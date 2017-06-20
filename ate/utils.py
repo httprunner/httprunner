@@ -20,3 +20,10 @@ def load_testcases(testcase_file_path):
     else:
         # '' or other suffix
         raise ParamsError("Bad testcase file name!")
+
+def parse_response_object(resp_obj):
+    return {
+        'status_code': resp_obj.status_code,
+        'headers': resp_obj.headers,
+        'content': resp_obj.content
+    }
