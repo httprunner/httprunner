@@ -1,5 +1,7 @@
 # ApiTestEngine
 
+[![Build Status](https://travis-ci.org/debugtalk/ApiTestEngine.svg?branch=master)](https://travis-ci.org/debugtalk/ApiTestEngine)
+
 ## 核心特性
 
 - 支持API接口的多种请求方法，包括 GET/POST/HEAD/PUT/DELETE 等
