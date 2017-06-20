@@ -8,19 +8,26 @@ class TestApiServer(unittest.TestCase):
     """
     Test case class that sets up an HTTP server which can be used within the tests
     """
-    def setUp(self):
-        super(TestApiServer, self).setUp()
-        self.api_server_process = multiprocessing.Process(
+    @classmethod
+    def setUpClass(cls):
+        cls.api_server_process = multiprocessing.Process(
             target=api_server.app.run
         )
-        self.api_server_process.start()
+        cls.api_server_process.start()
         time.sleep(0.1)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.api_server_process.terminate()
+
+    def setUp(self):
+        super(TestApiServer, self).setUp()
         self.host = "http://127.0.0.1:5000"
         self.api_client = requests.Session()
+        self.clear_users()
 
     def tearDown(self):
         super(TestApiServer, self).tearDown()
-        self.api_server_process.terminate()
 
     def clear_users(self):
         url = "%s/api/users" % self.host
