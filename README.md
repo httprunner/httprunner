@@ -11,6 +11,12 @@
 - 身兼多职，同时实现接口管理、接口自动化测试、接口性能测试（结合Locust）
 - 具有可扩展性，便于扩展实现Web平台化
 
+## Install
+
+```bash
+$ pip install -r requirements.txt
+```
+
 ## 阅读更多
 
 - [《背景介绍》](docs/background.md)
