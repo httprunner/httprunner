@@ -1,9 +1,10 @@
 import os
-import unittest
+import requests
 from ate import utils
 from ate import exception
+from .base import ApiServerUnittest
 
-class TestUtils(unittest.TestCase):
+class TestUtils(ApiServerUnittest):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo')
@@ -29,3 +30,11 @@ class TestUtils(unittest.TestCase):
         self.assertIn('response', testcases[0])
         self.assertIn('url', testcases[0]['request'])
         self.assertIn('method', testcases[0]['request'])
+
+    def test_parse_response_object(self):
+        url = "http://127.0.0.1:5000/api/users"
+        resp_obj = requests.get(url)
+        parse_result = utils.parse_response_object(resp_obj)
+        self.assertIn('status_code', parse_result)
+        self.assertIn('headers', parse_result)
+        self.assertIn('content', parse_result)
