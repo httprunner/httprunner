@@ -31,10 +31,24 @@ class TestUtils(ApiServerUnittest):
         self.assertIn('url', testcases[0]['request'])
         self.assertIn('method', testcases[0]['request'])
 
-    def test_parse_response_object(self):
+    def test_parse_response_object_json(self):
         url = "http://127.0.0.1:5000/api/users"
         resp_obj = requests.get(url)
         parse_result = utils.parse_response_object(resp_obj)
         self.assertIn('status_code', parse_result)
         self.assertIn('headers', parse_result)
         self.assertIn('content', parse_result)
+        self.assertIn('Content-Type', parse_result['headers'])
+        self.assertIn('Content-Length', parse_result['headers'])
+        self.assertIn('success', parse_result['content'])
+
+    def test_parse_response_object_text(self):
+        url = "http://127.0.0.1:5000/"
+        resp_obj = requests.get(url)
+        parse_result = utils.parse_response_object(resp_obj)
+        self.assertIn('status_code', parse_result)
+        self.assertIn('headers', parse_result)
+        self.assertIn('content', parse_result)
+        self.assertIn('Content-Type', parse_result['headers'])
+        self.assertIn('Content-Length', parse_result['headers'])
+        self.assertTrue(str, type(parse_result['content']))
