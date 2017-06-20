@@ -24,7 +24,7 @@ def load_testcases(testcase_file_path):
 def parse_response_object(resp_obj):
     try:
         resp_content = resp_obj.json()
-    except json.decoder.JSONDecodeError:
+    except ValueError:
         resp_content = resp_obj.text
 
     return {
