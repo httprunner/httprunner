@@ -19,6 +19,10 @@ data structure:
 """
 users_dict = {}
 
+@app.route('/')
+def index():
+    return "Hello World!"
+
 @app.route('/api/users')
 def get_users():
     users_list = [user for uid, user in users_dict.items()]
