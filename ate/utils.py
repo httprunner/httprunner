@@ -22,8 +22,13 @@ def load_testcases(testcase_file_path):
         raise ParamsError("Bad testcase file name!")
 
 def parse_response_object(resp_obj):
+    try:
+        resp_content = resp_obj.json()
+    except json.decoder.JSONDecodeError:
+        resp_content = resp_obj.text
+
     return {
         'status_code': resp_obj.status_code,
         'headers': resp_obj.headers,
-        'content': resp_obj.content
+        'content': resp_content
     }
