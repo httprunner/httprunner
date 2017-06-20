@@ -1,3 +1,4 @@
 requests
 termcolor
 flask
+PyYAML
