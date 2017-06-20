@@ -19,6 +19,10 @@
 $ pip install -r requirements.txt
 ```
 
+## Supported Python Versions
+
+Python 2.7, 3.3, 3.4, 3.5, and 3.6.
+
 ## 阅读更多
 
 - [《背景介绍》](docs/background.md)
