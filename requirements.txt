@@ -1,0 +1,4 @@
+requests
+termcolor
+flask
+PyYAML
