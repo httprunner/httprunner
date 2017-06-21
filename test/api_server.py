@@ -23,17 +23,18 @@ users_dict = {}
 def index():
     return "Hello World!"
 
-@app.route('/status_code/<int:status_code>')
-def get_response_with_status_code(status_code):
-    return "Status Code: %d" % status_code, status_code
+@app.route('/customize-response', methods=['POST'])
+def get_customized_response():
+    expected_resp_json = request.get_json()
+    status_code = expected_resp_json.get('status_code', 200)
+    headers_dict = expected_resp_json.get('headers', {})
+    body = expected_resp_json.get('body', "")
+    content = "Response: %s" % json.dumps(expected_resp_json)
+    response = make_response(content, status_code)
 
-@app.route('/response_headers', methods=['POST'])
-def get_response_with_headers():
-    headers_dict = request.get_json()
-    content = "Response headers: %s" % json.dumps(headers_dict)
-    response = make_response(content)
     for header_key, header_value in headers_dict.items():
         response.headers[header_key] = header_value
+
     return response
 
 @app.route('/api/users')

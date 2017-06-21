@@ -108,18 +108,23 @@ class TestApiServer(ApiServerUnittest):
         self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json()['success'], True)
 
-    def test_get_response_with_status_code(self):
+    def test_get_customized_response_status_code(self):
         status_code = random.randint(200, 511)
-        url = "%s/status_code/%d" % (self.host, status_code)
-        resp = self.api_client.get(url)
+        url = "%s/customize-response" % self.host
+        expected_response = {
+            'status_code': status_code,
+        }
+        resp = self.api_client.post(url, json=expected_response)
         self.assertEqual(status_code, resp.status_code)
 
-    def test_get_response_with_headers(self):
-        headers = {
-            'abc': 123,
-            'def': 456
+    def test_get_customized_response_headers(self):
+        expected_response = {
+            'headers': {
+                'abc': 123,
+                'def': 456
+            }
         }
-        url = "%s/response_headers" % self.host
-        resp = self.api_client.post(url, json=headers)
+        url = "%s/customize-response" % self.host
+        resp = self.api_client.post(url, json=expected_response)
         self.assertIn('abc', resp.headers)
         self.assertIn('123', resp.headers['abc'])
