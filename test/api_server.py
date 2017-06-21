@@ -27,6 +27,15 @@ def index():
 def get_response_with_status_code(status_code):
     return "Status Code: %d" % status_code, status_code
 
+@app.route('/response_headers', methods=['POST'])
+def get_response_with_headers():
+    headers_dict = request.get_json()
+    content = "Response headers: %s" % json.dumps(headers_dict)
+    response = make_response(content)
+    for header_key, header_value in headers_dict.items():
+        response.headers[header_key] = header_value
+    return response
+
 @app.route('/api/users')
 def get_users():
     users_list = [user for uid, user in users_dict.items()]

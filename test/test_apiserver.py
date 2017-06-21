@@ -113,3 +113,13 @@ class TestApiServer(ApiServerUnittest):
         url = "%s/status_code/%d" % (self.host, status_code)
         resp = self.api_client.get(url)
         self.assertEqual(status_code, resp.status_code)
+
+    def test_get_response_with_headers(self):
+        headers = {
+            'abc': 123,
+            'def': 456
+        }
+        url = "%s/response_headers" % self.host
+        resp = self.api_client.post(url, json=headers)
+        self.assertIn('abc', resp.headers)
+        self.assertIn('123', resp.headers['abc'])
