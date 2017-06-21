@@ -56,8 +56,12 @@ class TestUtils(ApiServerUnittest):
 
     def test_diff_response_status_code_equal(self):
         status_code = random.randint(200, 511)
-        url = "http://127.0.0.1:5000/status_code/%d" % status_code
-        resp_obj = requests.get(url)
+        url = "http://127.0.0.1:5000/customize-response"
+        response_dict = {
+            'status_code': status_code,
+        }
+        resp_obj = requests.post(url, json=response_dict)
+
         expected_resp_json = {
             'status_code': status_code
         }
@@ -66,8 +70,12 @@ class TestUtils(ApiServerUnittest):
 
     def test_diff_response_status_code_not_equal(self):
         status_code = random.randint(200, 511)
-        url = "http://127.0.0.1:5000/status_code/%d" % status_code
-        resp_obj = requests.get(url)
+        url = "http://127.0.0.1:5000/customize-response"
+        response_dict = {
+            'status_code': status_code,
+        }
+        resp_obj = requests.post(url, json=response_dict)
+
         expected_resp_json = {
             'status_code': 512
         }
