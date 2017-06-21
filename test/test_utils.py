@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 from ate import utils
 from ate import exception
@@ -52,3 +53,27 @@ class TestUtils(ApiServerUnittest):
         self.assertIn('Content-Type', parse_result['headers'])
         self.assertIn('Content-Length', parse_result['headers'])
         self.assertTrue(str, type(parse_result['content']))
+
+    def test_diff_response_status_code_equal(self):
+        status_code = random.randint(200, 511)
+        url = "http://127.0.0.1:5000/status_code/%d" % status_code
+        resp_obj = requests.get(url)
+        expected_resp_json = {
+            'status_code': status_code
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertFalse(diff_content)
+
+    def test_diff_response_status_code_not_equal(self):
+        status_code = random.randint(200, 511)
+        url = "http://127.0.0.1:5000/status_code/%d" % status_code
+        resp_obj = requests.get(url)
+        expected_resp_json = {
+            'status_code': 512
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        print('diff_content', diff_content)
+        self.assertIn('value', diff_content['status_code'])
+        self.assertIn('expected', diff_content['status_code'])
+        self.assertEqual(diff_content['status_code']['value'], status_code)
+        self.assertEqual(diff_content['status_code']['expected'], 512)

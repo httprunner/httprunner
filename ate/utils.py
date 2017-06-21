@@ -32,3 +32,16 @@ def parse_response_object(resp_obj):
         'headers': resp_obj.headers,
         'content': resp_content
     }
+
+def diff_response(resp_obj, expected_resp_json):
+    diff_content = {}
+    resp_info = parse_response_object(resp_obj)
+
+    expected_status_code = expected_resp_json.get('status_code', 200)
+    if resp_info['status_code'] != int(expected_status_code):
+        diff_content['status_code'] = {
+            'value': resp_info['status_code'],
+            'expected': expected_status_code
+        }
+
+    return diff_content
