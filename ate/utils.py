@@ -23,14 +23,14 @@ def load_testcases(testcase_file_path):
 
 def parse_response_object(resp_obj):
     try:
-        resp_content = resp_obj.json()
+        resp_body = resp_obj.json()
     except ValueError:
-        resp_content = resp_obj.text
+        resp_body = resp_obj.text
 
     return {
         'status_code': resp_obj.status_code,
         'headers': resp_obj.headers,
-        'content': resp_content
+        'body': resp_body
     }
 
 def diff_response(resp_obj, expected_resp_json):
