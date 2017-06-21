@@ -1,4 +1,5 @@
 import requests
+import random
 from .base import ApiServerUnittest
 
 class TestApiServer(ApiServerUnittest):
@@ -106,3 +107,9 @@ class TestApiServer(ApiServerUnittest):
         resp = self.delete_user(1000)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json()['success'], True)
+
+    def test_get_response_with_status_code(self):
+        status_code = random.randint(200, 511)
+        url = "%s/status_code/%d" % (self.host, status_code)
+        resp = self.api_client.get(url)
+        self.assertEqual(status_code, resp.status_code)

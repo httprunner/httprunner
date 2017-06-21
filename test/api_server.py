@@ -23,6 +23,10 @@ users_dict = {}
 def index():
     return "Hello World!"
 
+@app.route('/status_code/<int:status_code>')
+def get_response_with_status_code(status_code):
+    return "Status Code: %d" % status_code, status_code
+
 @app.route('/api/users')
 def get_users():
     users_list = [user for uid, user in users_dict.items()]
