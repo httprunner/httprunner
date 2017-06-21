@@ -131,6 +131,109 @@ class TestUtils(ApiServerUnittest):
             diff_content['headers'],
             {
                 'b': {'expected': '457', 'value': '456'},
-                'd': {'expected': '890', 'value': None}
+                'd': {'expected': 890, 'value': None}
+            }
+        )
+
+    def test_diff_response_body_equal(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'body': {
+                    'success': True,
+                    'count': 10
+                }
+            }
+        )
+
+        # expected response body is not specified
+        expected_resp_json = {}
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertFalse(diff_content)
+
+        # response body is the same as expected response body
+        expected_resp_json = {
+            'body': {
+                'success': True,
+                'count': '10'
+            }
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertFalse(diff_content)
+
+    def test_diff_response_body_not_equal_type_unmatch(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'body': {
+                    'success': True,
+                    'count': 10
+                }
+            }
+        )
+
+        # response body content type not match
+        expected_resp_json = {
+            'body': "ok"
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertEqual(
+            diff_content['body'],
+            {
+                'value': {'success': True, 'count': 10},
+                'expected': 'ok'
+            }
+        )
+
+    def test_diff_response_body_not_equal_string_unmatch(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'body': "success"
+            }
+        )
+
+        # response body content type matched to be string, while value unmatch
+        expected_resp_json = {
+            'body': "ok"
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertEqual(
+            diff_content['body'],
+            {
+                'value': 'success',
+                'expected': 'ok'
+            }
+        )
+
+    def test_diff_response_body_not_equal_json_unmatch(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'body': {
+                    'success': False
+                }
+            }
+        )
+
+        # response body is the same as expected response body
+        expected_resp_json = {
+            'body': {
+                'success': True,
+                'count': 10
+            }
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertEqual(
+            diff_content['body'],
+            {
+                'success': {
+                    'value': False,
+                    'expected': True
+                },
+                'count': {
+                    'value': None,
+                    'expected': 10
+                }
             }
         )
