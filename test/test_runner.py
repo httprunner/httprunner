@@ -69,8 +69,15 @@ class TestUtils(ApiServerUnittest):
             }
         )
 
-    def test_run_testcase_suite_success(self):
+    def test_run_testcase_suite_json_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo.json')
+        testcases = utils.load_testcases(testcase_file_path)
+        result = self.test_runner.run_testcase_suite(testcases)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result, [(True, {}), (True, {})])
+
+    def test_run_testcase_suite_yaml_success(self):
+        testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo.yml')
         testcases = utils.load_testcases(testcase_file_path)
         result = self.test_runner.run_testcase_suite(testcases)
         self.assertEqual(len(result), 2)

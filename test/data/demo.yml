@@ -12,6 +12,9 @@
         status_code: 201
         headers:
             Content-Type: application/json
+        body:
+            success: true
+            msg: user created successfully.
 
 -
     name: create user which existed
@@ -27,3 +30,6 @@
         status_code: 500
         headers:
             Content-Type: application/json
+        body:
+            success: false
+            msg: user already existed.
