@@ -28,9 +28,8 @@ def get_customized_response():
     expected_resp_json = request.get_json()
     status_code = expected_resp_json.get('status_code', 200)
     headers_dict = expected_resp_json.get('headers', {})
-    body = expected_resp_json.get('body', "")
-    content = "Response: %s" % json.dumps(expected_resp_json)
-    response = make_response(content, status_code)
+    body = expected_resp_json.get('body', {})
+    response = make_response(json.dumps(body), status_code)
 
     for header_key, header_value in headers_dict.items():
         response.headers[header_key] = header_value

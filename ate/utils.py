@@ -33,6 +33,19 @@ def parse_response_object(resp_obj):
         'body': resp_body
     }
 
+def diff_json(current_json, expected_json):
+    json_diff = {}
+
+    for key, expected_value in expected_json.items():
+        value = current_json.get(key, None)
+        if str(value) != str(expected_value):
+            json_diff[key] = {
+                'value': value,
+                'expected': expected_value
+            }
+
+    return json_diff
+
 def diff_response(resp_obj, expected_resp_json):
     diff_content = {}
     resp_info = parse_response_object(resp_obj)
@@ -45,16 +58,29 @@ def diff_response(resp_obj, expected_resp_json):
         }
 
     expected_headers = expected_resp_json.get('headers', {})
-    for header_key, expected_header_value in expected_headers.items():
-        header_value = resp_info['headers'].get(header_key, None)
-        if str(header_value) != str(expected_header_value):
+    headers_diff = diff_json(resp_info['headers'], expected_headers)
+    if headers_diff:
+        diff_content['headers'] = headers_diff
 
-            if 'headers' not in diff_content:
-                diff_content['headers'] = {}
+    expected_body = expected_resp_json.get('body', None)
 
-            diff_content['headers'][header_key] = {
-                'value': header_value,
-                'expected': str(expected_header_value)
+    if expected_body is None:
+        body_diff = {}
+    elif type(expected_body) != type(resp_info['body']):
+        body_diff = {
+            'value': resp_info['body'],
+            'expected': expected_body
+        }
+    elif isinstance(expected_body, str):
+        if expected_body != resp_info['body']:
+            body_diff = {
+                'value': resp_info['body'],
+                'expected': expected_body
             }
+    elif isinstance(expected_body, dict):
+        body_diff = diff_json(resp_info['body'], expected_body)
+
+    if body_diff:
+        diff_content['body'] = body_diff
 
     return diff_content
