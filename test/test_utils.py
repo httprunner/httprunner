@@ -56,11 +56,12 @@ class TestUtils(ApiServerUnittest):
 
     def test_diff_response_status_code_equal(self):
         status_code = random.randint(200, 511)
-        url = "http://127.0.0.1:5000/customize-response"
-        response_dict = {
-            'status_code': status_code,
-        }
-        resp_obj = requests.post(url, json=response_dict)
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'status_code': status_code,
+            }
+        )
 
         expected_resp_json = {
             'status_code': status_code
@@ -70,18 +71,66 @@ class TestUtils(ApiServerUnittest):
 
     def test_diff_response_status_code_not_equal(self):
         status_code = random.randint(200, 511)
-        url = "http://127.0.0.1:5000/customize-response"
-        response_dict = {
-            'status_code': status_code,
-        }
-        resp_obj = requests.post(url, json=response_dict)
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'status_code': status_code,
+            }
+        )
 
         expected_resp_json = {
             'status_code': 512
         }
         diff_content = utils.diff_response(resp_obj, expected_resp_json)
-        print('diff_content', diff_content)
         self.assertIn('value', diff_content['status_code'])
         self.assertIn('expected', diff_content['status_code'])
         self.assertEqual(diff_content['status_code']['value'], status_code)
         self.assertEqual(diff_content['status_code']['expected'], 512)
+
+    def test_diff_response_headers_equal(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'abc': 123,
+                    'def': 456
+                }
+            }
+        )
+
+        expected_resp_json = {
+            'headers': {
+                'abc': 123,
+                'def': '456'
+            }
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertFalse(diff_content)
+
+    def test_diff_response_headers_not_equal(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'a': 123,
+                    'b': '456',
+                    'c': '789'
+                }
+            }
+        )
+
+        expected_resp_json = {
+            'headers': {
+                'a': '123',
+                'b': '457',
+                'd': 890
+            }
+        }
+        diff_content = utils.diff_response(resp_obj, expected_resp_json)
+        self.assertEqual(
+            diff_content['headers'],
+            {
+                'b': {'expected': '457', 'value': '456'},
+                'd': {'expected': '890', 'value': None}
+            }
+        )
