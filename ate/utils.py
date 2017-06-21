@@ -44,4 +44,17 @@ def diff_response(resp_obj, expected_resp_json):
             'expected': expected_status_code
         }
 
+    expected_headers = expected_resp_json.get('headers', {})
+    for header_key, expected_header_value in expected_headers.items():
+        header_value = resp_info['headers'].get(header_key, None)
+        if str(header_value) != str(expected_header_value):
+
+            if 'headers' not in diff_content:
+                diff_content['headers'] = {}
+
+            diff_content['headers'][header_key] = {
+                'value': header_value,
+                'expected': str(expected_header_value)
+            }
+
     return diff_content
