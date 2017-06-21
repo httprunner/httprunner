@@ -38,10 +38,10 @@ class TestUtils(ApiServerUnittest):
         parse_result = utils.parse_response_object(resp_obj)
         self.assertIn('status_code', parse_result)
         self.assertIn('headers', parse_result)
-        self.assertIn('content', parse_result)
+        self.assertIn('body', parse_result)
         self.assertIn('Content-Type', parse_result['headers'])
         self.assertIn('Content-Length', parse_result['headers'])
-        self.assertIn('success', parse_result['content'])
+        self.assertIn('success', parse_result['body'])
 
     def test_parse_response_object_text(self):
         url = "http://127.0.0.1:5000/"
@@ -49,10 +49,10 @@ class TestUtils(ApiServerUnittest):
         parse_result = utils.parse_response_object(resp_obj)
         self.assertIn('status_code', parse_result)
         self.assertIn('headers', parse_result)
-        self.assertIn('content', parse_result)
+        self.assertIn('body', parse_result)
         self.assertIn('Content-Type', parse_result['headers'])
         self.assertIn('Content-Length', parse_result['headers'])
-        self.assertTrue(str, type(parse_result['content']))
+        self.assertTrue(str, type(parse_result['body']))
 
     def test_diff_response_status_code_equal(self):
         status_code = random.randint(200, 511)
