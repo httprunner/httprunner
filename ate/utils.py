@@ -1,7 +1,21 @@
+import hashlib
 import json
-import yaml
 import os.path
+import random
+import string
+
+import yaml
+
 from ate.exception import ParamsError
+
+
+def gen_random_string(str_len):
+    return ''.join(
+        random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
+
+def gen_md5(str_list):
+    authorization_str = "".join(str_list)
+    return hashlib.md5(authorization_str.encode('utf-8')).hexdigest()
 
 def load_yaml_file(yaml_file):
     with open(yaml_file, 'r+') as stream:

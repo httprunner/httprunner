@@ -1,10 +1,8 @@
-import hashlib
 import multiprocessing
-import random
-import string
 import time
 import unittest
 
+from ate import utils
 from . import api_server
 
 
@@ -29,11 +27,9 @@ class ApiServerUnittest(unittest.TestCase):
 
     def prepare_headers(self, data=""):
         token = api_server.TOKEN
-        random_str = ''.join(
-            random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+        random_str = utils.gen_random_string(5)
+        authorization = utils.gen_md5([token, data, random_str])
 
-        authorization_str = "".join([token, data, random_str])
-        authorization = hashlib.md5(authorization_str.encode('utf-8')).hexdigest()
         headers = {
             'authorization': authorization,
             'random': random_str
