@@ -13,7 +13,7 @@ class TestRunner(object):
             url = req_kwargs.pop('url')
             method = req_kwargs.pop('method')
         except KeyError:
-            raise exception.ParamsError("Params Error")
+            raise exception.ParamsError("URL or METHOD missed!")
 
         resp_obj = self.client.request(url=url, method=method, **req_kwargs)
         diff_content = utils.diff_response(resp_obj, testcase['response'])
