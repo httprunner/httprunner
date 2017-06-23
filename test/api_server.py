@@ -3,6 +3,7 @@ import json
 from functools import wraps
 
 from flask import Flask, make_response, request
+from ate import utils
 
 app = Flask(__name__)
 
@@ -36,8 +37,7 @@ def validate_request(func):
             req_authorization = req_headers['Authorization']
             random_str = req_headers['Random']
             data = request.data.decode("utf-8")
-            authorization_str = "".join([TOKEN, data, random_str])
-            authorization = hashlib.md5(authorization_str.encode('utf-8')).hexdigest()
+            authorization = utils.gen_md5([TOKEN, data, random_str])
             assert authorization == req_authorization
             return func(*args, **kwds)
         except (KeyError, AssertionError):
