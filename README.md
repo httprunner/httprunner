@@ -35,3 +35,4 @@ Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
 
 - [《接口自动化测试的最佳工程实践（ApiTestEngine）》](http://debugtalk.com/post/ApiTestEngine-api-test-best-practice/)
 - [《ApiTestEngine 演化之路（0）开发未动，测试先行》](http://debugtalk.com/post/ApiTestEngine-0-setup-CI-test/)
+- [《ApiTestEngine 演化之路（1）搭建基础框架》](http://debugtalk.com/post/ApiTestEngine-1-setup-basic-framework/)

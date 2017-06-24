@@ -17,6 +17,23 @@ def gen_md5(str_list):
     authorization_str = "".join(str_list)
     return hashlib.md5(authorization_str.encode('utf-8')).hexdigest()
 
+def handle_req_data(data):
+    if not data:
+        return data
+
+    if isinstance(data, str):
+        # check if data in str can be converted to dict
+        try:
+            data = json.loads(data)
+        except ValueError:
+            pass
+
+    if isinstance(data, dict):
+        # sort data in dict with keys, then convert to str
+        data = json.dumps(data, sort_keys=True)
+
+    return data
+
 def load_yaml_file(yaml_file):
     with open(yaml_file, 'r+') as stream:
         return yaml.load(stream)

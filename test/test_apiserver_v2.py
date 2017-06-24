@@ -1,4 +1,3 @@
-import json
 import random
 import requests
 
@@ -37,7 +36,7 @@ class TestApiServerV2(ApiServerUnittest):
             'name': name,
             'password': password
         }
-        headers = self.prepare_headers(json.dumps(data))
+        headers = self.prepare_headers(data)
         return self.api_client.post(url, headers=headers, json=data)
 
     def get_user(self, uid):
@@ -50,7 +49,7 @@ class TestApiServerV2(ApiServerUnittest):
             'name': name,
             'password': password
         }
-        headers = self.prepare_headers(json.dumps(data))
+        headers = self.prepare_headers(data)
         return self.api_client.put(url, headers=headers, json=data)
 
     def delete_user(self, uid):
@@ -129,7 +128,7 @@ class TestApiServerV2(ApiServerUnittest):
         }
         resp = self.api_client.post(
             url,
-            headers=self.prepare_headers(json.dumps(expected_response)),
+            headers=self.prepare_headers(expected_response),
             json=expected_response
         )
         self.assertEqual(status_code, resp.status_code)
@@ -144,7 +143,7 @@ class TestApiServerV2(ApiServerUnittest):
         url = "%s/customize-response" % self.host
         resp = self.api_client.post(
             url,
-            headers=self.prepare_headers(json.dumps(expected_response)),
+            headers=self.prepare_headers(expected_response),
             json=expected_response
         )
         self.assertIn('abc', resp.headers)
