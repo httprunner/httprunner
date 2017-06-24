@@ -37,7 +37,7 @@ def validate_request(func):
             req_authorization = req_headers['Authorization']
             random_str = req_headers['Random']
             data = utils.handle_req_data(request.data)
-            authorization = utils.gen_md5([TOKEN, data, random_str])
+            authorization = utils.gen_md5(TOKEN, data, random_str)
             assert authorization == req_authorization
             return func(*args, **kwds)
         except (KeyError, AssertionError):

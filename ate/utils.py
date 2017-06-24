@@ -19,9 +19,8 @@ def gen_random_string(str_len):
     return ''.join(
         random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
 
-def gen_md5(str_list):
-    authorization_str = "".join(str_list)
-    return hashlib.md5(authorization_str.encode('utf-8')).hexdigest()
+def gen_md5(*str_args):
+    return hashlib.md5("".join(str_args).encode('utf-8')).hexdigest()
 
 def handle_req_data(data):
 
