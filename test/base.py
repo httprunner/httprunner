@@ -29,7 +29,7 @@ class ApiServerUnittest(unittest.TestCase):
         token = api_server.TOKEN
         data = utils.handle_req_data(data)
         random_str = utils.gen_random_string(5)
-        authorization = utils.gen_md5([token, data, random_str])
+        authorization = utils.gen_md5(token, data, random_str)
 
         headers = {
             'authorization': authorization,
