@@ -8,6 +8,12 @@ import yaml
 
 from ate.exception import ParamsError
 
+try:
+    assert bytes is str
+    PYTHON_VERSION = 2
+except AssertionError:
+    PYTHON_VERSION = 3
+
 
 def gen_random_string(str_len):
     return ''.join(
@@ -18,6 +24,11 @@ def gen_md5(str_list):
     return hashlib.md5(authorization_str.encode('utf-8')).hexdigest()
 
 def handle_req_data(data):
+
+    if PYTHON_VERSION == 3 and isinstance(data, bytes):
+        # In Python3, convert bytes to str
+        data = data.decode('utf-8')
+
     if not data:
         return data
 
