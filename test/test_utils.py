@@ -13,7 +13,8 @@ class TestUtils(ApiServerUnittest):
             utils.load_testcases(testcase_file_path)
 
     def test_load_json_testcases(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo.json')
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testcases = utils.load_testcases(testcase_file_path)
         self.assertEqual(len(testcases), 2)
         self.assertIn('name', testcases[0])
@@ -23,7 +24,8 @@ class TestUtils(ApiServerUnittest):
         self.assertIn('method', testcases[0]['request'])
 
     def test_load_yaml_testcases(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo.yml')
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'test/data/simple_demo_no_auth.yml')
         testcases = utils.load_testcases(testcase_file_path)
         self.assertEqual(len(testcases), 2)
         self.assertIn('name', testcases[0])
