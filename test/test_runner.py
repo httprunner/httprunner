@@ -1,5 +1,4 @@
 import os
-import random
 import requests
 from ate import runner, exception, utils
 from .base import ApiServerUnittest
