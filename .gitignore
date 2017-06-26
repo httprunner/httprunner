@@ -7,3 +7,4 @@ dist/*
 *.egg-info
 .python-version
 logs/%
+.coverage
