@@ -2,3 +2,4 @@ requests
 termcolor
 flask
 PyYAML
+codecov
