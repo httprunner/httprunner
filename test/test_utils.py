@@ -251,54 +251,59 @@ class TestUtils(ApiServerUnittest):
         self.assertIn(file2, files)
 
     def test_load_testcases_by_path_files(self):
-        testcases_list = []
+        testsets_list = []
 
         # absolute file path
         path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_no_auth.json')
-        testcases_list.extend(utils.load_testcases_by_path(path))
-        self.assertEqual(len(testcases_list), 2)
+        testset_list = utils.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list), 1)
+        self.assertEqual(len(testset_list[0]), 2)
+        testsets_list.extend(testset_list)
 
         # relative file path
         path = 'test/data/simple_demo_no_auth.yml'
-        testcases_list.extend(utils.load_testcases_by_path(path))
-        self.assertEqual(len(testcases_list), 4)
+        testset_list = utils.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list), 1)
+        self.assertEqual(len(testset_list[0]), 2)
+        testsets_list.extend(testset_list)
 
         # list/set container with file(s)
         path = [
             os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json'),
             'test/data/simple_demo_no_auth.yml'
         ]
-        testcases_list.extend(utils.load_testcases_by_path(path))
-        self.assertEqual(len(testcases_list), 8)
+        testset_list = utils.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list), 2)
+        self.assertEqual(len(testset_list[0]), 2)
+        self.assertEqual(len(testset_list[1]), 2)
+        testsets_list.extend(testset_list)
+        self.assertEqual(len(testsets_list), 4)
 
-        for testcase in testcases_list:
-            testcase = testcase["test"]
-            self.assertIn('name', testcase)
-            self.assertIn('request', testcase)
-            self.assertIn('response', testcase)
-            self.assertIn('url', testcase['request'])
-            self.assertIn('method', testcase['request'])
+        for testset in testsets_list:
+            for testcase in testset:
+                testcase = testcase["test"]
+                self.assertIn('name', testcase)
+                self.assertIn('request', testcase)
+                self.assertIn('response', testcase)
+                self.assertIn('url', testcase['request'])
+                self.assertIn('method', testcase['request'])
 
     def test_load_testcases_by_path_folder(self):
-        testcases_list_1 = []
-        testcases_list_2 = []
-        testcases_list_3 = []
-
         # absolute folder path
         path = os.path.join(os.getcwd(), 'test/data')
-        testcases_list_1.extend(utils.load_testcases_by_path(path))
-        self.assertGreater(len(testcases_list_1), 10)
+        testset_list_1 = utils.load_testcases_by_path(path)
+        self.assertGreater(len(testset_list_1), 6)
 
         # relative folder path
         path = 'test/data/'
-        testcases_list_2.extend(utils.load_testcases_by_path(path))
-        self.assertEqual(len(testcases_list_1), len(testcases_list_2))
+        testset_list_2 = utils.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list_1), len(testset_list_2))
 
         # list/set container with file(s)
         path = [
             os.path.join(os.getcwd(), 'test/data'),
             'test/data/'
         ]
-        testcases_list_3.extend(utils.load_testcases_by_path(path))
-        self.assertEqual(len(testcases_list_3), 2 * len(testcases_list_1))
+        testset_list_3 = utils.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))

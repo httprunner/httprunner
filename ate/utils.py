@@ -145,27 +145,28 @@ def load_testcases_by_path(path):
             - absolute/relative file path
             - absolute/relative folder path
             - list/set container with file(s) and/or folder(s)
-    @return all loaded testcases in a list
+    @return testcase sets list, each testset is corresponding to a file
+        [
+            [testcase11, testcase12],
+            [testcase21, testcase22, testcase23]
+        ]
     """
-    testcases_list = []
-
     if isinstance(path, (list, set)):
-        for file_path in set(path):
-            _testcases_list = load_testcases_by_path(file_path)
-            for testcase in _testcases_list:
-                testcases_list.append(testcase)
+        testsets_list = []
 
-        return testcases_list
+        for file_path in set(path):
+            _testsets_list = load_testcases_by_path(file_path)
+            testsets_list.extend(_testsets_list)
+
+        return testsets_list
 
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
 
-    if os.path.isfile(path):
-        testcases = load_testcases(path)
-        testcases_list.extend(testcases)
-
     if os.path.isdir(path):
-        files = load_foler_files(path)
-        testcases_list.extend(load_testcases_by_path(files))
+        files_list = load_foler_files(path)
+        return load_testcases_by_path(files_list)
 
-    return testcases_list
+    if os.path.isfile(path):
+        testcases_list = load_testcases(path)
+        return [testcases_list]
