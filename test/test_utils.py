@@ -17,22 +17,24 @@ class TestUtils(ApiServerUnittest):
             os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testcases = utils.load_testcases(testcase_file_path)
         self.assertEqual(len(testcases), 2)
-        self.assertIn('name', testcases[0])
-        self.assertIn('request', testcases[0])
-        self.assertIn('response', testcases[0])
-        self.assertIn('url', testcases[0]['request'])
-        self.assertIn('method', testcases[0]['request'])
+        testcase = testcases[0]["test"]
+        self.assertIn('name', testcase)
+        self.assertIn('request', testcase)
+        self.assertIn('response', testcase)
+        self.assertIn('url', testcase['request'])
+        self.assertIn('method', testcase['request'])
 
     def test_load_yaml_testcases(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_no_auth.yml')
         testcases = utils.load_testcases(testcase_file_path)
         self.assertEqual(len(testcases), 2)
-        self.assertIn('name', testcases[0])
-        self.assertIn('request', testcases[0])
-        self.assertIn('response', testcases[0])
-        self.assertIn('url', testcases[0]['request'])
-        self.assertIn('method', testcases[0]['request'])
+        testcase = testcases[0]["test"]
+        self.assertIn('name', testcase)
+        self.assertIn('request', testcase)
+        self.assertIn('response', testcase)
+        self.assertIn('url', testcase['request'])
+        self.assertIn('method', testcase['request'])
 
     def test_parse_response_object_json(self):
         url = "http://127.0.0.1:5000/api/users"
