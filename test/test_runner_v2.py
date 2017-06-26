@@ -20,21 +20,21 @@ class TestRunnerV2(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_auth_hardcode.yml')
         testcases = utils.load_testcases(testcase_file_path)
-        success, _ = self.test_runner.run_single_testcase(testcases[0])
+        success, _ = self.test_runner.run_test(testcases[0])
         self.assertTrue(success)
 
     def test_run_single_testcase_json(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_auth_hardcode.json')
         testcases = utils.load_testcases(testcase_file_path)
-        success, _ = self.test_runner.run_single_testcase(testcases[0])
+        success, _ = self.test_runner.run_test(testcases[0])
         self.assertTrue(success)
 
     def test_run_testcase_auth_suite_yaml(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_auth_hardcode.yml')
         testcases = utils.load_testcases(testcase_file_path)
-        result = self.test_runner.run_testcase_suite(testcases)
+        result = self.test_runner.run_testsets(testcases)
         self.assertEqual(len(result), 2)
         self.assertEqual(result, [(True, {}), (True, {})])
 
@@ -42,7 +42,7 @@ class TestRunnerV2(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_auth_hardcode.json')
         testcases = utils.load_testcases(testcase_file_path)
-        result = self.test_runner.run_testcase_suite(testcases)
+        result = self.test_runner.run_testsets(testcases)
         self.assertEqual(len(result), 2)
         self.assertEqual(result, [(True, {}), (True, {})])
 
@@ -50,7 +50,7 @@ class TestRunnerV2(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/demo_template_separate.yml')
         testcases = utils.load_testcases(testcase_file_path)
-        success, _ = self.test_runner.run_single_testcase(testcases[0])
+        success, _ = self.test_runner.run_test(testcases[0])
         self.assertTrue(success)
-        success, _ = self.test_runner.run_single_testcase(testcases[1])
+        success, _ = self.test_runner.run_test(testcases[1])
         self.assertFalse(success)
