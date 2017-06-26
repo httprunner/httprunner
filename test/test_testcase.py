@@ -90,7 +90,8 @@ class TestcaseParserUnittest(unittest.TestCase):
         new_variable_binds = {
             "method": "GET"
         }
-        parsed_testcase = self.testcase_parser.parse(testcase, new_variable_binds)
+        self.testcase_parser.update_variables_binds(new_variable_binds)
+        parsed_testcase = self.testcase_parser.parse(testcase)
 
         self.assertIn("method", self.testcase_parser.variables_binds)
         self.assertEqual(
