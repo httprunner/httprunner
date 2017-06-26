@@ -17,7 +17,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_single_testcase_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testcases = utils.load_testcases(testcase_file_path)
-        success, _ = self.test_runner.run_single_testcase(testcases[0])
+        success, _ = self.test_runner.run_test(testcases[0])
         self.assertTrue(success)
 
     def test_run_single_testcase_fail(self):
@@ -45,7 +45,7 @@ class TestRunner(ApiServerUnittest):
                 }
             }
         }
-        success, diff_content = self.test_runner.run_single_testcase(testcase)
+        success, diff_content = self.test_runner.run_test(testcase)
         self.assertFalse(success)
         self.assertEqual(
             diff_content['status_code'],
@@ -72,13 +72,13 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_suite_json_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testcases = utils.load_testcases(testcase_file_path)
-        result = self.test_runner.run_testcase_suite(testcases)
+        result = self.test_runner.run_testsets(testcases)
         self.assertEqual(len(result), 2)
         self.assertEqual(result, [(True, {}), (True, {})])
 
     def test_run_testcase_suite_yaml_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
         testcases = utils.load_testcases(testcase_file_path)
-        result = self.test_runner.run_testcase_suite(testcases)
+        result = self.test_runner.run_testsets(testcases)
         self.assertEqual(len(result), 2)
         self.assertEqual(result, [(True, {}), (True, {})])
