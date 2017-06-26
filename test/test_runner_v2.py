@@ -45,3 +45,12 @@ class TestRunnerV2(ApiServerUnittest):
         result = self.test_runner.run_testcase_suite(testcases)
         self.assertEqual(len(result), 2)
         self.assertEqual(result, [(True, {}), (True, {})])
+
+    def test_run_testcase_template_yaml(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'test/data/demo_template_separate.yml')
+        testcases = utils.load_testcases(testcase_file_path)
+        success, _ = self.test_runner.run_single_testcase(testcases[0])
+        self.assertTrue(success)
+        success, _ = self.test_runner.run_single_testcase(testcases[1])
+        self.assertFalse(success)

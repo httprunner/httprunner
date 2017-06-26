@@ -1,12 +1,39 @@
 import requests
-from ate import utils, exception
+
+from ate import exception, utils
+from ate.context import Context
+from ate.testcase import TestcaseParser
+
 
 class TestRunner(object):
 
     def __init__(self):
         self.client = requests.Session()
+        self.context = Context()
+        self.testcase_parser = TestcaseParser()
+
+    def prepare(self, testcase):
+        """ prepare work before running test.
+        parse testcase with variables binds if it is a template.
+        """
+        requires = testcase.get('requires', [])
+        self.context.import_requires(requires)
+
+        function_binds = testcase.get('function_binds', {})
+        self.context.bind_functions(function_binds)
+
+        variable_binds = testcase.get('variable_binds', [])
+        self.context.bind_variables(variable_binds)
+
+        parsed_testcase = self.testcase_parser.parse(
+            testcase,
+            variables_binds=self.context.variables
+        )
+        return parsed_testcase
 
     def run_single_testcase(self, testcase):
+        testcase = self.prepare(testcase)
+
         req_kwargs = testcase['request']
 
         try:
