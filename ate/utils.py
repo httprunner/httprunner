@@ -125,3 +125,47 @@ def diff_response(resp_obj, expected_resp_json):
         diff_content['body'] = body_diff
 
     return diff_content
+
+def load_foler_files(folder_path):
+    """ load folder path, return all files in list format.
+    """
+    file_list = []
+
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for filename in filenames:
+            file_path = os.path.join(dirpath, filename)
+            file_list.append(file_path)
+
+    return file_list
+
+def load_testcases_by_path(path):
+    """ load testcases from file path
+    @param path
+        path could be in several type:
+            - absolute/relative file path
+            - absolute/relative folder path
+            - list/set container with file(s) and/or folder(s)
+    @return all loaded testcases in a list
+    """
+    testcases_list = []
+
+    if isinstance(path, (list, set)):
+        for file_path in set(path):
+            _testcases_list = load_testcases_by_path(file_path)
+            for testcase in _testcases_list:
+                testcases_list.append(testcase)
+
+        return testcases_list
+
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), path)
+
+    if os.path.isfile(path):
+        testcases = load_testcases(path)
+        testcases_list.extend(testcases)
+
+    if os.path.isdir(path):
+        files = load_foler_files(path)
+        testcases_list.extend(load_testcases_by_path(files))
+
+    return testcases_list
