@@ -12,27 +12,53 @@ class TestRunner(object):
         self.context = Context()
         self.testcase_parser = TestcaseParser()
 
-    def prepare(self, testcase):
-        """ prepare work before running test.
-        parse testcase with variables binds if it is a template.
+    def pre_config(self, config_dict):
+        """ create/update variables binds
+        @param config_dict
+            {
+                "requires": ["random", "hashlib"],
+                "function_binds": {
+                    "gen_random_string": \
+                        "lambda str_len: ''.join(random.choice(string.ascii_letters + \
+                        string.digits) for _ in range(str_len))",
+                    "gen_md5": \
+                        "lambda *str_args: hashlib.md5(''.join(str_args).\
+                        encode('utf-8')).hexdigest()"
+                },
+                "variable_binds": [
+                    {"TOKEN": "debugtalk"},
+                    {"random": {"func": "gen_random_string", "args": [5]}},
+                ]
+            }
+        @return variables binds mapping
+            {
+                "TOKEN": "debugtalk",
+                "random": "A2dEx"
+            }
         """
-        requires = testcase.get('requires', [])
+        requires = config_dict.get('requires', [])
         self.context.import_requires(requires)
 
-        function_binds = testcase.get('function_binds', {})
+        function_binds = config_dict.get('function_binds', {})
         self.context.bind_functions(function_binds)
 
-        variable_binds = testcase.get('variable_binds', [])
+        variable_binds = config_dict.get('variable_binds', [])
         self.context.bind_variables(variable_binds)
 
-        parsed_testcase = self.testcase_parser.parse(
-            testcase,
-            variables_binds=self.context.variables
-        )
+        self.testcase_parser.update_variables_binds(self.context.variables)
+
+    def parse_testcase(self, testcase):
+        """ parse testcase with variables binds if it is a template.
+        """
+        self.pre_config(testcase)
+
+        parsed_testcase = self.testcase_parser.parse(testcase)
         return parsed_testcase
 
     def run_test(self, testcase):
-        testcase = self.prepare(testcase)
+        """ run single testcase.
+        """
+        testcase = self.parse_testcase(testcase)
 
         req_kwargs = testcase['request']
 
@@ -48,7 +74,34 @@ class TestRunner(object):
         return success, diff_content
 
     def run_testsets(self, testsets):
-        return [
-            self.run_test(testcase)
-            for testcase in testsets
-        ]
+        """ run testcase suite.
+        @testsets
+            [
+                {
+                    "config": {
+                        "requires": [],
+                        "function_binds": {},
+                        "variable_binds": []
+                    }
+                },
+                {
+                    "test": {
+                        "variable_binds": {}, # override
+                        "request": {},
+                        "response": {}
+                    }
+                }
+            ]
+        """
+        results = []
+        for item in testsets:
+            for key in item:
+                if key == "config":
+                    config_dict = item[key]
+                    self.pre_config(config_dict)
+                elif key == "test":
+                    testcase = item[key]
+                    result = self.run_test(testcase)
+                    results.append(result)
+
+        return results
