@@ -6,7 +6,7 @@ class TestcaseParser(object):
     def __init__(self, variables_binds={}):
         self.variables_binds = variables_binds
 
-    def parse(self, testcase_template):
+    def parse(self, testcase_template, variables_binds={}):
         """ parse testcase_template, replace all variables with bind value.
         variables marker: ${variable}.
         @param testcase_template
@@ -30,7 +30,12 @@ class TestcaseParser(object):
                     "msg": "user created successfully."
                 }
             }
+        @param variables_binds
+            variable binds of testcase parser instance will be updated.
         """
+        if variables_binds:
+            self.variables_binds.update(variables_binds)
+
         return self.substitute(testcase_template)
 
     def substitute(self, content):
