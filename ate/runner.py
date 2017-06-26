@@ -31,7 +31,7 @@ class TestRunner(object):
         )
         return parsed_testcase
 
-    def run_single_testcase(self, testcase):
+    def run_test(self, testcase):
         testcase = self.prepare(testcase)
 
         req_kwargs = testcase['request']
@@ -47,8 +47,8 @@ class TestRunner(object):
         success = False if diff_content else True
         return success, diff_content
 
-    def run_testcase_suite(self, testcase_sets):
+    def run_testsets(self, testsets):
         return [
-            self.run_single_testcase(testcase)
-            for testcase in testcase_sets
+            self.run_test(testcase)
+            for testcase in testsets
         ]
