@@ -2,4 +2,5 @@ requests
 termcolor
 flask
 PyYAML
-codecov
+coveralls
+coverage
