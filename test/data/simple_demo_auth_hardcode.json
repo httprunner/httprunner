@@ -1,53 +1,57 @@
 [
     {
-        "name": "create user which does not exist",
-        "request": {
-            "url": "http://127.0.0.1:5000/api/users/1000",
-            "method": "POST",
-            "headers": {
-                "content-type": "application/json",
-                "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-                "random": "A2dEx"
+        "test": {
+            "name": "create user which does not exist",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/users/1000",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                    "random": "A2dEx"
+                },
+                "json": {
+                    "name": "user1",
+                    "password": "123456"
+                }
             },
-            "json": {
-                "name": "user1",
-                "password": "123456"
-            }
-        },
-        "response": {
-            "status_code": 201,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body": {
-                "success": true,
-                "msg": "user created successfully."
+            "response": {
+                "status_code": 201,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": {
+                    "success": true,
+                    "msg": "user created successfully."
+                }
             }
         }
     },
     {
-        "name": "create user which existed",
-        "request": {
-            "url": "http://127.0.0.1:5000/api/users/1000",
-            "method": "POST",
-            "headers": {
-                "content-type": "application/json",
-                "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-                "random": "A2dEx"
+        "test": {
+            "name": "create user which existed",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/users/1000",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                    "random": "A2dEx"
+                },
+                "json": {
+                    "name": "user1",
+                    "password": "123456"
+                }
             },
-            "json": {
-                "name": "user1",
-                "password": "123456"
-            }
-        },
-        "response": {
-            "status_code": 500,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body":{
-                "success": false,
-                "msg": "user already existed."
+            "response": {
+                "status_code": 500,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body":{
+                    "success": false,
+                    "msg": "user already existed."
+                }
             }
         }
     }

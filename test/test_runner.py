@@ -14,10 +14,18 @@ class TestRunner(ApiServerUnittest):
         url = "http://127.0.0.1:5000/api/users"
         return requests.delete(url)
 
-    def test_run_single_testcase_success(self):
+    def test_run_single_testcase_yaml_success(self):
+        testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
+        testcases = utils.load_testcases(testcase_file_path)
+        testcase = testcases[0]["test"]
+        success, _ = self.test_runner.run_test(testcase)
+        self.assertTrue(success)
+
+    def test_run_single_testcase_json_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testcases = utils.load_testcases(testcase_file_path)
-        success, _ = self.test_runner.run_test(testcases[0])
+        testcase = testcases[0]["test"]
+        success, _ = self.test_runner.run_test(testcase)
         self.assertTrue(success)
 
     def test_run_single_testcase_fail(self):
