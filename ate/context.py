@@ -1,4 +1,6 @@
+import re
 import importlib
+from ate import exception, utils
 
 class Context(object):
     """ Manages binding of variables
@@ -44,13 +46,10 @@ class Context(object):
 
     def get_eval_value(self, data):
         """ evaluate data recursively, each variable in data will be evaluated.
-            variable will always be a string started with $, such as $token
+            variables marker: ${variable}.
         """
         if isinstance(data, str):
-            if data.startswith('$'):
-                # this is a variable, and will replace with its bind value
-                return self.variables.get(data[1:])
-            return data
+            return utils.parse_content_with_variables(data, self.variables)
 
         if isinstance(data, list):
             return [self.get_eval_value(item) for item in data]
