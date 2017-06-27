@@ -16,6 +16,7 @@ class TestRunner(object):
         """ create/update variables binds
         @param config_dict
             {
+                "name": "description content",
                 "requires": ["random", "hashlib"],
                 "function_binds": {
                     "gen_random_string": \
@@ -29,11 +30,6 @@ class TestRunner(object):
                     {"TOKEN": "debugtalk"},
                     {"random": {"func": "gen_random_string", "args": [5]}},
                 ]
-            }
-        @return variables binds mapping
-            {
-                "TOKEN": "debugtalk",
-                "random": "A2dEx"
             }
         """
         requires = config_dict.get('requires', [])
@@ -49,15 +45,7 @@ class TestRunner(object):
 
     def parse_testcase(self, testcase):
         """ parse testcase with variables binds if it is a template.
-        """
-        self.pre_config(testcase)
-
-        parsed_testcase = self.testcase_parser.parse(testcase)
-        return parsed_testcase
-
-    def run_test(self, testcase):
-        """ run single testcase.
-        @testcase
+        @param (dict) testcase
             {
                 "name": "testcase description",
                 "requires": [],  # optional, override
@@ -66,6 +54,30 @@ class TestRunner(object):
                 "request": {},
                 "response": {}
             }
+        @return (dict) variables binds mapping
+            {
+                "TOKEN": "debugtalk",
+                "random": "A2dEx"
+            }
+        """
+        self.pre_config(testcase)
+
+        parsed_testcase = self.testcase_parser.parse(testcase)
+        return parsed_testcase
+
+    def run_test(self, testcase):
+        """ run single testcase.
+        @param (dict) testcase
+            {
+                "name": "testcase description",
+                "requires": [],  # optional, override
+                "function_binds": {}, # optional, override
+                "variable_binds": {}, # optional, override
+                "request": {},
+                "response": {}
+            }
+        @return (tuple) test result of single testcase
+            (success, diff_content)
         """
         testcase = self.parse_testcase(testcase)
 
@@ -82,42 +94,61 @@ class TestRunner(object):
         success = False if diff_content else True
         return success, diff_content
 
-    def run_testsets(self, testsets):
-        """ run testcase suite.
-        @testsets
-            [
-                {
+    def run_testset(self, testset):
+        """ run single testset, including one or several testcases.
+        @param (dict) testset
+            {
+                "name": "testset description",
+                "config": {
                     "name": "testset description",
-                    "config": {
-                        "requires": [],
-                        "function_binds": {},
-                        "variable_binds": []
+                    "requires": [],
+                    "function_binds": {},
+                    "variable_binds": []
+                },
+                "testcases": [
+                    {
+                        "name": "testcase description",
+                        "variable_binds": {}, # override
+                        "request": {},
+                        "response": {}
                     },
-                    "testcases": [
-                        {
-                            "name": "testcase description",
-                            "variable_binds": {}, # override
-                            "request": {},
-                            "response": {}
-                        },
-                        testcase12
-                    ]
-                },
-                {
-                    "name": "XXX",
-                    "config": {},
-                    "testcases": [testcase21, testcase22, testcase23]
-                },
+                    testcase12
+                ]
+            }
+        @return (list) test results of testcases
+            [
+                (success, diff_content),    # testcase1
+                (success, diff_content)     # testcase2
             ]
         """
         results = []
 
-        for testset in testsets:
-            config_dict = testset.get("config", {})
-            self.pre_config(config_dict)
-            testcases = testset.get("testcases", [])
-            for testcase in testcases:
-                result = self.run_test(testcase)
-                results.append(result)
+        config_dict = testset.get("config", {})
+        self.pre_config(config_dict)
+        testcases = testset.get("testcases", [])
+        for testcase in testcases:
+            result = self.run_test(testcase)
+            results.append(result)
 
         return results
+
+    def run_testsets(self, testsets):
+        """ run testsets, including one or several testsets.
+        @param testsets
+            [
+                testset1,
+                testset2,
+            ]
+        @return (list) test results of testsets
+            [
+                [   # testset1
+                    (success, diff_content),    # testcase11
+                    (success, diff_content)     # testcase12
+                ],
+                [   # testset2
+                    (success, diff_content),    # testcase21
+                    (success, diff_content)     # testcase22
+                ]
+            ]
+        """
+        return [self.run_testset(testset) for testset in testsets]
