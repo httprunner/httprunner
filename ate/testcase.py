@@ -1,5 +1,4 @@
-import re
-from ate import exception
+from ate import utils
 
 class TestcaseParser(object):
 
@@ -44,22 +43,7 @@ class TestcaseParser(object):
             variables marker: ${variable}.
         """
         if isinstance(content, str):
-            # check if content includes ${variable}
-            matched = re.match(r"(.*)\$\{(.*)\}(.*)", content)
-            if matched:
-                # this is a variable, and will replace with its bind value
-                variable_name = matched.group(2)
-                value = self.variables_binds.get(variable_name)
-                if value is None:
-                    raise exception.ParamsError(
-                        "%s is not defined in bind variables!" % variable_name)
-                if matched.group(1) or matched.group(3):
-                    # e.g. /api/users/${uid}
-                    return re.sub(r"\$\{.*\}", value, content)
-
-                return value
-
-            return content
+            return utils.parse_content_with_variables(content, self.variables_binds)
 
         if isinstance(content, list):
             return [self.substitute(item) for item in content]

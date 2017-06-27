@@ -12,7 +12,7 @@
         - TOKEN: debugtalk
         - random: {"func": "gen_random_string", "args": [5]}
         - data: '{"name": "user", "password": "123456"}'
-        - authorization: {"func": "gen_md5", "args": ["$TOKEN", "$data", "$random"]}
+        - authorization: {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}
         - expected_status_code: 201
     request:
         url: http://127.0.0.1:5000/api/users/1000
@@ -43,7 +43,7 @@
         - TOKEN: debugtalk
         - random: {"func": "gen_random_string", "args": [5]}
         - data: '{"name": "user", "password": "123456"}'
-        - authorization: {"func": "gen_md5", "args": ["$TOKEN", "$data", "$random"]}
+        - authorization: {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}
         - expected_status_code: 500
     request:
         url: http://127.0.0.1:5000/api/users/1000
