@@ -325,3 +325,25 @@ class TestUtils(ApiServerUnittest):
         ]
         testset_list_3 = utils.load_testcases_by_path(path)
         self.assertEqual(testset_list_3, [])
+
+    def test_parse_content_with_variables(self):
+        content = "${var}"
+        variables_binds = {
+            "var": "abc"
+        }
+        result = utils.parse_content_with_variables(content, variables_binds)
+        self.assertEqual(result, "abc")
+
+        content = "123${var}456"
+        variables_binds = {
+            "var": "abc"
+        }
+        result = utils.parse_content_with_variables(content, variables_binds)
+        self.assertEqual(result, "123abc456")
+
+        content = "${var1}"
+        variables_binds = {
+            "var2": "abc"
+        }
+        with self.assertRaises(exception.ParamsError):
+            utils.parse_content_with_variables(content, variables_binds)
