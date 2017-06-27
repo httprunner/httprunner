@@ -167,7 +167,7 @@ def load_testcases_by_path(path):
         files_list = load_foler_files(path)
         return load_testcases_by_path(files_list)
 
-    if os.path.isfile(path):
+    elif os.path.isfile(path):
         testset = {
             "name": "",
             "config": {},
@@ -187,3 +187,6 @@ def load_testcases_by_path(path):
                     testset["testcases"].append(item["test"])
 
         return [testset]
+
+    else:
+        return []
