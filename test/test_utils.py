@@ -306,3 +306,22 @@ class TestUtils(ApiServerUnittest):
         ]
         testset_list_3 = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
+
+    def test_load_testcases_by_path_not_exist(self):
+        # absolute folder path
+        path = os.path.join(os.getcwd(), 'test/data_not_exist')
+        testset_list_1 = utils.load_testcases_by_path(path)
+        self.assertEqual(testset_list_1, [])
+
+        # relative folder path
+        path = 'test/data_not_exist'
+        testset_list_2 = utils.load_testcases_by_path(path)
+        self.assertEqual(testset_list_2, [])
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'test/data_not_exist'),
+            'test/data_not_exist/'
+        ]
+        testset_list_3 = utils.load_testcases_by_path(path)
+        self.assertEqual(testset_list_3, [])
