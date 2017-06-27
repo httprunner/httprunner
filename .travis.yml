@@ -9,7 +9,6 @@ python:
 install:
   - pip install -r requirements.txt
 script:
-  - coverage run --source=. -m unittest discover
+  - coverage run --source=ate -m unittest discover
 after_success:
-  - coverage report -m
   - coveralls
