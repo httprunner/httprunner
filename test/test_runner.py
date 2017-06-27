@@ -78,14 +78,14 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_testcase_suite_json_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json')
-        testcases = utils.load_testcases(testcase_file_path)
-        result = self.test_runner.run_testsets(testcases)
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result, [(True, {}), (True, {})])
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results, [(True, {}), (True, {})])
 
     def test_run_testcase_suite_yaml_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
-        testcases = utils.load_testcases(testcase_file_path)
-        result = self.test_runner.run_testsets(testcases)
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result, [(True, {}), (True, {})])
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results, [(True, {}), (True, {})])

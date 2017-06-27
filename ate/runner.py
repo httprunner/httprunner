@@ -82,26 +82,30 @@ class TestRunner(object):
                         "requires": [],
                         "function_binds": {},
                         "variable_binds": []
-                    }
+                    },
+                    "testcases": [
+                        {
+                            "variable_binds": {}, # override
+                            "request": {},
+                            "response": {}
+                        },
+                        testcase12
+                    ]
                 },
                 {
-                    "test": {
-                        "variable_binds": {}, # override
-                        "request": {},
-                        "response": {}
-                    }
-                }
+                    "config": {},
+                    "testcases": [testcase21, testcase22, testcase23]
+                },
             ]
         """
         results = []
-        for item in testsets:
-            for key in item:
-                if key == "config":
-                    config_dict = item[key]
-                    self.pre_config(config_dict)
-                elif key == "test":
-                    testcase = item[key]
-                    result = self.run_test(testcase)
-                    results.append(result)
+
+        for testset in testsets:
+            config_dict = testset.get("config", {})
+            self.pre_config(config_dict)
+            testcases = testset.get("testcases", [])
+            for testcase in testcases:
+                result = self.run_test(testcase)
+                results.append(result)
 
         return results

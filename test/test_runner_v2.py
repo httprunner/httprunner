@@ -34,16 +34,17 @@ class TestRunnerV2(ApiServerUnittest):
     def test_run_testcase_auth_suite_yaml(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_auth_hardcode.yml')
-        testcases = utils.load_testcases(testcase_file_path)
-        results = self.test_runner.run_testsets(testcases)
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 2)
         self.assertEqual(results, [(True, {}), (True, {})])
+
 
     def test_run_testcase_auth_suite_json(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/simple_demo_auth_hardcode.json')
-        testcases = utils.load_testcases(testcase_file_path)
-        results = self.test_runner.run_testsets(testcases)
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 2)
         self.assertEqual(results, [(True, {}), (True, {})])
 
@@ -59,6 +60,7 @@ class TestRunnerV2(ApiServerUnittest):
     def test_run_testcase_template_sets_yaml(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'test/data/demo_template_sets.yml')
-        testcases = utils.load_testcases(testcase_file_path)
-        results = self.test_runner.run_testsets(testcases)
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
+        self.assertEqual(len(results), 2)
         self.assertEqual(results, [(True, {}), (True, {})])
