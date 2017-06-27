@@ -173,7 +173,10 @@ def load_testcases_by_path(path):
             "config": {},
             "testcases": []
         }
-        testcases_list = load_testcases(path)
+        try:
+            testcases_list = load_testcases(path)
+        except ParamsError:
+            return []
 
         for item in testcases_list:
             for key in item:
