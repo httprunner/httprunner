@@ -57,6 +57,15 @@ class TestRunner(object):
 
     def run_test(self, testcase):
         """ run single testcase.
+        @testcase
+            {
+                "name": "testcase description",
+                "requires": [],  # optional, override
+                "function_binds": {}, # optional, override
+                "variable_binds": {}, # optional, override
+                "request": {},
+                "response": {}
+            }
         """
         testcase = self.parse_testcase(testcase)
 
@@ -78,6 +87,7 @@ class TestRunner(object):
         @testsets
             [
                 {
+                    "name": "testset description",
                     "config": {
                         "requires": [],
                         "function_binds": {},
@@ -85,6 +95,7 @@ class TestRunner(object):
                     },
                     "testcases": [
                         {
+                            "name": "testcase description",
                             "variable_binds": {}, # override
                             "request": {},
                             "response": {}
@@ -93,6 +104,7 @@ class TestRunner(object):
                     ]
                 },
                 {
+                    "name": "XXX",
                     "config": {},
                     "testcases": [testcase21, testcase22, testcase23]
                 },
