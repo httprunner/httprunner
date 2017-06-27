@@ -1,6 +1,6 @@
 import requests
 import random
-from .base import ApiServerUnittest
+from test.base import ApiServerUnittest
 
 class TestApiServer(ApiServerUnittest):
     def setUp(self):

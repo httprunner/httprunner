@@ -1,7 +1,7 @@
 import random
 import requests
 
-from .base import ApiServerUnittest
+from test.base import ApiServerUnittest
 
 
 class TestApiServerV2(ApiServerUnittest):

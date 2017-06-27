@@ -3,7 +3,7 @@ import random
 import requests
 from ate import utils
 from ate import exception
-from .base import ApiServerUnittest
+from test.base import ApiServerUnittest
 
 class TestUtils(ApiServerUnittest):
 

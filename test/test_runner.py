@@ -1,7 +1,7 @@
 import os
 import requests
 from ate import runner, exception, utils
-from .base import ApiServerUnittest
+from test.base import ApiServerUnittest
 
 class TestRunner(ApiServerUnittest):
 
