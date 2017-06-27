@@ -258,14 +258,14 @@ class TestUtils(ApiServerUnittest):
             os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertEqual(len(testset_list[0]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 2)
         testsets_list.extend(testset_list)
 
         # relative file path
         path = 'test/data/simple_demo_no_auth.yml'
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertEqual(len(testset_list[0]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 2)
         testsets_list.extend(testset_list)
 
         # list/set container with file(s)
@@ -275,14 +275,13 @@ class TestUtils(ApiServerUnittest):
         ]
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 2)
-        self.assertEqual(len(testset_list[0]), 2)
-        self.assertEqual(len(testset_list[1]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 2)
+        self.assertEqual(len(testset_list[1]["testcases"]), 2)
         testsets_list.extend(testset_list)
         self.assertEqual(len(testsets_list), 4)
 
         for testset in testsets_list:
-            for testcase in testset:
-                testcase = testcase["test"]
+            for testcase in testset["testcases"]:
                 self.assertIn('name', testcase)
                 self.assertIn('request', testcase)
                 self.assertIn('response', testcase)
