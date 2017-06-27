@@ -147,8 +147,8 @@ def load_testcases_by_path(path):
             - list/set container with file(s) and/or folder(s)
     @return testcase sets list, each testset is corresponding to a file
         [
-            [testcase11, testcase12],
-            [testcase21, testcase22, testcase23]
+            {"config": {}, "testcases": [testcase11, testcase12]},
+            {"config": {}, "testcases": [testcase21, testcase22, testcase23]},
         ]
     """
     if isinstance(path, (list, set)):
@@ -168,5 +168,17 @@ def load_testcases_by_path(path):
         return load_testcases_by_path(files_list)
 
     if os.path.isfile(path):
+        testset = {
+            "config": {},
+            "testcases": []
+        }
         testcases_list = load_testcases(path)
-        return [testcases_list]
+
+        for item in testcases_list:
+            for key in item:
+                if key == "config":
+                    testset["config"] = item["config"]
+                elif key == "test":
+                    testset["testcases"].append(item["test"])
+
+        return [testset]
