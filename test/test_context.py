@@ -69,7 +69,7 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase1 = {
             "variable_binds": [
                 {"GLOBAL_TOKEN": "debugtalk"},
-                {"token": "$GLOBAL_TOKEN"}
+                {"token": "${GLOBAL_TOKEN}"}
             ]
         }
         testcase2 = self.testcases[3]
