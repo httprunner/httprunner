@@ -139,3 +139,43 @@ class TestUtils(ApiServerUnittest):
         }
         with self.assertRaises(exception.ParamsError):
             utils.parse_content_with_variables(content, variables_binds)
+
+    def test_query_json(self):
+        json_content = {
+            "ids": [1, 2, 3, 4],
+            "person": {
+                "name": {
+                    "first_name": "Leo",
+                    "last_name": "Lee",
+                },
+                "age": 29,
+                "cities": ["Guangzhou", "Shenzhen"]
+            }
+        }
+        query = "ids.2"
+        result = utils.query_json(json_content, query)
+        self.assertEqual(result, 3)
+
+        query = "ids.str_key"
+        with self.assertRaises(exception.ParamsError):
+            utils.query_json(json_content, query)
+
+        query = "ids.5"
+        with self.assertRaises(exception.ParamsError):
+            utils.query_json(json_content, query)
+
+        query = "person.age"
+        result = utils.query_json(json_content, query)
+        self.assertEqual(result, 29)
+
+        query = "person.not_exist_key"
+        with self.assertRaises(exception.ParamsError):
+            utils.query_json(json_content, query)
+
+        query = "person.cities.0"
+        result = utils.query_json(json_content, query)
+        self.assertEqual(result, "Guangzhou")
+
+        query = "person.name.first_name"
+        result = utils.query_json(json_content, query)
+        self.assertEqual(result, "Leo")
