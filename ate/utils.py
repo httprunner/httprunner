@@ -159,3 +159,36 @@ def parse_content_with_variables(content, variables_binds):
         return value
 
     return content
+
+def query_json(json_content, query, delimiter='.'):
+    """ Do an xpath-like query with json_content.
+    @param (json_content) json_content
+        json_content = {
+            "ids": [1, 2, 3, 4],
+            "person": {
+                "name": {
+                    "first_name": "Leo",
+                    "last_name": "Lee",
+                },
+                "age": 29,
+                "cities": ["Guangzhou", "Shenzhen"]
+            }
+        }
+    @param (str) query
+        "person.name.first_name"  =>  "Leo"
+        "person.cities.0"         =>  "Guangzhou"
+    @return queried result
+    """
+    stripped_query = query.strip(delimiter)
+    if not stripped_query:
+        return None
+
+    try:
+        for key in stripped_query.split(delimiter):
+            if isinstance(json_content, list):
+                key = int(key)
+            json_content = json_content[key]
+    except (KeyError, ValueError, IndexError):
+        raise ParamsError("invalid query string in extract_binds!")
+
+    return json_content
