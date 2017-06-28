@@ -105,8 +105,7 @@ class TestRunner(object):
 
         resp = self.client.request(url=url, method=method, **req_kwargs)
 
-        resp_obj = response.ResponseObject(resp)
-        resp_obj.extract_response(self.context)
+        resp_obj = response.ResponseObject(resp, self.context)
         return resp_obj.validate(testcase['response'])
 
     def run_testset(self, testset):
