@@ -9,22 +9,22 @@ class ResponseObject(object):
         """
         self.resp_obj = resp_obj
 
-    def parse_response_body(self):
+    def parsed_body(self):
         try:
             return self.resp_obj.json()
         except ValueError:
             return self.resp_obj.text
 
-    def parse_response_object(self):
+    def parsed_dict(self):
         return {
             'status_code': self.resp_obj.status_code,
             'headers': self.resp_obj.headers,
-            'body': self.parse_response_body()
+            'body': self.parsed_body()
         }
 
     def diff_response(self, expected_resp_json):
         diff_content = {}
-        resp_info = self.parse_response_object()
+        resp_info = self.parsed_dict()
 
         expected_status_code = expected_resp_json.get('status_code', 200)
         if resp_info['status_code'] != int(expected_status_code):
@@ -81,7 +81,7 @@ class ResponseObject(object):
                     top_query, sub_query = value.split(delimiter, 1)
 
                     if top_query in ["body", "content", "text"]:
-                        json_content = self.parse_response_body()
+                        json_content = self.parsed_body()
                     else:
                         json_content = getattr(self.resp_obj, top_query)
 
@@ -98,3 +98,8 @@ class ResponseObject(object):
 
             except AttributeError:
                 raise exception.ParamsError("invalid extract_binds!")
+
+    def validate(self, expected_resp_json):
+        diff_content = self.diff_response(expected_resp_json)
+        success = False if diff_content else True
+        return success, diff_content
