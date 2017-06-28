@@ -69,7 +69,9 @@ def extract_response(resp_obj, context, delimiter='.'):
         try:
             if isinstance(value, str):
                 value += "."
-                top_query, sub_query = value.split(delimiter, maxsplit=1)
+                # string.split(sep=None, maxsplit=-1) -> list of strings
+                # e.g. "content.person.name" => ["content", "person.name"]
+                top_query, sub_query = value.split(delimiter, 1)
 
                 if top_query in ["body", "content", "text"]:
                     json_content = parse_response_body(resp_obj)
