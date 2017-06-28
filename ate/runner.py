@@ -1,6 +1,6 @@
 import requests
 
-from ate import exception, utils
+from ate import exception, response
 from ate.context import Context
 from ate.testcase import TestcaseParser
 
@@ -101,7 +101,7 @@ class TestRunner(object):
             raise exception.ParamsError("URL or METHOD missed!")
 
         resp_obj = self.client.request(url=url, method=method, **req_kwargs)
-        diff_content = utils.diff_response(resp_obj, testcase['response'])
+        diff_content = response.diff_response(resp_obj, testcase['response'])
         success = False if diff_content else True
         return success, diff_content
 
