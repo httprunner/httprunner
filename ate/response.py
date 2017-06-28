@@ -1,16 +1,17 @@
-from ate import utils
+from ate import utils, exception
 
+
+def parse_response_body(resp_obj):
+    try:
+        return resp_obj.json()
+    except ValueError:
+        return resp_obj.text
 
 def parse_response_object(resp_obj):
-    try:
-        resp_body = resp_obj.json()
-    except ValueError:
-        resp_body = resp_obj.text
-
     return {
         'status_code': resp_obj.status_code,
         'headers': resp_obj.headers,
-        'body': resp_body
+        'body': parse_response_body(resp_obj)
     }
 
 def diff_response(resp_obj, expected_resp_json):
@@ -51,3 +52,40 @@ def diff_response(resp_obj, expected_resp_json):
         diff_content['body'] = body_diff
 
     return diff_content
+
+def extract_response(resp_obj, context, delimiter='.'):
+    """ extract content from requests.Response, and bind extracted value to context.extractors
+    @param (requests.Response instance) resp_obj
+    @param (ate.context.Context instance) context
+        context.extractors:
+        {
+            "resp_status_code": "status_code",
+            "resp_headers_content_type": "headers.content-type",
+            "resp_content": "content",
+            "resp_content_person_first_name": "content.person.name.first_name"
+        }
+    """
+    for key, value in context.extractors.items():
+        try:
+            if isinstance(value, str):
+                value += "."
+                top_query, sub_query = value.split(delimiter, maxsplit=1)
+
+                if top_query in ["body", "content", "text"]:
+                    json_content = parse_response_body(resp_obj)
+                else:
+                    json_content = getattr(resp_obj, top_query)
+
+                if sub_query:
+                    # e.g. key: resp_headers_content_type, sub_query = "content-type"
+                    answer = utils.query_json(json_content, sub_query)
+                    context.extractors[key] = answer
+                else:
+                    # e.g. key: resp_status_code, resp_content
+                    context.extractors[key] = json_content
+
+            else:
+                raise NotImplementedError("TODO: support template.")
+
+        except AttributeError:
+            raise exception.ParamsError("invalid extract_binds!")
