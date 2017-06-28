@@ -103,9 +103,11 @@ class TestRunner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        resp_obj = self.client.request(url=url, method=method, **req_kwargs)
-        response.extract_response(resp_obj, self.context)
-        diff_content = response.diff_response(resp_obj, testcase['response'])
+        resp = self.client.request(url=url, method=method, **req_kwargs)
+
+        resp_obj = response.ResponseObject(resp)
+        resp_obj.extract_response(self.context)
+        diff_content = resp_obj.diff_response(testcase['response'])
         success = False if diff_content else True
         return success, diff_content
 
