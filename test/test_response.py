@@ -255,8 +255,7 @@ class TestResponse(ApiServerUnittest):
 
         test_context = context.Context()
         test_context.bind_extractors(extract_binds)
-        resp_obj = response.ResponseObject(resp)
-        resp_obj.extract_response(test_context)
+        response.ResponseObject(resp, test_context)
 
         extract_binds_dict = test_context.extractors
         self.assertEqual(
@@ -312,10 +311,9 @@ class TestResponse(ApiServerUnittest):
 
         test_context = context.Context()
         test_context.bind_extractors(extract_binds)
-        resp_obj = response.ResponseObject(resp)
 
         with self.assertRaises(exception.ParamsError):
-            resp_obj.extract_response(test_context)
+            response.ResponseObject(resp, test_context)
 
         extract_binds = {
             "resp_content_list_index_error": "content.person.cities.3"
@@ -323,10 +321,9 @@ class TestResponse(ApiServerUnittest):
 
         test_context = context.Context()
         test_context.bind_extractors(extract_binds)
-        resp_obj = response.ResponseObject(resp)
 
         with self.assertRaises(exception.ParamsError):
-            resp_obj.extract_response(test_context)
+            response.ResponseObject(resp, test_context)
 
     def test_extract_response_json_string(self):
         resp = requests.post(
@@ -345,8 +342,7 @@ class TestResponse(ApiServerUnittest):
 
         test_context = context.Context()
         test_context.bind_extractors(extract_binds)
-        resp_obj = response.ResponseObject(resp)
-        resp_obj.extract_response(test_context)
+        resp_obj = response.ResponseObject(resp, test_context)
 
         extract_binds_dict = test_context.extractors
         self.assertEqual(
