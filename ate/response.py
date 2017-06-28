@@ -3,11 +3,14 @@ from ate import utils, exception
 
 class ResponseObject(object):
 
-    def __init__(self, resp_obj):
+    def __init__(self, resp_obj, context=None):
         """ initialize with a requests.Response object
         @param (requests.Response instance) resp_obj
+        @param (ate.context.Context instance) context
         """
         self.resp_obj = resp_obj
+        if context:
+            self.extract_response(context)
 
     def parsed_body(self):
         try:
