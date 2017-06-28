@@ -54,10 +54,21 @@ class TestRunner(object):
                 "request": {},
                 "response": {}
             }
-        @return (dict) variables binds mapping
+        @return (dict) parsed testcase with bind values
             {
-                "TOKEN": "debugtalk",
-                "random": "A2dEx"
+                "request": {
+                    "url": "http://127.0.0.1:5000/api/users/1000",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                        "random": "A2dEx"
+                    },
+                    "body": '{"name": "user", "password": "123456"}'
+                },
+                "response": {
+                    "status_code": 201
+                }
             }
         """
         self.pre_config(testcase)
