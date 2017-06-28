@@ -107,9 +107,7 @@ class TestRunner(object):
 
         resp_obj = response.ResponseObject(resp)
         resp_obj.extract_response(self.context)
-        diff_content = resp_obj.diff_response(testcase['response'])
-        success = False if diff_content else True
-        return success, diff_content
+        return resp_obj.validate(testcase['response'])
 
     def run_testset(self, testset):
         """ run single testset, including one or several testcases.
