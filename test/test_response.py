@@ -1,9 +1,9 @@
 import random
 import requests
-from ate import response
+from ate import response, context, exception
 from test.base import ApiServerUnittest
 
-class TestUtils(ApiServerUnittest):
+class TestResponse(ApiServerUnittest):
 
     def test_parse_response_object_json(self):
         url = "http://127.0.0.1:5000/api/users"
@@ -209,4 +209,132 @@ class TestUtils(ApiServerUnittest):
                     'expected': 10
                 }
             }
+        )
+
+    def test_extract_response_json(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'Content-Type': "application/json"
+                },
+                'body': {
+                    'success': False,
+                    "person": {
+                        "name": {
+                            "first_name": "Leo",
+                            "last_name": "Lee",
+                        },
+                        "age": 29,
+                        "cities": ["Guangzhou", "Shenzhen"]
+                    }
+                }
+            }
+        )
+
+        extract_binds = {
+            "resp_status_code": "status_code",
+            "resp_headers_content_type": "headers.content-type",
+            "resp_content_body_success": "body.success",
+            "resp_content_content_success": "content.success",
+            "resp_content_text_success": "text.success",
+            "resp_content_person_first_name": "content.person.name.first_name",
+            "resp_content_cities_1": "content.person.cities.1"
+        }
+
+        test_context = context.Context()
+        test_context.bind_extractors(extract_binds)
+        response.extract_response(resp_obj, test_context)
+
+        extract_binds_dict = test_context.extractors
+        self.assertEqual(
+            extract_binds_dict["resp_status_code"],
+            200
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_headers_content_type"],
+            "application/json"
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_content_content_success"],
+            False
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_content_text_success"],
+            False
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_content_person_first_name"],
+            "Leo"
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_content_cities_1"],
+            "Shenzhen"
+        )
+
+
+    def test_extract_response_fail(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'Content-Type': "application/json"
+                },
+                'body': {
+                    'success': False,
+                    "person": {
+                        "name": {
+                            "first_name": "Leo",
+                            "last_name": "Lee",
+                        },
+                        "age": 29,
+                        "cities": ["Guangzhou", "Shenzhen"]
+                    }
+                }
+            }
+        )
+
+        extract_binds = {
+            "resp_content_dict_key_error": "content.not_exist"
+        }
+
+        test_context = context.Context()
+        test_context.bind_extractors(extract_binds)
+
+        with self.assertRaises(exception.ParamsError):
+            response.extract_response(resp_obj, test_context)
+
+        extract_binds = {
+            "resp_content_list_index_error": "content.person.cities.3"
+        }
+
+        test_context = context.Context()
+        test_context.bind_extractors(extract_binds)
+
+        with self.assertRaises(exception.ParamsError):
+            response.extract_response(resp_obj, test_context)
+
+    def test_extract_response_json_string(self):
+        resp_obj = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'Content-Type': "application/json"
+                },
+                'body': "abc"
+            }
+        )
+
+        extract_binds = {
+            "resp_content_body": "content"
+        }
+
+        test_context = context.Context()
+        test_context.bind_extractors(extract_binds)
+        response.extract_response(resp_obj, test_context)
+
+        extract_binds_dict = test_context.extractors
+        self.assertEqual(
+            extract_binds_dict["resp_content_body"],
+            "abc"
         )
