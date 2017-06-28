@@ -41,6 +41,9 @@ class TestRunner(object):
         variable_binds = config_dict.get('variable_binds', [])
         self.context.bind_variables(variable_binds)
 
+        extract_binds = config_dict.get('extract_binds', {})
+        self.context.bind_extractors(extract_binds)
+
         self.testcase_parser.update_variables_binds(self.context.variables)
 
     def parse_testcase(self, testcase):
@@ -101,6 +104,7 @@ class TestRunner(object):
             raise exception.ParamsError("URL or METHOD missed!")
 
         resp_obj = self.client.request(url=url, method=method, **req_kwargs)
+        response.extract_response(resp_obj, self.context)
         diff_content = response.diff_response(resp_obj, testcase['response'])
         success = False if diff_content else True
         return success, diff_content
