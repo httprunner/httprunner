@@ -128,3 +128,10 @@ class TestApiServer(ApiServerUnittest):
         resp = self.api_client.post(url, json=expected_response)
         self.assertIn('abc', resp.headers)
         self.assertIn('123', resp.headers['abc'])
+
+    def test_get_token(self):
+        url = "%s/api/token" % self.host
+        resp = self.api_client.get(url)
+        resp_json = resp.json()
+        self.assertTrue(resp_json["success"])
+        self.assertEqual(len(resp_json["token"]), 8)
