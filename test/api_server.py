@@ -65,6 +65,17 @@ def get_customized_response():
 
     return response
 
+@app.route('/api/token')
+@validate_request
+def get_token():
+    result = {
+        'success': True,
+        'token': utils.gen_random_string(8)
+    }
+    response = make_response(json.dumps(result))
+    response.headers["Content-Type"] = "application/json"
+    return response
+
 @app.route('/api/users')
 @validate_request
 def get_users():
