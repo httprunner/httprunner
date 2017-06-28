@@ -14,25 +14,36 @@ class TestcaseParser(object):
     def parse(self, testcase_template):
         """ parse testcase_template, replace all variables with bind value.
         variables marker: ${variable}.
-        @param testcase_template
-            "request": {
-                "url": "http://127.0.0.1:5000/api/users/${uid}",
-                "method": "POST",
-                "headers": {
-                    "Content-Type": "application/json",
-                    "authorization": "${authorization}",
-                    "random": "${random}"
+        @param (dict) testcase_template
+            {
+                "request": {
+                    "url": "http://127.0.0.1:5000/api/users/${uid}",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "authorization": "${authorization}",
+                        "random": "${random}"
+                    },
+                    "body": "${data}"
                 },
-                "body": "${json}"
-            },
-            "response": {
-                "status_code": "${expected_status}",
-                "headers": {
-                    "Content-Type": "application/json"
+                "response": {
+                    "status_code": "${expected_status}"
+                }
+            }
+        @return (dict) parsed testcase with bind values
+            {
+                "request": {
+                    "url": "http://127.0.0.1:5000/api/users/1000",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                        "random": "A2dEx"
+                    },
+                    "body": '{"name": "user", "password": "123456"}'
                 },
-                "body": {
-                    "success": True,
-                    "msg": "user created successfully."
+                "response": {
+                    "status_code": 201
                 }
             }
         """
