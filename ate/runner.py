@@ -59,10 +59,10 @@ class TestRunner(object):
                     "body": '{"name": "user", "password": "123456"}'
                 },
                 "extract_binds": {},
-                "validators": {}
+                "validators": []
             }
         @return (tuple) test result of single testcase
-            (success, diff_content)
+            (success, diff_content_list)
         """
         self.update_context(testcase)
         parsed_request = parse_template(testcase["request"], self.context.variables)
@@ -80,10 +80,10 @@ class TestRunner(object):
         extracted_variables_mapping = resp_obj.extract_response(extract_binds)
         self.context.update_variables(extracted_variables_mapping)
 
-        validators = testcase.get("validators", {})
-        diff_content_dict = resp_obj.validate(validators, self.context.variables)
+        validators = testcase.get("validators", [])
+        diff_content_list = resp_obj.validate(validators, self.context.variables)
 
-        return resp_obj.success, diff_content_dict
+        return resp_obj.success, diff_content_list
 
     def run_testset(self, testset):
         """ run single testset, including one or several testcases.
