@@ -77,8 +77,8 @@ class TestRunner(object):
         resp_obj = response.ResponseObject(resp)
 
         extract_binds = testcase.get("extract_binds", {})
-        extract_binds_dict = resp_obj.extract_response(extract_binds)
-        self.context.update_variables(extract_binds_dict)
+        extracted_variables_mapping = resp_obj.extract_response(extract_binds)
+        self.context.update_variables(extracted_variables_mapping)
 
         validators = testcase.get("validators", {})
         diff_content_dict = resp_obj.validate(validators, self.context.variables)
