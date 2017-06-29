@@ -9,9 +9,10 @@ import yaml
 from ate.exception import ParamsError
 
 try:
-    assert bytes is str
+    string_type = basestring
     PYTHON_VERSION = 2
-except AssertionError:
+except NameError:
+    string_type = str
     PYTHON_VERSION = 3
 
 
