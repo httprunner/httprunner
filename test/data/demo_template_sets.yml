@@ -17,7 +17,6 @@
     name: create user which does not exist
     variable_binds:
         - data: '{"name": "user", "password": "123456"}'
-        - expected_status_code: 201
     request:
         url: http://127.0.0.1:5000/api/users/1000
         method: POST
@@ -26,13 +25,12 @@
             authorization: "${authorization}"
             random: "${random}"
         data: "${data}"
-    response:
-        status_code: "${expected_status_code}"
-        headers:
-            Content-Type: application/json
-        body:
-            success: true
-            msg: user created successfully.
+    extract_binds:
+        resp_status_code: status_code
+        resp_body_success: content.success
+    validators:
+        resp_status_code: {"comparator": "eq", "expected": 201}
+        resp_body_success: {"comparator": "eq", "expected": true}
 
 - test:
     name: create user which does not exist
@@ -47,10 +45,9 @@
             authorization: "${authorization}"
             random: "${random}"
         data: "${data}"
-    response:
-        status_code: "${expected_status_code}"
-        headers:
-            Content-Type: application/json
-        body:
-            success: false
-            msg: user already existed.
+    extract_binds:
+        resp_status_code: status_code
+        resp_body_success: content.success
+    validators:
+        resp_status_code: {"comparator": "eq", "expected": 500}
+        resp_body_success: {"comparator": "eq", "expected": false}

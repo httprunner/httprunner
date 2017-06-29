@@ -18,7 +18,6 @@ class TestUtils(ApiServerUnittest):
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
         self.assertIn('request', testcase)
-        self.assertIn('response', testcase)
         self.assertIn('url', testcase['request'])
         self.assertIn('method', testcase['request'])
 
@@ -30,7 +29,6 @@ class TestUtils(ApiServerUnittest):
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
         self.assertIn('request', testcase)
-        self.assertIn('response', testcase)
         self.assertIn('url', testcase['request'])
         self.assertIn('method', testcase['request'])
 
@@ -76,7 +74,6 @@ class TestUtils(ApiServerUnittest):
             for testcase in testset["testcases"]:
                 self.assertIn('name', testcase)
                 self.assertIn('request', testcase)
-                self.assertIn('response', testcase)
                 self.assertIn('url', testcase['request'])
                 self.assertIn('method', testcase['request'])
 
@@ -179,3 +176,11 @@ class TestUtils(ApiServerUnittest):
         query = "person.name.first_name"
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "Leo")
+
+    def test_compare(self):
+        self.assertEqual(utils.compare(1, 1, "eq"), False)
+        self.assertEqual(utils.compare("abc", "abc", "eq"), False)
+        self.assertEqual(utils.compare("abc", "abc"), False)
+
+        self.assertEqual(utils.compare(123, "123", "eq"), True)
+        self.assertEqual(utils.compare(123, "123"), True)

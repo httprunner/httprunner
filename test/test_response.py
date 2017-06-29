@@ -1,6 +1,5 @@
-import random
 import requests
-from ate import response, context, exception
+from ate import response, exception
 from test.base import ApiServerUnittest
 
 class TestResponse(ApiServerUnittest):
@@ -28,199 +27,6 @@ class TestResponse(ApiServerUnittest):
         self.assertIn('Content-Type', parsed_dict['headers'])
         self.assertIn('Content-Length', parsed_dict['headers'])
         self.assertTrue(str, type(parsed_dict['body']))
-
-    def test_diff_response_status_code_equal(self):
-        status_code = random.randint(200, 511)
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'status_code': status_code,
-            }
-        )
-
-        expected_resp_json = {
-            'status_code': status_code
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertFalse(diff_content)
-
-    def test_diff_response_status_code_not_equal(self):
-        status_code = random.randint(200, 511)
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'status_code': status_code,
-            }
-        )
-
-        expected_resp_json = {
-            'status_code': 512
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertIn('value', diff_content['status_code'])
-        self.assertIn('expected', diff_content['status_code'])
-        self.assertEqual(diff_content['status_code']['value'], status_code)
-        self.assertEqual(diff_content['status_code']['expected'], 512)
-
-    def test_diff_response_headers_equal(self):
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'headers': {
-                    'abc': 123,
-                    'def': 456
-                }
-            }
-        )
-
-        expected_resp_json = {
-            'headers': {
-                'abc': 123,
-                'def': '456'
-            }
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertFalse(diff_content)
-
-    def test_diff_response_headers_not_equal(self):
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'headers': {
-                    'a': 123,
-                    'b': '456',
-                    'c': '789'
-                }
-            }
-        )
-
-        expected_resp_json = {
-            'headers': {
-                'a': '123',
-                'b': '457',
-                'd': 890
-            }
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertEqual(
-            diff_content['headers'],
-            {
-                'b': {'expected': '457', 'value': '456'},
-                'd': {'expected': 890, 'value': None}
-            }
-        )
-
-    def test_diff_response_body_equal(self):
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'body': {
-                    'success': True,
-                    'count': 10
-                }
-            }
-        )
-
-        # expected response body is not specified
-        expected_resp_json = {}
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertFalse(diff_content)
-
-        # response body is the same as expected response body
-        expected_resp_json = {
-            'body': {
-                'success': True,
-                'count': '10'
-            }
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertFalse(diff_content)
-
-    def test_diff_response_body_not_equal_type_unmatch(self):
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'body': {
-                    'success': True,
-                    'count': 10
-                }
-            }
-        )
-
-        # response body content type not match
-        expected_resp_json = {
-            'body': "ok"
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertEqual(
-            diff_content['body'],
-            {
-                'value': {'success': True, 'count': 10},
-                'expected': 'ok'
-            }
-        )
-
-    def test_diff_response_body_not_equal_string_unmatch(self):
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'body': "success"
-            }
-        )
-
-        # response body content type matched to be string, while value unmatch
-        expected_resp_json = {
-            'body': "ok"
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertEqual(
-            diff_content['body'],
-            {
-                'value': 'success',
-                'expected': 'ok'
-            }
-        )
-
-    def test_diff_response_body_not_equal_json_unmatch(self):
-        resp = requests.post(
-            url="http://127.0.0.1:5000/customize-response",
-            json={
-                'body': {
-                    'success': False
-                }
-            }
-        )
-
-        # response body is the same as expected response body
-        expected_resp_json = {
-            'body': {
-                'success': True,
-                'count': 10
-            }
-        }
-        resp_obj = response.ResponseObject(resp)
-        diff_content = resp_obj.diff_response(expected_resp_json)
-        self.assertEqual(
-            diff_content['body'],
-            {
-                'success': {
-                    'value': False,
-                    'expected': True
-                },
-                'count': {
-                    'value': None,
-                    'expected': 10
-                }
-            }
-        )
 
     def test_extract_response_json(self):
         resp = requests.post(
@@ -252,12 +58,9 @@ class TestResponse(ApiServerUnittest):
             "resp_content_person_first_name": "content.person.name.first_name",
             "resp_content_cities_1": "content.person.cities.1"
         }
+        resp_obj = response.ResponseObject(resp)
+        extract_binds_dict = resp_obj.extract_response(extract_binds)
 
-        test_context = context.Context()
-        test_context.bind_extractors(extract_binds)
-        response.ResponseObject(resp, test_context)
-
-        extract_binds_dict = test_context.extractors
         self.assertEqual(
             extract_binds_dict["resp_status_code"],
             200
@@ -283,7 +86,6 @@ class TestResponse(ApiServerUnittest):
             "Shenzhen"
         )
 
-
     def test_extract_response_fail(self):
         resp = requests.post(
             url="http://127.0.0.1:5000/customize-response",
@@ -308,22 +110,18 @@ class TestResponse(ApiServerUnittest):
         extract_binds = {
             "resp_content_dict_key_error": "content.not_exist"
         }
-
-        test_context = context.Context()
-        test_context.bind_extractors(extract_binds)
+        resp_obj = response.ResponseObject(resp)
 
         with self.assertRaises(exception.ParamsError):
-            response.ResponseObject(resp, test_context)
+            resp_obj.extract_response(extract_binds)
 
         extract_binds = {
             "resp_content_list_index_error": "content.person.cities.3"
         }
-
-        test_context = context.Context()
-        test_context.bind_extractors(extract_binds)
+        resp_obj = response.ResponseObject(resp)
 
         with self.assertRaises(exception.ParamsError):
-            response.ResponseObject(resp, test_context)
+            resp_obj.extract_response(extract_binds)
 
     def test_extract_response_json_string(self):
         resp = requests.post(
@@ -339,13 +137,48 @@ class TestResponse(ApiServerUnittest):
         extract_binds = {
             "resp_content_body": "content"
         }
+        resp_obj = response.ResponseObject(resp)
 
-        test_context = context.Context()
-        test_context.bind_extractors(extract_binds)
-        resp_obj = response.ResponseObject(resp, test_context)
-
-        extract_binds_dict = test_context.extractors
+        extract_binds_dict = resp_obj.extract_response(extract_binds)
         self.assertEqual(
             extract_binds_dict["resp_content_body"],
             "abc"
         )
+
+    def test_validate(self):
+        url = "http://127.0.0.1:5000/"
+        resp = requests.get(url)
+        resp_obj = response.ResponseObject(resp)
+
+        validators = {
+            "resp_status_code": {"comparator": "eq", "expected": 201},
+            "resp_body_success": {"comparator": "eq", "expected": True}
+        }
+        variables_mapping = {
+            "resp_status_code": 200,
+            "resp_body_success": True
+        }
+
+        diff_content_dict = resp_obj.validate(validators, variables_mapping)
+        self.assertFalse(resp_obj.success)
+        self.assertEqual(
+            diff_content_dict,
+            {
+                "resp_status_code": {
+                    "comparator": "eq", "expected": 201, "value": 200
+                }
+            }
+        )
+
+        validators = {
+            "resp_status_code": {"comparator": "eq", "expected": 201},
+            "resp_body_success": {"comparator": "eq", "expected": True}
+        }
+        variables_mapping = {
+            "resp_status_code": 201,
+            "resp_body_success": True
+        }
+
+        diff_content_dict = resp_obj.validate(validators, variables_mapping)
+        self.assertTrue(resp_obj.success)
+        self.assertEqual(diff_content_dict, {})

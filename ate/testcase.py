@@ -1,69 +1,56 @@
 from ate import utils
 
-class TestcaseParser(object):
 
-    def __init__(self, variables_binds={}):
-        self.variables_binds = variables_binds
+def parse_template(testcase_template, variables_binds):
+    """ parse testcase_template, replace all variables with bind value.
+    variables marker: ${variable}.
+    @param (dict) testcase_template
+        {
+            "url": "http://127.0.0.1:5000/api/users/${uid}",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json",
+                "authorization": "${authorization}",
+                "random": "${random}"
+            },
+            "body": "${data}"
+        }
+    @param (dict) variables binds mapping
+        {
+            "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+            "random": "A2dEx",
+            "data": '{"name": "user", "password": "123456"}'
+        }
+    @return (dict) parsed testcase with bind variable values
+        {
+            "url": "http://127.0.0.1:5000/api/users/1000",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json",
+                "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                "random": "A2dEx"
+            },
+            "body": '{"name": "user", "password": "123456"}'
+        }
+    """
 
-    def update_variables_binds(self, variables_mapping):
-        """ update variables binds with new mapping.
-        """
-        if variables_mapping:
-            self.variables_binds.update(variables_mapping)
-
-    def parse(self, testcase_template):
-        """ parse testcase_template, replace all variables with bind value.
-        variables marker: ${variable}.
-        @param (dict) testcase_template
-            {
-                "request": {
-                    "url": "http://127.0.0.1:5000/api/users/${uid}",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json",
-                        "authorization": "${authorization}",
-                        "random": "${random}"
-                    },
-                    "body": "${data}"
-                },
-                "response": {
-                    "status_code": "${expected_status}"
-                }
-            }
-        @return (dict) parsed testcase with bind values
-            {
-                "request": {
-                    "url": "http://127.0.0.1:5000/api/users/1000",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json",
-                        "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-                        "random": "A2dEx"
-                    },
-                    "body": '{"name": "user", "password": "123456"}'
-                },
-                "response": {
-                    "status_code": 201
-                }
-            }
-        """
-        return self.substitute(testcase_template)
-
-    def substitute(self, content):
+    def substitute(content):
         """ substitute content recursively, each variable will be replaced with bind value.
             variables marker: ${variable}.
         """
         if isinstance(content, str):
-            return utils.parse_content_with_variables(content, self.variables_binds)
+            return utils.parse_content_with_variables(content, variables_binds)
 
         if isinstance(content, list):
-            return [self.substitute(item) for item in content]
+            return [substitute(item) for item in content]
 
         if isinstance(content, dict):
             parsed_content = {}
             for key, value in content.items():
-                parsed_content[key] = self.substitute(value)
+                parsed_content[key] = substitute(value)
 
             return parsed_content
 
         return content
+
+    return substitute(testcase_template)

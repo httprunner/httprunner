@@ -1,6 +1,6 @@
 import unittest
 
-from ate.testcase import TestcaseParser
+from ate.testcase import parse_template
 from ate import exception
 
 
@@ -18,7 +18,6 @@ class TestcaseParserUnittest(unittest.TestCase):
             "expected_status": 201,
             "expected_success": True
         }
-        self.testcase_parser = TestcaseParser(self.variables_binds)
 
     def test_parse_testcase_template(self):
         testcase = {
@@ -43,7 +42,7 @@ class TestcaseParserUnittest(unittest.TestCase):
                 }
             }
         }
-        parsed_testcase = self.testcase_parser.parse(testcase)
+        parsed_testcase = parse_template(testcase, self.variables_binds)
 
         self.assertEqual(
             parsed_testcase["request"]["url"],
@@ -78,7 +77,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             }
         }
         with self.assertRaises(exception.ParamsError):
-            self.testcase_parser.parse(testcase)
+            parse_template(testcase, self.variables_binds)
 
     def test_parse_testcase_with_new_variable_binds(self):
         testcase = {
@@ -90,10 +89,9 @@ class TestcaseParserUnittest(unittest.TestCase):
         new_variable_binds = {
             "method": "GET"
         }
-        self.testcase_parser.update_variables_binds(new_variable_binds)
-        parsed_testcase = self.testcase_parser.parse(testcase)
+        self.variables_binds.update(new_variable_binds)
+        parsed_testcase = parse_template(testcase, self.variables_binds)
 
-        self.assertIn("method", self.testcase_parser.variables_binds)
         self.assertEqual(
             parsed_testcase["request"]["method"],
             new_variable_binds["method"]
