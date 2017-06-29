@@ -181,24 +181,36 @@ def query_json(json_content, query, delimiter='.'):
 
     return json_content
 
-def diff_json(current_json, expected_json):
-    json_diff = {}
-
-    for key, expected_value in expected_json.items():
-        value = current_json.get(key, None)
-        if str(value) != str(expected_value):
-            json_diff[key] = {
-                'value': value,
-                'expected': expected_value
-            }
-
-    return json_diff
-
-def compare(value, expected, comparator="eq"):
+def match_expected(value, expected, comparator="eq"):
+    """ check if value matches expected value.
+    @param value: value that get from response.
+    @param expected: expected result described in testcase
+    @param comparator: compare method
+    """
     try:
-        if comparator in ["eq", "=="]:
+        if comparator in ["eq", "equals", "=="]:
             assert value == expected
+        elif comparator in ["str_eq", "string_equals"]:
+            assert str(value) == str(expected)
+        elif comparator in ["ne", "not_equals"]:
+            assert value != expected
+        elif comparator in ["len_eq", "length_equal", "count_eq"]:
+            assert len(value) == len(expected)
+        elif comparator in ["lt", "less_than"]:
+            assert value < expected
+        elif comparator in ["le", "less_than_or_equals"]:
+            assert value <= expected
+        elif comparator in ["gt", "greater_than"]:
+            assert value > expected
+        elif comparator in ["ge", "greater_than_or_equals"]:
+            assert value >= expected
+        elif comparator in ["contains"]:
+            assert expected in value
+        elif comparator in ["contained_by"]:
+            assert value in expected
+        elif comparator in ["regex"]:
+            assert re.match(expected, value)
 
-        return False
-    except AssertionError:
         return True
+    except AssertionError:
+        return False

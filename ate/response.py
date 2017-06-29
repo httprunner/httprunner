@@ -92,13 +92,13 @@ class ResponseObject(object):
             except KeyError:
                 raise exception.ParamsError("invalid validator %s" % validator_key)
 
-            difference_exist = utils.compare(
+            match_expected = utils.match_expected(
                 value,
                 validator_dict["expected"],
                 validator_dict["comparator"]
             )
 
-            if difference_exist:
+            if not match_expected:
                 diff_content_dict[validator_key] = validator_dict
 
         self.success = False if diff_content_dict else True
