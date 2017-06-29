@@ -74,34 +74,35 @@ class ResponseObject(object):
 
     def validate(self, validators, variables_mapping):
         """ Bind named validators to value within the context.
-        @param (dict) validators
-            {
-                "resp_status_code": {"comparator": "eq", "expected": 201},
-                "resp_body_success": {"comparator": "eq", "expected": True}
-            }
+        @param (list) validators
+            [
+                {"check": "status_code", "comparator": "eq", "expected": 201},
+                {"check": "resp_body_success", "comparator": "eq", "expected": True}
+            ]
         @param (dict) variables_mapping
             {
-                "resp_status_code": 200,
                 "resp_body_success": True
             }
-        @return (dict) content differences
-            {
-                "resp_status_code": {
+        @return (list) content differences
+            [
+                {
+                    "check": "status_code",
                     "comparator": "eq", "expected": 201, "value": 200
                 }
-            }
+            ]
         """
-        diff_content_dict = {}
+        diff_content_list = []
 
-        for validator_key, validator_dict in validators.items():
+        for validator_dict in validators:
 
+            if "expected" not in validator_dict or "check" not in validator_dict:
+                raise exception.ParamsError("expected not specified in validator")
+
+            validator_key = validator_dict["check"]
             try:
                 validator_dict["value"] = variables_mapping[validator_key]
             except KeyError:
                 validator_dict["value"] = self.extract_field(validator_key)
-
-            if "expected" not in validator_dict:
-                raise exception.ParamsError("expected not specified in validator")
 
             match_expected = utils.match_expected(
                 validator_dict["value"],
@@ -110,7 +111,7 @@ class ResponseObject(object):
             )
 
             if not match_expected:
-                diff_content_dict[validator_key] = validator_dict
+                diff_content_list.append(validator_dict)
 
-        self.success = False if diff_content_dict else True
-        return diff_content_dict
+        self.success = False if diff_content_list else True
+        return diff_content_list

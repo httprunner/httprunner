@@ -37,7 +37,7 @@ class TestRunnerV2(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, {}), (True, {})])
+        self.assertEqual(results, [(True, []), (True, [])])
 
     def test_run_testsets_auth_yaml(self):
         testcase_file_path = os.path.join(
@@ -45,7 +45,7 @@ class TestRunnerV2(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, {}), (True, {})])
+        self.assertEqual(results[0], [(True, []), (True, [])])
 
     def test_run_testset_auth_json(self):
         testcase_file_path = os.path.join(
@@ -53,7 +53,7 @@ class TestRunnerV2(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, {}), (True, {})])
+        self.assertEqual(results, [(True, []), (True, [])])
 
     def test_run_testsets_auth_json(self):
         testcase_file_path = os.path.join(
@@ -61,7 +61,7 @@ class TestRunnerV2(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, {}), (True, {})])
+        self.assertEqual(results[0], [(True, []), (True, [])])
 
     def test_run_testcase_template_yaml(self):
         testcase_file_path = os.path.join(
@@ -78,7 +78,7 @@ class TestRunnerV2(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, {}), (True, {})])
+        self.assertEqual(results, [(True, []), (True, [])])
 
     def test_run_testsets_template_yaml(self):
         testcase_file_path = os.path.join(
@@ -86,4 +86,4 @@ class TestRunnerV2(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, {}), (True, {})])
+        self.assertEqual(results[0], [(True, []), (True, [])])

@@ -9,9 +9,9 @@
             name: user1
             password: 123456
     validators:
-        status_code: {"comparator": "eq", "expected": 201}
-        headers.content-type: {"comparator": "eq", "expected": "application/json"}
-        content.success: {"comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expected": 201}
+        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "headers.content-type", "comparator": "eq", "expected": "application/json"}
 
 - test:
     name: create user which existed
@@ -24,6 +24,6 @@
             name: user1
             password: 123456
     validators:
-        status_code: {"comparator": "eq", "expected": 500}
-        headers.content-type: {"comparator": "eq", "expected": "application/json"}
-        content.success: {"comparator": "eq", "expected": false}
+        - {"check": "status_code", "comparator": "eq", "expected": 500}
+        - {"check": "content.success", "comparator": "eq", "expected": false}
+        - {"check": "headers.content-type", "comparator": "eq", "expected": "application/json"}
