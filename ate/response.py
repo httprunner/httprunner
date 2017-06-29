@@ -1,9 +1,5 @@
 from ate import utils, exception
 
-try:
-    basestring  # Python 2.x
-except NameError:
-    basestring = str    # Python 3.x
 
 class ResponseObject(object):
 
@@ -40,7 +36,7 @@ class ResponseObject(object):
         extract_binds_dict = {}
 
         for key, value in extract_binds.items():
-            if not isinstance(value, basestring):
+            if not isinstance(value, utils.string_type):
                 raise exception.ParamsError("invalid extract_binds!")
 
             try:
