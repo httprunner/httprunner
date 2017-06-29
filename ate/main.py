@@ -16,7 +16,7 @@ class ApiTestCase(unittest.TestCase):
         """ run testcase and check result.
         """
         result = self.test_runner.run_test(self.testcase)
-        self.assertEqual(result, (True, {}))
+        self.assertEqual(result, (True, []))
 
 def create_suite(testset):
     """ create test suite with a testset, it may include one or several testcases.

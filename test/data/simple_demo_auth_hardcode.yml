@@ -11,8 +11,8 @@
             name: "user1"
             password: "123456"
     validators:
-        status_code: {"comparator": "eq", "expected": 201}
-        content.success: {"comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expected": 201}
+        - {"check": "content.success", "comparator": "eq", "expected": true}
 
 - test:
     name: create user which existed
@@ -27,5 +27,5 @@
             name: "user1"
             password: "123456"
     validators:
-        status_code: {"comparator": "eq", "expected": 500}
-        content.success: {"comparator": "eq", "expected": false}
+        - {"check": "status_code", "comparator": "eq", "expected": 500}
+        - {"check": "content.success", "comparator": "eq", "expected": false}

@@ -46,26 +46,26 @@ class TestRunner(ApiServerUnittest):
                 "resp_body_success": "content.success",
                 "resp_headers_contenttype": "headers.content-type"
             },
-            "validators": {
-                "resp_status_code": {"comparator": "eq", "expected": 200},
-                "resp_body_success": {"comparator": "eq", "expected": False},
-                "resp_headers_contenttype": {"comparator": "eq", "expected": "html/text"}
-            }
+            "validators": [
+                {"check": "resp_status_code", "comparator": "eq", "expected": 200},
+                {"check": "resp_body_success", "comparator": "eq", "expected": False},
+                {"check": "resp_headers_contenttype", "comparator": "eq", "expected": "html/text"}
+            ]
         }
 
-        success, diff_content = self.test_runner.run_test(testcase)
+        success, diff_content_list = self.test_runner.run_test(testcase)
         self.assertFalse(success)
         self.assertEqual(
-            diff_content['resp_status_code'],
-            {"comparator": "eq", "expected": 200, 'value': 201}
+            diff_content_list[0],
+            {"check": "resp_status_code", "comparator": "eq", "expected": 200, 'value': 201}
         )
         self.assertEqual(
-            diff_content['resp_body_success'],
-            {"comparator": "eq", "expected": False, 'value': True}
+            diff_content_list[1],
+            {"check": "resp_body_success", "comparator": "eq", "expected": False, 'value': True}
         )
         self.assertEqual(
-            diff_content['resp_headers_contenttype'],
-            {"comparator": "eq", "expected": "html/text", 'value': "application/json"}
+            diff_content_list[2],
+            {"check": "resp_headers_contenttype", "comparator": "eq", "expected": "html/text", 'value': "application/json"}
         )
 
     def test_run_testset_json_success(self):
@@ -73,25 +73,25 @@ class TestRunner(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, {}), (True, {})])
+        self.assertEqual(results, [(True, []), (True, [])])
 
     def test_run_testsets_json_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json')
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, {}), (True, {})])
+        self.assertEqual(results[0], [(True, []), (True, [])])
 
     def test_run_testset_yaml_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, {}), (True, {})])
+        self.assertEqual(results, [(True, []), (True, [])])
 
     def test_run_testsets_yaml_success(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, {}), (True, {})])
+        self.assertEqual(results[0], [(True, []), (True, [])])
