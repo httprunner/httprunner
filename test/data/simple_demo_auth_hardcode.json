@@ -15,15 +15,14 @@
                     "password": "123456"
                 }
             },
-            "response": {
-                "status_code": 201,
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body": {
-                    "success": true,
-                    "msg": "user created successfully."
-                }
+            "extract_binds": {
+                "resp_status_code": "status_code",
+                "resp_body_success": "content.success",
+                "resp_body_msg": "content.msg"
+            },
+            "validators": {
+                "resp_status_code": {"comparator": "eq", "expected": 201},
+                "resp_body_success": {"comparator": "eq", "expected": true}
             }
         }
     },
@@ -43,15 +42,13 @@
                     "password": "123456"
                 }
             },
-            "response": {
-                "status_code": 500,
-                "headers": {
-                    "Content-Type": "application/json"
-                },
-                "body":{
-                    "success": false,
-                    "msg": "user already existed."
-                }
+            "extract_binds": {
+                "resp_status_code": "status_code",
+                "resp_body_success": "content.success"
+            },
+            "validators": {
+                "resp_status_code": {"comparator": "eq", "expected": 500},
+                "resp_body_success": {"comparator": "eq", "expected": false}
             }
         }
     }

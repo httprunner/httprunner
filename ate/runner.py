@@ -2,7 +2,7 @@ import requests
 
 from ate import exception, response
 from ate.context import Context
-from ate.testcase import TestcaseParser
+from ate.testcase import parse_template
 
 
 class TestRunner(object):
@@ -10,10 +10,9 @@ class TestRunner(object):
     def __init__(self):
         self.client = requests.Session()
         self.context = Context()
-        self.testcase_parser = TestcaseParser()
 
-    def pre_config(self, config_dict):
-        """ create/update variables binds
+    def update_context(self, config_dict):
+        """ create/update context variables binds
         @param config_dict
             {
                 "name": "description content",
@@ -41,44 +40,6 @@ class TestRunner(object):
         variable_binds = config_dict.get('variable_binds', [])
         self.context.bind_variables(variable_binds)
 
-        extract_binds = config_dict.get('extract_binds', {})
-        self.context.bind_extractors(extract_binds)
-
-        self.testcase_parser.update_variables_binds(self.context.variables)
-
-    def parse_testcase(self, testcase):
-        """ parse testcase with variables binds if it is a template.
-        @param (dict) testcase
-            {
-                "name": "testcase description",
-                "requires": [],  # optional, override
-                "function_binds": {}, # optional, override
-                "variable_binds": {}, # optional, override
-                "request": {},
-                "response": {}
-            }
-        @return (dict) parsed testcase with bind values
-            {
-                "request": {
-                    "url": "http://127.0.0.1:5000/api/users/1000",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json",
-                        "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-                        "random": "A2dEx"
-                    },
-                    "body": '{"name": "user", "password": "123456"}'
-                },
-                "response": {
-                    "status_code": 201
-                }
-            }
-        """
-        self.pre_config(testcase)
-
-        parsed_testcase = self.testcase_parser.parse(testcase)
-        return parsed_testcase
-
     def run_test(self, testcase):
         """ run single testcase.
         @param (dict) testcase
@@ -87,26 +48,42 @@ class TestRunner(object):
                 "requires": [],  # optional, override
                 "function_binds": {}, # optional, override
                 "variable_binds": {}, # optional, override
-                "request": {},
-                "response": {}
+                "request": {
+                    "url": "http://127.0.0.1:5000/api/users/1000",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "authorization": "${authorization}",
+                        "random": "${random}"
+                    },
+                    "body": '{"name": "user", "password": "123456"}'
+                },
+                "extract_binds": {},
+                "validators": {}
             }
         @return (tuple) test result of single testcase
             (success, diff_content)
         """
-        testcase = self.parse_testcase(testcase)
-
-        req_kwargs = testcase['request']
+        self.update_context(testcase)
+        parsed_request = parse_template(testcase["request"], self.context.variables)
 
         try:
-            url = req_kwargs.pop('url')
-            method = req_kwargs.pop('method')
+            url = parsed_request.pop('url')
+            method = parsed_request.pop('method')
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        resp = self.client.request(url=url, method=method, **req_kwargs)
+        resp = self.client.request(url=url, method=method, **parsed_request)
+        resp_obj = response.ResponseObject(resp)
 
-        resp_obj = response.ResponseObject(resp, self.context)
-        return resp_obj.validate(testcase['response'])
+        extract_binds = testcase.get("extract_binds", {})
+        extract_binds_dict = resp_obj.extract_response(extract_binds)
+        self.context.update_variables(extract_binds_dict)
+
+        validators = testcase.get("validators", {})
+        diff_content_dict = resp_obj.validate(validators, self.context.variables)
+
+        return resp_obj.success, diff_content_dict
 
     def run_testset(self, testset):
         """ run single testset, including one or several testcases.
@@ -124,7 +101,8 @@ class TestRunner(object):
                         "name": "testcase description",
                         "variable_binds": {}, # override
                         "request": {},
-                        "response": {}
+                        "extract_binds": {},
+                        "validators": {}
                     },
                     testcase12
                 ]
@@ -138,7 +116,7 @@ class TestRunner(object):
         results = []
 
         config_dict = testset.get("config", {})
-        self.pre_config(config_dict)
+        self.update_context(config_dict)
         testcases = testset.get("testcases", [])
         for testcase in testcases:
             result = self.run_test(testcase)
