@@ -210,6 +210,8 @@ def match_expected(value, expected, comparator="eq"):
             assert value in expected
         elif comparator in ["regex"]:
             assert re.match(expected, value)
+        elif comparator in ["str_len", "string_length"]:
+            assert len(value) == int(expected)
         else:
             raise ParamsError("comparator not supported!")
 

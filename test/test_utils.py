@@ -201,3 +201,6 @@ class TestUtils(ApiServerUnittest):
 
         with self.assertRaises(exception.ParamsError):
             utils.match_expected(1, 2, "not_supported_comparator")
+
+        self.assertTrue(utils.match_expected("2017-06-29 17:29:58", 19, "str_len"))
+        self.assertTrue(utils.match_expected("2017-06-29 17:29:58", "19", "str_len"))
