@@ -182,3 +182,31 @@ class TestResponse(ApiServerUnittest):
         diff_content_dict = resp_obj.validate(validators, variables_mapping)
         self.assertTrue(resp_obj.success)
         self.assertEqual(diff_content_dict, {})
+
+    def test_validate_exception(self):
+        url = "http://127.0.0.1:5000/"
+        resp = requests.get(url)
+        resp_obj = response.ResponseObject(resp)
+
+        # expected value missed in validators
+        validators = {
+            "resp_status_code": {"comparator": "eq", "expected": 201},
+            "resp_body_success": {"comparator": "eq"}
+        }
+        variables_mapping = {
+            "resp_status_code": 200,
+            "resp_body_success": True
+        }
+        with self.assertRaises(exception.ParamsError):
+            resp_obj.validate(validators, variables_mapping)
+
+        # expected value missed in validators
+        validators = {
+            "resp_status_code": {"comparator": "eq", "expected": 201},
+            "resp_body_success": {"comparator": "eq", "expected": True}
+        }
+        variables_mapping = {
+            "resp_status_code": 200
+        }
+        with self.assertRaises(exception.ParamsError):
+            resp_obj.validate(validators, variables_mapping)
