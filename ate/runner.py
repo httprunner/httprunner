@@ -1,3 +1,4 @@
+import copy
 import requests
 
 from ate import exception, response
@@ -10,10 +11,11 @@ class TestRunner(object):
     def __init__(self):
         self.client = requests.Session()
         self.context = Context()
+        self.testset_req_overall_configs = {}
 
-    def update_context(self, config_dict):
+    def update_context(self, config_dict, level="testcase"):
         """ create/update context variables binds
-        @param config_dict
+        @param (dict) config_dict
             {
                 "name": "description content",
                 "requires": ["random", "hashlib"],
@@ -30,6 +32,8 @@ class TestRunner(object):
                     {"random": {"func": "gen_random_string", "args": [5]}},
                 ]
             }
+        @param (str) context level, testcase or testset
+            only when level is testset, shall we update testset_req_overall_configs
         """
         requires = config_dict.get('requires', [])
         self.context.import_requires(requires)
@@ -39,6 +43,9 @@ class TestRunner(object):
 
         variable_binds = config_dict.get('variable_binds', [])
         self.context.bind_variables(variable_binds)
+
+        if level == "testset":
+            self.testset_req_overall_configs = config_dict.get('request', {})
 
     def run_test(self, testcase):
         """ run single testcase.
@@ -65,8 +72,14 @@ class TestRunner(object):
             (success, diff_content_list)
         """
         self.update_context(testcase)
-        parsed_request = parse_template(testcase["request"], self.context.variables)
 
+        # each testcase shall inherit from testset request configs,
+        # but can not override testset configs,
+        # that's why we use copy.deepcopy here.
+        testcase_request = copy.deepcopy(self.testset_req_overall_configs)
+        testcase_request.update(testcase["request"])
+
+        parsed_request = parse_template(testcase_request, self.context.variables)
         try:
             url = parsed_request.pop('url')
             method = parsed_request.pop('method')
@@ -94,7 +107,8 @@ class TestRunner(object):
                     "name": "testset description",
                     "requires": [],
                     "function_binds": {},
-                    "variable_binds": []
+                    "variable_binds": [],
+                    "request": {}
                 },
                 "testcases": [
                     {
