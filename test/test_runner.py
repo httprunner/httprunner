@@ -41,39 +41,31 @@ class TestRunner(ApiServerUnittest):
                     "password": "123456"
                 }
             },
-            "response": {
-                "status_code": 200,
-                "headers": {
-                    "Content-Type": "html/text"
-                },
-                "body": {
-                    'success': False,
-                    'msg': "user already existed."
-                }
+            "extract_binds": {
+                "resp_status_code": "status_code",
+                "resp_body_success": "content.success",
+                "resp_headers_contenttype": "headers.content-type"
+            },
+            "validators": {
+                "resp_status_code": {"comparator": "eq", "expected": 200},
+                "resp_body_success": {"comparator": "eq", "expected": False},
+                "resp_headers_contenttype": {"comparator": "eq", "expected": "html/text"}
             }
         }
+
         success, diff_content = self.test_runner.run_test(testcase)
         self.assertFalse(success)
         self.assertEqual(
-            diff_content['status_code'],
-            {'expected': 200, 'value': 201}
+            diff_content['resp_status_code'],
+            {"comparator": "eq", "expected": 200, 'value': 201}
         )
         self.assertEqual(
-            diff_content['headers'],
-            {'Content-Type': {'expected': 'html/text', 'value': 'application/json'}}
+            diff_content['resp_body_success'],
+            {"comparator": "eq", "expected": False, 'value': True}
         )
         self.assertEqual(
-            diff_content['body'],
-            {
-                'msg': {
-                    'expected': 'user already existed.',
-                    'value': 'user created successfully.'
-                },
-                'success': {
-                    'expected': False,
-                    'value': True
-                }
-            }
+            diff_content['resp_headers_contenttype'],
+            {"comparator": "eq", "expected": "html/text", 'value': "application/json"}
         )
 
     def test_run_testset_json_success(self):

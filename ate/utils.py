@@ -62,19 +62,6 @@ def load_testcases(testcase_file_path):
         # '' or other suffix
         raise ParamsError("Bad testcase file name!")
 
-def diff_json(current_json, expected_json):
-    json_diff = {}
-
-    for key, expected_value in expected_json.items():
-        value = current_json.get(key, None)
-        if str(value) != str(expected_value):
-            json_diff[key] = {
-                'value': value,
-                'expected': expected_value
-            }
-
-    return json_diff
-
 def load_foler_files(folder_path):
     """ load folder path, return all files in list format.
     """
@@ -192,3 +179,25 @@ def query_json(json_content, query, delimiter='.'):
         raise ParamsError("invalid query string in extract_binds!")
 
     return json_content
+
+def diff_json(current_json, expected_json):
+    json_diff = {}
+
+    for key, expected_value in expected_json.items():
+        value = current_json.get(key, None)
+        if str(value) != str(expected_value):
+            json_diff[key] = {
+                'value': value,
+                'expected': expected_value
+            }
+
+    return json_diff
+
+def compare(value, expected, comparator="eq"):
+    try:
+        if comparator in ["eq", "=="]:
+            assert value == expected
+
+        return False
+    except AssertionError:
+        return True

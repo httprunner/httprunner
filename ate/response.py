@@ -1,16 +1,18 @@
 from ate import utils, exception
 
+try:
+    basestring  # Python 2.x
+except NameError:
+    basestring = str    # Python 3.x
 
 class ResponseObject(object):
 
-    def __init__(self, resp_obj, context=None):
+    def __init__(self, resp_obj):
         """ initialize with a requests.Response object
         @param (requests.Response instance) resp_obj
-        @param (ate.context.Context instance) context
         """
         self.resp_obj = resp_obj
-        if context:
-            self.extract_response(context)
+        self.success = True
 
     def parsed_body(self):
         try:
@@ -25,49 +27,9 @@ class ResponseObject(object):
             'body': self.parsed_body()
         }
 
-    def diff_response(self, expected_resp_json):
-        diff_content = {}
-        resp_info = self.parsed_dict()
-
-        expected_status_code = expected_resp_json.get('status_code', 200)
-        if resp_info['status_code'] != int(expected_status_code):
-            diff_content['status_code'] = {
-                'value': resp_info['status_code'],
-                'expected': expected_status_code
-            }
-
-        expected_headers = expected_resp_json.get('headers', {})
-        headers_diff = utils.diff_json(resp_info['headers'], expected_headers)
-        if headers_diff:
-            diff_content['headers'] = headers_diff
-
-        expected_body = expected_resp_json.get('body', None)
-
-        if expected_body is None:
-            body_diff = {}
-        elif type(expected_body) != type(resp_info['body']):
-            body_diff = {
-                'value': resp_info['body'],
-                'expected': expected_body
-            }
-        elif isinstance(expected_body, str):
-            if expected_body != resp_info['body']:
-                body_diff = {
-                    'value': resp_info['body'],
-                    'expected': expected_body
-                }
-        elif isinstance(expected_body, dict):
-            body_diff = utils.diff_json(resp_info['body'], expected_body)
-
-        if body_diff:
-            diff_content['body'] = body_diff
-
-        return diff_content
-
-    def extract_response(self, context, delimiter='.'):
-        """ extract content from requests.Response, and bind extracted value to context.extractors
-        @param (ate.context.Context instance) context
-            context.extractors:
+    def extract_response(self, extract_binds, delimiter='.'):
+        """ extract content from requests.Response
+        @param (dict) extract_binds
             {
                 "resp_status_code": "status_code",
                 "resp_headers_content_type": "headers.content-type",
@@ -75,34 +37,73 @@ class ResponseObject(object):
                 "resp_content_person_first_name": "content.person.name.first_name"
             }
         """
-        for key, value in context.extractors.items():
+        extract_binds_dict = {}
+
+        for key, value in extract_binds.items():
+            if not isinstance(value, basestring):
+                raise exception.ParamsError("invalid extract_binds!")
+
             try:
-                if isinstance(value, str):
-                    value += "."
-                    # string.split(sep=None, maxsplit=-1) -> list of strings
-                    # e.g. "content.person.name" => ["content", "person.name"]
-                    top_query, sub_query = value.split(delimiter, 1)
+                value += "."
+                # string.split(sep=None, maxsplit=-1) -> list of strings
+                # e.g. "content.person.name" => ["content", "person.name"]
+                top_query, sub_query = value.split(delimiter, 1)
 
-                    if top_query in ["body", "content", "text"]:
-                        json_content = self.parsed_body()
-                    else:
-                        json_content = getattr(self.resp_obj, top_query)
-
-                    if sub_query:
-                        # e.g. key: resp_headers_content_type, sub_query = "content-type"
-                        answer = utils.query_json(json_content, sub_query)
-                        context.extractors[key] = answer
-                    else:
-                        # e.g. key: resp_status_code, resp_content
-                        context.extractors[key] = json_content
-
+                if top_query in ["body", "content", "text"]:
+                    json_content = self.parsed_body()
                 else:
-                    raise NotImplementedError("TODO: support template.")
+                    json_content = getattr(self.resp_obj, top_query)
+
+                if sub_query:
+                    # e.g. key: resp_headers_content_type, sub_query = "content-type"
+                    answer = utils.query_json(json_content, sub_query)
+                    extract_binds_dict[key] = answer
+                else:
+                    # e.g. key: resp_status_code, resp_content
+                    extract_binds_dict[key] = json_content
 
             except AttributeError:
                 raise exception.ParamsError("invalid extract_binds!")
 
-    def validate(self, expected_resp_json):
-        diff_content = self.diff_response(expected_resp_json)
-        success = False if diff_content else True
-        return success, diff_content
+        return extract_binds_dict
+
+    def validate(self, validators, variables_mapping):
+        """ Bind named validators to value within the context.
+        @param (dict) validators
+            {
+                "resp_status_code": {"comparator": "eq", "expected": 201},
+                "resp_body_success": {"comparator": "eq", "expected": True}
+            }
+        @param (dict) variables_mapping
+            {
+                "resp_status_code": 200,
+                "resp_body_success": True
+            }
+        @return (dict) content differences
+            {
+                "resp_status_code": {
+                    "comparator": "eq", "expected": 201, "value": 200
+                }
+            }
+        """
+        diff_content_dict = {}
+
+        for validator_key, validator_dict in validators.items():
+
+            try:
+                value = variables_mapping[validator_key]
+                validator_dict["value"] = value
+            except KeyError:
+                raise exception.ParamsError("invalid validator %s" % validator_key)
+
+            difference_exist = utils.compare(
+                value,
+                validator_dict["expected"],
+                validator_dict["comparator"]
+            )
+
+            if difference_exist:
+                diff_content_dict[validator_key] = validator_dict
+
+        self.success = False if diff_content_dict else True
+        return diff_content_dict
