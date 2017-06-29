@@ -178,9 +178,23 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, "Leo")
 
     def test_compare(self):
-        self.assertEqual(utils.compare(1, 1, "eq"), False)
-        self.assertEqual(utils.compare("abc", "abc", "eq"), False)
-        self.assertEqual(utils.compare("abc", "abc"), False)
+        self.assertTrue(utils.match_expected(1, 1, "eq"))
+        self.assertTrue(utils.match_expected("abc", "abc", "eq"))
+        self.assertTrue(utils.match_expected("abc", "abc"))
+        self.assertFalse(utils.match_expected(123, "123", "eq"))
+        self.assertFalse(utils.match_expected(123, "123"))
 
-        self.assertEqual(utils.compare(123, "123", "eq"), True)
-        self.assertEqual(utils.compare(123, "123"), True)
+        self.assertTrue(utils.match_expected("123", "345", "len_eq"))
+        self.assertTrue(utils.match_expected(123, "123", "str_eq"))
+        self.assertTrue(utils.match_expected(123, "123", "ne"))
+
+        self.assertTrue(utils.match_expected(1, 2, "lt"))
+        self.assertTrue(utils.match_expected(1, 1, "le"))
+        self.assertTrue(utils.match_expected(2, 1, "gt"))
+        self.assertTrue(utils.match_expected(1, 1, "ge"))
+
+        self.assertTrue(utils.match_expected("123abc456", "3ab", "contains"))
+        self.assertTrue(utils.match_expected("3ab", "123abc456", "contained_by"))
+
+        self.assertTrue(utils.match_expected("123abc456", "^123.*456$", "regex"))
+        self.assertFalse(utils.match_expected("123abc456", "^12b.*456$", "regex"))
