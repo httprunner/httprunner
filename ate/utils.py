@@ -210,6 +210,8 @@ def match_expected(value, expected, comparator="eq"):
             assert value in expected
         elif comparator in ["regex"]:
             assert re.match(expected, value)
+        else:
+            raise ParamsError("comparator not supported!")
 
         return True
     except AssertionError:

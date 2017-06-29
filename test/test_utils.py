@@ -198,3 +198,6 @@ class TestUtils(ApiServerUnittest):
 
         self.assertTrue(utils.match_expected("123abc456", "^123.*456$", "regex"))
         self.assertFalse(utils.match_expected("123abc456", "^12b.*456$", "regex"))
+
+        with self.assertRaises(exception.ParamsError):
+            utils.match_expected(1, 2, "not_supported_comparator")
