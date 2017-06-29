@@ -23,7 +23,36 @@ class ResponseObject(object):
             'body': self.parsed_body()
         }
 
-    def extract_response(self, extract_binds, delimiter='.'):
+    def extract_field(self, field, delimiter='.'):
+        """ extract field from requests.Response
+        @param (str) field of requests.Response object, and may be joined by delimiter
+            "status_code"
+            "content"
+            "headers.content-type"
+            "content.person.name.first_name"
+        """
+        try:
+            field += "."
+            # string.split(sep=None, maxsplit=-1) -> list of strings
+            # e.g. "content.person.name" => ["content", "person.name"]
+            top_query, sub_query = field.split(delimiter, 1)
+
+            if top_query in ["body", "content", "text"]:
+                json_content = self.parsed_body()
+            else:
+                json_content = getattr(self.resp_obj, top_query)
+
+            if sub_query:
+                # e.g. key: resp_headers_content_type, sub_query = "content-type"
+                return utils.query_json(json_content, sub_query)
+            else:
+                # e.g. key: resp_status_code, resp_content
+                return json_content
+
+        except AttributeError:
+            raise exception.ParamsError("invalid extract_binds!")
+
+    def extract_response(self, extract_binds):
         """ extract content from requests.Response
         @param (dict) extract_binds
             {
@@ -33,35 +62,15 @@ class ResponseObject(object):
                 "resp_content_person_first_name": "content.person.name.first_name"
             }
         """
-        extract_binds_dict = {}
+        extracted_variables_mapping = {}
 
-        for key, value in extract_binds.items():
-            if not isinstance(value, utils.string_type):
+        for key, field in extract_binds.items():
+            if not isinstance(field, utils.string_type):
                 raise exception.ParamsError("invalid extract_binds!")
 
-            try:
-                value += "."
-                # string.split(sep=None, maxsplit=-1) -> list of strings
-                # e.g. "content.person.name" => ["content", "person.name"]
-                top_query, sub_query = value.split(delimiter, 1)
+            extracted_variables_mapping[key] = self.extract_field(field)
 
-                if top_query in ["body", "content", "text"]:
-                    json_content = self.parsed_body()
-                else:
-                    json_content = getattr(self.resp_obj, top_query)
-
-                if sub_query:
-                    # e.g. key: resp_headers_content_type, sub_query = "content-type"
-                    answer = utils.query_json(json_content, sub_query)
-                    extract_binds_dict[key] = answer
-                else:
-                    # e.g. key: resp_status_code, resp_content
-                    extract_binds_dict[key] = json_content
-
-            except AttributeError:
-                raise exception.ParamsError("invalid extract_binds!")
-
-        return extract_binds_dict
+        return extracted_variables_mapping
 
     def validate(self, validators, variables_mapping):
         """ Bind named validators to value within the context.
@@ -87,15 +96,16 @@ class ResponseObject(object):
         for validator_key, validator_dict in validators.items():
 
             try:
-                value = variables_mapping[validator_key]
-                validator_dict["value"] = value
-                expected_value = validator_dict["expected"]
+                validator_dict["value"] = variables_mapping[validator_key]
             except KeyError:
-                raise exception.ParamsError("invalid validator %s" % validator_key)
+                validator_dict["value"] = self.extract_field(validator_key)
+
+            if "expected" not in validator_dict:
+                raise exception.ParamsError("expected not specified in validator")
 
             match_expected = utils.match_expected(
-                value,
-                expected_value,
+                validator_dict["value"],
+                validator_dict["expected"],
                 validator_dict.get("comparator", "eq")
             )
 
