@@ -15,14 +15,9 @@
                     "password": "123456"
                 }
             },
-            "extract_binds": {
-                "resp_status_code": "status_code",
-                "resp_body_success": "content.success",
-                "resp_body_msg": "content.msg"
-            },
             "validators": {
-                "resp_status_code": {"comparator": "eq", "expected": 201},
-                "resp_body_success": {"comparator": "eq", "expected": true}
+                "status_code": {"comparator": "eq", "expected": 201},
+                "content.success": {"comparator": "eq", "expected": true}
             }
         }
     },
@@ -42,13 +37,9 @@
                     "password": "123456"
                 }
             },
-            "extract_binds": {
-                "resp_status_code": "status_code",
-                "resp_body_success": "content.success"
-            },
             "validators": {
-                "resp_status_code": {"comparator": "eq", "expected": 500},
-                "resp_body_success": {"comparator": "eq", "expected": false}
+                "status_code": {"comparator": "eq", "expected": 500},
+                "content.success": {"comparator": "eq", "expected": false}
             }
         }
     }
