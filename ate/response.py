@@ -89,13 +89,14 @@ class ResponseObject(object):
             try:
                 value = variables_mapping[validator_key]
                 validator_dict["value"] = value
+                expected_value = validator_dict["expected"]
             except KeyError:
                 raise exception.ParamsError("invalid validator %s" % validator_key)
 
             match_expected = utils.match_expected(
                 value,
-                validator_dict["expected"],
-                validator_dict["comparator"]
+                expected_value,
+                validator_dict.get("comparator", "eq")
             )
 
             if not match_expected:
