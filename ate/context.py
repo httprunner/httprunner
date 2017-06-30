@@ -1,6 +1,16 @@
-import re
 import importlib
+import re
+import types
+
 from ate import exception, utils
+
+
+def is_function(tup):
+    """
+    Takes (name, object) tuple, returns True if it is a function.
+    """
+    name, item = tup
+    return isinstance(item, types.FunctionType)
 
 class Context(object):
     """ Manages binding of variables
@@ -28,6 +38,14 @@ class Context(object):
             if isinstance(function, str):
                 function = eval(function)
             self.functions[func_name] = function
+
+    def import_module_functions(self, modules):
+        """ import modules and bind all functions within the context
+        """
+        for module_name in modules:
+            imported = importlib.import_module(module_name)
+            imported_functions_dict = dict(filter(is_function, vars(imported).items()))
+            self.functions.update(imported_functions_dict)
 
     def bind_variables(self, variable_binds):
         """ Bind named variables to value within the context.
