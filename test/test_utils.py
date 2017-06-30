@@ -188,6 +188,11 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.match_expected(123, "123", "str_eq"))
         self.assertTrue(utils.match_expected(123, "123", "ne"))
 
+        self.assertTrue(utils.match_expected("123", 2, "len_gt"))
+        self.assertTrue(utils.match_expected("123", 3, "len_ge"))
+        self.assertTrue(utils.match_expected("123", 4, "len_lt"))
+        self.assertTrue(utils.match_expected("123", 3, "len_le"))
+
         self.assertTrue(utils.match_expected(1, 2, "lt"))
         self.assertTrue(utils.match_expected(1, 1, "le"))
         self.assertTrue(utils.match_expected(2, 1, "gt"))
