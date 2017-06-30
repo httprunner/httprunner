@@ -184,7 +184,7 @@ class TestUtils(ApiServerUnittest):
         self.assertFalse(utils.match_expected(123, "123", "eq"))
         self.assertFalse(utils.match_expected(123, "123"))
 
-        self.assertTrue(utils.match_expected("123", "345", "len_eq"))
+        self.assertTrue(utils.match_expected("123", 3, "len_eq"))
         self.assertTrue(utils.match_expected(123, "123", "str_eq"))
         self.assertTrue(utils.match_expected(123, "123", "ne"))
 
