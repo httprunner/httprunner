@@ -195,7 +195,7 @@ def match_expected(value, expected, comparator="eq"):
         elif comparator in ["ne", "not_equals"]:
             assert value != expected
         elif comparator in ["len_eq", "length_equal", "count_eq"]:
-            assert len(value) == len(expected)
+            assert len(value) == expected
         elif comparator in ["lt", "less_than"]:
             assert value < expected
         elif comparator in ["le", "less_than_or_equals"]:
