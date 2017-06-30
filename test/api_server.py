@@ -41,7 +41,13 @@ def validate_request(func):
             assert authorization == req_authorization
             return func(*args, **kwds)
         except (KeyError, AssertionError):
-            return "Authorization failed!", 403
+            result = {
+                'success': False,
+                'msg': "Authorization failed!"
+            }
+            response = make_response(json.dumps(result), 403)
+            response.headers["Content-Type"] = "application/json"
+            return response
 
     return wrapper
 
