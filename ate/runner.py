@@ -41,6 +41,9 @@ class TestRunner(object):
         function_binds = config_dict.get('function_binds', {})
         self.context.bind_functions(function_binds)
 
+        module_functions = config_dict.get('import_module_functions', [])
+        self.context.import_module_functions(module_functions)
+
         variable_binds = config_dict.get('variable_binds', [])
         self.context.bind_variables(variable_binds)
 

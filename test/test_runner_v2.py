@@ -87,3 +87,19 @@ class TestRunnerV2(ApiServerUnittest):
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], [(True, []), (True, [])])
+
+    def test_run_testset_template_import_functions(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'test/data/demo_import_functions.yml')
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testset(testsets[0])
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results, [(True, []), (True, [])])
+
+    def test_run_testsets_template_import_functions(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'test/data/demo_import_functions.yml')
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], [(True, []), (True, [])])
