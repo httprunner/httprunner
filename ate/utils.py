@@ -196,6 +196,16 @@ def match_expected(value, expected, comparator="eq"):
             assert value != expected
         elif comparator in ["len_eq", "length_equal", "count_eq"]:
             assert len(value) == expected
+        elif comparator in ["len_gt", "count_gt", "length_greater_than", "count_greater_than"]:
+            assert len(value) > expected
+        elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals", \
+            "count_greater_than_or_equals"]:
+            assert len(value) >= expected
+        elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
+            assert len(value) < expected
+        elif comparator in ["len_le", "count_le", "length_less_than_or_equals", \
+            "count_less_than_or_equals"]:
+            assert len(value) <= expected
         elif comparator in ["lt", "less_than"]:
             assert value < expected
         elif comparator in ["le", "less_than_or_equals"]:
