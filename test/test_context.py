@@ -12,79 +12,53 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo_binds.yml')
         self.testcases = utils.load_testcases(testcase_file_path)
 
-    def test_context_variable_string(self):
+    def test_context_register_variables(self):
         # testcase in JSON format
         testcase1 = {
             "variable_binds": [
-                {"TOKEN": "debugtalk"}
-            ]
-        }
-        # testcase in YAML format
-        testcase2 = self.testcases[0]
-
-        for testcase in [testcase1, testcase2]:
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
-
-            context_variables = self.context.variables
-            self.assertIn("TOKEN", context_variables)
-            self.assertEqual(context_variables["TOKEN"], "debugtalk")
-
-    def test_context_variable_list(self):
-        testcase1 = {
-            "variable_binds": [
-                {"var": [1, 2, 3]}
-            ]
-        }
-        testcase2 = self.testcases[1]
-
-        for testcase in [testcase1, testcase2]:
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
-
-            context_variables = self.context.variables
-            self.assertIn("var", context_variables)
-            self.assertEqual(context_variables["var"], [1, 2, 3])
-
-    def test_context_variable_json(self):
-        testcase1 = {
-            "variable_binds": [
+                {"TOKEN": "debugtalk"},
+                {"var": [1, 2, 3]},
                 {"data": {'name': 'user', 'password': '123456'}}
             ]
         }
-        testcase2 = self.testcases[2]
+        # testcase in YAML format
+        testcase2 = self.testcases["register_variables"]
 
         for testcase in [testcase1, testcase2]:
             variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            self.context.register_variables_config(variable_binds)
 
-            context_variables = self.context.variables
+            context_variables = self.context._get_evaluated_testcase_variables()
+            self.assertIn("TOKEN", context_variables)
+            self.assertEqual(context_variables["TOKEN"], "debugtalk")
+            self.assertIn("var", context_variables)
+            self.assertEqual(context_variables["var"], [1, 2, 3])
             self.assertIn("data", context_variables)
             self.assertEqual(
                 context_variables["data"],
                 {'name': 'user', 'password': '123456'}
             )
 
-    def test_context_variable_variable(self):
+    def test_context_register_template_variables(self):
         testcase1 = {
             "variable_binds": [
                 {"GLOBAL_TOKEN": "debugtalk"},
                 {"token": "${GLOBAL_TOKEN}"}
             ]
         }
-        testcase2 = self.testcases[3]
+        testcase2 = self.testcases["register_template_variables"]
 
         for testcase in [testcase1, testcase2]:
             variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            self.context.register_variables_config(variable_binds)
 
-            context_variables = self.context.variables
+            context_variables = self.context._get_evaluated_testcase_variables()
             self.assertIn("GLOBAL_TOKEN", context_variables)
             self.assertEqual(context_variables["GLOBAL_TOKEN"], "debugtalk")
             self.assertIn("token", context_variables)
             self.assertEqual(context_variables["token"], "debugtalk")
 
-    def test_context_variable_function_lambda(self):
+    def test_context_bind_lambda_functions(self):
         testcase1 = {
             "function_binds": {
                 "add_one": lambda x: x + 1,
@@ -95,22 +69,22 @@ class VariableBindsUnittest(unittest.TestCase):
                 {"sum2nums": {"func": "add_two_nums", "args": [2, 3]}}
             ]
         }
-        testcase2 = self.testcases[4]
+        testcase2 = self.testcases["bind_lambda_functions"]
 
         for testcase in [testcase1, testcase2]:
             function_binds = testcase.get('function_binds', {})
             self.context.bind_functions(function_binds)
 
             variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            self.context.register_variables_config(variable_binds)
 
-            context_variables = self.context.variables
+            context_variables = self.context._get_evaluated_testcase_variables()
             self.assertIn("add1", context_variables)
             self.assertEqual(context_variables["add1"], 3)
             self.assertIn("sum2nums", context_variables)
             self.assertEqual(context_variables["sum2nums"], 5)
 
-    def test_context_variable_function_lambda_with_import(self):
+    def test_context_bind_lambda_functions_with_import(self):
         testcase1 = {
             "requires": ["random", "string", "hashlib"],
             "function_binds": {
@@ -120,11 +94,11 @@ class VariableBindsUnittest(unittest.TestCase):
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": {"func": "gen_random_string", "args": [5]}},
-                {"data": "{'name': 'user', 'password': '123456'}"},
-                {"md5": {"func": "gen_md5", "args": ["$TOKEN", "$data", "$random"]}}
+                {"data": '{"name": "user", "password": "123456"}'},
+                {"authorization": {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}}
             ]
         }
-        testcase2 = self.testcases[5]
+        testcase2 = self.testcases["bind_lambda_functions_with_import"]
 
         for testcase in [testcase1, testcase2]:
             requires = testcase.get('requires', [])
@@ -134,11 +108,20 @@ class VariableBindsUnittest(unittest.TestCase):
             self.context.bind_functions(function_binds)
 
             variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            self.context.register_variables_config(variable_binds)
+            context_variables = self.context._get_evaluated_testcase_variables()
 
-            context_variables = self.context.variables
+            self.assertIn("TOKEN", context_variables)
+            TOKEN = context_variables["TOKEN"]
+            self.assertEqual(TOKEN, "debugtalk")
             self.assertIn("random", context_variables)
             self.assertIsInstance(context_variables["random"], str)
             self.assertEqual(len(context_variables["random"]), 5)
-            self.assertIn("md5", context_variables)
-            self.assertEqual(len(context_variables["md5"]), 32)
+            random = context_variables["random"]
+            self.assertIn("data", context_variables)
+            data = context_variables["data"]
+            self.assertIn("authorization", context_variables)
+            self.assertEqual(len(context_variables["authorization"]), 32)
+            authorization = context_variables["authorization"]
+            self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
+
