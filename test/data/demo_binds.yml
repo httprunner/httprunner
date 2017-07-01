@@ -30,3 +30,13 @@ bind_lambda_functions_with_import:
         - random: {"func": "gen_random_string", "args": [5]}
         - data: "{'name': 'user', 'password': '123456'}"
         - authorization: {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}
+
+bind_module_functions:
+    function_binds:
+        import_module_functions:
+            - test.data.custom_functions
+    variable_binds:
+        - TOKEN: debugtalk
+        - random: {"func": "gen_random_string", "args": [5]}
+        - data: "{'name': 'user', 'password': '123456'}"
+        - authorization: {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}
