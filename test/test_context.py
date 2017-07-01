@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from ate import utils
+from ate import utils, runner
 from ate.context import Context
 
 
@@ -158,3 +158,33 @@ class VariableBindsUnittest(unittest.TestCase):
             self.assertEqual(len(context_variables["authorization"]), 32)
             authorization = context_variables["authorization"]
             self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
+
+    def test_get_parsed_request(self):
+        test_runner = runner.TestRunner()
+        testcase = {
+            "import_module_functions": ["test.data.custom_functions"],
+            "variable_binds": [
+                {"TOKEN": "debugtalk"},
+                {"random": {"func": "gen_random_string", "args": [5]}},
+                {"data": '{"name": "user", "password": "123456"}'},
+                {"authorization": {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}}
+            ],
+            "request": {
+                "url": "http://127.0.0.1:5000/api/users/1000",
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "authorization": "${authorization}",
+                    "random": "${random}"
+                },
+                "data": "${data}"
+            }
+        }
+        test_runner.init_context(testcase, level="testcase")
+        parsed_request = test_runner.context.get_parsed_request()
+        self.assertIn("authorization", parsed_request["headers"])
+        self.assertEqual(len(parsed_request["headers"]["authorization"]), 32)
+        self.assertIn("random", parsed_request["headers"])
+        self.assertEqual(len(parsed_request["headers"]["random"]), 5)
+        self.assertIn("data", parsed_request)
+        self.assertEqual(parsed_request["data"], testcase["variable_binds"][2]["data"])
