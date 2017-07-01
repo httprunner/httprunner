@@ -1,21 +1,15 @@
--
+register_variables:
     variable_binds:
         - TOKEN: "debugtalk"
-
--
-    variable_binds:
         - var: [1, 2, 3]
-
--
-    variable_binds:
         - data: {'name': 'user', 'password': '123456'}
 
--
+register_template_variables:
     variable_binds:
         - TOKEN: "debugtalk"
         - token: ${TOKEN}
 
--
+bind_lambda_functions:
     function_binds:
         add_one: "lambda x: x + 1"
         add_two_nums: "lambda x, y: x + y"
@@ -23,7 +17,7 @@
         - add1: {"func": "add_one", "args": [2]}
         - sum2nums: {"func": "add_two_nums", "args": [2, 3]}
 
--
+bind_lambda_functions_with_import:
     requires:
         - random
         - string
