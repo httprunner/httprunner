@@ -125,3 +125,36 @@ class VariableBindsUnittest(unittest.TestCase):
             authorization = context_variables["authorization"]
             self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
 
+    def test_import_module_functions(self):
+        testcase1 = {
+            "import_module_functions": ["test.data.custom_functions"],
+            "variable_binds": [
+                {"TOKEN": "debugtalk"},
+                {"random": {"func": "gen_random_string", "args": [5]}},
+                {"data": '{"name": "user", "password": "123456"}'},
+                {"authorization": {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}}
+            ]
+        }
+        testcase2 = self.testcases["bind_module_functions"]
+
+        for testcase in [testcase1, testcase2]:
+            module_functions = testcase.get('import_module_functions', [])
+            self.context.import_module_functions(module_functions)
+
+            variable_binds = testcase['variable_binds']
+            self.context.register_variables_config(variable_binds)
+            context_variables = self.context._get_evaluated_testcase_variables()
+
+            self.assertIn("TOKEN", context_variables)
+            TOKEN = context_variables["TOKEN"]
+            self.assertEqual(TOKEN, "debugtalk")
+            self.assertIn("random", context_variables)
+            self.assertIsInstance(context_variables["random"], str)
+            self.assertEqual(len(context_variables["random"]), 5)
+            random = context_variables["random"]
+            self.assertIn("data", context_variables)
+            data = context_variables["data"]
+            self.assertIn("authorization", context_variables)
+            self.assertEqual(len(context_variables["authorization"]), 32)
+            authorization = context_variables["authorization"]
+            self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
