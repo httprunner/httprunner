@@ -15,20 +15,22 @@ class TestHttpClient(ApiServerUnittest):
         url = "%s/api/users" % self.host
         return self.api_client.delete(url)
 
-    def create_user(self, uid, name, password):
-        url = "%s/api/users/%d" % (self.host, uid)
+    def test_request_with_full_url(self):
+        url = "%s/api/users/1000" % self.host
         data = {
-            'name': name,
-            'password': password
+            'name': 'user1',
+            'password': '123456'
         }
-        return self.api_client.post(url, json=data)
-
-    def test_create_user_not_existed(self):
-        resp = self.create_user(1000, 'user1', '123456')
+        resp = self.api_client.post(url, json=data)
         self.assertEqual(201, resp.status_code)
         self.assertEqual(True, resp.json()['success'])
 
-    def test_create_user_existed(self):
-        resp = self.create_user(1000, 'user1', '123456')
-        resp = self.create_user(1000, 'user1', '123456')
-        self.assertEqual(500, resp.status_code)
+    def test_request_without_base_url(self):
+        url = "/api/users/1000"
+        data = {
+            'name': 'user1',
+            'password': '123456'
+        }
+        resp = self.api_client.post(url, json=data)
+        self.assertEqual(201, resp.status_code)
+        self.assertEqual(True, resp.json()['success'])
