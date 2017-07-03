@@ -1,4 +1,5 @@
 import argparse
+import logging
 import unittest
 
 from ate import runner, utils
@@ -56,7 +57,14 @@ def main():
     parser.add_argument(
         '--testcase-path', default='testcases',
         help="testcase file path")
+    parser.add_argument(
+        '--log-level', default='INFO',
+        help="Specify logging level, default is INFO.")
 
     args = parser.parse_args()
+
+    log_level = getattr(logging, args.log_level.upper())
+    logging.basicConfig(level=log_level)
+
     task_suite = create_task(args.testcase_path)
     unittest.TextTestRunner().run(task_suite)
