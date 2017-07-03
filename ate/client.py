@@ -9,8 +9,6 @@ from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
 
 from ate.exception import ParamsError
 
-log_level = getattr(logging, "INFO")
-logging.basicConfig(level=log_level)
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
 
