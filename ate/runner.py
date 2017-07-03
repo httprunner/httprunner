@@ -9,7 +9,7 @@ class TestRunner(object):
         self.client = HttpSession(base_url)
         self.context = Context()
 
-    def init_context(self, config_dict, level):
+    def init_config(self, config_dict, level):
         """ create/update context variables binds
         @param (dict) config_dict
             {
@@ -70,7 +70,7 @@ class TestRunner(object):
         @return (tuple) test result of single testcase
             (success, diff_content_list)
         """
-        self.init_context(testcase, level="testcase")
+        self.init_config(testcase, level="testcase")
         parsed_request = self.context.get_parsed_request()
         try:
             url = parsed_request.pop('url')
@@ -123,7 +123,7 @@ class TestRunner(object):
         results = []
 
         config_dict = testset.get("config", {})
-        self.init_context(config_dict, level="testset")
+        self.init_config(config_dict, level="testset")
         testcases = testset.get("testcases", [])
         for testcase in testcases:
             result = self.run_test(testcase)
