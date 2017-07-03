@@ -12,13 +12,15 @@
         - data: ""
         - random: {"func": "gen_random_string", "args": [5]}
         - authorization: {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}
+    request:
+        base_url: http://127.0.0.1:5000
 
 - test:
     name: create user which does not exist
     variable_binds:
         - data: '{"name": "user", "password": "123456"}'
     request:
-        url: http://127.0.0.1:5000/api/users/1000
+        url: /api/users/1000
         method: POST
         headers:
             Content-Type: application/json
@@ -35,7 +37,7 @@
         - data: '{"name": "user", "password": "123456"}'
         - expected_status_code: 500
     request:
-        url: http://127.0.0.1:5000/api/users/1000
+        url: /api/users/1000
         method: POST
         headers:
             Content-Type: application/json
