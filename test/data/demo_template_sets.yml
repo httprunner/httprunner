@@ -32,7 +32,7 @@
         - {"check": "content.success", "comparator": "eq", "expected": true}
 
 - test:
-    name: create user which does not exist
+    name: create user which does exist
     variable_binds:
         - data: '{"name": "user", "password": "123456"}'
         - expected_status_code: 500
