@@ -180,7 +180,7 @@ class VariableBindsUnittest(unittest.TestCase):
                 "data": "${data}"
             }
         }
-        test_runner.init_context(testcase, level="testcase")
+        test_runner.init_config(testcase, level="testcase")
         parsed_request = test_runner.context.get_parsed_request()
         self.assertIn("authorization", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["authorization"]), 32)
