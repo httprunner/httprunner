@@ -3,7 +3,7 @@ from ate.client import HttpSession
 from ate.context import Context
 
 
-class TestRunner(object):
+class Runner(object):
 
     def __init__(self, base_url=None):
         self.client = HttpSession(base_url)
