@@ -44,6 +44,9 @@ class Runner(object):
         self.context.register_variables_config(variable_binds, level)
 
         request_config = config_dict.get('request', {})
+        if level == "testset":
+            base_url = request_config.pop("base_url", None)
+            self.client = HttpSession(base_url)
         self.context.register_request(request_config, level)
 
     def run_test(self, testcase):
@@ -72,6 +75,7 @@ class Runner(object):
         """
         self.init_config(testcase, level="testcase")
         parsed_request = self.context.get_parsed_request()
+
         try:
             url = parsed_request.pop('url')
             method = parsed_request.pop('method')
