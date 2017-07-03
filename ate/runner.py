@@ -5,8 +5,8 @@ from ate.context import Context
 
 class TestRunner(object):
 
-    def __init__(self):
-        self.client = HttpSession()
+    def __init__(self, base_url=None):
+        self.client = HttpSession(base_url)
         self.context = Context()
 
     def init_context(self, config_dict, level):
