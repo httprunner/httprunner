@@ -26,7 +26,7 @@ def create_suite(testset):
 
     test_runner = runner.TestRunner()
     config_dict = testset.get("config", {})
-    test_runner.init_context(config_dict, level="testset")
+    test_runner.init_config(config_dict, level="testset")
     testcases = testset.get("testcases", [])
 
     for testcase in testcases:
