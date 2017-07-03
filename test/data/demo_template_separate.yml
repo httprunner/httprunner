@@ -26,7 +26,7 @@
         - {"check": "content.success", "comparator": "eq", "expected": true}
 
 - test:
-    name: create user which does not exist
+    name: create user which does exist
     requires:
         - random
         - string
