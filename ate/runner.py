@@ -78,12 +78,6 @@ class TestRunner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        if "HttpNtlmAuth" in parsed_request:
-            from requests_ntlm import HttpNtlmAuth
-            auth_account = parsed_request.pop("HttpNtlmAuth")
-            parsed_request["auth"] = HttpNtlmAuth(
-                auth_account["username"], auth_account["password"])
-
         resp = self.client.request(url=url, method=method, **parsed_request)
         resp_obj = response.ResponseObject(resp)
 
