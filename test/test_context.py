@@ -160,7 +160,7 @@ class VariableBindsUnittest(unittest.TestCase):
             self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
 
     def test_get_parsed_request(self):
-        test_runner = runner.TestRunner()
+        test_runner = runner.Runner()
         testcase = {
             "import_module_functions": ["test.data.custom_functions"],
             "variable_binds": [

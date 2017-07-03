@@ -8,7 +8,7 @@ class TestRunnerV2(ApiServerUnittest):
     authentication = True
 
     def setUp(self):
-        self.test_runner = runner.TestRunner()
+        self.test_runner = runner.Runner()
         self.clear_users()
 
     def clear_users(self):

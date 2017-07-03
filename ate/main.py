@@ -20,11 +20,11 @@ class ApiTestCase(unittest.TestCase):
 
 def create_suite(testset):
     """ create test suite with a testset, it may include one or several testcases.
-        each suite should initialize a seperate TestRunner() with testset config.
+        each suite should initialize a seperate Runner() with testset config.
     """
     suite = unittest.TestSuite()
 
-    test_runner = runner.TestRunner()
+    test_runner = runner.Runner()
     config_dict = testset.get("config", {})
     test_runner.init_config(config_dict, level="testset")
     testcases = testset.get("testcases", [])
