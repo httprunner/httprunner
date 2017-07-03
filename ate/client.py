@@ -97,6 +97,12 @@ class HttpSession(requests.Session):
         request_meta["method"] = method
         request_meta["start_time"] = time.time()
 
+        if "HttpNtlmAuth" in kwargs:
+            from requests_ntlm import HttpNtlmAuth
+            auth_account = kwargs.pop("HttpNtlmAuth")
+            kwargs["auth"] = HttpNtlmAuth(
+                auth_account["username"], auth_account["password"])
+
         response = self._send_request_safe_mode(method, url, **kwargs)
         request_meta["url"] = (response.history and response.history[0] or response)\
             .request.path_url
