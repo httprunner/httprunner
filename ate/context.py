@@ -160,7 +160,8 @@ class Context(object):
             if "func" in data:
                 # this is a function, e.g. {"func": "gen_random_string", "args": [5]}
                 # function marker: "func" key in dict
-                # the function will be called, and its return value will be binded to the variable.
+                # the function will be called, and its return value will be binded
+                # to the testcase context variable.
                 func_name = data['func']
                 args = self.get_eval_value(data.get('args', []))
                 kargs = self.get_eval_value(data.get('kargs', {}))

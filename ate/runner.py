@@ -1,13 +1,12 @@
-import requests
-
 from ate import exception, response
+from ate.client import HttpSession
 from ate.context import Context
 
 
 class TestRunner(object):
 
     def __init__(self):
-        self.client = requests.Session()
+        self.client = HttpSession()
         self.context = Context()
 
     def init_context(self, config_dict, level):
