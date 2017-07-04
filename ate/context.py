@@ -178,9 +178,9 @@ class Context(object):
             fuction_meta = utils.parse_function(data)
             func_name = fuction_meta['func_name']
             args = fuction_meta.get('args', [])
-            kargs = fuction_meta.get('kargs', {})
+            kwargs = fuction_meta.get('kwargs', {})
             args = self.get_eval_value(args)
-            kargs = self.get_eval_value(kargs)
-            return self.testcase_config["functions"][func_name](*args, **kargs)
+            kwargs = self.get_eval_value(kwargs)
+            return self.testcase_config["functions"][func_name](*args, **kwargs)
         else:
             return data
