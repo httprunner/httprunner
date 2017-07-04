@@ -294,3 +294,18 @@ def match_expected(value, expected, comparator="eq"):
         return True
     except AssertionError:
         return False
+
+def deep_update_dict(origin_dict, override_dict):
+    """ update origin dict with override dict recursively
+    e.g. origin_dict = {'a': 1, 'b': {'c': 2, 'd': 4}}
+         override_dict = {'b': {'c': 3}}
+    return: {'a': 1, 'b': {'c': 3, 'd': 4}}
+    """
+    for key, val in override_dict.items():
+        if isinstance(val, dict):
+            tmp = deep_update_dict(origin_dict.get(key, {}), val)
+            origin_dict[key] = tmp
+        else:
+            origin_dict[key] = override_dict[key]
+
+    return origin_dict
