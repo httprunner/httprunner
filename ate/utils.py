@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import json
 import os.path
@@ -15,6 +16,8 @@ except NameError:
     string_type = str
     PYTHON_VERSION = 3
 
+variable_regexp = re.compile(r"^\$(\w+)$")
+function_regexp = re.compile(r"^\$\{(\w+)\(([\w =,]*)\)\}$")
 
 def gen_random_string(str_len):
     return ''.join(
@@ -127,6 +130,80 @@ def load_testcases_by_path(path):
 
     else:
         return []
+
+def is_variable(content):
+    """ check if content is a variable, which is in format $variable
+    @param (str) content
+    @return (bool) True or False
+
+    e.g. $variable => True
+         abc => False
+    """
+    matched = variable_regexp.match(content)
+    return True if matched else False
+
+def parse_variable(content):
+    """ parse variable name from string content.
+    @param (str) content
+    @return (str) variable name
+
+    e.g. $variable => variable
+    """
+    matched = variable_regexp.match(content)
+    return matched.group(1)
+
+def is_functon(content):
+    """ check if content is a function, which is in format ${func()}
+    @param (str) content
+    @return (bool) True or False
+
+    e.g. ${func()} => True
+         ${func(5)} => True
+         ${func(1, 2)} => True
+         ${func(a=1, b=2)} => True
+         $abc => False
+         abc => False
+    """
+    matched = function_regexp.match(content)
+    return True if matched else False
+
+def parse_string_value(str_value):
+    try:
+        return ast.literal_eval(str_value)
+    except ValueError:
+        return str_value
+
+def parse_function(content):
+    """ parse function name and args from string content.
+    @param (str) content
+    @return (dict) function name and args
+
+    e.g. ${func()} => {'func_name': 'func', 'args': [], 'kwargs': {}}
+         ${func(5)} => {'func_name': 'func', 'args': [5], 'kwargs': {}}
+         ${func(1, 2)} => {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
+         ${func(a=1, b=2)} => {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+         ${func(1, 2, a=3, b=4)} => {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
+    """
+    function_meta = {
+        "args": [],
+        "kwargs": {}
+    }
+    matched = function_regexp.match(content)
+    function_meta["func_name"] = matched.group(1)
+
+    args_str = matched.group(2).replace(" ", "")
+    if args_str == "":
+        return function_meta
+
+    args_list = args_str.split(',')
+    for arg in args_list:
+        if '=' in arg:
+            key, value = arg.split('=')
+            function_meta["kwargs"][key] = parse_string_value(value)
+        else:
+            function_meta["args"].append(parse_string_value(arg))
+
+    return function_meta
 
 def parse_content_with_variables(content, variables_binds):
     """ replace variables with bind value
