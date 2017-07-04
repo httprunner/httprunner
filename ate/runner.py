@@ -26,7 +26,7 @@ class Runner(object):
                 "import_module_functions": ["test.data.custom_functions"],
                 "variable_binds": [
                     {"TOKEN": "debugtalk"},
-                    {"random": {"func": "gen_random_string", "args": [5]}},
+                    {"random": "${gen_random_string(5)}"},
                 ]
             }
         @param (str) context level, testcase or testset
@@ -62,8 +62,8 @@ class Runner(object):
                     "method": "POST",
                     "headers": {
                         "Content-Type": "application/json",
-                        "authorization": "${authorization}",
-                        "random": "${random}"
+                        "authorization": "$authorization",
+                        "random": "$random"
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },

@@ -4,9 +4,9 @@
         - test.data.custom_functions
     variable_binds:
         - TOKEN: debugtalk
-        - json: {"name": "user", "password": "123456"}
-        - random: {"func": "gen_random_string", "args": [5]}
-        - authorization: {"func": "gen_md5", "args": ["${TOKEN}", "${json}", "${random}"]}
+        - json: {}
+        - random: ${gen_random_string(5)}
+        - authorization: ${gen_md5($TOKEN, $json, $random)}
 
 - test:
     name: create user which does not exist
@@ -17,9 +17,9 @@
         method: POST
         headers:
             Content-Type: application/json
-            authorization: "${authorization}"
-            random: "${random}"
-        json: "${json}"
+            authorization: $authorization
+            random: $random
+        json: $json
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
@@ -33,9 +33,9 @@
         method: POST
         headers:
             Content-Type: application/json
-            authorization: "${authorization}"
-            random: "${random}"
-        json: "${json}"
+            authorization: $authorization
+            random: $random
+        json: $json
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 500}
         - {"check": "content.success", "comparator": "eq", "expected": false}
