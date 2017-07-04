@@ -17,7 +17,7 @@ except NameError:
     PYTHON_VERSION = 3
 
 variable_regexp = re.compile(r"^\$(\w+)$")
-function_regexp = re.compile(r"^\$\{(\w+)\(([\w =,]*)\)\}$")
+function_regexp = re.compile(r"^\$\{(\w+)\(([\$\w =,]*)\)\}$")
 
 def gen_random_string(str_len):
     return ''.join(
@@ -168,9 +168,18 @@ def is_functon(content):
     return True if matched else False
 
 def parse_string_value(str_value):
+    """ parse string to number if possible
+    e.g. "123" => 123
+         "12.2" => 12.3
+         "abc" => "abc"
+         "$var" => "$var"
+    """
     try:
         return ast.literal_eval(str_value)
     except ValueError:
+        return str_value
+    except SyntaxError:
+        # e.g. $var, ${func}
         return str_value
 
 def parse_function(content):
