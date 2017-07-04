@@ -43,7 +43,7 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase1 = {
             "variable_binds": [
                 {"GLOBAL_TOKEN": "debugtalk"},
-                {"token": "${GLOBAL_TOKEN}"}
+                {"token": "$GLOBAL_TOKEN"}
             ]
         }
         testcase2 = self.testcases["register_template_variables"]
@@ -65,8 +65,8 @@ class VariableBindsUnittest(unittest.TestCase):
                 "add_two_nums": lambda x, y: x + y
             },
             "variable_binds": [
-                {"add1": {"func": "add_one", "args": [2]}},
-                {"sum2nums": {"func": "add_two_nums", "args": [2, 3]}}
+                {"add1": "${add_one(2)}"},
+                {"sum2nums": "${add_two_nums(2,3)}"}
             ]
         }
         testcase2 = self.testcases["bind_lambda_functions"]
@@ -93,9 +93,9 @@ class VariableBindsUnittest(unittest.TestCase):
             },
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
-                {"random": {"func": "gen_random_string", "args": [5]}},
+                {"random": "${gen_random_string(5)}"},
                 {"data": '{"name": "user", "password": "123456"}'},
-                {"authorization": {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}}
+                {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
             ]
         }
         testcase2 = self.testcases["bind_lambda_functions_with_import"]
@@ -130,9 +130,9 @@ class VariableBindsUnittest(unittest.TestCase):
             "import_module_functions": ["test.data.custom_functions"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
-                {"random": {"func": "gen_random_string", "args": [5]}},
+                {"random": "${gen_random_string(5)}"},
                 {"data": '{"name": "user", "password": "123456"}'},
-                {"authorization": {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}}
+                {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
             ]
         }
         testcase2 = self.testcases["bind_module_functions"]
@@ -165,19 +165,19 @@ class VariableBindsUnittest(unittest.TestCase):
             "import_module_functions": ["test.data.custom_functions"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
-                {"random": {"func": "gen_random_string", "args": [5]}},
+                {"random": "${gen_random_string(5)}"},
                 {"data": '{"name": "user", "password": "123456"}'},
-                {"authorization": {"func": "gen_md5", "args": ["${TOKEN}", "${data}", "${random}"]}}
+                {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
             ],
             "request": {
                 "url": "http://127.0.0.1:5000/api/users/1000",
                 "method": "POST",
                 "headers": {
                     "Content-Type": "application/json",
-                    "authorization": "${authorization}",
-                    "random": "${random}"
+                    "authorization": "$authorization",
+                    "random": "$random"
                 },
-                "data": "${data}"
+                "data": "$data"
             }
         }
         test_runner.init_config(testcase, level="testcase")
@@ -194,14 +194,14 @@ class VariableBindsUnittest(unittest.TestCase):
             "str_1": "str_value1",
             "str_2": "str_value2"
         }
-        self.assertEqual(self.context.get_eval_value("${str_1}"), "str_value1")
-        self.assertEqual(self.context.get_eval_value("${str_2}"), "str_value2")
+        self.assertEqual(self.context.get_eval_value("$str_1"), "str_value1")
+        self.assertEqual(self.context.get_eval_value("$str_2"), "str_value2")
         self.assertEqual(
-            self.context.get_eval_value(["${str_1}", "str3"]),
+            self.context.get_eval_value(["$str_1", "str3"]),
             ["str_value1", "str3"]
         )
         self.assertEqual(
-            self.context.get_eval_value({"key": "${str_1}"}),
+            self.context.get_eval_value({"key": "$str_1"}),
             {"key": "str_value1"}
         )
 
@@ -209,6 +209,10 @@ class VariableBindsUnittest(unittest.TestCase):
         self.context.testcase_config["functions"]["gen_random_string"] = \
             lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
                 for _ in range(str_len))
-        result = self.context.get_eval_value(
-            {"func": "gen_random_string", "args": [5]})
+        result = self.context.get_eval_value("${gen_random_string(5)}")
         self.assertEqual(len(result), 5)
+
+        add_two_nums = lambda a, b=1: a + b
+        self.context.testcase_config["functions"]["add_two_nums"] = add_two_nums
+        self.assertEqual(self.context.get_eval_value("${add_two_nums(1)}"), 2)
+        self.assertEqual(self.context.get_eval_value("${add_two_nums(1, 2)}"), 3)

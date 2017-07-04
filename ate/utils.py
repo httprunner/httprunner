@@ -214,26 +214,6 @@ def parse_function(content):
 
     return function_meta
 
-def parse_content_with_variables(content, variables_binds):
-    """ replace variables with bind value
-    """
-    # check if content includes ${variable}
-    matched = re.match(r"(.*)\$\{(.*)\}(.*)", content)
-    if matched:
-        # this is a variable, and will replace with its bind value
-        variable_name = matched.group(2)
-        value = variables_binds.get(variable_name)
-        if value is None:
-            raise ParamsError(
-                "%s is not defined in bind variables!" % variable_name)
-        if matched.group(1) or matched.group(3):
-            # e.g. /api/users/${uid}
-            return re.sub(r"\$\{.*\}", value, content)
-
-        return value
-
-    return content
-
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
     @param (json_content) json_content

@@ -1,19 +1,40 @@
-from ate import utils
+import re
+from ate.exception import ParamsError
 
+
+def parse_content_with_variables(content, variables_binds):
+    """ replace variables with bind value
+    """
+    # check if content includes $variable
+    matched = re.match(r"^(.*)\$(\w+)(.*)$", content)
+    if matched:
+        # this is a variable, and will replace with its bind value
+        variable_name = matched.group(2)
+        value = variables_binds.get(variable_name)
+        if value is None:
+            raise ParamsError(
+                "%s is not defined in bind variables!" % variable_name)
+        if matched.group(1) or matched.group(3):
+            # e.g. /api/users/$uid
+            return content.replace("$%s" % variable_name, value)
+
+        return value
+
+    return content
 
 def parse_template(testcase_template, variables_binds):
     """ parse testcase_template, replace all variables with bind value.
-    variables marker: ${variable}.
+    variables marker: $variable.
     @param (dict) testcase_template
         {
-            "url": "http://127.0.0.1:5000/api/users/${uid}",
+            "url": "http://127.0.0.1:5000/api/users/$uid",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json",
-                "authorization": "${authorization}",
-                "random": "${random}"
+                "authorization": "$authorization",
+                "random": "$random"
             },
-            "body": "${data}"
+            "body": "$data"
         }
     @param (dict) variables binds mapping
         {
@@ -36,10 +57,9 @@ def parse_template(testcase_template, variables_binds):
 
     def substitute(content):
         """ substitute content recursively, each variable will be replaced with bind value.
-            variables marker: ${variable}.
         """
         if isinstance(content, str):
-            return utils.parse_content_with_variables(content, variables_binds)
+            return parse_content_with_variables(content, variables_binds)
 
         if isinstance(content, list):
             return [substitute(item) for item in content]
