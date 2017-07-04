@@ -279,3 +279,12 @@ class TestUtils(ApiServerUnittest):
 
         self.assertTrue(utils.match_expected("2017-06-29 17:29:58", 19, "str_len"))
         self.assertTrue(utils.match_expected("2017-06-29 17:29:58", "19", "str_len"))
+
+    def test_deep_update_dict(self):
+        origin_dict = {'a': 1, 'b': {'c': 3, 'd': 4}, 'f': 6}
+        override_dict = {'a': 2, 'b': {'c': 33, 'e': 5}, 'g': 7}
+        updated_dict = utils.deep_update_dict(origin_dict, override_dict)
+        self.assertEqual(
+            updated_dict,
+            {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7}
+        )
