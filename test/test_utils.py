@@ -170,9 +170,13 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.is_functon(content))
         content = "${func(1, 2)}"
         self.assertTrue(utils.is_functon(content))
+        content = "${func($a, $b)}"
+        self.assertTrue(utils.is_functon(content))
         content = "${func(a=1, b=2)}"
         self.assertTrue(utils.is_functon(content))
         content = "${func(1, 2, a=3, b=4)}"
+        self.assertTrue(utils.is_functon(content))
+        content = "${func(1, $b, c=$x, d=4)}"
         self.assertTrue(utils.is_functon(content))
         content = "${func}"
         self.assertFalse(utils.is_functon(content))
@@ -188,6 +192,10 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(utils.parse_string_value(str_value), 12.3)
         str_value = "a123"
         self.assertEqual(utils.parse_string_value(str_value), "a123")
+        str_value = "$var"
+        self.assertEqual(utils.parse_string_value(str_value), "$var")
+        str_value = "${func}"
+        self.assertEqual(utils.parse_string_value(str_value), "${func}")
 
     def test_parse_functon(self):
         content = "${func()}"
