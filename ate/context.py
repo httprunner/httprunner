@@ -110,8 +110,10 @@ class Context(object):
             testcase request shall inherit from testset request configs,
             but can not change testset configs, that's why we use copy.deepcopy here.
         """
-        testcase_request_config = copy.deepcopy(self.testset_config["request"])
-        testcase_request_config.update(self.testcase_config["request"])
+        testcase_request_config = utils.deep_update_dict(
+            copy.deepcopy(self.testset_config["request"]),
+            self.testcase_config["request"]
+        )
 
         parsed_request = testcase.parse_template(
             testcase_request_config,
