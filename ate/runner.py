@@ -31,6 +31,8 @@ class Runner(object):
             }
         @param (str) context level, testcase or testset
         """
+        self.context.init_context(level)
+
         requires = config_dict.get('requires', [])
         self.context.import_requires(requires)
 
