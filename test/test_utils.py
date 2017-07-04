@@ -137,6 +137,90 @@ class TestUtils(ApiServerUnittest):
         with self.assertRaises(exception.ParamsError):
             utils.parse_content_with_variables(content, variables_binds)
 
+    def test_is_variable(self):
+        content = "$var"
+        self.assertTrue(utils.is_variable(content))
+        content = "$var123"
+        self.assertTrue(utils.is_variable(content))
+        content = "$var_name"
+        self.assertTrue(utils.is_variable(content))
+        content = "var"
+        self.assertFalse(utils.is_variable(content))
+        content = "a$var"
+        self.assertFalse(utils.is_variable(content))
+        content = "$v ar"
+        self.assertFalse(utils.is_variable(content))
+        content = " "
+        self.assertFalse(utils.is_variable(content))
+        content = "$abc*"
+        self.assertFalse(utils.is_variable(content))
+
+    def test_parse_variable(self):
+        content = "$var"
+        self.assertEqual(utils.parse_variable(content), "var")
+        content = "$var123"
+        self.assertEqual(utils.parse_variable(content), "var123")
+        content = "$var_name"
+        self.assertEqual(utils.parse_variable(content), "var_name")
+
+    def test_is_functon(self):
+        content = "${func()}"
+        self.assertTrue(utils.is_functon(content))
+        content = "${func(5)}"
+        self.assertTrue(utils.is_functon(content))
+        content = "${func(1, 2)}"
+        self.assertTrue(utils.is_functon(content))
+        content = "${func(a=1, b=2)}"
+        self.assertTrue(utils.is_functon(content))
+        content = "${func(1, 2, a=3, b=4)}"
+        self.assertTrue(utils.is_functon(content))
+        content = "${func}"
+        self.assertFalse(utils.is_functon(content))
+        content = "$abc"
+        self.assertFalse(utils.is_functon(content))
+        content = "abc"
+        self.assertFalse(utils.is_functon(content))
+
+    def test_parse_string_value(self):
+        str_value = "123"
+        self.assertEqual(utils.parse_string_value(str_value), 123)
+        str_value = "12.3"
+        self.assertEqual(utils.parse_string_value(str_value), 12.3)
+        str_value = "a123"
+        self.assertEqual(utils.parse_string_value(str_value), "a123")
+
+    def test_parse_functon(self):
+        content = "${func()}"
+        self.assertEqual(
+            utils.parse_function(content),
+            {'func_name': 'func', 'args': [], 'kwargs': {}}
+        )
+        content = "${func(5)}"
+        self.assertEqual(
+            utils.parse_function(content),
+            {'func_name': 'func', 'args': [5], 'kwargs': {}}
+        )
+        content = "${func(1, 2)}"
+        self.assertEqual(
+            utils.parse_function(content),
+            {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
+        )
+        content = "${func(a=1, b=2)}"
+        self.assertEqual(
+            utils.parse_function(content),
+            {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+        )
+        content = "${func(a= 1, b =2)}"
+        self.assertEqual(
+            utils.parse_function(content),
+            {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+        )
+        content = "${func(1, 2, a=3, b=4)}"
+        self.assertEqual(
+            utils.parse_function(content),
+            {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
+        )
+
     def test_query_json(self):
         json_content = {
             "ids": [1, 2, 3, 4],
