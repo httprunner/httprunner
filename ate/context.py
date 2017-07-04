@@ -78,9 +78,9 @@ class Context(object):
         e.g.
             [
                 {"TOKEN": "debugtalk"},
-                {"random": {"func": "gen_random_string", "args": [5]}},
+                {"random": "${gen_random_string(5)}"},
                 {"json": {'name': 'user', 'password': '123456'}},
-                {"md5": {"func": "gen_md5", "args": ["${TOKEN}", "${json}", "${random}"]}}
+                {"md5": "${gen_md5($TOKEN, $json, $random)}"}
             ]
         """
         if level == "testset":
@@ -148,29 +148,39 @@ class Context(object):
 
     def get_eval_value(self, data):
         """ evaluate data recursively, each variable in data will be evaluated.
-            variables marker: ${variable}.
         """
-        if isinstance(data, str):
-            return utils.parse_content_with_variables(data, self.testcase_variables_mapping)
-
-        if isinstance(data, list):
+        if isinstance(data, (list, tuple)):
             return [self.get_eval_value(item) for item in data]
 
         if isinstance(data, dict):
-            if "func" in data:
-                # this is a function, e.g. {"func": "gen_random_string", "args": [5]}
-                # function marker: "func" key in dict
-                # the function will be called, and its return value will be binded
-                # to the testcase context variable.
-                func_name = data['func']
-                args = self.get_eval_value(data.get('args', []))
-                kargs = self.get_eval_value(data.get('kargs', {}))
-                return self.testcase_config["functions"][func_name](*args, **kargs)
-            else:
-                evaluated_data = {}
-                for key, value in data.items():
-                    evaluated_data[key] = self.get_eval_value(value)
+            evaluated_data = {}
+            for key, value in data.items():
+                evaluated_data[key] = self.get_eval_value(value)
 
-                return evaluated_data
+            return evaluated_data
 
-        return data
+        if isinstance(data, (int, float)):
+            return data
+
+        # data is in string format here
+        data = data.strip()
+        if utils.is_variable(data):
+            # variable marker: $var
+            variable_name = utils.parse_variable(data)
+            value = self.testcase_variables_mapping.get(variable_name)
+            if value is None:
+                raise exception.ParamsError(
+                    "%s is not defined in bind variables!" % variable_name)
+            return value
+
+        elif utils.is_functon(data):
+            # function marker: ${func(1, 2, a=3, b=4)}
+            fuction_meta = utils.parse_function(data)
+            func_name = fuction_meta['func_name']
+            args = fuction_meta.get('args', [])
+            kargs = fuction_meta.get('kargs', {})
+            args = self.get_eval_value(args)
+            kargs = self.get_eval_value(kargs)
+            return self.testcase_config["functions"][func_name](*args, **kargs)
+        else:
+            return data

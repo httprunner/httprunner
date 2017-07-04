@@ -1,6 +1,6 @@
 import unittest
 
-from ate.testcase import parse_template
+from ate.testcase import parse_template, parse_content_with_variables
 from ate import exception
 
 
@@ -22,22 +22,22 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_parse_testcase_template(self):
         testcase = {
             "request": {
-                "url": "http://127.0.0.1:5000/api/users/${uid}",
+                "url": "http://127.0.0.1:5000/api/users/$uid",
                 "method": "POST",
                 "headers": {
                     "Content-Type": "application/json",
-                    "authorization": "${authorization}",
-                    "random": "${random}"
+                    "authorization": "$authorization",
+                    "random": "$random"
                 },
-                "body": "${json}"
+                "body": "$json"
             },
             "response": {
-                "status_code": "${expected_status}",
+                "status_code": "$expected_status",
                 "headers": {
                     "Content-Type": "application/json"
                 },
                 "body": {
-                    "success": "${expected_success}",
+                    "success": "$expected_success",
                     "msg": "user created successfully."
                 }
             }
@@ -72,8 +72,8 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_parse_testcase_template_miss_bind_variable(self):
         testcase = {
             "request": {
-                "url": "http://127.0.0.1:5000/api/users/${uid}",
-                "method": "${method}"
+                "url": "http://127.0.0.1:5000/api/users/$uid",
+                "method": "$method"
             }
         }
         with self.assertRaises(exception.ParamsError):
@@ -82,8 +82,8 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_parse_testcase_with_new_variable_binds(self):
         testcase = {
             "request": {
-                "url": "http://127.0.0.1:5000/api/users/${uid}",
-                "method": "${method}"
+                "url": "http://127.0.0.1:5000/api/users/$uid",
+                "method": "$method"
             }
         }
         new_variable_binds = {
@@ -96,3 +96,25 @@ class TestcaseParserUnittest(unittest.TestCase):
             parsed_testcase["request"]["method"],
             new_variable_binds["method"]
         )
+
+    def test_parse_content_with_variables(self):
+        content = "$var"
+        variables_binds = {
+            "var": "abc"
+        }
+        result = parse_content_with_variables(content, variables_binds)
+        self.assertEqual(result, "abc")
+
+        content = "123$var/456"
+        variables_binds = {
+            "var": "abc"
+        }
+        result = parse_content_with_variables(content, variables_binds)
+        self.assertEqual(result, "123abc/456")
+
+        content = "$var1"
+        variables_binds = {
+            "var2": "abc"
+        }
+        with self.assertRaises(exception.ParamsError):
+            parse_content_with_variables(content, variables_binds)
