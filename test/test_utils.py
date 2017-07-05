@@ -247,7 +247,7 @@ class TestUtils(ApiServerUnittest):
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "Leo")
 
-    def test_compare(self):
+    def test_match_expected(self):
         self.assertTrue(utils.match_expected(1, 1, "eq"))
         self.assertTrue(utils.match_expected("abc", "abc", "eq"))
         self.assertTrue(utils.match_expected("abc", "abc"))
@@ -279,6 +279,10 @@ class TestUtils(ApiServerUnittest):
 
         self.assertTrue(utils.match_expected("2017-06-29 17:29:58", 19, "str_len"))
         self.assertTrue(utils.match_expected("2017-06-29 17:29:58", "19", "str_len"))
+
+        self.assertTrue(utils.match_expected("abc123", "ab", "startswith"))
+        self.assertTrue(utils.match_expected("123abc", 12, "startswith"))
+        self.assertTrue(utils.match_expected(12345, 123, "startswith"))
 
     def test_deep_update_dict(self):
         origin_dict = {'a': 1, 'b': {'c': 3, 'd': 4}, 'f': 6}
