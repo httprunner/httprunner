@@ -288,6 +288,8 @@ def match_expected(value, expected, comparator="eq"):
             assert re.match(expected, value)
         elif comparator in ["str_len", "string_length"]:
             assert len(value) == int(expected)
+        elif comparator in ["startswith"]:
+            assert str(value).startswith(str(expected))
         else:
             raise ParamsError("comparator not supported!")
 
