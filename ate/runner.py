@@ -1,3 +1,5 @@
+import requests
+
 from ate import exception, response
 from ate.client import HttpSession
 from ate.context import Context
@@ -5,8 +7,8 @@ from ate.context import Context
 
 class Runner(object):
 
-    def __init__(self, base_url=None):
-        self.client = HttpSession(base_url)
+    def __init__(self, http_client_session=None):
+        self.http_client_session = http_client_session
         self.context = Context()
 
     def init_config(self, config_dict, level):
@@ -48,7 +50,10 @@ class Runner(object):
         request_config = config_dict.get('request', {})
         if level == "testset":
             base_url = request_config.pop("base_url", None)
-            self.client = HttpSession(base_url)
+            self.http_client_session = self.http_client_session or HttpSession(base_url)
+        else:
+            # testcase
+            self.http_client_session = self.http_client_session or requests.Session()
         self.context.register_request(request_config, level)
 
     def run_test(self, testcase):
@@ -84,7 +89,7 @@ class Runner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        resp = self.client.request(url=url, method=method, **parsed_request)
+        resp = self.http_client_session.request(url=url, method=method, **parsed_request)
         resp_obj = response.ResponseObject(resp)
 
         extract_binds = testcase.get("extract_binds", {})
