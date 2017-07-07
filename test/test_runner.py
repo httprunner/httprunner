@@ -6,8 +6,7 @@ from test.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        base_url = "http://127.0.0.1:5000"
-        self.test_runner = runner.Runner(base_url)
+        self.test_runner = runner.Runner()
         self.clear_users()
 
     def clear_users(self):
@@ -32,7 +31,7 @@ class TestRunner(ApiServerUnittest):
         testcase = {
             "name": "create user which does not exist",
             "request": {
-                "url": "/api/users/1000",
+                "url": "http://127.0.0.1:5000/api/users/1000",
                 "method": "POST",
                 "headers": {
                     "content-type": "application/json"
