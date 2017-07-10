@@ -28,6 +28,74 @@ Run unittest to make sure everything is OK.
 $ python -m unittest discover
 ```
 
+## 编写测试用例
+
+推荐采用`YAML`格式编写测试用例。
+
+如下是一个典型的接口测试用例示例。具体的编写方式请阅读详细文档。
+
+```python
+- config:
+    name: "create user testsets."
+    requires:
+        - random
+        - string
+        - hashlib
+    function_binds:
+        gen_random_string: "lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(str_len))"
+        gen_md5: "lambda *str_args: hashlib.md5(''.join(str_args).encode('utf-8')).hexdigest()"
+    variable_binds:
+        - TOKEN: debugtalk
+        - data: ""
+        - random: ${gen_random_string(5)}
+        - authorization: ${gen_md5($TOKEN, $data, $random)}
+    request:
+        base_url: http://127.0.0.1:5000
+
+- test:
+    name: create user which does not exist
+    variable_binds:
+        - data: '{"name": "user", "password": "123456"}'
+    request:
+        url: /api/users/1000
+        method: POST
+        headers:
+            Content-Type: application/json
+            authorization: $authorization
+            random: $random
+        data: $data
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 201}
+        - {"check": "content.success", "comparator": "eq", "expected": true}
+
+- test:
+    name: create user which does exist
+    variable_binds:
+        - data: '{"name": "user", "password": "123456"}'
+        - expected_status_code: 500
+    request:
+        url: /api/users/1000
+        method: POST
+        headers:
+            Content-Type: application/json
+            authorization: $authorization
+            random: $random
+        data: $data
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 500}
+        - {"check": "content.success", "comparator": "eq", "expected": false}
+```
+
+## 运行测试用例
+
+`ApiTestEngine`可指定运行特定的测试用例文件，或运行指定目录下的所有测试用例。
+
+```bash
+$ python main.py --testcase-path filepath/testcase.yml
+
+$ python main.py --testcase-path testcases_folder_path
+```
+
 ## Supported Python Versions
 
 Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
@@ -35,5 +103,6 @@ Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
 ## 阅读更多
 
 - [《接口自动化测试的最佳工程实践（ApiTestEngine）》](http://debugtalk.com/post/ApiTestEngine-api-test-best-practice/)
-- [《ApiTestEngine 演化之路（0）开发未动，测试先行》](http://debugtalk.com/post/ApiTestEngine-0-setup-CI-test/)
-- [《ApiTestEngine 演化之路（1）搭建基础框架》](http://debugtalk.com/post/ApiTestEngine-1-setup-basic-framework/)
+- [《ApiTestEngine 演进之路（0）开发未动，测试先行》](http://debugtalk.com/post/ApiTestEngine-0-setup-CI-test/)
+- [《ApiTestEngine 演进之路（1）搭建基础框架》](http://debugtalk.com/post/ApiTestEngine-1-setup-basic-framework/)
+- [《ApiTestEngine 演进之路（2）探索优雅的测试用例描述方式》](http://debugtalk.com/post/ApiTestEngine-2-best-testcase-description/)
