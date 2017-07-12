@@ -7,7 +7,7 @@ import re
 import string
 import yaml
 
-from ate.exception import ParamsError
+from exception import ParamsError
 
 try:
     string_type = basestring
