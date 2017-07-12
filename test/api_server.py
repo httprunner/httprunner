@@ -3,7 +3,7 @@ import json
 from functools import wraps
 
 from flask import Flask, make_response, request
-from ate import utils
+from ate import *
 
 app = Flask(__name__)
 
