@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 import unittest
@@ -73,5 +74,8 @@ def main():
     log_level = getattr(logging, args.log_level.upper())
     logging.basicConfig(level=log_level)
 
-    task_suite = create_task(args.testcase_path)
-    HtmlTestRunner.HTMLTestRunner(output="test-reports").run(task_suite)
+    testcase_path = args.testcase_path.rstrip('/')
+    task_suite = create_task(testcase_path)
+
+    output_folder_name = os.path.basename(os.path.splitext(testcase_path)[0])
+    HtmlTestRunner.HTMLTestRunner(output=output_folder_name).run(task_suite)
