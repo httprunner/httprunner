@@ -165,7 +165,7 @@ class Context(object):
             return data
 
         # data is in string format here
-        data = data.strip()
+        data = "" if data is None else data.strip()
         if utils.is_variable(data):
             # variable marker: $var
             variable_name = utils.parse_variable(data)
