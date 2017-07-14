@@ -2,6 +2,8 @@ import argparse
 import logging
 import unittest
 
+import HtmlTestRunner
+
 from ate import runner, utils
 
 
@@ -31,6 +33,11 @@ def create_suite(testset):
     testcases = testset.get("testcases", [])
 
     for testcase in testcases:
+        if utils.PYTHON_VERSION == 3:
+            ApiTestCase.runTest.__doc__ = testcase['name']
+        else:
+            ApiTestCase.runTest.__func__.__doc__ = testcase['name']
+
         test = ApiTestCase(test_runner, testcase)
         suite.addTest(test)
 
@@ -67,4 +74,4 @@ def main():
     logging.basicConfig(level=log_level)
 
     task_suite = create_task(args.testcase_path)
-    unittest.TextTestRunner().run(task_suite)
+    HtmlTestRunner.HTMLTestRunner(output="test-reports").run(task_suite)
