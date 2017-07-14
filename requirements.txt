@@ -4,3 +4,4 @@ flask
 PyYAML
 coveralls
 coverage
+-e git+https://github.com/debugtalk/HtmlTestRunner.git#egg=HtmlTestRunner
