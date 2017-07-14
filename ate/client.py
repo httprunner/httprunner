@@ -130,7 +130,7 @@ class HttpSession(requests.Session):
                 method=method, url=url, exception=str(e)))
         else:
             logging.info(
-                """ status_code: {}! response_time: {} ms, response_length: {} bytes"""\
+                """ status_code: {}, response_time: {} ms, response_length: {} bytes"""\
                 .format(request_meta["status_code"], request_meta["response_time"], \
                     request_meta["content_size"]))
 
