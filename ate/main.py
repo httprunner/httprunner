@@ -68,6 +68,9 @@ def main():
     parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
+    parser.add_argument(
+        '--report-name',
+        help="Specify report name, default is generated time.")
 
     args = parser.parse_args()
 
@@ -78,4 +81,8 @@ def main():
     task_suite = create_task(testcase_path)
 
     output_folder_name = os.path.basename(os.path.splitext(testcase_path)[0])
-    HtmlTestRunner.HTMLTestRunner(output=output_folder_name).run(task_suite)
+    kwargs = {
+        "output": output_folder_name,
+        "report_name": args.report_name
+    }
+    HtmlTestRunner.HTMLTestRunner(**kwargs).run(task_suite)
