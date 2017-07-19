@@ -4,6 +4,7 @@ import logging
 
 import PyUnitReport
 
+from ate import __version__
 from ate.task import create_task
 
 def main():
@@ -11,6 +12,9 @@ def main():
     """
     parser = argparse.ArgumentParser(
         description='Api Test Engine.')
+    parser.add_argument(
+        '-V', '--version', dest='version', action='store_true',
+        help="show version")
     parser.add_argument(
         '--testcase-path', default='testcases',
         help="testcase file path")
@@ -22,6 +26,10 @@ def main():
         help="Specify report name, default is generated time.")
 
     args = parser.parse_args()
+
+    if args.version:
+        print(__version__)
+        exit(0)
 
     log_level = getattr(logging, args.log_level.upper())
     logging.basicConfig(level=log_level)
