@@ -16,8 +16,8 @@ def main():
         '-V', '--version', dest='version', action='store_true',
         help="show version")
     parser.add_argument(
-        '--testcase-path', default='testcases',
-        help="testcase file path")
+        'testset_paths', nargs='*',
+        help="testset file path")
     parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
@@ -34,12 +34,20 @@ def main():
     log_level = getattr(logging, args.log_level.upper())
     logging.basicConfig(level=log_level)
 
-    testcase_path = args.testcase_path.rstrip('/')
-    task_suite = create_task(testcase_path)
+    report_name = args.report_name
+    if report_name and len(args.testset_paths) > 1:
+        report_name = None
+        logging.warning("More than one testset paths specified, \
+                        report name is ignored, use generated time instead.")
 
-    output_folder_name = os.path.basename(os.path.splitext(testcase_path)[0])
-    kwargs = {
-        "output": output_folder_name,
-        "report_name": args.report_name
-    }
-    PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
+    for testset_path in args.testset_paths:
+
+        testset_path = testset_path.strip('/')
+        task_suite = create_task(testset_path)
+
+        output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
+        kwargs = {
+            "output": output_folder_name,
+            "report_name": report_name
+        }
+        PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
