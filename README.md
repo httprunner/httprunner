@@ -19,13 +19,7 @@
 ## Install
 
 ```bash
-$ pip install -r requirements.txt
-```
-
-Run unittest to make sure everything is OK.
-
-```bash
-$ python -m unittest discover
+$ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
 ```
 
 ## 编写测试用例
@@ -91,9 +85,9 @@ $ python -m unittest discover
 `ApiTestEngine`可指定运行特定的测试用例文件，或运行指定目录下的所有测试用例。
 
 ```bash
-$ python main.py --testcase-path filepath/testcase.yml
+$ ate --testcase-path filepath/testcase.yml
 
-$ python main.py --testcase-path testcases_folder_path
+$ ate --testcase-path testcases_folder_path
 ```
 
 ## Supported Python Versions
