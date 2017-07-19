@@ -1,2 +1,2 @@
-from ate.main import main
+from ate.cli import main
 main()
