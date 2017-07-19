@@ -2,7 +2,7 @@ import os
 import argparse
 import logging
 
-import HtmlTestRunner
+import PyUnitReport
 
 from ate.task import create_task
 
@@ -34,4 +34,4 @@ def main():
         "output": output_folder_name,
         "report_name": args.report_name
     }
-    HtmlTestRunner.HTMLTestRunner(**kwargs).run(task_suite)
+    PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
