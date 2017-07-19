@@ -22,6 +22,34 @@
 $ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
 ```
 
+执行`ate -V`，检测安装是否成功。
+
+```text
+$ ate -V
+0.1.0
+```
+
+执行`ate -h`，查看命令的帮助说明。
+
+```text
+$ ate -h
+usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
+           [testset_paths [testset_paths ...]]
+
+Api Test Engine.
+
+positional arguments:
+  testset_paths         testset file path
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -V, --version         show version
+  --log-level LOG_LEVEL
+                        Specify logging level, default is INFO.
+  --report-name REPORT_NAME
+                        Specify report name, default is generated time.
+```
+
 ## 编写测试用例
 
 推荐采用`YAML`格式编写测试用例。
@@ -82,12 +110,24 @@ $ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngi
 
 ## 运行测试用例
 
-`ApiTestEngine`可指定运行特定的测试用例文件，或运行指定目录下的所有测试用例。
+`ApiTestEngine`可指定运行特定的测试用例集文件，或运行指定目录下的所有测试用例集文件。
 
-```bash
-$ ate --testcase-path filepath/testcase.yml
+执行单个测试用例集：
 
-$ ate --testcase-path testcases_folder_path
+```text
+$ ate filepath/testcase.yml
+```
+
+执行多个测试用例集：
+
+```text
+$ ate filepath1/testcase1.yml filepath2/testcase2.yml
+```
+
+执行指定目录下的所有测试用例集：
+
+```text
+$ ate testcases_folder_path
 ```
 
 ## Supported Python Versions
