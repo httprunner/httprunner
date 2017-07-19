@@ -2,7 +2,7 @@ import os
 import random
 import requests
 from test.base import ApiServerUnittest
-from ate import main, utils
+from ate import task, utils
 
 class TestMain(ApiServerUnittest):
 
@@ -16,15 +16,15 @@ class TestMain(ApiServerUnittest):
     def test_create_suite(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
         testsets = utils.load_testcases_by_path(testcase_file_path)
-        suite = main.create_suite(testsets[0])
+        suite = task.create_suite(testsets[0])
         self.assertEqual(suite.countTestCases(), 2)
         for testcase in suite:
-            self.assertIsInstance(testcase, main.ApiTestCase)
+            self.assertIsInstance(testcase, task.ApiTestCase)
 
     def test_create_task(self):
         testcase_file_path = os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.yml')
-        task_suite = main.create_task(testcase_file_path)
+        task_suite = task.create_task(testcase_file_path)
         self.assertEqual(task_suite.countTestCases(), 2)
         for suite in task_suite:
             for testcase in suite:
-                self.assertIsInstance(testcase, main.ApiTestCase)
+                self.assertIsInstance(testcase, task.ApiTestCase)
