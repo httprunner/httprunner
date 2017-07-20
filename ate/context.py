@@ -1,6 +1,8 @@
 import copy
 import importlib
+import os
 import re
+import sys
 import types
 from collections import OrderedDict
 
@@ -67,6 +69,7 @@ class Context(object):
     def import_module_functions(self, modules, level="testcase"):
         """ import modules and bind all functions within the context
         """
+        sys.path.insert(0, os.getcwd())
         for module_name in modules:
             imported = importlib.import_module(module_name)
             imported_functions_dict = dict(filter(is_function, vars(imported).items()))
