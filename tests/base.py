@@ -3,7 +3,7 @@ import time
 import unittest
 
 from ate import utils
-from test import api_server
+from tests import api_server
 
 
 class ApiServerUnittest(unittest.TestCase):

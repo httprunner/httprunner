@@ -1,6 +1,6 @@
 import requests
 from ate import response, exception
-from test.base import ApiServerUnittest
+from tests.base import ApiServerUnittest
 
 class TestResponse(ApiServerUnittest):
 
