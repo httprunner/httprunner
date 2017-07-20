@@ -54,23 +54,27 @@ class ResponseObject(object):
 
     def extract_response(self, extract_binds):
         """ extract content from requests.Response
-        @param (dict) extract_binds
-            {
-                "resp_status_code": "status_code",
-                "resp_headers_content_type": "headers.content-type",
-                "resp_content": "content",
-                "resp_content_person_first_name": "content.person.name.first_name"
-            }
+        @param (list) extract_binds
+            [
+                {"resp_status_code": "status_code"},
+                {"resp_headers_content_type": "headers.content-type"},
+                {"resp_content": "content"},
+                {"resp_content_person_first_name": "content.person.name.first_name"}
+            ]
+        @return (list) variable binds list
         """
-        extracted_variables_mapping = {}
+        extracted_variables_mapping_list = []
 
-        for key, field in extract_binds.items():
-            if not isinstance(field, utils.string_type):
-                raise exception.ParamsError("invalid extract_binds!")
+        for extract_bind in extract_binds:
+            for key, field in extract_bind.items():
+                if not isinstance(field, utils.string_type):
+                    raise exception.ParamsError("invalid extract_binds!")
 
-            extracted_variables_mapping[key] = self.extract_field(field)
+                extracted_variables_mapping_list.append(
+                    {key: self.extract_field(field)}
+                )
 
-        return extracted_variables_mapping
+        return extracted_variables_mapping_list
 
     def validate(self, validators, variables_mapping):
         """ Bind named validators to value within the context.
