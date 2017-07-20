@@ -16,8 +16,8 @@ except NameError:
     string_type = str
     PYTHON_VERSION = 3
 
-variable_regexp = re.compile(r"^\$(\w+)$")
-function_regexp = re.compile(r"^\$\{(\w+)\(([\$\w =,]*)\)\}$")
+variable_regexp = re.compile(r"^\$([\w_]+)$")
+function_regexp = re.compile(r"^\$\{([\w_]+)\(([\$\w_ =,]*)\)\}$")
 
 def gen_random_string(str_len):
     return ''.join(
