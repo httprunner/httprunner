@@ -21,10 +21,10 @@ class Context(object):
     """
     def __init__(self):
         self.testset_config = {}
-        self.testset_shared_variables_mapping = dict()
+        self.testset_shared_variables_mapping = OrderedDict()
 
         self.testcase_config = {}
-        self.testcase_variables_mapping = dict()
+        self.testcase_variables_mapping = OrderedDict()
         self.init_context()
 
     def init_context(self, level='testset'):
@@ -34,12 +34,12 @@ class Context(object):
         """
         if level == "testset":
             self.testset_config["functions"] = {}
-            self.testset_config["variables"] = OrderedDict()
             self.testset_config["request"] = {}
             self.testset_shared_variables_mapping = {}
 
-        self.testcase_config["functions"] = {}
-        self.testcase_config["variables"] = OrderedDict()
+        # testcase config shall inherit from testset configs,
+        # but can not change testset configs, that's why we use copy.deepcopy here.
+        self.testcase_config["functions"] = copy.deepcopy(self.testset_config["functions"])
         self.testcase_config["request"] = {}
         self.testcase_variables_mapping = copy.deepcopy(self.testset_shared_variables_mapping)
 
@@ -64,7 +64,7 @@ class Context(object):
                 function = eval(function)
             eval_function_binds[func_name] = function
 
-        self.__update_context_config(level, "functions", eval_function_binds)
+        self.__update_context_functions_config(level, eval_function_binds)
 
     def import_module_functions(self, modules, level="testcase"):
         """ import modules and bind all functions within the context
@@ -73,11 +73,14 @@ class Context(object):
         for module_name in modules:
             imported = importlib.import_module(module_name)
             imported_functions_dict = dict(filter(is_function, vars(imported).items()))
-            self.__update_context_config(level, "functions", imported_functions_dict)
+            self.__update_context_functions_config(level, imported_functions_dict)
 
-    def register_variables_config(self, variable_binds, level="testcase"):
-        """ register variable configs
-        @param (list) variable_binds, variable can be value or custom function
+    def bind_variables(self, variable_binds, level="testcase"):
+        """ bind variables to testset context or current testcase context.
+            variables in testset context can be used in all testcases of current test suite.
+
+        @param (list) variable_binds, variable can be value or custom function.
+            if value is function, it will be called and bind result to variable.
         e.g.
             [
                 {"TOKEN": "debugtalk"},
@@ -86,69 +89,54 @@ class Context(object):
                 {"md5": "${gen_md5($TOKEN, $json, $random)}"}
             ]
         """
-        if level == "testset":
-            for variable_bind in variable_binds:
-                self.testset_config["variables"].update(variable_bind)
-        elif level == "testcase":
-            self.testcase_config["variables"] = copy.deepcopy(self.testset_config["variables"])
-            for variable_bind in variable_binds:
-                self.testcase_config["variables"].update(variable_bind)
+        for variable_bind in variable_binds:
+            for variable_name, value in variable_bind.items():
+                variable_evale_value = self.get_eval_value(value)
 
-    def register_request(self, request_dict, level="testcase"):
-        self.__update_context_config(level, "request", request_dict)
+                if level == "testset":
+                    self.testset_shared_variables_mapping[variable_name] = variable_evale_value
 
-    def __update_context_config(self, level, config_type, config_mapping):
+                self.testcase_variables_mapping[variable_name] = variable_evale_value
+
+    def __update_context_functions_config(self, level, config_mapping):
         """
         @param level: testset or testcase
-        @param config_type: functions, variables or request
-        @param config_mapping: functions config mapping or variables config mapping
+        @param config_type: functions
+        @param config_mapping: functions config mapping
         """
         if level == "testset":
-            self.testset_config[config_type].update(config_mapping)
-        elif level == "testcase":
-            self.testcase_config[config_type].update(config_mapping)
+            self.testset_config["functions"].update(config_mapping)
+
+        self.testcase_config["functions"].update(config_mapping)
+
+    def register_request(self, request_dict, level="testcase"):
+        self.__update_context_request_config(level, request_dict)
+
+    def __update_context_request_config(self, level, config_mapping):
+        """
+        @param level: testset or testcase
+        @param config_type: request
+        @param config_mapping: request config mapping
+        """
+        if level == "testset":
+            self.testset_config["request"].update(config_mapping)
+
+        self.testcase_config["request"] = utils.deep_update_dict(
+            copy.deepcopy(self.testset_config["request"]),
+            config_mapping
+        )
 
     def get_parsed_request(self):
         """ get parsed request, with each variable replaced by bind value.
-            testcase request shall inherit from testset request configs,
-            but can not change testset configs, that's why we use copy.deepcopy here.
         """
-        testcase_request_config = utils.deep_update_dict(
-            copy.deepcopy(self.testset_config["request"]),
-            self.testcase_config["request"]
-        )
-
         parsed_request = testcase.parse_template(
-            testcase_request_config,
-            self._get_evaluated_testcase_variables()
+            self.testcase_config["request"],
+            self.testcase_variables_mapping
         )
 
         return parsed_request
 
-    def bind_extracted_variables(self, variables_mapping):
-        """ bind extracted variable to current testcase context and testset context.
-            since extracted variable maybe used in current testcase and next testcases.
-        """
-        self.testset_shared_variables_mapping.update(variables_mapping)
-        self.testcase_variables_mapping.update(variables_mapping)
-
     def get_testcase_variables_mapping(self):
-        return self.testcase_variables_mapping
-
-    def _get_evaluated_testcase_variables(self):
-        """ variables in variables_config will be evaluated each time
-        """
-        testcase_functions_config = copy.deepcopy(self.testset_config["functions"])
-        testcase_functions_config.update(self.testcase_config["functions"])
-        self.testcase_config["functions"] = testcase_functions_config
-
-        testcase_variables_config = copy.deepcopy(self.testset_config["variables"])
-        testcase_variables_config.update(self.testcase_config["variables"])
-        self.testcase_config["variables"] = testcase_variables_config
-
-        for var_name, var_value in self.testcase_config["variables"].items():
-            self.testcase_variables_mapping[var_name] = self.get_eval_value(var_value)
-
         return self.testcase_variables_mapping
 
     def get_eval_value(self, data):
