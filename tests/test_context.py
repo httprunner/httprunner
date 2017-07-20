@@ -9,7 +9,7 @@ class VariableBindsUnittest(unittest.TestCase):
 
     def setUp(self):
         self.context = Context()
-        testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo_binds.yml')
+        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
         self.testcases = utils.load_testcases(testcase_file_path)
 
     def test_context_register_variables(self):
@@ -127,7 +127,7 @@ class VariableBindsUnittest(unittest.TestCase):
 
     def test_import_module_functions(self):
         testcase1 = {
-            "import_module_functions": ["test.data.custom_functions"],
+            "import_module_functions": ["tests.data.custom_functions"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
@@ -162,7 +162,7 @@ class VariableBindsUnittest(unittest.TestCase):
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
         testcase = {
-            "import_module_functions": ["test.data.custom_functions"],
+            "import_module_functions": ["tests.data.custom_functions"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},

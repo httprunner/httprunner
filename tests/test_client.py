@@ -1,5 +1,5 @@
 from ate.client import HttpSession
-from test.base import ApiServerUnittest
+from tests.base import ApiServerUnittest
 
 class TestHttpClient(ApiServerUnittest):
     def setUp(self):
