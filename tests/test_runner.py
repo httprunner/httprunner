@@ -41,11 +41,11 @@ class TestRunner(ApiServerUnittest):
                     "password": "123456"
                 }
             },
-            "extract_binds": {
-                "resp_status_code": "status_code",
-                "resp_body_success": "content.success",
-                "resp_headers_contenttype": "headers.content-type"
-            },
+            "extract_binds": [
+                {"resp_status_code": "status_code"},
+                {"resp_body_success": "content.success"},
+                {"resp_headers_contenttype": "headers.content-type"}
+            ],
             "validators": [
                 {"check": "resp_status_code", "comparator": "eq", "expected": 200},
                 {"check": "resp_body_success", "comparator": "eq", "expected": False},

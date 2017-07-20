@@ -4,14 +4,13 @@
         - tests.data.custom_functions
     variable_binds:
         - TOKEN: debugtalk
-        - json: {}
-        - random: ${gen_random_string(5)}
-        - authorization: ${gen_md5($TOKEN, $json, $random)}
 
 - test:
     name: create user which does not exist
     variable_binds:
         - json: {"name": "user", "password": "123456"}
+        - random: ${gen_random_string(5)}
+        - authorization: ${gen_md5($TOKEN, $json, $random)}
     request:
         url: http://127.0.0.1:5000/api/users/1000
         method: POST
@@ -28,6 +27,8 @@
     name: create user which does not exist
     variable_binds:
         - json: {"name": "user", "password": "123456"}
+        - random: ${gen_random_string(5)}
+        - authorization: ${gen_md5($TOKEN, $json, $random)}
     request:
         url: http://127.0.0.1:5000/api/users/1000
         method: POST
