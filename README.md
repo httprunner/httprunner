@@ -22,7 +22,9 @@
 $ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
 ```
 
-执行`ate -V`，检测安装是否成功。
+若安装出现问题，请查看[`FAQ`](docs/FAQ.md)。
+
+执行`ate -V`，若正常显示版本号，则说明安装成功。
 
 ```text
 $ ate -V
