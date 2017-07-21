@@ -32,7 +32,7 @@ class Context(object):
         if level == "testset":
             self.testset_functions_config = {}
             self.testset_request_config = {}
-            self.testset_shared_variables_mapping = {}
+            self.testset_shared_variables_mapping = OrderedDict()
 
         # testcase config shall inherit from testset configs,
         # but can not change testset configs, that's why we use copy.deepcopy here.
