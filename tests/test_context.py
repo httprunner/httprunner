@@ -206,13 +206,13 @@ class VariableBindsUnittest(unittest.TestCase):
         )
 
         import random, string
-        self.context.testcase_config["functions"]["gen_random_string"] = \
+        self.context.testcase_functions_config["gen_random_string"] = \
             lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
                 for _ in range(str_len))
         result = self.context.get_eval_value("${gen_random_string(5)}")
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
-        self.context.testcase_config["functions"]["add_two_nums"] = add_two_nums
+        self.context.testcase_functions_config["add_two_nums"] = add_two_nums
         self.assertEqual(self.context.get_eval_value("${add_two_nums(1)}"), 2)
         self.assertEqual(self.context.get_eval_value("${add_two_nums(1, 2)}"), 3)
