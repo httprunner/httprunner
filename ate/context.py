@@ -20,10 +20,7 @@ class Context(object):
         context has two levels, testset and testcase.
     """
     def __init__(self):
-        self.testset_config = {}
         self.testset_shared_variables_mapping = OrderedDict()
-
-        self.testcase_config = {}
         self.testcase_variables_mapping = OrderedDict()
         self.init_context()
 
@@ -33,14 +30,14 @@ class Context(object):
         testcase level context initializes when each testcase starts.
         """
         if level == "testset":
-            self.testset_config["functions"] = {}
-            self.testset_config["request"] = {}
+            self.testset_functions_config = {}
+            self.testset_request_config = {}
             self.testset_shared_variables_mapping = {}
 
         # testcase config shall inherit from testset configs,
         # but can not change testset configs, that's why we use copy.deepcopy here.
-        self.testcase_config["functions"] = copy.deepcopy(self.testset_config["functions"])
-        self.testcase_config["request"] = {}
+        self.testcase_functions_config = copy.deepcopy(self.testset_functions_config)
+        self.testcase_request_config = {}
         self.testcase_variables_mapping = copy.deepcopy(self.testset_shared_variables_mapping)
 
     def import_requires(self, modules):
@@ -105,9 +102,9 @@ class Context(object):
         @param config_mapping: functions config mapping
         """
         if level == "testset":
-            self.testset_config["functions"].update(config_mapping)
+            self.testset_functions_config.update(config_mapping)
 
-        self.testcase_config["functions"].update(config_mapping)
+        self.testcase_functions_config.update(config_mapping)
 
     def register_request(self, request_dict, level="testcase"):
         self.__update_context_request_config(level, request_dict)
@@ -119,10 +116,10 @@ class Context(object):
         @param config_mapping: request config mapping
         """
         if level == "testset":
-            self.testset_config["request"].update(config_mapping)
+            self.testset_request_config.update(config_mapping)
 
-        self.testcase_config["request"] = utils.deep_update_dict(
-            copy.deepcopy(self.testset_config["request"]),
+        self.testcase_request_config = utils.deep_update_dict(
+            copy.deepcopy(self.testset_request_config),
             config_mapping
         )
 
@@ -130,7 +127,7 @@ class Context(object):
         """ get parsed request, with each variable replaced by bind value.
         """
         parsed_request = testcase.parse_template(
-            self.testcase_config["request"],
+            self.testcase_request_config,
             self.testcase_variables_mapping
         )
 
@@ -174,6 +171,6 @@ class Context(object):
             kwargs = fuction_meta.get('kwargs', {})
             args = self.get_eval_value(args)
             kwargs = self.get_eval_value(kwargs)
-            return self.testcase_config["functions"][func_name](*args, **kwargs)
+            return self.testcase_functions_config[func_name](*args, **kwargs)
         else:
             return data
