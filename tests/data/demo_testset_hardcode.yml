@@ -1,12 +1,31 @@
 - test:
+    name: get token
+    request:
+        url: http://127.0.0.1:5000/api/get-token
+        method: POST
+        headers:
+            Content-Type: application/json
+            user_agent: 'iOS/10.3'
+            device_sn: 'HZfFBh6tU59EdXJ'
+            os_platform: 'ios'
+            app_version: '2.8.6'
+        json:
+            sign: f1219719911caae89ccc301679857ebfda115ca2
+    extract_binds:
+        - token: content.token
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+
+- test:
     name: create user which does not exist
     request:
         url: http://127.0.0.1:5000/api/users/1000
         method: POST
         headers:
             Content-Type: application/json
-            authorization: a83de0ff8d2e896dbd8efb81ba14e17d
-            random: A2dEx
+            device_sn: 'HZfFBh6tU59EdXJ'
+            token: $token
         json:
             name: "user1"
             password: "123456"
@@ -21,8 +40,8 @@
         method: POST
         headers:
             Content-Type: application/json
-            authorization: a83de0ff8d2e896dbd8efb81ba14e17d
-            random: A2dEx
+            device_sn: 'HZfFBh6tU59EdXJ'
+            token: $token
         json:
             name: "user1"
             password: "123456"

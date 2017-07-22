@@ -1,9 +1,10 @@
 import hashlib
+import hmac
 import json
 from functools import wraps
 
-from flask import Flask, make_response, request
 from ate import utils
+from flask import Flask, make_response, request
 
 app = Flask(__name__)
 
@@ -22,25 +23,32 @@ data structure:
 """
 users_dict = {}
 
-AUTHENTICATION = False
-TOKEN = "debugtalk"
+""" storage all token data
+data structure:
+    token_dict = {
+        'device_sn1': 'token1',
+        'device_sn2': 'token1'
+    }
+"""
+token_dict = {}
 
 def validate_request(func):
 
     @wraps(func)
-    def wrapper(*args, **kwds):
-        if not AUTHENTICATION:
-            return func(*args, **kwds)
+    def wrapper(*args, **kwargs):
+        device_sn = request.headers.get('device_sn', "")
+        token = request.headers.get('token', "")
 
-        try:
-            req_headers = request.headers
-            req_authorization = req_headers['Authorization']
-            random_str = req_headers['Random']
-            data = utils.handle_req_data(request.data)
-            authorization = utils.gen_md5(TOKEN, data, random_str)
-            assert authorization == req_authorization
-            return func(*args, **kwds)
-        except (KeyError, AssertionError):
+        if not device_sn or not token:
+            result = {
+                'success': False,
+                'msg': "device_sn or token is null."
+            }
+            response = make_response(json.dumps(result), 401)
+            response.headers["Content-Type"] = "application/json"
+            return response
+
+        if token_dict[device_sn] != token:
             result = {
                 'success': False,
                 'msg': "Authorization failed!"
@@ -49,16 +57,46 @@ def validate_request(func):
             response.headers["Content-Type"] = "application/json"
             return response
 
+        return func(*args, **kwargs)
+
     return wrapper
 
 
 @app.route('/')
-@validate_request
 def index():
     return "Hello World!"
 
+@app.route('/api/get-token', methods=['POST'])
+def get_token():
+    user_agent = request.headers.get('User-Agent', "")
+    device_sn = request.headers.get('device_sn', "")
+    os_platform = request.headers.get('os_platform', "")
+    app_version = request.headers.get('app_version', "")
+    data = request.get_json()
+    sign = data.get('sign', "")
+
+    expected_sign = utils.get_sign(user_agent, device_sn, os_platform, app_version)
+
+    if expected_sign != sign:
+        result = {
+            'success': False,
+            'msg': "Authorization failed!"
+        }
+        response = make_response(json.dumps(result), 403)
+    else:
+        token = utils.gen_random_string(16)
+        token_dict[device_sn] = token
+
+        result = {
+            'success': True,
+            'token': token
+        }
+        response = make_response(json.dumps(result))
+
+    response.headers["Content-Type"] = "application/json"
+    return response
+
 @app.route('/customize-response', methods=['POST'])
-@validate_request
 def get_customized_response():
     expected_resp_json = request.get_json()
     status_code = expected_resp_json.get('status_code', 200)
@@ -69,17 +107,6 @@ def get_customized_response():
     for header_key, header_value in headers_dict.items():
         response.headers[header_key] = header_value
 
-    return response
-
-@app.route('/api/token')
-@validate_request
-def get_token():
-    result = {
-        'success': True,
-        'token': utils.gen_random_string(8)
-    }
-    response = make_response(json.dumps(result))
-    response.headers["Content-Type"] = "application/json"
     return response
 
 @app.route('/api/users')
@@ -95,7 +122,7 @@ def get_users():
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/users', methods=['DELETE'])
+@app.route('/api/reset-all')
 @validate_request
 def clear_users():
     users_dict.clear()

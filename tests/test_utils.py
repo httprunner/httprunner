@@ -12,9 +12,9 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/simple_demo_no_auth.json')
+            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testcases = utils.load_testcases(testcase_file_path)
-        self.assertEqual(len(testcases), 2)
+        self.assertEqual(len(testcases), 3)
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
         self.assertIn('request', testcase)
@@ -23,9 +23,9 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_yaml_testcases(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/simple_demo_no_auth.yml')
+            os.getcwd(), 'tests/data/demo_testset_hardcode.yml')
         testcases = utils.load_testcases(testcase_file_path)
-        self.assertEqual(len(testcases), 2)
+        self.assertEqual(len(testcases), 3)
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
         self.assertIn('request', testcase)
@@ -45,28 +45,28 @@ class TestUtils(ApiServerUnittest):
 
         # absolute file path
         path = os.path.join(
-            os.getcwd(), 'tests/data/simple_demo_no_auth.json')
+            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertEqual(len(testset_list[0]["testcases"]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
         testsets_list.extend(testset_list)
 
         # relative file path
-        path = 'tests/data/simple_demo_no_auth.yml'
+        path = 'tests/data/demo_testset_hardcode.yml'
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertEqual(len(testset_list[0]["testcases"]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
         testsets_list.extend(testset_list)
 
         # list/set container with file(s)
         path = [
-            os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.json'),
-            'tests/data/simple_demo_no_auth.yml'
+            os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
+            'tests/data/demo_testset_hardcode.yml'
         ]
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 2)
-        self.assertEqual(len(testset_list[0]["testcases"]), 2)
-        self.assertEqual(len(testset_list[1]["testcases"]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        self.assertEqual(len(testset_list[1]["testcases"]), 3)
         testsets_list.extend(testset_list)
         self.assertEqual(len(testsets_list), 4)
 
@@ -81,7 +81,7 @@ class TestUtils(ApiServerUnittest):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
         testset_list_1 = utils.load_testcases_by_path(path)
-        self.assertGreater(len(testset_list_1), 6)
+        self.assertGreater(len(testset_list_1), 5)
 
         # relative folder path
         path = 'tests/data/'

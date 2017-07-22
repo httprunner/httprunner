@@ -7,49 +7,58 @@ class TestRunner(ApiServerUnittest):
 
     def setUp(self):
         self.test_runner = runner.Runner()
-        self.clear_users()
+        self.reset_all()
 
-    def clear_users(self):
-        url = "http://127.0.0.1:5000/api/users"
-        return requests.delete(url)
+        self.testcase_file_path_list = [
+            os.path.join(
+                os.getcwd(), 'tests/data/demo_testset_hardcode.yml'),
+            os.path.join(
+                os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+        ]
 
-    def test_run_single_testcase_yaml_success(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.yml')
-        testcases = utils.load_testcases(testcase_file_path)
-        testcase = testcases[0]["test"]
-        success, _ = self.test_runner.run_test(testcase)
-        self.assertTrue(success)
+    def reset_all(self):
+        url = "%s/api/reset-all" % self.host
+        headers = self.get_authenticated_headers()
+        return self.api_client.get(url, headers=headers)
 
-    def test_run_single_testcase_json_success(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.json')
-        testcases = utils.load_testcases(testcase_file_path)
-        testcase = testcases[0]["test"]
-        success, _ = self.test_runner.run_test(testcase)
-        self.assertTrue(success)
+    def test_run_single_testcase(self):
+        for testcase_file_path in self.testcase_file_path_list:
+            testcases = utils.load_testcases(testcase_file_path)
+            testcase = testcases[0]["test"]
+            success, _ = self.test_runner.run_test(testcase)
+            self.assertTrue(success)
+
+            testcase = testcases[1]["test"]
+            success, _ = self.test_runner.run_test(testcase)
+            self.assertTrue(success)
+
+            testcase = testcases[2]["test"]
+            success, _ = self.test_runner.run_test(testcase)
+            self.assertTrue(success)
 
     def test_run_single_testcase_fail(self):
         testcase = {
-            "name": "create user which does not exist",
+            "name": "get token",
             "request": {
-                "url": "http://127.0.0.1:5000/api/users/1000",
+                "url": "http://127.0.0.1:5000/api/get-token",
                 "method": "POST",
                 "headers": {
-                    "content-type": "application/json"
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6"
                 },
                 "json": {
-                    "name": "user1",
-                    "password": "123456"
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
                 }
             },
             "extract_binds": [
-                {"resp_status_code": "status_code"},
-                {"resp_body_success": "content.success"},
-                {"resp_headers_contenttype": "headers.content-type"}
+                {"token": "content.token"}
             ],
             "validators": [
-                {"check": "resp_status_code", "comparator": "eq", "expected": 200},
-                {"check": "resp_body_success", "comparator": "eq", "expected": False},
-                {"check": "resp_headers_contenttype", "comparator": "eq", "expected": "html/text"}
+                {"check": "status_code", "comparator": "eq", "expected": 205},
+                {"check": "content.token", "comparator": "len_eq", "expected": 19}
             ]
         }
 
@@ -57,41 +66,51 @@ class TestRunner(ApiServerUnittest):
         self.assertFalse(success)
         self.assertEqual(
             diff_content_list[0],
-            {"check": "resp_status_code", "comparator": "eq", "expected": 200, 'value': 201}
-        )
-        self.assertEqual(
-            diff_content_list[1],
-            {"check": "resp_body_success", "comparator": "eq", "expected": False, 'value': True}
-        )
-        self.assertEqual(
-            diff_content_list[2],
-            {"check": "resp_headers_contenttype", "comparator": "eq", "expected": "html/text", 'value': "application/json"}
+            {"check": "status_code", "comparator": "eq", "expected": 205, 'value': 200}
         )
 
-    def test_run_testset_json_success(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.json')
+    def test_run_testset_hardcode(self):
+        for testcase_file_path in self.testcase_file_path_list:
+            testsets = utils.load_testcases_by_path(testcase_file_path)
+            results = self.test_runner.run_testset(testsets[0])
+            self.assertEqual(len(results), 3)
+            self.assertEqual(results, [(True, [])] * 3)
+
+    def test_run_testsets_hardcode(self):
+        for testcase_file_path in self.testcase_file_path_list:
+            testsets = utils.load_testcases_by_path(testcase_file_path)
+            results = self.test_runner.run_testsets(testsets)
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results, [[(True, [])] * 3])
+
+    def test_run_testset_template_variables(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_variables.yml')
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
-        self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, []), (True, [])])
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results, [(True, [])] * 3)
 
-    def test_run_testsets_json_success(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.json')
+    def test_run_testset_template_import_functions(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testset(testsets[0])
+        self.assertEqual(len(results), 3)
+        self.assertEqual(results, [(True, [])] * 3)
+
+    def test_run_testsets_template_import_functions(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, []), (True, [])])
+        self.assertEqual(results, [[(True, [])] * 3])
 
-    def test_run_testset_yaml_success(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.yml')
-        testsets = utils.load_testcases_by_path(testcase_file_path)
-        results = self.test_runner.run_testset(testsets[0])
-        self.assertEqual(len(results), 2)
-        self.assertEqual(results, [(True, []), (True, [])])
-
-    def test_run_testsets_yaml_success(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/simple_demo_no_auth.yml')
+    def test_run_testsets_template_lambda_functions(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_template_lambda_functions.yml')
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], [(True, []), (True, [])])
+        self.assertEqual(results, [[(True, [])] * 3])
