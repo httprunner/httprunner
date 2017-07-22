@@ -58,56 +58,57 @@ optional arguments:
 
 如下是一个典型的接口测试用例示例。具体的编写方式请阅读详细文档。
 
-```python
+```yaml
 - config:
     name: "create user testsets."
-    requires:
-        - random
-        - string
-        - hashlib
-    function_binds:
-        gen_random_string: "lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(str_len))"
-        gen_md5: "lambda *str_args: hashlib.md5(''.join(str_args).encode('utf-8')).hexdigest()"
+    import_module_functions:
+        - tests.data.custom_functions
     variable_binds:
-        - TOKEN: debugtalk
-        - data: ""
-        - random: ${gen_random_string(5)}
-        - authorization: ${gen_md5($TOKEN, $data, $random)}
+        - user_agent: 'iOS/10.3'
+        - device_sn: ${gen_random_string(15)}
+        - os_platform: 'ios'
+        - app_version: '2.8.6'
+        - sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     request:
         base_url: http://127.0.0.1:5000
+        headers:
+            Content-Type: application/json
+            device_sn: $device_sn
+
+- test:
+    name: get token
+    request:
+        url: /api/get-token
+        method: POST
+        headers:
+            user_agent: $user_agent
+            device_sn: $device_sn
+            os_platform: $os_platform
+            app_version: $app_version
+        json:
+            sign: $sign
+    extract_binds:
+        - token: content.token
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
 - test:
     name: create user which does not exist
     variable_binds:
-        - data: '{"name": "user", "password": "123456"}'
+        - user_name: "user1"
+        - user_password: "123456"
     request:
         url: /api/users/1000
         method: POST
         headers:
-            Content-Type: application/json
-            authorization: $authorization
-            random: $random
-        data: $data
+            token: $token
+        json:
+            name: $user_name
+            password: $user_password
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
-
-- test:
-    name: create user which does exist
-    variable_binds:
-        - data: '{"name": "user", "password": "123456"}'
-        - expected_status_code: 500
-    request:
-        url: /api/users/1000
-        method: POST
-        headers:
-            Content-Type: application/json
-            authorization: $authorization
-            random: $random
-        data: $data
-    validators:
-        - {"check": "status_code", "comparator": "eq", "expected": 500}
-        - {"check": "content.success", "comparator": "eq", "expected": false}
 ```
 
 ## 运行测试用例

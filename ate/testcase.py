@@ -1,5 +1,6 @@
 import re
 from ate.exception import ParamsError
+from ate.utils import string_type
 
 
 def parse_content_with_variables(content, variables_binds):
@@ -58,7 +59,7 @@ def parse_template(testcase_template, variables_binds):
     def substitute(content):
         """ substitute content recursively, each variable will be replaced with bind value.
         """
-        if isinstance(content, str):
+        if isinstance(content, string_type):
             return parse_content_with_variables(content, variables_binds)
 
         if isinstance(content, list):

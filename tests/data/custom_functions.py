@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import random
 import string
@@ -13,36 +14,33 @@ except NameError:
     PYTHON_VERSION = 3
     import urllib.parse as urllib
 
+SECRET_KEY = "DebugTalk"
 
 def gen_random_string(str_len):
-    return ''.join(
-        random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
+    random_char_list = []
+    for _ in range(str_len):
+        random_char = random.choice(string.ascii_letters + string.digits)
+        random_char_list.append(random_char)
+
+    random_string = ''.join(random_char_list)
+    return random_string
+
+gen_random_string_lambda = lambda str_len: ''.join(
+    random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
+
+def get_sign(*args):
+    content = ''.join(args).encode('ascii')
+    sign_key = SECRET_KEY.encode('ascii')
+    sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
+    return sign
+
+get_sign_lambda = lambda *args: hmac.new(
+    'DebugTalk'.encode('ascii'),
+    ''.join(args).encode('ascii'),
+    hashlib.sha1).hexdigest()
 
 def gen_md5(*args):
-    args = [handle_req_data(item) for item in args]
     return hashlib.md5("".join(args).encode('utf-8')).hexdigest()
-
-def handle_req_data(data):
-
-    if PYTHON_VERSION == 3 and isinstance(data, bytes):
-        # In Python3, convert bytes to str
-        data = data.decode('utf-8')
-
-    if not data:
-        return data
-
-    if isinstance(data, str):
-        # check if data in str can be converted to dict
-        try:
-            data = json.loads(data)
-        except ValueError:
-            pass
-
-    if isinstance(data, dict):
-        # sort data in dict with keys, then convert to str
-        data = json.dumps(data, sort_keys=True)
-
-    return data
 
 def gen_urlencode_str(**kargs):
     urlencoded_str = ""
