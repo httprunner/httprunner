@@ -1,12 +1,13 @@
 import ast
 import hashlib
+import hmac
 import json
 import os.path
 import random
 import re
 import string
-import yaml
 
+import yaml
 from ate.exception import ParamsError
 
 try:
@@ -16,6 +17,7 @@ except NameError:
     string_type = str
     PYTHON_VERSION = 3
 
+SECRET_KEY = "DebugTalk"
 variable_regexp = re.compile(r"^\$([\w_]+)$")
 function_regexp = re.compile(r"^\$\{([\w_]+)\(([\$\w_ =,]*)\)\}$")
 
@@ -26,27 +28,11 @@ def gen_random_string(str_len):
 def gen_md5(*str_args):
     return hashlib.md5("".join(str_args).encode('utf-8')).hexdigest()
 
-def handle_req_data(data):
-
-    if PYTHON_VERSION == 3 and isinstance(data, bytes):
-        # In Python3, convert bytes to str
-        data = data.decode('utf-8')
-
-    if not data:
-        return data
-
-    if isinstance(data, str):
-        # check if data in str can be converted to dict
-        try:
-            data = json.loads(data)
-        except ValueError:
-            pass
-
-    if isinstance(data, dict):
-        # sort data in dict with keys, then convert to str
-        data = json.dumps(data, sort_keys=True)
-
-    return data
+def get_sign(*args):
+    content = ''.join(args).encode('ascii')
+    sign_key = SECRET_KEY.encode('ascii')
+    sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
+    return sign
 
 def load_yaml_file(yaml_file):
     with open(yaml_file, 'r+') as stream:
