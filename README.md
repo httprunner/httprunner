@@ -5,7 +5,7 @@
 
 ## Design Philosophy
 
-Take full reuse of Python's existing powerful libraries: [`requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achive the goal of API automation test, production environment monitoring, and API performance test, with a concise and  elegant manner.
+Take full reuse of Python's existing powerful libraries: [`requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achieve the goal of API automation test, production environment monitoring, and API performance test, with a concise and  elegant manner.
 
 ## Key Features
 
