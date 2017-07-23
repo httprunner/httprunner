@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/debugtalk/ApiTestEngine.svg?branch=master)](https://travis-ci.org/debugtalk/ApiTestEngine)
 [![Coverage Status](https://coveralls.io/repos/github/debugtalk/ApiTestEngine/badge.svg?branch=master)](https://coveralls.io/github/debugtalk/ApiTestEngine?branch=master)
 
-## 核心特性
+## Key Features
 
 - 支持API接口的多种请求方法，包括 GET/POST/HEAD/PUT/DELETE 等
 - 测试用例与代码分离，测试用例维护方式简洁优雅，支持`YAML/JSON`
@@ -16,22 +16,22 @@
 
 [《背景介绍》](docs/background.md) [《特性拆解介绍》](docs/features-intro.md)
 
-## Install
+## Installation
 
 ```bash
 $ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
 ```
 
-若安装出现问题，请查看[`FAQ`](docs/FAQ.md)。
+If there is a problem with the installation, you can check the [`FAQ`](docs/FAQ.md).
 
-执行`ate -V`，若正常显示版本号，则说明安装成功。
+To ensure the installation is successful, you can excuting command `ate -V` to see if you can get the version number.
 
 ```text
 $ ate -V
 0.1.0
 ```
 
-执行`ate -h`，查看命令的帮助说明。
+Execute the command `ate -h` to view command help.
 
 ```text
 $ ate -h
@@ -52,11 +52,11 @@ optional arguments:
                         Specify report name, default is generated time.
 ```
 
-## 编写测试用例
+## Write testcases
 
-推荐采用`YAML`格式编写测试用例。
+It is recommended to write testcases in `YAML` format.
 
-如下是一个典型的接口测试用例示例。具体的编写方式请阅读详细文档。
+And here is testset example of typical scenario: get token at the beginning, and each subsequent requests should take the token in the headers.
 
 ```yaml
 - config:
@@ -112,23 +112,25 @@ optional arguments:
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
 
-## 运行测试用例
+For detailed regulations of writing testcases, you can read the specification.
 
-`ApiTestEngine`可指定运行特定的测试用例集文件，或运行指定目录下的所有测试用例集文件。
+## Run testcases
 
-执行单个测试用例集：
+`ApiTestEngine` can run testcases in diverse ways.
+
+You can run single testset by specifying testset file path.
 
 ```text
 $ ate filepath/testcase.yml
 ```
 
-执行多个测试用例集：
+You can also run several testsets by specifying multiple testset file paths.
 
 ```text
 $ ate filepath1/testcase1.yml filepath2/testcase2.yml
 ```
 
-执行指定目录下的所有测试用例集：
+If you want to run testsets of a whole project, you can achieve this goal by specifying the project folder path.
 
 ```text
 $ ate testcases_folder_path
@@ -138,7 +140,7 @@ $ ate testcases_folder_path
 
 Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
 
-## 阅读更多
+## To Learn more ...
 
 - [《接口自动化测试的最佳工程实践（ApiTestEngine）》](http://debugtalk.com/post/ApiTestEngine-api-test-best-practice/)
 - [《ApiTestEngine 演进之路（0）开发未动，测试先行》](http://debugtalk.com/post/ApiTestEngine-0-setup-CI-test/)
