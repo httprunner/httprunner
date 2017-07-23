@@ -3,6 +3,10 @@
 [![Build Status](https://travis-ci.org/debugtalk/ApiTestEngine.svg?branch=master)](https://travis-ci.org/debugtalk/ApiTestEngine)
 [![Coverage Status](https://coveralls.io/repos/github/debugtalk/ApiTestEngine/badge.svg?branch=master)](https://coveralls.io/github/debugtalk/ApiTestEngine?branch=master)
 
+## Design Philosophy
+
+Take full reuse of Python's existing powerful libraries: [`requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achive the goal of API automation test, production environment monitoring, and API performance test, with a concise and  elegant manner.
+
 ## Key Features
 
 - 支持API接口的多种请求方法，包括 GET/POST/HEAD/PUT/DELETE 等
@@ -148,3 +152,8 @@ Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
 - [《ApiTestEngine 演进之路（2）探索优雅的测试用例描述方式》](http://debugtalk.com/post/ApiTestEngine-2-best-testcase-description/)
 - [《ApiTestEngine 演进之路（3）测试用例中实现 Python 函数的定义》](http://debugtalk.com/post/ApiTestEngine-3-define-functions-in-yaml-testcases/)
 - [《ApiTestEngine 演进之路（4）测试用例中实现 Python 函数的调用》](http://debugtalk.com/post/ApiTestEngine-4-call-functions-in-yaml-testcases/)
+
+
+[requests]: http://docs.python-requests.org/en/master/
+[unittest]: https://docs.python.org/3/library/unittest.html
+[Locust]: http://locust.io/
