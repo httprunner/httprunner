@@ -18,7 +18,7 @@ Take full reuse of Python's existing powerful libraries: [`requests`][requests],
 - 身兼多职，同时实现接口管理、接口自动化测试、接口性能测试（结合Locust）
 - 具有可扩展性，便于扩展实现Web平台化
 
-[《背景介绍》](docs/background.md) [《特性拆解介绍》](docs/features-intro.md)
+[*`Background Introduction (CN)`*](docs/background-CN.md) | [*`Feature Descriptions (CN)`*](docs/feature-descriptions-CN.md)
 
 ## Installation
 
