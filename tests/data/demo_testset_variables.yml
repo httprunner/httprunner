@@ -1,10 +1,7 @@
 - config:
     name: "create user testsets."
     variable_binds:
-        - user_agent: 'iOS/10.3'
         - device_sn: 'HZfFBh6tU59EdXJ'
-        - os_platform: 'ios'
-        - app_version: '2.8.6'
     request:
         base_url: http://127.0.0.1:5000
         headers:
@@ -13,6 +10,11 @@
 
 - test:
     name: get token
+    variable_binds:
+        - user_agent: 'iOS/10.3'
+        - os_platform: 'ios'
+        - app_version: '2.8.6'
+        - sign: f1219719911caae89ccc301679857ebfda115ca2
     request:
         url: /api/get-token
         method: POST
@@ -23,7 +25,7 @@
             os_platform: $os_platform
             app_version: $app_version
         json:
-            sign: f1219719911caae89ccc301679857ebfda115ca2
+            sign: $sign
     extract_binds:
         - token: content.token
     validators:

@@ -7,7 +7,6 @@
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
         - app_version: '2.8.6'
-        - sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     request:
         base_url: http://127.0.0.1:5000
         headers:
@@ -16,6 +15,8 @@
 
 - test:
     name: get token
+    variable_binds:
+        - sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     request:
         url: /api/get-token
         method: POST
