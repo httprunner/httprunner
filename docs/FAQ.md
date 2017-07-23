@@ -1,19 +1,19 @@
-## 无法自动安装PyUnitReport依赖库
+## Unable to install PyUnitReport dependency library automatically
 
-如果安装过程中出现如下报错：
+If there is something goes wrong in installation like below.
 
 ```text
 Downloading/unpacking PyUnitReport (from ApiTestEngine)
   Could not find any downloads that satisfy the requirement PyUnitReport (from ApiTestEngine)
 ```
 
-那么需要先手动安装`PyUnitReport`，安装方式如下：
+You could install `PyUnitReport` manully at first.
 
 ```bash
 $ pip install git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport
 ```
 
-然后再重新安装`ApiTestEngine`即可。
+And then everything will be OK when you reinstall `ApiTestEngine`.
 
 ```bash
 $ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
