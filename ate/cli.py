@@ -48,6 +48,7 @@ def main():
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
         kwargs = {
             "output": output_folder_name,
-            "report_name": report_name
+            "report_name": report_name,
+            "failfast": True
         }
         PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
