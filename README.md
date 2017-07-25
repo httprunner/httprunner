@@ -20,19 +20,25 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 
 [*`Background Introduction (中文版)`*](docs/background-CN.md) | [*`Feature Descriptions (中文版)`*](docs/feature-descriptions-CN.md)
 
-## Installation
+## Installation/Upgrade
 
 ```bash
 $ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
 ```
 
-If there is a problem with the installation, you can check the [`FAQ`](docs/FAQ.md).
+To upgrade all specified packages to the newest available version, you should add the `-U` option.
 
-To ensure the installation is successful, you can excuting command `ate -V` to see if you can get the version number.
+```bash
+$ pip install -U git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
+```
+
+If there is a problem with the installation or upgrade, you can check the [`FAQ`](docs/FAQ.md).
+
+To ensure the installation or upgrade is successful, you can excuting command `ate -V` to see if you can get the correct version number.
 
 ```text
 $ ate -V
-0.1.0
+0.2.2
 ```
 
 Execute the command `ate -h` to view command help.
