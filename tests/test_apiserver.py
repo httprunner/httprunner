@@ -1,24 +1,30 @@
-import requests
 import random
-from test.base import ApiServerUnittest
+import requests
+
+from tests.base import ApiServerUnittest
+
 
 class TestApiServer(ApiServerUnittest):
+
     def setUp(self):
         super(TestApiServer, self).setUp()
-        self.host = "http://127.0.0.1:5000"
-        self.api_client = requests.Session()
-        self.clear_users()
+        self.headers = self.get_authenticated_headers()
+        self.reset_all()
 
     def tearDown(self):
         super(TestApiServer, self).tearDown()
 
-    def clear_users(self):
-        url = "%s/api/users" % self.host
-        return self.api_client.delete(url)
+    def test_index(self):
+        resp = self.api_client.get(self.host)
+        self.assertEqual(200, resp.status_code)
+
+    def reset_all(self):
+        url = "%s/api/reset-all" % self.host
+        return self.api_client.get(url, headers=self.headers)
 
     def get_users(self):
         url = "%s/api/users" % self.host
-        return self.api_client.get(url)
+        return self.api_client.get(url, headers=self.headers)
 
     def create_user(self, uid, name, password):
         url = "%s/api/users/%d" % (self.host, uid)
@@ -26,11 +32,11 @@ class TestApiServer(ApiServerUnittest):
             'name': name,
             'password': password
         }
-        return self.api_client.post(url, json=data)
+        return self.api_client.post(url, headers=self.headers, json=data)
 
     def get_user(self, uid):
         url = "%s/api/users/%d" % (self.host, uid)
-        return self.api_client.get(url)
+        return self.api_client.get(url, headers=self.headers)
 
     def update_user(self, uid, name, password):
         url = "%s/api/users/%d" % (self.host, uid)
@@ -38,14 +44,14 @@ class TestApiServer(ApiServerUnittest):
             'name': name,
             'password': password
         }
-        return self.api_client.put(url, json=data)
+        return self.api_client.put(url, headers=self.headers, json=data)
 
     def delete_user(self, uid):
         url = "%s/api/users/%d" % (self.host, uid)
-        return self.api_client.delete(url)
+        return self.api_client.delete(url, headers=self.headers)
 
-    def test_clear_users(self):
-        resp = self.clear_users()
+    def test_reset_all(self):
+        resp = self.reset_all()
         self.assertEqual(200, resp.status_code)
         self.assertEqual(True, resp.json()['success'])
 
@@ -114,7 +120,11 @@ class TestApiServer(ApiServerUnittest):
         expected_response = {
             'status_code': status_code,
         }
-        resp = self.api_client.post(url, json=expected_response)
+        resp = self.api_client.post(
+            url,
+            headers=self.headers,
+            json=expected_response
+        )
         self.assertEqual(status_code, resp.status_code)
 
     def test_get_customized_response_headers(self):
@@ -125,13 +135,10 @@ class TestApiServer(ApiServerUnittest):
             }
         }
         url = "%s/customize-response" % self.host
-        resp = self.api_client.post(url, json=expected_response)
+        resp = self.api_client.post(
+            url,
+            headers=self.headers,
+            json=expected_response
+        )
         self.assertIn('abc', resp.headers)
         self.assertIn('123', resp.headers['abc'])
-
-    def test_get_token(self):
-        url = "%s/api/token" % self.host
-        resp = self.api_client.get(url)
-        resp_json = resp.json()
-        self.assertTrue(resp_json["success"])
-        self.assertEqual(len(resp_json["token"]), 8)

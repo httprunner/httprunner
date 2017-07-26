@@ -1,20 +1,20 @@
 import os
 from ate import utils
 from ate import exception
-from test.base import ApiServerUnittest
+from tests.base import ApiServerUnittest
 
 class TestUtils(ApiServerUnittest):
 
     def test_load_testcases_bad_filepath(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'test/data/demo')
+        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
         with self.assertRaises(exception.ParamsError):
             utils.load_testcases(testcase_file_path)
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'test/data/simple_demo_no_auth.json')
+            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testcases = utils.load_testcases(testcase_file_path)
-        self.assertEqual(len(testcases), 2)
+        self.assertEqual(len(testcases), 3)
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
         self.assertIn('request', testcase)
@@ -23,9 +23,9 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_yaml_testcases(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'test/data/simple_demo_no_auth.yml')
+            os.getcwd(), 'tests/data/demo_testset_hardcode.yml')
         testcases = utils.load_testcases(testcase_file_path)
-        self.assertEqual(len(testcases), 2)
+        self.assertEqual(len(testcases), 3)
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
         self.assertIn('request', testcase)
@@ -33,10 +33,10 @@ class TestUtils(ApiServerUnittest):
         self.assertIn('method', testcase['request'])
 
     def test_load_foler_files(self):
-        folder = os.path.join(os.getcwd(), 'test')
+        folder = os.path.join(os.getcwd(), 'tests')
         files = utils.load_foler_files(folder)
-        file1 = os.path.join(os.getcwd(), 'test', 'test_utils.py')
-        file2 = os.path.join(os.getcwd(), 'test', 'data', 'demo_binds.yml')
+        file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
+        file2 = os.path.join(os.getcwd(), 'tests', 'data', 'demo_binds.yml')
         self.assertIn(file1, files)
         self.assertIn(file2, files)
 
@@ -45,28 +45,28 @@ class TestUtils(ApiServerUnittest):
 
         # absolute file path
         path = os.path.join(
-            os.getcwd(), 'test/data/simple_demo_no_auth.json')
+            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertEqual(len(testset_list[0]["testcases"]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
         testsets_list.extend(testset_list)
 
         # relative file path
-        path = 'test/data/simple_demo_no_auth.yml'
+        path = 'tests/data/demo_testset_hardcode.yml'
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertEqual(len(testset_list[0]["testcases"]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
         testsets_list.extend(testset_list)
 
         # list/set container with file(s)
         path = [
-            os.path.join(os.getcwd(), 'test/data/simple_demo_no_auth.json'),
-            'test/data/simple_demo_no_auth.yml'
+            os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
+            'tests/data/demo_testset_hardcode.yml'
         ]
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 2)
-        self.assertEqual(len(testset_list[0]["testcases"]), 2)
-        self.assertEqual(len(testset_list[1]["testcases"]), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        self.assertEqual(len(testset_list[1]["testcases"]), 3)
         testsets_list.extend(testset_list)
         self.assertEqual(len(testsets_list), 4)
 
@@ -79,38 +79,38 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_testcases_by_path_folder(self):
         # absolute folder path
-        path = os.path.join(os.getcwd(), 'test/data')
+        path = os.path.join(os.getcwd(), 'tests/data')
         testset_list_1 = utils.load_testcases_by_path(path)
-        self.assertGreater(len(testset_list_1), 6)
+        self.assertGreater(len(testset_list_1), 5)
 
         # relative folder path
-        path = 'test/data/'
+        path = 'tests/data/'
         testset_list_2 = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list_1), len(testset_list_2))
 
         # list/set container with file(s)
         path = [
-            os.path.join(os.getcwd(), 'test/data'),
-            'test/data/'
+            os.path.join(os.getcwd(), 'tests/data'),
+            'tests/data/'
         ]
         testset_list_3 = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
 
     def test_load_testcases_by_path_not_exist(self):
         # absolute folder path
-        path = os.path.join(os.getcwd(), 'test/data_not_exist')
+        path = os.path.join(os.getcwd(), 'tests/data_not_exist')
         testset_list_1 = utils.load_testcases_by_path(path)
         self.assertEqual(testset_list_1, [])
 
         # relative folder path
-        path = 'test/data_not_exist'
+        path = 'tests/data_not_exist'
         testset_list_2 = utils.load_testcases_by_path(path)
         self.assertEqual(testset_list_2, [])
 
         # list/set container with file(s)
         path = [
-            os.path.join(os.getcwd(), 'test/data_not_exist'),
-            'test/data_not_exist/'
+            os.path.join(os.getcwd(), 'tests/data_not_exist'),
+            'tests/data_not_exist/'
         ]
         testset_list_3 = utils.load_testcases_by_path(path)
         self.assertEqual(testset_list_3, [])

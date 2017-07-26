@@ -1,0 +1,64 @@
+- config:
+    name: "create user testsets."
+    variable_binds:
+        - device_sn: 'HZfFBh6tU59EdXJ'
+    request:
+        base_url: http://127.0.0.1:5000
+        headers:
+            Content-Type: application/json
+            device_sn: $device_sn
+
+- test:
+    name: get token
+    variable_binds:
+        - user_agent: 'iOS/10.3'
+        - os_platform: 'ios'
+        - app_version: '2.8.6'
+        - sign: f1219719911caae89ccc301679857ebfda115ca2
+    request:
+        url: /api/get-token
+        method: POST
+        headers:
+            Content-Type: application/json
+            user_agent: $user_agent
+            device_sn: $device_sn
+            os_platform: $os_platform
+            app_version: $app_version
+        json:
+            sign: $sign
+    extract_binds:
+        - token: content.token
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+
+- test:
+    name: create user which does not exist
+    variable_binds:
+        - user_name: "user1"
+        - user_password: "123456"
+    request:
+        url: /api/users/1000
+        method: POST
+        headers:
+            token: $token
+        json:
+            name: $user_name
+            password: $user_password
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 201}
+        - {"check": "content.success", "comparator": "eq", "expected": true}
+
+- test:
+    name: create user which does not exist
+    request:
+        url: /api/users/1000
+        method: POST
+        headers:
+            token: $token
+        json:
+            name: "user1"
+            password: "123456"
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 500}
+        - {"check": "content.success", "comparator": "eq", "expected": false}

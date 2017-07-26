@@ -1,6 +1,6 @@
 import requests
 from ate import response, exception
-from test.base import ApiServerUnittest
+from tests.base import ApiServerUnittest
 
 class TestResponse(ApiServerUnittest):
 
@@ -49,40 +49,44 @@ class TestResponse(ApiServerUnittest):
             }
         )
 
-        extract_binds = {
-            "resp_status_code": "status_code",
-            "resp_headers_content_type": "headers.content-type",
-            "resp_content_body_success": "body.success",
-            "resp_content_content_success": "content.success",
-            "resp_content_text_success": "text.success",
-            "resp_content_person_first_name": "content.person.name.first_name",
-            "resp_content_cities_1": "content.person.cities.1"
-        }
+        extract_binds_list = [
+            {"resp_status_code": "status_code"},
+            {"resp_headers_content_type": "headers.content-type"},
+            {"resp_content_body_success": "body.success"},
+            {"resp_content_content_success": "content.success"},
+            {"resp_content_text_success": "text.success"},
+            {"resp_content_person_first_name": "content.person.name.first_name"},
+            {"resp_content_cities_1": "content.person.cities.1"}
+        ]
         resp_obj = response.ResponseObject(resp)
-        extract_binds_dict = resp_obj.extract_response(extract_binds)
+        extract_binds_dict_list = resp_obj.extract_response(extract_binds_list)
 
         self.assertEqual(
-            extract_binds_dict["resp_status_code"],
+            extract_binds_dict_list[0]["resp_status_code"],
             200
         )
         self.assertEqual(
-            extract_binds_dict["resp_headers_content_type"],
+            extract_binds_dict_list[1]["resp_headers_content_type"],
             "application/json"
         )
         self.assertEqual(
-            extract_binds_dict["resp_content_content_success"],
+            extract_binds_dict_list[2]["resp_content_body_success"],
             False
         )
         self.assertEqual(
-            extract_binds_dict["resp_content_text_success"],
+            extract_binds_dict_list[3]["resp_content_content_success"],
             False
         )
         self.assertEqual(
-            extract_binds_dict["resp_content_person_first_name"],
+            extract_binds_dict_list[4]["resp_content_text_success"],
+            False
+        )
+        self.assertEqual(
+            extract_binds_dict_list[5]["resp_content_person_first_name"],
             "Leo"
         )
         self.assertEqual(
-            extract_binds_dict["resp_content_cities_1"],
+            extract_binds_dict_list[6]["resp_content_cities_1"],
             "Shenzhen"
         )
 
@@ -107,21 +111,21 @@ class TestResponse(ApiServerUnittest):
             }
         )
 
-        extract_binds = {
-            "resp_content_dict_key_error": "content.not_exist"
-        }
+        extract_binds_list = [
+            {"resp_content_dict_key_error": "content.not_exist"}
+        ]
         resp_obj = response.ResponseObject(resp)
 
         with self.assertRaises(exception.ParamsError):
-            resp_obj.extract_response(extract_binds)
+            resp_obj.extract_response(extract_binds_list)
 
-        extract_binds = {
-            "resp_content_list_index_error": "content.person.cities.3"
-        }
+        extract_binds_list = [
+            {"resp_content_list_index_error": "content.person.cities.3"}
+        ]
         resp_obj = response.ResponseObject(resp)
 
         with self.assertRaises(exception.ParamsError):
-            resp_obj.extract_response(extract_binds)
+            resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_json_string(self):
         resp = requests.post(
@@ -134,14 +138,14 @@ class TestResponse(ApiServerUnittest):
             }
         )
 
-        extract_binds = {
-            "resp_content_body": "content"
-        }
+        extract_binds_list = [
+            {"resp_content_body": "content"}
+        ]
         resp_obj = response.ResponseObject(resp)
 
-        extract_binds_dict = resp_obj.extract_response(extract_binds)
+        extract_binds_dict_list = resp_obj.extract_response(extract_binds_list)
         self.assertEqual(
-            extract_binds_dict["resp_content_body"],
+            extract_binds_dict_list[0]["resp_content_body"],
             "abc"
         )
 

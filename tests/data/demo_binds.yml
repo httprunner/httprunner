@@ -1,10 +1,4 @@
-register_variables:
-    variable_binds:
-        - TOKEN: "debugtalk"
-        - var: [1, 2, 3]
-        - data: {'name': 'user', 'password': '123456'}
-
-register_template_variables:
+bind_variables:
     variable_binds:
         - TOKEN: "debugtalk"
         - token: $TOKEN
@@ -34,7 +28,7 @@ bind_lambda_functions_with_import:
 bind_module_functions:
     function_binds:
         import_module_functions:
-            - test.data.custom_functions
+            - tests.data.custom_functions
     variable_binds:
         - TOKEN: debugtalk
         - random: ${gen_random_string(5)}

@@ -1,19 +1,20 @@
 from ate.client import HttpSession
-from test.base import ApiServerUnittest
+from tests.base import ApiServerUnittest
 
 class TestHttpClient(ApiServerUnittest):
     def setUp(self):
         super(TestHttpClient, self).setUp()
-        self.host = "http://127.0.0.1:5000"
         self.api_client = HttpSession(self.host)
-        self.clear_users()
+        self.headers = self.get_authenticated_headers()
+        self.reset_all()
 
     def tearDown(self):
         super(TestHttpClient, self).tearDown()
 
-    def clear_users(self):
-        url = "%s/api/users" % self.host
-        return self.api_client.delete(url)
+    def reset_all(self):
+        url = "%s/api/reset-all" % self.host
+        headers = self.get_authenticated_headers()
+        return self.api_client.get(url, headers=headers)
 
     def test_request_with_full_url(self):
         url = "%s/api/users/1000" % self.host
@@ -21,7 +22,7 @@ class TestHttpClient(ApiServerUnittest):
             'name': 'user1',
             'password': '123456'
         }
-        resp = self.api_client.post(url, json=data)
+        resp = self.api_client.post(url, json=data, headers=self.headers)
         self.assertEqual(201, resp.status_code)
         self.assertEqual(True, resp.json()['success'])
 
@@ -31,6 +32,6 @@ class TestHttpClient(ApiServerUnittest):
             'name': 'user1',
             'password': '123456'
         }
-        resp = self.api_client.post(url, json=data)
+        resp = self.api_client.post(url, json=data, headers=self.headers)
         self.assertEqual(201, resp.status_code)
         self.assertEqual(True, resp.json()['success'])

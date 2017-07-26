@@ -45,7 +45,7 @@ class Runner(object):
         self.context.import_module_functions(module_functions, level)
 
         variable_binds = config_dict.get('variable_binds', [])
-        self.context.register_variables_config(variable_binds, level)
+        self.context.bind_variables(variable_binds, level)
 
         request_config = config_dict.get('request', {})
         if level == "testset":
@@ -93,8 +93,8 @@ class Runner(object):
         resp_obj = response.ResponseObject(resp)
 
         extract_binds = testcase.get("extract_binds", {})
-        extracted_variables_mapping = resp_obj.extract_response(extract_binds)
-        self.context.bind_extracted_variables(extracted_variables_mapping)
+        extracted_variables_mapping_list = resp_obj.extract_response(extract_binds)
+        self.context.bind_variables(extracted_variables_mapping_list, level="testset")
 
         validators = testcase.get("validators", [])
         diff_content_list = resp_obj.validate(
