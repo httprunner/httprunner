@@ -34,7 +34,7 @@ $ pip install -U git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestE
 
 If there is a problem with the installation or upgrade, you can check the [`FAQ`](docs/FAQ.md).
 
-To ensure the installation or upgrade is successful, you can excuting command `ate -V` to see if you can get the correct version number.
+To ensure the installation or upgrade is successful, you can execute command `ate -V` to see if you can get the correct version number.
 
 ```text
 $ ate -V
