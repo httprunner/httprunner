@@ -18,7 +18,7 @@ except NameError:
     PYTHON_VERSION = 3
 
 SECRET_KEY = "DebugTalk"
-variable_regexp = re.compile(r"^\$([\w_]+)$")
+variable_regexp = r"\$([\w_]+)"
 function_regexp = re.compile(r"^\$\{([\w_]+)\(([\$\w_ =,]*)\)\}$")
 
 def gen_random_string(str_len):
@@ -117,26 +117,45 @@ def load_testcases_by_path(path):
     else:
         return []
 
-def is_variable(content):
-    """ check if content is a variable, which is in format $variable
+def get_contain_variables(content):
+    """ extract all variable names from content, which is in format $variable
     @param (str) content
-    @return (bool) True or False
+    @return (list) variable name list
 
-    e.g. $variable => True
-         abc => False
+    e.g. $variable => ["variable"]
+         /blog/$postid => ["postid"]
+         /$var1/$var2 => ["var1", "var2"]
+         abc => []
     """
-    matched = variable_regexp.match(content)
-    return True if matched else False
+    return re.findall(variable_regexp, content)
 
-def parse_variable(content):
-    """ parse variable name from string content.
+def parse_variables(content, variable_mapping):
+    """ replace all variables of string content with mapping value.
     @param (str) content
-    @return (str) variable name
+    @return (str) parsed content
 
-    e.g. $variable => variable
+    e.g.
+        variable_mapping = {
+            "var_1": "abc",
+            "var_2": "def"
+        }
+        $var_1 => "abc"
+        $var_1#XYZ => "abc#XYZ"
+        /$var_1/$var_2/var3 => "/abc/def/var3"
+        ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
     """
-    matched = variable_regexp.match(content)
-    return matched.group(1)
+    variable_name_list = get_contain_variables(content)
+    for variable_name in variable_name_list:
+        variable_value = variable_mapping.get(variable_name)
+        if variable_value is None:
+            raise ParamsError(
+                "%s is not defined in bind variables!" % variable_name)
+
+        content = content.replace(
+            "${}".format(variable_name),
+            variable_value
+        )
+    return content
 
 def is_functon(content):
     """ check if content is a function, which is in format ${func()}
