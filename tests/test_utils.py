@@ -115,31 +115,77 @@ class TestUtils(ApiServerUnittest):
         testset_list_3 = utils.load_testcases_by_path(path)
         self.assertEqual(testset_list_3, [])
 
-    def test_is_variable(self):
-        content = "$var"
-        self.assertTrue(utils.is_variable(content))
-        content = "$var123"
-        self.assertTrue(utils.is_variable(content))
-        content = "$var_name"
-        self.assertTrue(utils.is_variable(content))
-        content = "var"
-        self.assertFalse(utils.is_variable(content))
-        content = "a$var"
-        self.assertFalse(utils.is_variable(content))
-        content = "$v ar"
-        self.assertFalse(utils.is_variable(content))
-        content = " "
-        self.assertFalse(utils.is_variable(content))
-        content = "$abc*"
-        self.assertFalse(utils.is_variable(content))
+    def test_get_contain_variables(self):
+        self.assertEqual(
+            utils.get_contain_variables("$var"),
+            ["var"]
+        )
+        self.assertEqual(
+            utils.get_contain_variables("$var123"),
+            ["var123"]
+        )
+        self.assertEqual(
+            utils.get_contain_variables("$var_name"),
+            ["var_name"]
+        )
+        self.assertEqual(
+            utils.get_contain_variables("var"),
+            []
+        )
+        self.assertEqual(
+            utils.get_contain_variables("a$var"),
+            ["var"]
+        )
+        self.assertEqual(
+            utils.get_contain_variables("$v ar"),
+            ["v"]
+        )
+        self.assertEqual(
+            utils.get_contain_variables(" "),
+            []
+        )
+        self.assertEqual(
+            utils.get_contain_variables("$abc*"),
+            ["abc"]
+        )
+        self.assertEqual(
+            utils.get_contain_variables("${func()}"),
+            []
+        )
+        self.assertEqual(
+            utils.get_contain_variables("${func(1,2)}"),
+            []
+        )
+        self.assertEqual(
+            utils.get_contain_variables("${gen_md5($TOKEN, $data, $random)}"),
+            ["TOKEN", "data", "random"]
+        )
 
-    def test_parse_variable(self):
-        content = "$var"
-        self.assertEqual(utils.parse_variable(content), "var")
-        content = "$var123"
-        self.assertEqual(utils.parse_variable(content), "var123")
-        content = "$var_name"
-        self.assertEqual(utils.parse_variable(content), "var_name")
+    def test_parse_variables(self):
+        variable_mapping = {
+            "var_1": "abc",
+            "var_2": "def"
+        }
+        self.assertEqual(
+            utils.parse_variables("$var_1", variable_mapping),
+            "abc"
+        )
+        self.assertEqual(
+            utils.parse_variables("var_1", variable_mapping),
+            "var_1"
+        )
+        self.assertEqual(
+            utils.parse_variables("$var_1#XYZ", variable_mapping),
+            "abc#XYZ"
+        )
+        self.assertEqual(
+            utils.parse_variables("/$var_1/$var_2/var3", variable_mapping),
+            "/abc/def/var3"
+        )
+        self.assertEqual(
+            utils.parse_variables("${func($var_1, $var_2, xyz)}", variable_mapping),
+            "${func(abc, def, xyz)}"
+        )
 
     def test_is_functon(self):
         content = "${func()}"

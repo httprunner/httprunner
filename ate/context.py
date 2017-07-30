@@ -6,7 +6,7 @@ import sys
 import types
 from collections import OrderedDict
 
-from ate import exception, testcase, utils
+from ate import testcase, utils
 
 
 def is_function(tup):
@@ -154,16 +154,8 @@ class Context(object):
 
         # data is in string format here
         data = "" if data is None else data.strip()
-        if utils.is_variable(data):
-            # variable marker: $var
-            variable_name = utils.parse_variable(data)
-            value = self.testcase_variables_mapping.get(variable_name)
-            if value is None:
-                raise exception.ParamsError(
-                    "%s is not defined in bind variables!" % variable_name)
-            return value
 
-        elif utils.is_functon(data):
+        if utils.is_functon(data):
             # function marker: ${func(1, 2, a=3, b=4)}
             fuction_meta = utils.parse_function(data)
             func_name = fuction_meta['func_name']
@@ -172,5 +164,10 @@ class Context(object):
             args = self.get_eval_value(args)
             kwargs = self.get_eval_value(kwargs)
             return self.testcase_functions_config[func_name](*args, **kwargs)
+
+        elif utils.get_contain_variables(data):
+            parsed_data = utils.parse_variables(data, self.testcase_variables_mapping)
+            return parsed_data
+
         else:
             return data
