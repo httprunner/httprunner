@@ -183,6 +183,10 @@ class TestUtils(ApiServerUnittest):
             "/abc/def/var3"
         )
         self.assertEqual(
+            utils.parse_variables("/$var_1/$var_2/$var_1", variable_mapping),
+            "/abc/def/abc"
+        )
+        self.assertEqual(
             utils.parse_variables("${func($var_1, $var_2, xyz)}", variable_mapping),
             "${func(abc, def, xyz)}"
         )
