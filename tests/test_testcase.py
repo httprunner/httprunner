@@ -106,68 +106,48 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_is_functon(self):
-        content = "${func()}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func(5)}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func(1, 2)}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func($a, $b)}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func(a=1, b=2)}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func(1, 2, a=3, b=4)}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func(1, $b, c=$x, d=4)}"
-        self.assertTrue(testcase.is_functon(content))
-        content = "${func}"
-        self.assertFalse(testcase.is_functon(content))
-        content = "$abc"
-        self.assertFalse(testcase.is_functon(content))
-        content = "abc"
-        self.assertFalse(testcase.is_functon(content))
+        self.assertTrue(testcase.is_functon("${func()}"))
+        self.assertTrue(testcase.is_functon("${func(5)}"))
+        self.assertTrue(testcase.is_functon("${func(1, 2)}"))
+        self.assertTrue(testcase.is_functon("${func($a, $b)}"))
+        self.assertTrue(testcase.is_functon("${func(a=1, b=2)}"))
+        self.assertTrue(testcase.is_functon("${func(1, 2, a=3, b=4)}"))
+        self.assertTrue(testcase.is_functon("${func(1, $b, c=$x, d=4)}"))
+        self.assertFalse(testcase.is_functon("${func}"))
+        self.assertFalse(testcase.is_functon("$abc"))
+        self.assertFalse(testcase.is_functon("abc"))
+        self.assertFalse(testcase.is_functon("${}"))
 
     def test_parse_string_value(self):
-        str_value = "123"
-        self.assertEqual(testcase.parse_string_value(str_value), 123)
-        str_value = "12.3"
-        self.assertEqual(testcase.parse_string_value(str_value), 12.3)
-        str_value = "a123"
-        self.assertEqual(testcase.parse_string_value(str_value), "a123")
-        str_value = "$var"
-        self.assertEqual(testcase.parse_string_value(str_value), "$var")
-        str_value = "${func}"
-        self.assertEqual(testcase.parse_string_value(str_value), "${func}")
+        self.assertEqual(testcase.parse_string_value("123"), 123)
+        self.assertEqual(testcase.parse_string_value("12.3"), 12.3)
+        self.assertEqual(testcase.parse_string_value("a123"), "a123")
+        self.assertEqual(testcase.parse_string_value("$var"), "$var")
+        self.assertEqual(testcase.parse_string_value("${func}"), "${func}")
 
     def test_parse_functon(self):
-        content = "${func()}"
         self.assertEqual(
-            testcase.parse_function(content),
+            testcase.parse_function("${func()}"),
             {'func_name': 'func', 'args': [], 'kwargs': {}}
         )
-        content = "${func(5)}"
         self.assertEqual(
-            testcase.parse_function(content),
+            testcase.parse_function("${func(5)}"),
             {'func_name': 'func', 'args': [5], 'kwargs': {}}
         )
-        content = "${func(1, 2)}"
         self.assertEqual(
-            testcase.parse_function(content),
+            testcase.parse_function("${func(1, 2)}"),
             {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
         )
-        content = "${func(a=1, b=2)}"
         self.assertEqual(
-            testcase.parse_function(content),
+            testcase.parse_function("${func(a=1, b=2)}"),
             {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
-        content = "${func(a= 1, b =2)}"
         self.assertEqual(
-            testcase.parse_function(content),
+            testcase.parse_function("${func(a= 1, b =2)}"),
             {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
-        content = "${func(1, 2, a=3, b=4)}"
         self.assertEqual(
-            testcase.parse_function(content),
+            testcase.parse_function("${func(1, 2, a=3, b=4)}"),
             {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
         )
 
