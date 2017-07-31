@@ -151,10 +151,16 @@ def parse_variables(content, variable_mapping):
             raise ParamsError(
                 "%s is not defined in bind variables!" % variable_name)
 
-        content = content.replace(
-            "${}".format(variable_name),
-            variable_value
-        )
+        if "${}".format(variable_name) == content:
+            # content is a variable
+            content = variable_value
+        else:
+            # content contains one or many variables
+            content = content.replace(
+                "${}".format(variable_name),
+                str(variable_value)
+            )
+
     return content
 
 def is_functon(content):

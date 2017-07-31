@@ -164,7 +164,10 @@ class TestUtils(ApiServerUnittest):
     def test_parse_variables(self):
         variable_mapping = {
             "var_1": "abc",
-            "var_2": "def"
+            "var_2": "def",
+            "var_3": 123,
+            "var_4": {"a": 1},
+            "var_5": True
         }
         self.assertEqual(
             utils.parse_variables("$var_1", variable_mapping),
@@ -189,6 +192,26 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(
             utils.parse_variables("${func($var_1, $var_2, xyz)}", variable_mapping),
             "${func(abc, def, xyz)}"
+        )
+        self.assertEqual(
+            utils.parse_variables("$var_3", variable_mapping),
+            123
+        )
+        self.assertEqual(
+            utils.parse_variables("$var_4", variable_mapping),
+            {"a": 1}
+        )
+        self.assertEqual(
+            utils.parse_variables("$var_5", variable_mapping),
+            True
+        )
+        self.assertEqual(
+            utils.parse_variables("abc$var_5", variable_mapping),
+            "abcTrue"
+        )
+        self.assertEqual(
+            utils.parse_variables("abc$var_4", variable_mapping),
+            "abc{'a': 1}"
         )
 
     def test_is_functon(self):
