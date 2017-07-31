@@ -38,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-0.2.2
+0.3.0
 ```
 
 Execute the command `ate -h` to view command help.
