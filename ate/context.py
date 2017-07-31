@@ -88,7 +88,11 @@ class Context(object):
         """
         for variable_bind in variable_binds:
             for variable_name, value in variable_bind.items():
-                variable_evale_value = self.get_eval_value(value)
+                variable_evale_value = testcase.parse_content_with_bindings(
+                    value,
+                    self.testcase_variables_mapping,
+                    self.testcase_functions_config
+                )
 
                 if level == "testset":
                     self.testset_shared_variables_mapping[variable_name] = variable_evale_value
@@ -126,48 +130,13 @@ class Context(object):
     def get_parsed_request(self):
         """ get parsed request, with each variable replaced by bind value.
         """
-        parsed_request = testcase.parse_template(
+        parsed_request = testcase.parse_content_with_bindings(
             self.testcase_request_config,
-            self.testcase_variables_mapping
+            self.testcase_variables_mapping,
+            self.testcase_functions_config
         )
 
         return parsed_request
 
     def get_testcase_variables_mapping(self):
         return self.testcase_variables_mapping
-
-    def get_eval_value(self, data):
-        """ evaluate data recursively, each variable in data will be evaluated.
-        """
-        if isinstance(data, (list, tuple)):
-            return [self.get_eval_value(item) for item in data]
-
-        if isinstance(data, dict):
-            evaluated_data = {}
-            for key, value in data.items():
-                evaluated_data[key] = self.get_eval_value(value)
-
-            return evaluated_data
-
-        if isinstance(data, (int, float)):
-            return data
-
-        # data is in string format here
-        data = "" if data is None else data.strip()
-
-        if utils.is_functon(data):
-            # function marker: ${func(1, 2, a=3, b=4)}
-            fuction_meta = utils.parse_function(data)
-            func_name = fuction_meta['func_name']
-            args = fuction_meta.get('args', [])
-            kwargs = fuction_meta.get('kwargs', {})
-            args = self.get_eval_value(args)
-            kwargs = self.get_eval_value(kwargs)
-            return self.testcase_functions_config[func_name](*args, **kwargs)
-
-        elif utils.get_contain_variables(data):
-            parsed_data = utils.parse_variables(data, self.testcase_variables_mapping)
-            return parsed_data
-
-        else:
-            return data

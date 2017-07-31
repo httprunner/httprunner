@@ -188,31 +188,3 @@ class VariableBindsUnittest(unittest.TestCase):
         self.assertEqual(len(parsed_request["headers"]["random"]), 5)
         self.assertIn("data", parsed_request)
         self.assertEqual(parsed_request["data"], testcase["variable_binds"][2]["data"])
-
-    def test_get_eval_value(self):
-        self.context.testcase_variables_mapping = {
-            "str_1": "str_value1",
-            "str_2": "str_value2"
-        }
-        self.assertEqual(self.context.get_eval_value("$str_1"), "str_value1")
-        self.assertEqual(self.context.get_eval_value("$str_2"), "str_value2")
-        self.assertEqual(
-            self.context.get_eval_value(["$str_1", "str3"]),
-            ["str_value1", "str3"]
-        )
-        self.assertEqual(
-            self.context.get_eval_value({"key": "$str_1"}),
-            {"key": "str_value1"}
-        )
-
-        import random, string
-        self.context.testcase_functions_config["gen_random_string"] = \
-            lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
-                for _ in range(str_len))
-        result = self.context.get_eval_value("${gen_random_string(5)}")
-        self.assertEqual(len(result), 5)
-
-        add_two_nums = lambda a, b=1: a + b
-        self.context.testcase_functions_config["add_two_nums"] = add_two_nums
-        self.assertEqual(self.context.get_eval_value("${add_two_nums(1)}"), 2)
-        self.assertEqual(self.context.get_eval_value("${add_two_nums(1, 2)}"), 3)
