@@ -12,9 +12,9 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - Inherit all powerful features of [`Requests`][requests], just have fun to handle HTTP in human way.
 - Define testcases in YAML or JSON format in concise and elegant manner.
 - Supports `function`/`variable`/`extract`/`validate` mechanisms to create full test scenarios.
-- Testcases can be run in diverse ways, with single testset, multiple testsets, or whole project folder.
+- Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
-- Perfect combination with [Jenkins][Jenkins], running continuous test and production monitoring.
+- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring.
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
 - It is extensible to facilitate the implementation of web platform with [`Flask`][flask] framework.
 
