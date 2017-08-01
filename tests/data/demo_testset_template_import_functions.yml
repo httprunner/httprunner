@@ -15,8 +15,6 @@
 
 - test:
     name: get token
-    variable_binds:
-        - sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     request:
         url: /api/get-token
         method: POST
@@ -26,7 +24,7 @@
             os_platform: $os_platform
             app_version: $app_version
         json:
-            sign: $sign
+            sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     extract_binds:
         - token: content.token
     validators:
