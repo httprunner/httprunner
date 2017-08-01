@@ -86,8 +86,6 @@ And here is testset example of typical scenario: get token at the beginning, and
 
 - test:
     name: get token
-    variable_binds:
-        - sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     request:
         url: /api/get-token
         method: POST
@@ -97,7 +95,7 @@ And here is testset example of typical scenario: get token at the beginning, and
             os_platform: $os_platform
             app_version: $app_version
         json:
-            sign: $sign
+            sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     extract_binds:
         - token: content.token
     validators:
@@ -106,17 +104,14 @@ And here is testset example of typical scenario: get token at the beginning, and
 
 - test:
     name: create user which does not exist
-    variable_binds:
-        - user_name: "user1"
-        - user_password: "123456"
     request:
         url: /api/users/1000
         method: POST
         headers:
             token: $token
         json:
-            name: $user_name
-            password: $user_password
+            name: "user1"
+            password: "123456"
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
