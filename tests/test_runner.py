@@ -66,7 +66,7 @@ class TestRunner(ApiServerUnittest):
         self.assertFalse(success)
         self.assertEqual(
             diff_content_list[0],
-            {"check": "status_code", "comparator": "eq", "expected": 205, 'value': 200}
+            {"check": "status_code", "comparator": "eq", "expected": 205, 'actual_value': 200}
         )
 
     def test_run_testset_hardcode(self):

@@ -50,7 +50,7 @@ class ResponseObject(object):
                 return json_content
 
         except AttributeError:
-            raise exception.ParamsError("invalid extract_binds!")
+            raise exception.ParseResponseError("failed to extract bind variable in response!")
 
     def extract_response(self, extract_binds):
         """ extract content from requests.Response
@@ -68,7 +68,7 @@ class ResponseObject(object):
         for extract_bind in extract_binds:
             for key, field in extract_bind.items():
                 if not isinstance(field, utils.string_type):
-                    raise exception.ParamsError("invalid extract_binds!")
+                    raise exception.ParamsError("invalid extract_binds in testcase extract_binds!")
 
                 extracted_variables_mapping_list.append(
                     {key: self.extract_field(field)}
@@ -99,19 +99,28 @@ class ResponseObject(object):
 
         for validator_dict in validators:
 
-            if "expected" not in validator_dict or "check" not in validator_dict:
-                raise exception.ParamsError("expected not specified in validator")
+            check_item = validator_dict.get("check")
+            if not check_item:
+                raise exception.ParamsError("invalid check item in testcase validators!")
 
-            validator_key = validator_dict["check"]
-            try:
-                validator_dict["value"] = variables_mapping[validator_key]
-            except KeyError:
-                validator_dict["value"] = self.extract_field(validator_key)
+            if "expected" not in validator_dict:
+                raise exception.ParamsError("expected item missed in testcase validators!")
+
+            expected = validator_dict.get("expected")
+            comparator = validator_dict.get("comparator", "eq")
+
+            if check_item in variables_mapping:
+                validator_dict["actual_value"] = variables_mapping[check_item]
+            else:
+                try:
+                    validator_dict["actual_value"] = self.extract_field(check_item)
+                except exception.ParseResponseError:
+                    raise exception.ParseResponseError("failed to extract check item in response!")
 
             match_expected = utils.match_expected(
-                validator_dict["value"],
-                validator_dict["expected"],
-                validator_dict.get("comparator", "eq")
+                validator_dict["actual_value"],
+                expected,
+                comparator
             )
 
             if not match_expected:

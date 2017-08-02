@@ -170,7 +170,7 @@ class TestResponse(ApiServerUnittest):
             [
                 {
                     "check": "resp_status_code",
-                    "comparator": "eq", "expected": 201, "value": 200
+                    "comparator": "eq", "expected": 201, "actual_value": 200
                 }
             ]
         )
