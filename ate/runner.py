@@ -101,10 +101,9 @@ class Runner(object):
             extracted_variables_mapping_list = resp_obj.extract_response(extract_binds)
             self.context.bind_variables(extracted_variables_mapping_list, level="testset")
 
-            diff_content_list = resp_obj.validate(
-                validators, self.context.get_testcase_variables_mapping())
+            resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
 
-        return resp_obj.success, diff_content_list
+        return True
 
     def run_testset(self, testset):
         """ run single testset, including one or several testcases.

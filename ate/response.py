@@ -8,7 +8,6 @@ class ResponseObject(object):
         @param (requests.Response instance) resp_obj
         """
         self.resp_obj = resp_obj
-        self.success = True
 
     def parsed_body(self):
         try:
@@ -95,8 +94,6 @@ class ResponseObject(object):
                 }
             ]
         """
-        diff_content_list = []
-
         for validator_dict in validators:
 
             check_item = validator_dict.get("check")
@@ -117,14 +114,11 @@ class ResponseObject(object):
                 except exception.ParseResponseError:
                     raise exception.ParseResponseError("failed to extract check item in response!")
 
-            match_expected = utils.match_expected(
+            utils.match_expected(
                 validator_dict["actual_value"],
                 expected,
-                comparator
+                comparator,
+                check_item
             )
 
-            if not match_expected:
-                diff_content_list.append(validator_dict)
-
-        self.success = False if diff_content_list else True
-        return diff_content_list
+        return True

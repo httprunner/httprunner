@@ -158,8 +158,12 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.match_expected(1, 1, "eq"))
         self.assertTrue(utils.match_expected("abc", "abc", "eq"))
         self.assertTrue(utils.match_expected("abc", "abc"))
-        self.assertFalse(utils.match_expected(123, "123", "eq"))
-        self.assertFalse(utils.match_expected(123, "123"))
+
+        with self.assertRaises(exception.ValidationError):
+            utils.match_expected(123, "123", "eq")
+
+        with self.assertRaises(exception.ValidationError):
+            utils.match_expected(123, "123")
 
         self.assertTrue(utils.match_expected("123", 3, "len_eq"))
         self.assertTrue(utils.match_expected(123, "123", "str_eq"))
@@ -179,7 +183,8 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.match_expected("3ab", "123abc456", "contained_by"))
 
         self.assertTrue(utils.match_expected("123abc456", "^123.*456$", "regex"))
-        self.assertFalse(utils.match_expected("123abc456", "^12b.*456$", "regex"))
+        with self.assertRaises(exception.ValidationError):
+            utils.match_expected("123abc456", "^12b.*456$", "regex")
 
         with self.assertRaises(exception.ParamsError):
             utils.match_expected(1, 2, "not_supported_comparator")
