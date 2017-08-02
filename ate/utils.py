@@ -144,11 +144,12 @@ def query_json(json_content, query, delimiter='.'):
 
     return json_content
 
-def match_expected(value, expected, comparator="eq"):
+def match_expected(value, expected, comparator="eq", check_item=""):
     """ check if value matches expected value.
-    @param value: value that get from response.
+    @param value: actual value that get from response.
     @param expected: expected result described in testcase
     @param comparator: compare method
+    @param check_item: check item name
     """
     try:
         if comparator in ["eq", "equals", "=="]:
@@ -192,7 +193,13 @@ def match_expected(value, expected, comparator="eq"):
 
         return True
     except AssertionError:
-        return False
+        err_msg = "\n".join([
+            "check item name: %s;" % check_item,
+            "check item value: %s (%s);" % (value, type(value).__name__),
+            "comparator: %s;" % comparator,
+            "expected value: %s (%s)." % (expected, type(expected).__name__)
+        ])
+        raise exception.ValidationError(err_msg)
 
 def deep_update_dict(origin_dict, override_dict):
     """ update origin dict with override dict recursively

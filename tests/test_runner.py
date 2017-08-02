@@ -25,16 +25,13 @@ class TestRunner(ApiServerUnittest):
         for testcase_file_path in self.testcase_file_path_list:
             testcases = utils.load_testcases(testcase_file_path)
             testcase = testcases[0]["test"]
-            success, _ = self.test_runner.run_test(testcase)
-            self.assertTrue(success)
+            self.assertTrue(self.test_runner.run_test(testcase))
 
             testcase = testcases[1]["test"]
-            success, _ = self.test_runner.run_test(testcase)
-            self.assertTrue(success)
+            self.assertTrue(self.test_runner.run_test(testcase))
 
             testcase = testcases[2]["test"]
-            success, _ = self.test_runner.run_test(testcase)
-            self.assertTrue(success)
+            self.assertTrue(self.test_runner.run_test(testcase))
 
     def test_run_single_testcase_fail(self):
         testcase = {
@@ -62,26 +59,22 @@ class TestRunner(ApiServerUnittest):
             ]
         }
 
-        success, diff_content_list = self.test_runner.run_test(testcase)
-        self.assertFalse(success)
-        self.assertEqual(
-            diff_content_list[0],
-            {"check": "status_code", "comparator": "eq", "expected": 205, 'actual_value': 200}
-        )
+        with self.assertRaises(exception.ValidationError):
+            self.test_runner.run_test(testcase)
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             testsets = utils.load_testcases_by_path(testcase_file_path)
             results = self.test_runner.run_testset(testsets[0])
             self.assertEqual(len(results), 3)
-            self.assertEqual(results, [(True, [])] * 3)
+            self.assertEqual(results, [True] * 3)
 
     def test_run_testsets_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             testsets = utils.load_testcases_by_path(testcase_file_path)
             results = self.test_runner.run_testsets(testsets)
             self.assertEqual(len(results), 1)
-            self.assertEqual(results, [[(True, [])] * 3])
+            self.assertEqual(results, [[True] * 3])
 
     def test_run_testset_template_variables(self):
         testcase_file_path = os.path.join(
@@ -89,7 +82,7 @@ class TestRunner(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 3)
-        self.assertEqual(results, [(True, [])] * 3)
+        self.assertEqual(results, [True] * 3)
 
     def test_run_testset_template_import_functions(self):
         testcase_file_path = os.path.join(
@@ -97,7 +90,7 @@ class TestRunner(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testset(testsets[0])
         self.assertEqual(len(results), 3)
-        self.assertEqual(results, [(True, [])] * 3)
+        self.assertEqual(results, [True] * 3)
 
     def test_run_testsets_template_import_functions(self):
         testcase_file_path = os.path.join(
@@ -105,7 +98,7 @@ class TestRunner(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results, [[(True, [])] * 3])
+        self.assertEqual(results, [[True] * 3])
 
     def test_run_testsets_template_lambda_functions(self):
         testcase_file_path = os.path.join(
@@ -113,4 +106,4 @@ class TestRunner(ApiServerUnittest):
         testsets = utils.load_testcases_by_path(testcase_file_path)
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results, [[(True, [])] * 3])
+        self.assertEqual(results, [[True] * 3])
