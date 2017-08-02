@@ -43,7 +43,9 @@ def main():
         logging.warning("More than one testset paths specified, \
                         report name is ignored, use generated time instead.")
 
-    for testset_path in args.testset_paths:
+    results = {}
+
+    for testset_path in set(args.testset_paths):
 
         testset_path = testset_path.strip('/')
         task_suite = create_task(testset_path)
@@ -54,4 +56,13 @@ def main():
             "report_name": report_name,
             "failfast": args.failfast
         }
-        PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
+        result = PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
+        results[testset_path] = {
+            "total": result.testsRun,
+            "successes": len(result.successes),
+            "failures": len(result.failures),
+            "errors": len(result.errors),
+            "skipped": len(result.skipped)
+        }
+
+    return results
