@@ -13,7 +13,7 @@ with open('README.md') as f:
 setup(
     name='ApiTestEngine',
     version=version,
-    description='An API test engine.',
+    description='API test engine.',
     long_description=long_description,
     author='Leo Lee',
     author_email='mail@debugtalk.com',
@@ -27,10 +27,12 @@ setup(
         "PyYAML",
         "coveralls",
         "coverage",
-        "PyUnitReport"
+        "PyUnitReport",
+        "jenkins-mail-py"
     ],
     dependency_links=[
-        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport"
+        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport",
+        "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
