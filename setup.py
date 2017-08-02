@@ -23,7 +23,6 @@ setup(
     keywords='api test',
     install_requires=[
         "requests",
-        "termcolor",
         "flask",
         "PyYAML",
         "coveralls",

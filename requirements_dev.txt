@@ -1,5 +1,4 @@
 requests
-termcolor
 flask
 PyYAML
 coveralls
