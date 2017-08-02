@@ -7,8 +7,7 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        with self.assertRaises(exception.ParamsError):
-            utils.load_testcases(testcase_file_path)
+        self.assertEqual(utils.load_testcases(testcase_file_path), [])
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
@@ -132,11 +131,11 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 3)
 
         query = "ids.str_key"
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ParseResponseError):
             utils.query_json(json_content, query)
 
         query = "ids.5"
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ParseResponseError):
             utils.query_json(json_content, query)
 
         query = "person.age"
@@ -144,7 +143,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 29)
 
         query = "person.not_exist_key"
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ParseResponseError):
             utils.query_json(json_content, query)
 
         query = "person.cities.0"

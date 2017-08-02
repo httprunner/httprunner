@@ -116,7 +116,7 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ParseResponseError):
             resp_obj.extract_response(extract_binds_list)
 
         extract_binds_list = [
@@ -124,7 +124,7 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ParseResponseError):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_json_string(self):

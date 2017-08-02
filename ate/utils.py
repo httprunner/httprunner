@@ -7,7 +7,7 @@ import re
 import string
 
 import yaml
-from ate.exception import ParamsError
+from ate import exception
 
 try:
     string_type = basestring
@@ -47,7 +47,7 @@ def load_testcases(testcase_file_path):
         return load_yaml_file(testcase_file_path)
     else:
         # '' or other suffix
-        raise ParamsError("Bad testcase file name!")
+        return []
 
 def load_foler_files(folder_path):
     """ load folder path, return all files in list format.
@@ -96,10 +96,7 @@ def load_testcases_by_path(path):
             "config": {},
             "testcases": []
         }
-        try:
-            testcases_list = load_testcases(path)
-        except ParamsError:
-            return []
+        testcases_list = load_testcases(path)
 
         for item in testcases_list:
             for key in item:
@@ -143,7 +140,7 @@ def query_json(json_content, query, delimiter='.'):
                 key = int(key)
             json_content = json_content[key]
     except (KeyError, ValueError, IndexError):
-        raise ParamsError("invalid query string in extract_binds!")
+        raise exception.ParseResponseError("failed to query json when extracting response!")
 
     return json_content
 
@@ -191,7 +188,7 @@ def match_expected(value, expected, comparator="eq"):
         elif comparator in ["startswith"]:
             assert str(value).startswith(str(expected))
         else:
-            raise ParamsError("comparator not supported!")
+            raise exception.ParamsError("comparator not supported!")
 
         return True
     except AssertionError:
