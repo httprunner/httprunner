@@ -28,6 +28,12 @@ def main():
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
 
+    try:
+        from jenkins_mail_py import MailgunHelper
+        mailer = MailgunHelper(parser)
+    except ImportError:
+        mailer = None
+
     args = parser.parse_args()
 
     if args.version:
@@ -68,5 +74,8 @@ def main():
 
         if len(result.successes) != result.testsRun:
             flag = "FAILED"
+
+    if mailer and mailer.config_ready:
+        mailer.send_mail(flag, content=results)
 
     return flag, results

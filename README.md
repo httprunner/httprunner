@@ -14,7 +14,7 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - Supports `function`/`variable`/`extract`/`validate` mechanisms to create full test scenarios.
 - Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
-- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring.
+- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring. Send mail notification with [`jenkins-mail-py`][jenkins-mail-py].
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
 - It is extensible to facilitate the implementation of web platform with [`Flask`][flask] framework.
 
@@ -38,16 +38,21 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-0.3.0
+0.3.1
 ```
 
 Execute the command `ate -h` to view command help.
 
 ```text
 $ ate -h
-usage: main.py [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-               [--failfast]
-               [testset_paths [testset_paths ...]]
+usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
+           [--failfast] [--mailgun-api-id MAILGUN_API_ID]
+           [--mailgun-api-key MAILGUN_API_KEY] [--email-sender EMAIL_SENDER]
+           [--email-recepients EMAIL_RECEPIENTS] [--mail-subject MAIL_SUBJECT]
+           [--mail-content MAIL_CONTENT] [--jenkins-job-name JENKINS_JOB_NAME]
+           [--jenkins-job-url JENKINS_JOB_URL]
+           [--jenkins-build-number JENKINS_BUILD_NUMBER]
+           [testset_paths [testset_paths ...]]
 
 Api Test Engine.
 
@@ -62,6 +67,24 @@ optional arguments:
   --report-name REPORT_NAME
                         Specify report name, default is generated time.
   --failfast            Stop the test run on the first error or failure.
+  --mailgun-api-id MAILGUN_API_ID
+                        Specify mailgun api id.
+  --mailgun-api-key MAILGUN_API_KEY
+                        Specify mailgun api key.
+  --email-sender EMAIL_SENDER
+                        Specify email sender.
+  --email-recepients EMAIL_RECEPIENTS
+                        Specify email recepients.
+  --mail-subject MAIL_SUBJECT
+                        Specify email subject.
+  --mail-content MAIL_CONTENT
+                        Specify email content.
+  --jenkins-job-name JENKINS_JOB_NAME
+                        Specify jenkins job name.
+  --jenkins-job-url JENKINS_JOB_URL
+                        Specify jenkins job url.
+  --jenkins-build-number JENKINS_BUILD_NUMBER
+                        Specify jenkins build number.
 ```
 
 ## Write testcases
@@ -143,6 +166,12 @@ If you want to run testsets of a whole project, you can achieve this goal by spe
 $ ate testcases_folder_path
 ```
 
+When you do continuous integration test or production environment monitoring with `Jenkins`, you may need to send test result notification. For instance, you can send email with mailgun service as below.
+
+```text
+$ ate filepath/testcase.yml --mailgun-api-id samples.mailgun.org --mailgun-api-key key-3ax6xnjp29jd6fds4gc373sgvjxteol0 --email-sender excited@samples.mailgun.org --email-recepients test@email.com --jenkins-job-name demo-smoketest --jenkins-job-url http://test.debugtalk.com/job/demo-smoketest/ --jenkins-build-number 69
+```
+
 ## Supported Python Versions
 
 Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
@@ -163,3 +192,4 @@ Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
 [flask]: http://flask.pocoo.org/
 [PyUnitReport]: https://github.com/debugtalk/PyUnitReport
 [Jenkins]: https://jenkins.io/index.html
+[jenkins-mail-py]: https://github.com/debugtalk/jenkins-mail-py.git
