@@ -49,7 +49,7 @@ def parse_variables(content, variable_mapping):
             # content contains one or many variables
             content = content.replace(
                 "${}".format(variable_name),
-                str(variable_value)
+                str(variable_value), 1
             )
 
     return content

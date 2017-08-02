@@ -188,6 +188,19 @@ class TestcaseParserUnittest(unittest.TestCase):
             "/users/100/training/1498?userId=100&data=1498"
         )
 
+    def test_parse_variables_multiple_identical_variables(self):
+        variables_binds = {
+            "user": 100,
+            "userid": 1000,
+            "data": 1498
+        }
+        content = "/users/$user/$userid/$data?userId=$userid&data=$data"
+        self.assertEqual(
+            testcase.parse_content_with_bindings(content, variables_binds, {}),
+            "/users/100/1000/1498?userId=1000&data=1498"
+        )
+
+
     def test_parse_content_with_bindings_functions(self):
         import random, string
         functions_binds = {
