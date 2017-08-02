@@ -196,9 +196,9 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.match_expected("123abc", 12, "startswith"))
         self.assertTrue(utils.match_expected(12345, 123, "startswith"))
 
+        self.assertTrue(utils.match_expected(None, None, "eq"))
         with self.assertRaises(exception.ValidationError):
             utils.match_expected(None, 3, "len_eq")
-
         with self.assertRaises(exception.ValidationError):
             utils.match_expected("abc", None, "gt")
 

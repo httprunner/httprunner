@@ -152,6 +152,11 @@ def match_expected(value, expected, comparator="eq", check_item=""):
     @param check_item: check item name
     """
     try:
+        if value is None or expected is None:
+            assert comparator in ["is", "eq", "equals", "=="]
+            assert value is None
+            assert expected is None
+
         if comparator in ["eq", "equals", "=="]:
             assert value == expected
         elif comparator in ["str_eq", "string_equals"]:
