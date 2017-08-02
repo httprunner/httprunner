@@ -1,11 +1,11 @@
-import os
 import argparse
 import logging
+import os
 
 import PyUnitReport
-
 from ate import __version__
 from ate.task import create_task
+
 
 def main():
     """ parse command line options and run commands.
@@ -44,6 +44,7 @@ def main():
                         report name is ignored, use generated time instead.")
 
     results = {}
+    flag = "SUCCESS"
 
     for testset_path in set(args.testset_paths):
 
@@ -65,4 +66,7 @@ def main():
             "skipped": len(result.skipped)
         }
 
-    return results
+        if len(result.successes) != result.testsRun:
+            flag = "FAILED"
+
+    return flag, results
