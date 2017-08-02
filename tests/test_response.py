@@ -163,17 +163,8 @@ class TestResponse(ApiServerUnittest):
             "resp_body_success": True
         }
 
-        diff_content_list = resp_obj.validate(validators, variables_mapping)
-        self.assertFalse(resp_obj.success)
-        self.assertEqual(
-            diff_content_list,
-            [
-                {
-                    "check": "resp_status_code",
-                    "comparator": "eq", "expected": 201, "actual_value": 200
-                }
-            ]
-        )
+        with self.assertRaises(exception.ValidationError):
+            resp_obj.validate(validators, variables_mapping)
 
         validators = [
             {"check": "resp_status_code", "comparator": "eq", "expected": 201},
@@ -184,9 +175,7 @@ class TestResponse(ApiServerUnittest):
             "resp_body_success": True
         }
 
-        diff_content_list = resp_obj.validate(validators, variables_mapping)
-        self.assertTrue(resp_obj.success)
-        self.assertEqual(diff_content_list, [])
+        self.assertTrue(resp_obj.validate(validators, variables_mapping))
 
     def test_validate_exception(self):
         url = "http://127.0.0.1:5000/"
@@ -199,7 +188,7 @@ class TestResponse(ApiServerUnittest):
             {"check": "body_success", "comparator": "eq"}
         ]
         variables_mapping = {}
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ValidationError):
             resp_obj.validate(validators, variables_mapping)
 
         # expected value missed in variables mapping
@@ -210,5 +199,5 @@ class TestResponse(ApiServerUnittest):
         variables_mapping = {
             "resp_status_code": 200
         }
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exception.ValidationError):
             resp_obj.validate(validators, variables_mapping)
