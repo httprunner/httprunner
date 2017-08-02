@@ -24,6 +24,9 @@ def main():
     parser.add_argument(
         '--report-name',
         help="Specify report name, default is generated time.")
+    parser.add_argument(
+        '--failfast', action='store_true', default=False,
+        help="Stop the test run on the first error or failure.")
 
     args = parser.parse_args()
 
@@ -49,6 +52,6 @@ def main():
         kwargs = {
             "output": output_folder_name,
             "report_name": report_name,
-            "failfast": True
+            "failfast": args.failfast
         }
         PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)

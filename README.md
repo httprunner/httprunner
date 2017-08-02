@@ -45,8 +45,9 @@ Execute the command `ate -h` to view command help.
 
 ```text
 $ ate -h
-usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-           [testset_paths [testset_paths ...]]
+usage: main.py [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
+               [--failfast]
+               [testset_paths [testset_paths ...]]
 
 Api Test Engine.
 
@@ -60,6 +61,7 @@ optional arguments:
                         Specify logging level, default is INFO.
   --report-name REPORT_NAME
                         Specify report name, default is generated time.
+  --failfast            Stop the test run on the first error or failure.
 ```
 
 ## Write testcases
