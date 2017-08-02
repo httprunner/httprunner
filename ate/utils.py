@@ -192,7 +192,8 @@ def match_expected(value, expected, comparator="eq", check_item=""):
             raise exception.ParamsError("comparator not supported!")
 
         return True
-    except AssertionError:
+
+    except (AssertionError, TypeError):
         err_msg = "\n".join([
             "check item name: %s;" % check_item,
             "check item value: %s (%s);" % (value, type(value).__name__),
