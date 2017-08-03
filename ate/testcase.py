@@ -37,11 +37,11 @@ def parse_variables(content, variable_mapping):
     """
     variable_name_list = get_contain_variables(content)
     for variable_name in variable_name_list:
-        variable_value = variable_mapping.get(variable_name)
-        if variable_value is None:
+        if variable_name not in variable_mapping:
             raise ParamsError(
                 "%s is not defined in bind variables!" % variable_name)
 
+        variable_value = variable_mapping.get(variable_name)
         if "${}".format(variable_name) == content:
             # content is a variable
             content = variable_value
