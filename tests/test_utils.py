@@ -156,41 +156,37 @@ class TestUtils(ApiServerUnittest):
 
     def test_match_expected(self):
         self.assertTrue(utils.match_expected(1, 1, "eq"))
-        self.assertTrue(utils.match_expected("abc", "abc", "eq"))
+        self.assertTrue(utils.match_expected("abc", "abc", "=="))
         self.assertTrue(utils.match_expected("abc", "abc"))
 
         with self.assertRaises(exception.ValidationError):
             utils.match_expected(123, "123", "eq")
-
         with self.assertRaises(exception.ValidationError):
             utils.match_expected(123, "123")
-
-        self.assertTrue(utils.match_expected("123", 3, "len_eq"))
-        self.assertTrue(utils.match_expected(123, "123", "str_eq"))
-        self.assertTrue(utils.match_expected(123, "123", "ne"))
-
-        self.assertTrue(utils.match_expected("123", 2, "len_gt"))
-        self.assertTrue(utils.match_expected("123", 3, "len_ge"))
-        self.assertTrue(utils.match_expected("123", 4, "len_lt"))
-        self.assertTrue(utils.match_expected("123", 3, "len_le"))
 
         self.assertTrue(utils.match_expected(1, 2, "lt"))
         self.assertTrue(utils.match_expected(1, 1, "le"))
         self.assertTrue(utils.match_expected(2, 1, "gt"))
         self.assertTrue(utils.match_expected(1, 1, "ge"))
+        self.assertTrue(utils.match_expected(123, "123", "ne"))
+
+        self.assertTrue(utils.match_expected("123", 3, "len_eq"))
+        self.assertTrue(utils.match_expected("123", 2, "len_gt"))
+        self.assertTrue(utils.match_expected("123", 3, "len_ge"))
+        self.assertTrue(utils.match_expected("123", 4, "len_lt"))
+        self.assertTrue(utils.match_expected("123", 3, "len_le"))
 
         self.assertTrue(utils.match_expected("123abc456", "3ab", "contains"))
+        self.assertTrue(utils.match_expected(['1', '2'], "1", "contains"))
+        self.assertTrue(utils.match_expected({'a':1, 'b':2}, "a", "contains"))
         self.assertTrue(utils.match_expected("3ab", "123abc456", "contained_by"))
 
-        self.assertTrue(utils.match_expected("123abc456", "^123.*456$", "regex"))
+        self.assertTrue(utils.match_expected("123abc456", "^123\w+456$", "regex"))
         with self.assertRaises(exception.ValidationError):
             utils.match_expected("123abc456", "^12b.*456$", "regex")
 
         with self.assertRaises(exception.ParamsError):
             utils.match_expected(1, 2, "not_supported_comparator")
-
-        self.assertTrue(utils.match_expected("2017-06-29 17:29:58", 19, "str_len"))
-        self.assertTrue(utils.match_expected("2017-06-29 17:29:58", "19", "str_len"))
 
         self.assertTrue(utils.match_expected("abc123", "ab", "startswith"))
         self.assertTrue(utils.match_expected("123abc", 12, "startswith"))
