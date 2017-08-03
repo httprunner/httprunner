@@ -169,7 +169,14 @@ $ ate testcases_folder_path
 When you do continuous integration test or production environment monitoring with `Jenkins`, you may need to send test result notification. For instance, you can send email with mailgun service as below.
 
 ```text
-$ ate filepath/testcase.yml --mailgun-api-id samples.mailgun.org --mailgun-api-key key-3ax6xnjp29jd6fds4gc373sgvjxteol0 --email-sender excited@samples.mailgun.org --email-recepients test@email.com --jenkins-job-name demo-smoketest --jenkins-job-url http://test.debugtalk.com/job/demo-smoketest/ --jenkins-build-number 69
+$ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
+    --mailgun-api-id samples.mailgun.org \
+    --mailgun-api-key key-3ax6xnjp29jd6fds4gc373sgvjxteol0 \
+    --email-sender excited@samples.mailgun.org \
+    --email-recepients ${MAIL_RECEPIENTS} \
+    --jenkins-job-name ${JOB_NAME} \
+    --jenkins-job-url ${JOB_URL} \
+    --jenkins-build-number ${BUILD_NUMBER}
 ```
 
 ## Supported Python Versions
