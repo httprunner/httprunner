@@ -58,7 +58,8 @@ class TestcaseParserUnittest(unittest.TestCase):
             "var_2": "def",
             "var_3": 123,
             "var_4": {"a": 1},
-            "var_5": True
+            "var_5": True,
+            "var_6": None
         }
         self.assertEqual(
             testcase.parse_variables("$var_1", variable_mapping),
@@ -103,6 +104,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual(
             testcase.parse_variables("abc$var_4", variable_mapping),
             "abc{'a': 1}"
+        )
+        self.assertEqual(
+            testcase.parse_variables("$var_6", variable_mapping),
+            None
         )
 
     def test_is_functon(self):
