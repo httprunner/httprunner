@@ -77,5 +77,3 @@ def main():
 
     if mailer and mailer.config_ready:
         mailer.send_mail(flag, content=results)
-
-    return flag, results
