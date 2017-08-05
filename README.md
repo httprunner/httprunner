@@ -145,7 +145,7 @@ $ ate testcases_folder_path
 
 ## Supported Python Versions
 
-Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
+Python `2.7`, `3.3`, `3.4`, `3.5`, `3.6` and `3.7-dev`.
 
 ## To learn more ...
 
