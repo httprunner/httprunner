@@ -30,7 +30,7 @@ setup(
         "PyUnitReport"
     ],
     dependency_links=[
-        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport"
+        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
