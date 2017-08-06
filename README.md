@@ -23,13 +23,13 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 ## Installation/Upgrade
 
 ```bash
-$ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
+$ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine --process-dependency-links
 ```
 
 To upgrade all specified packages to the newest available version, you should add the `-U` option.
 
 ```bash
-$ pip install -U git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine
+$ pip install -U git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine --process-dependency-links
 ```
 
 If there is a problem with the installation or upgrade, you can check the [`FAQ`](docs/FAQ.md).
@@ -181,7 +181,7 @@ $ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
 
 ## Supported Python Versions
 
-Python `2.7`, `3.3`, `3.4`, `3.5`, and `3.6`.
+Python `2.7`, `3.3`, `3.4`, `3.5`, `3.6` and `3.7-dev`.
 
 ## To learn more ...
 
