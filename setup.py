@@ -31,7 +31,7 @@ setup(
         "jenkins-mail-py"
     ],
     dependency_links=[
-        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport",
+        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0",
         "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py"
     ],
     classifiers=[
@@ -40,7 +40,8 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7-dev'
     ],
     entry_points={
         'console_scripts': [
