@@ -27,9 +27,13 @@ setup(
         "PyYAML",
         "coveralls",
         "coverage",
-        "PyUnitReport",
-        "jenkins-mail-py"
+        "PyUnitReport"
     ],
+    extras_require={
+        'mail': [
+            "jenkins-mail-py"
+        ]
+    },
     dependency_links=[
         "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0",
         "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py-0"
