@@ -64,9 +64,9 @@ optional arguments:
   --failfast            Stop the test run on the first error or failure.
 ```
 
-### use jenkins-mail-py plugin
+### use `jenkins-mail-py` plugin
 
-If you want to use `ApiTestEngine` with Jenkins, you may need to send mail notification, and[`jenkins-mail-py`][jenkins-mail-py] will be of great help.
+If you want to use `ApiTestEngine` with Jenkins, you may need to send mail notification, and [`jenkins-mail-py`][jenkins-mail-py] will be of great help.
 
 To install mail helper, run this command in your terminal:
 
