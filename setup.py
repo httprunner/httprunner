@@ -32,7 +32,7 @@ setup(
     ],
     dependency_links=[
         "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0",
-        "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py"
+        "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py-0"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
