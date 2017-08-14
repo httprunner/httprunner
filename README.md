@@ -38,10 +38,43 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-0.3.1
+0.3.2
 ```
 
 Execute the command `ate -h` to view command help.
+
+```text
+$ ate -h
+usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
+           [--failfast]
+           [testset_paths [testset_paths ...]]
+
+Api Test Engine.
+
+positional arguments:
+  testset_paths         testset file path
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -V, --version         show version
+  --log-level LOG_LEVEL
+                        Specify logging level, default is INFO.
+  --report-name REPORT_NAME
+                        Specify report name, default is generated time.
+  --failfast            Stop the test run on the first error or failure.
+```
+
+### use jenkins-mail-py plugin
+
+If you want to use `ApiTestEngine` with Jenkins, you may need to send mail notification, and[`jenkins-mail-py`][jenkins-mail-py] will be of great help.
+
+To install mail helper, run this command in your terminal:
+
+```text
+$ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
+```
+
+With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
 
 ```text
 $ ate -h
