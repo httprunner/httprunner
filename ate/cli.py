@@ -50,7 +50,7 @@ def main():
                         report name is ignored, use generated time instead.")
 
     results = {}
-    flag = "SUCCESS"
+    subject = "SUCCESS"
 
     for testset_path in set(args.testset_paths):
 
@@ -73,9 +73,10 @@ def main():
         }
 
         if len(result.successes) != result.testsRun:
-            flag = "FAILED"
+            subject = "FAILED"
 
+    flag_code = 0 if subject == "SUCCESS" else 1
     if mailer and mailer.config_ready:
-        mailer.send_mail(flag, content=results)
+        mailer.send_mail(subject, results, flag_code)
 
-    return 0 if flag == "SUCCESS" else 1
+    return flag_code
