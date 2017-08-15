@@ -78,8 +78,7 @@ class Runner(object):
                 "extract_binds": {}, # optional
                 "validators": []     # optional
             }
-        @return (tuple) test result of single testcase
-            (success, diff_content_list)
+        @return True or raise exception during test
         """
         self.init_config(testcase, level="testcase")
         parsed_request = self.context.get_parsed_request()
