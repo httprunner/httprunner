@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+from collections import OrderedDict
 
 import PyUnitReport
 from ate import __version__
@@ -64,13 +65,13 @@ def main():
             "failfast": args.failfast
         }
         result = PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
-        results[testset_path] = {
+        results[testset_path] = OrderedDict({
             "total": result.testsRun,
             "successes": len(result.successes),
             "failures": len(result.failures),
             "errors": len(result.errors),
             "skipped": len(result.skipped)
-        }
+        })
 
         if len(result.successes) != result.testsRun:
             subject = "FAILED"
