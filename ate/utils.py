@@ -32,11 +32,11 @@ def get_sign(*args):
     return sign
 
 def load_yaml_file(yaml_file):
-    with open(yaml_file, 'r+') as stream:
+    with open(yaml_file, 'r+', encoding='utf-8') as stream:
         return yaml.load(stream)
 
 def load_json_file(json_file):
-    with open(json_file) as data_file:
+    with open(json_file, encoding='utf-8') as data_file:
         return json.load(data_file)
 
 def load_testcases(testcase_file_path):
