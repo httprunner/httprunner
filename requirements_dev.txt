@@ -5,3 +5,4 @@ coveralls
 coverage
 -e git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport
 -e git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
+-e git+https://github.com/locustio/locust.git#egg=locustio

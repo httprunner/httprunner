@@ -1,15 +1,17 @@
 import argparse
+import codecs
 import logging
 import os
+import sys
 from collections import OrderedDict
-
 import PyUnitReport
+
 from ate import __version__
 from ate.task import create_task
 
 
-def main():
-    """ parse command line options and run commands.
+def main_ate():
+    """ API test: parse command line options and run commands.
     """
     parser = argparse.ArgumentParser(
         description='Api Test Engine.')
@@ -81,3 +83,65 @@ def main():
         mailer.send_mail(subject, results, flag_code)
 
     return flag_code
+
+def main_locust():
+    """ Performance test with locust: parse command line options and run commands.
+    """
+    try:
+        from locust.main import main
+    except ImportError:
+        print("Locust is not installed, exit.")
+        exit(1)
+
+    sys.argv[0] = 'locust'
+    if len(sys.argv) == 1:
+        sys.argv.extend(["-h"])
+
+    if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
+        main()
+        sys.exit(0)
+
+    try:
+        testcase_index = sys.argv.index('-f') + 1
+        assert testcase_index < len(sys.argv)
+    except (ValueError, AssertionError):
+        print("Testcase file is not specified, exit.")
+        sys.exit(1)
+
+    testcase_file_path = sys.argv[testcase_index]
+    sys.argv[testcase_index] = parse_locustfile(testcase_file_path)
+    main()
+
+def parse_locustfile(file_path):
+    """ parse testcase file and return locustfile path.
+        if file_path is a Python file, assume it is a locustfile
+        if file_path is a YAML/JSON file, convert it to locustfile
+    """
+    if not os.path.isfile(file_path):
+        print("file path invalid, exit.")
+        sys.exit(1)
+
+    file_suffix = os.path.splitext(file_path)[1]
+    if file_suffix == ".py":
+        locustfile_path = file_path
+    elif file_suffix in ['.yaml', '.yml', '.json']:
+        locustfile_path = gen_locustfile(file_path)
+    else:
+        # '' or other suffix
+        print("file type should be YAML/JSON/Python, exit.")
+        sys.exit(1)
+
+    return locustfile_path
+
+def gen_locustfile(testcase_file_path):
+    """ generate locustfile from template.
+    """
+    locustfile_path = 'locustfile.py'
+    with codecs.open('ate/locustfile_template', encoding='utf-8') as template:
+        with codecs.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
+            template_content = template.read()
+            template_content = template_content.replace("$HOST", "https://skypixel.com")
+            template_content = template_content.replace("$TESTCASE_FILE", testcase_file_path)
+            locustfile.write(template_content)
+
+    return locustfile_path

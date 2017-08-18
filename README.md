@@ -38,8 +38,8 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-jenkins-mail-py version: 0.2.4
-ApiTestEngine version: 0.3.3
+jenkins-mail-py version: 0.2.5
+ApiTestEngine version: 0.4.0
 ```
 
 Execute the command `ate -h` to view command help.
@@ -213,9 +213,44 @@ $ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
     --jenkins-build-number ${BUILD_NUMBER}
 ```
 
+## Performance test
+
+With reuse of [`Locust`][Locust], you can run performance test without extra work.
+
+```bash
+$ ate-locust -V
+Locust 0.8a2
+```
+
+For full usage, you can run `ate-locust -h` to see help, and you will find that it is the same with `locust -h`.
+
+The only difference is the `-f` argument. If you specify `-f` with a Python locustfile, it will be the same as `locust`, while if you specify `-f` with a `YAML/JSON` testcase file, it will convert to Python locustfile first and then pass to `locust`.
+
+```bash
+$ ate-locust -f examples/first-testcase.yml
+[2017-08-18 17:20:43,915] Leos-MacBook-Air.local/INFO/locust.main: Starting web monitor at *:8089
+[2017-08-18 17:20:43,918] Leos-MacBook-Air.local/INFO/locust.main: Starting Locust 0.8a2
+```
+
+In this case, you can reuse all features of [`Locust`][Locust].
+
+Enjoy!
+
 ## Supported Python Versions
 
 Python `2.7`, `3.3`, `3.4`, `3.5`, `3.6` and `3.7-dev`.
+
+`ApiTestEngine` has been tested on `macOS`, `Linux` and `Windows` platforms.
+
+## Development
+
+To develop or debug `ApiTestEngine`, you can install relevant requirements and use `main-ate.py` or `main-locust.py` as entrances.
+
+```bash
+$ pip install -r requirements_dev.txt
+$ python main-ate -h
+$ python main-locust -h
+```
 
 ## To learn more ...
 

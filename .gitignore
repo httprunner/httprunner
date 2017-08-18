@@ -8,3 +8,4 @@ dist/*
 .python-version
 logs/%
 .coverage
+locustfile.py
