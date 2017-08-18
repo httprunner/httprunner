@@ -17,6 +17,9 @@ setup(
     url='https://github.com/debugtalk/ApiTestEngine',
     license='MIT',
     packages=find_packages(exclude=['test.*', 'test']),
+    package_data={
+        'ate': ['locustfile_template'],
+    },
     keywords='api test',
     install_requires=[
         "requests",
@@ -29,11 +32,15 @@ setup(
     extras_require={
         'mail': [
             "jenkins-mail-py"
+        ],
+        'locust': [
+            "locustio"
         ]
     },
     dependency_links=[
         "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0",
-        "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py-0"
+        "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py-0",
+        "git+https://github.com/locustio/locust.git#egg=locust-0"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -46,7 +53,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ate=ate.cli:main'
+            'ate=ate.cli:main_ate',
+            'ate-locust=ate.cli:main_locust'
         ]
     }
 )
