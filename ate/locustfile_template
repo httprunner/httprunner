@@ -1,0 +1,26 @@
+#coding: utf-8
+import zmq
+import os
+from locust import HttpLocust, TaskSet, task
+from ate import utils, runner, exception
+
+class WebPageTasks(TaskSet):
+    def on_start(self):
+        self.test_runner = runner.Runner(self.client)
+        self.testset = self.locust.testset
+
+    @task
+    def test_specified_scenario(self):
+        try:
+            self.test_runner.run_testset(self.testset)
+        except exception.ValidationError:
+            pass
+
+class WebPageUser(HttpLocust):
+    host = "$HOST"
+    task_set = WebPageTasks
+    min_wait = 1000
+    max_wait = 5000
+
+    testsets = utils.load_testcases_by_path("$TESTCASE_FILE")
+    testset = testsets[0]
