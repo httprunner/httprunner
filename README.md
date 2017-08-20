@@ -176,7 +176,7 @@ And here is testset example of typical scenario: get token at the beginning, and
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
 
-For detailed regulations of writing testcases, you can read the specification.
+For detailed regulations of writing testcases, you can read the [`QuickStart`][quickstart] documents.
 
 ## Run testcases
 
@@ -255,6 +255,7 @@ $ python main-locust -h
 ## To learn more ...
 
 - [《接口自动化测试的最佳工程实践（ApiTestEngine）》](http://debugtalk.com/post/ApiTestEngine-api-test-best-practice/)
+- [`ApiTestEngine QuickStart`][quickstart]
 - [《ApiTestEngine 演进之路（0）开发未动，测试先行》](http://debugtalk.com/post/ApiTestEngine-0-setup-CI-test/)
 - [《ApiTestEngine 演进之路（1）搭建基础框架》](http://debugtalk.com/post/ApiTestEngine-1-setup-basic-framework/)
 - [《ApiTestEngine 演进之路（2）探索优雅的测试用例描述方式》](http://debugtalk.com/post/ApiTestEngine-2-best-testcase-description/)
@@ -269,3 +270,4 @@ $ python main-locust -h
 [PyUnitReport]: https://github.com/debugtalk/PyUnitReport
 [Jenkins]: https://jenkins.io/index.html
 [jenkins-mail-py]: https://github.com/debugtalk/jenkins-mail-py.git
+[quickstart]: docs/quickstart.md
