@@ -1,4 +1,4 @@
-requests
+requests[security]
 flask
 PyYAML
 coveralls
