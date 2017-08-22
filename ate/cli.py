@@ -137,7 +137,11 @@ def gen_locustfile(testcase_file_path):
     """ generate locustfile from template.
     """
     locustfile_path = 'locustfile.py'
-    with codecs.open('ate/locustfile_template', encoding='utf-8') as template:
+    template_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'locustfile_template'
+    )
+    with codecs.open(template_path, encoding='utf-8') as template:
         with codecs.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
             template_content = template.read()
             template_content = template_content.replace("$HOST", "https://skypixel.com")
