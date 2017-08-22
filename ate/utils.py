@@ -204,7 +204,7 @@ def match_expected(value, expected, comparator="eq", check_item=""):
         elif comparator in ["startswith"]:
             assert str(value).startswith(str(expected))
         elif comparator in ["endswith"]:
-            assert str(expected).startswith(str(value))
+            assert str(value).endswith(str(expected))
         else:
             raise exception.ParamsError("comparator not supported!")
 

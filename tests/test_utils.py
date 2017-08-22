@@ -191,6 +191,9 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.match_expected("abc123", "ab", "startswith"))
         self.assertTrue(utils.match_expected("123abc", 12, "startswith"))
         self.assertTrue(utils.match_expected(12345, 123, "startswith"))
+        self.assertTrue(utils.match_expected("abc123", 23, "endswith"))
+        self.assertTrue(utils.match_expected("123abc", "abc", "endswith"))
+        self.assertTrue(utils.match_expected(12345, 45, "endswith"))
 
         self.assertTrue(utils.match_expected(None, None, "eq"))
         with self.assertRaises(exception.ValidationError):
