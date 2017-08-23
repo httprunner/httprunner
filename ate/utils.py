@@ -190,10 +190,10 @@ def match_expected(value, expected, comparator="eq", check_item=""):
             assert isinstance(expected, int)
             assert len(value) <= expected
         elif comparator in ["contains"]:
-            assert isinstance(value, (list,tuple,dict,string_type))
+            assert isinstance(value, (list, tuple, dict, string_type))
             assert expected in value
         elif comparator in ["contained_by"]:
-            assert isinstance(expected, (list,tuple,dict,string_type))
+            assert isinstance(expected, (list, tuple, dict, string_type))
             assert value in expected
         elif comparator in ["type"]:
             assert isinstance(value, expected)
