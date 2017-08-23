@@ -327,14 +327,14 @@ Great! The test case runs successfully and generates a `HTML` test report.
 This is just a starting point, see the `advanced guide` for the advanced features.
 
 - templating
-- [`data extraction and validation`](extraction-and-validation)
+- [`data extraction and validation`][extraction-and-validation]
 - [`comparator`][comparator]
 
 [requests]: http://docs.python-requests.org/en/master/
 [requests.request]: http://docs.python-requests.org/en/master/api/#requests.request
-[comparator]: docs/comparator.md
-[extraction-and-validation]: docs/extraction-and-validation.md
-[quickstart-demo-rev-0]: examples/quickstart-demo-rev-0.yml
-[quickstart-demo-rev-1]: examples/quickstart-demo-rev-1.yml
-[quickstart-demo-rev-2]: examples/quickstart-demo-rev-2.yml
-[quickstart-demo-rev-3]: examples/quickstart-demo-rev-3.yml
+[comparator]: comparator.md
+[extraction-and-validation]: extraction-and-validation.md
+[quickstart-demo-rev-0]: ../examples/quickstart-demo-rev-0.yml
+[quickstart-demo-rev-1]: ../examples/quickstart-demo-rev-1.yml
+[quickstart-demo-rev-2]: ../examples/quickstart-demo-rev-2.yml
+[quickstart-demo-rev-3]: ../examples/quickstart-demo-rev-3.yml
