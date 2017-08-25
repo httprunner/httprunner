@@ -137,7 +137,8 @@ def parse_content_with_bindings(content, variables_binds, functions_binds):
         {
             "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
             "random": "A2dEx",
-            "data": {"name": "user", "password": "123456"}
+            "data": {"name": "user", "password": "123456"},
+            "uuid": 1000
         }
     @param (dict) functions_binds, functions binds mapping
         {
