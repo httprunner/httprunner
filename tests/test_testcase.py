@@ -149,24 +149,25 @@ class TestcaseParserUnittest(unittest.TestCase):
             "str_1": "str_value1",
             "str_2": "str_value2"
         }
+        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
         self.assertEqual(
-            testcase.parse_content_with_bindings("$str_1", variables_binds, {}),
+            testcase_parser.parse_content_with_bindings("$str_1"),
             "str_value1"
         )
         self.assertEqual(
-            testcase.parse_content_with_bindings("123$str_1/456", variables_binds, {}),
+            testcase_parser.parse_content_with_bindings("123$str_1/456"),
             "123str_value1/456"
         )
 
         with self.assertRaises(ParamsError):
-            testcase.parse_content_with_bindings("$str_3", variables_binds, {})
+            testcase_parser.parse_content_with_bindings("$str_3")
 
         self.assertEqual(
-            testcase.parse_content_with_bindings(["$str_1", "str3"], variables_binds, {}),
+            testcase_parser.parse_content_with_bindings(["$str_1", "str3"]),
             ["str_value1", "str3"]
         )
         self.assertEqual(
-            testcase.parse_content_with_bindings({"key": "$str_1"}, variables_binds, {}),
+            testcase_parser.parse_content_with_bindings({"key": "$str_1"}),
             {"key": "str_value1"}
         )
 
@@ -175,9 +176,10 @@ class TestcaseParserUnittest(unittest.TestCase):
             "userid": 100,
             "data": 1498
         }
+        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
         content = "/users/$userid/training/$data?userId=$userid&data=$data"
         self.assertEqual(
-            testcase.parse_content_with_bindings(content, variables_binds, {}),
+            testcase_parser.parse_content_with_bindings(content),
             "/users/100/training/1498?userId=100&data=1498"
         )
 
@@ -187,9 +189,10 @@ class TestcaseParserUnittest(unittest.TestCase):
             "userid": 1000,
             "data": 1498
         }
+        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
         content = "/users/$user/$userid/$data?userId=$userid&data=$data"
         self.assertEqual(
-            testcase.parse_content_with_bindings(content, variables_binds, {}),
+            testcase_parser.parse_content_with_bindings(content),
             "/users/100/1000/1498?userId=1000&data=1498"
         )
 
@@ -199,18 +202,19 @@ class TestcaseParserUnittest(unittest.TestCase):
             "gen_random_string": lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
                 for _ in range(str_len))
         }
+        testcase_parser = testcase.TestcaseParser(functions_binds=functions_binds)
 
-        result = testcase.parse_content_with_bindings("${gen_random_string(5)}", {}, functions_binds)
+        result = testcase_parser.parse_content_with_bindings("${gen_random_string(5)}")
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
         functions_binds["add_two_nums"] = add_two_nums
         self.assertEqual(
-            testcase.parse_content_with_bindings("${add_two_nums(1)}", {}, functions_binds),
+            testcase_parser.parse_content_with_bindings("${add_two_nums(1)}"),
             2
         )
         self.assertEqual(
-            testcase.parse_content_with_bindings("${add_two_nums(1, 2)}", {}, functions_binds),
+            testcase_parser.parse_content_with_bindings("${add_two_nums(1, 2)}"),
             3
         )
 
@@ -252,12 +256,13 @@ class TestcaseParserUnittest(unittest.TestCase):
         functions_binds = {
             "add_two_nums": lambda a, b=1: a + b
         }
+        testcase_parser = testcase.TestcaseParser(functions_binds=functions_binds)
         self.assertEqual(
-            testcase.eval_content_functions("${add_two_nums(1, 2)}", {}, functions_binds),
+            testcase_parser.eval_content_functions("${add_two_nums(1, 2)}"),
             3
         )
         self.assertEqual(
-            testcase.eval_content_functions("/api/${add_two_nums(1, 2)}", {}, functions_binds),
+            testcase_parser.eval_content_functions("/api/${add_two_nums(1, 2)}"),
             "/api/3"
         )
 
@@ -283,8 +288,8 @@ class TestcaseParserUnittest(unittest.TestCase):
             },
             "body": "$data"
         }
-        parsed_testcase = testcase.parse_content_with_bindings(
-            testcase_template, variables_binds, functions_binds)
+        parsed_testcase = testcase.TestcaseParser(variables_binds, functions_binds)\
+            .parse_content_with_bindings(testcase_template)
 
         self.assertEqual(
             parsed_testcase["url"],

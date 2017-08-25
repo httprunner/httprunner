@@ -6,7 +6,8 @@ import sys
 import types
 from collections import OrderedDict
 
-from ate import testcase, utils
+from ate.testcase import TestcaseParser
+from ate import utils
 
 
 def is_function(tup):
@@ -22,6 +23,7 @@ class Context(object):
     def __init__(self):
         self.testset_shared_variables_mapping = OrderedDict()
         self.testcase_variables_mapping = OrderedDict()
+        self.testcase_parser = TestcaseParser()
         self.init_context()
 
     def init_context(self, level='testset'):
@@ -39,6 +41,9 @@ class Context(object):
         self.testcase_functions_config = copy.deepcopy(self.testset_functions_config)
         self.testcase_request_config = {}
         self.testcase_variables_mapping = copy.deepcopy(self.testset_shared_variables_mapping)
+
+        self.testcase_parser.bind_functions(self.testcase_functions_config)
+        self.testcase_parser.bind_variables(self.testcase_variables_mapping)
 
     def import_requires(self, modules):
         """ import required modules dynamicly
@@ -88,16 +93,13 @@ class Context(object):
         """
         for variable_bind in variable_binds:
             for variable_name, value in variable_bind.items():
-                variable_evale_value = testcase.parse_content_with_bindings(
-                    value,
-                    self.testcase_variables_mapping,
-                    self.testcase_functions_config
-                )
+                variable_evale_value = self.testcase_parser.parse_content_with_bindings(value)
 
                 if level == "testset":
                     self.testset_shared_variables_mapping[variable_name] = variable_evale_value
 
                 self.testcase_variables_mapping[variable_name] = variable_evale_value
+                self.testcase_parser.bind_variables(self.testcase_variables_mapping)
 
     def __update_context_functions_config(self, level, config_mapping):
         """
@@ -109,6 +111,7 @@ class Context(object):
             self.testset_functions_config.update(config_mapping)
 
         self.testcase_functions_config.update(config_mapping)
+        self.testcase_parser.bind_functions(self.testcase_functions_config)
 
     def register_request(self, request_dict, level="testcase"):
         self.__update_context_request_config(level, request_dict)
@@ -130,10 +133,8 @@ class Context(object):
     def get_parsed_request(self):
         """ get parsed request, with each variable replaced by bind value.
         """
-        parsed_request = testcase.parse_content_with_bindings(
-            self.testcase_request_config,
-            self.testcase_variables_mapping,
-            self.testcase_functions_config
+        parsed_request = self.testcase_parser.parse_content_with_bindings(
+            self.testcase_request_config
         )
 
         return parsed_request

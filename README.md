@@ -39,7 +39,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 ```text
 $ ate -V
 jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.4.0
+ApiTestEngine version: 0.5.0
 ```
 
 Execute the command `ate -h` to view command help.
