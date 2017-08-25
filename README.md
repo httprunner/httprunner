@@ -38,7 +38,6 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-jenkins-mail-py version: 0.2.5
 ApiTestEngine version: 0.5.0
 ```
 
@@ -73,6 +72,9 @@ To install mail helper, run this command in your terminal:
 
 ```text
 $ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
+$ ate -V
+jenkins-mail-py version: 0.2.5
+ApiTestEngine version: 0.5.0
 ```
 
 With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
