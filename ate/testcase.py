@@ -5,10 +5,11 @@ from ate import utils
 from ate.exception import ParamsError
 
 variable_regexp = r"\$([\w_]+)"
-function_regexp = re.compile(r"^\$\{([\w_]+)\(([\$\w_ =,]*)\)\}$")
+function_regexp = r"\$\{[\w_]+\([\$\w_ =,]*\)\}"
+function_regexp_compile = re.compile(r"^\$\{([\w_]+)\(([\$\w_ =,]*)\)\}$")
 
 
-def get_contain_variables(content):
+def extract_variables(content):
     """ extract all variable names from content, which is in format $variable
     @param (str) content
     @return (list) variable name list
@@ -18,9 +19,12 @@ def get_contain_variables(content):
          /$var1/$var2 => ["var1", "var2"]
          abc => []
     """
-    return re.findall(variable_regexp, content)
+    try:
+        return re.findall(variable_regexp, content)
+    except TypeError:
+        return []
 
-def parse_variables(content, variable_mapping):
+def eval_content_variables(content, variable_mapping):
     """ replace all variables of string content with mapping value.
     @param (str) content
     @return (str) parsed content
@@ -35,8 +39,8 @@ def parse_variables(content, variable_mapping):
         /$var_1/$var_2/var3 => "/abc/def/var3"
         ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
     """
-    variable_name_list = get_contain_variables(content)
-    for variable_name in variable_name_list:
+    variables_list = extract_variables(content)
+    for variable_name in variables_list:
         if variable_name not in variable_mapping:
             raise ParamsError(
                 "%s is not defined in bind variables!" % variable_name)
@@ -54,20 +58,52 @@ def parse_variables(content, variable_mapping):
 
     return content
 
-def is_functon(content):
-    """ check if content is a function, which is in format ${func()}
+def extract_functions(content):
+    """ extract all functions from string content, which are in format ${fun()}
+        Notice: extract_functions should be called after eval_content_variables, thus
+                there will not be any variables in given content
     @param (str) content
-    @return (bool) True or False
+    @return (list) functions list
 
-    e.g. ${func()} => True
-         ${func(5)} => True
-         ${func(1, 2)} => True
-         ${func(a=1, b=2)} => True
-         $abc => False
-         abc => False
+    e.g. ${func(5)} => ["${func(5)}"]
+         ${func(a=1, b=2)} => ["${func(a=1, b=2)}"]
+         /api/1000?_t=${get_timestamp()} => ["get_timestamp()"]
+         /api/${add(1, 2)} => ["add(1, 2)"]
+         "/api/${add(1, 2)}?_t=${get_timestamp()}" => ["${add(1, 2)}", "${get_timestamp()}"]
     """
-    matched = function_regexp.match(content)
-    return True if matched else False
+    try:
+        return re.findall(function_regexp, content)
+    except TypeError:
+        return []
+
+def eval_content_functions(content, variables_binds, functions_binds):
+    functions_list = extract_functions(content)
+    for func_content in functions_list:
+        function_meta = parse_function(func_content)
+        func_name = function_meta['func_name']
+
+        func = functions_binds.get(func_name)
+        if func is None:
+            raise ParamsError(
+                "%s is not defined in bind functions!" % func_name)
+
+        args = function_meta.get('args', [])
+        kwargs = function_meta.get('kwargs', {})
+        args = parse_content_with_bindings(args, variables_binds, functions_binds)
+        kwargs = parse_content_with_bindings(kwargs, variables_binds, functions_binds)
+        eval_value = func(*args, **kwargs)
+
+        if func_content == content:
+            # content is a variable
+            content = eval_value
+        else:
+            # content contains one or many variables
+            content = content.replace(
+                func_content,
+                str(eval_value), 1
+            )
+
+    return content
 
 def parse_string_value(str_value):
     """ parse string to number if possible
@@ -99,7 +135,7 @@ def parse_function(content):
         "args": [],
         "kwargs": {}
     }
-    matched = function_regexp.match(content)
+    matched = function_regexp_compile.match(content)
     function_meta["func_name"] = matched.group(1)
 
     args_str = matched.group(2).replace(" ", "")
@@ -167,8 +203,11 @@ def parse_content_with_bindings(content, variables_binds, functions_binds):
     if isinstance(content, dict):
         evaluated_data = {}
         for key, value in content.items():
-            evaluated_data[key] = parse_content_with_bindings(
+            eval_key = parse_content_with_bindings(
+                key, variables_binds, functions_binds)
+            eval_value = parse_content_with_bindings(
                 value, variables_binds, functions_binds)
+            evaluated_data[eval_key] = eval_value
 
         return evaluated_data
 
@@ -178,25 +217,11 @@ def parse_content_with_bindings(content, variables_binds, functions_binds):
     # content is in string format here
     content = "" if content is None else content.strip()
 
-    if is_functon(content):
-        # function marker: ${func(1, 2, a=3, b=4)}
-        fuction_meta = parse_function(content)
-        func_name = fuction_meta['func_name']
+    # replace functions with evaluated value
+    # Notice: eval_content_functions must be called before eval_content_variables
+    content = eval_content_functions(content, variables_binds, functions_binds)
 
-        func = functions_binds.get(func_name)
-        if func is None:
-            raise ParamsError(
-                "%s is not defined in bind functions!" % func_name)
+    # replace variables with binding value
+    content = eval_content_variables(content, variables_binds)
 
-        args = fuction_meta.get('args', [])
-        kwargs = fuction_meta.get('kwargs', {})
-        args = parse_content_with_bindings(args, variables_binds, functions_binds)
-        kwargs = parse_content_with_bindings(kwargs, variables_binds, functions_binds)
-        return func(*args, **kwargs)
-
-    elif get_contain_variables(content):
-        parsed_data = parse_variables(content, variables_binds)
-        return parsed_data
-
-    else:
-        return content
+    return content
