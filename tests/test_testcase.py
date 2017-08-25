@@ -1,58 +1,59 @@
+import time
 import unittest
 
-from ate.exception import ParamsError
 from ate import testcase
+from ate.exception import ParamsError
 
 
 class TestcaseParserUnittest(unittest.TestCase):
 
-    def test_get_contain_variables(self):
+    def test_extract_variables(self):
         self.assertEqual(
-            testcase.get_contain_variables("$var"),
+            testcase.extract_variables("$var"),
             ["var"]
         )
         self.assertEqual(
-            testcase.get_contain_variables("$var123"),
+            testcase.extract_variables("$var123"),
             ["var123"]
         )
         self.assertEqual(
-            testcase.get_contain_variables("$var_name"),
+            testcase.extract_variables("$var_name"),
             ["var_name"]
         )
         self.assertEqual(
-            testcase.get_contain_variables("var"),
+            testcase.extract_variables("var"),
             []
         )
         self.assertEqual(
-            testcase.get_contain_variables("a$var"),
+            testcase.extract_variables("a$var"),
             ["var"]
         )
         self.assertEqual(
-            testcase.get_contain_variables("$v ar"),
+            testcase.extract_variables("$v ar"),
             ["v"]
         )
         self.assertEqual(
-            testcase.get_contain_variables(" "),
+            testcase.extract_variables(" "),
             []
         )
         self.assertEqual(
-            testcase.get_contain_variables("$abc*"),
+            testcase.extract_variables("$abc*"),
             ["abc"]
         )
         self.assertEqual(
-            testcase.get_contain_variables("${func()}"),
+            testcase.extract_variables("${func()}"),
             []
         )
         self.assertEqual(
-            testcase.get_contain_variables("${func(1,2)}"),
+            testcase.extract_variables("${func(1,2)}"),
             []
         )
         self.assertEqual(
-            testcase.get_contain_variables("${gen_md5($TOKEN, $data, $random)}"),
+            testcase.extract_variables("${gen_md5($TOKEN, $data, $random)}"),
             ["TOKEN", "data", "random"]
         )
 
-    def test_parse_variables(self):
+    def test_eval_content_variables(self):
         variable_mapping = {
             "var_1": "abc",
             "var_2": "def",
@@ -62,66 +63,53 @@ class TestcaseParserUnittest(unittest.TestCase):
             "var_6": None
         }
         self.assertEqual(
-            testcase.parse_variables("$var_1", variable_mapping),
+            testcase.eval_content_variables("$var_1", variable_mapping),
             "abc"
         )
         self.assertEqual(
-            testcase.parse_variables("var_1", variable_mapping),
+            testcase.eval_content_variables("var_1", variable_mapping),
             "var_1"
         )
         self.assertEqual(
-            testcase.parse_variables("$var_1#XYZ", variable_mapping),
+            testcase.eval_content_variables("$var_1#XYZ", variable_mapping),
             "abc#XYZ"
         )
         self.assertEqual(
-            testcase.parse_variables("/$var_1/$var_2/var3", variable_mapping),
+            testcase.eval_content_variables("/$var_1/$var_2/var3", variable_mapping),
             "/abc/def/var3"
         )
         self.assertEqual(
-            testcase.parse_variables("/$var_1/$var_2/$var_1", variable_mapping),
+            testcase.eval_content_variables("/$var_1/$var_2/$var_1", variable_mapping),
             "/abc/def/abc"
         )
         self.assertEqual(
-            testcase.parse_variables("${func($var_1, $var_2, xyz)}", variable_mapping),
+            testcase.eval_content_variables("${func($var_1, $var_2, xyz)}", variable_mapping),
             "${func(abc, def, xyz)}"
         )
         self.assertEqual(
-            testcase.parse_variables("$var_3", variable_mapping),
+            testcase.eval_content_variables("$var_3", variable_mapping),
             123
         )
         self.assertEqual(
-            testcase.parse_variables("$var_4", variable_mapping),
+            testcase.eval_content_variables("$var_4", variable_mapping),
             {"a": 1}
         )
         self.assertEqual(
-            testcase.parse_variables("$var_5", variable_mapping),
+            testcase.eval_content_variables("$var_5", variable_mapping),
             True
         )
         self.assertEqual(
-            testcase.parse_variables("abc$var_5", variable_mapping),
+            testcase.eval_content_variables("abc$var_5", variable_mapping),
             "abcTrue"
         )
         self.assertEqual(
-            testcase.parse_variables("abc$var_4", variable_mapping),
+            testcase.eval_content_variables("abc$var_4", variable_mapping),
             "abc{'a': 1}"
         )
         self.assertEqual(
-            testcase.parse_variables("$var_6", variable_mapping),
+            testcase.eval_content_variables("$var_6", variable_mapping),
             None
         )
-
-    def test_is_functon(self):
-        self.assertTrue(testcase.is_functon("${func()}"))
-        self.assertTrue(testcase.is_functon("${func(5)}"))
-        self.assertTrue(testcase.is_functon("${func(1, 2)}"))
-        self.assertTrue(testcase.is_functon("${func($a, $b)}"))
-        self.assertTrue(testcase.is_functon("${func(a=1, b=2)}"))
-        self.assertTrue(testcase.is_functon("${func(1, 2, a=3, b=4)}"))
-        self.assertTrue(testcase.is_functon("${func(1, $b, c=$x, d=4)}"))
-        self.assertFalse(testcase.is_functon("${func}"))
-        self.assertFalse(testcase.is_functon("$abc"))
-        self.assertFalse(testcase.is_functon("abc"))
-        self.assertFalse(testcase.is_functon("${}"))
 
     def test_parse_string_value(self):
         self.assertEqual(testcase.parse_string_value("123"), 123)
@@ -205,7 +193,6 @@ class TestcaseParserUnittest(unittest.TestCase):
             "/users/100/1000/1498?userId=1000&data=1498"
         )
 
-
     def test_parse_content_with_bindings_functions(self):
         import random, string
         functions_binds = {
@@ -227,20 +214,66 @@ class TestcaseParserUnittest(unittest.TestCase):
             3
         )
 
+    def test_extract_functions(self):
+        self.assertEqual(
+            testcase.extract_functions("${func()}"),
+            ["${func()}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("${func(5)}"),
+            ["${func(5)}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("${func(a=1, b=2)}"),
+            ["${func(a=1, b=2)}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("${func(1, $b, c=$x, d=4)}"),
+            ["${func(1, $b, c=$x, d=4)}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("/api/1000?_t=${get_timestamp()}"),
+            ["${get_timestamp()}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("/api/${add(1, 2)}"),
+            ["${add(1, 2)}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("/api/${add(1, 2)}?_t=${get_timestamp()}"),
+            ["${add(1, 2)}", "${get_timestamp()}"]
+        )
+        self.assertEqual(
+            testcase.extract_functions("abc${func(1, 2, a=3, b=4)}def"),
+            ["${func(1, 2, a=3, b=4)}"]
+        )
+
+    def test_eval_content_functions(self):
+        functions_binds = {
+            "add_two_nums": lambda a, b=1: a + b
+        }
+        self.assertEqual(
+            testcase.eval_content_functions("${add_two_nums(1, 2)}", {}, functions_binds),
+            3
+        )
+        self.assertEqual(
+            testcase.eval_content_functions("/api/${add_two_nums(1, 2)}", {}, functions_binds),
+            "/api/3"
+        )
+
     def test_parse_content_with_bindings_testcase(self):
         variables_binds = {
             "uid": "1000",
             "random": "A2dEx",
             "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-            "data": {"name": "user", "password": "123456"},
-            "expected_status": 201,
-            "expected_success": True
+            "data": {"name": "user", "password": "123456"}
         }
         functions_binds = {
-            "add_two_nums": lambda a, b=1: a + b
+            "add_two_nums": lambda a, b=1: a + b,
+            "get_timestamp": lambda: int(time.time() * 1000)
         }
         testcase_template = {
-            "url": "http://127.0.0.1:5000/api/users/$uid",
+            "url": "http://127.0.0.1:5000/api/users/$uid/${add_two_nums(1,2)}",
             "method": "POST",
             "headers": {
                 "Content-Type": "application/json",
@@ -255,7 +288,7 @@ class TestcaseParserUnittest(unittest.TestCase):
 
         self.assertEqual(
             parsed_testcase["url"],
-            "http://127.0.0.1:5000/api/users/%s" % variables_binds["uid"]
+            "http://127.0.0.1:5000/api/users/1000/3"
         )
         self.assertEqual(
             parsed_testcase["headers"]["authorization"],
