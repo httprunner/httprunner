@@ -24,44 +24,8 @@ def extract_variables(content):
     except TypeError:
         return []
 
-def eval_content_variables(content, variable_mapping):
-    """ replace all variables of string content with mapping value.
-    @param (str) content
-    @return (str) parsed content
-
-    e.g.
-        variable_mapping = {
-            "var_1": "abc",
-            "var_2": "def"
-        }
-        $var_1 => "abc"
-        $var_1#XYZ => "abc#XYZ"
-        /$var_1/$var_2/var3 => "/abc/def/var3"
-        ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
-    """
-    variables_list = extract_variables(content)
-    for variable_name in variables_list:
-        if variable_name not in variable_mapping:
-            raise ParamsError(
-                "%s is not defined in bind variables!" % variable_name)
-
-        variable_value = variable_mapping.get(variable_name)
-        if "${}".format(variable_name) == content:
-            # content is a variable
-            content = variable_value
-        else:
-            # content contains one or many variables
-            content = content.replace(
-                "${}".format(variable_name),
-                str(variable_value), 1
-            )
-
-    return content
-
 def extract_functions(content):
     """ extract all functions from string content, which are in format ${fun()}
-        Notice: extract_functions should be called after eval_content_variables, thus
-                there will not be any variables in given content
     @param (str) content
     @return (list) functions list
 
@@ -75,35 +39,6 @@ def extract_functions(content):
         return re.findall(function_regexp, content)
     except TypeError:
         return []
-
-def eval_content_functions(content, variables_binds, functions_binds):
-    functions_list = extract_functions(content)
-    for func_content in functions_list:
-        function_meta = parse_function(func_content)
-        func_name = function_meta['func_name']
-
-        func = functions_binds.get(func_name)
-        if func is None:
-            raise ParamsError(
-                "%s is not defined in bind functions!" % func_name)
-
-        args = function_meta.get('args', [])
-        kwargs = function_meta.get('kwargs', {})
-        args = parse_content_with_bindings(args, variables_binds, functions_binds)
-        kwargs = parse_content_with_bindings(kwargs, variables_binds, functions_binds)
-        eval_value = func(*args, **kwargs)
-
-        if func_content == content:
-            # content is a variable
-            content = eval_value
-        else:
-            # content contains one or many variables
-            content = content.replace(
-                func_content,
-                str(eval_value), 1
-            )
-
-    return content
 
 def parse_string_value(str_value):
     """ parse string to number if possible
@@ -152,76 +87,152 @@ def parse_function(content):
 
     return function_meta
 
-def parse_content_with_bindings(content, variables_binds, functions_binds):
-    """ evaluate content recursively, each variable in content will be
-        evaluated with bind variables and functions.
+def eval_content_variables(content, variable_mapping):
+    """ replace all variables of string content with mapping value.
+    @param (str) content
+    @return (str) parsed content
 
-    variables marker: $variable.
-    @param (dict) content in any data structure
-        {
-            "url": "http://127.0.0.1:5000/api/users/$uid",
-            "method": "POST",
-            "headers": {
-                "Content-Type": "application/json",
-                "authorization": "$authorization",
-                "random": "$random",
-                "sum": "${add_two_nums(1, 2)}"
-            },
-            "body": "$data"
+    e.g.
+        variable_mapping = {
+            "var_1": "abc",
+            "var_2": "def"
         }
-    @param (dict) variables_binds, variables binds mapping
-        {
-            "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-            "random": "A2dEx",
-            "data": {"name": "user", "password": "123456"},
-            "uuid": 1000
-        }
-    @param (dict) functions_binds, functions binds mapping
-        {
-            "add_two_nums": lambda a, b=1: a + b
-        }
-    @return (dict) parsed content with evaluated bind values
-        {
-            "url": "http://127.0.0.1:5000/api/users/1000",
-            "method": "POST",
-            "headers": {
-                "Content-Type": "application/json",
-                "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
-                "random": "A2dEx",
-                "sum": 3
-            },
-            "body": {"name": "user", "password": "123456"}
-        }
+        $var_1 => "abc"
+        $var_1#XYZ => "abc#XYZ"
+        /$var_1/$var_2/var3 => "/abc/def/var3"
+        ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
     """
+    variables_list = extract_variables(content)
+    for variable_name in variables_list:
+        if variable_name not in variable_mapping:
+            raise ParamsError(
+                "%s is not defined in bind variables!" % variable_name)
 
-    if isinstance(content, (list, tuple)):
-        return [
-            parse_content_with_bindings(item, variables_binds, functions_binds)
-            for item in content
-        ]
-
-    if isinstance(content, dict):
-        evaluated_data = {}
-        for key, value in content.items():
-            eval_key = parse_content_with_bindings(
-                key, variables_binds, functions_binds)
-            eval_value = parse_content_with_bindings(
-                value, variables_binds, functions_binds)
-            evaluated_data[eval_key] = eval_value
-
-        return evaluated_data
-
-    if isinstance(content, (int, float)):
-        return content
-
-    # content is in string format here
-    content = "" if content is None else content.strip()
-
-    # replace functions with evaluated value
-    # Notice: eval_content_functions must be called before eval_content_variables
-    content = eval_content_functions(content, variables_binds, functions_binds)
-
-    # replace variables with binding value
-    content = eval_content_variables(content, variables_binds)
+        variable_value = variable_mapping.get(variable_name)
+        if "${}".format(variable_name) == content:
+            # content is a variable
+            content = variable_value
+        else:
+            # content contains one or many variables
+            content = content.replace(
+                "${}".format(variable_name),
+                str(variable_value), 1
+            )
 
     return content
+
+
+class TestcaseParser(object):
+
+    def __init__(self, variables_binds={}, functions_binds={}):
+        self.bind_variables(variables_binds)
+        self.bind_functions(functions_binds)
+
+    def bind_variables(self, variables_binds):
+        """ bind variables to current testcase parser
+        @param (dict) variables_binds, variables binds mapping
+            {
+                "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                "random": "A2dEx",
+                "data": {"name": "user", "password": "123456"},
+                "uuid": 1000
+            }
+        """
+        self.variables_binds = variables_binds
+
+    def bind_functions(self, functions_binds):
+        """ bind functions to current testcase parser
+        @param (dict) functions_binds, functions binds mapping
+            {
+                "add_two_nums": lambda a, b=1: a + b
+            }
+        """
+        self.functions_binds = functions_binds
+
+    def eval_content_functions(self, content):
+        functions_list = extract_functions(content)
+        for func_content in functions_list:
+            function_meta = parse_function(func_content)
+            func_name = function_meta['func_name']
+
+            func = self.functions_binds.get(func_name)
+            if func is None:
+                raise ParamsError(
+                    "%s is not defined in bind functions!" % func_name)
+
+            args = function_meta.get('args', [])
+            kwargs = function_meta.get('kwargs', {})
+            args = self.parse_content_with_bindings(args)
+            kwargs = self.parse_content_with_bindings(kwargs)
+            eval_value = func(*args, **kwargs)
+
+            if func_content == content:
+                # content is a variable
+                content = eval_value
+            else:
+                # content contains one or many variables
+                content = content.replace(
+                    func_content,
+                    str(eval_value), 1
+                )
+
+        return content
+
+    def parse_content_with_bindings(self, content):
+        """ parse content recursively, each variable and function in content will be evaluated.
+
+        @param (dict) content in any data structure
+            {
+                "url": "http://127.0.0.1:5000/api/users/$uid/${add_two_nums(1, 1)}",
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "authorization": "$authorization",
+                    "random": "$random",
+                    "sum": "${add_two_nums(1, 2)}"
+                },
+                "body": "$data"
+            }
+        @return (dict) parsed content with evaluated bind values
+            {
+                "url": "http://127.0.0.1:5000/api/users/1000/2",
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
+                    "random": "A2dEx",
+                    "sum": 3
+                },
+                "body": {"name": "user", "password": "123456"}
+            }
+        """
+
+        if isinstance(content, (list, tuple)):
+            return [
+                self.parse_content_with_bindings(item)
+                for item in content
+            ]
+
+        if isinstance(content, dict):
+            evaluated_data = {}
+            for key, value in content.items():
+                eval_key = self.parse_content_with_bindings(key)
+                eval_value = self.parse_content_with_bindings(value)
+                evaluated_data[eval_key] = eval_value
+
+            return evaluated_data
+
+        if isinstance(content, (int, float)):
+            return content
+
+        # content is in string format here
+        content = "" if content is None else content.strip()
+
+        # replace functions with evaluated value
+        # Notice: eval_content_functions must be called before eval_content_variables
+        content = self.eval_content_functions(content)
+
+        # replace variables with binding value
+        content = eval_content_variables(content, self.variables_binds)
+
+        return content
