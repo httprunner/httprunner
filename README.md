@@ -38,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.5.0
+ApiTestEngine version: 0.5.1
 ```
 
 Execute the command `ate -h` to view command help.
@@ -74,7 +74,7 @@ To install mail helper, run this command in your terminal:
 $ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
 $ ate -V
 jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.5.0
+ApiTestEngine version: 0.5.1
 ```
 
 With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
@@ -221,7 +221,8 @@ With reuse of [`Locust`][Locust], you can run performance test without extra wor
 
 ```bash
 $ locusts -V
-Locust 0.8a2
+[2017-08-26 23:45:42,246] bogon/INFO/stdout: Locust 0.8a2
+[2017-08-26 23:45:42,246] bogon/INFO/stdout:
 ```
 
 For full usage, you can run `locusts -h` to see help, and you will find that it is the same with `locust -h`.
@@ -235,6 +236,22 @@ $ locusts -f examples/first-testcase.yml
 ```
 
 In this case, you can reuse all features of [`Locust`][Locust].
+
+That’s not all about it. With the argument `--full-speed`, you can even start locust with master and several slaves (default to cpu cores) at one time, which means you can leverage all cpus of your machine.
+
+```bash
+$ locusts -f examples/first-testcase.yml --full-speed
+[2017-08-26 23:51:47,071] bogon/INFO/locust.main: Starting web monitor at *:8089
+[2017-08-26 23:51:47,075] bogon/INFO/locust.main: Starting Locust 0.8a2
+[2017-08-26 23:51:47,078] bogon/INFO/locust.main: Starting Locust 0.8a2
+[2017-08-26 23:51:47,080] bogon/INFO/locust.main: Starting Locust 0.8a2
+[2017-08-26 23:51:47,083] bogon/INFO/locust.main: Starting Locust 0.8a2
+[2017-08-26 23:51:47,084] bogon/INFO/locust.runners: Client 'bogon_656e0af8e968a8533d379dd252422ad3' reported as ready. Currently 1 clients ready to swarm.
+[2017-08-26 23:51:47,085] bogon/INFO/locust.runners: Client 'bogon_09f73850252ee4ec739ed77d3c4c6dba' reported as ready. Currently 2 clients ready to swarm.
+[2017-08-26 23:51:47,084] bogon/INFO/locust.main: Starting Locust 0.8a2
+[2017-08-26 23:51:47,085] bogon/INFO/locust.runners: Client 'bogon_869f7ed671b1a9952b56610f01e2006f' reported as ready. Currently 3 clients ready to swarm.
+[2017-08-26 23:51:47,085] bogon/INFO/locust.runners: Client 'bogon_80a804cda36b80fac17b57fd2d5e7cdb' reported as ready. Currently 4 clients ready to swarm.
+```
 
 Enjoy!
 
