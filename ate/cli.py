@@ -4,10 +4,11 @@ import logging
 import os
 import sys
 from collections import OrderedDict
-import PyUnitReport
 
 from ate import __version__
 from ate.task import create_task
+
+import PyUnitReport
 
 
 def main_ate():
@@ -88,7 +89,7 @@ def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
     try:
-        from locust.main import main
+        from ate.locusts import main, run_locusts_at_full_speed
     except ImportError:
         print("Locust is not installed, exit.")
         exit(1)
@@ -110,7 +111,11 @@ def main_locust():
 
     testcase_file_path = sys.argv[testcase_index]
     sys.argv[testcase_index] = parse_locustfile(testcase_file_path)
-    main()
+
+    if "--full-speed" in sys.argv:
+        run_locusts_at_full_speed(sys.argv)
+    else:
+        main()
 
 def parse_locustfile(file_path):
     """ parse testcase file and return locustfile path.
