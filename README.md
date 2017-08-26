@@ -220,16 +220,16 @@ $ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
 With reuse of [`Locust`][Locust], you can run performance test without extra work.
 
 ```bash
-$ ate-locust -V
+$ locusts -V
 Locust 0.8a2
 ```
 
-For full usage, you can run `ate-locust -h` to see help, and you will find that it is the same with `locust -h`.
+For full usage, you can run `locusts -h` to see help, and you will find that it is the same with `locust -h`.
 
 The only difference is the `-f` argument. If you specify `-f` with a Python locustfile, it will be the same as `locust`, while if you specify `-f` with a `YAML/JSON` testcase file, it will convert to Python locustfile first and then pass to `locust`.
 
 ```bash
-$ ate-locust -f examples/first-testcase.yml
+$ locusts -f examples/first-testcase.yml
 [2017-08-18 17:20:43,915] Leos-MacBook-Air.local/INFO/locust.main: Starting web monitor at *:8089
 [2017-08-18 17:20:43,918] Leos-MacBook-Air.local/INFO/locust.main: Starting Locust 0.8a2
 ```

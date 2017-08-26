@@ -54,7 +54,7 @@ setup(
     entry_points={
         'console_scripts': [
             'ate=ate.cli:main_ate',
-            'ate-locust=ate.cli:main_locust'
+            'locusts=ate.cli:main_locust'
         ]
     }
 )
