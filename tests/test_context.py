@@ -3,6 +3,7 @@ import unittest
 
 from ate import utils, runner
 from ate.context import Context
+from ate.exception import ParamsError
 
 
 class VariableBindsUnittest(unittest.TestCase):
@@ -158,6 +159,28 @@ class VariableBindsUnittest(unittest.TestCase):
             self.assertEqual(len(context_variables["authorization"]), 32)
             authorization = context_variables["authorization"]
             self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
+
+    def test_register_request(self):
+        request_dict = {
+            "url": "http://debugtalk.com",
+            "method": "GET",
+            "headers": {
+                "Content-Type": "application/json",
+                "USER-AGENT": "ios/10.3"
+            }
+        }
+        self.context.register_request(request_dict)
+
+        parsed_request = self.context.get_parsed_request()
+        self.assertIn("content-type", parsed_request["headers"])
+        self.assertIn("user-agent", parsed_request["headers"])
+
+        request_dict = {
+            "headers": "invalid headers"
+        }
+        with self.assertRaises(ParamsError):
+            self.context.register_request(request_dict)
+
 
     def test_get_parsed_request(self):
         test_runner = runner.Runner()

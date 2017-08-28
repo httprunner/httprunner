@@ -6,8 +6,9 @@ import sys
 import types
 from collections import OrderedDict
 
-from ate.testcase import TestcaseParser
 from ate import utils
+from ate.exception import ParamsError
+from ate.testcase import TestcaseParser
 
 
 def is_function(tup):
@@ -114,6 +115,13 @@ class Context(object):
         self.testcase_parser.bind_functions(self.testcase_functions_config)
 
     def register_request(self, request_dict, level="testcase"):
+        if "headers" in request_dict:
+            # convert keys in request headers to lowercase
+            headers = request_dict.pop("headers")
+            if not isinstance(headers, dict):
+                raise ParamsError("HTTP Request Headers invalid!")
+            request_dict["headers"] = {key.lower(): headers[key] for key in headers}
+
         self.__update_context_request_config(level, request_dict)
 
     def __update_context_request_config(self, level, config_mapping):
