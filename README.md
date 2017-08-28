@@ -253,6 +253,8 @@ $ locusts -f examples/first-testcase.yml --full-speed
 [2017-08-26 23:51:47,085] bogon/INFO/locust.runners: Client 'bogon_80a804cda36b80fac17b57fd2d5e7cdb' reported as ready. Currently 4 clients ready to swarm.
 ```
 
+![](docs/locusts-full-speed.jpg)
+
 Enjoy!
 
 ## Supported Python Versions
