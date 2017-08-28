@@ -1,15 +1,25 @@
+import json
 import logging
 import re
 import time
 
 import requests
+from ate.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
 
-from ate.exception import ParamsError
-
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
+
+
+def process_kwargs(method, **kwargs):
+    if method == "POST":
+        # if request content-type is application/json, request data should be dumped
+        content_type = kwargs.get("headers", {}).get("content-type", "")
+        if content_type.startswith("application/json") and "data" in kwargs:
+            kwargs["data"] = json.dumps(kwargs["data"])
+
+    return kwargs
 
 
 class ApiResponse(Response):
@@ -142,6 +152,7 @@ class HttpSession(requests.Session):
         Safe mode has been removed from requests 1.x.
         """
         try:
+            kwargs = process_kwargs(method, **kwargs)
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise
