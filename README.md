@@ -237,7 +237,7 @@ $ locusts -f examples/first-testcase.yml
 
 In this case, you can reuse all features of [`Locust`][Locust].
 
-That’s not all about it. With the argument `--full-speed`, you can even start locust with master and several slaves (default to cpu cores) at one time, which means you can leverage all cpus of your machine.
+That’s not all about it. With the argument `--full-speed`, you can even start locust with master and several slaves (default to cpu cores number) at one time, which means you can leverage all cpus of your machine.
 
 ```bash
 $ locusts -f examples/first-testcase.yml --full-speed
