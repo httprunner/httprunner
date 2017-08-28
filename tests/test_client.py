@@ -1,4 +1,4 @@
-from ate.client import HttpSession
+from ate.client import HttpSession, process_kwargs
 from tests.base import ApiServerUnittest
 
 class TestHttpClient(ApiServerUnittest):
@@ -35,3 +35,16 @@ class TestHttpClient(ApiServerUnittest):
         resp = self.api_client.post(url, json=data, headers=self.headers)
         self.assertEqual(201, resp.status_code)
         self.assertEqual(True, resp.json()['success'])
+
+    def test_process_kwargs(self):
+        kwargs = {
+            "headers": {
+                "content-type": "application/json; charset=utf-8"
+            },
+            "data": {
+                "a": 1,
+                "b": 2
+            }
+        }
+        kwargs = process_kwargs("POST", **kwargs)
+        self.assertEqual(kwargs["data"], '{"a": 1, "b": 2}')
