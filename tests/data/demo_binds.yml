@@ -28,7 +28,7 @@ bind_lambda_functions_with_import:
 bind_module_functions:
     function_binds:
         import_module_functions:
-            - tests.data.custom_functions
+            - tests.data.debugtalk
     variable_binds:
         - TOKEN: debugtalk
         - random: ${gen_random_string(5)}

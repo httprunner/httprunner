@@ -38,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.5.1
+ApiTestEngine version: 0.5.4
 ```
 
 Execute the command `ate -h` to view command help.
@@ -74,7 +74,7 @@ To install mail helper, run this command in your terminal:
 $ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
 $ ate -V
 jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.5.1
+ApiTestEngine version: 0.5.4
 ```
 
 With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
@@ -133,7 +133,7 @@ And here is testset example of typical scenario: get token at the beginning, and
 - config:
     name: "create user testsets."
     import_module_functions:
-        - tests.data.custom_functions
+        - tests.data.debugtalk
     variable_binds:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
