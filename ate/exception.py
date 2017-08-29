@@ -6,6 +6,9 @@ class MyBaseError(BaseException):
 class ParamsError(MyBaseError):
     pass
 
+class ResponseError(MyBaseError):
+    pass
+
 class ParseResponseError(MyBaseError):
     pass
 

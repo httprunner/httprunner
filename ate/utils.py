@@ -6,9 +6,10 @@ import os.path
 import random
 import re
 import string
-import yaml
 
+import yaml
 from ate import exception
+from requests.structures import CaseInsensitiveDict
 
 try:
     string_type = basestring
@@ -131,15 +132,17 @@ def query_json(json_content, query, delimiter='.'):
         "person.cities.0"         =>  "Guangzhou"
     @return queried result
     """
-    stripped_query = query.strip(delimiter)
-    if not stripped_query:
-        return None
+    if json_content == "":
+        raise exception.ResponseError("response content is empty!")
 
     try:
-        for key in stripped_query.split(delimiter):
+        for key in query.split(delimiter):
             if isinstance(json_content, list):
-                key = int(key)
-            json_content = json_content[key]
+                json_content = json_content[int(key)]
+            elif isinstance(json_content, (dict, CaseInsensitiveDict)):
+                json_content = json_content[key]
+            else:
+                raise exception.ParseResponseError("response content is in text format! failed to query key {}!".format(key))
     except (KeyError, ValueError, IndexError):
         raise exception.ParseResponseError("failed to query json when extracting response!")
 
