@@ -46,6 +46,9 @@ class Context(object):
         self.testcase_parser.bind_functions(self.testcase_functions_config)
         self.testcase_parser.bind_variables(self.testcase_variables_mapping)
 
+        if level == "testset":
+            self.import_module_functions(["ate.debugtalk"], "testset")
+
     def import_requires(self, modules):
         """ import required modules dynamicly
         """
