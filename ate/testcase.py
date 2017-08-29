@@ -1,7 +1,7 @@
 import ast
 import re
 
-from ate import utils
+from ate.utils import long_type
 from ate.exception import ParamsError
 
 variable_regexp = r"\$([\w_]+)"
@@ -222,7 +222,7 @@ class TestcaseParser(object):
 
             return evaluated_data
 
-        if isinstance(content, (int, float)):
+        if isinstance(content, (int, long_type, float, complex)):
             return content
 
         # content is in string format here

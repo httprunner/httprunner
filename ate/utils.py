@@ -13,9 +13,11 @@ from requests.structures import CaseInsensitiveDict
 
 try:
     string_type = basestring
+    long_type = long
     PYTHON_VERSION = 2
 except NameError:
     string_type = str
+    long_type = int
     PYTHON_VERSION = 3
 
 SECRET_KEY = "DebugTalk"
