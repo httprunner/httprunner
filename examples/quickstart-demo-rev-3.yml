@@ -1,7 +1,7 @@
 - config:
     name: "smoketest for CRUD users."
     import_module_functions:
-        - examples.utils
+        - examples.debugtalk
     variable_binds:
         - device_sn: ${gen_random_string(15)}
     request:
