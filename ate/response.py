@@ -31,10 +31,13 @@ class ResponseObject(object):
             "content.person.name.first_name"
         """
         try:
-            field += "."
             # string.split(sep=None, maxsplit=-1) -> list of strings
             # e.g. "content.person.name" => ["content", "person.name"]
-            top_query, sub_query = field.split(delimiter, 1)
+            try:
+                top_query, sub_query = field.split(delimiter, 1)
+            except ValueError:
+                top_query = field
+                sub_query = None
 
             if top_query in ["body", "content", "text"]:
                 json_content = self.parsed_body()

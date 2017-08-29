@@ -149,6 +149,34 @@ class TestResponse(ApiServerUnittest):
             "abc"
         )
 
+    def test_extract_response_empty(self):
+        resp = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'Content-Type': "application/json"
+                },
+                'body': ""
+            }
+        )
+
+        extract_binds_list = [
+            {"resp_content_body": "content"}
+        ]
+        resp_obj = response.ResponseObject(resp)
+        extract_binds_dict_list = resp_obj.extract_response(extract_binds_list)
+        self.assertEqual(
+            extract_binds_dict_list[0]["resp_content_body"],
+            ""
+        )
+
+        extract_binds_list = [
+            {"resp_content_body": "content.abc"}
+        ]
+        resp_obj = response.ResponseObject(resp)
+        with self.assertRaises(exception.ResponseError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_validate(self):
         url = "http://127.0.0.1:5000/"
         resp = requests.get(url)
