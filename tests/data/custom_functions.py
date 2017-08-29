@@ -65,6 +65,3 @@ def gen_urlencode_str(**kargs):
         urlencoded_str += "&"
 
     return urlencoded_str.strip("&")
-
-def get_timestamp():
-    return int(time.time() * 1000)

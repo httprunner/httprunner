@@ -13,6 +13,20 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
         self.testcases = utils.load_testcases(testcase_file_path)
 
+    def test_context_init_functions(self):
+        self.assertIn("get_timestamp", self.context.testset_functions_config)
+        self.assertIn("gen_random_string", self.context.testset_functions_config)
+
+        variable_binds = [
+            {"random": "${gen_random_string(5)}"},
+            {"timestamp10": "${get_timestamp(10)}"}
+        ]
+        self.context.bind_variables(variable_binds)
+        context_variables = self.context.get_testcase_variables_mapping()
+
+        self.assertEqual(len(context_variables["random"]), 5)
+        self.assertEqual(len(context_variables["timestamp10"]), 10)
+
     def test_context_bind_testset_variables(self):
         # testcase in JSON format
         testcase1 = {
