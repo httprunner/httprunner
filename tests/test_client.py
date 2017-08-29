@@ -47,4 +47,5 @@ class TestHttpClient(ApiServerUnittest):
             }
         }
         kwargs = process_kwargs("POST", **kwargs)
-        self.assertEqual(kwargs["data"], '{"a": 1, "b": 2}')
+        self.assertIn('"a": 1', kwargs["data"])
+        self.assertIn('"b": 2', kwargs["data"])
