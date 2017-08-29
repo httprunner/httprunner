@@ -142,7 +142,8 @@ def query_json(json_content, query, delimiter='.'):
             elif isinstance(json_content, (dict, CaseInsensitiveDict)):
                 json_content = json_content[key]
             else:
-                raise exception.ParseResponseError("response content is in text format! failed to query key {}!".format(key))
+                raise exception.ParseResponseError(
+                    "response content is in text format! failed to query key {}!".format(key))
     except (KeyError, ValueError, IndexError):
         raise exception.ParseResponseError("failed to query json when extracting response!")
 
