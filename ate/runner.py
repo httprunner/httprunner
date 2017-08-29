@@ -25,7 +25,7 @@ class Runner(object):
                         "lambda *str_args: hashlib.md5(''.join(str_args).\
                         encode('utf-8')).hexdigest()"
                 },
-                "import_module_functions": ["test.data.custom_functions"],
+                "import_module_functions": ["test.data.debugtalk"],
                 "variable_binds": [
                     {"TOKEN": "debugtalk"},
                     {"random": "${gen_random_string(5)}"},

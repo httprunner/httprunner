@@ -142,7 +142,7 @@ class VariableBindsUnittest(unittest.TestCase):
 
     def test_import_module_functions(self):
         testcase1 = {
-            "import_module_functions": ["tests.data.custom_functions"],
+            "import_module_functions": ["tests.data.debugtalk"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
@@ -199,7 +199,7 @@ class VariableBindsUnittest(unittest.TestCase):
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
         testcase = {
-            "import_module_functions": ["tests.data.custom_functions"],
+            "import_module_functions": ["tests.data.debugtalk"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},

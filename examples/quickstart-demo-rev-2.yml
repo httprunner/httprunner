@@ -1,7 +1,7 @@
 - test:
     name: get token
     import_module_functions:
-        - examples.utils
+        - examples.debugtalk
     variable_binds:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
