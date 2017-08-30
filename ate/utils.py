@@ -1,4 +1,5 @@
 import codecs
+import fnmatch
 import hashlib
 import hmac
 import json
@@ -53,13 +54,17 @@ def load_testcases(testcase_file_path):
         # '' or other suffix
         return []
 
-def load_foler_files(folder_path):
+def load_foler_files(folder_path, match_filter_list=["*"]):
     """ load folder path, return all files in list format.
     """
     file_list = []
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
-        for filename in filenames:
+        filenames_list = []
+        for match_filter in match_filter_list:
+            filenames_list.extend(fnmatch.filter(filenames, match_filter))
+
+        for filename in filenames_list:
             file_path = os.path.join(dirpath, filename)
             file_list.append(file_path)
 
@@ -91,7 +96,7 @@ def load_testcases_by_path(path):
         path = os.path.join(os.getcwd(), path)
 
     if os.path.isdir(path):
-        files_list = load_foler_files(path)
+        files_list = load_foler_files(path, ["*.yml", "*.json"])
         return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):

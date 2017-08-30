@@ -33,11 +33,12 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_foler_files(self):
         folder = os.path.join(os.getcwd(), 'tests')
-        files = utils.load_foler_files(folder)
         file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
         file2 = os.path.join(os.getcwd(), 'tests', 'data', 'demo_binds.yml')
+
+        files = utils.load_foler_files(folder, ["*.py"])
         self.assertIn(file1, files)
-        self.assertIn(file2, files)
+        self.assertNotIn(file2, files)
 
     def test_load_testcases_by_path_files(self):
         testsets_list = []
