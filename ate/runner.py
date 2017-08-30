@@ -129,8 +129,8 @@ class Runner(object):
             }
         @return (list) test results of testcases
             [
-                (success, diff_content),    # testcase1
-                (success, diff_content)     # testcase2
+                True,    # testcase11
+                True     # testcase12
             ]
         """
         results = []
@@ -154,12 +154,12 @@ class Runner(object):
         @return (list) test results of testsets
             [
                 [   # testset1
-                    (success, diff_content),    # testcase11
-                    (success, diff_content)     # testcase12
+                    True,    # testcase11
+                    True     # testcase12
                 ],
                 [   # testset2
-                    (success, diff_content),    # testcase21
-                    (success, diff_content)     # testcase22
+                    True,    # testcase21
+                    True     # testcase22
                 ]
             ]
         """
