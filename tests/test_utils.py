@@ -48,6 +48,8 @@ class TestUtils(ApiServerUnittest):
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
+        self.assertIn("path", testset_list[0]["config"])
+        self.assertEqual(testset_list[0]["config"]["path"], path)
         self.assertEqual(len(testset_list[0]["testcases"]), 3)
         testsets_list.extend(testset_list)
 
@@ -55,6 +57,8 @@ class TestUtils(ApiServerUnittest):
         path = 'tests/data/demo_testset_hardcode.yml'
         testset_list = utils.load_testcases_by_path(path)
         self.assertEqual(len(testset_list), 1)
+        self.assertIn("path", testset_list[0]["config"])
+        self.assertIn(path, testset_list[0]["config"]["path"])
         self.assertEqual(len(testset_list[0]["testcases"]), 3)
         testsets_list.extend(testset_list)
 

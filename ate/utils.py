@@ -102,7 +102,9 @@ def load_testcases_by_path(path):
     elif os.path.isfile(path):
         testset = {
             "name": "",
-            "config": {},
+            "config": {
+                "path": path
+            },
             "testcases": []
         }
         testcases_list = load_testcases(path)
@@ -110,7 +112,7 @@ def load_testcases_by_path(path):
         for item in testcases_list:
             for key in item:
                 if key == "config":
-                    testset["config"] = item["config"]
+                    testset["config"].update(item["config"])
                     testset["name"] = item["config"].get("name", "")
                 elif key == "test":
                     testset["testcases"].append(item["test"])
