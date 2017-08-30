@@ -96,7 +96,7 @@ def load_testcases_by_path(path):
         path = os.path.join(os.getcwd(), path)
 
     if os.path.isdir(path):
-        files_list = load_foler_files(path, ["*.yml", "*.json"])
+        files_list = load_foler_files(path, ["*.yml", "*.yaml", "*.json"])
         return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
@@ -115,7 +115,7 @@ def load_testcases_by_path(path):
                 elif key == "test":
                     testset["testcases"].append(item["test"])
 
-        return [testset]
+        return [testset] if testset["testcases"] else []
 
     else:
         return []

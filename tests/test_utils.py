@@ -81,7 +81,7 @@ class TestUtils(ApiServerUnittest):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
         testset_list_1 = utils.load_testcases_by_path(path)
-        self.assertGreater(len(testset_list_1), 5)
+        self.assertGreater(len(testset_list_1), 4)
 
         # relative folder path
         path = 'tests/data/'
