@@ -2,6 +2,7 @@ import codecs
 import fnmatch
 import hashlib
 import hmac
+import imp
 import importlib
 import json
 import os.path
@@ -260,8 +261,42 @@ def get_imported_module(module_name):
     """
     return importlib.import_module(module_name)
 
+def get_imported_module_from_file(file_path):
+    """ import module from python file path and return imported module
+    """
+
+    if PYTHON_VERSION == 3:
+        imported_module = importlib.machinery.SourceFileLoader(
+            'module_name', file_path).load_module()
+    else:
+        # Python 2.7
+        imported_module = imp.load_source('module_name', file_path)
+
+    return imported_module
+
 def filter_module_functions(module):
     """ filter functions from import module
     """
     module_functions_dict = dict(filter(is_function, vars(module).items()))
     return module_functions_dict
+
+def search_conf_function(start_path, func):
+    """ search expected function recursive upward
+    """
+    dir_path = os.path.dirname(os.path.abspath(start_path))
+    target_file = os.path.join(dir_path, "debugtalk.py")
+
+    if os.path.isfile(target_file):
+        imported_module = get_imported_module_from_file(target_file)
+        functions_dict = filter_module_functions(imported_module)
+        if func in functions_dict:
+            return functions_dict[func]
+        else:
+            return search_conf_function(dir_path, func)
+
+    if dir_path == start_path:
+        # system root path
+        err_msg = "{} not found in recursive upward path!".format(func)
+        raise exception.FunctionNotFound(err_msg)
+
+    return search_conf_function(dir_path, func)
