@@ -12,6 +12,7 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - Inherit all powerful features of [`Requests`][requests], just have fun to handle HTTP in human way.
 - Define testcases in YAML or JSON format in concise and elegant manner.
 - Supports `function`/`variable`/`extract`/`validate` mechanisms to create full test scenarios.
+- With `debugtalk.py` plugin, module functions can be auto-discovered in recursive upward directories.
 - Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
 - Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring. Send mail notification with [`jenkins-mail-py`][jenkins-mail-py].
@@ -38,7 +39,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.5.4
+ApiTestEngine version: 0.6.0
 ```
 
 Execute the command `ate -h` to view command help.
@@ -74,7 +75,7 @@ To install mail helper, run this command in your terminal:
 $ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
 $ ate -V
 jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.5.4
+ApiTestEngine version: 0.6.0
 ```
 
 With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
@@ -127,13 +128,11 @@ optional arguments:
 
 It is recommended to write testcases in `YAML` format.
 
-And here is testset example of typical scenario: get token at the beginning, and each subsequent requests should take the token in the headers.
+And here is testset example of typical scenario: get `token` at the beginning, and each subsequent requests should take the `token` in the headers.
 
 ```yaml
 - config:
     name: "create user testsets."
-    import_module_functions:
-        - tests.data.debugtalk
     variable_binds:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
@@ -177,6 +176,8 @@ And here is testset example of typical scenario: get token at the beginning, and
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
+
+Function invoke is supported in `YAML/JSON` format testcases, such as `gen_random_string` and `get_sign` above. This mechanism relies on the `debugtak.py` hot plugin, with which we can define functions in `debugtak.py` file, and then functions can be auto discovered and invoked in runtime.
 
 For detailed regulations of writing testcases, you can read the [`QuickStart`][quickstart] documents.
 
