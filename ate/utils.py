@@ -255,9 +255,13 @@ def is_function(tup):
     name, item = tup
     return isinstance(item, types.FunctionType)
 
-def get_module_functions(module_name):
-    """ import module and return filtered functions
+def get_imported_module(module_name):
+    """ import module and return imported module
     """
-    imported = importlib.import_module(module_name)
-    module_functions_dict = dict(filter(is_function, vars(imported).items()))
+    return importlib.import_module(module_name)
+
+def filter_module_functions(module):
+    """ filter functions from import module
+    """
+    module_functions_dict = dict(filter(is_function, vars(module).items()))
     return module_functions_dict

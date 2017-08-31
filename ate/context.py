@@ -1,5 +1,4 @@
 import copy
-import importlib
 import os
 import re
 import sys
@@ -46,7 +45,7 @@ class Context(object):
         """ import required modules dynamicly
         """
         for module_name in modules:
-            globals()[module_name] = importlib.import_module(module_name)
+            globals()[module_name] = utils.get_imported_module(module_name)
 
     def bind_functions(self, function_binds, level="testcase"):
         """ Bind named functions within the context
@@ -70,7 +69,8 @@ class Context(object):
         """
         sys.path.insert(0, os.getcwd())
         for module_name in modules:
-            imported_functions_dict = utils.get_module_functions(module_name)
+            imported_module = utils.get_imported_module(module_name)
+            imported_functions_dict = utils.filter_module_functions(imported_module)
             self.__update_context_functions_config(level, imported_functions_dict)
 
     def bind_variables(self, variable_binds, level="testcase"):
