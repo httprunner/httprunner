@@ -3,19 +3,12 @@ import importlib
 import os
 import re
 import sys
-import types
 from collections import OrderedDict
 
 from ate import utils
 from ate.exception import ParamsError
 from ate.testcase import TestcaseParser
 
-
-def is_function(tup):
-    """ Takes (name, object) tuple, returns True if it is a function.
-    """
-    name, item = tup
-    return isinstance(item, types.FunctionType)
 
 class Context(object):
     """ Manages context functions and variables.
@@ -77,8 +70,7 @@ class Context(object):
         """
         sys.path.insert(0, os.getcwd())
         for module_name in modules:
-            imported = importlib.import_module(module_name)
-            imported_functions_dict = dict(filter(is_function, vars(imported).items()))
+            imported_functions_dict = utils.get_module_functions(module_name)
             self.__update_context_functions_config(level, imported_functions_dict)
 
     def bind_variables(self, variable_binds, level="testcase"):
