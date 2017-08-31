@@ -1,8 +1,8 @@
 import ast
+import os
 import re
 
-from ate.utils import long_type
-from ate.exception import ParamsError
+from ate import exception, utils
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{[\w_]+\([\$\w_ =,]*\)\}"
@@ -105,7 +105,7 @@ def eval_content_variables(content, variable_mapping):
     variables_list = extract_variables(content)
     for variable_name in variables_list:
         if variable_name not in variable_mapping:
-            raise ParamsError(
+            raise exception.ParamsError(
                 "%s is not defined in bind variables!" % variable_name)
 
         variable_value = variable_mapping.get(variable_name)
@@ -124,9 +124,10 @@ def eval_content_variables(content, variable_mapping):
 
 class TestcaseParser(object):
 
-    def __init__(self, variables_binds={}, functions_binds={}):
+    def __init__(self, variables_binds={}, functions_binds={}, file_path=None):
         self.bind_variables(variables_binds)
         self.bind_functions(functions_binds)
+        self.file_path = file_path
 
     def bind_variables(self, variables_binds):
         """ bind variables to current testcase parser
@@ -149,16 +150,25 @@ class TestcaseParser(object):
         """
         self.functions_binds = functions_binds
 
+    def get_bind_fuctions(self, func_name):
+        func = self.functions_binds.get(func_name)
+        if func:
+            return func
+
+        try:
+            assert self.file_path is not None
+            return utils.search_conf_function(self.file_path, func_name)
+        except (AssertionError, exception.FunctionNotFound):
+            raise exception.ParamsError(
+                "%s is not defined in bind functions!" % func_name)
+
     def eval_content_functions(self, content):
         functions_list = extract_functions(content)
         for func_content in functions_list:
             function_meta = parse_function(func_content)
             func_name = function_meta['func_name']
 
-            func = self.functions_binds.get(func_name)
-            if func is None:
-                raise ParamsError(
-                    "%s is not defined in bind functions!" % func_name)
+            func = self.get_bind_fuctions(func_name)
 
             args = function_meta.get('args', [])
             kwargs = function_meta.get('kwargs', {})
@@ -222,7 +232,7 @@ class TestcaseParser(object):
 
             return evaluated_data
 
-        if isinstance(content, (int, long_type, float, complex)):
+        if isinstance(content, (int, utils.long_type, float, complex)):
             return content
 
         # content is in string format here

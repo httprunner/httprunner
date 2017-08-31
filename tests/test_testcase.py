@@ -266,6 +266,16 @@ class TestcaseParserUnittest(unittest.TestCase):
             "/api/3"
         )
 
+    def test_eval_content_functions_search_upward(self):
+        testcase_parser = testcase.TestcaseParser()
+
+        with self.assertRaises(ParamsError):
+            testcase_parser.eval_content_functions("/api/${gen_md5(abc)}")
+
+        testcase_parser.file_path = "tests/data/demo_testset_hardcode.yml"
+        content = testcase_parser.eval_content_functions("/api/${gen_md5(abc)}")
+        self.assertEqual(content, "/api/900150983cd24fb0d6963f7d28e17f72")
+
     def test_parse_content_with_bindings_testcase(self):
         variables_binds = {
             "uid": "1000",
