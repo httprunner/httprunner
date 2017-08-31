@@ -2,11 +2,13 @@ import codecs
 import fnmatch
 import hashlib
 import hmac
+import importlib
 import json
 import os.path
 import random
 import re
 import string
+import types
 
 import yaml
 from ate import exception
@@ -246,3 +248,16 @@ def deep_update_dict(origin_dict, override_dict):
             origin_dict[key] = override_dict[key]
 
     return origin_dict
+
+def is_function(tup):
+    """ Takes (name, object) tuple, returns True if it is a function.
+    """
+    name, item = tup
+    return isinstance(item, types.FunctionType)
+
+def get_module_functions(module_name):
+    """ import module and return filtered functions
+    """
+    imported = importlib.import_module(module_name)
+    module_functions_dict = dict(filter(is_function, vars(imported).items()))
+    return module_functions_dict
