@@ -39,7 +39,7 @@ class Context(object):
         self.testcase_parser.bind_variables(self.testcase_variables_mapping)
 
         if level == "testset":
-            self.import_module_functions(["ate.debugtalk"], "testset")
+            self.import_module_functions(["ate.built_in"], "testset")
 
     def import_requires(self, modules):
         """ import required modules dynamicly
