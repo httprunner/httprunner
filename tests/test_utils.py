@@ -225,3 +225,41 @@ class TestUtils(ApiServerUnittest):
             updated_dict,
             {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7}
         )
+
+    def test_get_imported_module(self):
+        imported_module = utils.get_imported_module("os")
+        self.assertIn("walk", dir(imported_module))
+
+    def test_filter_module_functions(self):
+        imported_module = utils.get_imported_module("ate.utils")
+        self.assertIn("PYTHON_VERSION", dir(imported_module))
+
+        functions_dict = utils.filter_module_functions(imported_module)
+        self.assertIn("filter_module_functions", functions_dict)
+        self.assertNotIn("PYTHON_VERSION", functions_dict)
+
+    def test_get_imported_module_from_file(self):
+        imported_module = utils.get_imported_module_from_file("tests/data/debugtalk.py")
+        self.assertIn("gen_md5", dir(imported_module))
+
+        functions_dict = utils.filter_module_functions(imported_module)
+        self.assertIn("gen_md5", functions_dict)
+        self.assertNotIn("PYTHON_VERSION", functions_dict)
+
+        with self.assertRaises(exception.FileNotFoundError):
+            utils.get_imported_module_from_file("tests/data/debugtalk2.py")
+
+    def test_search_conf_function(self):
+        gen_md5 = utils.search_conf_function("tests/data/demo_binds.yml", "gen_md5")
+        self.assertTrue(utils.is_function(("gen_md5", gen_md5)))
+        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
+
+        gen_md5 = utils.search_conf_function("tests/data/subfolder/test.yml", "gen_md5")
+        self.assertTrue(utils.is_function(("_", gen_md5)))
+        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
+
+        with self.assertRaises(exception.FunctionNotFound):
+            utils.search_conf_function("tests/data/subfolder/test.yml", "func_not_exist")
+
+        with self.assertRaises(exception.FunctionNotFound):
+            utils.search_conf_function("/user/local/bin", "gen_md5")
