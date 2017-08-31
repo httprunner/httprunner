@@ -152,11 +152,11 @@ Let's look back to our test set `quickstart-demo-rev-1.yml`, and we can see the 
 
 In actual scenarios, each user's `device_sn` is different, so we should parameterize the request parameters, which is also called `parameterization`. In the meanwhile, the `sign` field is calculated with other header fields, thus it may change significantly if any header field changes slightly.
 
-However, the test cases are only `YAML` documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine `Python` scripts with `YAML` test cases in `ApiTestEngine`.
+However, the test cases are only `YAML` documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine `Python` scripts with `YAML/JSON` test cases in `ApiTestEngine`.
 
-To achieve this goal, we can utilize `import_module_functions` and `variable_binds` mechanisms.
+To achieve this goal, we can utilize `debugtalk.py` plugin and `variable_binds` mechanisms.
 
-To be specific, we can create a Python file (`examples/utils.py`) and implement the related algorithm in it. Since we want to import this file, so we should put a `__init__.py` in this folder to make it as a Python module.
+To be specific, we can create a Python file (`examples/debugtalk.py`) and implement the related algorithm in it. The `debugtalk.py` file can not only be located beside `YAML/JSON` testset file, but also can be in any upward recursive folder. Since we want `debugtalk.py` to be importable, we should put a `__init__.py` in its folder to make it as a Python module.
 
 ```python
 import hashlib
@@ -187,8 +187,6 @@ And then, we can revise our demo test case and reference the functions. Suppose 
 ```yaml
 - test:
     name: get token
-    import_module_functions:
-        - examples.utils
     variable_binds:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
@@ -226,9 +224,9 @@ And then, we can revise our demo test case and reference the functions. Suppose 
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
 
-In this revised test case, we firstly import module functions in `import_module_functions` block by specifying the Python module path, which is relative to the current working directory.
+In this revised test case, `variable reference` and `function invoke` mechanisms are both used.
 
-To make fields like `device_sn` can be used more than once, we also bind values to variables in `variable_binds` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
+To make fields like `device_sn` can be used more than once, we bind values to variables in `variable_binds` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
 
 When we want to reference a variable in the test case, we can do this with a escape character `$`. For example, `$user_agent` will not be taken as a normal string, and `ApiTestEngine` will consider it as a variable named `user_agent`, search and return its binding value.
 
@@ -246,8 +244,6 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
 # examples/quickstart-demo-rev-3.yml
 - config:
     name: "smoketest for CRUD users."
-    import_module_functions:
-        - examples.utils
     variable_binds:
         - device_sn: ${gen_random_string(15)}
     request:
@@ -291,7 +287,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
 
-As you see, we import public `Python` modules and variables in `config` block. Also, we can set `base_url` in `config` block, thereby we can only specify relative path in each API request url. Besides, we can also set common fields in `config` `request`, such as `device_sn` in headers.
+As you see, we define variables in `config` block. Also, we can set `base_url` in `config` block, thereby we can specify relative path in each API request url. Besides, we can also set common fields in `config` `request`, such as `device_sn` in headers.
 
 Until now, the test cases are finished and each detail is handled properly.
 
