@@ -51,6 +51,7 @@ class Runner(object):
         if level == "testset":
             base_url = request_config.pop("base_url", None)
             self.http_client_session = self.http_client_session or HttpSession(base_url)
+            self.context.testcase_parser.file_path = config_dict.get("path", None)
         else:
             # testcase
             self.http_client_session = self.http_client_session or requests.Session()
