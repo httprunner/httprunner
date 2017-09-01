@@ -70,7 +70,7 @@ class Context(object):
         sys.path.insert(0, os.getcwd())
         for module_name in modules:
             imported_module = utils.get_imported_module(module_name)
-            imported_functions_dict = utils.filter_module_functions(imported_module)
+            imported_functions_dict = utils.filter_module(imported_module, "function")
             self.__update_context_functions_config(level, imported_functions_dict)
 
     def bind_variables(self, variable_binds, level="testcase"):
