@@ -150,17 +150,23 @@ class TestcaseParser(object):
         """
         self.functions_binds = functions_binds
 
-    def get_bind_fuctions(self, func_name):
-        func = self.functions_binds.get(func_name)
-        if func:
-            return func
+    def get_bind_item(self, item_type, item_name):
+        if item_type == "function":
+            item = self.functions_binds.get(item_name)
+        elif item_type == "variable":
+            item = self.variables_binds.get(item_name)
+        else:
+            raise exception.ParamsError("bind item should only be function or variable.")
+
+        if item:
+            return item
 
         try:
             assert self.file_path is not None
-            return utils.search_conf_function(self.file_path, func_name)
+            return utils.search_conf_item(self.file_path, item_type, item_name)
         except (AssertionError, exception.FunctionNotFound):
             raise exception.ParamsError(
-                "%s is not defined in bind functions!" % func_name)
+                "{} is not defined in bind {}s!".format(item_name, item_type))
 
     def eval_content_functions(self, content):
         functions_list = extract_functions(content)
@@ -168,7 +174,7 @@ class TestcaseParser(object):
             function_meta = parse_function(func_content)
             func_name = function_meta['func_name']
 
-            func = self.get_bind_fuctions(func_name)
+            func = self.get_bind_item("function", func_name)
 
             args = function_meta.get('args', [])
             kwargs = function_meta.get('kwargs', {})
