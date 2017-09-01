@@ -278,3 +278,18 @@ class TestUtils(ApiServerUnittest):
 
         with self.assertRaises(exception.VariableNotFound):
             utils.search_conf_item("/user/local/bin", "variable", "SECRET_KEY")
+
+    def test_is_variable(self):
+        var1 = 123
+        var2 = "abc"
+        self.assertTrue(utils.is_variable(("var1", var1)))
+        self.assertTrue(utils.is_variable(("var2", var2)))
+
+        __var = 123
+        self.assertFalse(utils.is_variable(("__var", __var)))
+
+        func = lambda x: x + 1
+        self.assertFalse(utils.is_variable(("func", func)))
+
+        self.assertFalse(utils.is_variable(("os", os)))
+        self.assertFalse(utils.is_variable(("utils", utils)))
