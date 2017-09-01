@@ -21,3 +21,6 @@ class ValidationError(MyBaseError):
 
 class FunctionNotFound(NameError):
     pass
+
+class VariableNotFound(NameError):
+    pass

@@ -256,6 +256,18 @@ def is_function(tup):
     name, item = tup
     return isinstance(item, types.FunctionType)
 
+def is_variable(tup):
+    """ Takes (name, object) tuple, returns True if it is a variable.
+    """
+    name, item = tup
+    if callable(item):
+        return False
+
+    if name.startswith("__"):
+        return False
+
+    return True
+
 def get_imported_module(module_name):
     """ import module and return imported module
     """
@@ -274,29 +286,40 @@ def get_imported_module_from_file(file_path):
 
     return imported_module
 
-def filter_module_functions(module):
-    """ filter functions from import module
+def filter_module(module, filter_type):
+    """ filter functions or variables from import module
+    @params
+        module: imported module
+        filter_type: "function" or "variable"
     """
-    module_functions_dict = dict(filter(is_function, vars(module).items()))
+    filter_type = is_function if filter_type == "function" else is_variable
+    module_functions_dict = dict(filter(filter_type, vars(module).items()))
     return module_functions_dict
 
-def search_conf_function(start_path, func):
-    """ search expected function recursive upward
+def search_conf_item(start_path, item_type, item_name):
+    """ search expected function or variable recursive upward
+    @param
+        start_path: search start path
+        item_type: "function" or "variable"
+        item_name: function name or variable name
     """
     dir_path = os.path.dirname(os.path.abspath(start_path))
     target_file = os.path.join(dir_path, "debugtalk.py")
 
     if os.path.isfile(target_file):
         imported_module = get_imported_module_from_file(target_file)
-        functions_dict = filter_module_functions(imported_module)
-        if func in functions_dict:
-            return functions_dict[func]
+        functions_dict = filter_module(imported_module, item_type)
+        if item_name in functions_dict:
+            return functions_dict[item_name]
         else:
-            return search_conf_function(dir_path, func)
+            return search_conf_item(dir_path, item_type, item_name)
 
     if dir_path == start_path:
         # system root path
-        err_msg = "{} not found in recursive upward path!".format(func)
-        raise exception.FunctionNotFound(err_msg)
+        err_msg = "{} not found in recursive upward path!".format(item_name)
+        if item_type == "function":
+            raise exception.FunctionNotFound(err_msg)
+        else:
+            raise exception.VariableNotFound(err_msg)
 
-    return search_conf_function(dir_path, func)
+    return search_conf_item(dir_path, item_type, item_name)
