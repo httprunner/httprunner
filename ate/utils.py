@@ -263,6 +263,9 @@ def is_variable(tup):
     if callable(item):
         return False
 
+    if isinstance(item, types.ModuleType):
+        return False
+
     if name.startswith("__"):
         return False
 
