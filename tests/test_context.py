@@ -140,9 +140,9 @@ class VariableBindsUnittest(unittest.TestCase):
             authorization = context_variables["authorization"]
             self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
 
-    def test_import_module_functions(self):
+    def test_import_module_items(self):
         testcase1 = {
-            "import_module_functions": ["tests.data.debugtalk"],
+            "import_module_items": ["tests.data.debugtalk"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
@@ -153,8 +153,8 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase2 = self.testcases["bind_module_functions"]
 
         for testcase in [testcase1, testcase2]:
-            module_functions = testcase.get('import_module_functions', [])
-            self.context.import_module_functions(module_functions)
+            module_items = testcase.get('import_module_items', [])
+            self.context.import_module_items(module_items)
 
             variable_binds = testcase['variable_binds']
             self.context.bind_variables(variable_binds)
@@ -173,6 +173,9 @@ class VariableBindsUnittest(unittest.TestCase):
             self.assertEqual(len(context_variables["authorization"]), 32)
             authorization = context_variables["authorization"]
             self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
+            self.assertIn("SECRET_KEY", context_variables)
+            SECRET_KEY = context_variables["SECRET_KEY"]
+            self.assertEqual(SECRET_KEY, "DebugTalk")
 
     def test_register_request(self):
         request_dict = {
@@ -195,11 +198,10 @@ class VariableBindsUnittest(unittest.TestCase):
         with self.assertRaises(ParamsError):
             self.context.register_request(request_dict)
 
-
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
         testcase = {
-            "import_module_functions": ["tests.data.debugtalk"],
+            "import_module_items": ["tests.data.debugtalk"],
             "variable_binds": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
@@ -212,7 +214,8 @@ class VariableBindsUnittest(unittest.TestCase):
                 "headers": {
                     "Content-Type": "application/json",
                     "authorization": "$authorization",
-                    "random": "$random"
+                    "random": "$random",
+                    "SECRET_KEY": "$SECRET_KEY"
                 },
                 "data": "$data"
             }
@@ -225,3 +228,4 @@ class VariableBindsUnittest(unittest.TestCase):
         self.assertEqual(len(parsed_request["headers"]["random"]), 5)
         self.assertIn("data", parsed_request)
         self.assertEqual(parsed_request["data"], testcase["variable_binds"][2]["data"])
+        self.assertEqual(parsed_request["headers"]["secret_key"], "DebugTalk")

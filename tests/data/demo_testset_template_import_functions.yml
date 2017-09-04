@@ -1,6 +1,6 @@
 - config:
     name: "create user testsets."
-    import_module_functions:
+    import_module_items:
         - tests.data.debugtalk
     variable_binds:
         - user_agent: 'iOS/10.3'
