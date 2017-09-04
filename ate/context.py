@@ -138,7 +138,7 @@ class Context(object):
         )
 
     def get_parsed_request(self):
-        """ get parsed request, with each variable replaced by bind value.
+        """ get parsed request, with bind variables and functions.
         """
         parsed_request = self.testcase_parser.parse_content_with_bindings(
             self.testcase_request_config
@@ -148,3 +148,8 @@ class Context(object):
 
     def get_testcase_variables_mapping(self):
         return self.testcase_variables_mapping
+
+    def exec_content_functions(self, content):
+        """ execute functions in content.
+        """
+        self.testcase_parser.eval_content_functions(content)

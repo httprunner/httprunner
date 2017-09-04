@@ -79,7 +79,9 @@ class Runner(object):
                     "body": '{"name": "user", "password": "123456"}'
                 },
                 "extract_binds": [], # optional
-                "validators": []     # optional
+                "validators": [],    # optional
+                "setup": [],         # optional
+                "teardown": []       # optional
             }
         @return True or raise exception during test
         """
@@ -95,8 +97,16 @@ class Runner(object):
         run_times = int(testcase.get("times", 1))
         extract_binds = testcase.get("extract_binds", [])
         validators = testcase.get("validators", [])
+        setup_actions = testcase.get("setup", [])
+        teardown_actions = testcase.get("teardown", [])
+
+        def setup_teardown(actions):
+            for action in actions:
+                self.context.exec_content_functions(action)
 
         for _ in range(run_times):
+            setup_teardown(setup_actions)
+
             resp = self.http_client_session.request(url=url, method=method, **parsed_request)
             resp_obj = response.ResponseObject(resp)
 
@@ -104,6 +114,8 @@ class Runner(object):
             self.context.bind_variables(extracted_variables_mapping_list, level="testset")
 
             resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
+
+            setup_teardown(teardown_actions)
 
         return True
 

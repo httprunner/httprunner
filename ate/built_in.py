@@ -28,3 +28,8 @@ def get_current_date(fmt="%Y-%m-%d"):
     """ get current date, default format is %Y-%m-%d
     """
     return datetime.datetime.now().strftime(fmt)
+
+def sleep(sec):
+    """ sleep specified seconds
+    """
+    time.sleep(sec)

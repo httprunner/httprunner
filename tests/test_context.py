@@ -1,7 +1,8 @@
 import os
+import time
 import unittest
 
-from ate import utils, runner
+from ate import runner, utils
 from ate.context import Context
 from ate.exception import ParamsError
 
@@ -229,3 +230,12 @@ class VariableBindsUnittest(unittest.TestCase):
         self.assertIn("data", parsed_request)
         self.assertEqual(parsed_request["data"], testcase["variable_binds"][2]["data"])
         self.assertEqual(parsed_request["headers"]["secret_key"], "DebugTalk")
+
+    def test_exec_content_functions(self):
+        test_runner = runner.Runner()
+        content = "${sleep(1)}"
+        start_time = time.time()
+        test_runner.context.exec_content_functions(content)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.assertGreater(elapsed_time, 1)
