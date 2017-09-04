@@ -27,7 +27,7 @@ bind_lambda_functions_with_import:
 
 bind_module_functions:
     function_binds:
-        import_module_functions:
+        import_module_items:
             - tests.data.debugtalk
     variable_binds:
         - TOKEN: debugtalk

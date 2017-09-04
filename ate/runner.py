@@ -25,7 +25,7 @@ class Runner(object):
                         "lambda *str_args: hashlib.md5(''.join(str_args).\
                         encode('utf-8')).hexdigest()"
                 },
-                "import_module_functions": ["test.data.debugtalk"],
+                "import_module_items": ["test.data.debugtalk"],
                 "variable_binds": [
                     {"TOKEN": "debugtalk"},
                     {"random": "${gen_random_string(5)}"},
@@ -41,8 +41,10 @@ class Runner(object):
         function_binds = config_dict.get('function_binds', {})
         self.context.bind_functions(function_binds, level)
 
-        module_functions = config_dict.get('import_module_functions', [])
-        self.context.import_module_functions(module_functions, level)
+        # import_module_functions will be deprecated soon
+        module_items = config_dict.get('import_module_items', []) \
+            or config_dict.get('import_module_functions', [])
+        self.context.import_module_items(module_items, level)
 
         variable_binds = config_dict.get('variable_binds', [])
         self.context.bind_variables(variable_binds, level)

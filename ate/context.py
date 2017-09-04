@@ -39,7 +39,7 @@ class Context(object):
         self.testcase_parser.bind_variables(self.testcase_variables_mapping)
 
         if level == "testset":
-            self.import_module_functions(["ate.built_in"], "testset")
+            self.import_module_items(["ate.built_in"], "testset")
 
     def import_requires(self, modules):
         """ import required modules dynamicly
@@ -64,7 +64,7 @@ class Context(object):
 
         self.__update_context_functions_config(level, eval_function_binds)
 
-    def import_module_functions(self, modules, level="testcase"):
+    def import_module_items(self, modules, level="testcase"):
         """ import modules and bind all functions within the context
         """
         sys.path.insert(0, os.getcwd())
@@ -72,6 +72,10 @@ class Context(object):
             imported_module = utils.get_imported_module(module_name)
             imported_functions_dict = utils.filter_module(imported_module, "function")
             self.__update_context_functions_config(level, imported_functions_dict)
+
+            imported_variables_dict = utils.filter_module(imported_module, "variable")
+            variable_binds = [{key: value} for key, value in imported_variables_dict.items()]
+            self.bind_variables(variable_binds, level)
 
     def bind_variables(self, variable_binds, level="testcase"):
         """ bind variables to testset context or current testcase context.
