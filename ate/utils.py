@@ -261,12 +261,15 @@ def is_variable(tup):
     """
     name, item = tup
     if callable(item):
+        # function or class
         return False
 
     if isinstance(item, types.ModuleType):
+        # imported module
         return False
 
-    if name.startswith("__"):
+    if name.startswith("_"):
+        # private property
         return False
 
     return True
