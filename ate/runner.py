@@ -78,7 +78,7 @@ class Runner(object):
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },
-                "extract_binds": {}, # optional
+                "extract_binds": [], # optional
                 "validators": []     # optional
             }
         @return True or raise exception during test
@@ -93,7 +93,7 @@ class Runner(object):
             raise exception.ParamsError("URL or METHOD missed!")
 
         run_times = int(testcase.get("times", 1))
-        extract_binds = testcase.get("extract_binds", {})
+        extract_binds = testcase.get("extract_binds", [])
         validators = testcase.get("validators", [])
 
         for _ in range(run_times):
