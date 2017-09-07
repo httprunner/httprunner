@@ -314,9 +314,9 @@ def search_conf_item(start_path, item_type, item_name):
 
     if os.path.isfile(target_file):
         imported_module = get_imported_module_from_file(target_file)
-        functions_dict = filter_module(imported_module, item_type)
-        if item_name in functions_dict:
-            return functions_dict[item_name]
+        items_dict = filter_module(imported_module, item_type)
+        if item_name in items_dict:
+            return items_dict[item_name]
         else:
             return search_conf_item(dir_path, item_type, item_name)
 
