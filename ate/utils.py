@@ -57,7 +57,7 @@ def load_testcases(testcase_file_path):
         # '' or other suffix
         return []
 
-def load_foler_files(folder_path, match_filter_list=["*"]):
+def load_folder_files(folder_path, match_filter_list=["*"]):
     """ load folder path, return all files in list format.
     """
     file_list = []
@@ -99,7 +99,7 @@ def load_testcases_by_path(path):
         path = os.path.join(os.getcwd(), path)
 
     if os.path.isdir(path):
-        files_list = load_foler_files(path, ["*.yml", "*.yaml", "*.json"])
+        files_list = load_folder_files(path, ["*.yml", "*.yaml", "*.json"])
         return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
