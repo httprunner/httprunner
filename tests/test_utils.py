@@ -31,12 +31,12 @@ class TestUtils(ApiServerUnittest):
         self.assertIn('url', testcase['request'])
         self.assertIn('method', testcase['request'])
 
-    def test_load_foler_files(self):
+    def test_load_folder_files(self):
         folder = os.path.join(os.getcwd(), 'tests')
         file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
         file2 = os.path.join(os.getcwd(), 'tests', 'data', 'demo_binds.yml')
 
-        files = utils.load_foler_files(folder, ["*.py"])
+        files = utils.load_folder_files(folder, ["*.py"])
         self.assertIn(file1, files)
         self.assertNotIn(file2, files)
 
