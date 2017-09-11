@@ -18,7 +18,7 @@ class ApiTestCase(unittest.TestCase):
 
 def create_suite(testset):
     """ create test suite with a testset, it may include one or several testcases.
-        each suite should initialize a seperate Runner() with testset config.
+        each suite should initialize a separate Runner() with testset config.
     """
     suite = unittest.TestSuite()
 

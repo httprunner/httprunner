@@ -42,7 +42,7 @@ class Context(object):
             self.import_module_items(["ate.built_in"], "testset")
 
     def import_requires(self, modules):
-        """ import required modules dynamicly
+        """ import required modules dynamically
         """
         for module_name in modules:
             globals()[module_name] = utils.get_imported_module(module_name)
