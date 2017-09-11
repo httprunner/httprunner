@@ -118,7 +118,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual(testcase.parse_string_value("$var"), "$var")
         self.assertEqual(testcase.parse_string_value("${func}"), "${func}")
 
-    def test_parse_functon(self):
+    def test_parse_function(self):
         self.assertEqual(
             testcase.parse_function("${func()}"),
             {'func_name': 'func', 'args': [], 'kwargs': {}}
