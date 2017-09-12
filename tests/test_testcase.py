@@ -54,62 +54,68 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_eval_content_variables(self):
-        variable_mapping = {
+        variable_binds = {
             "var_1": "abc",
             "var_2": "def",
             "var_3": 123,
             "var_4": {"a": 1},
-            "var_5": True,
-            "var_6": None
+            "var_5": True
         }
+        testcase_parser = testcase.TestcaseParser(variables_binds=variable_binds)
         self.assertEqual(
-            testcase.eval_content_variables("$var_1", variable_mapping),
+            testcase_parser.eval_content_variables("$var_1"),
             "abc"
         )
         self.assertEqual(
-            testcase.eval_content_variables("var_1", variable_mapping),
+            testcase_parser.eval_content_variables("var_1"),
             "var_1"
         )
         self.assertEqual(
-            testcase.eval_content_variables("$var_1#XYZ", variable_mapping),
+            testcase_parser.eval_content_variables("$var_1#XYZ"),
             "abc#XYZ"
         )
         self.assertEqual(
-            testcase.eval_content_variables("/$var_1/$var_2/var3", variable_mapping),
+            testcase_parser.eval_content_variables("/$var_1/$var_2/var3"),
             "/abc/def/var3"
         )
         self.assertEqual(
-            testcase.eval_content_variables("/$var_1/$var_2/$var_1", variable_mapping),
+            testcase_parser.eval_content_variables("/$var_1/$var_2/$var_1"),
             "/abc/def/abc"
         )
         self.assertEqual(
-            testcase.eval_content_variables("${func($var_1, $var_2, xyz)}", variable_mapping),
+            testcase_parser.eval_content_variables("${func($var_1, $var_2, xyz)}"),
             "${func(abc, def, xyz)}"
         )
         self.assertEqual(
-            testcase.eval_content_variables("$var_3", variable_mapping),
+            testcase_parser.eval_content_variables("$var_3"),
             123
         )
         self.assertEqual(
-            testcase.eval_content_variables("$var_4", variable_mapping),
+            testcase_parser.eval_content_variables("$var_4"),
             {"a": 1}
         )
         self.assertEqual(
-            testcase.eval_content_variables("$var_5", variable_mapping),
+            testcase_parser.eval_content_variables("$var_5"),
             True
         )
         self.assertEqual(
-            testcase.eval_content_variables("abc$var_5", variable_mapping),
+            testcase_parser.eval_content_variables("abc$var_5"),
             "abcTrue"
         )
         self.assertEqual(
-            testcase.eval_content_variables("abc$var_4", variable_mapping),
+            testcase_parser.eval_content_variables("abc$var_4"),
             "abc{'a': 1}"
         )
-        self.assertEqual(
-            testcase.eval_content_variables("$var_6", variable_mapping),
-            None
-        )
+
+    def test_eval_content_variables_search_upward(self):
+        testcase_parser = testcase.TestcaseParser()
+
+        with self.assertRaises(ParamsError):
+            testcase_parser.eval_content_variables("/api/$SECRET_KEY")
+
+        testcase_parser.file_path = "tests/data/demo_testset_hardcode.yml"
+        content = testcase_parser.eval_content_variables("/api/$SECRET_KEY")
+        self.assertEqual(content, "/api/DebugTalk")
 
     def test_parse_string_value(self):
         self.assertEqual(testcase.parse_string_value("123"), 123)
