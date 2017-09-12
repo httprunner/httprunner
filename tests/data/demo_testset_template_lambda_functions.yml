@@ -18,7 +18,7 @@
         - os_platform: 'ios'
         - app_version: '2.8.6'
     request:
-        base_url: http://127.0.0.1:5000
+        base_url: $BASE_URL
         headers:
             Content-Type: application/json
             device_sn: $device_sn

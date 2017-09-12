@@ -3,7 +3,7 @@
     variable_binds:
         - device_sn: 'HZfFBh6tU59EdXJ'
     request:
-        base_url: http://127.0.0.1:5000
+        base_url: $BASE_URL
         headers:
             Content-Type: application/json
             device_sn: $device_sn

@@ -41,7 +41,7 @@ class Runner(object):
                     "headers": {
                         "Content-Type": "application/json"
                     }
-
+                },
                 "json": {
                     "sign": "f1219719911caae89ccc301679857ebfda115ca2"
                 }
@@ -52,10 +52,12 @@ class Runner(object):
         self.context.config_context(config_dict, level)
 
         request_config = config_dict.get('request', {})
-        base_url = request_config.pop("base_url", None)
+        parsed_request = self.context.get_parsed_request(request_config, level)
+
+        base_url = parsed_request.pop("base_url", None)
         self.http_client_session = self.http_client_session or HttpSession(base_url)
 
-        self.context.register_request(request_config, level)
+        return parsed_request
 
     def run_test(self, testcase):
         """ run single testcase.
@@ -83,8 +85,7 @@ class Runner(object):
             }
         @return True or raise exception during test
         """
-        self.init_config(testcase, level="testcase")
-        parsed_request = self.context.get_parsed_request()
+        parsed_request = self.init_config(testcase, level="testcase")
 
         try:
             url = parsed_request.pop('url')
