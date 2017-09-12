@@ -41,6 +41,24 @@ class Context(object):
         if level == "testset":
             self.import_module_items(["ate.built_in"], "testset")
 
+    def config_context(self, config_dict, level):
+        if level == "testset":
+            self.testcase_parser.file_path = config_dict.get("path", None)
+
+        requires = config_dict.get('requires', [])
+        self.import_requires(requires)
+
+        function_binds = config_dict.get('function_binds', {})
+        self.bind_functions(function_binds, level)
+
+        # import_module_functions will be deprecated soon
+        module_items = config_dict.get('import_module_items', []) \
+            or config_dict.get('import_module_functions', [])
+        self.import_module_items(module_items, level)
+
+        variable_binds = config_dict.get('variable_binds', [])
+        self.bind_variables(variable_binds, level)
+
     def import_requires(self, modules):
         """ import required modules dynamically
         """

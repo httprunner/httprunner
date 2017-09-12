@@ -1,5 +1,3 @@
-import requests
-
 from ate import exception, response
 from ate.client import HttpSession
 from ate.context import Context
@@ -14,49 +12,49 @@ class Runner(object):
     def init_config(self, config_dict, level):
         """ create/update context variables binds
         @param (dict) config_dict
+        @param (str) level, "testset" or "testcase"
+        testset:
             {
-                "name": "description content",
-                "requires": ["random", "hashlib"],
-                "function_binds": {
-                    "gen_random_string": \
-                        "lambda str_len: ''.join(random.choice(string.ascii_letters + \
-                        string.digits) for _ in range(str_len))",
-                    "gen_md5": \
-                        "lambda *str_args: hashlib.md5(''.join(str_args).\
-                        encode('utf-8')).hexdigest()"
-                },
-                "import_module_items": ["test.data.debugtalk"],
-                "variable_binds": [
-                    {"TOKEN": "debugtalk"},
-                    {"random": "${gen_random_string(5)}"},
-                ]
+                "name": "smoke testset",
+                "path": "tests/data/demo_testset_variables.yml",
+                "requires": [],         # optional
+                "function_binds": {},   # optional
+                "import_module_items": [],  # optional
+                "variable_binds": [],   # optional
+                "request": {
+                    "base_url": "http://127.0.0.1:5000",
+                    "headers": {
+                        "User-Agent": "iOS/2.8.3"
+                    }
+                }
+            }
+        testcase:
+            {
+                "name": "testcase description",
+                "requires": [],         # optional
+                "function_binds": {},   # optional
+                "import_module_items": [],  # optional
+                "variable_binds": [],   # optional
+                "request": {
+                    "url": "/api/get-token",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    }
+
+                "json": {
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                }
             }
         @param (str) context level, testcase or testset
         """
         self.context.init_context(level)
-
-        requires = config_dict.get('requires', [])
-        self.context.import_requires(requires)
-
-        function_binds = config_dict.get('function_binds', {})
-        self.context.bind_functions(function_binds, level)
-
-        # import_module_functions will be deprecated soon
-        module_items = config_dict.get('import_module_items', []) \
-            or config_dict.get('import_module_functions', [])
-        self.context.import_module_items(module_items, level)
-
-        variable_binds = config_dict.get('variable_binds', [])
-        self.context.bind_variables(variable_binds, level)
+        self.context.config_context(config_dict, level)
 
         request_config = config_dict.get('request', {})
-        if level == "testset":
-            base_url = request_config.pop("base_url", None)
-            self.http_client_session = self.http_client_session or HttpSession(base_url)
-            self.context.testcase_parser.file_path = config_dict.get("path", None)
-        else:
-            # testcase
-            self.http_client_session = self.http_client_session or requests.Session()
+        base_url = request_config.pop("base_url", None)
+        self.http_client_session = self.http_client_session or HttpSession(base_url)
+
         self.context.register_request(request_config, level)
 
     def run_test(self, testcase):
