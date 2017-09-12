@@ -87,40 +87,6 @@ def parse_function(content):
 
     return function_meta
 
-def eval_content_variables(content, variable_mapping):
-    """ replace all variables of string content with mapping value.
-    @param (str) content
-    @return (str) parsed content
-
-    e.g.
-        variable_mapping = {
-            "var_1": "abc",
-            "var_2": "def"
-        }
-        $var_1 => "abc"
-        $var_1#XYZ => "abc#XYZ"
-        /$var_1/$var_2/var3 => "/abc/def/var3"
-        ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
-    """
-    variables_list = extract_variables(content)
-    for variable_name in variables_list:
-        if variable_name not in variable_mapping:
-            raise exception.ParamsError(
-                "%s is not defined in bind variables!" % variable_name)
-
-        variable_value = variable_mapping.get(variable_name)
-        if "${}".format(variable_name) == content:
-            # content is a variable
-            content = variable_value
-        else:
-            # content contains one or many variables
-            content = content.replace(
-                "${}".format(variable_name),
-                str(variable_value), 1
-            )
-
-    return content
-
 
 class TestcaseParser(object):
 
@@ -194,6 +160,37 @@ class TestcaseParser(object):
 
         return content
 
+    def eval_content_variables(self, content):
+        """ replace all variables of string content with mapping value.
+        @param (str) content
+        @return (str) parsed content
+
+        e.g.
+            variable_mapping = {
+                "var_1": "abc",
+                "var_2": "def"
+            }
+            $var_1 => "abc"
+            $var_1#XYZ => "abc#XYZ"
+            /$var_1/$var_2/var3 => "/abc/def/var3"
+            ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
+        """
+        variables_list = extract_variables(content)
+        for variable_name in variables_list:
+            variable_value = self.get_bind_item("variable", variable_name)
+
+            if "${}".format(variable_name) == content:
+                # content is a variable
+                content = variable_value
+            else:
+                # content contains one or many variables
+                content = content.replace(
+                    "${}".format(variable_name),
+                    str(variable_value), 1
+                )
+
+        return content
+
     def parse_content_with_bindings(self, content):
         """ parse content recursively, each variable and function in content will be evaluated.
 
@@ -249,6 +246,6 @@ class TestcaseParser(object):
         content = self.eval_content_functions(content)
 
         # replace variables with binding value
-        content = eval_content_variables(content, self.variables_binds)
+        content = self.eval_content_variables(content)
 
         return content
