@@ -178,7 +178,7 @@ class VariableBindsUnittest(unittest.TestCase):
             SECRET_KEY = context_variables["SECRET_KEY"]
             self.assertEqual(SECRET_KEY, "DebugTalk")
 
-    def test_register_request(self):
+    def test_parse_request(self):
         request_dict = {
             "url": "http://debugtalk.com",
             "method": "GET",
@@ -187,9 +187,8 @@ class VariableBindsUnittest(unittest.TestCase):
                 "USER-AGENT": "ios/10.3"
             }
         }
-        self.context.register_request(request_dict)
 
-        parsed_request = self.context.get_parsed_request()
+        parsed_request = self.context.get_parsed_request(request_dict)
         self.assertIn("content-type", parsed_request["headers"])
         self.assertIn("user-agent", parsed_request["headers"])
 
@@ -197,7 +196,7 @@ class VariableBindsUnittest(unittest.TestCase):
             "headers": "invalid headers"
         }
         with self.assertRaises(ParamsError):
-            self.context.register_request(request_dict)
+            self.context.get_parsed_request(request_dict)
 
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
@@ -221,8 +220,7 @@ class VariableBindsUnittest(unittest.TestCase):
                 "data": "$data"
             }
         }
-        test_runner.init_config(testcase, level="testcase")
-        parsed_request = test_runner.context.get_parsed_request()
+        parsed_request = test_runner.init_config(testcase, level="testcase")
         self.assertIn("authorization", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["authorization"]), 32)
         self.assertIn("random", parsed_request["headers"])

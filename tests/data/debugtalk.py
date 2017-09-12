@@ -15,6 +15,7 @@ except NameError:
     import urllib.parse as urllib
 
 SECRET_KEY = "DebugTalk"
+BASE_URL = "http://127.0.0.1:5000"
 
 def get_sign(*args):
     content = ''.join(args).encode('ascii')

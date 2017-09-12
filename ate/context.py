@@ -32,7 +32,6 @@ class Context(object):
         # testcase config shall inherit from testset configs,
         # but can not change testset configs, that's why we use copy.deepcopy here.
         self.testcase_functions_config = copy.deepcopy(self.testset_functions_config)
-        self.testcase_request_config = {}
         self.testcase_variables_mapping = copy.deepcopy(self.testset_shared_variables_mapping)
 
         self.testcase_parser.bind_functions(self.testcase_functions_config)
@@ -131,7 +130,11 @@ class Context(object):
         self.testcase_functions_config.update(config_mapping)
         self.testcase_parser.bind_functions(self.testcase_functions_config)
 
-    def register_request(self, request_dict, level="testcase"):
+    def get_parsed_request(self, request_dict, level="testcase"):
+        """ get parsed request with bind variables and functions.
+        @param request_dict: request config mapping
+        @param level: testset or testcase
+        """
         if "headers" in request_dict:
             # convert keys in request headers to lowercase
             headers = request_dict.pop("headers")
@@ -139,27 +142,18 @@ class Context(object):
                 raise ParamsError("HTTP Request Headers invalid!")
             request_dict["headers"] = {key.lower(): headers[key] for key in headers}
 
-        self.__update_context_request_config(level, request_dict)
-
-    def __update_context_request_config(self, level, config_mapping):
-        """
-        @param level: testset or testcase
-        @param config_type: request
-        @param config_mapping: request config mapping
-        """
         if level == "testset":
-            self.testset_request_config.update(config_mapping)
+            request_dict = self.testcase_parser.parse_content_with_bindings(
+                request_dict
+            )
+            self.testset_request_config.update(request_dict)
 
-        self.testcase_request_config = utils.deep_update_dict(
+        testcase_request_config = utils.deep_update_dict(
             copy.deepcopy(self.testset_request_config),
-            config_mapping
+            request_dict
         )
-
-    def get_parsed_request(self):
-        """ get parsed request, with bind variables and functions.
-        """
         parsed_request = self.testcase_parser.parse_content_with_bindings(
-            self.testcase_request_config
+            testcase_request_config
         )
 
         return parsed_request
