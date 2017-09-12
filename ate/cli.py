@@ -57,7 +57,7 @@ def main_ate():
 
     for testset_path in set(args.testset_paths):
 
-        testset_path = testset_path.strip('/')
+        testset_path = testset_path.rstrip('/')
         task_suite = create_task(testset_path)
 
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
