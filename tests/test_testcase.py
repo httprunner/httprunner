@@ -59,7 +59,8 @@ class TestcaseParserUnittest(unittest.TestCase):
             "var_2": "def",
             "var_3": 123,
             "var_4": {"a": 1},
-            "var_5": True
+            "var_5": True,
+            "var_6": None
         }
         testcase_parser = testcase.TestcaseParser(variables_binds=variable_binds)
         self.assertEqual(
@@ -105,6 +106,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual(
             testcase_parser.eval_content_variables("abc$var_4"),
             "abc{'a': 1}"
+        )
+        self.assertEqual(
+            testcase_parser.eval_content_variables("$var_6"),
+            None
         )
 
     def test_eval_content_variables_search_upward(self):

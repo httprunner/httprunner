@@ -118,14 +118,13 @@ class TestcaseParser(object):
 
     def get_bind_item(self, item_type, item_name):
         if item_type == "function":
-            item = self.functions_binds.get(item_name)
+            if item_name in self.functions_binds:
+                return self.functions_binds[item_name]
         elif item_type == "variable":
-            item = self.variables_binds.get(item_name)
+            if item_name in self.variables_binds:
+                return self.variables_binds[item_name]
         else:
             raise exception.ParamsError("bind item should only be function or variable.")
-
-        if item:
-            return item
 
         try:
             assert self.file_path is not None
