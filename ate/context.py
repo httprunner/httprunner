@@ -5,7 +5,6 @@ import sys
 from collections import OrderedDict
 
 from ate import utils
-from ate.exception import ParamsError
 from ate.testcase import TestcaseParser
 
 
@@ -135,13 +134,6 @@ class Context(object):
         @param request_dict: request config mapping
         @param level: testset or testcase
         """
-        if "headers" in request_dict:
-            # convert keys in request headers to lowercase
-            headers = request_dict.pop("headers")
-            if not isinstance(headers, dict):
-                raise ParamsError("HTTP Request Headers invalid!")
-            request_dict["headers"] = {key.lower(): headers[key] for key in headers}
-
         if level == "testset":
             request_dict = self.testcase_parser.parse_content_with_bindings(
                 request_dict
