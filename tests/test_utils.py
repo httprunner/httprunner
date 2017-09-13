@@ -293,3 +293,23 @@ class TestUtils(ApiServerUnittest):
 
         self.assertFalse(utils.is_variable(("os", os)))
         self.assertFalse(utils.is_variable(("utils", utils)))
+
+    def test_lower_dict_key(self):
+        origin_dict = {
+            "Name": "test",
+            "Request": {
+                "url": "http://127.0.0.1:5000",
+                "METHOD": "POST",
+                "Headers": {
+                    "Accept": "application/json",
+                    "User-Agent": "ios/9.3"
+                }
+            }
+        }
+        new_dict = utils.lower_dict_key(origin_dict)
+        self.assertIn("name", new_dict)
+        self.assertIn("request", new_dict)
+        self.assertIn("method", new_dict["request"])
+        self.assertIn("headers", new_dict["request"])
+        self.assertIn("Accept", new_dict["request"]["headers"])
+        self.assertIn("User-Agent", new_dict["request"]["headers"])

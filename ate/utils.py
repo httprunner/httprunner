@@ -329,3 +329,20 @@ def search_conf_item(start_path, item_type, item_name):
             raise exception.VariableNotFound(err_msg)
 
     return search_conf_item(dir_path, item_type, item_name)
+
+def lower_dict_key(origin_dict, depth=1):
+    """ convert dict key to lower case, with depth control supported.
+    """
+    new_dict = {}
+
+    for key, value in origin_dict.items():
+        if depth > 2:
+            new_dict[key] = value
+            continue
+
+        if isinstance(value, dict):
+            value = lower_dict_key(value, depth+1)
+
+        new_dict[key.lower()] = value
+
+    return new_dict
