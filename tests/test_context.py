@@ -178,26 +178,6 @@ class VariableBindsUnittest(unittest.TestCase):
             SECRET_KEY = context_variables["SECRET_KEY"]
             self.assertEqual(SECRET_KEY, "DebugTalk")
 
-    def test_parse_request(self):
-        request_dict = {
-            "url": "http://debugtalk.com",
-            "method": "GET",
-            "headers": {
-                "Content-Type": "application/json",
-                "USER-AGENT": "ios/10.3"
-            }
-        }
-
-        parsed_request = self.context.get_parsed_request(request_dict)
-        self.assertIn("content-type", parsed_request["headers"])
-        self.assertIn("user-agent", parsed_request["headers"])
-
-        request_dict = {
-            "headers": "invalid headers"
-        }
-        with self.assertRaises(ParamsError):
-            self.context.get_parsed_request(request_dict)
-
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
         testcase = {
@@ -210,14 +190,14 @@ class VariableBindsUnittest(unittest.TestCase):
             ],
             "request": {
                 "url": "http://127.0.0.1:5000/api/users/1000",
-                "method": "POST",
-                "headers": {
+                "METHOD": "POST",
+                "Headers": {
                     "Content-Type": "application/json",
                     "authorization": "$authorization",
                     "random": "$random",
                     "SECRET_KEY": "$SECRET_KEY"
                 },
-                "data": "$data"
+                "Data": "$data"
             }
         }
         parsed_request = test_runner.init_config(testcase, level="testcase")
@@ -227,7 +207,7 @@ class VariableBindsUnittest(unittest.TestCase):
         self.assertEqual(len(parsed_request["headers"]["random"]), 5)
         self.assertIn("data", parsed_request)
         self.assertEqual(parsed_request["data"], testcase["variable_binds"][2]["data"])
-        self.assertEqual(parsed_request["headers"]["secret_key"], "DebugTalk")
+        self.assertEqual(parsed_request["headers"]["SECRET_KEY"], "DebugTalk")
 
     def test_exec_content_functions(self):
         test_runner = runner.Runner()
