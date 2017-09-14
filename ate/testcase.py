@@ -5,8 +5,8 @@ import re
 from ate import exception, utils
 
 variable_regexp = r"\$([\w_]+)"
-function_regexp = r"\$\{[\w_]+\([\$\w_ =,]*\)\}"
-function_regexp_compile = re.compile(r"^\$\{([\w_]+)\(([\$\w_ =,]*)\)\}$")
+function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"
+function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w_ =,]*)\)$")
 
 
 def extract_variables(content):
@@ -29,11 +29,11 @@ def extract_functions(content):
     @param (str) content
     @return (list) functions list
 
-    e.g. ${func(5)} => ["${func(5)}"]
-         ${func(a=1, b=2)} => ["${func(a=1, b=2)}"]
+    e.g. ${func(5)} => ["func(5)"]
+         ${func(a=1, b=2)} => ["func(a=1, b=2)"]
          /api/1000?_t=${get_timestamp()} => ["get_timestamp()"]
          /api/${add(1, 2)} => ["add(1, 2)"]
-         "/api/${add(1, 2)}?_t=${get_timestamp()}" => ["${add(1, 2)}", "${get_timestamp()}"]
+         "/api/${add(1, 2)}?_t=${get_timestamp()}" => ["add(1, 2)", "get_timestamp()"]
     """
     try:
         return re.findall(function_regexp, content)
@@ -60,11 +60,11 @@ def parse_function(content):
     @param (str) content
     @return (dict) function name and args
 
-    e.g. ${func()} => {'func_name': 'func', 'args': [], 'kwargs': {}}
-         ${func(5)} => {'func_name': 'func', 'args': [5], 'kwargs': {}}
-         ${func(1, 2)} => {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
-         ${func(a=1, b=2)} => {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
-         ${func(1, 2, a=3, b=4)} => {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
+    e.g. func() => {'func_name': 'func', 'args': [], 'kwargs': {}}
+         func(5) => {'func_name': 'func', 'args': [5], 'kwargs': {}}
+         func(1, 2) => {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
+         func(a=1, b=2) => {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+         func(1, 2, a=3, b=4) => {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
     """
     function_meta = {
         "args": [],
@@ -147,6 +147,7 @@ class TestcaseParser(object):
             kwargs = self.parse_content_with_bindings(kwargs)
             eval_value = func(*args, **kwargs)
 
+            func_content = "${" + func_content + "}"
             if func_content == content:
                 # content is a variable
                 content = eval_value
