@@ -103,9 +103,9 @@ class HttpSession(requests.Session):
         request_meta["method"] = method
         request_meta["start_time"] = time.time()
 
-        if "HttpNtlmAuth" in kwargs:
+        if "httpntlmauth" in kwargs:
             from requests_ntlm import HttpNtlmAuth
-            auth_account = kwargs.pop("HttpNtlmAuth")
+            auth_account = kwargs.pop("httpntlmauth")
             kwargs["auth"] = HttpNtlmAuth(
                 auth_account["username"], auth_account["password"])
 
