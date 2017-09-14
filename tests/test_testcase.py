@@ -131,27 +131,27 @@ class TestcaseParserUnittest(unittest.TestCase):
 
     def test_parse_function(self):
         self.assertEqual(
-            testcase.parse_function("${func()}"),
+            testcase.parse_function("func()"),
             {'func_name': 'func', 'args': [], 'kwargs': {}}
         )
         self.assertEqual(
-            testcase.parse_function("${func(5)}"),
+            testcase.parse_function("func(5)"),
             {'func_name': 'func', 'args': [5], 'kwargs': {}}
         )
         self.assertEqual(
-            testcase.parse_function("${func(1, 2)}"),
+            testcase.parse_function("func(1, 2)"),
             {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
         )
         self.assertEqual(
-            testcase.parse_function("${func(a=1, b=2)}"),
+            testcase.parse_function("func(a=1, b=2)"),
             {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
         self.assertEqual(
-            testcase.parse_function("${func(a= 1, b =2)}"),
+            testcase.parse_function("func(a= 1, b =2)"),
             {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
         self.assertEqual(
-            testcase.parse_function("${func(1, 2, a=3, b=4)}"),
+            testcase.parse_function("func(1, 2, a=3, b=4)"),
             {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
         )
 
@@ -232,35 +232,35 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_extract_functions(self):
         self.assertEqual(
             testcase.extract_functions("${func()}"),
-            ["${func()}"]
+            ["func()"]
         )
         self.assertEqual(
             testcase.extract_functions("${func(5)}"),
-            ["${func(5)}"]
+            ["func(5)"]
         )
         self.assertEqual(
             testcase.extract_functions("${func(a=1, b=2)}"),
-            ["${func(a=1, b=2)}"]
+            ["func(a=1, b=2)"]
         )
         self.assertEqual(
             testcase.extract_functions("${func(1, $b, c=$x, d=4)}"),
-            ["${func(1, $b, c=$x, d=4)}"]
+            ["func(1, $b, c=$x, d=4)"]
         )
         self.assertEqual(
             testcase.extract_functions("/api/1000?_t=${get_timestamp()}"),
-            ["${get_timestamp()}"]
+            ["get_timestamp()"]
         )
         self.assertEqual(
             testcase.extract_functions("/api/${add(1, 2)}"),
-            ["${add(1, 2)}"]
+            ["add(1, 2)"]
         )
         self.assertEqual(
             testcase.extract_functions("/api/${add(1, 2)}?_t=${get_timestamp()}"),
-            ["${add(1, 2)}", "${get_timestamp()}"]
+            ["add(1, 2)", "get_timestamp()"]
         )
         self.assertEqual(
             testcase.extract_functions("abc${func(1, 2, a=3, b=4)}def"),
-            ["${func(1, 2, a=3, b=4)}"]
+            ["func(1, 2, a=3, b=4)"]
         )
 
     def test_eval_content_functions(self):
