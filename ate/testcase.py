@@ -149,8 +149,71 @@ def update_test_info(test_dict, dir_path):
     api_call = test_dict["api"]
     function_meta = parse_function(api_call)
     func_name = function_meta["func_name"]
+    api_call_args = function_meta["args"]
     api_info = get_api_definition(func_name, dir_path)
+    api_def_args = api_info.get("function_meta").get("args", [])
+
+    if len(api_call_args) != len(api_def_args):
+        raise exception.ParamsError("api call args invalid!")
+
+    args_mapping = {}
+    for index, item in enumerate(api_def_args):
+        if api_call_args[index] == item:
+            continue
+
+        args_mapping[item] = api_call_args[index]
+
+    if args_mapping:
+        api_info = substitute_variables_with_mapping(api_info, args_mapping)
+
     test_dict.update(api_info)
+
+def substitute_variables_with_mapping(content, mapping):
+    """ substitute variables in content with mapping
+    e.g.
+    @params
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'headers': {'token': '$token'}
+            }
+        }
+        mapping = {"$uid": 1000}
+    @return
+        {
+            'request': {
+                'url': '/api/users/1000',
+                'headers': {'token': '$token'}
+            }
+        }
+    """
+    if isinstance(content, (list, tuple)):
+        return [
+            substitute_variables_with_mapping(item, mapping)
+            for item in content
+        ]
+
+    if isinstance(content, dict):
+        substituted_data = {}
+        for key, value in content.items():
+            eval_key = substitute_variables_with_mapping(key, mapping)
+            eval_value = substitute_variables_with_mapping(value, mapping)
+            substituted_data[eval_key] = eval_value
+
+        return substituted_data
+
+    if isinstance(content, (int, utils.long_type, float, complex)):
+        return content
+
+    # content is in string format here
+    for var, value in mapping.items():
+        if content == var:
+            # content is a variable
+            content = value
+        else:
+            content = content.replace(var, str(value))
+
+    return content
 
 def get_api_definition(name, dir_path):
     """ get expected api from dir_path upward recursively

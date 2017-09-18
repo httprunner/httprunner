@@ -20,10 +20,9 @@
 - test:
     name: create user which does not exist
     variable_binds:
-        - uid: 1000
         - user_name: "user1"
         - user_password: "123456"
-    api: create_user($uid, $user_name, $user_password, $token)
+    api: create_user(1000, $user_name, $user_password, $token)
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
@@ -31,10 +30,9 @@
 - test:
     name: create user which does not exist
     variable_binds:
-        - uid: 1000
         - user_name: "user1"
         - user_password: "123456"
-    api: create_user($uid, $user_name, $user_password, $token)
+    api: create_user(1000, $user_name, $user_password, $token)
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 500}
         - {"check": "content.success", "comparator": "eq", "expected": false}
