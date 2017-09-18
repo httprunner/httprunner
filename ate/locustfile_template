@@ -2,7 +2,7 @@
 import zmq
 import os
 from locust import HttpLocust, TaskSet, task
-from ate import utils, runner, exception
+from ate import testcase, runner, exception
 
 class WebPageTasks(TaskSet):
     def on_start(self):
@@ -22,5 +22,5 @@ class WebPageUser(HttpLocust):
     min_wait = 1000
     max_wait = 5000
 
-    testsets = utils.load_testcases_by_path("$TESTCASE_FILE")
+    testsets = testcase.load_testcases_by_path("$TESTCASE_FILE")
     testset = testsets[0]

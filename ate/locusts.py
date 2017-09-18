@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import sys
 
-from ate.utils import load_testcases_by_path
+from ate.testcase import load_testcases_by_path
 from locust.main import main
 
 
