@@ -1,0 +1,26 @@
+- api:
+    def: get_token($user_name, $device_sn, $os_platform, $app_version)
+    request:
+        url: /api/get-token
+        method: POST
+        headers:
+            user_agent: $user_agent
+            device_sn: $device_sn
+            os_platform: $os_platform
+            app_version: $app_version
+        json:
+            sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+
+- api:
+    def: create_user($uid, $user_name, $user_password, $token)
+    request:
+        url: /api/users/$uid
+        method: POST
+        headers:
+            token: $token
+        json:
+            name: $user_name
+            password: $user_password

@@ -107,3 +107,11 @@ class TestRunner(ApiServerUnittest):
         results = self.test_runner.run_testsets(testsets)
         self.assertEqual(len(results), 1)
         self.assertEqual(results, [[True] * 3])
+
+    def test_run_testset_layered(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+        testsets = utils.load_testcases_by_path(testcase_file_path)
+        results = self.test_runner.run_testsets(testsets)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results, [[True] * 3])

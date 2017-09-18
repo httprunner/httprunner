@@ -44,7 +44,8 @@ class TestUtils(ApiServerUnittest):
         self.assertNotIn(file1, files)
 
         files = utils.load_folder_files(folder, file_type="api", recursive=True)
-        self.assertEqual(files, [])
+        api_file = os.path.join(os.getcwd(), 'tests', 'data', 'api.yml')
+        self.assertEqual(files[0], api_file)
 
     def test_load_testcases_by_path_files(self):
         testsets_list = []
@@ -124,6 +125,36 @@ class TestUtils(ApiServerUnittest):
         ]
         testset_list_3 = utils.load_testcases_by_path(path)
         self.assertEqual(testset_list_3, [])
+
+    def test_load_testcases_by_path_layered(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+        testsets_list = utils.load_testcases_by_path(path)
+        self.assertIn("variable_binds", testsets_list[0]["config"])
+        self.assertIn("request", testsets_list[0]["config"])
+        print(testsets_list[0]["testcases"][0])
+        self.assertIn("request", testsets_list[0]["testcases"][0])
+        self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
+        self.assertIn("validators", testsets_list[0]["testcases"][0])
+
+    def test_load_api_definition(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data')
+        api_dir_dict = utils.load_api_definition(path)
+        self.assertIn("get_token", api_dir_dict)
+        self.assertEqual("/api/get-token", api_dir_dict["get_token"]["request"]["url"])
+        self.assertIn("$user_name", api_dir_dict["get_token"]["function_meta"]["args"])
+        self.assertIn("create_user", api_dir_dict)
+
+    def test_get_api_definition(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data')
+        api_info = utils.get_api_definition("get_token", path)
+        self.assertEqual("/api/get-token", api_info["request"]["url"])
+        self.assertIn(path, utils.api_overall_dict)
+
+        with self.assertRaises(exception.ApiNotFound):
+            utils.get_api_definition("api_not_exist", path)
 
     def test_query_json(self):
         json_content = {
