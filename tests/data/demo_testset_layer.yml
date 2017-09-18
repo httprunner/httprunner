@@ -1,0 +1,40 @@
+- config:
+    name: "create user testsets."
+    variable_binds:
+        - user_agent: 'iOS/10.3'
+        - device_sn: ${gen_random_string(15)}
+        - os_platform: 'ios'
+        - app_version: '2.8.6'
+    request:
+        base_url: $BASE_URL
+        headers:
+            Content-Type: application/json
+            device_sn: $device_sn
+
+- test:
+    name: get token
+    api: get_token($user_agent, $device_sn, $os_platform, $app_version)
+    extract_binds:
+        - token: content.token
+
+- test:
+    name: create user which does not exist
+    variable_binds:
+        - uid: 1000
+        - user_name: "user1"
+        - user_password: "123456"
+    api: create_user($uid, $user_name, $user_password, $token)
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 201}
+        - {"check": "content.success", "comparator": "eq", "expected": true}
+
+- test:
+    name: create user which does not exist
+    variable_binds:
+        - uid: 1000
+        - user_name: "user1"
+        - user_password: "123456"
+    api: create_user($uid, $user_name, $user_password, $token)
+    validators:
+        - {"check": "status_code", "comparator": "eq", "expected": 500}
+        - {"check": "content.success", "comparator": "eq", "expected": false}

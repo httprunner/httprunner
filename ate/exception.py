@@ -24,3 +24,6 @@ class FunctionNotFound(NameError):
 
 class VariableNotFound(NameError):
     pass
+
+class ApiNotFound(NameError):
+    pass
