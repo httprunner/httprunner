@@ -134,19 +134,21 @@ def load_testcases_by_path(path):
                     testset["config"].update(item["config"])
                     testset["name"] = item["config"].get("name", "")
                 elif key == "test":
-                    test_dict = item["test"]
-                    if "api" in test_dict:
-                        update_test_info(test_dict, dir_path)
+                    test_block_dict = item["test"]
+                    if "api" in test_block_dict:
+                        testcase_list = load_testcases_by_call(test_block_dict, dir_path, "api")
+                    else:
+                        testcase_list = [test_block_dict]
 
-                    testset["testcases"].append(test_dict)
+                    testset["testcases"].extend(testcase_list)
 
         return [testset] if testset["testcases"] else []
 
     else:
         return []
 
-def update_test_info(test_dict, dir_path):
-    api_call = test_dict["api"]
+def load_testcases_by_call(test_block_dict, dir_path, call_type):
+    api_call = test_block_dict[call_type]
     function_meta = parse_function(api_call)
     func_name = function_meta["func_name"]
     api_call_args = function_meta["args"]
@@ -166,7 +168,9 @@ def update_test_info(test_dict, dir_path):
     if args_mapping:
         api_info = substitute_variables_with_mapping(api_info, args_mapping)
 
-    test_dict.update(api_info)
+    test_block_dict.update(api_info)
+
+    return [test_block_dict]
 
 def substitute_variables_with_mapping(content, mapping):
     """ substitute variables in content with mapping
