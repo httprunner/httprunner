@@ -1,5 +1,4 @@
 import codecs
-import fnmatch
 import hashlib
 import hmac
 import imp
@@ -57,19 +56,34 @@ def load_testcases(testcase_file_path):
         # '' or other suffix
         return []
 
-def load_folder_files(folder_path, match_filter_list=["*"]):
+def load_folder_files(folder_path, file_type, recursive=False):
     """ load folder path, return all files in list format.
+    @param
+        folder_path: specified folder path to load
+        file_type: "test" or "api"
+        recursive: if True, will load files recursively
     """
     file_list = []
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
         filenames_list = []
-        for match_filter in match_filter_list:
-            filenames_list.extend(fnmatch.filter(filenames, match_filter))
+
+        for filename in filenames:
+
+            if not filename.endswith(('.yml', '.yaml', '.json')):
+                continue
+
+            if file_type == "api" and not filename.startswith(('api.', 'api-')):
+                continue
+
+            filenames_list.append(filename)
 
         for filename in filenames_list:
             file_path = os.path.join(dirpath, filename)
             file_list.append(file_path)
+
+        if not recursive:
+            break
 
     return file_list
 
@@ -99,7 +113,7 @@ def load_testcases_by_path(path):
         path = os.path.join(os.getcwd(), path)
 
     if os.path.isdir(path):
-        files_list = load_folder_files(path, ["*.yml", "*.yaml", "*.json"])
+        files_list = load_folder_files(path, file_type="test", recursive=True)
         return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
