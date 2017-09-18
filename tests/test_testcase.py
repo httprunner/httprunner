@@ -1,8 +1,9 @@
+import os
 import time
 import unittest
 
 from ate import testcase
-from ate.exception import ParamsError
+from ate.exception import ParamsError, ApiNotFound
 
 
 class TestcaseParserUnittest(unittest.TestCase):
@@ -332,3 +333,112 @@ class TestcaseParserUnittest(unittest.TestCase):
             parsed_testcase["headers"]["sum"],
             3
         )
+
+    def test_load_testcases_by_path_files(self):
+        testsets_list = []
+
+        # absolute file path
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+        testset_list = testcase.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list), 1)
+        self.assertIn("path", testset_list[0]["config"])
+        self.assertEqual(testset_list[0]["config"]["path"], path)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        testsets_list.extend(testset_list)
+
+        # relative file path
+        path = 'tests/data/demo_testset_hardcode.yml'
+        testset_list = testcase.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list), 1)
+        self.assertIn("path", testset_list[0]["config"])
+        self.assertIn(path, testset_list[0]["config"]["path"])
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        testsets_list.extend(testset_list)
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
+            'tests/data/demo_testset_hardcode.yml'
+        ]
+        testset_list = testcase.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        self.assertEqual(len(testset_list[1]["testcases"]), 3)
+        testsets_list.extend(testset_list)
+        self.assertEqual(len(testsets_list), 4)
+
+        for testset in testsets_list:
+            for test in testset["testcases"]:
+                self.assertIn('name', test)
+                self.assertIn('request', test)
+                self.assertIn('url', test['request'])
+                self.assertIn('method', test['request'])
+
+    def test_load_testcases_by_path_folder(self):
+        # absolute folder path
+        path = os.path.join(os.getcwd(), 'tests/data')
+        testset_list_1 = testcase.load_testcases_by_path(path)
+        self.assertGreater(len(testset_list_1), 4)
+
+        # relative folder path
+        path = 'tests/data/'
+        testset_list_2 = testcase.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list_1), len(testset_list_2))
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'tests/data'),
+            'tests/data/'
+        ]
+        testset_list_3 = testcase.load_testcases_by_path(path)
+        self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
+
+    def test_load_testcases_by_path_not_exist(self):
+        # absolute folder path
+        path = os.path.join(os.getcwd(), 'tests/data_not_exist')
+        testset_list_1 = testcase.load_testcases_by_path(path)
+        self.assertEqual(testset_list_1, [])
+
+        # relative folder path
+        path = 'tests/data_not_exist'
+        testset_list_2 = testcase.load_testcases_by_path(path)
+        self.assertEqual(testset_list_2, [])
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'tests/data_not_exist'),
+            'tests/data_not_exist/'
+        ]
+        testset_list_3 = testcase.load_testcases_by_path(path)
+        self.assertEqual(testset_list_3, [])
+
+    def test_load_testcases_by_path_layered(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+        testsets_list = testcase.load_testcases_by_path(path)
+        self.assertIn("variable_binds", testsets_list[0]["config"])
+        self.assertIn("request", testsets_list[0]["config"])
+        print(testsets_list[0]["testcases"][0])
+        self.assertIn("request", testsets_list[0]["testcases"][0])
+        self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
+        self.assertIn("validators", testsets_list[0]["testcases"][0])
+
+    def test_load_api_definition(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data')
+        api_dir_dict = testcase.load_api_definition(path)
+        self.assertIn("get_token", api_dir_dict)
+        self.assertEqual("/api/get-token", api_dir_dict["get_token"]["request"]["url"])
+        self.assertIn("$user_name", api_dir_dict["get_token"]["function_meta"]["args"])
+        self.assertIn("create_user", api_dir_dict)
+
+    def test_get_api_definition(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data')
+        api_info = testcase.get_api_definition("get_token", path)
+        self.assertEqual("/api/get-token", api_info["request"]["url"])
+        self.assertIn(path, testcase.api_overall_dict)
+
+        with self.assertRaises(ApiNotFound):
+            testcase.get_api_definition("api_not_exist", path)

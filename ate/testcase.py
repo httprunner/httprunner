@@ -7,6 +7,7 @@ from ate import exception, utils
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"
 function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w_ =,]*)\)$")
+api_overall_dict = {}
 
 
 def extract_variables(content):
@@ -86,6 +87,122 @@ def parse_function(content):
             function_meta["args"].append(parse_string_value(arg))
 
     return function_meta
+
+def load_testcases_by_path(path):
+    """ load testcases from file path
+    @param path
+        path could be in several type:
+            - absolute/relative file path
+            - absolute/relative folder path
+            - list/set container with file(s) and/or folder(s)
+    @return testcase sets list, each testset is corresponding to a file
+        [
+            {"name": "desc1", "config": {}, "testcases": [testcase11, testcase12]},
+            {"name": "desc2", "config": {}, "testcases": [testcase21, testcase22, testcase23]},
+        ]
+    """
+    if isinstance(path, (list, set)):
+        testsets_list = []
+
+        for file_path in set(path):
+            _testsets_list = load_testcases_by_path(file_path)
+            testsets_list.extend(_testsets_list)
+
+        return testsets_list
+
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), path)
+
+    if os.path.isdir(path):
+        files_list = utils.load_folder_files(path, file_type="test", recursive=True)
+        return load_testcases_by_path(files_list)
+
+    elif os.path.isfile(path):
+        testset = {
+            "name": "",
+            "config": {
+                "path": path
+            },
+            "testcases": []
+        }
+        testcases_list = utils.load_testcases(path)
+        dir_path = os.path.dirname(os.path.abspath(path))
+
+        for item in testcases_list:
+            for key in item:
+                if key == "config":
+                    testset["config"].update(item["config"])
+                    testset["name"] = item["config"].get("name", "")
+                elif key == "test":
+                    test_dict = item["test"]
+                    if "api" in test_dict:
+                        update_test_info(test_dict, dir_path)
+
+                    testset["testcases"].append(test_dict)
+
+        return [testset] if testset["testcases"] else []
+
+    else:
+        return []
+
+def update_test_info(test_dict, dir_path):
+    api_call = test_dict["api"]
+    function_meta = parse_function(api_call)
+    func_name = function_meta["func_name"]
+    api_info = get_api_definition(func_name, dir_path)
+    test_dict.update(api_info)
+
+def get_api_definition(name, dir_path):
+    """ get expected api from dir_path upward recursively
+    @param
+        name: api name
+        dir_path: start search dir path
+    @return
+        expected api info if found, otherwise raise ApiNotFound exception
+    """
+    api_dir_dict = api_overall_dict.get(dir_path)
+    if not api_dir_dict:
+        api_dir_dict = load_api_definition(dir_path)
+        api_overall_dict[dir_path] = api_dir_dict
+
+    api_info = api_dir_dict.get(name)
+    if api_info:
+        return api_info
+
+    parent_dir_path = os.path.dirname(dir_path)
+    if dir_path == parent_dir_path:
+        # system root path
+        err_msg = "{} not found in recursive upward path!".format(name)
+        raise exception.ApiNotFound(err_msg)
+
+    return get_api_definition(name, parent_dir_path)
+
+def load_api_definition(dir_path):
+    """ load all api definitions in specified dir path
+    @param (str) dir_path
+    @return (dict) all api definitions in dir_path merged in one dict
+    """
+    api_files = utils.load_folder_files(dir_path, file_type="api", recursive=False)
+
+    api_def_list = []
+    for api_file in api_files:
+        api_def_list.extend(utils.load_testcases(api_file))
+
+    api_dir_dict = {}
+
+    for item in api_def_list:
+        for key in item:
+            if key == "api":
+                api_def = item["api"].pop("def")
+                function_meta = parse_function(api_def)
+                func_name = function_meta["func_name"]
+
+                api_info = {}
+                api_info["function_meta"] = function_meta
+                api_info.update(item["api"])
+                api_dir_dict[func_name] = api_info
+
+    return api_dir_dict
 
 
 class TestcaseParser(object):

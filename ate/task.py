@@ -1,6 +1,6 @@
 import unittest
 
-from ate import runner, utils
+from ate import runner, testcase, utils
 
 
 class ApiTestCase(unittest.TestCase):
@@ -43,7 +43,7 @@ def create_task(testcase_path):
         each task suite may include one or several test suite.
     """
     task_suite = unittest.TestSuite()
-    testsets = utils.load_testcases_by_path(testcase_path)
+    testsets = testcase.load_testcases_by_path(testcase_path)
 
     for testset in testsets:
         suite = create_suite(testset)

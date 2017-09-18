@@ -1,6 +1,9 @@
 import os
+
+from ate import task
+from ate.testcase import load_testcases_by_path
 from tests.base import ApiServerUnittest
-from ate import task, utils
+
 
 class TestTask(ApiServerUnittest):
 
@@ -14,7 +17,7 @@ class TestTask(ApiServerUnittest):
 
     def test_create_suite(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        testsets = utils.load_testcases_by_path(testcase_file_path)
+        testsets = load_testcases_by_path(testcase_file_path)
         suite = task.create_suite(testsets[0])
         self.assertEqual(suite.countTestCases(), 3)
         for testcase in suite:
