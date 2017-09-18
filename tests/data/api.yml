@@ -1,5 +1,5 @@
 - api:
-    def: get_token($user_name, $device_sn, $os_platform, $app_version)
+    def: get_token($user_agent, $device_sn, $os_platform, $app_version)
     request:
         url: /api/get-token
         method: POST
