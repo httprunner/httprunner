@@ -419,10 +419,26 @@ class TestcaseParserUnittest(unittest.TestCase):
         testsets_list = testcase.load_testcases_by_path(path)
         self.assertIn("variable_binds", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["config"])
-        print(testsets_list[0]["testcases"][0])
         self.assertIn("request", testsets_list[0]["testcases"][0])
         self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
         self.assertIn("validators", testsets_list[0]["testcases"][0])
+
+    def test_substitute_variables_with_mapping(self):
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'method': "$method",
+                'headers': {'token': '$token'}
+            }
+        }
+        mapping = {
+            "$uid": 1000,
+            "$method": "POST"
+        }
+        result = testcase.substitute_variables_with_mapping(content, mapping)
+        self.assertEqual("/api/users/1000", result["request"]["url"])
+        self.assertEqual("$token", result["request"]["headers"]["token"])
+        self.assertEqual("POST", result["request"]["method"])
 
     def test_load_api_definition(self):
         path = os.path.join(
@@ -430,7 +446,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         api_dir_dict = testcase.load_api_definition(path)
         self.assertIn("get_token", api_dir_dict)
         self.assertEqual("/api/get-token", api_dir_dict["get_token"]["request"]["url"])
-        self.assertIn("$user_name", api_dir_dict["get_token"]["function_meta"]["args"])
+        self.assertIn("$user_agent", api_dir_dict["get_token"]["function_meta"]["args"])
         self.assertIn("create_user", api_dir_dict)
 
     def test_get_api_definition(self):
