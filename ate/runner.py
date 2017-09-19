@@ -144,22 +144,30 @@ class Runner(object):
                     testcase12
                 ]
             }
-        @return (list) test results of testcases
-            [
-                True,    # testcase11
-                True     # testcase12
-            ]
+        @return (dict) test result of testcases
+            {
+                "success": True,
+                "output": {}    # variables mapping
+            }
         """
-        results = []
-
+        success = True
         config_dict = testset.get("config", {})
         self.init_config(config_dict, level="testset")
         testcases = testset.get("testcases", [])
         for testcase in testcases:
-            result = self.run_test(testcase)
-            results.append(result)
+            try:
+                assert self.run_test(testcase)
+            except AssertionError:
+                success = False
 
-        return results
+        output_variables_list = config_dict.get("output", [])
+        output = self.generate_output(output_variables_list)
+        self.print_output(output)
+
+        return {
+            "success": success,
+            "output": output
+        }
 
     def run_testsets(self, testsets):
         """ run testsets, including one or several testsets.
@@ -168,16 +176,34 @@ class Runner(object):
                 testset1,
                 testset2,
             ]
-        @return (list) test results of testsets
-            [
-                [   # testset1
-                    True,    # testcase11
-                    True     # testcase12
-                ],
-                [   # testset2
-                    True,    # testcase21
-                    True     # testcase22
-                ]
-            ]
+        @return (bool) test result of testsets
         """
-        return [self.run_testset(testset) for testset in testsets]
+        success = True
+        for testset in testsets:
+            try:
+                result = self.run_testset(testset)
+                assert result["success"]
+            except AssertionError:
+                success = False
+
+        return success
+
+    def generate_output(self, output_variables_list):
+        variables_mapping = self.context.get_testcase_variables_mapping()
+        return {
+            variable: variables_mapping[variable]
+            for variable in output_variables_list
+        }
+
+    def print_output(self, output):
+        if not output:
+            return
+
+        print("\n================== Output ==================")
+        print('{:<10}:  {:<}'.format("Variable", "Value"))
+        print('{:<10}:  {:<}'.format("--------", "-----"))
+
+        for variable, value in output.items():
+            print('{:<10}:  {:<}'.format(variable, value))
+
+        print("============================================\n")
