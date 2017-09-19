@@ -70,7 +70,7 @@ class Runner(object):
                 "times": 3,
                 "requires": [],  # optional, override
                 "function_binds": {}, # optional, override
-                "variable_binds": {}, # optional, override
+                "variable_binds": [], # optional, override
                 "request": {
                     "url": "http://127.0.0.1:5000/api/users/1000",
                     "method": "POST",
@@ -136,7 +136,7 @@ class Runner(object):
                 "testcases": [
                     {
                         "name": "testcase description",
-                        "variable_binds": {}, # optional, override
+                        "variable_binds": [], # optional, override
                         "request": {},
                         "extract_binds": {},  # optional
                         "validators": {}      # optional
