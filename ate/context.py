@@ -54,7 +54,7 @@ class Context(object):
             or config_dict.get('import_module_functions', [])
         self.import_module_items(module_items, level)
 
-        variable_binds = config_dict.get('variable_binds', [])
+        variable_binds = config_dict.get('variable_binds', OrderedDict())
         self.bind_variables(variable_binds, level)
 
     def import_requires(self, modules):
@@ -90,32 +90,33 @@ class Context(object):
             self.__update_context_functions_config(level, imported_functions_dict)
 
             imported_variables_dict = utils.filter_module(imported_module, "variable")
-            variable_binds = [{key: value} for key, value in imported_variables_dict.items()]
-            self.bind_variables(variable_binds, level)
+            self.bind_variables(imported_variables_dict, level)
 
     def bind_variables(self, variable_binds, level="testcase"):
         """ bind variables to testset context or current testcase context.
             variables in testset context can be used in all testcases of current test suite.
 
-        @param (list) variable_binds, variable can be value or custom function.
+        @param (list or OrderDict) variable_binds, variable can be value or custom function.
             if value is function, it will be called and bind result to variable.
         e.g.
-            [
-                {"TOKEN": "debugtalk"},
-                {"random": "${gen_random_string(5)}"},
-                {"json": {'name': 'user', 'password': '123456'}},
-                {"md5": "${gen_md5($TOKEN, $json, $random)}"}
-            ]
+            OrderDict({
+                "TOKEN": "debugtalk",
+                "random": "${gen_random_string(5)}",
+                "json": {'name': 'user', 'password': '123456'},
+                "md5": "${gen_md5($TOKEN, $json, $random)}"
+            })
         """
-        for variable_bind in variable_binds:
-            for variable_name, value in variable_bind.items():
-                variable_evale_value = self.testcase_parser.parse_content_with_bindings(value)
+        if isinstance(variable_binds, list):
+            variable_binds = utils.convert_to_order_dict(variable_binds)
 
-                if level == "testset":
-                    self.testset_shared_variables_mapping[variable_name] = variable_evale_value
+        for variable_name, value in variable_binds.items():
+            variable_evale_value = self.testcase_parser.parse_content_with_bindings(value)
 
-                self.testcase_variables_mapping[variable_name] = variable_evale_value
-                self.testcase_parser.bind_variables(self.testcase_variables_mapping)
+            if level == "testset":
+                self.testset_shared_variables_mapping[variable_name] = variable_evale_value
+
+            self.testcase_variables_mapping[variable_name] = variable_evale_value
+            self.testcase_parser.bind_variables(self.testcase_variables_mapping)
 
     def __update_context_functions_config(self, level, config_mapping):
         """
