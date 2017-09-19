@@ -1,4 +1,6 @@
-from ate import utils, exception
+from collections import OrderedDict
+
+from ate import exception, utils
 
 
 class ResponseObject(object):
@@ -63,20 +65,18 @@ class ResponseObject(object):
                 {"resp_content": "content"},
                 {"resp_content_person_first_name": "content.person.name.first_name"}
             ]
-        @return (list) variable binds list
+        @return (OrderDict) variable binds ordered dict
         """
-        extracted_variables_mapping_list = []
+        extracted_variables_mapping = OrderedDict()
 
         for extract_bind in extract_binds:
             for key, field in extract_bind.items():
                 if not isinstance(field, utils.string_type):
                     raise exception.ParamsError("invalid extract_binds in testcase extract_binds!")
 
-                extracted_variables_mapping_list.append(
-                    {key: self.extract_field(field)}
-                )
+                extracted_variables_mapping[key] = self.extract_field(field)
 
-        return extracted_variables_mapping_list
+        return extracted_variables_mapping
 
     def validate(self, validators, variables_mapping):
         """ Bind named validators to value within the context.
