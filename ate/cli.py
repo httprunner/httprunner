@@ -78,6 +78,9 @@ def main_ate():
         if len(result.successes) != result.testsRun:
             subject = "FAILED"
 
+        for task in task_suite:
+            task.print_output()
+
     flag_code = 0 if subject == "SUCCESS" else 1
     if mailer and mailer.config_ready:
         mailer.send_mail(subject, results, flag_code)
