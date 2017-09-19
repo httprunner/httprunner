@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from ate import exception, response, utils
 from ate.client import HttpSession
 from ate.context import Context
@@ -121,29 +123,33 @@ class Runner(object):
 
         return True
 
-    def run_testset(self, testset):
+    def run_testset(self, testset, variables_mapping=None):
         """ run single testset, including one or several testcases.
-        @param (dict) testset
-            {
-                "name": "testset description",
-                "config": {
+        @param
+            (dict) testset
+                {
                     "name": "testset description",
-                    "requires": [],
-                    "function_binds": {},
-                    "variable_binds": [],
-                    "request": {}
-                },
-                "testcases": [
-                    {
-                        "name": "testcase description",
-                        "variable_binds": [], # optional, override
-                        "request": {},
-                        "extract_binds": {},  # optional
-                        "validators": {}      # optional
+                    "config": {
+                        "name": "testset description",
+                        "requires": [],
+                        "function_binds": {},
+                        "variable_binds": [],
+                        "request": {}
                     },
-                    testcase12
-                ]
-            }
+                    "testcases": [
+                        {
+                            "name": "testcase description",
+                            "variable_binds": [], # optional, override
+                            "request": {},
+                            "extract_binds": {},  # optional
+                            "validators": {}      # optional
+                        },
+                        testcase12
+                    ]
+                }
+            (dict) variables_mapping:
+                passed in variables mapping, it will override variable_binds in config block
+
         @return (dict) test result of testcases
             {
                 "success": True,
@@ -152,6 +158,21 @@ class Runner(object):
         """
         success = True
         config_dict = testset.get("config", {})
+
+        def merge_variable_binds(variable_binds, variables_mapping):
+            variables_dict = OrderedDict()
+            for variable_dict in variable_binds:
+                variables_dict.update(variable_dict)
+
+            for var, value in variables_mapping.items():
+                variables_dict.update({var: value})
+
+            return [{var: value} for var, value in variables_dict.items()]
+
+        variable_binds = config_dict.get("variable_binds", [])
+        variables_mapping = variables_mapping or {}
+        config_dict["variable_binds"] = merge_variable_binds(variable_binds, variables_mapping)
+
         self.init_config(config_dict, level="testset")
         testcases = testset.get("testcases", [])
         for testcase in testcases:
