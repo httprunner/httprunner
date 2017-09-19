@@ -241,3 +241,33 @@ class TestUtils(ApiServerUnittest):
         self.assertIn("headers", new_dict["request"])
         self.assertIn("Accept", new_dict["request"]["headers"])
         self.assertIn("User-Agent", new_dict["request"]["headers"])
+
+    def test_convert_to_order_dict(self):
+        map_list = [
+            {"a": 1},
+            {"b": 2}
+        ]
+        ordered_dict = utils.convert_to_order_dict(map_list)
+        self.assertIsInstance(ordered_dict, dict)
+        self.assertIn("a", ordered_dict)
+
+    def test_update_ordered_dict(self):
+        map_list = [
+            {"a": 1},
+            {"b": 2}
+        ]
+        ordered_dict = utils.convert_to_order_dict(map_list)
+        override_mapping = {"a": 3, "c": 4}
+        new_dict = utils.update_ordered_dict(ordered_dict, override_mapping)
+        self.assertEqual(3, new_dict["a"])
+        self.assertEqual(4, new_dict["c"])
+
+    def test_override_variables_binds(self):
+        map_list = [
+            {"a": 1},
+            {"b": 2}
+        ]
+        override_mapping = {"a": 3, "c": 4}
+        new_dict = utils.override_variables_binds(map_list, override_mapping)
+        self.assertEqual(3, new_dict["a"])
+        self.assertEqual(4, new_dict["c"])
