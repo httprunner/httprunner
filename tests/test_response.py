@@ -59,34 +59,34 @@ class TestResponse(ApiServerUnittest):
             {"resp_content_cities_1": "content.person.cities.1"}
         ]
         resp_obj = response.ResponseObject(resp)
-        extract_binds_dict_list = resp_obj.extract_response(extract_binds_list)
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
 
         self.assertEqual(
-            extract_binds_dict_list[0]["resp_status_code"],
+            extract_binds_dict["resp_status_code"],
             200
         )
         self.assertEqual(
-            extract_binds_dict_list[1]["resp_headers_content_type"],
+            extract_binds_dict["resp_headers_content_type"],
             "application/json"
         )
         self.assertEqual(
-            extract_binds_dict_list[2]["resp_content_body_success"],
+            extract_binds_dict["resp_content_body_success"],
             False
         )
         self.assertEqual(
-            extract_binds_dict_list[3]["resp_content_content_success"],
+            extract_binds_dict["resp_content_content_success"],
             False
         )
         self.assertEqual(
-            extract_binds_dict_list[4]["resp_content_text_success"],
+            extract_binds_dict["resp_content_text_success"],
             False
         )
         self.assertEqual(
-            extract_binds_dict_list[5]["resp_content_person_first_name"],
+            extract_binds_dict["resp_content_person_first_name"],
             "Leo"
         )
         self.assertEqual(
-            extract_binds_dict_list[6]["resp_content_cities_1"],
+            extract_binds_dict["resp_content_cities_1"],
             "Shenzhen"
         )
 
@@ -143,9 +143,9 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        extract_binds_dict_list = resp_obj.extract_response(extract_binds_list)
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
         self.assertEqual(
-            extract_binds_dict_list[0]["resp_content_body"],
+            extract_binds_dict["resp_content_body"],
             "abc"
         )
 
@@ -164,9 +164,9 @@ class TestResponse(ApiServerUnittest):
             {"resp_content_body": "content"}
         ]
         resp_obj = response.ResponseObject(resp)
-        extract_binds_dict_list = resp_obj.extract_response(extract_binds_list)
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
         self.assertEqual(
-            extract_binds_dict_list[0]["resp_content_body"],
+            extract_binds_dict["resp_content_body"],
             ""
         )
 
