@@ -114,8 +114,8 @@ class Runner(object):
             resp = self.http_client_session.request(url=url, method=method, **parsed_request)
             resp_obj = response.ResponseObject(resp)
 
-            extracted_variables_mapping_list = resp_obj.extract_response(extract_binds)
-            self.context.bind_variables(extracted_variables_mapping_list, level="testset")
+            extracted_variables_mapping = resp_obj.extract_response(extract_binds)
+            self.context.bind_variables(extracted_variables_mapping, level="testset")
 
             resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
 
@@ -159,19 +159,9 @@ class Runner(object):
         success = True
         config_dict = testset.get("config", {})
 
-        def merge_variable_binds(variable_binds, variables_mapping):
-            variables_dict = OrderedDict()
-            for variable_dict in variable_binds:
-                variables_dict.update(variable_dict)
-
-            for var, value in variables_mapping.items():
-                variables_dict.update({var: value})
-
-            return [{var: value} for var, value in variables_dict.items()]
-
         variable_binds = config_dict.get("variable_binds", [])
         variables_mapping = variables_mapping or {}
-        config_dict["variable_binds"] = merge_variable_binds(variable_binds, variables_mapping)
+        config_dict["variable_binds"] = utils.override_variables_binds(variable_binds, variables_mapping)
 
         self.init_config(config_dict, level="testset")
         testcases = testset.get("testcases", [])
