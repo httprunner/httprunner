@@ -119,3 +119,14 @@ class TestRunner(ApiServerUnittest):
         result = self.test_runner.run_testset(testsets[0])
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
+
+    def test_run_testset_with_variables_mapping(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+        testsets = load_testcases_by_path(testcase_file_path)
+        variables_mapping = {
+            "app_version": '2.9.7'
+        }
+        result = self.test_runner.run_testset(testsets[0], variables_mapping)
+        self.assertTrue(result["success"])
+        self.assertIn("token", result["output"])
