@@ -68,13 +68,13 @@ class ResponseObject(object):
         @return (OrderDict) variable binds ordered dict
         """
         extracted_variables_mapping = OrderedDict()
+        extract_binds_order_dict = utils.convert_to_order_dict(extract_binds)
 
-        for extract_bind in extract_binds:
-            for key, field in extract_bind.items():
-                if not isinstance(field, utils.string_type):
-                    raise exception.ParamsError("invalid extract_binds in testcase extract_binds!")
+        for key, field in extract_binds_order_dict.items():
+            if not isinstance(field, utils.string_type):
+                raise exception.ParamsError("invalid extract_binds in testcase extract_binds!")
 
-                extracted_variables_mapping[key] = self.extract_field(field)
+            extracted_variables_mapping[key] = self.extract_field(field)
 
         return extracted_variables_mapping
 

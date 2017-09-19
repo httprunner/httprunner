@@ -9,6 +9,7 @@ import random
 import re
 import string
 import types
+from collections import OrderedDict
 
 import yaml
 from ate import exception
@@ -309,3 +310,52 @@ def lower_dict_key(origin_dict, depth=1):
         new_dict[key.lower()] = value
 
     return new_dict
+
+def convert_to_order_dict(map_list):
+    """ convert mapping in list to ordered dict
+    @param (list) map_list
+        [
+            {"a": 1},
+            {"b": 2}
+        ]
+    @return (OrderDict)
+        OrderDict({
+            "a": 1,
+            "b": 2
+        })
+    """
+    ordered_dict = OrderedDict()
+    for map_dict in map_list:
+        ordered_dict.update(map_dict)
+
+    return ordered_dict
+
+def update_ordered_dict(ordered_dict, override_mapping):
+    """ override ordered_dict with new mapping
+    @param
+        (OrderDict) ordered_dict
+            OrderDict({
+                "a": 1,
+                "b": 2
+            })
+        (dict) override_mapping
+            {"a": 3, "c": 4}
+    @return (OrderDict)
+        OrderDict({
+            "a": 3,
+            "b": 2,
+            "c": 4
+        })
+    """
+    for var, value in override_mapping.items():
+        ordered_dict.update({var: value})
+
+    return ordered_dict
+
+def override_variables_binds(variable_binds, new_mapping):
+    """ convert variable_binds in testcase to ordered mapping, with new_mapping overrided
+    """
+    return update_ordered_dict(
+        convert_to_order_dict(variable_binds),
+        new_mapping
+    )
