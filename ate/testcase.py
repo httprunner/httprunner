@@ -88,13 +88,14 @@ def parse_function(content):
 
     return function_meta
 
-def load_testcases_by_path(path):
+def load_testcases_by_path(path, file_type="test"):
     """ load testcases from file path
-    @param path
-        path could be in several type:
+    @param
+        path: path could be in several type
             - absolute/relative file path
             - absolute/relative folder path
             - list/set container with file(s) and/or folder(s)
+        file_type: "test" or "suite"
     @return testcase sets list, each testset is corresponding to a file
         [
             {"name": "desc1", "config": {}, "testcases": [testcase11, testcase12]},
@@ -105,7 +106,7 @@ def load_testcases_by_path(path):
         testsets_list = []
 
         for file_path in set(path):
-            _testsets_list = load_testcases_by_path(file_path)
+            _testsets_list = load_testcases_by_path(file_path, file_type)
             testsets_list.extend(_testsets_list)
 
         return testsets_list
@@ -114,8 +115,8 @@ def load_testcases_by_path(path):
         path = os.path.join(os.getcwd(), path)
 
     if os.path.isdir(path):
-        files_list = utils.load_folder_files(path, file_type="test", recursive=True)
-        return load_testcases_by_path(files_list)
+        files_list = utils.load_folder_files(path, file_type=file_type, recursive=True)
+        return load_testcases_by_path(files_list, file_type)
 
     elif os.path.isfile(path):
         testset = {
