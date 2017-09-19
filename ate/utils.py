@@ -359,3 +359,16 @@ def override_variables_binds(variable_binds, new_mapping):
         convert_to_order_dict(variable_binds),
         new_mapping
     )
+
+def print_output(output):
+    if not output:
+        return
+
+    print("\n================== Output ==================")
+    print('{:<10}:  {:<}'.format("Variable", "Value"))
+    print('{:<10}:  {:<}'.format("--------", "-----"))
+
+    for variable, value in output.items():
+        print('{:<10}:  {:<}'.format(variable, value))
+
+    print("============================================\n")

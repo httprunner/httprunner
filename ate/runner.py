@@ -172,12 +172,10 @@ class Runner(object):
                 success = False
 
         output_variables_list = config_dict.get("output", [])
-        output = self.generate_output(output_variables_list)
-        self.print_output(output)
 
         return {
             "success": success,
-            "output": output
+            "output": self.generate_output(output_variables_list)
         }
 
     def run_testsets(self, testsets):
@@ -200,21 +198,13 @@ class Runner(object):
         return success
 
     def generate_output(self, output_variables_list):
+        """ generate and print output
+        """
         variables_mapping = self.context.get_testcase_variables_mapping()
-        return {
+        output = {
             variable: variables_mapping[variable]
             for variable in output_variables_list
         }
+        utils.print_output(output)
 
-    def print_output(self, output):
-        if not output:
-            return
-
-        print("\n================== Output ==================")
-        print('{:<10}:  {:<}'.format("Variable", "Value"))
-        print('{:<10}:  {:<}'.format("--------", "-----"))
-
-        for variable, value in output.items():
-            print('{:<10}:  {:<}'.format(variable, value))
-
-        print("============================================\n")
+        return output
