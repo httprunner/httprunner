@@ -42,16 +42,20 @@ class ApiTestSuite(unittest.TestSuite):
         output_variables_list = self.config_dict.get("output", [])
         self.test_runner.generate_output(output_variables_list)
 
-
-def create_task(testcase_path):
+class TaskSuite(unittest.TestSuite):
     """ create test task suite with specified testcase path.
         each task suite may include one or several test suite.
     """
-    task_suite = unittest.TestSuite()
-    testsets = testcase.load_testcases_by_path(testcase_path)
+    def __init__(self, testcase_path):
+        super(TaskSuite, self).__init__()
+        self.suite_list = []
+        testsets = testcase.load_testcases_by_path(testcase_path)
 
-    for testset in testsets:
-        suite = ApiTestSuite(testset)
-        task_suite.addTest(suite)
+        for testset in testsets:
+            suite = ApiTestSuite(testset)
+            self.addTest(suite)
+            self.suite_list.append(suite)
 
-    return task_suite
+    @property
+    def tasks(self):
+        return self.suite_list

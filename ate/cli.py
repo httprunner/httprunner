@@ -5,7 +5,7 @@ import sys
 from collections import OrderedDict
 
 from ate import __version__
-from ate.task import create_task
+from ate.task import TaskSuite
 
 import PyUnitReport
 
@@ -58,7 +58,7 @@ def main_ate():
     for testset_path in set(args.testset_paths):
 
         testset_path = testset_path.rstrip('/')
-        task_suite = create_task(testset_path)
+        task_suite = TaskSuite(testset_path)
 
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
         kwargs = {
@@ -78,7 +78,7 @@ def main_ate():
         if len(result.successes) != result.testsRun:
             subject = "FAILED"
 
-        for task in task_suite:
+        for task in task_suite.tasks:
             task.print_output()
 
     flag_code = 0 if subject == "SUCCESS" else 1
