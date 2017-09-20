@@ -300,7 +300,7 @@ def lower_dict_key(origin_dict, depth=1):
     new_dict = {}
 
     for key, value in origin_dict.items():
-        if depth > 2:
+        if depth >= 2:
             new_dict[key] = value
             continue
 
@@ -310,6 +310,17 @@ def lower_dict_key(origin_dict, depth=1):
         new_dict[key.lower()] = value
 
     return new_dict
+
+def lower_config_dict_key(config_dict):
+    """ convert key in config dict to lower case, convertion will occur in two places:
+        1, all keys in config dict;
+        2, all keys in config["request"]
+    """
+    config_dict = lower_dict_key(config_dict)
+    if "request" in config_dict and isinstance(config_dict["request"], dict):
+        config_dict["request"] = lower_dict_key(config_dict["request"])
+
+    return config_dict
 
 def convert_to_order_dict(map_list):
     """ convert mapping in list to ordered dict

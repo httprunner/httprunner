@@ -222,7 +222,7 @@ class TestUtils(ApiServerUnittest):
         self.assertFalse(utils.is_variable(("os", os)))
         self.assertFalse(utils.is_variable(("utils", utils)))
 
-    def test_lower_dict_key(self):
+    def test_handle_config_key_case(self):
         origin_dict = {
             "Name": "test",
             "Request": {
@@ -234,7 +234,7 @@ class TestUtils(ApiServerUnittest):
                 }
             }
         }
-        new_dict = utils.lower_dict_key(origin_dict)
+        new_dict = utils.lower_config_dict_key(origin_dict)
         self.assertIn("name", new_dict)
         self.assertIn("request", new_dict)
         self.assertIn("method", new_dict["request"])

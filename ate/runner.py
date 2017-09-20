@@ -51,7 +51,7 @@ class Runner(object):
         @param (str) context level, testcase or testset
         """
         # convert keys in request headers to lowercase
-        config_dict = utils.lower_dict_key(config_dict)
+        config_dict = utils.lower_config_dict_key(config_dict)
 
         self.context.init_context(level)
         self.context.config_context(config_dict, level)
