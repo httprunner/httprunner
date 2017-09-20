@@ -369,7 +369,13 @@ def print_output(output):
     print('{:<16}:  {:<}'.format("--------", "-----"))
 
     for variable, value in output.items():
-        print('{:<16}:  {:<}'.format(
-            variable.encode("utf-8"), value.encode("utf-8")))
+
+        if PYTHON_VERSION == 2:
+            if isinstance(variable, unicode):
+                variable = variable.encode("utf-8")
+            if isinstance(value, unicode):
+                value = value.encode("utf-8")
+
+        print('{:<16}:  {:<}'.format(variable, value))
 
     print("============================================\n")
