@@ -428,7 +428,13 @@ class TestcaseParserUnittest(unittest.TestCase):
             'request': {
                 'url': '/api/users/$uid',
                 'method': "$method",
-                'headers': {'token': '$token'}
+                'headers': {'token': '$token'},
+                'data': {
+                    "null": None,
+                    "true": True,
+                    "false": False,
+                    "empty_str": ""
+                }
             }
         }
         mapping = {
@@ -439,6 +445,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual("/api/users/1000", result["request"]["url"])
         self.assertEqual("$token", result["request"]["headers"]["token"])
         self.assertEqual("POST", result["request"]["method"])
+        self.assertIsNone(result["request"]["data"]["null"])
+        self.assertTrue(result["request"]["data"]["true"])
+        self.assertFalse(result["request"]["data"]["false"])
+        self.assertEqual("", result["request"]["data"]["empty_str"])
 
     def test_load_api_definition(self):
         path = os.path.join(
