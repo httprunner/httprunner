@@ -365,10 +365,11 @@ def print_output(output):
         return
 
     print("\n================== Output ==================")
-    print('{:<10}:  {:<}'.format("Variable", "Value"))
-    print('{:<10}:  {:<}'.format("--------", "-----"))
+    print('{:<16}:  {:<}'.format("Variable", "Value"))
+    print('{:<16}:  {:<}'.format("--------", "-----"))
 
     for variable, value in output.items():
-        print('{:<10}:  {:<}'.format(variable, value))
+        print('{:<16}:  {:<}'.format(
+            variable.encode("utf-8"), value.encode("utf-8")))
 
     print("============================================\n")

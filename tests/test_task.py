@@ -25,7 +25,7 @@ class TestTask(ApiServerUnittest):
 
     def test_create_task(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        task_suite = task.create_task(testcase_file_path)
+        task_suite = task.TaskSuite(testcase_file_path)
         self.assertEqual(task_suite.countTestCases(), 3)
         for suite in task_suite:
             for testcase in suite:
