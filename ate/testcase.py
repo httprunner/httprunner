@@ -192,7 +192,16 @@ def substitute_variables_with_mapping(content, mapping):
             }
         }
     """
-    if isinstance(content, (list, tuple)):
+    if isinstance(content, bool):
+        return content
+
+    if isinstance(content, (int, utils.long_type, float, complex)):
+        return content
+
+    if not content:
+        return content
+
+    if isinstance(content, (list, set, tuple)):
         return [
             substitute_variables_with_mapping(item, mapping)
             for item in content
@@ -206,9 +215,6 @@ def substitute_variables_with_mapping(content, mapping):
             substituted_data[eval_key] = eval_value
 
         return substituted_data
-
-    if isinstance(content, (int, utils.long_type, float, complex)):
-        return content
 
     # content is in string format here
     for var, value in mapping.items():
