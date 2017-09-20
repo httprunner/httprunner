@@ -1,7 +1,9 @@
 import os
-from ate import utils
-from ate import exception
+from collections import OrderedDict
+
+from ate import exception, utils
 from tests.base import ApiServerUnittest
+
 
 class TestUtils(ApiServerUnittest):
 
@@ -278,3 +280,19 @@ class TestUtils(ApiServerUnittest):
         new_dict = utils.override_variables_binds(map_list, override_mapping)
         self.assertEqual(3, new_dict["a"])
         self.assertEqual(4, new_dict["c"])
+
+        map_list = OrderedDict(
+            {
+                "a": 1,
+                "b": 2
+            }
+        )
+        override_mapping = {"a": 3, "c": 4}
+        new_dict = utils.override_variables_binds(map_list, override_mapping)
+        self.assertEqual(3, new_dict["a"])
+        self.assertEqual(4, new_dict["c"])
+
+        map_list = "invalid"
+        override_mapping = {"a": 3, "c": 4}
+        with self.assertRaises(exception.ParamsError):
+            utils.override_variables_binds(map_list, override_mapping)
