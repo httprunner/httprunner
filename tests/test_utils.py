@@ -242,6 +242,13 @@ class TestUtils(ApiServerUnittest):
         self.assertIn("Accept", new_dict["request"]["headers"])
         self.assertIn("User-Agent", new_dict["request"]["headers"])
 
+        origin_dict = {
+            "Name": "test",
+            "Request": "$default_request"
+        }
+        new_dict = utils.lower_config_dict_key(origin_dict)
+        self.assertIn("$default_request", new_dict["request"])
+
     def test_convert_to_order_dict(self):
         map_list = [
             {"a": 1},
