@@ -4,6 +4,7 @@ import hmac
 import imp
 import importlib
 import json
+import logging
 import os.path
 import random
 import re
@@ -382,9 +383,9 @@ def print_output(output):
     if not output:
         return
 
-    print("\n================== Output ==================")
-    print('{:<16}:  {:<}'.format("Variable", "Value"))
-    print('{:<16}:  {:<}'.format("--------", "-----"))
+    content = "\n================== Output ==================\n"
+    content += '{:<16}:  {:<}\n'.format("Variable", "Value")
+    content += '{:<16}:  {:<}\n'.format("--------", "-----")
 
     for variable, value in output.items():
 
@@ -394,6 +395,8 @@ def print_output(output):
             if isinstance(value, unicode):
                 value = value.encode("utf-8")
 
-        print('{:<16}:  {:<}'.format(variable, value))
+        content += '{:<16}:  {:<}\n'.format(variable, value)
 
-    print("============================================\n")
+    content += "============================================\n"
+
+    logging.debug(content)
