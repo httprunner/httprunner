@@ -451,9 +451,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual("", result["request"]["data"]["empty_str"])
 
     def test_load_api_definition(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/data')
-        api_dir_dict = testcase.load_api_definition(path)
+        api_dir_dict = testcase.load_api_definition()
         self.assertIn("get_token", api_dir_dict)
         self.assertEqual("/api/get-token", api_dir_dict["get_token"]["request"]["url"])
         self.assertIn("$user_agent", api_dir_dict["get_token"]["function_meta"]["args"])
@@ -464,7 +462,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             os.getcwd(), 'tests/data')
         api_info = testcase.get_api_definition("get_token", path)
         self.assertEqual("/api/get-token", api_info["request"]["url"])
-        self.assertIn(path, testcase.api_overall_dict)
+        self.assertIn("get_token", testcase.api_overall_dict)
 
         with self.assertRaises(ApiNotFound):
             testcase.get_api_definition("api_not_exist", path)

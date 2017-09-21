@@ -59,11 +59,10 @@ def load_testcases(testcase_file_path):
         # '' or other suffix
         return []
 
-def load_folder_files(folder_path, file_type, recursive=False):
+def load_folder_files(folder_path, recursive=True):
     """ load folder path, return all files in list format.
     @param
         folder_path: specified folder path to load
-        file_type: "test" or "api"
         recursive: if True, will load files recursively
     """
     file_list = []
@@ -72,11 +71,7 @@ def load_folder_files(folder_path, file_type, recursive=False):
         filenames_list = []
 
         for filename in filenames:
-
             if not filename.endswith(('.yml', '.yaml', '.json')):
-                continue
-
-            if file_type == "api" and not filename.startswith(('api.', 'api-')):
                 continue
 
             filenames_list.append(filename)
