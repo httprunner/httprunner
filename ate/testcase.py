@@ -88,14 +88,12 @@ def parse_function(content):
 
     return function_meta
 
-def load_testcases_by_path(path, file_type="test"):
+def load_testcases_by_path(path):
     """ load testcases from file path
-    @param
-        path: path could be in several type
-            - absolute/relative file path
-            - absolute/relative folder path
-            - list/set container with file(s) and/or folder(s)
-        file_type: "test" or "suite"
+    @param path: path could be in several type
+        - absolute/relative file path
+        - absolute/relative folder path
+        - list/set container with file(s) and/or folder(s)
     @return testcase sets list, each testset is corresponding to a file
         [
             {"name": "desc1", "config": {}, "testcases": [testcase11, testcase12]},
@@ -106,7 +104,7 @@ def load_testcases_by_path(path, file_type="test"):
         testsets_list = []
 
         for file_path in set(path):
-            _testsets_list = load_testcases_by_path(file_path, file_type)
+            _testsets_list = load_testcases_by_path(file_path)
             testsets_list.extend(_testsets_list)
 
         return testsets_list
@@ -115,8 +113,8 @@ def load_testcases_by_path(path, file_type="test"):
         path = os.path.join(os.getcwd(), path)
 
     if os.path.isdir(path):
-        files_list = utils.load_folder_files(path, file_type=file_type, recursive=True)
-        return load_testcases_by_path(files_list, file_type)
+        files_list = utils.load_folder_files(path)
+        return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
         testset = {
@@ -127,7 +125,6 @@ def load_testcases_by_path(path, file_type="test"):
             "testcases": []
         }
         testcases_list = utils.load_testcases(path)
-        dir_path = os.path.dirname(os.path.abspath(path))
 
         for item in testcases_list:
             for key in item:
@@ -137,7 +134,7 @@ def load_testcases_by_path(path, file_type="test"):
                 elif key == "test":
                     test_block_dict = item["test"]
                     if "api" in test_block_dict:
-                        testcase_list = load_testcases_by_call(test_block_dict, dir_path, "api")
+                        testcase_list = load_testcases_by_call(test_block_dict, "api")
                     else:
                         testcase_list = [test_block_dict]
 
@@ -148,12 +145,12 @@ def load_testcases_by_path(path, file_type="test"):
     else:
         return []
 
-def load_testcases_by_call(test_block_dict, dir_path, call_type):
+def load_testcases_by_call(test_block_dict, call_type):
     api_call = test_block_dict[call_type]
     function_meta = parse_function(api_call)
     func_name = function_meta["func_name"]
     api_call_args = function_meta["args"]
-    api_info = get_api_definition(func_name, dir_path)
+    api_info = get_api_definition(func_name)
     api_def_args = api_info.get("function_meta").get("args", [])
 
     if len(api_call_args) != len(api_def_args):
@@ -226,43 +223,40 @@ def substitute_variables_with_mapping(content, mapping):
 
     return content
 
-def get_api_definition(name, dir_path):
-    """ get expected api from dir_path upward recursively
+def get_api_definition(name, dir_path=None):
+    """ get expected api from dir_path.
+        By default, dir_path is "$CWD/tests/api/"
     @param
         name: api name
-        dir_path: start search dir path
+        dir_path: specified api dir path
     @return
         expected api info if found, otherwise raise ApiNotFound exception
     """
-    api_dir_dict = api_overall_dict.get(dir_path)
-    if not api_dir_dict:
-        api_dir_dict = load_api_definition(dir_path)
-        api_overall_dict[dir_path] = api_dir_dict
+    global api_overall_dict
+    if not api_overall_dict:
+        api_overall_dict.update(load_api_definition(dir_path))
 
-    api_info = api_dir_dict.get(name)
-    if api_info:
-        return api_info
-
-    parent_dir_path = os.path.dirname(dir_path)
-    if dir_path == parent_dir_path:
-        # system root path
-        err_msg = "{} not found in recursive upward path!".format(name)
+    api_info = api_overall_dict.get(name)
+    if not api_info:
+        err_msg = "API {} not found!".format(name)
         raise exception.ApiNotFound(err_msg)
 
-    return get_api_definition(name, parent_dir_path)
+    return api_info
 
-def load_api_definition(dir_path):
-    """ load all api definitions in specified dir path
+def load_api_definition(dir_path=None):
+    """ load all api definitions in specified dir path.
+        By default, dir_path is "$CWD/tests/api/"
     @param (str) dir_path
     @return (dict) all api definitions in dir_path merged in one dict
     """
-    api_files = utils.load_folder_files(dir_path, file_type="api", recursive=False)
+    api_dir_path = dir_path or os.path.join(os.getcwd(), "tests", "api")
+    api_files = utils.load_folder_files(api_dir_path)
 
     api_def_list = []
     for api_file in api_files:
         api_def_list.extend(utils.load_testcases(api_file))
 
-    api_dir_dict = {}
+    api_dict = {}
 
     for item in api_def_list:
         for key in item:
@@ -274,9 +268,9 @@ def load_api_definition(dir_path):
                 api_info = {}
                 api_info["function_meta"] = function_meta
                 api_info.update(item["api"])
-                api_dir_dict[func_name] = api_info
+                api_dict[func_name] = api_info
 
-    return api_dir_dict
+    return api_dict
 
 
 class TestcaseParser(object):
