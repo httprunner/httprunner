@@ -7,7 +7,7 @@ from ate import exception, utils
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"
 function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w_ =,]*)\)$")
-api_overall_dict = {}
+test_def_overall_dict = {}
 
 
 def extract_variables(content):
@@ -96,8 +96,8 @@ def load_testcases_by_path(path):
         - list/set container with file(s) and/or folder(s)
     @return testcase sets list, each testset is corresponding to a file
         [
-            {"name": "desc1", "config": {}, "testcases": [testcase11, testcase12]},
-            {"name": "desc2", "config": {}, "testcases": [testcase21, testcase22, testcase23]},
+            testset_dict_1,
+            testset_dict_2
         ]
     """
     if isinstance(path, (list, set)):
@@ -117,41 +117,71 @@ def load_testcases_by_path(path):
         return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
-        testset = {
-            "name": "",
-            "config": {
-                "path": path
-            },
-            "testcases": []
-        }
-        testcases_list = utils.load_testcases(path)
-
-        for item in testcases_list:
-            for key in item:
-                if key == "config":
-                    testset["config"].update(item["config"])
-                    testset["name"] = item["config"].get("name", "")
-                elif key == "test":
-                    test_block_dict = item["test"]
-                    if "api" in test_block_dict:
-                        testcase_list = load_testcases_by_call(test_block_dict, "api")
-                    else:
-                        testcase_list = [test_block_dict]
-
-                    testset["testcases"].extend(testcase_list)
-
-        return [testset] if testset["testcases"] else []
+        return load_test_file(path)
 
     else:
         return []
 
+def load_test_file(file_path):
+    """ load testset file, get testset data structure.
+    @param file_path: absolute valid testset file path
+    @return testset dict
+        {
+            "name": "desc1",
+            "config": {},
+            "api": {},
+            "testcases": [testcase11, testcase12]
+        }
+    """
+    testset = {
+        "name": "",
+        "config": {
+            "path": file_path
+        },
+        "api": {},
+        "testcases": []
+    }
+    testcases_list = utils.load_testcases(file_path)
+
+    for item in testcases_list:
+        for key in item:
+            if key == "config":
+                testset["config"].update(item["config"])
+                testset["name"] = item["config"].get("name", "")
+
+            elif key == "test":
+                test_block_dict = item["test"]
+                if "api" in test_block_dict:
+                    testcase_list = load_testcases_by_call(test_block_dict, "api")
+                elif "suite" in test_block_dict:
+                    testcase_list = load_testcases_by_call(test_block_dict, "suite")
+                else:
+                    testcase_list = [test_block_dict]
+
+                testset["testcases"].extend(testcase_list)
+
+            elif key == "api":
+                api_def = item["api"].pop("def")
+                function_meta = parse_function(api_def)
+                func_name = function_meta["func_name"]
+
+                api_info = {}
+                api_info["function_meta"] = function_meta
+                api_info.update(item["api"])
+                testset["api"][func_name] = api_info
+
+    if testset["testcases"] or testset["api"]:
+        return [testset]
+    else:
+        return []
+
 def load_testcases_by_call(test_block_dict, call_type):
-    api_call = test_block_dict[call_type]
-    function_meta = parse_function(api_call)
+    call_func = test_block_dict[call_type]
+    function_meta = parse_function(call_func)
     func_name = function_meta["func_name"]
     api_call_args = function_meta["args"]
-    api_info = get_api_definition(func_name)
-    api_def_args = api_info.get("function_meta").get("args", [])
+    test_info = get_test_definition(func_name, call_type)
+    api_def_args = test_info.get("function_meta").get("args", [])
 
     if len(api_call_args) != len(api_def_args):
         raise exception.ParamsError("api call args invalid!")
@@ -164,11 +194,74 @@ def load_testcases_by_call(test_block_dict, call_type):
         args_mapping[item] = api_call_args[index]
 
     if args_mapping:
-        api_info = substitute_variables_with_mapping(api_info, args_mapping)
+        test_info = substitute_variables_with_mapping(test_info, args_mapping)
 
-    test_block_dict.update(api_info)
+    test_block_dict.update(test_info)
 
     return [test_block_dict]
+
+def get_test_definition(name, call_type, dir_path=None):
+    """ get expected api or suite from dir_path.
+    @params:
+        name: api name
+        call_type: "api" or "suite"
+        dir_path: specified api dir path, default is "$CWD/tests/api/"
+    @return
+        expected api info if found, otherwise raise ApiNotFound exception
+    """
+    global test_def_overall_dict
+    if call_type not in test_def_overall_dict:
+        test_def_overall_dict[call_type] = {}
+
+    test_def_overall_dict[call_type].update(load_test_definition(call_type, dir_path))
+    test_info = test_def_overall_dict[call_type].get(name)
+    if not test_info:
+        err_msg = "{} {} not found!".format(call_type, name)
+        if call_type == "api":
+            raise exception.ApiNotFound(err_msg)
+        elif call_type == "suite":
+            raise exception.SuiteNotFound(err_msg)
+        else:
+            raise exception.ParamsError("call_type can only be api or suite!")
+
+    return test_info
+
+def load_test_definition(call_type, dir_path=None):
+    """ load all api or suite definitions in specified dir path.
+    @params:
+        call_type: "api" or "suite"
+        dir_path: specified api dir path, default is "$CWD/tests/api/"
+    @return (dict) all api definitions in dir_path merged in one dict
+    """
+    dir_path = dir_path or os.path.join(os.getcwd(), "tests", call_type)
+    api_files = utils.load_folder_files(dir_path)
+
+    test_def_dict = {}
+    for test_file in api_files:
+        testset = load_testcases_by_path(test_file)
+        if not testset:
+            continue
+
+        suite = testset[0]
+
+        if call_type == "api":
+            test_dict = suite["api"]
+
+        elif call_type == "suite":
+            if "def" not in suite["config"]:
+                continue
+
+            call_func = suite["config"]["def"]
+            function_meta = parse_function(call_func)
+            suite["function_meta"] = function_meta
+
+            test_dict = {
+                function_meta["func_name"]: suite
+            }
+
+        test_def_dict.update(test_dict)
+
+    return test_def_dict
 
 def substitute_variables_with_mapping(content, mapping):
     """ substitute variables in content with mapping
@@ -222,55 +315,6 @@ def substitute_variables_with_mapping(content, mapping):
             content = content.replace(var, str(value))
 
     return content
-
-def get_api_definition(name, dir_path=None):
-    """ get expected api from dir_path.
-        By default, dir_path is "$CWD/tests/api/"
-    @param
-        name: api name
-        dir_path: specified api dir path
-    @return
-        expected api info if found, otherwise raise ApiNotFound exception
-    """
-    global api_overall_dict
-    if not api_overall_dict:
-        api_overall_dict.update(load_api_definition(dir_path))
-
-    api_info = api_overall_dict.get(name)
-    if not api_info:
-        err_msg = "API {} not found!".format(name)
-        raise exception.ApiNotFound(err_msg)
-
-    return api_info
-
-def load_api_definition(dir_path=None):
-    """ load all api definitions in specified dir path.
-        By default, dir_path is "$CWD/tests/api/"
-    @param (str) dir_path
-    @return (dict) all api definitions in dir_path merged in one dict
-    """
-    api_dir_path = dir_path or os.path.join(os.getcwd(), "tests", "api")
-    api_files = utils.load_folder_files(api_dir_path)
-
-    api_def_list = []
-    for api_file in api_files:
-        api_def_list.extend(utils.load_testcases(api_file))
-
-    api_dict = {}
-
-    for item in api_def_list:
-        for key in item:
-            if key == "api":
-                api_def = item["api"].pop("def")
-                function_meta = parse_function(api_def)
-                func_name = function_meta["func_name"]
-
-                api_info = {}
-                api_info["function_meta"] = function_meta
-                api_info.update(item["api"])
-                api_dict[func_name] = api_info
-
-    return api_dict
 
 
 class TestcaseParser(object):
