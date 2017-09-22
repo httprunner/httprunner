@@ -45,9 +45,21 @@ class TestUtils(ApiServerUnittest):
         self.assertIn(file2, files)
         self.assertNotIn(file1, files)
 
-        files = utils.load_folder_files(folder)
+        files_1 = utils.load_folder_files(folder)
         api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
-        self.assertEqual(files[0], api_file)
+        self.assertEqual(files_1[0], api_file)
+
+        folder_list = [folder, folder]
+        files_2 = utils.load_folder_files(folder)
+        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
+        self.assertEqual(files_2[0], api_file)
+        self.assertEqual(len(files_1), len(files_2))
+
+        files = utils.load_folder_files("not_existed_foulder", recursive=False)
+        self.assertEqual([], files)
+
+        files = utils.load_folder_files(file2, recursive=False)
+        self.assertEqual([], files)
 
     def test_query_json(self):
         json_content = {
