@@ -12,7 +12,7 @@ class VariableBindsUnittest(unittest.TestCase):
     def setUp(self):
         self.context = Context()
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
-        self.testcases = utils.load_testcases(testcase_file_path)
+        self.testcases = utils.load_tests(testcase_file_path)
 
     def test_context_init_functions(self):
         self.assertIn("get_timestamp", self.context.testset_functions_config)

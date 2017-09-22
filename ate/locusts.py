@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import sys
 
-from ate.testcase import load_testcases_by_path
+from ate.testcase import load_test_file
 from locust.main import main
 
 
@@ -36,8 +36,8 @@ def gen_locustfile(testcase_file_path):
         os.path.dirname(os.path.realpath(__file__)),
         'locustfile_template'
     )
-    testsets = load_testcases_by_path(testcase_file_path)
-    host = testsets[0].get("config", {}).get("request", {}).get("base_url", "")
+    testset = load_test_file(testcase_file_path)
+    host = testset.get("config", {}).get("request", {}).get("base_url", "")
 
     with codecs.open(template_path, encoding='utf-8') as template:
         with codecs.open(locustfile_path, 'w', encoding='utf-8') as locustfile:

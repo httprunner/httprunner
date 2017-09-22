@@ -1,8 +1,8 @@
 import os
 
 import requests
-from ate import exception, runner, utils
-from ate.testcase import load_testcases_by_path
+from ate import exception, runner, testcase, utils
+
 from tests.base import ApiServerUnittest
 
 
@@ -26,7 +26,7 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_single_testcase(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testcases = utils.load_testcases(testcase_file_path)
+            testcases = utils.load_tests(testcase_file_path)
             testcase = testcases[0]["test"]
             self.assertTrue(self.test_runner.run_test(testcase))
 
@@ -67,66 +67,66 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testsets = load_testcases_by_path(testcase_file_path)
-            result = self.test_runner.run_testset(testsets[0])
+            testset = testcase.load_test_file(testcase_file_path)
+            result = self.test_runner.run_testset(testset)
             self.assertTrue(result["success"])
 
     def test_run_testsets_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testsets = load_testcases_by_path(testcase_file_path)
+            testsets = testcase.load_testcases_by_path(testcase_file_path)
             result = self.test_runner.run_testsets(testsets)
             self.assertTrue(result)
 
     def test_run_testset_template_variables(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
-        result = self.test_runner.run_testset(testsets[0])
+        testset = testcase.load_test_file(testcase_file_path)
+        result = self.test_runner.run_testset(testset)
         self.assertTrue(result["success"])
 
     def test_run_testset_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
-        result = self.test_runner.run_testset(testsets[0])
+        testset = testcase.load_test_file(testcase_file_path)
+        result = self.test_runner.run_testset(testset)
         self.assertTrue(result["success"])
 
     def test_run_testsets_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
+        testsets = testcase.load_testcases_by_path(testcase_file_path)
         result = self.test_runner.run_testsets(testsets)
         self.assertTrue(result)
 
     def test_run_testsets_template_lambda_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_lambda_functions.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
+        testsets = testcase.load_testcases_by_path(testcase_file_path)
         result = self.test_runner.run_testsets(testsets)
         self.assertTrue(result)
 
     def test_run_testset_layered(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
+        testsets = testcase.load_testcases_by_path(testcase_file_path)
         result = self.test_runner.run_testsets(testsets)
         self.assertTrue(result)
 
     def test_run_testset_output(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
-        result = self.test_runner.run_testset(testsets[0])
+        testset = testcase.load_test_file(testcase_file_path)
+        result = self.test_runner.run_testset(testset)
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
 
     def test_run_testset_with_variables_mapping(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
+        testset = testcase.load_test_file(testcase_file_path)
         variables_mapping = {
             "app_version": '2.9.7'
         }
-        result = self.test_runner.run_testset(testsets[0], variables_mapping)
+        result = self.test_runner.run_testset(testset, variables_mapping)
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
