@@ -27,3 +27,6 @@ class VariableNotFound(NameError):
 
 class ApiNotFound(NameError):
     pass
+
+class SuiteNotFound(NameError):
+    pass
