@@ -9,12 +9,12 @@ class TestUtils(ApiServerUnittest):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        self.assertEqual(utils.load_testcases(testcase_file_path), [])
+        self.assertEqual(utils.load_tests(testcase_file_path), [])
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        testcases = utils.load_testcases(testcase_file_path)
+        testcases = utils.load_tests(testcase_file_path)
         self.assertEqual(len(testcases), 3)
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)
@@ -25,7 +25,7 @@ class TestUtils(ApiServerUnittest):
     def test_load_yaml_testcases(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_hardcode.yml')
-        testcases = utils.load_testcases(testcase_file_path)
+        testcases = utils.load_tests(testcase_file_path)
         self.assertEqual(len(testcases), 3)
         testcase = testcases[0]["test"]
         self.assertIn('name', testcase)

@@ -1,7 +1,7 @@
 import os
 
 from ate import task
-from ate.testcase import load_testcases_by_path
+from ate.testcase import load_test_file
 from tests.base import ApiServerUnittest
 
 
@@ -17,8 +17,8 @@ class TestTask(ApiServerUnittest):
 
     def test_create_suite(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        testsets = load_testcases_by_path(testcase_file_path)
-        suite = task.ApiTestSuite(testsets[0])
+        testset = load_test_file(testcase_file_path)
+        suite = task.ApiTestSuite(testset)
         self.assertEqual(suite.countTestCases(), 3)
         for testcase in suite:
             self.assertIsInstance(testcase, task.ApiTestCase)

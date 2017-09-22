@@ -49,7 +49,7 @@ def load_json_file(json_file):
     with codecs.open(json_file, encoding='utf-8') as data_file:
         return json.load(data_file)
 
-def load_testcases(testcase_file_path):
+def load_tests(testcase_file_path):
     file_suffix = os.path.splitext(testcase_file_path)[1]
     if file_suffix == '.json':
         return load_json_file(testcase_file_path)
