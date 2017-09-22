@@ -65,6 +65,16 @@ def load_folder_files(folder_path, recursive=True):
         folder_path: specified folder path to load
         recursive: if True, will load files recursively
     """
+    if isinstance(folder_path, (list, set)):
+        files = []
+        for path in set(folder_path):
+            files.extend(load_folder_files(path, recursive))
+
+        return files
+
+    if not os.path.exists(folder_path):
+        return []
+
     file_list = []
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
