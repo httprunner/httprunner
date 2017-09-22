@@ -117,8 +117,11 @@ def load_testcases_by_path(path):
         return load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
-        return load_test_file(path)
-
+        testset = load_test_file(path)
+        if testset["testcases"] or testset["api"]:
+            return [testset]
+        else:
+            return []
     else:
         return []
 
@@ -141,9 +144,9 @@ def load_test_file(file_path):
         "api": {},
         "testcases": []
     }
-    testcases_list = utils.load_testcases(file_path)
+    tests_list = utils.load_tests(file_path)
 
-    for item in testcases_list:
+    for item in tests_list:
         for key in item:
             if key == "config":
                 testset["config"].update(item["config"])
@@ -170,10 +173,7 @@ def load_test_file(file_path):
                 api_info.update(item["api"])
                 testset["api"][func_name] = api_info
 
-    if testset["testcases"] or testset["api"]:
-        return [testset]
-    else:
-        return []
+    return testset
 
 def load_testcases_by_call(test_block_dict, call_type):
     call_func = test_block_dict[call_type]

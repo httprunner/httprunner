@@ -22,5 +22,4 @@ class WebPageUser(HttpLocust):
     min_wait = 1000
     max_wait = 5000
 
-    testsets = testcase.load_testcases_by_path("$TESTCASE_FILE")
-    testset = testsets[0]
+    testset = testcase.load_test_file("$TESTCASE_FILE")
