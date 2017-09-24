@@ -7,7 +7,11 @@ from ate import exception, utils
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"
 function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w_ =,]*)\)$")
-test_def_overall_dict = {}
+test_def_overall_dict = {
+    "loaded": False,
+    "api": {},
+    "suite": {}
+}
 
 
 def extract_variables(content):
@@ -88,6 +92,37 @@ def parse_function(content):
 
     return function_meta
 
+def load_test_dependencies():
+    """ load all api and suite definitions.
+        default api folder is "$CWD/tests/api/".
+        default suite folder is "$CWD/tests/suite/".
+    """
+    test_def_overall_dict["loaded"] = True
+    test_def_overall_dict["api"] = {}
+    test_def_overall_dict["suite"] = {}
+
+    # load api definitions
+    api_def_folder = os.path.join(os.getcwd(), "tests", "api")
+    api_files = utils.load_folder_files(api_def_folder)
+
+    for test_file in api_files:
+        testset = load_test_file(test_file)
+        test_def_overall_dict["api"].update(testset["api"])
+
+    # load suite definitions
+    suite_def_folder = os.path.join(os.getcwd(), "tests", "suite")
+    suite_files = utils.load_folder_files(suite_def_folder)
+
+    for suite_file in suite_files:
+        suite = load_test_file(suite_file)
+        if "def" not in suite["config"]:
+            raise exception.ParamsError("def missed in suite file: {}!".format(suite_file))
+
+        call_func = suite["config"]["def"]
+        function_meta = parse_function(call_func)
+        suite["function_meta"] = function_meta
+        test_def_overall_dict["suite"][function_meta["func_name"]] = suite
+
 def load_testcases_by_path(path):
     """ load testcases from file path
     @param path: path could be in several type
@@ -101,13 +136,15 @@ def load_testcases_by_path(path):
         ]
     """
     if isinstance(path, (list, set)):
-        testsets_list = []
+        testsets = []
 
         for file_path in set(path):
-            _testsets_list = load_testcases_by_path(file_path)
-            testsets_list.extend(_testsets_list)
+            testset = load_testcases_by_path(file_path)
+            if not testset:
+                continue
+            testsets.extend(testset)
 
-        return testsets_list
+        return testsets
 
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
@@ -120,10 +157,8 @@ def load_testcases_by_path(path):
         testset = load_test_file(path)
         if testset["testcases"] or testset["api"]:
             return [testset]
-        else:
-            return []
-    else:
-        return []
+
+    return []
 
 def load_test_file(file_path):
     """ load testset file, get testset data structure.
@@ -155,13 +190,16 @@ def load_test_file(file_path):
             elif key == "test":
                 test_block_dict = item["test"]
                 if "api" in test_block_dict:
-                    testcase_list = load_testcases_by_call(test_block_dict, "api")
+                    ref_name = test_block_dict["api"]
+                    test_info = get_testinfo_by_reference(ref_name, "api")
+                    test_block_dict.update(test_info)
+                    testset["testcases"].append(test_block_dict)
                 elif "suite" in test_block_dict:
-                    testcase_list = load_testcases_by_call(test_block_dict, "suite")
+                    ref_name = test_block_dict["suite"]
+                    test_info = get_testinfo_by_reference(ref_name, "suite")
+                    testset["testcases"].extend(test_info["testcases"])
                 else:
-                    testcase_list = [test_block_dict]
-
-                testset["testcases"].extend(testcase_list)
+                    testset["testcases"].append(test_block_dict)
 
             elif key == "api":
                 api_def = item["api"].pop("def")
@@ -175,93 +213,55 @@ def load_test_file(file_path):
 
     return testset
 
-def load_testcases_by_call(test_block_dict, call_type):
-    call_func = test_block_dict[call_type]
-    function_meta = parse_function(call_func)
+def get_testinfo_by_reference(ref_name, ref_type):
+    """ get test content by reference name
+    @params:
+        ref_name: reference name, e.g. api_v1_Account_Login_POST($UserName, $Password)
+        ref_type: "api" or "suite"
+    """
+    function_meta = parse_function(ref_name)
     func_name = function_meta["func_name"]
-    api_call_args = function_meta["args"]
-    test_info = get_test_definition(func_name, call_type)
-    api_def_args = test_info.get("function_meta").get("args", [])
+    call_args = function_meta["args"]
+    test_info = get_test_definition(func_name, ref_type)
+    def_args = test_info.get("function_meta").get("args", [])
 
-    if len(api_call_args) != len(api_def_args):
-        raise exception.ParamsError("api call args invalid!")
+    if len(call_args) != len(def_args):
+        raise exception.ParamsError("call args mismatch defined args!")
 
     args_mapping = {}
-    for index, item in enumerate(api_def_args):
-        if api_call_args[index] == item:
+    for index, item in enumerate(def_args):
+        if call_args[index] == item:
             continue
 
-        args_mapping[item] = api_call_args[index]
+        args_mapping[item] = call_args[index]
 
     if args_mapping:
         test_info = substitute_variables_with_mapping(test_info, args_mapping)
 
-    test_block_dict.update(test_info)
+    return test_info
 
-    return [test_block_dict]
-
-def get_test_definition(name, call_type, dir_path=None):
-    """ get expected api or suite from dir_path.
+def get_test_definition(name, ref_type):
+    """ get expected api or suite.
     @params:
-        name: api name
-        call_type: "api" or "suite"
-        dir_path: specified api dir path, default is "$CWD/tests/api/"
+        name: api or suite name
+        ref_type: "api" or "suite"
     @return
         expected api info if found, otherwise raise ApiNotFound exception
     """
-    global test_def_overall_dict
-    if call_type not in test_def_overall_dict:
-        test_def_overall_dict[call_type] = {}
+    if not test_def_overall_dict.get("loaded", False):
+        load_test_dependencies()
 
-    test_def_overall_dict[call_type].update(load_test_definition(call_type, dir_path))
-    test_info = test_def_overall_dict[call_type].get(name)
+    test_info = test_def_overall_dict.get(ref_type, {}).get(name)
     if not test_info:
-        err_msg = "{} {} not found!".format(call_type, name)
-        if call_type == "api":
+        err_msg = "{} {} not found!".format(ref_type, name)
+        if ref_type == "api":
             raise exception.ApiNotFound(err_msg)
-        elif call_type == "suite":
+        elif ref_type == "suite":
             raise exception.SuiteNotFound(err_msg)
         else:
-            raise exception.ParamsError("call_type can only be api or suite!")
+            raise exception.ParamsError("ref_type can only be api or suite!")
 
     return test_info
-
-def load_test_definition(call_type, dir_path=None):
-    """ load all api or suite definitions in specified dir path.
-    @params:
-        call_type: "api" or "suite"
-        dir_path: specified api dir path, default is "$CWD/tests/api/"
-    @return (dict) all api definitions in dir_path merged in one dict
-    """
-    dir_path = dir_path or os.path.join(os.getcwd(), "tests", call_type)
-    api_files = utils.load_folder_files(dir_path)
-
-    test_def_dict = {}
-    for test_file in api_files:
-        testset = load_testcases_by_path(test_file)
-        if not testset:
-            continue
-
-        suite = testset[0]
-
-        if call_type == "api":
-            test_dict = suite["api"]
-
-        elif call_type == "suite":
-            if "def" not in suite["config"]:
-                continue
-
-            call_func = suite["config"]["def"]
-            function_meta = parse_function(call_func)
-            suite["function_meta"] = function_meta
-
-            test_dict = {
-                function_meta["func_name"]: suite
-            }
-
-        test_def_dict.update(test_dict)
-
-    return test_def_dict
 
 def substitute_variables_with_mapping(content, mapping):
     """ substitute variables in content with mapping
