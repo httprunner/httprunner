@@ -450,19 +450,20 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertFalse(result["request"]["data"]["false"])
         self.assertEqual("", result["request"]["data"]["empty_str"])
 
-    def test_load_api_definition(self):
-        api_dir_dict = testcase.load_test_definition("api")
-        self.assertIn("get_token", api_dir_dict)
-        self.assertEqual("/api/get-token", api_dir_dict["get_token"]["request"]["url"])
-        self.assertIn("$user_agent", api_dir_dict["get_token"]["function_meta"]["args"])
-        self.assertIn("create_user", api_dir_dict)
+    def test_load_test_dependencies(self):
+        testcase.test_def_overall_dict = {}
+        testcase.load_test_dependencies()
+        self.assertTrue(testcase.test_def_overall_dict["loaded"])
+        api_dict = testcase.test_def_overall_dict["api"]
+        self.assertIn("get_token", api_dict)
+        self.assertEqual("/api/get-token", api_dict["get_token"]["request"]["url"])
+        self.assertIn("$user_agent", api_dict["get_token"]["function_meta"]["args"])
+        self.assertIn("create_user", api_dict)
 
     def test_get_api_definition(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/data')
-        api_info = testcase.get_test_definition("get_token", "api", path)
+        api_info = testcase.get_test_definition("get_token", "api")
         self.assertEqual("/api/get-token", api_info["request"]["url"])
         self.assertIn("get_token", testcase.test_def_overall_dict["api"])
 
         with self.assertRaises(ApiNotFound):
-            testcase.get_test_definition("api_not_exist", "api", path)
+            testcase.get_test_definition("api_not_exist", "api")

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from ate import exception, response, utils
+from ate import exception, response, testcase, utils
 from ate.client import HttpSession
 from ate.context import Context
 
@@ -10,6 +10,7 @@ class Runner(object):
     def __init__(self, http_client_session=None):
         self.http_client_session = http_client_session
         self.context = Context()
+        testcase.load_test_dependencies()
 
     def init_config(self, config_dict, level):
         """ create/update context variables binds
