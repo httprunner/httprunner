@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from ate import __version__
 from ate.task import TaskSuite
+from ate.utils import create_scaffold
 
 import PyUnitReport
 
@@ -30,6 +31,9 @@ def main_ate():
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
+    parser.add_argument(
+        '--startproject',
+        help="Specify new project name.")
 
     try:
         from jenkins_mail_py import MailgunHelper
@@ -45,6 +49,12 @@ def main_ate():
 
     log_level = getattr(logging, args.log_level.upper())
     logging.basicConfig(level=log_level)
+
+    project_name = args.startproject
+    if project_name:
+        project_path = os.path.join(os.getcwd(), project_name)
+        create_scaffold(project_path)
+        exit(0)
 
     report_name = args.report_name
     if report_name and len(args.testset_paths) > 1:

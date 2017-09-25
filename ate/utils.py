@@ -405,3 +405,29 @@ def print_output(output):
     content += "============================================\n"
 
     logging.debug(content)
+
+def create_scaffold(project_path):
+    logging.info(" Start to create new project: {}".format(project_path))
+
+    if os.path.isdir(project_path):
+        folder_name = os.path.basename(project_path)
+        logging.warning(" Folder {} exists, please specify a new folder name.".format(folder_name))
+        return
+
+    def create_path(path, ptype):
+        if ptype == "folder":
+            os.makedirs(path)
+        elif ptype == "file":
+            open(path, 'w').close()
+
+        logging.info("\tcreated {}: {}".format(ptype, path))
+
+    path_list = [
+        (project_path, "folder"),
+        (os.path.join(project_path, "tests"), "folder"),
+        (os.path.join(project_path, "tests", "api"), "folder"),
+        (os.path.join(project_path, "tests", "suite"), "folder"),
+        (os.path.join(project_path, "tests", "testcases"), "folder"),
+        (os.path.join(project_path, "tests", "debugtalk.py"), "file")
+    ]
+    [create_path(p[0], p[1]) for p in path_list]

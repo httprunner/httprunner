@@ -1,4 +1,5 @@
 import os
+import shutil
 from collections import OrderedDict
 
 from ate import exception, utils
@@ -308,3 +309,13 @@ class TestUtils(ApiServerUnittest):
         override_mapping = {"a": 3, "c": 4}
         with self.assertRaises(exception.ParamsError):
             utils.override_variables_binds(map_list, override_mapping)
+
+    def test_create_scaffold(self):
+        project_path = os.path.join(os.getcwd(), "projectABC")
+        utils.create_scaffold(project_path)
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "api")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "suite")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "testcases")))
+        self.assertTrue(os.path.isfile(os.path.join(project_path, "tests", "debugtalk.py")))
+        shutil.rmtree(project_path)
