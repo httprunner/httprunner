@@ -73,9 +73,8 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_testsets_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testsets = testcase.load_testcases_by_path(testcase_file_path)
-            result = self.test_runner.run_testsets(testsets)
-            self.assertTrue(result)
+            result = self.test_runner.run(testcase_file_path)
+            self.assertTrue(result["success"])
 
     def test_run_testset_template_variables(self):
         testcase_file_path = os.path.join(
@@ -94,23 +93,20 @@ class TestRunner(ApiServerUnittest):
     def test_run_testsets_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        testsets = testcase.load_testcases_by_path(testcase_file_path)
-        result = self.test_runner.run_testsets(testsets)
-        self.assertTrue(result)
+        result = self.test_runner.run(testcase_file_path)
+        self.assertTrue(result["success"])
 
     def test_run_testsets_template_lambda_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_lambda_functions.yml')
-        testsets = testcase.load_testcases_by_path(testcase_file_path)
-        result = self.test_runner.run_testsets(testsets)
-        self.assertTrue(result)
+        result = self.test_runner.run(testcase_file_path)
+        self.assertTrue(result["success"])
 
     def test_run_testset_layered(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets = testcase.load_testcases_by_path(testcase_file_path)
-        result = self.test_runner.run_testsets(testsets)
-        self.assertTrue(result)
+        result = self.test_runner.run(testcase_file_path)
+        self.assertTrue(result["success"])
 
     def test_run_testset_output(self):
         testcase_file_path = os.path.join(

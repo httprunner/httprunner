@@ -151,7 +151,7 @@ class Runner(object):
             (dict) variables_mapping:
                 passed in variables mapping, it will override variable_binds in config block
 
-        @return (dict) test result of testcases
+        @return (dict) test result of testset
             {
                 "success": True,
                 "output": {}    # variables mapping
@@ -179,24 +179,33 @@ class Runner(object):
             "output": self.generate_output(output_variables_list)
         }
 
-    def run_testsets(self, testsets):
-        """ run testsets, including one or several testsets.
-        @param testsets
-            [
-                testset1,
-                testset2,
-            ]
-        @return (bool) test result of testsets
+    def run(self, path, mapping=None):
+        """ run specified testset path or folder path.
+        @param
+            path: path could be in several type
+                - absolute/relative file path
+                - absolute/relative folder path
+                - list/set container with file(s) and/or folder(s)
+            (dict) mapping:
+                passed in variables mapping, it will override variable_binds in config block
         """
         success = True
+        mapping = mapping or {}
+        output = {}
+        testsets = testcase.load_testcases_by_path(path)
         for testset in testsets:
             try:
-                result = self.run_testset(testset)
+                result = self.run_testset(testset, mapping)
                 assert result["success"]
             except AssertionError:
                 success = False
+            finally:
+                output.update(result["output"])
 
-        return success
+        return {
+            "success": success,
+            "output": output
+        }
 
     def generate_output(self, output_variables_list):
         """ generate and print output
