@@ -28,13 +28,13 @@ class TestRunner(ApiServerUnittest):
         for testcase_file_path in self.testcase_file_path_list:
             testcases = utils.load_tests(testcase_file_path)
             testcase = testcases[0]["test"]
-            self.assertTrue(self.test_runner.run_test(testcase))
+            self.assertTrue(self.test_runner._run_test(testcase))
 
             testcase = testcases[1]["test"]
-            self.assertTrue(self.test_runner.run_test(testcase))
+            self.assertTrue(self.test_runner._run_test(testcase))
 
             testcase = testcases[2]["test"]
-            self.assertTrue(self.test_runner.run_test(testcase))
+            self.assertTrue(self.test_runner._run_test(testcase))
 
     def test_run_single_testcase_fail(self):
         testcase = {
@@ -63,12 +63,11 @@ class TestRunner(ApiServerUnittest):
         }
 
         with self.assertRaises(exception.ValidationError):
-            self.test_runner.run_test(testcase)
+            self.test_runner._run_test(testcase)
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testset = testcase.load_test_file(testcase_file_path)
-            result = self.test_runner.run_testset(testset)
+            result = self.test_runner.run(testcase_file_path)
             self.assertTrue(result["success"])
 
     def test_run_testsets_hardcode(self):
@@ -79,15 +78,13 @@ class TestRunner(ApiServerUnittest):
     def test_run_testset_template_variables(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        testset = testcase.load_test_file(testcase_file_path)
-        result = self.test_runner.run_testset(testset)
+        result = self.test_runner.run(testcase_file_path)
         self.assertTrue(result["success"])
 
     def test_run_testset_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        testset = testcase.load_test_file(testcase_file_path)
-        result = self.test_runner.run_testset(testset)
+        result = self.test_runner.run(testcase_file_path)
         self.assertTrue(result["success"])
 
     def test_run_testsets_template_import_functions(self):
@@ -111,18 +108,16 @@ class TestRunner(ApiServerUnittest):
     def test_run_testset_output(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testset = testcase.load_test_file(testcase_file_path)
-        result = self.test_runner.run_testset(testset)
+        result = self.test_runner.run(testcase_file_path)
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
 
     def test_run_testset_with_variables_mapping(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testset = testcase.load_test_file(testcase_file_path)
         variables_mapping = {
             "app_version": '2.9.7'
         }
-        result = self.test_runner.run_testset(testset, variables_mapping)
+        result = self.test_runner.run(testcase_file_path, variables_mapping)
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
