@@ -65,7 +65,7 @@ class Runner(object):
 
         return parsed_request
 
-    def run_test(self, testcase):
+    def _run_test(self, testcase):
         """ run single testcase.
         @param (dict) testcase
             {
@@ -124,7 +124,7 @@ class Runner(object):
 
         return True
 
-    def run_testset(self, testset, variables_mapping=None):
+    def _run_testset(self, testset, variables_mapping=None):
         """ run single testset, including one or several testcases.
         @param
             (dict) testset
@@ -168,7 +168,7 @@ class Runner(object):
         testcases = testset.get("testcases", [])
         for testcase in testcases:
             try:
-                assert self.run_test(testcase)
+                assert self._run_test(testcase)
             except AssertionError:
                 success = False
 
@@ -195,7 +195,7 @@ class Runner(object):
         testsets = testcase.load_testcases_by_path(path)
         for testset in testsets:
             try:
-                result = self.run_testset(testset, mapping)
+                result = self._run_testset(testset, mapping)
                 assert result["success"]
             except AssertionError:
                 success = False
