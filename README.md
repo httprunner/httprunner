@@ -39,7 +39,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.7.0
+ApiTestEngine version: 0.7.4
 ```
 
 Execute the command `ate -h` to view command help.
@@ -75,7 +75,7 @@ To install mail helper, run this command in your terminal:
 $ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
 $ ate -V
 jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.7.0
+ApiTestEngine version: 0.7.4
 ```
 
 With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
@@ -283,7 +283,8 @@ $ python main-locust -h
 - [《ApiTestEngine 演进之路（2）探索优雅的测试用例描述方式》](http://debugtalk.com/post/ApiTestEngine-2-best-testcase-description/)
 - [《ApiTestEngine 演进之路（3）测试用例中实现 Python 函数的定义》](http://debugtalk.com/post/ApiTestEngine-3-define-functions-in-yaml-testcases/)
 - [《ApiTestEngine 演进之路（4）测试用例中实现 Python 函数的调用》](http://debugtalk.com/post/ApiTestEngine-4-call-functions-in-yaml-testcases/)
-
+- [《ApiTestEngine 集成 Locust 实现更好的性能测试体验》](http://debugtalk.com/post/apitestengine-supersede-locust/)
+- [《约定大于配置：ApiTestEngine实现热加载机制》](http://debugtalk.com/post/apitestengine-hot-plugin/)
 
 [requests]: http://docs.python-requests.org/en/master/
 [unittest]: https://docs.python.org/3/library/unittest.html
