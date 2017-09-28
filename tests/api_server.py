@@ -184,6 +184,7 @@ def update_user(uid):
         user = request.get_json()
         success = True
         status_code = 200
+        users_dict[uid] = user
     else:
         success = False
         status_code = 404
