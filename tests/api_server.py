@@ -1,5 +1,4 @@
 import hashlib
-import hmac
 import json
 from functools import wraps
 
