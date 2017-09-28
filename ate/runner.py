@@ -197,10 +197,9 @@ class Runner(object):
             try:
                 result = self._run_testset(testset, mapping)
                 assert result["success"]
+                output.update(result["output"])
             except AssertionError:
                 success = False
-            finally:
-                output.update(result["output"])
 
         return {
             "success": success,
