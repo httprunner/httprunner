@@ -12,6 +12,7 @@ test_def_overall_dict = {
     "api": {},
     "suite": {}
 }
+testcases_cache_mapping = {}
 
 
 def extract_variables(content):
@@ -149,16 +150,25 @@ def load_testcases_by_path(path):
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
 
+    if path in testcases_cache_mapping:
+        return testcases_cache_mapping[path]
+
     if os.path.isdir(path):
         files_list = utils.load_folder_files(path)
-        return load_testcases_by_path(files_list)
+        testcases_list = load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
         testset = load_test_file(path)
         if testset["testcases"] or testset["api"]:
-            return [testset]
+            testcases_list = [testset]
+        else:
+            testcases_list = []
 
-    return []
+    else:
+        testcases_list = []
+
+    testcases_cache_mapping[path] = testcases_list
+    return testcases_list
 
 def load_test_file(file_path):
     """ load testset file, get testset data structure.

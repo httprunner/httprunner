@@ -20,14 +20,18 @@
         - token: content.token
 
 - test:
-    name: create user which does not exist
-    variable_binds:
-        - user_name: "user1"
-        - user_password: "123456"
-    api: create_user(1000, $user_name, $user_password, $token)
+    name: reset all users
+    api: reset_all($token)
     validators:
-        - {"check": "status_code", "comparator": "eq", "expected": 201}
-        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.success", "expected": true}
+
+- test:
+    name: get user that does not exist
+    api: get_user(1000, $token)
+    validators:
+        - {"check": "status_code", "expected": 404}
+        - {"check": "content.success", "expected": false}
 
 - test:
     name: create user which does not exist
@@ -36,5 +40,79 @@
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
     validators:
-        - {"check": "status_code", "comparator": "eq", "expected": 500}
-        - {"check": "content.success", "comparator": "eq", "expected": false}
+        - {"check": "status_code", "expected": 201}
+        - {"check": "content.success", "expected": true}
+
+- test:
+    name: get user that has been created
+    api: get_user(1000, $token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.success", "expected": true}
+        - {"check": "content.data.password", "expected": "123456"}
+
+- test:
+    name: create user which exists
+    variable_binds:
+        - user_name: "user1"
+        - user_password: "123456"
+    api: create_user(1000, $user_name, $user_password, $token)
+    validators:
+        - {"check": "status_code", "expected": 500}
+        - {"check": "content.success", "expected": false}
+
+- test:
+    name: update user which exists
+    variable_binds:
+        - user_name: "user1"
+        - user_password: "654321"
+    api: update_user(1000, $user_name, $user_password, $token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.success", "expected": true}
+
+- test:
+    name: get user that has been created
+    api: get_user(1000, $token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.success", "expected": true}
+        - {"check": "content.data.password", "expected": "654321"}
+
+- test:
+    name: get users
+    api: get_users($token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.count", "expected": 1}
+
+- test:
+    name: delete user that exists
+    api: delete_user(1000, $token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.success", "expected": true}
+
+- test:
+    name: get users
+    api: get_users($token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.count", "expected": 0}
+
+- test:
+    name: create user which has been deleted
+    variable_binds:
+        - user_name: "user1"
+        - user_password: "123456"
+    api: create_user(1000, $user_name, $user_password, $token)
+    validators:
+        - {"check": "status_code", "expected": 201}
+        - {"check": "content.success", "expected": true}
+
+- test:
+    name: get users
+    api: get_users($token)
+    validators:
+        - {"check": "status_code", "expected": 200}
+        - {"check": "content.count", "expected": 1}
