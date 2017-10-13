@@ -83,10 +83,13 @@ With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional a
 ```text
 $ ate -h
 usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-           [--failfast] [--mailgun-api-id MAILGUN_API_ID]
-           [--mailgun-api-key MAILGUN_API_KEY] [--email-sender EMAIL_SENDER]
-           [--email-recepients EMAIL_RECEPIENTS] [--mail-subject MAIL_SUBJECT]
-           [--mail-content MAIL_CONTENT] [--jenkins-job-name JENKINS_JOB_NAME]
+           [--failfast] [--startproject STARTPROJECT]
+           [--mailgun-smtp-username MAILGUN_SMTP_USERNAME]
+           [--mailgun-smtp-password MAILGUN_SMTP_PASSWORD]
+           [--mail-sender MAIL_SENDER]
+           [--mail-recepients [MAIL_RECEPIENTS [MAIL_RECEPIENTS ...]]]
+           [--mail-subject MAIL_SUBJECT] [--mail-content MAIL_CONTENT]
+           [--jenkins-job-name JENKINS_JOB_NAME]
            [--jenkins-job-url JENKINS_JOB_URL]
            [--jenkins-build-number JENKINS_BUILD_NUMBER]
            [testset_paths [testset_paths ...]]
@@ -104,13 +107,15 @@ optional arguments:
   --report-name REPORT_NAME
                         Specify report name, default is generated time.
   --failfast            Stop the test run on the first error or failure.
-  --mailgun-api-id MAILGUN_API_ID
-                        Specify mailgun api id.
-  --mailgun-api-key MAILGUN_API_KEY
-                        Specify mailgun api key.
-  --email-sender EMAIL_SENDER
+  --startproject STARTPROJECT
+                        Specify new project name.
+  --mailgun-smtp-username MAILGUN_SMTP_USERNAME
+                        Specify mailgun smtp username.
+  --mailgun-smtp-password MAILGUN_SMTP_PASSWORD
+                        Specify mailgun smtp password.
+  --mail-sender MAIL_SENDER
                         Specify email sender.
-  --email-recepients EMAIL_RECEPIENTS
+  --mail-recepients [MAIL_RECEPIENTS [MAIL_RECEPIENTS ...]]
                         Specify email recepients.
   --mail-subject MAIL_SUBJECT
                         Specify email subject.
@@ -207,8 +212,8 @@ When you do continuous integration test or production environment monitoring wit
 
 ```text
 $ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
-    --mailgun-api-id samples.mailgun.org \
-    --mailgun-api-key key-3ax6xnjp29jd6fds4gc373sgvjxteol0 \
+    --mailgun-smtp-username "qa@debugtalk.com" \
+    --mailgun-smtp-password "12345678" \
     --email-sender excited@samples.mailgun.org \
     --email-recepients ${MAIL_RECEPIENTS} \
     --jenkins-job-name ${JOB_NAME} \
