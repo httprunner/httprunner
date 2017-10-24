@@ -12,7 +12,7 @@
             'DebugTalk'.encode('ascii'),
             ''.join(args).encode('ascii'),
             hashlib.sha1).hexdigest()"
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string_lambda(15)}
         - os_platform: 'ios'
@@ -43,7 +43,7 @@
 
 - test:
     name: create user which does not exist
-    variable_binds:
+    variables:
         - user_name: "user1"
         - user_password: "123456"
     request:

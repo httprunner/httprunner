@@ -18,11 +18,11 @@ class VariableBindsUnittest(unittest.TestCase):
         self.assertIn("get_timestamp", self.context.testset_functions_config)
         self.assertIn("gen_random_string", self.context.testset_functions_config)
 
-        variable_binds = [
+        variables = [
             {"random": "${gen_random_string(5)}"},
             {"timestamp10": "${get_timestamp(10)}"}
         ]
-        self.context.bind_variables(variable_binds)
+        self.context.bind_variables(variables)
         context_variables = self.context.get_testcase_variables_mapping()
 
         self.assertEqual(len(context_variables["random"]), 5)
@@ -31,7 +31,7 @@ class VariableBindsUnittest(unittest.TestCase):
     def test_context_bind_testset_variables(self):
         # testcase in JSON format
         testcase1 = {
-            "variable_binds": [
+            "variables": [
                 {"GLOBAL_TOKEN": "debugtalk"},
                 {"token": "$GLOBAL_TOKEN"}
             ]
@@ -40,8 +40,8 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase2 = self.testcases["bind_variables"]
 
         for testcase in [testcase1, testcase2]:
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds, level="testset")
+            variables = testcase['variables']
+            self.context.bind_variables(variables, level="testset")
 
             testset_variables = self.context.testset_shared_variables_mapping
             testcase_variables = self.context.get_testcase_variables_mapping()
@@ -54,7 +54,7 @@ class VariableBindsUnittest(unittest.TestCase):
 
     def test_context_bind_testcase_variables(self):
         testcase1 = {
-            "variable_binds": [
+            "variables": [
                 {"GLOBAL_TOKEN": "debugtalk"},
                 {"token": "$GLOBAL_TOKEN"}
             ]
@@ -62,8 +62,8 @@ class VariableBindsUnittest(unittest.TestCase):
         testcase2 = self.testcases["bind_variables"]
 
         for testcase in [testcase1, testcase2]:
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            variables = testcase['variables']
+            self.context.bind_variables(variables)
 
             testset_variables = self.context.testset_shared_variables_mapping
             testcase_variables = self.context.get_testcase_variables_mapping()
@@ -80,7 +80,7 @@ class VariableBindsUnittest(unittest.TestCase):
                 "add_one": lambda x: x + 1,
                 "add_two_nums": lambda x, y: x + y
             },
-            "variable_binds": [
+            "variables": [
                 {"add1": "${add_one(2)}"},
                 {"sum2nums": "${add_two_nums(2,3)}"}
             ]
@@ -91,8 +91,8 @@ class VariableBindsUnittest(unittest.TestCase):
             function_binds = testcase.get('function_binds', {})
             self.context.bind_functions(function_binds)
 
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            variables = testcase['variables']
+            self.context.bind_variables(variables)
 
             context_variables = self.context.get_testcase_variables_mapping()
             self.assertIn("add1", context_variables)
@@ -107,7 +107,7 @@ class VariableBindsUnittest(unittest.TestCase):
                 "gen_random_string": "lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(str_len))",
                 "gen_md5": "lambda *str_args: hashlib.md5(''.join(str_args).encode('utf-8')).hexdigest()"
             },
-            "variable_binds": [
+            "variables": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
                 {"data": '{"name": "user", "password": "123456"}'},
@@ -123,8 +123,8 @@ class VariableBindsUnittest(unittest.TestCase):
             function_binds = testcase.get('function_binds', {})
             self.context.bind_functions(function_binds)
 
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            variables = testcase['variables']
+            self.context.bind_variables(variables)
             context_variables = self.context.get_testcase_variables_mapping()
 
             self.assertIn("TOKEN", context_variables)
@@ -144,7 +144,7 @@ class VariableBindsUnittest(unittest.TestCase):
     def test_import_module_items(self):
         testcase1 = {
             "import_module_items": ["tests.data.debugtalk"],
-            "variable_binds": [
+            "variables": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
                 {"data": '{"name": "user", "password": "123456"}'},
@@ -157,8 +157,8 @@ class VariableBindsUnittest(unittest.TestCase):
             module_items = testcase.get('import_module_items', [])
             self.context.import_module_items(module_items)
 
-            variable_binds = testcase['variable_binds']
-            self.context.bind_variables(variable_binds)
+            variables = testcase['variables']
+            self.context.bind_variables(variables)
             context_variables = self.context.get_testcase_variables_mapping()
 
             self.assertIn("TOKEN", context_variables)
@@ -182,7 +182,7 @@ class VariableBindsUnittest(unittest.TestCase):
         test_runner = runner.Runner()
         testcase = {
             "import_module_items": ["tests.data.debugtalk"],
-            "variable_binds": [
+            "variables": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
                 {"data": '{"name": "user", "password": "123456"}'},
@@ -206,7 +206,7 @@ class VariableBindsUnittest(unittest.TestCase):
         self.assertIn("random", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["random"]), 5)
         self.assertIn("data", parsed_request)
-        self.assertEqual(parsed_request["data"], testcase["variable_binds"][2]["data"])
+        self.assertEqual(parsed_request["data"], testcase["variables"][2]["data"])
         self.assertEqual(parsed_request["headers"]["SECRET_KEY"], "DebugTalk")
 
     def test_exec_content_functions(self):
