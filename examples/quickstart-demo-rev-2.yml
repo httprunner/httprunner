@@ -1,6 +1,6 @@
 - test:
     name: get token
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'

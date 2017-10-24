@@ -154,7 +154,7 @@ In actual scenarios, each user's `device_sn` is different, so we should paramete
 
 However, the test cases are only `YAML` documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine `Python` scripts with `YAML/JSON` test cases in `ApiTestEngine`.
 
-To achieve this goal, we can utilize `debugtalk.py` plugin and `variable_binds` mechanisms.
+To achieve this goal, we can utilize `debugtalk.py` plugin and `variables` mechanisms.
 
 To be specific, we can create a Python file (`examples/debugtalk.py`) and implement the related algorithm in it. The `debugtalk.py` file can not only be located beside `YAML/JSON` testset file, but also can be in any upward recursive folder. Since we want `debugtalk.py` to be importable, we should put a `__init__.py` in its folder to make it as a Python module.
 
@@ -187,7 +187,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
 ```yaml
 - test:
     name: get token
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
@@ -226,7 +226,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
 
 In this revised test case, `variable reference` and `function invoke` mechanisms are both used.
 
-To make fields like `device_sn` can be used more than once, we bind values to variables in `variable_binds` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
+To make fields like `device_sn` can be used more than once, we bind values to variables in `variables` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
 
 When we want to reference a variable in the test case, we can do this with a escape character `$`. For example, `$user_agent` will not be taken as a normal string, and `ApiTestEngine` will consider it as a variable named `user_agent`, search and return its binding value.
 
@@ -244,7 +244,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
 # examples/quickstart-demo-rev-3.yml
 - config:
     name: "smoketest for CRUD users."
-    variable_binds:
+    variables:
         - device_sn: ${gen_random_string(15)}
     request:
         base_url: http://127.0.0.1:5000
@@ -253,7 +253,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
 
 - test:
     name: get token
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - os_platform: 'ios'
         - app_version: '2.8.6'
