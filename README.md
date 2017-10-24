@@ -5,7 +5,7 @@
 
 ## Design Philosophy
 
-Take full reuse of Python's existing powerful libraries: [`Requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achieve the goal of API automation test, production environment monitoring, and API performance test, with a concise and  elegant manner.
+Take full reuse of Python's existing powerful libraries: [`Requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achieve the goal of API automation test, production environment monitoring, and API performance test, with a concise and elegant manner.
 
 ## Key Features
 
@@ -15,9 +15,8 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - With `debugtalk.py` plugin, module functions can be auto-discovered in recursive upward directories.
 - Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
-- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring.
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
-- It is extensible to facilitate the implementation of web platform with [`Flask`][flask] framework.
+- CLI command supported, perfect combination with [Jenkins][Jenkins].
 
 [*`Background Introduction (中文版)`*](docs/background-CN.md) | [*`Feature Descriptions (中文版)`*](docs/feature-descriptions-CN.md)
 
@@ -39,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.7.4
+ApiTestEngine version: 0.7.5
 ```
 
 Execute the command `ate -h` to view command help.
@@ -47,10 +46,10 @@ Execute the command `ate -h` to view command help.
 ```text
 $ ate -h
 usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-           [--failfast]
+           [--failfast] [--startproject STARTPROJECT]
            [testset_paths [testset_paths ...]]
 
-Api Test Engine.
+ApiTestEngine.
 
 positional arguments:
   testset_paths         testset file path
@@ -63,6 +62,8 @@ optional arguments:
   --report-name REPORT_NAME
                         Specify report name, default is generated time.
   --failfast            Stop the test run on the first error or failure.
+  --startproject STARTPROJECT
+                        Specify new project name.
 ```
 
 ## Write testcases
@@ -233,5 +234,4 @@ $ python main-locust -h
 [flask]: http://flask.pocoo.org/
 [PyUnitReport]: https://github.com/debugtalk/PyUnitReport
 [Jenkins]: https://jenkins.io/index.html
-[jenkins-mail-py]: https://github.com/debugtalk/jenkins-mail-py.git
 [quickstart]: docs/quickstart.md
