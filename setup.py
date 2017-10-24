@@ -30,26 +30,20 @@ setup(
         "PyUnitReport"
     ],
     extras_require={
-        'mail': [
-            "jenkins-mail-py"
-        ],
-        'locust': [
+        'locustio': [
             "locustio"
         ]
     },
     dependency_links=[
         "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0",
-        "git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py-0",
         "git+https://github.com/locustio/locust.git#egg=locust-0"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7-dev'
+        'Programming Language :: Python :: 3.6'
     ],
     entry_points={
         'console_scripts': [
