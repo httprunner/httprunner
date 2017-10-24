@@ -202,7 +202,7 @@ Enjoy!
 
 ## Supported Python Versions
 
-Python `2.7`, `3.3`, `3.4`, `3.5` and `3.6`.
+Python `2.7`, `3.4`, `3.5` and `3.6`.
 
 `ApiTestEngine` has been tested on `macOS`, `Linux` and `Windows` platforms.
 
