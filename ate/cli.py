@@ -35,12 +35,6 @@ def main_ate():
         '--startproject',
         help="Specify new project name.")
 
-    try:
-        from jenkins_mail_py import MailgunHelper
-        mailer = MailgunHelper(parser)
-    except ImportError:
-        mailer = None
-
     args = parser.parse_args()
 
     if args.version:
@@ -63,7 +57,7 @@ def main_ate():
                         report name is ignored, use generated time instead.")
 
     results = {}
-    subject = "SUCCESS"
+    success = True
 
     for testset_path in set(args.testset_paths):
 
@@ -86,16 +80,12 @@ def main_ate():
         })
 
         if len(result.successes) != result.testsRun:
-            subject = "FAILED"
+            success = False
 
         for task in task_suite.tasks:
             task.print_output()
 
-    flag_code = 0 if subject == "SUCCESS" else 1
-    if mailer and mailer.config_ready:
-        mailer.send_mail(subject, results, flag_code)
-
-    return flag_code
+    return 0 if success is True else 1
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
