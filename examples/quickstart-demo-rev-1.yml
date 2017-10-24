@@ -10,7 +10,7 @@
             app_version: 2.8.6
         json:
             sign: 19067cf712265eb5426db8d3664026c1ccea02b9
-    extract_binds:
+    extractors:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
