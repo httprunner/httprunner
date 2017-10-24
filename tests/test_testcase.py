@@ -210,17 +210,17 @@ class TestcaseParserUnittest(unittest.TestCase):
 
     def test_parse_content_with_bindings_functions(self):
         import random, string
-        functions_binds = {
+        functions = {
             "gen_random_string": lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
                 for _ in range(str_len))
         }
-        testcase_parser = testcase.TestcaseParser(functions_binds=functions_binds)
+        testcase_parser = testcase.TestcaseParser(functions=functions)
 
         result = testcase_parser.parse_content_with_bindings("${gen_random_string(5)}")
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
-        functions_binds["add_two_nums"] = add_two_nums
+        functions["add_two_nums"] = add_two_nums
         self.assertEqual(
             testcase_parser.parse_content_with_bindings("${add_two_nums(1)}"),
             2
@@ -265,10 +265,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_eval_content_functions(self):
-        functions_binds = {
+        functions = {
             "add_two_nums": lambda a, b=1: a + b
         }
-        testcase_parser = testcase.TestcaseParser(functions_binds=functions_binds)
+        testcase_parser = testcase.TestcaseParser(functions=functions)
         self.assertEqual(
             testcase_parser.eval_content_functions("${add_two_nums(1, 2)}"),
             3
@@ -295,7 +295,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
             "data": {"name": "user", "password": "123456"}
         }
-        functions_binds = {
+        functions = {
             "add_two_nums": lambda a, b=1: a + b,
             "get_timestamp": lambda: int(time.time() * 1000)
         }
@@ -310,7 +310,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             },
             "body": "$data"
         }
-        parsed_testcase = testcase.TestcaseParser(variables, functions_binds)\
+        parsed_testcase = testcase.TestcaseParser(variables, functions)\
             .parse_content_with_bindings(testcase_template)
 
         self.assertEqual(
