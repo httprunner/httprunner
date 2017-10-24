@@ -84,7 +84,7 @@ class Runner(object):
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },
-                "extract_binds": [], # optional
+                "extractors": [], # optional
                 "validators": [],    # optional
                 "setup": [],         # optional
                 "teardown": []       # optional
@@ -100,7 +100,9 @@ class Runner(object):
             raise exception.ParamsError("URL or METHOD missed!")
 
         run_times = int(testcase.get("times", 1))
-        extract_binds = testcase.get("extract_binds", [])
+        extractors = testcase.get("extractors") \
+            or testcase.get("extractor") \
+            or testcase.get("extract_binds", [])
         validators = testcase.get("validators", [])
         setup_actions = testcase.get("setup", [])
         teardown_actions = testcase.get("teardown", [])
@@ -115,7 +117,7 @@ class Runner(object):
             resp = self.http_client_session.request(url=url, method=method, **parsed_request)
             resp_obj = response.ResponseObject(resp)
 
-            extracted_variables_mapping = resp_obj.extract_response(extract_binds)
+            extracted_variables_mapping = resp_obj.extract_response(extractors)
             self.context.bind_variables(extracted_variables_mapping, level="testset")
 
             resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
@@ -142,7 +144,7 @@ class Runner(object):
                             "name": "testcase description",
                             "variable_binds": [], # optional, override
                             "request": {},
-                            "extract_binds": {},  # optional
+                            "extractors": {},  # optional
                             "validators": {}      # optional
                         },
                         testcase12

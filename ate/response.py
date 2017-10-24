@@ -56,9 +56,9 @@ class ResponseObject(object):
         except AttributeError:
             raise exception.ParseResponseError("failed to extract bind variable in response!")
 
-    def extract_response(self, extract_binds):
+    def extract_response(self, extractors):
         """ extract content from requests.Response
-        @param (list) extract_binds
+        @param (list) extractors
             [
                 {"resp_status_code": "status_code"},
                 {"resp_headers_content_type": "headers.content-type"},
@@ -68,11 +68,11 @@ class ResponseObject(object):
         @return (OrderDict) variable binds ordered dict
         """
         extracted_variables_mapping = OrderedDict()
-        extract_binds_order_dict = utils.convert_to_order_dict(extract_binds)
+        extract_binds_order_dict = utils.convert_to_order_dict(extractors)
 
         for key, field in extract_binds_order_dict.items():
             if not isinstance(field, utils.string_type):
-                raise exception.ParamsError("invalid extract_binds in testcase extract_binds!")
+                raise exception.ParamsError("invalid extractors in testcase!")
 
             extracted_variables_mapping[key] = self.extract_field(field)
 
