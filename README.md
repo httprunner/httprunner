@@ -15,7 +15,7 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - With `debugtalk.py` plugin, module functions can be auto-discovered in recursive upward directories.
 - Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
-- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring. Send mail notification with [`jenkins-mail-py`][jenkins-mail-py].
+- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring.
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
 - It is extensible to facilitate the implementation of web platform with [`Flask`][flask] framework.
 
@@ -63,70 +63,6 @@ optional arguments:
   --report-name REPORT_NAME
                         Specify report name, default is generated time.
   --failfast            Stop the test run on the first error or failure.
-```
-
-### use `jenkins-mail-py` plugin
-
-If you want to use `ApiTestEngine` with Jenkins, you may need to send mail notification, and [`jenkins-mail-py`][jenkins-mail-py] will be of great help.
-
-To install mail helper, run this command in your terminal:
-
-```text
-$ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
-$ ate -V
-jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.7.4
-```
-
-With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
-
-```text
-$ ate -h
-usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-           [--failfast] [--startproject STARTPROJECT]
-           [--mailgun-smtp-username MAILGUN_SMTP_USERNAME]
-           [--mailgun-smtp-password MAILGUN_SMTP_PASSWORD]
-           [--mail-sender MAIL_SENDER]
-           [--mail-recepients [MAIL_RECEPIENTS [MAIL_RECEPIENTS ...]]]
-           [--mail-subject MAIL_SUBJECT] [--mail-content MAIL_CONTENT]
-           [--jenkins-job-name JENKINS_JOB_NAME]
-           [--jenkins-job-url JENKINS_JOB_URL]
-           [--jenkins-build-number JENKINS_BUILD_NUMBER]
-           [testset_paths [testset_paths ...]]
-
-Api Test Engine.
-
-positional arguments:
-  testset_paths         testset file path
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -V, --version         show version
-  --log-level LOG_LEVEL
-                        Specify logging level, default is INFO.
-  --report-name REPORT_NAME
-                        Specify report name, default is generated time.
-  --failfast            Stop the test run on the first error or failure.
-  --startproject STARTPROJECT
-                        Specify new project name.
-  --mailgun-smtp-username MAILGUN_SMTP_USERNAME
-                        Specify mailgun smtp username.
-  --mailgun-smtp-password MAILGUN_SMTP_PASSWORD
-                        Specify mailgun smtp password.
-  --mail-sender MAIL_SENDER
-                        Specify email sender.
-  --mail-recepients [MAIL_RECEPIENTS [MAIL_RECEPIENTS ...]]
-                        Specify email recepients.
-  --mail-subject MAIL_SUBJECT
-                        Specify email subject.
-  --mail-content MAIL_CONTENT
-                        Specify email content.
-  --jenkins-job-name JENKINS_JOB_NAME
-                        Specify jenkins job name.
-  --jenkins-job-url JENKINS_JOB_URL
-                        Specify jenkins job url.
-  --jenkins-build-number JENKINS_BUILD_NUMBER
-                        Specify jenkins build number.
 ```
 
 ## Write testcases
