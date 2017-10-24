@@ -75,7 +75,7 @@ And here is testset example of typical scenario: get `token` at the beginning, a
 ```yaml
 - config:
     name: "create user testsets."
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'

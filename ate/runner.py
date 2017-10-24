@@ -23,7 +23,7 @@ class Runner(object):
                 "requires": [],         # optional
                 "function_binds": {},   # optional
                 "import_module_items": [],  # optional
-                "variable_binds": [],   # optional
+                "variables": [],   # optional
                 "request": {
                     "base_url": "http://127.0.0.1:5000",
                     "headers": {
@@ -37,7 +37,7 @@ class Runner(object):
                 "requires": [],         # optional
                 "function_binds": {},   # optional
                 "import_module_items": [],  # optional
-                "variable_binds": [],   # optional
+                "variables": [],   # optional
                 "request": {
                     "url": "/api/get-token",
                     "method": "POST",
@@ -71,9 +71,9 @@ class Runner(object):
             {
                 "name": "testcase description",
                 "times": 3,
-                "requires": [],  # optional, override
-                "function_binds": {}, # optional, override
-                "variable_binds": [], # optional, override
+                "requires": [],         # optional, override
+                "function_binds": {},   # optional, override
+                "variables": [],        # optional, override
                 "request": {
                     "url": "http://127.0.0.1:5000/api/users/1000",
                     "method": "POST",
@@ -136,13 +136,13 @@ class Runner(object):
                         "name": "testset description",
                         "requires": [],
                         "function_binds": {},
-                        "variable_binds": [],
+                        "variables": [],
                         "request": {}
                     },
                     "testcases": [
                         {
                             "name": "testcase description",
-                            "variable_binds": [], # optional, override
+                            "variables": [], # optional, override
                             "request": {},
                             "extractors": {},  # optional
                             "validators": {}      # optional
@@ -151,7 +151,7 @@ class Runner(object):
                     ]
                 }
             (dict) variables_mapping:
-                passed in variables mapping, it will override variable_binds in config block
+                passed in variables mapping, it will override variables in config block
 
         @return (dict) test result of testset
             {
@@ -162,9 +162,9 @@ class Runner(object):
         success = True
         config_dict = testset.get("config", {})
 
-        variable_binds = config_dict.get("variable_binds", [])
+        variables = config_dict.get("variables", [])
         variables_mapping = variables_mapping or {}
-        config_dict["variable_binds"] = utils.override_variables_binds(variable_binds, variables_mapping)
+        config_dict["variables"] = utils.override_variables_binds(variables, variables_mapping)
 
         self.init_config(config_dict, level="testset")
         testcases = testset.get("testcases", [])
@@ -189,7 +189,7 @@ class Runner(object):
                 - absolute/relative folder path
                 - list/set container with file(s) and/or folder(s)
             (dict) mapping:
-                passed in variables mapping, it will override variable_binds in config block
+                passed in variables mapping, it will override variables in config block
         """
         success = True
         mapping = mapping or {}

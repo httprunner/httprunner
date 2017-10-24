@@ -55,7 +55,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_eval_content_variables(self):
-        variable_binds = {
+        variables = {
             "var_1": "abc",
             "var_2": "def",
             "var_3": 123,
@@ -63,7 +63,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             "var_5": True,
             "var_6": None
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variable_binds)
+        testcase_parser = testcase.TestcaseParser(variables_binds=variables)
         self.assertEqual(
             testcase_parser.eval_content_variables("$var_1"),
             "abc"
@@ -417,7 +417,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         testsets_list = testcase.load_testcases_by_path(path)
-        self.assertIn("variable_binds", testsets_list[0]["config"])
+        self.assertIn("variables", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["testcases"][0])
         self.assertIn("url", testsets_list[0]["testcases"][0]["request"])

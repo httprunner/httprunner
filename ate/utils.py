@@ -369,18 +369,18 @@ def update_ordered_dict(ordered_dict, override_mapping):
 
     return ordered_dict
 
-def override_variables_binds(variable_binds, new_mapping):
-    """ convert variable_binds in testcase to ordered mapping, with new_mapping overrided
+def override_variables_binds(variables, new_mapping):
+    """ convert variables in testcase to ordered mapping, with new_mapping overrided
     """
-    if isinstance(variable_binds, list):
-        variable_binds_ordered_dict = convert_to_order_dict(variable_binds)
-    elif isinstance(variable_binds, OrderedDict):
-        variable_binds_ordered_dict = variable_binds
+    if isinstance(variables, list):
+        variables_ordered_dict = convert_to_order_dict(variables)
+    elif isinstance(variables, OrderedDict):
+        variables_ordered_dict = variables
     else:
-        raise exception.ParamsError("variable_binds error!")
+        raise exception.ParamsError("variables error!")
 
     return update_ordered_dict(
-        variable_binds_ordered_dict,
+        variables_ordered_dict,
         new_mapping
     )
 
