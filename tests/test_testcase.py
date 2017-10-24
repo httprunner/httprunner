@@ -63,7 +63,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             "var_5": True,
             "var_6": None
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         self.assertEqual(
             testcase_parser.eval_content_variables("$var_1"),
             "abc"
@@ -157,11 +157,11 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_parse_content_with_bindings_variables(self):
-        variables_binds = {
+        variables = {
             "str_1": "str_value1",
             "str_2": "str_value2"
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         self.assertEqual(
             testcase_parser.parse_content_with_bindings("$str_1"),
             "str_value1"
@@ -184,11 +184,11 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_parse_content_with_bindings_multiple_identical_variables(self):
-        variables_binds = {
+        variables = {
             "userid": 100,
             "data": 1498
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         content = "/users/$userid/training/$data?userId=$userid&data=$data"
         self.assertEqual(
             testcase_parser.parse_content_with_bindings(content),
@@ -196,12 +196,12 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_parse_variables_multiple_identical_variables(self):
-        variables_binds = {
+        variables = {
             "user": 100,
             "userid": 1000,
             "data": 1498
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         content = "/users/$user/$userid/$data?userId=$userid&data=$data"
         self.assertEqual(
             testcase_parser.parse_content_with_bindings(content),
@@ -289,7 +289,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual(content, "/api/900150983cd24fb0d6963f7d28e17f72")
 
     def test_parse_content_with_bindings_testcase(self):
-        variables_binds = {
+        variables = {
             "uid": "1000",
             "random": "A2dEx",
             "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
@@ -310,7 +310,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             },
             "body": "$data"
         }
-        parsed_testcase = testcase.TestcaseParser(variables_binds, functions_binds)\
+        parsed_testcase = testcase.TestcaseParser(variables, functions_binds)\
             .parse_content_with_bindings(testcase_template)
 
         self.assertEqual(
@@ -319,15 +319,15 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
         self.assertEqual(
             parsed_testcase["headers"]["authorization"],
-            variables_binds["authorization"]
+            variables["authorization"]
         )
         self.assertEqual(
             parsed_testcase["headers"]["random"],
-            variables_binds["random"]
+            variables["random"]
         )
         self.assertEqual(
             parsed_testcase["body"],
-            variables_binds["data"]
+            variables["data"]
         )
         self.assertEqual(
             parsed_testcase["headers"]["sum"],
