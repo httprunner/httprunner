@@ -55,7 +55,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_eval_content_variables(self):
-        variable_binds = {
+        variables = {
             "var_1": "abc",
             "var_2": "def",
             "var_3": 123,
@@ -63,7 +63,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             "var_5": True,
             "var_6": None
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variable_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         self.assertEqual(
             testcase_parser.eval_content_variables("$var_1"),
             "abc"
@@ -157,11 +157,11 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_parse_content_with_bindings_variables(self):
-        variables_binds = {
+        variables = {
             "str_1": "str_value1",
             "str_2": "str_value2"
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         self.assertEqual(
             testcase_parser.parse_content_with_bindings("$str_1"),
             "str_value1"
@@ -184,11 +184,11 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_parse_content_with_bindings_multiple_identical_variables(self):
-        variables_binds = {
+        variables = {
             "userid": 100,
             "data": 1498
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         content = "/users/$userid/training/$data?userId=$userid&data=$data"
         self.assertEqual(
             testcase_parser.parse_content_with_bindings(content),
@@ -196,12 +196,12 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_parse_variables_multiple_identical_variables(self):
-        variables_binds = {
+        variables = {
             "user": 100,
             "userid": 1000,
             "data": 1498
         }
-        testcase_parser = testcase.TestcaseParser(variables_binds=variables_binds)
+        testcase_parser = testcase.TestcaseParser(variables=variables)
         content = "/users/$user/$userid/$data?userId=$userid&data=$data"
         self.assertEqual(
             testcase_parser.parse_content_with_bindings(content),
@@ -210,17 +210,17 @@ class TestcaseParserUnittest(unittest.TestCase):
 
     def test_parse_content_with_bindings_functions(self):
         import random, string
-        functions_binds = {
+        functions = {
             "gen_random_string": lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
                 for _ in range(str_len))
         }
-        testcase_parser = testcase.TestcaseParser(functions_binds=functions_binds)
+        testcase_parser = testcase.TestcaseParser(functions=functions)
 
         result = testcase_parser.parse_content_with_bindings("${gen_random_string(5)}")
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
-        functions_binds["add_two_nums"] = add_two_nums
+        functions["add_two_nums"] = add_two_nums
         self.assertEqual(
             testcase_parser.parse_content_with_bindings("${add_two_nums(1)}"),
             2
@@ -265,10 +265,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_eval_content_functions(self):
-        functions_binds = {
+        functions = {
             "add_two_nums": lambda a, b=1: a + b
         }
-        testcase_parser = testcase.TestcaseParser(functions_binds=functions_binds)
+        testcase_parser = testcase.TestcaseParser(functions=functions)
         self.assertEqual(
             testcase_parser.eval_content_functions("${add_two_nums(1, 2)}"),
             3
@@ -289,13 +289,13 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertEqual(content, "/api/900150983cd24fb0d6963f7d28e17f72")
 
     def test_parse_content_with_bindings_testcase(self):
-        variables_binds = {
+        variables = {
             "uid": "1000",
             "random": "A2dEx",
             "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
             "data": {"name": "user", "password": "123456"}
         }
-        functions_binds = {
+        functions = {
             "add_two_nums": lambda a, b=1: a + b,
             "get_timestamp": lambda: int(time.time() * 1000)
         }
@@ -310,7 +310,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             },
             "body": "$data"
         }
-        parsed_testcase = testcase.TestcaseParser(variables_binds, functions_binds)\
+        parsed_testcase = testcase.TestcaseParser(variables, functions)\
             .parse_content_with_bindings(testcase_template)
 
         self.assertEqual(
@@ -319,15 +319,15 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
         self.assertEqual(
             parsed_testcase["headers"]["authorization"],
-            variables_binds["authorization"]
+            variables["authorization"]
         )
         self.assertEqual(
             parsed_testcase["headers"]["random"],
-            variables_binds["random"]
+            variables["random"]
         )
         self.assertEqual(
             parsed_testcase["body"],
-            variables_binds["data"]
+            variables["data"]
         )
         self.assertEqual(
             parsed_testcase["headers"]["sum"],
@@ -417,7 +417,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         testsets_list = testcase.load_testcases_by_path(path)
-        self.assertIn("variable_binds", testsets_list[0]["config"])
+        self.assertIn("variables", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["testcases"][0])
         self.assertIn("url", testsets_list[0]["testcases"][0]["request"])

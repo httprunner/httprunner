@@ -5,7 +5,7 @@
 
 ## Design Philosophy
 
-Take full reuse of Python's existing powerful libraries: [`Requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achieve the goal of API automation test, production environment monitoring, and API performance test, with a concise and  elegant manner.
+Take full reuse of Python's existing powerful libraries: [`Requests`][requests], [`unittest`][unittest] and [`Locust`][Locust]. And achieve the goal of API automation test, production environment monitoring, and API performance test, with a concise and elegant manner.
 
 ## Key Features
 
@@ -15,9 +15,8 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - With `debugtalk.py` plugin, module functions can be auto-discovered in recursive upward directories.
 - Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
-- Perfect combination with [Jenkins][Jenkins], running continuous integration test and production environment monitoring. Send mail notification with [`jenkins-mail-py`][jenkins-mail-py].
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
-- It is extensible to facilitate the implementation of web platform with [`Flask`][flask] framework.
+- CLI command supported, perfect combination with [Jenkins][Jenkins].
 
 [*`Background Introduction (中文版)`*](docs/background-CN.md) | [*`Feature Descriptions (中文版)`*](docs/feature-descriptions-CN.md)
 
@@ -39,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.7.4
+ApiTestEngine version: 0.7.5
 ```
 
 Execute the command `ate -h` to view command help.
@@ -47,10 +46,10 @@ Execute the command `ate -h` to view command help.
 ```text
 $ ate -h
 usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-           [--failfast]
+           [--failfast] [--startproject STARTPROJECT]
            [testset_paths [testset_paths ...]]
 
-Api Test Engine.
+ApiTestEngine.
 
 positional arguments:
   testset_paths         testset file path
@@ -63,65 +62,8 @@ optional arguments:
   --report-name REPORT_NAME
                         Specify report name, default is generated time.
   --failfast            Stop the test run on the first error or failure.
-```
-
-### use `jenkins-mail-py` plugin
-
-If you want to use `ApiTestEngine` with Jenkins, you may need to send mail notification, and [`jenkins-mail-py`][jenkins-mail-py] will be of great help.
-
-To install mail helper, run this command in your terminal:
-
-```text
-$ pip install -U git+https://github.com/debugtalk/jenkins-mail-py.git#egg=jenkins-mail-py
-$ ate -V
-jenkins-mail-py version: 0.2.5
-ApiTestEngine version: 0.7.4
-```
-
-With [`jenkins-mail-py`][jenkins-mail-py] installed, you can see more optional arguments.
-
-```text
-$ ate -h
-usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-           [--failfast] [--mailgun-api-id MAILGUN_API_ID]
-           [--mailgun-api-key MAILGUN_API_KEY] [--email-sender EMAIL_SENDER]
-           [--email-recepients EMAIL_RECEPIENTS] [--mail-subject MAIL_SUBJECT]
-           [--mail-content MAIL_CONTENT] [--jenkins-job-name JENKINS_JOB_NAME]
-           [--jenkins-job-url JENKINS_JOB_URL]
-           [--jenkins-build-number JENKINS_BUILD_NUMBER]
-           [testset_paths [testset_paths ...]]
-
-Api Test Engine.
-
-positional arguments:
-  testset_paths         testset file path
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -V, --version         show version
-  --log-level LOG_LEVEL
-                        Specify logging level, default is INFO.
-  --report-name REPORT_NAME
-                        Specify report name, default is generated time.
-  --failfast            Stop the test run on the first error or failure.
-  --mailgun-api-id MAILGUN_API_ID
-                        Specify mailgun api id.
-  --mailgun-api-key MAILGUN_API_KEY
-                        Specify mailgun api key.
-  --email-sender EMAIL_SENDER
-                        Specify email sender.
-  --email-recepients EMAIL_RECEPIENTS
-                        Specify email recepients.
-  --mail-subject MAIL_SUBJECT
-                        Specify email subject.
-  --mail-content MAIL_CONTENT
-                        Specify email content.
-  --jenkins-job-name JENKINS_JOB_NAME
-                        Specify jenkins job name.
-  --jenkins-job-url JENKINS_JOB_URL
-                        Specify jenkins job url.
-  --jenkins-build-number JENKINS_BUILD_NUMBER
-                        Specify jenkins build number.
+  --startproject STARTPROJECT
+                        Specify new project name.
 ```
 
 ## Write testcases
@@ -133,7 +75,7 @@ And here is testset example of typical scenario: get `token` at the beginning, a
 ```yaml
 - config:
     name: "create user testsets."
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
@@ -156,7 +98,7 @@ And here is testset example of typical scenario: get `token` at the beginning, a
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extract_binds:
+    extractors:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
@@ -207,8 +149,8 @@ When you do continuous integration test or production environment monitoring wit
 
 ```text
 $ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
-    --mailgun-api-id samples.mailgun.org \
-    --mailgun-api-key key-3ax6xnjp29jd6fds4gc373sgvjxteol0 \
+    --mailgun-smtp-username "qa@debugtalk.com" \
+    --mailgun-smtp-password "12345678" \
     --email-sender excited@samples.mailgun.org \
     --email-recepients ${MAIL_RECEPIENTS} \
     --jenkins-job-name ${JOB_NAME} \
@@ -260,7 +202,7 @@ Enjoy!
 
 ## Supported Python Versions
 
-Python `2.7`, `3.3`, `3.4`, `3.5` and `3.6`.
+Python `2.7`, `3.4`, `3.5` and `3.6`.
 
 `ApiTestEngine` has been tested on `macOS`, `Linux` and `Windows` platforms.
 
@@ -292,5 +234,4 @@ $ python main-locust -h
 [flask]: http://flask.pocoo.org/
 [PyUnitReport]: https://github.com/debugtalk/PyUnitReport
 [Jenkins]: https://jenkins.io/index.html
-[jenkins-mail-py]: https://github.com/debugtalk/jenkins-mail-py.git
 [quickstart]: docs/quickstart.md

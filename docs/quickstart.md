@@ -120,7 +120,7 @@ To fix this problem, we should correlate `token` field in the second API test ca
             app_version: 2.8.6
         json:
             sign: 19067cf712265eb5426db8d3664026c1ccea02b9
-    extract_binds:
+    extractors:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
@@ -142,7 +142,7 @@ To fix this problem, we should correlate `token` field in the second API test ca
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
 
-As you see, the `token` field is no longer hardcoded, instead it is extracted from the first API request with `extract_binds` mechanism. In the meanwhile, it is assigned to `token` variable, which can be referenced by the subsequent API requests.
+As you see, the `token` field is no longer hardcoded, instead it is extracted from the first API request with `extractors` mechanism. In the meanwhile, it is assigned to `token` variable, which can be referenced by the subsequent API requests.
 
 Now we save the test cases to [`quickstart-demo-rev-1.yml`][quickstart-demo-rev-1] and rerun it, and we will find that both API requests to be successful.
 
@@ -154,7 +154,7 @@ In actual scenarios, each user's `device_sn` is different, so we should paramete
 
 However, the test cases are only `YAML` documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine `Python` scripts with `YAML/JSON` test cases in `ApiTestEngine`.
 
-To achieve this goal, we can utilize `debugtalk.py` plugin and `variable_binds` mechanisms.
+To achieve this goal, we can utilize `debugtalk.py` plugin and `variables` mechanisms.
 
 To be specific, we can create a Python file (`examples/debugtalk.py`) and implement the related algorithm in it. The `debugtalk.py` file can not only be located beside `YAML/JSON` testset file, but also can be in any upward recursive folder. Since we want `debugtalk.py` to be importable, we should put a `__init__.py` in its folder to make it as a Python module.
 
@@ -187,7 +187,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
 ```yaml
 - test:
     name: get token
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
@@ -202,7 +202,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extract_binds:
+    extractors:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
@@ -226,7 +226,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
 
 In this revised test case, `variable reference` and `function invoke` mechanisms are both used.
 
-To make fields like `device_sn` can be used more than once, we bind values to variables in `variable_binds` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
+To make fields like `device_sn` can be used more than once, we bind values to variables in `variables` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
 
 When we want to reference a variable in the test case, we can do this with a escape character `$`. For example, `$user_agent` will not be taken as a normal string, and `ApiTestEngine` will consider it as a variable named `user_agent`, search and return its binding value.
 
@@ -244,7 +244,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
 # examples/quickstart-demo-rev-3.yml
 - config:
     name: "smoketest for CRUD users."
-    variable_binds:
+    variables:
         - device_sn: ${gen_random_string(15)}
     request:
         base_url: http://127.0.0.1:5000
@@ -253,7 +253,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
 
 - test:
     name: get token
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - os_platform: 'ios'
         - app_version: '2.8.6'
@@ -266,7 +266,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extract_binds:
+    extractors:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
