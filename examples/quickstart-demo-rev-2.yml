@@ -1,6 +1,6 @@
 - test:
     name: get token
-    variable_binds:
+    variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
@@ -15,7 +15,7 @@
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extract_binds:
+    extractors:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
