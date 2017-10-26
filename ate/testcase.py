@@ -329,14 +329,14 @@ def substitute_variables_with_mapping(content, mapping):
 
 class TestcaseParser(object):
 
-    def __init__(self, variables_binds={}, functions_binds={}, file_path=None):
-        self.bind_variables(variables_binds)
-        self.bind_functions(functions_binds)
+    def __init__(self, variables={}, functions={}, file_path=None):
+        self.bind_variables(variables)
+        self.bind_functions(functions)
         self.file_path = file_path
 
-    def bind_variables(self, variables_binds):
+    def bind_variables(self, variables):
         """ bind variables to current testcase parser
-        @param (dict) variables_binds, variables binds mapping
+        @param (dict) variables, variables binds mapping
             {
                 "authorization": "a83de0ff8d2e896dbd8efb81ba14e17d",
                 "random": "A2dEx",
@@ -344,24 +344,24 @@ class TestcaseParser(object):
                 "uuid": 1000
             }
         """
-        self.variables_binds = variables_binds
+        self.variables = variables
 
-    def bind_functions(self, functions_binds):
+    def bind_functions(self, functions):
         """ bind functions to current testcase parser
-        @param (dict) functions_binds, functions binds mapping
+        @param (dict) functions, functions binds mapping
             {
                 "add_two_nums": lambda a, b=1: a + b
             }
         """
-        self.functions_binds = functions_binds
+        self.functions = functions
 
     def get_bind_item(self, item_type, item_name):
         if item_type == "function":
-            if item_name in self.functions_binds:
-                return self.functions_binds[item_name]
+            if item_name in self.functions:
+                return self.functions[item_name]
         elif item_type == "variable":
-            if item_name in self.variables_binds:
-                return self.variables_binds[item_name]
+            if item_name in self.variables:
+                return self.variables[item_name]
         else:
             raise exception.ParamsError("bind item should only be function or variable.")
 
