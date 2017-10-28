@@ -1,6 +1,5 @@
 #coding: utf-8
 import zmq
-import os
 from locust import HttpLocust, TaskSet, task
 from ate import runner, exception
 
