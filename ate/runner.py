@@ -124,8 +124,9 @@ class Runner(object):
             try:
                 resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
             except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
-                text = "Exception occured. HTTP response content shows below: \n{}".format(resp.text)
-                logging.error(text)
+                logging.error("Exception occured.")
+                logging.error("HTTP request kwargs: \n{}".format(parsed_request))
+                logging.error("HTTP response content: \n{}".format(resp.text))
                 raise
 
             setup_teardown(teardown_actions)
