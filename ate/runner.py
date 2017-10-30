@@ -97,6 +97,7 @@ class Runner(object):
         try:
             url = parsed_request.pop('url')
             method = parsed_request.pop('method')
+            group_name = parsed_request.pop("group", None)
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
@@ -115,7 +116,12 @@ class Runner(object):
         for _ in range(run_times):
             setup_teardown(setup_actions)
 
-            resp = self.http_client_session.request(url=url, method=method, **parsed_request)
+            resp = self.http_client_session.request(
+                method,
+                url,
+                name=group_name,
+                **parsed_request
+            )
             resp_obj = response.ResponseObject(resp)
 
             extracted_variables_mapping = resp_obj.extract_response(extractors)
