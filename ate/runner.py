@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 
 from ate import exception, response, testcase, utils
@@ -120,7 +121,12 @@ class Runner(object):
             extracted_variables_mapping = resp_obj.extract_response(extractors)
             self.context.bind_variables(extracted_variables_mapping, level="testset")
 
-            resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
+            try:
+                resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
+            except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
+                text = "Exception occured. HTTP response content shows below: \n{}".format(resp.text)
+                logging.error(text)
+                raise
 
             setup_teardown(teardown_actions)
 
