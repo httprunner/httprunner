@@ -149,6 +149,55 @@ class TestResponse(ApiServerUnittest):
             "abc"
         )
 
+    def test_extract_text_response(self):
+        resp = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'Content-Type': "application/json"
+                },
+                'body': "LB123abcRB789"
+            }
+        )
+
+        extract_binds_list = [
+            {"resp_content_key1": "LB123(.*)RB789"},
+            {"resp_content_key2": "LB[\d]*(.*)RB[\d]*"},
+            {"resp_content_key3": "LB[\d]*(.*)9"}
+        ]
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+        self.assertEqual(
+            extract_binds_dict["resp_content_key1"],
+            "abc"
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_content_key2"],
+            "abc"
+        )
+        self.assertEqual(
+            extract_binds_dict["resp_content_key3"],
+            "abcRB78"
+        )
+
+    def test_extract_text_response_exception(self):
+        resp = requests.post(
+            url="http://127.0.0.1:5000/customize-response",
+            json={
+                'headers': {
+                    'Content-Type': "application/json"
+                },
+                'body': "LB123abcRB789"
+            }
+        )
+        extract_binds_list = [
+            {"resp_content_key1": "LB123.*RB789"}
+        ]
+        resp_obj = response.ResponseObject(resp)
+        with self.assertRaises(exception.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_extract_response_empty(self):
         resp = requests.post(
             url="http://127.0.0.1:5000/customize-response",
@@ -174,7 +223,7 @@ class TestResponse(ApiServerUnittest):
             {"resp_content_body": "content.abc"}
         ]
         resp_obj = response.ResponseObject(resp)
-        with self.assertRaises(exception.ResponseError):
+        with self.assertRaises(exception.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
     def test_validate(self):

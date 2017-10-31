@@ -38,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.7.5
+ApiTestEngine version: 0.7.7
 ```
 
 Execute the command `ate -h` to view command help.
