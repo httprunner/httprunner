@@ -53,7 +53,7 @@ class TestRunner(ApiServerUnittest):
                     "sign": "f1219719911caae89ccc301679857ebfda115ca2"
                 }
             },
-            "extractors": [
+            "extract": [
                 {"token": "content.token"}
             ],
             "validators": [
