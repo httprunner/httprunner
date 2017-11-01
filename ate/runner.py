@@ -86,7 +86,7 @@ class Runner(object):
                     "body": '{"name": "user", "password": "123456"}'
                 },
                 "extract": [], # optional
-                "validators": [],    # optional
+                "validate": [],      # optional
                 "setup": [],         # optional
                 "teardown": []       # optional
             }
@@ -104,7 +104,8 @@ class Runner(object):
         run_times = int(testcase.get("times", 1))
         extractors = testcase.get("extract") \
             or testcase.get("extract_binds", [])
-        validators = testcase.get("validators", [])
+        validators = testcase.get("validate") \
+            or testcase.get("validators", [])
         setup_actions = testcase.get("setup", [])
         teardown_actions = testcase.get("teardown", [])
 
@@ -157,7 +158,7 @@ class Runner(object):
                             "variables": [], # optional, override
                             "request": {},
                             "extract": {},  # optional
-                            "validators": {}      # optional
+                            "validate": {}      # optional
                         },
                         testcase12
                     ]
