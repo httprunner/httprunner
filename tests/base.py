@@ -6,8 +6,10 @@ import requests
 from ate import utils
 from tests import api_server
 
+
 def apprun():
-    _ = api_server.app.run()
+    api_server.app.run()
+
 
 class ApiServerUnittest(unittest.TestCase):
     """ Test case class that sets up an HTTP server which can be used within the tests
