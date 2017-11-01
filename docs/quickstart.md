@@ -65,7 +65,7 @@ Open your favorite text editor and you can write test cases like this.
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
@@ -122,7 +122,7 @@ To fix this problem, we should correlate `token` field in the second API test ca
             sign: 19067cf712265eb5426db8d3664026c1ccea02b9
     extract:
         - token: content.token
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
@@ -137,7 +137,7 @@ To fix this problem, we should correlate `token` field in the second API test ca
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
@@ -204,7 +204,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     extract:
         - token: content.token
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
@@ -219,7 +219,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
@@ -268,7 +268,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     extract:
         - token: content.token
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
@@ -282,7 +282,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```

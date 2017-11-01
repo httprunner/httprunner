@@ -21,7 +21,7 @@
                     "token": "content.token"
                 }
             ],
-            "validators": [
+            "validate": [
                 {"check": "status_code", "comparator": "eq", "expected": 200},
                 {"check": "content.token", "comparator": "len_eq", "expected": 16}
             ]
@@ -43,7 +43,7 @@
                     "password": "123456"
                 }
             },
-            "validators": [
+            "validate": [
                 {"check": "status_code", "comparator": "eq", "expected": 201},
                 {"check": "content.success", "comparator": "eq", "expected": true}
             ]
@@ -65,7 +65,7 @@
                     "password": "123456"
                 }
             },
-            "validators": [
+            "validate": [
                 {"check": "status_code", "comparator": "eq", "expected": 500},
                 {"check": "content.success", "comparator": "eq", "expected": false}
             ]

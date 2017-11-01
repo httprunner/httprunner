@@ -22,14 +22,14 @@
 - test:
     name: reset all users
     api: reset_all($token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.success", "expected": true}
 
 - test:
     name: get user that does not exist
     api: get_user(1000, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 404}
         - {"check": "content.success", "expected": false}
 
@@ -39,14 +39,14 @@
         - user_name: "user1"
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 201}
         - {"check": "content.success", "expected": true}
 
 - test:
     name: get user that has been created
     api: get_user(1000, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.success", "expected": true}
         - {"check": "content.data.password", "expected": "123456"}
@@ -57,7 +57,7 @@
         - user_name: "user1"
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 500}
         - {"check": "content.success", "expected": false}
 
@@ -67,14 +67,14 @@
         - user_name: "user1"
         - user_password: "654321"
     api: update_user(1000, $user_name, $user_password, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.success", "expected": true}
 
 - test:
     name: get user that has been updated
     api: get_user(1000, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.success", "expected": true}
         - {"check": "content.data.password", "expected": "654321"}
@@ -82,21 +82,21 @@
 - test:
     name: get users
     api: get_users($token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.count", "expected": 1}
 
 - test:
     name: delete user that exists
     api: delete_user(1000, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.success", "expected": true}
 
 - test:
     name: get users
     api: get_users($token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.count", "expected": 0}
 
@@ -106,13 +106,13 @@
         - user_name: "user1"
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 201}
         - {"check": "content.success", "expected": true}
 
 - test:
     name: get users
     api: get_users($token)
-    validators:
+    validate:
         - {"check": "status_code", "expected": 200}
         - {"check": "content.count", "expected": 1}
