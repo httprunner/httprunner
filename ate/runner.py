@@ -85,7 +85,7 @@ class Runner(object):
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },
-                "extractors": [], # optional
+                "extract": [], # optional
                 "validators": [],    # optional
                 "setup": [],         # optional
                 "teardown": []       # optional
@@ -102,8 +102,7 @@ class Runner(object):
             raise exception.ParamsError("URL or METHOD missed!")
 
         run_times = int(testcase.get("times", 1))
-        extractors = testcase.get("extractors") \
-            or testcase.get("extractor") \
+        extractors = testcase.get("extract") \
             or testcase.get("extract_binds", [])
         validators = testcase.get("validators", [])
         setup_actions = testcase.get("setup", [])
@@ -157,7 +156,7 @@ class Runner(object):
                             "name": "testcase description",
                             "variables": [], # optional, override
                             "request": {},
-                            "extractors": {},  # optional
+                            "extract": {},  # optional
                             "validators": {}      # optional
                         },
                         testcase12

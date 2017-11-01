@@ -98,7 +98,7 @@ And here is testset example of typical scenario: get `token` at the beginning, a
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extractors:
+    extract:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}

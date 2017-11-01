@@ -120,7 +120,7 @@ To fix this problem, we should correlate `token` field in the second API test ca
             app_version: 2.8.6
         json:
             sign: 19067cf712265eb5426db8d3664026c1ccea02b9
-    extractors:
+    extract:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
@@ -142,7 +142,7 @@ To fix this problem, we should correlate `token` field in the second API test ca
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
 
-As you see, the `token` field is no longer hardcoded, instead it is extracted from the first API request with `extractors` mechanism. In the meanwhile, it is assigned to `token` variable, which can be referenced by the subsequent API requests.
+As you see, the `token` field is no longer hardcoded, instead it is extracted from the first API request with `extract` mechanism. In the meanwhile, it is assigned to `token` variable, which can be referenced by the subsequent API requests.
 
 Now we save the test cases to [`quickstart-demo-rev-1.yml`][quickstart-demo-rev-1] and rerun it, and we will find that both API requests to be successful.
 
@@ -202,7 +202,7 @@ And then, we can revise our demo test case and reference the functions. Suppose 
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extractors:
+    extract:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
@@ -266,7 +266,7 @@ To handle this case, overall `config` block is supported in `ApiTestEngine`. If 
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extractors:
+    extract:
         - token: content.token
     validators:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
