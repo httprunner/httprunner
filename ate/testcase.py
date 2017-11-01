@@ -330,11 +330,11 @@ def substitute_variables_with_mapping(content, mapping):
 class TestcaseParser(object):
 
     def __init__(self, variables={}, functions={}, file_path=None):
-        self.bind_variables(variables)
+        self.update_binded_variables(variables)
         self.bind_functions(functions)
         self.file_path = file_path
 
-    def bind_variables(self, variables):
+    def update_binded_variables(self, variables):
         """ bind variables to current testcase parser
         @param (dict) variables, variables binds mapping
             {
