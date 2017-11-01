@@ -54,7 +54,7 @@ class HttpSession(requests.Session):
         else:
             raise ParamsError("base url missed!")
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, name=None, **kwargs):
         """
         Constructs and sends a :py:class:`requests.Request`.
         Returns :py:class:`requests.Response` object.
@@ -63,6 +63,8 @@ class HttpSession(requests.Session):
             method for the new :class:`Request` object.
         :param url:
             URL for the new :class:`Request` object.
+        :param name: (optional)
+            Placeholder, make compatible with Locust's HttpSession
         :param params: (optional)
             Dictionary or bytes to be sent in the query string for the :class:`Request`.
         :param data: (optional)
