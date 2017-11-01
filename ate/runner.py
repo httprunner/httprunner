@@ -103,6 +103,7 @@ class Runner(object):
 
         run_times = int(testcase.get("times", 1))
         extractors = testcase.get("extract") \
+            or testcase.get("extractors") \
             or testcase.get("extract_binds", [])
         validators = testcase.get("validate") \
             or testcase.get("validators", [])
