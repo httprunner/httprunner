@@ -126,7 +126,7 @@ class Runner(object):
             resp_obj = response.ResponseObject(resp)
 
             extracted_variables_mapping = resp_obj.extract_response(extractors)
-            self.context.bind_variables(extracted_variables_mapping, level="testset")
+            self.context.bind_extracted_variables(extracted_variables_mapping)
 
             try:
                 resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
