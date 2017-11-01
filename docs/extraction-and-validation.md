@@ -24,7 +24,7 @@ Suppose we get the following HTTP response.
 }
 ```
 
-In `extractors` and `validators`, we can do chain operation to extract data field in HTTP response.
+In `extract` and `validate`, we can do chain operation to extract data field in HTTP response.
 
 For instance, if we want to get `Content-Type` in response headers, then we can specify `headers.content-type`; if we want to get `first_name` in response content, we can specify `content.person.name.first_name`.
 
@@ -46,10 +46,10 @@ content.person.cities.1
 ```
 
 ```yaml
-extractors:
+extract:
     - content_type: headers.content-type
     - first_name: content.person.name.first_name
-validators:
+validate:
     - {"check": "status_code", "comparator": "eq", "expected": 200}
     - {"check": "headers.content-type", "expected": "application/json"}
     - {"check": "headers.content-length", "comparator": "gt", "expected": 40}

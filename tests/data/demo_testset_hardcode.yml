@@ -11,9 +11,9 @@
             app_version: '2.8.6'
         json:
             sign: f1219719911caae89ccc301679857ebfda115ca2
-    extractors:
+    extract:
         - token: content.token
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
@@ -29,7 +29,7 @@
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 
@@ -45,6 +45,6 @@
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 500}
         - {"check": "content.success", "comparator": "eq", "expected": false}

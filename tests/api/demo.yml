@@ -10,7 +10,7 @@
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
