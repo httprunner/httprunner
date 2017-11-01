@@ -28,7 +28,7 @@
             sign: $sign
     extract:
         - token: content.token
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
@@ -45,7 +45,7 @@
         json:
             name: $user_name
             password: $user_password
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 
@@ -59,6 +59,6 @@
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 500}
         - {"check": "content.success", "comparator": "eq", "expected": false}

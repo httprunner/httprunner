@@ -421,7 +421,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertIn("request", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["testcases"][0])
         self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
-        self.assertIn("validators", testsets_list[0]["testcases"][0])
+        self.assertIn("validate", testsets_list[0]["testcases"][0])
 
     def test_substitute_variables_with_mapping(self):
         content = {
