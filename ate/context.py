@@ -34,7 +34,7 @@ class Context(object):
         self.testcase_variables_mapping = copy.deepcopy(self.testset_shared_variables_mapping)
 
         self.testcase_parser.bind_functions(self.testcase_functions_config)
-        self.testcase_parser.bind_variables(self.testcase_variables_mapping)
+        self.testcase_parser.update_binded_variables(self.testcase_variables_mapping)
 
         if level == "testset":
             self.import_module_items(["ate.built_in"], "testset")
@@ -117,7 +117,17 @@ class Context(object):
                 self.testset_shared_variables_mapping[variable_name] = variable_evale_value
 
             self.testcase_variables_mapping[variable_name] = variable_evale_value
-            self.testcase_parser.bind_variables(self.testcase_variables_mapping)
+            self.testcase_parser.update_binded_variables(self.testcase_variables_mapping)
+
+    def bind_extracted_variables(self, variables):
+        """ bind extracted variables to testset context
+        @param (OrderDict) variables
+            extracted value do not need to evaluate.
+        """
+        for variable_name, value in variables.items():
+            self.testset_shared_variables_mapping[variable_name] = value
+            self.testcase_variables_mapping[variable_name] = value
+            self.testcase_parser.update_binded_variables(self.testcase_variables_mapping)
 
     def __update_context_functions_config(self, level, config_mapping):
         """

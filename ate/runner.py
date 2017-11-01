@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 
 from ate import exception, response, testcase, utils
@@ -84,8 +85,8 @@ class Runner(object):
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },
-                "extractors": [], # optional
-                "validators": [],    # optional
+                "extract": [], # optional
+                "validate": [],      # optional
                 "setup": [],         # optional
                 "teardown": []       # optional
             }
@@ -96,14 +97,16 @@ class Runner(object):
         try:
             url = parsed_request.pop('url')
             method = parsed_request.pop('method')
+            group_name = parsed_request.pop("group", None)
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
         run_times = int(testcase.get("times", 1))
-        extractors = testcase.get("extractors") \
-            or testcase.get("extractor") \
+        extractors = testcase.get("extract") \
+            or testcase.get("extractors") \
             or testcase.get("extract_binds", [])
-        validators = testcase.get("validators", [])
+        validators = testcase.get("validate") \
+            or testcase.get("validators", [])
         setup_actions = testcase.get("setup", [])
         teardown_actions = testcase.get("teardown", [])
 
@@ -114,13 +117,24 @@ class Runner(object):
         for _ in range(run_times):
             setup_teardown(setup_actions)
 
-            resp = self.http_client_session.request(url=url, method=method, **parsed_request)
+            resp = self.http_client_session.request(
+                method,
+                url,
+                name=group_name,
+                **parsed_request
+            )
             resp_obj = response.ResponseObject(resp)
 
             extracted_variables_mapping = resp_obj.extract_response(extractors)
-            self.context.bind_variables(extracted_variables_mapping, level="testset")
+            self.context.bind_extracted_variables(extracted_variables_mapping)
 
-            resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
+            try:
+                resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
+            except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
+                logging.error("Exception occured.")
+                logging.error("HTTP request kwargs: \n{}".format(parsed_request))
+                logging.error("HTTP response content: \n{}".format(resp.text))
+                raise
 
             setup_teardown(teardown_actions)
 
@@ -144,8 +158,8 @@ class Runner(object):
                             "name": "testcase description",
                             "variables": [], # optional, override
                             "request": {},
-                            "extractors": {},  # optional
-                            "validators": {}      # optional
+                            "extract": {},  # optional
+                            "validate": {}      # optional
                         },
                         testcase12
                     ]

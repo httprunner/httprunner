@@ -38,7 +38,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.7.5
+ApiTestEngine version: 0.7.7
 ```
 
 Execute the command `ate -h` to view command help.
@@ -98,9 +98,9 @@ And here is testset example of typical scenario: get `token` at the beginning, a
             app_version: $app_version
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
-    extractors:
+    extract:
         - token: content.token
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 200}
         - {"check": "content.token", "comparator": "len_eq", "expected": 16}
 
@@ -114,7 +114,7 @@ And here is testset example of typical scenario: get `token` at the beginning, a
         json:
             name: "user1"
             password: "123456"
-    validators:
+    validate:
         - {"check": "status_code", "comparator": "eq", "expected": 201}
         - {"check": "content.success", "comparator": "eq", "expected": true}
 ```
