@@ -66,9 +66,9 @@ class Runner(object):
 
         return parsed_request
 
-    def _run_test(self, testcase):
+    def _run_test(self, testcase_dict):
         """ run single testcase.
-        @param (dict) testcase
+        @param (dict) testcase_dict
             {
                 "name": "testcase description",
                 "times": 3,
@@ -92,7 +92,7 @@ class Runner(object):
             }
         @return True or raise exception during test
         """
-        parsed_request = self.init_config(testcase, level="testcase")
+        parsed_request = self.init_config(testcase_dict, level="testcase")
 
         try:
             url = parsed_request.pop('url')
@@ -101,14 +101,14 @@ class Runner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        run_times = int(testcase.get("times", 1))
-        extractors = testcase.get("extract") \
-            or testcase.get("extractors") \
-            or testcase.get("extract_binds", [])
-        validators = testcase.get("validate") \
-            or testcase.get("validators", [])
-        setup_actions = testcase.get("setup", [])
-        teardown_actions = testcase.get("teardown", [])
+        run_times = int(testcase_dict.get("times", 1))
+        extractors = testcase_dict.get("extract") \
+            or testcase_dict.get("extractors") \
+            or testcase_dict.get("extract_binds", [])
+        validators = testcase_dict.get("validate") \
+            or testcase_dict.get("validators", [])
+        setup_actions = testcase_dict.get("setup", [])
+        teardown_actions = testcase_dict.get("teardown", [])
 
         def setup_teardown(actions):
             for action in actions:
@@ -182,9 +182,9 @@ class Runner(object):
 
         self.init_config(config_dict, level="testset")
         testcases = testset.get("testcases", [])
-        for testcase in testcases:
+        for testcase_dict in testcases:
             try:
-                assert self._run_test(testcase)
+                assert self._run_test(testcase_dict)
             except AssertionError:
                 success = False
 
