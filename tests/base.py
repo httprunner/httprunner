@@ -7,6 +7,10 @@ from ate import utils
 from tests import api_server
 
 
+def apprun():
+    api_server.app.run()
+
+
 class ApiServerUnittest(unittest.TestCase):
     """ Test case class that sets up an HTTP server which can be used within the tests
     """
@@ -15,7 +19,7 @@ class ApiServerUnittest(unittest.TestCase):
     def setUpClass(cls):
         cls.host = "http://127.0.0.1:5000"
         cls.api_server_process = multiprocessing.Process(
-            target=api_server.app.run
+            target=apprun
         )
         cls.api_server_process.start()
         time.sleep(0.1)
