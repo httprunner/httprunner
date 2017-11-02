@@ -131,11 +131,12 @@ class Runner(object):
             try:
                 resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
             except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
-                logging.error("Exception occured.")
-                logging.error("HTTP request url: \n{}".format(url))
-                logging.error("HTTP request kwargs: \n{}".format(parsed_request))
-                logging.error("HTTP response status_code: \n{}".format(resp.status_code))
-                logging.error("HTTP response content: \n{}".format(resp.text))
+                err_msg = u"Exception occured.\n"
+                err_msg += u"HTTP request url: {}\n".format(url)
+                err_msg += u"HTTP request kwargs: \n{}".format(parsed_request)
+                err_msg += u"HTTP response status_code: {}\n".format(resp.status_code)
+                err_msg += u"HTTP response content: \n{}".format(resp.text)
+                logging.error(err_msg)
                 raise
 
             setup_teardown(teardown_actions)

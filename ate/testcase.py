@@ -34,7 +34,7 @@ def _load_json_file(json_file):
         try:
             json_content = json.load(data_file)
         except exception.JSONDecodeError:
-            err_msg = "JSONDecodeError: JSON file format error: {}".format(json_file)
+            err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
             logging.error(err_msg)
             raise exception.FileFormatError(err_msg)
 
@@ -49,7 +49,7 @@ def _load_file(testcase_file_path):
         return _load_yaml_file(testcase_file_path)
     else:
         # '' or other suffix
-        err_msg = "file is not in YAML/JSON format: {}".format(testcase_file_path)
+        err_msg = u"file is not in YAML/JSON format: {}".format(testcase_file_path)
         logging.warning(err_msg)
         return []
 
@@ -206,7 +206,7 @@ def load_testcases_by_path(path):
             testcases_list = []
 
     else:
-        logging.error("file not found: {}".format(path))
+        logging.error(u"file not found: {}".format(path))
         testcases_list = []
 
     testcases_cache_mapping[path] = testcases_list
@@ -373,13 +373,13 @@ def check_format(file_path, content):
     """
     if not content:
         # testcase file content is empty
-        err_msg = "Testcase file content is empty: {}".format(file_path)
+        err_msg = u"Testcase file content is empty: {}".format(file_path)
         logging.error(err_msg)
         raise exception.FileFormatError(err_msg)
 
     elif not isinstance(content, (list, dict)):
         # testcase file content does not match testcase format
-        err_msg = "Testcase file content format invalid: {}".format(file_path)
+        err_msg = u"Testcase file content format invalid: {}".format(file_path)
         logging.error(err_msg)
         raise exception.FileFormatError(err_msg)
 

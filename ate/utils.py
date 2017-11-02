@@ -398,7 +398,7 @@ def create_scaffold(project_path):
 
     if os.path.isdir(project_path):
         folder_name = os.path.basename(project_path)
-        logging.warning(" Folder {} exists, please specify a new folder name.".format(folder_name))
+        logging.warning(u" Folder {} exists, please specify a new folder name.".format(folder_name))
         return
 
     def create_path(path, ptype):
