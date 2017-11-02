@@ -34,6 +34,55 @@ class TestUtils(ApiServerUnittest):
         self.assertIn('url', testcase['request'])
         self.assertIn('method', testcase['request'])
 
+    def test_load_yaml_file_file_format_error(self):
+        yaml_tmp_file = "tests/data/tmp.yml"
+        # create empty yaml file
+        with open(yaml_tmp_file, 'w') as f:
+            f.write("")
+
+        with self.assertRaises(exception.FileFormatError):
+            utils.load_yaml_file(yaml_tmp_file)
+
+        os.remove(yaml_tmp_file)
+
+        # create invalid format yaml file
+        with open(yaml_tmp_file, 'w') as f:
+            f.write("abc")
+
+        with self.assertRaises(exception.FileFormatError):
+            utils.load_yaml_file(yaml_tmp_file)
+
+        os.remove(yaml_tmp_file)
+
+    def test_load_json_file_file_format_error(self):
+        json_tmp_file = "tests/data/tmp.json"
+        # create empty file
+        with open(json_tmp_file, 'w') as f:
+            f.write("")
+
+        with self.assertRaises(exception.FileFormatError):
+            utils.load_json_file(json_tmp_file)
+
+        os.remove(json_tmp_file)
+
+        # create empty json file
+        with open(json_tmp_file, 'w') as f:
+            f.write("{}")
+
+        with self.assertRaises(exception.FileFormatError):
+            utils.load_json_file(json_tmp_file)
+
+        os.remove(json_tmp_file)
+
+        # create invalid format json file
+        with open(json_tmp_file, 'w') as f:
+            f.write("abc")
+
+        with self.assertRaises(exception.FileFormatError):
+            utils.load_json_file(json_tmp_file)
+
+        os.remove(json_tmp_file)
+
     def test_load_folder_files(self):
         folder = os.path.join(os.getcwd(), 'tests')
         file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
@@ -50,7 +99,6 @@ class TestUtils(ApiServerUnittest):
         api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
         self.assertEqual(files_1[0], api_file)
 
-        folder_list = [folder, folder]
         files_2 = utils.load_folder_files(folder)
         api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
         self.assertEqual(files_2[0], api_file)

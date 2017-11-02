@@ -7,6 +7,9 @@ except NameError:
 class MyBaseError(BaseException):
     pass
 
+class FileFormatError(MyBaseError):
+    pass
+
 class ParamsError(MyBaseError):
     pass
 

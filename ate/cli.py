@@ -4,7 +4,7 @@ import os
 import sys
 from collections import OrderedDict
 
-from ate import __version__
+from ate import __version__, exception
 from ate.task import TaskSuite
 from ate.utils import create_scaffold
 
@@ -62,7 +62,12 @@ def main_ate():
     for testset_path in set(args.testset_paths):
 
         testset_path = testset_path.rstrip('/')
-        task_suite = TaskSuite(testset_path)
+
+        try:
+            task_suite = TaskSuite(testset_path)
+        except exception.FileFormatError:
+            success = False
+            continue
 
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
         kwargs = {
