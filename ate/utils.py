@@ -13,7 +13,7 @@ import types
 from collections import OrderedDict
 
 import yaml
-from ate import exception
+from ate import exception, testcase
 from requests.structures import CaseInsensitiveDict
 
 try:
@@ -42,12 +42,26 @@ def get_sign(*args):
     return sign
 
 def load_yaml_file(yaml_file):
+    """ load yaml file and check file content format
+    """
     with codecs.open(yaml_file, 'r+', encoding='utf-8') as stream:
-        return yaml.load(stream)
+        yaml_content = yaml.load(stream)
+        testcase.check_format(yaml_file, yaml_content)
+        return yaml_content
 
 def load_json_file(json_file):
+    """ load json file and check file content format
+    """
     with codecs.open(json_file, encoding='utf-8') as data_file:
-        return json.load(data_file)
+        try:
+            json_content = json.load(data_file)
+        except json.decoder.JSONDecodeError:
+            err_msg = "JSONDecodeError: JSON file format error: {}".format(json_file)
+            logging.error(err_msg)
+            raise exception.FileFormatError(err_msg)
+
+        testcase.check_format(json_file, json_content)
+        return json_content
 
 def load_tests(testcase_file_path):
     file_suffix = os.path.splitext(testcase_file_path)[1]

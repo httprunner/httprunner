@@ -1,4 +1,5 @@
 import ast
+import logging
 import os
 import re
 
@@ -325,6 +326,21 @@ def substitute_variables_with_mapping(content, mapping):
             content = content.replace(var, str(value))
 
     return content
+
+def check_format(file_path, content):
+    """ check testcase format if valid
+    """
+    if not content:
+        # testcase file content is empty
+        err_msg = "Testcase file content is empty: {}".format(file_path)
+        logging.error(err_msg)
+        raise exception.FileFormatError(err_msg)
+
+    elif not isinstance(content, (list, dict)):
+        # testcase file content does not match testcase format
+        err_msg = "Testcase file content format invalid: {}".format(file_path)
+        logging.error(err_msg)
+        raise exception.FileFormatError(err_msg)
 
 
 class TestcaseParser(object):
