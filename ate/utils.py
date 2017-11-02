@@ -39,6 +39,13 @@ def get_sign(*args):
     sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
     return sign
 
+def remove_prefix(text, prefix):
+    """ remove prefix from text
+    """
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
+
 def load_folder_files(folder_path, recursive=True):
     """ load folder path, return all files in list format.
     @param

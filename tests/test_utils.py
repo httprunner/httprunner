@@ -8,6 +8,14 @@ from tests.base import ApiServerUnittest
 
 class TestUtils(ApiServerUnittest):
 
+    def test_remove_prefix(self):
+        full_url = "http://debugtalk.com/post/123"
+        prefix = "http://debugtalk.com"
+        self.assertEqual(
+            utils.remove_prefix(full_url, prefix),
+            "/post/123"
+        )
+
     def test_load_folder_files(self):
         folder = os.path.join(os.getcwd(), 'tests')
         file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
