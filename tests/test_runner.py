@@ -25,7 +25,7 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_single_testcase(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testcases = testcase.load_tests(testcase_file_path)
+            testcases = testcase._load_file(testcase_file_path)
             test = testcases[0]["test"]
             self.assertTrue(self.test_runner._run_test(test))
 
