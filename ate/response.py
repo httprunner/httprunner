@@ -42,9 +42,9 @@ class ResponseObject(object):
         """
         matched = re.search(field, self.resp_text)
         if not matched:
-            err_msg = "Extractor error: failed to extract data with regex!\n"
-            err_msg += "response body: {}\n".format(self.resp_text)
-            err_msg += "regex: {}\n".format(field)
+            err_msg = u"Extractor error: failed to extract data with regex!\n"
+            err_msg += u"response body: {}\n".format(self.resp_text)
+            err_msg += u"regex: {}\n".format(field)
             logging.error(err_msg)
             raise exception.ParamsError(err_msg)
 
@@ -75,9 +75,9 @@ class ResponseObject(object):
 
             if sub_query:
                 if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
-                    err_msg = "Extractor error: failed to extract data with regex!\n"
-                    err_msg += "response: {}\n".format(self.parsed_dict())
-                    err_msg += "regex: {}\n".format(field)
+                    err_msg = u"Extractor error: failed to extract data with regex!\n"
+                    err_msg += u"response: {}\n".format(self.parsed_dict())
+                    err_msg += u"regex: {}\n".format(field)
                     logging.error(err_msg)
                     raise exception.ParamsError(err_msg)
 
@@ -88,9 +88,9 @@ class ResponseObject(object):
                 return top_query_content
 
         except AttributeError:
-            err_msg = "Failed to extract value from response!\n"
-            err_msg += "response: {}\n".format(self.parsed_dict())
-            err_msg += "extract field: {}\n".format(field)
+            err_msg = u"Failed to extract value from response!\n"
+            err_msg += u"response: {}\n".format(self.parsed_dict())
+            err_msg += u"extract field: {}\n".format(field)
             logging.error(err_msg)
             raise exception.ParamsError(err_msg)
 

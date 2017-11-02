@@ -136,7 +136,7 @@ class HttpSession(requests.Session):
         try:
             response.raise_for_status()
         except RequestException as e:
-            logging.error(" Failed to {method} {url}! exception msg: {exception}".format(
+            logging.error(u" Failed to {method} {url}! exception msg: {exception}".format(
                 method=method, url=url, exception=str(e)))
         else:
             logging.info(
