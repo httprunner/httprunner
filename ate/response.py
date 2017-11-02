@@ -90,7 +90,7 @@ class ResponseObject(object):
         except AttributeError:
             err_msg = "Failed to extract value from response!\n"
             err_msg += "response: {}\n".format(self.parsed_dict())
-            err_msg += "extract field field: {}\n".format(field)
+            err_msg += "extract field: {}\n".format(field)
             logging.error(err_msg)
             raise exception.ParamsError(err_msg)
 
