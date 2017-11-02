@@ -1,7 +1,6 @@
 import os
 
-import requests
-from ate import exception, runner, testcase, utils
+from ate import exception, runner, testcase
 
 from tests.base import ApiServerUnittest
 
@@ -26,18 +25,18 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_single_testcase(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testcases = utils.load_tests(testcase_file_path)
-            testcase = testcases[0]["test"]
-            self.assertTrue(self.test_runner._run_test(testcase))
+            testcases = testcase.load_tests(testcase_file_path)
+            test = testcases[0]["test"]
+            self.assertTrue(self.test_runner._run_test(test))
 
-            testcase = testcases[1]["test"]
-            self.assertTrue(self.test_runner._run_test(testcase))
+            test = testcases[1]["test"]
+            self.assertTrue(self.test_runner._run_test(test))
 
-            testcase = testcases[2]["test"]
-            self.assertTrue(self.test_runner._run_test(testcase))
+            test = testcases[2]["test"]
+            self.assertTrue(self.test_runner._run_test(test))
 
     def test_run_single_testcase_fail(self):
-        testcase = {
+        test = {
             "name": "get token",
             "request": {
                 "url": "http://127.0.0.1:5000/api/get-token",
@@ -63,7 +62,7 @@ class TestRunner(ApiServerUnittest):
         }
 
         with self.assertRaises(exception.ValidationError):
-            self.test_runner._run_test(testcase)
+            self.test_runner._run_test(test)
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:

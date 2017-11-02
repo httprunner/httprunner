@@ -1,8 +1,15 @@
 #coding: utf-8
+import json
+
 try:
     FileNotFoundError = FileNotFoundError
 except NameError:
     FileNotFoundError = IOError
+
+try:
+    JSONDecodeError = json.decoder.JSONDecodeError
+except AttributeError:
+    JSONDecodeError = ValueError
 
 class MyBaseError(BaseException):
     pass

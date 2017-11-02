@@ -1,8 +1,11 @@
 import ast
+import codecs
+import json
 import logging
 import os
 import re
 
+import yaml
 from ate import exception, utils
 
 variable_regexp = r"\$([\w_]+)"
@@ -15,6 +18,38 @@ test_def_overall_dict = {
 }
 testcases_cache_mapping = {}
 
+
+def load_yaml_file(yaml_file):
+    """ load yaml file and check file content format
+    """
+    with codecs.open(yaml_file, 'r+', encoding='utf-8') as stream:
+        yaml_content = yaml.load(stream)
+        check_format(yaml_file, yaml_content)
+        return yaml_content
+
+def load_json_file(json_file):
+    """ load json file and check file content format
+    """
+    with codecs.open(json_file, encoding='utf-8') as data_file:
+        try:
+            json_content = json.load(data_file)
+        except exception.JSONDecodeError:
+            err_msg = "JSONDecodeError: JSON file format error: {}".format(json_file)
+            logging.error(err_msg)
+            raise exception.FileFormatError(err_msg)
+
+        check_format(json_file, json_content)
+        return json_content
+
+def load_tests(testcase_file_path):
+    file_suffix = os.path.splitext(testcase_file_path)[1]
+    if file_suffix == '.json':
+        return load_json_file(testcase_file_path)
+    elif file_suffix in ['.yaml', '.yml']:
+        return load_yaml_file(testcase_file_path)
+    else:
+        # '' or other suffix
+        return []
 
 def extract_variables(content):
     """ extract all variable names from content, which is in format $variable
@@ -191,7 +226,7 @@ def load_test_file(file_path):
         "api": {},
         "testcases": []
     }
-    tests_list = utils.load_tests(file_path)
+    tests_list = load_tests(file_path)
 
     for item in tests_list:
         for key in item:
