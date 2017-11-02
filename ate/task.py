@@ -52,7 +52,7 @@ class TaskSuite(unittest.TestSuite):
         self.suite_list = []
         testsets = testcase.load_testcases_by_path(testcase_path)
         if not testsets:
-            raise exception.FileNotFoundError
+            raise exception.TestcaseNotFound
 
         for testset in testsets:
             suite = ApiTestSuite(testset)

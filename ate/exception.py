@@ -29,14 +29,20 @@ class ParseResponseError(MyBaseError):
 class ValidationError(MyBaseError):
     pass
 
-class FunctionNotFound(NameError):
+class NotFoundError(MyBaseError):
     pass
 
-class VariableNotFound(NameError):
+class FunctionNotFound(NotFoundError):
     pass
 
-class ApiNotFound(NameError):
+class VariableNotFound(NotFoundError):
     pass
 
-class SuiteNotFound(NameError):
+class ApiNotFound(NotFoundError):
+    pass
+
+class SuiteNotFound(NotFoundError):
+    pass
+
+class TestcaseNotFound(NotFoundError):
     pass
