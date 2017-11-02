@@ -7,15 +7,15 @@ from ate import exception, runner, testcase, utils
 class ApiTestCase(unittest.TestCase):
     """ create a testcase.
     """
-    def __init__(self, test_runner, testcase):
+    def __init__(self, test_runner, testcase_dict):
         super(ApiTestCase, self).__init__()
         self.test_runner = test_runner
-        self.testcase = testcase
+        self.testcase_dict = testcase_dict
 
     def runTest(self):
         """ run testcase and check result.
         """
-        self.assertTrue(self.test_runner._run_test(self.testcase))
+        self.assertTrue(self.test_runner._run_test(self.testcase_dict))
 
 class ApiTestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.
@@ -30,13 +30,13 @@ class ApiTestSuite(unittest.TestSuite):
         self._add_tests_to_suite(testcases)
 
     def _add_tests_to_suite(self, testcases):
-        for testcase in testcases:
+        for testcase_dict in testcases:
             if utils.PYTHON_VERSION == 3:
-                ApiTestCase.runTest.__doc__ = testcase['name']
+                ApiTestCase.runTest.__doc__ = testcase_dict['name']
             else:
-                ApiTestCase.runTest.__func__.__doc__ = testcase['name']
+                ApiTestCase.runTest.__func__.__doc__ = testcase_dict['name']
 
-            test = ApiTestCase(self.test_runner, testcase)
+            test = ApiTestCase(self.test_runner, testcase_dict)
             self.addTest(test)
 
     def print_output(self):
