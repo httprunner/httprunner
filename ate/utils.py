@@ -1,9 +1,7 @@
-import codecs
 import hashlib
 import hmac
 import imp
 import importlib
-import json
 import logging
 import os.path
 import random
@@ -13,7 +11,7 @@ import types
 from collections import OrderedDict
 
 import yaml
-from ate import exception, testcase
+from ate import exception
 from requests.structures import CaseInsensitiveDict
 
 try:
@@ -40,38 +38,6 @@ def get_sign(*args):
     sign_key = SECRET_KEY.encode('ascii')
     sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
     return sign
-
-def load_yaml_file(yaml_file):
-    """ load yaml file and check file content format
-    """
-    with codecs.open(yaml_file, 'r+', encoding='utf-8') as stream:
-        yaml_content = yaml.load(stream)
-        testcase.check_format(yaml_file, yaml_content)
-        return yaml_content
-
-def load_json_file(json_file):
-    """ load json file and check file content format
-    """
-    with codecs.open(json_file, encoding='utf-8') as data_file:
-        try:
-            json_content = json.load(data_file)
-        except json.decoder.JSONDecodeError:
-            err_msg = "JSONDecodeError: JSON file format error: {}".format(json_file)
-            logging.error(err_msg)
-            raise exception.FileFormatError(err_msg)
-
-        testcase.check_format(json_file, json_content)
-        return json_content
-
-def load_tests(testcase_file_path):
-    file_suffix = os.path.splitext(testcase_file_path)[1]
-    if file_suffix == '.json':
-        return load_json_file(testcase_file_path)
-    elif file_suffix in ['.yaml', '.yml']:
-        return load_yaml_file(testcase_file_path)
-    else:
-        # '' or other suffix
-        return []
 
 def load_folder_files(folder_path, recursive=True):
     """ load folder path, return all files in list format.
