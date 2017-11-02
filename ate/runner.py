@@ -7,10 +7,11 @@ from ate.context import Context
 
 class Runner(object):
 
-    def __init__(self, http_client_session=None):
+    def __init__(self, http_client_session=None, request_failure_hook=None):
         self.http_client_session = http_client_session
         self.context = Context()
         testcase.load_test_dependencies()
+        self.request_failure_hook = request_failure_hook
 
     def init_config(self, config_dict, level):
         """ create/update context variables binds
@@ -131,7 +132,9 @@ class Runner(object):
                 resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
             except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
                 logging.error("Exception occured.")
+                logging.error("HTTP request url: \n{}".format(url))
                 logging.error("HTTP request kwargs: \n{}".format(parsed_request))
+                logging.error("HTTP response status_code: \n{}".format(resp.status_code))
                 logging.error("HTTP response content: \n{}".format(resp.text))
                 raise
 
@@ -155,9 +158,9 @@ class Runner(object):
                     "testcases": [
                         {
                             "name": "testcase description",
-                            "variables": [], # optional, override
+                            "variables": [],    # optional, override
                             "request": {},
-                            "extract": {},  # optional
+                            "extract": {},      # optional
                             "validate": {}      # optional
                         },
                         testcase12
@@ -183,9 +186,17 @@ class Runner(object):
         testcases = testset.get("testcases", [])
         for testcase_dict in testcases:
             try:
-                assert self._run_test(testcase_dict)
-            except AssertionError:
+                self._run_test(testcase_dict)
+            except exception.MyBaseError as ex:
                 success = False
+                if self.request_failure_hook:
+                    self.request_failure_hook.fire(
+                        request_type=testcase_dict.get("request", {}).get("method"),
+                        name=testcase_dict.get("request", {}).get("url"),
+                        response_time=0,
+                        exception=ex
+                    )
+                break
 
         output_variables_list = config_dict.get("output", [])
 
