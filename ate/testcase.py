@@ -19,7 +19,7 @@ test_def_overall_dict = {
 testcases_cache_mapping = {}
 
 
-def load_yaml_file(yaml_file):
+def _load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
     with codecs.open(yaml_file, 'r+', encoding='utf-8') as stream:
@@ -27,7 +27,7 @@ def load_yaml_file(yaml_file):
         check_format(yaml_file, yaml_content)
         return yaml_content
 
-def load_json_file(json_file):
+def _load_json_file(json_file):
     """ load json file and check file content format
     """
     with codecs.open(json_file, encoding='utf-8') as data_file:
@@ -41,12 +41,12 @@ def load_json_file(json_file):
         check_format(json_file, json_content)
         return json_content
 
-def load_tests(testcase_file_path):
+def _load_file(testcase_file_path):
     file_suffix = os.path.splitext(testcase_file_path)[1]
     if file_suffix == '.json':
-        return load_json_file(testcase_file_path)
+        return _load_json_file(testcase_file_path)
     elif file_suffix in ['.yaml', '.yml']:
-        return load_yaml_file(testcase_file_path)
+        return _load_yaml_file(testcase_file_path)
     else:
         # '' or other suffix
         return []
@@ -226,7 +226,7 @@ def load_test_file(file_path):
         "api": {},
         "testcases": []
     }
-    tests_list = load_tests(file_path)
+    tests_list = _load_file(file_path)
 
     for item in tests_list:
         for key in item:

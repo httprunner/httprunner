@@ -10,12 +10,12 @@ class TestcaseParserUnittest(unittest.TestCase):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        self.assertEqual(testcase.load_tests(testcase_file_path), [])
+        self.assertEqual(testcase._load_file(testcase_file_path), [])
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        testcases = testcase.load_tests(testcase_file_path)
+        testcases = testcase._load_file(testcase_file_path)
         self.assertEqual(len(testcases), 3)
         test = testcases[0]["test"]
         self.assertIn('name', test)
@@ -26,7 +26,7 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_load_yaml_testcases(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_hardcode.yml')
-        testcases = testcase.load_tests(testcase_file_path)
+        testcases = testcase._load_file(testcase_file_path)
         self.assertEqual(len(testcases), 3)
         test = testcases[0]["test"]
         self.assertIn('name', test)
@@ -41,7 +41,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             f.write("")
 
         with self.assertRaises(FileFormatError):
-            testcase.load_yaml_file(yaml_tmp_file)
+            testcase._load_yaml_file(yaml_tmp_file)
 
         os.remove(yaml_tmp_file)
 
@@ -50,7 +50,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             f.write("abc")
 
         with self.assertRaises(FileFormatError):
-            testcase.load_yaml_file(yaml_tmp_file)
+            testcase._load_yaml_file(yaml_tmp_file)
 
         os.remove(yaml_tmp_file)
 
@@ -61,7 +61,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             f.write("")
 
         with self.assertRaises(FileFormatError):
-            testcase.load_json_file(json_tmp_file)
+            testcase._load_json_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
@@ -70,7 +70,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             f.write("{}")
 
         with self.assertRaises(FileFormatError):
-            testcase.load_json_file(json_tmp_file)
+            testcase._load_json_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
@@ -79,7 +79,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             f.write("abc")
 
         with self.assertRaises(FileFormatError):
-            testcase.load_json_file(json_tmp_file)
+            testcase._load_json_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
