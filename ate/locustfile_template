@@ -1,18 +1,16 @@
 #coding: utf-8
 import zmq
 from locust import HttpLocust, TaskSet, task
-from ate import runner, exception
+from locust.events import request_failure
+from ate import runner
 
 class WebPageTasks(TaskSet):
     def on_start(self):
-        self.test_runner = runner.Runner(self.client)
+        self.test_runner = runner.Runner(self.client, request_failure)
 
     @task
     def test_specified_scenario(self):
-        try:
-            self.test_runner.run(self.locust.file_path)
-        except exception.ValidationError:
-            pass
+        self.test_runner.run(self.locust.file_path)
 
 class WebPageUser(HttpLocust):
     host = "$HOST"
