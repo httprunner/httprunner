@@ -68,6 +68,9 @@ def main_ate():
         except exception.FileFormatError:
             success = False
             continue
+        except exception.FileNotFoundError:
+            success = False
+            continue
 
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
         kwargs = {
