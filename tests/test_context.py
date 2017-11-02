@@ -2,7 +2,7 @@ import os
 import time
 import unittest
 
-from ate import runner, utils
+from ate import runner, testcase, utils
 from ate.context import Context
 from ate.exception import ParamsError
 
@@ -12,7 +12,7 @@ class VariableBindsUnittest(unittest.TestCase):
     def setUp(self):
         self.context = Context()
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
-        self.testcases = utils.load_tests(testcase_file_path)
+        self.testcases = testcase.load_tests(testcase_file_path)
 
     def test_context_init_functions(self):
         self.assertIn("get_timestamp", self.context.testset_functions_config)
