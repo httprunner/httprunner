@@ -1,5 +1,4 @@
 import logging
-from collections import OrderedDict
 
 from ate import exception, response, testcase, utils
 from ate.client import HttpSession
