@@ -65,10 +65,7 @@ def main_ate():
 
         try:
             task_suite = TaskSuite(testset_path)
-        except exception.FileFormatError:
-            success = False
-            continue
-        except exception.FileNotFoundError:
+        except exception.TestcaseNotFound:
             success = False
             continue
 

@@ -49,6 +49,8 @@ def _load_file(testcase_file_path):
         return _load_yaml_file(testcase_file_path)
     else:
         # '' or other suffix
+        err_msg = "file is not in YAML/JSON format: {}".format(testcase_file_path)
+        logging.warning(err_msg)
         return []
 
 def extract_variables(content):
@@ -194,10 +196,13 @@ def load_testcases_by_path(path):
         testcases_list = load_testcases_by_path(files_list)
 
     elif os.path.isfile(path):
-        testset = load_test_file(path)
-        if testset["testcases"] or testset["api"]:
-            testcases_list = [testset]
-        else:
+        try:
+            testset = load_test_file(path)
+            if testset["testcases"] or testset["api"]:
+                testcases_list = [testset]
+            else:
+                testcases_list = []
+        except exception.FileFormatError:
             testcases_list = []
 
     else:
