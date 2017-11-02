@@ -1,6 +1,7 @@
+import logging
 import unittest
 
-from ate import runner, testcase, utils
+from ate import exception, runner, testcase, utils
 
 
 class ApiTestCase(unittest.TestCase):
@@ -50,6 +51,8 @@ class TaskSuite(unittest.TestSuite):
         super(TaskSuite, self).__init__()
         self.suite_list = []
         testsets = testcase.load_testcases_by_path(testcase_path)
+        if not testsets:
+            raise exception.FileNotFoundError
 
         for testset in testsets:
             suite = ApiTestSuite(testset)

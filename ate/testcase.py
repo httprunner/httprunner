@@ -166,6 +166,7 @@ def load_testcases_by_path(path):
             testcases_list = []
 
     else:
+        logging.error("file not found: {}".format(path))
         testcases_list = []
 
     testcases_cache_mapping[path] = testcases_list
