@@ -245,6 +245,29 @@ class TestUtils(ApiServerUnittest):
         new_dict = utils.lower_config_dict_key(origin_dict)
         self.assertIn("$default_request", new_dict["request"])
 
+    def test_lower_dict_keys(self):
+        request_dict = {
+            "url": "http://127.0.0.1:5000",
+            "METHOD": "POST",
+            "Headers": {
+                "Accept": "application/json",
+                "User-Agent": "ios/9.3"
+            }
+        }
+        new_request_dict = utils.lower_dict_keys(request_dict)
+        self.assertIn("method", new_request_dict)
+        self.assertIn("headers", new_request_dict)
+        self.assertIn("Accept", new_request_dict["headers"])
+        self.assertIn("User-Agent", new_request_dict["headers"])
+
+        request_dict = "$default_request"
+        new_request_dict = utils.lower_dict_keys(request_dict)
+        self.assertEqual("$default_request", request_dict)
+
+        request_dict = None
+        new_request_dict = utils.lower_dict_keys(request_dict)
+        self.assertEqual(None, request_dict)
+
     def test_convert_to_order_dict(self):
         map_list = [
             {"a": 1},
