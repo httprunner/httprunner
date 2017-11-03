@@ -133,7 +133,7 @@ class Runner(object):
             except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
                 err_msg = u"Exception occured.\n"
                 err_msg += u"HTTP request url: {}\n".format(url)
-                err_msg += u"HTTP request kwargs: \n{}".format(parsed_request)
+                err_msg += u"HTTP request kwargs: {}\n".format(parsed_request)
                 err_msg += u"HTTP response status_code: {}\n".format(resp.status_code)
                 err_msg += u"HTTP response content: \n{}".format(resp.text)
                 logging.error(err_msg)
