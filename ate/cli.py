@@ -38,7 +38,7 @@ def main_ate():
     args = parser.parse_args()
 
     if args.version:
-        print("ApiTestEngine version: {}".format(__version__))
+        print("HttpRunner version: {}".format(__version__))
         exit(0)
 
     log_level = getattr(logging, args.log_level.upper())

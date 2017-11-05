@@ -1,7 +1,9 @@
-# ApiTestEngine
+# HttpRunner
 
-[![Build Status](https://travis-ci.org/debugtalk/ApiTestEngine.svg?branch=master)](https://travis-ci.org/debugtalk/ApiTestEngine)
-[![Coverage Status](https://coveralls.io/repos/github/debugtalk/ApiTestEngine/badge.svg?branch=master)](https://coveralls.io/github/debugtalk/ApiTestEngine?branch=master)
+[![Build Status](https://travis-ci.org/debugtalk/HttpRunner.svg?branch=master)](https://travis-ci.org/debugtalk/HttpRunner)
+[![Coverage Status](https://coveralls.io/repos/github/debugtalk/HttpRunner/badge.svg?branch=master)](https://coveralls.io/github/debugtalk/HttpRunner?branch=master)
+
+New name for `ApiTestEngine`.
 
 ## Design Philosophy
 
@@ -23,13 +25,13 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 ## Installation/Upgrade
 
 ```bash
-$ pip install git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine --process-dependency-links
+$ pip install git+https://github.com/debugtalk/HttpRunner.git#egg=HttpRunner --process-dependency-links
 ```
 
 To upgrade all specified packages to the newest available version, you should add the `-U` option.
 
 ```bash
-$ pip install -U git+https://github.com/debugtalk/ApiTestEngine.git#egg=ApiTestEngine --process-dependency-links
+$ pip install -U git+https://github.com/debugtalk/HttpRunner.git#egg=HttpRunner --process-dependency-links
 ```
 
 If there is a problem with the installation or upgrade, you can check the [`FAQ`](docs/FAQ.md).
@@ -38,7 +40,7 @@ To ensure the installation or upgrade is successful, you can execute command `at
 
 ```text
 $ ate -V
-ApiTestEngine version: 0.7.7
+HttpRunner version: 0.8.0
 ```
 
 Execute the command `ate -h` to view command help.
@@ -49,7 +51,7 @@ usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
            [--failfast] [--startproject STARTPROJECT]
            [testset_paths [testset_paths ...]]
 
-ApiTestEngine.
+HttpRunner.
 
 positional arguments:
   testset_paths         testset file path
@@ -125,7 +127,7 @@ For detailed regulations of writing testcases, you can read the [`QuickStart`][q
 
 ## Run testcases
 
-`ApiTestEngine` can run testcases in diverse ways.
+`HttpRunner` can run testcases in diverse ways.
 
 You can run single testset by specifying testset file path.
 
@@ -204,11 +206,11 @@ Enjoy!
 
 Python `2.7`, `3.4`, `3.5` and `3.6`.
 
-`ApiTestEngine` has been tested on `macOS`, `Linux` and `Windows` platforms.
+`HttpRunner` has been tested on `macOS`, `Linux` and `Windows` platforms.
 
 ## Development
 
-To develop or debug `ApiTestEngine`, you can install relevant requirements and use `main-ate.py` or `main-locust.py` as entrances.
+To develop or debug `HttpRunner`, you can install relevant requirements and use `main-ate.py` or `main-locust.py` as entrances.
 
 ```bash
 $ pip install -r requirements_dev.txt

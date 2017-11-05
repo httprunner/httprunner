@@ -2,7 +2,7 @@
 
 ## Introduction to Sample Interface Service
 
-Along with this project, I devised a sample interface service, and you can use it to familiarize how to play with `ApiTestEngine`.
+Along with this project, I devised a sample interface service, and you can use it to familiarize how to play with `HttpRunner`.
 
 This sample service mainly has two parts:
 
@@ -76,7 +76,7 @@ You may wonder why we use the `json` field other than `data`. That's because the
 
 Have you recalled some familiar scenes?
 
-Yes! That's what we did in [`requests.request`](requests.request)! Since `ApiTestEngine` takes full reuse of [`Requests`][requests], it inherits all powerful features of [`Requests`][requests], and we can handle HTTP request as the way we do before.
+Yes! That's what we did in [`requests.request`](requests.request)! Since `HttpRunner` takes full reuse of [`Requests`][requests], it inherits all powerful features of [`Requests`][requests], and we can handle HTTP request as the way we do before.
 
 ## Run test cases
 
@@ -152,7 +152,7 @@ Let's look back to our test set `quickstart-demo-rev-1.yml`, and we can see the 
 
 In actual scenarios, each user's `device_sn` is different, so we should parameterize the request parameters, which is also called `parameterization`. In the meanwhile, the `sign` field is calculated with other header fields, thus it may change significantly if any header field changes slightly.
 
-However, the test cases are only `YAML` documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine `Python` scripts with `YAML/JSON` test cases in `ApiTestEngine`.
+However, the test cases are only `YAML` documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine `Python` scripts with `YAML/JSON` test cases in `HttpRunner`.
 
 To achieve this goal, we can utilize `debugtalk.py` plugin and `variables` mechanisms.
 
@@ -228,7 +228,7 @@ In this revised test case, `variable reference` and `function invoke` mechanisms
 
 To make fields like `device_sn` can be used more than once, we bind values to variables in `variables` block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.
 
-When we want to reference a variable in the test case, we can do this with a escape character `$`. For example, `$user_agent` will not be taken as a normal string, and `ApiTestEngine` will consider it as a variable named `user_agent`, search and return its binding value.
+When we want to reference a variable in the test case, we can do this with a escape character `$`. For example, `$user_agent` will not be taken as a normal string, and `HttpRunner` will consider it as a variable named `user_agent`, search and return its binding value.
 
 When we want to reference a function, we shall use another escape character `${}`. Any content in `${}` will be considered as function calling, so we should guarantee that we call functions in the right way. At the same time, variables can also be referenced as parameters of function.
 
@@ -238,7 +238,7 @@ There is still one issue unsolved.
 
 The `device_sn` field is defined in the first API test case, thus it may be impossible to reference it in other test cases. Context separation is a well-designed mechanism, and we should obey this good practice.
 
-To handle this case, overall `config` block is supported in `ApiTestEngine`. If we define variables or import functions in `config` block, these variables and functions will become global and can be referenced in the whole test set.
+To handle this case, overall `config` block is supported in `HttpRunner`. If we define variables or import functions in `config` block, these variables and functions will become global and can be referenced in the whole test set.
 
 ```yaml
 # examples/quickstart-demo-rev-3.yml
@@ -311,7 +311,7 @@ OK
 
 Generating HTML reports...
 Template is not specified, load default template instead.
-Reports generated: /Users/Leo/MyProjects/ApiTestEngine/reports/quickstart-demo-rev-0/2017-08-01-16-51-51.html
+Reports generated: /Users/Leo/MyProjects/HttpRunner/reports/quickstart-demo-rev-0/2017-08-01-16-51-51.html
 ```
 
 Great! The test case runs successfully and generates a `HTML` test report.

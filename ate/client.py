@@ -31,7 +31,7 @@ class ApiResponse(Response):
 class HttpSession(requests.Session):
     """
     Class for performing HTTP requests and holding (session-) cookies between requests (in order
-    to be able to log in and out of websites). Each request is logged so that ApiTestEngine can
+    to be able to log in and out of websites). Each request is logged so that HttpRunner can
     display statistics.
 
     This is a slightly extended version of `python-request <http://python-requests.org>`_'s
@@ -39,7 +39,7 @@ class HttpSession(requests.Session):
     the methods for making requests (get, post, delete, put, head, options, patch, request)
     can now take a *url* argument that's only the path part of the URL, in which case the host
     part of the URL will be prepended with the HttpSession.base_url which is normally inherited
-    from a ApiTestEngine class' host property.
+    from a HttpRunner class' host property.
     """
     def __init__(self, base_url=None, *args, **kwargs):
         super(HttpSession, self).__init__(*args, **kwargs)
