@@ -41,4 +41,4 @@
 当然，每位工程师对`最佳工程实践`的理念或多或少都会存在一些差异，也希望大家能多多交流，在思维的碰撞中共同进步。
 
 
-[ApiTestEngine]: https://github.com/debugtalk/ApiTestEngine
+[ApiTestEngine]: https://github.com/debugtalk/HttpRunner
