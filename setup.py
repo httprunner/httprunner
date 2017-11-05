@@ -8,13 +8,13 @@ with open(os.path.join(os.path.dirname(__file__), 'ate', '__init__.py')) as f:
     version = re.compile(r"__version__\s+=\s+'(.*)'", re.I).match(f.read()).group(1)
 
 setup(
-    name='ApiTestEngine',
+    name='HttpRunner',
     version=version,
-    description='API test engine.',
-    long_description="Best practice of API test, including automation test and performance test.",
+    description='HTTP test runner, not just about api test and load test.',
+    long_description="HTTP test runner, not just about api test and load test.",
     author='Leo Lee',
     author_email='mail@debugtalk.com',
-    url='https://github.com/debugtalk/ApiTestEngine',
+    url='https://github.com/debugtalk/HttpRunner',
     license='MIT',
     packages=find_packages(exclude=['test.*', 'test']),
     package_data={
