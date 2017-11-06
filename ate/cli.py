@@ -4,11 +4,12 @@ import os
 import sys
 from collections import OrderedDict
 
-from ate import __version__, exception
+import PyUnitReport
+from PyUnitReport import __version__ as pyu_version
+from ate import __version__ as ate_version
+from ate import exception
 from ate.task import TaskSuite
 from ate.utils import create_scaffold
-
-import PyUnitReport
 
 
 def main_ate():
@@ -38,7 +39,8 @@ def main_ate():
     args = parser.parse_args()
 
     if args.version:
-        print("HttpRunner version: {}".format(__version__))
+        print("HttpRunner version: {}".format(ate_version))
+        print("PyUnitReport version: {}".format(pyu_version))
         exit(0)
 
     log_level = getattr(logging, args.log_level.upper())
