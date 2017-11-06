@@ -34,15 +34,6 @@ setup(
         "coverage",
         "PyUnitReport"
     ],
-    extras_require={
-        'locustio': [
-            "locustio"
-        ]
-    },
-    dependency_links=[
-        "git+https://github.com/debugtalk/PyUnitReport.git#egg=PyUnitReport-0",
-        "git+https://github.com/locustio/locust.git#egg=locust-0"
-    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python :: 2.7',
