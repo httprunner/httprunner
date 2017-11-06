@@ -1,17 +1,22 @@
 #encoding: utf-8
+import io
 import os
 import re
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 # parse version from ate/__init__.py
 with open(os.path.join(os.path.dirname(__file__), 'ate', '__init__.py')) as f:
     version = re.compile(r"__version__\s+=\s+'(.*)'", re.I).match(f.read()).group(1)
 
+with io.open("README.md", encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='HttpRunner',
     version=version,
     description='HTTP test runner, not just about api test and load test.',
-    long_description="HTTP test runner, not just about api test and load test.",
+    long_description=long_description,
     author='Leo Lee',
     author_email='mail@debugtalk.com',
     url='https://github.com/debugtalk/HttpRunner',
