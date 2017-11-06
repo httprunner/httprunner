@@ -7,6 +7,8 @@ from setuptools import find_packages, setup
 with io.open("README.md", encoding='utf-8') as f:
     long_description = f.read()
 
+install_requires = open("requirements.txt").readlines()
+
 setup(
     name='HttpRunner',
     version=__version__,
@@ -21,14 +23,7 @@ setup(
         'ate': ['locustfile_template'],
     },
     keywords='api test',
-    install_requires=[
-        "requests[security]",
-        "flask",
-        "PyYAML",
-        "coveralls",
-        "coverage",
-        "PyUnitReport"
-    ],
+    install_requires=install_requires,
     classifiers=[
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python :: 2.7',
