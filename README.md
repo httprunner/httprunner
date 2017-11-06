@@ -25,14 +25,10 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 ## Installation/Upgrade
 
 ```bash
-$ pip install git+https://github.com/debugtalk/HttpRunner.git#egg=HttpRunner --process-dependency-links
+$ pip install HttpRunner
 ```
 
 To upgrade all specified packages to the newest available version, you should add the `-U` option.
-
-```bash
-$ pip install -U git+https://github.com/debugtalk/HttpRunner.git#egg=HttpRunner --process-dependency-links
-```
 
 If there is a problem with the installation or upgrade, you can check the [`FAQ`](docs/FAQ.md).
 
