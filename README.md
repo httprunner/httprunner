@@ -1,7 +1,10 @@
 # HttpRunner
 
-[![Build Status](https://travis-ci.org/debugtalk/HttpRunner.svg?branch=master)](https://travis-ci.org/debugtalk/HttpRunner)
+[![license](https://img.shields.io/github/license/HttpRunner/HttpRunner.svg)](https://github.com/HttpRunner/HttpRunner/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/debugtalk/HttpRunner.svg?branch=master)](https://travis-ci.org/HttpRunner/HttpRunner)
 [![Coverage Status](https://coveralls.io/repos/github/debugtalk/HttpRunner/badge.svg?branch=master)](https://coveralls.io/github/debugtalk/HttpRunner?branch=master)
+[![PyPI](https://img.shields.io/pypi/v/HttpRunner.svg)](https://pypi.python.org/pypi/HttpRunner)
+[![PyPI](https://img.shields.io/pypi/pyversions/HttpRunner.svg)](https://pypi.python.org/pypi/HttpRunner)
 
 New name for `ApiTestEngine`.
 
