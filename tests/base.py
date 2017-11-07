@@ -3,7 +3,7 @@ import time
 import unittest
 
 import requests
-from ate import utils
+from httprunner import utils
 from tests import api_server
 
 

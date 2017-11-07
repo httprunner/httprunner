@@ -6,7 +6,7 @@ import os
 import re
 
 import yaml
-from ate import exception, utils
+from httprunner import exception, utils
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"

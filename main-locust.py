@@ -1,5 +1,5 @@
 """ used for debugging
 """
 
-from ate.cli import main_locust
+from httprunner.cli import main_locust
 main_locust()

@@ -1,4 +1,4 @@
-from ate.client import HttpSession, prepare_kwargs
+from httprunner.client import HttpSession, prepare_kwargs
 from tests.base import ApiServerUnittest
 
 class TestHttpClient(ApiServerUnittest):

@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from ate import exception, runner, testcase, utils
+from httprunner import exception, runner, testcase, utils
 
 
 class ApiTestCase(unittest.TestCase):

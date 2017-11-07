@@ -4,8 +4,8 @@ import re
 import sys
 from collections import OrderedDict
 
-from ate import utils
-from ate.testcase import TestcaseParser
+from httprunner import utils
+from httprunner.testcase import TestcaseParser
 
 
 class Context(object):
@@ -37,7 +37,7 @@ class Context(object):
         self.testcase_parser.update_binded_variables(self.testcase_variables_mapping)
 
         if level == "testset":
-            self.import_module_items(["ate.built_in"], "testset")
+            self.import_module_items(["httprunner.built_in"], "testset")
 
     def config_context(self, config_dict, level):
         if level == "testset":

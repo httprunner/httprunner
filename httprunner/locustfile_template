@@ -2,7 +2,7 @@
 import zmq
 from locust import HttpLocust, TaskSet, task
 from locust.events import request_failure
-from ate import runner
+from httprunner import runner
 
 class WebPageTasks(TaskSet):
     def on_start(self):
