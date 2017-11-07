@@ -2,7 +2,7 @@ import hashlib
 import json
 from functools import wraps
 
-from ate import utils
+from httprunner import utils
 from flask import Flask, make_response, request
 
 app = Flask(__name__)

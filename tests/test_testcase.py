@@ -2,8 +2,8 @@ import os
 import time
 import unittest
 
-from ate import testcase
-from ate.exception import ApiNotFound, FileFormatError, ParamsError
+from httprunner import testcase
+from httprunner.exception import ApiNotFound, FileFormatError, ParamsError
 
 
 class TestcaseParserUnittest(unittest.TestCase):

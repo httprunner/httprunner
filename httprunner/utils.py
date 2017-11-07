@@ -11,7 +11,7 @@ import types
 from collections import OrderedDict
 
 import yaml
-from ate import exception
+from httprunner import exception
 from requests.structures import CaseInsensitiveDict
 
 try:

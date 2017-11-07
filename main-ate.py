@@ -1,5 +1,5 @@
 """ used for debugging
 """
 
-from ate.cli import main_ate
+from httprunner.cli import main_ate
 main_ate()

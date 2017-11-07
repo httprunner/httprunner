@@ -2,9 +2,9 @@ import os
 import time
 import unittest
 
-from ate import runner, testcase, utils
-from ate.context import Context
-from ate.exception import ParamsError
+from httprunner import runner, testcase, utils
+from httprunner.context import Context
+from httprunner.exception import ParamsError
 
 
 class VariableBindsUnittest(unittest.TestCase):

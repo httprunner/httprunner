@@ -35,18 +35,18 @@ To upgrade all specified packages to the newest available version, you should ad
 
 If there is a problem with the installation or upgrade, you can check the [`FAQ`](docs/FAQ.md).
 
-To ensure the installation or upgrade is successful, you can execute command `ate -V` to see if you can get the correct version number.
+To ensure the installation or upgrade is successful, you can execute command `httprunner -V` to see if you can get the correct version number.
 
 ```text
-$ ate -V
+$ httprunner -V
 HttpRunner version: 0.8.0
 ```
 
-Execute the command `ate -h` to view command help.
+Execute the command `httprunner -h` to view command help.
 
 ```text
-$ ate -h
-usage: ate [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
+$ httprunner -h
+usage: httprunner [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
            [--failfast] [--startproject STARTPROJECT]
            [testset_paths [testset_paths ...]]
 
@@ -131,25 +131,25 @@ For detailed regulations of writing testcases, you can read the [`QuickStart`][q
 You can run single testset by specifying testset file path.
 
 ```text
-$ ate filepath/testcase.yml
+$ httprunner filepath/testcase.yml
 ```
 
 You can also run several testsets by specifying multiple testset file paths.
 
 ```text
-$ ate filepath1/testcase1.yml filepath2/testcase2.yml
+$ httprunner filepath1/testcase1.yml filepath2/testcase2.yml
 ```
 
 If you want to run testsets of a whole project, you can achieve this goal by specifying the project folder path.
 
 ```text
-$ ate testcases_folder_path
+$ httprunner testcases_folder_path
 ```
 
 When you do continuous integration test or production environment monitoring with `Jenkins`, you may need to send test result notification. For instance, you can send email with mailgun service as below.
 
 ```text
-$ ate filepath/testcase.yml --report-name ${BUILD_NUMBER} \
+$ httprunner filepath/testcase.yml --report-name ${BUILD_NUMBER} \
     --mailgun-smtp-username "qa@debugtalk.com" \
     --mailgun-smtp-password "12345678" \
     --email-sender excited@samples.mailgun.org \

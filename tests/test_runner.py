@@ -1,6 +1,6 @@
 import os
 
-from ate import exception, runner, testcase
+from httprunner import exception, runner, testcase
 
 from tests.base import ApiServerUnittest
 
