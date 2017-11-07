@@ -1,8 +1,8 @@
 import logging
 
-from ate import exception, response, testcase, utils
-from ate.client import HttpSession
-from ate.context import Context
+from httprunner import exception, response, testcase, utils
+from httprunner.client import HttpSession
+from httprunner.context import Context
 
 
 class Runner(object):

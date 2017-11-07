@@ -6,10 +6,10 @@ from collections import OrderedDict
 
 import PyUnitReport
 from PyUnitReport import __version__ as pyu_version
-from ate import __version__ as ate_version
-from ate import exception
-from ate.task import TaskSuite
-from ate.utils import create_scaffold
+from httprunner import __version__ as ate_version
+from httprunner import exception
+from httprunner.task import TaskSuite
+from httprunner.utils import create_scaffold
 
 
 def main_ate():
@@ -98,7 +98,7 @@ def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
     try:
-        from ate import locusts
+        from httprunner import locusts
     except ImportError:
         print("Locust is not installed, exit.")
         exit(1)

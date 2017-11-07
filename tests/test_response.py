@@ -1,5 +1,5 @@
 import requests
-from ate import response, exception
+from httprunner import response, exception
 from tests.base import ApiServerUnittest
 
 class TestResponse(ApiServerUnittest):

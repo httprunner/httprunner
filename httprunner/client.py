@@ -4,7 +4,7 @@ import re
 import time
 
 import requests
-from ate.exception import ParamsError
+from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)

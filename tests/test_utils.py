@@ -2,7 +2,7 @@ import os
 import shutil
 from collections import OrderedDict
 
-from ate import exception, utils
+from httprunner import exception, utils
 from tests.base import ApiServerUnittest
 
 
@@ -155,7 +155,7 @@ class TestUtils(ApiServerUnittest):
         self.assertIn("walk", dir(imported_module))
 
     def test_filter_module_functions(self):
-        imported_module = utils.get_imported_module("ate.utils")
+        imported_module = utils.get_imported_module("httprunner.utils")
         self.assertIn("PYTHON_VERSION", dir(imported_module))
 
         functions_dict = utils.filter_module(imported_module, "function")

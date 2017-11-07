@@ -3,7 +3,7 @@ import multiprocessing
 import os
 import sys
 
-from ate.testcase import load_test_file
+from httprunner.testcase import load_test_file
 from locust.main import main
 
 

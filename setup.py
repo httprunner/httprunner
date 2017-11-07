@@ -1,7 +1,7 @@
 #encoding: utf-8
 import io
 
-from ate import __version__
+from httprunner import __version__
 from setuptools import find_packages, setup
 
 with io.open("README.md", encoding='utf-8') as f:
@@ -20,7 +20,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=['test.*', 'test']),
     package_data={
-        'ate': ['locustfile_template'],
+        'httprunner': ['locustfile_template'],
     },
     keywords='api test',
     install_requires=install_requires,
@@ -33,8 +33,9 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ate=ate.cli:main_ate',
-            'locusts=ate.cli:main_locust'
+            'ate=httprunner.cli:main_ate',
+            'httprunner=httprunner.cli:main_ate',
+            'locusts=httprunner.cli:main_locust'
         ]
     }
 )

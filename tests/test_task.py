@@ -1,7 +1,7 @@
 import os
 
-from ate import task
-from ate.testcase import load_test_file
+from httprunner import task
+from httprunner.testcase import load_test_file
 from tests.base import ApiServerUnittest
 
 
