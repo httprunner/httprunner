@@ -4,8 +4,9 @@ import os
 import sys
 from collections import OrderedDict
 
-import PyUnitReport
-from PyUnitReport import __version__ as pyu_version
+from pyunitreport import __version__ as pyu_version
+from pyunitreport import HTMLTestRunner
+
 from httprunner import __version__ as ate_version
 from httprunner import exception
 from httprunner.task import TaskSuite
@@ -77,7 +78,7 @@ def main_ate():
             "report_name": report_name,
             "failfast": args.failfast
         }
-        result = PyUnitReport.HTMLTestRunner(**kwargs).run(task_suite)
+        result = HTMLTestRunner(**kwargs).run(task_suite)
         results[testset_path] = OrderedDict({
             "total": result.testsRun,
             "successes": len(result.successes),
