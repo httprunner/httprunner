@@ -70,5 +70,7 @@ Supported Python Versions
 
 HttpRunner supports Python 2.7, 3.4, 3.5, and 3.6. And we strongly recommend you to use ``Python 3.6``.
 
+``HttpRunner`` has been tested on ``macOS``, ``Linux`` and ``Windows`` platforms.
+
 
 .. _PyPI: https://pypi.python.org/pypi
