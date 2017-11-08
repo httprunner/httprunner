@@ -101,7 +101,9 @@ def main_locust():
     try:
         from httprunner import locusts
     except ImportError:
-        print("Locust is not installed, exit.")
+        msg = "Locust is not installed, install first and try again.\n"
+        msg += "install command: pip install locustio"
+        print(msg)
         exit(1)
 
     sys.argv[0] = 'locust'
