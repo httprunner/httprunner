@@ -4,7 +4,7 @@ import io
 from httprunner import __version__
 from setuptools import find_packages, setup
 
-with io.open("README.md", encoding='utf-8') as f:
+with io.open("README.rst", encoding='utf-8') as f:
     long_description = f.read()
 
 install_requires = open("requirements.txt").readlines()
