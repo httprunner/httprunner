@@ -1,12 +1,4 @@
-# HttpRunner
-
-[![license](https://img.shields.io/github/license/HttpRunner/HttpRunner.svg)](https://github.com/HttpRunner/HttpRunner/blob/master/LICENSE)
-[![Build Status](https://travis-ci.org/debugtalk/HttpRunner.svg?branch=master)](https://travis-ci.org/HttpRunner/HttpRunner)
-[![Coverage Status](https://coveralls.io/repos/github/debugtalk/HttpRunner/badge.svg?branch=master)](https://coveralls.io/github/debugtalk/HttpRunner?branch=master)
-[![PyPI](https://img.shields.io/pypi/v/HttpRunner.svg)](https://pypi.python.org/pypi/HttpRunner)
-[![PyPI](https://img.shields.io/pypi/pyversions/HttpRunner.svg)](https://pypi.python.org/pypi/HttpRunner)
-
-New name for `ApiTestEngine`.
+# Introduction
 
 ## Design Philosophy
 
@@ -23,17 +15,14 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
 - CLI command supported, perfect combination with [Jenkins][Jenkins].
 
-## Supported Python Versions
+## Learn more
 
-Python `2.7`, `3.4`, `3.5` and `3.6`.
-
-`HttpRunner` has been tested on `macOS`, `Linux` and `Windows` platforms.
+You can read this [blog][HttpRunner-blog] to learn more about the background and initial thoughts of `HttpRunner`.
 
 
 [requests]: http://docs.python-requests.org/en/master/
 [unittest]: https://docs.python.org/3/library/unittest.html
 [Locust]: http://locust.io/
-[flask]: http://flask.pocoo.org/
-[PyUnitReport]: https://github.com/debugtalk/PyUnitReport
+[PyUnitReport]: https://github.com/HttpRunner/PyUnitReport
 [Jenkins]: https://jenkins.io/index.html
-[quickstart]: docs/quickstart.md
+[HttpRunner-blog]: http://debugtalk.com/post/ApiTestEngine-api-test-best-practice/

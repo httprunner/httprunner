@@ -1,6 +1,8 @@
 *.pyc
 __pycache__
 .DS_Store
+.vscode
+.pypirc
 */tmp/*
 build/*
 dist/*
@@ -9,3 +11,5 @@ dist/*
 logs/%
 .coverage
 locustfile.py
+
+_build
