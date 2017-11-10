@@ -44,6 +44,15 @@ HttpRunner is rich documented.
 - `User documentation`_ helps you to make the most use of HttpRunner
 - `Development process blogs`_ will make you fully understand HttpRunner
 
+Next Step
+---------
+
+There are still too many awesome features to be implemented. Recent schedules includes:
+
+- Integrate with Charles and Fiddler: convert `HAR`_ (HTTP Archive) format to YAML testcases.
+- Integrate with Swagger: convert exported API definition of `Swagger`_ to YAML testcases.
+- Integrate with PostMan: convert `Postman Collection Format`_ to YAML testcases.
+
 
 .. _Requests: http://docs.python-requests.org/en/master/
 .. _unittest: https://docs.python.org/3/library/unittest.html
@@ -52,3 +61,6 @@ HttpRunner is rich documented.
 .. _Jenkins: https://jenkins.io/index.html
 .. _User documentation: http://httprunner.readthedocs.io/
 .. _Development process blogs: http://debugtalk.com/tags/ApiTestEngine/
+.. _HAR: http://httparchive.org/
+.. _Swagger: https://swagger.io/
+.. _Postman Collection Format : http://blog.getpostman.com/2015/06/05/travelogue-of-postman-collection-format-v2/
