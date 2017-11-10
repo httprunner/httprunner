@@ -17,7 +17,7 @@ def main_ate():
     """ API test: parse command line options and run commands.
     """
     parser = argparse.ArgumentParser(
-        description='Api Test Engine.')
+        description='HTTP test runner, not just about api test and load test.')
     parser.add_argument(
         '-V', '--version', dest='version', action='store_true',
         help="show version")
