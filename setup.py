@@ -35,6 +35,7 @@ setup(
         'console_scripts': [
             'ate=httprunner.cli:main_ate',
             'httprunner=httprunner.cli:main_ate',
+            'hrun=httprunner.cli:main_ate',
             'locusts=httprunner.cli:main_locust'
         ]
     }
