@@ -32,18 +32,18 @@ This option works on each installation method described above. ::
 Check Installation
 ------------------
 
-When HttpRunner is installed, a **httprunner** command should be available in your shell (if you're not using
+When HttpRunner is installed, a **httprunner** (**hrun** for short) command should be available in your shell (if you're not using
 virtualenv—which you should—make sure your python script directory is on your path).
 
 To see ``HttpRunner`` version: ::
 
-    $ httprunner -V
+    $ httprunner -V     # same as: hrun -V
     HttpRunner version: 0.8.1b
     PyUnitReport version: 0.1.3b
 
 To see available options, run::
 
-    $ httprunner -h
+    $ httprunner -h     # same as: hrun -h
     usage: httprunner [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
             [--failfast] [--startproject STARTPROJECT]
             [testset_paths [testset_paths ...]]
