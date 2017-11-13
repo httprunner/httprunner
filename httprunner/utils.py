@@ -10,7 +10,6 @@ import string
 import types
 from collections import OrderedDict
 
-import yaml
 from httprunner import exception
 from requests.structures import CaseInsensitiveDict
 
