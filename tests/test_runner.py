@@ -1,4 +1,5 @@
 import os
+import time
 
 from httprunner import exception, runner, testcase
 
@@ -58,11 +59,16 @@ class TestRunner(ApiServerUnittest):
             "validate": [
                 {"check": "status_code", "expect": 205},
                 {"check": "content.token", "comparator": "len_eq", "expect": 19}
-            ]
+            ],
+            "teardown": ["${sleep(2)}"]
         }
 
         with self.assertRaises(exception.ValidationError):
+            start_time = time.time()
             self.test_runner._run_test(test)
+            end_time = time.time()
+            # check if teardown function executed
+            self.assertGreater(end_time - start_time, 2)
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
