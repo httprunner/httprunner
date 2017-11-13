@@ -66,8 +66,8 @@ Open your favorite text editor and you can write test cases like this.
             name: "user1"
             password: "123456"
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 201}
-        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expect": 201}
+        - {"check": "content.success", "comparator": "eq", "expect": true}
 ```
 
 As you see, each API request is described in a `test` block. And in the `request` field, it describes the detail of HTTP request, includes url, method, headers and data, which are in line with the captured traffic.
@@ -123,8 +123,8 @@ To fix this problem, we should correlate `token` field in the second API test ca
     extract:
         - token: content.token
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 200}
-        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+        - {"check": "status_code", "comparator": "eq", "expect": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
 - test:
     name: create user which does not exist
@@ -138,8 +138,8 @@ To fix this problem, we should correlate `token` field in the second API test ca
             name: "user1"
             password: "123456"
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 201}
-        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expect": 201}
+        - {"check": "content.success", "comparator": "eq", "expect": true}
 ```
 
 As you see, the `token` field is no longer hardcoded, instead it is extracted from the first API request with `extract` mechanism. In the meanwhile, it is assigned to `token` variable, which can be referenced by the subsequent API requests.
@@ -205,8 +205,8 @@ And then, we can revise our demo test case and reference the functions. Suppose 
     extract:
         - token: content.token
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 200}
-        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+        - {"check": "status_code", "comparator": "eq", "expect": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
 - test:
     name: create user which does not exist
@@ -220,8 +220,8 @@ And then, we can revise our demo test case and reference the functions. Suppose 
             name: "user1"
             password: "123456"
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 201}
-        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expect": 201}
+        - {"check": "content.success", "comparator": "eq", "expect": true}
 ```
 
 In this revised test case, `variable reference` and `function invoke` mechanisms are both used.
@@ -269,8 +269,8 @@ To handle this case, overall `config` block is supported in `HttpRunner`. If we 
     extract:
         - token: content.token
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 200}
-        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+        - {"check": "status_code", "comparator": "eq", "expect": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
 - test:
     name: create user which does not exist
@@ -283,8 +283,8 @@ To handle this case, overall `config` block is supported in `HttpRunner`. If we 
             name: "user1"
             password: "123456"
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 201}
-        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expect": 201}
+        - {"check": "content.success", "comparator": "eq", "expect": true}
 ```
 
 As you see, we define variables in `config` block. Also, we can set `base_url` in `config` block, thereby we can specify relative path in each API request url. Besides, we can also set common fields in `config` `request`, such as `device_sn` in headers.

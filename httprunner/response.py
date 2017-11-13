@@ -128,8 +128,8 @@ class ResponseObject(object):
         """ Bind named validators to value within the context.
         @param (list) validators
             [
-                {"check": "status_code", "comparator": "eq", "expected": 201},
-                {"check": "resp_body_success", "comparator": "eq", "expected": True}
+                {"check": "status_code", "comparator": "eq", "expect": 201},
+                {"check": "resp_body_success", "comparator": "eq", "expect": True}
             ]
         @param (dict) variables_mapping
             {
@@ -139,7 +139,7 @@ class ResponseObject(object):
             [
                 {
                     "check": "status_code",
-                    "comparator": "eq", "expected": 201, "value": 200
+                    "comparator": "eq", "expect": 201, "value": 200
                 }
             ]
         """
@@ -147,12 +147,15 @@ class ResponseObject(object):
 
             check_item = validator_dict.get("check")
             if not check_item:
-                raise exception.ParamsError("invalid check item in testcase validators!")
+                raise exception.ParamsError("check item invalid: {}".format(check_item))
 
-            if "expected" not in validator_dict:
-                raise exception.ParamsError("expected item missed in testcase validators!")
+            if "expect" in validator_dict:
+                expect_value = validator_dict.get("expect")
+            elif "expected" in validator_dict:
+                expect_value = validator_dict.get("expected")
+            else:
+                raise exception.ParamsError("expected value missed in testcase validator!")
 
-            expected = validator_dict.get("expected")
             comparator = validator_dict.get("comparator", "eq")
 
             if check_item in variables_mapping:
@@ -165,7 +168,7 @@ class ResponseObject(object):
 
             utils.match_expected(
                 validator_dict["actual_value"],
-                expected,
+                expect_value,
                 comparator,
                 check_item
             )
