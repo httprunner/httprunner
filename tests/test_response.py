@@ -232,8 +232,8 @@ class TestResponse(ApiServerUnittest):
         resp_obj = response.ResponseObject(resp)
 
         validators = [
-            {"check": "resp_status_code", "comparator": "eq", "expected": 201},
-            {"check": "resp_body_success", "comparator": "eq", "expected": True}
+            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "resp_body_success", "comparator": "eq", "expect": True}
         ]
         variables_mapping = {
             "resp_status_code": 200,
@@ -244,8 +244,8 @@ class TestResponse(ApiServerUnittest):
             resp_obj.validate(validators, variables_mapping)
 
         validators = [
-            {"check": "resp_status_code", "comparator": "eq", "expected": 201},
-            {"check": "resp_body_success", "comparator": "eq", "expected": True}
+            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "resp_body_success", "comparator": "eq", "expect": True}
         ]
         variables_mapping = {
             "resp_status_code": 201,
@@ -261,7 +261,7 @@ class TestResponse(ApiServerUnittest):
 
         # expected value missed in validators
         validators = [
-            {"check": "status_code", "comparator": "eq", "expected": 201},
+            {"check": "status_code", "comparator": "eq", "expect": 201},
             {"check": "body_success", "comparator": "eq"}
         ]
         variables_mapping = {}
@@ -270,7 +270,7 @@ class TestResponse(ApiServerUnittest):
 
         # expected value missed in variables mapping
         validators = [
-            {"check": "resp_status_code", "comparator": "eq", "expected": 201},
+            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
             {"check": "body_success", "comparator": "eq"}
         ]
         variables_mapping = {

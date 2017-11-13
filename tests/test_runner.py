@@ -56,8 +56,8 @@ class TestRunner(ApiServerUnittest):
                 {"token": "content.token"}
             ],
             "validate": [
-                {"check": "status_code", "comparator": "eq", "expected": 205},
-                {"check": "content.token", "comparator": "len_eq", "expected": 19}
+                {"check": "status_code", "expect": 205},
+                {"check": "content.token", "comparator": "len_eq", "expect": 19}
             ]
         }
 
