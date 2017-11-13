@@ -138,8 +138,8 @@ class Runner(object):
                 err_msg += u"HTTP response content: \n{}".format(resp.text)
                 logging.error(err_msg)
                 raise
-
-            setup_teardown(teardown_actions)
+            finally:
+                setup_teardown(teardown_actions)
 
         return True
 
