@@ -29,8 +29,8 @@
     extract:
         - token: content.token
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 200}
-        - {"check": "content.token", "comparator": "len_eq", "expected": 16}
+        - {"check": "status_code", "comparator": "eq", "expect": 200}
+        - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
 - test:
     name: create user which does not exist
@@ -46,8 +46,8 @@
             name: $user_name
             password: $user_password
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 201}
-        - {"check": "content.success", "comparator": "eq", "expected": true}
+        - {"check": "status_code", "comparator": "eq", "expect": 201}
+        - {"check": "content.success", "comparator": "eq", "expect": true}
 
 - test:
     name: create user which does not exist
@@ -60,5 +60,5 @@
             name: "user1"
             password: "123456"
     validate:
-        - {"check": "status_code", "comparator": "eq", "expected": 500}
-        - {"check": "content.success", "comparator": "eq", "expected": false}
+        - {"check": "status_code", "comparator": "eq", "expect": 500}
+        - {"check": "content.success", "comparator": "eq", "expect": false}

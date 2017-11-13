@@ -23,15 +23,15 @@
     name: reset all users
     api: reset_all($token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.success", "expected": true}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
 
 - test:
     name: get user that does not exist
     api: get_user(1000, $token)
     validate:
-        - {"check": "status_code", "expected": 404}
-        - {"check": "content.success", "expected": false}
+        - {"check": "status_code", "expect": 404}
+        - {"check": "content.success", "expect": false}
 
 - test:
     name: create user which does not exist
@@ -40,16 +40,16 @@
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
     validate:
-        - {"check": "status_code", "expected": 201}
-        - {"check": "content.success", "expected": true}
+        - {"check": "status_code", "expect": 201}
+        - {"check": "content.success", "expect": true}
 
 - test:
     name: get user that has been created
     api: get_user(1000, $token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.success", "expected": true}
-        - {"check": "content.data.password", "expected": "123456"}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+        - {"check": "content.data.password", "expect": "123456"}
 
 - test:
     name: create user which exists
@@ -58,8 +58,8 @@
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
     validate:
-        - {"check": "status_code", "expected": 500}
-        - {"check": "content.success", "expected": false}
+        - {"check": "status_code", "expect": 500}
+        - {"check": "content.success", "expect": false}
 
 - test:
     name: update user which exists
@@ -68,37 +68,37 @@
         - user_password: "654321"
     api: update_user(1000, $user_name, $user_password, $token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.success", "expected": true}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
 
 - test:
     name: get user that has been updated
     api: get_user(1000, $token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.success", "expected": true}
-        - {"check": "content.data.password", "expected": "654321"}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+        - {"check": "content.data.password", "expect": "654321"}
 
 - test:
     name: get users
     api: get_users($token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.count", "expected": 1}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.count", "expect": 1}
 
 - test:
     name: delete user that exists
     api: delete_user(1000, $token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.success", "expected": true}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
 
 - test:
     name: get users
     api: get_users($token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.count", "expected": 0}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.count", "expect": 0}
 
 - test:
     name: create user which has been deleted
@@ -107,12 +107,12 @@
         - user_password: "123456"
     api: create_user(1000, $user_name, $user_password, $token)
     validate:
-        - {"check": "status_code", "expected": 201}
-        - {"check": "content.success", "expected": true}
+        - {"check": "status_code", "expect": 201}
+        - {"check": "content.success", "expect": true}
 
 - test:
     name: get users
     api: get_users($token)
     validate:
-        - {"check": "status_code", "expected": 200}
-        - {"check": "content.count", "expected": 1}
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.count", "expect": 1}
