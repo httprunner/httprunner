@@ -1,6 +1,4 @@
 requests[security]
 flask
 PyYAML
-coveralls
-coverage
 PyUnitReport
