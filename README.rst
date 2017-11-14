@@ -4,11 +4,11 @@ HttpRunner
 .. image:: https://img.shields.io/github/license/HttpRunner/HttpRunner.svg
     :target: https://github.com/HttpRunner/HttpRunner/blob/master/LICENSE
 
-.. image:: https://travis-ci.org/debugtalk/HttpRunner.svg?branch=master
+.. image:: https://travis-ci.org/HttpRunner/HttpRunner.svg?branch=master
     :target: https://travis-ci.org/HttpRunner/HttpRunner
 
-.. image:: https://coveralls.io/repos/github/debugtalk/HttpRunner/badge.svg?branch=master
-    :target: https://coveralls.io/github/debugtalk/HttpRunner?branch=master
+.. image:: https://coveralls.io/repos/github/HttpRunner/HttpRunner/badge.svg?branch=master
+    :target: https://coveralls.io/github/HttpRunner/HttpRunner?branch=master
 
 .. image:: https://img.shields.io/pypi/v/HttpRunner.svg
     :target: https://pypi.python.org/pypi/HttpRunner
