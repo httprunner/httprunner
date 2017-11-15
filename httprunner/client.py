@@ -4,10 +4,13 @@ import re
 import time
 
 import requests
+import urllib3
 from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
