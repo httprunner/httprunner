@@ -197,6 +197,9 @@ class Runner(object):
                         response_time=0,
                         exception=ex
                     )
+                else:
+                    logging.exception(
+                        "Exception occured in testcase: {}".format(testcase_dict.get("name")))
                 break
 
         output_variables_list = config_dict.get("output", [])
