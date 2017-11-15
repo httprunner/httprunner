@@ -17,7 +17,7 @@ HttpRunner
     :target: https://pypi.python.org/pypi/HttpRunner
 
 
-New name for ``ApiTestEngine``.
+Former name: ``ApiTestEngine``.
 
 Design Philosophy
 -----------------
@@ -29,6 +29,7 @@ Key Features
 
 - Inherit all powerful features of `Requests`_, just have fun to handle HTTP in human way.
 - Define testcases in YAML or JSON format in concise and elegant manner.
+- Record and generate testcases with ``HAR`` support. see `har2case`_.
 - Supports ``function``/``variable``/``extract``/``validate`` mechanisms to create full test scenarios.
 - With ``debugtalk.py`` plugin, module functions can be auto-discovered in recursive upward directories.
 - Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
@@ -49,9 +50,9 @@ Next Step
 
 There are still too many awesome features to be implemented. Recent schedules includes:
 
-- Integrate with Charles and Fiddler: convert `HAR`_ (HTTP Archive) format to YAML testcases.
-- Integrate with Swagger: convert exported API definition of `Swagger`_ to YAML testcases.
-- Integrate with PostMan: convert `Postman Collection Format`_ to YAML testcases.
+- [x] Integrate with Charles and Fiddler: convert `HAR`_ (HTTP Archive) format to YAML testcases.
+- [ ] Integrate with Swagger: convert exported API definition of `Swagger`_ to YAML testcases.
+- [ ] Integrate with PostMan: convert `Postman Collection Format`_ to YAML testcases.
 
 
 .. _Requests: http://docs.python-requests.org/en/master/
@@ -63,4 +64,5 @@ There are still too many awesome features to be implemented. Recent schedules in
 .. _Development process blogs: http://debugtalk.com/tags/ApiTestEngine/
 .. _HAR: http://httparchive.org/
 .. _Swagger: https://swagger.io/
-.. _Postman Collection Format : http://blog.getpostman.com/2015/06/05/travelogue-of-postman-collection-format-v2/
+.. _Postman Collection Format: http://blog.getpostman.com/2015/06/05/travelogue-of-postman-collection-format-v2/
+.. _har2case: https://github.com/HttpRunner/har2case
