@@ -114,6 +114,8 @@ class HttpSession(requests.Session):
             kwargs["auth"] = HttpNtlmAuth(
                 auth_account["username"], auth_account["password"])
 
+        kwargs.setdefault("timeout", 120)
+
         response = self._send_request_safe_mode(method, url, **kwargs)
         request_meta["url"] = (response.history and response.history[0] or response)\
             .request.path_url
