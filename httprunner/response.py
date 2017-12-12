@@ -124,50 +124,69 @@ class ResponseObject(object):
 
         return extracted_variables_mapping
 
-    def validate(self, validators, variables_mapping):
-        """ Bind named validators to value within the context.
-        @param (list) validators
-            [
-                {"check": "status_code", "comparator": "eq", "expect": 201},
+    def parse_validator(self, validator, variables_mapping):
+        """ parse validator, validator maybe in two format
+        @param (dict) validator
+            format1: this is kept for compatiblity with the previous versions.
+                {"check": "status_code", "comparator": "eq", "expect": 201}
                 {"check": "resp_body_success", "comparator": "eq", "expect": True}
-            ]
+            format2: recommended new version
+                {'eq': ['status_code', 201]}
+                {'eq': ['resp_body_success', True]}
         @param (dict) variables_mapping
             {
                 "resp_body_success": True
             }
-        @return (list) content differences
-            [
-                {
-                    "check": "status_code",
-                    "comparator": "eq", "expect": 201, "value": 200
-                }
-            ]
+        @return validator info
+            check_item, check_value, expect_value, comparator
         """
-        for validator_dict in validators:
+        if not isinstance(validator, dict):
+            raise exception.ParamsError("invalid validator: {}".format(validator))
 
-            check_item = validator_dict.get("check")
-            if not check_item:
-                raise exception.ParamsError("check item invalid: {}".format(check_item))
+        if "check" in validator and len(validator) > 1:
+            # format1
+            check_item = validator.get("check")
 
-            if "expect" in validator_dict:
-                expect_value = validator_dict.get("expect")
-            elif "expected" in validator_dict:
-                expect_value = validator_dict.get("expected")
+            if "expect" in validator:
+                expect_value = validator.get("expect")
+            elif "expected" in validator:
+                expect_value = validator.get("expected")
             else:
-                raise exception.ParamsError("expected value missed in testcase validator!")
+                raise exception.ParamsError("invalid validator: {}".format(validator))
 
-            comparator = validator_dict.get("comparator", "eq")
+            comparator = validator.get("comparator", "eq")
 
-            if check_item in variables_mapping:
-                validator_dict["actual_value"] = variables_mapping[check_item]
-            else:
-                try:
-                    validator_dict["actual_value"] = self.extract_field(check_item)
-                except exception.ParseResponseError:
-                    raise exception.ParseResponseError("failed to extract check item in response!")
+        elif len(validator) == 1:
+            # format2
+            comparator = list(validator.keys())[0]
+            compare_values = validator[comparator]
+
+            if not isinstance(compare_values, list) or len(compare_values) != 2:
+                raise exception.ParamsError("invalid validator: {}".format(validator))
+
+            check_item, expect_value = compare_values
+
+        else:
+            raise exception.ParamsError("invalid validator: {}".format(validator))
+
+        if check_item in variables_mapping:
+            check_value = variables_mapping[check_item]
+        else:
+            try:
+                check_value = self.extract_field(check_item)
+            except exception.ParseResponseError:
+                raise exception.ParseResponseError("failed to extract check item in response!")
+
+        return check_item, check_value, expect_value, comparator
+
+    def validate(self, validators, variables_mapping):
+        """ check validators with the context variable mapping.
+        """
+        for validator in validators:
+            check_item, check_value, expect_value, comparator = self.parse_validator(validator, variables_mapping)
 
             utils.match_expected(
-                validator_dict["actual_value"],
+                check_value,
                 expect_value,
                 comparator,
                 check_item
