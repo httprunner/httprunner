@@ -40,8 +40,8 @@ And here is testset example of typical scenario: get `token` at the beginning, a
         extract:
             - token: content.token
         validate:
-            - {"check": "status_code", "comparator": "eq", "expect": 200}
-            - {"check": "content.token", "comparator": "len_eq", "expect": 16}
+            - eq: ["status_code", 200]
+            - len_eq: ["content.token", 16]
 
     - test:
         name: create user which does not exist
@@ -54,8 +54,8 @@ And here is testset example of typical scenario: get `token` at the beginning, a
                 name: "user1"
                 password: "123456"
         validate:
-            - {"check": "status_code", "comparator": "eq", "expect": 201}
-            - {"check": "content.success", "comparator": "eq", "expect": true}
+            - eq: ["status_code", 201]
+            - eq: ["content.success", true]
 
 Function invoke is supported in `YAML/JSON` format testcases, such as `gen_random_string` and `get_sign` above. This mechanism relies on the `debugtak.py` hot plugin, with which we can define functions in `debugtak.py` file, and then functions can be auto discovered and invoked in runtime.
 
@@ -105,9 +105,9 @@ Comparator
 | ``contained_by``          | contained by              | A in B                  | | 'a' contained_by 'abc' |
 |                           |                           |                         | | 1 contained_by [1,2]   |
 +---------------------------+---------------------------+-------------------------+--------------------------+
-| ``type``                  | A is instance of B        | isinstance(A, B)        | 123 type 'int'           |
+| ``type_match``                  | A is instance of B        | isinstance(A, B)        | 123 type_match 'int'           |
 +---------------------------+---------------------------+-------------------------+--------------------------+
-| ``regex``                 | regex matches             | re.match(B, A)          | 'abcdef' regex 'a\w+d'   |
+| ``regex_match``                 | regex matches             | re.match(B, A)          | 'abcdef' regex_match 'a\w+d'   |
 +---------------------------+---------------------------+-------------------------+--------------------------+
 | ``startswith``            | starts with               | A.startswith(B) is True | 'abc' startswith 'ab'    |
 +---------------------------+---------------------------+-------------------------+--------------------------+
@@ -171,12 +171,11 @@ There might be slight difference on list, cos we can use index to locate list it
         - content_type: headers.content-type
         - first_name: content.person.name.first_name
     validate:
-        - {"check": "status_code", "comparator": "eq", "expect": 200}
-        - {"check": "headers.content-type", "expect": "application/json"}
-        - {"check": "headers.content-length", "comparator": "gt", "expect": 40}
-        - {"check": "content.success", "comparator": "eq", "expect": True}
-        - {"check": "content.token", "comparator": "len_eq", "expect": 16}
-
+        - eq: ["status_code", 200]
+        - eq: ["headers.content-type", "application/json"]
+        - gt: ["headers.content-length", 40]
+        - eq: ["content.success", true]
+        - len_eq: ["content.token", 16]
 
 
 .. _QuickStart: http://
