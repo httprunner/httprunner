@@ -230,6 +230,8 @@ class Context(object):
             except exception.ParseResponseError:
                 raise exception.ParseResponseError("failed to extract check item in response!")
 
+        expect_value = self.testcase_parser.eval_content_variables(expect_value)
+
         validator_dict = {
             "check_item": check_item,
             "check_value": check_value,
