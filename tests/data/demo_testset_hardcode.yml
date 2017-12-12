@@ -14,6 +14,8 @@
     extract:
         - token: content.token
     validate:
+        - eq: ["status_code", 200]
+        - len_eq: ["content.token", 16]
         - {"check": "status_code", "comparator": "eq", "expect": 200}
         - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
@@ -30,6 +32,8 @@
             name: "user1"
             password: "123456"
     validate:
+        - eq: ["status_code", 201]
+        - eq: ["content.success", True]
         - {"check": "status_code", "comparator": "eq", "expect": 201}
         - {"check": "content.success", "comparator": "eq", "expect": true}
 
@@ -46,5 +50,7 @@
             name: "user1"
             password: "123456"
     validate:
+        - "eq": ["status_code", 500]
+        - "eq": ["content.success", false]
         - {"check": "status_code", "comparator": "eq", "expect": 500}
         - {"check": "content.success", "comparator": "eq", "expect": false}
