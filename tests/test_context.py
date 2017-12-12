@@ -1,13 +1,13 @@
 import os
 import time
-import unittest
 
-from httprunner import runner, testcase, utils
+import requests
+from httprunner import exception, response, runner, testcase, utils
 from httprunner.context import Context
-from httprunner.exception import ParamsError
+from tests.base import ApiServerUnittest
 
 
-class VariableBindsUnittest(unittest.TestCase):
+class VariableBindsUnittest(ApiServerUnittest):
 
     def setUp(self):
         self.context = Context()
@@ -217,3 +217,72 @@ class VariableBindsUnittest(unittest.TestCase):
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.assertGreater(elapsed_time, 1)
+
+    def test_do_validation(self):
+        self.context.do_validation(
+            {"check_item": "check_item", "check_value": 1, "expect_value": 1, "comparator": "eq"}
+        )
+        self.context.do_validation(
+            {"check_item": "check_item", "check_value": "abc", "expect_value": "abc", "comparator": "=="}
+        )
+
+        config_dict = {
+            "path": 'tests/data/demo_testset_hardcode.yml'
+        }
+        self.context.config_context(config_dict, "testset")
+        self.context.do_validation(
+            {"check_item": "status_code", "check_value": "201", "expect_value": 3, "comparator": "sum_status_code"}
+        )
+
+    def test_validate(self):
+        url = "http://127.0.0.1:5000/"
+        resp = requests.get(url)
+        resp_obj = response.ResponseObject(resp)
+
+        validators = [
+            {"eq": ["resp_status_code", 201]},
+            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "resp_body_success", "comparator": "eq", "expect": True}
+        ]
+        variables = [
+            {"resp_status_code": 200},
+            {"resp_body_success": True}
+        ]
+        self.context.bind_variables(variables)
+
+        with self.assertRaises(exception.ValidationError):
+            self.context.validate(validators, resp_obj)
+
+        variables = [
+            {"resp_status_code": 201},
+            {"resp_body_success": True}
+        ]
+        self.context.bind_variables(variables)
+
+        self.assertTrue(self.context.validate(validators, resp_obj))
+
+    def test_validate_exception(self):
+        url = "http://127.0.0.1:5000/"
+        resp = requests.get(url)
+        resp_obj = response.ResponseObject(resp)
+
+        # expected value missed in validators
+        validators = [
+            {"eq": ["resp_status_code", 201]},
+            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "resp_body_success", "comparator": "eq", "expect": True}
+        ]
+        variables = []
+        self.context.bind_variables(variables)
+
+        with self.assertRaises(exception.ParamsError):
+            self.context.validate(validators, resp_obj)
+
+        # expected value missed in variables mapping
+        variables = [
+            {"resp_status_code": 200}
+        ]
+        self.context.bind_variables(variables)
+
+        with self.assertRaises(exception.ValidationError):
+            self.context.validate(validators, resp_obj)

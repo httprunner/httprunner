@@ -15,9 +15,11 @@
         - token: content.token
     validate:
         - eq: ["status_code", 200]
+        - len_eq: ["token", 16]
         - len_eq: ["content.token", 16]
         - {"check": "status_code", "comparator": "eq", "expect": 200}
-        - {"check": "content.token", "comparator": "len_eq", "expect": 16}
+        - sum_status_code: ["status_code", 2]
+        - {"check": "token", "comparator": "len_eq", "expect": 16}
 
 - test:
     name: create user which does not exist
@@ -33,6 +35,7 @@
             password: "123456"
     validate:
         - eq: ["status_code", 201]
+        - sum_status_code: ["status_code", 3]
         - eq: ["content.success", True]
         - {"check": "status_code", "comparator": "eq", "expect": 201}
         - {"check": "content.success", "comparator": "eq", "expect": true}
@@ -51,6 +54,7 @@
             password: "123456"
     validate:
         - "eq": ["status_code", 500]
+        - sum_status_code: ["status_code", 5]
         - "eq": ["content.success", false]
         - {"check": "status_code", "comparator": "eq", "expect": 500}
         - {"check": "content.success", "comparator": "eq", "expect": false}

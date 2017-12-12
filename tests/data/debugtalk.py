@@ -30,3 +30,13 @@ get_sign_lambda = lambda *args: hmac.new(
 
 def gen_md5(*args):
     return hashlib.md5("".join(args).encode('utf-8')).hexdigest()
+
+def sum_status_code(status_code, expect_sum):
+    """ sum status code digits
+        e.g. 400 => 4, 201 => 3
+    """
+    sum_value = 0
+    for digit in str(status_code):
+        sum_value += int(digit)
+
+    assert sum_value == expect_sum
