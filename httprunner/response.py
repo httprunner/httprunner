@@ -2,7 +2,7 @@ import logging
 import re
 from collections import OrderedDict
 
-from httprunner import exception, utils
+from httprunner import exception, utils, testcase
 from requests.structures import CaseInsensitiveDict
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
@@ -123,69 +123,3 @@ class ResponseObject(object):
             extracted_variables_mapping[key] = self.extract_field(field)
 
         return extracted_variables_mapping
-
-    def parse_validator(self, validator, variables_mapping):
-        """ parse validator, validator maybe in two format
-        @param (dict) validator
-            format1: this is kept for compatiblity with the previous versions.
-                {"check": "status_code", "comparator": "eq", "expect": 201}
-                {"check": "resp_body_success", "comparator": "eq", "expect": True}
-            format2: recommended new version
-                {'eq': ['status_code', 201]}
-                {'eq': ['resp_body_success', True]}
-        @param (dict) variables_mapping
-            {
-                "resp_body_success": True
-            }
-        @return (dict) validator info
-            {
-                "check_item": check_item,
-                "check_value": check_value,
-                "expect_value": expect_value,
-                "comparator": comparator
-            }
-        """
-        if not isinstance(validator, dict):
-            raise exception.ParamsError("invalid validator: {}".format(validator))
-
-        if "check" in validator and len(validator) > 1:
-            # format1
-            check_item = validator.get("check")
-
-            if "expect" in validator:
-                expect_value = validator.get("expect")
-            elif "expected" in validator:
-                expect_value = validator.get("expected")
-            else:
-                raise exception.ParamsError("invalid validator: {}".format(validator))
-
-            comparator = validator.get("comparator", "eq")
-
-        elif len(validator) == 1:
-            # format2
-            comparator = list(validator.keys())[0]
-            compare_values = validator[comparator]
-
-            if not isinstance(compare_values, list) or len(compare_values) != 2:
-                raise exception.ParamsError("invalid validator: {}".format(validator))
-
-            check_item, expect_value = compare_values
-
-        else:
-            raise exception.ParamsError("invalid validator: {}".format(validator))
-
-        if check_item in variables_mapping:
-            check_value = variables_mapping[check_item]
-        else:
-            try:
-                check_value = self.extract_field(check_item)
-            except exception.ParseResponseError:
-                raise exception.ParseResponseError("failed to extract check item in response!")
-
-        validator_dict = {
-            "check_item": check_item,
-            "check_value": check_value,
-            "expect_value": expect_value,
-            "comparator": comparator
-        }
-        return validator_dict
