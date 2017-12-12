@@ -189,39 +189,3 @@ class ResponseObject(object):
             "comparator": comparator
         }
         return validator_dict
-
-    def do_validation(self, validator_dict, functions_mapping):
-        """ validate with functions
-        """
-        comparator = utils.get_uniform_comparator(validator_dict["comparator"])
-
-        validate_func = functions_mapping.get(comparator)
-        if not validate_func:
-            raise exception.FunctionNotFound("comparator not found: {}".format(comparator))
-
-        check_item = validator_dict["check_item"]
-        check_value = validator_dict["check_value"]
-        expect_value = validator_dict["expect_value"]
-
-        try:
-            if check_value is None or expect_value is None:
-                assert comparator in ["is", "eq", "equals", "=="]
-
-            validate_func(validator_dict["check_value"], validator_dict["expect_value"])
-        except (AssertionError, TypeError):
-            err_msg = "\n" + "\n".join([
-                "\tcheck item name: %s;" % check_item,
-                "\tcheck item value: %s (%s);" % (check_value, type(check_value).__name__),
-                "\tcomparator: %s;" % comparator,
-                "\texpected value: %s (%s)." % (expect_value, type(expect_value).__name__)
-            ])
-            raise exception.ValidationError(err_msg)
-
-    def validate(self, validators, variables_mapping, functions_mapping):
-        """ check validators with the context variable mapping.
-        """
-        for validator in validators:
-            validator_dict = self.parse_validator(validator, variables_mapping)
-            self.do_validation(validator_dict, functions_mapping)
-
-        return True
