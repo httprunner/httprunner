@@ -240,9 +240,9 @@ class VariableBindsUnittest(ApiServerUnittest):
         resp_obj = response.ResponseObject(resp)
 
         validators = [
-            {"eq": ["resp_status_code", 201]},
-            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "resp_body_success", "comparator": "eq", "expect": True}
+            {"eq": ["$resp_status_code", 201]},
+            {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
         ]
         variables = [
             {"resp_status_code": 200},
@@ -268,9 +268,9 @@ class VariableBindsUnittest(ApiServerUnittest):
 
         # expected value missed in validators
         validators = [
-            {"eq": ["resp_status_code", 201]},
-            {"check": "resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "resp_body_success", "comparator": "eq", "expect": True}
+            {"eq": ["$resp_status_code", 201]},
+            {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
         ]
         variables = []
         self.context.bind_variables(variables)

@@ -4,8 +4,7 @@ import re
 import sys
 from collections import OrderedDict
 
-from httprunner import exception, utils
-from httprunner.testcase import TestcaseParser
+from httprunner import exception, testcase, utils
 
 
 class Context(object):
@@ -15,7 +14,7 @@ class Context(object):
     def __init__(self):
         self.testset_shared_variables_mapping = OrderedDict()
         self.testcase_variables_mapping = OrderedDict()
-        self.testcase_parser = TestcaseParser()
+        self.testcase_parser = testcase.TestcaseParser()
         self.init_context()
 
     def init_context(self, level='testset'):
@@ -170,6 +169,75 @@ class Context(object):
         """
         self.testcase_parser.eval_content_functions(content)
 
+    def parse_validator(self, validator, resp_obj):
+        """ parse validator, validator maybe in two format
+        @param (dict) validator
+            format1: this is kept for compatiblity with the previous versions.
+                {"check": "status_code", "comparator": "eq", "expect": 201}
+                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+            format2: recommended new version
+                {'eq': ['status_code', 201]}
+                {'eq': ['$resp_body_success', True]}
+        @param (object) resp_obj
+        @return (dict) validator info
+            {
+                "check_item": check_item,
+                "check_value": check_value,
+                "expect_value": expect_value,
+                "comparator": comparator
+            }
+        """
+        if not isinstance(validator, dict):
+            raise exception.ParamsError("invalid validator: {}".format(validator))
+
+        if "check" in validator and len(validator) > 1:
+            # format1
+            check_item = validator.get("check")
+
+            if "expect" in validator:
+                expect_value = validator.get("expect")
+            elif "expected" in validator:
+                expect_value = validator.get("expected")
+            else:
+                raise exception.ParamsError("invalid validator: {}".format(validator))
+
+            comparator = validator.get("comparator", "eq")
+
+        elif len(validator) == 1:
+            # format2
+            comparator = list(validator.keys())[0]
+            compare_values = validator[comparator]
+
+            if not isinstance(compare_values, list) or len(compare_values) != 2:
+                raise exception.ParamsError("invalid validator: {}".format(validator))
+
+            check_item, expect_value = compare_values
+
+        else:
+            raise exception.ParamsError("invalid validator: {}".format(validator))
+
+        # check_item should only be in 3 type:
+        # 1, variable reference, e.g. $token
+        # 2, string joined by delimiter. e.g. "status_code", "headers.content-type"
+        # 3, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
+        if testcase.extract_variables(check_item):
+            # type 1
+            check_value = self.testcase_parser.eval_content_variables(check_item)
+        else:
+            try:
+                # type 2 or type 3
+                check_value = resp_obj.extract_field(check_item)
+            except exception.ParseResponseError:
+                raise exception.ParseResponseError("failed to extract check item in response!")
+
+        validator_dict = {
+            "check_item": check_item,
+            "check_value": check_value,
+            "expect_value": expect_value,
+            "comparator": comparator
+        }
+        return validator_dict
+
     def do_validation(self, validator_dict):
         """ validate with functions
         """
@@ -202,10 +270,8 @@ class Context(object):
         @param (list) validators
         @param (object) resp_obj
         """
-        variables_mapping = self.get_testcase_variables_mapping()
-
         for validator in validators:
-            validator_dict = resp_obj.parse_validator(validator, variables_mapping)
+            validator_dict = self.parse_validator(validator, resp_obj)
             self.do_validation(validator_dict)
 
         return True
