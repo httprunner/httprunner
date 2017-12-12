@@ -129,7 +129,11 @@ class Runner(object):
             self.context.bind_extracted_variables(extracted_variables_mapping)
 
             try:
-                resp_obj.validate(validators, self.context.get_testcase_variables_mapping())
+                resp_obj.validate(
+                    validators,
+                    self.context.get_testcase_variables_mapping(),
+                    self.context.get_testcase_functions_mapping()
+                )
             except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
                 err_msg = u"Exception occured.\n"
                 err_msg += u"HTTP request url: {}\n".format(url)

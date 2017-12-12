@@ -165,6 +165,9 @@ class Context(object):
     def get_testcase_variables_mapping(self):
         return self.testcase_variables_mapping
 
+    def get_testcase_functions_mapping(self):
+        return self.testcase_functions_config
+
     def exec_content_functions(self, content):
         """ execute functions in content.
         """

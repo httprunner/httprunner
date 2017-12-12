@@ -94,52 +94,73 @@ class TestUtils(ApiServerUnittest):
         with self.assertRaises(exception.ParseResponseError):
             utils.query_json(json_content, query)
 
-    def test_match_expected(self):
-        self.assertTrue(utils.match_expected(1, 1, "eq"))
-        self.assertTrue(utils.match_expected("abc", "abc", "=="))
-        self.assertTrue(utils.match_expected("abc", "abc"))
+    def test_get_uniform_comparator(self):
+        self.assertEqual(utils.get_uniform_comparator("eq"), "equals")
+        self.assertEqual(utils.get_uniform_comparator("=="), "equals")
+        self.assertEqual(utils.get_uniform_comparator("lt"), "less_than")
+        self.assertEqual(utils.get_uniform_comparator("le"), "less_than_or_equals")
+        self.assertEqual(utils.get_uniform_comparator("gt"), "greater_than")
+        self.assertEqual(utils.get_uniform_comparator("ge"), "greater_than_or_equals")
+        self.assertEqual(utils.get_uniform_comparator("ne"), "not_equals")
 
-        with self.assertRaises(exception.ValidationError):
-            utils.match_expected(123, "123", "eq")
-        with self.assertRaises(exception.ValidationError):
-            utils.match_expected(123, "123")
+        self.assertEqual(utils.get_uniform_comparator("str_eq"), "string_equals")
+        self.assertEqual(utils.get_uniform_comparator("len_eq"), "length_equals")
+        self.assertEqual(utils.get_uniform_comparator("count_eq"), "length_equals")
 
-        self.assertTrue(utils.match_expected(1, 2, "lt"))
-        self.assertTrue(utils.match_expected(1, 1, "le"))
-        self.assertTrue(utils.match_expected(2, 1, "gt"))
-        self.assertTrue(utils.match_expected(1, 1, "ge"))
-        self.assertTrue(utils.match_expected(123, "123", "ne"))
+        self.assertEqual(utils.get_uniform_comparator("len_gt"), "length_greater_than")
+        self.assertEqual(utils.get_uniform_comparator("count_gt"), "length_greater_than")
+        self.assertEqual(utils.get_uniform_comparator("count_greater_than"), "length_greater_than")
 
-        self.assertTrue(utils.match_expected("123", 3, "len_eq"))
-        self.assertTrue(utils.match_expected("123", 2, "len_gt"))
-        self.assertTrue(utils.match_expected("123", 3, "len_ge"))
-        self.assertTrue(utils.match_expected("123", 4, "len_lt"))
-        self.assertTrue(utils.match_expected("123", 3, "len_le"))
+        self.assertEqual(utils.get_uniform_comparator("len_ge"), "length_greater_than_or_equals")
+        self.assertEqual(utils.get_uniform_comparator("count_ge"), "length_greater_than_or_equals")
+        self.assertEqual(utils.get_uniform_comparator("count_greater_than_or_equals"), "length_greater_than_or_equals")
 
-        self.assertTrue(utils.match_expected("123abc456", "3ab", "contains"))
-        self.assertTrue(utils.match_expected(['1', '2'], "1", "contains"))
-        self.assertTrue(utils.match_expected({'a':1, 'b':2}, "a", "contains"))
-        self.assertTrue(utils.match_expected("3ab", "123abc456", "contained_by"))
+        self.assertEqual(utils.get_uniform_comparator("len_lt"), "length_less_than")
+        self.assertEqual(utils.get_uniform_comparator("count_lt"), "length_less_than")
+        self.assertEqual(utils.get_uniform_comparator("count_less_than"), "length_less_than")
 
-        self.assertTrue(utils.match_expected("123abc456", "^123\w+456$", "regex"))
-        with self.assertRaises(exception.ValidationError):
-            utils.match_expected("123abc456", "^12b.*456$", "regex")
+        self.assertEqual(utils.get_uniform_comparator("len_le"), "length_less_than_or_equals")
+        self.assertEqual(utils.get_uniform_comparator("count_le"), "length_less_than_or_equals")
+        self.assertEqual(utils.get_uniform_comparator("count_less_than_or_equals"), "length_less_than_or_equals")
 
-        with self.assertRaises(exception.ParamsError):
-            utils.match_expected(1, 2, "not_supported_comparator")
+    def test_validators(self):
+        imported_module = utils.get_imported_module("httprunner.built_in")
+        functions_mapping = utils.filter_module(imported_module, "function")
 
-        self.assertTrue(utils.match_expected("abc123", "ab", "startswith"))
-        self.assertTrue(utils.match_expected("123abc", 12, "startswith"))
-        self.assertTrue(utils.match_expected(12345, 123, "startswith"))
-        self.assertTrue(utils.match_expected("abc123", 23, "endswith"))
-        self.assertTrue(utils.match_expected("123abc", "abc", "endswith"))
-        self.assertTrue(utils.match_expected(12345, 45, "endswith"))
+        functions_mapping["equals"](None, None)
+        functions_mapping["equals"](1, 1)
+        functions_mapping["equals"]("abc", "abc")
+        with self.assertRaises(AssertionError):
+            functions_mapping["equals"]("123", 123)
 
-        self.assertTrue(utils.match_expected(None, None, "eq"))
-        with self.assertRaises(exception.ValidationError):
-            utils.match_expected(None, 3, "len_eq")
-        with self.assertRaises(exception.ValidationError):
-            utils.match_expected("abc", None, "gt")
+        functions_mapping["less_than"](1, 2)
+        functions_mapping["less_than_or_equals"](2, 2)
+
+        functions_mapping["greater_than"](2, 1)
+        functions_mapping["greater_than_or_equals"](2, 2)
+
+        functions_mapping["not_equals"](123, "123")
+
+        functions_mapping["length_equals"]("123", 3)
+        functions_mapping["length_greater_than"]("123", 2)
+        functions_mapping["length_greater_than_or_equals"]("123", 3)
+
+        functions_mapping["contains"]("123abc456", "3ab")
+        functions_mapping["contains"](['1', '2'], "1")
+        functions_mapping["contains"]({'a':1, 'b':2}, "a")
+        functions_mapping["contained_by"]("3ab", "123abc456")
+
+        functions_mapping["regex_match"]("123abc456", "^123\w+456$")
+        with self.assertRaises(AssertionError):
+            functions_mapping["regex_match"]("123abc456", "^12b.*456$")
+
+        functions_mapping["startswith"]("abc123", "ab")
+        functions_mapping["startswith"]("123abc", 12)
+        functions_mapping["startswith"](12345, 123)
+
+        functions_mapping["endswith"]("abc123", 23)
+        functions_mapping["endswith"]("123abc", "abc")
+        functions_mapping["endswith"](12345, 45)
 
     def test_deep_update_dict(self):
         origin_dict = {'a': 1, 'b': {'c': 3, 'd': 4}, 'f': 6}

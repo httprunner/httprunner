@@ -1,8 +1,13 @@
 import requests
-from httprunner import response, exception
+from httprunner import exception, response, utils
 from tests.base import ApiServerUnittest
 
+
 class TestResponse(ApiServerUnittest):
+
+    def setUp(self):
+        imported_module = utils.get_imported_module("httprunner.built_in")
+        self.functions_mapping = utils.filter_module(imported_module, "function")
 
     def test_parse_response_object_json(self):
         url = "http://127.0.0.1:5000/api/users"
@@ -226,6 +231,20 @@ class TestResponse(ApiServerUnittest):
         with self.assertRaises(exception.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
+    def test_do_validation(self):
+        url = "http://127.0.0.1:5000/"
+        resp = requests.get(url)
+        resp_obj = response.ResponseObject(resp)
+
+        resp_obj.do_validation(
+            {"check_item": "check_item", "check_value": 1, "expect_value": 1, "comparator": "eq"},
+            self.functions_mapping
+        )
+        resp_obj.do_validation(
+            {"check_item": "check_item", "check_value": "abc", "expect_value": "abc", "comparator": "=="},
+            self.functions_mapping
+        )
+
     def test_validate(self):
         url = "http://127.0.0.1:5000/"
         resp = requests.get(url)
@@ -241,7 +260,7 @@ class TestResponse(ApiServerUnittest):
         }
 
         with self.assertRaises(exception.ValidationError):
-            resp_obj.validate(validators, variables_mapping)
+            resp_obj.validate(validators, variables_mapping, self.functions_mapping)
 
         validators = [
             {"check": "resp_status_code", "comparator": "eq", "expect": 201},
@@ -252,7 +271,7 @@ class TestResponse(ApiServerUnittest):
             "resp_body_success": True
         }
 
-        self.assertTrue(resp_obj.validate(validators, variables_mapping))
+        self.assertTrue(resp_obj.validate(validators, variables_mapping, self.functions_mapping))
 
     def test_validate_exception(self):
         url = "http://127.0.0.1:5000/"
@@ -266,7 +285,7 @@ class TestResponse(ApiServerUnittest):
         ]
         variables_mapping = {}
         with self.assertRaises(exception.ValidationError):
-            resp_obj.validate(validators, variables_mapping)
+            resp_obj.validate(validators, variables_mapping, self.functions_mapping)
 
         # expected value missed in variables mapping
         validators = [
@@ -277,4 +296,4 @@ class TestResponse(ApiServerUnittest):
             "resp_status_code": 200
         }
         with self.assertRaises(exception.ValidationError):
-            resp_obj.validate(validators, variables_mapping)
+            resp_obj.validate(validators, variables_mapping, self.functions_mapping)
