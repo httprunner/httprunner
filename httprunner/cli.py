@@ -103,7 +103,7 @@ def main_locust():
     except ImportError:
         msg = "Locust is not installed, install first and try again.\n"
         msg += "install command: pip install locustio"
-        print(msg)
+        logging.info(msg)
         exit(1)
 
     sys.argv[0] = 'locust'
@@ -118,13 +118,18 @@ def main_locust():
         testcase_index = sys.argv.index('-f') + 1
         assert testcase_index < len(sys.argv)
     except (ValueError, AssertionError):
-        print("Testcase file is not specified, exit.")
+        logging.error("Testcase file is not specified, exit.")
         sys.exit(1)
 
     testcase_file_path = sys.argv[testcase_index]
     sys.argv[testcase_index] = locusts.parse_locustfile(testcase_file_path)
 
     if "--full-speed" in sys.argv:
+
+        if "--no-web" in sys.argv:
+            logging.warning("conflict parameter args: --full-speed --no-web. \nexit.")
+            sys.exit(1)
+
         locusts.run_locusts_at_full_speed(sys.argv)
     else:
         locusts.main()
