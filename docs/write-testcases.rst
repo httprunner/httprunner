@@ -68,7 +68,7 @@ Comparator
 ``HttpRunner`` currently supports the following comparators.
 
 +---------------------------+---------------------------+-------------------------+--------------------------+
-| comparator                | Description               | A(check), B(expect)   | examples                 |
+| comparator                | Description               | A(check), B(expect)     | examples                 |
 +===========================+===========================+=========================+==========================+
 | ``eq``, ``==``            | value is equal            | A == B                  | 9 eq 9                   |
 +---------------------------+---------------------------+-------------------------+--------------------------+
@@ -105,9 +105,9 @@ Comparator
 | ``contained_by``          | contained by              | A in B                  | | 'a' contained_by 'abc' |
 |                           |                           |                         | | 1 contained_by [1,2]   |
 +---------------------------+---------------------------+-------------------------+--------------------------+
-| ``type_match``                  | A is instance of B        | isinstance(A, B)        | 123 type_match 'int'           |
+| ``type_match``            | A is instance of B        | isinstance(A, B)        | 123 type_match 'int'     |
 +---------------------------+---------------------------+-------------------------+--------------------------+
-| ``regex_match``                 | regex matches             | re.match(B, A)          | 'abcdef' regex_match 'a\w+d'   |
+| ``regex_match``           | regex matches             | re.match(B, A)          | 'abcdef' regex 'a\w+d'   |
 +---------------------------+---------------------------+-------------------------+--------------------------+
 | ``startswith``            | starts with               | A.startswith(B) is True | 'abc' startswith 'ab'    |
 +---------------------------+---------------------------+-------------------------+--------------------------+
