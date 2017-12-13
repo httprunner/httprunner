@@ -16,17 +16,23 @@
                     "sign": "f1219719911caae89ccc301679857ebfda115ca2"
                 }
             },
+            "variables": [
+                {"expect_status_code": 200},
+                {"token_len": 16}
+            ],
             "extract": [
                 {
                     "token": "content.token"
                 }
             ],
             "validate": [
-                {"eq": ["status_code", 200]},
-                {"len_eq": ["content.token", 16]},
                 {"check": "status_code", "comparator": "eq", "expect": 200},
-                {"sum_status_code": ["status_code", 2]},
-                {"check": "content.token", "comparator": "len_eq", "expect": 16}
+                {"eq": ["status_code", "$expect_status_code"]},
+                {"check": "$token", "comparator": "len_eq", "expect": 16},
+                {"len_eq": ["$token", "$token_len"]},
+                {"len_eq": ["content.token", 16]},
+                {"check": "status_code", "comparator": "sum_status_code", "expect": 2},
+                {"sum_status_code": ["status_code", 2]}
             ]
         }
     },
