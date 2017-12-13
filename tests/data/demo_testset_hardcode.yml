@@ -17,12 +17,13 @@
     extract:
         - token: content.token
     validate:
+        - {"check": "status_code", "comparator": "eq", "expect": 200}
         - eq: ["status_code", $expect_status_code]
+        - {"check": "$token", "comparator": "len_eq", "expect": 16}
         - len_eq: ["$token", $token_len]
         - len_eq: ["content.token", 16]
-        - {"check": "status_code", "comparator": "eq", "expect": 200}
+        - {"check": "status_code", "comparator": "sum_status_code", "expect": 2}
         - sum_status_code: ["status_code", 2]
-        - {"check": "$token", "comparator": "len_eq", "expect": 16}
 
 - test:
     name: create user which does not exist
