@@ -1,4 +1,4 @@
-import codecs
+import io
 import multiprocessing
 import os
 import sys
@@ -39,8 +39,8 @@ def gen_locustfile(testcase_file_path):
     testset = load_test_file(testcase_file_path)
     host = testset.get("config", {}).get("request", {}).get("base_url", "")
 
-    with codecs.open(template_path, encoding='utf-8') as template:
-        with codecs.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
+    with io.open(template_path, encoding='utf-8') as template:
+        with io.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
             template_content = template.read()
             template_content = template_content.replace("$HOST", host)
             template_content = template_content.replace("$TESTCASE_FILE", testcase_file_path)

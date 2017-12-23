@@ -1,5 +1,5 @@
 import ast
-import codecs
+import io
 import json
 import logging
 import os
@@ -22,7 +22,7 @@ testcases_cache_mapping = {}
 def _load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
-    with codecs.open(yaml_file, 'r', encoding='utf-8') as stream:
+    with io.open(yaml_file, 'r', encoding='utf-8') as stream:
         yaml_content = yaml.load(stream)
         check_format(yaml_file, yaml_content)
         return yaml_content
@@ -30,7 +30,7 @@ def _load_yaml_file(yaml_file):
 def _load_json_file(json_file):
     """ load json file and check file content format
     """
-    with codecs.open(json_file, encoding='utf-8') as data_file:
+    with io.open(json_file, encoding='utf-8') as data_file:
         try:
             json_content = json.load(data_file)
         except exception.JSONDecodeError:
