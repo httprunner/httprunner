@@ -1,8 +1,7 @@
 import os
 import time
 
-from httprunner import exception, runner, testcase
-
+from httprunner import exception, runner, testcase, utils
 from tests.base import ApiServerUnittest
 
 
@@ -132,3 +131,16 @@ class TestRunner(ApiServerUnittest):
         result = self.test_runner.run(testcase_file_path, variables_mapping)
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
+
+    def test_run_testcase_with_empty_header(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/test_bugfix.yml')
+        testsets = testcase.load_testcases_by_path(testcase_file_path)
+        testset = testsets[0]
+        config_dict_headers = testset["config"]["request"]["headers"]
+        test_dict_headers = testset["testcases"][0]["request"]["headers"]
+        headers = utils.deep_update_dict(
+            config_dict_headers,
+            test_dict_headers
+        )
+        self.assertEqual(headers["Content-Type"], "application/json")
