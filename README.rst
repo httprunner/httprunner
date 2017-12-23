@@ -61,7 +61,7 @@ There are still too many awesome features to be implemented. Recent schedules in
 .. _PyUnitReport: https://github.com/HttpRunner/PyUnitReport
 .. _Jenkins: https://jenkins.io/index.html
 .. _User documentation: http://httprunner.readthedocs.io/
-.. _Development process blogs: http://debugtalk.com/tags/ApiTestEngine/
+.. _Development process blogs: http://debugtalk.com/tags/HttpRunner/
 .. _HAR: http://httparchive.org/
 .. _Swagger: https://swagger.io/
 .. _Postman Collection Format: http://blog.getpostman.com/2015/06/05/travelogue-of-postman-collection-format-v2/
