@@ -22,7 +22,7 @@ testcases_cache_mapping = {}
 def _load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
-    with codecs.open(yaml_file, 'r+', encoding='utf-8') as stream:
+    with codecs.open(yaml_file, 'r', encoding='utf-8') as stream:
         yaml_content = yaml.load(stream)
         check_format(yaml_file, yaml_content)
         return yaml_content
