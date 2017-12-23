@@ -1,0 +1,13 @@
+- config:
+    name: "bugfix testcases."
+    request:
+        base_url: http://127.0.0.1:5000
+        headers:
+            Content-Type: application/json
+
+- test:
+    name: get headers from config
+    request:
+        url: /api/users/1000
+        method: GET
+        headers:

@@ -155,10 +155,16 @@ def deep_update_dict(origin_dict, override_dict):
          override_dict = {'b': {'c': 3}}
     return: {'a': 1, 'b': {'c': 3, 'd': 4}}
     """
+    if not override_dict:
+        return origin_dict
+
     for key, val in override_dict.items():
         if isinstance(val, dict):
             tmp = deep_update_dict(origin_dict.get(key, {}), val)
             origin_dict[key] = tmp
+        elif val is None:
+            # fix #64: when headers in test is None, it should inherit from config
+            continue
         else:
             origin_dict[key] = override_dict[key]
 
