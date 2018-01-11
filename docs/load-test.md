@@ -21,10 +21,10 @@ $ locusts -f examples/first-testcase.yml
 
 In this case, you can reuse all features of [`Locust`][Locust].
 
-That’s not all about it. With the argument `--full-speed`, you can even start locust with master and several slaves (default to cpu cores number) at one time, which means you can leverage all cpus of your machine.
+That’s not all about it. With the argument `--cpu-cores`, you can even start locust with master and specified number of slaves (default to cpu cores number) at one time, which means you can leverage all cpus of your machine.
 
 ```bash
-$ locusts -f examples/first-testcase.yml --full-speed
+$ locusts -f examples/first-testcase.yml --cpu-cores 4
 [2017-08-26 23:51:47,071] bogon/INFO/locust.main: Starting web monitor at *:8089
 [2017-08-26 23:51:47,075] bogon/INFO/locust.main: Starting Locust 0.8a2
 [2017-08-26 23:51:47,078] bogon/INFO/locust.main: Starting Locust 0.8a2

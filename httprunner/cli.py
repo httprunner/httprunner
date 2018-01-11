@@ -1,16 +1,16 @@
 import argparse
 import logging
+import multiprocessing
 import os
 import sys
 from collections import OrderedDict
 
-from pyunitreport import __version__ as pyu_version
-from pyunitreport import HTMLTestRunner
-
 from httprunner import __version__ as ate_version
 from httprunner import exception
 from httprunner.task import TaskSuite
-from httprunner.utils import create_scaffold
+from httprunner.utils import create_scaffold, string_type
+from pyunitreport import __version__ as pyu_version
+from pyunitreport import HTMLTestRunner
 
 
 def main_ate():
@@ -98,6 +98,8 @@ def main_ate():
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
+    logging.basicConfig(level="INFO")
+
     try:
         from httprunner import locusts
     except ImportError:
@@ -124,12 +126,34 @@ def main_locust():
     testcase_file_path = sys.argv[testcase_index]
     sys.argv[testcase_index] = locusts.parse_locustfile(testcase_file_path)
 
-    if "--full-speed" in sys.argv:
-
+    if "--cpu-cores" in sys.argv:
+        """ locusts -f locustfile.py --cpu-cores 4
+        """
         if "--no-web" in sys.argv:
-            logging.warning("conflict parameter args: --full-speed --no-web. \nexit.")
+            logging.error("conflict parameter args: --cpu-cores & --no-web. \nexit.")
             sys.exit(1)
 
-        locusts.run_locusts_at_full_speed(sys.argv)
+        cpu_cores_index = sys.argv.index('--cpu-cores')
+
+        cpu_cores_num_index = cpu_cores_index + 1
+
+        if cpu_cores_num_index >= len(sys.argv):
+            """ do not specify cpu cores explicitly
+                locusts -f locustfile.py --cpu-cores
+            """
+            cpu_cores_num_value = multiprocessing.cpu_count()
+            logging.warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+        else:
+            try:
+                """ locusts -f locustfile.py --cpu-cores 4 """
+                cpu_cores_num_value = int(sys.argv[cpu_cores_num_index])
+                sys.argv.pop(cpu_cores_num_index)
+            except ValueError:
+                """ locusts -f locustfile.py --cpu-cores -P 8888 """
+                cpu_cores_num_value = multiprocessing.cpu_count()
+                logging.warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+
+        sys.argv.pop(cpu_cores_index)
+        locusts.run_locusts_on_cpu_cores(sys.argv, cpu_cores_num_value)
     else:
         locusts.main()
