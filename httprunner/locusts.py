@@ -58,12 +58,9 @@ def start_slave(sys_argv):
     sys.argv = sys_argv
     main()
 
-def run_locusts_at_full_speed(sys_argv):
-    sys_argv.pop(sys_argv.index("--full-speed"))
-    slaves_num = multiprocessing.cpu_count()
-
+def run_locusts_on_cpu_cores(sys_argv, cpu_cores_num_value):
     processes = []
-    for _ in range(slaves_num):
+    for _ in range(cpu_cores_num_value):
         p_slave = multiprocessing.Process(target=start_slave, args=(sys_argv,))
         p_slave.daemon = True
         p_slave.start()
