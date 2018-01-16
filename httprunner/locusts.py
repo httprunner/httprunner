@@ -54,12 +54,16 @@ def start_master(sys_argv):
     main()
 
 def start_slave(sys_argv):
-    sys_argv.extend(["--slave"])
+    if "--slave" not in sys_argv:
+        sys_argv.extend(["--slave"])
+
     sys.argv = sys_argv
     main()
 
 def run_locusts_on_cpu_cores(sys_argv, cpu_cores_num_value):
     processes = []
+    manager = multiprocessing.Manager()
+
     for _ in range(cpu_cores_num_value):
         p_slave = multiprocessing.Process(target=start_slave, args=(sys_argv,))
         p_slave.daemon = True
@@ -67,6 +71,9 @@ def run_locusts_on_cpu_cores(sys_argv, cpu_cores_num_value):
         processes.append(p_slave)
 
     try:
-        start_master(sys_argv)
+        if "--slave" in sys_argv:
+            [process.join() for process in processes]
+        else:
+            start_master(sys_argv)
     except KeyboardInterrupt:
-        sys.exit(0)
+        manager.shutdown()
