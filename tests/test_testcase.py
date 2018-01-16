@@ -542,3 +542,40 @@ class TestcaseParserUnittest(unittest.TestCase):
 
         with self.assertRaises(ApiNotFound):
             testcase.get_test_definition("api_not_exist", "api")
+
+    def test_parse_validator(self):
+        validator = {"check": "status_code", "comparator": "eq", "expect": 201}
+        self.assertEqual(
+            testcase.parse_validator(validator),
+            {"check": "status_code", "comparator": "eq", "expect": 201}
+        )
+
+        validator = {'eq': ['status_code', 201]}
+        self.assertEqual(
+            testcase.parse_validator(validator),
+            {"check": "status_code", "comparator": "eq", "expect": 201}
+        )
+
+    def test_merge_validator(self):
+        api_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        test_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+
+        merged_validators = testcase.merge_validator(api_validators, test_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            merged_validators
+        )

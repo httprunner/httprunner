@@ -18,6 +18,9 @@
     api: get_token($user_agent, $device_sn, $os_platform, $app_version)
     extract:
         - token: content.token
+    validate:
+        - "eq": ["status_code", 200]
+        - "len_eq": ["content.token", 16]
 
 - test:
     name: reset all users

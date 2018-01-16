@@ -212,6 +212,121 @@ def load_testcases_by_path(path):
     testcases_cache_mapping[path] = testcases_list
     return testcases_list
 
+def parse_validator(validator):
+    """ parse validator, validator maybe in two format
+    @param (dict) validator
+        format1: this is kept for compatiblity with the previous versions.
+            {"check": "status_code", "comparator": "eq", "expect": 201}
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+        format2: recommended new version
+            {'eq': ['status_code', 201]}
+            {'eq': ['$resp_body_success', True]}
+    @return (dict) validator info
+        {
+            "check": "status_code",
+            "expect": 201,
+            "comparator": "eq"
+        }
+    """
+    if not isinstance(validator, dict):
+        raise exception.ParamsError("invalid validator: {}".format(validator))
+
+    if "check" in validator and len(validator) > 1:
+        # format1
+        check_item = validator.get("check")
+
+        if "expect" in validator:
+            expect_value = validator.get("expect")
+        elif "expected" in validator:
+            expect_value = validator.get("expected")
+        else:
+            raise exception.ParamsError("invalid validator: {}".format(validator))
+
+        comparator = validator.get("comparator", "eq")
+
+    elif len(validator) == 1:
+        # format2
+        comparator = list(validator.keys())[0]
+        compare_values = validator[comparator]
+
+        if not isinstance(compare_values, list) or len(compare_values) != 2:
+            raise exception.ParamsError("invalid validator: {}".format(validator))
+
+        check_item, expect_value = compare_values
+
+    else:
+        raise exception.ParamsError("invalid validator: {}".format(validator))
+
+    return {
+        "check": check_item,
+        "expect": expect_value,
+        "comparator": comparator
+    }
+
+def merge_validator(api_validators, test_validators):
+    """ merge api_validators with test_validators
+    @params:
+        api_validators: [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
+        test_validators: [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
+    @return:
+        [
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            {"check": "s3", "expect": 12, "comparator": "len_eq"}
+        ]
+    """
+    if not api_validators:
+        return test_validators
+
+    elif not test_validators:
+        return api_validators
+
+    else:
+        api_validators_mapping = {}
+        for api_validator in api_validators:
+            api_validator = parse_validator(api_validator)
+            key = (api_validator["check"], api_validator["comparator"])
+            api_validators_mapping[key] = api_validator
+
+        test_validators_mapping = {}
+        for test_validator in test_validators:
+            test_validator = parse_validator(test_validator)
+            key = (test_validator["check"], test_validator["comparator"])
+            test_validators_mapping[key] = test_validator
+
+        api_validators_mapping.update(test_validators_mapping)
+        return list(api_validators_mapping.values())
+
+def extend_test_api(test_block_dict):
+    """ update test block api with api definition
+    @param
+        test_block_dict:
+            {
+                "name": "get token",
+                "api": "get_token($user_agent, $device_sn, $os_platform, $app_version)",
+                "extract": [{"token": "content.token"}],
+                "validate": [{'eq': ['status_code', 200]}, {'len_eq': ['content.token', 16]}]
+            }
+    @return
+        {
+            "name": "get token",
+            "api": "get_token($user_agent, $device_sn, $os_platform, $app_version)",
+            "extract": [{"token": "content.token"}],
+            "validate": [{'eq': ['status_code', 200]}, {'len_eq': ['content.token', 16]}]
+        }
+    """
+    ref_name = test_block_dict["api"]
+    test_info = get_testinfo_by_reference(ref_name, "api")
+
+    api_validators = test_info.get("validate") or test_info.get("validators", [])
+    test_validators = test_block_dict.get("validate") or test_block_dict.get("validators", [])
+
+    test_block_dict.update(test_info)
+    test_block_dict["validate"] = merge_validator(
+        api_validators,
+        test_validators
+    )
+
 def load_test_file(file_path):
     """ load testset file, get testset data structure.
     @param file_path: absolute valid testset file path
@@ -242,9 +357,7 @@ def load_test_file(file_path):
             elif key == "test":
                 test_block_dict = item["test"]
                 if "api" in test_block_dict:
-                    ref_name = test_block_dict["api"]
-                    test_info = get_testinfo_by_reference(ref_name, "api")
-                    test_block_dict.update(test_info)
+                    extend_test_api(test_block_dict)
                     testset["testcases"].append(test_block_dict)
                 elif "suite" in test_block_dict:
                     ref_name = test_block_dict["suite"]
