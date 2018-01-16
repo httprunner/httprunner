@@ -102,9 +102,7 @@ class Runner(object):
             raise exception.ParamsError("URL or METHOD missed!")
 
         run_times = int(testcase_dict.get("times", 1))
-        extractors = testcase_dict.get("extract") \
-            or testcase_dict.get("extractors") \
-            or testcase_dict.get("extract_binds", [])
+        extractors = testcase_dict.get("extract", [])
         validators = testcase_dict.get("validate", [])
         setup_actions = testcase_dict.get("setup", [])
         teardown_actions = testcase_dict.get("teardown", [])
