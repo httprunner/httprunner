@@ -169,54 +169,22 @@ class Context(object):
         """
         self.testcase_parser.eval_content_functions(content)
 
-    def parse_validator(self, validator, resp_obj):
-        """ parse validator, validator maybe in two format
+    def eval_check_item(self, validator, resp_obj):
+        """ evaluate check item in validator
         @param (dict) validator
-            format1: this is kept for compatiblity with the previous versions.
-                {"check": "status_code", "comparator": "eq", "expect": 201}
-                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
-            format2: recommended new version
-                {'eq': ['status_code', 201]}
-                {'eq': ['$resp_body_success', True]}
+            {"check": "status_code", "comparator": "eq", "expect": 201}
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
         @param (object) resp_obj
         @return (dict) validator info
             {
-                "check_item": check_item,
-                "check_value": check_value,
-                "expect_value": expect_value,
-                "comparator": comparator
+                "check": "status_code",
+                "check_value": 200,
+                "expect": 201,
+                "comparator": "eq"
             }
         """
-        if not isinstance(validator, dict):
-            raise exception.ParamsError("invalid validator: {}".format(validator))
-
-        if "check" in validator and len(validator) > 1:
-            # format1
-            check_item = validator.get("check")
-
-            if "expect" in validator:
-                expect_value = validator.get("expect")
-            elif "expected" in validator:
-                expect_value = validator.get("expected")
-            else:
-                raise exception.ParamsError("invalid validator: {}".format(validator))
-
-            comparator = validator.get("comparator", "eq")
-
-        elif len(validator) == 1:
-            # format2
-            comparator = list(validator.keys())[0]
-            compare_values = validator[comparator]
-
-            if not isinstance(compare_values, list) or len(compare_values) != 2:
-                raise exception.ParamsError("invalid validator: {}".format(validator))
-
-            check_item, expect_value = compare_values
-
-        else:
-            raise exception.ParamsError("invalid validator: {}".format(validator))
-
-        # check_item should only be in 3 type:
+        check_item = validator["check"]
+        # check_item should only be in 3 types:
         # 1, variable reference, e.g. $token
         # 2, string joined by delimiter. e.g. "status_code", "headers.content-type"
         # 3, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
@@ -230,15 +198,14 @@ class Context(object):
             except exception.ParseResponseError:
                 raise exception.ParseResponseError("failed to extract check item in response!")
 
-        expect_value = self.testcase_parser.eval_content_variables(expect_value)
+        validator["check_value"] = check_value
 
-        validator_dict = {
-            "check_item": check_item,
-            "check_value": check_value,
-            "expect_value": expect_value,
-            "comparator": comparator
-        }
-        return validator_dict
+        # expect_value should only be in 2 types:
+        # 1, variable reference, e.g. $expect_status_code
+        # 2, actual value, e.g. 200
+        expect_value = self.testcase_parser.eval_content_variables(validator["expect"])
+        validator["expect"] = expect_value
+        return validator
 
     def do_validation(self, validator_dict):
         """ validate with functions
@@ -249,15 +216,15 @@ class Context(object):
         if not validate_func:
             raise exception.FunctionNotFound("comparator not found: {}".format(comparator))
 
-        check_item = validator_dict["check_item"]
+        check_item = validator_dict["check"]
         check_value = validator_dict["check_value"]
-        expect_value = validator_dict["expect_value"]
+        expect_value = validator_dict["expect"]
 
         try:
             if check_value is None or expect_value is None:
                 assert comparator in ["is", "eq", "equals", "=="]
 
-            validate_func(validator_dict["check_value"], validator_dict["expect_value"])
+            validate_func(validator_dict["check_value"], validator_dict["expect"])
         except (AssertionError, TypeError):
             err_msg = "\n" + "\n".join([
                 "\tcheck item name: %s;" % check_item,
@@ -273,7 +240,10 @@ class Context(object):
         @param (object) resp_obj
         """
         for validator in validators:
-            validator_dict = self.parse_validator(validator, resp_obj)
+            validator_dict = self.eval_check_item(
+                testcase.parse_validator(validator),
+                resp_obj
+            )
             self.do_validation(validator_dict)
 
         return True

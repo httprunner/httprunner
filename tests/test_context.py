@@ -220,10 +220,10 @@ class VariableBindsUnittest(ApiServerUnittest):
 
     def test_do_validation(self):
         self.context.do_validation(
-            {"check_item": "check_item", "check_value": 1, "expect_value": 1, "comparator": "eq"}
+            {"check": "check", "check_value": 1, "expect": 1, "comparator": "eq"}
         )
         self.context.do_validation(
-            {"check_item": "check_item", "check_value": "abc", "expect_value": "abc", "comparator": "=="}
+            {"check": "check", "check_value": "abc", "expect": "abc", "comparator": "=="}
         )
 
         config_dict = {
@@ -231,7 +231,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         }
         self.context.config_context(config_dict, "testset")
         self.context.do_validation(
-            {"check_item": "status_code", "check_value": "201", "expect_value": 3, "comparator": "sum_status_code"}
+            {"check": "status_code", "check_value": "201", "expect": 3, "comparator": "sum_status_code"}
         )
 
     def test_validate(self):

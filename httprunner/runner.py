@@ -105,8 +105,7 @@ class Runner(object):
         extractors = testcase_dict.get("extract") \
             or testcase_dict.get("extractors") \
             or testcase_dict.get("extract_binds", [])
-        validators = testcase_dict.get("validate") \
-            or testcase_dict.get("validators", [])
+        validators = testcase_dict.get("validate", [])
         setup_actions = testcase_dict.get("setup", [])
         teardown_actions = testcase_dict.get("teardown", [])
 
