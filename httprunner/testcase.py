@@ -310,7 +310,7 @@ def extend_test_api(test_block_dict):
     @return
         {
             "name": "get token",
-            "api": "get_token($user_agent, $device_sn, $os_platform, $app_version)",
+            "request": {...},
             "extract": [{"token": "content.token"}],
             "validate": [{'eq': ['status_code', 200]}, {'len_eq': ['content.token', 16]}]
         }
