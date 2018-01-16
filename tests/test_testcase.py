@@ -579,3 +579,21 @@ class TestcaseParserUnittest(unittest.TestCase):
             {"check": "s3", "expect": 12, "comparator": "len_eq"},
             merged_validators
         )
+
+    def test_merge_extractor(self):
+        api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
+        test_extracors = [{"var1": "val111"}, {"var3": "val3"}]
+
+        merged_extractors = testcase.merge_extractor(api_extrators, test_extracors)
+        self.assertIn(
+            {"var1": "val111"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var2": "val2"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var3": "val3"},
+            merged_extractors
+        )

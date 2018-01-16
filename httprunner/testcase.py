@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from collections import OrderedDict
 
 import yaml
 from httprunner import exception, utils
@@ -297,6 +298,48 @@ def merge_validator(api_validators, test_validators):
         api_validators_mapping.update(test_validators_mapping)
         return list(api_validators_mapping.values())
 
+def merge_extractor(api_extrators, test_extracors):
+    """ merge api_extrators with test_extracors
+    @params:
+        api_extrators: [{"var1": "val1"}, {"var2": "val2"}]
+        test_extracors: [{"var1": "val111"}, {"var3": "val3"}]
+    @return:
+        [
+            {"var1": "val111"},
+            {"var2": "val2"},
+            {"var3": "val3"}
+        ]
+    """
+    if not api_extrators:
+        return test_extracors
+
+    elif not test_extracors:
+        return api_extrators
+
+    else:
+        extractor_dict = OrderedDict()
+        for api_extrator in api_extrators:
+            if len(api_extrator) != 1:
+                logging.warning("incorrect extractor: {}".format(api_extrator))
+                continue
+
+            var_name = list(api_extrator.keys())[0]
+            extractor_dict[var_name] = api_extrator[var_name]
+
+        for test_extrator in test_extracors:
+            if len(test_extrator) != 1:
+                logging.warning("incorrect extractor: {}".format(test_extrator))
+                continue
+
+            var_name = list(test_extrator.keys())[0]
+            extractor_dict[var_name] = test_extrator[var_name]
+
+        extractor_list = []
+        for key, value in extractor_dict.items():
+            extractor_list.append({key: value})
+
+        return extractor_list
+
 def extend_test_api(test_block_dict):
     """ update test block api with api definition
     @param
@@ -321,10 +364,21 @@ def extend_test_api(test_block_dict):
     api_validators = test_info.get("validate") or test_info.get("validators", [])
     test_validators = test_block_dict.get("validate") or test_block_dict.get("validators", [])
 
+    api_extrators = test_info.get("extract") \
+        or test_info.get("extractors") \
+        or test_info.get("extract_binds", [])
+    test_extracors = test_block_dict.get("extract") \
+        or test_block_dict.get("extractors") \
+        or test_block_dict.get("extract_binds", [])
+
     test_block_dict.update(test_info)
     test_block_dict["validate"] = merge_validator(
         api_validators,
         test_validators
+    )
+    test_block_dict["extract"] = merge_extractor(
+        api_extrators,
+        test_extracors
     )
 
 def load_test_file(file_path):
