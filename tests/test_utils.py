@@ -162,6 +162,9 @@ class TestUtils(ApiServerUnittest):
         functions_mapping["endswith"]("123abc", "abc")
         functions_mapping["endswith"](12345, 45)
 
+        functions_mapping["type_match"](580509390, int)
+        functions_mapping["type_match"](580509390, "int")
+
     def test_deep_update_dict(self):
         origin_dict = {'a': 1, 'b': {'c': 3, 'd': 4}, 'f': 6, 'h': 123}
         override_dict = {'a': 2, 'b': {'c': 33, 'e': 5}, 'g': 7, 'h': None}

@@ -89,7 +89,18 @@ def contained_by(check_value, expect_value):
     assert check_value in expect_value
 
 def type_match(check_value, expect_value):
-    assert isinstance(check_value, expect_value)
+    def get_type(name):
+        if isinstance(name, type):
+            return name
+        elif isinstance(name, str):
+            try:
+                return __builtins__[name]
+            except KeyError:
+                raise ValueError(name)
+        else:
+            raise ValueError(name)
+
+    assert isinstance(check_value, get_type(expect_value))
 
 def regex_match(check_value, expect_value):
     assert isinstance(expect_value, string_type)
