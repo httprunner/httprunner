@@ -144,3 +144,15 @@ class TestRunner(ApiServerUnittest):
             test_dict_headers
         )
         self.assertEqual(headers["Content-Type"], "application/json")
+
+    def test_bugfix_type_match(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/test_bugfix.yml')
+        testcases = testcase._load_file(testcase_file_path)
+        config_dict = {
+            "path": testcase_file_path
+        }
+        self.test_runner.init_config(config_dict, "testset")
+
+        test = testcases[2]["test"]
+        self.assertTrue(self.test_runner._run_test(test))
