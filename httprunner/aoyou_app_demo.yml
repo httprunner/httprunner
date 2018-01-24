@@ -1,0 +1,25 @@
+- config:
+    name: "homepage api monitor for aoyou."
+    request:
+        base_url: https://mservice.aoyou.com
+
+- test:
+    name: 检查周周爆款数据（是否空窗<=5）
+    variables:
+        - user_agent: "android400425/7E61C213710D58C1CA8E7DF485A2D12E/ffffffff-87b9-c09b-ffff-ffffd0c43ef6/0/"
+    request:
+        url: "/api40/element/GetQiangProduct"
+        method: POST
+        headers:
+            User-Agent: $user_agent
+        json:
+            cityId: "1"
+            channelTypeid: "385"
+            type: "3"
+            space: "7A17CC9D-14B8-4083-9A02-DE980B38BB2B"
+    extract:
+        - Message: content.Message
+        - data: content.Data.listqiangProduct
+    validate:
+        - {"check": "status_code", "comparator": "eq", "expect": 200}
+        - {"check": "content.Data.listqiangProduct", "comparator": "len_ge", "expect": 5}
