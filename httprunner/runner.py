@@ -237,10 +237,15 @@ class Runner(object):
         """ generate and print output
         """
         variables_mapping = self.context.get_testcase_variables_mapping()
-        output = {
-            variable: variables_mapping[variable]
-            for variable in output_variables_list
-        }
+
+        output = {}
+        for variable in output_variables_list:
+            if variable not in variables_mapping:
+                logging.warning("variable '{}' can not be found in variables mapping, failed to ouput!")
+                continue
+
+            output[variable] = variables_mapping[variable]
+
         utils.print_output(output)
 
         return output
