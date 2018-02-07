@@ -71,6 +71,7 @@ class Runner(object):
         @param (dict) testcase_dict
             {
                 "name": "testcase description",
+                "skip": Fasle,
                 "times": 3,
                 "requires": [],         # optional, override
                 "function_binds": {},   # optional, override
@@ -101,7 +102,12 @@ class Runner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        run_times = int(testcase_dict.get("times", 1))
+        skip_current_test = testcase_dict.get("skip", False)
+        if skip_current_test:
+            run_times = 0
+        else:
+            run_times = int(testcase_dict.get("times", 1))
+
         extractors = testcase_dict.get("extract", [])
         validators = testcase_dict.get("validate", [])
         setup_actions = testcase_dict.get("setup", [])
