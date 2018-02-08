@@ -72,7 +72,7 @@ class Runner(object):
         @param (dict) testcase_dict
             {
                 "name": "testcase description",
-                "skip": Fasle,
+                "skip": "skip this test unconditionally",
                 "times": 3,
                 "requires": [],         # optional, override
                 "function_binds": {},   # optional, override
@@ -87,7 +87,7 @@ class Runner(object):
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },
-                "extract": [], # optional
+                "extract": [],       # optional
                 "validate": [],      # optional
                 "setup": [],         # optional
                 "teardown": []       # optional
