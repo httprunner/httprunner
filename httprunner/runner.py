@@ -108,7 +108,10 @@ class Runner(object):
         setup_actions = testcase_dict.get("setup", [])
         teardown_actions = testcase_dict.get("teardown", [])
 
-        if "skipIf" in testcase_dict:
+        if "skip" in testcase_dict:
+            skip_reason = testcase_dict["skip"]
+            raise SkipTest(skip_reason)
+        elif "skipIf" in testcase_dict:
             skip_if_condition = testcase_dict["skipIf"]
             if self.context.exec_content_functions(skip_if_condition):
                 skip_reason = "{} evaluate to True".format(skip_if_condition)
