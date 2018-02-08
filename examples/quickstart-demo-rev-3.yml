@@ -25,6 +25,8 @@
     extract:
         - token: content.token
     validate:
+        - eq: ["status_code", 200]
+        - len_eq: ["content.token", 16]
         - {"check": "status_code", "comparator": "eq", "expect": 200}
         - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
