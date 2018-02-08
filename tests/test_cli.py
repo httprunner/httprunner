@@ -9,16 +9,27 @@ from tests.base import ApiServerUnittest
 
 class TestCli(ApiServerUnittest):
 
-    def test_run_times(self):
+    def setUp(self):
         testset_path = "tests/data/demo_testset_cli.yml"
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
-        kwargs = {
+        self.kwargs = {
             "output": output_folder_name
         }
+        self.task_suite = TaskSuite(testset_path)
+        self.report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
+        self.reset_all()
 
-        task_suite = TaskSuite(testset_path)
-        result = HTMLTestRunner(**kwargs).run(task_suite)
-        self.assertEqual(result.testsRun, 5)
+    def reset_all(self):
+        url = "%s/api/reset-all" % self.host
+        headers = self.get_authenticated_headers()
+        return self.api_client.get(url, headers=headers)
 
-        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
-        shutil.rmtree(report_save_dir)
+    def test_run_times(self):
+        result = HTMLTestRunner(**self.kwargs).run(self.task_suite)
+        self.assertEqual(result.testsRun, 6)
+        shutil.rmtree(self.report_save_dir)
+
+    def test_skip(self):
+        result = HTMLTestRunner(**self.kwargs).run(self.task_suite)
+        self.assertEqual(len(result.skipped), 2)
+        shutil.rmtree(self.report_save_dir)

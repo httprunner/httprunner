@@ -15,7 +15,11 @@ class ApiTestCase(unittest.TestCase):
     def runTest(self):
         """ run testcase and check result.
         """
-        self.assertTrue(self.test_runner._run_test(self.testcase_dict))
+        skip_current_test = self.testcase_dict.get("skip", False)
+        if skip_current_test:
+            self.skipTest("skip this test")
+        else:
+            self.assertTrue(self.test_runner._run_test(self.testcase_dict))
 
 class ApiTestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.
