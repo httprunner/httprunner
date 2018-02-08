@@ -102,12 +102,6 @@ class Runner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        skip_current_test = testcase_dict.get("skip", False)
-        if skip_current_test:
-            run_times = 0
-        else:
-            run_times = int(testcase_dict.get("times", 1))
-
         extractors = testcase_dict.get("extract", [])
         validators = testcase_dict.get("validate", [])
         setup_actions = testcase_dict.get("setup", [])
@@ -117,32 +111,31 @@ class Runner(object):
             for action in actions:
                 self.context.exec_content_functions(action)
 
-        for _ in range(run_times):
-            setup_teardown(setup_actions)
+        setup_teardown(setup_actions)
 
-            resp = self.http_client_session.request(
-                method,
-                url,
-                name=group_name,
-                **parsed_request
-            )
-            resp_obj = response.ResponseObject(resp)
+        resp = self.http_client_session.request(
+            method,
+            url,
+            name=group_name,
+            **parsed_request
+        )
+        resp_obj = response.ResponseObject(resp)
 
-            extracted_variables_mapping = resp_obj.extract_response(extractors)
-            self.context.bind_extracted_variables(extracted_variables_mapping)
+        extracted_variables_mapping = resp_obj.extract_response(extractors)
+        self.context.bind_extracted_variables(extracted_variables_mapping)
 
-            try:
-                self.context.validate(validators, resp_obj)
-            except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
-                err_msg = u"Exception occured.\n"
-                err_msg += u"HTTP request url: {}\n".format(url)
-                err_msg += u"HTTP request kwargs: {}\n".format(parsed_request)
-                err_msg += u"HTTP response status_code: {}\n".format(resp.status_code)
-                err_msg += u"HTTP response content: \n{}".format(resp.text)
-                logging.error(err_msg)
-                raise
-            finally:
-                setup_teardown(teardown_actions)
+        try:
+            self.context.validate(validators, resp_obj)
+        except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
+            err_msg = u"Exception occured.\n"
+            err_msg += u"HTTP request url: {}\n".format(url)
+            err_msg += u"HTTP request kwargs: {}\n".format(parsed_request)
+            err_msg += u"HTTP response status_code: {}\n".format(resp.status_code)
+            err_msg += u"HTTP response content: \n{}".format(resp.text)
+            logging.error(err_msg)
+            raise
+        finally:
+            setup_teardown(teardown_actions)
 
         return True
 

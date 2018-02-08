@@ -37,7 +37,7 @@ class ApiTestSuite(unittest.TestSuite):
                 ApiTestCase.runTest.__func__.__doc__ = testcase_dict['name']
 
             test = ApiTestCase(self.test_runner, testcase_dict)
-            self.addTest(test)
+            [self.addTest(test) for _ in range(int(testcase_dict.get("times", 1)))]
 
     def print_output(self):
         output_variables_list = self.config_dict.get("output", [])
