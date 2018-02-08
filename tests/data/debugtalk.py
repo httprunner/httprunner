@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import os
 import random
 import string
 import time
@@ -40,3 +41,10 @@ def sum_status_code(status_code, expect_sum):
         sum_value += int(digit)
 
     assert sum_value == expect_sum
+
+os.environ["TEST_ENV"] = "PRODUCTION"
+
+def skip_test_in_production_env():
+    """ skip this test in production environment
+    """
+    return os.environ["TEST_ENV"] == "PRODUCTION"

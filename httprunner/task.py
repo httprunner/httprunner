@@ -15,9 +15,9 @@ class ApiTestCase(unittest.TestCase):
     def runTest(self):
         """ run testcase and check result.
         """
-        skip_current_test = self.testcase_dict.get("skip", False)
-        if skip_current_test:
-            self.skipTest("skip this test")
+        if "skip" in self.testcase_dict:
+            skip_reason = self.testcase_dict["skip"]
+            self.skipTest(skip_reason)
         else:
             self.assertTrue(self.test_runner._run_test(self.testcase_dict))
 
