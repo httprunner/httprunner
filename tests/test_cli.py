@@ -26,7 +26,7 @@ class TestCli(ApiServerUnittest):
 
     def test_run_times(self):
         result = HTMLTestRunner(**self.kwargs).run(self.task_suite)
-        self.assertEqual(result.testsRun, 8)
+        self.assertEqual(result.testsRun, 10)
         shutil.rmtree(self.report_save_dir)
 
     def test_skip(self):

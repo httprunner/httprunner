@@ -67,6 +67,30 @@ class Runner(object):
 
         return parsed_request
 
+    def _handle_skip_feature(self, testcase_dict):
+        """ handle skip feature for testcase
+            - skip: skip current test unconditionally
+            - skipIf: skip current test if condition is true
+            - skipUnless: skip current test unless condition is true
+        """
+        skip_reason = None
+
+        if "skip" in testcase_dict:
+            skip_reason = testcase_dict["skip"]
+
+        elif "skipIf" in testcase_dict:
+            skip_if_condition = testcase_dict["skipIf"]
+            if self.context.exec_content_functions(skip_if_condition):
+                skip_reason = "{} evaluate to True".format(skip_if_condition)
+
+        elif "skipUnless" in testcase_dict:
+            skip_unless_condition = testcase_dict["skipUnless"]
+            if not self.context.exec_content_functions(skip_unless_condition):
+                skip_reason = "{} evaluate to False".format(skip_unless_condition)
+
+        if skip_reason:
+            raise SkipTest(skip_reason)
+
     def _run_test(self, testcase_dict):
         """ run single testcase.
         @param (dict) testcase_dict
@@ -108,14 +132,7 @@ class Runner(object):
         setup_actions = testcase_dict.get("setup", [])
         teardown_actions = testcase_dict.get("teardown", [])
 
-        if "skip" in testcase_dict:
-            skip_reason = testcase_dict["skip"]
-            raise SkipTest(skip_reason)
-        elif "skipIf" in testcase_dict:
-            skip_if_condition = testcase_dict["skipIf"]
-            if self.context.exec_content_functions(skip_if_condition):
-                skip_reason = "{} evaluate to True".format(skip_if_condition)
-                raise SkipTest(skip_reason)
+        self._handle_skip_feature(testcase_dict)
 
         def setup_teardown(actions):
             for action in actions:
