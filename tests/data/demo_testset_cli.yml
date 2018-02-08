@@ -68,8 +68,29 @@
         - {"check": "content.success", "comparator": "eq", "expect": false}
 
 - test:
-    name: create user which existed (skipped)
-    skip: True
+    name: create user which existed (skip unconditionally)
+    skip: skip this test unconditionally
+    times: 2
+    request:
+        url: http://127.0.0.1:5000/api/users/1000
+        method: POST
+        headers:
+            Content-Type: application/json
+            device_sn: 'HZfFBh6tU59EdXJ'
+            token: $token
+        json:
+            name: "user1"
+            password: "123456"
+    validate:
+        - "eq": ["status_code", 500]
+        - sum_status_code: ["status_code", 5]
+        - "eq": ["content.success", false]
+        - {"check": "status_code", "comparator": "eq", "expect": 500}
+        - {"check": "content.success", "comparator": "eq", "expect": false}
+
+- test:
+    name: create user which existed (skip with condition)
+    skipIf: ${skip_test_in_production_env()}
     times: 2
     request:
         url: http://127.0.0.1:5000/api/users/1000

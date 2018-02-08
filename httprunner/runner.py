@@ -1,4 +1,5 @@
 import logging
+from unittest.case import SkipTest
 
 from httprunner import exception, response, testcase, utils
 from httprunner.client import HttpSession
@@ -106,6 +107,12 @@ class Runner(object):
         validators = testcase_dict.get("validate", [])
         setup_actions = testcase_dict.get("setup", [])
         teardown_actions = testcase_dict.get("teardown", [])
+
+        if "skipIf" in testcase_dict:
+            skip_if_condition = testcase_dict["skipIf"]
+            if self.context.exec_content_functions(skip_if_condition):
+                skip_reason = "{} evaluate to True".format(skip_if_condition)
+                raise SkipTest(skip_reason)
 
         def setup_teardown(actions):
             for action in actions:

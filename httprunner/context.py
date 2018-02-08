@@ -167,7 +167,7 @@ class Context(object):
     def exec_content_functions(self, content):
         """ execute functions in content.
         """
-        self.testcase_parser.eval_content_functions(content)
+        return self.testcase_parser.eval_content_functions(content)
 
     def eval_check_item(self, validator, resp_obj):
         """ evaluate check item in validator
