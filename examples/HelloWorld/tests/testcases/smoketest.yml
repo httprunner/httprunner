@@ -1,0 +1,20 @@
+- config:
+    name: smoketest
+    variables:
+        - device_sn: ${gen_random_string(15)}
+    request: $default_request
+
+- test:
+    name: setup and reset all.
+    suite: setup_and_reset($device_sn)
+    output:
+        - token
+        - device_sn
+
+- test:
+    name: create user 1000 and check result.
+    suite: create_and_check(1000, $token)
+
+- test:
+    name: create user 1001 and check result.
+    suite: create_and_check(1001, $token)
