@@ -11,5 +11,4 @@ dist/*
 logs/%
 .coverage
 locustfile.py
-
-_build
+site/
