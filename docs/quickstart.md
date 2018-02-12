@@ -328,8 +328,8 @@ This is just a starting point, see the `advanced guide` for the advanced feature
 
 [requests]: http://docs.python-requests.org/en/master/
 [requests.request]: http://docs.python-requests.org/en/master/api/#requests.request
-[comparator]: comparator.md
-[extraction-and-validation]: extraction-and-validation.md
+[comparator]: write-testcases.md#comparator
+[extraction-and-validation]: write-testcases.md#extraction-and-validation
 [quickstart-demo-rev-0]: ../examples/quickstart-demo-rev-0.yml
 [quickstart-demo-rev-1]: ../examples/quickstart-demo-rev-1.yml
 [quickstart-demo-rev-2]: ../examples/quickstart-demo-rev-2.yml
