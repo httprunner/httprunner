@@ -267,7 +267,10 @@ class Runner(object):
         output = {}
         for variable in output_variables_list:
             if variable not in variables_mapping:
-                logging.warning("variable '{}' can not be found in variables mapping, failed to ouput!")
+                logging.warning(
+                    "variable '{}' can not be found in variables mapping, failed to ouput!"\
+                        .format(variable)
+                )
                 continue
 
             output[variable] = variables_mapping[variable]
