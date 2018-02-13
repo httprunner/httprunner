@@ -13,7 +13,7 @@ from pyunitreport import __version__ as pyu_version
 from pyunitreport import HTMLTestRunner
 
 
-def main_ate():
+def main_hrun():
     """ API test: parse command line options and run commands.
     """
     parser = argparse.ArgumentParser(
