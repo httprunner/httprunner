@@ -33,9 +33,9 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ate=httprunner.cli:main_ate',
-            'httprunner=httprunner.cli:main_ate',
-            'hrun=httprunner.cli:main_ate',
+            'ate=httprunner.cli:main_hrun',
+            'httprunner=httprunner.cli:main_hrun',
+            'hrun=httprunner.cli:main_hrun',
             'locusts=httprunner.cli:main_locust'
         ]
     }
