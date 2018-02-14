@@ -44,9 +44,6 @@ class ApiTestSuite(unittest.TestSuite):
             }
         (dict) variables_mapping:
             passed in variables mapping, it will override variables in config block
-
-    @return (instance) test result of testset
-        Result(success, output)
     """
     def __init__(self, testset, variables_mapping=None, http_client_session=None):
         super(ApiTestSuite, self).__init__()
@@ -116,9 +113,31 @@ class TaskSuite(unittest.TestSuite):
 
 class Result(object):
 
-    def __init__(self, success, output):
-        self.success = success
+    class Stat(object):
+        def __init__(self, **stat_dict):
+            for key, value in stat_dict.items():
+                setattr(self, key, value)
+
+    def __init__(self, result, output):
+        self.success = result.wasSuccessful()
+        self.stat = self.make_stat(result)
         self.output = output
+
+    def make_stat(self, result):
+        total = result.testsRun
+        failures = len(result.failures)
+        errors = len(result.errors)
+        skipped = len(result.skipped)
+        successes = total - failures - errors - skipped
+        stat = {
+            "total": total,
+            "successes": successes,
+            "failures": failures,
+            "errors": errors,
+            "skipped": skipped
+        }
+        return self.Stat(**stat)
+
 
 class LocustTask(object):
 
