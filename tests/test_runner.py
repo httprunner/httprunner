@@ -26,7 +26,7 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_single_testcase(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testcases = testcase._load_file(testcase_file_path)
+            testcases = testcase.load_file(testcase_file_path)
 
             config_dict = {
                 "path": testcase_file_path
@@ -150,7 +150,7 @@ class TestRunner(ApiServerUnittest):
     def test_bugfix_type_match(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testcases = testcase._load_file(testcase_file_path)
+        testcases = testcase.load_file(testcase_file_path)
         config_dict = {
             "path": testcase_file_path
         }
