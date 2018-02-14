@@ -3,15 +3,42 @@ import logging
 import multiprocessing
 import os
 import sys
+import unittest
 from collections import OrderedDict
 
-from httprunner import __version__ as ate_version
-from httprunner import exception
-from httprunner.task import TaskSuite
-from httprunner.utils import create_scaffold, string_type
+from httprunner import __version__ as hrun_version
+from httprunner.utils import create_scaffold, print_output, string_type
 from pyunitreport import __version__ as pyu_version
 from pyunitreport import HTMLTestRunner
 
+from .exception import TestcaseNotFound
+from .task import Result, TaskSuite
+
+
+def run_suite_path(path, mapping=None, runner=None):
+    """ run suite with YAML/JSON file path
+    @params:
+        - path: testset path
+        - mapping: passed in variables mapping, it will override variables in config block
+        - runner: HTMLTestRunner() or TextTestRunner()
+    """
+    try:
+        mapping = mapping or {}
+        task_suite = TaskSuite(path, mapping)
+    except TestcaseNotFound:
+        sys.exit(1)
+
+    test_runner = runner or unittest.TextTestRunner()
+    result = test_runner.run(task_suite)
+
+    output = {}
+    for task in task_suite.tasks:
+        output.update(task.output)
+
+    return Result(
+        result.wasSuccessful(),
+        output
+    )
 
 def main_hrun():
     """ API test: parse command line options and run commands.
@@ -28,9 +55,6 @@ def main_hrun():
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
     parser.add_argument(
-        '--report-name',
-        help="Specify report name, default is generated time.")
-    parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
     parser.add_argument(
@@ -40,7 +64,7 @@ def main_hrun():
     args = parser.parse_args()
 
     if args.version:
-        print("HttpRunner version: {}".format(ate_version))
+        print("HttpRunner version: {}".format(hrun_version))
         print("PyUnitReport version: {}".format(pyu_version))
         exit(0)
 
@@ -53,47 +77,15 @@ def main_hrun():
         create_scaffold(project_path)
         exit(0)
 
-    report_name = args.report_name
-    if report_name and len(args.testset_paths) > 1:
-        report_name = None
-        logging.warning("More than one testset paths specified, \
-                        report name is ignored, use generated time instead.")
+    kwargs = {
+        "output": os.path.join(os.getcwd(), "reports"),
+        "failfast": args.failfast
+    }
+    test_runner = HTMLTestRunner(**kwargs)
+    result = run_suite_path(args.testset_paths, {}, test_runner)
+    print_output(result.output)
 
-    results = {}
-    success = True
-
-    for testset_path in set(args.testset_paths):
-
-        testset_path = testset_path.rstrip('/')
-
-        try:
-            task_suite = TaskSuite(testset_path)
-        except exception.TestcaseNotFound:
-            success = False
-            continue
-
-        output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
-        kwargs = {
-            "output": output_folder_name,
-            "report_name": report_name,
-            "failfast": args.failfast
-        }
-        result = HTMLTestRunner(**kwargs).run(task_suite)
-        results[testset_path] = OrderedDict({
-            "total": result.testsRun,
-            "successes": len(result.successes),
-            "failures": len(result.failures),
-            "errors": len(result.errors),
-            "skipped": len(result.skipped)
-        })
-
-        if len(result.successes) != result.testsRun:
-            success = False
-
-        for task in task_suite.tasks:
-            task.print_output()
-
-    return 0 if success is True else 1
+    return 0 if result.success else 1
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
