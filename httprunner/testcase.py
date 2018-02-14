@@ -42,15 +42,15 @@ def _load_json_file(json_file):
         check_format(json_file, json_content)
         return json_content
 
-def _load_file(testcase_file_path):
-    file_suffix = os.path.splitext(testcase_file_path)[1]
+def load_file(file_path):
+    file_suffix = os.path.splitext(file_path)[1]
     if file_suffix == '.json':
-        return _load_json_file(testcase_file_path)
+        return _load_json_file(file_path)
     elif file_suffix in ['.yaml', '.yml']:
-        return _load_yaml_file(testcase_file_path)
+        return _load_yaml_file(file_path)
     else:
         # '' or other suffix
-        err_msg = u"file is not in YAML/JSON format: {}".format(testcase_file_path)
+        err_msg = u"file is not in YAML/JSON format: {}".format(file_path)
         logging.warning(err_msg)
         return []
 
@@ -400,7 +400,7 @@ def load_test_file(file_path):
         "api": {},
         "testcases": []
     }
-    tests_list = _load_file(file_path)
+    tests_list = load_file(file_path)
 
     for item in tests_list:
         for key in item:
