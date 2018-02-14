@@ -8,11 +8,13 @@ from httprunner.context import Context
 
 class Runner(object):
 
-    def __init__(self, http_client_session=None, request_failure_hook=None):
+    def __init__(self, config_dict=None, http_client_session=None):
         self.http_client_session = http_client_session
         self.context = Context()
         testcase.load_test_dependencies()
-        self.request_failure_hook = request_failure_hook
+
+        config_dict = config_dict or {}
+        self.init_config(config_dict, "testset")
 
     def init_config(self, config_dict, level):
         """ create/update context variables binds
@@ -166,101 +168,8 @@ class Runner(object):
 
         return True
 
-    def _run_testset(self, testset, variables_mapping=None):
-        """ run single testset, including one or several testcases.
-        @param
-            (dict) testset
-                {
-                    "name": "testset description",
-                    "config": {
-                        "name": "testset description",
-                        "requires": [],
-                        "function_binds": {},
-                        "variables": [],
-                        "request": {}
-                    },
-                    "testcases": [
-                        {
-                            "name": "testcase description",
-                            "variables": [],    # optional, override
-                            "request": {},
-                            "extract": {},      # optional
-                            "validate": {}      # optional
-                        },
-                        testcase12
-                    ]
-                }
-            (dict) variables_mapping:
-                passed in variables mapping, it will override variables in config block
-
-        @return (dict) test result of testset
-            {
-                "success": True,
-                "output": {}    # variables mapping
-            }
-        """
-        success = True
-        config_dict = testset.get("config", {})
-
-        variables = config_dict.get("variables", [])
-        variables_mapping = variables_mapping or {}
-        config_dict["variables"] = utils.override_variables_binds(variables, variables_mapping)
-
-        self.init_config(config_dict, level="testset")
-        testcases = testset.get("testcases", [])
-        for testcase_dict in testcases:
-            try:
-                self._run_test(testcase_dict)
-            except exception.MyBaseError as ex:
-                success = False
-                if self.request_failure_hook:
-                    self.request_failure_hook.fire(
-                        request_type=testcase_dict.get("request", {}).get("method"),
-                        name=testcase_dict.get("request", {}).get("url"),
-                        response_time=0,
-                        exception=ex
-                    )
-                else:
-                    logging.exception(
-                        "Exception occured in testcase: {}".format(testcase_dict.get("name")))
-                break
-
-        output_variables_list = config_dict.get("output", [])
-
-        return {
-            "success": success,
-            "output": self.generate_output(output_variables_list)
-        }
-
-    def run(self, path, mapping=None):
-        """ run specified testset path or folder path.
-        @param
-            path: path could be in several type
-                - absolute/relative file path
-                - absolute/relative folder path
-                - list/set container with file(s) and/or folder(s)
-            (dict) mapping:
-                passed in variables mapping, it will override variables in config block
-        """
-        success = True
-        mapping = mapping or {}
-        output = {}
-        testsets = testcase.load_testcases_by_path(path)
-        for testset in testsets:
-            try:
-                result = self._run_testset(testset, mapping)
-                assert result["success"]
-                output.update(result["output"])
-            except AssertionError:
-                success = False
-
-        return {
-            "success": success,
-            "output": output
-        }
-
-    def generate_output(self, output_variables_list):
-        """ generate and print output
+    def extract_output(self, output_variables_list):
+        """ extract output variables
         """
         variables_mapping = self.context.get_testcase_variables_mapping()
 
@@ -274,7 +183,5 @@ class Runner(object):
                 continue
 
             output[variable] = variables_mapping[variable]
-
-        utils.print_output(output)
 
         return output
