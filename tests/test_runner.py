@@ -84,6 +84,8 @@ class TestRunner(ApiServerUnittest):
     def test_run_testsets_hardcode(self):
         result = run_suite_path(self.testcase_file_path_list)
         self.assertTrue(result.success)
+        self.assertEqual(result.stat.total, 6)
+        self.assertEqual(result.stat.successes, 6)
 
     def test_run_testset_template_variables(self):
         testcase_file_path = os.path.join(

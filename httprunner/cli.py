@@ -35,10 +35,7 @@ def run_suite_path(path, mapping=None, runner=None):
     for task in task_suite.tasks:
         output.update(task.output)
 
-    return Result(
-        result.wasSuccessful(),
-        output
-    )
+    return Result(result, output)
 
 def main_hrun():
     """ API test: parse command line options and run commands.
