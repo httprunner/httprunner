@@ -72,7 +72,7 @@ class ApiTestSuite(unittest.TestSuite):
 
     def _add_tests_to_suite(self, testcases):
         for testcase_dict in testcases:
-            testcase_name = self.test_runner.get_eval_content(testcase_dict["name"])
+            testcase_name = self.test_runner.context.eval_content(testcase_dict["name"])
             if utils.PYTHON_VERSION == 3:
                 ApiTestCase.runTest.__doc__ = testcase_name
             else:

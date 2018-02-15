@@ -717,7 +717,7 @@ class TestcaseParser(object):
             raise exception.ParamsError(
                 "{} is not defined in bind {}s!".format(item_name, item_type))
 
-    def eval_content_functions(self, content):
+    def _eval_content_functions(self, content):
         functions_list = extract_functions(content)
         for func_content in functions_list:
             function_meta = parse_function(func_content)
@@ -727,8 +727,8 @@ class TestcaseParser(object):
 
             args = function_meta.get('args', [])
             kwargs = function_meta.get('kwargs', {})
-            args = self.parse_content_with_bindings(args)
-            kwargs = self.parse_content_with_bindings(kwargs)
+            args = self.eval_content_with_bindings(args)
+            kwargs = self.eval_content_with_bindings(kwargs)
             eval_value = func(*args, **kwargs)
 
             func_content = "${" + func_content + "}"
@@ -744,7 +744,7 @@ class TestcaseParser(object):
 
         return content
 
-    def eval_content_variables(self, content):
+    def _eval_content_variables(self, content):
         """ replace all variables of string content with mapping value.
         @param (str) content
         @return (str) parsed content
@@ -775,7 +775,7 @@ class TestcaseParser(object):
 
         return content
 
-    def parse_content_with_bindings(self, content):
+    def eval_content_with_bindings(self, content):
         """ parse content recursively, each variable and function in content will be evaluated.
 
         @param (dict) content in any data structure
@@ -806,15 +806,15 @@ class TestcaseParser(object):
 
         if isinstance(content, (list, tuple)):
             return [
-                self.parse_content_with_bindings(item)
+                self.eval_content_with_bindings(item)
                 for item in content
             ]
 
         if isinstance(content, dict):
             evaluated_data = {}
             for key, value in content.items():
-                eval_key = self.parse_content_with_bindings(key)
-                eval_value = self.parse_content_with_bindings(value)
+                eval_key = self.eval_content_with_bindings(key)
+                eval_value = self.eval_content_with_bindings(value)
                 evaluated_data[eval_key] = eval_value
 
             return evaluated_data
@@ -826,10 +826,10 @@ class TestcaseParser(object):
         content = "" if content is None else content.strip()
 
         # replace functions with evaluated value
-        # Notice: eval_content_functions must be called before eval_content_variables
-        content = self.eval_content_functions(content)
+        # Notice: _eval_content_functions must be called before _eval_content_variables
+        content = self._eval_content_functions(content)
 
         # replace variables with binding value
-        content = self.eval_content_variables(content)
+        content = self._eval_content_variables(content)
 
         return content

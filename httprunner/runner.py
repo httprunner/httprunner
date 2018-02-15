@@ -82,12 +82,12 @@ class Runner(object):
 
         elif "skipIf" in testcase_dict:
             skip_if_condition = testcase_dict["skipIf"]
-            if self.context.exec_content_functions(skip_if_condition):
+            if self.context.eval_content(skip_if_condition):
                 skip_reason = "{} evaluate to True".format(skip_if_condition)
 
         elif "skipUnless" in testcase_dict:
             skip_unless_condition = testcase_dict["skipUnless"]
-            if not self.context.exec_content_functions(skip_unless_condition):
+            if not self.context.eval_content(skip_unless_condition):
                 skip_reason = "{} evaluate to False".format(skip_unless_condition)
 
         if skip_reason:
@@ -138,7 +138,7 @@ class Runner(object):
 
         def setup_teardown(actions):
             for action in actions:
-                self.context.exec_content_functions(action)
+                self.context.eval_content(action)
 
         setup_teardown(setup_actions)
 
@@ -168,15 +168,10 @@ class Runner(object):
 
         return True
 
-    def get_eval_content(self, content):
-        """ evaluate content with variable bindings
-        """
-        return self.context.testcase_parser.parse_content_with_bindings(content)
-
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
-        variables_mapping = self.context.get_testcase_variables_mapping()
+        variables_mapping = self.context.testcase_variables_mapping
 
         output = {}
         for variable in output_variables_list:

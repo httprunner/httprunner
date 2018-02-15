@@ -247,51 +247,51 @@ class TestcaseParserUnittest(unittest.TestCase):
         }
         testcase_parser = testcase.TestcaseParser(variables=variables)
         self.assertEqual(
-            testcase_parser.eval_content_variables("$var_1"),
+            testcase_parser._eval_content_variables("$var_1"),
             "abc"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("var_1"),
+            testcase_parser._eval_content_variables("var_1"),
             "var_1"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("$var_1#XYZ"),
+            testcase_parser._eval_content_variables("$var_1#XYZ"),
             "abc#XYZ"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("/$var_1/$var_2/var3"),
+            testcase_parser._eval_content_variables("/$var_1/$var_2/var3"),
             "/abc/def/var3"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("/$var_1/$var_2/$var_1"),
+            testcase_parser._eval_content_variables("/$var_1/$var_2/$var_1"),
             "/abc/def/abc"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("${func($var_1, $var_2, xyz)}"),
+            testcase_parser._eval_content_variables("${func($var_1, $var_2, xyz)}"),
             "${func(abc, def, xyz)}"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("$var_3"),
+            testcase_parser._eval_content_variables("$var_3"),
             123
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("$var_4"),
+            testcase_parser._eval_content_variables("$var_4"),
             {"a": 1}
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("$var_5"),
+            testcase_parser._eval_content_variables("$var_5"),
             True
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("abc$var_5"),
+            testcase_parser._eval_content_variables("abc$var_5"),
             "abcTrue"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("abc$var_4"),
+            testcase_parser._eval_content_variables("abc$var_4"),
             "abc{'a': 1}"
         )
         self.assertEqual(
-            testcase_parser.eval_content_variables("$var_6"),
+            testcase_parser._eval_content_variables("$var_6"),
             None
         )
 
@@ -299,10 +299,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         testcase_parser = testcase.TestcaseParser()
 
         with self.assertRaises(ParamsError):
-            testcase_parser.eval_content_variables("/api/$SECRET_KEY")
+            testcase_parser._eval_content_variables("/api/$SECRET_KEY")
 
         testcase_parser.file_path = "tests/data/demo_testset_hardcode.yml"
-        content = testcase_parser.eval_content_variables("/api/$SECRET_KEY")
+        content = testcase_parser._eval_content_variables("/api/$SECRET_KEY")
         self.assertEqual(content, "/api/DebugTalk")
 
     def test_parse_string_value(self):
@@ -345,23 +345,23 @@ class TestcaseParserUnittest(unittest.TestCase):
         }
         testcase_parser = testcase.TestcaseParser(variables=variables)
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings("$str_1"),
+            testcase_parser.eval_content_with_bindings("$str_1"),
             "str_value1"
         )
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings("123$str_1/456"),
+            testcase_parser.eval_content_with_bindings("123$str_1/456"),
             "123str_value1/456"
         )
 
         with self.assertRaises(ParamsError):
-            testcase_parser.parse_content_with_bindings("$str_3")
+            testcase_parser.eval_content_with_bindings("$str_3")
 
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings(["$str_1", "str3"]),
+            testcase_parser.eval_content_with_bindings(["$str_1", "str3"]),
             ["str_value1", "str3"]
         )
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings({"key": "$str_1"}),
+            testcase_parser.eval_content_with_bindings({"key": "$str_1"}),
             {"key": "str_value1"}
         )
 
@@ -373,7 +373,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         testcase_parser = testcase.TestcaseParser(variables=variables)
         content = "/users/$userid/training/$data?userId=$userid&data=$data"
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings(content),
+            testcase_parser.eval_content_with_bindings(content),
             "/users/100/training/1498?userId=100&data=1498"
         )
 
@@ -386,7 +386,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         testcase_parser = testcase.TestcaseParser(variables=variables)
         content = "/users/$user/$userid/$data?userId=$userid&data=$data"
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings(content),
+            testcase_parser.eval_content_with_bindings(content),
             "/users/100/1000/1498?userId=1000&data=1498"
         )
 
@@ -398,17 +398,17 @@ class TestcaseParserUnittest(unittest.TestCase):
         }
         testcase_parser = testcase.TestcaseParser(functions=functions)
 
-        result = testcase_parser.parse_content_with_bindings("${gen_random_string(5)}")
+        result = testcase_parser.eval_content_with_bindings("${gen_random_string(5)}")
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
         functions["add_two_nums"] = add_two_nums
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings("${add_two_nums(1)}"),
+            testcase_parser.eval_content_with_bindings("${add_two_nums(1)}"),
             2
         )
         self.assertEqual(
-            testcase_parser.parse_content_with_bindings("${add_two_nums(1, 2)}"),
+            testcase_parser.eval_content_with_bindings("${add_two_nums(1, 2)}"),
             3
         )
 
@@ -452,11 +452,11 @@ class TestcaseParserUnittest(unittest.TestCase):
         }
         testcase_parser = testcase.TestcaseParser(functions=functions)
         self.assertEqual(
-            testcase_parser.eval_content_functions("${add_two_nums(1, 2)}"),
+            testcase_parser._eval_content_functions("${add_two_nums(1, 2)}"),
             3
         )
         self.assertEqual(
-            testcase_parser.eval_content_functions("/api/${add_two_nums(1, 2)}"),
+            testcase_parser._eval_content_functions("/api/${add_two_nums(1, 2)}"),
             "/api/3"
         )
 
@@ -464,10 +464,10 @@ class TestcaseParserUnittest(unittest.TestCase):
         testcase_parser = testcase.TestcaseParser()
 
         with self.assertRaises(ParamsError):
-            testcase_parser.eval_content_functions("/api/${gen_md5(abc)}")
+            testcase_parser._eval_content_functions("/api/${gen_md5(abc)}")
 
         testcase_parser.file_path = "tests/data/demo_testset_hardcode.yml"
-        content = testcase_parser.eval_content_functions("/api/${gen_md5(abc)}")
+        content = testcase_parser._eval_content_functions("/api/${gen_md5(abc)}")
         self.assertEqual(content, "/api/900150983cd24fb0d6963f7d28e17f72")
 
     def test_parse_content_with_bindings_testcase(self):
@@ -493,7 +493,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             "body": "$data"
         }
         parsed_testcase = testcase.TestcaseParser(variables, functions)\
-            .parse_content_with_bindings(testcase_template)
+            .eval_content_with_bindings(testcase_template)
 
         self.assertEqual(
             parsed_testcase["url"],
