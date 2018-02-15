@@ -23,7 +23,7 @@ class VariableBindsUnittest(ApiServerUnittest):
             {"timestamp10": "${get_timestamp(10)}"}
         ]
         self.context.bind_variables(variables)
-        context_variables = self.context.get_testcase_variables_mapping()
+        context_variables = self.context.testcase_variables_mapping
 
         self.assertEqual(len(context_variables["random"]), 5)
         self.assertEqual(len(context_variables["timestamp10"]), 10)
@@ -44,7 +44,7 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.context.bind_variables(variables, level="testset")
 
             testset_variables = self.context.testset_shared_variables_mapping
-            testcase_variables = self.context.get_testcase_variables_mapping()
+            testcase_variables = self.context.testcase_variables_mapping
             self.assertIn("GLOBAL_TOKEN", testset_variables)
             self.assertIn("GLOBAL_TOKEN", testcase_variables)
             self.assertEqual(testset_variables["GLOBAL_TOKEN"], "debugtalk")
@@ -66,7 +66,7 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.context.bind_variables(variables)
 
             testset_variables = self.context.testset_shared_variables_mapping
-            testcase_variables = self.context.get_testcase_variables_mapping()
+            testcase_variables = self.context.testcase_variables_mapping
             self.assertNotIn("GLOBAL_TOKEN", testset_variables)
             self.assertIn("GLOBAL_TOKEN", testcase_variables)
             self.assertEqual(testcase_variables["GLOBAL_TOKEN"], "debugtalk")
@@ -94,7 +94,7 @@ class VariableBindsUnittest(ApiServerUnittest):
             variables = testcase['variables']
             self.context.bind_variables(variables)
 
-            context_variables = self.context.get_testcase_variables_mapping()
+            context_variables = self.context.testcase_variables_mapping
             self.assertIn("add1", context_variables)
             self.assertEqual(context_variables["add1"], 3)
             self.assertIn("sum2nums", context_variables)
@@ -125,7 +125,7 @@ class VariableBindsUnittest(ApiServerUnittest):
 
             variables = testcase['variables']
             self.context.bind_variables(variables)
-            context_variables = self.context.get_testcase_variables_mapping()
+            context_variables = self.context.testcase_variables_mapping
 
             self.assertIn("TOKEN", context_variables)
             TOKEN = context_variables["TOKEN"]
@@ -159,7 +159,7 @@ class VariableBindsUnittest(ApiServerUnittest):
 
             variables = testcase['variables']
             self.context.bind_variables(variables)
-            context_variables = self.context.get_testcase_variables_mapping()
+            context_variables = self.context.testcase_variables_mapping
 
             self.assertIn("TOKEN", context_variables)
             TOKEN = context_variables["TOKEN"]
@@ -213,7 +213,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         test_runner = runner.Runner()
         content = "${sleep(1)}"
         start_time = time.time()
-        test_runner.context.exec_content_functions(content)
+        test_runner.context.eval_content(content)
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.assertGreater(elapsed_time, 1)

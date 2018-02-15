@@ -110,12 +110,12 @@ class Context(object):
             variables = utils.convert_to_order_dict(variables)
 
         for variable_name, value in variables.items():
-            variable_evale_value = self.testcase_parser.parse_content_with_bindings(value)
+            variable_eval_value = self.eval_content(value)
 
             if level == "testset":
-                self.testset_shared_variables_mapping[variable_name] = variable_evale_value
+                self.testset_shared_variables_mapping[variable_name] = variable_eval_value
 
-            self.testcase_variables_mapping[variable_name] = variable_evale_value
+            self.testcase_variables_mapping[variable_name] = variable_eval_value
             self.testcase_parser.update_binded_variables(self.testcase_variables_mapping)
 
     def bind_extracted_variables(self, variables):
@@ -140,13 +140,19 @@ class Context(object):
         self.testcase_functions_config.update(config_mapping)
         self.testcase_parser.bind_functions(self.testcase_functions_config)
 
+    def eval_content(self, content):
+        """ evaluate content recursively, take effect on each variable and function in content.
+            content may be in any data structure, include dict, list, tuple, number, string, etc.
+        """
+        return self.testcase_parser.eval_content_with_bindings(content)
+
     def get_parsed_request(self, request_dict, level="testcase"):
         """ get parsed request with bind variables and functions.
         @param request_dict: request config mapping
         @param level: testset or testcase
         """
         if level == "testset":
-            request_dict = self.testcase_parser.parse_content_with_bindings(
+            request_dict = self.eval_content(
                 request_dict
             )
             self.testset_request_config.update(request_dict)
@@ -155,19 +161,11 @@ class Context(object):
             copy.deepcopy(self.testset_request_config),
             request_dict
         )
-        parsed_request = self.testcase_parser.parse_content_with_bindings(
+        parsed_request = self.eval_content(
             testcase_request_config
         )
 
         return parsed_request
-
-    def get_testcase_variables_mapping(self):
-        return self.testcase_variables_mapping
-
-    def exec_content_functions(self, content):
-        """ execute functions in content.
-        """
-        return self.testcase_parser.eval_content_functions(content)
 
     def eval_check_item(self, validator, resp_obj):
         """ evaluate check item in validator
@@ -190,7 +188,7 @@ class Context(object):
         # 3, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
         if testcase.extract_variables(check_item):
             # type 1
-            check_value = self.testcase_parser.eval_content_variables(check_item)
+            check_value = self.eval_content(check_item)
         else:
             try:
                 # type 2 or type 3
@@ -203,7 +201,7 @@ class Context(object):
         # expect_value should only be in 2 types:
         # 1, variable reference, e.g. $expect_status_code
         # 2, actual value, e.g. 200
-        expect_value = self.testcase_parser.eval_content_variables(validator["expect"])
+        expect_value = self.eval_content(validator["expect"])
         validator["expect"] = expect_value
         return validator
 
