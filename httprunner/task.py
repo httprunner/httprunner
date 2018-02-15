@@ -49,13 +49,26 @@ class ApiTestSuite(unittest.TestSuite):
         super(ApiTestSuite, self).__init__()
 
         self.config_dict = testset.get("config", {})
+
         variables = self.config_dict.get("variables", [])
         variables_mapping = variables_mapping or {}
         self.config_dict["variables"] = utils.override_variables_binds(variables, variables_mapping)
 
-        self.test_runner = runner.Runner(self.config_dict, http_client_session)
-        testcases = testset.get("testcases", [])
-        self._add_tests_to_suite(testcases)
+        parameters = self.config_dict.get("parameters", [])
+        cartesian_product_parameters = testcase.gen_cartesian_product_parameters(
+            parameters,
+            self.config_dict["path"]
+        ) or [{}]
+        for parameter_mapping in cartesian_product_parameters:
+            if parameter_mapping:
+                self.config_dict["variables"] = utils.override_variables_binds(
+                    self.config_dict["variables"],
+                    parameter_mapping
+                )
+
+            self.test_runner = runner.Runner(self.config_dict, http_client_session)
+            testcases = testset.get("testcases", [])
+            self._add_tests_to_suite(testcases)
 
     def _add_tests_to_suite(self, testcases):
         for testcase_dict in testcases:
