@@ -1,8 +1,10 @@
 import ast
 import io
+import itertools
 import json
 import logging
 import os
+import random
 import re
 from collections import OrderedDict
 
@@ -42,12 +44,70 @@ def _load_json_file(json_file):
         check_format(json_file, json_content)
         return json_content
 
+def _load_csv_file(csv_file):
+    """ load csv file and check file content format
+    @param
+        csv_file: csv file path
+        e.g. csv file content:
+            username,password
+            test1,111111
+            test2,222222
+            test3,333333
+    @return
+        list of parameter, each parameter is in dict format
+        e.g.
+        [
+            {'username': 'test1', 'password': '111111'},
+            {'username': 'test2', 'password': '222222'},
+            {'username': 'test3', 'password': '333333'}
+        ]
+    """
+    csv_content_list = []
+    parameter_list = None
+    collums_num = 0
+    with io.open(csv_file, encoding='utf-8') as data_file:
+        for line in data_file:
+            line_data = line.strip().split(",")
+            if line_data == [""]:
+                # ignore empty line
+                continue
+
+            if not parameter_list:
+                # first line will always be parameter name
+                expected_filename = "{}.csv".format("-".join(line_data))
+                if not csv_file.endswith(expected_filename):
+                    raise exception.FileFormatError("CSV file name does not match with headers: {}".format(csv_file))
+
+                parameter_list = line_data
+                collums_num = len(parameter_list)
+                continue
+
+            # from the second line
+            if len(line_data) != collums_num:
+                err_msg = "CSV file collums does match with headers.\n"
+                err_msg += "\tcsv file path: {}\n".format(csv_file)
+                err_msg += "\terror line content: {}".format(line_data)
+                raise exception.FileFormatError(err_msg)
+            else:
+                data = {}
+                for index, parameter_name in enumerate(parameter_list):
+                    data[parameter_name] = line_data[index]
+
+                csv_content_list.append(data)
+
+    return csv_content_list
+
 def load_file(file_path):
-    file_suffix = os.path.splitext(file_path)[1]
+    if not os.path.isfile(file_path):
+        raise exception.FileNotFoundError("{} does not exist.".format(file_path))
+
+    file_suffix = os.path.splitext(file_path)[1].lower()
     if file_suffix == '.json':
         return _load_json_file(file_path)
     elif file_suffix in ['.yaml', '.yml']:
         return _load_yaml_file(file_path)
+    elif file_suffix == ".csv":
+        return _load_csv_file(file_path)
     else:
         # '' or other suffix
         err_msg = u"file is not in YAML/JSON format: {}".format(file_path)
@@ -549,6 +609,67 @@ def check_format(file_path, content):
         err_msg = u"Testcase file content format invalid: {}".format(file_path)
         logging.error(err_msg)
         raise exception.FileFormatError(err_msg)
+
+def gen_cartesian_product(*args):
+    """ generate cartesian product for lists
+    @param
+        (list) args
+            [{"a": 1}, {"a": 2}],
+            [
+                {"x": 111, "y": 112},
+                {"x": 121, "y": 122}
+            ]
+    @return
+        cartesian product in list
+        [
+            {'a': 1, 'x': 111, 'y': 112},
+            {'a': 1, 'x': 121, 'y': 122},
+            {'a': 2, 'x': 111, 'y': 112},
+            {'a': 2, 'x': 121, 'y': 122}
+        ]
+    """
+    if not args:
+        return []
+    elif len(args) == 1:
+        return args[0]
+
+    product_list = []
+    for product_item_tuple in itertools.product(*args):
+        product_item_dict = {}
+        for item in product_item_tuple:
+            product_item_dict.update(item)
+
+        product_list.append(product_item_dict)
+
+    return product_list
+
+def gen_cartesian_product_parameters(parameters, testset_path):
+    """ parse parameters and generate cartesian product
+    @params
+        (list) parameters: parameter name and fetch method
+            e.g.
+                [
+                    {"user_agent": "Random"},
+                    {"app_version": "Sequential"}
+                ]
+        (str) testset_path: testset file path, used for locating csv file
+    @return cartesian product in list
+    """
+    parameters_content_list = []
+    for parameter in parameters:
+        parameter_name, fetch_method = list(parameter.items())[0]
+        parameter_file_path = os.path.join(
+            os.path.dirname(testset_path),
+            "{}.csv".format(parameter_name)
+        )
+        csv_content_list = load_file(parameter_file_path)
+
+        if fetch_method.lower() == "random":
+            random.shuffle(csv_content_list)
+
+        parameters_content_list.append(csv_content_list)
+
+    return gen_cartesian_product(*parameters_content_list)
 
 
 class TestcaseParser(object):

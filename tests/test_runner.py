@@ -158,3 +158,11 @@ class TestRunner(ApiServerUnittest):
 
         test = testcases[2]["test"]
         self.assertTrue(self.test_runner._run_test(test))
+
+    def test_run_testset_with_parameters(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_parameters.yml')
+        result = run_suite_path(testcase_file_path)
+        self.assertTrue(result.success)
+        self.assertIn("token", result.output)
+        self.assertEqual(result.stat.total, 6)

@@ -3,14 +3,16 @@ import time
 import unittest
 
 from httprunner import testcase
-from httprunner.exception import ApiNotFound, FileFormatError, ParamsError
+from httprunner.exception import (ApiNotFound, FileFormatError,
+                                  FileNotFoundError, ParamsError)
 
 
 class TestcaseParserUnittest(unittest.TestCase):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        self.assertEqual(testcase.load_file(testcase_file_path), [])
+        with self.assertRaises(FileNotFoundError):
+            testcase.load_file(testcase_file_path)
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
@@ -33,6 +35,111 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertIn('request', test)
         self.assertIn('url', test['request'])
         self.assertIn('method', test['request'])
+
+    def test_load_csv_file_one_parameter(self):
+        csv_file_path = os.path.join(
+            os.getcwd(), 'tests/data/user_agent.csv')
+        csv_content = testcase.load_file(csv_file_path)
+        self.assertEqual(
+            csv_content,
+            [
+                {'user_agent': 'iOS/10.1'},
+                {'user_agent': 'iOS/10.2'},
+                {'user_agent': 'iOS/10.3'}
+            ]
+        )
+
+    def test_load_csv_file_multiple_parameters(self):
+        csv_file_path = os.path.join(
+            os.getcwd(), 'tests/data/username-password.csv')
+        csv_content = testcase.load_file(csv_file_path)
+        self.assertEqual(
+            csv_content,
+            [
+                {'username': 'test1', 'password': '111111'},
+                {'username': 'test2', 'password': '222222'},
+                {'username': 'test3', 'password': '333333'}
+            ]
+        )
+
+    def test_cartesian_product_one(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        ]
+        product_list = testcase.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        )
+
+    def test_cartesian_product_multiple(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ],
+            [
+                {"x": 111, "y": 112},
+                {"x": 121, "y": 122}
+            ]
+        ]
+        product_list = testcase.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
+            ]
+        )
+
+    def test_cartesian_product_empty(self):
+        parameters_content_list = []
+        product_list = testcase.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(product_list, [])
+
+    def test_gen_cartesian_product_parameters_one_to_one(self):
+        parameters = [
+            {"user_agent": "random"},
+            {"app_version": "sequential"}
+        ]
+        testset_path = os.path.join(
+            os.getcwd(),
+            "tests/data/demo_parameters.yml"
+        )
+        cartesian_product_parameters = testcase.gen_cartesian_product_parameters(
+            parameters,
+            testset_path
+        )
+        self.assertEqual(
+            len(cartesian_product_parameters),
+            6
+        )
+
+    def test_gen_cartesian_product_parameters_one_to_multiple(self):
+        parameters = [
+            {"user_agent": "random"},
+            {"username-password": "sequential"}
+        ]
+        testset_path = os.path.join(
+            os.getcwd(),
+            "tests/data/demo_parameters.yml"
+        )
+        cartesian_product_parameters = testcase.gen_cartesian_product_parameters(
+            parameters,
+            testset_path
+        )
+        self.assertEqual(
+            len(cartesian_product_parameters),
+            9
+        )
 
     def test_load_yaml_file_file_format_error(self):
         yaml_tmp_file = "tests/data/tmp.yml"
