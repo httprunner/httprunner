@@ -168,6 +168,11 @@ class Runner(object):
 
         return True
 
+    def get_eval_content(self, content):
+        """ evaluate content with variable bindings
+        """
+        return self.context.testcase_parser.parse_content_with_bindings(content)
+
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
