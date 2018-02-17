@@ -1,0 +1,12 @@
+site_name: HttpRunner Docs
+pages:
+    - index.md
+    - Introduction.md
+    - Installation.md
+    - quickstart.md
+    - write-testcases.md
+    - run-testcases.md
+    - load-test.md
+    - development.md
+    - FAQ.md
+theme: material
