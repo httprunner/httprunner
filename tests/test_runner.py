@@ -34,13 +34,13 @@ class TestRunner(ApiServerUnittest):
             self.test_runner.init_config(config_dict, "testset")
 
             test = testcases[0]["test"]
-            self.assertTrue(self.test_runner._run_test(test))
+            self.test_runner._run_test(test)
 
             test = testcases[1]["test"]
-            self.assertTrue(self.test_runner._run_test(test))
+            self.test_runner._run_test(test)
 
             test = testcases[2]["test"]
-            self.assertTrue(self.test_runner._run_test(test))
+            self.test_runner._run_test(test)
 
     def test_run_single_testcase_fail(self):
         test = {
@@ -157,7 +157,7 @@ class TestRunner(ApiServerUnittest):
         self.test_runner.init_config(config_dict, "testset")
 
         test = testcases[2]["test"]
-        self.assertTrue(self.test_runner._run_test(test))
+        self.test_runner._run_test(test)
 
     def test_run_testset_with_parameters(self):
         testcase_file_path = os.path.join(
