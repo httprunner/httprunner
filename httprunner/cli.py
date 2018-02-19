@@ -68,6 +68,10 @@ def main_hrun():
     log_level = getattr(logging, args.log_level.upper())
     logging.basicConfig(level=log_level)
 
+    if log_level >= 20:
+        # hide traceback when log level is INFO/WARNING/ERROR/CRITICAL
+        sys.tracebacklimit = 0
+
     project_name = args.startproject
     if project_name:
         project_path = os.path.join(os.getcwd(), project_name)
