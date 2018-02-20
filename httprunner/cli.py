@@ -65,7 +65,9 @@ def main_hrun():
         print("PyUnitReport version: {}".format(pyu_version))
         exit(0)
 
-    log_level = getattr(logging, args.log_level.upper())
+    log_level = getattr(logging, args.log_level.upper(), None)
+    if not log_level:
+        raise ValueError('Invalid log level: %s' % args.log_level)
     logging.basicConfig(level=log_level)
 
     if log_level >= 20:
