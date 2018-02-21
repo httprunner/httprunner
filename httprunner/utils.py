@@ -2,7 +2,6 @@ import hashlib
 import hmac
 import imp
 import importlib
-import logging
 import os.path
 import random
 import re
@@ -10,8 +9,9 @@ import string
 import types
 from collections import OrderedDict
 
-from httprunner import exception
 from requests.structures import CaseInsensitiveDict
+
+from . import exception, logger
 
 try:
     string_type = basestring
@@ -351,15 +351,15 @@ def print_output(output):
 
     content += "============================================\n"
 
-    logging.debug(content)
+    logger.log_debug(content)
 
 def create_scaffold(project_path):
-    logging.info(" Start to create new project: {}".format(project_path))
-
     if os.path.isdir(project_path):
         folder_name = os.path.basename(project_path)
-        logging.warning(u" Folder {} exists, please specify a new folder name.".format(folder_name))
+        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(folder_name))
         return
+
+    logger.color_print("Start to create new project: {}\n".format(project_path), "GREEN")
 
     def create_path(path, ptype):
         if ptype == "folder":
@@ -367,7 +367,7 @@ def create_scaffold(project_path):
         elif ptype == "file":
             open(path, 'w').close()
 
-        logging.info("\tcreated {}: {}".format(ptype, path))
+        return "created {}: {}\n".format(ptype, path)
 
     path_list = [
         (project_path, "folder"),
@@ -377,4 +377,9 @@ def create_scaffold(project_path):
         (os.path.join(project_path, "tests", "testcases"), "folder"),
         (os.path.join(project_path, "tests", "debugtalk.py"), "file")
     ]
-    [create_path(p[0], p[1]) for p in path_list]
+
+    msg = ""
+    for p in path_list:
+        msg += create_path(p[0], p[1])
+
+    logger.color_print(msg, "BLUE")

@@ -1,9 +1,8 @@
-import logging
 from unittest.case import SkipTest
 
-from httprunner import exception, response, testcase, utils
-from httprunner.client import HttpSession
-from httprunner.context import Context
+from . import exception, logger, response, testcase, utils
+from .client import HttpSession
+from .context import Context
 
 
 class Runner(object):
@@ -156,12 +155,20 @@ class Runner(object):
         try:
             self.context.validate(validators, resp_obj)
         except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
-            err_msg = u"Exception occured.\n"
-            err_msg += u"HTTP request url: {}\n".format(url)
-            err_msg += u"HTTP request kwargs: {}\n".format(parsed_request)
-            err_msg += u"HTTP response status_code: {}\n".format(resp.status_code)
-            err_msg += u"HTTP response content: \n{}".format(resp.text)
-            logging.error(err_msg)
+            # log request
+            err_req_msg = "request: \n"
+            err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))
+            for k, v in parsed_request.items():
+                err_req_msg += "{}: {}\n".format(k, v)
+            logger.log_error(err_req_msg)
+
+            # log response
+            err_resp_msg = "response: \n"
+            err_resp_msg += "status_code: {}\n".format(resp.status_code)
+            err_resp_msg += "headers: {}\n".format(resp.headers)
+            err_resp_msg += "body: {}\n".format(resp.text)
+            logger.log_error(err_resp_msg)
+
             raise
         finally:
             setup_teardown(teardown_actions)
@@ -174,7 +181,7 @@ class Runner(object):
         output = {}
         for variable in output_variables_list:
             if variable not in variables_mapping:
-                logging.warning(
+                logger.log_warning(
                     "variable '{}' can not be found in variables mapping, failed to ouput!"\
                         .format(variable)
                 )

@@ -1,9 +1,9 @@
-import logging
 import re
 from collections import OrderedDict
 
-from httprunner import exception, utils, testcase
 from requests.structures import CaseInsensitiveDict
+
+from . import exception, logger, testcase, utils
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 
@@ -42,10 +42,10 @@ class ResponseObject(object):
         """
         matched = re.search(field, self.resp_text)
         if not matched:
-            err_msg = u"Extractor error: failed to extract data with regex!\n"
+            err_msg = u"Failed to extract data with regex!\n"
             err_msg += u"response body: {}\n".format(self.resp_text)
             err_msg += u"regex: {}\n".format(field)
-            logging.error(err_msg)
+            logger.log_error(err_msg)
             raise exception.ParamsError(err_msg)
 
         return matched.group(1)
@@ -75,10 +75,10 @@ class ResponseObject(object):
 
             if sub_query:
                 if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
-                    err_msg = u"Extractor error: failed to extract data with regex!\n"
+                    err_msg = u"Failed to extract data with regex!\n"
                     err_msg += u"response: {}\n".format(self.parsed_dict())
                     err_msg += u"regex: {}\n".format(field)
-                    logging.error(err_msg)
+                    logger.log_error(err_msg)
                     raise exception.ParamsError(err_msg)
 
                 # e.g. key: resp_headers_content_type, sub_query = "content-type"
@@ -91,7 +91,7 @@ class ResponseObject(object):
             err_msg = u"Failed to extract value from response!\n"
             err_msg += u"response: {}\n".format(self.parsed_dict())
             err_msg += u"extract field: {}\n".format(field)
-            logging.error(err_msg)
+            logger.log_error(err_msg)
             raise exception.ParamsError(err_msg)
 
     def extract_field(self, field):

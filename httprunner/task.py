@@ -1,7 +1,6 @@
-import logging
 import unittest
 
-from httprunner import exception, runner, testcase, utils
+from . import exception, logger, runner, testcase, utils
 
 
 class ApiTestCase(unittest.TestCase):
@@ -73,10 +72,11 @@ class ApiTestSuite(unittest.TestSuite):
     def _add_tests_to_suite(self, testcases):
         for testcase_dict in testcases:
             testcase_name = self.test_runner.context.eval_content(testcase_dict["name"])
+            testcase_name_with_color = logger.coloring(testcase_name, "yellow")
             if utils.PYTHON_VERSION == 3:
-                ApiTestCase.runTest.__doc__ = testcase_name
+                ApiTestCase.runTest.__doc__ = testcase_name_with_color
             else:
-                ApiTestCase.runTest.__func__.__doc__ = testcase_name
+                ApiTestCase.runTest.__func__.__doc__ = testcase_name_with_color
 
             test = ApiTestCase(self.test_runner, testcase_dict)
             [self.addTest(test) for _ in range(int(testcase_dict.get("times", 1)))]
@@ -165,14 +165,10 @@ class LocustTask(object):
                 try:
                     test.runTest()
                 except exception.MyBaseError as ex:
-                    try:
-                        from locust.events import request_failure
-                        request_failure.fire(
-                            request_type=test.testcase_dict.get("request", {}).get("method"),
-                            name=test.testcase_dict.get("request", {}).get("url"),
-                            response_time=0,
-                            exception=ex
-                        )
-                    except ImportError:
-                        logging.exception(
-                            "Exception occured in testcase: {}".format(test.testcase_dict.get("name")))
+                    from locust.events import request_failure
+                    request_failure.fire(
+                        request_type=test.testcase_dict.get("request", {}).get("method"),
+                        name=test.testcase_dict.get("request", {}).get("url"),
+                        response_time=0,
+                        exception=ex
+                    )

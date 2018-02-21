@@ -1,18 +1,18 @@
 import argparse
-import logging
 import multiprocessing
 import os
 import sys
 import unittest
 from collections import OrderedDict
 
-from httprunner import __version__ as hrun_version
-from httprunner.utils import create_scaffold, print_output, string_type
 from pyunitreport import __version__ as pyu_version
 from pyunitreport import HTMLTestRunner
 
+from . import __version__ as hrun_version
+from . import logger
 from .exception import TestcaseNotFound
 from .task import Result, TaskSuite
+from .utils import create_scaffold, print_output, string_type
 
 
 def run_suite_path(path, mapping=None, runner=None):
@@ -59,20 +59,12 @@ def main_hrun():
         help="Specify new project name.")
 
     args = parser.parse_args()
+    logger.setup_logger(args.log_level)
 
     if args.version:
-        print("HttpRunner version: {}".format(hrun_version))
-        print("PyUnitReport version: {}".format(pyu_version))
+        logger.color_print("HttpRunner version: {}".format(hrun_version), "GREEN")
+        logger.color_print("PyUnitReport version: {}".format(pyu_version), "GREEN")
         exit(0)
-
-    log_level = getattr(logging, args.log_level.upper(), None)
-    if not log_level:
-        raise ValueError('Invalid log level: %s' % args.log_level)
-    logging.basicConfig(level=log_level)
-
-    if log_level >= 20:
-        # hide traceback when log level is INFO/WARNING/ERROR/CRITICAL
-        sys.tracebacklimit = 0
 
     project_name = args.startproject
     if project_name:
@@ -93,14 +85,14 @@ def main_hrun():
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
-    logging.basicConfig(level="INFO")
+    logger.setup_logger("INFO")
 
     try:
         from httprunner import locusts
     except ImportError:
         msg = "Locust is not installed, install first and try again.\n"
         msg += "install command: pip install locustio"
-        logging.info(msg)
+        logger.log_warning(msg)
         exit(1)
 
     sys.argv[0] = 'locust'
@@ -115,7 +107,7 @@ def main_locust():
         testcase_index = sys.argv.index('-f') + 1
         assert testcase_index < len(sys.argv)
     except (ValueError, AssertionError):
-        logging.error("Testcase file is not specified, exit.")
+        logger.log_error("Testcase file is not specified, exit.")
         sys.exit(1)
 
     testcase_file_path = sys.argv[testcase_index]
@@ -125,7 +117,7 @@ def main_locust():
         """ locusts -f locustfile.py --cpu-cores 4
         """
         if "--no-web" in sys.argv:
-            logging.error("conflict parameter args: --cpu-cores & --no-web. \nexit.")
+            logger.log_error("conflict parameter args: --cpu-cores & --no-web. \nexit.")
             sys.exit(1)
 
         cpu_cores_index = sys.argv.index('--cpu-cores')
@@ -137,7 +129,7 @@ def main_locust():
                 locusts -f locustfile.py --cpu-cores
             """
             cpu_cores_num_value = multiprocessing.cpu_count()
-            logging.warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+            logger.log_warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
         else:
             try:
                 """ locusts -f locustfile.py --cpu-cores 4 """
@@ -146,7 +138,7 @@ def main_locust():
             except ValueError:
                 """ locusts -f locustfile.py --cpu-cores -P 8888 """
                 cpu_cores_num_value = multiprocessing.cpu_count()
-                logging.warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+                logger.log_warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
 
         sys.argv.pop(cpu_cores_index)
         locusts.run_locusts_on_cpu_cores(sys.argv, cpu_cores_num_value)

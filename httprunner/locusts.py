@@ -3,8 +3,10 @@ import multiprocessing
 import os
 import sys
 
-from httprunner.testcase import load_test_file
 from locust.main import main
+
+from .logger import color_print
+from .testcase import load_test_file
 
 
 def parse_locustfile(file_path):
@@ -13,7 +15,7 @@ def parse_locustfile(file_path):
         if file_path is a YAML/JSON file, convert it to locustfile
     """
     if not os.path.isfile(file_path):
-        print("file path invalid, exit.")
+        color_print("file path invalid, exit.", "RED")
         sys.exit(1)
 
     file_suffix = os.path.splitext(file_path)[1]
@@ -23,7 +25,7 @@ def parse_locustfile(file_path):
         locustfile_path = gen_locustfile(file_path)
     else:
         # '' or other suffix
-        print("file type should be YAML/JSON/Python, exit.")
+        color_print("file type should be YAML/JSON/Python, exit.", "RED")
         sys.exit(1)
 
     return locustfile_path

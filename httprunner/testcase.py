@@ -2,14 +2,14 @@ import ast
 import io
 import itertools
 import json
-import logging
 import os
 import random
 import re
 from collections import OrderedDict
 
 import yaml
-from httprunner import exception, utils
+
+from . import exception, logger, utils
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"
@@ -38,7 +38,7 @@ def _load_json_file(json_file):
             json_content = json.load(data_file)
         except exception.JSONDecodeError:
             err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
-            logging.error(err_msg)
+            logger.log_error(err_msg)
             raise exception.FileFormatError(err_msg)
 
         check_format(json_file, json_content)
@@ -110,8 +110,8 @@ def load_file(file_path):
         return _load_csv_file(file_path)
     else:
         # '' or other suffix
-        err_msg = u"file is not in YAML/JSON format: {}".format(file_path)
-        logging.warning(err_msg)
+        err_msg = u"Unsupported file format: {}".format(file_path)
+        logger.log_warning(err_msg)
         return []
 
 def extract_variables(content):
@@ -267,7 +267,7 @@ def load_testcases_by_path(path):
             testcases_list = []
 
     else:
-        logging.error(u"file not found: {}".format(path))
+        logger.log_error(u"file not found: {}".format(path))
         testcases_list = []
 
     testcases_cache_mapping[path] = testcases_list
@@ -380,7 +380,7 @@ def merge_extractor(api_extrators, test_extracors):
         extractor_dict = OrderedDict()
         for api_extrator in api_extrators:
             if len(api_extrator) != 1:
-                logging.warning("incorrect extractor: {}".format(api_extrator))
+                logger.log_warning("incorrect extractor: {}".format(api_extrator))
                 continue
 
             var_name = list(api_extrator.keys())[0]
@@ -388,7 +388,7 @@ def merge_extractor(api_extrators, test_extracors):
 
         for test_extrator in test_extracors:
             if len(test_extrator) != 1:
-                logging.warning("incorrect extractor: {}".format(test_extrator))
+                logger.log_warning("incorrect extractor: {}".format(test_extrator))
                 continue
 
             var_name = list(test_extrator.keys())[0]
@@ -601,13 +601,13 @@ def check_format(file_path, content):
     if not content:
         # testcase file content is empty
         err_msg = u"Testcase file content is empty: {}".format(file_path)
-        logging.error(err_msg)
+        logger.log_error(err_msg)
         raise exception.FileFormatError(err_msg)
 
     elif not isinstance(content, (list, dict)):
         # testcase file content does not match testcase format
         err_msg = u"Testcase file content format invalid: {}".format(file_path)
-        logging.error(err_msg)
+        logger.log_error(err_msg)
         raise exception.FileFormatError(err_msg)
 
 def gen_cartesian_product(*args):

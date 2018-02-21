@@ -1,14 +1,15 @@
 import json
-import logging
 import re
 import time
 
 import requests
 import urllib3
-from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
+
+from . import logger
+from .exception import ParamsError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -99,8 +100,8 @@ class HttpSession(requests.Session):
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
-        logging.info(" Start to {method} {url}".format(method=method, url=url))
-        logging.debug(" kwargs: {kwargs}".format(kwargs=kwargs))
+        logger.log_info("{method} {url}".format(method=method, url=url))
+        logger.log_debug("request kwargs: {kwargs}".format(kwargs=kwargs))
         # store meta data that is used when reporting the request to locust's statistics
         request_meta = {}
 
@@ -136,16 +137,17 @@ class HttpSession(requests.Session):
         request_meta["response_headers"] = response.headers
         request_meta["response_content"] = response.content
 
-        logging.debug(" response: {response}".format(response=request_meta))
+        logger.log_debug("response status_code: {}".format(response.status_code))
+        logger.log_debug("response headers: {}".format(response.headers))
+        logger.log_debug("response body: {}".format(response.text))
 
         try:
             response.raise_for_status()
         except RequestException as e:
-            logging.error(u" Failed to {method} {url}! exception msg: {exception}".format(
-                method=method, url=url, exception=str(e)))
+            logger.log_error(u"{exception}".format(exception=str(e)))
         else:
-            logging.info(
-                """ status_code: {}, response_time: {} ms, response_length: {} bytes"""\
+            logger.log_info(
+                """status_code: {}, response_time: {} ms, response_length: {} bytes"""\
                 .format(request_meta["status_code"], request_meta["response_time"], \
                     request_meta["content_size"]))
 
