@@ -18,12 +18,15 @@ setup(
     author_email='mail@debugtalk.com',
     url='https://github.com/debugtalk/HttpRunner',
     license='MIT',
-    packages=find_packages(exclude=['test.*', 'test']),
+    packages=find_packages(exclude=["examples", "tests", "tests.*"]),
     package_data={
         'httprunner': ['locustfile_template'],
     },
     keywords='api test',
     install_requires=install_requires,
+    extras_require={
+        'dev': ['flask']
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python :: 2.7',
