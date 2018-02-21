@@ -1,5 +1,4 @@
-requests[security]
-flask
+requests
 PyYAML
 PyUnitReport
 har2case
