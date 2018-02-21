@@ -8,8 +8,7 @@ import re
 from collections import OrderedDict
 
 import yaml
-
-from . import exception, logger, utils
+from httprunner import exception, logger, utils
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"

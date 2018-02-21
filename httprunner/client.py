@@ -4,12 +4,11 @@ import time
 
 import requests
 import urllib3
+from httprunner import logger
+from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
-
-from . import logger
-from .exception import ParamsError
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

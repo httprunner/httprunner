@@ -3,10 +3,10 @@ import multiprocessing
 import os
 import sys
 
-from locust.main import main
+from httprunner.logger import color_print
+from httprunner.testcase import load_test_file
 
-from .logger import color_print
-from .testcase import load_test_file
+from locust.main import main
 
 
 def parse_locustfile(file_path):

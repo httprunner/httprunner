@@ -5,14 +5,13 @@ import sys
 import unittest
 from collections import OrderedDict
 
+from httprunner import __version__ as hrun_version
+from httprunner import logger
+from httprunner.exception import TestcaseNotFound
+from httprunner.task import Result, TaskSuite
+from httprunner.utils import create_scaffold, print_output, string_type
 from pyunitreport import __version__ as pyu_version
 from pyunitreport import HTMLTestRunner
-
-from . import __version__ as hrun_version
-from . import logger
-from .exception import TestcaseNotFound
-from .task import Result, TaskSuite
-from .utils import create_scaffold, print_output, string_type
 
 
 def run_suite_path(path, mapping=None, runner=None):
@@ -144,3 +143,12 @@ def main_locust():
         locusts.run_locusts_on_cpu_cores(sys.argv, cpu_cores_num_value)
     else:
         locusts.main()
+
+
+if __name__ == '__main__':
+    cmd = sys.argv.pop(1)
+
+    if cmd == "hrun":
+        main_hrun()
+    elif cmd == "locust":
+        main_locust()

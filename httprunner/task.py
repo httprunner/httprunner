@@ -1,6 +1,6 @@
 import unittest
 
-from . import exception, logger, runner, testcase, utils
+from httprunner import exception, logger, runner, testcase, utils
 
 
 class ApiTestCase(unittest.TestCase):

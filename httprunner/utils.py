@@ -9,9 +9,8 @@ import string
 import types
 from collections import OrderedDict
 
+from httprunner import exception, logger
 from requests.structures import CaseInsensitiveDict
-
-from . import exception, logger
 
 try:
     string_type = basestring
