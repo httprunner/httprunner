@@ -7,7 +7,14 @@ from setuptools import find_packages, setup
 with io.open("README.rst", encoding='utf-8') as f:
     long_description = f.read()
 
-install_requires = open("requirements.txt").readlines()
+install_requires = [
+    "requests",
+    "PyYAML",
+    "PyUnitReport",
+    "har2case",
+    "colorama",
+    "colorlog"
+]
 
 setup(
     name='HttpRunner',
