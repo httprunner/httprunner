@@ -1,8 +1,8 @@
 from unittest.case import SkipTest
 
-from . import exception, logger, response, testcase, utils
-from .client import HttpSession
-from .context import Context
+from httprunner import exception, logger, response, testcase, utils
+from httprunner.client import HttpSession
+from httprunner.context import Context
 
 
 class Runner(object):
