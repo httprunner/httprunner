@@ -10,3 +10,6 @@ pages:
     - development.md
     - FAQ.md
 theme: material
+google_analytics:
+  - 'UA-114587036-1'
+  - 'auto'
