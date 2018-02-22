@@ -148,7 +148,7 @@ def main_locust():
 if __name__ == '__main__':
     cmd = sys.argv.pop(1)
 
-    if cmd == "hrun":
+    if cmd in ["hrun", "httprunner", "ate"]:
         main_hrun()
-    elif cmd == "locust":
+    elif cmd in ["locust", "locusts"]:
         main_locust()

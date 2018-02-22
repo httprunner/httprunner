@@ -5,5 +5,5 @@ To develop or debug `HttpRunner`, you can install relevant requirements and use 
 ```bash
 $ python setup.py install
 $ python httprunner/cli.py hrun -h
-$ python httprunner/cli.py locust -h
+$ python httprunner/cli.py locusts -h
 ```
