@@ -8,8 +8,7 @@ python:
 install:
   - pip install coverage
   - pip install coveralls
-  - pip install flask
-  - python setup.py install
+  - pip install -r requirements-dev.txt
 script:
   - coverage run --source=httprunner -m unittest discover
 after_success:

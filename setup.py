@@ -23,7 +23,7 @@ setup(
     long_description=long_description,
     author='Leo Lee',
     author_email='mail@debugtalk.com',
-    url='https://github.com/debugtalk/HttpRunner',
+    url='https://github.com/HttpRunner/HttpRunner',
     license='MIT',
     packages=find_packages(exclude=["examples", "tests", "tests.*"]),
     package_data={
