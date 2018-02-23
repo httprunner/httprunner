@@ -12,12 +12,12 @@ Then install all dependencies:
 $ pip install -r requirements-dev.txt
 ```
 
-Now you can use `httprunner/cli.py` as debugging entrances.
+Now you can use `main-debug.py` as debugging entrances.
 
 ```bash
 # debug hrun
-$ python httprunner/cli.py hrun -h
+$ python main-debug.py hrun -h
 
 # debug locusts
-$ python httprunner/cli.py locusts -h
+$ python main-debug.py locusts -h
 ```
