@@ -143,12 +143,3 @@ def main_locust():
         locusts.run_locusts_on_cpu_cores(sys.argv, cpu_cores_num_value)
     else:
         locusts.main()
-
-
-if __name__ == '__main__':
-    cmd = sys.argv.pop(1)
-
-    if cmd in ["hrun", "httprunner", "ate"]:
-        main_hrun()
-    elif cmd in ["locust", "locusts"]:
-        main_locust()
