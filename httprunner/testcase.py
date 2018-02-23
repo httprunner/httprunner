@@ -802,6 +802,8 @@ class TestcaseParser(object):
                 "body": {"name": "user", "password": "123456"}
             }
         """
+        if content is None:
+            return None
 
         if isinstance(content, (list, tuple)):
             return [
@@ -822,7 +824,7 @@ class TestcaseParser(object):
             return content
 
         # content is in string format here
-        content = "" if content is None else content.strip()
+        content = content.strip()
 
         # replace functions with evaluated value
         # Notice: _eval_content_functions must be called before _eval_content_variables

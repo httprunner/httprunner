@@ -119,7 +119,7 @@ def query_json(json_content, query, delimiter='.'):
 def get_uniform_comparator(comparator):
     """ convert comparator alias to uniform name
     """
-    if comparator in ["eq", "equals", "=="]:
+    if comparator in ["eq", "equals", "==", "is"]:
         return "equals"
     elif comparator in ["lt", "less_than"]:
         return "less_than"
