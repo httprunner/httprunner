@@ -1,0 +1,7 @@
+requests
+PyYAML
+PyUnitReport
+har2case
+colorama
+colorlog
+flask
