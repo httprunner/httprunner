@@ -218,10 +218,11 @@ class Context(object):
         check_value = validator_dict["check_value"]
         expect_value = validator_dict["expect"]
 
-        try:
-            if check_value is None or expect_value is None:
-                assert comparator in ["is", "eq", "equals", "=="]
+        if (check_value is None or expect_value is None) \
+            and comparator not in ["is", "eq", "equals", "=="]:
+            raise exception.ParamsError("Null value can only be compared with comparator: eq/equals/==")
 
+        try:
             validate_func(validator_dict["check_value"], validator_dict["expect"])
         except (AssertionError, TypeError):
             err_msg = "\n" + "\n".join([
