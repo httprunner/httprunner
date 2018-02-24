@@ -18,10 +18,10 @@ class TestTask(ApiServerUnittest):
     def test_create_suite(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
         testset = load_test_file(testcase_file_path)
-        suite = task.ApiTestSuite(testset)
+        suite = task.TestSuite(testset)
         self.assertEqual(suite.countTestCases(), 3)
         for testcase in suite:
-            self.assertIsInstance(testcase, task.ApiTestCase)
+            self.assertIsInstance(testcase, task.TestCase)
 
     def test_create_task(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
@@ -29,4 +29,4 @@ class TestTask(ApiServerUnittest):
         self.assertEqual(task_suite.countTestCases(), 3)
         for suite in task_suite:
             for testcase in suite:
-                self.assertIsInstance(testcase, task.ApiTestCase)
+                self.assertIsInstance(testcase, task.TestCase)

@@ -4,11 +4,11 @@ import unittest
 from httprunner import exception, logger, runner, testcase, utils
 
 
-class ApiTestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):
     """ create a testcase.
     """
     def __init__(self, test_runner, testcase_dict):
-        super(ApiTestCase, self).__init__()
+        super(TestCase, self).__init__()
         self.test_runner = test_runner
         self.testcase_dict = testcase_dict
 
@@ -17,7 +17,7 @@ class ApiTestCase(unittest.TestCase):
         """
         self.test_runner._run_test(self.testcase_dict)
 
-class ApiTestSuite(unittest.TestSuite):
+class TestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.
         each suite should initialize a separate Runner() with testset config.
     @param
@@ -46,7 +46,7 @@ class ApiTestSuite(unittest.TestSuite):
             passed in variables mapping, it will override variables in config block
     """
     def __init__(self, testset, variables_mapping=None, http_client_session=None):
-        super(ApiTestSuite, self).__init__()
+        super(TestSuite, self).__init__()
 
         self.config_dict = testset.get("config", {})
 
@@ -75,11 +75,11 @@ class ApiTestSuite(unittest.TestSuite):
             testcase_name = self.test_runner.context.eval_content(testcase_dict["name"])
             testcase_name_with_color = logger.coloring(testcase_name, "yellow")
             if utils.PYTHON_VERSION == 3:
-                ApiTestCase.runTest.__doc__ = testcase_name_with_color
+                TestCase.runTest.__doc__ = testcase_name_with_color
             else:
-                ApiTestCase.runTest.__func__.__doc__ = testcase_name_with_color
+                TestCase.runTest.__func__.__doc__ = testcase_name_with_color
 
-            test = ApiTestCase(self.test_runner, testcase_dict)
+            test = TestCase(self.test_runner, testcase_dict)
             [self.addTest(test) for _ in range(int(testcase_dict.get("times", 1)))]
 
     @property
@@ -88,7 +88,7 @@ class ApiTestSuite(unittest.TestSuite):
         return self.test_runner.extract_output(output_variables_list)
 
 class TaskSuite(unittest.TestSuite):
-    """ create test task suite with specified testcase path.
+    """ create task suite with specified testcase path.
         each task suite may include one or several test suite.
     """
     def __init__(self, path, mapping=None, http_client_session=None):
@@ -117,7 +117,7 @@ class TaskSuite(unittest.TestSuite):
 
         self.suite_list = []
         for testset in testsets:
-            suite = ApiTestSuite(testset, mapping, http_client_session)
+            suite = TestSuite(testset, mapping, http_client_session)
             self.addTest(suite)
             self.suite_list.append(suite)
 
