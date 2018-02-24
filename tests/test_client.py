@@ -36,7 +36,21 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(201, resp.status_code)
         self.assertEqual(True, resp.json()['success'])
 
-    def test_prepare_kwargs(self):
+    def test_prepare_kwargs_content_type_application_json_without_charset(self):
+        kwargs = {
+            "headers": {
+                "content-type": "application/json"
+            },
+            "data": {
+                "a": 1,
+                "b": 2
+            }
+        }
+        prepare_kwargs("POST", kwargs)
+        self.assertIn('"a": 1', kwargs["data"])
+        self.assertIn('"b": 2', kwargs["data"])
+
+    def test_prepare_kwargs_content_type_application_json_charset_utf8(self):
         kwargs = {
             "headers": {
                 "content-type": "application/json; charset=utf-8"
@@ -47,5 +61,4 @@ class TestHttpClient(ApiServerUnittest):
             }
         }
         prepare_kwargs("POST", kwargs)
-        self.assertIn('"a": 1', kwargs["data"])
-        self.assertIn('"b": 2', kwargs["data"])
+        self.assertIsInstance(kwargs["data"], bytes)
