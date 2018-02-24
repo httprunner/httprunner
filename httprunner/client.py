@@ -14,14 +14,34 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
+def get_charset_from_content_type(content_type):
+    """ extract charset encoding type from Content-Type
+    @param content_type
+        e.g.
+        application/json; charset=UTF-8
+        application/x-www-form-urlencoded; charset=UTF-8
+    @return: charset encoding type
+        UTF-8
+    """
+    content_type = content_type.lower()
+    if "charset=" not in content_type:
+        return None
+
+    index = content_type.index("charset=") + len("charset=")
+    return content_type[index:]
 
 def prepare_kwargs(method, kwargs):
     if method == "POST":
-        # if request content-type is application/json, request data should be dumped
-        content_type = kwargs.get("headers", {}).get("content-type", "")
-        if content_type.startswith("application/json") and "data" in kwargs:
-            kwargs["data"] = json.dumps(kwargs["data"])
+        content_type = kwargs.get("headers", {}).get("content-type")
+        if content_type and "data" in kwargs:
+            # if request content-type is application/json, request data should be dumped
+            if content_type.startswith("application/json"):
+                kwargs["data"] = json.dumps(kwargs["data"])
 
+            # if charset is specified in content-type, request data should be encoded with charset encoding
+            charset = get_charset_from_content_type(content_type)
+            if charset:
+                kwargs["data"] = kwargs["data"].encode(charset)
 
 class ApiResponse(Response):
 
@@ -100,7 +120,7 @@ class HttpSession(requests.Session):
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
         logger.log_info("{method} {url}".format(method=method, url=url))
-        logger.log_debug("request kwargs: {kwargs}".format(kwargs=kwargs))
+        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=kwargs))
         # store meta data that is used when reporting the request to locust's statistics
         request_meta = {}
 
@@ -159,6 +179,7 @@ class HttpSession(requests.Session):
         """
         try:
             prepare_kwargs(method, kwargs)
+            logger.log_debug("request kwargs(processed): {kwargs}".format(kwargs=kwargs))
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise
