@@ -119,6 +119,7 @@ class HttpSession(requests.Session):
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
+        print("")
         logger.log_info("{method} {url}".format(method=method, url=url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=kwargs))
         # store meta data that is used when reporting the request to locust's statistics
