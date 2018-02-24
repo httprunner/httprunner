@@ -1,1 +1,3 @@
-__version__ = '0.9.3c'
+__version__ = '0.9.4'
+
+from httprunner.task import HttpRunner

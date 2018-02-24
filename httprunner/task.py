@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from httprunner import exception, logger, runner, testcase, utils
@@ -151,6 +152,35 @@ class Result(object):
             "skipped": skipped
         }
         return self.Stat(**stat)
+
+
+class HttpRunner(object):
+
+    def __init__(self, path, runner=None):
+        """ initialize HttpRunner with specified testset file path and test runner
+        @params:
+            - path: YAML/JSON testset file path
+            - runner: HTMLTestRunner() or TextTestRunner()
+        """
+        self.path = path
+        self.runner = runner or unittest.TextTestRunner()
+
+    def run(self, mapping=None):
+        """ start to run suite
+            if mapping specified, it will override variables in config block
+        """
+        try:
+            mapping = mapping or {}
+            task_suite = TaskSuite(self.path, mapping)
+        except exception.TestcaseNotFound:
+            sys.exit(1)
+
+        result = self.runner.run(task_suite)
+        output = {}
+        for task in task_suite.tasks:
+            output.update(task.output)
+
+        return Result(result, output)
 
 
 class LocustTask(object):
