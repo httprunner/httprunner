@@ -207,7 +207,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         self.assertEqual(len(parsed_request["headers"]["random"]), 5)
         self.assertIn("data", parsed_request)
         self.assertEqual(parsed_request["data"], testcase["variables"][2]["data"])
-        self.assertEqual(parsed_request["headers"]["SECRET_KEY"], "DebugTalk")
+        self.assertEqual(parsed_request["headers"]["secret_key"], "DebugTalk")
 
     def test_exec_content_functions(self):
         test_runner = runner.Runner()
