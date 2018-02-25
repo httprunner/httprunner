@@ -16,7 +16,7 @@ class TestCase(unittest.TestCase):
     def runTest(self):
         """ run testcase and check result.
         """
-        self.test_runner._run_test(self.testcase_dict)
+        self.test_runner.run_test(self.testcase_dict)
 
 class TestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.

@@ -33,13 +33,13 @@ class TestRunner(ApiServerUnittest):
             self.test_runner.init_config(config_dict, "testset")
 
             test = testcases[0]["test"]
-            self.test_runner._run_test(test)
+            self.test_runner.run_test(test)
 
             test = testcases[1]["test"]
-            self.test_runner._run_test(test)
+            self.test_runner.run_test(test)
 
             test = testcases[2]["test"]
-            self.test_runner._run_test(test)
+            self.test_runner.run_test(test)
 
     def test_run_single_testcase_fail(self):
         test = {
@@ -70,7 +70,7 @@ class TestRunner(ApiServerUnittest):
 
         with self.assertRaises(exception.ValidationError):
             start_time = time.time()
-            self.test_runner._run_test(test)
+            self.test_runner.run_test(test)
             end_time = time.time()
             # check if teardown function executed
             self.assertGreater(end_time - start_time, 2)
@@ -156,7 +156,7 @@ class TestRunner(ApiServerUnittest):
         self.test_runner.init_config(config_dict, "testset")
 
         test = testcases[2]["test"]
-        self.test_runner._run_test(test)
+        self.test_runner.run_test(test)
 
     def test_run_testset_with_parameters(self):
         testcase_file_path = os.path.join(
