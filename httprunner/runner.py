@@ -173,6 +173,8 @@ class Runner(object):
         finally:
             setup_teardown(teardown_actions)
 
+        return getattr(self.http_client_session, "meta_data", {})
+
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
