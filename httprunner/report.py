@@ -54,13 +54,13 @@ class HtmlTestResult(unittest.TextTestResult):
         )
         self.report_path = None
 
-    def _record_test(self, test, result_type, attachment=''):
+    def _record_test(self, test, status, attachment=''):
         self.records.append({
             'name': test.shortDescription(),
-            'result_type': result_type,
-            'start_at': datetime.fromtimestamp(test.start_at),
-            'duration': time.time() - test.start_at,
-            'attachment': attachment
+            'status': status,
+            'response_time': test.meta_data["response_time"],
+            'attachment': attachment,
+            "meta_data": test.meta_data
         })
 
     def startTestRun(self):
@@ -68,7 +68,6 @@ class HtmlTestResult(unittest.TextTestResult):
 
     def startTest(self, test):
         """ add start test time """
-        test.start_at = time.time()
         super(HtmlTestResult, self).startTest(test)
         logger.color_print(test.shortDescription(), "yellow")
 

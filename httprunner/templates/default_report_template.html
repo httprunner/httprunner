@@ -87,14 +87,14 @@
     <tr>
       <th>Status</th>
       <th>Name</th>
-      <th>Duration</th>
+      <th>Response Time</th>
       <th>Info</th>
     </tr>
     {% for record in records %}
       <tr>
-        <th class="{{record.result_type}}" style="width:5em;">{{record.result_type}}</td>
+        <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
         <td>{{record.name}}</td>
-        <td style="text-align:right;width:6em;">{{ '%0.3f'| format(record.duration|float) }} seconds</td>
+        <td style="text-align:center;width:6em;">{{ '%0.1f'| format(record.response_time|float) }} ms</td>
         <td class="info"><pre>{{record.attachment}}</pre></td>
       </tr>
     {% endfor %}
