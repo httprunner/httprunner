@@ -92,7 +92,7 @@ class Runner(object):
         if skip_reason:
             raise SkipTest(skip_reason)
 
-    def _run_test(self, testcase_dict):
+    def run_test(self, testcase_dict):
         """ run single testcase.
         @param (dict) testcase_dict
             {
