@@ -1,6 +1,6 @@
 requests
 PyYAML
-PyUnitReport
+Jinja2
 har2case
 colorama
 colorlog

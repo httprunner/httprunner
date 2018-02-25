@@ -1,0 +1,102 @@
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{html_report_name}} - TestReport</title>
+  <style>
+    body {
+      background-color: #f2f2f2;
+      color: #333;
+    }
+    #summary, #details {
+      width: 960px;
+    }
+    #summary th {
+      background-color: skyblue;
+      padding: 5px 12px;
+    }
+    #summary td {
+      background-color: lightblue;
+      text-align: center;
+      padding: 4px 8px;
+    }
+    #details th {
+      background-color: skyblue;
+      padding: 5px 12px;
+    }
+    #details td {
+      background-color: lightblue;
+      padding: 5px 12px;
+    }
+    #details .info {
+      background-color: lightgrey;
+      font-size: smaller;
+      padding-left: 2em;
+      white-space: nowrap;
+    }
+    #details .success {
+      background-color: greenyellow;
+    }
+    #details .error {
+      background-color: red;
+    }
+    #details .failure {
+      background-color: salmon;
+    }
+    #details .skipped {
+      background-color: gray;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Test Report: {{html_report_name}}</h1>
+
+  <h2>Summary</h2>
+  <table id="summary">
+
+    <tr>
+      <th>START AT</th>
+      <td colspan="4">{{time.start_at.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+    </tr>
+    <tr>
+      <th>DURATION</th>
+      <td colspan="4">{{ '%0.3f'| format(time.duration|float) }} seconds</td>
+    </tr>
+    <tr>
+      <th>TOTAL</th>
+      <th>SUCCESS</th>
+      <th>FAILED</th>
+      <th>ERROR</th>
+      <th>SKIPPED</th>
+      <!-- <th>ExpectedFailure</th>
+      <th>UnexpectedSuccess</th> -->
+    </tr>
+    <tr>
+      <td>{{stat.testsRun}}</td>
+      <td>{{stat.successes}}</td>
+      <td>{{stat.failures}}</td>
+      <td>{{stat.errors}}</td>
+      <td>{{stat.skipped}}</td>
+      <!-- <td>{{stat.expectedFailures}}</td>
+      <td>{{stat.unexpectedSuccesses}}</td> -->
+    </tr>
+  </table>
+
+  <h2>Details</h2>
+  <table id="details">
+    <tr>
+      <th>Status</th>
+      <th>Name</th>
+      <th>Duration</th>
+      <th>Info</th>
+    </tr>
+    {% for record in records %}
+      <tr>
+        <th class="{{record.result_type}}" style="width:5em;">{{record.result_type}}</td>
+        <td>{{record.name}}</td>
+        <td style="text-align:right;width:6em;">{{ '%0.3f'| format(record.duration|float) }} seconds</td>
+        <td class="info"><pre>{{record.attachment}}</pre></td>
+      </tr>
+    {% endfor %}
+  </table>
+</body>

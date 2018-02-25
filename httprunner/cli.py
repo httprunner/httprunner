@@ -9,8 +9,6 @@ from httprunner import __version__ as hrun_version
 from httprunner import logger
 from httprunner.task import HttpRunner
 from httprunner.utils import create_scaffold, print_output, string_type
-from pyunitreport import __version__ as pyu_version
-from pyunitreport import HTMLTestRunner
 
 
 def main_hrun():
@@ -25,6 +23,12 @@ def main_hrun():
         'testset_paths', nargs='*',
         help="testset file path")
     parser.add_argument(
+        '--html-report-name',
+        help="specify html report name, only effective when generating html report.")
+    parser.add_argument(
+        '--html-report-template',
+        help="specify html report template path.")
+    parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
     parser.add_argument(
@@ -38,8 +42,7 @@ def main_hrun():
     logger.setup_logger(args.log_level)
 
     if args.version:
-        logger.color_print("HttpRunner version: {}".format(hrun_version), "GREEN")
-        logger.color_print("PyUnitReport version: {}".format(pyu_version), "GREEN")
+        logger.color_print("{}".format(hrun_version), "GREEN")
         exit(0)
 
     project_name = args.startproject
@@ -49,14 +52,16 @@ def main_hrun():
         exit(0)
 
     kwargs = {
-        "output": os.path.join(os.getcwd(), "reports"),
         "failfast": args.failfast
     }
-    test_runner = HTMLTestRunner(**kwargs)
-    result = HttpRunner(args.testset_paths, test_runner).run()
-    print_output(result.output)
+    run_kwargs = {
+        "html_report_name": args.html_report_name,
+        "html_report_template": args.html_report_template
+    }
+    result = HttpRunner(args.testset_paths, **kwargs).run(**run_kwargs)
 
-    return 0 if result.success else 1
+    print_output(result["output"])
+    return 0 if result["success"] else 1
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
