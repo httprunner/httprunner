@@ -1,3 +1,4 @@
+import io
 import os
 import time
 import unittest
@@ -141,7 +142,7 @@ class HtmlTestResult(unittest.TextTestResult):
             os.makedirs(report_dir_path)
 
         report_path = os.path.join(report_dir_path, html_report_name)
-        with open(report_path, 'w', encoding='utf-8') as fp:
+        with io.open(report_path, 'w', encoding='utf-8') as fp:
             rendered_content = Template(template_content).render(summary)
             fp.write(rendered_content)
 
