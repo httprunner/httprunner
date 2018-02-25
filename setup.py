@@ -10,7 +10,7 @@ with io.open("README.rst", encoding='utf-8') as f:
 install_requires = [
     "requests",
     "PyYAML",
-    "PyUnitReport",
+    "Jinja2",
     "har2case",
     "colorama",
     "colorlog"
@@ -27,7 +27,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=["examples", "tests", "tests.*"]),
     package_data={
-        'httprunner': ['locustfile_template'],
+        'httprunner': ['locustfile_template', "templates/default_report_template.html"],
     },
     keywords='api test',
     install_requires=install_requires,

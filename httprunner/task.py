@@ -2,6 +2,7 @@ import sys
 import unittest
 
 from httprunner import exception, logger, runner, testcase, utils
+from httprunner.report import HtmlTestResult, get_summary
 
 
 class TestCase(unittest.TestCase):
@@ -73,11 +74,10 @@ class TestSuite(unittest.TestSuite):
     def _add_tests_to_suite(self, testcases):
         for testcase_dict in testcases:
             testcase_name = self.test_runner.context.eval_content(testcase_dict["name"])
-            testcase_name_with_color = logger.coloring(testcase_name, "yellow")
             if utils.PYTHON_VERSION == 3:
-                TestCase.runTest.__doc__ = testcase_name_with_color
+                TestCase.runTest.__doc__ = testcase_name
             else:
-                TestCase.runTest.__func__.__doc__ = testcase_name_with_color
+                TestCase.runTest.__func__.__doc__ = testcase_name
 
             test = TestCase(self.test_runner, testcase_dict)
             [self.addTest(test) for _ in range(int(testcase_dict.get("times", 1)))]
@@ -126,61 +126,55 @@ class TaskSuite(unittest.TestSuite):
         return self.suite_list
 
 
-class Result(object):
-
-    class Stat(object):
-        def __init__(self, **stat_dict):
-            for key, value in stat_dict.items():
-                setattr(self, key, value)
-
-    def __init__(self, result, output):
-        self.success = result.wasSuccessful()
-        self.stat = self.make_stat(result)
-        self.output = output
-
-    def make_stat(self, result):
-        total = result.testsRun
-        failures = len(result.failures)
-        errors = len(result.errors)
-        skipped = len(result.skipped)
-        successes = total - failures - errors - skipped
-        stat = {
-            "total": total,
-            "successes": successes,
-            "failures": failures,
-            "errors": errors,
-            "skipped": skipped
-        }
-        return self.Stat(**stat)
-
-
 class HttpRunner(object):
 
-    def __init__(self, path, runner=None):
+    def __init__(self, path, **kwargs):
         """ initialize HttpRunner with specified testset file path and test runner
         @params:
             - path: YAML/JSON testset file path
-            - runner: HTMLTestRunner() or TextTestRunner()
+            - gen_html_report: True/False
+            - failfast: False/True, stop the test run on the first error or failure.
         """
         self.path = path
-        self.runner = runner or unittest.TextTestRunner()
 
-    def run(self, mapping=None):
+        self.gen_html_report = kwargs.pop("gen_html_report", True)
+        if self.gen_html_report:
+            kwargs["resultclass"] = HtmlTestResult
+
+        self.runner = unittest.TextTestRunner(**kwargs)
+
+    def run(self, **kwargs):
         """ start to run suite
+        @param mapping
             if mapping specified, it will override variables in config block
+        @param html_report_name
+            output html report file name
+        @param html_report_template
+            report template file path, template should be in Jinja2 format
         """
         try:
-            mapping = mapping or {}
+            mapping = kwargs.get("mapping", {})
             task_suite = TaskSuite(self.path, mapping)
         except exception.TestcaseNotFound:
             sys.exit(1)
 
         result = self.runner.run(task_suite)
+
         output = {}
         for task in task_suite.tasks:
             output.update(task.output)
 
-        return Result(result, output)
+        if self.gen_html_report:
+            summary = result.summary
+            summary["report_path"] = result.render_html_report(
+                kwargs.get("html_report_name"),
+                kwargs.get("html_report_template")
+            )
+        else:
+            summary = get_summary(result)
+
+        summary["output"] = output
+        return summary
 
 
 class LocustTask(object):
