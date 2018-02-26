@@ -177,8 +177,8 @@
         <td style="text-align:center;width:6em;">{{ '%0.1f'| format(record.response_time|float) }} ms</td>
         <td class="detail">
 
-            <a class="button" href="#popup_log">log</a>
-            <div id="popup_log" class="overlay">
+            <a class="button" href="#popup_log_{{loop.index}}">log</a>
+            <div id="popup_log_{{loop.index}}" class="overlay">
               <div class="popup">
                 <h2>Request and Response data</h2>
                 <a class="close" href="#">&times;</a>
@@ -187,8 +187,8 @@
             </div>
 
             {% if record.attachment %}
-              <a class="button" href="#popup_attachment">traceback</a>
-              <div id="popup_attachment" class="overlay">
+              <a class="button" href="#popup_attachment_{{loop.index}}">traceback</a>
+              <div id="popup_attachment_{{loop.index}}" class="overlay">
                 <div class="popup">
                   <h2>Traceback Message</h2>
                   <a class="close" href="#">&times;</a>
