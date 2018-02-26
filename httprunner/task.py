@@ -12,6 +12,7 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).__init__()
         self.test_runner = test_runner
         self.testcase_dict = testcase_dict
+        self.meta_data = {}
 
     def runTest(self):
         """ run testcase and check result.

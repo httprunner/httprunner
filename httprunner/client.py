@@ -116,17 +116,17 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
+        # store detail data of request and response
+        self.meta_data = {}
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
         logger.log_info("{method} {url}".format(method=method, url=url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=kwargs))
-        # store meta data that is used when reporting the request to locust's statistics
-        meta_data = {}
 
         # set up pre_request hook for attaching meta data to the request object
-        meta_data["method"] = method
-        meta_data["request_time"] = time.time()
+        self.meta_data["method"] = method
+        self.meta_data["request_time"] = time.time()
 
         if "httpntlmauth" in kwargs:
             from requests_ntlm import HttpNtlmAuth
@@ -137,24 +137,24 @@ class HttpSession(requests.Session):
         kwargs.setdefault("timeout", 120)
 
         response = self._send_request_safe_mode(method, url, **kwargs)
-        meta_data["url"] = (response.history and response.history[0] or response)\
+        self.meta_data["url"] = (response.history and response.history[0] or response)\
             .request.path_url
 
         # record the consumed time
-        meta_data["response_time"] = int((time.time() - meta_data["request_time"]) * 1000)
+        self.meta_data["response_time"] = int((time.time() - self.meta_data["request_time"]) * 1000)
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body
         if kwargs.get("stream", False):
-            meta_data["content_size"] = int(response.headers.get("content-length") or 0)
+            self.meta_data["content_size"] = int(response.headers.get("content-length") or 0)
         else:
-            meta_data["content_size"] = len(response.content or "")
+            self.meta_data["content_size"] = len(response.content or "")
 
-        meta_data["request_headers"] = response.request.headers
-        meta_data["request_body"] = response.request.body
-        meta_data["status_code"] = response.status_code
-        meta_data["response_headers"] = response.headers
-        meta_data["response_body"] = response.text
+        self.meta_data["request_headers"] = response.request.headers
+        self.meta_data["request_body"] = response.request.body
+        self.meta_data["status_code"] = response.status_code
+        self.meta_data["response_headers"] = response.headers
+        self.meta_data["response_body"] = response.text
 
         logger.log_debug("response status_code: {}".format(response.status_code))
         logger.log_debug("response headers: {}".format(response.headers))
@@ -167,10 +167,9 @@ class HttpSession(requests.Session):
         else:
             logger.log_info(
                 """status_code: {}, response_time: {} ms, response_length: {} bytes"""\
-                .format(meta_data["status_code"], meta_data["response_time"], \
-                    meta_data["content_size"]))
+                .format(self.meta_data["status_code"], self.meta_data["response_time"], \
+                    self.meta_data["content_size"]))
 
-        self.meta_data = meta_data
         return response
 
     def _send_request_safe_mode(self, method, url, **kwargs):

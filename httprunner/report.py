@@ -58,7 +58,7 @@ class HtmlTestResult(unittest.TextTestResult):
         self.records.append({
             'name': test.shortDescription(),
             'status': status,
-            'response_time': test.meta_data["response_time"],
+            'response_time': test.meta_data.get("response_time", 0),
             'attachment': attachment,
             "meta_data": test.meta_data
         })
