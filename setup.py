@@ -27,7 +27,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=["examples", "tests", "tests.*"]),
     package_data={
-        'httprunner': ['locustfile_template', "templates/default_report_template.html"],
+        'httprunner': ["templates/*"],
     },
     keywords='api test',
     install_requires=install_requires,
