@@ -36,7 +36,8 @@ def gen_locustfile(testcase_file_path):
     locustfile_path = 'locustfile.py'
     template_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        'locustfile_template'
+        "templates",
+        "locustfile_template"
     )
     testset = load_test_file(testcase_file_path)
     host = testset.get("config", {}).get("request", {}).get("base_url", "")
