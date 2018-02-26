@@ -6,6 +6,7 @@ from datetime import datetime
 
 from httprunner import logger
 from jinja2 import Template
+from requests.structures import CaseInsensitiveDict
 
 
 def get_summary(result):
@@ -38,6 +39,18 @@ def get_summary(result):
 
     return summary
 
+def make_json_serializable(raw_json):
+    serializable_json = {}
+    for key, value in raw_json.items():
+        if isinstance(value, bytes):
+            value = value.decode("utf-8")
+        elif isinstance(value, CaseInsensitiveDict):
+            value = dict(value)
+
+        serializable_json[key] = value
+
+    return serializable_json
+
 
 class HtmlTestResult(unittest.TextTestResult):
     """A html result class that can generate formatted html results.
@@ -60,7 +73,7 @@ class HtmlTestResult(unittest.TextTestResult):
             'status': status,
             'response_time': test.meta_data.get("response_time", 0),
             'attachment': attachment,
-            "meta_data": test.meta_data
+            "meta_data": make_json_serializable(test.meta_data)
         })
 
     def startTestRun(self):
