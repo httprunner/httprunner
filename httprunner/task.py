@@ -12,12 +12,14 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).__init__()
         self.test_runner = test_runner
         self.testcase_dict = testcase_dict
-        self.meta_data = {}
 
     def runTest(self):
         """ run testcase and check result.
         """
-        self.meta_data = self.test_runner.run_test(self.testcase_dict)
+        try:
+            self.test_runner.run_test(self.testcase_dict)
+        finally:
+            self.meta_data = getattr(self.test_runner.http_client_session, "meta_data", {})
 
 class TestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.
