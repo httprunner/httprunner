@@ -6,6 +6,8 @@
     body {
       background-color: #f2f2f2;
       color: #333;
+      margin: 0 auto;
+      width: 960px;
     }
     #summary, #details {
       width: 960px;
@@ -27,11 +29,11 @@
       background-color: lightblue;
       padding: 5px 12px;
     }
-    #details .info {
+    #details .detail {
       background-color: lightgrey;
       font-size: smaller;
-      padding-left: 2em;
-      white-space: nowrap;
+      padding: 5px 10px;
+      text-align: center;
     }
     #details .success {
       background-color: greenyellow;
@@ -45,6 +47,84 @@
     #details .skipped {
       background-color: gray;
     }
+
+    .button {
+      font-size: 1em;
+      padding: 6px;
+      width: 4em;
+      text-align: center;
+      background-color: #06d85f;
+      border-radius: 20px/50px;
+      cursor: pointer;
+      transition: all 0.3s ease-out;
+    }
+    a.button{
+      color: gray;
+      text-decoration: none;
+    }
+    .button:hover {
+      background: #2cffbd;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.7);
+      transition: opacity 500ms;
+      visibility: hidden;
+      opacity: 0;
+    }
+    .overlay:target {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .popup {
+      margin: 70px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 5px;
+      width: 30%;
+      position: relative;
+      transition: all 5s ease-in-out;
+    }
+
+    .popup h2 {
+      margin-top: 0;
+      color: #333;
+      font-family: Tahoma, Arial, sans-serif;
+    }
+    .popup .close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      transition: all 200ms;
+      font-size: 30px;
+      font-weight: bold;
+      text-decoration: none;
+      color: #333;
+    }
+    .popup .close:hover {
+      color: #06d85f;
+    }
+    .popup .content {
+      max-height: 30%;
+      overflow: auto;
+      text-align: left;
+    }
+
+    @media screen and (max-width: 700px) {
+      .box {
+        width: 70%;
+      }
+      .popup {
+        width: 70%;
+      }
+    }
+
   </style>
 </head>
 
@@ -88,14 +168,36 @@
       <th>Status</th>
       <th>Name</th>
       <th>Response Time</th>
-      <th>Info</th>
+      <th>Detail</th>
     </tr>
     {% for record in records %}
       <tr>
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
         <td>{{record.name}}</td>
         <td style="text-align:center;width:6em;">{{ '%0.1f'| format(record.response_time|float) }} ms</td>
-        <td class="info"><pre>{{record.attachment}}</pre></td>
+        <td class="detail">
+
+            <a class="button" href="#popup_log">log</a>
+            <div id="popup_log" class="overlay">
+              <div class="popup">
+                <h2>Request and Response data</h2>
+                <a class="close" href="#">&times;</a>
+                <div class="content"><pre>{{ record.meta_data | tojson(indent=2) | safe }}</pre></div>
+              </div>
+            </div>
+
+            {% if record.attachment %}
+              <a class="button" href="#popup_attachment">traceback</a>
+              <div id="popup_attachment" class="overlay">
+                <div class="popup">
+                  <h2>Traceback Message</h2>
+                  <a class="close" href="#">&times;</a>
+                  <div class="content"><pre>{{ record.attachment }}</pre></div>
+                </div>
+              </div>
+            {% endif %}
+
+        </td>
       </tr>
     {% endfor %}
   </table>
