@@ -4,8 +4,8 @@ import os
 import sys
 import unittest
 
-from httprunner import __version__ as hrun_version
 from httprunner import logger
+from httprunner.__about__ import __version__
 from httprunner.task import HttpRunner
 from httprunner.utils import create_scaffold, print_output, string_type
 
@@ -41,7 +41,7 @@ def main_hrun():
     logger.setup_logger(args.log_level)
 
     if args.version:
-        logger.color_print("{}".format(hrun_version), "GREEN")
+        logger.color_print("{}".format(__version__), "GREEN")
         exit(0)
 
     project_name = args.startproject
