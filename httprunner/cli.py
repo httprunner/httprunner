@@ -3,7 +3,6 @@ import multiprocessing
 import os
 import sys
 import unittest
-from collections import OrderedDict
 
 from httprunner import __version__ as hrun_version
 from httprunner import logger
