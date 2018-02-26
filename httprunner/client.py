@@ -126,7 +126,6 @@ class HttpSession(requests.Session):
 
         # set up pre_request hook for attaching meta data to the request object
         self.meta_data["method"] = method
-        self.meta_data["request_time"] = time.time()
 
         if "httpntlmauth" in kwargs:
             from requests_ntlm import HttpNtlmAuth
@@ -136,19 +135,14 @@ class HttpSession(requests.Session):
 
         kwargs.setdefault("timeout", 120)
 
+        self.meta_data["request_time"] = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
-        self.meta_data["url"] = (response.history and response.history[0] or response)\
-            .request.path_url
-
         # record the consumed time
         self.meta_data["response_time"] = int((time.time() - self.meta_data["request_time"]) * 1000)
+        self.meta_data["elapsed"] = response.elapsed.total_seconds()
 
-        # get the length of the content, but if the argument stream is set to True, we take
-        # the size from the content-length header, in order to not trigger fetching of the body
-        if kwargs.get("stream", False):
-            self.meta_data["content_size"] = int(response.headers.get("content-length") or 0)
-        else:
-            self.meta_data["content_size"] = len(response.content or "")
+        self.meta_data["url"] = (response.history and response.history[0] or response)\
+            .request.path_url
 
         self.meta_data["request_headers"] = response.request.headers
         self.meta_data["request_body"] = response.request.body
@@ -156,9 +150,16 @@ class HttpSession(requests.Session):
         self.meta_data["response_headers"] = response.headers
         self.meta_data["response_body"] = response.text
 
-        logger.log_debug("response status_code: {}".format(response.status_code))
-        logger.log_debug("response headers: {}".format(response.headers))
-        logger.log_debug("response body: {}".format(response.text))
+        logger.log_debug("response status_code: {}".format(self.meta_data["status_code"]))
+        logger.log_debug("response headers: {}".format(self.meta_data["response_headers"]))
+        logger.log_debug("response body: {}".format(self.meta_data["response_body"]))
+
+        # get the length of the content, but if the argument stream is set to True, we take
+        # the size from the content-length header, in order to not trigger fetching of the body
+        if kwargs.get("stream", False):
+            self.meta_data["content_size"] = int(self.meta_data["response_headers"].get("content-length") or 0)
+        else:
+            self.meta_data["content_size"] = len(response.content or "")
 
         try:
             response.raise_for_status()
@@ -166,9 +167,12 @@ class HttpSession(requests.Session):
             logger.log_error(u"{exception}".format(exception=str(e)))
         else:
             logger.log_info(
-                """status_code: {}, response_time: {} ms, response_length: {} bytes"""\
-                .format(self.meta_data["status_code"], self.meta_data["response_time"], \
-                    self.meta_data["content_size"]))
+                """status_code: {}, response_time: {} ms, response_length: {} bytes""".format(
+                    self.meta_data["status_code"],
+                    self.meta_data["response_time"],
+                    self.meta_data["content_size"]
+                )
+            )
 
         return response
 
