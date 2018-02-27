@@ -1,5 +1,6 @@
 import io
 import os
+import platform
 import time
 import unittest
 from datetime import datetime
@@ -8,6 +9,15 @@ from httprunner import logger
 from jinja2 import Template
 from requests.structures import CaseInsensitiveDict
 
+
+def get_platform():
+    return {
+        "python_version": "{}_{}".format(
+            platform.python_implementation(),
+            platform.python_version()
+        ),
+        "platform": platform.platform()
+    }
 
 def get_summary(result):
     """ get summary from test result
@@ -21,7 +31,8 @@ def get_summary(result):
             'skipped': len(result.skipped),
             'expectedFailures': len(result.expectedFailures),
             'unexpectedSuccesses': len(result.unexpectedSuccesses)
-        }
+        },
+        "platform": get_platform()
     }
     summary["stat"]["successes"] = summary["stat"]["testsRun"] \
         - summary["stat"]["failures"] \
