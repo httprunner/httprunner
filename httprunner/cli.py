@@ -50,14 +50,10 @@ def main_hrun():
         create_scaffold(project_path)
         exit(0)
 
-    kwargs = {
-        "failfast": args.failfast
-    }
-    run_kwargs = {
-        "html_report_name": args.html_report_name,
-        "html_report_template": args.html_report_template
-    }
-    result = HttpRunner(args.testset_paths, **kwargs).run(**run_kwargs)
+    result = HttpRunner(args.testset_paths, failfast=args.failfast).run(
+        html_report_name=args.html_report_name,
+        html_report_template=args.html_report_template
+    )
 
     print_output(result["output"])
     return 0 if result["success"] else 1
