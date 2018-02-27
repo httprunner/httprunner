@@ -133,10 +133,13 @@ class HttpRunner(object):
 
     def __init__(self, path, gen_html_report=True, **kwargs):
         """ initialize HttpRunner with specified testset file path and test runner
-        @params:
-            - path: YAML/JSON testset file path
-            - gen_html_report: True/False
-            - kwargs: key-value arguments used to initialize TextTestRunner
+        @param (str) path:
+            YAML/JSON testset file path
+        @param (boolean) gen_html_report:
+            True: use HtmlTestResult and generate html report
+            False: use TextTestResult and do not generate report file
+        @param (dict) kwargs:
+            key-value arguments used to initialize TextTestRunner
                 - failfast: False/True, stop the test run on the first error or failure.
         """
         self.path = path
@@ -149,11 +152,11 @@ class HttpRunner(object):
 
     def run(self, mapping=None, html_report_name=None, html_report_template=None):
         """ start to run suite
-        @param mapping
+        @param (dict) mapping:
             if mapping specified, it will override variables in config block
-        @param html_report_name
+        @param (str) html_report_name:
             output html report file name
-        @param html_report_template
+        @param (str) html_report_template:
             report template file path, template should be in Jinja2 format
         """
         try:
