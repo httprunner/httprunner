@@ -6,13 +6,15 @@ import unittest
 from datetime import datetime
 
 from httprunner import logger
+from httprunner.__about__ import __version__
 from jinja2 import Template
 from requests.structures import CaseInsensitiveDict
 
 
 def get_platform():
     return {
-        "python_version": "{}_{}".format(
+        "httprunner_version": __version__,
+        "python_version": "{} {}".format(
             platform.python_implementation(),
             platform.python_version()
         ),
