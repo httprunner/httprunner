@@ -7,7 +7,8 @@ import unittest
 from httprunner import logger
 from httprunner.__about__ import __version__
 from httprunner.task import HttpRunner
-from httprunner.utils import create_scaffold, print_output, string_type
+from httprunner.utils import (create_scaffold, load_dot_env_file, print_output,
+                              string_type)
 
 
 def main_hrun():
@@ -31,6 +32,9 @@ def main_hrun():
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
     parser.add_argument(
+        '--dot-env-path',
+        help="Specify .env file path, which is useful for keeping production credentials.")
+    parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
     parser.add_argument(
@@ -43,6 +47,10 @@ def main_hrun():
     if args.version:
         logger.color_print("{}".format(__version__), "GREEN")
         exit(0)
+
+    dot_env_path = args.dot_env_path or os.path.join(os.getcwd(), ".env")
+    if dot_env_path:
+        load_dot_env_file(dot_env_path)
 
     project_name = args.startproject
     if project_name:

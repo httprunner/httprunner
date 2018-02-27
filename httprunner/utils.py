@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import imp
 import importlib
+import io
 import os.path
 import random
 import re
@@ -390,3 +391,16 @@ def create_scaffold(project_path):
         msg += create_path(p[0], p[1])
 
     logger.color_print(msg, "BLUE")
+
+def load_dot_env_file(path):
+    """ load .env file and set to os.environ
+    """
+    if not os.path.isfile(path):
+        return
+
+    logger.log_info("Loading environment variables from {}".format(path))
+    with io.open(path, 'r', encoding='utf-8') as fp:
+        for line in fp:
+            variable, value = line.split("=")
+            os.environ[variable] = value
+            logger.log_debug("Loaded variable: {}".format(variable))
