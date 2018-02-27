@@ -131,22 +131,23 @@ class TaskSuite(unittest.TestSuite):
 
 class HttpRunner(object):
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, path, gen_html_report=True, **kwargs):
         """ initialize HttpRunner with specified testset file path and test runner
         @params:
             - path: YAML/JSON testset file path
             - gen_html_report: True/False
-            - failfast: False/True, stop the test run on the first error or failure.
+            - kwargs: key-value arguments used to initialize TextTestRunner
+                - failfast: False/True, stop the test run on the first error or failure.
         """
         self.path = path
 
-        self.gen_html_report = kwargs.pop("gen_html_report", True)
+        self.gen_html_report = gen_html_report
         if self.gen_html_report:
             kwargs["resultclass"] = HtmlTestResult
 
         self.runner = unittest.TextTestRunner(**kwargs)
 
-    def run(self, **kwargs):
+    def run(self, mapping=None, html_report_name=None, html_report_template=None):
         """ start to run suite
         @param mapping
             if mapping specified, it will override variables in config block
@@ -156,7 +157,7 @@ class HttpRunner(object):
             report template file path, template should be in Jinja2 format
         """
         try:
-            mapping = kwargs.get("mapping", {})
+            mapping = mapping or {}
             task_suite = TaskSuite(self.path, mapping)
         except exception.TestcaseNotFound:
             sys.exit(1)
@@ -170,8 +171,8 @@ class HttpRunner(object):
         if self.gen_html_report:
             summary = result.summary
             summary["report_path"] = result.render_html_report(
-                kwargs.get("html_report_name"),
-                kwargs.get("html_report_template")
+                html_report_name,
+                html_report_template
             )
         else:
             summary = get_summary(result)
