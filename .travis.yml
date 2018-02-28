@@ -6,10 +6,9 @@ python:
   - 3.5
   - 3.6
 install:
-  - pip install coverage
-  - pip install coveralls
-  - pip install -r requirements-dev.txt
+  - pip install pipenv --upgrade-strategy=only-if-needed
+  - pipenv install --dev
 script:
-  - coverage run --source=httprunner -m unittest discover
+  - pipenv run coverage run --source=httprunner -m unittest discover
 after_success:
-  - coveralls
+  - pipenv run coveralls
