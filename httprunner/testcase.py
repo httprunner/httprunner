@@ -705,8 +705,13 @@ class TestcaseParser(object):
                 return self.functions[item_name]
 
             try:
-                return eval(item_name)
-            except NameError:
+                # check if builtin functions
+                item_func = eval(item_name)
+                if callable(item_func):
+                    # is builtin function
+                    return item_func
+            except (NameError, TypeError):
+                # is not builtin function, continue to search
                 pass
         elif item_type == "variable":
             if item_name in self.variables:
