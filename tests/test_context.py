@@ -100,6 +100,25 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertIn("sum2nums", context_variables)
             self.assertEqual(context_variables["sum2nums"], 5)
 
+    def test_call_builtin_functions(self):
+        testcase1 = {
+            "variables": [
+                {"length": "${len(debugtalk)}"},
+                {"smallest": "${min(2, 3, 8)}"},
+                {"largest": "${max(2, 3, 8)}"}
+            ]
+        }
+        testcase2 = self.testcases["builtin_functions"]
+
+        for testcase in [testcase1, testcase2]:
+            variables = testcase['variables']
+            self.context.bind_variables(variables)
+
+            context_variables = self.context.testcase_variables_mapping
+            self.assertEqual(context_variables["length"], 9)
+            self.assertEqual(context_variables["smallest"], 2)
+            self.assertEqual(context_variables["largest"], 8)
+
     def test_context_bind_lambda_functions_with_import(self):
         testcase1 = {
             "requires": ["random", "string", "hashlib"],

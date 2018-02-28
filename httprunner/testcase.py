@@ -703,6 +703,11 @@ class TestcaseParser(object):
         if item_type == "function":
             if item_name in self.functions:
                 return self.functions[item_name]
+
+            try:
+                return eval(item_name)
+            except NameError:
+                pass
         elif item_type == "variable":
             if item_name in self.variables:
                 return self.variables[item_name]

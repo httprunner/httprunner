@@ -34,3 +34,9 @@ bind_module_functions:
         - random: ${gen_random_string(5)}
         - data: "{'name': 'user', 'password': '123456'}"
         - authorization: ${gen_md5($TOKEN, $data, $random)}
+
+builtin_functions:
+    variables:
+        - length: ${len(debugtalk)}
+        - smallest: ${min(2, 3, 8)}
+        - largest: ${max(2, 3, 8)}
