@@ -20,6 +20,8 @@ colorlog = "*"
 flask = "*"
 coverage = "*"
 coveralls = "*"
+twine = "*"
 
 
 [scripts]
+
