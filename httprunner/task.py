@@ -59,7 +59,7 @@ class TestSuite(unittest.TestSuite):
         self.config_dict["variables"] = utils.override_variables_binds(variables, variables_mapping)
 
         parameters = self.config_dict.get("parameters", [])
-        cartesian_product_parameters = testcase.gen_cartesian_product_parameters(
+        cartesian_product_parameters = testcase.parse_parameters(
             parameters,
             self.config_dict["path"]
         ) or [{}]

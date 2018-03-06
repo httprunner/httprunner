@@ -164,4 +164,4 @@ class TestRunner(ApiServerUnittest):
         result = HttpRunner(testcase_file_path).run()
         self.assertTrue(result["success"])
         self.assertIn("token", result["output"])
-        self.assertEqual(result["stat"]["testsRun"], 6)
+        self.assertEqual(result["stat"]["testsRun"], 3 * 2 * 3)

@@ -48,3 +48,15 @@ def skip_test_in_production_env():
     """ skip this test in production environment
     """
     return os.environ["TEST_ENV"] == "PRODUCTION"
+
+def gen_app_version():
+    return [
+        {"app_version": "2.8.5"},
+        {"app_version": "2.8.6"}
+    ]
+
+def get_account():
+    return [
+        {"username": "user1", "password": "111111"},
+        {"username": "user2", "password": "222222"}
+    ]

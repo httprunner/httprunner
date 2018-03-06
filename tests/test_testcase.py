@@ -51,7 +51,7 @@ class TestcaseParserUnittest(unittest.TestCase):
 
     def test_load_csv_file_multiple_parameters(self):
         csv_file_path = os.path.join(
-            os.getcwd(), 'tests/data/username-password.csv')
+            os.getcwd(), 'tests/data/account.csv')
         csv_content = testcase.load_file(csv_file_path)
         self.assertEqual(
             csv_content,
@@ -105,40 +105,70 @@ class TestcaseParserUnittest(unittest.TestCase):
         product_list = testcase.gen_cartesian_product(*parameters_content_list)
         self.assertEqual(product_list, [])
 
-    def test_gen_cartesian_product_parameters_one_to_one(self):
+    def test_parse_parameters_raw_list(self):
         parameters = [
-            {"user_agent": "random"},
-            {"app_version": "sequential"}
+            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+            {"username-password": [("user1", "111111"), ("test2", "222222")]}
         ]
-        testset_path = os.path.join(
-            os.getcwd(),
-            "tests/data/demo_parameters.yml"
-        )
-        cartesian_product_parameters = testcase.gen_cartesian_product_parameters(
-            parameters,
-            testset_path
-        )
+        cartesian_product_parameters = testcase.parse_parameters(parameters)
         self.assertEqual(
             len(cartesian_product_parameters),
-            6
+            3 * 2
         )
 
-    def test_gen_cartesian_product_parameters_one_to_multiple(self):
+    def test_parse_parameters_parameterize(self):
         parameters = [
-            {"user_agent": "random"},
-            {"username-password": "sequential"}
+            {"app_version": "${parameterize(app_version.csv)}"},
+            {"username-password": "${parameterize(account.csv)}"}
         ]
         testset_path = os.path.join(
             os.getcwd(),
             "tests/data/demo_parameters.yml"
         )
-        cartesian_product_parameters = testcase.gen_cartesian_product_parameters(
+        cartesian_product_parameters = testcase.parse_parameters(
             parameters,
             testset_path
         )
         self.assertEqual(
             len(cartesian_product_parameters),
-            9
+            2 * 3
+        )
+
+    def test_parse_parameters_custom_function(self):
+        parameters = [
+            {"app_version": "${gen_app_version()}"},
+            {"username-password": "${get_account()}"}
+        ]
+        testset_path = os.path.join(
+            os.getcwd(),
+            "tests/data/demo_parameters.yml"
+        )
+        cartesian_product_parameters = testcase.parse_parameters(
+            parameters,
+            testset_path
+        )
+        self.assertEqual(
+            len(cartesian_product_parameters),
+            2 * 2
+        )
+
+    def test_parse_parameters_mix(self):
+        parameters = [
+            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+            {"app_version": "${gen_app_version()}"},
+            {"username-password": "${parameterize(account.csv)}"}
+        ]
+        testset_path = os.path.join(
+            os.getcwd(),
+            "tests/data/demo_parameters.yml"
+        )
+        cartesian_product_parameters = testcase.parse_parameters(
+            parameters,
+            testset_path
+        )
+        self.assertEqual(
+            len(cartesian_product_parameters),
+            3 * 2 * 3
         )
 
     def test_load_yaml_file_file_format_error(self):

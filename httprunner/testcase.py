@@ -11,8 +11,8 @@ import yaml
 from httprunner import exception, logger, utils
 
 variable_regexp = r"\$([\w_]+)"
-function_regexp = r"\$\{([\w_]+\([\$\w_ =,]*\))\}"
-function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w_ =,]*)\)$")
+function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
+function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w\.\-_ =,]*)\)$")
 test_def_overall_dict = {
     "loaded": False,
     "api": {},
@@ -73,10 +73,6 @@ def _load_csv_file(csv_file):
 
             if not parameter_list:
                 # first line will always be parameter name
-                expected_filename = "{}.csv".format("-".join(line_data))
-                if not csv_file.endswith(expected_filename):
-                    raise exception.FileFormatError("CSV file name does not match with headers: {}".format(csv_file))
-
                 parameter_list = line_data
                 collums_num = len(parameter_list)
                 continue
@@ -642,34 +638,54 @@ def gen_cartesian_product(*args):
 
     return product_list
 
-def gen_cartesian_product_parameters(parameters, testset_path):
+def parse_parameters(parameters, testset_path=None):
     """ parse parameters and generate cartesian product
     @params
-        (list) parameters: parameter name and fetch method
+        (list) parameters: parameter name and value in list
+            parameter value may be in three types:
+                (1) data list
+                (2) call built-in parameterize function
+                (3) call custom function in debugtalk.py
             e.g.
                 [
-                    {"user_agent": "Random"},
-                    {"app_version": "Sequential"}
+                    {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+                    {"username-password": "${parameterize(account.csv)}"},
+                    {"app_version": "${gen_app_version()}"}
                 ]
-        (str) testset_path: testset file path, used for locating csv file
+        (str) testset_path: testset file path, used for locating csv file and debugtalk.py
     @return cartesian product in list
     """
-    parameters_content_list = []
+    testcase_parser = TestcaseParser(file_path=testset_path)
+
+    parsed_parameters_list = []
     for parameter in parameters:
-        parameter_name, fetch_method = list(parameter.items())[0]
-        parameter_file_path = os.path.join(
-            os.path.dirname(testset_path),
-            "{}.csv".format(parameter_name)
-        )
-        csv_content_list = load_file(parameter_file_path)
+        parameter_name, parameter_content = list(parameter.items())[0]
+        parameter_name_list = parameter_name.split("-")
 
-        if fetch_method.lower() == "random":
-            random.shuffle(csv_content_list)
+        if isinstance(parameter_content, list):
+            # (1) data list
+            # e.g. {"app_version": ["2.8.5", "2.8.6"]}
+            #       => [{"app_version": "2.8.5", "app_version": "2.8.6"}]
+            # e.g. {"username-password": [["user1", "111111"], ["test2", "222222"]}
+            #       => [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
+            parameter_content_list = [
+                dict(zip(parameter_name_list, [parameter_item]))
+                for parameter_item in parameter_content
+            ]
+        else:
+            # (2) & (3)
+            parsed_parameter_content = testcase_parser.eval_content_with_bindings(parameter_content)
+            # e.g. [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
+            # e.g. [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
+            parameter_content_list = [
+                # get subset by parameter name
+                {key: parameter_item[key] for key in parameter_name_list}
+                for parameter_item in parsed_parameter_content
+            ]
 
-        parameters_content_list.append(csv_content_list)
+        parsed_parameters_list.append(parameter_content_list)
 
-    return gen_cartesian_product(*parameters_content_list)
-
+    return gen_cartesian_product(*parsed_parameters_list)
 
 class TestcaseParser(object):
 
@@ -726,19 +742,34 @@ class TestcaseParser(object):
             raise exception.ParamsError(
                 "{} is not defined in bind {}s!".format(item_name, item_type))
 
+    def parameterize(self, csv_file_name, fetch_method="Sequential"):
+        parameter_file_path = os.path.join(
+            os.path.dirname(self.file_path),
+            "{}".format(csv_file_name)
+        )
+        csv_content_list = load_file(parameter_file_path)
+
+        if fetch_method.lower() == "random":
+            random.shuffle(csv_content_list)
+
+        return csv_content_list
+
     def _eval_content_functions(self, content):
         functions_list = extract_functions(content)
         for func_content in functions_list:
             function_meta = parse_function(func_content)
             func_name = function_meta['func_name']
 
-            func = self.get_bind_item("function", func_name)
-
             args = function_meta.get('args', [])
             kwargs = function_meta.get('kwargs', {})
             args = self.eval_content_with_bindings(args)
             kwargs = self.eval_content_with_bindings(kwargs)
-            eval_value = func(*args, **kwargs)
+
+            if func_name in ["parameterize", "P"]:
+                eval_value = self.parameterize(*args, **kwargs)
+            else:
+                func = self.get_bind_item("function", func_name)
+                eval_value = func(*args, **kwargs)
 
             func_content = "${" + func_content + "}"
             if func_content == content:
