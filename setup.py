@@ -3,7 +3,6 @@ import io
 import os
 import sys
 from shutil import rmtree
-from httprunner.logger import color_print
 
 from setuptools import Command, find_packages, setup
 
@@ -33,8 +32,8 @@ class UploadCommand(Command):
 
     @staticmethod
     def status(s):
-        """Prints things in yellow color."""
-        color_print(s, "yellow")
+        """Prints things in green color."""
+        print("\033[0;32m{0}\033[0m".format(s))
 
     def initialize_options(self):
         """ override
