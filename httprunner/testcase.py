@@ -677,6 +677,9 @@ def parse_parameters(parameters, testset_path=None):
             parsed_parameter_content = testcase_parser.eval_content_with_bindings(parameter_content)
             # e.g. [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
             # e.g. [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
+            if not isinstance(parsed_parameter_content, list):
+                raise exception.ParamsError("parameters syntax error!")
+
             parameter_content_list = [
                 # get subset by parameter name
                 {key: parameter_item[key] for key in parameter_name_list}
