@@ -1,3 +1,4 @@
+import copy
 import sys
 import unittest
 
@@ -32,12 +33,15 @@ class TestSuite(unittest.TestSuite):
                     "name": "testset description",
                     "requires": [],
                     "function_binds": {},
+                    "parameters": {},
                     "variables": [],
-                    "request": {}
+                    "request": {},
+                    "output": []
                 },
                 "testcases": [
                     {
                         "name": "testcase description",
+                        "parameters": {},
                         "variables": [],    # optional, override
                         "request": {},
                         "extract": {},      # optional
@@ -51,44 +55,92 @@ class TestSuite(unittest.TestSuite):
     """
     def __init__(self, testset, variables_mapping=None, http_client_session=None):
         super(TestSuite, self).__init__()
+        self.test_runner_list = []
 
-        self.config_dict = testset.get("config", {})
+        config_dict = testset.get("config", {})
+        self.output_variables_list = config_dict.get("output", [])
+        self.testset_file_path = config_dict["path"]
+        config_dict_parameters = config_dict.get("parameters", [])
 
-        variables = self.config_dict.get("variables", [])
+        config_dict_variables = config_dict.get("variables", [])
         variables_mapping = variables_mapping or {}
-        self.config_dict["variables"] = utils.override_variables_binds(variables, variables_mapping)
+        config_dict_variables = utils.override_variables_binds(config_dict_variables, variables_mapping)
 
-        parameters = self.config_dict.get("parameters", [])
+        config_parametered_variables_list = self._get_parametered_variables(
+            config_dict_variables,
+            config_dict_parameters
+        )
+        self.testcase_parser = testcase.TestcaseParser()
+        testcases = testset.get("testcases", [])
+
+        for config_variables in config_parametered_variables_list:
+            # config level
+            config_dict["variables"] = config_variables
+            test_runner = runner.Runner(config_dict, http_client_session)
+
+            for testcase_dict in testcases:
+                testcase_dict = copy.copy(testcase_dict)
+                # testcase level
+                testcase_parametered_variables_list = self._get_parametered_variables(
+                    testcase_dict.get("variables", []),
+                    testcase_dict.get("parameters", [])
+                )
+                for testcase_variables in testcase_parametered_variables_list:
+                    testcase_dict["variables"] = testcase_variables
+
+                    # eval testcase name with bind variables
+                    variables = utils.override_variables_binds(
+                        config_variables,
+                        testcase_variables
+                    )
+                    self.testcase_parser.update_binded_variables(variables)
+                    testcase_name = self.testcase_parser.eval_content_with_bindings(testcase_dict["name"])
+                    self.test_runner_list.append((test_runner, variables))
+
+                    self._add_test_to_suite(testcase_name, test_runner, testcase_dict)
+
+    def _get_parametered_variables(self, variables, parameters):
+        """ parameterize varaibles with parameters
+        """
         cartesian_product_parameters = testcase.parse_parameters(
             parameters,
-            self.config_dict["path"]
+            self.testset_file_path
         ) or [{}]
+
+        parametered_variables_list = []
         for parameter_mapping in cartesian_product_parameters:
-            if parameter_mapping:
-                self.config_dict["variables"] = utils.override_variables_binds(
-                    self.config_dict["variables"],
-                    parameter_mapping
-                )
+            parameter_mapping = parameter_mapping or {}
+            variables = utils.override_variables_binds(
+                variables,
+                parameter_mapping
+            )
 
-            self.test_runner = runner.Runner(self.config_dict, http_client_session)
-            testcases = testset.get("testcases", [])
-            self._add_tests_to_suite(testcases)
+            parametered_variables_list.append(variables)
 
-    def _add_tests_to_suite(self, testcases):
-        for testcase_dict in testcases:
-            testcase_name = self.test_runner.context.eval_content(testcase_dict["name"])
-            if utils.PYTHON_VERSION == 3:
-                TestCase.runTest.__doc__ = testcase_name
-            else:
-                TestCase.runTest.__func__.__doc__ = testcase_name
+        return parametered_variables_list
 
-            test = TestCase(self.test_runner, testcase_dict)
-            [self.addTest(test) for _ in range(int(testcase_dict.get("times", 1)))]
+    def _add_test_to_suite(self, testcase_name, test_runner, testcase_dict):
+        if utils.PYTHON_VERSION == 3:
+            TestCase.runTest.__doc__ = testcase_name
+        else:
+            TestCase.runTest.__func__.__doc__ = testcase_name
+
+        test = TestCase(test_runner, testcase_dict)
+        [self.addTest(test) for _ in range(int(testcase_dict.get("times", 1)))]
 
     @property
     def output(self):
-        output_variables_list = self.config_dict.get("output", [])
-        return self.test_runner.extract_output(output_variables_list)
+        outputs = []
+
+        for test_runner, variables in self.test_runner_list:
+            outputs.append(
+                {
+                    "in": variables,
+                    "out": test_runner.extract_output(self.output_variables_list)
+                }
+            )
+
+        return outputs
 
 class TaskSuite(unittest.TestSuite):
     """ create task suite with specified testcase path.
@@ -167,9 +219,9 @@ class HttpRunner(object):
 
         result = self.runner.run(task_suite)
 
-        output = {}
+        output = []
         for task in task_suite.tasks:
-            output.update(task.output)
+            output.extend(task.output)
 
         if self.gen_html_report:
             summary = result.summary

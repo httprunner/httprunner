@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import hmac
 import imp
@@ -319,10 +320,11 @@ def update_ordered_dict(ordered_dict, override_mapping):
             "c": 4
         })
     """
+    new_ordered_dict = copy.copy(ordered_dict)
     for var, value in override_mapping.items():
-        ordered_dict.update({var: value})
+        new_ordered_dict.update({var: value})
 
-    return ordered_dict
+    return new_ordered_dict
 
 def override_variables_binds(variables, new_mapping):
     """ convert variables in testcase to ordered mapping, with new_mapping overrided
@@ -339,25 +341,40 @@ def override_variables_binds(variables, new_mapping):
         new_mapping
     )
 
-def print_output(output):
-    if not output:
+def print_output(outputs):
+
+    if not outputs:
         return
 
-    content = "\n================== Output ==================\n"
-    content += '{:<16}:  {:<}\n'.format("Variable", "Value")
-    content += '{:<16}:  {:<}\n'.format("--------", "-----")
+    content = "\n================== Variables & Output ==================\n"
+    content += '{:<6} | {:<16} :  {:<}\n'.format("Type", "Variable", "Value")
+    content += '{:<6} | {:<16} :  {:<}\n'.format("-" * 6, "-" * 16, "-" * 27)
 
-    for variable, value in output.items():
+    def prepare_content(var_type, in_out):
+        content = ""
+        for variable, value in in_out.items():
 
-        if PYTHON_VERSION == 2:
-            if isinstance(variable, unicode):
-                variable = variable.encode("utf-8")
-            if isinstance(value, unicode):
-                value = value.encode("utf-8")
+            if PYTHON_VERSION == 2:
+                if isinstance(variable, unicode):
+                    variable = variable.encode("utf-8")
+                if isinstance(value, unicode):
+                    value = value.encode("utf-8")
 
-        content += '{:<16}:  {:<}\n'.format(variable, value)
+            content += '{:<6} | {:<16} :  {:<}\n'.format(var_type, variable, value)
 
-    content += "============================================\n"
+        return content
+
+    for output in outputs:
+        _in = output["in"]
+        _out = output["out"]
+
+        if not _out:
+            continue
+
+        content += prepare_content("Var", _in)
+        content += "\n"
+        content += prepare_content("Out", _out)
+        content += "-" * 56 + "\n"
 
     logger.log_debug(content)
 

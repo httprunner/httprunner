@@ -121,7 +121,8 @@ class TestRunner(ApiServerUnittest):
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         result = HttpRunner(testcase_file_path).run()
         self.assertTrue(result["success"])
-        self.assertIn("token", result["output"])
+        self.assertIn("token", result["output"][0]["out"])
+        self.assertEqual(len(result["output"]), 13)
 
     def test_run_testset_with_variables_mapping(self):
         testcase_file_path = os.path.join(
@@ -131,7 +132,8 @@ class TestRunner(ApiServerUnittest):
         }
         result = HttpRunner(testcase_file_path).run(mapping=variables_mapping)
         self.assertTrue(result["success"])
-        self.assertIn("token", result["output"])
+        self.assertIn("token", result["output"][0]["out"])
+        self.assertEqual(len(result["output"]), 13)
 
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
@@ -163,5 +165,5 @@ class TestRunner(ApiServerUnittest):
             os.getcwd(), 'tests/data/demo_parameters.yml')
         result = HttpRunner(testcase_file_path).run()
         self.assertTrue(result["success"])
-        self.assertIn("token", result["output"])
-        self.assertEqual(result["stat"]["testsRun"], 3 * 2 * 3)
+        self.assertEqual(len(result["output"]), 3 * 2)
+        self.assertEqual(result["stat"]["testsRun"], 3 * 2)

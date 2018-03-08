@@ -2,10 +2,7 @@
     name: "user management testset."
     parameters:
         - user_agent: ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
-        - app_version: ${gen_app_version()}
-        - username: ${parameterize(account.csv)}
     variables:
-        - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
     request:
@@ -17,10 +14,22 @@
         - token
 
 - test:
-    name: get token with $user_agent and $app_version, username $username
+    name: get token with $user_agent and $app_version
+    parameters:
+        - app_version: ${gen_app_version()}
     api: get_token($user_agent, $device_sn, $os_platform, $app_version)
     extract:
         - token: content.token
     validate:
         - "eq": ["status_code", 200]
         - "len_eq": ["content.token", 16]
+
+# - test:
+#     name: create user
+#     parameters:
+#         - user_id: [1001, 1002, 1003]
+#         - username-password: ${parameterize(account.csv)}
+#     api: create_user($user_id, $username, $password, $token)
+#     validate:
+#         - {"check": "status_code", "expect": 201}
+#         - {"check": "content.success", "expect": true}
