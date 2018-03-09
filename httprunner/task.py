@@ -12,7 +12,7 @@ class TestCase(unittest.TestCase):
     def __init__(self, test_runner, testcase_dict):
         super(TestCase, self).__init__()
         self.test_runner = test_runner
-        self.testcase_dict = testcase_dict
+        self.testcase_dict = copy.copy(testcase_dict)
 
     def runTest(self):
         """ run testcase and check result.

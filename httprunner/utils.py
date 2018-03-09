@@ -331,7 +331,7 @@ def override_variables_binds(variables, new_mapping):
     """
     if isinstance(variables, list):
         variables_ordered_dict = convert_to_order_dict(variables)
-    elif isinstance(variables, OrderedDict):
+    elif isinstance(variables, (OrderedDict, dict)):
         variables_ordered_dict = variables
     else:
         raise exception.ParamsError("variables error!")
