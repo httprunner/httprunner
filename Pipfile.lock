@@ -44,10 +44,10 @@
         },
         "har2case": {
             "hashes": [
-                "sha256:90de0af8c0dc0033bddb2713ff45f2421f4940166e2503cd08af1eb84bd42994",
-                "sha256:a53728d8fdf2da356575154d4ab008e2b79079021581ea08a95a499a98dcd2b0"
+                "sha256:52bf5eeb84e7acb6b70bef5f0601c42d809dab767894c7cc89f758029c3c9463",
+                "sha256:e575e0608addea91fc4f13fcbbcfeeaec5a4700859054d8616b8f07951aea92a"
             ],
-            "version": "==0.1.4"
+            "version": "==0.1.5"
         },
         "idna": {
             "hashes": [
@@ -104,14 +104,6 @@
         }
     },
     "develop": {
-        "argparse": {
-            "hashes": [
-                "sha256:62b089a55be1d8949cd2bc7e0df0bddb9e028faefc8c32038cc84862aefdd6e4",
-                "sha256:c31647edb69fd3d465a847ea3157d37bed1f95f19760b11a47aa91c04b666314"
-            ],
-            "markers": "python_version == '2.6'",
-            "version": "==1.4.0"
-        },
         "certifi": {
             "hashes": [
                 "sha256:14131608ad2fd56836d33a71ee60fa1c82bc9d2c8d98b7bdbc631fe1b3cd1296",
@@ -250,10 +242,10 @@
         },
         "twine": {
             "hashes": [
-                "sha256:caa45b7987fc96321258cd7668e3be2ff34064f5c66d2d975b641adca659c1ab",
-                "sha256:d3ce5c480c22ccfb761cd358526e862b32546d2fe4bc93d46b5cf04ea3cc46ca"
+                "sha256:c3540f2b98667698412b0dc9f5e40c8c1a08a9e79e255c9c21339105eb4ca57a",
+                "sha256:eff86e20fdffef8abb0b638784c62d0348dac4c80380907e39b732c56e9192fb"
             ],
-            "version": "==1.9.1"
+            "version": "==1.10.0"
         },
         "urllib3": {
             "hashes": [
