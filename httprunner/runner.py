@@ -92,6 +92,10 @@ class Runner(object):
         if skip_reason:
             raise SkipTest(skip_reason)
 
+    def setup_teardown(self, actions):
+        for action in actions:
+            self.context.eval_content(action)
+
     def run_test(self, testcase_dict):
         """ run single testcase.
         @param (dict) testcase_dict
@@ -135,11 +139,7 @@ class Runner(object):
 
         self._handle_skip_feature(testcase_dict)
 
-        def setup_teardown(actions):
-            for action in actions:
-                self.context.eval_content(action)
-
-        setup_teardown(setup_actions)
+        self.setup_teardown(setup_actions)
 
         resp = self.http_client_session.request(
             method,
@@ -171,7 +171,7 @@ class Runner(object):
 
             raise
         finally:
-            setup_teardown(teardown_actions)
+            self.setup_teardown(teardown_actions)
 
     def extract_output(self, output_variables_list):
         """ extract output variables
