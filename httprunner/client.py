@@ -43,6 +43,13 @@ def prepare_kwargs(method, kwargs):
             if charset:
                 kwargs["data"] = kwargs["data"].encode(charset)
 
+    if "httpntlmauth" in kwargs:
+        from requests_ntlm import HttpNtlmAuth
+        auth_account = kwargs.pop("httpntlmauth")
+        kwargs["auth"] = HttpNtlmAuth(
+            auth_account["username"], auth_account["password"])
+
+
 class ApiResponse(Response):
 
     def raise_for_status(self):
@@ -126,12 +133,6 @@ class HttpSession(requests.Session):
 
         # set up pre_request hook for attaching meta data to the request object
         self.meta_data["method"] = method
-
-        if "httpntlmauth" in kwargs:
-            from requests_ntlm import HttpNtlmAuth
-            auth_account = kwargs.pop("httpntlmauth")
-            kwargs["auth"] = HttpNtlmAuth(
-                auth_account["username"], auth_account["password"])
 
         kwargs.setdefault("timeout", 120)
 
