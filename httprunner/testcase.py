@@ -718,7 +718,7 @@ class TestcaseParser(object):
         """
         self.functions = functions
 
-    def get_bind_item(self, item_type, item_name):
+    def _get_bind_item(self, item_type, item_name):
         if item_type == "function":
             if item_name in self.functions:
                 return self.functions[item_name]
@@ -744,6 +744,12 @@ class TestcaseParser(object):
         except (AssertionError, exception.FunctionNotFound):
             raise exception.ParamsError(
                 "{} is not defined in bind {}s!".format(item_name, item_type))
+
+    def get_bind_function(self, func_name):
+        return self._get_bind_item("function", func_name)
+
+    def get_bind_variable(self, variable_name):
+        return self._get_bind_item("variable", variable_name)
 
     def parameterize(self, csv_file_name, fetch_method="Sequential"):
         parameter_file_path = os.path.join(
@@ -771,7 +777,7 @@ class TestcaseParser(object):
             if func_name in ["parameterize", "P"]:
                 eval_value = self.parameterize(*args, **kwargs)
             else:
-                func = self.get_bind_item("function", func_name)
+                func = self.get_bind_function(func_name)
                 eval_value = func(*args, **kwargs)
 
             func_content = "${" + func_content + "}"
@@ -804,7 +810,7 @@ class TestcaseParser(object):
         """
         variables_list = extract_variables(content)
         for variable_name in variables_list:
-            variable_value = self.get_bind_item("variable", variable_name)
+            variable_value = self.get_bind_variable(variable_name)
 
             if "${}".format(variable_name) == content:
                 # content is a variable
