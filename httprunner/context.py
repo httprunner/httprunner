@@ -209,7 +209,7 @@ class Context(object):
         """ validate with functions
         """
         comparator = utils.get_uniform_comparator(validator_dict["comparator"])
-        validate_func = self.testcase_parser.get_bind_item("function", comparator)
+        validate_func = self.testcase_parser.get_bind_function(comparator)
 
         if not validate_func:
             raise exception.FunctionNotFound("comparator not found: {}".format(comparator))
