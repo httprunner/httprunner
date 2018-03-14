@@ -1,4 +1,3 @@
-import json
 import re
 import time
 
@@ -13,41 +12,6 @@ from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
-
-def get_charset_from_content_type(content_type):
-    """ extract charset encoding type from Content-Type
-    @param content_type
-        e.g.
-        application/json; charset=UTF-8
-        application/x-www-form-urlencoded; charset=UTF-8
-    @return: charset encoding type
-        UTF-8
-    """
-    content_type = content_type.lower()
-    if "charset=" not in content_type:
-        return None
-
-    index = content_type.index("charset=") + len("charset=")
-    return content_type[index:]
-
-def prepare_kwargs(method, kwargs):
-    if method == "POST":
-        content_type = kwargs.get("headers", {}).get("content-type")
-        if content_type and "data" in kwargs:
-            # if request content-type is application/json, request data should be dumped
-            if content_type.startswith("application/json"):
-                kwargs["data"] = json.dumps(kwargs["data"])
-
-            # if charset is specified in content-type, request data should be encoded with charset encoding
-            charset = get_charset_from_content_type(content_type)
-            if charset:
-                kwargs["data"] = kwargs["data"].encode(charset)
-
-    if "httpntlmauth" in kwargs:
-        from requests_ntlm import HttpNtlmAuth
-        auth_account = kwargs.pop("httpntlmauth")
-        kwargs["auth"] = HttpNtlmAuth(
-            auth_account["username"], auth_account["password"])
 
 
 class ApiResponse(Response):
@@ -183,7 +147,6 @@ class HttpSession(requests.Session):
         Safe mode has been removed from requests 1.x.
         """
         try:
-            prepare_kwargs(method, kwargs)
             logger.log_debug("request kwargs(processed): {kwargs}".format(kwargs=kwargs))
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):

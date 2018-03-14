@@ -1,7 +1,7 @@
 """
 Built-in dependent functions used in YAML/JSON testcases.
 """
-
+import json
 import datetime
 import random
 import re
@@ -30,11 +30,6 @@ def get_current_date(fmt="%Y-%m-%d"):
     """ get current date, default format is %Y-%m-%d
     """
     return datetime.datetime.now().strftime(fmt)
-
-def sleep(sec):
-    """ sleep specified seconds
-    """
-    time.sleep(sec)
 
 
 """ built-in comparators
@@ -112,3 +107,46 @@ def startswith(check_value, expect_value):
 
 def endswith(check_value, expect_value):
     assert str(check_value).endswith(str(expect_value))
+
+""" built-in hooks
+"""
+def get_charset_from_content_type(content_type):
+    """ extract charset encoding type from Content-Type
+    @param content_type
+        e.g.
+        application/json; charset=UTF-8
+        application/x-www-form-urlencoded; charset=UTF-8
+    @return: charset encoding type
+        UTF-8
+    """
+    content_type = content_type.lower()
+    if "charset=" not in content_type:
+        return None
+
+    index = content_type.index("charset=") + len("charset=")
+    return content_type[index:]
+
+def setup_hook_prepare_kwargs(method, url, kwargs):
+    if method == "POST":
+        content_type = kwargs.get("headers", {}).get("content-type")
+        if content_type and "data" in kwargs:
+            # if request content-type is application/json, request data should be dumped
+            if content_type.startswith("application/json"):
+                kwargs["data"] = json.dumps(kwargs["data"])
+
+            # if charset is specified in content-type, request data should be encoded with charset encoding
+            charset = get_charset_from_content_type(content_type)
+            if charset:
+                kwargs["data"] = kwargs["data"].encode(charset)
+
+def setup_hook_httpntlmauth(method, url, kwargs):
+    if "httpntlmauth" in kwargs:
+        from requests_ntlm import HttpNtlmAuth
+        auth_account = kwargs.pop("httpntlmauth")
+        kwargs["auth"] = HttpNtlmAuth(
+            auth_account["username"], auth_account["password"])
+
+def teardown_hook_sleep_1_secs(resp_obj):
+    """ sleep 1 seconds after request
+    """
+    time.sleep(1)

@@ -230,7 +230,7 @@ class VariableBindsUnittest(ApiServerUnittest):
 
     def test_exec_content_functions(self):
         test_runner = runner.Runner()
-        content = "${sleep(1)}"
+        content = "${teardown_hook_sleep_1_secs(1)}"
         start_time = time.time()
         test_runner.context.eval_content(content)
         end_time = time.time()

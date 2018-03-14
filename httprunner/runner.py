@@ -3,6 +3,7 @@ from unittest.case import SkipTest
 from httprunner import exception, logger, response, testcase, utils
 from httprunner.client import HttpSession
 from httprunner.context import Context
+from httprunner.events import EventHook
 
 
 class Runner(object):
@@ -92,9 +93,44 @@ class Runner(object):
         if skip_reason:
             raise SkipTest(skip_reason)
 
-    def setup_teardown(self, actions):
-        for action in actions:
-            self.context.eval_content(action)
+    def _prepare_hooks_event(self, hooks):
+        if not hooks:
+            return None
+
+        event = EventHook()
+        for hook in hooks:
+            func = self.context.testcase_parser.get_bind_function(hook)
+            event += func
+
+        return event
+
+    def _call_setup_hooks(self, hooks, method, url, kwargs):
+        """ call hook functions before request
+
+        Listeners should take the following arguments:
+
+        * *method*: request method type, e.g. GET, POST, PUT
+        * *url*: URL that was called (or override name if it was used in the call to the client)
+        * *kwargs*: kwargs of request
+        """
+        event = self._prepare_hooks_event(hooks)
+        if not event:
+            return
+
+        event.fire(method=method, url=url, kwargs=kwargs)
+
+    def _call_teardown_hooks(self, hooks, resp_obj):
+        """ call hook functions after request
+
+        Listeners should take the following arguments:
+
+        * *resp_obj*: response object
+        """
+        event = self._prepare_hooks_event(hooks)
+        if not event:
+            return
+
+        event.fire(resp_obj=resp_obj)
 
     def run_test(self, testcase_dict):
         """ run single testcase.
@@ -116,10 +152,10 @@ class Runner(object):
                     },
                     "body": '{"name": "user", "password": "123456"}'
                 },
-                "extract": [],       # optional
-                "validate": [],      # optional
-                "setup": [],         # optional
-                "teardown": []       # optional
+                "extract": [],              # optional
+                "validate": [],             # optional
+                "setup_hooks": [],          # optional
+                "teardown_hooks": []        # optional
             }
         @return True or raise exception during test
         """
@@ -132,21 +168,21 @@ class Runner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        extractors = testcase_dict.get("extract", [])
-        validators = testcase_dict.get("validate", [])
-        setup_actions = testcase_dict.get("setup", [])
-        teardown_actions = testcase_dict.get("teardown", [])
-
         self._handle_skip_feature(testcase_dict)
 
-        self.setup_teardown(setup_actions)
+        extractors = testcase_dict.get("extract", [])
+        validators = testcase_dict.get("validate", [])
+        setup_hooks = testcase_dict.get("setup_hooks", [])
+        teardown_hooks = testcase_dict.get("teardown_hooks", [])
 
+        self._call_setup_hooks(setup_hooks, method, url, parsed_request)
         resp = self.http_client_session.request(
             method,
             url,
             name=group_name,
             **parsed_request
         )
+        self._call_teardown_hooks(teardown_hooks, resp)
         resp_obj = response.ResponseObject(resp)
 
         extracted_variables_mapping = resp_obj.extract_response(extractors)
@@ -170,8 +206,6 @@ class Runner(object):
             logger.log_error(err_resp_msg)
 
             raise
-        finally:
-            self.setup_teardown(teardown_actions)
 
     def extract_output(self, output_variables_list):
         """ extract output variables
