@@ -1,5 +1,7 @@
-from httprunner.client import HttpSession, prepare_kwargs
+from httprunner.built_in import setup_hook_prepare_kwargs
+from httprunner.client import HttpSession
 from tests.base import ApiServerUnittest
+
 
 class TestHttpClient(ApiServerUnittest):
     def setUp(self):
@@ -46,7 +48,7 @@ class TestHttpClient(ApiServerUnittest):
                 "b": 2
             }
         }
-        prepare_kwargs("POST", kwargs)
+        setup_hook_prepare_kwargs("POST", "/path", kwargs)
         self.assertIn('"a": 1', kwargs["data"])
         self.assertIn('"b": 2', kwargs["data"])
 
@@ -60,5 +62,5 @@ class TestHttpClient(ApiServerUnittest):
                 "b": 2
             }
         }
-        prepare_kwargs("POST", kwargs)
+        setup_hook_prepare_kwargs("POST", "/path", kwargs)
         self.assertIsInstance(kwargs["data"], bytes)

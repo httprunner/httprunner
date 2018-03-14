@@ -65,7 +65,7 @@ class TestRunner(ApiServerUnittest):
                 {"check": "status_code", "expect": 205},
                 {"check": "content.token", "comparator": "len_eq", "expect": 19}
             ],
-            "teardown": ["${sleep(2)}"]
+            "teardown_hooks": ["teardown_hook_sleep_1_secs"]
         }
 
         with self.assertRaises(exception.ValidationError):
