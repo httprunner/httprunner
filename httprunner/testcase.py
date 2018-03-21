@@ -485,6 +485,9 @@ def load_test_file(file_path):
                 api_info.update(item["api"])
                 testset["api"][func_name] = api_info
 
+            else:
+                logger.log_warning("unexpected block: {}. block should only be config or test.".format(key))
+
     return testset
 
 def get_testinfo_by_reference(ref_name, ref_type):
