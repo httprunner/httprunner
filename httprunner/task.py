@@ -215,6 +215,7 @@ class HttpRunner(object):
             mapping = mapping or {}
             task_suite = TaskSuite(self.path, mapping)
         except exception.TestcaseNotFound:
+            logger.log_error("Testcases not found in {}".format(self.path))
             sys.exit(1)
 
         result = self.runner.run(task_suite)
