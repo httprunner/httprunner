@@ -26,7 +26,7 @@ def setup_logger(log_level):
         sys.tracebacklimit = 0
 
     formatter = ColoredFormatter(
-        "%(log_color)s%(bg_white)s%(levelname)-8s%(reset)s %(message)s",
+        u"%(log_color)s%(bg_white)s%(levelname)-8s%(reset)s %(message)s",
         datefmt=None,
         reset=True,
         log_colors=log_colors_config

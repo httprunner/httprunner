@@ -113,6 +113,7 @@ class Runner(object):
         * *url*: URL that was called (or override name if it was used in the call to the client)
         * *kwargs*: kwargs of request
         """
+        hooks.insert(0, "setup_hook_prepare_kwargs")
         event = self._prepare_hooks_event(hooks)
         if not event:
             return
