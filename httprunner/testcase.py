@@ -1,4 +1,5 @@
 import ast
+import csv
 import io
 import itertools
 import json
@@ -62,33 +63,11 @@ def _load_csv_file(csv_file):
         ]
     """
     csv_content_list = []
-    parameter_list = None
-    collums_num = 0
-    with io.open(csv_file, encoding='utf-8') as data_file:
-        for line in data_file:
-            line_data = line.strip().split(",")
-            if line_data == [""]:
-                # ignore empty line
-                continue
 
-            if not parameter_list:
-                # first line will always be parameter name
-                parameter_list = line_data
-                collums_num = len(parameter_list)
-                continue
-
-            # from the second line
-            if len(line_data) != collums_num:
-                err_msg = "CSV file collums does match with headers.\n"
-                err_msg += "\tcsv file path: {}\n".format(csv_file)
-                err_msg += "\terror line content: {}".format(line_data)
-                raise exception.FileFormatError(err_msg)
-            else:
-                data = {}
-                for index, parameter_name in enumerate(parameter_list):
-                    data[parameter_name] = line_data[index]
-
-                csv_content_list.append(data)
+    with io.open(csv_file, encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            csv_content_list.append(row)
 
     return csv_content_list
 
