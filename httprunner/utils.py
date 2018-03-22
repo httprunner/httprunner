@@ -4,6 +4,7 @@ import hmac
 import imp
 import importlib
 import io
+import json
 import os.path
 import random
 import re
@@ -421,3 +422,21 @@ def load_dot_env_file(path):
             variable, value = line.split("=")
             os.environ[variable] = value
             logger.log_debug("Loaded variable: {}".format(variable))
+
+def validate_json_file(file_list):
+    """ validate JSON testset format
+    """
+    for json_file in set(file_list):
+        if not json_file.endswith(".json"):
+            logger.log_warning("Only JSON file format can be validated.")
+            continue
+
+        logger.color_print("start to validate JSON file: {}".format(json_file), "GREEN")
+
+        with open(json_file) as stream:
+            try:
+                json.load(stream)
+            except ValueError as e:
+                raise SystemExit(e)
+
+        print("OK")
