@@ -8,7 +8,7 @@ from httprunner import logger
 from httprunner.__about__ import __version__
 from httprunner.task import HttpRunner
 from httprunner.utils import (create_scaffold, load_dot_env_file, print_output,
-                              string_type, validate_json_file)
+                              string_type, validate_json_file, prettify_json_file)
 
 
 def main_hrun():
@@ -43,6 +43,9 @@ def main_hrun():
     parser.add_argument(
         '--validate', nargs='*',
         help="Validate JSON testset format.")
+    parser.add_argument(
+        '--prettify', nargs='*',
+        help="Prettify JSON testset format.")
 
     args = parser.parse_args()
     logger.setup_logger(args.log_level)
@@ -53,6 +56,9 @@ def main_hrun():
 
     if args.validate:
         validate_json_file(args.validate)
+        exit(0)
+    if args.prettify:
+        prettify_json_file(args.prettify)
         exit(0)
 
     dot_env_path = args.dot_env_path or os.path.join(os.getcwd(), ".env")
