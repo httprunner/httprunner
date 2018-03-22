@@ -428,7 +428,7 @@ def validate_json_file(file_list):
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated.")
+            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
             continue
 
         logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
@@ -446,7 +446,7 @@ def prettify_json_file(file_list):
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be prettified.")
+            logger.log_warning("Only JSON file format can be prettified, skip: {}".format(json_file))
             continue
 
         logger.color_print("Start to prettify JSON file: {}".format(json_file), "GREEN")
