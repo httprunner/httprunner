@@ -431,12 +431,38 @@ def validate_json_file(file_list):
             logger.log_warning("Only JSON file format can be validated.")
             continue
 
-        logger.color_print("start to validate JSON file: {}".format(json_file), "GREEN")
+        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
 
-        with open(json_file) as stream:
+        with io.open(json_file) as stream:
             try:
                 json.load(stream)
             except ValueError as e:
                 raise SystemExit(e)
 
         print("OK")
+
+def prettify_json_file(file_list):
+    """ prettify JSON testset format
+    """
+    for json_file in set(file_list):
+        if not json_file.endswith(".json"):
+            logger.log_warning("Only JSON file format can be prettified.")
+            continue
+
+        logger.color_print("Start to prettify JSON file: {}".format(json_file), "GREEN")
+
+        dir_path = os.path.dirname(json_file)
+        file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
+        outfile = os.path.join(dir_path, "{}.pretty.json".format(file_name))
+
+        with io.open(json_file, 'r', encoding='utf-8') as stream:
+            try:
+                obj = json.load(stream)
+            except ValueError as e:
+                raise SystemExit(e)
+
+        with io.open(outfile, 'w', encoding='utf-8') as out:
+            json.dump(obj, out, indent=4, separators=(',', ': '))
+            out.write('\n')
+
+        print("success: {}".format(outfile))
