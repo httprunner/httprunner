@@ -1,15 +1,15 @@
 """
 Built-in dependent functions used in YAML/JSON testcases.
 """
-import json
 import datetime
+import json
 import random
 import re
 import string
 import time
 
+from httprunner.compat import basestring
 from httprunner.exception import ParamsError
-from httprunner.utils import string_type
 
 
 def gen_random_string(str_len):
@@ -76,11 +76,11 @@ def length_less_than_or_equals(check_value, expect_value):
     assert len(check_value) <= expect_value
 
 def contains(check_value, expect_value):
-    assert isinstance(check_value, (list, tuple, dict, string_type))
+    assert isinstance(check_value, (list, tuple, dict, basestring))
     assert expect_value in check_value
 
 def contained_by(check_value, expect_value):
-    assert isinstance(expect_value, (list, tuple, dict, string_type))
+    assert isinstance(expect_value, (list, tuple, dict, basestring))
     assert check_value in expect_value
 
 def type_match(check_value, expect_value):
@@ -98,8 +98,8 @@ def type_match(check_value, expect_value):
     assert isinstance(check_value, get_type(expect_value))
 
 def regex_match(check_value, expect_value):
-    assert isinstance(expect_value, string_type)
-    assert isinstance(check_value, string_type)
+    assert isinstance(expect_value, basestring)
+    assert isinstance(check_value, basestring)
     assert re.match(expect_value, check_value)
 
 def startswith(check_value, expect_value):

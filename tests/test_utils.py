@@ -1,8 +1,8 @@
 import os
 import shutil
-from collections import OrderedDict
 
 from httprunner import exception, utils
+from httprunner.compat import OrderedDict
 from tests.base import ApiServerUnittest
 
 
@@ -180,11 +180,11 @@ class TestUtils(ApiServerUnittest):
 
     def test_filter_module_functions(self):
         imported_module = utils.get_imported_module("httprunner.utils")
-        self.assertIn("PYTHON_VERSION", dir(imported_module))
+        self.assertIn("is_py3", dir(imported_module))
 
         functions_dict = utils.filter_module(imported_module, "function")
         self.assertIn("filter_module", functions_dict)
-        self.assertNotIn("PYTHON_VERSION", functions_dict)
+        self.assertNotIn("is_py3", functions_dict)
 
     def test_get_imported_module_from_file(self):
         imported_module = utils.get_imported_module_from_file("tests/data/debugtalk.py")
@@ -192,7 +192,7 @@ class TestUtils(ApiServerUnittest):
 
         functions_dict = utils.filter_module(imported_module, "function")
         self.assertIn("gen_md5", functions_dict)
-        self.assertNotIn("PYTHON_VERSION", functions_dict)
+        self.assertNotIn("urllib", functions_dict)
 
         with self.assertRaises(exception.FileNotFoundError):
             utils.get_imported_module_from_file("tests/data/debugtalk2.py")

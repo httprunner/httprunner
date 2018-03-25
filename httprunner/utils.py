@@ -10,19 +10,10 @@ import random
 import re
 import string
 import types
-from collections import OrderedDict
 
 from httprunner import exception, logger
+from httprunner.compat import OrderedDict, is_py2, is_py3
 from requests.structures import CaseInsensitiveDict
-
-try:
-    string_type = basestring
-    long_type = long
-    PYTHON_VERSION = 2
-except NameError:
-    string_type = str
-    long_type = int
-    PYTHON_VERSION = 3
 
 SECRET_KEY = "DebugTalk"
 
@@ -205,7 +196,7 @@ def get_imported_module_from_file(file_path):
     """ import module from python file path and return imported module
     """
 
-    if PYTHON_VERSION == 3:
+    if is_py3:
         imported_module = importlib.machinery.SourceFileLoader(
             'module_name', file_path).load_module()
     else:
@@ -355,7 +346,7 @@ def print_output(outputs):
         content = ""
         for variable, value in in_out.items():
 
-            if PYTHON_VERSION == 2:
+            if is_py2:
                 if isinstance(variable, unicode):
                     variable = variable.encode("utf-8")
                 if isinstance(value, unicode):

@@ -6,10 +6,10 @@ import json
 import os
 import random
 import re
-from collections import OrderedDict
 
 import yaml
 from httprunner import exception, logger, utils
+from httprunner.compat import OrderedDict, numeric_types
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
@@ -541,7 +541,7 @@ def substitute_variables_with_mapping(content, mapping):
     if isinstance(content, bool):
         return content
 
-    if isinstance(content, (int, utils.long_type, float, complex)):
+    if isinstance(content, (numeric_types, type)):
         return content
 
     if not content:
@@ -852,7 +852,7 @@ class TestcaseParser(object):
 
             return evaluated_data
 
-        if isinstance(content, (int, utils.long_type, float, complex)):
+        if isinstance(content, (numeric_types, type)):
             return content
 
         # content is in string format here

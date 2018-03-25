@@ -1,7 +1,7 @@
 import re
-from collections import OrderedDict
 
 from httprunner import exception, logger, testcase, utils
+from httprunner.compat import OrderedDict, basestring
 from requests.structures import CaseInsensitiveDict
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
@@ -116,7 +116,7 @@ class ResponseObject(object):
         extract_binds_order_dict = utils.convert_to_order_dict(extractors)
 
         for key, field in extract_binds_order_dict.items():
-            if not isinstance(field, utils.string_type):
+            if not isinstance(field, basestring):
                 raise exception.ParamsError("invalid extractors in testcase!")
 
             extracted_variables_mapping[key] = self.extract_field(field)
