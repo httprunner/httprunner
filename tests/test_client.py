@@ -1,5 +1,6 @@
 from httprunner.built_in import setup_hook_prepare_kwargs
 from httprunner.client import HttpSession
+from httprunner.compat import bytes
 from tests.base import ApiServerUnittest
 
 
@@ -49,8 +50,9 @@ class TestHttpClient(ApiServerUnittest):
             }
         }
         setup_hook_prepare_kwargs("POST", "/path", kwargs)
-        self.assertIn('"a": 1', kwargs["data"])
-        self.assertIn('"b": 2', kwargs["data"])
+        self.assertIsInstance(kwargs["data"], bytes)
+        self.assertIn(b'"a": 1', kwargs["data"])
+        self.assertIn(b'"b": 2', kwargs["data"])
 
     def test_prepare_kwargs_content_type_application_json_charset_utf8(self):
         kwargs = {

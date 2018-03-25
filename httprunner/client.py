@@ -4,7 +4,7 @@ import time
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.compat import is_py2
+from httprunner.compat import str
 from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
@@ -116,7 +116,7 @@ class HttpSession(requests.Session):
         self.meta_data["response_headers"] = response.headers
 
         self.meta_data["response_body"] = response.text
-        if is_py2 and isinstance(self.meta_data["response_body"], unicode):
+        if isinstance(self.meta_data["response_body"], str):
             self.meta_data["response_body"] = self.meta_data["response_body"].encode("utf-8")
 
         logger.log_debug("response status_code: {}".format(self.meta_data["status_code"]))
