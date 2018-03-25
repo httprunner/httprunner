@@ -2,9 +2,9 @@ import copy
 import os
 import re
 import sys
-from collections import OrderedDict
 
 from httprunner import exception, testcase, utils
+from httprunner.compat import OrderedDict
 
 
 class Context(object):

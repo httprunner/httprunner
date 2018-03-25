@@ -7,8 +7,9 @@ import unittest
 from httprunner import logger
 from httprunner.__about__ import __version__
 from httprunner.task import HttpRunner
-from httprunner.utils import (create_scaffold, load_dot_env_file, print_output,
-                              string_type, validate_json_file, prettify_json_file)
+from httprunner.utils import (create_scaffold, load_dot_env_file,
+                              prettify_json_file, print_output,
+                              validate_json_file)
 
 
 def main_hrun():

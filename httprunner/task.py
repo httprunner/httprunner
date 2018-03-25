@@ -3,6 +3,7 @@ import sys
 import unittest
 
 from httprunner import exception, logger, runner, testcase, utils
+from httprunner.compat import is_py3
 from httprunner.report import HtmlTestResult, get_summary
 
 
@@ -120,7 +121,7 @@ class TestSuite(unittest.TestSuite):
         return parametered_variables_list
 
     def _add_test_to_suite(self, testcase_name, test_runner, testcase_dict):
-        if utils.PYTHON_VERSION == 3:
+        if is_py3:
             TestCase.runTest.__doc__ = testcase_name
         else:
             TestCase.runTest.__func__.__doc__ = testcase_name
