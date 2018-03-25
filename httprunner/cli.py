@@ -6,10 +6,11 @@ import unittest
 
 from httprunner import logger
 from httprunner.__about__ import __version__
+from httprunner.compat import is_py2
 from httprunner.task import HttpRunner
-from httprunner.utils import (create_scaffold, load_dot_env_file,
-                              prettify_json_file, print_output,
-                              validate_json_file)
+from httprunner.utils import (create_scaffold, get_python2_retire_msg,
+                              load_dot_env_file, prettify_json_file,
+                              print_output, validate_json_file)
 
 
 def main_hrun():
@@ -50,6 +51,9 @@ def main_hrun():
 
     args = parser.parse_args()
     logger.setup_logger(args.log_level)
+
+    if is_py2:
+        logger.log_warning(get_python2_retire_msg())
 
     if args.version:
         logger.color_print("{}".format(__version__), "GREEN")
