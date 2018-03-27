@@ -94,8 +94,6 @@ class HttpSession(requests.Session):
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
-        logger.log_info("{method} {url}".format(method=method, url=url))
-        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=kwargs))
 
         # set up pre_request hook for attaching meta data to the request object
         self.meta_data["method"] = method
@@ -117,9 +115,11 @@ class HttpSession(requests.Session):
         self.meta_data["response_headers"] = response.headers
         self.meta_data["response_content"] = response.content
 
-        logger.log_debug("response status_code: {}".format(self.meta_data["status_code"]))
-        logger.log_debug("response headers: {}".format(self.meta_data["response_headers"]))
-        logger.log_debug("response content: {}".format(self.meta_data["response_content"]))
+        msg = "response details:\n"
+        msg += "> status_code: {}\n".format(self.meta_data["status_code"])
+        msg += "> headers: {}\n".format(self.meta_data["response_headers"])
+        msg += "> content: {}".format(self.meta_data["response_content"])
+        logger.log_debug(msg)
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body
@@ -149,7 +149,10 @@ class HttpSession(requests.Session):
         Safe mode has been removed from requests 1.x.
         """
         try:
-            logger.log_debug("request kwargs(processed): {kwargs}".format(kwargs=kwargs))
+            msg = "processed request:\n"
+            msg += "> {method} {url}\n".format(method=method, url=url)
+            msg += "> kwargs: {kwargs}".format(kwargs=kwargs)
+            logger.log_debug(msg)
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise

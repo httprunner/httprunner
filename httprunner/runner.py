@@ -178,6 +178,8 @@ class Runner(object):
         setup_hooks = testcase_dict.get("setup_hooks", [])
         teardown_hooks = testcase_dict.get("teardown_hooks", [])
 
+        logger.log_info("{method} {url}".format(method=method, url=url))
+        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_request))
         self._call_setup_hooks(setup_hooks, method, url, parsed_request)
         resp = self.http_client_session.request(
             method,
