@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 from unittest.case import SkipTest
 
 from httprunner import exception, logger, response, testcase, utils

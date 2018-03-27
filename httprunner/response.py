@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 import re
 
 from httprunner import exception, logger, testcase, utils

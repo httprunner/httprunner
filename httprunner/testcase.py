@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 import ast
 import csv
 import io
