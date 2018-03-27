@@ -165,5 +165,5 @@ class TestRunner(ApiServerUnittest):
             os.getcwd(), 'tests/data/demo_parameters.yml')
         result = HttpRunner(testcase_file_path).run()
         self.assertTrue(result["success"])
-        self.assertEqual(len(result["output"]), 3 * 2)
-        self.assertEqual(result["stat"]["testsRun"], 3 * 2)
+        self.assertEqual(len(result["output"]), 3 * 2 * 2)
+        self.assertEqual(result["stat"]["testsRun"], 3 * 2 * 2)

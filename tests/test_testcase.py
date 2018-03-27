@@ -108,12 +108,16 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_parse_parameters_raw_list(self):
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
-            {"username-password": [("user1", "111111"), ("test2", "222222")]}
+            {"username-password": [("user1", "111111"), ["test2", "222222"]]}
         ]
         cartesian_product_parameters = testcase.parse_parameters(parameters)
         self.assertEqual(
             len(cartesian_product_parameters),
             3 * 2
+        )
+        self.assertEqual(
+            cartesian_product_parameters[0],
+            {'user_agent': 'iOS/10.1', 'username': 'user1', 'password': '111111'}
         )
 
     def test_parse_parameters_parameterize(self):
