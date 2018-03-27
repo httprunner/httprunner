@@ -188,7 +188,7 @@
               <div class="popup">
                 <h2>Request and Response data</h2>
                 <a class="close" href="#">&times;</a>
-                <div class="content"><pre>{{ record.meta_data | tojson(indent=2) | safe }}</pre></div>
+                <div class="content"><pre>{{ record.meta_data | safe }}</pre></div>
               </div>
             </div>
 

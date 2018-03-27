@@ -113,12 +113,16 @@ class HttpSession(requests.Session):
         self.meta_data["request_body"] = response.request.body
         self.meta_data["status_code"] = response.status_code
         self.meta_data["response_headers"] = response.headers
-        self.meta_data["response_content"] = response.content
+
+        try:
+            self.meta_data["response_body"] = response.json()
+        except ValueError:
+            self.meta_data["response_body"] = response.content
 
         msg = "response details:\n"
         msg += "> status_code: {}\n".format(self.meta_data["status_code"])
         msg += "> headers: {}\n".format(self.meta_data["response_headers"])
-        msg += "> content: {}".format(self.meta_data["response_content"])
+        msg += "> body: {}".format(self.meta_data["response_body"])
         logger.log_debug(msg)
 
         # get the length of the content, but if the argument stream is set to True, we take
