@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 import io
 import os
 import platform

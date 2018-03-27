@@ -1,6 +1,9 @@
+# encoding: utf-8
+
 """
 Built-in dependent functions used in YAML/JSON testcases.
 """
+
 import datetime
 import json
 import random

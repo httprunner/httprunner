@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 class EventHook(object):
     """
     Simple event class used to provide hooks for different types of events in HttpRunner.
