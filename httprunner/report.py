@@ -71,7 +71,7 @@ def make_json_serializable(raw_json):
 
     keyorder = ["url", "method", "request_headers", "request_body", "request_time",
         "status_code", "response_headers", "response_body",
-        "content_size", "response_time", "elapsed"]
+        "content_size", "response_time(ms)", "elapsed(ms)"]
     serializable_ordered_json = OrderedDict(
         sorted(serializable_json.items(), key=lambda x:keyorder.index(x[0])))
 
@@ -97,7 +97,7 @@ class HtmlTestResult(unittest.TextTestResult):
         self.records.append({
             'name': test.shortDescription(),
             'status': status,
-            'response_time': test.meta_data.get("response_time", 0),
+            'response_time_ms': test.meta_data.get("response_time(ms)", 0),
             'attachment': attachment,
             "meta_data": make_json_serializable(test.meta_data)
         })
