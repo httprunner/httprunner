@@ -6,7 +6,6 @@ import time
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.compat import str
 from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
@@ -116,14 +115,11 @@ class HttpSession(requests.Session):
         self.meta_data["request_body"] = response.request.body
         self.meta_data["status_code"] = response.status_code
         self.meta_data["response_headers"] = response.headers
-
-        self.meta_data["response_body"] = response.text
-        if isinstance(self.meta_data["response_body"], str):
-            self.meta_data["response_body"] = self.meta_data["response_body"].encode("utf-8")
+        self.meta_data["response_content"] = response.content
 
         logger.log_debug("response status_code: {}".format(self.meta_data["status_code"]))
         logger.log_debug("response headers: {}".format(self.meta_data["response_headers"]))
-        logger.log_debug("response body: {}".format(self.meta_data["response_body"]))
+        logger.log_debug("response content: {}".format(self.meta_data["response_content"]))
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body
