@@ -9,6 +9,7 @@ from datetime import datetime
 
 from httprunner import logger
 from httprunner.__about__ import __version__
+from httprunner.compat import basestring, bytes, numeric_types
 from jinja2 import Template
 from requests.structures import CaseInsensitiveDict
 
@@ -61,6 +62,9 @@ def make_json_serializable(raw_json):
             value = value.decode("utf-8")
         elif isinstance(value, CaseInsensitiveDict):
             value = dict(value)
+        elif not isinstance(value, (basestring, numeric_types)):
+            # class instance, e.g. MultipartEncoder()
+            value = repr(value)
 
         serializable_json[key] = value
 
@@ -148,9 +152,6 @@ class HtmlTestResult(unittest.TextTestResult):
         else:
             logger.log_info("render with html report template: {}".format(html_report_template))
 
-        with open(html_report_template, "r") as fp:
-            template_content = fp.read()
-
         summary = self.summary
         logger.log_info("Start to render Html report ...")
         logger.log_debug("render data: {}".format(summary))
@@ -168,10 +169,12 @@ class HtmlTestResult(unittest.TextTestResult):
         if not os.path.isdir(report_dir_path):
             os.makedirs(report_dir_path)
 
-        report_path = os.path.join(report_dir_path, html_report_name)
-        with io.open(report_path, 'w', encoding='utf-8') as fp:
-            rendered_content = Template(template_content).render(summary)
-            fp.write(rendered_content)
+        with io.open(html_report_template, "r", encoding='utf-8') as fp_r:
+            template_content = fp_r.read()
+            report_path = os.path.join(report_dir_path, html_report_name)
+            with io.open(report_path, 'w', encoding='utf-8') as fp_w:
+                rendered_content = Template(template_content).render(summary)
+                fp_w.write(rendered_content)
 
         logger.log_info("Generated Html report: {}".format(report_path))
 
