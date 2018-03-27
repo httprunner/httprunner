@@ -5,7 +5,7 @@ import os
 import platform
 import time
 import unittest
-from collections import Iterable
+from collections import Iterable, OrderedDict
 from datetime import datetime
 
 from httprunner import logger
@@ -69,7 +69,13 @@ def make_json_serializable(raw_json):
 
         serializable_json[key] = value
 
-    return json.dumps(serializable_json, indent=2, ensure_ascii=False)
+    keyorder = ["url", "method", "request_headers", "request_body", "request_time",
+        "status_code", "response_headers", "response_body",
+        "content_size", "response_time", "elapsed"]
+    serializable_ordered_json = OrderedDict(
+        sorted(serializable_json.items(), key=lambda x:keyorder.index(x[0])))
+
+    return json.dumps(serializable_ordered_json, indent=2, ensure_ascii=False)
 
 
 class HtmlTestResult(unittest.TextTestResult):
