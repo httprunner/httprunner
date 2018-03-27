@@ -148,7 +148,8 @@ def response(flow):
         ]
         entry["request"]["postData"] = {
             "mimeType": flow.request.headers.get("Content-Type", ""),
-            "text": flow.request.get_text(strict=False),
+            # har2case will encode params if there's "text" value
+            # "text": flow.request.get_text(strict=False),
             "params": params
         }
 
