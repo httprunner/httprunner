@@ -107,7 +107,7 @@ class HttpSession(requests.Session):
         self.meta_data["elapsed(ms)"] = response.elapsed.microseconds / 1000.0
 
         self.meta_data["url"] = (response.history and response.history[0] or response)\
-            .request.path_url
+            .request.url
 
         self.meta_data["request_headers"] = response.request.headers
         self.meta_data["request_body"] = response.request.body
