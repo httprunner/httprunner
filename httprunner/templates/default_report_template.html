@@ -180,7 +180,7 @@
       <tr>
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
         <td>{{record.name}}</td>
-        <td style="text-align:center;width:6em;">{{ '%0.1f'| format(record.response_time|float) }} ms</td>
+        <td style="text-align:center;width:6em;">{{ '%0.1f'| format(record.response_time_ms|float) }} ms</td>
         <td class="detail">
 
             <a class="button" href="#popup_log_{{loop.index}}">log</a>

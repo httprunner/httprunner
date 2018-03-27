@@ -103,8 +103,8 @@ class HttpSession(requests.Session):
         self.meta_data["request_time"] = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
         # record the consumed time
-        self.meta_data["response_time"] = int((time.time() - self.meta_data["request_time"]) * 1000)
-        self.meta_data["elapsed"] = response.elapsed.total_seconds()
+        self.meta_data["response_time(ms)"] = round((time.time() - self.meta_data["request_time"]) * 1000, 2)
+        self.meta_data["elapsed(ms)"] = response.elapsed.microseconds / 1000.0
 
         self.meta_data["url"] = (response.history and response.history[0] or response)\
             .request.path_url
@@ -138,9 +138,9 @@ class HttpSession(requests.Session):
             logger.log_error(u"{exception}".format(exception=str(e)))
         else:
             logger.log_info(
-                """status_code: {}, response_time: {} ms, response_length: {} bytes""".format(
+                """status_code: {}, response_time(ms): {} ms, response_length: {} bytes""".format(
                     self.meta_data["status_code"],
-                    self.meta_data["response_time"],
+                    self.meta_data["response_time(ms)"],
                     self.meta_data["content_size"]
                 )
             )
