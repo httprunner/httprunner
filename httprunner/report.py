@@ -5,11 +5,12 @@ import os
 import platform
 import time
 import unittest
+from collections import Iterable
 from datetime import datetime
 
 from httprunner import logger
 from httprunner.__about__ import __version__
-from httprunner.compat import basestring, bytes, numeric_types
+from httprunner.compat import basestring, bytes, json, numeric_types
 from jinja2 import Template
 from requests.structures import CaseInsensitiveDict
 
@@ -62,13 +63,13 @@ def make_json_serializable(raw_json):
             value = value.decode("utf-8")
         elif isinstance(value, CaseInsensitiveDict):
             value = dict(value)
-        elif not isinstance(value, (basestring, numeric_types)):
+        elif not isinstance(value, (basestring, numeric_types, Iterable)):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
         serializable_json[key] = value
 
-    return serializable_json
+    return json.dumps(serializable_json, indent=2, ensure_ascii=False)
 
 
 class HtmlTestResult(unittest.TextTestResult):
