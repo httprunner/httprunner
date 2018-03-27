@@ -652,10 +652,17 @@ def parse_parameters(parameters, testset_path=None):
             #       => [{"app_version": "2.8.5", "app_version": "2.8.6"}]
             # e.g. {"username-password": [["user1", "111111"], ["test2", "222222"]}
             #       => [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
-            parameter_content_list = [
-                dict(zip(parameter_name_list, [parameter_item]))
-                for parameter_item in parameter_content
-            ]
+            parameter_content_list = []
+            for parameter_item in parameter_content:
+                if not isinstance(parameter_item, (list, tuple)):
+                    # "2.8.5" => ["2.8.5"]
+                    parameter_item = [parameter_item]
+
+                # ["app_version"], ["2.8.5"] => {"app_version": "2.8.5"}
+                # ["username", "password"], ["user1", "111111"] => {"username": "user1", "password": "111111"}
+                parameter_content_dict = dict(zip(parameter_name_list, parameter_item))
+
+                parameter_content_list.append(parameter_content_dict)
         else:
             # (2) & (3)
             parsed_parameter_content = testcase_parser.eval_content_with_bindings(parameter_content)
