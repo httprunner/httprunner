@@ -98,10 +98,21 @@ class ResponseObject(object):
     def extract_field(self, field):
         """ extract value from requests.Response.
         """
-        if text_extractor_regexp_compile.match(field):
-            return self._extract_field_with_regex(field)
-        else:
-            return self._extract_field_with_delimiter(field)
+        msg = "extract field: {}".format(field)
+
+        try:
+            if text_extractor_regexp_compile.match(field):
+                value = self._extract_field_with_regex(field)
+            else:
+                value = self._extract_field_with_delimiter(field)
+
+            msg += "\t=> {}".format(value)
+            logger.log_debug(msg)
+        except exception.ParseResponseError:
+            logger.log_error("failed to extract field: {}".format(field))
+            raise
+
+        return value
 
     def extract_response(self, extractors):
         """ extract value from requests.Response and store in OrderedDict.
@@ -114,6 +125,10 @@ class ResponseObject(object):
             ]
         @return (OrderDict) variable binds ordered dict
         """
+        if not extractors:
+            return {}
+
+        logger.log_info("start to extract from response object.")
         extracted_variables_mapping = OrderedDict()
         extract_binds_order_dict = utils.convert_to_order_dict(extractors)
 
