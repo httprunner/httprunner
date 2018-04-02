@@ -97,7 +97,11 @@ class TestSuite(unittest.TestSuite):
                         testcase_variables
                     )
                     self.testcase_parser.update_binded_variables(variables)
-                    testcase_name = self.testcase_parser.eval_content_with_bindings(testcase_dict["name"])
+                    try:
+                        testcase_name = self.testcase_parser.eval_content_with_bindings(testcase_dict["name"])
+                    except (AssertionError, exception.ParamsError):
+                        logger.log_warning("failed to eval testcase name: {}".format(testcase_dict["name"]))
+                        testcase_name = testcase_dict["name"]
                     self.test_runner_list.append((test_runner, variables))
 
                     self._add_test_to_suite(testcase_name, test_runner, testcase_dict)
