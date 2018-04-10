@@ -11,7 +11,7 @@ from datetime import datetime
 from httprunner import logger
 from httprunner.__about__ import __version__
 from httprunner.compat import basestring, bytes, json, numeric_types
-from jinja2 import Template
+from jinja2 import Template, escape
 from requests.structures import CaseInsensitiveDict
 
 
@@ -67,7 +67,7 @@ def make_json_serializable(raw_json):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
-        serializable_json[key] = value
+        serializable_json[key] = escape(value)
 
     keyorder = ["url", "method", "request_headers", "request_body", "request_time",
         "status_code", "response_headers", "response_body",
