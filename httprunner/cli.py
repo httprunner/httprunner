@@ -117,34 +117,34 @@ def main_locust():
     testcase_file_path = sys.argv[testcase_index]
     sys.argv[testcase_index] = locusts.parse_locustfile(testcase_file_path)
 
-    if "--cpu-cores" in sys.argv:
-        """ locusts -f locustfile.py --cpu-cores 4
+    if "--processes" in sys.argv:
+        """ locusts -f locustfile.py --processes 4
         """
         if "--no-web" in sys.argv:
-            logger.log_error("conflict parameter args: --cpu-cores & --no-web. \nexit.")
+            logger.log_error("conflict parameter args: --processes & --no-web. \nexit.")
             sys.exit(1)
 
-        cpu_cores_index = sys.argv.index('--cpu-cores')
+        processes_index = sys.argv.index('--processes')
 
-        cpu_cores_num_index = cpu_cores_index + 1
+        processes_count_index = processes_index + 1
 
-        if cpu_cores_num_index >= len(sys.argv):
-            """ do not specify cpu cores explicitly
-                locusts -f locustfile.py --cpu-cores
+        if processes_count_index >= len(sys.argv):
+            """ do not specify processes count explicitly
+                locusts -f locustfile.py --processes
             """
-            cpu_cores_num_value = multiprocessing.cpu_count()
-            logger.log_warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+            processes_count = multiprocessing.cpu_count()
+            logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
         else:
             try:
-                """ locusts -f locustfile.py --cpu-cores 4 """
-                cpu_cores_num_value = int(sys.argv[cpu_cores_num_index])
-                sys.argv.pop(cpu_cores_num_index)
+                """ locusts -f locustfile.py --processes 4 """
+                processes_count = int(sys.argv[processes_count_index])
+                sys.argv.pop(processes_count_index)
             except ValueError:
-                """ locusts -f locustfile.py --cpu-cores -P 8888 """
-                cpu_cores_num_value = multiprocessing.cpu_count()
-                logger.log_warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+                """ locusts -f locustfile.py --processes -P 8888 """
+                processes_count = multiprocessing.cpu_count()
+                logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
 
-        sys.argv.pop(cpu_cores_index)
-        locusts.run_locusts_on_cpu_cores(sys.argv, cpu_cores_num_value)
+        sys.argv.pop(processes_index)
+        locusts.run_locusts_with_processes(sys.argv, processes_count)
     else:
         locusts.main()
