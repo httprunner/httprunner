@@ -196,7 +196,9 @@ class Context(object):
                 # type 2 or type 3
                 check_value = resp_obj.extract_field(check_item)
             except exception.ParseResponseError:
-                raise exception.ParseResponseError("failed to extract check item in response!")
+                msg = "failed to extract check item from response!\n"
+                msg += "response: {}".format(resp_obj.resp_text)
+                raise exception.ParseResponseError(msg)
 
         validator["check_value"] = check_value
 
