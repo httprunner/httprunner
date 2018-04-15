@@ -195,7 +195,8 @@ class Runner(object):
 
         try:
             self.context.validate(validators, resp_obj)
-        except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
+        except (exception.ParamsError, exception.ResponseError, \
+            exception.ValidationError, exception.ParseResponseError):
             # log request
             err_req_msg = "request: \n"
             err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))
