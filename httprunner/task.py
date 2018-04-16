@@ -140,12 +140,11 @@ class TestSuite(unittest.TestSuite):
         outputs = []
 
         for test_runner, variables in self.test_runner_list:
-            outputs.append(
-                {
-                    "in": variables,
-                    "out": test_runner.extract_output(self.output_variables_list)
-                }
-            )
+            out = test_runner.extract_output(self.output_variables_list)
+            if not out:
+                continue
+
+            outputs.append({"in": variables, "out": out})
 
         return outputs
 
