@@ -849,7 +849,7 @@ class TestcaseParser(object):
                 # content is a variable
                 content = variable_value
             else:
-                # content contains one or many variables
+                # content contains one or several variables
                 content = content.replace(
                     "${}".format(variable_name),
                     str(variable_value), 1

@@ -6,6 +6,7 @@ Built-in dependent functions used in YAML/JSON testcases.
 
 import datetime
 import json
+import os
 import random
 import re
 import string
@@ -13,8 +14,11 @@ import time
 
 from httprunner.compat import basestring, builtin_str, integer_types, str
 from httprunner.exception import ParamsError
+from requests_toolbelt import MultipartEncoder
 
 
+""" built-in functions
+"""
 def gen_random_string(str_len):
     """ generate random string with specified length
     """
@@ -33,6 +37,21 @@ def get_current_date(fmt="%Y-%m-%d"):
     """ get current date, default format is %Y-%m-%d
     """
     return datetime.datetime.now().strftime(fmt)
+
+def multipart_encoder(field_name, file_path, file_type=None, file_headers=None):
+    if not os.path.isabs(file_path):
+        file_path = os.path.join(os.getcwd(), file_path)
+
+    filename = os.path.basename(file_path)
+    with open(file_path, 'rb') as f:
+        fields = {
+            field_name: (filename, f.read(), file_type)
+        }
+
+    return MultipartEncoder(fields)
+
+def multipart_content_type(multipart_encoder):
+    return multipart_encoder.content_type
 
 
 """ built-in comparators
