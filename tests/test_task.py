@@ -24,9 +24,57 @@ class TestTask(ApiServerUnittest):
             self.assertIsInstance(testcase, task.TestCase)
 
     def test_create_task(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        task_suite = task.TaskSuite(testcase_file_path)
-        self.assertEqual(task_suite.countTestCases(), 3)
+        testsets = [
+            {
+                'name': 'testset description',
+                'config': {
+                    'path': 'docs/data/demo-quickstart-2.yml',
+                    'name': 'testset description',
+                    'request': {
+                        'base_url': '',
+                        'headers': {'User-Agent': 'python-requests/2.18.4'}
+                    },
+                    'variables': [],
+                    'output': ['token']
+                },
+                'api': {},
+                'testcases': [
+                    {
+                        'name': '/api/get-token',
+                        'request': {
+                            'url': 'http://127.0.0.1:5000/api/get-token',
+                            'method': 'POST',
+                            'headers': {'Content-Type': 'application/json', 'app_version': '2.8.6', 'device_sn': 'FwgRiO7CNA50DSU', 'os_platform': 'ios', 'user_agent': 'iOS/10.3'},
+                            'json': {'sign': '958a05393efef0ac7c0fb80a7eac45e24fd40c27'}
+                        },
+                        'extract': [
+                            {'token': 'content.token'}
+                        ],
+                        'validate': [
+                            {'eq': ['status_code', 200]},
+                            {'eq': ['headers.Content-Type', 'application/json']},
+                            {'eq': ['content.success', True]}
+                        ]
+                    },
+                    {
+                        'name': '/api/users/1000',
+                        'request': {
+                            'url': 'http://127.0.0.1:5000/api/users/1000',
+                            'method': 'POST',
+                            'headers': {'Content-Type': 'application/json', 'device_sn': 'FwgRiO7CNA50DSU','token': '$token'}, 'json': {'name': 'user1', 'password': '123456'}
+                        },
+                        'validate': [
+                            {'eq': ['status_code', 201]},
+                            {'eq': ['headers.Content-Type', 'application/json']},
+                            {'eq': ['content.success', True]},
+                            {'eq': ['content.msg', 'user created successfully.']}
+                        ]
+                    }
+                ]
+            }
+        ]
+        task_suite = task.TaskSuite(testsets)
+        self.assertEqual(task_suite.countTestCases(), 2)
         for suite in task_suite:
             for testcase in suite:
                 self.assertIsInstance(testcase, task.TestCase)
