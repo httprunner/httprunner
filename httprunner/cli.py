@@ -7,7 +7,7 @@ import sys
 import unittest
 
 from httprunner import logger
-from httprunner.__about__ import __version__
+from httprunner.__about__ import __description__, __version__
 from httprunner.compat import is_py2
 from httprunner.task import HttpRunner
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
@@ -18,8 +18,7 @@ from httprunner.utils import (create_scaffold, get_python2_retire_msg,
 def main_hrun():
     """ API test: parse command line options and run commands.
     """
-    parser = argparse.ArgumentParser(
-        description='HTTP test runner, not just about api test and load test.')
+    parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         '-V', '--version', dest='version', action='store_true',
         help="show version")
