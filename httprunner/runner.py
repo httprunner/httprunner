@@ -173,8 +173,8 @@ class Runner(object):
 
         self._handle_skip_feature(testcase_dict)
 
-        extractors = testcase_dict.get("extract", [])
-        validators = testcase_dict.get("validate", [])
+        extractors = testcase_dict.get("extract", []) or testcase_dict.get("extractors", [])
+        validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         setup_hooks = testcase_dict.get("setup_hooks", [])
         teardown_hooks = testcase_dict.get("teardown_hooks", [])
 

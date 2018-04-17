@@ -98,3 +98,11 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 2)
         self.assertIn("records", summary)
+
+    def test_run_yaml_upload(self):
+        testset_path = "tests/httpbin/upload.yml"
+        runner = HttpRunner().run(testset_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertIn("records", summary)
