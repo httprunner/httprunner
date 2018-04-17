@@ -152,29 +152,33 @@ class TaskSuite(unittest.TestSuite):
     """ create task suite with specified testcase path.
         each task suite may include one or several test suite.
     """
-    def __init__(self, path, mapping=None, http_client_session=None):
+    def __init__(self, testsets, mapping=None, http_client_session=None):
         """
         @params
-            path: path could be in several type
-                - absolute/relative file path
-                - absolute/relative folder path
-                - list/set container with file(s) and/or folder(s)
-            (dict) mapping:
+            testsets (dict/list): testset or list of testset
+                testset_dict
+                or
+                [
+                    testset_dict_1,
+                    testset_dict_2,
+                    {
+                        "name": "desc1",
+                        "config": {},
+                        "api": {},
+                        "testcases": [testcase11, testcase12]
+                    }
+                ]
+            mapping (dict):
                 passed in variables mapping, it will override variables in config block
         """
         super(TaskSuite, self).__init__()
         mapping = mapping or {}
 
-        if not isinstance(path, list):
-            # absolute/relative file/folder path
-            path = [path]
-
-        # remove duplicate path
-        path = set(path)
-
-        testsets = testcase.load_testcases_by_path(path)
         if not testsets:
             raise exception.TestcaseNotFound
+
+        if isinstance(testsets, dict):
+            testsets = [testsets]
 
         self.suite_list = []
         for testset in testsets:
@@ -185,6 +189,18 @@ class TaskSuite(unittest.TestSuite):
     @property
     def tasks(self):
         return self.suite_list
+
+
+def init_task_suite(path_or_testsets, mapping=None, http_client_session=None):
+    """ initialize task suite
+    """
+    if not testcase.is_testsets(path_or_testsets):
+        testsets = testcase.load_testcases_by_path(path_or_testsets)
+    else:
+        testsets = path_or_testsets
+
+    mapping = mapping or {}
+    return TaskSuite(testsets, mapping, http_client_session)
 
 
 class HttpRunner(object):
@@ -198,16 +214,25 @@ class HttpRunner(object):
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)
 
-    def run(self, path, mapping=None):
-        """ start to run specified testset file with varaibles mapping
-        @param (str) path:
-            YAML/JSON testset file path
+    def run(self, path_or_testsets, mapping=None):
+        """ start to run test with varaibles mapping
+        @param path_or_testsets: YAML/JSON testset file path or testset list
+            path: path could be in several type
+                - absolute/relative file path
+                - absolute/relative folder path
+                - list/set container with file(s) and/or folder(s)
+            testsets: testset or list of testset
+                - (dict) testset_dict
+                - (list) list of testset_dict
+                    [
+                        testset_dict_1,
+                        testset_dict_2
+                    ]
         @param (dict) mapping:
             if mapping specified, it will override variables in config block
         """
         try:
-            mapping = mapping or {}
-            task_suite = TaskSuite(path, mapping)
+            task_suite = init_task_suite(path_or_testsets, mapping)
         except exception.TestcaseNotFound:
             logger.log_error("Testcases not found in {}".format(path))
             sys.exit(1)
@@ -238,9 +263,8 @@ class HttpRunner(object):
 
 class LocustTask(object):
 
-    def __init__(self, path, locust_client, mapping=None):
-        mapping = mapping or {}
-        self.task_suite = TaskSuite(path, mapping, locust_client)
+    def __init__(self, path_or_testsets, locust_client, mapping=None):
+        self.task_suite = init_task_suite(path_or_testsets, mapping, locust_client)
 
     def run(self):
         for suite in self.task_suite:
