@@ -27,6 +27,9 @@ def main_hrun():
         'testset_paths', nargs='*',
         help="testset file path")
     parser.add_argument(
+        '--no-html-report', action='store_true', default=False,
+        help="do not generate html report.")
+    parser.add_argument(
         '--html-report-name',
         help="specify html report name, only effective when generating html report.")
     parser.add_argument(
@@ -78,13 +81,17 @@ def main_hrun():
         create_scaffold(project_path)
         exit(0)
 
-    result = HttpRunner(args.testset_paths, failfast=args.failfast).run(
-        html_report_name=args.html_report_name,
-        html_report_template=args.html_report_template
-    )
+    runner = HttpRunner(failfast=args.failfast).run(args.testset_paths)
 
-    print_output(result["output"])
-    return 0 if result["success"] else 1
+    if not args.no_html_report:
+        runner.gen_html_report(
+            html_report_name=args.html_report_name,
+            html_report_template=args.html_report_template
+        )
+
+    summary = runner.summary
+    print_output(summary["output"])
+    return 0 if summary["success"] else 1
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.

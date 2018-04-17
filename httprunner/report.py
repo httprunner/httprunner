@@ -53,8 +53,55 @@ def get_summary(result):
             'duration': result.duration
         }
         summary["records"] = result.records
+    else:
+        summary["records"] = []
 
     return summary
+
+def render_html_report(summary, html_report_name=None, html_report_template=None):
+    """ render html report with specified report name and template
+        if html_report_name is not specified, use current datetime
+        if html_report_template is not specified, use default report template
+    """
+    if not html_report_template:
+        html_report_template = os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            "templates",
+            "default_report_template.html"
+        )
+        logger.log_debug("No html report template specified, use default.")
+    else:
+        logger.log_info("render with html report template: {}".format(html_report_template))
+
+    logger.log_info("Start to render Html report ...")
+    logger.log_debug("render data: {}".format(summary))
+
+    report_dir_path = os.path.join(os.getcwd(), "reports")
+    start_datetime = summary["time"]["start_at"].strftime('%Y-%m-%d-%H-%M-%S')
+    if html_report_name:
+        summary["html_report_name"] = html_report_name
+        report_dir_path = os.path.join(report_dir_path, html_report_name)
+        html_report_name += "-{}.html".format(start_datetime)
+    else:
+        summary["html_report_name"] = ""
+        html_report_name = "{}.html".format(start_datetime)
+
+    if not os.path.isdir(report_dir_path):
+        os.makedirs(report_dir_path)
+
+    for record in summary.get("records"):
+        record["meta_data"] = make_json_serializable(record["meta_data"])
+
+    with io.open(html_report_template, "r", encoding='utf-8') as fp_r:
+        template_content = fp_r.read()
+        report_path = os.path.join(report_dir_path, html_report_name)
+        with io.open(report_path, 'w', encoding='utf-8') as fp_w:
+            rendered_content = Template(template_content).render(summary)
+            fp_w.write(rendered_content)
+
+    logger.log_info("Generated Html report: {}".format(report_path))
+
+    return report_path
 
 def make_json_serializable(raw_json):
     serializable_json = {}
@@ -86,12 +133,6 @@ class HtmlTestResult(unittest.TextTestResult):
     def __init__(self, stream, descriptions, verbosity):
         super(HtmlTestResult, self).__init__(stream, descriptions, verbosity)
         self.records = []
-        self.default_report_template_path = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
-            "templates",
-            "default_report_template.html"
-        )
-        self.report_path = None
 
     def _record_test(self, test, status, attachment=''):
         self.records.append({
@@ -99,7 +140,7 @@ class HtmlTestResult(unittest.TextTestResult):
             'status': status,
             'response_time_ms': test.meta_data.get("response_time(ms)", 0),
             'attachment': attachment,
-            "meta_data": make_json_serializable(test.meta_data)
+            "meta_data": test.meta_data
         })
 
     def startTestRun(self):
@@ -143,46 +184,3 @@ class HtmlTestResult(unittest.TextTestResult):
     @property
     def duration(self):
         return time.time() - self.start_at
-
-    @property
-    def summary(self):
-        return get_summary(self)
-
-    def render_html_report(self, html_report_name=None, html_report_template=None):
-        """ render html report with specified report name and template
-            if html_report_name is not specified, use current datetime
-            if html_report_template is not specified, use default report template
-        """
-        if not html_report_template:
-            html_report_template = self.default_report_template_path
-            logger.log_debug("No html report template specified, use default.")
-        else:
-            logger.log_info("render with html report template: {}".format(html_report_template))
-
-        summary = self.summary
-        logger.log_info("Start to render Html report ...")
-        logger.log_debug("render data: {}".format(summary))
-
-        report_dir_path = os.path.join(os.getcwd(), "reports")
-        start_datetime = summary["time"]["start_at"].strftime('%Y-%m-%d-%H-%M-%S')
-        if html_report_name:
-            summary["html_report_name"] = html_report_name
-            report_dir_path = os.path.join(report_dir_path, html_report_name)
-            html_report_name += "-{}.html".format(start_datetime)
-        else:
-            summary["html_report_name"] = ""
-            html_report_name = "{}.html".format(start_datetime)
-
-        if not os.path.isdir(report_dir_path):
-            os.makedirs(report_dir_path)
-
-        with io.open(html_report_template, "r", encoding='utf-8') as fp_r:
-            template_content = fp_r.read()
-            report_path = os.path.join(report_dir_path, html_report_name)
-            with io.open(report_path, 'w', encoding='utf-8') as fp_w:
-                rendered_content = Template(template_content).render(summary)
-                fp_w.write(rendered_content)
-
-        logger.log_info("Generated Html report: {}".format(report_path))
-
-        return report_path

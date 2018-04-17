@@ -77,52 +77,59 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
-            result = HttpRunner(testcase_file_path).run()
-            self.assertTrue(result["success"])
+            runner = HttpRunner().run(testcase_file_path)
+            self.assertTrue(runner.summary["success"])
 
     def test_run_testsets_hardcode(self):
-        result = HttpRunner(self.testcase_file_path_list).run()
-        self.assertTrue(result["success"])
-        self.assertEqual(result["stat"]["testsRun"], 6)
-        self.assertEqual(result["stat"]["successes"], 6)
+        runner = HttpRunner().run(self.testcase_file_path_list)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 6)
+        self.assertEqual(summary["stat"]["successes"], 6)
 
     def test_run_testset_template_variables(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
 
     def test_run_testset_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
 
     def test_run_testsets_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
 
     def test_run_testsets_template_lambda_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_template_lambda_functions.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
 
     def test_run_testset_layered(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
 
     def test_run_testset_output(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
-        self.assertIn("token", result["output"][0]["out"])
-        self.assertEqual(len(result["output"]), 13)
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertIn("token", summary["output"][0]["out"])
+        self.assertEqual(len(summary["output"]), 13)
 
     def test_run_testset_with_variables_mapping(self):
         testcase_file_path = os.path.join(
@@ -130,10 +137,11 @@ class TestRunner(ApiServerUnittest):
         variables_mapping = {
             "app_version": '2.9.7'
         }
-        result = HttpRunner(testcase_file_path).run(mapping=variables_mapping)
-        self.assertTrue(result["success"])
-        self.assertIn("token", result["output"][0]["out"])
-        self.assertEqual(len(result["output"]), 13)
+        runner = HttpRunner().run(testcase_file_path, mapping=variables_mapping)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertIn("token", summary["output"][0]["out"])
+        self.assertEqual(len(summary["output"]), 13)
 
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
@@ -163,7 +171,8 @@ class TestRunner(ApiServerUnittest):
     def test_run_testset_with_parameters(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_parameters.yml')
-        result = HttpRunner(testcase_file_path).run()
-        self.assertTrue(result["success"])
-        self.assertEqual(len(result["output"]), 3 * 2 * 2)
-        self.assertEqual(result["stat"]["testsRun"], 3 * 2 * 2)
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(len(summary["output"]), 3 * 2 * 2)
+        self.assertEqual(summary["stat"]["testsRun"], 3 * 2 * 2)

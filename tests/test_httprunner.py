@@ -17,30 +17,21 @@ class TestHttpRunner(ApiServerUnittest):
         return self.api_client.get(url, headers=headers)
 
     def test_text_run_times(self):
-        kwargs = {
-            "gen_html_report": False
-        }
-        result = HttpRunner(self.testset_path, **kwargs).run()
-        self.assertEqual(result["stat"]["testsRun"], 10)
+        runner = HttpRunner().run(self.testset_path)
+        self.assertEqual(runner.summary["stat"]["testsRun"], 10)
 
     def test_text_skip(self):
-        kwargs = {
-            "gen_html_report": False
-        }
-        result = HttpRunner(self.testset_path, **kwargs).run()
-        self.assertEqual(result["stat"]["skipped"], 4)
+        runner = HttpRunner().run(self.testset_path)
+        self.assertEqual(runner.summary["stat"]["skipped"], 4)
 
     def test_html_report(self):
-        kwargs = {
-            "gen_html_report": True
-        }
+        kwargs = {}
         output_folder_name = os.path.basename(os.path.splitext(self.testset_path)[0])
-        run_kwargs = {
-            "html_report_name": output_folder_name
-        }
-        result = HttpRunner(self.testset_path).run(**run_kwargs)
-        self.assertEqual(result["stat"]["testsRun"], 10)
-        self.assertEqual(result["stat"]["skipped"], 4)
+        runner = HttpRunner().run(self.testset_path)
+        summary = runner.summary
+        self.assertEqual(summary["stat"]["testsRun"], 10)
+        self.assertEqual(summary["stat"]["skipped"], 4)
 
+        runner.gen_html_report(html_report_name=output_folder_name)
         report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
         shutil.rmtree(report_save_dir)
