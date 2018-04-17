@@ -146,7 +146,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testsets = testcase.load_testcases_by_path(testcase_file_path)
+        testsets = testcase.load_testsets_by_path(testcase_file_path)
         testset = testsets[0]
         config_dict_headers = testset["config"]["request"]["headers"]
         test_dict_headers = testset["testcases"][0]["request"]["headers"]

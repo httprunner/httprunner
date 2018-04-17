@@ -556,7 +556,7 @@ class TestcaseParserUnittest(unittest.TestCase):
         # absolute file path
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        testset_list = testcase.load_testcases_by_path(path)
+        testset_list = testcase.load_testsets_by_path(path)
         self.assertEqual(len(testset_list), 1)
         self.assertIn("path", testset_list[0]["config"])
         self.assertEqual(testset_list[0]["config"]["path"], path)
@@ -565,7 +565,7 @@ class TestcaseParserUnittest(unittest.TestCase):
 
         # relative file path
         path = 'tests/data/demo_testset_hardcode.yml'
-        testset_list = testcase.load_testcases_by_path(path)
+        testset_list = testcase.load_testsets_by_path(path)
         self.assertEqual(len(testset_list), 1)
         self.assertIn("path", testset_list[0]["config"])
         self.assertIn(path, testset_list[0]["config"]["path"])
@@ -577,7 +577,7 @@ class TestcaseParserUnittest(unittest.TestCase):
             os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
             'tests/data/demo_testset_hardcode.yml'
         ]
-        testset_list = testcase.load_testcases_by_path(path)
+        testset_list = testcase.load_testsets_by_path(path)
         self.assertEqual(len(testset_list), 2)
         self.assertEqual(len(testset_list[0]["testcases"]), 3)
         self.assertEqual(len(testset_list[1]["testcases"]), 3)
@@ -594,12 +594,12 @@ class TestcaseParserUnittest(unittest.TestCase):
     def test_load_testcases_by_path_folder(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
-        testset_list_1 = testcase.load_testcases_by_path(path)
+        testset_list_1 = testcase.load_testsets_by_path(path)
         self.assertGreater(len(testset_list_1), 4)
 
         # relative folder path
         path = 'tests/data/'
-        testset_list_2 = testcase.load_testcases_by_path(path)
+        testset_list_2 = testcase.load_testsets_by_path(path)
         self.assertEqual(len(testset_list_1), len(testset_list_2))
 
         # list/set container with file(s)
@@ -607,18 +607,18 @@ class TestcaseParserUnittest(unittest.TestCase):
             os.path.join(os.getcwd(), 'tests/data'),
             'tests/data/'
         ]
-        testset_list_3 = testcase.load_testcases_by_path(path)
+        testset_list_3 = testcase.load_testsets_by_path(path)
         self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
 
     def test_load_testcases_by_path_not_exist(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data_not_exist')
-        testset_list_1 = testcase.load_testcases_by_path(path)
+        testset_list_1 = testcase.load_testsets_by_path(path)
         self.assertEqual(testset_list_1, [])
 
         # relative folder path
         path = 'tests/data_not_exist'
-        testset_list_2 = testcase.load_testcases_by_path(path)
+        testset_list_2 = testcase.load_testsets_by_path(path)
         self.assertEqual(testset_list_2, [])
 
         # list/set container with file(s)
@@ -626,13 +626,13 @@ class TestcaseParserUnittest(unittest.TestCase):
             os.path.join(os.getcwd(), 'tests/data_not_exist'),
             'tests/data_not_exist/'
         ]
-        testset_list_3 = testcase.load_testcases_by_path(path)
+        testset_list_3 = testcase.load_testsets_by_path(path)
         self.assertEqual(testset_list_3, [])
 
     def test_load_testcases_by_path_layered(self):
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets_list = testcase.load_testcases_by_path(path)
+        testsets_list = testcase.load_testsets_by_path(path)
         self.assertIn("variables", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["testcases"][0])

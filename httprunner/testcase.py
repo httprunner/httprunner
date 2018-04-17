@@ -199,7 +199,7 @@ def load_test_dependencies():
         suite["function_meta"] = function_meta
         test_def_overall_dict["suite"][function_meta["func_name"]] = suite
 
-def load_testcases_by_path(path):
+def load_testsets_by_path(path):
     """ load testcases from file path
     @param path: path could be in several type
         - absolute/relative file path
@@ -215,7 +215,7 @@ def load_testcases_by_path(path):
         testsets = []
 
         for file_path in set(path):
-            testset = load_testcases_by_path(file_path)
+            testset = load_testsets_by_path(file_path)
             if not testset:
                 continue
             testsets.extend(testset)
@@ -230,7 +230,7 @@ def load_testcases_by_path(path):
 
     if os.path.isdir(path):
         files_list = utils.load_folder_files(path)
-        testcases_list = load_testcases_by_path(files_list)
+        testcases_list = load_testsets_by_path(files_list)
 
     elif os.path.isfile(path):
         try:
