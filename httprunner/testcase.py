@@ -501,6 +501,9 @@ def load_test_file(file_path):
                 function_meta = parse_function(api_def)
                 func_name = function_meta["func_name"]
 
+                if func_name in testset["api"]:
+                    logger.log_warning("api definition duplicated: {}".format(func_name))
+
                 api_info = {}
                 api_info["function_meta"] = function_meta
                 api_info.update(item["api"])
