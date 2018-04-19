@@ -71,12 +71,27 @@ class ResponseObject(object):
 
             if top_query in ["body", "content", "text"]:
                 top_query_content = self.parsed_body()
+            elif top_query == "cookies":
+                cookies = self.resp_obj.cookies
+                try:
+                    return cookies[sub_query]
+                except KeyError:
+                    err_msg = u"Failed to extract attribute from cookies!\n"
+                    err_msg += u"cookies: {}\n".format(cookies)
+                    err_msg += u"attribute: {}".format(sub_query)
+                    logger.log_error(err_msg)
+                    raise exception.ParamsError(err_msg)
             else:
-                top_query_content = getattr(self.resp_obj, top_query)
+                try:
+                    top_query_content = getattr(self.resp_obj, top_query)
+                except AttributeError:
+                    err_msg = u"Failed to extract attribute from response object: resp_obj.{}".format(top_query)
+                    logger.log_error(err_msg)
+                    raise exception.ParamsError(err_msg)
 
             if sub_query:
                 if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
-                    err_msg = u"Failed to extract data with regex!\n"
+                    err_msg = u"Failed to extract data with delimiter!\n"
                     err_msg += u"response: {}\n".format(self.parsed_dict())
                     err_msg += u"regex: {}\n".format(field)
                     logger.log_error(err_msg)
