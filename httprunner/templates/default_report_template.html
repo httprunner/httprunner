@@ -177,7 +177,7 @@
       <th>Detail</th>
     </tr>
     {% for record in records %}
-      <tr>
+      <tr id="record_{{loop.index}}">
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
         <td>{{record.name}}</td>
         <td style="text-align:center;width:6em;">{{ '%0.1f'| format(record.response_time_ms|float) }} ms</td>
@@ -187,7 +187,7 @@
             <div id="popup_log_{{loop.index}}" class="overlay">
               <div class="popup">
                 <h2>Request and Response data</h2>
-                <a class="close" href="#">&times;</a>
+                <a class="close" href="#record_{{loop.index}}">&times;</a>
                 <div class="content"><pre>{{ record.meta_data | safe }}</pre></div>
               </div>
             </div>
@@ -197,7 +197,7 @@
               <div id="popup_attachment_{{loop.index}}" class="overlay">
                 <div class="popup">
                   <h2>Traceback Message</h2>
-                  <a class="close" href="#">&times;</a>
+                  <a class="close" href="#record_{{loop.index}}">&times;</a>
                   <div class="content"><pre>{{ record.attachment }}</pre></div>
                 </div>
               </div>
