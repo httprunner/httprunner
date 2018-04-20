@@ -16,7 +16,7 @@ log_colors_config = {
     'CRITICAL': 'red',
 }
 
-def setup_logger(log_level):
+def setup_logger(log_level, log_file=None):
     """setup root logger with ColoredFormatter."""
     level = getattr(logging, log_level.upper(), None)
     if not level:
@@ -34,7 +34,11 @@ def setup_logger(log_level):
         log_colors=log_colors_config
     )
 
-    handler = logging.StreamHandler()
+    if log_file:
+        handler = logging.FileHandler(log_file)
+    else:
+        handler = logging.StreamHandler()
+
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
     logging.root.setLevel(level)

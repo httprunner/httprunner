@@ -38,6 +38,9 @@ def main_hrun():
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
     parser.add_argument(
+        '--log-file',
+        help="Write logs to specified file path.")
+    parser.add_argument(
         '--dot-env-path',
         help="Specify .env file path, which is useful for keeping production credentials.")
     parser.add_argument(
@@ -54,7 +57,7 @@ def main_hrun():
         help="Prettify JSON testset format.")
 
     args = parser.parse_args()
-    logger.setup_logger(args.log_level)
+    logger.setup_logger(args.log_level, args.log_file)
 
     if is_py2:
         logger.log_warning(get_python2_retire_msg())
