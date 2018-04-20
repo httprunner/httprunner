@@ -106,3 +106,36 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
         self.assertIn("records", summary)
+
+    def test_run_post_data(self):
+        testsets = [
+            {
+                "name": "post data",
+                "config": {
+                    "path": ""
+                },
+
+                "testcases": [
+                    {
+                        "name": "post data",
+                        "request": {
+                            "url": "https://httpbin.org/post",
+                            "method": "POST",
+                            "headers": {
+                                "Content-Type": "application/json"
+                            },
+                            "data": "abc"
+                        },
+                        "validate": [
+                            {"eq": ["status_code", 200]}
+                        ]
+                    }
+
+                ]
+            }
+        ]
+        runner = HttpRunner().run(testsets)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertEqual(summary["records"][0]["meta_data"]["response_body"]["data"], "abc")
