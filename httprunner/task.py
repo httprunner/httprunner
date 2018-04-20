@@ -62,7 +62,7 @@ class TestSuite(unittest.TestSuite):
 
         config_dict = testset.get("config", {})
         self.output_variables_list = config_dict.get("output", [])
-        self.testset_file_path = config_dict["path"]
+        self.testset_file_path = config_dict.get("path")
         config_dict_parameters = config_dict.get("parameters", [])
 
         config_dict_variables = config_dict.get("variables", [])
