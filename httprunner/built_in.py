@@ -137,7 +137,7 @@ def setup_hook_prepare_kwargs(method, url, kwargs):
         content_type = kwargs.get("headers", {}).get("content-type")
         if content_type and "data" in kwargs:
             # if request content-type is application/json, request data should be dumped
-            if content_type.startswith("application/json"):
+            if content_type.startswith("application/json") and isinstance(kwargs["data"], (dict, list)):
                 kwargs["data"] = json.dumps(kwargs["data"])
 
             if isinstance(kwargs["data"], str):
