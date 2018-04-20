@@ -111,10 +111,6 @@ class TestHttpRunner(ApiServerUnittest):
         testsets = [
             {
                 "name": "post data",
-                "config": {
-                    "path": ""
-                },
-
                 "testcases": [
                     {
                         "name": "post data",
