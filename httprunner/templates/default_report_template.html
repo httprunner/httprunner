@@ -189,8 +189,6 @@
               <h2>Request and Response data</h2>
               <a class="close" href="#record_{{loop.index}}">&times;</a>
 
-              <!-- <div class="content"><pre>{{ record.meta_data | safe }}</pre></div> -->
-
               <div class="content">
                 <h3>Request:</h3>
                 <div style="overflow: auto">
@@ -213,12 +211,15 @@
                         {% endfor %}
                       </td>
                     </tr>
+                    {% if record.meta_data.method in ["POST", "PUT"] %}
                     <tr>
                       <th>body</th>
                       <td>
-                         <pre>{{ record.meta_data.request_body | safe }}</pre>
+                          <pre>{{ record.meta_data.request_body | safe }}</pre>
                       </td>
                     </tr>
+                    {% endif %}
+
                   </table>
                 </div>
 
