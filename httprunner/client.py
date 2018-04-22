@@ -6,6 +6,7 @@ import time
 import requests
 import urllib3
 from httprunner import logger
+from httprunner.compat import urljoin
 from httprunner.exception import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
@@ -46,7 +47,7 @@ class HttpSession(requests.Session):
         if absolute_http_url_regexp.match(path):
             return path
         elif self.base_url:
-            return "%s%s" % (self.base_url, path)
+            return urljoin(self.base_url, path)
         else:
             raise ParamsError("base url missed!")
 

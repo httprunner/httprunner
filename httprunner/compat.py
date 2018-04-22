@@ -34,6 +34,7 @@ except ImportError:
 
 if is_py2:
     from urllib3.packages.ordered_dict import OrderedDict
+    from urlparse import urljoin
 
     builtin_str = str
     bytes = str
@@ -44,6 +45,7 @@ if is_py2:
 
 elif is_py3:
     from collections import OrderedDict
+    from urllib.parse import urljoin
 
     builtin_str = str
     str = str
