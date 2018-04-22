@@ -90,7 +90,9 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
         os.makedirs(report_dir_path)
 
     for record in summary.get("records"):
-        record["meta_data"] = make_json_serializable(record["meta_data"])
+        meta_data = record['meta_data']
+        stringify_body(meta_data, 'request')
+        stringify_body(meta_data, 'response')
 
     with io.open(html_report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
@@ -103,26 +105,24 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
 
     return report_path
 
-def make_json_serializable(raw_json):
-    serializable_json = {}
-    for key, value in raw_json.items():
-        if isinstance(value, bytes):
-            value = value.decode("utf-8")
-        elif isinstance(value, CaseInsensitiveDict):
-            value = dict(value)
-        elif not isinstance(value, (basestring, numeric_types, Iterable)):
-            # class instance, e.g. MultipartEncoder()
-            value = repr(value)
+def stringify_body(meta_data, request_or_response):
+    headers = meta_data['{}_headers'.format(request_or_response)]
+    body = meta_data.get('{}_body'.format(request_or_response))
 
-        serializable_json[key] = escape(value)
+    if isinstance(body, CaseInsensitiveDict):
+        body = json.dumps(dict(body), ensure_ascii=False)
 
-    keyorder = ["url", "method", "request_headers", "request_body", "request_time",
-        "status_code", "response_headers", "response_body",
-        "content_size", "response_time(ms)", "elapsed(ms)"]
-    serializable_ordered_json = OrderedDict(
-        sorted(serializable_json.items(), key=lambda x:keyorder.index(x[0])))
+    elif isinstance(body, (dict, list)):
+        body = json.dumps(body, ensure_ascii=False)
 
-    return json.dumps(serializable_ordered_json, indent=2, ensure_ascii=False)
+    elif isinstance(body, bytes):
+        body = body.decode("utf-8")
+
+    elif not isinstance(body, (basestring, numeric_types, Iterable)):
+        # class instance, e.g. MultipartEncoder()
+        body = repr(body)
+
+    meta_data['{}_body'.format(request_or_response)] = body
 
 
 class HtmlTestResult(unittest.TextTestResult):
@@ -138,7 +138,6 @@ class HtmlTestResult(unittest.TextTestResult):
         self.records.append({
             'name': test.shortDescription(),
             'status': status,
-            'response_time_ms': test.meta_data.get("response_time(ms)", 0),
             'attachment': attachment,
             "meta_data": test.meta_data
         })
