@@ -135,3 +135,13 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
         self.assertEqual(summary["records"][0]["meta_data"]["response_body"]["data"], "abc")
+
+    def test_html_report_repsonse_image(self):
+        testset_path = "tests/httpbin/load_image.yml"
+        runner = HttpRunner().run(testset_path)
+        summary = runner.summary
+        output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
+        report = runner.gen_html_report(html_report_name=output_folder_name)
+        self.assertTrue(os.path.isfile(report))
+        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
+        shutil.rmtree(report_save_dir)

@@ -245,7 +245,11 @@
                     <tr>
                       <th>body</th>
                       <td>
-                        <pre>{{ record.meta_data.response_body | safe }}</pre>
+                        {% if record.meta_data.response_data_type == "image" %}
+                          <img src="{{ record.meta_data.response_body }}" />
+                        {% else %}
+                          <pre>{{ record.meta_data.response_body | safe }}</pre>
+                        {% endif %}
                       </td>
                     </tr>
                   </table>

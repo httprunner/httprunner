@@ -5,6 +5,7 @@ import os
 import platform
 import time
 import unittest
+from base64 import b64encode
 from collections import Iterable, OrderedDict
 from datetime import datetime
 
@@ -113,10 +114,18 @@ def stringify_body(meta_data, request_or_response):
         body = json.dumps(dict(body), ensure_ascii=False)
 
     elif isinstance(body, (dict, list)):
-        body = json.dumps(body, ensure_ascii=False)
+        body = json.dumps(body, indent=2, ensure_ascii=False)
 
     elif isinstance(body, bytes):
-        body = body.decode("utf-8")
+        resp_content_type = headers.get("Content-Type", "")
+        if "image" in resp_content_type:
+            meta_data["response_data_type"] = "image"
+            body = "data:{};base64,{}".format(
+                resp_content_type,
+                b64encode(body).decode('utf-8')
+            )
+        else:
+            body = body.decode("utf-8")
 
     elif not isinstance(body, (basestring, numeric_types, Iterable)):
         # class instance, e.g. MultipartEncoder()
