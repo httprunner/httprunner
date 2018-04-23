@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import ast
+import collections
 import csv
 import io
 import itertools
@@ -300,6 +301,34 @@ def parse_validator(validator):
         "comparator": comparator
     }
 
+def _get_validators_mapping(validators):
+    """ get validators mapping from api or test validators
+    @param (list) validators:
+        [
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+        ]
+    @return
+        {
+            ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+            ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+        }
+    """
+    validators_mapping = {}
+
+    for validator in validators:
+        validator = parse_validator(validator)
+
+        if not isinstance(validator["check"], collections.Hashable):
+            check = json.dumps(validator["check"])
+        else:
+            check = validator["check"]
+
+        key = (check, validator["comparator"])
+        validators_mapping[key] = validator
+
+    return validators_mapping
+
 def merge_validator(api_validators, test_validators):
     """ merge api_validators with test_validators
     @params:
@@ -319,17 +348,8 @@ def merge_validator(api_validators, test_validators):
         return api_validators
 
     else:
-        api_validators_mapping = {}
-        for api_validator in api_validators:
-            api_validator = parse_validator(api_validator)
-            key = (api_validator["check"], api_validator["comparator"])
-            api_validators_mapping[key] = api_validator
-
-        test_validators_mapping = {}
-        for test_validator in test_validators:
-            test_validator = parse_validator(test_validator)
-            key = (test_validator["check"], test_validator["comparator"])
-            test_validators_mapping[key] = test_validator
+        api_validators_mapping = _get_validators_mapping(api_validators)
+        test_validators_mapping = _get_validators_mapping(test_validators)
 
         api_validators_mapping.update(test_validators_mapping)
         return list(api_validators_mapping.values())

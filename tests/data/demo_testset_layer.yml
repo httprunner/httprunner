@@ -21,6 +21,7 @@
     validate:
         - "eq": ["status_code", 200]
         - "len_eq": ["content.token", 16]
+        - "contains": [{"a": 1, "b": 2}, "b"]
 
 - test:
     name: reset all users

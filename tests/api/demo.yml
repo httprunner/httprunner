@@ -13,6 +13,7 @@
     validate:
         - "eq": ["status_code", 0]
         - "len_eq": ["content.token", 12]
+        - "contains": [{"a": 1, "b": 2}, "a"]
 
 - api:
     def: create_user($uid, $user_name, $user_password, $token)
