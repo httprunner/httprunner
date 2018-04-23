@@ -184,12 +184,13 @@ class Context(object):
             }
         """
         check_item = validator["check"]
-        # check_item should only be in 3 types:
+        # check_item should only be in 4 types:
         # 1, variable reference, e.g. $token
         # 2, string joined by delimiter. e.g. "status_code", "headers.content-type"
         # 3, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
-        if testcase.extract_variables(check_item):
-            # type 1
+        # 4, dict or list, maybe containing variables reference, e.g. {"var": "$abc"}
+        if isinstance(check_item, (dict, list)) or testcase.extract_variables(check_item):
+            # type 4 or type 1
             check_value = self.eval_content(check_item)
         else:
             try:

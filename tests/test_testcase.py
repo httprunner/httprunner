@@ -721,6 +721,20 @@ class TestcaseParserUnittest(unittest.TestCase):
             merged_validators
         )
 
+    def test_merge_validator_with_dict(self):
+        api_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        test_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+
+        merged_validators = testcase.merge_validator(api_validators, test_validators)
+        self.assertEqual(len(merged_validators), 3)
+        self.assertEqual(merged_validators[1], {'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'})
+
     def test_merge_extractor(self):
         api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
         test_extracors = [{"var1": "val111"}, {"var3": "val3"}]
