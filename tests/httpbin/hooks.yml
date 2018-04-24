@@ -1,0 +1,16 @@
+- config:
+    name: basic test with httpbin
+    request:
+        base_url: https://httpbin.org/
+
+- test:
+    name: headers
+    request:
+        url: /headers
+        method: GET
+    setup_hooks:
+        - setup_hook_add_kwargs
+        - setup_hook_remove_kwargs
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.headers.Host, "httpbin.org"]

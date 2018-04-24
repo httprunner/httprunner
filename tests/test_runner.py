@@ -75,6 +75,13 @@ class TestRunner(ApiServerUnittest):
             # check if teardown function executed
             self.assertGreater(end_time - start_time, 2)
 
+    def test_run_testset_with_setup_hooks(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/httpbin/hooks.yml')
+        runner = HttpRunner().run(testcase_file_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             runner = HttpRunner().run(testcase_file_path)
