@@ -1,4 +1,6 @@
 # encoding: utf-8
+from httprunner.exception import MyBaseError
+
 
 class EventHook(object):
     """
@@ -14,17 +16,20 @@ class EventHook(object):
     """
 
     def __init__(self):
-        self._handlers = set()
+        self._handlers = []
 
     def __iadd__(self, handler):
-        self._handlers.add(handler)
+        self._handlers.append(handler)
         return self
 
     def __isub__(self, handler):
-        self._handlers.remove(handler)
+        if handler not in self._handlers:
+            raise MyBaseError("handler not found: {}".format(handler))
+
+        index = self._handlers.index(handler)
+        self._handlers.pop(index)
         return self
 
     def fire(self, **kwargs):
         for handler in self._handlers:
             handler(**kwargs)
-
