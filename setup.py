@@ -20,7 +20,8 @@ install_requires = [
     "Jinja2",
     "har2case",
     "colorama",
-    "colorlog"
+    "colorlog",
+    "requests_toolbelt"
 ]
 
 class UploadCommand(Command):
