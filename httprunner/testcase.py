@@ -2,7 +2,6 @@
 
 import ast
 import collections
-import csv
 import io
 import itertools
 import json
@@ -10,8 +9,8 @@ import os
 import random
 import re
 
-import yaml
 from httprunner import exception, logger, utils
+from httprunner.utils import FileUtils
 from httprunner.compat import OrderedDict, numeric_types
 
 variable_regexp = r"\$([\w_]+)"
@@ -24,72 +23,6 @@ test_def_overall_dict = {
 }
 testcases_cache_mapping = {}
 
-
-def _load_yaml_file(yaml_file):
-    """ load yaml file and check file content format
-    """
-    with io.open(yaml_file, 'r', encoding='utf-8') as stream:
-        yaml_content = yaml.load(stream)
-        check_format(yaml_file, yaml_content)
-        return yaml_content
-
-def _load_json_file(json_file):
-    """ load json file and check file content format
-    """
-    with io.open(json_file, encoding='utf-8') as data_file:
-        try:
-            json_content = json.load(data_file)
-        except exception.JSONDecodeError:
-            err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
-            logger.log_error(err_msg)
-            raise exception.FileFormatError(err_msg)
-
-        check_format(json_file, json_content)
-        return json_content
-
-def _load_csv_file(csv_file):
-    """ load csv file and check file content format
-    @param
-        csv_file: csv file path
-        e.g. csv file content:
-            username,password
-            test1,111111
-            test2,222222
-            test3,333333
-    @return
-        list of parameter, each parameter is in dict format
-        e.g.
-        [
-            {'username': 'test1', 'password': '111111'},
-            {'username': 'test2', 'password': '222222'},
-            {'username': 'test3', 'password': '333333'}
-        ]
-    """
-    csv_content_list = []
-
-    with io.open(csv_file, encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            csv_content_list.append(row)
-
-    return csv_content_list
-
-def load_file(file_path):
-    if not os.path.isfile(file_path):
-        raise exception.FileNotFoundError("{} does not exist.".format(file_path))
-
-    file_suffix = os.path.splitext(file_path)[1].lower()
-    if file_suffix == '.json':
-        return _load_json_file(file_path)
-    elif file_suffix in ['.yaml', '.yml']:
-        return _load_yaml_file(file_path)
-    elif file_suffix == ".csv":
-        return _load_csv_file(file_path)
-    else:
-        # '' or other suffix
-        err_msg = u"Unsupported file format: {}".format(file_path)
-        logger.log_warning(err_msg)
-        return []
 
 def extract_variables(content):
     """ extract all variable names from content, which is in format $variable
@@ -180,7 +113,7 @@ def load_test_dependencies():
 
     # load api definitions
     api_def_folder = os.path.join(os.getcwd(), "tests", "api")
-    api_files = utils.load_folder_files(api_def_folder)
+    api_files = FileUtils.load_folder_files(api_def_folder)
 
     for test_file in api_files:
         testset = load_test_file(test_file)
@@ -188,7 +121,7 @@ def load_test_dependencies():
 
     # load suite definitions
     suite_def_folder = os.path.join(os.getcwd(), "tests", "suite")
-    suite_files = utils.load_folder_files(suite_def_folder)
+    suite_files = FileUtils.load_folder_files(suite_def_folder)
 
     for suite_file in suite_files:
         suite = load_test_file(suite_file)
@@ -230,7 +163,7 @@ def load_testsets_by_path(path):
         return testcases_cache_mapping[path]
 
     if os.path.isdir(path):
-        files_list = utils.load_folder_files(path)
+        files_list = FileUtils.load_folder_files(path)
         testcases_list = load_testsets_by_path(files_list)
 
     elif os.path.isfile(path):
@@ -496,7 +429,7 @@ def load_test_file(file_path):
         "api": {},
         "testcases": []
     }
-    tests_list = load_file(file_path)
+    tests_list = FileUtils.load_file(file_path)
 
     for item in tests_list:
         for key in item:
@@ -638,21 +571,6 @@ def substitute_variables_with_mapping(content, mapping):
             content = content.replace(var, str(value))
 
     return content
-
-def check_format(file_path, content):
-    """ check testcase format if valid
-    """
-    if not content:
-        # testcase file content is empty
-        err_msg = u"Testcase file content is empty: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exception.FileFormatError(err_msg)
-
-    elif not isinstance(content, (list, dict)):
-        # testcase file content does not match testcase format
-        err_msg = u"Testcase file content format invalid: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exception.FileFormatError(err_msg)
 
 def gen_cartesian_product(*args):
     """ generate cartesian product for lists
@@ -812,7 +730,7 @@ class TestcaseParser(object):
             os.path.dirname(self.file_path),
             "{}".format(csv_file_name)
         )
-        csv_content_list = load_file(parameter_file_path)
+        csv_content_list = FileUtils.load_file(parameter_file_path)
 
         if fetch_method.lower() == "random":
             random.shuffle(csv_content_list)

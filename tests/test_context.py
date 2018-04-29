@@ -2,8 +2,9 @@ import os
 import time
 
 import requests
-from httprunner import exception, response, runner, testcase, utils
+from httprunner import exception, response, runner, testcase
 from httprunner.context import Context
+from httprunner.utils import FileUtils, gen_md5
 from tests.base import ApiServerUnittest
 
 
@@ -12,7 +13,7 @@ class VariableBindsUnittest(ApiServerUnittest):
     def setUp(self):
         self.context = Context()
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
-        self.testcases = testcase.load_file(testcase_file_path)
+        self.testcases = FileUtils.load_file(testcase_file_path)
 
     def test_context_init_functions(self):
         self.assertIn("get_timestamp", self.context.testset_functions_config)
@@ -158,7 +159,7 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertIn("authorization", context_variables)
             self.assertEqual(len(context_variables["authorization"]), 32)
             authorization = context_variables["authorization"]
-            self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
+            self.assertEqual(gen_md5(TOKEN, data, random), authorization)
 
     def test_import_module_items(self):
         testcase1 = {
@@ -192,7 +193,7 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertIn("authorization", context_variables)
             self.assertEqual(len(context_variables["authorization"]), 32)
             authorization = context_variables["authorization"]
-            self.assertEqual(utils.gen_md5(TOKEN, data, random), authorization)
+            self.assertEqual(gen_md5(TOKEN, data, random), authorization)
             self.assertIn("SECRET_KEY", context_variables)
             SECRET_KEY = context_variables["SECRET_KEY"]
             self.assertEqual(SECRET_KEY, "DebugTalk")
