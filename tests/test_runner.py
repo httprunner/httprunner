@@ -1,7 +1,8 @@
 import os
 import time
 
-from httprunner import HttpRunner, exception, runner, testcase, utils
+from httprunner import HttpRunner, exception, runner, testcase
+from httprunner.utils import FileUtils, deep_update_dict
 from tests.base import ApiServerUnittest
 
 
@@ -25,7 +26,7 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_single_testcase(self):
         for testcase_file_path in self.testcase_file_path_list:
-            testcases = testcase.load_file(testcase_file_path)
+            testcases = FileUtils.load_file(testcase_file_path)
 
             config_dict = {
                 "path": testcase_file_path
@@ -157,7 +158,7 @@ class TestRunner(ApiServerUnittest):
         testset = testsets[0]
         config_dict_headers = testset["config"]["request"]["headers"]
         test_dict_headers = testset["testcases"][0]["request"]["headers"]
-        headers = utils.deep_update_dict(
+        headers = deep_update_dict(
             config_dict_headers,
             test_dict_headers
         )
@@ -166,7 +167,7 @@ class TestRunner(ApiServerUnittest):
     def test_bugfix_type_match(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testcases = testcase.load_file(testcase_file_path)
+        testcases = FileUtils.load_file(testcase_file_path)
         config_dict = {
             "path": testcase_file_path
         }
