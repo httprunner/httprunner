@@ -126,11 +126,11 @@ class TestFileUtils(unittest.TestCase):
         self.assertNotIn(file1, files)
 
         files_1 = FileUtils.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
+        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'basic.yml')
         self.assertEqual(files_1[0], api_file)
 
         files_2 = FileUtils.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
+        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'basic.yml')
         self.assertEqual(files_2[0], api_file)
         self.assertEqual(len(files_1), len(files_2))
 
@@ -231,7 +231,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(utils.get_uniform_comparator("count_le"), "length_less_than_or_equals")
         self.assertEqual(utils.get_uniform_comparator("count_less_than_or_equals"), "length_less_than_or_equals")
 
-    def test_validators(self):
+    def current_validators(self):
         imported_module = utils.get_imported_module("httprunner.built_in")
         functions_mapping = utils.filter_module(imported_module, "function")
 

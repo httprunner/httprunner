@@ -7,6 +7,7 @@ import unittest
 from httprunner import exception, logger, runner, testcase, utils
 from httprunner.compat import is_py3
 from httprunner.report import HtmlTestResult, get_summary, render_html_report
+from httprunner.testcase import TestcaseLoader
 
 
 class TestCase(unittest.TestCase):
@@ -195,7 +196,7 @@ def init_task_suite(path_or_testsets, mapping=None, http_client_session=None):
     """ initialize task suite
     """
     if not testcase.is_testsets(path_or_testsets):
-        testsets = testcase.load_testsets_by_path(path_or_testsets)
+        testsets = TestcaseLoader.load_testsets_by_path(path_or_testsets)
     else:
         testsets = path_or_testsets
 

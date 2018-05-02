@@ -1,7 +1,7 @@
 import os
 
 from httprunner import task
-from httprunner.testcase import load_test_file
+from httprunner.testcase import TestcaseLoader
 from tests.base import ApiServerUnittest
 
 
@@ -17,7 +17,7 @@ class TestTask(ApiServerUnittest):
 
     def test_create_suite(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        testset = load_test_file(testcase_file_path)
+        testset = TestcaseLoader.load_test_file(testcase_file_path)
         suite = task.TestSuite(testset)
         self.assertEqual(suite.countTestCases(), 3)
         for testcase in suite:
