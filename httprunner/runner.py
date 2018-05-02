@@ -2,10 +2,11 @@
 
 from unittest.case import SkipTest
 
-from httprunner import exception, logger, response, testcase, utils
+from httprunner import exception, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import Context
 from httprunner.events import EventHook
+from httprunner.testcase import TestcaseLoader
 
 
 class Runner(object):
@@ -13,7 +14,7 @@ class Runner(object):
     def __init__(self, config_dict=None, http_client_session=None):
         self.http_client_session = http_client_session
         self.context = Context()
-        testcase.load_test_dependencies()
+        TestcaseLoader.load_test_dependencies()
 
         config_dict = config_dict or {}
         self.init_config(config_dict, "testset")

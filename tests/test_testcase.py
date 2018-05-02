@@ -4,7 +4,192 @@ import unittest
 
 from httprunner import testcase
 from httprunner.exception import (ApiNotFound, FileFormatError,
-                                  FileNotFoundError, ParamsError)
+                                  FileNotFoundError, ParamsError,
+                                  SuiteNotFound)
+from httprunner.testcase import TestcaseLoader
+
+
+class TestTestcaseLoader(unittest.TestCase):
+
+    def setUp(self):
+        TestcaseLoader.overall_def_dict = {
+            "api": {},
+            "suite": {}
+        }
+
+    def test_load_test_dependencies(self):
+        TestcaseLoader.load_test_dependencies()
+        overall_def_dict = TestcaseLoader.overall_def_dict
+        self.assertIn("get_token", overall_def_dict["api"])
+        self.assertIn("create_and_check", overall_def_dict["suite"])
+
+    def test_load_api_file(self):
+        TestcaseLoader.load_api_file("tests/api/basic.yml")
+        overall_api_def_dict = TestcaseLoader.overall_def_dict["api"]
+        self.assertIn("get_token",overall_api_def_dict)
+        self.assertEqual("/api/get-token", overall_api_def_dict["get_token"]["request"]["url"])
+        self.assertIn("$user_agent", overall_api_def_dict["get_token"]["function_meta"]["args"])
+        self.assertEqual(len(overall_api_def_dict["get_token"]["validate"]), 3)
+
+    def test_load_test_file_suite(self):
+        TestcaseLoader.load_api_file("tests/api/basic.yml")
+        testset = TestcaseLoader.load_test_file("tests/suite/create_and_get.yml")
+        self.assertEqual(testset["name"], "create user and check result.")
+        self.assertEqual(testset["config"]["name"], "create user and check result.")
+        self.assertEqual(len(testset["testcases"]), 3)
+        self.assertEqual(testset["testcases"][0]["name"], "make sure user $uid does not exist")
+        self.assertEqual(testset["testcases"][0]["request"]["url"], "/api/users/$uid")
+
+    def test_load_test_file_testcase(self):
+        TestcaseLoader.load_test_dependencies()
+        testset = TestcaseLoader.load_test_file("tests/testcases/smoketest.yml")
+        self.assertEqual(testset["name"], "smoketest")
+        self.assertEqual(testset["config"]["path"], "tests/testcases/smoketest.yml")
+        self.assertIn("device_sn", testset["config"]["variables"][0])
+        self.assertEqual(len(testset["testcases"]), 8)
+        self.assertEqual(testset["testcases"][0]["name"], "get token")
+
+    def test_get_block_by_name(self):
+        TestcaseLoader.load_test_dependencies()
+        ref_call = "get_user($uid, $token)"
+        block = TestcaseLoader._get_block_by_name(ref_call, "api")
+        self.assertEqual(block["request"]["url"], "/api/users/$uid")
+        self.assertEqual(block["function_meta"]["func_name"], "get_user")
+        self.assertEqual(block["function_meta"]["args"], ['$uid', '$token'])
+
+    def test_get_block_by_name_args_mismatch(self):
+        TestcaseLoader.load_test_dependencies()
+        ref_call = "get_user($uid, $token, $var)"
+        with self.assertRaises(ParamsError):
+            TestcaseLoader._get_block_by_name(ref_call, "api")
+
+    def test_get_test_definition_api(self):
+        TestcaseLoader.load_test_dependencies()
+        api_def = TestcaseLoader._get_test_definition("get_token", "api")
+        self.assertEqual(api_def["request"]["url"], "/api/get-token")
+
+        with self.assertRaises(ApiNotFound):
+            TestcaseLoader._get_test_definition("get_token_XXX", "api")
+
+    def test_get_test_definition_suite(self):
+        TestcaseLoader.load_test_dependencies()
+        api_def = TestcaseLoader._get_test_definition("create_and_check", "suite")
+        self.assertEqual(api_def["name"], "create user and check result.")
+
+        with self.assertRaises(SuiteNotFound):
+            TestcaseLoader._get_test_definition("create_and_check_XXX", "suite")
+
+    def test_override_block(self):
+        TestcaseLoader.load_test_dependencies()
+        def_block = TestcaseLoader._get_block_by_name("get_token($user_agent, $device_sn, $os_platform, $app_version)", "api")
+        test_block = {
+            "name": "override block",
+            "variables": [
+                {"var": 123}
+            ],
+            'request': {
+                'url': '/api/get-token', 'method': 'POST', 'headers': {'user_agent': '$user_agent', 'device_sn': '$device_sn', 'os_platform': '$os_platform', 'app_version': '$app_version'}, 'json': {'sign': '${get_sign($user_agent, $device_sn, $os_platform, $app_version)}'}},
+            'validate': [
+                {'eq': ['status_code', 201]},
+                {'len_eq': ['content.token', 32]}
+            ]
+        }
+
+        TestcaseLoader._override_block(def_block, test_block)
+        self.assertEqual(test_block["name"], "override block")
+        self.assertEqual(test_block["validate"][0], {'check': 'status_code', 'expect': 201, 'comparator': 'eq'})
+        self.assertEqual(test_block["validate"][1], {'check': 'content.token', 'comparator': 'len_eq', 'expect': 32})
+
+    def test_load_testcases_by_path_files(self):
+        testsets_list = []
+
+        # absolute file path
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+        testset_list = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(len(testset_list), 1)
+        self.assertIn("path", testset_list[0]["config"])
+        self.assertEqual(testset_list[0]["config"]["path"], path)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        testsets_list.extend(testset_list)
+
+        # relative file path
+        path = 'tests/data/demo_testset_hardcode.yml'
+        testset_list = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(len(testset_list), 1)
+        self.assertIn("path", testset_list[0]["config"])
+        self.assertIn(path, testset_list[0]["config"]["path"])
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        testsets_list.extend(testset_list)
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
+            'tests/data/demo_testset_hardcode.yml'
+        ]
+        testset_list = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(len(testset_list), 2)
+        self.assertEqual(len(testset_list[0]["testcases"]), 3)
+        self.assertEqual(len(testset_list[1]["testcases"]), 3)
+        testsets_list.extend(testset_list)
+        self.assertEqual(len(testsets_list), 4)
+
+        for testset in testsets_list:
+            for test in testset["testcases"]:
+                self.assertIn('name', test)
+                self.assertIn('request', test)
+                self.assertIn('url', test['request'])
+                self.assertIn('method', test['request'])
+
+    def test_load_testcases_by_path_folder(self):
+        TestcaseLoader.load_test_dependencies()
+        # absolute folder path
+        path = os.path.join(os.getcwd(), 'tests/data')
+        testset_list_1 = TestcaseLoader.load_testsets_by_path(path)
+        self.assertGreater(len(testset_list_1), 4)
+
+        # relative folder path
+        path = 'tests/data/'
+        testset_list_2 = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(len(testset_list_1), len(testset_list_2))
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'tests/data'),
+            'tests/data/'
+        ]
+        testset_list_3 = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
+
+    def test_load_testcases_by_path_not_exist(self):
+        # absolute folder path
+        path = os.path.join(os.getcwd(), 'tests/data_not_exist')
+        testset_list_1 = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(testset_list_1, [])
+
+        # relative folder path
+        path = 'tests/data_not_exist'
+        testset_list_2 = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(testset_list_2, [])
+
+        # list/set container with file(s)
+        path = [
+            os.path.join(os.getcwd(), 'tests/data_not_exist'),
+            'tests/data_not_exist/'
+        ]
+        testset_list_3 = TestcaseLoader.load_testsets_by_path(path)
+        self.assertEqual(testset_list_3, [])
+
+    def test_load_testcases_by_path_layered(self):
+        TestcaseLoader.load_test_dependencies()
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+        testsets_list = TestcaseLoader.load_testsets_by_path(path)
+        self.assertIn("variables", testsets_list[0]["config"])
+        self.assertIn("request", testsets_list[0]["config"])
+        self.assertIn("request", testsets_list[0]["testcases"][0])
+        self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
+        self.assertIn("validate", testsets_list[0]["testcases"][0])
 
 
 class TestcaseParserUnittest(unittest.TestCase):
@@ -448,94 +633,6 @@ class TestcaseParserUnittest(unittest.TestCase):
             3
         )
 
-    def test_load_testcases_by_path_files(self):
-        testsets_list = []
-
-        # absolute file path
-        path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        testset_list = testcase.load_testsets_by_path(path)
-        self.assertEqual(len(testset_list), 1)
-        self.assertIn("path", testset_list[0]["config"])
-        self.assertEqual(testset_list[0]["config"]["path"], path)
-        self.assertEqual(len(testset_list[0]["testcases"]), 3)
-        testsets_list.extend(testset_list)
-
-        # relative file path
-        path = 'tests/data/demo_testset_hardcode.yml'
-        testset_list = testcase.load_testsets_by_path(path)
-        self.assertEqual(len(testset_list), 1)
-        self.assertIn("path", testset_list[0]["config"])
-        self.assertIn(path, testset_list[0]["config"]["path"])
-        self.assertEqual(len(testset_list[0]["testcases"]), 3)
-        testsets_list.extend(testset_list)
-
-        # list/set container with file(s)
-        path = [
-            os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
-            'tests/data/demo_testset_hardcode.yml'
-        ]
-        testset_list = testcase.load_testsets_by_path(path)
-        self.assertEqual(len(testset_list), 2)
-        self.assertEqual(len(testset_list[0]["testcases"]), 3)
-        self.assertEqual(len(testset_list[1]["testcases"]), 3)
-        testsets_list.extend(testset_list)
-        self.assertEqual(len(testsets_list), 4)
-
-        for testset in testsets_list:
-            for test in testset["testcases"]:
-                self.assertIn('name', test)
-                self.assertIn('request', test)
-                self.assertIn('url', test['request'])
-                self.assertIn('method', test['request'])
-
-    def test_load_testcases_by_path_folder(self):
-        # absolute folder path
-        path = os.path.join(os.getcwd(), 'tests/data')
-        testset_list_1 = testcase.load_testsets_by_path(path)
-        self.assertGreater(len(testset_list_1), 4)
-
-        # relative folder path
-        path = 'tests/data/'
-        testset_list_2 = testcase.load_testsets_by_path(path)
-        self.assertEqual(len(testset_list_1), len(testset_list_2))
-
-        # list/set container with file(s)
-        path = [
-            os.path.join(os.getcwd(), 'tests/data'),
-            'tests/data/'
-        ]
-        testset_list_3 = testcase.load_testsets_by_path(path)
-        self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
-
-    def test_load_testcases_by_path_not_exist(self):
-        # absolute folder path
-        path = os.path.join(os.getcwd(), 'tests/data_not_exist')
-        testset_list_1 = testcase.load_testsets_by_path(path)
-        self.assertEqual(testset_list_1, [])
-
-        # relative folder path
-        path = 'tests/data_not_exist'
-        testset_list_2 = testcase.load_testsets_by_path(path)
-        self.assertEqual(testset_list_2, [])
-
-        # list/set container with file(s)
-        path = [
-            os.path.join(os.getcwd(), 'tests/data_not_exist'),
-            'tests/data_not_exist/'
-        ]
-        testset_list_3 = testcase.load_testsets_by_path(path)
-        self.assertEqual(testset_list_3, [])
-
-    def test_load_testcases_by_path_layered(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets_list = testcase.load_testsets_by_path(path)
-        self.assertIn("variables", testsets_list[0]["config"])
-        self.assertIn("request", testsets_list[0]["config"])
-        self.assertIn("request", testsets_list[0]["testcases"][0])
-        self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
-        self.assertIn("validate", testsets_list[0]["testcases"][0])
 
     def test_substitute_variables_with_mapping(self):
         content = {
@@ -564,23 +661,6 @@ class TestcaseParserUnittest(unittest.TestCase):
         self.assertFalse(result["request"]["data"]["false"])
         self.assertEqual("", result["request"]["data"]["empty_str"])
 
-    def test_load_test_dependencies(self):
-        testcase.test_def_overall_dict = {}
-        testcase.load_test_dependencies()
-        self.assertTrue(testcase.test_def_overall_dict["loaded"])
-        api_dict = testcase.test_def_overall_dict["api"]
-        self.assertIn("get_token", api_dict)
-        self.assertEqual("/api/get-token", api_dict["get_token"]["request"]["url"])
-        self.assertIn("$user_agent", api_dict["get_token"]["function_meta"]["args"])
-        self.assertIn("create_user", api_dict)
-
-    def test_get_api_definition(self):
-        api_info = testcase.get_test_definition("get_token", "api")
-        self.assertEqual("/api/get-token", api_info["request"]["url"])
-        self.assertIn("get_token", testcase.test_def_overall_dict["api"])
-
-        with self.assertRaises(ApiNotFound):
-            testcase.get_test_definition("api_not_exist", "api")
 
     def test_parse_validator(self):
         validator = {"check": "status_code", "comparator": "eq", "expect": 201}
@@ -596,16 +676,16 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_merge_validator(self):
-        api_validators = [
+        def_validators = [
             {'eq': ['v1', 200]},
             {"check": "s2", "expect": 16, "comparator": "len_eq"}
         ]
-        test_validators = [
+        current_validators = [
             {"check": "v1", "expect": 201},
             {'len_eq': ['s3', 12]}
         ]
 
-        merged_validators = testcase.merge_validator(api_validators, test_validators)
+        merged_validators = testcase._merge_validator(def_validators, current_validators)
         self.assertIn(
             {"check": "v1", "expect": 201, "comparator": "eq"},
             merged_validators
@@ -620,25 +700,25 @@ class TestcaseParserUnittest(unittest.TestCase):
         )
 
     def test_merge_validator_with_dict(self):
-        api_validators = [
+        def_validators = [
             {'eq': ["a", {"v": 1}]},
             {'eq': [{"b": 1}, 200]}
         ]
-        test_validators = [
+        current_validators = [
             {'len_eq': ['s3', 12]},
             {'eq': [{"b": 1}, 201]}
         ]
 
-        merged_validators = testcase.merge_validator(api_validators, test_validators)
+        merged_validators = testcase._merge_validator(def_validators, current_validators)
         self.assertEqual(len(merged_validators), 3)
         self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, merged_validators)
         self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, merged_validators)
 
     def test_merge_extractor(self):
         api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
-        test_extracors = [{"var1": "val111"}, {"var3": "val3"}]
+        current_extractors = [{"var1": "val111"}, {"var3": "val3"}]
 
-        merged_extractors = testcase.merge_extractor(api_extrators, test_extracors)
+        merged_extractors = testcase._merge_extractor(api_extrators, current_extractors)
         self.assertIn(
             {"var1": "val111"},
             merged_extractors
