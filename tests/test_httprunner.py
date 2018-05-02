@@ -115,7 +115,7 @@ class TestHttpRunner(ApiServerUnittest):
                     {
                         "name": "post data",
                         "request": {
-                            "url": "https://httpbin.org/post",
+                            "url": "http://127.0.0.1:3458/post",
                             "method": "POST",
                             "headers": {
                                 "Content-Type": "application/json"

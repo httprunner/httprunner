@@ -1,7 +1,7 @@
 - config:
     name: basic test with httpbin
     request:
-        base_url: https://httpbin.org/
+        base_url: http://127.0.0.1:3458/
 
 - test:
     name: headers
@@ -13,4 +13,4 @@
         - setup_hook_remove_kwargs
     validate:
         - eq: ["status_code", 200]
-        - eq: [content.headers.Host, "httpbin.org"]
+        - eq: [content.headers.Host, "127.0.0.1:3458"]

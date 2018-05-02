@@ -14,6 +14,7 @@ requests-toolbelt = "*"
 
 [dev-packages]
 flask = "*"
+httpbin = "*"
 coverage = "*"
 coveralls = "*"
 twine = "*"

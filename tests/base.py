@@ -3,12 +3,18 @@ import time
 import unittest
 
 import requests
+from httpbin import app as httpbin_app
 from httprunner import utils
-from tests import api_server
+from tests.api_server import app as flask_app
 
+FLASK_APP_PORT = 5000
+HTTPBIN_APP_PORT = 3458
 
-def apprun():
-    api_server.app.run()
+def run_flask():
+    flask_app.run(port=FLASK_APP_PORT)
+
+def run_httpbin():
+    httpbin_app.run(port=HTTPBIN_APP_PORT)
 
 
 class ApiServerUnittest(unittest.TestCase):
@@ -18,16 +24,21 @@ class ApiServerUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = "http://127.0.0.1:5000"
-        cls.api_server_process = multiprocessing.Process(
-            target=apprun
+        cls.flask_process = multiprocessing.Process(
+            target=run_flask
         )
-        cls.api_server_process.start()
+        cls.httpbin_process = multiprocessing.Process(
+            target=run_httpbin
+        )
+        cls.flask_process.start()
+        cls.httpbin_process.start()
         time.sleep(0.1)
         cls.api_client = requests.Session()
 
     @classmethod
     def tearDownClass(cls):
-        cls.api_server_process.terminate()
+        cls.flask_process.terminate()
+        cls.httpbin_process.terminate()
 
     def get_token(self, user_agent, device_sn, os_platform, app_version):
         url = "%s/api/get-token" % self.host
