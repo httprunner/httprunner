@@ -62,7 +62,7 @@ class TestFileUtils(unittest.TestCase):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(exception.FileNotFoundError):
             FileUtils.load_file(testcase_file_path)
 
     def test_load_json_testcases(self):

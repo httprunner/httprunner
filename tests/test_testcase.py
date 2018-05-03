@@ -97,8 +97,8 @@ class TestTestcaseLoader(unittest.TestCase):
 
         TestcaseLoader._override_block(def_block, test_block)
         self.assertEqual(test_block["name"], "override block")
-        self.assertEqual(test_block["validate"][0], {'check': 'status_code', 'expect': 201, 'comparator': 'eq'})
-        self.assertEqual(test_block["validate"][1], {'check': 'content.token', 'comparator': 'len_eq', 'expect': 32})
+        self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, test_block["validate"])
+        self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, test_block["validate"])
 
     def test_load_testcases_by_path_files(self):
         testsets_list = []

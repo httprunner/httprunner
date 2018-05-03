@@ -107,6 +107,7 @@ class TestcaseLoader(object):
     }
     testcases_cache_mapping = {}
 
+    @staticmethod
     def load_test_dependencies():
         """ load all api and suite definitions.
             default api folder is "$CWD/tests/api/".
@@ -130,6 +131,7 @@ class TestcaseLoader(object):
             suite["function_meta"] = function_meta
             TestcaseLoader.overall_def_dict["suite"][function_meta["func_name"]] = suite
 
+    @staticmethod
     def load_api_file(file_path):
         """ load api definition from file and store in overall_def_dict["api"]
             api file should be in format below:
@@ -172,6 +174,7 @@ class TestcaseLoader(object):
             api_dict["function_meta"] = function_meta
             TestcaseLoader.overall_def_dict["api"][func_name] = api_dict
 
+    @staticmethod
     def load_test_file(file_path):
         """ load testcase file or suite file
         @param file_path: absolute valid file path
@@ -245,6 +248,7 @@ class TestcaseLoader(object):
 
         return testset
 
+    @staticmethod
     def _get_block_by_name(ref_call, ref_type):
         """ get test content by reference name
         @params:
@@ -272,6 +276,7 @@ class TestcaseLoader(object):
 
         return block
 
+    @staticmethod
     def _get_test_definition(name, ref_type):
         """ get expected api or suite.
         @params:
@@ -292,6 +297,7 @@ class TestcaseLoader(object):
 
         return block
 
+    @staticmethod
     def _override_block(def_block, current_block):
         """ override def_block with current_block
         @param def_block:
@@ -334,6 +340,7 @@ class TestcaseLoader(object):
             current_extractors
         )
 
+    @staticmethod
     def load_testsets_by_path(path):
         """ load testcases from file path
         @param path: path could be in several type
