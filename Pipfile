@@ -13,6 +13,7 @@ colorlog = "*"
 requests-toolbelt = "*"
 
 [dev-packages]
+Flask = "<1.0.0"
 httpbin = "*"
 coverage = "*"
 coveralls = "*"
