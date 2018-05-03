@@ -1,5 +1,5 @@
 [[source]]
-url = "https://pypi.python.org/simple"
+url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
@@ -13,7 +13,6 @@ colorlog = "*"
 requests-toolbelt = "*"
 
 [dev-packages]
-flask = "*"
 httpbin = "*"
 coverage = "*"
 coveralls = "*"
