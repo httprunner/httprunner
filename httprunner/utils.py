@@ -46,6 +46,7 @@ def remove_prefix(text, prefix):
 
 class FileUtils(object):
 
+    @staticmethod
     def _check_format(file_path, content):
         """ check testcase format if valid
         """
@@ -61,6 +62,7 @@ class FileUtils(object):
             logger.log_error(err_msg)
             raise exception.FileFormatError(err_msg)
 
+    @staticmethod
     def _load_yaml_file(yaml_file):
         """ load yaml file and check file content format
         """
@@ -69,6 +71,7 @@ class FileUtils(object):
             FileUtils._check_format(yaml_file, yaml_content)
             return yaml_content
 
+    @staticmethod
     def _load_json_file(json_file):
         """ load json file and check file content format
         """
@@ -83,6 +86,7 @@ class FileUtils(object):
             FileUtils._check_format(json_file, json_content)
             return json_content
 
+    @staticmethod
     def _load_csv_file(csv_file):
         """ load csv file and check file content format
         @param
@@ -110,6 +114,7 @@ class FileUtils(object):
 
         return csv_content_list
 
+    @staticmethod
     def load_file(file_path):
         if not os.path.isfile(file_path):
             raise exception.FileNotFoundError("{} does not exist.".format(file_path))
@@ -127,6 +132,7 @@ class FileUtils(object):
             logger.log_warning(err_msg)
             return []
 
+    @staticmethod
     def load_folder_files(folder_path, recursive=True):
         """ load folder path, return all files in list format.
         @param
