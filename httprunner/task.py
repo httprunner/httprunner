@@ -196,6 +196,7 @@ def init_task_suite(path_or_testsets, mapping=None, http_client_session=None):
     """ initialize task suite
     """
     if not testcase.is_testsets(path_or_testsets):
+        TestcaseLoader.load_test_dependencies()
         testsets = TestcaseLoader.load_testsets_by_path(path_or_testsets)
     else:
         testsets = path_or_testsets
