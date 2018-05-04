@@ -145,3 +145,10 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(os.path.isfile(report))
         report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
         shutil.rmtree(report_save_dir)
+
+    def test_testcase_layer(self):
+        testcase_path = "tests/testcases/smoketest.yml"
+        runner = HttpRunner(failfast=True).run(testcase_path)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 8)
