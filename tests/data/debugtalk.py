@@ -1,3 +1,4 @@
+#coding: utf-8
 import hashlib
 import hmac
 import json
@@ -56,3 +57,15 @@ def get_account():
         {"username": "user1", "password": "111111"},
         {"username": "user2", "password": "222222"}
     ]
+
+def get_user_name(name_type, length):
+    if name_type == "chinese" and length == 4:
+        return "六小龄童"
+    else:
+        return "bob"
+
+def get_user_info():
+    return {
+        "weight": 100,
+        "height": 170
+    }

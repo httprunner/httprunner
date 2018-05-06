@@ -17,6 +17,9 @@ variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
 function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w\.\-_ =,]*)\)$")
 
+key_name_of_function_name = "hrun_func_name"
+key_name_of_function_args = "hrun_func_args"
+
 
 def extract_variables(content):
     """ extract all variable names from content, which is in format $variable
@@ -826,6 +829,13 @@ class TestcaseParser(object):
 
         return content
 
+    def _eval_functions(self, func_name, func_args=None):
+        func = self.get_bind_function(func_name)
+        if func_args:
+            return func(**func_args)
+        else:
+            return func()
+
     def _eval_content_variables(self, content):
         """ replace all variables of string content with mapping value.
         @param (str) content
@@ -900,6 +910,9 @@ class TestcaseParser(object):
                 eval_key = self.eval_content_with_bindings(key)
                 eval_value = self.eval_content_with_bindings(value)
                 evaluated_data[eval_key] = eval_value
+
+            if isinstance(evaluated_data, dict) and evaluated_data.get(key_name_of_function_name):
+                return self._eval_functions(content.get(key_name_of_function_name), content.get(key_name_of_function_args))
 
             return evaluated_data
 

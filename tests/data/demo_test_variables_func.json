@@ -1,0 +1,145 @@
+[
+    {
+        "config": {
+            "name": "create user",
+            "variables": [
+                {
+                    "id": 1949,
+                    "name": {
+                        "hrun_func_name": "get_user_name",
+                        "hrun_func_args": {
+                            "name_type": "chinese",
+                            "length": 4
+                        }
+                    },
+                    "user_info": {
+                        "hrun_func_name": "get_user_info"
+                    },
+                    "create_date_by_default_method": "${get_current_date(fmt=%Y-%m-%d %H:%M:%S)}",
+                    "create_date_by_default_method_1": "${get_current_date(fmt='%Y-%m-%d %H:%M:%S')}",
+                    "create_date_by_default_method_2": "${get_current_date(fmt=\"%Y-%m-%d %H:%M:%S\")}",
+                    "create_data_by_new_method": {
+                        "hrun_func_name": "get_current_date",
+                        "hrun_func_args": {
+                            "fmt": "%Y-%m-%d %H:%M:%S"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "test": {
+            "name": "get token",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/get-token",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6"
+                },
+                "json": {
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                }
+            },
+            "variables": [
+                {"expect_status_code": 200},
+                {"token_len": 16}
+            ],
+            "extract": [
+                {
+                    "token": "content.token"
+                }
+            ],
+            "validate": [
+                {"check": "status_code", "comparator": "eq", "expect": 200},
+                {"eq": ["status_code", "$expect_status_code"]},
+                {"check": "$token", "comparator": "len_eq", "expect": 16},
+                {"len_eq": ["$token", "$token_len"]},
+                {"len_eq": ["content.token", 16]},
+                {"check": "status_code", "comparator": "sum_status_code", "expect": 2},
+                {"sum_status_code": ["status_code", 2]}
+            ]
+        }
+    },
+    {
+        "test": {
+            "name": "create user",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/users/$id",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "token": "$token"
+                },
+                "json": {
+                    "name": "$name",
+                    "user_info": "$user_info",
+                    "create_date_by_default_method": "$create_date_by_default_method",
+                    "create_date_by_default_method_1": "$create_date_by_default_method_1",
+                    "create_date_by_default_method_2": "$create_date_by_default_method_2",
+                    "create_data_by_new_method": "$create_data_by_new_method"
+                }
+            },
+            "variables": [
+                {"expect_status_code": 201}
+            ],
+            "validate": [
+                {"check": "status_code", "comparator": "eq", "expect": 201},
+                {"eq": ["status_code", "$expect_status_code"]}
+            ]
+        }
+    },
+    {
+        "test": {
+            "name": "get user",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/users/$id",
+                "method": "GET",
+                    "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "token": "$token"
+                }
+            },
+            "validate": [
+                {"check": "status_code", "comparator": "eq", "expect": 200},
+                {"check": "content.data.create_date_by_default_method", "comparator": "eq", "expect": "${get_current_date(fmt=%Y-%m-%d %H:%M:%S)}"},
+                {"check": "content.data.create_date_by_default_method_1", "comparator": "eq", "expect": "${get_current_date(fmt='%Y-%m-%d %H:%M:%S')}"},
+                {"check": "content.data.create_date_by_default_method_2", "comparator": "eq", "expect": "${get_current_date(fmt=\"%Y-%m-%d %H:%M:%S\")}"},
+                {"check": "content.data.create_data_by_new_method", "comparator": "ne", "expect": "${get_current_date(fmt=%Y-%m-%d %H:%M:%S)}"}
+            ]
+            
+        }
+    },
+    {
+        "test": {
+            "name": "clear user",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/reset-all",
+                "method": "GET",
+                    "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "token": "$token"
+                }
+            },
+            "validate": [
+                {"check": "status_code", "comparator": "eq", "expect": 200}
+            ]
+        }
+    }
+]
