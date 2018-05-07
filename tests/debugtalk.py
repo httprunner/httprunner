@@ -56,3 +56,20 @@ def get_account():
         {"username": "user1", "password": "111111"},
         {"username": "user2", "password": "222222"}
     ]
+
+SECRET_KEY = "DebugTalk"
+
+def gen_random_string(str_len):
+    random_char_list = []
+    for _ in range(str_len):
+        random_char = random.choice(string.ascii_letters + string.digits)
+        random_char_list.append(random_char)
+
+    random_string = ''.join(random_char_list)
+    return random_string
+
+def setup_hook_add_kwargs(method, url, kwargs):
+    kwargs["key"] = "value"
+
+def setup_hook_remove_kwargs(method, url, kwargs):
+    kwargs.pop("key")

@@ -300,7 +300,7 @@ class TestUtils(ApiServerUnittest):
         self.assertNotIn("is_py3", functions_dict)
 
     def test_get_imported_module_from_file(self):
-        imported_module = utils.get_imported_module_from_file("tests/data/debugtalk.py")
+        imported_module = utils.get_imported_module_from_file("tests/debugtalk.py")
         self.assertIn("gen_md5", dir(imported_module))
 
         functions_dict = utils.filter_module(imported_module, "function")
@@ -308,7 +308,7 @@ class TestUtils(ApiServerUnittest):
         self.assertNotIn("urllib", functions_dict)
 
         with self.assertRaises(exception.FileNotFoundError):
-            utils.get_imported_module_from_file("tests/data/debugtalk2.py")
+            utils.get_imported_module_from_file("tests/debugtalk2.py")
 
     def test_search_conf_function(self):
         gen_md5 = utils.search_conf_item("tests/data/demo_binds.yml", "function", "gen_md5")
