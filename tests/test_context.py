@@ -163,7 +163,7 @@ class VariableBindsUnittest(ApiServerUnittest):
 
     def test_import_module_items(self):
         testcase1 = {
-            "import_module_items": ["tests.data.debugtalk"],
+            "import_module_items": ["tests.debugtalk"],
             "variables": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
@@ -201,7 +201,7 @@ class VariableBindsUnittest(ApiServerUnittest):
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
         testcase = {
-            "import_module_items": ["tests.data.debugtalk"],
+            "import_module_items": ["tests.debugtalk"],
             "variables": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},

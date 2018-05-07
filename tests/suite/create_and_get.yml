@@ -2,7 +2,11 @@
 - config:
     name: "create user and check result."
     def: create_and_check($uid, $token)
-    request: $default_request
+    request:
+        "base_url": "http://127.0.0.1:5000"
+        "headers":
+            "Content-Type": "application/json"
+            "device_sn": "$device_sn"
     output:
         - token
 
