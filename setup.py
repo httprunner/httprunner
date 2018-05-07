@@ -83,9 +83,7 @@ setup(
     },
     keywords='HTTP api test requests locust',
     install_requires=install_requires,
-    extras_require={
-        'dev': ['flask']
-    },
+    extras_require={},
     classifiers=[
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python :: 2.7',
