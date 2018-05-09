@@ -500,8 +500,14 @@ def create_scaffold(project_path):
 def load_dot_env_file(path):
     """ load .env file and set to os.environ
     """
-    if not os.path.isfile(path):
-        return
+    if not path:
+        path = os.path.join(os.getcwd(), ".env")
+        if not os.path.isfile(path):
+            logger.log_debug(".env file not exist: {}".format(path))
+            return
+    else:
+        if not os.path.isfile(path):
+            raise exception.FileNotFoundError("env file not exist: {}".format(path))
 
     logger.log_info("Loading environment variables from {}".format(path))
     with io.open(path, 'r', encoding='utf-8') as fp:

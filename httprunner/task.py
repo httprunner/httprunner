@@ -8,6 +8,7 @@ from httprunner import exception, logger, runner, testcase, utils
 from httprunner.compat import is_py3
 from httprunner.report import HtmlTestResult, get_summary, render_html_report
 from httprunner.testcase import TestcaseLoader
+from httprunner.utils import load_dot_env_file
 
 
 class TestCase(unittest.TestCase):
@@ -212,7 +213,11 @@ class HttpRunner(object):
         @param (dict) kwargs: key-value arguments used to initialize TextTestRunner
             - resultclass: HtmlTestResult or TextTestResult
             - failfast: False/True, stop the test run on the first error or failure.
+            - dot_env_path: .env file path
         """
+        dot_env_path = kwargs.pop("dot_env_path", None)
+        load_dot_env_file(dot_env_path)
+
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)
 
