@@ -11,8 +11,8 @@ from httprunner.__about__ import __description__, __version__
 from httprunner.compat import is_py2
 from httprunner.task import HttpRunner
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                              load_dot_env_file, prettify_json_file,
-                              print_output, validate_json_file)
+                              prettify_json_file, print_output,
+                              validate_json_file)
 
 
 def main_hrun():
@@ -73,17 +73,13 @@ def main_hrun():
         prettify_json_file(args.prettify)
         exit(0)
 
-    dot_env_path = args.dot_env_path or os.path.join(os.getcwd(), ".env")
-    if dot_env_path:
-        load_dot_env_file(dot_env_path)
-
     project_name = args.startproject
     if project_name:
         project_path = os.path.join(os.getcwd(), project_name)
         create_scaffold(project_path)
         exit(0)
 
-    runner = HttpRunner(failfast=args.failfast).run(args.testset_paths)
+    runner = HttpRunner(failfast=args.failfast, dot_env_path=args.dot_env_path).run(args.testset_paths)
 
     if not args.no_html_report:
         runner.gen_html_report(
