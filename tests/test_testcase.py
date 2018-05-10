@@ -454,6 +454,10 @@ class TestcaseParserUnittest(unittest.TestCase):
             testcase.parse_function("func(1, 2, a=3, b=4)"),
             {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
         )
+        self.assertEqual(
+            testcase.parse_function("func($request, 123)"),
+            {'func_name': 'func', 'args': ["$request", 123], 'kwargs': {}}
+        )
 
     def test_parse_content_with_bindings_variables(self):
         variables = {

@@ -10,7 +10,7 @@ import random
 import re
 
 from httprunner import exception, logger, utils
-from httprunner.compat import OrderedDict, numeric_types
+from httprunner.compat import OrderedDict, basestring, numeric_types
 from httprunner.utils import FileUtils
 
 variable_regexp = r"\$([\w_]+)"
@@ -75,14 +75,15 @@ def parse_function(content):
          func(a=1, b=2) => {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
          func(1, 2, a=3, b=4) => {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
     """
+    matched = function_regexp_compile.match(content)
+    if not matched:
+        raise exception.FunctionNotFound("{} not found!".format(content))
+
     function_meta = {
+        "func_name": matched.group(1),
         "args": [],
         "kwargs": {}
     }
-    matched = function_regexp_compile.match(content)
-    if not matched:
-        raise exception.ApiNotFound("{} not found!".format(content))
-    function_meta["func_name"] = matched.group(1)
 
     args_str = matched.group(2).replace(" ", "")
     if args_str == "":
@@ -597,6 +598,7 @@ def substitute_variables_with_mapping(content, mapping):
             }
         }
     """
+    # TODO: refactor type check
     if isinstance(content, bool):
         return content
 
@@ -903,17 +905,16 @@ class TestcaseParser(object):
 
             return evaluated_data
 
-        if isinstance(content, (numeric_types, type)):
-            return content
+        if isinstance(content, basestring):
 
-        # content is in string format here
-        content = content.strip()
+            # content is in string format here
+            content = content.strip()
 
-        # replace functions with evaluated value
-        # Notice: _eval_content_functions must be called before _eval_content_variables
-        content = self._eval_content_functions(content)
+            # replace functions with evaluated value
+            # Notice: _eval_content_functions must be called before _eval_content_variables
+            content = self._eval_content_functions(content)
 
-        # replace variables with binding value
-        content = self._eval_content_variables(content)
+            # replace variables with binding value
+            content = self._eval_content_variables(content)
 
         return content

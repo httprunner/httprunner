@@ -40,7 +40,9 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(True, resp.json()['success'])
 
     def test_prepare_kwargs_content_type_application_json_without_charset(self):
-        kwargs = {
+        request = {
+            "url": "/path",
+            "method": "POST",
             "headers": {
                 "content-type": "application/json"
             },
@@ -49,13 +51,15 @@ class TestHttpClient(ApiServerUnittest):
                 "b": 2
             }
         }
-        setup_hook_prepare_kwargs("POST", "/path", kwargs)
-        self.assertIsInstance(kwargs["data"], bytes)
-        self.assertIn(b'"a": 1', kwargs["data"])
-        self.assertIn(b'"b": 2', kwargs["data"])
+        setup_hook_prepare_kwargs(request)
+        self.assertIsInstance(request["data"], bytes)
+        self.assertIn(b'"a": 1', request["data"])
+        self.assertIn(b'"b": 2', request["data"])
 
     def test_prepare_kwargs_content_type_application_json_charset_utf8(self):
-        kwargs = {
+        request = {
+            "url": "/path",
+            "method": "POST",
             "headers": {
                 "content-type": "application/json; charset=utf-8"
             },
@@ -64,5 +68,5 @@ class TestHttpClient(ApiServerUnittest):
                 "b": 2
             }
         }
-        setup_hook_prepare_kwargs("POST", "/path", kwargs)
-        self.assertIsInstance(kwargs["data"], bytes)
+        setup_hook_prepare_kwargs(request)
+        self.assertIsInstance(request["data"], bytes)

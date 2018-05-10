@@ -68,8 +68,16 @@ def gen_random_string(str_len):
     random_string = ''.join(random_char_list)
     return random_string
 
-def setup_hook_add_kwargs(method, url, kwargs):
-    kwargs["key"] = "value"
+def setup_hook_add_kwargs(request):
+    request["key"] = "value"
 
-def setup_hook_remove_kwargs(method, url, kwargs):
-    kwargs.pop("key")
+def setup_hook_remove_kwargs(request):
+    request.pop("key")
+
+def teardown_hook_sleep_N_secs(response, n_secs):
+    """ sleep n seconds after request
+    """
+    if response.status_code == 200:
+        time.sleep(0.1)
+    else:
+        time.sleep(n_secs)
