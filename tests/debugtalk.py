@@ -81,3 +81,6 @@ def teardown_hook_sleep_N_secs(response, n_secs):
         time.sleep(0.1)
     else:
         time.sleep(n_secs)
+
+def hook_print(msg):
+    print(msg)
