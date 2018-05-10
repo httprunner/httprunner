@@ -132,25 +132,25 @@ def endswith(check_value, expect_value):
 
 """ built-in hooks
 """
-def setup_hook_prepare_kwargs(method, url, kwargs):
-    if method == "POST":
-        content_type = kwargs.get("headers", {}).get("content-type")
-        if content_type and "data" in kwargs:
+def setup_hook_prepare_kwargs(request):
+    if request["method"] == "POST":
+        content_type = request.get("headers", {}).get("content-type")
+        if content_type and "data" in request:
             # if request content-type is application/json, request data should be dumped
-            if content_type.startswith("application/json") and isinstance(kwargs["data"], (dict, list)):
-                kwargs["data"] = json.dumps(kwargs["data"])
+            if content_type.startswith("application/json") and isinstance(request["data"], (dict, list)):
+                request["data"] = json.dumps(request["data"])
 
-            if isinstance(kwargs["data"], str):
-                kwargs["data"] = kwargs["data"].encode('utf-8')
+            if isinstance(request["data"], str):
+                request["data"] = request["data"].encode('utf-8')
 
-def setup_hook_httpntlmauth(method, url, kwargs):
-    if "httpntlmauth" in kwargs:
+def setup_hook_httpntlmauth(request):
+    if "httpntlmauth" in request:
         from requests_ntlm import HttpNtlmAuth
-        auth_account = kwargs.pop("httpntlmauth")
-        kwargs["auth"] = HttpNtlmAuth(
+        auth_account = request.pop("httpntlmauth")
+        request["auth"] = HttpNtlmAuth(
             auth_account["username"], auth_account["password"])
 
-def teardown_hook_sleep_1_secs(resp_obj):
-    """ sleep 1 seconds after request
+def sleep_N_secs(n_secs):
+    """ sleep n seconds
     """
-    time.sleep(1)
+    time.sleep(n_secs)

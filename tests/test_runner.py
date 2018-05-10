@@ -60,29 +60,91 @@ class TestRunner(ApiServerUnittest):
                     "sign": "f1219719911caae89ccc301679857ebfda115ca2"
                 }
             },
-            "extract": [
-                {"token": "content.token"}
-            ],
             "validate": [
                 {"check": "status_code", "expect": 205},
                 {"check": "content.token", "comparator": "len_eq", "expect": 19}
-            ],
-            "teardown_hooks": ["teardown_hook_sleep_1_secs"]
+            ]
         }
 
         with self.assertRaises(exception.ValidationError):
-            start_time = time.time()
             self.test_runner.run_test(test)
-            end_time = time.time()
-            # check if teardown function executed
-            self.assertGreater(end_time - start_time, 2)
 
     def test_run_testset_with_setup_hooks(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/httpbin/hooks.yml')
+
+        start_time = time.time()
         runner = HttpRunner().run(testcase_file_path)
+        end_time = time.time()
         summary = runner.summary
         self.assertTrue(summary["success"])
+        self.assertLess(end_time - start_time, 1)
+
+    def test_run_testset_with_teardown_hooks_success(self):
+        test = {
+            "name": "get token",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/get-token",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6"
+                },
+                "json": {
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                }
+            },
+            "validate": [
+                {"check": "status_code", "expect": 200}
+            ],
+            "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
+        }
+        config_dict = {
+            "path": os.path.join(os.getcwd(), __file__)
+        }
+        self.test_runner.init_config(config_dict, "testset")
+
+        start_time = time.time()
+        self.test_runner.run_test(test)
+        end_time = time.time()
+        # check if teardown function executed
+        self.assertLess(end_time - start_time, 0.5)
+
+    def test_run_testset_with_teardown_hooks_fail(self):
+        test = {
+            "name": "get token",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/get-token2",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6"
+                },
+                "json": {
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                }
+            },
+            "validate": [
+                {"check": "status_code", "expect": 404}
+            ],
+            "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
+        }
+        config_dict = {
+            "path": os.path.join(os.getcwd(), __file__)
+        }
+        self.test_runner.init_config(config_dict, "testset")
+
+        start_time = time.time()
+        self.test_runner.run_test(test)
+        end_time = time.time()
+        # check if teardown function executed
+        self.assertGreater(end_time - start_time, 2)
 
     def test_run_testset_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:

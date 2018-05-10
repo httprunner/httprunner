@@ -5,7 +5,6 @@ from unittest.case import SkipTest
 from httprunner import exception, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import Context
-from httprunner.events import EventHook
 
 
 class Runner(object):
@@ -94,45 +93,10 @@ class Runner(object):
         if skip_reason:
             raise SkipTest(skip_reason)
 
-    def _prepare_hooks_event(self, hooks):
-        if not hooks:
-            return None
-
-        event = EventHook()
-        for hook in hooks:
-            func = self.context.testcase_parser.get_bind_function(hook)
-            event += func
-
-        return event
-
-    def _call_setup_hooks(self, hooks, method, url, kwargs):
-        """ call hook functions before request
-
-        Listeners should take the following arguments:
-
-        * *method*: request method type, e.g. GET, POST, PUT
-        * *url*: URL that was called (or override name if it was used in the call to the client)
-        * *kwargs*: kwargs of request
-        """
-        hooks.insert(0, "setup_hook_prepare_kwargs")
-        event = self._prepare_hooks_event(hooks)
-        if not event:
-            return
-
-        event.fire(method=method, url=url, kwargs=kwargs)
-
-    def _call_teardown_hooks(self, hooks, resp_obj):
-        """ call hook functions after request
-
-        Listeners should take the following arguments:
-
-        * *resp_obj*: response object
-        """
-        event = self._prepare_hooks_event(hooks)
-        if not event:
-            return
-
-        event.fire(resp_obj=resp_obj)
+    def do_hook_actions(self, actions):
+        for action in actions:
+            logger.log_debug("call hook: {}".format(action))
+            self.context.eval_content(action)
 
     def run_test(self, testcase_dict):
         """ run single testcase.
@@ -161,7 +125,12 @@ class Runner(object):
             }
         @return True or raise exception during test
         """
+        # check skip
+        self._handle_skip_feature(testcase_dict)
+
+        # prepare
         parsed_request = self.init_config(testcase_dict, level="testcase")
+        self.context.bind_variables({"request": parsed_request})
 
         try:
             url = parsed_request.pop('url')
@@ -170,28 +139,36 @@ class Runner(object):
         except KeyError:
             raise exception.ParamsError("URL or METHOD missed!")
 
-        self._handle_skip_feature(testcase_dict)
-
-        extractors = testcase_dict.get("extract", []) or testcase_dict.get("extractors", [])
-        validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
-        setup_hooks = testcase_dict.get("setup_hooks", [])
-        teardown_hooks = testcase_dict.get("teardown_hooks", [])
-
         logger.log_info("{method} {url}".format(method=method, url=url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_request))
-        self._call_setup_hooks(setup_hooks, method, url, parsed_request)
+
+        # setup hooks
+        setup_hooks = testcase_dict.get("setup_hooks", [])
+        setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
+        self.do_hook_actions(setup_hooks)
+
+        # request
         resp = self.http_client_session.request(
             method,
             url,
             name=group_name,
             **parsed_request
         )
-        self._call_teardown_hooks(teardown_hooks, resp)
-        resp_obj = response.ResponseObject(resp)
 
+        # teardown hooks
+        teardown_hooks = testcase_dict.get("teardown_hooks", [])
+        if teardown_hooks:
+            self.context.bind_variables({"response": resp})
+            self.do_hook_actions(teardown_hooks)
+
+        # extract
+        extractors = testcase_dict.get("extract", []) or testcase_dict.get("extractors", [])
+        resp_obj = response.ResponseObject(resp)
         extracted_variables_mapping = resp_obj.extract_response(extractors)
         self.context.bind_extracted_variables(extracted_variables_mapping)
 
+        # validate
+        validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
             self.context.validate(validators, resp_obj)
         except (exception.ParamsError, exception.ResponseError, \
