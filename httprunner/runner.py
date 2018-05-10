@@ -16,6 +16,18 @@ class Runner(object):
         config_dict = config_dict or {}
         self.init_config(config_dict, "testset")
 
+        # testset setup hooks
+        testset_setup_hooks = config_dict.pop("setup_hooks", [])
+        if testset_setup_hooks:
+            self.do_hook_actions(testset_setup_hooks)
+
+        # testset teardown hooks
+        self.testset_teardown_hooks = config_dict.pop("teardown_hooks", [])
+
+    def __del__(self):
+        if self.testset_teardown_hooks:
+            self.do_hook_actions(self.testset_teardown_hooks)
+
     def init_config(self, config_dict, level):
         """ create/update context variables binds
         @param (dict) config_dict
@@ -130,7 +142,7 @@ class Runner(object):
 
         # prepare
         parsed_request = self.init_config(testcase_dict, level="testcase")
-        self.context.bind_variables({"request": parsed_request})
+        self.context.bind_variables({"request": parsed_request}, level="testcase")
 
         try:
             url = parsed_request.pop('url')
@@ -158,7 +170,7 @@ class Runner(object):
         # teardown hooks
         teardown_hooks = testcase_dict.get("teardown_hooks", [])
         if teardown_hooks:
-            self.context.bind_variables({"response": resp})
+            self.context.bind_variables({"response": resp}, level="testcase")
             self.do_hook_actions(teardown_hooks)
 
         # extract

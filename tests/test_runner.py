@@ -69,7 +69,60 @@ class TestRunner(ApiServerUnittest):
         with self.assertRaises(exception.ValidationError):
             self.test_runner.run_test(test)
 
-    def test_run_testset_with_setup_hooks(self):
+    def test_run_testset_with_hooks(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/httpbin/hooks.yml')
+
+        start_time = time.time()
+
+        config_dict = {
+            "path": os.path.join(os.getcwd(), __file__),
+            "name": "basic test with httpbin",
+            "request": {
+                "base_url": "http://127.0.0.1:3458/"
+            },
+            "setup_hooks": [
+                "${sleep_N_secs(0.5)}"
+                "${hook_print(setup)}"
+            ],
+            "teardown_hooks": [
+                "${sleep_N_secs(1)}",
+                "${hook_print(teardown)}"
+            ]
+        }
+        test = {
+            "name": "get token",
+            "request": {
+                "url": "http://127.0.0.1:5000/api/get-token",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "device_sn": "HZfFBh6tU59EdXJ",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6"
+                },
+                "json": {
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                }
+            },
+            "validate": [
+                {"check": "status_code", "expect": 200}
+            ]
+        }
+        test_runner = runner.Runner(config_dict)
+        end_time = time.time()
+        # check if testset setup hook executed
+        self.assertGreater(end_time - start_time, 0.5)
+
+        start_time = time.time()
+        test_runner.run_test(test)
+        test_runner.run_test(test)
+        end_time = time.time()
+        # testset teardown hook has not been executed now
+        self.assertLess(end_time - start_time, 1)
+
+    def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/httpbin/hooks.yml')
 

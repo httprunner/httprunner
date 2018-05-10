@@ -2,6 +2,10 @@
     name: basic test with httpbin
     request:
         base_url: http://127.0.0.1:3458/
+    setup_hooks:
+        - ${hook_print(setup)}
+    teardown_hooks:
+        - ${hook_print(teardown)}
 
 - test:
     name: headers
