@@ -46,14 +46,12 @@ HttpRunner is rich documented.
 - `中文用户使用手册`_
 - `开发历程记录博客`_
 
-Next Step
+Subscribe
 ---------
 
-There are still too many awesome features to be implemented. Recent schedules includes:
+Subscribe the Wechat official account, be the first to get the latest information.
 
-- [x] Integrate with Charles and Fiddler: convert `HAR`_ (HTTP Archive) format to YAML testcases.
-- [ ] Integrate with Swagger: convert exported API definition of `Swagger`_ to YAML testcases.
-- [ ] Integrate with PostMan: convert `Postman Collection Format`_ to YAML testcases.
+.. image:: docs/images/qrcode_for_httprunner.jpg
 
 
 .. _Requests: http://docs.python-requests.org/en/master/
