@@ -37,7 +37,7 @@ HttpRunner is rich documented.
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
-![](docs/images/qrcode_for_httprunner.jpg)
+![][qrcode_for_httprunner]
 
 [Requests]: http://docs.python-requests.org/en/master/
 [unittest]: https://docs.python.org/3/library/unittest.html
@@ -51,3 +51,4 @@ HttpRunner is rich documented.
 [HAR]: http://httparchive.org/
 [Swagger]: https://swagger.io/
 [Postman Collection Format]: http://blog.getpostman.com/2015/06/05/travelogue-of-postman-collection-format-v2/
+[qrcode_for_httprunner]: https://raw.githubusercontent.com/HttpRunner/HttpRunner/master/docs/images/qrcode_for_httprunner.jpg
