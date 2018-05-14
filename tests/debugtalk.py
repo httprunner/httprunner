@@ -84,3 +84,6 @@ def teardown_hook_sleep_N_secs(response, n_secs):
 
 def hook_print(msg):
     print(msg)
+
+def modify_headers_os_platform(request, os_platform):
+    request["headers"]["os_platform"] = os_platform

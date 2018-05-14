@@ -70,9 +70,6 @@ class TestRunner(ApiServerUnittest):
             self.test_runner.run_test(test)
 
     def test_run_testset_with_hooks(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/httpbin/hooks.yml')
-
         start_time = time.time()
 
         config_dict = {
@@ -121,6 +118,39 @@ class TestRunner(ApiServerUnittest):
         end_time = time.time()
         # testset teardown hook has not been executed now
         self.assertLess(end_time - start_time, 1)
+
+    def test_run_testset_with_hooks_modify_request(self):
+        config_dict = {
+            "path": os.path.join(os.getcwd(), __file__),
+            "name": "basic test with httpbin",
+            "request": {
+                "base_url": "http://127.0.0.1:3458/"
+            }
+        }
+        test = {
+            "name": "modify request headers",
+            "request": {
+                "url": "/anything",
+                "method": "POST",
+                "headers": {
+                    "content-type": "application/json",
+                    "user_agent": "iOS/10.3",
+                    "os_platform": "ios"
+                },
+                "json": {
+                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                }
+            },
+            "setup_hooks": [
+                "${modify_headers_os_platform($request, android)}"
+            ],
+            "validate": [
+                {"check": "status_code", "expect": 200},
+                {"check": "content.headers.Os-Platform", "expect": "android"}
+            ]
+        }
+        test_runner = runner.Runner(config_dict)
+        test_runner.run_test(test)
 
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(

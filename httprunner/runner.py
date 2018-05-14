@@ -142,7 +142,12 @@ class Runner(object):
 
         # prepare
         parsed_request = self.init_config(testcase_dict, level="testcase")
-        self.context.bind_variables({"request": parsed_request}, level="testcase")
+        self.context.bind_testcase_variable("request", parsed_request)
+
+        # setup hooks
+        setup_hooks = testcase_dict.get("setup_hooks", [])
+        setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
+        self.do_hook_actions(setup_hooks)
 
         try:
             url = parsed_request.pop('url')
@@ -153,11 +158,6 @@ class Runner(object):
 
         logger.log_info("{method} {url}".format(method=method, url=url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_request))
-
-        # setup hooks
-        setup_hooks = testcase_dict.get("setup_hooks", [])
-        setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
-        self.do_hook_actions(setup_hooks)
 
         # request
         resp = self.http_client_session.request(
@@ -170,7 +170,7 @@ class Runner(object):
         # teardown hooks
         teardown_hooks = testcase_dict.get("teardown_hooks", [])
         if teardown_hooks:
-            self.context.bind_variables({"response": resp}, level="testcase")
+            self.context.bind_testcase_variable("response", resp)
             self.do_hook_actions(teardown_hooks)
 
         # extract
