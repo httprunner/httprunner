@@ -118,14 +118,17 @@ def stringify_body(meta_data, request_or_response):
 
     elif isinstance(body, bytes):
         resp_content_type = headers.get("Content-Type", "")
-        if "image" in resp_content_type:
-            meta_data["response_data_type"] = "image"
-            body = "data:{};base64,{}".format(
-                resp_content_type,
-                b64encode(body).decode('utf-8')
-            )
-        else:
-            body = body.decode("utf-8")
+        try:
+            if "image" in resp_content_type:
+                meta_data["response_data_type"] = "image"
+                body = "data:{};base64,{}".format(
+                    resp_content_type,
+                    b64encode(body).decode('utf-8')
+                )
+            else:
+                body = body.decode("utf-8")
+        except UnicodeDecodeError:
+            pass
 
     elif not isinstance(body, (basestring, numeric_types, Iterable)):
         # class instance, e.g. MultipartEncoder()
