@@ -143,13 +143,6 @@ def setup_hook_prepare_kwargs(request):
             if isinstance(request["data"], str):
                 request["data"] = request["data"].encode('utf-8')
 
-def setup_hook_httpntlmauth(request):
-    if "httpntlmauth" in request:
-        from requests_ntlm import HttpNtlmAuth
-        auth_account = request.pop("httpntlmauth")
-        request["auth"] = HttpNtlmAuth(
-            auth_account["username"], auth_account["password"])
-
 def sleep_N_secs(n_secs):
     """ sleep n seconds
     """
