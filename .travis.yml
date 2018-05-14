@@ -9,6 +9,7 @@ install:
   - pip install pipenv --upgrade-strategy=only-if-needed
   - pipenv install --dev
 script:
+  - pipenv run python setup.py install
   - pipenv run coverage run --source=httprunner -m unittest discover
 after_success:
   - pipenv run coveralls
