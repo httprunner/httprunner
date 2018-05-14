@@ -87,3 +87,10 @@ def hook_print(msg):
 
 def modify_headers_os_platform(request, os_platform):
     request["headers"]["os_platform"] = os_platform
+
+def setup_hook_httpntlmauth(request):
+    if "httpntlmauth" in request:
+        from requests_ntlm import HttpNtlmAuth
+        auth_account = request.pop("httpntlmauth")
+        request["auth"] = HttpNtlmAuth(
+            auth_account["username"], auth_account["password"])
