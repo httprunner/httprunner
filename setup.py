@@ -11,7 +11,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, 'httprunner', '__about__.py'), encoding='utf-8') as f:
     exec(f.read(), about)
 
-with io.open("README.rst", encoding='utf-8') as f:
+with io.open("README.md", encoding='utf-8') as f:
     long_description = f.read()
 
 install_requires = [
@@ -78,7 +78,7 @@ setup(
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
     packages=find_packages(exclude=["examples", "tests", "tests.*"]),
     package_data={
-        '': ["README.rst"],
+        '': ["README.md"],
         'httprunner': ["templates/*"],
     },
     keywords='HTTP api test requests locust',
