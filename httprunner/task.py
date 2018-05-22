@@ -202,6 +202,7 @@ def init_task_suite(path_or_testsets, mapping=None, http_client_session=None):
     else:
         testsets = path_or_testsets
 
+    # TODO: move comparator uniform here
     mapping = mapping or {}
     return TaskSuite(testsets, mapping, http_client_session)
 
