@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'/>
+    <meta name='description' content=''/>
+    <meta name='robots' content='noodp, noydir'/>
+    <meta name='viewport' content='width=device-width, initial-scale=1'/>
+    <meta id="timeStampFormat" name="timeStampFormat" content='MMM d, yyyy hh:mm:ss a'/>
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600' rel='stylesheet' type='text/css'>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href='http://extentreports.com/resx/dist/css/extent.css' type='text/css' rel='stylesheet'/>
+
+
+    <title>接口自动化测试报告</title>
+    <style type='text/css'>
+        .node.level-1 ul {
+            display: none;
+        }
+
+        .node.level-1.active ul {
+            display: block;
+        }
+
+        .card-panel.environment th:first-child {
+            width: 30%;
+        }
+    </style>
+</head>
+
+<body class='extent standard default hide-overflow dark'>
+<div id='theme-selector' alt='Click to toggle theme. To enable by default, use theme configuration.'
+     title='Click to toggle theme. To enable by default, use theme configuration.'>
+    <span><i class='material-icons'>desktop_windows</i></span>
+</div>
+<nav>
+    <div class="nav-wrapper">
+        <a href="#!" class="brand-logo blue darken-3">Extent</a>
+        <!-- slideout menu -->
+        <ul id='slide-out' class='side-nav fixed hide-on-med-and-down'>
+            <li class='waves-effect active'>
+                <a href='#!' view='test-view' onclick="configureView(0);chartsView('test');" title="报告详情">
+                    <i class='material-icons'>dashboard</i>
+                </a>
+            </li>
+            <li class='waves-effect'>
+                <a href='#!' onclick="configureView(-1);chartsView('dashboard');" view='dashboard-view' title="报告概览">
+                    <i class='material-icons'>track_changes</i></i>
+                </a>
+            </li>
+        </ul>
+        <!-- report name -->
+        <span class='report-name'>{{ html_report_name }} - TestReport</span>
+        <!-- report headline -->
+        <span class='report-headline'></span>
+        <!-- nav-right -->
+        <ul id='nav-mobile' class='right hide-on-med-and-down nav-right'>
+            <li>
+                <a href='#!'>
+                    <span class='label suite-start-time blue darken-3'>{{ time.start_at }}</span>
+                </a>
+            </li>
+            <li>
+                <a href='#!'>
+                    <span class='label blue darken-3'>HttpRunner {{ platform.httprunner_version }} </span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<!-- container -->
+<div class='container'>
+    <div id='test-view' class='view'>
+        <section id='controls'>
+            <div class='controls grey lighten-4'>
+                <!-- test toggle -->
+                <div class='chip transparent'>
+                    <a class='dropdown-button tests-toggle' data-activates='tests-toggle' data-constrainwidth='true'
+                       data-beloworigin='true' data-hover='true' href='#'>
+                        <i class='material-icons'>warning</i> Status
+                    </a>
+                    <ul id='tests-toggle' class='dropdown-content'>
+                        <li status='fail'><a href='#!'>Fail<i class='material-icons red-text'>cancel</i></a></li>
+                        <li class='divider'></li>
+                        <li status='clear' clear='true'><a href='#!'>Clear Filters <i
+                                class='material-icons'>clear</i></a></li>
+                    </ul>
+                </div>
+                <!-- test toggle -->
+                <!-- category toggle -->
+                <!-- category toggle -->
+                <!-- clear filters -->
+                <div class='chip transparent hide'>
+                    <a class='' id='clear-filters' alt='Clear Filters' title='Clear Filters'>
+                        <i class='material-icons'>close</i> Clear
+                    </a>
+                </div>
+                <!-- clear filters -->
+                <!-- enable dashboard -->
+                <div id='toggle-test-view-charts' class='chip transparent'>
+                    <a class='pink-text' id='enable-dashboard' alt='Enable Dashboard' title='Enable Dashboard'>
+                        <i class='material-icons'>track_changes</i> Dashboard
+                    </a>
+                </div>
+                <!-- enable dashboard -->
+                <!-- search -->
+                <div class='chip transparent' alt='Search Tests' title='Search Tests'>
+                    <a href="#" class='search-div'>
+                        <i class='material-icons'>search</i> Search
+                    </a>
+                    <div class='input-field left hide'>
+                        <input id='search-tests' type='text' class='validate browser-default'
+                               placeholder='Search Tests...'>
+                    </div>
+                </div>
+                <!-- search -->
+            </div>
+        </section>
+        <div id='test-view-charts' class='subview-full'>
+            <div id='charts-row' class='row nm-v nm-h'>
+                <div class='col s12 m6 l6 np-h'>
+                    <div class='card-panel nm-v'>
+                        <div class='left panel-name'>Tests</div>
+                        <div class='chart-box'>
+                            <canvas id='parent-analysis' width='100' height='80'></canvas>
+                        </div>
+                        <div class='block text-small'>
+                                <span class='tooltipped' data-position='top' data-tooltip='0%'>
+                                    <span class='strong'>{{ stat.successes }}</span> test(s) passed</span>
+                        </div>
+                        <div class='block text-small'>
+                            <span class='strong tooltipped' data-position='top'
+                                  data-tooltip='100%'>{{ stat.errors }}</span> test(s) failed,
+                            <span class='strong tooltipped' data-position='top'
+                                  data-tooltip='0%'>{{ stat.skipped }}</span> test(s) skipped
+                        </div>
+                    </div>
+                </div>
+                <div class='col s12 m6 l6 np-h'>
+                    <div class='card-panel nm-v'>
+                        <div class='left panel-name'>Steps</div>
+                        <div class='chart-box'>
+                            <canvas id='child-analysis' width='100' height='80'></canvas>
+                        </div>
+                        <div class='block text-small'>
+                            <span class='tooltipped' data-position='top' data-tooltip='0%'>
+                                <span class='strong'>{{ stat.expectedFailures }}</span>test(s) expectedFailures</span>
+                        </div>
+                        <div class='block text-small'>
+                            <span class='strong tooltipped' data-position='top'
+                                  data-tooltip='100%'>{{ stat.unexpectedSuccesses }}</span>test(s) unexpectedSuccesses
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class='subview-left left'>
+            <div class='view-summary'>
+                <h5>Tests</h5>
+                <ul id='test-collection' class='test-collection'>
+                    {% for record in records %}
+                        {% if record.status == 'success' %}
+                            <li class='test displayed active  ' status='pass' bdd='pass'
+                                test-id='{{ forloop.counter }}'>
+                                <div class='test-heading'>
+                                    <span class='test-name'>{{ record.name }}</span>
+                                    <span class='test-time'>{{ record.meta_data.response_time }} ms</span>
+                                    <span class='test-status right pass'>pass</span>
+                                </div>
+                                {% elif record.status == 'error' %}
+                            <li class='test displayed active  ' status='fail' bdd='fail'
+                                test-id='{{ forloop.counter }}'>
+                            <div class='test-heading'>
+                                <span class='test-name'>{{ record.name }}</span>
+                                <span class='test-time'>{{ record.meta_data.response_time }} ms</span>
+                                <span class='test-status right fail'>fail</span>
+                            </div>
+                        {% endif %}
+                    <div class='test-content hide'>
+                        <div class='test-time-info'>
+                            <span class='label start-time'>{{ record.meta_data.response_time }} ms</span>
+                        </div>
+                        <div class='test-steps'>
+                            <table class='bordered table-results'>
+                                <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Identity</th>
+                                    <th>Details</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr class='log' status='info'>
+                                    <td class='status info' title='info' alt='info'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>url</td>
+                                    <td class='step-details'>{{ record.meta_data.url }}</td>
+                                </tr>
+                                <tr class='log' status='info'>
+                                    <td class='status info' title='info' alt='info'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>method</td>
+                                    <td class='step-details'>{{ record.meta_data.method }}</td>
+                                </tr>
+                                <tr class='log' status='info'>
+                                    <td class='status info' title='info' alt='info'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>status_code</td>
+                                    <td class='step-details'>{{ record.meta_data.status_code }}</td>
+                                </tr>
+                                <tr class='log' status='debug'>
+                                    <td class='status debug' title='debug' alt='debug'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>req_headers</td>
+                                    <td class='step-details'>
+                                        {% for key, value in record.meta_data.request_headers.items %}
+                                            <div>
+                                                <strong>{{ key }}</strong>: {{ value | safe }}
+                                            </div>
+                                        {% endfor %}</td>
+                                </tr>
+                                <tr class='log' status='debug'>
+                                    <td class='status debug' title='debug' alt='debug'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>req_body</td>
+                                    <td class='step-details'>{{ record.meta_data.request_body | safe }}</td>
+                                </tr>
+                                <tr class='log' status='debug'>
+                                    <td class='status debug' title='debug' alt='debug'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>resp_headers</td>
+                                    <td class='step-details'>
+                                        {% for key, value in record.meta_data.response_headers.items %}
+                                            <div>
+                                                <strong>{{ key }}</strong>: {{ value | safe }}
+                                            </div>
+                                        {% endfor %}</td>
+                                </tr>
+                                <tr class='log' status='debug'>
+                                    <td class='status debug' title='debug' alt='debug'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>resp_body</td>
+                                    <td class='step-details'>{{ record.meta_data.response_body | safe }}</td>
+                                </tr>
+
+                                <tr class='log' status='debug'>
+                                    <td class='status debug' title='debug' alt='debug'><i
+                                            class='material-icons'>low_priority</i></td>
+                                    <td class='timestamp'>content_size</td>
+                                    <td class='step-details'>{{ record.meta_data.content_size }} bytes</td>
+                                </tr>
+
+                                {% if record.attachment != '' %}
+                                    <tr class='log' status='fail'>
+                                        <td class='status fail' title='fail' alt='fail'><i
+                                                class='material-icons'>cancel</i></td>
+                                        <td class='timestamp'>exception:</td>
+                                        <td class='step-details'>
+                                            <pre>{{ record.attachment }}</pre>
+                                        </td>
+                                    </tr>
+
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <!-- subview left -->
+        <div class='subview-right left'>
+            <div class='view-summary'>
+                <h5 class='test-name'></h5>
+                <div id='step-filters' class="right">
+                    <span class="blue-text" status="info" alt="info" title="info"><i
+                            class="material-icons">info_outline</i></span>
+                    <span class="green-text" status="pass" alt="pass" title="pass"><i class="material-icons">check_circle</i></span>
+                    <span class="red-text" status="fail" alt="fail" title="fail"><i
+                            class="material-icons">cancel</i></span>
+                    <span class="red-text text-darken-4" status="fatal" alt="fatal" title="fatal"><i
+                            class="material-icons">cancel</i></span>
+                    <span class="pink-text text-lighten-1" status="error" alt="error" title="error"><i
+                            class="material-icons">error</i></span>
+                    <span class="orange-text" alt="warning" status="warning" title="warning"><i class="material-icons">warning</i></span>
+                    <span class="teal-text" status="skip" alt="skip" title="skip"><i
+                            class="material-icons">redo</i></span>
+                    <span status="clear" alt="Clear filters" title="Clear filters"><i
+                            class="material-icons">clear</i></span>
+                </div>
+            </div>
+        </div>
+        <!-- subview right -->
+    </div>
+    <!-- test view -->
+    <!-- category view -->
+    <div id='dashboard-view' class='view hide'>
+        <div class='card-panel transparent np-v'>
+            <h5>Dashboard</h5>
+            <div class='row'>
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Tests
+                        <div class='panel-lead'>{{ stat.testsRun }}</div>
+                    </div>
+                </div>
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Pass
+                        <div class='panel-lead'>{{ stat.successes }}</div>
+                    </div>
+                </div>
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Fail
+                        <div class='panel-lead'>{{ stat.errors }}</div>
+                    </div>
+                </div>
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Skip
+                        <div class='panel-lead'>{{ stat.skipped }}</div>
+                    </div>
+                </div>
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Start
+                        <div class='panel-lead'>{{ time.start_at }}</div>
+                    </div>
+                </div>
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Time Taken
+                        <div class='panel-lead'>{{ '%0.3f'| format(time.duration|float) }} seconds</div>
+                    </div>
+                </div>
+
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        PLATFORM
+                        <div class='panel-lead'>HttpRunner {{ platform.httprunner_version }}</div>
+                    </div>
+                </div>
+
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Python Version
+                        <div class='panel-lead'>{{ platform.python_version }}</div>
+                    </div>
+                </div>
+
+                <div class='col s2'>
+                    <div class='card-panel r'>
+                        Client
+                        <div class='panel-lead'>{{ platform.platform }}</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- dashboard view -->
+    <!-- testrunner-logs view -->
+</div>
+<!-- container -->
+<script>
+    var statusGroup = {
+        passParent: {{ stat.successes }},
+        failParent: {{ stat.errors }},
+        fatalParent: 0,
+        errorParent: {{ stat.failures }},
+        warningParent: 0,
+        skipParent: {{ stat.skipped }},
+        exceptionsParent: {{ stat.expectedFailures }},
+
+        passChild: {{ stat.successes }},
+        failChild: {{ stat.errors }},
+        fatalChild: 0,
+        errorChild: {{ stat.failures }},
+        warningChild: 0,
+        skipChild: {{ stat.skipped }},
+        infoChild: 0,
+        exceptionsChild: {{ stat.expectedFailures }},
+
+    };
+</script>
+<script src='http://extentreports.com/resx/dist/js/extent.js' type='text/javascript'></script>
+<script type='text/javascript'>
+    $(window).off("keydown");
+</script>
+</body>
+
+</html>
