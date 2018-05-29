@@ -180,7 +180,7 @@
       <tr id="record_{{loop.index}}">
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
         <td>{{record.name}}</td>
-        <td style="text-align:center;width:6em;">{{ record.meta_data["response_time(ms)"] }} ms</td>
+        <td style="text-align:center;width:6em;">{{ record.meta_data["response_time_ms"] }} ms</td>
         <td class="detail">
 
           <a class="button" href="#popup_log_{{loop.index}}">log</a>
@@ -264,11 +264,11 @@
                       </tr>
                     <tr>
                       <th>response_time(ms)</th>
-                      <td>{{ record.meta_data["response_time(ms)"] }}</td>
+                      <td>{{ record.meta_data["response_time_ms"] }}</td>
                     </tr>
                     <tr>
                       <th>elapsed(ms)</th>
-                      <td>{{ record.meta_data["elapsed(ms)"] }}</td>
+                      <td>{{ record.meta_data["elapsed_ms"] }}</td>
                     </tr>
                   </table>
                 </div>
