@@ -217,6 +217,7 @@ class Context(object):
     def do_validation(self, validator_dict):
         """ validate with functions
         """
+        # TODO: move comparator uniform to init_task_suite
         comparator = utils.get_uniform_comparator(validator_dict["comparator"])
         validate_func = self.testcase_parser.get_bind_function(comparator)
 
