@@ -50,14 +50,14 @@
             </li>
         </ul>
         <!-- report name -->
-        <span class='report-name'>{{ html_report_name }} - TestReport</span>
+        <span class='report-name'>Test Report: {{ html_report_name }}</span>
         <!-- report headline -->
         <span class='report-headline'></span>
         <!-- nav-right -->
         <ul id='nav-mobile' class='right hide-on-med-and-down nav-right'>
             <li>
                 <a href='#!'>
-                    <span class='label suite-start-time blue darken-3'>{{ time.start_at }}</span>
+                    <span class='label suite-start-time blue darken-3'>{{ time.start_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
                 </a>
             </li>
             <li>
@@ -162,15 +162,15 @@
                     {% for record in records %}
                         {% if record.status == 'success' %}
                             <li class='test displayed active  ' status='pass' bdd='pass'
-                                test-id='{{ forloop.counter }}'>
+                                test-id='{{ loop.index }}'>
                                 <div class='test-heading'>
                                     <span class='test-name'>{{ record.name }}</span>
                                     <span class='test-time'>{{ record.meta_data.response_time_ms }} ms</span>
                                     <span class='test-status right pass'>pass</span>
                                 </div>
                                 {% elif record.status == 'error' %}
-                            <li class='test displayed active  ' status='fail' bdd='fail'
-                                test-id='{{ forloop.counter }}'>
+                            <li class='test displayed active' status='fail' bdd='fail'
+                                test-id='{{ loop.index }}'>
                             <div class='test-heading'>
                                 <span class='test-name'>{{ record.name }}</span>
                                 <span class='test-time'>{{ record.meta_data.response_time_ms }} ms</span>
@@ -214,7 +214,7 @@
                                             class='material-icons'>low_priority</i></td>
                                     <td class='timestamp'>req_headers</td>
                                     <td class='step-details'>
-                                        {% for key, value in record.meta_data.request_headers.items %}
+                                        {% for key, value in record.meta_data.request_headers.items() %}
                                             <div>
                                                 <strong>{{ key }}</strong>: {{ value | safe }}
                                             </div>
@@ -231,7 +231,7 @@
                                             class='material-icons'>low_priority</i></td>
                                     <td class='timestamp'>resp_headers</td>
                                     <td class='step-details'>
-                                        {% for key, value in record.meta_data.response_headers.items %}
+                                        {% for key, value in record.meta_data.response_headers.items() %}
                                             <div>
                                                 <strong>{{ key }}</strong>: {{ value | safe }}
                                             </div>
@@ -241,7 +241,13 @@
                                     <td class='status debug' title='debug' alt='debug'><i
                                             class='material-icons'>low_priority</i></td>
                                     <td class='timestamp'>resp_body</td>
-                                    <td class='step-details'>{{ record.meta_data.response_body | safe }}</td>
+                                    <td class='step-details'>
+                                        {% if record.meta_data.response_data_type == "image" %}
+                                            <img src="{{ record.meta_data.response_body }}"/>
+                                        {% else %}
+                                            <pre>{{ record.meta_data.response_body | safe }}</pre>
+                                        {% endif %}
+                                    </td>
                                 </tr>
 
                                 <tr class='log' status='debug'>
@@ -354,7 +360,7 @@
 
                 <div class='col s2'>
                     <div class='card-panel r'>
-                        Client
+                        Agent
                         <div class='panel-lead'>{{ platform.platform }}</div>
                     </div>
                 </div>
