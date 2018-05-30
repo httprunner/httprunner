@@ -125,14 +125,9 @@ class TestFileUtils(unittest.TestCase):
         self.assertIn(file2, files)
         self.assertNotIn(file1, files)
 
-        files_1 = FileUtils.load_folder_files(folder)
+        files = FileUtils.load_folder_files(folder)
         api_file = os.path.join(os.getcwd(), 'tests', 'api', 'basic.yml')
-        self.assertEqual(files_1[0], api_file)
-
-        files_2 = FileUtils.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'basic.yml')
-        self.assertEqual(files_2[0], api_file)
-        self.assertEqual(len(files_1), len(files_2))
+        self.assertIn(api_file, files)
 
         files = FileUtils.load_folder_files("not_existed_foulder", recursive=False)
         self.assertEqual([], files)
