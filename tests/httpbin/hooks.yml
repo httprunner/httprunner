@@ -20,3 +20,17 @@
     validate:
         - eq: ["status_code", 200]
         - eq: [content.headers.Host, "127.0.0.1:3458"]
+
+- test:
+    name: alter response
+    request:
+        url: /headers
+        method: GET
+    teardown_hooks:
+        - ${alter_response($response)}
+    validate:
+        - eq: ["status_code", 500]
+        - eq: ["headers.content-type", "html/text"]
+        - eq: [json.headers.Host, "127.0.0.1:8888"]
+        - eq: [content.headers.Host, "127.0.0.1:3458"]
+        - eq: [text.headers.Host, "127.0.0.1:3458"]

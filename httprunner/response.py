@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+import json
 import re
 
 from httprunner import exception, logger, testcase, utils
@@ -16,35 +17,34 @@ class ResponseObject(object):
         @param (requests.Response instance) resp_obj
         """
         self.resp_obj = resp_obj
-        self.resp_text = resp_obj.text
-        self.resp_body = self.parsed_body()
 
-    def parsed_body(self):
+    def __getattr__(self, key):
         try:
-            return self.resp_obj.json()
-        except ValueError:
-            return self.resp_text
+            if key == "json":
+                value = self.resp_obj.json()
+            else:
+                value =  getattr(self.resp_obj, key)
 
-    def parsed_dict(self):
-        return {
-            'status_code': self.resp_obj.status_code,
-            'headers': self.resp_obj.headers,
-            'body': self.resp_body
-        }
+            self.__dict__[key] = value
+            return value
+        except AttributeError:
+            err_msg = "ResponseObject does not have attribute: {}".format(key)
+            logger.log_error(err_msg)
+            raise exception.ParamsError(err_msg)
 
     def _extract_field_with_regex(self, field):
         """ extract field from response content with regex.
             requests.Response body could be json or html text.
         @param (str) field should only be regex string that matched r".*\(.*\).*"
         e.g.
-            self.resp_text: "LB123abcRB789"
+            self.text: "LB123abcRB789"
             field: "LB[\d]*(.*)RB[\d]*"
             return: abc
         """
-        matched = re.search(field, self.resp_text)
+        matched = re.search(field, self.text)
         if not matched:
             err_msg = u"Failed to extract data with regex!\n"
-            err_msg += u"response body: {}\n".format(self.resp_text)
+            err_msg += u"response content: {}\n".format(self.content)
             err_msg += u"regex: {}\n".format(field)
             logger.log_error(err_msg)
             raise exception.ParamsError(err_msg)
@@ -56,6 +56,8 @@ class ResponseObject(object):
         @param (str) field should be string joined by delimiter.
         e.g.
             "status_code"
+            "headers"
+            "cookies"
             "content"
             "headers.content-type"
             "content.person.name.first_name"
@@ -69,10 +71,8 @@ class ResponseObject(object):
                 top_query = field
                 sub_query = None
 
-            if top_query in ["body", "content", "text"]:
-                top_query_content = self.parsed_body()
-            elif top_query == "cookies":
-                cookies = self.resp_obj.cookies
+            if top_query == "cookies":
+                cookies = self.cookies
                 try:
                     return cookies[sub_query]
                 except KeyError:
@@ -81,21 +81,25 @@ class ResponseObject(object):
                     err_msg += u"attribute: {}".format(sub_query)
                     logger.log_error(err_msg)
                     raise exception.ParamsError(err_msg)
-            else:
-                try:
-                    top_query_content = getattr(self.resp_obj, top_query)
-                except AttributeError:
-                    err_msg = u"Failed to extract attribute from response object: resp_obj.{}".format(top_query)
-                    logger.log_error(err_msg)
-                    raise exception.ParamsError(err_msg)
+
+            try:
+                top_query_content = getattr(self, top_query)
+            except AttributeError:
+                err_msg = u"Failed to extract attribute from response object: resp_obj.{}".format(top_query)
+                logger.log_error(err_msg)
+                raise exception.ParamsError(err_msg)
 
             if sub_query:
                 if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
-                    err_msg = u"Failed to extract data with delimiter!\n"
-                    err_msg += u"response: {}\n".format(self.parsed_dict())
-                    err_msg += u"regex: {}\n".format(field)
-                    logger.log_error(err_msg)
-                    raise exception.ParamsError(err_msg)
+                    try:
+                        # TODO: remove compatibility for content, text
+                        top_query_content = json.loads(top_query_content)
+                    except json.decoder.JSONDecodeError:
+                        err_msg = u"Failed to extract data with delimiter!\n"
+                        err_msg += u"response content: {}\n".format(self.content)
+                        err_msg += u"regex: {}\n".format(field)
+                        logger.log_error(err_msg)
+                        raise exception.ParamsError(err_msg)
 
                 # e.g. key: resp_headers_content_type, sub_query = "content-type"
                 return utils.query_json(top_query_content, sub_query)
@@ -105,7 +109,7 @@ class ResponseObject(object):
 
         except AttributeError:
             err_msg = u"Failed to extract value from response!\n"
-            err_msg += u"response: {}\n".format(self.parsed_dict())
+            err_msg += u"response content: {}\n".format(self.content)
             err_msg += u"extract field: {}\n".format(field)
             logger.log_error(err_msg)
             raise exception.ParamsError(err_msg)
@@ -123,6 +127,8 @@ class ResponseObject(object):
 
             msg += "\t=> {}".format(value)
             logger.log_debug(msg)
+
+        # TODO: unify ParseResponseError type
         except (exception.ParseResponseError, TypeError):
             logger.log_error("failed to extract field: {}".format(field))
             raise

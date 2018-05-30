@@ -94,3 +94,8 @@ def setup_hook_httpntlmauth(request):
         auth_account = request.pop("httpntlmauth")
         request["auth"] = HttpNtlmAuth(
             auth_account["username"], auth_account["password"])
+
+def alter_response(response):
+    response.status_code = 500
+    response.headers["Content-Type"] = "html/text"
+    response.json["headers"]["Host"] = "127.0.0.1:8888"
