@@ -93,6 +93,8 @@ class ResponseObject(object):
                 if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
                     try:
                         # TODO: remove compatibility for content, text
+                        if isinstance(top_query_content, bytes):
+                            top_query_content = top_query_content.decode("utf-8")
                         top_query_content = json.loads(top_query_content)
                     except json.decoder.JSONDecodeError:
                         err_msg = u"Failed to extract data with delimiter!\n"
