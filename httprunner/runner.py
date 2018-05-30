@@ -166,16 +166,16 @@ class Runner(object):
             name=group_name,
             **parsed_request
         )
+        resp_obj = response.ResponseObject(resp)
 
         # teardown hooks
         teardown_hooks = testcase_dict.get("teardown_hooks", [])
         if teardown_hooks:
-            self.context.bind_testcase_variable("response", resp)
+            self.context.bind_testcase_variable("response", resp_obj)
             self.do_hook_actions(teardown_hooks)
 
         # extract
         extractors = testcase_dict.get("extract", []) or testcase_dict.get("extractors", [])
-        resp_obj = response.ResponseObject(resp)
         extracted_variables_mapping = resp_obj.extract_response(extractors)
         self.context.bind_extracted_variables(extracted_variables_mapping)
 
@@ -194,9 +194,9 @@ class Runner(object):
 
             # log response
             err_resp_msg = "response: \n"
-            err_resp_msg += "status_code: {}\n".format(resp.status_code)
-            err_resp_msg += "headers: {}\n".format(resp.headers)
-            err_resp_msg += "body: {}\n".format(resp.text)
+            err_resp_msg += "status_code: {}\n".format(resp_obj.status_code)
+            err_resp_msg += "headers: {}\n".format(resp_obj.headers)
+            err_resp_msg += "content: {}\n".format(resp_obj.content)
             logger.log_error(err_resp_msg)
 
             raise
