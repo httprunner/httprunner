@@ -126,7 +126,7 @@ def stringify_body(meta_data, request_or_response):
                     b64encode(body).decode('utf-8')
                 )
             else:
-                body = body.decode("utf-8")
+                body = escape(body.decode("utf-8"))
         except UnicodeDecodeError:
             pass
 
