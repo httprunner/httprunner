@@ -104,7 +104,7 @@
                 </div>
                 <!-- enable dashboard -->
                 <!-- search -->
-                <div class='chip transparent' alt='Search Tests' title='Search Tests'>
+                <div class='chip transparent' alt='Search Tests' title='Search Tests' style="color: white;">
                     <a href="#" class='search-div'>
                         <i class='material-icons'>search</i> Search
                     </a>
@@ -161,7 +161,7 @@
                 <ul id='test-collection' class='test-collection'>
                     {% for record in records %}
                         {% if record.status == 'success' %}
-                            <li class='test displayed active  ' status='pass' bdd='pass'
+                            <li class='test displayed active pass' status='pass' bdd='pass'
                                 test-id='{{ loop.index }}'>
                                 <div class='test-heading'>
                                     <span class='test-name'>{{ record.name }}</span>
@@ -169,7 +169,7 @@
                                     <span class='test-status right pass'>pass</span>
                                 </div>
                                 {% elif record.status == 'error' %}
-                            <li class='test displayed active' status='fail' bdd='fail'
+                            <li class='test displayed active fail' status='fail' bdd='fail'
                                 test-id='{{ loop.index }}'>
                             <div class='test-heading'>
                                 <span class='test-name'>{{ record.name }}</span>
