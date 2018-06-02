@@ -85,15 +85,16 @@ def parse_function(content):
         "kwargs": {}
     }
 
-    args_str = matched.group(2).replace(" ", "")
+    args_str = matched.group(2).strip()
     if args_str == "":
         return function_meta
 
     args_list = args_str.split(',')
     for arg in args_list:
+        arg = arg.strip()
         if '=' in arg:
             key, value = arg.split('=')
-            function_meta["kwargs"][key] = parse_string_value(value)
+            function_meta["kwargs"][key.strip()] = parse_string_value(value.strip())
         else:
             function_meta["args"].append(parse_string_value(arg))
 
