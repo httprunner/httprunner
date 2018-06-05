@@ -79,8 +79,10 @@
                        data-beloworigin='true' data-hover='true' href='#'>
                         <i class='material-icons'>warning</i> Status
                     </a>
-                    <ul id='tests-toggle' class='dropdown-content'>
-                        <li status='fail'><a href='#!'>Fail<i class='material-icons red-text'>cancel</i></a></li>
+                     <ul id='tests-toggle' class='dropdown-content'>
+                        <li status='pass'><a href='#!'>Pass <i class='material-icons green-text'>check_circle</i></a>
+                        </li>
+                        <li status='fail'><a href='#!'>Fail <i class='material-icons red-text'>cancel</i></a></li>
                         <li class='divider'></li>
                         <li status='clear' clear='true'><a href='#!'>Clear Filters <i
                                 class='material-icons'>clear</i></a></li>
@@ -334,7 +336,7 @@
                 <div class='col s2'>
                     <div class='card-panel r'>
                         Start
-                        <div class='panel-lead'>{{ time.start_at }}</div>
+                        <div class='panel-lead'>{{ time.start_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
                     </div>
                 </div>
                 <div class='col s2'>
