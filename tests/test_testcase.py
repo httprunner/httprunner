@@ -65,8 +65,10 @@ class TestTestcaseLoader(unittest.TestCase):
 
     def test_get_test_definition_api(self):
         TestcaseLoader.load_test_dependencies()
-        api_def = TestcaseLoader._get_test_definition("get_token", "api")
-        self.assertEqual(api_def["request"]["url"], "/api/get-token")
+        api_def = TestcaseLoader._get_test_definition("get_headers", "api")
+        self.assertEqual(api_def["request"]["url"], "/headers")
+        self.assertEqual(len(api_def["setup_hooks"]), 2)
+        self.assertEqual(len(api_def["teardown_hooks"]), 1)
 
         with self.assertRaises(ApiNotFound):
             TestcaseLoader._get_test_definition("get_token_XXX", "api")
