@@ -81,3 +81,17 @@
     validate:
         - eq: ["status_code", 200]
         - eq: ["content.success", true]
+
+- api:
+    def: get_headers($n_secs)
+    request:
+        url: /headers
+        method: GET
+    setup_hooks:
+        - ${setup_hook_add_kwargs($request)}
+        - ${setup_hook_remove_kwargs($request)}
+    teardown_hooks:
+        - ${teardown_hook_sleep_N_secs($response, $n_secs)}
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.headers.Host, "127.0.0.1:3458"]
