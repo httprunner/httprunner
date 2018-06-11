@@ -513,7 +513,8 @@ def load_dot_env_file(path):
     with io.open(path, 'r', encoding='utf-8') as fp:
         for line in fp:
             variable, value = line.split("=")
-            os.environ[variable] = value
+            variable = variable.strip()
+            os.environ[variable] = value.strip()
             logger.log_debug("Loaded variable: {}".format(variable))
 
 def validate_json_file(file_list):

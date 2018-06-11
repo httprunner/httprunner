@@ -158,6 +158,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertNotIn("PROJECT_KEY", os.environ)
         HttpRunner(dot_env_path="tests/data/test.env").run(self.testset_path)
         self.assertIn("PROJECT_KEY", os.environ)
+        self.assertEqual(os.environ["UserName"], "debugtalk")
 
     def test_load_env_path_not_exist(self):
         with self.assertRaises(FileNotFoundError):
