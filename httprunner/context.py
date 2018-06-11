@@ -188,17 +188,21 @@ class Context(object):
             }
         """
         check_item = validator["check"]
-        # check_item should only be in 4 types:
+        # check_item should only be the following 5 formats:
         # 1, variable reference, e.g. $token
-        # 2, string joined by delimiter. e.g. "status_code", "headers.content-type"
-        # 3, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
-        # 4, dict or list, maybe containing variables reference, e.g. {"var": "$abc"}
-        if isinstance(check_item, (dict, list)) or testcase.extract_variables(check_item):
-            # type 4 or type 1
+        # 2, function reference, e.g. ${is_status_code_200($status_code)}
+        # 3, dict or list, maybe containing variable/function reference, e.g. {"var": "$abc"}
+        # 4, string joined by delimiter. e.g. "status_code", "headers.content-type"
+        # 5, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
+
+        if isinstance(check_item, (dict, list)) \
+            or testcase.extract_variables(check_item) \
+            or testcase.extract_functions(check_item):
+            # format 1/2/3
             check_value = self.eval_content(check_item)
         else:
             try:
-                # type 2 or type 3
+                # format 4/5
                 check_value = resp_obj.extract_field(check_item)
             except exception.ParseResponseError:
                 msg = "failed to extract check item from response!\n"

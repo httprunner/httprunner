@@ -38,6 +38,9 @@ def sum_status_code(status_code, expect_sum):
 
     assert sum_value == expect_sum
 
+def is_status_code_200(status_code):
+    return status_code == 200
+
 os.environ["TEST_ENV"] = "PRODUCTION"
 
 def skip_test_in_production_env():
