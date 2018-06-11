@@ -262,7 +262,8 @@ class VariableBindsUnittest(ApiServerUnittest):
         validators = [
             {"eq": ["$resp_status_code", 201]},
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True},
+            {"check": "${is_status_code_200($resp_status_code)}", "comparator": "eq", "expect": False}
         ]
         variables = [
             {"resp_status_code": 200},
@@ -278,6 +279,11 @@ class VariableBindsUnittest(ApiServerUnittest):
             {"resp_body_success": True}
         ]
         self.context.bind_variables(variables)
+        from tests.debugtalk import is_status_code_200
+        functions = {
+            "is_status_code_200": is_status_code_200
+        }
+        self.context.bind_functions(functions)
 
         self.assertTrue(self.context.validate(validators, resp_obj))
 
