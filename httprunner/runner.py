@@ -178,7 +178,7 @@ class Runner(object):
         extractors = testcase_dict.get("extract", []) or testcase_dict.get("extractors", [])
         extracted_variables_mapping = resp_obj.extract_response(extractors)
         self.context.bind_extracted_variables(extracted_variables_mapping)
-        #print(self.context.testcase_parser.variables)
+        
         # validate
         validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
