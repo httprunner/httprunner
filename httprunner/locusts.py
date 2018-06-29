@@ -40,6 +40,7 @@ def gen_locustfile(testcase_file_path):
         "templates",
         "locustfile_template"
     )
+    TestcaseLoader.load_test_dependencies()
     testset = TestcaseLoader.load_test_file(testcase_file_path)
     host = testset.get("config", {}).get("request", {}).get("base_url", "")
 

@@ -6,6 +6,7 @@ import re
 from httprunner import exception, logger, testcase, utils
 from httprunner.compat import OrderedDict, basestring
 from requests.structures import CaseInsensitiveDict
+from requests.models import PreparedRequest
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 
@@ -95,7 +96,11 @@ class ResponseObject(object):
                         # TODO: remove compatibility for content, text
                         if isinstance(top_query_content, bytes):
                             top_query_content = top_query_content.decode("utf-8")
-                        top_query_content = json.loads(top_query_content)
+                        
+                        if isinstance(top_query_content, PreparedRequest):
+                            top_query_content = top_query_content.__dict__
+                        else:                                                        
+                            top_query_content = json.loads(top_query_content) 
                     except json.decoder.JSONDecodeError:
                         err_msg = u"Failed to extract data with delimiter!\n"
                         err_msg += u"response content: {}\n".format(self.content)
