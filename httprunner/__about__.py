@@ -1,7 +1,7 @@
 __title__ = 'HttpRunner'
 __description__ = 'One-stop solution for HTTP(S) testing.'
 __url__ = 'https://github.com/HttpRunner/HttpRunner'
-__version__ = '1.4.7'
+__version__ = '1.4.8'
 __author__ = 'debugtalk'
 __author_email__ = 'mail@debugtalk.com'
 __license__ = 'MIT'

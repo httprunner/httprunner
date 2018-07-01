@@ -25,7 +25,9 @@ class TestCase(unittest.TestCase):
         try:
             self.test_runner.run_test(self.testcase_dict)
         finally:
-            self.meta_data = getattr(self.test_runner.http_client_session, "meta_data", {})
+            if hasattr(self.test_runner.http_client_session, "meta_data"):
+                self.meta_data = self.test_runner.http_client_session.meta_data
+                self.test_runner.http_client_session.init_meta_data()
 
 class TestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.
