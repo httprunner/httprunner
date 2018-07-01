@@ -90,17 +90,24 @@ class HttpSession(requests.Session):
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
         # store detail data of request and response
-        self.meta_data = {}
+        self.meta_data = {
+            "url": url,
+            "method": method,
+            "request_time": time.time(),
+            "request_headers": {},
+            "request_body": "N/A",
+            "status_code": "N/A",
+            "response_headers": {},
+            "response_body": "N/A",
+            "content_size": "N/A",
+            "response_time_ms": "N/A",
+            "elapsed_ms": "N/A"
+        }
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
 
-        # set up pre_request hook for attaching meta data to the request object
-        self.meta_data["method"] = method
-
         kwargs.setdefault("timeout", 120)
-
-        self.meta_data["request_time"] = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
         # record the consumed time
         self.meta_data["response_time_ms"] = round((time.time() - self.meta_data["request_time"]) * 1000, 2)
