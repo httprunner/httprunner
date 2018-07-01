@@ -40,6 +40,7 @@ class HttpSession(requests.Session):
     def __init__(self, base_url=None, *args, **kwargs):
         super(HttpSession, self).__init__(*args, **kwargs)
         self.base_url = base_url if base_url else ""
+        self.init_meta_data()
 
     def _build_url(self, path):
         """ prepend url with hostname unless it's already an absolute URL """
@@ -49,6 +50,23 @@ class HttpSession(requests.Session):
             return "{}/{}".format(self.base_url.rstrip("/"), path.lstrip("/"))
         else:
             raise ParamsError("base url missed!")
+
+    def init_meta_data(self):
+        """ initialize meta_data, it will store detail data of request and response
+        """
+        self.meta_data = {
+            "url": "N/A",
+            "method": "N/A",
+            "request_time": "N/A",
+            "request_headers": {},
+            "request_body": "N/A",
+            "status_code": "N/A",
+            "response_headers": {},
+            "response_body": "N/A",
+            "content_size": "N/A",
+            "response_time_ms": "N/A",
+            "elapsed_ms": "N/A"
+        }
 
     def request(self, method, url, name=None, **kwargs):
         """
@@ -89,43 +107,35 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
-        # store detail data of request and response
-        self.meta_data = {
-            "url": url,
-            "method": method,
-            "request_time": time.time(),
-            "request_headers": {},
-            "request_body": "N/A",
-            "status_code": "N/A",
-            "response_headers": {},
-            "response_body": "N/A",
-            "content_size": "N/A",
-            "response_time_ms": "N/A",
-            "elapsed_ms": "N/A"
-        }
+        # record original request info
+        self.meta_data["method"] = method
+        self.meta_data["url"] = url
+        self.meta_data["request_time"] = time.time()
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
 
         kwargs.setdefault("timeout", 120)
         response = self._send_request_safe_mode(method, url, **kwargs)
+
         # record the consumed time
         self.meta_data["response_time_ms"] = round((time.time() - self.meta_data["request_time"]) * 1000, 2)
         self.meta_data["elapsed_ms"] = response.elapsed.microseconds / 1000.0
 
-        self.meta_data["url"] = (response.history and response.history[0] or response)\
-            .request.url
-
+        # record actual request info
+        self.meta_data["url"] = (response.history and response.history[0] or response).request.url
         self.meta_data["request_headers"] = response.request.headers
         self.meta_data["request_body"] = response.request.body
+
+        # record response info
         self.meta_data["status_code"] = response.status_code
         self.meta_data["response_headers"] = response.headers
-
         try:
             self.meta_data["response_body"] = response.json()
         except ValueError:
             self.meta_data["response_body"] = response.content
 
+        # log response details in debug mode
         msg = "response details:\n"
         msg += "> status_code: {}\n".format(self.meta_data["status_code"])
         msg += "> headers: {}\n".format(self.meta_data["response_headers"])
