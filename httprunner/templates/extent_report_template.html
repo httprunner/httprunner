@@ -218,7 +218,7 @@
                                     <td class='step-details'>
                                         {% for key, value in record.meta_data.request_headers.items() %}
                                             <div>
-                                                <strong>{{ key }}</strong>: {{ value | safe }}
+                                                <strong>{{ key }}</strong>: {{ value }}
                                             </div>
                                         {% endfor %}</td>
                                 </tr>
@@ -226,7 +226,7 @@
                                     <td class='status debug' title='debug' alt='debug'><i
                                             class='material-icons'>low_priority</i></td>
                                     <td class='timestamp'>req_body</td>
-                                    <td class='step-details'>{{ record.meta_data.request_body | safe }}</td>
+                                    <td class='step-details'>{{ record.meta_data.request_body }}</td>
                                 </tr>
                                 <tr class='log' status='debug'>
                                     <td class='status debug' title='debug' alt='debug'><i
@@ -235,7 +235,7 @@
                                     <td class='step-details'>
                                         {% for key, value in record.meta_data.response_headers.items() %}
                                             <div>
-                                                <strong>{{ key }}</strong>: {{ value | safe }}
+                                                <strong>{{ key }}</strong>: {{ value }}
                                             </div>
                                         {% endfor %}</td>
                                 </tr>
@@ -247,7 +247,7 @@
                                         {% if record.meta_data.response_data_type == "image" %}
                                             <img src="{{ record.meta_data.response_body }}"/>
                                         {% else %}
-                                            <pre>{{ record.meta_data.response_body | safe }}</pre>
+                                            <pre>{{ record.meta_data.response_body }}</pre>
                                         {% endif %}
                                     </td>
                                 </tr>
