@@ -207,7 +207,7 @@
                       <td>
                         {% for key, value in record.meta_data.request_headers.items() %}
                         <div>
-                          <strong>{{ key }}</strong>: {{ value | safe }}
+                          <strong>{{ key }}</strong>: {{ value }}
                         </div>
                         {% endfor %}
                       </td>
@@ -216,7 +216,7 @@
                     <tr>
                       <th>body</th>
                       <td>
-                          <pre>{{ record.meta_data.request_body | safe }}</pre>
+                          <pre>{{ record.meta_data.request_body }}</pre>
                       </td>
                     </tr>
                     {% endif %}
@@ -238,7 +238,7 @@
                       <td>
                           {% for key, value in record.meta_data.response_headers.items() %}
                           <div>
-                            <strong>{{ key }}</strong>: {{ value | safe }}
+                            <strong>{{ key }}</strong>: {{ value }}
                           </div>
                           {% endfor %}
                       </td>
@@ -249,7 +249,7 @@
                         {% if record.meta_data.response_data_type == "image" %}
                           <img src="{{ record.meta_data.response_body }}" />
                         {% else %}
-                          <pre>{{ record.meta_data.response_body | safe }}</pre>
+                          <pre>{{ record.meta_data.response_body }}</pre>
                         {% endif %}
                       </td>
                     </tr>
