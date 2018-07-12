@@ -107,7 +107,7 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
     return report_path
 
 def stringify_body(meta_data, request_or_response):
-    headers = meta_data['{}_headers'.format(request_or_response)]
+    headers = meta_data.get('{}_headers'.format(request_or_response), {})
     body = meta_data.get('{}_body'.format(request_or_response))
 
     if isinstance(body, CaseInsensitiveDict):
