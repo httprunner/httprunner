@@ -262,8 +262,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         validators = [
             {"eq": ["$resp_status_code", 201]},
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True},
-            {"check": "${is_status_code_200($resp_status_code)}", "comparator": "eq", "expect": False}
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
         ]
         variables = [
             {"resp_status_code": 200},
@@ -272,8 +271,15 @@ class VariableBindsUnittest(ApiServerUnittest):
         self.context.bind_variables(variables)
 
         with self.assertRaises(exception.ValidationError):
-            self.context.validate(validators, resp_obj)
+            evaluated_validators = self.context.eval_validators(validators, resp_obj)
+            self.context.validate(evaluated_validators)
 
+        validators = [
+            {"eq": ["$resp_status_code", 201]},
+            {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
+            {"check": "$resp_body_success", "comparator": "eq", "expect": True},
+            {"check": "${is_status_code_200($resp_status_code)}", "comparator": "eq", "expect": False}
+        ]
         variables = [
             {"resp_status_code": 201},
             {"resp_body_success": True}
@@ -285,7 +291,8 @@ class VariableBindsUnittest(ApiServerUnittest):
         }
         self.context.bind_functions(functions)
 
-        self.assertTrue(self.context.validate(validators, resp_obj))
+        evaluated_validators = self.context.eval_validators(validators, resp_obj)
+        self.context.validate(evaluated_validators)
 
     def test_validate_exception(self):
         url = "http://127.0.0.1:5000/"
@@ -295,14 +302,14 @@ class VariableBindsUnittest(ApiServerUnittest):
         # expected value missed in validators
         validators = [
             {"eq": ["$resp_status_code", 201]},
-            {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+            {"check": "$resp_status_code", "comparator": "eq", "expect": 201}
         ]
         variables = []
         self.context.bind_variables(variables)
 
         with self.assertRaises(exception.ParamsError):
-            self.context.validate(validators, resp_obj)
+            evaluated_validators = self.context.eval_validators(validators, resp_obj)
+            self.context.validate(evaluated_validators)
 
         # expected value missed in variables mapping
         variables = [
@@ -311,4 +318,5 @@ class VariableBindsUnittest(ApiServerUnittest):
         self.context.bind_variables(variables)
 
         with self.assertRaises(exception.ValidationError):
-            self.context.validate(validators, resp_obj)
+            evaluated_validators = self.context.eval_validators(validators, resp_obj)
+            self.context.validate(evaluated_validators)

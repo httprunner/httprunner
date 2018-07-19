@@ -30,6 +30,15 @@
       background-color: skyblue;
       padding: 5px 12px;
     }
+    .details tr .passed {
+      background-color: lightgreen;
+    }
+    .details tr .failed {
+      background-color: red;
+    }
+    .details tr .unchecked {
+      background-color: gray;
+    }
     .details td {
       background-color: lightblue;
       padding: 5px 12px;
@@ -275,6 +284,34 @@
                       </td>
                     </tr>
                   </table>
+                </div>
+
+                <h3>Validators:</h3>
+                <div style="overflow: auto">
+                    <table>
+                      <tr>
+                        <th>check</th>
+                        <th>comparator</th>
+                        <th>expect value</th>
+                        <th>actual value</th>
+                      </tr>
+                      {% for validator in record.meta_data.validators %}
+                      <tr>
+                        {% if validator.check_result == "passed" %}
+                        <td class="passed">
+                        {% elif validator.check_result == "failed" %}
+                        <td class="failed">
+                        {% elif validator.check_result == "unchecked" %}
+                        <td class="unchecked">
+                        {% endif %}
+                          {{validator.check}}
+                        </td>
+                        <td>{{validator.comparator}}</td>
+                        <td>{{validator.expect}}</td>
+                        <td>{{validator.check_value}}</td>
+                      </tr>
+                      {% endfor %}
+                    </table>
                 </div>
 
                 <h3>Statistics:</h3>
