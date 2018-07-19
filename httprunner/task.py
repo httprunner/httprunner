@@ -9,7 +9,7 @@ from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
 from httprunner.testcase import TestcaseLoader
-from httprunner.utils import load_dot_env_file
+from httprunner.utils import load_dot_env_file, print_output
 
 
 class TestCase(unittest.TestCase):
@@ -259,12 +259,16 @@ class HttpRunner(object):
         for test_suite in test_suite_list:
             result = self.runner.run(test_suite)
             test_suite_summary = get_summary(result)
+
             self.summary["success"] &= test_suite_summary["success"]
             test_suite_summary["name"] = test_suite.config.get("name")
             test_suite_summary["base_url"] = test_suite.config.get("request", {}).get("base_url", "")
             test_suite_summary["output"] = test_suite.output
+            print_output(test_suite_summary["output"])
+
             accumulate_stat(self.summary["stat"], test_suite_summary["stat"])
             accumulate_stat(self.summary["time"], test_suite_summary["time"])
+
             self.summary["details"].append(test_suite_summary)
 
         return self
