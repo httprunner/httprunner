@@ -88,7 +88,9 @@ def main_hrun():
         )
 
     summary = runner.summary
-    print_output(summary["output"])
+    for suite_summary in summary["details"]:
+        print_output(suite_summary["output"])
+
     return 0 if summary["success"] else 1
 
 def main_locust():
