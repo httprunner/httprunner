@@ -206,13 +206,11 @@ class TestcaseLoader(object):
                 ]
         @return testset dict
             {
-                "name": "desc1",
                 "config": {},
                 "testcases": [testcase11, testcase12]
             }
         """
         testset = {
-            "name": "",
             "config": {
                 "path": file_path
             },
@@ -228,7 +226,6 @@ class TestcaseLoader(object):
 
             if key == "config":
                 testset["config"].update(test_block)
-                testset["name"] = test_block.get("name", "")
 
             elif key == "test":
                 if "api" in test_block:

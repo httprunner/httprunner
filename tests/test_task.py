@@ -73,8 +73,9 @@ class TestTask(ApiServerUnittest):
                 ]
             }
         ]
-        task_suite = task.TaskSuite(testsets)
+        test_suite_list = task.init_test_suites(testsets)
+        self.assertEqual(len(test_suite_list), 1)
+        task_suite = test_suite_list[0]
         self.assertEqual(task_suite.countTestCases(), 2)
-        for suite in task_suite:
-            for testcase in suite:
-                self.assertIsInstance(testcase, task.TestCase)
+        for testcase in task_suite:
+            self.assertIsInstance(testcase, task.TestCase)

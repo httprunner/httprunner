@@ -38,8 +38,7 @@ def get_summary(result):
             'skipped': len(result.skipped),
             'expectedFailures': len(result.expectedFailures),
             'unexpectedSuccesses': len(result.unexpectedSuccesses)
-        },
-        "platform": get_platform()
+        }
     }
     summary["stat"]["successes"] = summary["stat"]["testsRun"] \
         - summary["stat"]["failures"] \
@@ -90,10 +89,11 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
     if not os.path.isdir(report_dir_path):
         os.makedirs(report_dir_path)
 
-    for record in summary.get("records"):
-        meta_data = record['meta_data']
-        stringify_body(meta_data, 'request')
-        stringify_body(meta_data, 'response')
+    for suite_summary in summary["details"]:
+        for record in suite_summary.get("records"):
+            meta_data = record['meta_data']
+            stringify_body(meta_data, 'request')
+            stringify_body(meta_data, 'response')
 
     with io.open(html_report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()

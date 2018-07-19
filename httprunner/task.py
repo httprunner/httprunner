@@ -6,7 +6,8 @@ import unittest
 
 from httprunner import exception, logger, runner, testcase, utils
 from httprunner.compat import is_py3
-from httprunner.report import HtmlTestResult, get_summary, render_html_report
+from httprunner.report import (HtmlTestResult, get_platform, get_summary,
+                               render_html_report)
 from httprunner.testcase import TestcaseLoader
 from httprunner.utils import load_dot_env_file
 
@@ -28,6 +29,7 @@ class TestCase(unittest.TestCase):
             if hasattr(self.test_runner.http_client_session, "meta_data"):
                 self.meta_data = self.test_runner.http_client_session.meta_data
                 self.test_runner.http_client_session.init_meta_data()
+
 
 class TestSuite(unittest.TestSuite):
     """ create test suite with a testset, it may include one or several testcases.
@@ -64,12 +66,12 @@ class TestSuite(unittest.TestSuite):
         super(TestSuite, self).__init__()
         self.test_runner_list = []
 
-        config_dict = testset.get("config", {})
-        self.output_variables_list = config_dict.get("output", [])
-        self.testset_file_path = config_dict.get("path")
-        config_dict_parameters = config_dict.get("parameters", [])
+        self.config = testset.get("config", {})
+        self.output_variables_list = self.config.get("output", [])
+        self.testset_file_path = self.config.get("path")
+        config_dict_parameters = self.config.get("parameters", [])
 
-        config_dict_variables = config_dict.get("variables", [])
+        config_dict_variables = self.config.get("variables", [])
         variables_mapping = variables_mapping or {}
         config_dict_variables = utils.override_variables_binds(config_dict_variables, variables_mapping)
 
@@ -82,8 +84,8 @@ class TestSuite(unittest.TestSuite):
 
         for config_variables in config_parametered_variables_list:
             # config level
-            config_dict["variables"] = config_variables
-            test_runner = runner.Runner(config_dict, http_client_session)
+            self.config["variables"] = config_variables
+            test_runner = runner.Runner(self.config, http_client_session)
 
             for testcase_dict in testcases:
                 testcase_dict = copy.copy(testcase_dict)
@@ -148,55 +150,30 @@ class TestSuite(unittest.TestSuite):
             if not out:
                 continue
 
-            outputs.append({"in": variables, "out": out})
+            in_out = {"in": variables, "out": out}
+            if in_out not in outputs:
+                outputs.append(in_out)
 
         return outputs
 
-class TaskSuite(unittest.TestSuite):
-    """ create task suite with specified testcase path.
-        each task suite may include one or several test suite.
-    """
-    def __init__(self, testsets, mapping=None, http_client_session=None):
-        """
-        @params
-            testsets (dict/list): testset or list of testset
-                testset_dict
-                or
-                [
-                    testset_dict_1,
-                    testset_dict_2,
-                    {
-                        "name": "desc1",
-                        "config": {},
-                        "api": {},
-                        "testcases": [testcase11, testcase12]
-                    }
-                ]
-            mapping (dict):
-                passed in variables mapping, it will override variables in config block
-        """
-        super(TaskSuite, self).__init__()
-        mapping = mapping or {}
 
-        if not testsets:
-            raise exception.TestcaseNotFound
-
-        if isinstance(testsets, dict):
-            testsets = [testsets]
-
-        self.suite_list = []
-        for testset in testsets:
-            suite = TestSuite(testset, mapping, http_client_session)
-            self.addTest(suite)
-            self.suite_list.append(suite)
-
-    @property
-    def tasks(self):
-        return self.suite_list
-
-
-def init_task_suite(path_or_testsets, mapping=None, http_client_session=None):
-    """ initialize task suite
+def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
+    """ initialize TestSuite list with testset path or testset dict
+    @params
+        testsets (dict/list): testset or list of testset
+            testset_dict
+            or
+            [
+                testset_dict_1,
+                testset_dict_2,
+                {
+                    "config": {},
+                    "api": {},
+                    "testcases": [testcase11, testcase12]
+                }
+            ]
+        mapping (dict):
+            passed in variables mapping, it will override variables in config block
     """
     if not testcase.is_testsets(path_or_testsets):
         TestcaseLoader.load_test_dependencies()
@@ -206,7 +183,19 @@ def init_task_suite(path_or_testsets, mapping=None, http_client_session=None):
 
     # TODO: move comparator uniform here
     mapping = mapping or {}
-    return TaskSuite(testsets, mapping, http_client_session)
+
+    if not testsets:
+        raise exception.TestcaseNotFound
+
+    if isinstance(testsets, dict):
+        testsets = [testsets]
+
+    test_suite_list = []
+    for testset in testsets:
+        test_suite = TestSuite(testset, mapping, http_client_session)
+        test_suite_list.append(test_suite)
+
+    return test_suite_list
 
 
 class HttpRunner(object):
@@ -242,19 +231,42 @@ class HttpRunner(object):
             if mapping specified, it will override variables in config block
         """
         try:
-            task_suite = init_task_suite(path_or_testsets, mapping)
+            test_suite_list = init_test_suites(path_or_testsets, mapping)
         except exception.TestcaseNotFound:
             logger.log_error("Testcases not found in {}".format(path_or_testsets))
             sys.exit(1)
 
-        result = self.runner.run(task_suite)
-        self.summary = get_summary(result)
+        self.summary = {
+            "success": True,
+            "stat": {},
+            "time": {},
+            "platform": get_platform(),
+            "details": []
+        }
 
-        output = []
-        for task in task_suite.tasks:
-            output.extend(task.output)
+        def accumulate_stat(origin_stat, new_stat):
+            """ accumulate new_stat to origin_stat
+            """
+            for key in new_stat:
+                if key not in origin_stat:
+                    origin_stat[key] = new_stat[key]
+                elif key == "start_at":
+                    # start datetime
+                    origin_stat[key] = min(origin_stat[key], new_stat[key])
+                else:
+                    origin_stat[key] += new_stat[key]
 
-        self.summary["output"] = output
+        for test_suite in test_suite_list:
+            result = self.runner.run(test_suite)
+            test_suite_summary = get_summary(result)
+            self.summary["success"] &= test_suite_summary["success"]
+            test_suite_summary["name"] = test_suite.config.get("name")
+            test_suite_summary["base_url"] = test_suite.config.get("request", {}).get("base_url", "")
+            test_suite_summary["output"] = test_suite.output
+            accumulate_stat(self.summary["stat"], test_suite_summary["stat"])
+            accumulate_stat(self.summary["time"], test_suite_summary["time"])
+            self.summary["details"].append(test_suite_summary)
+
         return self
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
@@ -274,11 +286,11 @@ class HttpRunner(object):
 class LocustTask(object):
 
     def __init__(self, path_or_testsets, locust_client, mapping=None):
-        self.task_suite = init_task_suite(path_or_testsets, mapping, locust_client)
+        self.test_suite_list = init_test_suites(path_or_testsets, mapping, locust_client)
 
     def run(self):
-        for suite in self.task_suite:
-            for test in suite:
+        for test_suite in self.test_suite_list:
+            for test in test_suite:
                 try:
                     test.runTest()
                 except exception.MyBaseError as ex:

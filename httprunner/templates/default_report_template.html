@@ -9,7 +9,7 @@
       margin: 0 auto;
       width: 960px;
     }
-    #summary, #details {
+    #summary {
       width: 960px;
       margin-bottom: 20px;
     }
@@ -22,30 +22,34 @@
       text-align: center;
       padding: 4px 8px;
     }
-    #details th {
+    .details {
+      width: 960px;
+      margin-bottom: 20px;
+    }
+    .details th {
       background-color: skyblue;
       padding: 5px 12px;
     }
-    #details td {
+    .details td {
       background-color: lightblue;
       padding: 5px 12px;
     }
-    #details .detail {
+    .details .detail {
       background-color: lightgrey;
       font-size: smaller;
       padding: 5px 10px;
       text-align: center;
     }
-    #details .success {
+    .details .success {
       background-color: greenyellow;
     }
-    #details .error {
+    .details .error {
       background-color: red;
     }
-    #details .failure {
+    .details .failure {
       background-color: salmon;
     }
-    #details .skipped {
+    .details .skipped {
       background-color: gray;
     }
 
@@ -170,25 +174,42 @@
   </table>
 
   <h2>Details</h2>
-  <table id="details">
-    <tr>
-      <th>Status</th>
-      <th>Name</th>
-      <th>Response Time</th>
-      <th>Detail</th>
-    </tr>
-    {% for record in records %}
-      <tr id="record_{{loop.index}}">
+
+  {% for test_suite_summary in details %}
+  {% set suite_index = loop.index %}
+  <h3>{{test_suite_summary.name}}</h3>
+    <table class="details">
+      <tr>
+        <th>base_url</th>
+        <td colspan="4">{{test_suite_summary.base_url}}</td>
+      </tr>
+      <tr>
+        <td>TOTAL: {{test_suite_summary.stat.testsRun}}</td>
+        <td>SUCCESS: {{test_suite_summary.stat.successes}}</td>
+        <td>FAILED: {{test_suite_summary.stat.failures}}</td>
+        <td>ERROR: {{test_suite_summary.stat.errors}}</td>
+        <td>SKIPPED: {{test_suite_summary.stat.skipped}}</td>
+      </tr>
+      <tr>
+        <th>Status</th>
+        <th colspan="2">Name</th>
+        <th>Response Time</th>
+        <th>Detail</th>
+      </tr>
+
+      {% for record in test_suite_summary.records %}
+      {% set record_index = "{}_{}".format(suite_index, loop.index) %}
+      <tr id="record_{{record_index}}">
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
-        <td>{{record.name}}</td>
-        <td style="text-align:center;width:6em;">{{ record.meta_data["response_time_ms"] }} ms</td>
+        <td colspan="2">{{record.name}}</td>
+        <td style="text-align:center;width:6em;">{{ record.meta_data.response_time_ms }} ms</td>
         <td class="detail">
 
-          <a class="button" href="#popup_log_{{loop.index}}">log</a>
-          <div id="popup_log_{{loop.index}}" class="overlay">
+          <a class="button" href="#popup_log_{{record_index}}">log</a>
+          <div id="popup_log_{{record_index}}" class="overlay">
             <div class="popup">
               <h2>Request and Response data</h2>
-              <a class="close" href="#record_{{loop.index}}">&times;</a>
+              <a class="close" href="#record_{{record_index}}">&times;</a>
 
               <div class="content">
                 <h3>Request:</h3>
@@ -261,15 +282,15 @@
                   <table>
                     <tr>
                         <th>content_size(bytes)</th>
-                        <td>{{ record.meta_data["content_size"] }}</td>
+                        <td>{{ record.meta_data.content_size }}</td>
                       </tr>
                     <tr>
                       <th>response_time(ms)</th>
-                      <td>{{ record.meta_data["response_time_ms"] }}</td>
+                      <td>{{ record.meta_data.response_time_ms }}</td>
                     </tr>
                     <tr>
                       <th>elapsed(ms)</th>
-                      <td>{{ record.meta_data["elapsed_ms"] }}</td>
+                      <td>{{ record.meta_data.elapsed_ms }}</td>
                     </tr>
                   </table>
                 </div>
@@ -279,11 +300,11 @@
           </div>
 
           {% if record.attachment %}
-            <a class="button" href="#popup_attachment_{{loop.index}}">traceback</a>
-            <div id="popup_attachment_{{loop.index}}" class="overlay">
+            <a class="button" href="#popup_attachment_{{record_index}}">traceback</a>
+            <div id="popup_attachment_{{record_index}}" class="overlay">
               <div class="popup">
                 <h2>Traceback Message</h2>
-                <a class="close" href="#record_{{loop.index}}">&times;</a>
+                <a class="close" href="#record_{{record_index}}">&times;</a>
                 <div class="content"><pre>{{ record.attachment }}</pre></div>
               </div>
             </div>
@@ -292,5 +313,6 @@
         </td>
       </tr>
     {% endfor %}
-  </table>
+    </table>
+  {% endfor %}
 </body>
