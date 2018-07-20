@@ -152,7 +152,7 @@ class TestSuite(unittest.TestSuite):
                 continue
 
             in_out = {
-                "in": variables or {},
+                "in": dict(variables),
                 "out": out
             }
             if in_out not in outputs:
