@@ -187,10 +187,35 @@
   {% for test_suite_summary in details %}
   {% set suite_index = loop.index %}
   <h3>{{test_suite_summary.name}}</h3>
-    <table class="details">
+    <table id="suite_{{suite_index}}" class="details">
       <tr>
         <th>base_url</th>
-        <td colspan="4">{{test_suite_summary.base_url}}</td>
+        <td colspan="2">{{test_suite_summary.base_url}}</td>
+        <th colspan="2" class="detail">
+          <a class="button" href="#suite_output_{{suite_index}}">parameters & output</a>
+          <div id="suite_output_{{suite_index}}" class="overlay">
+              <div class="popup">
+                  <h2>Parameters and Output</h2>
+                  <a class="close" href="#suite_{{suite_index}}">&times;</a>
+                  <div class="content">
+                    <div style="overflow: auto">
+                        <table>
+                          <tr>
+                            <th>variables</th>
+                            <th>output</th>
+                          </tr>
+                          {% for in_out in test_suite_summary.output %}
+                          <tr>
+                            <td>{{in_out.in}}</td>
+                            <td>{{in_out.out}}</td>
+                          </tr>
+                          {% endfor %}
+                        </table>
+                    </div>
+                  </div>
+              </div>
+          </div>
+        </td>
       </tr>
       <tr>
         <td>TOTAL: {{test_suite_summary.stat.testsRun}}</td>
