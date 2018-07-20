@@ -151,7 +151,10 @@ class TestSuite(unittest.TestSuite):
             if not out:
                 continue
 
-            in_out = {"in": variables, "out": out}
+            in_out = {
+                "in": variables or {},
+                "out": out
+            }
             if in_out not in outputs:
                 outputs.append(in_out)
 
