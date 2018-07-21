@@ -121,7 +121,7 @@ def stringify_body(meta_data, request_or_response):
         resp_content_type = headers.get("Content-Type", "")
         try:
             if "image" in resp_content_type:
-                meta_data["response_data_type"] = "image"
+                meta_data["response"]["data_type"] = "image"
                 body = "data:{};base64,{}".format(
                     resp_content_type,
                     b64encode(body).decode('utf-8')
