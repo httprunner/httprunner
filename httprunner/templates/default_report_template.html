@@ -236,7 +236,7 @@
       <tr id="record_{{record_index}}">
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
         <td colspan="2">{{record.name}}</td>
-        <td style="text-align:center;width:6em;">{{ record.meta_data.response_time_ms }} ms</td>
+        <td style="text-align:center;width:6em;">{{ record.meta_data.response.response_time_ms }} ms</td>
         <td class="detail">
 
           <a class="button" href="#popup_log_{{record_index}}">log</a>
@@ -249,66 +249,51 @@
                 <h3>Request:</h3>
                 <div style="overflow: auto">
                   <table>
-                    <tr>
-                      <th>url</th>
-                      <td>{{ record.meta_data.url }}</td>
-                    </tr>
-                    <tr>
-                      <th>method</th>
-                      <td>{{ record.meta_data.method }}</td>
-                    </tr>
-                    <tr>
-                      <th>headers</th>
-                      <td>
-                        {% for key, value in record.meta_data.request_headers.items() %}
-                        <div>
-                          <strong>{{ key }}</strong>: {{ value }}
-                        </div>
-                        {% endfor %}
-                      </td>
-                    </tr>
-                    {% if record.meta_data.method in ["POST", "PUT"] %}
-                    <tr>
-                      <th>body</th>
-                      <td>
-                          <pre>{{ record.meta_data.request_body }}</pre>
-                      </td>
-                    </tr>
-                    {% endif %}
-
+                    {% for key, value in record.meta_data.request.items() %}
+                      <tr>
+                        <th>{{key}}</th>
+                        <td>
+                          {% if key == "headers" %}
+                            {% for header_key, header_value in record.meta_data.request.headers.items() %}
+                            <div>
+                              <strong>{{ header_key }}</strong>: {{ header_value }}
+                            </div>
+                            {% endfor %}
+                          {% else %}
+                            {{value}}
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
                   </table>
                 </div>
 
                 <h3>Response:</h3>
                 <div style="overflow: auto">
                   <table>
-                    <tr>
-                      <th>status_code</th>
-                      <td>
-                        {{ record.meta_data.status_code }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>headers</th>
-                      <td>
-                          {% for key, value in record.meta_data.response_headers.items() %}
-                          <div>
-                            <strong>{{ key }}</strong>: {{ value }}
-                          </div>
-                          {% endfor %}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>body</th>
-                      <td>
-                        {% if record.meta_data.response_data_type == "image" %}
-                          <img src="{{ record.meta_data.response_body }}" />
-                        {% else %}
-                          <pre>{{ record.meta_data.response_body }}</pre>
-                        {% endif %}
-                      </td>
-                    </tr>
-                  </table>
+                      {% for key, value in record.meta_data.response.items() %}
+                        <tr>
+                          <th>{{key}}</th>
+                          <td>
+                            {% if key == "headers" %}
+                              {% for header_key, header_value in record.meta_data.request.headers.items() %}
+                              <div>
+                                <strong>{{ header_key }}</strong>: {{ header_value }}
+                              </div>
+                              {% endfor %}
+                            {% elif key == "data_type" %}
+                              {% if value == "image" %}
+                                <img src="{{ record.meta_data.response.body }}" />
+                              {% else %}
+                                <pre>{{ record.meta_data.response.body }}</pre>
+                              {% endif %}
+                            {% else %}
+                              {{value}}
+                            {% endif %}
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </table>
                 </div>
 
                 <h3>Validators:</h3>
@@ -344,15 +329,15 @@
                   <table>
                     <tr>
                         <th>content_size(bytes)</th>
-                        <td>{{ record.meta_data.content_size }}</td>
+                        <td>{{ record.meta_data.response.content_size }}</td>
                       </tr>
                     <tr>
                       <th>response_time(ms)</th>
-                      <td>{{ record.meta_data.response_time_ms }}</td>
+                      <td>{{ record.meta_data.response.response_time_ms }}</td>
                     </tr>
                     <tr>
                       <th>elapsed(ms)</th>
-                      <td>{{ record.meta_data.elapsed_ms }}</td>
+                      <td>{{ record.meta_data.response.elapsed_ms }}</td>
                     </tr>
                   </table>
                 </div>

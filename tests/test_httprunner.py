@@ -137,7 +137,7 @@ class TestHttpRunner(ApiServerUnittest):
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
-        self.assertEqual(summary["details"][0]["records"][0]["meta_data"]["response_body"]["data"], "abc")
+        self.assertEqual(summary["details"][0]["records"][0]["meta_data"]["response"]["json"]["data"], "abc")
 
     def test_html_report_repsonse_image(self):
         testset_path = "tests/httpbin/load_image.yml"
