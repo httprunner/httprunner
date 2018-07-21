@@ -135,7 +135,7 @@ class HttpSession(requests.Session):
 
         # record actual request info
         self.meta_data["request"]["url"] = (response.history and response.history[0] or response).request.url
-        self.meta_data["request"]["headers"] = response.request.headers
+        self.meta_data["request"]["headers"] = dict(response.request.headers)
         self.meta_data["request"]["body"] = response.request.body
 
         # log request details in debug mode
@@ -146,7 +146,7 @@ class HttpSession(requests.Session):
         self.meta_data["response"]["url"] = response.url
         self.meta_data["response"]["status_code"] = response.status_code
         self.meta_data["response"]["reason"] = response.reason
-        self.meta_data["response"]["headers"] = response.headers
+        self.meta_data["response"]["headers"] = dict(response.headers)
         self.meta_data["response"]["cookies"] = response.cookies or {}
         self.meta_data["response"]["encoding"] = response.encoding
         self.meta_data["response"]["content"] = response.content
