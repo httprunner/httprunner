@@ -67,7 +67,9 @@ class HttpSession(requests.Session):
                 "content_size": "N/A",
                 "response_time_ms": "N/A",
                 "elapsed_ms": "N/A",
-                "content": None
+                "encoding": None,
+                "content": None,
+                "content_type": ""
             }
         }
 
@@ -151,6 +153,7 @@ class HttpSession(requests.Session):
         self.meta_data["response"]["encoding"] = response.encoding
         self.meta_data["response"]["content"] = response.content
         self.meta_data["response"]["text"] = response.text
+        self.meta_data["response"]["content_type"] = response.headers.get("Content-Type", "")
 
         try:
             self.meta_data["response"]["json"] = response.json()

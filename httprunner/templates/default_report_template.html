@@ -281,7 +281,7 @@
                                 <strong>{{ header_key }}</strong>: {{ header_value }}
                               </div>
                               {% endfor %}
-                            {% elif key == "data_type" %}
+                            {% elif key == "content_type" %}
                               {% if value == "image" %}
                                 <img src="{{ record.meta_data.response.body }}" />
                               {% else %}
