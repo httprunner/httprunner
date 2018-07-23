@@ -82,6 +82,16 @@ class ResponseObject(object):
                     err_msg += u"attribute: {}".format(sub_query)
                     logger.log_error(err_msg)
                     raise exception.ParamsError(err_msg)
+            elif top_query == "elapsed":
+                if sub_query in ["days", "seconds", "microseconds"]:
+                    return getattr(self.elapsed, sub_query)
+                elif sub_query == "total_seconds":
+                    return self.elapsed.total_seconds()
+                else:
+                    err_msg = "{}: {} is not valid timedelta attribute.\n".format(field, sub_query)
+                    err_msg += "elapsed only support attributes: days, seconds, microseconds, total_seconds.\n"
+                    logger.log_error(err_msg)
+                    raise exception.ParamsError(err_msg)
 
             try:
                 top_query_content = getattr(self, top_query)
@@ -96,11 +106,11 @@ class ResponseObject(object):
                         # TODO: remove compatibility for content, text
                         if isinstance(top_query_content, bytes):
                             top_query_content = top_query_content.decode("utf-8")
-                        
+
                         if isinstance(top_query_content, PreparedRequest):
                             top_query_content = top_query_content.__dict__
-                        else:                                                        
-                            top_query_content = json.loads(top_query_content) 
+                        else:
+                            top_query_content = json.loads(top_query_content)
                     except json.decoder.JSONDecodeError:
                         err_msg = u"Failed to extract data with delimiter!\n"
                         err_msg += u"response content: {}\n".format(self.content)
