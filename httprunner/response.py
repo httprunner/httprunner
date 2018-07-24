@@ -127,14 +127,14 @@ class ResponseObject(object):
         except AttributeError:
             err_msg = u"Failed to extract value from response!\n"
             err_msg += u"response content: {}\n".format(self.content)
-            err_msg += u"extract field: {}\n".format(field)
+            err_msg += u"extract: {}\n".format(field)
             logger.log_error(err_msg)
             raise exception.ParamsError(err_msg)
 
     def extract_field(self, field):
         """ extract value from requests.Response.
         """
-        msg = "extract field: {}".format(field)
+        msg = "extract: {}".format(field)
 
         try:
             if text_extractor_regexp_compile.match(field):
