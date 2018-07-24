@@ -307,9 +307,9 @@
                       </tr>
                       {% for validator in record.meta_data.validators %}
                       <tr>
-                        {% if validator.check_result == "passed" %}
+                        {% if validator.check_result == "pass" %}
                         <td class="passed">
-                        {% elif validator.check_result == "failed" %}
+                        {% elif validator.check_result == "fail" %}
                         <td class="failed">
                         {% elif validator.check_result == "unchecked" %}
                         <td class="unchecked">

@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import exception, testcase, utils
+from httprunner import exception, logger, testcase, utils
 from httprunner.compat import OrderedDict
 
 
@@ -237,32 +237,50 @@ class Context(object):
             and comparator not in ["is", "eq", "equals", "=="]:
             raise exception.ParamsError("Null value can only be compared with comparator: eq/equals/==")
 
-        try:
-            validator_dict["check_result"] = "passed"
-            validate_func(validator_dict["check_value"], validator_dict["expect"])
-        except (AssertionError, TypeError):
-            err_msg = "\n" + "\n".join([
-                "\tcheck item name: %s;" % check_item,
-                "\tcheck item value: %s (%s);" % (check_value, type(check_value).__name__),
-                "\tcomparator: %s;" % comparator,
-                "\texpected value: %s (%s)." % (expect_value, type(expect_value).__name__)
-            ])
-            validator_dict["check_result"] = "failed"
-            raise exception.ValidationError(err_msg)
+        validate_msg = "validate: {} {} {}({})".format(
+            check_item,
+            comparator,
+            expect_value,
+            type(expect_value).__name__
+        )
 
-    def eval_validators(self, validators, resp_obj):
-        """ evaluate validators with context variable mapping.
+        try:
+            validator_dict["check_result"] = "pass"
+            validate_func(check_value, expect_value)
+            validate_msg += "\t==> pass"
+            logger.log_debug(validate_msg)
+        except (AssertionError, TypeError):
+            validate_msg += "\t==> fail"
+            validate_msg += "\n{}({}) {} {}({})".format(
+                check_value,
+                type(check_value).__name__,
+                comparator,
+                expect_value,
+                type(expect_value).__name__
+            )
+            logger.log_error(validate_msg)
+            validator_dict["check_result"] = "fail"
+            raise exception.ValidationError(validate_msg)
+
+    def validate(self, validators, resp_obj):
+        """ make validations
         """
-        return [
-            self.eval_check_item(
+        self.evaluated_validators = []
+        validate_pass = True
+
+        for validator in validators:
+            # evaluate validators with context variable mapping.
+            evaluated_validator = self.eval_check_item(
                 testcase.parse_validator(validator),
                 resp_obj
             )
-            for validator in validators
-        ]
 
-    def validate(self, validators):
-        """ make validations
-        """
-        for validator_dict in validators:
-            self.do_validation(validator_dict)
+            try:
+                self.do_validation(evaluated_validator)
+            except exception.ValidationError:
+                validate_pass = False
+
+            self.evaluated_validators.append(evaluated_validator)
+
+        if not validate_pass:
+            raise exception.ValidationError

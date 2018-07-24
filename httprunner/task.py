@@ -28,7 +28,7 @@ class TestCase(unittest.TestCase):
         finally:
             if hasattr(self.test_runner.http_client_session, "meta_data"):
                 self.meta_data = self.test_runner.http_client_session.meta_data
-                self.meta_data["validators"] = self.test_runner.evaluated_validators
+                self.meta_data["validators"] = self.test_runner.context.evaluated_validators
                 self.test_runner.http_client_session.init_meta_data()
 
 

@@ -271,8 +271,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         self.context.bind_variables(variables)
 
         with self.assertRaises(exception.ValidationError):
-            evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(evaluated_validators)
+            self.context.validate(validators, resp_obj)
 
         validators = [
             {"eq": ["$resp_status_code", 201]},
@@ -291,8 +290,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         }
         self.context.bind_functions(functions)
 
-        evaluated_validators = self.context.eval_validators(validators, resp_obj)
-        self.context.validate(evaluated_validators)
+        self.context.validate(validators, resp_obj)
 
     def test_validate_exception(self):
         url = "http://127.0.0.1:5000/"
@@ -308,8 +306,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         self.context.bind_variables(variables)
 
         with self.assertRaises(exception.ParamsError):
-            evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(evaluated_validators)
+            self.context.validate(validators, resp_obj)
 
         # expected value missed in variables mapping
         variables = [
@@ -318,5 +315,4 @@ class VariableBindsUnittest(ApiServerUnittest):
         self.context.bind_variables(variables)
 
         with self.assertRaises(exception.ValidationError):
-            evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(evaluated_validators)
+            self.context.validate(validators, resp_obj)
