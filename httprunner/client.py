@@ -55,17 +55,22 @@ class HttpSession(requests.Session):
         """ initialize meta_data, it will store detail data of request and response
         """
         self.meta_data = {
-            "url": "N/A",
-            "method": "N/A",
-            "request_time": "N/A",
-            "request_headers": {},
-            "request_body": "N/A",
-            "status_code": "N/A",
-            "response_headers": {},
-            "response_body": "N/A",
-            "content_size": "N/A",
-            "response_time_ms": "N/A",
-            "elapsed_ms": "N/A"
+            "request": {
+                "url": "N/A",
+                "method": "N/A",
+                "headers": {},
+                "start_timestamp": None
+            },
+            "response": {
+                "status_code": "N/A",
+                "headers": {},
+                "content_size": "N/A",
+                "response_time_ms": "N/A",
+                "elapsed_ms": "N/A",
+                "encoding": None,
+                "content": None,
+                "content_type": ""
+            }
         }
 
     def request(self, method, url, name=None, **kwargs):
@@ -107,10 +112,17 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
+        def log_print(request_response):
+            msg = "\n================== {} details ==================\n".format(request_response)
+            for key, value in self.meta_data[request_response].items():
+                msg += "{:<16} : {}\n".format(key, value)
+            logger.log_debug(msg)
+
         # record original request info
-        self.meta_data["method"] = method
-        self.meta_data["url"] = url
-        self.meta_data["request_time"] = time.time()
+        self.meta_data["request"]["method"] = method
+        self.meta_data["request"]["url"] = url
+        self.meta_data["request"].update(kwargs)
+        self.meta_data["request"]["start_timestamp"] = time.time()
 
         # prepend url with hostname unless it's already an absolute URL
         url = self._build_url(url)
@@ -119,35 +131,44 @@ class HttpSession(requests.Session):
         response = self._send_request_safe_mode(method, url, **kwargs)
 
         # record the consumed time
-        self.meta_data["response_time_ms"] = round((time.time() - self.meta_data["request_time"]) * 1000, 2)
-        self.meta_data["elapsed_ms"] = response.elapsed.microseconds / 1000.0
+        self.meta_data["response"]["response_time_ms"] = \
+            round((time.time() - self.meta_data["request"]["start_timestamp"]) * 1000, 2)
+        self.meta_data["response"]["elapsed_ms"] = response.elapsed.microseconds / 1000.0
 
         # record actual request info
-        self.meta_data["url"] = (response.history and response.history[0] or response).request.url
-        self.meta_data["request_headers"] = response.request.headers
-        self.meta_data["request_body"] = response.request.body
+        self.meta_data["request"]["url"] = (response.history and response.history[0] or response).request.url
+        self.meta_data["request"]["headers"] = dict(response.request.headers)
+        self.meta_data["request"]["body"] = response.request.body
+
+        # log request details in debug mode
+        log_print("request")
 
         # record response info
-        self.meta_data["status_code"] = response.status_code
-        self.meta_data["response_headers"] = response.headers
-        try:
-            self.meta_data["response_body"] = response.json()
-        except ValueError:
-            self.meta_data["response_body"] = response.content
+        self.meta_data["response"]["ok"] = response.ok
+        self.meta_data["response"]["url"] = response.url
+        self.meta_data["response"]["status_code"] = response.status_code
+        self.meta_data["response"]["reason"] = response.reason
+        self.meta_data["response"]["headers"] = dict(response.headers)
+        self.meta_data["response"]["cookies"] = response.cookies or {}
+        self.meta_data["response"]["encoding"] = response.encoding
+        self.meta_data["response"]["content"] = response.content
+        self.meta_data["response"]["text"] = response.text
+        self.meta_data["response"]["content_type"] = response.headers.get("Content-Type", "")
 
-        # log response details in debug mode
-        msg = "response details:\n"
-        msg += "> status_code: {}\n".format(self.meta_data["status_code"])
-        msg += "> headers: {}\n".format(self.meta_data["response_headers"])
-        msg += "> body: {}".format(self.meta_data["response_body"])
-        logger.log_debug(msg)
+        try:
+            self.meta_data["response"]["json"] = response.json()
+        except ValueError:
+            self.meta_data["response"]["json"] = None
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body
         if kwargs.get("stream", False):
-            self.meta_data["content_size"] = int(self.meta_data["response_headers"].get("content-length") or 0)
+            self.meta_data["response"]["content_size"] = int(self.meta_data["response"]["headers"].get("content-length") or 0)
         else:
-            self.meta_data["content_size"] = len(response.content or "")
+            self.meta_data["response"]["content_size"] = len(response.content or "")
+
+        # log response details in debug mode
+        log_print("response")
 
         try:
             response.raise_for_status()
@@ -156,9 +177,9 @@ class HttpSession(requests.Session):
         else:
             logger.log_info(
                 """status_code: {}, response_time(ms): {} ms, response_length: {} bytes""".format(
-                    self.meta_data["status_code"],
-                    self.meta_data["response_time_ms"],
-                    self.meta_data["content_size"]
+                    self.meta_data["response"]["status_code"],
+                    self.meta_data["response"]["response_time_ms"],
+                    self.meta_data["response"]["content_size"]
                 )
             )
 
