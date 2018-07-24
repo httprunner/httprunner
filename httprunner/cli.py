@@ -11,8 +11,7 @@ from httprunner.__about__ import __description__, __version__
 from httprunner.compat import is_py2
 from httprunner.task import HttpRunner
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                              prettify_json_file, print_output,
-                              validate_json_file)
+                              prettify_json_file, validate_json_file)
 
 
 def main_hrun():
@@ -88,7 +87,6 @@ def main_hrun():
         )
 
     summary = runner.summary
-    print_output(summary["output"])
     return 0 if summary["success"] else 1
 
 def main_locust():

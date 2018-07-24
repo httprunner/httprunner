@@ -9,7 +9,7 @@
       margin: 0 auto;
       width: 960px;
     }
-    #summary, #details {
+    #summary {
       width: 960px;
       margin-bottom: 20px;
     }
@@ -22,30 +22,43 @@
       text-align: center;
       padding: 4px 8px;
     }
-    #details th {
+    .details {
+      width: 960px;
+      margin-bottom: 20px;
+    }
+    .details th {
       background-color: skyblue;
       padding: 5px 12px;
     }
-    #details td {
+    .details tr .passed {
+      background-color: lightgreen;
+    }
+    .details tr .failed {
+      background-color: red;
+    }
+    .details tr .unchecked {
+      background-color: gray;
+    }
+    .details td {
       background-color: lightblue;
       padding: 5px 12px;
     }
-    #details .detail {
+    .details .detail {
       background-color: lightgrey;
       font-size: smaller;
       padding: 5px 10px;
       text-align: center;
     }
-    #details .success {
+    .details .success {
       background-color: greenyellow;
     }
-    #details .error {
+    .details .error {
       background-color: red;
     }
-    #details .failure {
+    .details .failure {
       background-color: salmon;
     }
-    #details .skipped {
+    .details .skipped {
       background-color: gray;
     }
 
@@ -137,7 +150,7 @@
 
     <tr>
       <th>START AT</th>
-      <td colspan="4">{{time.start_at.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+      <td colspan="4">{{time.start_datetime}}</td>
     </tr>
     <tr>
       <th>DURATION</th>
@@ -170,90 +183,145 @@
   </table>
 
   <h2>Details</h2>
-  <table id="details">
-    <tr>
-      <th>Status</th>
-      <th>Name</th>
-      <th>Response Time</th>
-      <th>Detail</th>
-    </tr>
-    {% for record in records %}
-      <tr id="record_{{loop.index}}">
+
+  {% for test_suite_summary in details %}
+  {% set suite_index = loop.index %}
+  <h3>{{test_suite_summary.name}}</h3>
+    <table id="suite_{{suite_index}}" class="details">
+      <tr>
+        <th>base_url</th>
+        <td colspan="2">{{test_suite_summary.base_url}}</td>
+        <th colspan="2" class="detail">
+          <a class="button" href="#suite_output_{{suite_index}}">parameters & output</a>
+          <div id="suite_output_{{suite_index}}" class="overlay">
+              <div class="popup">
+                  <h2>Parameters and Output</h2>
+                  <a class="close" href="#suite_{{suite_index}}">&times;</a>
+                  <div class="content">
+                    <div style="overflow: auto">
+                        <table>
+                          <tr>
+                            <th>variables</th>
+                            <th>output</th>
+                          </tr>
+                          {% for in_out in test_suite_summary.output %}
+                          <tr>
+                            <td>{{in_out.in}}</td>
+                            <td>{{in_out.out}}</td>
+                          </tr>
+                          {% endfor %}
+                        </table>
+                    </div>
+                  </div>
+              </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>TOTAL: {{test_suite_summary.stat.testsRun}}</td>
+        <td>SUCCESS: {{test_suite_summary.stat.successes}}</td>
+        <td>FAILED: {{test_suite_summary.stat.failures}}</td>
+        <td>ERROR: {{test_suite_summary.stat.errors}}</td>
+        <td>SKIPPED: {{test_suite_summary.stat.skipped}}</td>
+      </tr>
+      <tr>
+        <th>Status</th>
+        <th colspan="2">Name</th>
+        <th>Response Time</th>
+        <th>Detail</th>
+      </tr>
+
+      {% for record in test_suite_summary.records %}
+      {% set record_index = "{}_{}".format(suite_index, loop.index) %}
+      <tr id="record_{{record_index}}">
         <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
-        <td>{{record.name}}</td>
-        <td style="text-align:center;width:6em;">{{ record.meta_data["response_time_ms"] }} ms</td>
+        <td colspan="2">{{record.name}}</td>
+        <td style="text-align:center;width:6em;">{{ record.meta_data.response.response_time_ms }} ms</td>
         <td class="detail">
 
-          <a class="button" href="#popup_log_{{loop.index}}">log</a>
-          <div id="popup_log_{{loop.index}}" class="overlay">
+          <a class="button" href="#popup_log_{{record_index}}">log</a>
+          <div id="popup_log_{{record_index}}" class="overlay">
             <div class="popup">
               <h2>Request and Response data</h2>
-              <a class="close" href="#record_{{loop.index}}">&times;</a>
+              <a class="close" href="#record_{{record_index}}">&times;</a>
 
               <div class="content">
                 <h3>Request:</h3>
                 <div style="overflow: auto">
                   <table>
-                    <tr>
-                      <th>url</th>
-                      <td>{{ record.meta_data.url }}</td>
-                    </tr>
-                    <tr>
-                      <th>method</th>
-                      <td>{{ record.meta_data.method }}</td>
-                    </tr>
-                    <tr>
-                      <th>headers</th>
-                      <td>
-                        {% for key, value in record.meta_data.request_headers.items() %}
-                        <div>
-                          <strong>{{ key }}</strong>: {{ value }}
-                        </div>
-                        {% endfor %}
-                      </td>
-                    </tr>
-                    {% if record.meta_data.method in ["POST", "PUT"] %}
-                    <tr>
-                      <th>body</th>
-                      <td>
-                          <pre>{{ record.meta_data.request_body }}</pre>
-                      </td>
-                    </tr>
-                    {% endif %}
-
+                    {% for key, value in record.meta_data.request.items() %}
+                      <tr>
+                        <th>{{key}}</th>
+                        <td>
+                          {% if key == "headers" %}
+                            {% for header_key, header_value in record.meta_data.request.headers.items() %}
+                            <div>
+                              <strong>{{ header_key }}</strong>: {{ header_value }}
+                            </div>
+                            {% endfor %}
+                          {% else %}
+                            {{value}}
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
                   </table>
                 </div>
 
                 <h3>Response:</h3>
                 <div style="overflow: auto">
                   <table>
-                    <tr>
-                      <th>status_code</th>
-                      <td>
-                        {{ record.meta_data.status_code }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>headers</th>
-                      <td>
-                          {% for key, value in record.meta_data.response_headers.items() %}
-                          <div>
-                            <strong>{{ key }}</strong>: {{ value }}
-                          </div>
-                          {% endfor %}
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>body</th>
-                      <td>
-                        {% if record.meta_data.response_data_type == "image" %}
-                          <img src="{{ record.meta_data.response_body }}" />
-                        {% else %}
-                          <pre>{{ record.meta_data.response_body }}</pre>
+                      {% for key, value in record.meta_data.response.items() %}
+                        <tr>
+                          <th>{{key}}</th>
+                          <td>
+                            {% if key == "headers" %}
+                              {% for header_key, header_value in record.meta_data.request.headers.items() %}
+                              <div>
+                                <strong>{{ header_key }}</strong>: {{ header_value }}
+                              </div>
+                              {% endfor %}
+                            {% elif key == "content_type" %}
+                              {% if value == "image" %}
+                                <img src="{{ record.meta_data.response.body }}" />
+                              {% else %}
+                                <pre>{{ record.meta_data.response.body }}</pre>
+                              {% endif %}
+                            {% else %}
+                              {{value}}
+                            {% endif %}
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    </table>
+                </div>
+
+                <h3>Validators:</h3>
+                <div style="overflow: auto">
+                    <table>
+                      <tr>
+                        <th>check</th>
+                        <th>comparator</th>
+                        <th>expect value</th>
+                        <th>actual value</th>
+                      </tr>
+                      {% for validator in record.meta_data.validators %}
+                      <tr>
+                        {% if validator.check_result == "passed" %}
+                        <td class="passed">
+                        {% elif validator.check_result == "failed" %}
+                        <td class="failed">
+                        {% elif validator.check_result == "unchecked" %}
+                        <td class="unchecked">
                         {% endif %}
-                      </td>
-                    </tr>
-                  </table>
+                          {{validator.check}}
+                        </td>
+                        <td>{{validator.comparator}}</td>
+                        <td>{{validator.expect}}</td>
+                        <td>{{validator.check_value}}</td>
+                      </tr>
+                      {% endfor %}
+                    </table>
                 </div>
 
                 <h3>Statistics:</h3>
@@ -261,15 +329,15 @@
                   <table>
                     <tr>
                         <th>content_size(bytes)</th>
-                        <td>{{ record.meta_data["content_size"] }}</td>
+                        <td>{{ record.meta_data.response.content_size }}</td>
                       </tr>
                     <tr>
                       <th>response_time(ms)</th>
-                      <td>{{ record.meta_data["response_time_ms"] }}</td>
+                      <td>{{ record.meta_data.response.response_time_ms }}</td>
                     </tr>
                     <tr>
                       <th>elapsed(ms)</th>
-                      <td>{{ record.meta_data["elapsed_ms"] }}</td>
+                      <td>{{ record.meta_data.response.elapsed_ms }}</td>
                     </tr>
                   </table>
                 </div>
@@ -279,11 +347,11 @@
           </div>
 
           {% if record.attachment %}
-            <a class="button" href="#popup_attachment_{{loop.index}}">traceback</a>
-            <div id="popup_attachment_{{loop.index}}" class="overlay">
+            <a class="button" href="#popup_attachment_{{record_index}}">traceback</a>
+            <div id="popup_attachment_{{record_index}}" class="overlay">
               <div class="popup">
                 <h2>Traceback Message</h2>
-                <a class="close" href="#record_{{loop.index}}">&times;</a>
+                <a class="close" href="#record_{{record_index}}">&times;</a>
                 <div class="content"><pre>{{ record.attachment }}</pre></div>
               </div>
             </div>
@@ -292,5 +360,6 @@
         </td>
       </tr>
     {% endfor %}
-  </table>
+    </table>
+  {% endfor %}
 </body>

@@ -216,12 +216,13 @@ class Context(object):
         # 2, actual value, e.g. 200
         expect_value = self.eval_content(validator["expect"])
         validator["expect"] = expect_value
+        validator["check_result"] = "unchecked"
         return validator
 
     def do_validation(self, validator_dict):
         """ validate with functions
         """
-        # TODO: move comparator uniform to init_task_suite
+        # TODO: move comparator uniform to init_test_suites
         comparator = utils.get_uniform_comparator(validator_dict["comparator"])
         validate_func = self.testcase_parser.get_bind_function(comparator)
 
@@ -237,6 +238,7 @@ class Context(object):
             raise exception.ParamsError("Null value can only be compared with comparator: eq/equals/==")
 
         try:
+            validator_dict["check_result"] = "passed"
             validate_func(validator_dict["check_value"], validator_dict["expect"])
         except (AssertionError, TypeError):
             err_msg = "\n" + "\n".join([
@@ -245,18 +247,22 @@ class Context(object):
                 "\tcomparator: %s;" % comparator,
                 "\texpected value: %s (%s)." % (expect_value, type(expect_value).__name__)
             ])
+            validator_dict["check_result"] = "failed"
             raise exception.ValidationError(err_msg)
 
-    def validate(self, validators, resp_obj):
-        """ check validators with the context variable mapping.
-        @param (list) validators
-        @param (object) resp_obj
+    def eval_validators(self, validators, resp_obj):
+        """ evaluate validators with context variable mapping.
         """
-        for validator in validators:
-            validator_dict = self.eval_check_item(
+        return [
+            self.eval_check_item(
                 testcase.parse_validator(validator),
                 resp_obj
             )
-            self.do_validation(validator_dict)
+            for validator in validators
+        ]
 
-        return True
+    def validate(self, validators):
+        """ make validations
+        """
+        for validator_dict in validators:
+            self.do_validation(validator_dict)

@@ -34,7 +34,6 @@ class TestTestcaseLoader(unittest.TestCase):
     def test_load_test_file_suite(self):
         TestcaseLoader.load_api_file("tests/api/basic.yml")
         testset = TestcaseLoader.load_test_file("tests/suite/create_and_get.yml")
-        self.assertEqual(testset["name"], "create user and check result.")
         self.assertEqual(testset["config"]["name"], "create user and check result.")
         self.assertEqual(len(testset["testcases"]), 3)
         self.assertEqual(testset["testcases"][0]["name"], "make sure user $uid does not exist")
@@ -43,7 +42,7 @@ class TestTestcaseLoader(unittest.TestCase):
     def test_load_test_file_testcase(self):
         TestcaseLoader.load_test_dependencies()
         testset = TestcaseLoader.load_test_file("tests/testcases/smoketest.yml")
-        self.assertEqual(testset["name"], "smoketest")
+        self.assertEqual(testset["config"]["name"], "smoketest")
         self.assertEqual(testset["config"]["path"], "tests/testcases/smoketest.yml")
         self.assertIn("device_sn", testset["config"]["variables"][0])
         self.assertEqual(len(testset["testcases"]), 8)
@@ -76,7 +75,7 @@ class TestTestcaseLoader(unittest.TestCase):
     def test_get_test_definition_suite(self):
         TestcaseLoader.load_test_dependencies()
         api_def = TestcaseLoader._get_test_definition("create_and_check", "suite")
-        self.assertEqual(api_def["name"], "create user and check result.")
+        self.assertEqual(api_def["config"]["name"], "create user and check result.")
 
         with self.assertRaises(SuiteNotFound):
             TestcaseLoader._get_test_definition("create_and_check_XXX", "suite")
