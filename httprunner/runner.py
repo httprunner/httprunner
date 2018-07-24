@@ -11,7 +11,6 @@ class Runner(object):
 
     def __init__(self, config_dict=None, http_client_session=None):
         self.http_client_session = http_client_session
-        self.evaluated_validators = []
         self.context = Context()
 
         config_dict = config_dict or {}
@@ -183,8 +182,7 @@ class Runner(object):
         # validate
         validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
-            self.evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(self.evaluated_validators)
+            self.context.validate(validators, resp_obj)
         except (exception.ParamsError, exception.ResponseError, \
             exception.ValidationError, exception.ParseResponseError):
             # log request
