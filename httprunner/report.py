@@ -90,7 +90,9 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
     if not os.path.isdir(report_dir_path):
         os.makedirs(report_dir_path)
 
-    for suite_summary in summary["details"]:
+    for index, suite_summary in enumerate(summary["details"]):
+        if not suite_summary.get("name"):
+            suite_summary["name"] = "test suite {}".format(index)
         for record in suite_summary.get("records"):
             meta_data = record['meta_data']
             stringify_data(meta_data, 'request')
