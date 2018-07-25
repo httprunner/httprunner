@@ -28,20 +28,7 @@ class TestResponse(ApiServerUnittest):
         self.assertEqual(bytes, type(resp_obj.content))
 
     def test_extract_response_status_code(self):
-        resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
-            json={
-                'success': False,
-                "person": {
-                    "name": {
-                        "first_name": "Leo",
-                        "last_name": "Lee",
-                    },
-                    "age": 29,
-                    "cities": ["Guangzhou", "Shenzhen"]
-                }
-            }
-        )
+        resp = requests.get(url="http://127.0.0.1:3458/status/200")
         resp_obj = response.ResponseObject(resp)
 
         extract_binds_list = [
@@ -125,6 +112,24 @@ class TestResponse(ApiServerUnittest):
         with self.assertRaises(exceptions.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
+    def test_extract_response_headers(self):
+        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_headers": "headers"},
+            {"resp_headers_content_type": "headers.Content-Type"}
+        ]
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+        self.assertIn("Content-Type", extract_binds_dict["resp_headers"])
+        self.assertIn("text/html", extract_binds_dict["resp_headers_content_type"])
+
+        extract_binds_list = [
+            {"resp_headers_xxx": "headers.xxx"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_extract_response_json(self):
         resp = requests.post(
             url="http://127.0.0.1:3458/anything",
@@ -140,7 +145,7 @@ class TestResponse(ApiServerUnittest):
                 }
             }
         )
-        # resp.text
+        # resp.json()
         # {
         #     "args": {},
         #     "data": "{\"success\": false, \"person\": {\"name\": {\"first_name\": \"Leo\", \"last_name\": \"Lee\"}, \"age\": 29, \"cities\": [\"Guangzhou\", \"Shenzhen\"]}}",
@@ -175,7 +180,6 @@ class TestResponse(ApiServerUnittest):
         # }
 
         extract_binds_list = [
-            {"resp_status_code": "status_code"},
             {"resp_headers_content_type": "headers.content-type"},
             {"resp_content_body_success": "json.json.success"},
             {"resp_content_content_success": "content.json.success"},
