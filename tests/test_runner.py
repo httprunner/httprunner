@@ -66,7 +66,7 @@ class TestRunner(ApiServerUnittest):
             ]
         }
 
-        with self.assertRaises(exception.ValidationError):
+        with self.assertRaises(exception.ValidationFailure):
             self.test_runner.run_test(test)
 
     def test_run_testset_with_hooks(self):

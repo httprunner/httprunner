@@ -111,7 +111,7 @@ class ResponseObject(object):
                             top_query_content = top_query_content.__dict__
                         else:
                             top_query_content = json.loads(top_query_content)
-                    except json.decoder.JSONDecodeError:
+                    except exception.JSONDecodeError:
                         err_msg = u"Failed to extract data with delimiter!\n"
                         err_msg += u"response content: {}\n".format(self.content)
                         err_msg += u"regex: {}\n".format(field)
@@ -145,8 +145,8 @@ class ResponseObject(object):
             msg += "\t=> {}".format(value)
             logger.log_debug(msg)
 
-        # TODO: unify ParseResponseError type
-        except (exception.ParseResponseError, TypeError):
+        # TODO: unify ParseResponseFailure type
+        except (exception.ParseResponseFailure, TypeError):
             logger.log_error("failed to extract field: {}".format(field))
             raise
 

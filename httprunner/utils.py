@@ -117,7 +117,7 @@ class FileUtils(object):
     @staticmethod
     def load_file(file_path):
         if not os.path.isfile(file_path):
-            raise exception.FileNotFoundError("{} does not exist.".format(file_path))
+            raise exception.FileNotFound("{} does not exist.".format(file_path))
 
         file_suffix = os.path.splitext(file_path)[1].lower()
         if file_suffix == '.json':
@@ -190,7 +190,7 @@ def query_json(json_content, query, delimiter='.'):
     @return queried result
     """
     if json_content == "":
-        raise exception.ResponseError("response content is empty!")
+        raise exception.ResponseFailure("response content is empty!")
 
     try:
         for key in query.split(delimiter):
@@ -199,10 +199,10 @@ def query_json(json_content, query, delimiter='.'):
             elif isinstance(json_content, (dict, CaseInsensitiveDict)):
                 json_content = json_content[key]
             else:
-                raise exception.ParseResponseError(
+                raise exception.ParseResponseFailure(
                     "response content is in text format! failed to query key {}!".format(key))
     except (KeyError, ValueError, IndexError):
-        raise exception.ParseResponseError("failed to query json when extracting response!")
+        raise exception.ParseResponseFailure("failed to query json when extracting response!")
 
     return json_content
 
@@ -507,7 +507,7 @@ def load_dot_env_file(path):
             return
     else:
         if not os.path.isfile(path):
-            raise exception.FileNotFoundError("env file not exist: {}".format(path))
+            raise exception.FileNotFound("env file not exist: {}".format(path))
 
     logger.log_info("Loading environment variables from {}".format(path))
     with io.open(path, 'r', encoding='utf-8') as fp:
