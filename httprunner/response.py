@@ -44,7 +44,7 @@ class ResponseObject(object):
         """
         matched = re.search(field, self.text)
         if not matched:
-            err_msg = u"ExtractFailure: Failed to extract data with regex! => {}\n".format(field)
+            err_msg = u"Failed to extract data with regex! => {}\n".format(field)
             err_msg += u"response content: {}\n".format(self.content)
             logger.log_error(err_msg)
             raise exceptions.ExtractFailure(err_msg)
@@ -74,7 +74,7 @@ class ResponseObject(object):
         if top_query in ["status_code", "encoding", "ok", "reason", "url"]:
             if sub_query:
                 # status_code.XX
-                err_msg = u"ParamsError: {}\n".format(field)
+                err_msg = u"Failed to extract: {}\n".format(field)
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
 
@@ -90,7 +90,7 @@ class ResponseObject(object):
             try:
                 return cookies[sub_query]
             except KeyError:
-                err_msg = u"ExtractFailure: Failed to extract cookie! => {}\n".format(field)
+                err_msg = u"Failed to extract cookie! => {}\n".format(field)
                 err_msg += u"response cookies: {}\n".format(cookies)
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
@@ -99,7 +99,7 @@ class ResponseObject(object):
         elif top_query == "elapsed":
             available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
             if not sub_query:
-                err_msg = u"ParamsError: elapsed is datetime.timedelta instance, attribute should also be specified!\n"
+                err_msg = u"elapsed is datetime.timedelta instance, attribute should also be specified!\n"
                 err_msg += available_attributes
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
@@ -108,7 +108,7 @@ class ResponseObject(object):
             elif sub_query == "total_seconds":
                 return self.elapsed.total_seconds()
             else:
-                err_msg = "ParamsError: {} is not valid datetime.timedelta attribute.\n".format(sub_query)
+                err_msg = "{} is not valid datetime.timedelta attribute.\n".format(sub_query)
                 err_msg += available_attributes
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
@@ -123,7 +123,7 @@ class ResponseObject(object):
             try:
                 return headers[sub_query]
             except KeyError:
-                err_msg = u"ExtractFailure: Failed to extract header! => {}\n".format(field)
+                err_msg = u"Failed to extract header! => {}\n".format(field)
                 err_msg += u"response headers: {}\n".format(headers)
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
@@ -147,14 +147,14 @@ class ResponseObject(object):
                 return utils.query_json(body, sub_query)
             else:
                 # content = "<html>abcdefg</html>", content.xxx
-                err_msg = u"ExtractFailure: Failed to extract attribute from response body! => {}\n".format(field)
+                err_msg = u"Failed to extract attribute from response body! => {}\n".format(field)
                 err_msg += u"response body: {}\n".format(body)
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
 
         # others
         else:
-            err_msg = u"ParamsError: Failed to extract attribute from response! => {}\n".format(field)
+            err_msg = u"Failed to extract attribute from response! => {}\n".format(field)
             err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json, encoding, ok, reason, url."
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
@@ -163,7 +163,7 @@ class ResponseObject(object):
         """ extract value from requests.Response.
         """
         if not isinstance(field, basestring):
-            err_msg = u"ParamsError: Invalid extractor! => {}\n".format(field)
+            err_msg = u"Invalid extractor! => {}\n".format(field)
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 

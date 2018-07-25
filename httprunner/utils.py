@@ -204,7 +204,7 @@ def query_json(json_content, query, delimiter='.'):
         raise_flag = True
 
     if raise_flag:
-        err_msg = u"ExtractFailure: Failed to extract! => {}\n".format(query)
+        err_msg = u"Failed to extract! => {}\n".format(query)
         err_msg += response_body
         logger.log_error(err_msg)
         raise exceptions.ExtractFailure(err_msg)

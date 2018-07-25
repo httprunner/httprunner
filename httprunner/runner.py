@@ -159,8 +159,8 @@ class Runner(object):
         # TODO: move method validation to json schema
         valid_methods = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
         if method.upper() not in valid_methods:
-            err_msg = u"ParamsError: invalid HTTP method! => {}\n".format(method)
-            err_msg += "available HTTP methods: {}".format("/".join(valid_methods))
+            err_msg = u"Invalid HTTP method! => {}\n".format(method)
+            err_msg += "Available HTTP methods: {}".format("/".join(valid_methods))
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
