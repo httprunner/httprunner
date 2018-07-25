@@ -8,7 +8,11 @@ This module handles import compatibility issues between Python 2 and
 Python 3.
 """
 
-import json
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
 import sys
 
 # -------
@@ -29,6 +33,11 @@ is_py3 = (_ver[0] == 3)
 # Specifics
 # ---------
 
+try:
+    JSONDecodeError = json.JSONDecodeError
+except AttributeError:
+    JSONDecodeError = ValueError
+
 if is_py2:
     from urllib3.packages.ordered_dict import OrderedDict
 
@@ -40,7 +49,6 @@ if is_py2:
     integer_types = (int, long)
 
     FileNotFoundError = IOError
-    JSONDecodeError = ValueError
 
 elif is_py3:
     from collections import OrderedDict
@@ -53,4 +61,3 @@ elif is_py3:
     integer_types = (int,)
 
     FileNotFoundError = FileNotFoundError
-    JSONDecodeError = json.decoder.JSONDecodeError
