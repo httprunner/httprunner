@@ -40,7 +40,7 @@ if is_py2:
     integer_types = (int, long)
 
     FileNotFoundError = IOError
-    JSONDecodeError = json.decoder.JSONDecodeError
+    JSONDecodeError = ValueError
 
 elif is_py3:
     from collections import OrderedDict
@@ -53,4 +53,4 @@ elif is_py3:
     integer_types = (int,)
 
     FileNotFoundError = FileNotFoundError
-    JSONDecodeError = ValueError
+    JSONDecodeError = json.decoder.JSONDecodeError
