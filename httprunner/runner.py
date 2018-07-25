@@ -183,8 +183,8 @@ class Runner(object):
         validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
             self.context.validate(validators, resp_obj)
-        except (exceptions.ParamsError, exceptions.ResponseFailure, \
-            exceptions.ValidationFailure, exceptions.ParseResponseFailure):
+        except (exceptions.ParamsError, \
+                exceptions.ValidationFailure, exceptions.ParseResponseFailure):
             # log request
             err_req_msg = "request: \n"
             err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))
