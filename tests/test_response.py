@@ -1,6 +1,6 @@
 import requests
 from httprunner import exceptions, response, utils
-from httprunner.compat import bytes
+from httprunner.compat import bytes, str
 from tests.base import ApiServerUnittest
 
 
@@ -118,11 +118,13 @@ class TestResponse(ApiServerUnittest):
 
         extract_binds_list = [
             {"resp_headers": "headers"},
-            {"resp_headers_content_type": "headers.Content-Type"}
+            {"resp_headers_content_type": "headers.Content-Type"},
+            {"resp_headers_content_type_lowercase": "headers.content-type"}
         ]
         extract_binds_dict = resp_obj.extract_response(extract_binds_list)
         self.assertIn("Content-Type", extract_binds_dict["resp_headers"])
         self.assertIn("text/html", extract_binds_dict["resp_headers_content_type"])
+        self.assertIn("text/html", extract_binds_dict["resp_headers_content_type_lowercase"])
 
         extract_binds_list = [
             {"resp_headers_xxx": "headers.xxx"}
@@ -130,7 +132,7 @@ class TestResponse(ApiServerUnittest):
         with self.assertRaises(exceptions.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
-    def test_extract_response_json(self):
+    def test_extract_response_body_json(self):
         resp = requests.post(
             url="http://127.0.0.1:3458/anything",
             json={
@@ -191,10 +193,6 @@ class TestResponse(ApiServerUnittest):
         extract_binds_dict = resp_obj.extract_response(extract_binds_list)
 
         self.assertEqual(
-            extract_binds_dict["resp_status_code"],
-            200
-        )
-        self.assertEqual(
             extract_binds_dict["resp_headers_content_type"],
             "application/json"
         )
@@ -218,6 +216,35 @@ class TestResponse(ApiServerUnittest):
             extract_binds_dict["resp_content_cities_1"],
             "Shenzhen"
         )
+
+    def test_extract_response_body_html(self):
+        resp = requests.get(url="http://127.0.0.1:3458/")
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_content": "content"}
+        ]
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+
+        self.assertIsInstance(extract_binds_dict["resp_content"], str)
+        self.assertIn("python-requests.org", extract_binds_dict["resp_content"])
+
+        extract_binds_list = [
+            {"resp_content": "content.xxx"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
+    def test_extract_response_others(self):
+        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_others_encoding": "encoding"},
+            {"resp_others_history": "history"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_fail(self):
         resp = requests.post(

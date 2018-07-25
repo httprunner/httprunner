@@ -63,108 +63,97 @@ class ResponseObject(object):
             "headers.content-type"
             "content.person.name.first_name"
         """
+        # string.split(sep=None, maxsplit=-1) -> list of strings
+        # e.g. "content.person.name" => ["content", "person.name"]
         try:
-            # string.split(sep=None, maxsplit=-1) -> list of strings
-            # e.g. "content.person.name" => ["content", "person.name"]
-            try:
-                top_query, sub_query = field.split('.', 1)
-            except ValueError:
-                top_query = field
-                sub_query = None
+            top_query, sub_query = field.split('.', 1)
+        except ValueError:
+            top_query = field
+            sub_query = None
 
-            # status_code
-            if top_query == "status_code":
-                if sub_query:
-                    # status_code.XX
-                    err_msg = u"ParamsError: {}\n".format(field)
-                    logger.log_error(err_msg)
-                    raise exceptions.ParamsError(err_msg)
-
-                return self.status_code
-
-            # cookies
-            elif top_query == "cookies":
-                cookies = self.cookies.get_dict()
-                if not sub_query:
-                    # extract cookies
-                    return cookies
-
-                try:
-                    return cookies[sub_query]
-                except KeyError:
-                    err_msg = u"ParamsError: Failed to extract cookie! => {}\n".format(field)
-                    err_msg += u"response cookies: {}\n".format(cookies)
-                    logger.log_error(err_msg)
-                    raise exceptions.ParamsError(err_msg)
-
-            # elapsed
-            elif top_query == "elapsed":
-                available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
-                if not sub_query:
-                    err_msg = u"ParamsError: elapsed is datetime.timedelta instance, attribute should also be specified!\n"
-                    err_msg += available_attributes
-                    logger.log_error(err_msg)
-                    raise exceptions.ParamsError(err_msg)
-                elif sub_query in ["days", "seconds", "microseconds"]:
-                    return getattr(self.elapsed, sub_query)
-                elif sub_query == "total_seconds":
-                    return self.elapsed.total_seconds()
-                else:
-                    err_msg = "ParamsError: {} is not valid datetime.timedelta attribute.\n".format(sub_query)
-                    err_msg += available_attributes
-                    logger.log_error(err_msg)
-                    raise exceptions.ParamsError(err_msg)
-
-            # headers
-            elif top_query == "headers":
-                headers = self.headers
-                if not sub_query:
-                    # extract headers
-                    return headers
-
-                try:
-                    return headers[sub_query]
-                except KeyError:
-                    err_msg = u"ParamsError: Failed to extract header! => {}\n".format(field)
-                    err_msg += u"response headers: {}\n".format(headers)
-                    logger.log_error(err_msg)
-                    raise exceptions.ParamsError(err_msg)
-
-            try:
-                top_query_content = getattr(self, top_query)
-            except AttributeError:
-                err_msg = u"Failed to extract attribute from response object: resp_obj.{}".format(top_query)
+        # status_code
+        if top_query == "status_code":
+            if sub_query:
+                # status_code.XX
+                err_msg = u"ParamsError: {}\n".format(field)
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
 
-            if sub_query:
-                if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
-                    try:
-                        # TODO: remove compatibility for content, text
-                        if isinstance(top_query_content, bytes):
-                            top_query_content = top_query_content.decode("utf-8")
+            return self.status_code
 
-                        if isinstance(top_query_content, PreparedRequest):
-                            top_query_content = top_query_content.__dict__
-                        else:
-                            top_query_content = json.loads(top_query_content)
-                    except exceptions.JSONDecodeError:
-                        err_msg = u"Failed to extract data with delimiter!\n"
-                        err_msg += u"response content: {}\n".format(self.content)
-                        err_msg += u"regex: {}\n".format(field)
-                        logger.log_error(err_msg)
-                        raise exceptions.ParamsError(err_msg)
+        # cookies
+        elif top_query == "cookies":
+            cookies = self.cookies.get_dict()
+            if not sub_query:
+                # extract cookies
+                return cookies
 
-                # e.g. key: resp_headers_content_type, sub_query = "content-type"
-                return utils.query_json(top_query_content, sub_query)
+            try:
+                return cookies[sub_query]
+            except KeyError:
+                err_msg = u"ParamsError: Failed to extract cookie! => {}\n".format(field)
+                err_msg += u"response cookies: {}\n".format(cookies)
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+
+        # elapsed
+        elif top_query == "elapsed":
+            available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
+            if not sub_query:
+                err_msg = u"ParamsError: elapsed is datetime.timedelta instance, attribute should also be specified!\n"
+                err_msg += available_attributes
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+            elif sub_query in ["days", "seconds", "microseconds"]:
+                return getattr(self.elapsed, sub_query)
+            elif sub_query == "total_seconds":
+                return self.elapsed.total_seconds()
             else:
-                # e.g. key: resp_status_code, resp_content
-                return top_query_content
+                err_msg = "ParamsError: {} is not valid datetime.timedelta attribute.\n".format(sub_query)
+                err_msg += available_attributes
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
 
-        except AttributeError:
-            err_msg = u"Failed to extract value from response!\n"
-            err_msg += u"response content: {}\n".format(self.content)
-            err_msg += u"extract: {}\n".format(field)
+        # headers
+        elif top_query == "headers":
+            headers = self.headers
+            if not sub_query:
+                # extract headers
+                return headers
+
+            try:
+                return headers[sub_query]
+            except KeyError:
+                err_msg = u"ParamsError: Failed to extract header! => {}\n".format(field)
+                err_msg += u"response headers: {}\n".format(headers)
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+
+        # response body
+        elif top_query in ["content", "text", "json"]:
+            try:
+                body = self.json
+            except exceptions.JSONDecodeError:
+                body = self.text
+
+            if not sub_query:
+                # extract response body
+                return body
+
+            if isinstance(body, (dict, list)):
+                # content = {"xxx": 123}, content.xxx
+                return utils.query_json(body, sub_query)
+            else:
+                # content = "<html>abcdefg</html>", content.xxx
+                err_msg = u"ParamsError: Failed to extract attribute from response body! => {}\n".format(field)
+                err_msg += u"response body: {}\n".format(body)
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+
+        # others
+        else:
+            err_msg = u"ParamsError: Failed to extract attribute from response! => {}\n".format(field)
+            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json."
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
