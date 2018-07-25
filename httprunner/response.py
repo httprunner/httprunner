@@ -115,6 +115,21 @@ class ResponseObject(object):
                     logger.log_error(err_msg)
                     raise exceptions.ParamsError(err_msg)
 
+            # headers
+            elif top_query == "headers":
+                headers = self.headers
+                if not sub_query:
+                    # extract headers
+                    return headers
+
+                try:
+                    return headers[sub_query]
+                except KeyError:
+                    err_msg = u"ParamsError: Failed to extract header! => {}\n".format(field)
+                    err_msg += u"response headers: {}\n".format(headers)
+                    logger.log_error(err_msg)
+                    raise exceptions.ParamsError(err_msg)
+
             try:
                 top_query_content = getattr(self, top_query)
             except AttributeError:
