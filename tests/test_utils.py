@@ -163,11 +163,11 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 3)
 
         query = "ids.str_key"
-        with self.assertRaises(exceptions.ParseResponseFailure):
+        with self.assertRaises(exceptions.ExtractFailure):
             utils.query_json(json_content, query)
 
         query = "ids.5"
-        with self.assertRaises(exceptions.ParseResponseFailure):
+        with self.assertRaises(exceptions.ExtractFailure):
             utils.query_json(json_content, query)
 
         query = "person.age"
@@ -175,7 +175,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 29)
 
         query = "person.not_exist_key"
-        with self.assertRaises(exceptions.ParseResponseFailure):
+        with self.assertRaises(exceptions.ExtractFailure):
             utils.query_json(json_content, query)
 
         query = "person.cities.0"
@@ -185,6 +185,10 @@ class TestUtils(ApiServerUnittest):
         query = "person.name.first_name"
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "Leo")
+
+        query = "person.name.first_name.0"
+        result = utils.query_json(json_content, query)
+        self.assertEqual(result, "L")
 
     def test_get_uniform_comparator(self):
         self.assertEqual(utils.get_uniform_comparator("eq"), "equals")

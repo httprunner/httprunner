@@ -300,7 +300,7 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        with self.assertRaises(exceptions.ParseResponseFailure):
+        with self.assertRaises(exceptions.ExtractFailure):
             resp_obj.extract_response(extract_binds_list)
 
         extract_binds_list = [
@@ -308,7 +308,7 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        with self.assertRaises(exceptions.ParseResponseFailure):
+        with self.assertRaises(exceptions.ExtractFailure):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_json_string(self):
@@ -387,5 +387,5 @@ class TestResponse(ApiServerUnittest):
             {"resp_content_body": "content.data.def"}
         ]
         resp_obj = response.ResponseObject(resp)
-        with self.assertRaises(exceptions.ParseResponseFailure):
+        with self.assertRaises(exceptions.ExtractFailure):
             resp_obj.extract_response(extract_binds_list)

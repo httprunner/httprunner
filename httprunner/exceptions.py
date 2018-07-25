@@ -12,7 +12,7 @@ class MyBaseFailure(BaseException):
 class ValidationFailure(MyBaseFailure):
     pass
 
-class ParseResponseFailure(MyBaseFailure):
+class ExtractFailure(MyBaseFailure):
     pass
 
 

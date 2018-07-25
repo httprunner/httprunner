@@ -201,13 +201,8 @@ class Context(object):
             # format 1/2/3
             check_value = self.eval_content(check_item)
         else:
-            try:
-                # format 4/5
-                check_value = resp_obj.extract_field(check_item)
-            except exceptions.ParseResponseFailure:
-                msg = "failed to extract check item from response!\n"
-                msg += "response content: {}".format(resp_obj.content)
-                raise exceptions.ParseResponseFailure(msg)
+            # format 4/5
+            check_value = resp_obj.extract_field(check_item)
 
         validator["check_value"] = check_value
 

@@ -17,7 +17,7 @@ from datetime import datetime
 
 import yaml
 from httprunner import exceptions, logger
-from httprunner.compat import OrderedDict, is_py2, is_py3
+from httprunner.compat import OrderedDict, is_py2, is_py3, str
 from requests.structures import CaseInsensitiveDict
 
 SECRET_KEY = "DebugTalk"
@@ -186,20 +186,28 @@ def query_json(json_content, query, delimiter='.'):
         }
     @param (str) query
         "person.name.first_name"  =>  "Leo"
+        "person.name.first_name.0"  =>  "L"
         "person.cities.0"         =>  "Guangzhou"
     @return queried result
     """
+    raise_flag = False
+    response_body = u"from: {}\n".format(json_content)
     try:
         for key in query.split(delimiter):
-            if isinstance(json_content, list):
+            if isinstance(json_content, (list, str)):
                 json_content = json_content[int(key)]
             elif isinstance(json_content, dict):
                 json_content = json_content[key]
             else:
-                raise exceptions.ParseResponseFailure(
-                    "response content is in text format! failed to query key {}!".format(key))
+                raise_flag = True
     except (KeyError, ValueError, IndexError):
-        raise exceptions.ParseResponseFailure("failed to query json when extracting response!")
+        raise_flag = True
+
+    if raise_flag:
+        err_msg = u"ExtractFailure: Failed to extract! => {}\n".format(query)
+        err_msg += response_body
+        logger.log_error(err_msg)
+        raise exceptions.ExtractFailure(err_msg)
 
     return json_content
 
