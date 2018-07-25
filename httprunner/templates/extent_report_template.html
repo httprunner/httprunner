@@ -31,14 +31,14 @@
     </style>
 </head>
 
-<body class='extent standard default hide-overflow '>
-<div id='theme-selector' alt='切换主题，默认白色' title='切换主题'>
+<body class='extent standard default hide-overflow dark'>
+<div id='theme-selector' alt='切换主题，默认黑色' title='切换主题'>
     <span><i class='material-icons'>desktop_windows</i></span>
 </div>
 
 <nav>
     <div class="nav-wrapper">
-        <a href="#!" class="brand-logo blue darken-3">HRUN</a>
+        <a href="#!" class="brand-logo blue darken-3">API</a>
 
         <!-- slideout menu -->
         <ul id='slide-out' class='side-nav fixed hide-on-med-and-down'>
@@ -186,7 +186,7 @@
 
                     <div class='col s12 m6 l6 np-h'>
                         <div class='card-panel nm-v'>
-                            <div class='left panel-name'>Suite</div>
+                            <div class='left panel-name'>Suites</div>
                             <div class='chart-box'>
                                 <canvas id='child-analysis' width='100' height='80'></canvas>
                             </div>
@@ -209,7 +209,7 @@
         <div class='subview-left left'>
 
             <div class='view-summary'>
-                <h5>Tests</h5>
+                <h5>Suites</h5>
                 <ul id='test-collection' class='test-collection'>
 
                     {% for test_suite_summary in details %}
@@ -464,7 +464,7 @@
 
                     <li class='category displayed active'>
                         <div class='category-heading'>
-                            <span class='category-name'>All Tests</span>
+                            <span class='category-name'>All Suites</span>
                             <span class='category-status right'>
 							    <span class='label pass'>{{ stat.successes }} </span>
                                 {% if stat.errors != 0 %}
@@ -632,7 +632,7 @@
                                 <th>Error</th>
                             </tr>
                             <tr>
-                                <td>All Tests</td>
+                                <td>All Suites</td>
                                 <td>{{ stat.successes }}</td>
                                 <td>{{ stat.errors }}</td>
                                 <td>{{ stat.skipped }}</td>
