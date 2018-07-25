@@ -2,7 +2,7 @@ import os
 import time
 
 import requests
-from httprunner import exception, response, runner, testcase
+from httprunner import exceptions, response, runner, testcase
 from httprunner.context import Context
 from httprunner.utils import FileUtils, gen_md5
 from tests.base import ApiServerUnittest
@@ -270,7 +270,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         ]
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ValidationFailure):
+        with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)
 
         validators = [
@@ -305,7 +305,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         variables = []
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exceptions.ParamsError):
             self.context.validate(validators, resp_obj)
 
         # expected value missed in variables mapping
@@ -314,5 +314,5 @@ class VariableBindsUnittest(ApiServerUnittest):
         ]
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ValidationFailure):
+        with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)

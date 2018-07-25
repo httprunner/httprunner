@@ -6,7 +6,7 @@ import time
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.exception import ParamsError
+from httprunner.exceptions import ParamsError
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)

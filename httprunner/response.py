@@ -3,7 +3,7 @@
 import json
 import re
 
-from httprunner import exception, logger, testcase, utils
+from httprunner import exceptions, logger, testcase, utils
 from httprunner.compat import OrderedDict, basestring
 from requests.structures import CaseInsensitiveDict
 from requests.models import PreparedRequest
@@ -31,7 +31,7 @@ class ResponseObject(object):
         except AttributeError:
             err_msg = "ResponseObject does not have attribute: {}".format(key)
             logger.log_error(err_msg)
-            raise exception.ParamsError(err_msg)
+            raise exceptions.ParamsError(err_msg)
 
     def _extract_field_with_regex(self, field):
         """ extract field from response content with regex.
@@ -48,7 +48,7 @@ class ResponseObject(object):
             err_msg += u"response content: {}\n".format(self.content)
             err_msg += u"regex: {}\n".format(field)
             logger.log_error(err_msg)
-            raise exception.ParamsError(err_msg)
+            raise exceptions.ParamsError(err_msg)
 
         return matched.group(1)
 
@@ -81,7 +81,7 @@ class ResponseObject(object):
                     err_msg += u"cookies: {}\n".format(cookies)
                     err_msg += u"attribute: {}".format(sub_query)
                     logger.log_error(err_msg)
-                    raise exception.ParamsError(err_msg)
+                    raise exceptions.ParamsError(err_msg)
             elif top_query == "elapsed":
                 if sub_query in ["days", "seconds", "microseconds"]:
                     return getattr(self.elapsed, sub_query)
@@ -91,14 +91,14 @@ class ResponseObject(object):
                     err_msg = "{}: {} is not valid timedelta attribute.\n".format(field, sub_query)
                     err_msg += "elapsed only support attributes: days, seconds, microseconds, total_seconds.\n"
                     logger.log_error(err_msg)
-                    raise exception.ParamsError(err_msg)
+                    raise exceptions.ParamsError(err_msg)
 
             try:
                 top_query_content = getattr(self, top_query)
             except AttributeError:
                 err_msg = u"Failed to extract attribute from response object: resp_obj.{}".format(top_query)
                 logger.log_error(err_msg)
-                raise exception.ParamsError(err_msg)
+                raise exceptions.ParamsError(err_msg)
 
             if sub_query:
                 if not isinstance(top_query_content, (dict, CaseInsensitiveDict, list)):
@@ -111,12 +111,12 @@ class ResponseObject(object):
                             top_query_content = top_query_content.__dict__
                         else:
                             top_query_content = json.loads(top_query_content)
-                    except exception.JSONDecodeError:
+                    except exceptions.JSONDecodeError:
                         err_msg = u"Failed to extract data with delimiter!\n"
                         err_msg += u"response content: {}\n".format(self.content)
                         err_msg += u"regex: {}\n".format(field)
                         logger.log_error(err_msg)
-                        raise exception.ParamsError(err_msg)
+                        raise exceptions.ParamsError(err_msg)
 
                 # e.g. key: resp_headers_content_type, sub_query = "content-type"
                 return utils.query_json(top_query_content, sub_query)
@@ -129,7 +129,7 @@ class ResponseObject(object):
             err_msg += u"response content: {}\n".format(self.content)
             err_msg += u"extract: {}\n".format(field)
             logger.log_error(err_msg)
-            raise exception.ParamsError(err_msg)
+            raise exceptions.ParamsError(err_msg)
 
     def extract_field(self, field):
         """ extract value from requests.Response.
@@ -146,7 +146,7 @@ class ResponseObject(object):
             logger.log_debug(msg)
 
         # TODO: unify ParseResponseFailure type
-        except (exception.ParseResponseFailure, TypeError):
+        except (exceptions.ParseResponseFailure, TypeError):
             logger.log_error("failed to extract field: {}".format(field))
             raise
 
@@ -172,7 +172,7 @@ class ResponseObject(object):
 
         for key, field in extract_binds_order_dict.items():
             if not isinstance(field, basestring):
-                raise exception.ParamsError("invalid extractors in testcase!")
+                raise exceptions.ParamsError("invalid extractors in testcase!")
 
             extracted_variables_mapping[key] = self.extract_field(field)
 

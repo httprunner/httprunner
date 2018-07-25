@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from httprunner import exception, utils
+from httprunner import exceptions, utils
 from httprunner.compat import OrderedDict
 from httprunner.utils import FileUtils
 from tests.base import ApiServerUnittest
@@ -16,7 +16,7 @@ class TestFileUtils(unittest.TestCase):
         with open(yaml_tmp_file, 'w') as f:
             f.write("")
 
-        with self.assertRaises(exception.FileFormatError):
+        with self.assertRaises(exceptions.FileFormatError):
             FileUtils._load_yaml_file(yaml_tmp_file)
 
         os.remove(yaml_tmp_file)
@@ -25,7 +25,7 @@ class TestFileUtils(unittest.TestCase):
         with open(yaml_tmp_file, 'w') as f:
             f.write("abc")
 
-        with self.assertRaises(exception.FileFormatError):
+        with self.assertRaises(exceptions.FileFormatError):
             FileUtils._load_yaml_file(yaml_tmp_file)
 
         os.remove(yaml_tmp_file)
@@ -37,7 +37,7 @@ class TestFileUtils(unittest.TestCase):
         with open(json_tmp_file, 'w') as f:
             f.write("")
 
-        with self.assertRaises(exception.FileFormatError):
+        with self.assertRaises(exceptions.FileFormatError):
             FileUtils._load_json_file(json_tmp_file)
 
         os.remove(json_tmp_file)
@@ -46,7 +46,7 @@ class TestFileUtils(unittest.TestCase):
         with open(json_tmp_file, 'w') as f:
             f.write("{}")
 
-        with self.assertRaises(exception.FileFormatError):
+        with self.assertRaises(exceptions.FileFormatError):
             FileUtils._load_json_file(json_tmp_file)
 
         os.remove(json_tmp_file)
@@ -55,14 +55,14 @@ class TestFileUtils(unittest.TestCase):
         with open(json_tmp_file, 'w') as f:
             f.write("abc")
 
-        with self.assertRaises(exception.FileFormatError):
+        with self.assertRaises(exceptions.FileFormatError):
             FileUtils._load_json_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        with self.assertRaises(exception.FileNotFound):
+        with self.assertRaises(exceptions.FileNotFound):
             FileUtils.load_file(testcase_file_path)
 
     def test_load_json_testcases(self):
@@ -163,11 +163,11 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 3)
 
         query = "ids.str_key"
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             utils.query_json(json_content, query)
 
         query = "ids.5"
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             utils.query_json(json_content, query)
 
         query = "person.age"
@@ -175,7 +175,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 29)
 
         query = "person.not_exist_key"
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             utils.query_json(json_content, query)
 
         query = "person.cities.0"
@@ -189,12 +189,12 @@ class TestUtils(ApiServerUnittest):
     def test_query_json_content_is_text(self):
         json_content = ""
         query = "key"
-        with self.assertRaises(exception.ResponseFailure):
+        with self.assertRaises(exceptions.ResponseFailure):
             utils.query_json(json_content, query)
 
         json_content = "<html><body>content</body></html>"
         query = "key"
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             utils.query_json(json_content, query)
 
     def test_get_uniform_comparator(self):
@@ -302,7 +302,7 @@ class TestUtils(ApiServerUnittest):
         self.assertIn("gen_md5", functions_dict)
         self.assertNotIn("urllib", functions_dict)
 
-        with self.assertRaises(exception.FileNotFoundError):
+        with self.assertRaises(exceptions.FileNotFoundError):
             utils.get_imported_module_from_file("tests/debugtalk2.py")
 
     def test_search_conf_function(self):
@@ -314,10 +314,10 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.is_function(("_", gen_md5)))
         self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
 
-        with self.assertRaises(exception.FunctionNotFound):
+        with self.assertRaises(exceptions.FunctionNotFound):
             utils.search_conf_item("tests/data/subfolder/test.yml", "function", "func_not_exist")
 
-        with self.assertRaises(exception.FunctionNotFound):
+        with self.assertRaises(exceptions.FunctionNotFound):
             utils.search_conf_item("/user/local/bin", "function", "gen_md5")
 
     def test_search_conf_variable(self):
@@ -329,10 +329,10 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(utils.is_variable(("SECRET_KEY", SECRET_KEY)))
         self.assertEqual(SECRET_KEY, "DebugTalk")
 
-        with self.assertRaises(exception.VariableNotFound):
+        with self.assertRaises(exceptions.VariableNotFound):
             utils.search_conf_item("tests/data/subfolder/test.yml", "variable", "variable_not_exist")
 
-        with self.assertRaises(exception.VariableNotFound):
+        with self.assertRaises(exceptions.VariableNotFound):
             utils.search_conf_item("/user/local/bin", "variable", "SECRET_KEY")
 
     def test_is_variable(self):
@@ -443,7 +443,7 @@ class TestUtils(ApiServerUnittest):
 
         map_list = "invalid"
         override_mapping = {"a": 3, "c": 4}
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exceptions.ParamsError):
             utils.override_variables_binds(map_list, override_mapping)
 
     def test_create_scaffold(self):

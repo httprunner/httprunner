@@ -1,5 +1,5 @@
 import requests
-from httprunner import exception, response, utils
+from httprunner import exceptions, response, utils
 from httprunner.compat import bytes
 from tests.base import ApiServerUnittest
 
@@ -138,7 +138,7 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             resp_obj.extract_response(extract_binds_list)
 
         extract_binds_list = [
@@ -146,7 +146,7 @@ class TestResponse(ApiServerUnittest):
         ]
         resp_obj = response.ResponseObject(resp)
 
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_json_string(self):
@@ -202,7 +202,7 @@ class TestResponse(ApiServerUnittest):
             {"resp_content_key1": "LB123.*RB789"}
         ]
         resp_obj = response.ResponseObject(resp)
-        with self.assertRaises(exception.ParamsError):
+        with self.assertRaises(exceptions.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_empty(self):
@@ -225,5 +225,5 @@ class TestResponse(ApiServerUnittest):
             {"resp_content_body": "content.data.def"}
         ]
         resp_obj = response.ResponseObject(resp)
-        with self.assertRaises(exception.ParseResponseFailure):
+        with self.assertRaises(exceptions.ParseResponseFailure):
             resp_obj.extract_response(extract_binds_list)
