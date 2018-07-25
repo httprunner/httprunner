@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import exception, logger, testcase, utils
+from httprunner import exceptions, logger, testcase, utils
 from httprunner.compat import OrderedDict
 
 
@@ -204,10 +204,10 @@ class Context(object):
             try:
                 # format 4/5
                 check_value = resp_obj.extract_field(check_item)
-            except exception.ParseResponseFailure:
+            except exceptions.ParseResponseFailure:
                 msg = "failed to extract check item from response!\n"
                 msg += "response content: {}".format(resp_obj.content)
-                raise exception.ParseResponseFailure(msg)
+                raise exceptions.ParseResponseFailure(msg)
 
         validator["check_value"] = check_value
 
@@ -227,7 +227,7 @@ class Context(object):
         validate_func = self.testcase_parser.get_bind_function(comparator)
 
         if not validate_func:
-            raise exception.FunctionNotFound("comparator not found: {}".format(comparator))
+            raise exceptions.FunctionNotFound("comparator not found: {}".format(comparator))
 
         check_item = validator_dict["check"]
         check_value = validator_dict["check_value"]
@@ -235,7 +235,7 @@ class Context(object):
 
         if (check_value is None or expect_value is None) \
             and comparator not in ["is", "eq", "equals", "=="]:
-            raise exception.ParamsError("Null value can only be compared with comparator: eq/equals/==")
+            raise exceptions.ParamsError("Null value can only be compared with comparator: eq/equals/==")
 
         validate_msg = "validate: {} {} {}({})".format(
             check_item,
@@ -260,7 +260,7 @@ class Context(object):
             )
             logger.log_error(validate_msg)
             validator_dict["check_result"] = "fail"
-            raise exception.ValidationFailure(validate_msg)
+            raise exceptions.ValidationFailure(validate_msg)
 
     def validate(self, validators, resp_obj):
         """ make validations
@@ -277,10 +277,10 @@ class Context(object):
 
             try:
                 self.do_validation(evaluated_validator)
-            except exception.ValidationFailure:
+            except exceptions.ValidationFailure:
                 validate_pass = False
 
             self.evaluated_validators.append(evaluated_validator)
 
         if not validate_pass:
-            raise exception.ValidationFailure
+            raise exceptions.ValidationFailure

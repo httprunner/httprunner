@@ -2,7 +2,7 @@
 
 from unittest.case import SkipTest
 
-from httprunner import exception, logger, response, utils
+from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import Context
 
@@ -154,7 +154,7 @@ class Runner(object):
             method = parsed_request.pop('method')
             group_name = parsed_request.pop("group", None)
         except KeyError:
-            raise exception.ParamsError("URL or METHOD missed!")
+            raise exceptions.ParamsError("URL or METHOD missed!")
 
         logger.log_info("{method} {url}".format(method=method, url=url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_request))
@@ -183,8 +183,8 @@ class Runner(object):
         validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
             self.context.validate(validators, resp_obj)
-        except (exception.ParamsError, exception.ResponseFailure, \
-            exception.ValidationFailure, exception.ParseResponseFailure):
+        except (exceptions.ParamsError, exceptions.ResponseFailure, \
+            exceptions.ValidationFailure, exceptions.ParseResponseFailure):
             # log request
             err_req_msg = "request: \n"
             err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))

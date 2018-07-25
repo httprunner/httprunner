@@ -2,7 +2,7 @@ import os
 import shutil
 
 from httprunner import HttpRunner
-from httprunner.exception import FileNotFound
+from httprunner.exceptions import FileNotFound
 from tests.base import ApiServerUnittest
 
 

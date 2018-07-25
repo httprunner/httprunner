@@ -16,7 +16,7 @@ import types
 from datetime import datetime
 
 import yaml
-from httprunner import exception, logger
+from httprunner import exceptions, logger
 from httprunner.compat import OrderedDict, is_py2, is_py3
 from requests.structures import CaseInsensitiveDict
 
@@ -54,13 +54,13 @@ class FileUtils(object):
             # testcase file content is empty
             err_msg = u"Testcase file content is empty: {}".format(file_path)
             logger.log_error(err_msg)
-            raise exception.FileFormatError(err_msg)
+            raise exceptions.FileFormatError(err_msg)
 
         elif not isinstance(content, (list, dict)):
             # testcase file content does not match testcase format
             err_msg = u"Testcase file content format invalid: {}".format(file_path)
             logger.log_error(err_msg)
-            raise exception.FileFormatError(err_msg)
+            raise exceptions.FileFormatError(err_msg)
 
     @staticmethod
     def _load_yaml_file(yaml_file):
@@ -78,10 +78,10 @@ class FileUtils(object):
         with io.open(json_file, encoding='utf-8') as data_file:
             try:
                 json_content = json.load(data_file)
-            except exception.JSONDecodeError:
+            except exceptions.JSONDecodeError:
                 err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
                 logger.log_error(err_msg)
-                raise exception.FileFormatError(err_msg)
+                raise exceptions.FileFormatError(err_msg)
 
             FileUtils._check_format(json_file, json_content)
             return json_content
@@ -117,7 +117,7 @@ class FileUtils(object):
     @staticmethod
     def load_file(file_path):
         if not os.path.isfile(file_path):
-            raise exception.FileNotFound("{} does not exist.".format(file_path))
+            raise exceptions.FileNotFound("{} does not exist.".format(file_path))
 
         file_suffix = os.path.splitext(file_path)[1].lower()
         if file_suffix == '.json':
@@ -190,7 +190,7 @@ def query_json(json_content, query, delimiter='.'):
     @return queried result
     """
     if json_content == "":
-        raise exception.ResponseFailure("response content is empty!")
+        raise exceptions.ResponseFailure("response content is empty!")
 
     try:
         for key in query.split(delimiter):
@@ -199,10 +199,10 @@ def query_json(json_content, query, delimiter='.'):
             elif isinstance(json_content, (dict, CaseInsensitiveDict)):
                 json_content = json_content[key]
             else:
-                raise exception.ParseResponseFailure(
+                raise exceptions.ParseResponseFailure(
                     "response content is in text format! failed to query key {}!".format(key))
     except (KeyError, ValueError, IndexError):
-        raise exception.ParseResponseFailure("failed to query json when extracting response!")
+        raise exceptions.ParseResponseFailure("failed to query json when extracting response!")
 
     return json_content
 
@@ -333,9 +333,9 @@ def search_conf_item(start_path, item_type, item_name):
         # system root path
         err_msg = "{} not found in recursive upward path!".format(item_name)
         if item_type == "function":
-            raise exception.FunctionNotFound(err_msg)
+            raise exceptions.FunctionNotFound(err_msg)
         else:
-            raise exception.VariableNotFound(err_msg)
+            raise exceptions.VariableNotFound(err_msg)
 
     return search_conf_item(dir_path, item_type, item_name)
 
@@ -422,7 +422,7 @@ def override_variables_binds(variables, new_mapping):
     elif isinstance(variables, (OrderedDict, dict)):
         variables_ordered_dict = variables
     else:
-        raise exception.ParamsError("variables error!")
+        raise exceptions.ParamsError("variables error!")
 
     return update_ordered_dict(
         variables_ordered_dict,
@@ -507,7 +507,7 @@ def load_dot_env_file(path):
             return
     else:
         if not os.path.isfile(path):
-            raise exception.FileNotFound("env file not exist: {}".format(path))
+            raise exceptions.FileNotFound("env file not exist: {}".format(path))
 
     logger.log_info("Loading environment variables from {}".format(path))
     with io.open(path, 'r', encoding='utf-8') as fp:
