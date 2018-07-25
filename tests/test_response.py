@@ -84,6 +84,47 @@ class TestResponse(ApiServerUnittest):
         with self.assertRaises(exceptions.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
+    def test_extract_response_elapsed(self):
+        resp = requests.post(
+            url="http://127.0.0.1:3458/anything",
+            json={
+                'success': False,
+                "person": {
+                    "name": {
+                        "first_name": "Leo",
+                        "last_name": "Lee",
+                    },
+                    "age": 29,
+                    "cities": ["Guangzhou", "Shenzhen"]
+                }
+            }
+        )
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_elapsed": "elapsed"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
+        extract_binds_list = [
+            {"resp_elapsed_microseconds": "elapsed.microseconds"},
+            {"resp_elapsed_seconds": "elapsed.seconds"},
+            {"resp_elapsed_days": "elapsed.days"},
+            {"resp_elapsed_total_seconds": "elapsed.total_seconds"}
+        ]
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+        self.assertGreater(extract_binds_dict["resp_elapsed_microseconds"], 1000)
+        self.assertEqual(extract_binds_dict["resp_elapsed_seconds"], 0)
+        self.assertEqual(extract_binds_dict["resp_elapsed_days"], 0)
+        self.assertGreater(extract_binds_dict["resp_elapsed_total_seconds"], 0)
+
+        extract_binds_list = [
+            {"resp_elapsed": "elapsed.years"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_extract_response_json(self):
         resp = requests.post(
             url="http://127.0.0.1:3458/anything",

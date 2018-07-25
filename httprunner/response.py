@@ -99,13 +99,19 @@ class ResponseObject(object):
 
             # elapsed
             elif top_query == "elapsed":
-                if sub_query in ["days", "seconds", "microseconds"]:
+                available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
+                if not sub_query:
+                    err_msg = u"ParamsError: elapsed is datetime.timedelta instance, attribute should also be specified!\n"
+                    err_msg += available_attributes
+                    logger.log_error(err_msg)
+                    raise exceptions.ParamsError(err_msg)
+                elif sub_query in ["days", "seconds", "microseconds"]:
                     return getattr(self.elapsed, sub_query)
                 elif sub_query == "total_seconds":
                     return self.elapsed.total_seconds()
                 else:
-                    err_msg = "{}: {} is not valid timedelta attribute.\n".format(field, sub_query)
-                    err_msg += "elapsed only support attributes: days, seconds, microseconds, total_seconds.\n"
+                    err_msg = "ParamsError: {} is not valid datetime.timedelta attribute.\n".format(sub_query)
+                    err_msg += available_attributes
                     logger.log_error(err_msg)
                     raise exceptions.ParamsError(err_msg)
 
