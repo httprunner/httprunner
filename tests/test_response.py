@@ -60,6 +60,30 @@ class TestResponse(ApiServerUnittest):
         with self.assertRaises(exceptions.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
+    def test_extract_response_cookies(self):
+        resp = requests.get(
+            url="http://127.0.0.1:3458/cookies",
+            headers={
+                "accept": "application/json"
+            }
+        )
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_cookies": "cookies"}
+        ]
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+        self.assertEqual(
+            extract_binds_dict["resp_cookies"],
+            {}
+        )
+
+        extract_binds_list = [
+            {"resp_cookies": "cookies.xx"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_extract_response_json(self):
         resp = requests.post(
             url="http://127.0.0.1:3458/anything",

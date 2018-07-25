@@ -84,13 +84,16 @@ class ResponseObject(object):
 
             # cookies
             elif top_query == "cookies":
-                cookies = self.cookies
+                cookies = self.cookies.get_dict()
+                if not sub_query:
+                    # extract cookies
+                    return cookies
+
                 try:
                     return cookies[sub_query]
                 except KeyError:
-                    err_msg = u"Failed to extract attribute from cookies!\n"
-                    err_msg += u"cookies: {}\n".format(cookies)
-                    err_msg += u"attribute: {}".format(sub_query)
+                    err_msg = u"ParamsError: Failed to extract cookie! => {}\n".format(field)
+                    err_msg += u"response cookies: {}\n".format(cookies)
                     logger.log_error(err_msg)
                     raise exceptions.ParamsError(err_msg)
 
