@@ -72,14 +72,14 @@ class ResponseObject(object):
             sub_query = None
 
         # status_code
-        if top_query == "status_code":
+        if top_query in ["status_code", "encoding", "ok", "reason", "url"]:
             if sub_query:
                 # status_code.XX
                 err_msg = u"ParamsError: {}\n".format(field)
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
 
-            return self.status_code
+            return getattr(self, top_query)
 
         # cookies
         elif top_query == "cookies":
@@ -153,7 +153,7 @@ class ResponseObject(object):
         # others
         else:
             err_msg = u"ParamsError: Failed to extract attribute from response! => {}\n".format(field)
-            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json."
+            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json, encoding, ok, reason, url."
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
