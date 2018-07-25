@@ -44,11 +44,10 @@ class ResponseObject(object):
         """
         matched = re.search(field, self.text)
         if not matched:
-            err_msg = u"Failed to extract data with regex!\n"
+            err_msg = u"ExtractFailure: Failed to extract data with regex! => {}\n".format(field)
             err_msg += u"response content: {}\n".format(self.content)
-            err_msg += u"regex: {}\n".format(field)
             logger.log_error(err_msg)
-            raise exceptions.ParamsError(err_msg)
+            raise exceptions.ExtractFailure(err_msg)
 
         return matched.group(1)
 
@@ -91,10 +90,10 @@ class ResponseObject(object):
             try:
                 return cookies[sub_query]
             except KeyError:
-                err_msg = u"ParamsError: Failed to extract cookie! => {}\n".format(field)
+                err_msg = u"ExtractFailure: Failed to extract cookie! => {}\n".format(field)
                 err_msg += u"response cookies: {}\n".format(cookies)
                 logger.log_error(err_msg)
-                raise exceptions.ParamsError(err_msg)
+                raise exceptions.ExtractFailure(err_msg)
 
         # elapsed
         elif top_query == "elapsed":
@@ -124,10 +123,10 @@ class ResponseObject(object):
             try:
                 return headers[sub_query]
             except KeyError:
-                err_msg = u"ParamsError: Failed to extract header! => {}\n".format(field)
+                err_msg = u"ExtractFailure: Failed to extract header! => {}\n".format(field)
                 err_msg += u"response headers: {}\n".format(headers)
                 logger.log_error(err_msg)
-                raise exceptions.ParamsError(err_msg)
+                raise exceptions.ExtractFailure(err_msg)
 
         # response body
         elif top_query in ["content", "text", "json"]:
@@ -148,10 +147,10 @@ class ResponseObject(object):
                 return utils.query_json(body, sub_query)
             else:
                 # content = "<html>abcdefg</html>", content.xxx
-                err_msg = u"ParamsError: Failed to extract attribute from response body! => {}\n".format(field)
+                err_msg = u"ExtractFailure: Failed to extract attribute from response body! => {}\n".format(field)
                 err_msg += u"response body: {}\n".format(body)
                 logger.log_error(err_msg)
-                raise exceptions.ParamsError(err_msg)
+                raise exceptions.ExtractFailure(err_msg)
 
         # others
         else:
@@ -163,21 +162,20 @@ class ResponseObject(object):
     def extract_field(self, field):
         """ extract value from requests.Response.
         """
+        if not isinstance(field, basestring):
+            err_msg = u"ParamsError: Invalid extractor! => {}\n".format(field)
+            logger.log_error(err_msg)
+            raise exceptions.ParamsError(err_msg)
+
         msg = "extract: {}".format(field)
 
-        try:
-            if text_extractor_regexp_compile.match(field):
-                value = self._extract_field_with_regex(field)
-            else:
-                value = self._extract_field_with_delimiter(field)
+        if text_extractor_regexp_compile.match(field):
+            value = self._extract_field_with_regex(field)
+        else:
+            value = self._extract_field_with_delimiter(field)
 
-            msg += "\t=> {}".format(value)
-            logger.log_debug(msg)
-
-        # TODO: remove except here
-        except (TypeError):
-            logger.log_error("failed to extract field: {}".format(field))
-            raise
+        msg += "\t=> {}".format(value)
+        logger.log_debug(msg)
 
         return value
 
@@ -200,9 +198,6 @@ class ResponseObject(object):
         extract_binds_order_dict = utils.convert_to_order_dict(extractors)
 
         for key, field in extract_binds_order_dict.items():
-            if not isinstance(field, basestring):
-                raise exceptions.ParamsError("invalid extractors in testcase!")
-
             extracted_variables_mapping[key] = self.extract_field(field)
 
         return extracted_variables_mapping

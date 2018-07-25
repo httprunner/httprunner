@@ -191,7 +191,7 @@ def query_json(json_content, query, delimiter='.'):
     @return queried result
     """
     raise_flag = False
-    response_body = u"from: {}\n".format(json_content)
+    response_body = u"response body: {}\n".format(json_content)
     try:
         for key in query.split(delimiter):
             if isinstance(json_content, (list, str)):

@@ -101,7 +101,7 @@ class TestResponse(ApiServerUnittest):
         extract_binds_list = [
             {"resp_cookies": "cookies.xx"}
         ]
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.ExtractFailure):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_elapsed(self):
@@ -162,7 +162,7 @@ class TestResponse(ApiServerUnittest):
         extract_binds_list = [
             {"resp_headers_xxx": "headers.xxx"}
         ]
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.ExtractFailure):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_body_json(self):
@@ -265,7 +265,7 @@ class TestResponse(ApiServerUnittest):
         extract_binds_list = [
             {"resp_content": "content.xxx"}
         ]
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.ExtractFailure):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_others(self):
