@@ -72,7 +72,18 @@ class ResponseObject(object):
                 top_query = field
                 sub_query = None
 
-            if top_query == "cookies":
+            # status_code
+            if top_query == "status_code":
+                if sub_query:
+                    # status_code.XX
+                    err_msg = u"ParamsError: {}\n".format(field)
+                    logger.log_error(err_msg)
+                    raise exceptions.ParamsError(err_msg)
+
+                return self.status_code
+
+            # cookies
+            elif top_query == "cookies":
                 cookies = self.cookies
                 try:
                     return cookies[sub_query]
@@ -82,6 +93,8 @@ class ResponseObject(object):
                     err_msg += u"attribute: {}".format(sub_query)
                     logger.log_error(err_msg)
                     raise exceptions.ParamsError(err_msg)
+
+            # elapsed
             elif top_query == "elapsed":
                 if sub_query in ["days", "seconds", "microseconds"]:
                     return getattr(self.elapsed, sub_query)
