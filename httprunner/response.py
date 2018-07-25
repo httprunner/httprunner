@@ -143,6 +143,9 @@ class ResponseObject(object):
             if isinstance(body, (dict, list)):
                 # content = {"xxx": 123}, content.xxx
                 return utils.query_json(body, sub_query)
+            elif sub_query.isdigit():
+                # content = "abcdefg", content.3 => d
+                return utils.query_json(body, sub_query)
             else:
                 # content = "<html>abcdefg</html>", content.xxx
                 err_msg = u"ParamsError: Failed to extract attribute from response body! => {}\n".format(field)
@@ -171,8 +174,8 @@ class ResponseObject(object):
             msg += "\t=> {}".format(value)
             logger.log_debug(msg)
 
-        # TODO: unify ParseResponseFailure type
-        except (exceptions.ParseResponseFailure, TypeError):
+        # TODO: remove except here
+        except (TypeError):
             logger.log_error("failed to extract field: {}".format(field))
             raise
 
