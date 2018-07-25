@@ -47,6 +47,39 @@ class TestResponse(ApiServerUnittest):
         with self.assertRaises(exceptions.ParamsError):
             resp_obj.extract_response(extract_binds_list)
 
+    def test_extract_response_encoding_ok_reason_url(self):
+        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_encoding": "encoding"},
+            {"resp_ok": "ok"},
+            {"resp_reason": "reason"},
+            {"resp_url": "url"}
+        ]
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+
+        self.assertEqual(extract_binds_dict["resp_encoding"], "utf-8")
+        self.assertEqual(extract_binds_dict["resp_ok"], True)
+        self.assertEqual(extract_binds_dict["resp_reason"], "OK")
+        self.assertEqual(extract_binds_dict["resp_url"], "http://127.0.0.1:3458/status/200")
+
+        extract_binds_list = [{"resp_encoding": "encoding.xx"}]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
+        extract_binds_list = [{"resp_ok": "ok.xx"}]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
+        extract_binds_list = [{"resp_reason": "reason.xx"}]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
+        extract_binds_list = [{"resp_url": "url.xx"}]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_extract_response_cookies(self):
         resp = requests.get(
             url="http://127.0.0.1:3458/cookies",
