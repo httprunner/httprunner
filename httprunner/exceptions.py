@@ -12,9 +12,6 @@ class MyBaseFailure(BaseException):
 class ValidationFailure(MyBaseFailure):
     pass
 
-class ResponseFailure(MyBaseFailure):
-    pass
-
 class ParseResponseFailure(MyBaseFailure):
     pass
 

@@ -186,17 +186,6 @@ class TestUtils(ApiServerUnittest):
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "Leo")
 
-    def test_query_json_content_is_text(self):
-        json_content = ""
-        query = "key"
-        with self.assertRaises(exceptions.ResponseFailure):
-            utils.query_json(json_content, query)
-
-        json_content = "<html><body>content</body></html>"
-        query = "key"
-        with self.assertRaises(exceptions.ParseResponseFailure):
-            utils.query_json(json_content, query)
-
     def test_get_uniform_comparator(self):
         self.assertEqual(utils.get_uniform_comparator("eq"), "equals")
         self.assertEqual(utils.get_uniform_comparator("=="), "equals")

@@ -172,7 +172,7 @@ class FileUtils(object):
 
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
-    @param (json_content) json_content
+    @param (dict/list) json_content
         json_content = {
             "ids": [1, 2, 3, 4],
             "person": {
@@ -189,14 +189,11 @@ def query_json(json_content, query, delimiter='.'):
         "person.cities.0"         =>  "Guangzhou"
     @return queried result
     """
-    if json_content == "":
-        raise exceptions.ResponseFailure("response content is empty!")
-
     try:
         for key in query.split(delimiter):
             if isinstance(json_content, list):
                 json_content = json_content[int(key)]
-            elif isinstance(json_content, (dict, CaseInsensitiveDict)):
+            elif isinstance(json_content, dict):
                 json_content = json_content[key]
             else:
                 raise exceptions.ParseResponseFailure(
