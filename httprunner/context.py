@@ -17,6 +17,7 @@ class Context(object):
         self.testset_shared_variables_mapping = OrderedDict()
         self.testcase_variables_mapping = OrderedDict()
         self.testcase_parser = testcase.TestcaseParser()
+        self.evaluated_validators = []
         self.init_context()
 
     def init_context(self, level='testset'):
