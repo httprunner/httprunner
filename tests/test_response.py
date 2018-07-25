@@ -27,6 +27,39 @@ class TestResponse(ApiServerUnittest):
         resp_obj = response.ResponseObject(resp)
         self.assertEqual(bytes, type(resp_obj.content))
 
+    def test_extract_response_status_code(self):
+        resp = requests.post(
+            url="http://127.0.0.1:3458/anything",
+            json={
+                'success': False,
+                "person": {
+                    "name": {
+                        "first_name": "Leo",
+                        "last_name": "Lee",
+                    },
+                    "age": 29,
+                    "cities": ["Guangzhou", "Shenzhen"]
+                }
+            }
+        )
+        resp_obj = response.ResponseObject(resp)
+
+        extract_binds_list = [
+            {"resp_status_code": "status_code"}
+        ]
+        extract_binds_dict = resp_obj.extract_response(extract_binds_list)
+
+        self.assertEqual(
+            extract_binds_dict["resp_status_code"],
+            200
+        )
+
+        extract_binds_list = [
+            {"resp_status_code": "status_code.xx"}
+        ]
+        with self.assertRaises(exceptions.ParamsError):
+            resp_obj.extract_response(extract_binds_list)
+
     def test_extract_response_json(self):
         resp = requests.post(
             url="http://127.0.0.1:3458/anything",
