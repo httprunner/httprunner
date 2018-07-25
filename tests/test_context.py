@@ -270,7 +270,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         ]
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ValidationError):
+        with self.assertRaises(exception.ValidationFailure):
             self.context.validate(validators, resp_obj)
 
         validators = [
@@ -314,5 +314,5 @@ class VariableBindsUnittest(ApiServerUnittest):
         ]
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ValidationError):
+        with self.assertRaises(exception.ValidationFailure):
             self.context.validate(validators, resp_obj)

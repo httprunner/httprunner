@@ -62,7 +62,7 @@ class TestFileUtils(unittest.TestCase):
 
     def test_load_testcases_bad_filepath(self):
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        with self.assertRaises(exception.FileNotFoundError):
+        with self.assertRaises(exception.FileNotFound):
             FileUtils.load_file(testcase_file_path)
 
     def test_load_json_testcases(self):
@@ -163,11 +163,11 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 3)
 
         query = "ids.str_key"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exception.ParseResponseFailure):
             utils.query_json(json_content, query)
 
         query = "ids.5"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exception.ParseResponseFailure):
             utils.query_json(json_content, query)
 
         query = "person.age"
@@ -175,7 +175,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 29)
 
         query = "person.not_exist_key"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exception.ParseResponseFailure):
             utils.query_json(json_content, query)
 
         query = "person.cities.0"
@@ -189,12 +189,12 @@ class TestUtils(ApiServerUnittest):
     def test_query_json_content_is_text(self):
         json_content = ""
         query = "key"
-        with self.assertRaises(exception.ResponseError):
+        with self.assertRaises(exception.ResponseFailure):
             utils.query_json(json_content, query)
 
         json_content = "<html><body>content</body></html>"
         query = "key"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exception.ParseResponseFailure):
             utils.query_json(json_content, query)
 
     def test_get_uniform_comparator(self):

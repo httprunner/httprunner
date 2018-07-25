@@ -204,10 +204,10 @@ class Context(object):
             try:
                 # format 4/5
                 check_value = resp_obj.extract_field(check_item)
-            except exception.ParseResponseError:
+            except exception.ParseResponseFailure:
                 msg = "failed to extract check item from response!\n"
                 msg += "response content: {}".format(resp_obj.content)
-                raise exception.ParseResponseError(msg)
+                raise exception.ParseResponseFailure(msg)
 
         validator["check_value"] = check_value
 
@@ -260,7 +260,7 @@ class Context(object):
             )
             logger.log_error(validate_msg)
             validator_dict["check_result"] = "fail"
-            raise exception.ValidationError(validate_msg)
+            raise exception.ValidationFailure(validate_msg)
 
     def validate(self, validators, resp_obj):
         """ make validations
@@ -277,10 +277,10 @@ class Context(object):
 
             try:
                 self.do_validation(evaluated_validator)
-            except exception.ValidationError:
+            except exception.ValidationFailure:
                 validate_pass = False
 
             self.evaluated_validators.append(evaluated_validator)
 
         if not validate_pass:
-            raise exception.ValidationError
+            raise exception.ValidationFailure

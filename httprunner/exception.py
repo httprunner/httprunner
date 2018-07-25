@@ -1,16 +1,27 @@
 # encoding: utf-8
 
-import json
+from httprunner.compat import JSONDecodeError, FileNotFoundError
 
-try:
-    FileNotFoundError = FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
+""" failure type exceptions
+    these exceptions will mark test as failure
+"""
 
-try:
-    JSONDecodeError = json.decoder.JSONDecodeError
-except AttributeError:
-    JSONDecodeError = ValueError
+class MyBaseFailure(BaseException):
+    pass
+
+class ValidationFailure(MyBaseFailure):
+    pass
+
+class ResponseFailure(MyBaseFailure):
+    pass
+
+class ParseResponseFailure(MyBaseFailure):
+    pass
+
+
+""" error type exceptions
+    these exceptions will mark test as error
+"""
 
 class MyBaseError(BaseException):
     pass
@@ -21,16 +32,10 @@ class FileFormatError(MyBaseError):
 class ParamsError(MyBaseError):
     pass
 
-class ResponseError(MyBaseError):
-    pass
-
-class ParseResponseError(MyBaseError):
-    pass
-
-class ValidationError(MyBaseError):
-    pass
-
 class NotFoundError(MyBaseError):
+    pass
+
+class FileNotFound(FileNotFoundError, NotFoundError):
     pass
 
 class FunctionNotFound(NotFoundError):
