@@ -25,16 +25,6 @@ bind_lambda_functions_with_import:
         - data: "{'name': 'user', 'password': '123456'}"
         - authorization: ${gen_md5($TOKEN, $data, $random)}
 
-bind_module_functions:
-    function_binds:
-        import_module_items:
-            - tests.data.debugtalk
-    variables:
-        - TOKEN: debugtalk
-        - random: ${gen_random_string(5)}
-        - data: "{'name': 'user', 'password': '123456'}"
-        - authorization: ${gen_md5($TOKEN, $data, $random)}
-
 builtin_functions:
     variables:
         - length: ${len(debugtalk)}
