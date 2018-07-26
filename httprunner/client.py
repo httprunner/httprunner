@@ -115,7 +115,7 @@ class HttpSession(requests.Session):
         def log_print(request_response):
             msg = "\n================== {} details ==================\n".format(request_response)
             for key, value in self.meta_data[request_response].items():
-                msg += "{:<16} : {}\n".format(key, value)
+                msg += "{:<16} : {}\n".format(key, repr(value))
             logger.log_debug(msg)
 
         # record original request info

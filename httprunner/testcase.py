@@ -10,7 +10,8 @@ import random
 import re
 
 from httprunner import exceptions, logger, utils
-from httprunner.compat import OrderedDict, basestring, numeric_types
+from httprunner.compat import (OrderedDict, basestring, builtin_str,
+                               numeric_types, str)
 from httprunner.utils import FileUtils
 
 variable_regexp = r"\$([\w_]+)"
@@ -627,7 +628,9 @@ def substitute_variables_with_mapping(content, mapping):
             # content is a variable
             content = value
         else:
-            content = content.replace(var, str(value))
+            if not isinstance(value, str):
+                value = builtin_str(value)
+            content = content.replace(var, value)
 
     return content
 
@@ -850,9 +853,12 @@ class TestcaseParser(object):
                 content = variable_value
             else:
                 # content contains one or several variables
+                if not isinstance(variable_value, str):
+                    variable_value = builtin_str(variable_value)
+
                 content = content.replace(
                     "${}".format(variable_name),
-                    str(variable_value), 1
+                    variable_value, 1
                 )
 
         return content
