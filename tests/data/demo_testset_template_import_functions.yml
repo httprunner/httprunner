@@ -1,7 +1,5 @@
 - config:
     name: "create user testsets."
-    import_module_items:
-        - tests.debugtalk
     variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}

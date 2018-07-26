@@ -162,46 +162,38 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertEqual(gen_md5(TOKEN, data, random), authorization)
 
     def test_import_module_items(self):
-        testcase1 = {
-            "import_module_items": ["tests.debugtalk"],
-            "variables": [
-                {"TOKEN": "debugtalk"},
-                {"random": "${gen_random_string(5)}"},
-                {"data": '{"name": "user", "password": "123456"}'},
-                {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
-            ]
-        }
-        testcase2 = self.testcases["bind_module_functions"]
+        module_items = ["tests.debugtalk"]
+        variables = [
+            {"TOKEN": "debugtalk"},
+            {"random": "${gen_random_string(5)}"},
+            {"data": '{"name": "user", "password": "123456"}'},
+            {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
+        ]
 
-        for testcase in [testcase1, testcase2]:
-            module_items = testcase.get('import_module_items', [])
-            self.context.import_module_items(module_items)
+        self.context.import_module_items(module_items)
+        self.context.bind_variables(variables)
+        context_variables = self.context.testcase_variables_mapping
 
-            variables = testcase['variables']
-            self.context.bind_variables(variables)
-            context_variables = self.context.testcase_variables_mapping
-
-            self.assertIn("TOKEN", context_variables)
-            TOKEN = context_variables["TOKEN"]
-            self.assertEqual(TOKEN, "debugtalk")
-            self.assertIn("random", context_variables)
-            self.assertIsInstance(context_variables["random"], str)
-            self.assertEqual(len(context_variables["random"]), 5)
-            random = context_variables["random"]
-            self.assertIn("data", context_variables)
-            data = context_variables["data"]
-            self.assertIn("authorization", context_variables)
-            self.assertEqual(len(context_variables["authorization"]), 32)
-            authorization = context_variables["authorization"]
-            self.assertEqual(gen_md5(TOKEN, data, random), authorization)
-            self.assertIn("SECRET_KEY", context_variables)
-            SECRET_KEY = context_variables["SECRET_KEY"]
-            self.assertEqual(SECRET_KEY, "DebugTalk")
+        self.assertIn("TOKEN", context_variables)
+        TOKEN = context_variables["TOKEN"]
+        self.assertEqual(TOKEN, "debugtalk")
+        self.assertIn("random", context_variables)
+        self.assertIsInstance(context_variables["random"], str)
+        self.assertEqual(len(context_variables["random"]), 5)
+        random = context_variables["random"]
+        self.assertIn("data", context_variables)
+        data = context_variables["data"]
+        self.assertIn("authorization", context_variables)
+        self.assertEqual(len(context_variables["authorization"]), 32)
+        authorization = context_variables["authorization"]
+        self.assertEqual(gen_md5(TOKEN, data, random), authorization)
+        self.assertIn("SECRET_KEY", context_variables)
+        SECRET_KEY = context_variables["SECRET_KEY"]
+        self.assertEqual(SECRET_KEY, "DebugTalk")
 
     def test_get_parsed_request(self):
         test_runner = runner.Runner()
         testcase = {
-            "import_module_items": ["tests.debugtalk"],
             "variables": [
                 {"TOKEN": "debugtalk"},
                 {"random": "${gen_random_string(5)}"},
@@ -210,17 +202,19 @@ class VariableBindsUnittest(ApiServerUnittest):
             ],
             "request": {
                 "url": "http://127.0.0.1:5000/api/users/1000",
-                "METHOD": "POST",
-                "Headers": {
+                "method": "POST",
+                "headers": {
                     "Content-Type": "application/json",
                     "authorization": "$authorization",
                     "random": "$random",
-                    "SECRET_KEY": "$SECRET_KEY"
+                    "secret_key": "$SECRET_KEY"
                 },
-                "Data": "$data"
+                "data": "$data"
             }
         }
-        parsed_request = test_runner.init_config(testcase, level="testcase")
+        self.context.import_module_items(["tests.debugtalk"])
+        self.context.bind_variables(testcase["variables"])
+        parsed_request = self.context.get_parsed_request(testcase["request"])
         self.assertIn("authorization", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["authorization"]), 32)
         self.assertIn("random", parsed_request["headers"])

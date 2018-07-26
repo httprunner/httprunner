@@ -38,7 +38,6 @@ class Runner(object):
                 "path": "tests/data/demo_testset_variables.yml",
                 "requires": [],         # optional
                 "function_binds": {},   # optional
-                "import_module_items": [],  # optional
                 "variables": [],   # optional
                 "request": {
                     "base_url": "http://127.0.0.1:5000",
@@ -52,7 +51,6 @@ class Runner(object):
                 "name": "testcase description",
                 "requires": [],         # optional
                 "function_binds": {},   # optional
-                "import_module_items": [],  # optional
                 "variables": [],   # optional
                 "request": {
                     "url": "/api/get-token",
