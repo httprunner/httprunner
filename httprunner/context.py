@@ -45,9 +45,6 @@ class Context(object):
         if level == "testset":
             self.testcase_parser.file_path = config_dict.get("path", None)
 
-        function_binds = config_dict.get('function_binds', {})
-        self.bind_functions(function_binds, level)
-
         variables = config_dict.get('variables') \
             or config_dict.get('variable_binds', OrderedDict())
         self.bind_variables(variables, level)

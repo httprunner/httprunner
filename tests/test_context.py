@@ -76,30 +76,22 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertEqual(testcase_variables["token"], "debugtalk")
 
     def test_context_bind_lambda_functions(self):
-        testcase1 = {
-            "function_binds": {
-                "add_one": lambda x: x + 1,
-                "add_two_nums": lambda x, y: x + y
-            },
-            "variables": [
-                {"add1": "${add_one(2)}"},
-                {"sum2nums": "${add_two_nums(2,3)}"}
-            ]
+        function_binds = {
+            "add_one": lambda x: x + 1,
+            "add_two_nums": lambda x, y: x + y
         }
-        testcase2 = self.testcases["bind_lambda_functions"]
+        variables = [
+            {"add1": "${add_one(2)}"},
+            {"sum2nums": "${add_two_nums(2,3)}"}
+        ]
+        self.context.bind_functions(function_binds)
+        self.context.bind_variables(variables)
 
-        for testcase in [testcase1, testcase2]:
-            function_binds = testcase.get('function_binds', {})
-            self.context.bind_functions(function_binds)
-
-            variables = testcase['variables']
-            self.context.bind_variables(variables)
-
-            context_variables = self.context.testcase_variables_mapping
-            self.assertIn("add1", context_variables)
-            self.assertEqual(context_variables["add1"], 3)
-            self.assertIn("sum2nums", context_variables)
-            self.assertEqual(context_variables["sum2nums"], 5)
+        context_variables = self.context.testcase_variables_mapping
+        self.assertIn("add1", context_variables)
+        self.assertEqual(context_variables["add1"], 3)
+        self.assertIn("sum2nums", context_variables)
+        self.assertEqual(context_variables["sum2nums"], 5)
 
     def test_call_builtin_functions(self):
         testcase1 = {

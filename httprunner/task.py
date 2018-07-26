@@ -43,7 +43,6 @@ class TestSuite(unittest.TestSuite):
                 "name": "testset description",
                 "config": {
                     "name": "testset description",
-                    "function_binds": {},
                     "parameters": {},
                     "variables": [],
                     "request": {},
