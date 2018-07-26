@@ -17,7 +17,7 @@ from datetime import datetime
 
 import yaml
 from httprunner import exceptions, logger
-from httprunner.compat import OrderedDict, is_py2, is_py3, str
+from httprunner.compat import OrderedDict, basestring, is_py2, is_py3, str
 from requests.structures import CaseInsensitiveDict
 
 SECRET_KEY = "DebugTalk"
@@ -172,7 +172,7 @@ class FileUtils(object):
 
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
-    @param (dict/list) json_content
+    @param (dict/list/string) json_content
         json_content = {
             "ids": [1, 2, 3, 4],
             "person": {
@@ -194,11 +194,13 @@ def query_json(json_content, query, delimiter='.'):
     response_body = u"response body: {}\n".format(json_content)
     try:
         for key in query.split(delimiter):
-            if isinstance(json_content, (list, str)):
+            if isinstance(json_content, (list, basestring)):
                 json_content = json_content[int(key)]
             elif isinstance(json_content, dict):
                 json_content = json_content[key]
             else:
+                logger.log_error(
+                    "invalid type value: {}({})".format(json_content, type(json_content)))
                 raise_flag = True
     except (KeyError, ValueError, IndexError):
         raise_flag = True
