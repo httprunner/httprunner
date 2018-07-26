@@ -262,13 +262,6 @@ class TestRunner(ApiServerUnittest):
         summary = runner.summary
         self.assertTrue(summary["success"])
 
-    def test_run_testsets_template_lambda_functions(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_template_lambda_functions.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-
     def test_run_testset_layered(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')

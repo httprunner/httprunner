@@ -36,7 +36,6 @@ class Runner(object):
             {
                 "name": "smoke testset",
                 "path": "tests/data/demo_testset_variables.yml",
-                "requires": [],         # optional
                 "function_binds": {},   # optional
                 "variables": [],   # optional
                 "request": {
@@ -49,7 +48,6 @@ class Runner(object):
         testcase:
             {
                 "name": "testcase description",
-                "requires": [],         # optional
                 "function_binds": {},   # optional
                 "variables": [],   # optional
                 "request": {
@@ -115,7 +113,6 @@ class Runner(object):
                 "name": "testcase description",
                 "skip": "skip this test unconditionally",
                 "times": 3,
-                "requires": [],         # optional, override
                 "function_binds": {},   # optional, override
                 "variables": [],        # optional, override
                 "request": {

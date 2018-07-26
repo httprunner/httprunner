@@ -45,21 +45,12 @@ class Context(object):
         if level == "testset":
             self.testcase_parser.file_path = config_dict.get("path", None)
 
-        requires = config_dict.get('requires', [])
-        self.import_requires(requires)
-
         function_binds = config_dict.get('function_binds', {})
         self.bind_functions(function_binds, level)
 
         variables = config_dict.get('variables') \
             or config_dict.get('variable_binds', OrderedDict())
         self.bind_variables(variables, level)
-
-    def import_requires(self, modules):
-        """ import required modules dynamically
-        """
-        for module_name in modules:
-            globals()[module_name] = utils.get_imported_module(module_name)
 
     def bind_functions(self, function_binds, level="testcase"):
         """ Bind named functions within the context
