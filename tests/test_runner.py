@@ -163,6 +163,71 @@ class TestRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertLess(end_time - start_time, 1)
 
+    def test_run_httprunner_with_teardown_hooks_alter_response(self):
+        testsets = [
+            {
+                "name": "test teardown hooks",
+                "config": {
+                    'path': 'tests/httpbin/hooks.yml',
+                },
+                "testcases": [
+                    {
+                        "name": "test teardown hooks",
+                        "request": {
+                            "url": "http://127.0.0.1:3458/headers",
+                            "method": "GET",
+                            "data": "abc"
+                        },
+                        "teardown_hooks": [
+                            "${alter_response($response)}"
+                        ],
+                        "validate": [
+                            {"eq": ["status_code", 500]},
+                            {"eq": ["headers.content-type", "html/text"]},
+                            {"eq": ["json.headers.Host", "127.0.0.1:8888"]},
+                            {"eq": ["content.headers.Host", "127.0.0.1:8888"]},
+                            {"eq": ["text.headers.Host", "127.0.0.1:8888"]},
+                            {"eq": ["attributes.new_attribute", "new_attribute"]}
+                        ]
+                    }
+                ]
+            }
+        ]
+        runner = HttpRunner().run(testsets)
+        summary = runner.summary
+        self.assertTrue(summary["success"])
+
+    def test_run_httprunner_with_teardown_hooks_not_exist_attribute(self):
+        testsets = [
+            {
+                "name": "test teardown hooks",
+                "config": {
+                    'path': 'tests/httpbin/hooks.yml',
+                },
+                "testcases": [
+                    {
+                        "name": "test teardown hooks",
+                        "request": {
+                            "url": "http://127.0.0.1:3458/headers",
+                            "method": "GET",
+                            "data": "abc"
+                        },
+                        "teardown_hooks": [
+                            "${alter_response($response)}"
+                        ],
+                        "validate": [
+                            {"eq": ["attributes.attribute_not_exist", "new_attribute"]}
+                        ]
+                    }
+                ]
+            }
+        ]
+        # with self.assertRaises(exceptions.AssertionError):
+        runner = HttpRunner().run(testsets)
+
+        summary = runner.summary
+        self.assertFalse(summary["success"])
+
     def test_run_testset_with_teardown_hooks_success(self):
         test = {
             "name": "get token",
