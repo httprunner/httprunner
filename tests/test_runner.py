@@ -250,14 +250,7 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_testset_template_import_functions(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-
-    def test_run_testsets_template_import_functions(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_template_import_functions.yml')
+            os.getcwd(), 'tests/data/demo_testset_functions.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
