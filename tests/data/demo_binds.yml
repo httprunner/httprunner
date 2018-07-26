@@ -3,14 +3,6 @@ bind_variables:
         - TOKEN: "debugtalk"
         - token: $TOKEN
 
-bind_lambda_functions:
-    function_binds:
-        add_one: "lambda x: x + 1"
-        add_two_nums: "lambda x, y: x + y"
-    variables:
-        - add1: ${add_one(2)}
-        - sum2nums: ${add_two_nums(2, 3)}
-
 builtin_functions:
     variables:
         - length: ${len(debugtalk)}

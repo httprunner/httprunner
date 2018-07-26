@@ -36,7 +36,6 @@ class Runner(object):
             {
                 "name": "smoke testset",
                 "path": "tests/data/demo_testset_variables.yml",
-                "function_binds": {},   # optional
                 "variables": [],   # optional
                 "request": {
                     "base_url": "http://127.0.0.1:5000",
@@ -48,7 +47,6 @@ class Runner(object):
         testcase:
             {
                 "name": "testcase description",
-                "function_binds": {},   # optional
                 "variables": [],   # optional
                 "request": {
                     "url": "/api/get-token",
@@ -113,7 +111,6 @@ class Runner(object):
                 "name": "testcase description",
                 "skip": "skip this test unconditionally",
                 "times": 3,
-                "function_binds": {},   # optional, override
                 "variables": [],        # optional, override
                 "request": {
                     "url": "http://127.0.0.1:5000/api/users/1000",
