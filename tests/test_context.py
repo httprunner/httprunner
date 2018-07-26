@@ -120,47 +120,6 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertEqual(context_variables["smallest"], 2)
             self.assertEqual(context_variables["largest"], 8)
 
-    def test_context_bind_lambda_functions_with_import(self):
-        testcase1 = {
-            "requires": ["random", "string", "hashlib"],
-            "function_binds": {
-                "gen_random_string": "lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(str_len))",
-                "gen_md5": "lambda *str_args: hashlib.md5(''.join(str_args).encode('utf-8')).hexdigest()"
-            },
-            "variables": [
-                {"TOKEN": "debugtalk"},
-                {"random": "${gen_random_string(5)}"},
-                {"data": '{"name": "user", "password": "123456"}'},
-                {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
-            ]
-        }
-        testcase2 = self.testcases["bind_lambda_functions_with_import"]
-
-        for testcase in [testcase1, testcase2]:
-            requires = testcase.get('requires', [])
-            self.context.import_requires(requires)
-
-            function_binds = testcase.get('function_binds', {})
-            self.context.bind_functions(function_binds)
-
-            variables = testcase['variables']
-            self.context.bind_variables(variables)
-            context_variables = self.context.testcase_variables_mapping
-
-            self.assertIn("TOKEN", context_variables)
-            TOKEN = context_variables["TOKEN"]
-            self.assertEqual(TOKEN, "debugtalk")
-            self.assertIn("random", context_variables)
-            self.assertIsInstance(context_variables["random"], str)
-            self.assertEqual(len(context_variables["random"]), 5)
-            random = context_variables["random"]
-            self.assertIn("data", context_variables)
-            data = context_variables["data"]
-            self.assertIn("authorization", context_variables)
-            self.assertEqual(len(context_variables["authorization"]), 32)
-            authorization = context_variables["authorization"]
-            self.assertEqual(gen_md5(TOKEN, data, random), authorization)
-
     def test_import_module_items(self):
         module_items = ["tests.debugtalk"]
         variables = [
