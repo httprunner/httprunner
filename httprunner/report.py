@@ -102,7 +102,10 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
         template_content = fp_r.read()
         report_path = os.path.join(report_dir_path, html_report_name)
         with io.open(report_path, 'w', encoding='utf-8') as fp_w:
-            rendered_content = Template(template_content).render(summary)
+            rendered_content = Template(
+                template_content,
+                extensions=["jinja2.ext.loopcontrols"]
+            ).render(summary)
             fp_w.write(rendered_content)
 
     logger.log_info("Generated Html report: {}".format(report_path))
@@ -110,9 +113,16 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
     return report_path
 
 def stringify_data(meta_data, request_or_response):
+    """
+    meta_data = {
+        "request": {},
+        "response": {}
+    }
+    """
     headers = meta_data[request_or_response]["headers"]
 
     request_or_response_dict = meta_data[request_or_response]
+    response_content_type = meta_data["response"]["content_type"]
 
     for key, value in request_or_response_dict.items():
 
@@ -125,11 +135,11 @@ def stringify_data(meta_data, request_or_response):
                 if not encoding or encoding == "None":
                     encoding = "utf-8"
 
-                content_type = meta_data["response"]["content_type"]
-                if "image" in content_type:
+                if request_or_response == "response" and key == "content" and "image" in response_content_type:
+                    # display image
                     meta_data["response"]["content_type"] = "image"
                     value = "data:{};base64,{}".format(
-                        content_type,
+                        response_content_type,
                         b64encode(value).decode(encoding)
                     )
                 else:
