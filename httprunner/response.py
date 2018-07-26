@@ -45,7 +45,7 @@ class ResponseObject(object):
         matched = re.search(field, self.text)
         if not matched:
             err_msg = u"Failed to extract data with regex! => {}\n".format(field)
-            err_msg += u"response content: {}\n".format(self.content)
+            err_msg += u"response body: {}\n".format(self.text)
             logger.log_error(err_msg)
             raise exceptions.ExtractFailure(err_msg)
 
