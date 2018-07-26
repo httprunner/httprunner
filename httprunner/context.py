@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import exception, testcase, utils
+from httprunner import exceptions, logger, testcase, utils
 from httprunner.compat import OrderedDict
 
 
@@ -17,6 +17,7 @@ class Context(object):
         self.testset_shared_variables_mapping = OrderedDict()
         self.testcase_variables_mapping = OrderedDict()
         self.testcase_parser = testcase.TestcaseParser()
+        self.evaluated_validators = []
         self.init_context()
 
     def init_context(self, level='testset'):
@@ -201,13 +202,8 @@ class Context(object):
             # format 1/2/3
             check_value = self.eval_content(check_item)
         else:
-            try:
-                # format 4/5
-                check_value = resp_obj.extract_field(check_item)
-            except exception.ParseResponseError:
-                msg = "failed to extract check item from response!\n"
-                msg += "response content: {}".format(resp_obj.content)
-                raise exception.ParseResponseError(msg)
+            # format 4/5
+            check_value = resp_obj.extract_field(check_item)
 
         validator["check_value"] = check_value
 
@@ -227,7 +223,7 @@ class Context(object):
         validate_func = self.testcase_parser.get_bind_function(comparator)
 
         if not validate_func:
-            raise exception.FunctionNotFound("comparator not found: {}".format(comparator))
+            raise exceptions.FunctionNotFound("comparator not found: {}".format(comparator))
 
         check_item = validator_dict["check"]
         check_value = validator_dict["check_value"]
@@ -235,34 +231,56 @@ class Context(object):
 
         if (check_value is None or expect_value is None) \
             and comparator not in ["is", "eq", "equals", "=="]:
-            raise exception.ParamsError("Null value can only be compared with comparator: eq/equals/==")
+            raise exceptions.ParamsError("Null value can only be compared with comparator: eq/equals/==")
+
+        validate_msg = "validate: {} {} {}({})".format(
+            check_item,
+            comparator,
+            expect_value,
+            type(expect_value).__name__
+        )
 
         try:
-            validator_dict["check_result"] = "passed"
-            validate_func(validator_dict["check_value"], validator_dict["expect"])
+            validator_dict["check_result"] = "pass"
+            validate_func(check_value, expect_value)
+            validate_msg += "\t==> pass"
+            logger.log_debug(validate_msg)
         except (AssertionError, TypeError):
-            err_msg = "\n" + "\n".join([
-                "\tcheck item name: %s;" % check_item,
-                "\tcheck item value: %s (%s);" % (check_value, type(check_value).__name__),
-                "\tcomparator: %s;" % comparator,
-                "\texpected value: %s (%s)." % (expect_value, type(expect_value).__name__)
-            ])
-            validator_dict["check_result"] = "failed"
-            raise exception.ValidationError(err_msg)
+            validate_msg += "\t==> fail"
+            validate_msg += "\n{}({}) {} {}({})".format(
+                check_value,
+                type(check_value).__name__,
+                comparator,
+                expect_value,
+                type(expect_value).__name__
+            )
+            logger.log_error(validate_msg)
+            validator_dict["check_result"] = "fail"
+            raise exceptions.ValidationFailure(validate_msg)
 
-    def eval_validators(self, validators, resp_obj):
-        """ evaluate validators with context variable mapping.
+    def validate(self, validators, resp_obj):
+        """ make validations
         """
-        return [
-            self.eval_check_item(
+        if not validators:
+            return
+
+        logger.log_info("start to validate.")
+        self.evaluated_validators = []
+        validate_pass = True
+
+        for validator in validators:
+            # evaluate validators with context variable mapping.
+            evaluated_validator = self.eval_check_item(
                 testcase.parse_validator(validator),
                 resp_obj
             )
-            for validator in validators
-        ]
 
-    def validate(self, validators):
-        """ make validations
-        """
-        for validator_dict in validators:
-            self.do_validation(validator_dict)
+            try:
+                self.do_validation(evaluated_validator)
+            except exceptions.ValidationFailure:
+                validate_pass = False
+
+            self.evaluated_validators.append(evaluated_validator)
+
+        if not validate_pass:
+            raise exceptions.ValidationFailure

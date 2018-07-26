@@ -2,7 +2,7 @@ import os
 import time
 
 import requests
-from httprunner import exception, response, runner, testcase
+from httprunner import exceptions, response, runner, testcase
 from httprunner.context import Context
 from httprunner.utils import FileUtils, gen_md5
 from tests.base import ApiServerUnittest
@@ -270,9 +270,8 @@ class VariableBindsUnittest(ApiServerUnittest):
         ]
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ValidationError):
-            evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(evaluated_validators)
+        with self.assertRaises(exceptions.ValidationFailure):
+            self.context.validate(validators, resp_obj)
 
         validators = [
             {"eq": ["$resp_status_code", 201]},
@@ -291,8 +290,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         }
         self.context.bind_functions(functions)
 
-        evaluated_validators = self.context.eval_validators(validators, resp_obj)
-        self.context.validate(evaluated_validators)
+        self.context.validate(validators, resp_obj)
 
     def test_validate_exception(self):
         url = "http://127.0.0.1:5000/"
@@ -307,9 +305,8 @@ class VariableBindsUnittest(ApiServerUnittest):
         variables = []
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ParamsError):
-            evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(evaluated_validators)
+        with self.assertRaises(exceptions.ParamsError):
+            self.context.validate(validators, resp_obj)
 
         # expected value missed in variables mapping
         variables = [
@@ -317,6 +314,5 @@ class VariableBindsUnittest(ApiServerUnittest):
         ]
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exception.ValidationError):
-            evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(evaluated_validators)
+        with self.assertRaises(exceptions.ValidationFailure):
+            self.context.validate(validators, resp_obj)
