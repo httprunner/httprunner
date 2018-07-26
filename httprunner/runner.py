@@ -197,14 +197,14 @@ class Runner(object):
             err_req_msg = "request: \n"
             err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))
             for k, v in parsed_request.items():
-                err_req_msg += "{}: {}\n".format(k, v)
+                err_req_msg += "{}: {}\n".format(k, repr(v))
             logger.log_error(err_req_msg)
 
             # log response
             err_resp_msg = "response: \n"
             err_resp_msg += "status_code: {}\n".format(resp_obj.status_code)
             err_resp_msg += "headers: {}\n".format(resp_obj.headers)
-            err_resp_msg += "content: {}\n".format(resp_obj.content)
+            err_resp_msg += "content: {}\n".format(repr(resp_obj.text))
             logger.log_error(err_resp_msg)
 
             raise

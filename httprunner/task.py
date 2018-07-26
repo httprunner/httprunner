@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
         try:
             self.test_runner.run_test(self.testcase_dict)
         except exceptions.MyBaseFailure as ex:
-            self.fail(str(ex))
+            self.fail(repr(ex))
         finally:
             if hasattr(self.test_runner.http_client_session, "meta_data"):
                 self.meta_data = self.test_runner.http_client_session.meta_data

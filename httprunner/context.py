@@ -261,6 +261,10 @@ class Context(object):
     def validate(self, validators, resp_obj):
         """ make validations
         """
+        if not validators:
+            return
+
+        logger.log_info("start to validate.")
         self.evaluated_validators = []
         validate_pass = True
 
