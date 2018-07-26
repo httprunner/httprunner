@@ -204,7 +204,7 @@ class Runner(object):
             err_resp_msg = "response: \n"
             err_resp_msg += "status_code: {}\n".format(resp_obj.status_code)
             err_resp_msg += "headers: {}\n".format(resp_obj.headers)
-            err_resp_msg += "content: {}\n".format(repr(resp_obj.text))
+            err_resp_msg += "body: {}\n".format(repr(resp_obj.text))
             logger.log_error(err_resp_msg)
 
             raise
