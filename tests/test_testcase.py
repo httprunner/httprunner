@@ -3,9 +3,7 @@ import time
 import unittest
 
 from httprunner import testcase
-from httprunner.exception import (ApiNotFound, FileFormatError,
-                                  FileNotFoundError, ParamsError,
-                                  SuiteNotFound)
+from httprunner.exceptions import ApiNotFound, ParamsError, SuiteNotFound
 from httprunner.testcase import TestcaseLoader
 
 

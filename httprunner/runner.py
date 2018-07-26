@@ -2,7 +2,7 @@
 
 from unittest.case import SkipTest
 
-from httprunner import exception, logger, response, utils
+from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import Context
 
@@ -11,7 +11,6 @@ class Runner(object):
 
     def __init__(self, config_dict=None, http_client_session=None):
         self.http_client_session = http_client_session
-        self.evaluated_validators = []
         self.context = Context()
 
         config_dict = config_dict or {}
@@ -155,7 +154,15 @@ class Runner(object):
             method = parsed_request.pop('method')
             group_name = parsed_request.pop("group", None)
         except KeyError:
-            raise exception.ParamsError("URL or METHOD missed!")
+            raise exceptions.ParamsError("URL or METHOD missed!")
+
+        # TODO: move method validation to json schema
+        valid_methods = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+        if method.upper() not in valid_methods:
+            err_msg = u"Invalid HTTP method! => {}\n".format(method)
+            err_msg += "Available HTTP methods: {}".format("/".join(valid_methods))
+            logger.log_error(err_msg)
+            raise exceptions.ParamsError(err_msg)
 
         logger.log_info("{method} {url}".format(method=method, url=url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_request))
@@ -183,22 +190,21 @@ class Runner(object):
         # validate
         validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
-            self.evaluated_validators = self.context.eval_validators(validators, resp_obj)
-            self.context.validate(self.evaluated_validators)
-        except (exception.ParamsError, exception.ResponseError, \
-            exception.ValidationError, exception.ParseResponseError):
+            self.context.validate(validators, resp_obj)
+        except (exceptions.ParamsError, \
+                exceptions.ValidationFailure, exceptions.ExtractFailure):
             # log request
             err_req_msg = "request: \n"
             err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))
             for k, v in parsed_request.items():
-                err_req_msg += "{}: {}\n".format(k, v)
+                err_req_msg += "{}: {}\n".format(k, repr(v))
             logger.log_error(err_req_msg)
 
             # log response
             err_resp_msg = "response: \n"
             err_resp_msg += "status_code: {}\n".format(resp_obj.status_code)
             err_resp_msg += "headers: {}\n".format(resp_obj.headers)
-            err_resp_msg += "content: {}\n".format(resp_obj.content)
+            err_resp_msg += "body: {}\n".format(repr(resp_obj.text))
             logger.log_error(err_resp_msg)
 
             raise

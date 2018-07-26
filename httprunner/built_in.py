@@ -13,7 +13,7 @@ import string
 import time
 
 from httprunner.compat import basestring, builtin_str, integer_types, str
-from httprunner.exception import ParamsError
+from httprunner.exceptions import ParamsError
 from requests_toolbelt import MultipartEncoder
 
 

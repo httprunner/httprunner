@@ -9,8 +9,9 @@ import os
 import random
 import re
 
-from httprunner import exception, logger, utils
-from httprunner.compat import OrderedDict, basestring, numeric_types
+from httprunner import exceptions, logger, utils
+from httprunner.compat import (OrderedDict, basestring, builtin_str,
+                               numeric_types, str)
 from httprunner.utils import FileUtils
 
 variable_regexp = r"\$([\w_]+)"
@@ -77,7 +78,7 @@ def parse_function(content):
     """
     matched = function_regexp_compile.match(content)
     if not matched:
-        raise exception.FunctionNotFound("{} not found!".format(content))
+        raise exceptions.FunctionNotFound("{} not found!".format(content))
 
     function_meta = {
         "func_name": matched.group(1),
@@ -126,7 +127,7 @@ class TestcaseLoader(object):
         for suite_file in FileUtils.load_folder_files(suite_def_folder):
             suite = TestcaseLoader.load_test_file(suite_file)
             if "def" not in suite["config"]:
-                raise exception.ParamsError("def missed in suite file: {}!".format(suite_file))
+                raise exceptions.ParamsError("def missed in suite file: {}!".format(suite_file))
 
             call_func = suite["config"]["def"]
             function_meta = parse_function(call_func)
@@ -156,15 +157,15 @@ class TestcaseLoader(object):
         """
         api_items = FileUtils.load_file(file_path)
         if not isinstance(api_items, list):
-            raise exception.FileFormatError("API format error: {}".format(file_path))
+            raise exceptions.FileFormatError("API format error: {}".format(file_path))
 
         for api_item in api_items:
             if not isinstance(api_item, dict) or len(api_item) != 1:
-                raise exception.FileFormatError("API format error: {}".format(file_path))
+                raise exceptions.FileFormatError("API format error: {}".format(file_path))
 
             key, api_dict = api_item.popitem()
             if key != "api" or not isinstance(api_dict, dict) or "def" not in api_dict:
-                raise exception.FileFormatError("API format error: {}".format(file_path))
+                raise exceptions.FileFormatError("API format error: {}".format(file_path))
 
             api_def = api_dict.pop("def")
             function_meta = parse_function(api_def)
@@ -218,11 +219,11 @@ class TestcaseLoader(object):
         }
         for item in FileUtils.load_file(file_path):
             if not isinstance(item, dict) or len(item) != 1:
-                raise exception.FileFormatError("Testcase format error: {}".format(file_path))
+                raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
 
             key, test_block = item.popitem()
             if not isinstance(test_block, dict):
-                raise exception.FileFormatError("Testcase format error: {}".format(file_path))
+                raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
 
             if key == "config":
                 testset["config"].update(test_block)
@@ -261,7 +262,7 @@ class TestcaseLoader(object):
         def_args = block.get("function_meta").get("args", [])
 
         if len(call_args) != len(def_args):
-            raise exception.ParamsError("call args mismatch defined args!")
+            raise exceptions.ParamsError("call args mismatch defined args!")
 
         args_mapping = {}
         for index, item in enumerate(def_args):
@@ -289,10 +290,10 @@ class TestcaseLoader(object):
         if not block:
             err_msg = "{} not found!".format(name)
             if ref_type == "api":
-                raise exception.ApiNotFound(err_msg)
+                raise exceptions.ApiNotFound(err_msg)
             else:
                 # ref_type == "suite":
-                raise exception.SuiteNotFound(err_msg)
+                raise exceptions.SuiteNotFound(err_msg)
 
         return block
 
@@ -380,7 +381,7 @@ class TestcaseLoader(object):
                     testcases_list = [testset]
                 else:
                     testcases_list = []
-            except exception.FileFormatError:
+            except exceptions.FileFormatError:
                 testcases_list = []
 
         else:
@@ -407,7 +408,7 @@ def parse_validator(validator):
         }
     """
     if not isinstance(validator, dict):
-        raise exception.ParamsError("invalid validator: {}".format(validator))
+        raise exceptions.ParamsError("invalid validator: {}".format(validator))
 
     if "check" in validator and len(validator) > 1:
         # format1
@@ -418,7 +419,7 @@ def parse_validator(validator):
         elif "expected" in validator:
             expect_value = validator.get("expected")
         else:
-            raise exception.ParamsError("invalid validator: {}".format(validator))
+            raise exceptions.ParamsError("invalid validator: {}".format(validator))
 
         comparator = validator.get("comparator", "eq")
 
@@ -428,12 +429,12 @@ def parse_validator(validator):
         compare_values = validator[comparator]
 
         if not isinstance(compare_values, list) or len(compare_values) != 2:
-            raise exception.ParamsError("invalid validator: {}".format(validator))
+            raise exceptions.ParamsError("invalid validator: {}".format(validator))
 
         check_item, expect_value = compare_values
 
     else:
-        raise exception.ParamsError("invalid validator: {}".format(validator))
+        raise exceptions.ParamsError("invalid validator: {}".format(validator))
 
     return {
         "check": check_item,
@@ -627,7 +628,9 @@ def substitute_variables_with_mapping(content, mapping):
             # content is a variable
             content = value
         else:
-            content = content.replace(var, str(value))
+            if not isinstance(value, str):
+                value = builtin_str(value)
+            content = content.replace(var, value)
 
     return content
 
@@ -711,7 +714,7 @@ def parse_parameters(parameters, testset_path=None):
             # e.g. [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
             # e.g. [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
             if not isinstance(parsed_parameter_content, list):
-                raise exception.ParamsError("parameters syntax error!")
+                raise exceptions.ParamsError("parameters syntax error!")
 
             parameter_content_list = [
                 # get subset by parameter name
@@ -769,13 +772,13 @@ class TestcaseParser(object):
             if item_name in self.variables:
                 return self.variables[item_name]
         else:
-            raise exception.ParamsError("bind item should only be function or variable.")
+            raise exceptions.ParamsError("bind item should only be function or variable.")
 
         try:
             assert self.file_path is not None
             return utils.search_conf_item(self.file_path, item_type, item_name)
-        except (AssertionError, exception.FunctionNotFound):
-            raise exception.ParamsError(
+        except (AssertionError, exceptions.FunctionNotFound):
+            raise exceptions.ParamsError(
                 "{} is not defined in bind {}s!".format(item_name, item_type))
 
     def get_bind_function(self, func_name):
@@ -850,9 +853,12 @@ class TestcaseParser(object):
                 content = variable_value
             else:
                 # content contains one or several variables
+                if not isinstance(variable_value, str):
+                    variable_value = builtin_str(variable_value)
+
                 content = content.replace(
                     "${}".format(variable_name),
-                    str(variable_value), 1
+                    variable_value, 1
                 )
 
         return content

@@ -4,7 +4,7 @@ import copy
 import sys
 import unittest
 
-from httprunner import exception, logger, runner, testcase, utils
+from httprunner import exceptions, logger, runner, testcase, utils
 from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
@@ -25,10 +25,12 @@ class TestCase(unittest.TestCase):
         """
         try:
             self.test_runner.run_test(self.testcase_dict)
+        except exceptions.MyBaseFailure as ex:
+            self.fail(repr(ex))
         finally:
             if hasattr(self.test_runner.http_client_session, "meta_data"):
                 self.meta_data = self.test_runner.http_client_session.meta_data
-                self.meta_data["validators"] = self.test_runner.evaluated_validators
+                self.meta_data["validators"] = self.test_runner.context.evaluated_validators
                 self.test_runner.http_client_session.init_meta_data()
 
 
@@ -106,7 +108,7 @@ class TestSuite(unittest.TestSuite):
                     self.testcase_parser.update_binded_variables(variables)
                     try:
                         testcase_name = self.testcase_parser.eval_content_with_bindings(testcase_dict["name"])
-                    except (AssertionError, exception.ParamsError):
+                    except (AssertionError, exceptions.ParamsError):
                         logger.log_warning("failed to eval testcase name: {}".format(testcase_dict["name"]))
                         testcase_name = testcase_dict["name"]
                     self.test_runner_list.append((test_runner, variables))
@@ -189,7 +191,7 @@ def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
     mapping = mapping or {}
 
     if not testsets:
-        raise exception.TestcaseNotFound
+        raise exceptions.TestcaseNotFound
 
     if isinstance(testsets, dict):
         testsets = [testsets]
@@ -236,7 +238,7 @@ class HttpRunner(object):
         """
         try:
             test_suite_list = init_test_suites(path_or_testsets, mapping)
-        except exception.TestcaseNotFound:
+        except exceptions.TestcaseNotFound:
             logger.log_error("Testcases not found in {}".format(path_or_testsets))
             sys.exit(1)
 
@@ -301,7 +303,7 @@ class LocustTask(object):
             for test in test_suite:
                 try:
                     test.runTest()
-                except exception.MyBaseError as ex:
+                except exceptions.MyBaseError as ex:
                     from locust.events import request_failure
                     request_failure.fire(
                         request_type=test.testcase_dict.get("request", {}).get("method"),

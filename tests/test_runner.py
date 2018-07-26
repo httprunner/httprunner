@@ -1,7 +1,7 @@
 import os
 import time
 
-from httprunner import HttpRunner, exception, runner
+from httprunner import HttpRunner, exceptions, runner
 from httprunner.testcase import TestcaseLoader
 from httprunner.utils import FileUtils, deep_update_dict
 from tests.base import ApiServerUnittest
@@ -66,7 +66,7 @@ class TestRunner(ApiServerUnittest):
             ]
         }
 
-        with self.assertRaises(exception.ValidationError):
+        with self.assertRaises(exceptions.ValidationFailure):
             self.test_runner.run_test(test)
 
     def test_run_testset_with_hooks(self):
