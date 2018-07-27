@@ -178,10 +178,10 @@
                             </div>
                             <div class='block text-small'>
                             <span class='strong tooltipped' data-position='top'
-                                  >{{ stat.errors }}</span>
+                            >{{ stat.errors }}</span>
                                 test(s) errored
                                 <span class='strong tooltipped' data-position='top'
-                                      >{{ stat.skipped }}</span>
+                                >{{ stat.skipped }}</span>
                                 test(s) skipped
                             </div>
                         </div>
@@ -198,7 +198,8 @@
                             </span>
                             </div>
                             <div class='block text-small'>
-                                <span id="fail_suites" class='strong tooltipped' data-position='top'></span> suite(s) failed
+                                <span id="fail_suites" class='strong tooltipped' data-position='top'></span> suite(s)
+                                failed
                             </div>
                         </div>
                     </div>
@@ -223,7 +224,7 @@
                         {% endif %}
                         <div class='test-heading'>
                             <span class='test-name'>{{ test_suite_summary.name }}</span>
-                            <span class='test-time'>baseurl: {{ test_suite_summary.base_url }}</span>
+                            <span class='test-time'>base_url: {{ test_suite_summary.base_url }}</span>
                             {% if test_suite_summary.success == True %}
                                 <span class='test-status right pass'>pass</span>
                             {% else %}
@@ -253,7 +254,7 @@
                                     {% if  record.status == 'success' %}
                                         <li class='node level-1 leaf pass' status='pass'
                                             test-id='{{ test_suite_summary.name }}_{{ record.name }}_{{ loop.index }}'>
-                                            {% elif record.status == 'fail' %}
+                                            {% elif record.status == 'failure' %}
                                         <li class='node level-1 leaf fail' status='fail'
                                             test-id='{{ test_suite_summary.name }}_{{ record.name }}_{{ loop.index }}'>
                                             {% elif record.status == 'error' %}
@@ -269,7 +270,7 @@
                                     <span class='node-duration'>response_time: {{ record.meta_data.response.response_time_ms }} ms</span>
                                     {% if  record.status == 'success' %}
                                         <span class='test-status right pass'>pass</span>
-                                    {% elif record.status == 'fail' %}
+                                    {% elif record.status == 'failure' %}
                                         <span class='test-status right fail'>fail</span>
                                     {% elif record.status == 'error' %}
                                         <span class='test-status right error'>error</span>
@@ -519,13 +520,18 @@
                                         </tr>
                                         {% for record in test_suite_summary.records %}
                                             <tr>
-                                                <td>{{ record.meta_data.request.start_timestamp }}</td>
+                                                <td>{{ record.meta_data.request.start_timestamp|default("Script Error") }}</td>
                                                 <td class='linked'
                                                     test-id='{{ test_suite_summary.name }}_{{ record.name }}_{{ loop.index }}'>{{ record.name }}</td>
                                                 {% if record.status == 'success' %}
                                                     <td><span class='test-status pass'>pass</span></td>
-                                                {% else %}
+                                                {% elif record.status == 'failure' %}
                                                     <td><span class='test-status fail'>fail</span></td>
+                                                {% elif record.status == 'error' %}
+                                                    <td><span class='test-status error'>error</span></td>
+                                                {% elif record.status == 'skipped' %}
+                                                    <td><span class='test-status' style="color: #fbc02d">skip</span>
+                                                    </td>
                                                 {% endif %}
                                             </tr>
                                         {% endfor %}
@@ -573,13 +579,18 @@
                                         <tbody>
                                         {% for record in test_suite_summary.records %}
                                             <tr>
-                                                <td>{{ record.meta_data.request.start_timestamp }}</td>
+                                                <td>{{ record.meta_data.request.start_timestamp|default("Script Error") }}</td>
                                                 <td class='linked'
                                                     test-id='{{ test_suite_summary.name }}_{{ record.name }}_{{ loop.index }}'>{{ record.name }}</td>
                                                 {% if record.status == 'success' %}
                                                     <td><span class='test-status pass'>pass</span></td>
-                                                {% else %}
+                                                {% elif record.status == 'failure' %}
                                                     <td><span class='test-status fail'>fail</span></td>
+                                                {% elif record.status == 'error' %}
+                                                    <td><span class='test-status error'>error</span></td>
+                                                {% elif record.status == 'skipped' %}
+                                                    <td><span class='test-status' style="color: #fbc02d">skip</span>
+                                                    </td>
                                                 {% endif %}
                                             </tr>
                                         {% endfor %}
