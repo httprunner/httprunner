@@ -222,11 +222,37 @@ class TestRunner(ApiServerUnittest):
                 ]
             }
         ]
-        # with self.assertRaises(exceptions.AssertionError):
         runner = HttpRunner().run(testsets)
-
         summary = runner.summary
         self.assertFalse(summary["success"])
+        self.assertEqual(summary["stat"]["failures"], 1)
+
+    def test_run_httprunner_with_teardown_hooks_error(self):
+        testsets = [
+            {
+                "name": "test teardown hooks",
+                "config": {
+                    'path': 'tests/httpbin/hooks.yml',
+                },
+                "testcases": [
+                    {
+                        "name": "test teardown hooks",
+                        "request": {
+                            "url": "http://127.0.0.1:3458/headers",
+                            "method": "GET",
+                            "data": "abc"
+                        },
+                        "teardown_hooks": [
+                            "${alter_response_error($response)}"
+                        ]
+                    }
+                ]
+            }
+        ]
+        runner = HttpRunner().run(testsets)
+        summary = runner.summary
+        self.assertFalse(summary["success"])
+        self.assertEqual(summary["stat"]["errors"], 1)
 
     def test_run_testset_with_teardown_hooks_success(self):
         test = {

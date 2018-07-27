@@ -15,6 +15,12 @@ class ValidationFailure(MyBaseFailure):
 class ExtractFailure(MyBaseFailure):
     pass
 
+class SetupHooksFailure(MyBaseFailure):
+    pass
+
+class TeardownHooksFailure(MyBaseFailure):
+    pass
+
 
 """ error type exceptions
     these exceptions will mark test as error

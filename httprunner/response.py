@@ -153,7 +153,7 @@ class ResponseObject(object):
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
 
-        # new set response attributes
+        # new set response attributes in teardown_hooks
         elif top_query == "attributes":
             if not sub_query:
                 # extract response attributes
@@ -163,10 +163,10 @@ class ResponseObject(object):
                 return self.attributes[sub_query]
             else:
                 # content = "attributes.new_attribute_not_exist"
-                err_msg = u"Failed to extract cumstom set attribute! => {}\n".format(field)
+                err_msg = u"Failed to extract cumstom set attribute from teardown hooks! => {}\n".format(field)
                 err_msg += u"response set attributes: {}\n".format(self.attributes)
                 logger.log_error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
+                raise exceptions.TeardownHooksFailure(err_msg)
 
         # others
         else:

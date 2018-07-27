@@ -171,6 +171,7 @@ class Runner(object):
         # teardown hooks
         teardown_hooks = testcase_dict.get("teardown_hooks", [])
         if teardown_hooks:
+            logger.log_info("start to run teardown hooks")
             self.context.bind_testcase_variable("response", resp_obj)
             self.do_hook_actions(teardown_hooks)
 
