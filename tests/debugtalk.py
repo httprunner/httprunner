@@ -102,7 +102,10 @@ def alter_response(response):
     response.status_code = 500
     response.headers["Content-Type"] = "html/text"
     response.json["headers"]["Host"] = "127.0.0.1:8888"
-    response.attributes["new_attribute"] = "new_attribute"
+    response.new_attribute = "new_attribute_value"
+    response.new_attribute_dict = {
+        "key": 123
+    }
 
 def alter_response_error(response):
     # NameError

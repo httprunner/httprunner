@@ -18,7 +18,6 @@ class ResponseObject(object):
         @param (requests.Response instance) resp_obj
         """
         self.resp_obj = resp_obj
-        self.attributes = {}
 
     def __getattr__(self, key):
         try:
@@ -154,17 +153,23 @@ class ResponseObject(object):
                 raise exceptions.ExtractFailure(err_msg)
 
         # new set response attributes in teardown_hooks
-        elif top_query == "attributes":
+        elif top_query in self.__dict__:
+            attributes = self.__dict__[top_query]
+
             if not sub_query:
                 # extract response attributes
-                return self.attributes
+                return attributes
 
-            if sub_query in self.attributes:
-                return self.attributes[sub_query]
+            if isinstance(attributes, (dict, list)):
+                # attributes = {"xxx": 123}, content.xxx
+                return utils.query_json(attributes, sub_query)
+            elif sub_query.isdigit():
+                # attributes = "abcdefg", attributes.3 => d
+                return utils.query_json(attributes, sub_query)
             else:
                 # content = "attributes.new_attribute_not_exist"
                 err_msg = u"Failed to extract cumstom set attribute from teardown hooks! => {}\n".format(field)
-                err_msg += u"response set attributes: {}\n".format(self.attributes)
+                err_msg += u"response set attributes: {}\n".format(attributes)
                 logger.log_error(err_msg)
                 raise exceptions.TeardownHooksFailure(err_msg)
 
@@ -173,7 +178,7 @@ class ResponseObject(object):
             err_msg = u"Failed to extract attribute from response! => {}\n".format(field)
             err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json, encoding, ok, reason, url.\n\n"
             err_msg += u"If you want to set attribute in teardown_hooks, take the following example as reference:\n"
-            err_msg += u"response.attributes['new_attribute'] = 'new_attribute'\n"
+            err_msg += u"response.new_attribute = 'new_attribute_value'\n"
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 

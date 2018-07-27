@@ -187,7 +187,8 @@ class TestRunner(ApiServerUnittest):
                             {"eq": ["json.headers.Host", "127.0.0.1:8888"]},
                             {"eq": ["content.headers.Host", "127.0.0.1:8888"]},
                             {"eq": ["text.headers.Host", "127.0.0.1:8888"]},
-                            {"eq": ["attributes.new_attribute", "new_attribute"]}
+                            {"eq": ["new_attribute", "new_attribute_value"]},
+                            {"eq": ["new_attribute_dict.key", 123]}
                         ]
                     }
                 ]
@@ -216,7 +217,7 @@ class TestRunner(ApiServerUnittest):
                             "${alter_response($response)}"
                         ],
                         "validate": [
-                            {"eq": ["attributes.attribute_not_exist", "new_attribute"]}
+                            {"eq": ["attribute_not_exist", "new_attribute"]}
                         ]
                     }
                 ]
@@ -225,7 +226,7 @@ class TestRunner(ApiServerUnittest):
         runner = HttpRunner().run(testsets)
         summary = runner.summary
         self.assertFalse(summary["success"])
-        self.assertEqual(summary["stat"]["failures"], 1)
+        self.assertEqual(summary["stat"]["errors"], 1)
 
     def test_run_httprunner_with_teardown_hooks_error(self):
         testsets = [
