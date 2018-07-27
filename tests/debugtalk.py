@@ -103,3 +103,7 @@ def alter_response(response):
     response.headers["Content-Type"] = "html/text"
     response.json["headers"]["Host"] = "127.0.0.1:8888"
     response.attributes["new_attribute"] = "new_attribute"
+
+def alter_response_error(response):
+    # NameError
+    not_defined_variable
