@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import built_in, exceptions, logger, testcase, utils
+from httprunner import built_in, exceptions, logger, parser, testcase, utils
 from httprunner.compat import OrderedDict
 
 
@@ -251,7 +251,7 @@ class Context(object):
         for validator in validators:
             # evaluate validators with context variable mapping.
             evaluated_validator = self.eval_check_item(
-                testcase.parse_validator(validator),
+                parser.parse_validator(validator),
                 resp_obj
             )
 

@@ -4,8 +4,7 @@ import json
 import os
 
 import yaml
-from httprunner import exceptions, logger
-
+from httprunner import exceptions, logger, parser, utils
 
 ###############################################################################
 ##   file loader
@@ -155,3 +154,253 @@ def load_dot_env_file(path):
             variable = variable.strip()
             os.environ[variable] = value.strip()
             logger.log_debug("Loaded variable: {}".format(variable))
+
+
+###############################################################################
+##   suite loader
+###############################################################################
+
+
+overall_def_dict = {
+    "api": {},
+    "suite": {}
+}
+testcases_cache_mapping = {}
+
+
+def load_test_dependencies():
+    """ load all api and suite definitions.
+        default api folder is "$CWD/tests/api/".
+        default suite folder is "$CWD/tests/suite/".
+    """
+    # TODO: cache api and suite loading
+    # load api definitions
+    api_def_folder = os.path.join(os.getcwd(), "tests", "api")
+    for test_file in load_folder_files(api_def_folder):
+        load_api_file(test_file)
+
+    # load suite definitions
+    suite_def_folder = os.path.join(os.getcwd(), "tests", "suite")
+    for suite_file in load_folder_files(suite_def_folder):
+        suite = load_test_file(suite_file)
+        if "def" not in suite["config"]:
+            raise exceptions.ParamsError("def missed in suite file: {}!".format(suite_file))
+
+        call_func = suite["config"]["def"]
+        function_meta = parser.parse_function(call_func)
+        suite["function_meta"] = function_meta
+        overall_def_dict["suite"][function_meta["func_name"]] = suite
+
+
+def load_api_file(file_path):
+    """ load api definition from file and store in overall_def_dict["api"]
+        api file should be in format below:
+            [
+                {
+                    "api": {
+                        "def": "api_login",
+                        "request": {},
+                        "validate": []
+                    }
+                },
+                {
+                    "api": {
+                        "def": "api_logout",
+                        "request": {},
+                        "validate": []
+                    }
+                }
+            ]
+    """
+    api_items = load_file(file_path)
+    if not isinstance(api_items, list):
+        raise exceptions.FileFormatError("API format error: {}".format(file_path))
+
+    for api_item in api_items:
+        if not isinstance(api_item, dict) or len(api_item) != 1:
+            raise exceptions.FileFormatError("API format error: {}".format(file_path))
+
+        key, api_dict = api_item.popitem()
+        if key != "api" or not isinstance(api_dict, dict) or "def" not in api_dict:
+            raise exceptions.FileFormatError("API format error: {}".format(file_path))
+
+        api_def = api_dict.pop("def")
+        function_meta = parser.parse_function(api_def)
+        func_name = function_meta["func_name"]
+
+        if func_name in overall_def_dict["api"]:
+            logger.log_warning("API definition duplicated: {}".format(func_name))
+
+        api_dict["function_meta"] = function_meta
+        overall_def_dict["api"][func_name] = api_dict
+
+
+def load_test_file(file_path):
+    """ load testcase file or suite file
+    @param file_path: absolute valid file path
+        file_path should be in format below:
+            [
+                {
+                    "config": {
+                        "name": "",
+                        "def": "suite_order()",
+                        "request": {}
+                    }
+                },
+                {
+                    "test": {
+                        "name": "add product to cart",
+                        "api": "api_add_cart()",
+                        "validate": []
+                    }
+                },
+                {
+                    "test": {
+                        "name": "checkout cart",
+                        "request": {},
+                        "validate": []
+                    }
+                }
+            ]
+    @return testset dict
+        {
+            "config": {},
+            "testcases": [testcase11, testcase12]
+        }
+    """
+    testset = {
+        "config": {
+            "path": file_path
+        },
+        "testcases": []     # TODO: rename to tests
+    }
+    for item in load_file(file_path):
+        if not isinstance(item, dict) or len(item) != 1:
+            raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
+
+        key, test_block = item.popitem()
+        if not isinstance(test_block, dict):
+            raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
+
+        if key == "config":
+            testset["config"].update(test_block)
+
+        elif key == "test":
+            if "api" in test_block:
+                ref_call = test_block["api"]
+                def_block = _get_block_by_name(ref_call, "api")
+                utils._override_block(def_block, test_block)
+                testset["testcases"].append(test_block)
+            elif "suite" in test_block:
+                ref_call = test_block["suite"]
+                block = _get_block_by_name(ref_call, "suite")
+                testset["testcases"].extend(block["testcases"])
+            else:
+                testset["testcases"].append(test_block)
+
+        else:
+            logger.log_warning(
+                "unexpected block key: {}. block key should only be 'config' or 'test'.".format(key)
+            )
+
+    return testset
+
+
+def _get_block_by_name(ref_call, ref_type):
+    """ get test content by reference name
+    @params:
+        ref_call: e.g. api_v1_Account_Login_POST($UserName, $Password)
+        ref_type: "api" or "suite"
+    """
+    function_meta = parser.parse_function(ref_call)
+    func_name = function_meta["func_name"]
+    call_args = function_meta["args"]
+    block = _get_test_definition(func_name, ref_type)
+    def_args = block.get("function_meta").get("args", [])
+
+    if len(call_args) != len(def_args):
+        raise exceptions.ParamsError("call args mismatch defined args!")
+
+    args_mapping = {}
+    for index, item in enumerate(def_args):
+        if call_args[index] == item:
+            continue
+
+        args_mapping[item] = call_args[index]
+
+    if args_mapping:
+        block = utils.substitute_variables_with_mapping(block, args_mapping)
+
+    return block
+
+
+def _get_test_definition(name, ref_type):
+    """ get expected api or suite.
+    @params:
+        name: api or suite name
+        ref_type: "api" or "suite"
+    @return
+        expected api info if found, otherwise raise ApiNotFound exception
+    """
+    block = overall_def_dict.get(ref_type, {}).get(name)
+
+    if not block:
+        err_msg = "{} not found!".format(name)
+        if ref_type == "api":
+            raise exceptions.ApiNotFound(err_msg)
+        else:
+            # ref_type == "suite":
+            raise exceptions.SuiteNotFound(err_msg)
+
+    return block
+
+
+def load_testsets_by_path(path):
+    """ load testcases from file path
+    @param path: path could be in several type
+        - absolute/relative file path
+        - absolute/relative folder path
+        - list/set container with file(s) and/or folder(s)
+    @return testcase sets list, each testset is corresponding to a file
+        [
+            testset_dict_1,
+            testset_dict_2
+        ]
+    """
+    if isinstance(path, (list, set)):
+        testsets = []
+
+        for file_path in set(path):
+            testset = load_testsets_by_path(file_path)
+            if not testset:
+                continue
+            testsets.extend(testset)
+
+        return testsets
+
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), path)
+
+    if path in testcases_cache_mapping:
+        return testcases_cache_mapping[path]
+
+    if os.path.isdir(path):
+        files_list = load_folder_files(path)
+        testcases_list = load_testsets_by_path(files_list)
+
+    elif os.path.isfile(path):
+        try:
+            testset = load_test_file(path)
+            if testset["testcases"] or testset["api"]:
+                testcases_list = [testset]
+            else:
+                testcases_list = []
+        except exceptions.FileFormatError:
+            testcases_list = []
+
+    else:
+        logger.log_error(u"file not found: {}".format(path))
+        testcases_list = []
+
+    testcases_cache_mapping[path] = testcases_list
+    return testcases_list

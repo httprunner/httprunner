@@ -2,7 +2,6 @@ import os
 import time
 
 from httprunner import HttpRunner, exceptions, loader, runner
-from httprunner.testcase import TestcaseLoader
 from httprunner.utils import deep_update_dict
 from tests.base import ApiServerUnittest
 
@@ -380,7 +379,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testsets = TestcaseLoader.load_testsets_by_path(testcase_file_path)
+        testsets = loader.load_testsets_by_path(testcase_file_path)
         testset = testsets[0]
         config_dict_headers = testset["config"]["request"]["headers"]
         test_dict_headers = testset["testcases"][0]["request"]["headers"]
