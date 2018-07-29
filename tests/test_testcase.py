@@ -120,51 +120,6 @@ class TestcaseParserUnittest(unittest.TestCase):
             3 * 2 * 3
         )
 
-    def test_extract_variables(self):
-        self.assertEqual(
-            testcase.extract_variables("$var"),
-            ["var"]
-        )
-        self.assertEqual(
-            testcase.extract_variables("$var123"),
-            ["var123"]
-        )
-        self.assertEqual(
-            testcase.extract_variables("$var_name"),
-            ["var_name"]
-        )
-        self.assertEqual(
-            testcase.extract_variables("var"),
-            []
-        )
-        self.assertEqual(
-            testcase.extract_variables("a$var"),
-            ["var"]
-        )
-        self.assertEqual(
-            testcase.extract_variables("$v ar"),
-            ["v"]
-        )
-        self.assertEqual(
-            testcase.extract_variables(" "),
-            []
-        )
-        self.assertEqual(
-            testcase.extract_variables("$abc*"),
-            ["abc"]
-        )
-        self.assertEqual(
-            testcase.extract_variables("${func()}"),
-            []
-        )
-        self.assertEqual(
-            testcase.extract_variables("${func(1,2)}"),
-            []
-        )
-        self.assertEqual(
-            testcase.extract_variables("${gen_md5($TOKEN, $data, $random)}"),
-            ["TOKEN", "data", "random"]
-        )
 
     def test_eval_content_variables(self):
         variables = {

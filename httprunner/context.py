@@ -177,7 +177,7 @@ class Context(object):
         # 5, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
 
         if isinstance(check_item, (dict, list)) \
-            or testcase.extract_variables(check_item) \
+            or parser.extract_variables(check_item) \
             or testcase.extract_functions(check_item):
             # format 1/2/3
             check_value = self.eval_content(check_item)

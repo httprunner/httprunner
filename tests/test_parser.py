@@ -12,6 +12,52 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parser.parse_string_value("$var"), "$var")
         self.assertEqual(parser.parse_string_value("${func}"), "${func}")
 
+    def test_extract_variables(self):
+        self.assertEqual(
+            parser.extract_variables("$var"),
+            ["var"]
+        )
+        self.assertEqual(
+            parser.extract_variables("$var123"),
+            ["var123"]
+        )
+        self.assertEqual(
+            parser.extract_variables("$var_name"),
+            ["var_name"]
+        )
+        self.assertEqual(
+            parser.extract_variables("var"),
+            []
+        )
+        self.assertEqual(
+            parser.extract_variables("a$var"),
+            ["var"]
+        )
+        self.assertEqual(
+            parser.extract_variables("$v ar"),
+            ["v"]
+        )
+        self.assertEqual(
+            parser.extract_variables(" "),
+            []
+        )
+        self.assertEqual(
+            parser.extract_variables("$abc*"),
+            ["abc"]
+        )
+        self.assertEqual(
+            parser.extract_variables("${func()}"),
+            []
+        )
+        self.assertEqual(
+            parser.extract_variables("${func(1,2)}"),
+            []
+        )
+        self.assertEqual(
+            parser.extract_variables("${gen_md5($TOKEN, $data, $random)}"),
+            ["TOKEN", "data", "random"]
+        )
+
     def test_parse_function(self):
         self.assertEqual(
             parser.parse_function("func()"),
