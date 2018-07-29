@@ -9,10 +9,9 @@ import os
 import random
 import re
 
-from httprunner import exceptions, logger, utils
+from httprunner import exceptions, loader, logger, utils
 from httprunner.compat import (OrderedDict, basestring, builtin_str,
                                numeric_types, str)
-from httprunner.utils import FileUtils
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
@@ -119,12 +118,12 @@ class TestcaseLoader(object):
         # TODO: cache api and suite loading
         # load api definitions
         api_def_folder = os.path.join(os.getcwd(), "tests", "api")
-        for test_file in FileUtils.load_folder_files(api_def_folder):
+        for test_file in loader.load_folder_files(api_def_folder):
             TestcaseLoader.load_api_file(test_file)
 
         # load suite definitions
         suite_def_folder = os.path.join(os.getcwd(), "tests", "suite")
-        for suite_file in FileUtils.load_folder_files(suite_def_folder):
+        for suite_file in loader.load_folder_files(suite_def_folder):
             suite = TestcaseLoader.load_test_file(suite_file)
             if "def" not in suite["config"]:
                 raise exceptions.ParamsError("def missed in suite file: {}!".format(suite_file))
@@ -155,7 +154,7 @@ class TestcaseLoader(object):
                     }
                 ]
         """
-        api_items = FileUtils.load_file(file_path)
+        api_items = loader.load_file(file_path)
         if not isinstance(api_items, list):
             raise exceptions.FileFormatError("API format error: {}".format(file_path))
 
@@ -217,7 +216,7 @@ class TestcaseLoader(object):
             },
             "testcases": []     # TODO: rename to tests
         }
-        for item in FileUtils.load_file(file_path):
+        for item in loader.load_file(file_path):
             if not isinstance(item, dict) or len(item) != 1:
                 raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
 
@@ -371,7 +370,7 @@ class TestcaseLoader(object):
             return TestcaseLoader.testcases_cache_mapping[path]
 
         if os.path.isdir(path):
-            files_list = FileUtils.load_folder_files(path)
+            files_list = loader.load_folder_files(path)
             testcases_list = TestcaseLoader.load_testsets_by_path(files_list)
 
         elif os.path.isfile(path):
@@ -792,7 +791,7 @@ class TestcaseParser(object):
             os.path.dirname(self.file_path),
             "{}".format(csv_file_name)
         )
-        csv_content_list = FileUtils.load_file(parameter_file_path)
+        csv_content_list = loader.load_file(parameter_file_path)
 
         if fetch_method.lower() == "random":
             random.shuffle(csv_content_list)
