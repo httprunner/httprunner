@@ -11,24 +11,9 @@ from httprunner import exceptions, loader, logger, parser, utils
 from httprunner.compat import (OrderedDict, basestring, builtin_str,
                                numeric_types, str)
 
-variable_regexp = r"\$([\w_]+)"
+
 function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
 
-
-def extract_variables(content):
-    """ extract all variable names from content, which is in format $variable
-    @param (str) content
-    @return (list) variable name list
-
-    e.g. $variable => ["variable"]
-         /blog/$postid => ["postid"]
-         /$var1/$var2 => ["var1", "var2"]
-         abc => []
-    """
-    try:
-        return re.findall(variable_regexp, content)
-    except TypeError:
-        return []
 
 def extract_functions(content):
     """ extract all functions from string content, which are in format ${fun()}
@@ -298,7 +283,7 @@ class TestcaseParser(object):
             /$var_1/$var_2/var3 => "/abc/def/var3"
             ${func($var_1, $var_2, xyz)} => "${func(abc, def, xyz)}"
         """
-        variables_list = extract_variables(content)
+        variables_list = parser.extract_variables(content)
         for variable_name in variables_list:
             variable_value = self.get_bind_variable(variable_name)
 

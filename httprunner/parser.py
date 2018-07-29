@@ -3,6 +3,7 @@ import re
 
 from httprunner import exceptions
 
+variable_regexp = r"\$([\w_]+)"
 function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w\.\-_ =,]*)\)$")
 
 
@@ -20,6 +21,23 @@ def parse_string_value(str_value):
     except SyntaxError:
         # e.g. $var, ${func}
         return str_value
+
+
+def extract_variables(content):
+    """ extract all variable names from content, which is in format $variable
+    @param (str) content
+    @return (list) variable name list
+
+    e.g. $variable => ["variable"]
+         /blog/$postid => ["postid"]
+         /$var1/$var2 => ["var1", "var2"]
+         abc => []
+    """
+    # TODO: change variable notation from $var to {{var}}
+    try:
+        return re.findall(variable_regexp, content)
+    except TypeError:
+        return []
 
 
 def parse_function(content):
