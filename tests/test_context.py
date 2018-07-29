@@ -113,15 +113,14 @@ class VariableBindsUnittest(ApiServerUnittest):
             self.assertEqual(context_variables["largest"], 8)
 
     def test_import_module_items(self):
-        module_items = ["tests.debugtalk"]
         variables = [
             {"TOKEN": "debugtalk"},
             {"random": "${gen_random_string(5)}"},
             {"data": '{"name": "user", "password": "123456"}'},
             {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
         ]
-
-        self.context.import_module_items(module_items)
+        from tests import debugtalk
+        self.context.import_module_items(debugtalk)
         self.context.bind_variables(variables)
         context_variables = self.context.testcase_variables_mapping
 
@@ -163,7 +162,8 @@ class VariableBindsUnittest(ApiServerUnittest):
                 "data": "$data"
             }
         }
-        self.context.import_module_items(["tests.debugtalk"])
+        from tests import debugtalk
+        self.context.import_module_items(debugtalk)
         self.context.bind_variables(testcase["variables"])
         parsed_request = self.context.get_parsed_request(testcase["request"])
         self.assertIn("authorization", parsed_request["headers"])

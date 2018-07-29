@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import exceptions, logger, testcase, utils
+from httprunner import built_in, exceptions, logger, testcase, utils
 from httprunner.compat import OrderedDict
 
 
@@ -39,7 +39,7 @@ class Context(object):
         self.testcase_parser.update_binded_variables(self.testcase_variables_mapping)
 
         if level == "testset":
-            self.import_module_items(["httprunner.built_in"], "testset")
+            self.import_module_items(built_in)
 
     def config_context(self, config_dict, level):
         if level == "testset":
@@ -66,17 +66,14 @@ class Context(object):
 
         self.__update_context_functions_config(level, eval_function_binds)
 
-    def import_module_items(self, modules, level="testcase"):
-        """ import modules and bind all functions within the context
+    def import_module_items(self, imported_module):
+        """ import module functions and variables and bind to testset context
         """
-        sys.path.insert(0, os.getcwd())
-        for module_name in modules:
-            imported_module = utils.get_imported_module(module_name)
-            imported_functions_dict = utils.filter_module(imported_module, "function")
-            self.__update_context_functions_config(level, imported_functions_dict)
+        imported_functions_dict = utils.filter_module(imported_module, "function")
+        self.__update_context_functions_config("testset", imported_functions_dict)
 
-            imported_variables_dict = utils.filter_module(imported_module, "variable")
-            self.bind_variables(imported_variables_dict, level)
+        imported_variables_dict = utils.filter_module(imported_module, "variable")
+        self.bind_variables(imported_variables_dict, "testset")
 
     def bind_variables(self, variables, level="testcase"):
         """ bind variables to testset context or current testcase context.
