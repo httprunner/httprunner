@@ -4,12 +4,12 @@ import copy
 import sys
 import unittest
 
-from httprunner import exceptions, logger, runner, testcase, utils
+from httprunner import exceptions, loader, logger, runner, testcase, utils
 from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
 from httprunner.testcase import TestcaseLoader
-from httprunner.utils import load_dot_env_file, print_output
+from httprunner.utils import print_output
 
 
 class TestCase(unittest.TestCase):
@@ -212,7 +212,7 @@ class HttpRunner(object):
             - dot_env_path: .env file path
         """
         dot_env_path = kwargs.pop("dot_env_path", None)
-        load_dot_env_file(dot_env_path)
+        loader.load_dot_env_file(dot_env_path)
 
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)

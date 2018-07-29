@@ -134,3 +134,24 @@ def load_folder_files(folder_path, recursive=True):
             break
 
     return file_list
+
+
+def load_dot_env_file(path):
+    """ load .env file and set to os.environ
+    """
+    if not path:
+        path = os.path.join(os.getcwd(), ".env")
+        if not os.path.isfile(path):
+            logger.log_debug(".env file not exist: {}".format(path))
+            return
+    else:
+        if not os.path.isfile(path):
+            raise exceptions.FileNotFound("env file not exist: {}".format(path))
+
+    logger.log_info("Loading environment variables from {}".format(path))
+    with io.open(path, 'r', encoding='utf-8') as fp:
+        for line in fp:
+            variable, value = line.split("=")
+            variable = variable.strip()
+            os.environ[variable] = value.strip()
+            logger.log_debug("Loaded variable: {}".format(variable))
