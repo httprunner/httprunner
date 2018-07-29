@@ -2,7 +2,6 @@ import os
 import shutil
 
 from httprunner import HttpRunner
-from httprunner.exceptions import FileNotFound
 from tests.base import ApiServerUnittest
 
 
@@ -155,13 +154,3 @@ class TestHttpRunner(ApiServerUnittest):
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 8)
-
-    def test_load_env_path(self):
-        self.assertNotIn("PROJECT_KEY", os.environ)
-        HttpRunner(dot_env_path="tests/data/test.env").run(self.testset_path)
-        self.assertIn("PROJECT_KEY", os.environ)
-        self.assertEqual(os.environ["UserName"], "debugtalk")
-
-    def test_load_env_path_not_exist(self):
-        with self.assertRaises(FileNotFound):
-            HttpRunner(dot_env_path="not_exist.env").run(self.testset_path)

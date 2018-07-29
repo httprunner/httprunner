@@ -61,6 +61,90 @@ class TestUtils(ApiServerUnittest):
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "L")
 
+    def test_substitute_variables_with_mapping(self):
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'method': "$method",
+                'headers': {'token': '$token'},
+                'data': {
+                    "null": None,
+                    "true": True,
+                    "false": False,
+                    "empty_str": ""
+                }
+            }
+        }
+        mapping = {
+            "$uid": 1000,
+            "$method": "POST"
+        }
+        result = utils.substitute_variables_with_mapping(content, mapping)
+        self.assertEqual("/api/users/1000", result["request"]["url"])
+        self.assertEqual("$token", result["request"]["headers"]["token"])
+        self.assertEqual("POST", result["request"]["method"])
+        self.assertIsNone(result["request"]["data"]["null"])
+        self.assertTrue(result["request"]["data"]["true"])
+        self.assertFalse(result["request"]["data"]["false"])
+        self.assertEqual("", result["request"]["data"]["empty_str"])
+
+    def test_merge_validator(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+
+        merged_validators = utils._merge_validator(def_validators, current_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            merged_validators
+        )
+
+    def test_merge_validator_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+
+        merged_validators = utils._merge_validator(def_validators, current_validators)
+        self.assertEqual(len(merged_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, merged_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, merged_validators)
+
+    def test_merge_extractor(self):
+        api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
+        current_extractors = [{"var1": "val111"}, {"var3": "val3"}]
+
+        merged_extractors = utils._merge_extractor(api_extrators, current_extractors)
+        self.assertIn(
+            {"var1": "val111"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var2": "val2"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var3": "val3"},
+            merged_extractors
+        )
+
     def test_get_uniform_comparator(self):
         self.assertEqual(utils.get_uniform_comparator("eq"), "equals")
         self.assertEqual(utils.get_uniform_comparator("=="), "equals")

@@ -6,7 +6,7 @@ import os
 import sys
 
 from httprunner.logger import color_print
-from httprunner.testcase import TestcaseLoader
+from httprunner import loader
 from locust.main import main
 
 
@@ -40,8 +40,8 @@ def gen_locustfile(testcase_file_path):
         "templates",
         "locustfile_template"
     )
-    TestcaseLoader.load_test_dependencies()
-    testset = TestcaseLoader.load_test_file(testcase_file_path)
+    loader.load_test_dependencies()
+    testset = loader.load_test_file(testcase_file_path)
     host = testset.get("config", {}).get("request", {}).get("base_url", "")
 
     with io.open(template_path, encoding='utf-8') as template:

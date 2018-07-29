@@ -8,8 +8,6 @@ from httprunner import exceptions, loader, logger, runner, testcase, utils
 from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
-from httprunner.testcase import TestcaseLoader
-from httprunner.utils import print_output
 
 
 class TestCase(unittest.TestCase):
@@ -180,8 +178,8 @@ def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
             passed in variables mapping, it will override variables in config block
     """
     if not testcase.is_testsets(path_or_testsets):
-        TestcaseLoader.load_test_dependencies()
-        testsets = TestcaseLoader.load_testsets_by_path(path_or_testsets)
+        loader.load_test_dependencies()
+        testsets = loader.load_testsets_by_path(path_or_testsets)
     else:
         testsets = path_or_testsets
 
@@ -268,7 +266,7 @@ class HttpRunner(object):
             test_suite_summary["name"] = test_suite.config.get("name")
             test_suite_summary["base_url"] = test_suite.config.get("request", {}).get("base_url", "")
             test_suite_summary["output"] = test_suite.output
-            print_output(test_suite_summary["output"])
+            utils.print_output(test_suite_summary["output"])
 
             accumulate_stat(self.summary["stat"], test_suite_summary["stat"])
             accumulate_stat(self.summary["time"], test_suite_summary["time"])
