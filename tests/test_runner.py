@@ -187,6 +187,7 @@ class TestRunner(ApiServerUnittest):
                             {"eq": ["content.headers.Host", "127.0.0.1:8888"]},
                             {"eq": ["text.headers.Host", "127.0.0.1:8888"]},
                             {"eq": ["new_attribute", "new_attribute_value"]},
+                            {"eq": ["new_attribute_dict", {"key": 123}]},
                             {"eq": ["new_attribute_dict.key", 123]}
                         ]
                     }
