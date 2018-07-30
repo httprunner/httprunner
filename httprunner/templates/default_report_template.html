@@ -288,7 +288,7 @@
                             {% if value == "image" %}
                               <img src="{{ record.meta_data.response.content }}" />
                             {% else %}
-                              <pre>{{ record.meta_data.response.text }}</pre>
+                              <pre>{{ record.meta_data.response.text | e }}</pre>
                             {% endif %}
                           {% else %}
                             {{value}}
