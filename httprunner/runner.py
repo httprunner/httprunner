@@ -14,15 +14,16 @@ class Runner(object):
         self.context = Context()
 
         config_dict = config_dict or {}
-        self.init_config(config_dict, "testset")
 
         # testset setup hooks
         testset_setup_hooks = config_dict.pop("setup_hooks", [])
-        if testset_setup_hooks:
-            self.do_hook_actions(testset_setup_hooks)
-
         # testset teardown hooks
         self.testset_teardown_hooks = config_dict.pop("teardown_hooks", [])
+
+        self.init_config(config_dict, "testset")
+
+        if testset_setup_hooks:
+            self.do_hook_actions(testset_setup_hooks)
 
     def __del__(self):
         if self.testset_teardown_hooks:

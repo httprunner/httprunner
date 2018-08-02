@@ -2,7 +2,7 @@ import os
 import shutil
 
 from httprunner import HttpRunner
-from tests.base import ApiServerUnittest
+from tests.base import HTTPBIN_SERVER, ApiServerUnittest
 
 
 class TestHttpRunner(ApiServerUnittest):
@@ -117,7 +117,7 @@ class TestHttpRunner(ApiServerUnittest):
                     {
                         "name": "post data",
                         "request": {
-                            "url": "http://127.0.0.1:3458/post",
+                            "url": "{}/post".format(HTTPBIN_SERVER),
                             "method": "POST",
                             "headers": {
                                 "Content-Type": "application/json"
