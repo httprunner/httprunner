@@ -4,9 +4,9 @@ import json
 import re
 
 from httprunner import exceptions, logger, testcase, utils
-from httprunner.compat import OrderedDict, basestring
-from requests.structures import CaseInsensitiveDict
+from httprunner.compat import OrderedDict, basestring, is_py2
 from requests.models import PreparedRequest
+from requests.structures import CaseInsensitiveDict
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 
@@ -196,6 +196,9 @@ class ResponseObject(object):
             value = self._extract_field_with_regex(field)
         else:
             value = self._extract_field_with_delimiter(field)
+
+        if is_py2 and isinstance(value, unicode):
+            value = value.encode("utf-8")
 
         msg += "\t=> {}".format(value)
         logger.log_debug(msg)
