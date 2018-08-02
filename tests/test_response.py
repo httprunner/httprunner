@@ -260,7 +260,7 @@ class TestResponse(ApiServerUnittest):
         extract_binds_dict = resp_obj.extract_response(extract_binds_list)
 
         self.assertIsInstance(extract_binds_dict["resp_content"], str)
-        self.assertIn("python-requests.org", extract_binds_dict["resp_content"])
+        self.assertIn("httpbin.org", extract_binds_dict["resp_content"])
 
         extract_binds_list = [
             {"resp_content": "content.xxx"}
