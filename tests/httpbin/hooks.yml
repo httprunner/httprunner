@@ -1,7 +1,7 @@
 - config:
     name: basic test with httpbin
     request:
-        base_url: http://127.0.0.1:3458/
+        base_url: $HTTPBIN_SERVER
     setup_hooks:
         - ${hook_print(setup)}
     teardown_hooks:
@@ -19,7 +19,7 @@
         - ${teardown_hook_sleep_N_secs($response, 1)}
     validate:
         - eq: ["status_code", 200]
-        - eq: [content.headers.Host, "127.0.0.1:3458"]
+        - contained_by: [content.headers.Host, $HTTPBIN_SERVER]
 
 - test:
     name: alter response
