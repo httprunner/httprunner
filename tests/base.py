@@ -3,18 +3,27 @@ import time
 import unittest
 
 import requests
-from httpbin import app as httpbin_app
 from httprunner import utils
 from tests.api_server import app as flask_app
 
+try:
+    from httpbin import app as httpbin_app
+    HTTPBIN_HOST = "127.0.0.1"
+    HTTPBIN_PORT = 3458
+except ImportError:
+    HTTPBIN_HOST = "httpbin.org"
+    HTTPBIN_PORT = 80
+
 FLASK_APP_PORT = 5000
-HTTPBIN_APP_PORT = 3458
+HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
+
 
 def run_flask():
     flask_app.run(port=FLASK_APP_PORT)
 
 def run_httpbin():
-    httpbin_app.run(port=HTTPBIN_APP_PORT)
+    if HTTPBIN_HOST == "127.0.0.1":
+        httpbin_app.run(host=HTTPBIN_HOST, port=HTTPBIN_PORT)
 
 
 class ApiServerUnittest(unittest.TestCase):

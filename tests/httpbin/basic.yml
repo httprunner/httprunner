@@ -1,0 +1,93 @@
+- config:
+    name: basic test with httpbin
+    request:
+        base_url: http://httpbin.org/
+
+- test:
+    name: index
+    request:
+        url: /
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - contains: [content, "HTTP Request &amp; Response Service"]
+
+- test:
+    name: headers
+    request:
+        url: /headers
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.headers.Host, "httpbin.org"]
+
+- test:
+    name: user-agent
+    request:
+        url: /user-agent
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - startswith: [content.user-agent, "python-requests"]
+
+- test:
+    name: get without params
+    request:
+        url: /get
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.args, {}]
+
+- test:
+    name: get with params in url
+    request:
+        url: /get?a=1&b=2
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.args, {'a': '1', 'b': '2'}]
+
+- test:
+    name: get with params in params field
+    request:
+        url: /get
+        params:
+            a: 1
+            b: 2
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.args, {'a': '1', 'b': '2'}]
+
+- test:
+    name: set cookie
+    request:
+        url: /cookies/set?name=value
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        # - eq: [cookies.name, "value"]
+
+- test:
+    name: extract cookie
+    request:
+        url: /cookies
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [cookies.name, "value"]
+
+- test:
+    name: post data
+    request:
+        url: /post
+        method: POST
+        headers:
+            Content-Type: application/json
+        data: abc
+    validate:
+        - eq: ["status_code", 200]
+
+
+
