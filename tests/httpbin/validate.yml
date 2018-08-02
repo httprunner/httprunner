@@ -1,0 +1,13 @@
+- config:
+    name: basic test with httpbin
+    request:
+        base_url: http://httpbin.org/
+
+- test:
+    name: headers
+    request:
+        url: /headers
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - assert_status_code_is_200: ["status_code"]

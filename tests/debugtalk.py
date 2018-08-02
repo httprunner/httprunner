@@ -6,6 +6,8 @@ import random
 import string
 import time
 
+from tests.base import HTTPBIN_SERVER
+
 try:
     import urllib
 except NameError:
