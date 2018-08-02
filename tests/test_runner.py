@@ -3,7 +3,7 @@ import time
 
 from httprunner import HttpRunner, exceptions, loader, runner
 from httprunner.utils import deep_update_dict
-from tests.base import ApiServerUnittest
+from tests.base import HTTPBIN_SERVER, ApiServerUnittest
 
 
 class TestRunner(ApiServerUnittest):
@@ -75,7 +75,7 @@ class TestRunner(ApiServerUnittest):
             "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
             "request": {
-                "base_url": "http://127.0.0.1:3458/"
+                "base_url": HTTPBIN_SERVER
             },
             "setup_hooks": [
                 "${sleep_N_secs(0.5)}"
@@ -123,7 +123,7 @@ class TestRunner(ApiServerUnittest):
             "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
             "request": {
-                "base_url": "http://127.0.0.1:3458/"
+                "base_url": HTTPBIN_SERVER
             }
         }
         test = {
@@ -160,7 +160,7 @@ class TestRunner(ApiServerUnittest):
         end_time = time.time()
         summary = runner.summary
         self.assertTrue(summary["success"])
-        self.assertLess(end_time - start_time, 1)
+        self.assertLess(end_time - start_time, 3)
 
     def test_run_httprunner_with_teardown_hooks_alter_response(self):
         testsets = [
@@ -173,7 +173,7 @@ class TestRunner(ApiServerUnittest):
                     {
                         "name": "test teardown hooks",
                         "request": {
-                            "url": "http://127.0.0.1:3458/headers",
+                            "url": "{}/headers".format(HTTPBIN_SERVER),
                             "method": "GET",
                             "data": "abc"
                         },
@@ -209,7 +209,7 @@ class TestRunner(ApiServerUnittest):
                     {
                         "name": "test teardown hooks",
                         "request": {
-                            "url": "http://127.0.0.1:3458/headers",
+                            "url": "{}/headers".format(HTTPBIN_SERVER),
                             "method": "GET",
                             "data": "abc"
                         },
@@ -239,7 +239,7 @@ class TestRunner(ApiServerUnittest):
                     {
                         "name": "test teardown hooks",
                         "request": {
-                            "url": "http://127.0.0.1:3458/headers",
+                            "url": "{}/headers".format(HTTPBIN_SERVER),
                             "method": "GET",
                             "data": "abc"
                         },

@@ -6,18 +6,17 @@ name = "pypi"
 [packages]
 requests = "*"
 pyyaml = "*"
-"jinja2" = "*"
-"har2case" = "*"
+jinja2 = "*"
+har2case = "*"
 colorama = "*"
 colorlog = "*"
 requests-toolbelt = "*"
 
 [dev-packages]
 Flask = "<1.0.0"
-httpbin = "*"
 coverage = "*"
 coveralls = "*"
 twine = "*"
-"contextlib2" = "*"
+contextlib2 = "*"
 
 [scripts]

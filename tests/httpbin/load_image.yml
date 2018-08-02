@@ -1,7 +1,7 @@
 - config:
     name: load images
     request:
-        base_url: http://127.0.0.1:3458
+        base_url: $HTTPBIN_SERVER
 
 - test:
     name: get png image

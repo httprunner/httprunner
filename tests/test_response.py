@@ -1,7 +1,7 @@
 import requests
 from httprunner import exceptions, response, utils
-from httprunner.compat import bytes, str
-from tests.base import ApiServerUnittest
+from httprunner.compat import basestring, bytes
+from tests.base import HTTPBIN_SERVER, ApiServerUnittest
 
 
 class TestResponse(ApiServerUnittest):
@@ -28,7 +28,7 @@ class TestResponse(ApiServerUnittest):
         self.assertEqual(bytes, type(resp_obj.content))
 
     def test_extract_response_status_code(self):
-        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp = requests.get(url="{}/status/200".format(HTTPBIN_SERVER))
         resp_obj = response.ResponseObject(resp)
 
         extract_binds_list = [
@@ -48,7 +48,7 @@ class TestResponse(ApiServerUnittest):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_encoding_ok_reason_url(self):
-        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp = requests.get(url="{}/status/200".format(HTTPBIN_SERVER))
         resp_obj = response.ResponseObject(resp)
 
         extract_binds_list = [
@@ -62,7 +62,7 @@ class TestResponse(ApiServerUnittest):
         self.assertEqual(extract_binds_dict["resp_encoding"], "utf-8")
         self.assertEqual(extract_binds_dict["resp_ok"], True)
         self.assertEqual(extract_binds_dict["resp_reason"], "OK")
-        self.assertEqual(extract_binds_dict["resp_url"], "http://127.0.0.1:3458/status/200")
+        self.assertEqual(extract_binds_dict["resp_url"], "{}/status/200".format(HTTPBIN_SERVER))
 
         extract_binds_list = [{"resp_encoding": "encoding.xx"}]
         with self.assertRaises(exceptions.ParamsError):
@@ -82,7 +82,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_response_cookies(self):
         resp = requests.get(
-            url="http://127.0.0.1:3458/cookies",
+            url="{}/cookies".format(HTTPBIN_SERVER),
             headers={
                 "accept": "application/json"
             }
@@ -106,7 +106,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_response_elapsed(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             json={
                 'success': False,
                 "person": {
@@ -146,7 +146,7 @@ class TestResponse(ApiServerUnittest):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_headers(self):
-        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp = requests.get(url="{}/status/200".format(HTTPBIN_SERVER))
         resp_obj = response.ResponseObject(resp)
 
         extract_binds_list = [
@@ -167,7 +167,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_response_body_json(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             json={
                 'success': False,
                 "person": {
@@ -192,7 +192,7 @@ class TestResponse(ApiServerUnittest):
         #         "Connection": "keep-alive",
         #         "Content-Length": "129",
         #         "Content-Type": "application/json",
-        #         "Host": "127.0.0.1:3458",
+        #         "Host": HTTPBIN_SERVER,
         #         "User-Agent": "python-requests/2.18.4"
         #     },
         #     "json": {
@@ -211,7 +211,7 @@ class TestResponse(ApiServerUnittest):
         #     },
         #     "method": "POST",
         #     "origin": "127.0.0.1",
-        #     "url": "http://127.0.0.1:3458/anything"
+        #     "url": "{}/anything".format(HTTPBIN_SERVER)
         # }
 
         extract_binds_list = [
@@ -251,7 +251,7 @@ class TestResponse(ApiServerUnittest):
         )
 
     def test_extract_response_body_html(self):
-        resp = requests.get(url="http://127.0.0.1:3458/")
+        resp = requests.get(url=HTTPBIN_SERVER)
         resp_obj = response.ResponseObject(resp)
 
         extract_binds_list = [
@@ -259,8 +259,8 @@ class TestResponse(ApiServerUnittest):
         ]
         extract_binds_dict = resp_obj.extract_response(extract_binds_list)
 
-        self.assertIsInstance(extract_binds_dict["resp_content"], str)
-        self.assertIn("python-requests.org", extract_binds_dict["resp_content"])
+        self.assertIsInstance(extract_binds_dict["resp_content"], basestring)
+        self.assertIn("httpbin.org", extract_binds_dict["resp_content"])
 
         extract_binds_list = [
             {"resp_content": "content.xxx"}
@@ -269,7 +269,7 @@ class TestResponse(ApiServerUnittest):
             resp_obj.extract_response(extract_binds_list)
 
     def test_extract_response_others(self):
-        resp = requests.get(url="http://127.0.0.1:3458/status/200")
+        resp = requests.get(url="{}/status/200".format(HTTPBIN_SERVER))
         resp_obj = response.ResponseObject(resp)
 
         extract_binds_list = [
@@ -281,7 +281,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_response_fail(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             json={
                 'success': False,
                 "person": {
@@ -313,7 +313,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_response_json_string(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             data="abc"
         )
 
@@ -330,7 +330,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_text_response(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             data="LB123abcRB789"
         )
 
@@ -357,7 +357,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_text_response_exception(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             data="LB123abcRB789"
         )
         extract_binds_list = [
@@ -369,7 +369,7 @@ class TestResponse(ApiServerUnittest):
 
     def test_extract_response_empty(self):
         resp = requests.post(
-            url="http://127.0.0.1:3458/anything",
+            url="{}/anything".format(HTTPBIN_SERVER),
             data="abc"
         )
 
