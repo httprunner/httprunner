@@ -120,9 +120,7 @@ def stringify_data(meta_data, request_or_response):
     }
     """
     headers = meta_data[request_or_response]["headers"]
-
     request_or_response_dict = meta_data[request_or_response]
-    response_content_type = meta_data["response"]["content_type"]
 
     for key, value in request_or_response_dict.items():
 
@@ -135,11 +133,11 @@ def stringify_data(meta_data, request_or_response):
                 if not encoding or encoding == "None":
                     encoding = "utf-8"
 
-                if request_or_response == "response" and key == "content" and "image" in response_content_type:
+                if request_or_response == "response" and key == "content" \
+                    and "image" in meta_data["response"]["content_type"]:
                     # display image
-                    meta_data["response"]["content_type"] = "image"
                     value = "data:{};base64,{}".format(
-                        response_content_type,
+                        meta_data["response"]["content_type"],
                         b64encode(value).decode(encoding)
                     )
                 else:
