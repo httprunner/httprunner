@@ -272,20 +272,20 @@
               <div style="overflow: auto">
                 <table>
                     {% for key, value in record.meta_data.response.items() %}
-                      {% if key in ["content", "json", "elapsed_ms", "response_time_ms", "content_size", "content_type"] %}
+                      {% if key in ["text", "json", "elapsed_ms", "response_time_ms", "content_size", "content_type"] %}
                         {% continue %}
                       {% endif %}
                       <tr>
                         <th>{{key}}</th>
                         <td>
                           {% if key == "headers" %}
-                            {% for header_key, header_value in record.meta_data.request.headers.items() %}
+                            {% for header_key, header_value in record.meta_data.response.headers.items() %}
                             <div>
                               <strong>{{ header_key }}</strong>: {{ header_value }}
                             </div>
                             {% endfor %}
-                          {% elif key == "text" %}
-                            {% if value == "image" %}
+                          {% elif key == "content" %}
+                            {% if "image" in record.meta_data.response.content_type %}
                               <img src="{{ record.meta_data.response.content }}" />
                             {% else %}
                               <pre>{{ record.meta_data.response.text | e }}</pre>
