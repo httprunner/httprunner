@@ -236,7 +236,7 @@ def load_api_file(file_path):
 
 
 def load_test_file(file_path):
-    """ load testcase file or suite file
+    """ load testcase file or testsuite file
     @param file_path: absolute valid file path
         file_path should be in format below:
             [
@@ -355,28 +355,28 @@ def _get_test_definition(name, ref_type):
     return block
 
 
-def load_testsets_by_path(path):
+def load_testcases(path):
     """ load testcases from file path
     @param path: path could be in several type
         - absolute/relative file path
         - absolute/relative folder path
         - list/set container with file(s) and/or folder(s)
-    @return testcase sets list, each testset is corresponding to a file
+    @return testcases list, each testcase is corresponding to a file
         [
-            testset_dict_1,
-            testset_dict_2
+            testcase_dict_1,
+            testcase_dict_2
         ]
     """
     if isinstance(path, (list, set)):
-        testsets = []
+        testcases_list = []
 
         for file_path in set(path):
-            testset = load_testsets_by_path(file_path)
-            if not testset:
+            testcases = load_testcases(file_path)
+            if not testcases:
                 continue
-            testsets.extend(testset)
+            testcases_list.extend(testcases)
 
-        return testsets
+        return testcases_list
 
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
@@ -386,21 +386,22 @@ def load_testsets_by_path(path):
 
     if os.path.isdir(path):
         files_list = load_folder_files(path)
-        testcases_list = load_testsets_by_path(files_list)
+        testcases_list = load_testcases(files_list)
 
     elif os.path.isfile(path):
         try:
-            testset = load_test_file(path)
-            if testset["testcases"] or testset["api"]:
-                testcases_list = [testset]
+            testcase = load_test_file(path)
+            if testcase["testcases"]:
+                testcases_list = [testcase]
             else:
                 testcases_list = []
         except exceptions.FileFormatError:
             testcases_list = []
 
     else:
-        logger.log_error(u"file not found: {}".format(path))
-        testcases_list = []
+        err_msg = "file not found: {}".format(path)
+        logger.log_error(err_msg)
+        raise exceptions.FileNotFound(err_msg)
 
     testcases_cache_mapping[path] = testcases_list
     return testcases_list
