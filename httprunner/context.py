@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import built_in, exceptions, logger, testcase, utils
+from httprunner import built_in, exceptions, logger, parser, testcase, utils
 from httprunner.compat import OrderedDict
 
 
@@ -177,7 +177,7 @@ class Context(object):
         # 5, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
 
         if isinstance(check_item, (dict, list)) \
-            or testcase.extract_variables(check_item) \
+            or parser.extract_variables(check_item) \
             or testcase.extract_functions(check_item):
             # format 1/2/3
             check_value = self.eval_content(check_item)
@@ -251,7 +251,7 @@ class Context(object):
         for validator in validators:
             # evaluate validators with context variable mapping.
             evaluated_validator = self.eval_check_item(
-                testcase.parse_validator(validator),
+                parser.parse_validator(validator),
                 resp_obj
             )
 
