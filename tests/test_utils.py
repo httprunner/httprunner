@@ -4,136 +4,7 @@ import unittest
 
 from httprunner import exceptions, utils
 from httprunner.compat import OrderedDict
-from httprunner.utils import FileUtils
 from tests.base import ApiServerUnittest
-
-
-class TestFileUtils(unittest.TestCase):
-
-    def test_load_yaml_file_file_format_error(self):
-        yaml_tmp_file = "tests/data/tmp.yml"
-        # create empty yaml file
-        with open(yaml_tmp_file, 'w') as f:
-            f.write("")
-
-        with self.assertRaises(exceptions.FileFormatError):
-            FileUtils._load_yaml_file(yaml_tmp_file)
-
-        os.remove(yaml_tmp_file)
-
-        # create invalid format yaml file
-        with open(yaml_tmp_file, 'w') as f:
-            f.write("abc")
-
-        with self.assertRaises(exceptions.FileFormatError):
-            FileUtils._load_yaml_file(yaml_tmp_file)
-
-        os.remove(yaml_tmp_file)
-
-
-    def test_load_json_file_file_format_error(self):
-        json_tmp_file = "tests/data/tmp.json"
-        # create empty file
-        with open(json_tmp_file, 'w') as f:
-            f.write("")
-
-        with self.assertRaises(exceptions.FileFormatError):
-            FileUtils._load_json_file(json_tmp_file)
-
-        os.remove(json_tmp_file)
-
-        # create empty json file
-        with open(json_tmp_file, 'w') as f:
-            f.write("{}")
-
-        with self.assertRaises(exceptions.FileFormatError):
-            FileUtils._load_json_file(json_tmp_file)
-
-        os.remove(json_tmp_file)
-
-        # create invalid format json file
-        with open(json_tmp_file, 'w') as f:
-            f.write("abc")
-
-        with self.assertRaises(exceptions.FileFormatError):
-            FileUtils._load_json_file(json_tmp_file)
-
-        os.remove(json_tmp_file)
-
-    def test_load_testcases_bad_filepath(self):
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo')
-        with self.assertRaises(exceptions.FileNotFound):
-            FileUtils.load_file(testcase_file_path)
-
-    def test_load_json_testcases(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        testcases = FileUtils.load_file(testcase_file_path)
-        self.assertEqual(len(testcases), 3)
-        test = testcases[0]["test"]
-        self.assertIn('name', test)
-        self.assertIn('request', test)
-        self.assertIn('url', test['request'])
-        self.assertIn('method', test['request'])
-
-    def test_load_yaml_testcases(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_hardcode.yml')
-        testcases = FileUtils.load_file(testcase_file_path)
-        self.assertEqual(len(testcases), 3)
-        test = testcases[0]["test"]
-        self.assertIn('name', test)
-        self.assertIn('request', test)
-        self.assertIn('url', test['request'])
-        self.assertIn('method', test['request'])
-
-    def test_load_csv_file_one_parameter(self):
-        csv_file_path = os.path.join(
-            os.getcwd(), 'tests/data/user_agent.csv')
-        csv_content = FileUtils.load_file(csv_file_path)
-        self.assertEqual(
-            csv_content,
-            [
-                {'user_agent': 'iOS/10.1'},
-                {'user_agent': 'iOS/10.2'},
-                {'user_agent': 'iOS/10.3'}
-            ]
-        )
-
-    def test_load_csv_file_multiple_parameters(self):
-        csv_file_path = os.path.join(
-            os.getcwd(), 'tests/data/account.csv')
-        csv_content = FileUtils.load_file(csv_file_path)
-        self.assertEqual(
-            csv_content,
-            [
-                {'username': 'test1', 'password': '111111'},
-                {'username': 'test2', 'password': '222222'},
-                {'username': 'test3', 'password': '333333'}
-            ]
-        )
-
-    def test_load_folder_files(self):
-        folder = os.path.join(os.getcwd(), 'tests')
-        file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
-        file2 = os.path.join(os.getcwd(), 'tests', 'data', 'demo_binds.yml')
-
-        files = FileUtils.load_folder_files(folder, recursive=False)
-        self.assertNotIn(file2, files)
-
-        files = FileUtils.load_folder_files(folder)
-        self.assertIn(file2, files)
-        self.assertNotIn(file1, files)
-
-        files = FileUtils.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'basic.yml')
-        self.assertIn(api_file, files)
-
-        files = FileUtils.load_folder_files("not_existed_foulder", recursive=False)
-        self.assertEqual([], files)
-
-        files = FileUtils.load_folder_files(file2, recursive=False)
-        self.assertEqual([], files)
 
 
 class TestUtils(ApiServerUnittest):
@@ -189,6 +60,90 @@ class TestUtils(ApiServerUnittest):
         query = "person.name.first_name.0"
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "L")
+
+    def test_substitute_variables_with_mapping(self):
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'method': "$method",
+                'headers': {'token': '$token'},
+                'data': {
+                    "null": None,
+                    "true": True,
+                    "false": False,
+                    "empty_str": ""
+                }
+            }
+        }
+        mapping = {
+            "$uid": 1000,
+            "$method": "POST"
+        }
+        result = utils.substitute_variables_with_mapping(content, mapping)
+        self.assertEqual("/api/users/1000", result["request"]["url"])
+        self.assertEqual("$token", result["request"]["headers"]["token"])
+        self.assertEqual("POST", result["request"]["method"])
+        self.assertIsNone(result["request"]["data"]["null"])
+        self.assertTrue(result["request"]["data"]["true"])
+        self.assertFalse(result["request"]["data"]["false"])
+        self.assertEqual("", result["request"]["data"]["empty_str"])
+
+    def test_merge_validator(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+
+        merged_validators = utils._merge_validator(def_validators, current_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            merged_validators
+        )
+
+    def test_merge_validator_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+
+        merged_validators = utils._merge_validator(def_validators, current_validators)
+        self.assertEqual(len(merged_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, merged_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, merged_validators)
+
+    def test_merge_extractor(self):
+        api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
+        current_extractors = [{"var1": "val111"}, {"var3": "val3"}]
+
+        merged_extractors = utils._merge_extractor(api_extrators, current_extractors)
+        self.assertIn(
+            {"var1": "val111"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var2": "val2"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var3": "val3"},
+            merged_extractors
+        )
 
     def test_get_uniform_comparator(self):
         self.assertEqual(utils.get_uniform_comparator("eq"), "equals")

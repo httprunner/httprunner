@@ -1,7 +1,7 @@
 # encoding: utf-8
 
+import collections
 import copy
-import csv
 import hashlib
 import hmac
 import imp
@@ -10,14 +10,13 @@ import io
 import json
 import os.path
 import random
-import re
 import string
 import types
 from datetime import datetime
 
-import yaml
-from httprunner import exceptions, logger
-from httprunner.compat import OrderedDict, basestring, is_py2, is_py3, str
+from httprunner import exceptions, logger, parser
+from httprunner.compat import (OrderedDict, basestring, builtin_str, is_py2,
+                               is_py3, numeric_types, str)
 from requests.structures import CaseInsensitiveDict
 
 SECRET_KEY = "DebugTalk"
@@ -42,132 +41,6 @@ def remove_prefix(text, prefix):
     if text.startswith(prefix):
         return text[len(prefix):]
     return text
-
-
-class FileUtils(object):
-
-    @staticmethod
-    def _check_format(file_path, content):
-        """ check testcase format if valid
-        """
-        if not content:
-            # testcase file content is empty
-            err_msg = u"Testcase file content is empty: {}".format(file_path)
-            logger.log_error(err_msg)
-            raise exceptions.FileFormatError(err_msg)
-
-        elif not isinstance(content, (list, dict)):
-            # testcase file content does not match testcase format
-            err_msg = u"Testcase file content format invalid: {}".format(file_path)
-            logger.log_error(err_msg)
-            raise exceptions.FileFormatError(err_msg)
-
-    @staticmethod
-    def _load_yaml_file(yaml_file):
-        """ load yaml file and check file content format
-        """
-        with io.open(yaml_file, 'r', encoding='utf-8') as stream:
-            yaml_content = yaml.load(stream)
-            FileUtils._check_format(yaml_file, yaml_content)
-            return yaml_content
-
-    @staticmethod
-    def _load_json_file(json_file):
-        """ load json file and check file content format
-        """
-        with io.open(json_file, encoding='utf-8') as data_file:
-            try:
-                json_content = json.load(data_file)
-            except exceptions.JSONDecodeError:
-                err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
-                logger.log_error(err_msg)
-                raise exceptions.FileFormatError(err_msg)
-
-            FileUtils._check_format(json_file, json_content)
-            return json_content
-
-    @staticmethod
-    def _load_csv_file(csv_file):
-        """ load csv file and check file content format
-        @param
-            csv_file: csv file path
-            e.g. csv file content:
-                username,password
-                test1,111111
-                test2,222222
-                test3,333333
-        @return
-            list of parameter, each parameter is in dict format
-            e.g.
-            [
-                {'username': 'test1', 'password': '111111'},
-                {'username': 'test2', 'password': '222222'},
-                {'username': 'test3', 'password': '333333'}
-            ]
-        """
-        csv_content_list = []
-
-        with io.open(csv_file, encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                csv_content_list.append(row)
-
-        return csv_content_list
-
-    @staticmethod
-    def load_file(file_path):
-        if not os.path.isfile(file_path):
-            raise exceptions.FileNotFound("{} does not exist.".format(file_path))
-
-        file_suffix = os.path.splitext(file_path)[1].lower()
-        if file_suffix == '.json':
-            return FileUtils._load_json_file(file_path)
-        elif file_suffix in ['.yaml', '.yml']:
-            return FileUtils._load_yaml_file(file_path)
-        elif file_suffix == ".csv":
-            return FileUtils._load_csv_file(file_path)
-        else:
-            # '' or other suffix
-            err_msg = u"Unsupported file format: {}".format(file_path)
-            logger.log_warning(err_msg)
-            return []
-
-    @staticmethod
-    def load_folder_files(folder_path, recursive=True):
-        """ load folder path, return all files in list format.
-        @param
-            folder_path: specified folder path to load
-            recursive: if True, will load files recursively
-        """
-        if isinstance(folder_path, (list, set)):
-            files = []
-            for path in set(folder_path):
-                files.extend(FileUtils.load_folder_files(path, recursive))
-
-            return files
-
-        if not os.path.exists(folder_path):
-            return []
-
-        file_list = []
-
-        for dirpath, dirnames, filenames in os.walk(folder_path):
-            filenames_list = []
-
-            for filename in filenames:
-                if not filename.endswith(('.yml', '.yaml', '.json')):
-                    continue
-
-                filenames_list.append(filename)
-
-            for filename in filenames_list:
-                file_path = os.path.join(dirpath, filename)
-                file_list.append(file_path)
-
-            if not recursive:
-                break
-
-        return file_list
 
 
 def query_json(json_content, query, delimiter='.'):
@@ -212,6 +85,205 @@ def query_json(json_content, query, delimiter='.'):
         raise exceptions.ExtractFailure(err_msg)
 
     return json_content
+
+
+def substitute_variables_with_mapping(content, mapping):
+    """ substitute variables in content with mapping
+    e.g.
+    @params
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'headers': {'token': '$token'}
+            }
+        }
+        mapping = {"$uid": 1000}
+    @return
+        {
+            'request': {
+                'url': '/api/users/1000',
+                'headers': {'token': '$token'}
+            }
+        }
+    """
+    # TODO: refactor type check
+    if isinstance(content, bool):
+        return content
+
+    if isinstance(content, (numeric_types, type)):
+        return content
+
+    if not content:
+        return content
+
+    if isinstance(content, (list, set, tuple)):
+        return [
+            substitute_variables_with_mapping(item, mapping)
+            for item in content
+        ]
+
+    if isinstance(content, dict):
+        substituted_data = {}
+        for key, value in content.items():
+            eval_key = substitute_variables_with_mapping(key, mapping)
+            eval_value = substitute_variables_with_mapping(value, mapping)
+            substituted_data[eval_key] = eval_value
+
+        return substituted_data
+
+    # content is in string format here
+    for var, value in mapping.items():
+        if content == var:
+            # content is a variable
+            content = value
+        else:
+            if not isinstance(value, str):
+                value = builtin_str(value)
+            content = content.replace(var, value)
+
+    return content
+
+
+def _get_validators_mapping(validators):
+    """ get validators mapping from api or test validators
+    @param (list) validators:
+        [
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+        ]
+    @return
+        {
+            ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+            ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+        }
+    """
+    validators_mapping = {}
+
+    for validator in validators:
+        validator = parser.parse_validator(validator)
+
+        if not isinstance(validator["check"], collections.Hashable):
+            check = json.dumps(validator["check"])
+        else:
+            check = validator["check"]
+
+        key = (check, validator["comparator"])
+        validators_mapping[key] = validator
+
+    return validators_mapping
+
+
+def _merge_validator(def_validators, current_validators):
+    """ merge def_validators with current_validators
+    @params:
+        def_validators: [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
+        current_validators: [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
+    @return:
+        [
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            {"check": "s3", "expect": 12, "comparator": "len_eq"}
+        ]
+    """
+    if not def_validators:
+        return current_validators
+
+    elif not current_validators:
+        return def_validators
+
+    else:
+        api_validators_mapping = _get_validators_mapping(def_validators)
+        test_validators_mapping = _get_validators_mapping(current_validators)
+
+        api_validators_mapping.update(test_validators_mapping)
+        return list(api_validators_mapping.values())
+
+
+def _merge_extractor(def_extrators, current_extractors):
+    """ merge def_extrators with current_extractors
+    @params:
+        def_extrators: [{"var1": "val1"}, {"var2": "val2"}]
+        current_extractors: [{"var1": "val111"}, {"var3": "val3"}]
+    @return:
+        [
+            {"var1": "val111"},
+            {"var2": "val2"},
+            {"var3": "val3"}
+        ]
+    """
+    if not def_extrators:
+        return current_extractors
+
+    elif not current_extractors:
+        return def_extrators
+
+    else:
+        extractor_dict = OrderedDict()
+        for api_extrator in def_extrators:
+            if len(api_extrator) != 1:
+                logger.log_warning("incorrect extractor: {}".format(api_extrator))
+                continue
+
+            var_name = list(api_extrator.keys())[0]
+            extractor_dict[var_name] = api_extrator[var_name]
+
+        for test_extrator in current_extractors:
+            if len(test_extrator) != 1:
+                logger.log_warning("incorrect extractor: {}".format(test_extrator))
+                continue
+
+            var_name = list(test_extrator.keys())[0]
+            extractor_dict[var_name] = test_extrator[var_name]
+
+        extractor_list = []
+        for key, value in extractor_dict.items():
+            extractor_list.append({key: value})
+
+        return extractor_list
+
+
+def _override_block(def_block, current_block):
+    """ override def_block with current_block
+    @param def_block:
+        {
+            "name": "get token",
+            "request": {...},
+            "validate": [{'eq': ['status_code', 200]}]
+        }
+    @param current_block:
+        {
+            "name": "get token",
+            "extract": [{"token": "content.token"}],
+            "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+        }
+    @return
+        {
+            "name": "get token",
+            "request": {...},
+            "extract": [{"token": "content.token"}],
+            "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+        }
+    """
+    def_validators = def_block.get("validate") or def_block.get("validators", [])
+    current_validators = current_block.get("validate") or current_block.get("validators", [])
+
+    def_extrators = def_block.get("extract") \
+        or def_block.get("extractors") \
+        or def_block.get("extract_binds", [])
+    current_extractors = current_block.get("extract") \
+        or current_block.get("extractors") \
+        or current_block.get("extract_binds", [])
+
+    current_block.update(def_block)
+    current_block["validate"] = _merge_validator(
+        def_validators,
+        current_validators
+    )
+    current_block["extract"] = _merge_extractor(
+        def_extrators,
+        current_extractors
+    )
+
 
 def get_uniform_comparator(comparator):
     """ convert comparator alias to uniform name
@@ -504,25 +576,6 @@ def create_scaffold(project_path):
 
     logger.color_print(msg, "BLUE")
 
-def load_dot_env_file(path):
-    """ load .env file and set to os.environ
-    """
-    if not path:
-        path = os.path.join(os.getcwd(), ".env")
-        if not os.path.isfile(path):
-            logger.log_debug(".env file not exist: {}".format(path))
-            return
-    else:
-        if not os.path.isfile(path):
-            raise exceptions.FileNotFound("env file not exist: {}".format(path))
-
-    logger.log_info("Loading environment variables from {}".format(path))
-    with io.open(path, 'r', encoding='utf-8') as fp:
-        for line in fp:
-            variable, value = line.split("=")
-            variable = variable.strip()
-            os.environ[variable] = value.strip()
-            logger.log_debug("Loaded variable: {}".format(variable))
 
 def validate_json_file(file_list):
     """ validate JSON testset format

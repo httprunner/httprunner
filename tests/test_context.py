@@ -2,9 +2,9 @@ import os
 import time
 
 import requests
-from httprunner import exceptions, response, runner, testcase
+from httprunner import exceptions, loader, response, runner, testcase
 from httprunner.context import Context
-from httprunner.utils import FileUtils, gen_md5
+from httprunner.utils import gen_md5
 from tests.base import ApiServerUnittest
 
 
@@ -13,7 +13,7 @@ class VariableBindsUnittest(ApiServerUnittest):
     def setUp(self):
         self.context = Context()
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
-        self.testcases = FileUtils.load_file(testcase_file_path)
+        self.testcases = loader.load_file(testcase_file_path)
 
     def test_context_init_functions(self):
         self.assertIn("get_timestamp", self.context.testset_functions_config)
