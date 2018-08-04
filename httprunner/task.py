@@ -179,7 +179,7 @@ def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
     """
     if not testcase.is_testsets(path_or_testsets):
         loader.load_test_dependencies()
-        testsets = loader.load_testsets_by_path(path_or_testsets)
+        testsets = loader.load_testcases(path_or_testsets)
     else:
         testsets = path_or_testsets
 

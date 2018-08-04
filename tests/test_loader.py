@@ -240,7 +240,7 @@ class TestSuiteLoader(unittest.TestCase):
         # absolute file path
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        testset_list = loader.load_testsets_by_path(path)
+        testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 1)
         self.assertIn("path", testset_list[0]["config"])
         self.assertEqual(testset_list[0]["config"]["path"], path)
@@ -249,7 +249,7 @@ class TestSuiteLoader(unittest.TestCase):
 
         # relative file path
         path = 'tests/data/demo_testset_hardcode.yml'
-        testset_list = loader.load_testsets_by_path(path)
+        testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 1)
         self.assertIn("path", testset_list[0]["config"])
         self.assertIn(path, testset_list[0]["config"]["path"])
@@ -261,7 +261,7 @@ class TestSuiteLoader(unittest.TestCase):
             os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
             'tests/data/demo_testset_hardcode.yml'
         ]
-        testset_list = loader.load_testsets_by_path(path)
+        testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 2)
         self.assertEqual(len(testset_list[0]["testcases"]), 3)
         self.assertEqual(len(testset_list[1]["testcases"]), 3)
@@ -279,12 +279,12 @@ class TestSuiteLoader(unittest.TestCase):
         loader.load_test_dependencies()
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
-        testset_list_1 = loader.load_testsets_by_path(path)
+        testset_list_1 = loader.load_testcases(path)
         self.assertGreater(len(testset_list_1), 4)
 
         # relative folder path
         path = 'tests/data/'
-        testset_list_2 = loader.load_testsets_by_path(path)
+        testset_list_2 = loader.load_testcases(path)
         self.assertEqual(len(testset_list_1), len(testset_list_2))
 
         # list/set container with file(s)
@@ -292,33 +292,33 @@ class TestSuiteLoader(unittest.TestCase):
             os.path.join(os.getcwd(), 'tests/data'),
             'tests/data/'
         ]
-        testset_list_3 = loader.load_testsets_by_path(path)
+        testset_list_3 = loader.load_testcases(path)
         self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
 
     def test_load_testcases_by_path_not_exist(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data_not_exist')
-        testset_list_1 = loader.load_testsets_by_path(path)
-        self.assertEqual(testset_list_1, [])
+        with self.assertRaises(exceptions.FileNotFound):
+            loader.load_testcases(path)
 
         # relative folder path
         path = 'tests/data_not_exist'
-        testset_list_2 = loader.load_testsets_by_path(path)
-        self.assertEqual(testset_list_2, [])
+        with self.assertRaises(exceptions.FileNotFound):
+            loader.load_testcases(path)
 
         # list/set container with file(s)
         path = [
             os.path.join(os.getcwd(), 'tests/data_not_exist'),
             'tests/data_not_exist/'
         ]
-        testset_list_3 = loader.load_testsets_by_path(path)
-        self.assertEqual(testset_list_3, [])
+        with self.assertRaises(exceptions.FileNotFound):
+            loader.load_testcases(path)
 
     def test_load_testcases_by_path_layered(self):
         loader.load_test_dependencies()
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        testsets_list = loader.load_testsets_by_path(path)
+        testsets_list = loader.load_testcases(path)
         self.assertIn("variables", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["config"])
         self.assertIn("request", testsets_list[0]["testcases"][0])
