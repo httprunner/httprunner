@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from httprunner import exceptions, loader, utils
+from httprunner import exceptions, loader
 
 
 class TestFileLoader(unittest.TestCase):
@@ -211,7 +211,7 @@ class TestSuiteLoader(unittest.TestCase):
             ]
         }
 
-        utils._override_block(def_block, test_block)
+        loader._override_block(def_block, test_block)
         self.assertEqual(test_block["name"], "override block")
         self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, test_block["validate"])
         self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, test_block["validate"])
@@ -233,6 +233,63 @@ class TestSuiteLoader(unittest.TestCase):
 
         with self.assertRaises(exceptions.SuiteNotFound):
             loader._get_test_definition("create_and_check_XXX", "suite")
+
+    def test_merge_validator(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+
+        merged_validators = loader._merge_validator(def_validators, current_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            merged_validators
+        )
+
+    def test_merge_validator_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+
+        merged_validators = loader._merge_validator(def_validators, current_validators)
+        self.assertEqual(len(merged_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, merged_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, merged_validators)
+
+    def test_merge_extractor(self):
+        api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
+        current_extractors = [{"var1": "val111"}, {"var3": "val3"}]
+
+        merged_extractors = loader._merge_extractor(api_extrators, current_extractors)
+        self.assertIn(
+            {"var1": "val111"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var2": "val2"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var3": "val3"},
+            merged_extractors
+        )
 
     def test_load_testcases_by_path_files(self):
         testsets_list = []

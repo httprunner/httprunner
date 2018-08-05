@@ -5,7 +5,7 @@ import os
 import random
 import re
 
-from httprunner import exceptions, loader, logger, utils
+from httprunner import exceptions, loader, utils
 from httprunner.compat import (OrderedDict, basestring, builtin_str,
                                numeric_types, str)
 
