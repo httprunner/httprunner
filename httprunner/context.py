@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import built_in, exceptions, logger, parser, testcase, utils
+from httprunner import built_in, exceptions, logger, parser, utils
 from httprunner.compat import OrderedDict
 
 
@@ -16,7 +16,7 @@ class Context(object):
     def __init__(self):
         self.testset_shared_variables_mapping = OrderedDict()
         self.testcase_variables_mapping = OrderedDict()
-        self.testcase_parser = testcase.TestcaseParser()
+        self.testcase_parser = parser.TestcaseParser()
         self.evaluated_validators = []
         self.init_context()
 
@@ -178,7 +178,7 @@ class Context(object):
 
         if isinstance(check_item, (dict, list)) \
             or parser.extract_variables(check_item) \
-            or testcase.extract_functions(check_item):
+            or parser.extract_functions(check_item):
             # format 1/2/3
             check_value = self.eval_content(check_item)
         else:
