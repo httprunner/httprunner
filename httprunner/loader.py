@@ -4,7 +4,7 @@ import json
 import os
 
 import yaml
-from httprunner import exceptions, logger, parser, utils
+from httprunner import exceptions, logger, parser, utils, validator
 
 ###############################################################################
 ##   file loader
@@ -399,7 +399,7 @@ def load_testcases(path):
             testcases_list = []
 
     else:
-        err_msg = "file not found: {}".format(path)
+        err_msg = "path not exist: {}".format(path)
         logger.log_error(err_msg)
         raise exceptions.FileNotFound(err_msg)
 
@@ -412,5 +412,8 @@ def load(path):
     @param (str) path: testcase file/folder path
     @return (list) testcases list
     """
+    if validator.is_testcases(path):
+        return path
+
     _load_test_dependencies()
     return load_testcases(path)

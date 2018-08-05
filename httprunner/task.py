@@ -177,10 +177,7 @@ def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
         mapping (dict):
             passed in variables mapping, it will override variables in config block
     """
-    if not testcase.is_testsets(path_or_testsets):
-        testsets = loader.load(path_or_testsets)
-    else:
-        testsets = path_or_testsets
+    testsets = loader.load(path_or_testsets)
 
     # TODO: move comparator uniform here
     mapping = mapping or {}
