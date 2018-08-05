@@ -231,7 +231,7 @@ class TestSuiteLoader(unittest.TestCase):
         api_def = loader._get_test_definition("create_and_check", "suite")
         self.assertEqual(api_def["config"]["name"], "create user and check result.")
 
-        with self.assertRaises(exceptions.SuiteNotFound):
+        with self.assertRaises(exceptions.TestcaseNotFound):
             loader._get_test_definition("create_and_check_XXX", "suite")
 
     def test_merge_validator(self):

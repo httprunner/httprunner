@@ -337,9 +337,9 @@ def _get_block_by_name(ref_call, ref_type):
 
 
 def _get_test_definition(name, ref_type):
-    """ get expected api or suite.
+    """ get expected api or testcase.
     @params:
-        name: api or suite name
+        name: api or testcase name
         ref_type: "api" or "suite"
     @return
         expected api info if found, otherwise raise ApiNotFound exception
@@ -352,7 +352,7 @@ def _get_test_definition(name, ref_type):
             raise exceptions.ApiNotFound(err_msg)
         else:
             # ref_type == "suite":
-            raise exceptions.SuiteNotFound(err_msg)
+            raise exceptions.TestcaseNotFound(err_msg)
 
     return block
 
