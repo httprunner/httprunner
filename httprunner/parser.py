@@ -136,6 +136,63 @@ def parse_validator(validator):
     }
 
 
+def parse_data(content, mapping):
+    """ substitute variables in content with mapping
+    e.g.
+    @params
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'headers': {'token': '$token'}
+            }
+        }
+        mapping = {"$uid": 1000}
+    @return
+        {
+            'request': {
+                'url': '/api/users/1000',
+                'headers': {'token': '$token'}
+            }
+        }
+    """
+    # TODO: refactor type check
+    if isinstance(content, bool):
+        return content
+
+    if isinstance(content, (numeric_types, type)):
+        return content
+
+    if not content:
+        return content
+
+    if isinstance(content, (list, set, tuple)):
+        return [
+            parse_data(item, mapping)
+            for item in content
+        ]
+
+    if isinstance(content, dict):
+        substituted_data = {}
+        for key, value in content.items():
+            eval_key = parse_data(key, mapping)
+            eval_value = parse_data(value, mapping)
+            substituted_data[eval_key] = eval_value
+
+        return substituted_data
+
+    # content is in string format here
+    for var, value in mapping.items():
+        if content == var:
+            # content is a variable
+            content = value
+        else:
+            if not isinstance(value, str):
+                value = builtin_str(value)
+            content = content.replace(var, value)
+
+    return content
+
+
 def parse_parameters(parameters, testset_path=None):
     """ parse parameters and generate cartesian product
     @params

@@ -5,7 +5,7 @@ import json
 import os
 
 import yaml
-from httprunner import exceptions, logger, parser, utils, validator
+from httprunner import exceptions, logger, parser, validator
 from httprunner.compat import OrderedDict
 
 ###############################################################################
@@ -331,7 +331,7 @@ def _get_block_by_name(ref_call, ref_type):
         args_mapping[item] = call_args[index]
 
     if args_mapping:
-        block = utils.substitute_variables_with_mapping(block, args_mapping)
+        block = parser.parse_data(block, args_mapping)
 
     return block
 
