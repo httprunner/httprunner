@@ -168,7 +168,7 @@ overall_def_dict = {
 testcases_cache_mapping = {}
 
 
-def load_test_dependencies():
+def _load_test_dependencies():
     """ load all api and suite definitions.
         default api folder is "$CWD/tests/api/".
         default suite folder is "$CWD/tests/suite/".
@@ -177,12 +177,12 @@ def load_test_dependencies():
     # load api definitions
     api_def_folder = os.path.join(os.getcwd(), "tests", "api")
     for test_file in load_folder_files(api_def_folder):
-        load_api_file(test_file)
+        _load_api_file(test_file)
 
     # load suite definitions
     suite_def_folder = os.path.join(os.getcwd(), "tests", "suite")
     for suite_file in load_folder_files(suite_def_folder):
-        suite = load_test_file(suite_file)
+        suite = _load_test_file(suite_file)
         if "def" not in suite["config"]:
             raise exceptions.ParamsError("def missed in suite file: {}!".format(suite_file))
 
@@ -192,7 +192,7 @@ def load_test_dependencies():
         overall_def_dict["suite"][function_meta["func_name"]] = suite
 
 
-def load_api_file(file_path):
+def _load_api_file(file_path):
     """ load api definition from file and store in overall_def_dict["api"]
         api file should be in format below:
             [
@@ -235,7 +235,7 @@ def load_api_file(file_path):
         overall_def_dict["api"][func_name] = api_dict
 
 
-def load_test_file(file_path):
+def _load_test_file(file_path):
     """ load testcase file or testsuite file
     @param file_path: absolute valid file path
         file_path should be in format below:
@@ -390,7 +390,7 @@ def load_testcases(path):
 
     elif os.path.isfile(path):
         try:
-            testcase = load_test_file(path)
+            testcase = _load_test_file(path)
             if testcase["testcases"]:
                 testcases_list = [testcase]
             else:
@@ -405,3 +405,12 @@ def load_testcases(path):
 
     testcases_cache_mapping[path] = testcases_list
     return testcases_list
+
+
+def load(path):
+    """ main interface for loading testcases
+    @param (str) path: testcase file/folder path
+    @return (list) testcases list
+    """
+    _load_test_dependencies()
+    return load_testcases(path)

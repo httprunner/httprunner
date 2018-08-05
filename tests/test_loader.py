@@ -151,13 +151,13 @@ class TestSuiteLoader(unittest.TestCase):
         }
 
     def test_load_test_dependencies(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         overall_def_dict = loader.overall_def_dict
         self.assertIn("get_token", overall_def_dict["api"])
         self.assertIn("create_and_check", overall_def_dict["suite"])
 
     def test_load_api_file(self):
-        loader.load_api_file("tests/api/basic.yml")
+        loader._load_api_file("tests/api/basic.yml")
         overall_api_def_dict = loader.overall_def_dict["api"]
         self.assertIn("get_token",overall_api_def_dict)
         self.assertEqual("/api/get-token", overall_api_def_dict["get_token"]["request"]["url"])
@@ -165,16 +165,16 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(len(overall_api_def_dict["get_token"]["validate"]), 3)
 
     def test_load_test_file_suite(self):
-        loader.load_api_file("tests/api/basic.yml")
-        testset = loader.load_test_file("tests/suite/create_and_get.yml")
+        loader._load_api_file("tests/api/basic.yml")
+        testset = loader._load_test_file("tests/suite/create_and_get.yml")
         self.assertEqual(testset["config"]["name"], "create user and check result.")
         self.assertEqual(len(testset["testcases"]), 3)
         self.assertEqual(testset["testcases"][0]["name"], "make sure user $uid does not exist")
         self.assertEqual(testset["testcases"][0]["request"]["url"], "/api/users/$uid")
 
     def test_load_test_file_testcase(self):
-        loader.load_test_dependencies()
-        testset = loader.load_test_file("tests/testcases/smoketest.yml")
+        loader._load_test_dependencies()
+        testset = loader._load_test_file("tests/testcases/smoketest.yml")
         self.assertEqual(testset["config"]["name"], "smoketest")
         self.assertEqual(testset["config"]["path"], "tests/testcases/smoketest.yml")
         self.assertIn("device_sn", testset["config"]["variables"][0])
@@ -182,7 +182,7 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(testset["testcases"][0]["name"], "get token")
 
     def test_get_block_by_name(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         ref_call = "get_user($uid, $token)"
         block = loader._get_block_by_name(ref_call, "api")
         self.assertEqual(block["request"]["url"], "/api/users/$uid")
@@ -190,13 +190,13 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(block["function_meta"]["args"], ['$uid', '$token'])
 
     def test_get_block_by_name_args_mismatch(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         ref_call = "get_user($uid, $token, $var)"
         with self.assertRaises(exceptions.ParamsError):
             loader._get_block_by_name(ref_call, "api")
 
     def test_override_block(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         def_block = loader._get_block_by_name("get_token($user_agent, $device_sn, $os_platform, $app_version)", "api")
         test_block = {
             "name": "override block",
@@ -217,7 +217,7 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, test_block["validate"])
 
     def test_get_test_definition_api(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         api_def = loader._get_test_definition("get_headers", "api")
         self.assertEqual(api_def["request"]["url"], "/headers")
         self.assertEqual(len(api_def["setup_hooks"]), 2)
@@ -227,7 +227,7 @@ class TestSuiteLoader(unittest.TestCase):
             loader._get_test_definition("get_token_XXX", "api")
 
     def test_get_test_definition_suite(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         api_def = loader._get_test_definition("create_and_check", "suite")
         self.assertEqual(api_def["config"]["name"], "create user and check result.")
 
@@ -276,7 +276,7 @@ class TestSuiteLoader(unittest.TestCase):
                 self.assertIn('method', test['request'])
 
     def test_load_testcases_by_path_folder(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
         testset_list_1 = loader.load_testcases(path)
@@ -315,7 +315,7 @@ class TestSuiteLoader(unittest.TestCase):
             loader.load_testcases(path)
 
     def test_load_testcases_by_path_layered(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         testsets_list = loader.load_testcases(path)
