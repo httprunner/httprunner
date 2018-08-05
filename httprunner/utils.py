@@ -15,8 +15,7 @@ import types
 from datetime import datetime
 
 from httprunner import exceptions, logger
-from httprunner.compat import (OrderedDict, basestring, builtin_str, is_py2,
-                               is_py3, numeric_types, str)
+from httprunner.compat import OrderedDict, basestring, is_py2, is_py3
 from requests.structures import CaseInsensitiveDict
 
 SECRET_KEY = "DebugTalk"
@@ -85,63 +84,6 @@ def query_json(json_content, query, delimiter='.'):
         raise exceptions.ExtractFailure(err_msg)
 
     return json_content
-
-
-def substitute_variables_with_mapping(content, mapping):
-    """ substitute variables in content with mapping
-    e.g.
-    @params
-        content = {
-            'request': {
-                'url': '/api/users/$uid',
-                'headers': {'token': '$token'}
-            }
-        }
-        mapping = {"$uid": 1000}
-    @return
-        {
-            'request': {
-                'url': '/api/users/1000',
-                'headers': {'token': '$token'}
-            }
-        }
-    """
-    # TODO: refactor type check
-    if isinstance(content, bool):
-        return content
-
-    if isinstance(content, (numeric_types, type)):
-        return content
-
-    if not content:
-        return content
-
-    if isinstance(content, (list, set, tuple)):
-        return [
-            substitute_variables_with_mapping(item, mapping)
-            for item in content
-        ]
-
-    if isinstance(content, dict):
-        substituted_data = {}
-        for key, value in content.items():
-            eval_key = substitute_variables_with_mapping(key, mapping)
-            eval_value = substitute_variables_with_mapping(value, mapping)
-            substituted_data[eval_key] = eval_value
-
-        return substituted_data
-
-    # content is in string format here
-    for var, value in mapping.items():
-        if content == var:
-            # content is a variable
-            content = value
-        else:
-            if not isinstance(value, str):
-                value = builtin_str(value)
-            content = content.replace(var, value)
-
-    return content
 
 
 def get_uniform_comparator(comparator):

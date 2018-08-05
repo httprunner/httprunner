@@ -61,33 +61,6 @@ class TestUtils(ApiServerUnittest):
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "L")
 
-    def test_substitute_variables_with_mapping(self):
-        content = {
-            'request': {
-                'url': '/api/users/$uid',
-                'method': "$method",
-                'headers': {'token': '$token'},
-                'data': {
-                    "null": None,
-                    "true": True,
-                    "false": False,
-                    "empty_str": ""
-                }
-            }
-        }
-        mapping = {
-            "$uid": 1000,
-            "$method": "POST"
-        }
-        result = utils.substitute_variables_with_mapping(content, mapping)
-        self.assertEqual("/api/users/1000", result["request"]["url"])
-        self.assertEqual("$token", result["request"]["headers"]["token"])
-        self.assertEqual("POST", result["request"]["method"])
-        self.assertIsNone(result["request"]["data"]["null"])
-        self.assertTrue(result["request"]["data"]["true"])
-        self.assertFalse(result["request"]["data"]["false"])
-        self.assertEqual("", result["request"]["data"]["empty_str"])
-
     def test_get_uniform_comparator(self):
         self.assertEqual(utils.get_uniform_comparator("eq"), "equals")
         self.assertEqual(utils.get_uniform_comparator("=="), "equals")
