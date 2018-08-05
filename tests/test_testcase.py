@@ -368,32 +368,3 @@ class TestcaseParserUnittest(unittest.TestCase):
             parsed_testcase["headers"]["sum"],
             3
         )
-
-    def test_is_testsets(self):
-        data_structure = "path/to/file"
-        self.assertFalse(testcase.is_testsets(data_structure))
-        data_structure = ["path/to/file1", "path/to/file2"]
-        self.assertFalse(testcase.is_testsets(data_structure))
-
-        data_structure = {
-            "name": "desc1",
-            "config": {},
-            "api": {},
-            "testcases": ["testcase11", "testcase12"]
-        }
-        self.assertTrue(data_structure)
-        data_structure = [
-            {
-                "name": "desc1",
-                "config": {},
-                "api": {},
-                "testcases": ["testcase11", "testcase12"]
-            },
-            {
-                "name": "desc2",
-                "config": {},
-                "api": {},
-                "testcases": ["testcase21", "testcase22"]
-            }
-        ]
-        self.assertTrue(data_structure)
