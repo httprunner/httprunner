@@ -2,7 +2,7 @@ import os
 import time
 
 import requests
-from httprunner import exceptions, loader, response, runner, testcase
+from httprunner import exceptions, loader, response, runner
 from httprunner.context import Context
 from httprunner.utils import gen_md5
 from tests.base import ApiServerUnittest

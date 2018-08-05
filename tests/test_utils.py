@@ -403,3 +403,46 @@ class TestUtils(ApiServerUnittest):
         self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "testcases")))
         self.assertTrue(os.path.isfile(os.path.join(project_path, "tests", "debugtalk.py")))
         shutil.rmtree(project_path)
+
+    def test_cartesian_product_one(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        ]
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        )
+
+    def test_cartesian_product_multiple(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ],
+            [
+                {"x": 111, "y": 112},
+                {"x": 121, "y": 122}
+            ]
+        ]
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
+            ]
+        )
+
+    def test_cartesian_product_empty(self):
+        parameters_content_list = []
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(product_list, [])
