@@ -156,13 +156,8 @@ def parse_data(content, mapping):
         }
     """
     # TODO: refactor type check
-    if isinstance(content, bool):
-        return content
-
-    if isinstance(content, (numeric_types, type)):
-        return content
-
-    if not content:
+    # TODO: combine this with TestcaseParser
+    if content is None or isinstance(content, (numeric_types, bool, type)):
         return content
 
     if isinstance(content, (list, set, tuple)):
