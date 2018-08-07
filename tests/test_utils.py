@@ -1,8 +1,7 @@
 import os
 import shutil
-import unittest
 
-from httprunner import exceptions, utils
+from httprunner import exceptions, utils, validator
 from httprunner.compat import OrderedDict
 from tests.base import ApiServerUnittest
 
@@ -180,11 +179,11 @@ class TestUtils(ApiServerUnittest):
 
     def test_search_conf_function(self):
         gen_md5 = utils.search_conf_item("tests/data/demo_binds.yml", "function", "gen_md5")
-        self.assertTrue(utils.is_function(("gen_md5", gen_md5)))
+        self.assertTrue(validator.is_function(("gen_md5", gen_md5)))
         self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
 
         gen_md5 = utils.search_conf_item("tests/data/subfolder/test.yml", "function", "gen_md5")
-        self.assertTrue(utils.is_function(("_", gen_md5)))
+        self.assertTrue(validator.is_function(("_", gen_md5)))
         self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
 
         with self.assertRaises(exceptions.FunctionNotFound):
@@ -195,11 +194,11 @@ class TestUtils(ApiServerUnittest):
 
     def test_search_conf_variable(self):
         SECRET_KEY = utils.search_conf_item("tests/data/demo_binds.yml", "variable", "SECRET_KEY")
-        self.assertTrue(utils.is_variable(("SECRET_KEY", SECRET_KEY)))
+        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
         self.assertEqual(SECRET_KEY, "DebugTalk")
 
         SECRET_KEY = utils.search_conf_item("tests/data/subfolder/test.yml", "variable", "SECRET_KEY")
-        self.assertTrue(utils.is_variable(("SECRET_KEY", SECRET_KEY)))
+        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
         self.assertEqual(SECRET_KEY, "DebugTalk")
 
         with self.assertRaises(exceptions.VariableNotFound):
@@ -207,21 +206,6 @@ class TestUtils(ApiServerUnittest):
 
         with self.assertRaises(exceptions.VariableNotFound):
             utils.search_conf_item("/user/local/bin", "variable", "SECRET_KEY")
-
-    def test_is_variable(self):
-        var1 = 123
-        var2 = "abc"
-        self.assertTrue(utils.is_variable(("var1", var1)))
-        self.assertTrue(utils.is_variable(("var2", var2)))
-
-        __var = 123
-        self.assertFalse(utils.is_variable(("__var", __var)))
-
-        func = lambda x: x + 1
-        self.assertFalse(utils.is_variable(("func", func)))
-
-        self.assertFalse(utils.is_variable(("os", os)))
-        self.assertFalse(utils.is_variable(("utils", utils)))
 
     def test_handle_config_key_case(self):
         origin_dict = {
