@@ -1,11 +1,12 @@
 import collections
 import csv
+import importlib
 import io
 import json
 import os
 
 import yaml
-from httprunner import exceptions, logger, parser, validator
+from httprunner import exceptions, logger, parser, utils, validator
 from httprunner.compat import OrderedDict
 
 ###############################################################################
@@ -163,6 +164,50 @@ def load_dot_env_file(path):
             env_variables_mapping[variable.strip()] = value.strip()
 
     return env_variables_mapping
+
+
+###############################################################################
+##   debugtalk.py module loader
+###############################################################################
+
+def locate_debugtalk_py(start_dir_path):
+    """ locate debugtalk.py module and return module name
+        e.g.
+            debugtalk.py => "debugtalk"
+            tests/debugtalk.py => "tests.debugtalk"
+    """
+    module_path = os.path.join(start_dir_path, "debugtalk.py")
+    if os.path.isfile(module_path):
+        return "debugtalk"
+
+    # make compatible with former version
+    module_path = os.path.join(start_dir_path, "tests", "debugtalk.py")
+    if os.path.isfile(module_path):
+        return "tests.debugtalk"
+
+    return None
+
+
+def load_debugtalk_module(module_name=None):
+    """ load debugtalk.py module
+    @param (str) module_name
+        e.g. debugtalk
+             tests.debugtalk
+    """
+    module_name = module_name or locate_debugtalk_py(os.getcwd())
+
+    if not module_name:
+        return {}
+
+    try:
+        imported_module = importlib.import_module(module_name)
+    except ImportError:
+        raise exceptions.ParamsError("module name error: {}".format(module_name))
+
+    return {
+        "variables": utils.filter_module(imported_module, "variable"),
+        "functions": utils.filter_module(imported_module, "function")
+    }
 
 
 ###############################################################################
