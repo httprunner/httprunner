@@ -17,6 +17,15 @@ class TestUtils(ApiServerUnittest):
             "/post/123"
         )
 
+    def test_set_os_environ(self):
+        self.assertNotIn("abc", os.environ)
+        variables_mapping = {
+            "abc": "123"
+        }
+        utils.set_os_environ(variables_mapping)
+        self.assertIn("abc", os.environ)
+        self.assertEqual(os.environ["abc"], "123")
+
     def test_query_json(self):
         json_content = {
             "ids": [1, 2, 3, 4],

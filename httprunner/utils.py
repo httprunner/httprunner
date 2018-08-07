@@ -42,6 +42,14 @@ def remove_prefix(text, prefix):
     return text
 
 
+def set_os_environ(variables_mapping):
+    """ set variables mapping to os.environ
+    """
+    for variable in variables_mapping:
+        os.environ[variable] = variables_mapping[variable]
+        logger.log_debug("Loaded variable: {}".format(variable))
+
+
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
     @param (dict/list/string) json_content

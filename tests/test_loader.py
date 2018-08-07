@@ -132,10 +132,9 @@ class TestFileLoader(unittest.TestCase):
         self.assertEqual([], files)
 
     def test_load_dot_env_file(self):
-        self.assertNotIn("PROJECT_KEY", os.environ)
-        loader.load_dot_env_file("tests/data/test.env")
-        self.assertIn("PROJECT_KEY", os.environ)
-        self.assertEqual(os.environ["UserName"], "debugtalk")
+        env_variables_mapping = loader.load_dot_env_file("tests/data/test.env")
+        self.assertIn("PROJECT_KEY", env_variables_mapping)
+        self.assertEqual(env_variables_mapping["UserName"], "debugtalk")
 
     def test_load_env_path_not_exist(self):
         with self.assertRaises(exceptions.FileNotFound):
