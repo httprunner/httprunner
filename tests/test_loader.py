@@ -141,6 +141,40 @@ class TestFileLoader(unittest.TestCase):
             loader.load_dot_env_file("not_exist.env")
 
 
+class TestModuleLoader(unittest.TestCase):
+
+    def test_locate_debugtalk_py(self):
+        self.assertEqual(loader.locate_debugtalk_py(os.getcwd()), "tests.debugtalk")
+
+        start_dir_path = os.path.join(os.getcwd(), "tests")
+        self.assertEqual(
+            loader.locate_debugtalk_py(start_dir_path),
+            "debugtalk"
+        )
+
+        start_dir_path = os.path.join(os.getcwd(), "not_exist")
+        self.assertEqual(
+            loader.locate_debugtalk_py(start_dir_path),
+            None
+        )
+
+    def test_load_debugtalk_module(self):
+        imported_module_items = loader.load_debugtalk_module("tests.debugtalk")
+        print(imported_module_items)
+        self.assertEqual(
+            imported_module_items["variables"]["SECRET_KEY"],
+            "DebugTalk"
+        )
+        self.assertIn("alter_response", imported_module_items["functions"])
+
+        is_status_code_200 = imported_module_items["functions"]["is_status_code_200"]
+        self.assertTrue(is_status_code_200(200))
+        self.assertFalse(is_status_code_200(500))
+
+        with self.assertRaises(exceptions.ParamsError):
+            loader.load_debugtalk_module("debugtalk")
+
+
 class TestSuiteLoader(unittest.TestCase):
 
     def setUp(self):
