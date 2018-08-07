@@ -14,7 +14,7 @@ import string
 import types
 from datetime import datetime
 
-from httprunner import exceptions, logger
+from httprunner import exceptions, logger, validator
 from httprunner.compat import OrderedDict, basestring, is_py2, is_py3
 from requests.structures import CaseInsensitiveDict
 
@@ -147,30 +147,6 @@ def deep_update_dict(origin_dict, override_dict):
 
     return origin_dict
 
-def is_function(tup):
-    """ Takes (name, object) tuple, returns True if it is a function.
-    """
-    name, item = tup
-    return isinstance(item, types.FunctionType)
-
-def is_variable(tup):
-    """ Takes (name, object) tuple, returns True if it is a variable.
-    """
-    name, item = tup
-    if callable(item):
-        # function or class
-        return False
-
-    if isinstance(item, types.ModuleType):
-        # imported module
-        return False
-
-    if name.startswith("_"):
-        # private property
-        return False
-
-    return True
-
 def get_imported_module(module_name):
     """ import module and return imported module
     """
@@ -195,7 +171,7 @@ def filter_module(module, filter_type):
         module: imported module
         filter_type: "function" or "variable"
     """
-    filter_type = is_function if filter_type == "function" else is_variable
+    filter_type = validator.is_function if filter_type == "function" else validator.is_variable
     module_functions_dict = dict(filter(filter_type, vars(module).items()))
     return module_functions_dict
 
