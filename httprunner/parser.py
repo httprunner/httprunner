@@ -255,21 +255,28 @@ def parse_data(content, mapping):
 
 
 def parse_parameters(parameters, testset_path=None):
-    """ parse parameters and generate cartesian product
-    @params
-        (list) parameters: parameter name and value in list
+    """ parse parameters and generate cartesian product.
+
+    Args:
+        parameters (list) parameters: parameter name and value in list
             parameter value may be in three types:
-                (1) data list
-                (2) call built-in parameterize function
-                (3) call custom function in debugtalk.py
-            e.g.
-                [
-                    {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
-                    {"username-password": "${parameterize(account.csv)}"},
-                    {"app_version": "${gen_app_version()}"}
-                ]
-        (str) testset_path: testset file path, used for locating csv file and debugtalk.py
-    @return cartesian product in list
+                (1) data list, e.g. ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
+                (2) call built-in parameterize function, "${parameterize(account.csv)}"
+                (3) call custom function in debugtalk.py, "${gen_app_version()}"
+
+        testset_path (str): testset file path, used for locating csv file and debugtalk.py
+
+    Returns:
+        list: cartesian product list
+
+    Examples:
+        >>> parameters = [
+            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+            {"username-password": "${parameterize(account.csv)}"},
+            {"app_version": "${gen_app_version()}"}
+        ]
+        >>> parse_parameters(parameters)
+
     """
     testcase_parser = TestcaseParser(file_path=testset_path)
 
