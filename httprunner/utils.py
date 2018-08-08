@@ -3,20 +3,16 @@
 import copy
 import hashlib
 import hmac
-import imp
-import importlib
 import io
 import itertools
 import json
 import os.path
 import random
 import string
-import types
 from datetime import datetime
 
-from httprunner import exceptions, logger, validator
-from httprunner.compat import OrderedDict, basestring, is_py2, is_py3
-from requests.structures import CaseInsensitiveDict
+from httprunner import exceptions, logger
+from httprunner.compat import OrderedDict, basestring, is_py2
 
 SECRET_KEY = "DebugTalk"
 
@@ -146,19 +142,6 @@ def deep_update_dict(origin_dict, override_dict):
             origin_dict[key] = override_dict[key]
 
     return origin_dict
-
-def get_imported_module_from_file(file_path):
-    """ DEPRECATED: import module from python file path and return imported module
-    """
-    if is_py3:
-        imported_module = importlib.machinery.SourceFileLoader(
-            'module_name', file_path).load_module()
-    elif is_py2:
-        imported_module = imp.load_source('module_name', file_path)
-    else:
-        raise RuntimeError("Neither Python 3 nor Python 2.")
-
-    return imported_module
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
