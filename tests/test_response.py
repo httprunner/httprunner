@@ -1,5 +1,5 @@
 import requests
-from httprunner import built_in, exceptions, response, utils
+from httprunner import built_in, exceptions, loader, response
 from httprunner.compat import basestring, bytes
 from tests.base import HTTPBIN_SERVER, ApiServerUnittest
 
@@ -7,7 +7,8 @@ from tests.base import HTTPBIN_SERVER, ApiServerUnittest
 class TestResponse(ApiServerUnittest):
 
     def setUp(self):
-        self.functions_mapping = utils.filter_module(built_in, "function")
+        module_mapping = loader.load_python_module(built_in)
+        self.functions_mapping = module_mapping["functions"]
 
     def test_parse_response_object_json(self):
         url = "http://127.0.0.1:5000/api/users"

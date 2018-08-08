@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from httprunner import built_in, exceptions, logger, parser, utils
+from httprunner import built_in, exceptions, loader, logger, parser, utils
 from httprunner.compat import OrderedDict
 
 
@@ -69,11 +69,9 @@ class Context(object):
     def import_module_items(self, imported_module):
         """ import module functions and variables and bind to testset context
         """
-        imported_functions_dict = utils.filter_module(imported_module, "function")
-        self.__update_context_functions_config("testset", imported_functions_dict)
-
-        imported_variables_dict = utils.filter_module(imported_module, "variable")
-        self.bind_variables(imported_variables_dict, "testset")
+        module_mapping = loader.load_python_module(imported_module)
+        self.__update_context_functions_config("testset", module_mapping["functions"])
+        self.bind_variables(module_mapping["variables"], "testset")
 
     def bind_variables(self, variables, level="testcase"):
         """ bind variables to testset context or current testcase context.

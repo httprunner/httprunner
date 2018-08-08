@@ -207,6 +207,37 @@ def locate_debugtalk_py(start_path):
     return locate_debugtalk_py(os.path.dirname(start_dir_path))
 
 
+def load_python_module(module):
+    """ load python module.
+
+    Args:
+        module: python module
+
+    Returns:
+        dict: variables and functions mapping for specified python module
+
+            {
+                "variables": {},
+                "functions": {}
+            }
+
+    """
+    debugtalk_module = {
+        "variables": {},
+        "functions": {}
+    }
+
+    for name, item in vars(module).items():
+        if validator.is_function((name, item)):
+            debugtalk_module["functions"][name] = item
+        elif validator.is_variable((name, item)):
+            debugtalk_module["variables"][name] = item
+        else:
+            pass
+
+    return debugtalk_module
+
+
 def load_debugtalk_module(start_path=None):
     """ load debugtalk.py module.
 
@@ -224,26 +255,17 @@ def load_debugtalk_module(start_path=None):
 
     """
     start_path = start_path or os.getcwd()
-    debugtalk_module = {
-        "variables": {},
-        "functions": {}
-    }
 
     try:
         module_name = locate_debugtalk_py(start_path)
     except exceptions.FileNotFound:
-        return debugtalk_module
+        return {
+            "variables": {},
+            "functions": {}
+        }
 
     imported_module = importlib.import_module(module_name)
-    for name, item in vars(imported_module).items():
-        if validator.is_function((name, item)):
-            debugtalk_module["functions"][name] = item
-        elif validator.is_variable((name, item)):
-            debugtalk_module["variables"][name] = item
-        else:
-            pass
-
-    return debugtalk_module
+    return load_python_module(imported_module)
 
 
 ###############################################################################
