@@ -171,16 +171,30 @@ def load_dot_env_file(path):
 ###############################################################################
 
 def locate_debugtalk_py(start_dir_path):
-    """ locate debugtalk.py module and return module name
-        e.g.
-            debugtalk.py => "debugtalk"
-            tests/debugtalk.py => "tests.debugtalk"
+    """ locate debugtalk.py module and return module name.
+
+    Args:
+        start_dir_path (str): start locating directory path
+
+    Returns:
+        str: located module name. None if module not found.
+
+    Examples:
+        # CWD/debugtalk.py
+        >>> locate_debugtalk_py("/path/to/CWD")
+        debugtalk
+
+        # CWD/tests/debugtalk.py
+        >>> locate_debugtalk_py("/path/to/CWD")
+        tests.debugtalk
+
     """
     module_path = os.path.join(start_dir_path, "debugtalk.py")
     if os.path.isfile(module_path):
         return "debugtalk"
 
     # make compatible with former version
+    # TODO: remove this compatiblity
     module_path = os.path.join(start_dir_path, "tests", "debugtalk.py")
     if os.path.isfile(module_path):
         return "tests.debugtalk"
@@ -189,10 +203,31 @@ def locate_debugtalk_py(start_dir_path):
 
 
 def load_debugtalk_module(module_name=None):
-    """ load debugtalk.py module
-    @param (str) module_name
-        e.g. debugtalk
-             tests.debugtalk
+    """ load debugtalk.py module.
+
+    Args:
+        module_name (str, optional): module name for debugtalk.py. Defaults to None.
+
+    Returns:
+        dict: variables and functions mapping for debugtalk.py
+
+            {
+                "variables": {},
+                "functions": {}
+            }
+
+    Examples:
+        # debugtalk.py
+        >>> load_debugtalk_module()
+        debugtalk
+
+        # tests/debugtalk.py
+        >>> load_debugtalk_module()
+        tests.debugtalk
+
+    Raises:
+        exceptions.ParamsError: If failed to import specified module.
+
     """
     module_name = module_name or locate_debugtalk_py(os.getcwd())
 
