@@ -250,7 +250,7 @@ class VariableBindsUnittest(ApiServerUnittest):
         variables = []
         self.context.bind_variables(variables)
 
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.VariableNotFound):
             self.context.validate(validators, resp_obj)
 
         # expected value missed in variables mapping

@@ -294,6 +294,15 @@ class TestcaseParser(object):
         self.functions = functions
 
     def _get_bind_item(self, item_type, item_name):
+        """ get specified function or variable.
+
+        Args:
+            item_type(str): functions or variables
+            item_name(str): function name or variable name
+
+        Returns:
+            object: specified function or variable object.
+        """
         if item_type == "functions":
             if item_name in self.functions:
                 return self.functions[item_name]
@@ -307,19 +316,13 @@ class TestcaseParser(object):
             except (NameError, TypeError):
                 # is not builtin function, continue to search
                 pass
-        elif item_type == "variables":
+        else:
+            # item_type == "variables":
             if item_name in self.variables:
                 return self.variables[item_name]
-        else:
-            raise exceptions.ParamsError("bind item should only be function or variable.")
 
-        try:
-            assert self.file_path is not None
-            debugtalk_module = loader.load_debugtalk_module(self.file_path)
-            return loader.get_module_item(debugtalk_module, item_type, item_name)
-        except (AssertionError, exceptions.FunctionNotFound):
-            raise exceptions.ParamsError(
-                "{} is not defined in bind {}s!".format(item_name, item_type))
+        debugtalk_module = loader.load_debugtalk_module(self.file_path)
+        return loader.get_module_item(debugtalk_module, item_type, item_name)
 
     def get_bind_function(self, func_name):
         return self._get_bind_item("functions", func_name)
