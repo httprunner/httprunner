@@ -172,6 +172,12 @@ class TestModuleLoader(unittest.TestCase):
             "tests.debugtalk"
         )
 
+    def test_filter_module_functions(self):
+        module_mapping = loader.load_python_module(loader)
+        functions_dict = module_mapping["functions"]
+        self.assertIn("load_python_module", functions_dict)
+        self.assertNotIn("is_py3", functions_dict)
+
     def test_load_debugtalk_module(self):
         imported_module_items = loader.load_debugtalk_module()
         self.assertEqual(imported_module_items["functions"], {})

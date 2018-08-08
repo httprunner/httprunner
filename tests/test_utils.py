@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from httprunner import exceptions, utils, validator
+from httprunner import exceptions, loader, utils, validator
 from httprunner.compat import OrderedDict
 from tests.base import ApiServerUnittest
 
@@ -100,7 +100,8 @@ class TestUtils(ApiServerUnittest):
 
     def current_validators(self):
         from httprunner import built_in
-        functions_mapping = utils.filter_module(built_in, "function")
+        module_mapping = loader.load_python_module(built_in)
+        functions_mapping = module_mapping["functions"]
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
@@ -154,16 +155,12 @@ class TestUtils(ApiServerUnittest):
             {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7, 'h': 123}
         )
 
-    def test_filter_module_functions(self):
-        functions_dict = utils.filter_module(utils, "function")
-        self.assertIn("filter_module", functions_dict)
-        self.assertNotIn("is_py3", functions_dict)
-
     def test_get_imported_module_from_file(self):
         imported_module = utils.get_imported_module_from_file("tests/debugtalk.py")
         self.assertIn("gen_md5", dir(imported_module))
 
-        functions_dict = utils.filter_module(imported_module, "function")
+        module_mapping = loader.load_python_module(imported_module)
+        functions_dict = module_mapping["functions"]
         self.assertIn("gen_md5", functions_dict)
         self.assertNotIn("urllib", functions_dict)
 
