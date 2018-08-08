@@ -147,11 +147,6 @@ def deep_update_dict(origin_dict, override_dict):
 
     return origin_dict
 
-def get_imported_module(module_name):
-    """ import module and return imported module
-    """
-    return importlib.import_module(module_name)
-
 def get_imported_module_from_file(file_path):
     """ import module from python file path and return imported module
     """

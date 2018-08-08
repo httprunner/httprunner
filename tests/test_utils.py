@@ -99,8 +99,8 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(utils.get_uniform_comparator("count_less_than_or_equals"), "length_less_than_or_equals")
 
     def current_validators(self):
-        imported_module = utils.get_imported_module("httprunner.built_in")
-        functions_mapping = utils.filter_module(imported_module, "function")
+        from httprunner import built_in
+        functions_mapping = utils.filter_module(built_in, "function")
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
@@ -154,15 +154,8 @@ class TestUtils(ApiServerUnittest):
             {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7, 'h': 123}
         )
 
-    def test_get_imported_module(self):
-        imported_module = utils.get_imported_module("os")
-        self.assertIn("walk", dir(imported_module))
-
     def test_filter_module_functions(self):
-        imported_module = utils.get_imported_module("httprunner.utils")
-        self.assertIn("is_py3", dir(imported_module))
-
-        functions_dict = utils.filter_module(imported_module, "function")
+        functions_dict = utils.filter_module(utils, "function")
         self.assertIn("filter_module", functions_dict)
         self.assertNotIn("is_py3", functions_dict)
 
