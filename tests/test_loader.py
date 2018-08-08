@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from httprunner import exceptions, loader
+from httprunner import exceptions, loader, validator
 
 
 class TestFileLoader(unittest.TestCase):
@@ -193,6 +193,29 @@ class TestModuleLoader(unittest.TestCase):
         is_status_code_200 = imported_module_items["functions"]["is_status_code_200"]
         self.assertTrue(is_status_code_200(200))
         self.assertFalse(is_status_code_200(500))
+
+    def test_get_module_item_functions(self):
+        from httprunner import utils
+        module_mapping = loader.load_python_module(utils)
+
+        gen_md5 = loader.get_module_item(module_mapping, "functions", "gen_md5")
+        self.assertTrue(validator.is_function(("gen_md5", gen_md5)))
+        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
+
+        with self.assertRaises(exceptions.FunctionNotFound):
+            loader.get_module_item(module_mapping, "functions", "gen_md4")
+
+    def test_get_module_item_variables(self):
+        from httprunner import utils
+        module_mapping = loader.load_python_module(utils)
+
+
+        SECRET_KEY = loader.get_module_item(module_mapping, "variables", "SECRET_KEY")
+        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
+        self.assertEqual(SECRET_KEY, "DebugTalk")
+
+        with self.assertRaises(exceptions.VariableNotFound):
+            loader.get_module_item(module_mapping, "variables", "SECRET_KEY2")
 
 
 class TestSuiteLoader(unittest.TestCase):

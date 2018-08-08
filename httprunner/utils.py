@@ -148,7 +148,7 @@ def deep_update_dict(origin_dict, override_dict):
     return origin_dict
 
 def get_imported_module_from_file(file_path):
-    """ import module from python file path and return imported module
+    """ DEPRECATED: import module from python file path and return imported module
     """
     if is_py3:
         imported_module = importlib.machinery.SourceFileLoader(
@@ -159,44 +159,6 @@ def get_imported_module_from_file(file_path):
         raise RuntimeError("Neither Python 3 nor Python 2.")
 
     return imported_module
-
-def filter_module(module, filter_type):
-    """ filter functions or variables from import module
-    @params
-        module: imported module
-        filter_type: "function" or "variable"
-    """
-    filter_type = validator.is_function if filter_type == "function" else validator.is_variable
-    module_functions_dict = dict(filter(filter_type, vars(module).items()))
-    return module_functions_dict
-
-def search_conf_item(start_path, item_type, item_name):
-    """ search expected function or variable recursive upward
-    @param
-        start_path: search start path
-        item_type: "function" or "variable"
-        item_name: function name or variable name
-    """
-    dir_path = os.path.dirname(os.path.abspath(start_path))
-    target_file = os.path.join(dir_path, "debugtalk.py")
-
-    if os.path.isfile(target_file):
-        imported_module = get_imported_module_from_file(target_file)
-        items_dict = filter_module(imported_module, item_type)
-        if item_name in items_dict:
-            return items_dict[item_name]
-        else:
-            return search_conf_item(dir_path, item_type, item_name)
-
-    if dir_path == start_path:
-        # system root path
-        err_msg = "{} not found in recursive upward path!".format(item_name)
-        if item_type == "function":
-            raise exceptions.FunctionNotFound(err_msg)
-        else:
-            raise exceptions.VariableNotFound(err_msg)
-
-    return search_conf_item(dir_path, item_type, item_name)
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case

@@ -268,6 +268,39 @@ def load_debugtalk_module(start_path=None):
     return load_python_module(imported_module)
 
 
+def get_module_item(module_mapping, item_type, item_name):
+    """ get expected function or variable from module mapping.
+
+    Args:
+        module_mapping(dict): module mapping with variables and functions.
+
+            {
+                "variables": {},
+                "functions": {}
+            }
+
+        item_type(str): "functions" or "variables"
+        item_name(str): function name or variable name
+
+    Returns:
+        object: specified variable or function object.
+
+    Raises:
+        exceptions.FunctionNotFound: If specified function not found in module mapping
+        exceptions.VariableNotFound: If specified variable not found in module mapping
+
+    """
+    try:
+        return module_mapping[item_type][item_name]
+    except KeyError:
+        err_msg = "{} not found in debugtalk.py module!\n".format(item_name)
+        err_msg += "module mapping: {}".format(module_mapping)
+        if item_type == "functions":
+            raise exceptions.FunctionNotFound(err_msg)
+        else:
+            raise exceptions.VariableNotFound(err_msg)
+
+
 ###############################################################################
 ##   suite loader
 ###############################################################################
