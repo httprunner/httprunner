@@ -32,17 +32,62 @@ def parse_string_value(str_value):
 
 def extract_variables(content):
     """ extract all variable names from content, which is in format $variable
-    @param (str) content
-    @return (list) variable name list
 
-    e.g. $variable => ["variable"]
-         /blog/$postid => ["postid"]
-         /$var1/$var2 => ["var1", "var2"]
-         abc => []
+    Args:
+        content (str): string content
+
+    Returns:
+        list: variables list extracted from string content
+
+    Examples:
+        >>> extract_variables("$variable")
+        ["variable"]
+
+        >>> extract_variables("/blog/$postid")
+        ["postid"]
+
+        >>> extract_variables("/$var1/$var2")
+        ["var1", "var2"]
+
+        >>> extract_variables("abc")
+        []
+
     """
     # TODO: change variable notation from $var to {{var}}
     try:
         return re.findall(variable_regexp, content)
+    except TypeError:
+        return []
+
+
+def extract_functions(content):
+    """ extract all functions from string content, which are in format ${fun()}
+
+    Args:
+        content (str): string content
+
+    Returns:
+        list: functions list extracted from string content
+
+    Examples:
+        >>> extract_functions("${func(5)}")
+        ["func(5)"]
+
+        >>> extract_functions("${func(a=1, b=2)}")
+        ["func(a=1, b=2)"]
+
+        >>> extract_functions("/api/1000?_t=${get_timestamp()}")
+        ["get_timestamp()"]
+
+        >>> extract_functions("/api/${add(1, 2)}")
+        ["add(1, 2)"]
+
+        >>> extract_functions("/api/${add(1, 2)}?_t=${get_timestamp()}")
+        ["add(1, 2)", "get_timestamp()"]
+
+    """
+    try:
+        return re.findall(function_regexp, content)
     except TypeError:
         return []
 
@@ -246,23 +291,6 @@ def parse_parameters(parameters, testset_path=None):
         parsed_parameters_list.append(parameter_content_list)
 
     return utils.gen_cartesian_product(*parsed_parameters_list)
-
-
-def extract_functions(content):
-    """ extract all functions from string content, which are in format ${fun()}
-    @param (str) content
-    @return (list) functions list
-
-    e.g. ${func(5)} => ["func(5)"]
-         ${func(a=1, b=2)} => ["func(a=1, b=2)"]
-         /api/1000?_t=${get_timestamp()} => ["get_timestamp()"]
-         /api/${add(1, 2)} => ["add(1, 2)"]
-         "/api/${add(1, 2)}?_t=${get_timestamp()}" => ["add(1, 2)", "get_timestamp()"]
-    """
-    try:
-        return re.findall(function_regexp, content)
-    except TypeError:
-        return []
 
 
 class TestcaseParser(object):
