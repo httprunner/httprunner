@@ -277,7 +277,7 @@ class TestTestcaseParser(unittest.TestCase):
     def test_eval_content_variables_search_upward(self):
         testcase_parser = parser.TestcaseParser()
 
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.VariableNotFound):
             testcase_parser._eval_content_variables("/api/$SECRET_KEY")
 
         testcase_parser.file_path = "tests/data/demo_testset_hardcode.yml"
@@ -300,7 +300,7 @@ class TestTestcaseParser(unittest.TestCase):
             "123str_value1/456"
         )
 
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.VariableNotFound):
             testcase_parser.eval_content_with_bindings("$str_3")
 
         self.assertEqual(
@@ -410,7 +410,7 @@ class TestTestcaseParser(unittest.TestCase):
     def test_eval_content_functions_search_upward(self):
         testcase_parser = parser.TestcaseParser()
 
-        with self.assertRaises(exceptions.ParamsError):
+        with self.assertRaises(exceptions.FunctionNotFound):
             testcase_parser._eval_content_functions("/api/${gen_md5(abc)}")
 
         testcase_parser.file_path = "tests/data/demo_testset_hardcode.yml"
