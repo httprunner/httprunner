@@ -9,8 +9,8 @@ from httprunner import exceptions, loader, utils
 from httprunner.compat import (OrderedDict, basestring, builtin_str,
                                numeric_types, str)
 
-function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
 variable_regexp = r"\$([\w_]+)"
+function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
 function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w\.\-_ =,]*)\)$")
 
 
@@ -94,14 +94,35 @@ def extract_functions(content):
 
 def parse_function(content):
     """ parse function name and args from string content.
-    @param (str) content
-    @return (dict) function name and args
 
-    e.g. func() => {'func_name': 'func', 'args': [], 'kwargs': {}}
-         func(5) => {'func_name': 'func', 'args': [5], 'kwargs': {}}
-         func(1, 2) => {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
-         func(a=1, b=2) => {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
-         func(1, 2, a=3, b=4) => {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
+    Args:
+        content (str): string content
+
+    Returns:
+        dict: function meta dict
+
+            {
+                "func_name": "xxx",
+                "args": [],
+                "kwargs": {}
+            }
+
+    Examples:
+        >>> parse_function("func()")
+        {'func_name': 'func', 'args': [], 'kwargs': {}}
+
+        >>> parse_function("func(5)")
+        {'func_name': 'func', 'args': [5], 'kwargs': {}}
+
+        >>> parse_function("func(1, 2)")
+        {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
+
+        >>> parse_function("func(a=1, b=2)")
+        {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+
+        >>> parse_function("func(1, 2, a=3, b=4)")
+        {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
+
     """
     matched = function_regexp_compile.match(content)
     if not matched:
