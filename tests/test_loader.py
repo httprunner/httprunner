@@ -174,7 +174,8 @@ class TestModuleLoader(unittest.TestCase):
 
     def test_load_debugtalk_module(self):
         imported_module_items = loader.load_debugtalk_module()
-        self.assertEqual(imported_module_items, {})
+        self.assertEqual(imported_module_items["functions"], {})
+        self.assertEqual(imported_module_items["variables"], {})
 
         imported_module_items = loader.load_debugtalk_module("tests")
         self.assertEqual(

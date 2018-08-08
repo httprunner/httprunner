@@ -6,7 +6,7 @@ import json
 import os
 
 import yaml
-from httprunner import exceptions, logger, parser, utils, validator
+from httprunner import exceptions, logger, parser, validator
 from httprunner.compat import OrderedDict
 
 ###############################################################################
@@ -224,17 +224,24 @@ def load_debugtalk_module(start_path=None):
 
     """
     start_path = start_path or os.getcwd()
+    debugtalk_module = {
+        "variables": {},
+        "functions": {}
+    }
 
     try:
         module_name = locate_debugtalk_py(start_path)
     except exceptions.FileNotFound:
-        return {}
+        return debugtalk_module
 
     imported_module = importlib.import_module(module_name)
-    debugtalk_module = {
-        "variables": utils.filter_module(imported_module, "variable"),
-        "functions": utils.filter_module(imported_module, "function")
-    }
+    for name, item in vars(imported_module).items():
+        if validator.is_function((name, item)):
+            debugtalk_module["functions"][name] = item
+        elif validator.is_variable((name, item)):
+            debugtalk_module["variables"][name] = item
+        else:
+            pass
 
     return debugtalk_module
 
