@@ -155,18 +155,6 @@ class TestUtils(ApiServerUnittest):
             {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7, 'h': 123}
         )
 
-    def test_get_imported_module_from_file(self):
-        imported_module = utils.get_imported_module_from_file("tests/debugtalk.py")
-        self.assertIn("gen_md5", dir(imported_module))
-
-        module_mapping = loader.load_python_module(imported_module)
-        functions_dict = module_mapping["functions"]
-        self.assertIn("gen_md5", functions_dict)
-        self.assertNotIn("urllib", functions_dict)
-
-        with self.assertRaises(exceptions.FileNotFoundError):
-            utils.get_imported_module_from_file("tests/debugtalk2.py")
-
     def test_handle_config_key_case(self):
         origin_dict = {
             "Name": "test",
