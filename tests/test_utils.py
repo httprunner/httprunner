@@ -167,36 +167,6 @@ class TestUtils(ApiServerUnittest):
         with self.assertRaises(exceptions.FileNotFoundError):
             utils.get_imported_module_from_file("tests/debugtalk2.py")
 
-    def test_search_conf_function(self):
-        gen_md5 = utils.search_conf_item("tests/data/demo_binds.yml", "function", "gen_md5")
-        self.assertTrue(validator.is_function(("gen_md5", gen_md5)))
-        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
-
-        gen_md5 = utils.search_conf_item("tests/data/subfolder/test.yml", "function", "gen_md5")
-        self.assertTrue(validator.is_function(("_", gen_md5)))
-        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
-
-        with self.assertRaises(exceptions.FunctionNotFound):
-            utils.search_conf_item("tests/data/subfolder/test.yml", "function", "func_not_exist")
-
-        with self.assertRaises(exceptions.FunctionNotFound):
-            utils.search_conf_item("/user/local/bin", "function", "gen_md5")
-
-    def test_search_conf_variable(self):
-        SECRET_KEY = utils.search_conf_item("tests/data/demo_binds.yml", "variable", "SECRET_KEY")
-        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
-        self.assertEqual(SECRET_KEY, "DebugTalk")
-
-        SECRET_KEY = utils.search_conf_item("tests/data/subfolder/test.yml", "variable", "SECRET_KEY")
-        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
-        self.assertEqual(SECRET_KEY, "DebugTalk")
-
-        with self.assertRaises(exceptions.VariableNotFound):
-            utils.search_conf_item("tests/data/subfolder/test.yml", "variable", "variable_not_exist")
-
-        with self.assertRaises(exceptions.VariableNotFound):
-            utils.search_conf_item("/user/local/bin", "variable", "SECRET_KEY")
-
     def test_handle_config_key_case(self):
         origin_dict = {
             "Name": "test",

@@ -294,7 +294,7 @@ class TestcaseParser(object):
         self.functions = functions
 
     def _get_bind_item(self, item_type, item_name):
-        if item_type == "function":
+        if item_type == "functions":
             if item_name in self.functions:
                 return self.functions[item_name]
 
@@ -307,7 +307,7 @@ class TestcaseParser(object):
             except (NameError, TypeError):
                 # is not builtin function, continue to search
                 pass
-        elif item_type == "variable":
+        elif item_type == "variables":
             if item_name in self.variables:
                 return self.variables[item_name]
         else:
@@ -315,16 +315,17 @@ class TestcaseParser(object):
 
         try:
             assert self.file_path is not None
-            return utils.search_conf_item(self.file_path, item_type, item_name)
+            debugtalk_module = loader.load_debugtalk_module(self.file_path)
+            return loader.get_module_item(debugtalk_module, item_type, item_name)
         except (AssertionError, exceptions.FunctionNotFound):
             raise exceptions.ParamsError(
                 "{} is not defined in bind {}s!".format(item_name, item_type))
 
     def get_bind_function(self, func_name):
-        return self._get_bind_item("function", func_name)
+        return self._get_bind_item("functions", func_name)
 
     def get_bind_variable(self, variable_name):
-        return self._get_bind_item("variable", variable_name)
+        return self._get_bind_item("variables", variable_name)
 
     def parameterize(self, csv_file_name, fetch_method="Sequential"):
         parameter_file_path = os.path.join(
