@@ -50,8 +50,5 @@ class VariableNotFound(NotFoundError):
 class ApiNotFound(NotFoundError):
     pass
 
-class SuiteNotFound(NotFoundError):
-    pass
-
 class TestcaseNotFound(NotFoundError):
     pass

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from httprunner import exceptions, loader, utils
+from httprunner import exceptions, loader, validator
 
 
 class TestFileLoader(unittest.TestCase):
@@ -132,14 +132,89 @@ class TestFileLoader(unittest.TestCase):
         self.assertEqual([], files)
 
     def test_load_dot_env_file(self):
-        self.assertNotIn("PROJECT_KEY", os.environ)
-        loader.load_dot_env_file("tests/data/test.env")
-        self.assertIn("PROJECT_KEY", os.environ)
-        self.assertEqual(os.environ["UserName"], "debugtalk")
+        env_variables_mapping = loader.load_dot_env_file("tests/data/test.env")
+        self.assertIn("PROJECT_KEY", env_variables_mapping)
+        self.assertEqual(env_variables_mapping["UserName"], "debugtalk")
 
     def test_load_env_path_not_exist(self):
         with self.assertRaises(exceptions.FileNotFound):
             loader.load_dot_env_file("not_exist.env")
+
+    def test_locate_file(self):
+        with self.assertRaises(exceptions.FileNotFound):
+            loader.locate_file(os.getcwd(), "debugtalk.py")
+
+        with self.assertRaises(exceptions.FileNotFound):
+            loader.locate_file("", "debugtalk.py")
+
+        start_path = os.path.join(os.getcwd(), "tests")
+        self.assertEqual(
+            loader.locate_file(start_path, "debugtalk.py"),
+            "tests/debugtalk.py"
+        )
+        self.assertEqual(
+            loader.locate_file("tests/", "debugtalk.py"),
+            "tests/debugtalk.py"
+        )
+        self.assertEqual(
+            loader.locate_file("tests", "debugtalk.py"),
+            "tests/debugtalk.py"
+        )
+        self.assertEqual(
+            loader.locate_file("tests/base.py", "debugtalk.py"),
+            "tests/debugtalk.py"
+        )
+        self.assertEqual(
+            loader.locate_file("tests/data/test.env", "debugtalk.py"),
+            "tests/debugtalk.py"
+        )
+
+class TestModuleLoader(unittest.TestCase):
+
+    def test_filter_module_functions(self):
+        module_mapping = loader.load_python_module(loader)
+        functions_dict = module_mapping["functions"]
+        self.assertIn("load_python_module", functions_dict)
+        self.assertNotIn("is_py3", functions_dict)
+
+    def test_load_debugtalk_module(self):
+        imported_module_items = loader.load_debugtalk_module()
+        self.assertEqual(imported_module_items["functions"], {})
+        self.assertEqual(imported_module_items["variables"], {})
+
+        imported_module_items = loader.load_debugtalk_module("tests")
+        self.assertEqual(
+            imported_module_items["variables"]["SECRET_KEY"],
+            "DebugTalk"
+        )
+        self.assertIn("alter_response", imported_module_items["functions"])
+
+        is_status_code_200 = imported_module_items["functions"]["is_status_code_200"]
+        self.assertTrue(is_status_code_200(200))
+        self.assertFalse(is_status_code_200(500))
+
+    def test_get_module_item_functions(self):
+        from httprunner import utils
+        module_mapping = loader.load_python_module(utils)
+
+        gen_md5 = loader.get_module_item(module_mapping, "functions", "gen_md5")
+        self.assertTrue(validator.is_function(("gen_md5", gen_md5)))
+        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
+
+        with self.assertRaises(exceptions.FunctionNotFound):
+            loader.get_module_item(module_mapping, "functions", "gen_md4")
+
+    def test_get_module_item_variables(self):
+        from httprunner import utils
+        module_mapping = loader.load_python_module(utils)
+
+
+        SECRET_KEY = loader.get_module_item(module_mapping, "variables", "SECRET_KEY")
+        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
+        self.assertEqual(SECRET_KEY, "DebugTalk")
+
+        with self.assertRaises(exceptions.VariableNotFound):
+            loader.get_module_item(module_mapping, "variables", "SECRET_KEY2")
 
 
 class TestSuiteLoader(unittest.TestCase):
@@ -151,13 +226,13 @@ class TestSuiteLoader(unittest.TestCase):
         }
 
     def test_load_test_dependencies(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         overall_def_dict = loader.overall_def_dict
         self.assertIn("get_token", overall_def_dict["api"])
         self.assertIn("create_and_check", overall_def_dict["suite"])
 
     def test_load_api_file(self):
-        loader.load_api_file("tests/api/basic.yml")
+        loader._load_api_file("tests/api/basic.yml")
         overall_api_def_dict = loader.overall_def_dict["api"]
         self.assertIn("get_token",overall_api_def_dict)
         self.assertEqual("/api/get-token", overall_api_def_dict["get_token"]["request"]["url"])
@@ -165,16 +240,16 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(len(overall_api_def_dict["get_token"]["validate"]), 3)
 
     def test_load_test_file_suite(self):
-        loader.load_api_file("tests/api/basic.yml")
-        testset = loader.load_test_file("tests/suite/create_and_get.yml")
+        loader._load_api_file("tests/api/basic.yml")
+        testset = loader._load_test_file("tests/suite/create_and_get.yml")
         self.assertEqual(testset["config"]["name"], "create user and check result.")
         self.assertEqual(len(testset["testcases"]), 3)
         self.assertEqual(testset["testcases"][0]["name"], "make sure user $uid does not exist")
         self.assertEqual(testset["testcases"][0]["request"]["url"], "/api/users/$uid")
 
     def test_load_test_file_testcase(self):
-        loader.load_test_dependencies()
-        testset = loader.load_test_file("tests/testcases/smoketest.yml")
+        loader._load_test_dependencies()
+        testset = loader._load_test_file("tests/testcases/smoketest.yml")
         self.assertEqual(testset["config"]["name"], "smoketest")
         self.assertEqual(testset["config"]["path"], "tests/testcases/smoketest.yml")
         self.assertIn("device_sn", testset["config"]["variables"][0])
@@ -182,7 +257,7 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(testset["testcases"][0]["name"], "get token")
 
     def test_get_block_by_name(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         ref_call = "get_user($uid, $token)"
         block = loader._get_block_by_name(ref_call, "api")
         self.assertEqual(block["request"]["url"], "/api/users/$uid")
@@ -190,13 +265,13 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(block["function_meta"]["args"], ['$uid', '$token'])
 
     def test_get_block_by_name_args_mismatch(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         ref_call = "get_user($uid, $token, $var)"
         with self.assertRaises(exceptions.ParamsError):
             loader._get_block_by_name(ref_call, "api")
 
     def test_override_block(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         def_block = loader._get_block_by_name("get_token($user_agent, $device_sn, $os_platform, $app_version)", "api")
         test_block = {
             "name": "override block",
@@ -211,13 +286,13 @@ class TestSuiteLoader(unittest.TestCase):
             ]
         }
 
-        utils._override_block(def_block, test_block)
+        loader._override_block(def_block, test_block)
         self.assertEqual(test_block["name"], "override block")
         self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, test_block["validate"])
         self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, test_block["validate"])
 
     def test_get_test_definition_api(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         api_def = loader._get_test_definition("get_headers", "api")
         self.assertEqual(api_def["request"]["url"], "/headers")
         self.assertEqual(len(api_def["setup_hooks"]), 2)
@@ -227,12 +302,69 @@ class TestSuiteLoader(unittest.TestCase):
             loader._get_test_definition("get_token_XXX", "api")
 
     def test_get_test_definition_suite(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         api_def = loader._get_test_definition("create_and_check", "suite")
         self.assertEqual(api_def["config"]["name"], "create user and check result.")
 
-        with self.assertRaises(exceptions.SuiteNotFound):
+        with self.assertRaises(exceptions.TestcaseNotFound):
             loader._get_test_definition("create_and_check_XXX", "suite")
+
+    def test_merge_validator(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+
+        merged_validators = loader._merge_validator(def_validators, current_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            merged_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            merged_validators
+        )
+
+    def test_merge_validator_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+
+        merged_validators = loader._merge_validator(def_validators, current_validators)
+        self.assertEqual(len(merged_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, merged_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, merged_validators)
+
+    def test_merge_extractor(self):
+        api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
+        current_extractors = [{"var1": "val111"}, {"var3": "val3"}]
+
+        merged_extractors = loader._merge_extractor(api_extrators, current_extractors)
+        self.assertIn(
+            {"var1": "val111"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var2": "val2"},
+            merged_extractors
+        )
+        self.assertIn(
+            {"var3": "val3"},
+            merged_extractors
+        )
 
     def test_load_testcases_by_path_files(self):
         testsets_list = []
@@ -276,7 +408,7 @@ class TestSuiteLoader(unittest.TestCase):
                 self.assertIn('method', test['request'])
 
     def test_load_testcases_by_path_folder(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
         testset_list_1 = loader.load_testcases(path)
@@ -315,7 +447,7 @@ class TestSuiteLoader(unittest.TestCase):
             loader.load_testcases(path)
 
     def test_load_testcases_by_path_layered(self):
-        loader.load_test_dependencies()
+        loader._load_test_dependencies()
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         testsets_list = loader.load_testcases(path)
