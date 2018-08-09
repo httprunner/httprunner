@@ -4,7 +4,8 @@ import copy
 import sys
 import unittest
 
-from httprunner import context, exceptions, loader, logger, runner, utils
+from httprunner import (context, exceptions, loader, logger, runner, utils,
+                        validator)
 from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
@@ -159,10 +160,12 @@ class TestSuite(unittest.TestSuite):
         return outputs
 
 
-def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
-    """ initialize TestSuite list with testset path or testset dict
-    @params
-        testsets (dict/list): testset or list of testset
+def init_test_suites(path_or_testcases, mapping=None, http_client_session=None):
+    """ initialize TestSuite list with testcase path or testcase(s).
+
+    Args:
+        path_or_testcases (str/dict/list): testcase file path or testcase dict or testcases list
+
             testset_dict
             or
             [
@@ -174,23 +177,31 @@ def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
                     "testcases": [testcase11, testcase12]
                 }
             ]
-        mapping (dict):
-            passed in variables mapping, it will override variables in config block
+
+        mapping (dict): passed in variables mapping, it will override variables in config block.
+        http_client_session (instance): requests.Session(), or locusts.client.Session() instance.
+
+    Returns:
+        list: TestSuite() instance list.
+
     """
-    testsets = loader.load(path_or_testsets)
+    if validator.is_testcases(path_or_testcases):
+        testcases = path_or_testcases
+    else:
+        testcases = loader.load(path_or_testcases)
 
     # TODO: move comparator uniform here
     mapping = mapping or {}
 
-    if not testsets:
+    if not testcases:
         raise exceptions.TestcaseNotFound
 
-    if isinstance(testsets, dict):
-        testsets = [testsets]
+    if isinstance(testcases, dict):
+        testcases = [testcases]
 
     test_suite_list = []
-    for testset in testsets:
-        test_suite = TestSuite(testset, mapping, http_client_session)
+    for testcase in testcases:
+        test_suite = TestSuite(testcase, mapping, http_client_session)
         test_suite_list.append(test_suite)
 
     return test_suite_list
@@ -212,9 +223,9 @@ class HttpRunner(object):
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)
 
-    def run(self, path_or_testsets, mapping=None):
+    def run(self, path_or_testcases, mapping=None):
         """ start to run test with varaibles mapping
-        @param path_or_testsets: YAML/JSON testset file path or testset list
+        @param path_or_testcases: YAML/JSON testset file path or testset list
             path: path could be in several type
                 - absolute/relative file path
                 - absolute/relative folder path
@@ -230,9 +241,9 @@ class HttpRunner(object):
             if mapping specified, it will override variables in config block
         """
         try:
-            test_suite_list = init_test_suites(path_or_testsets, mapping)
+            test_suite_list = init_test_suites(path_or_testcases, mapping)
         except exceptions.TestcaseNotFound:
-            logger.log_error("Testcases not found in {}".format(path_or_testsets))
+            logger.log_error("Testcases not found in {}".format(path_or_testcases))
             sys.exit(1)
 
         self.summary = {
@@ -288,8 +299,8 @@ class HttpRunner(object):
 
 class LocustTask(object):
 
-    def __init__(self, path_or_testsets, locust_client, mapping=None):
-        self.test_suite_list = init_test_suites(path_or_testsets, mapping, locust_client)
+    def __init__(self, path_or_testcases, locust_client, mapping=None):
+        self.test_suite_list = init_test_suites(path_or_testcases, mapping, locust_client)
 
     def run(self):
         for test_suite in self.test_suite_list:

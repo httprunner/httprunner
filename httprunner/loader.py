@@ -745,8 +745,5 @@ def load(path):
         list: testcases list
 
     """
-    if validator.is_testcases(path):
-        return path
-
     _load_test_dependencies()
     return load_testcases(path)
