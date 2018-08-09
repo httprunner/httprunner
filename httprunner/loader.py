@@ -102,10 +102,14 @@ def load_file(file_path):
 
 
 def load_folder_files(folder_path, recursive=True):
-    """ load folder path, return all files in list format.
-    @param
-        folder_path: specified folder path to load
-        recursive: if True, will load files recursively
+    """ load folder path, return all files endswith yml/yaml/json in list.
+
+    Args:
+        folder_path (str): specified folder path to load
+        recursive (bool): load files recursively if True
+
+    Returns:
+        list: files endswith yml/yaml/json
     """
     if isinstance(folder_path, (list, set)):
         files = []
@@ -733,6 +737,91 @@ def load_testcases(path):
 
     testcases_cache_mapping[path] = testcases_list
     return testcases_list
+
+
+def load_folder_content(folder_path):
+    """ load api/testcases/testsuites definitions from folder.
+
+    Args:
+        folder_path (str): api/testcases/testsuites files folder.
+
+    Returns:
+        dict: api definition mapping.
+
+            {
+                "tests/api/basic.yml": [
+                    {"api": {"def": "api_login", "request": {}, "validate": []}},
+                    {"api": {"def": "api_logout", "request": {}, "validate": []}}
+                ]
+            }
+    """
+    items_mapping = {}
+
+    for file_path in load_folder_files(folder_path):
+        items_mapping[file_path] = load_file(file_path)
+
+    return items_mapping
+
+
+def load_api_folder(api_folder_path=None):
+    """ load api definitions from api folder.
+
+    Args:
+        api_folder_path (str): api files folder.
+
+            api file should be in the following format:
+            [
+                {
+                    "api": {
+                        "def": "api_login",
+                        "request": {},
+                        "validate": []
+                    }
+                },
+                {
+                    "api": {
+                        "def": "api_logout",
+                        "request": {},
+                        "validate": []
+                    }
+                }
+            ]
+
+    Returns:
+        dict: api definition mapping.
+
+            {
+                "api_login": {
+                    "function_meta": {"func_name": "api_login", "args": [], "kwargs": {}}
+                    "request": {}
+                },
+                "api_logout": {
+                    "function_meta": {"func_name": "api_logout", "args": [], "kwargs": {}}
+                    "request": {}
+                }
+            }
+    """
+    api_definition_mapping = {}
+
+    api_folder_path = api_folder_path or os.path.join(os.getcwd(), "api")
+    api_items_mapping = load_folder_content(api_folder_path)
+
+    for api_file_path, api_items in api_items_mapping.items():
+        # TODO: add JSON schema validation
+        for api_item in api_items:
+            key, api_dict = api_item.popitem()
+
+            api_def = api_dict.pop("def")
+            function_meta = parser.parse_function(api_def)
+            func_name = function_meta["func_name"]
+
+            if func_name in api_definition_mapping:
+                logger.log_warning("API definition duplicated: {}".format(func_name))
+
+            api_dict["function_meta"] = function_meta
+            api_definition_mapping[func_name] = api_dict
+
+    return api_definition_mapping
 
 
 def load(path):
