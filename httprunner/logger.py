@@ -15,6 +15,8 @@ log_colors_config = {
     'ERROR':    'red',
     'CRITICAL': 'red',
 }
+logger = logging.getLogger("httprunner")
+
 
 def setup_logger(log_level, log_file=None):
     """setup root logger with ColoredFormatter."""
@@ -40,24 +42,26 @@ def setup_logger(log_level, log_file=None):
         handler = logging.StreamHandler()
 
     handler.setFormatter(formatter)
-    logging.root.addHandler(handler)
-    logging.root.setLevel(level)
+    logger.addHandler(handler)
+    logger.setLevel(level)
 
 
 def coloring(text, color="WHITE"):
     fore_color = getattr(Fore, color.upper())
     return fore_color + text
 
+
 def color_print(msg, color="WHITE"):
     fore_color = getattr(Fore, color.upper())
     print(fore_color + msg)
+
 
 def log_with_color(level):
     """ log with color by different level
     """
     def wrapper(text):
         color = log_colors_config[level.upper()]
-        getattr(logging, level.lower())(coloring(text, color))
+        getattr(logger, level.lower())(coloring(text, color))
 
     return wrapper
 
