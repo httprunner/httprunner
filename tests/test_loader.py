@@ -140,37 +140,36 @@ class TestFileLoader(unittest.TestCase):
         with self.assertRaises(exceptions.FileNotFound):
             loader.load_dot_env_file("not_exist.env")
 
-
-class TestModuleLoader(unittest.TestCase):
-
-    def test_locate_debugtalk_py(self):
+    def test_locate_file(self):
         with self.assertRaises(exceptions.FileNotFound):
-            loader.locate_debugtalk_py(os.getcwd())
+            loader.locate_file(os.getcwd(), "debugtalk.py")
 
         with self.assertRaises(exceptions.FileNotFound):
-            loader.locate_debugtalk_py("")
+            loader.locate_file("", "debugtalk.py")
 
         start_path = os.path.join(os.getcwd(), "tests")
         self.assertEqual(
-            loader.locate_debugtalk_py(start_path),
-            "tests.debugtalk"
+            loader.locate_file(start_path, "debugtalk.py"),
+            "tests/debugtalk.py"
         )
         self.assertEqual(
-            loader.locate_debugtalk_py("tests/"),
-            "tests.debugtalk"
+            loader.locate_file("tests/", "debugtalk.py"),
+            "tests/debugtalk.py"
         )
         self.assertEqual(
-            loader.locate_debugtalk_py("tests"),
-            "tests.debugtalk"
+            loader.locate_file("tests", "debugtalk.py"),
+            "tests/debugtalk.py"
         )
         self.assertEqual(
-            loader.locate_debugtalk_py("tests/base.py"),
-            "tests.debugtalk"
+            loader.locate_file("tests/base.py", "debugtalk.py"),
+            "tests/debugtalk.py"
         )
         self.assertEqual(
-            loader.locate_debugtalk_py("tests/data/test.env"),
-            "tests.debugtalk"
+            loader.locate_file("tests/data/test.env", "debugtalk.py"),
+            "tests/debugtalk.py"
         )
+
+class TestModuleLoader(unittest.TestCase):
 
     def test_filter_module_functions(self):
         module_mapping = loader.load_python_module(loader)
