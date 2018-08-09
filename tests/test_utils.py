@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from httprunner import exceptions, loader, utils, validator
+from httprunner import exceptions, loader, utils
 from httprunner.compat import OrderedDict
 from tests.base import ApiServerUnittest
 
