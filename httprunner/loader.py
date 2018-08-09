@@ -826,13 +826,13 @@ def load_api_folder(api_folder_path=None):
     return api_definition_mapping
 
 
-def load_testcases_folder(testcases_folder_path=None):
-    """ load testcases definitions from testcases folder.
+def load_test_folder(test_folder_path=None, test_type="testcase"):
+    """ load testcases/testsuites definitions from folder.
 
     Args:
-        testcases_folder_path (str): testcases files folder.
+        test_folder_path (str): testcases/testsuites files folder.
 
-            testcases file should be in the following format:
+            testcase file should be in the following format:
             [
                 {
                     "config": {
@@ -849,8 +849,25 @@ def load_testcases_folder(testcases_folder_path=None):
                 }
             ]
 
+            testsuite file should be in the following format:
+            [
+                {
+                    "config": {
+                        "def": "create_and_check",
+                        "request": {},
+                        "validate": []
+                    }
+                },
+                {
+                    "test": {
+                        "suite": "get_user", # TODO: repalce suite with testcase
+                        "validate": []
+                    }
+                }
+            ]
+
     Returns:
-        dict: testcases definition mapping.
+        dict: testcases/testsuites definition mapping.
 
             {
                 "tests/testcases/setup.yml": [
@@ -866,41 +883,55 @@ def load_testcases_folder(testcases_folder_path=None):
             }
 
     """
-    testcases_definition_mapping = {}
+    test_definition_mapping = {}
 
-    # TODO: replace suite with testcases
-    testcases_folder_path = testcases_folder_path or os.path.join(os.getcwd(), "suite")
-    testcases_items_mapping = load_folder_content(testcases_folder_path)
+    if not test_folder_path:
+        if test_type == "testcase":
+            # TODO: replace suite with testcases
+            dir_name = "suite"
+        elif test_type == "testsuite":
+            # TODO: replace testcases with testsuites
+            dir_name = "testcases"
 
-    for testcase_file_path, testcase_items in testcases_items_mapping.items():
+        test_folder_path = os.path.join(os.getcwd(), dir_name)
+
+    test_items_mapping = load_folder_content(test_folder_path)
+
+    for test_file_path, items in test_items_mapping.items():
         # TODO: add JSON schema validation
 
         testcase = {
             "config": {
-                "path": testcase_file_path
+                "path": test_file_path
             },
             "tests": []
         }
-        for item in testcase_items:
-            key, test_block = item.popitem()
+        for item in items:
+            key, block = item.popitem()
 
             if key == "config":
-                testcase["config"].update(test_block)
-                testcase_def = test_block.pop("def")
+                testcase["config"].update(block)
+
+                if "def" not in block:
+                    # testsuite
+                    test_definition_mapping[test_file_path] = testcase
+                    continue
+
+                # testcase
+                testcase_def = block.pop("def")
                 function_meta = parser.parse_function(testcase_def)
                 func_name = function_meta["func_name"]
 
-                if func_name in testcases_definition_mapping:
+                if func_name in test_definition_mapping:
                     logger.log_warning("API definition duplicated: {}".format(func_name))
 
-                test_block["function_meta"] = function_meta
-                testcases_definition_mapping[func_name] = testcase
+                block["function_meta"] = function_meta
+                test_definition_mapping[func_name] = testcase
             else:
                 # key == "test":
-                testcase["tests"].append(test_block)
+                testcase["tests"].append(block)
 
-    return testcases_definition_mapping
-
+    return test_definition_mapping
 
 
 def load(path):

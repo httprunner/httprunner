@@ -473,11 +473,25 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_testcases_folder(self):
         path = os.path.join(os.getcwd(), "tests", "suite")
-        testcases_definition_mapping = loader.load_testcases_folder(path)
+        testcases_definition_mapping = loader.load_test_folder(path)
 
         self.assertIn("setup_and_reset", testcases_definition_mapping)
         self.assertIn("create_and_check", testcases_definition_mapping)
         self.assertEqual(
             testcases_definition_mapping["setup_and_reset"]["config"]["name"],
             "setup and reset all."
+        )
+
+    def test_load_testsuites_folder(self):
+        path = os.path.join(os.getcwd(), "tests", "testcases")
+        testsuites_definition_mapping = loader.load_test_folder(path)
+
+        testsute_path = os.path.join(os.getcwd(), "tests", "testcases", "smoketest.yml")
+        self.assertIn(
+            testsute_path,
+            testsuites_definition_mapping
+        )
+        self.assertEqual(
+            testsuites_definition_mapping[testsute_path]["config"]["name"],
+            "smoketest"
         )
