@@ -206,7 +206,8 @@ class HttpRunner(object):
             - dot_env_path: .env file path
         """
         dot_env_path = kwargs.pop("dot_env_path", None)
-        utils.set_os_environ(loader.load_dot_env_file(dot_env_path))
+        self.env_mapping = loader.load_dot_env_file(dot_env_path)
+        utils.set_os_environ(self.env_mapping)
 
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)

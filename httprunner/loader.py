@@ -140,6 +140,24 @@ def load_folder_files(folder_path, recursive=True):
 
 def load_dot_env_file(path):
     """ load .env file
+
+    Args:
+        path (str): .env file path.
+            If path is None, it will find .env file in current working directory.
+
+    Returns:
+        dict: environment variables mapping
+
+            {
+                "UserName": "debugtalk",
+                "Password": "123456",
+                "PROJECT_KEY": "ABCDEFGH"
+            }
+
+    Raises:
+        exceptions.FileNotFound: If specified env file is not exist.
+        exceptions.FileFormatError: If env file format is invalid.
+
     """
     if not path:
         path = os.path.join(os.getcwd(), ".env")
@@ -719,8 +737,13 @@ def load_testcases(path):
 
 def load(path):
     """ main interface for loading testcases
-    @param (str) path: testcase file/folder path
-    @return (list) testcases list
+
+    Args:
+        path (str): testcase file/folder path
+
+    Returns:
+        list: testcases list
+
     """
     if validator.is_testcases(path):
         return path
