@@ -166,22 +166,18 @@ def load_dot_env_file(path):
     return env_variables_mapping
 
 
-###############################################################################
-##   debugtalk.py module loader
-###############################################################################
-
-def locate_debugtalk_py(start_path):
-    """ locate debugtalk.py module and return module name.
+def locate_file(start_path, file_name):
+    """ locate filename and return file path.
         searching will be recursive upward until current working directory.
 
     Args:
         start_path (str): start locating path, maybe file path or directory path
 
     Returns:
-        str: located module name. None if module not found.
+        str: located file path. None if file not found.
 
     Raises:
-        exceptions.FileNotFound: If failed to locate debugtalk.py module.
+        exceptions.FileNotFound: If failed to locate file.
 
     """
     if os.path.isfile(start_path):
@@ -191,20 +187,47 @@ def locate_debugtalk_py(start_path):
     else:
         raise exceptions.FileNotFound("invalid path: {}".format(start_path))
 
-    module_path = os.path.join(start_dir_path, "debugtalk.py")
-    if os.path.isfile(module_path):
-        if os.path.isabs(module_path):
-            module_path = module_path[len(os.getcwd())+1:]
+    file_path = os.path.join(start_dir_path, file_name)
+    if os.path.isfile(file_path):
+        if os.path.isabs(file_path):
+            file_path = file_path[len(os.getcwd())+1:]
 
-        module_name = module_path.replace("/", ".").rstrip(".py")
-        return module_name
+        return file_path
 
     # current working directory
     if os.path.abspath(start_dir_path) == os.getcwd():
-        raise exceptions.FileNotFound("debugtalk.py module not found: {}".format(start_path))
+        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
 
     # locate recursive upward
-    return locate_debugtalk_py(os.path.dirname(start_dir_path))
+    return locate_file(os.path.dirname(start_dir_path), file_name)
+
+
+###############################################################################
+##   debugtalk.py module loader
+###############################################################################
+
+def convert_module_name(python_file_path):
+    """ convert python file relative path to module name.
+
+    Args:
+        python_file_path (str): python file relative path
+
+    Returns:
+        str: module name
+
+    Examples:
+        >>> convert_module_name("debugtalk.py")
+        debugtalk
+
+        >>> convert_module_name("tests/debugtalk.py")
+        tests.debugtalk
+
+        >>> convert_module_name("tests/data/debugtalk.py")
+        tests.data.debugtalk
+
+    """
+    module_name = python_file_path.replace("/", ".").rstrip(".py")
+    return module_name
 
 
 def load_python_module(module):
@@ -257,7 +280,8 @@ def load_debugtalk_module(start_path=None):
     start_path = start_path or os.getcwd()
 
     try:
-        module_name = locate_debugtalk_py(start_path)
+        module_path = locate_file(start_path, "debugtalk.py")
+        module_name = convert_module_name(module_path)
     except exceptions.FileNotFound:
         return {
             "variables": {},
