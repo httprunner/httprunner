@@ -754,6 +754,7 @@ def load_folder_content(folder_path):
                     {"api": {"def": "api_logout", "request": {}, "validate": []}}
                 ]
             }
+
     """
     items_mapping = {}
 
@@ -800,6 +801,7 @@ def load_api_folder(api_folder_path=None):
                     "request": {}
                 }
             }
+
     """
     api_definition_mapping = {}
 
@@ -822,6 +824,83 @@ def load_api_folder(api_folder_path=None):
             api_definition_mapping[func_name] = api_dict
 
     return api_definition_mapping
+
+
+def load_testcases_folder(testcases_folder_path=None):
+    """ load testcases definitions from testcases folder.
+
+    Args:
+        testcases_folder_path (str): testcases files folder.
+
+            testcases file should be in the following format:
+            [
+                {
+                    "config": {
+                        "def": "create_and_check",
+                        "request": {},
+                        "validate": []
+                    }
+                },
+                {
+                    "test": {
+                        "api": "get_user",
+                        "validate": []
+                    }
+                }
+            ]
+
+    Returns:
+        dict: testcases definition mapping.
+
+            {
+                "tests/testcases/setup.yml": [
+                    {"config": {}},
+                    {"test": {}},
+                    {"test": {}}
+                ],
+                "tests/testcases/create_and_get.yml": [
+                    {"config": {}},
+                    {"test": {}},
+                    {"test": {}}
+                ]
+            }
+
+    """
+    testcases_definition_mapping = {}
+
+    # TODO: replace suite with testcases
+    testcases_folder_path = testcases_folder_path or os.path.join(os.getcwd(), "suite")
+    testcases_items_mapping = load_folder_content(testcases_folder_path)
+
+    for testcase_file_path, testcase_items in testcases_items_mapping.items():
+        # TODO: add JSON schema validation
+
+        testcase = {
+            "config": {
+                "path": testcase_file_path
+            },
+            "tests": []
+        }
+        for item in testcase_items:
+            key, test_block = item.popitem()
+
+            if key == "config":
+                testcase["config"].update(test_block)
+                testcase_def = test_block.pop("def")
+                function_meta = parser.parse_function(testcase_def)
+                func_name = function_meta["func_name"]
+
+                if func_name in testcases_definition_mapping:
+                    logger.log_warning("API definition duplicated: {}".format(func_name))
+
+                test_block["function_meta"] = function_meta
+                testcases_definition_mapping[func_name] = testcase
+            else:
+                # key == "test":
+                testcase["tests"].append(test_block)
+
+    return testcases_definition_mapping
+
 
 
 def load(path):
