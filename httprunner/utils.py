@@ -1,23 +1,18 @@
 # encoding: utf-8
 
-import collections
 import copy
 import hashlib
 import hmac
-import imp
-import importlib
 import io
+import itertools
 import json
 import os.path
 import random
 import string
-import types
 from datetime import datetime
 
-from httprunner import exceptions, logger, parser
-from httprunner.compat import (OrderedDict, basestring, builtin_str, is_py2,
-                               is_py3, numeric_types, str)
-from requests.structures import CaseInsensitiveDict
+from httprunner import exceptions, logger
+from httprunner.compat import OrderedDict, basestring, is_py2
 
 SECRET_KEY = "DebugTalk"
 
@@ -41,6 +36,14 @@ def remove_prefix(text, prefix):
     if text.startswith(prefix):
         return text[len(prefix):]
     return text
+
+
+def set_os_environ(variables_mapping):
+    """ set variables mapping to os.environ
+    """
+    for variable in variables_mapping:
+        os.environ[variable] = variables_mapping[variable]
+        logger.log_debug("Loaded variable: {}".format(variable))
 
 
 def query_json(json_content, query, delimiter='.'):
@@ -85,204 +88,6 @@ def query_json(json_content, query, delimiter='.'):
         raise exceptions.ExtractFailure(err_msg)
 
     return json_content
-
-
-def substitute_variables_with_mapping(content, mapping):
-    """ substitute variables in content with mapping
-    e.g.
-    @params
-        content = {
-            'request': {
-                'url': '/api/users/$uid',
-                'headers': {'token': '$token'}
-            }
-        }
-        mapping = {"$uid": 1000}
-    @return
-        {
-            'request': {
-                'url': '/api/users/1000',
-                'headers': {'token': '$token'}
-            }
-        }
-    """
-    # TODO: refactor type check
-    if isinstance(content, bool):
-        return content
-
-    if isinstance(content, (numeric_types, type)):
-        return content
-
-    if not content:
-        return content
-
-    if isinstance(content, (list, set, tuple)):
-        return [
-            substitute_variables_with_mapping(item, mapping)
-            for item in content
-        ]
-
-    if isinstance(content, dict):
-        substituted_data = {}
-        for key, value in content.items():
-            eval_key = substitute_variables_with_mapping(key, mapping)
-            eval_value = substitute_variables_with_mapping(value, mapping)
-            substituted_data[eval_key] = eval_value
-
-        return substituted_data
-
-    # content is in string format here
-    for var, value in mapping.items():
-        if content == var:
-            # content is a variable
-            content = value
-        else:
-            if not isinstance(value, str):
-                value = builtin_str(value)
-            content = content.replace(var, value)
-
-    return content
-
-
-def _get_validators_mapping(validators):
-    """ get validators mapping from api or test validators
-    @param (list) validators:
-        [
-            {"check": "v1", "expect": 201, "comparator": "eq"},
-            {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-        ]
-    @return
-        {
-            ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
-            ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-        }
-    """
-    validators_mapping = {}
-
-    for validator in validators:
-        validator = parser.parse_validator(validator)
-
-        if not isinstance(validator["check"], collections.Hashable):
-            check = json.dumps(validator["check"])
-        else:
-            check = validator["check"]
-
-        key = (check, validator["comparator"])
-        validators_mapping[key] = validator
-
-    return validators_mapping
-
-
-def _merge_validator(def_validators, current_validators):
-    """ merge def_validators with current_validators
-    @params:
-        def_validators: [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
-        current_validators: [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
-    @return:
-        [
-            {"check": "v1", "expect": 201, "comparator": "eq"},
-            {"check": "s2", "expect": 16, "comparator": "len_eq"},
-            {"check": "s3", "expect": 12, "comparator": "len_eq"}
-        ]
-    """
-    if not def_validators:
-        return current_validators
-
-    elif not current_validators:
-        return def_validators
-
-    else:
-        api_validators_mapping = _get_validators_mapping(def_validators)
-        test_validators_mapping = _get_validators_mapping(current_validators)
-
-        api_validators_mapping.update(test_validators_mapping)
-        return list(api_validators_mapping.values())
-
-
-def _merge_extractor(def_extrators, current_extractors):
-    """ merge def_extrators with current_extractors
-    @params:
-        def_extrators: [{"var1": "val1"}, {"var2": "val2"}]
-        current_extractors: [{"var1": "val111"}, {"var3": "val3"}]
-    @return:
-        [
-            {"var1": "val111"},
-            {"var2": "val2"},
-            {"var3": "val3"}
-        ]
-    """
-    if not def_extrators:
-        return current_extractors
-
-    elif not current_extractors:
-        return def_extrators
-
-    else:
-        extractor_dict = OrderedDict()
-        for api_extrator in def_extrators:
-            if len(api_extrator) != 1:
-                logger.log_warning("incorrect extractor: {}".format(api_extrator))
-                continue
-
-            var_name = list(api_extrator.keys())[0]
-            extractor_dict[var_name] = api_extrator[var_name]
-
-        for test_extrator in current_extractors:
-            if len(test_extrator) != 1:
-                logger.log_warning("incorrect extractor: {}".format(test_extrator))
-                continue
-
-            var_name = list(test_extrator.keys())[0]
-            extractor_dict[var_name] = test_extrator[var_name]
-
-        extractor_list = []
-        for key, value in extractor_dict.items():
-            extractor_list.append({key: value})
-
-        return extractor_list
-
-
-def _override_block(def_block, current_block):
-    """ override def_block with current_block
-    @param def_block:
-        {
-            "name": "get token",
-            "request": {...},
-            "validate": [{'eq': ['status_code', 200]}]
-        }
-    @param current_block:
-        {
-            "name": "get token",
-            "extract": [{"token": "content.token"}],
-            "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
-        }
-    @return
-        {
-            "name": "get token",
-            "request": {...},
-            "extract": [{"token": "content.token"}],
-            "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
-        }
-    """
-    def_validators = def_block.get("validate") or def_block.get("validators", [])
-    current_validators = current_block.get("validate") or current_block.get("validators", [])
-
-    def_extrators = def_block.get("extract") \
-        or def_block.get("extractors") \
-        or def_block.get("extract_binds", [])
-    current_extractors = current_block.get("extract") \
-        or current_block.get("extractors") \
-        or current_block.get("extract_binds", [])
-
-    current_block.update(def_block)
-    current_block["validate"] = _merge_validator(
-        def_validators,
-        current_validators
-    )
-    current_block["extract"] = _merge_extractor(
-        def_extrators,
-        current_extractors
-    )
 
 
 def get_uniform_comparator(comparator):
@@ -337,86 +142,6 @@ def deep_update_dict(origin_dict, override_dict):
             origin_dict[key] = override_dict[key]
 
     return origin_dict
-
-def is_function(tup):
-    """ Takes (name, object) tuple, returns True if it is a function.
-    """
-    name, item = tup
-    return isinstance(item, types.FunctionType)
-
-def is_variable(tup):
-    """ Takes (name, object) tuple, returns True if it is a variable.
-    """
-    name, item = tup
-    if callable(item):
-        # function or class
-        return False
-
-    if isinstance(item, types.ModuleType):
-        # imported module
-        return False
-
-    if name.startswith("_"):
-        # private property
-        return False
-
-    return True
-
-def get_imported_module(module_name):
-    """ import module and return imported module
-    """
-    return importlib.import_module(module_name)
-
-def get_imported_module_from_file(file_path):
-    """ import module from python file path and return imported module
-    """
-    if is_py3:
-        imported_module = importlib.machinery.SourceFileLoader(
-            'module_name', file_path).load_module()
-    elif is_py2:
-        imported_module = imp.load_source('module_name', file_path)
-    else:
-        raise RuntimeError("Neither Python 3 nor Python 2.")
-
-    return imported_module
-
-def filter_module(module, filter_type):
-    """ filter functions or variables from import module
-    @params
-        module: imported module
-        filter_type: "function" or "variable"
-    """
-    filter_type = is_function if filter_type == "function" else is_variable
-    module_functions_dict = dict(filter(filter_type, vars(module).items()))
-    return module_functions_dict
-
-def search_conf_item(start_path, item_type, item_name):
-    """ search expected function or variable recursive upward
-    @param
-        start_path: search start path
-        item_type: "function" or "variable"
-        item_name: function name or variable name
-    """
-    dir_path = os.path.dirname(os.path.abspath(start_path))
-    target_file = os.path.join(dir_path, "debugtalk.py")
-
-    if os.path.isfile(target_file):
-        imported_module = get_imported_module_from_file(target_file)
-        items_dict = filter_module(imported_module, item_type)
-        if item_name in items_dict:
-            return items_dict[item_name]
-        else:
-            return search_conf_item(dir_path, item_type, item_name)
-
-    if dir_path == start_path:
-        # system root path
-        err_msg = "{} not found in recursive upward path!".format(item_name)
-        if item_type == "function":
-            raise exceptions.FunctionNotFound(err_msg)
-        else:
-            raise exceptions.VariableNotFound(err_msg)
-
-    return search_conf_item(dir_path, item_type, item_name)
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
@@ -575,6 +300,40 @@ def create_scaffold(project_path):
         msg += create_path(p[0], p[1])
 
     logger.color_print(msg, "BLUE")
+
+
+def gen_cartesian_product(*args):
+    """ generate cartesian product for lists
+    @param
+        (list) args
+            [{"a": 1}, {"a": 2}],
+            [
+                {"x": 111, "y": 112},
+                {"x": 121, "y": 122}
+            ]
+    @return
+        cartesian product in list
+        [
+            {'a': 1, 'x': 111, 'y': 112},
+            {'a': 1, 'x': 121, 'y': 122},
+            {'a': 2, 'x': 111, 'y': 112},
+            {'a': 2, 'x': 121, 'y': 122}
+        ]
+    """
+    if not args:
+        return []
+    elif len(args) == 1:
+        return args[0]
+
+    product_list = []
+    for product_item_tuple in itertools.product(*args):
+        product_item_dict = {}
+        for item in product_item_tuple:
+            product_item_dict.update(item)
+
+        product_list.append(product_item_dict)
+
+    return product_list
 
 
 def validate_json_file(file_list):

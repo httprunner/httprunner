@@ -1,6 +1,8 @@
 import os
+import time
 import unittest
-from httprunner import parser, exceptions
+
+from httprunner import exceptions, parser
 
 
 class TestParser(unittest.TestCase):
@@ -112,3 +114,30 @@ class TestParser(unittest.TestCase):
             parser.parse_validator(validator),
             {"check": "status_code", "comparator": "eq", "expect": 201}
         )
+
+    def test_parse_data(self):
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'method': "$method",
+                'headers': {'token': '$token'},
+                'data': {
+                    "null": None,
+                    "true": True,
+                    "false": False,
+                    "empty_str": ""
+                }
+            }
+        }
+        mapping = {
+            "$uid": 1000,
+            "$method": "POST"
+        }
+        result = parser.parse_data(content, mapping)
+        self.assertEqual("/api/users/1000", result["request"]["url"])
+        self.assertEqual("$token", result["request"]["headers"]["token"])
+        self.assertEqual("POST", result["request"]["method"])
+        self.assertIsNone(result["request"]["data"]["null"])
+        self.assertTrue(result["request"]["data"]["true"])
+        self.assertFalse(result["request"]["data"]["false"])
+        self.assertEqual("", result["request"]["data"]["empty_str"])
