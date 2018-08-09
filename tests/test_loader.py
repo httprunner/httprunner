@@ -456,3 +456,17 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn("request", testsets_list[0]["testcases"][0])
         self.assertIn("url", testsets_list[0]["testcases"][0]["request"])
         self.assertIn("validate", testsets_list[0]["testcases"][0])
+
+    def test_load_folder_content(self):
+        path = os.path.join(os.getcwd(), "tests", "api")
+        items_mapping = loader.load_folder_content(path)
+        file_path = os.path.join(os.getcwd(), "tests", "api", "basic.yml")
+        self.assertIn(file_path, items_mapping)
+        self.assertIsInstance(items_mapping[file_path], list)
+
+    def test_load_api_folder(self):
+        path = os.path.join(os.getcwd(), "tests", "api")
+        api_definition_mapping = loader.load_api_folder(path)
+        self.assertIn("get_token", api_definition_mapping)
+        self.assertIn("request", api_definition_mapping["get_token"])
+        self.assertIn("function_meta", api_definition_mapping["get_token"])
