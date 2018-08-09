@@ -4,7 +4,7 @@ import copy
 import sys
 import unittest
 
-from httprunner import exceptions, loader, logger, parser, runner, utils
+from httprunner import context, exceptions, loader, logger, runner, utils
 from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
@@ -78,7 +78,7 @@ class TestSuite(unittest.TestSuite):
             config_dict_variables,
             config_dict_parameters
         )
-        self.testcase_parser = parser.TestcaseParser()
+        self.testcase_parser = context.TestcaseParser()
         testcases = testset.get("testcases", [])
 
         for config_variables in config_parametered_variables_list:
@@ -114,7 +114,7 @@ class TestSuite(unittest.TestSuite):
     def _get_parametered_variables(self, variables, parameters):
         """ parameterize varaibles with parameters
         """
-        cartesian_product_parameters = parser.parse_parameters(
+        cartesian_product_parameters = context.parse_parameters(
             parameters,
             self.testset_file_path
         ) or [{}]
