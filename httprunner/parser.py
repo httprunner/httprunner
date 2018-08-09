@@ -386,12 +386,19 @@ class TestcaseParser(object):
     def get_bind_variable(self, variable_name):
         return self._get_bind_item("variables", variable_name)
 
-    def parameterize(self, csv_file_name, fetch_method="Sequential"):
-        parameter_file_path = os.path.join(
-            os.path.dirname(self.file_path),
-            "{}".format(csv_file_name)
-        )
-        csv_content_list = loader.load_file(parameter_file_path)
+    def load_csv_list(self, csv_file_name, fetch_method="Sequential"):
+        """ locate csv file and load csv content.
+
+        Args:
+            csv_file_name (str): csv file name
+            fetch_method (str): fetch data method, defaults to Sequential.
+                If set to "random", csv data list will be reordered in random.
+
+        Returns:
+            list: csv data list
+        """
+        csv_file_path = loader.locate_file(self.file_path, csv_file_name)
+        csv_content_list = loader.load_file(csv_file_path)
 
         if fetch_method.lower() == "random":
             random.shuffle(csv_content_list)
@@ -410,7 +417,7 @@ class TestcaseParser(object):
             kwargs = self.eval_content_with_bindings(kwargs)
 
             if func_name in ["parameterize", "P"]:
-                eval_value = self.parameterize(*args, **kwargs)
+                eval_value = self.load_csv_list(*args, **kwargs)
             else:
                 func = self.get_bind_function(func_name)
                 eval_value = func(*args, **kwargs)
