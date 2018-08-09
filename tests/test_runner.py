@@ -160,7 +160,7 @@ class TestRunner(ApiServerUnittest):
         end_time = time.time()
         summary = runner.summary
         self.assertTrue(summary["success"])
-        self.assertLess(end_time - start_time, 3)
+        self.assertLess(end_time - start_time, 10)
 
     def test_run_httprunner_with_teardown_hooks_alter_response(self):
         testsets = [

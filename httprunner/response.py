@@ -3,7 +3,7 @@
 import json
 import re
 
-from httprunner import exceptions, logger, testcase, utils
+from httprunner import exceptions, logger, utils
 from httprunner.compat import OrderedDict, basestring, is_py2
 from requests.models import PreparedRequest
 from requests.structures import CaseInsensitiveDict
