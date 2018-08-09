@@ -470,3 +470,14 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn("get_token", api_definition_mapping)
         self.assertIn("request", api_definition_mapping["get_token"])
         self.assertIn("function_meta", api_definition_mapping["get_token"])
+
+    def test_load_testcases_folder(self):
+        path = os.path.join(os.getcwd(), "tests", "suite")
+        testcases_definition_mapping = loader.load_testcases_folder(path)
+
+        self.assertIn("setup_and_reset", testcases_definition_mapping)
+        self.assertIn("create_and_check", testcases_definition_mapping)
+        self.assertEqual(
+            testcases_definition_mapping["setup_and_reset"]["config"]["name"],
+            "setup and reset all."
+        )
