@@ -210,11 +210,16 @@ def init_test_suites(path_or_testcases, mapping=None, http_client_session=None):
 class HttpRunner(object):
 
     def __init__(self, **kwargs):
-        """ initialize test runner
-        @param (dict) kwargs: key-value arguments used to initialize TextTestRunner
-            - resultclass: HtmlTestResult or TextTestResult
-            - failfast: False/True, stop the test run on the first error or failure.
-            - dot_env_path: .env file path
+        """ initialize HttpRunner
+
+        Args:
+            kwargs (dict): key-value arguments used to initialize TextTestRunner.
+            Commonly used arguments:
+
+            resultclass (class): HtmlTestResult or TextTestResult
+            failfast (bool): False/True, stop the test run on the first error or failure.
+            dot_env_path (str): .env file path
+
         """
         dot_env_path = kwargs.pop("dot_env_path", None)
         env_mapping = loader.load_dot_env_file(dot_env_path)
@@ -227,21 +232,26 @@ class HttpRunner(object):
         self.runner = unittest.TextTestRunner(**kwargs)
 
     def run(self, path_or_testcases, mapping=None):
-        """ start to run test with varaibles mapping
-        @param path_or_testcases: YAML/JSON testset file path or testset list
-            path: path could be in several type
-                - absolute/relative file path
-                - absolute/relative folder path
-                - list/set container with file(s) and/or folder(s)
-            testsets: testset or list of testset
-                - (dict) testset_dict
-                - (list) list of testset_dict
-                    [
-                        testset_dict_1,
-                        testset_dict_2
-                    ]
-        @param (dict) mapping:
-            if mapping specified, it will override variables in config block
+        """ start to run test with varaibles mapping.
+
+        Args:
+            path_or_testcases (str/list/dict): YAML/JSON testset file path or testset list
+                path: path could be in several type
+                    - absolute/relative file path
+                    - absolute/relative folder path
+                    - list/set container with file(s) and/or folder(s)
+                testsets: testset or list of testset
+                    - (dict) testset_dict
+                    - (list) list of testset_dict
+                        [
+                            testset_dict_1,
+                            testset_dict_2
+                        ]
+            mapping (dict): if mapping specified, it will override variables in config block.
+
+        Returns:
+            instance: HttpRunner() instance
+
         """
         try:
             test_suite_list = init_test_suites(path_or_testcases, mapping)
@@ -258,8 +268,7 @@ class HttpRunner(object):
         }
 
         def accumulate_stat(origin_stat, new_stat):
-            """ accumulate new_stat to origin_stat
-            """
+            """accumulate new_stat to origin_stat."""
             for key in new_stat:
                 if key not in origin_stat:
                     origin_stat[key] = new_stat[key]
@@ -287,11 +296,15 @@ class HttpRunner(object):
         return self
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
-        """ generate html report and return report path
-        @param (str) html_report_name:
-            output html report file name
-        @param (str) html_report_template:
-            report template file path, template should be in Jinja2 format
+        """ generate html report and return report path.
+
+        Args:
+            html_report_name (str): output html report file name
+            html_report_template (str): report template file path, template should be in Jinja2 format
+
+        Returns:
+            str: generated html report path
+
         """
         return render_html_report(
             self.summary,
