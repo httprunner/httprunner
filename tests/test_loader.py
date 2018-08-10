@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from httprunner import exceptions, loader, validator
+from httprunner import exceptions, loader, task, validator
 
 
 class TestFileLoader(unittest.TestCase):
@@ -502,3 +502,16 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(project_tests["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
         self.assertIn("get_token", project_tests["tests"]["api"])
         self.assertIn("setup_and_reset", project_tests["tests"]["testcases"])
+
+    def test_loader(self):
+        hrunner = task.HttpRunner(dot_env_path="tests/data/test.env")
+        self.assertEqual(hrunner.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
+        self.assertIn("debugtalk", hrunner.project_mapping)
+        self.assertIn("setup_and_reset", hrunner.project_mapping["tests"]["testcases"])
+        self.assertEqual(
+            hrunner.project_mapping["debugtalk"]["variables"]["SECRET_KEY"],
+            "DebugTalk"
+        )
+        self.assertIn("get_sign", hrunner.project_mapping["debugtalk"]["functions"])
+        self.assertIn("get_token", hrunner.project_mapping["tests"]["api"])
+        self.assertIn("setup_and_reset", hrunner.project_mapping["tests"]["testcases"])
