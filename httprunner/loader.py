@@ -826,11 +826,11 @@ def load_api_folder(api_folder_path=None):
     return api_definition_mapping
 
 
-def load_test_folder(test_folder_path=None, test_type="testcase"):
-    """ load testcases/testsuites definitions from folder.
+def load_test_folder(test_folder_path=None):
+    """ load testcases definitions from folder.
 
     Args:
-        test_folder_path (str): testcases/testsuites files folder.
+        test_folder_path (str): testcases files folder.
 
             testcase file should be in the following format:
             [
@@ -849,25 +849,8 @@ def load_test_folder(test_folder_path=None, test_type="testcase"):
                 }
             ]
 
-            testsuite file should be in the following format:
-            [
-                {
-                    "config": {
-                        "def": "create_and_check",
-                        "request": {},
-                        "validate": []
-                    }
-                },
-                {
-                    "test": {
-                        "suite": "get_user", # TODO: repalce suite with testcase
-                        "validate": []
-                    }
-                }
-            ]
-
     Returns:
-        dict: testcases/testsuites definition mapping.
+        dict: testcases definition mapping.
 
             {
                 "tests/testcases/setup.yml": [
@@ -885,16 +868,8 @@ def load_test_folder(test_folder_path=None, test_type="testcase"):
     """
     test_definition_mapping = {}
 
-    if not test_folder_path:
-        if test_type == "testcase":
-            # TODO: replace suite with testcases
-            dir_name = "suite"
-        elif test_type == "testsuite":
-            # TODO: replace testcases with testsuites
-            dir_name = "testcases"
-
-        test_folder_path = os.path.join(os.getcwd(), dir_name)
-
+    # TODO: replace suite with testcases
+    test_folder_path = test_folder_path or os.path.join(os.getcwd(), "suite")
     test_items_mapping = load_folder_content(test_folder_path)
 
     for test_file_path, items in test_items_mapping.items():
@@ -913,11 +888,9 @@ def load_test_folder(test_folder_path=None, test_type="testcase"):
                 testcase["config"].update(block)
 
                 if "def" not in block:
-                    # testsuite
                     test_definition_mapping[test_file_path] = testcase
                     continue
 
-                # testcase
                 testcase_def = block.pop("def")
                 function_meta = parser.parse_function(testcase_def)
                 func_name = function_meta["func_name"]
@@ -932,6 +905,27 @@ def load_test_folder(test_folder_path=None, test_type="testcase"):
                 testcase["tests"].append(block)
 
     return test_definition_mapping
+
+
+def load_project_tests(folder_path=None):
+    """ load api, testcases and debugtalk.py module.
+
+    Args:
+        folder_path (str): folder path.
+            If not set, defautls to current working directory.
+
+    Returns:
+        dict: project tests mapping.
+
+    """
+    folder_path = folder_path or os.getcwd()
+    return {
+        "debugtalk": load_debugtalk_module(folder_path),
+        "tests": {
+            "api": load_api_folder(os.path.join(folder_path, "api")),
+            "testcases": load_test_folder(os.path.join(folder_path, "suite"))
+        }
+    }
 
 
 def load(path):
