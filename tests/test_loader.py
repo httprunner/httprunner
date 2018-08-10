@@ -495,3 +495,10 @@ class TestSuiteLoader(unittest.TestCase):
             testsuites_definition_mapping[testsute_path]["config"]["name"],
             "smoketest"
         )
+
+    def test_load_project_tests(self):
+        project_dir = os.path.join(os.getcwd(), "tests")
+        project_tests = loader.load_project_tests(project_dir)
+        self.assertEqual(project_tests["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
+        self.assertIn("get_token", project_tests["tests"]["api"])
+        self.assertIn("setup_and_reset", project_tests["tests"]["testcases"])
