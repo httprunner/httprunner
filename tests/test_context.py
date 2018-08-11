@@ -4,7 +4,6 @@ import unittest
 
 import requests
 from httprunner import context, exceptions, loader, parser, response, runner
-from httprunner.utils import gen_md5
 from tests.base import ApiServerUnittest
 
 
@@ -120,6 +119,7 @@ class TestContext(ApiServerUnittest):
             {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
         ]
         from tests import debugtalk
+        from tests.debugtalk import gen_md5
         self.context.import_module_items(debugtalk)
         self.context.bind_variables(variables)
         context_variables = self.context.testcase_variables_mapping
