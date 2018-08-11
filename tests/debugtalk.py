@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import json
 import os
 import random
@@ -8,18 +6,8 @@ import time
 
 from tests.api_server import HTTPBIN_SERVER, SECRET_KEY, gen_md5, get_sign
 
-try:
-    import urllib
-except NameError:
-    import urllib.parse as urllib
-
 BASE_URL = "http://127.0.0.1:5000"
 
-
-get_sign_lambda = lambda *args: hmac.new(
-    'DebugTalk'.encode('ascii'),
-    ''.join(args).encode('ascii'),
-    hashlib.sha1).hexdigest()
 
 def sum_status_code(status_code, expect_sum):
     """ sum status code digits
