@@ -9,6 +9,18 @@ import yaml
 from httprunner import exceptions, logger, parser, validator
 from httprunner.compat import OrderedDict
 
+
+project_mapping = {
+    "debugtalk": {},
+    "env": {},
+    "tests": {
+        "api": {},
+        "testcases": {}
+    }
+}
+""" dict: save project loaded api/testcases, environments and debugtalk.py module.
+"""
+
 ###############################################################################
 ##   file loader
 ###############################################################################
@@ -185,6 +197,7 @@ def load_dot_env_file(path):
 
             env_variables_mapping[variable.strip()] = value.strip()
 
+    project_mapping["env"] = env_variables_mapping
     return env_variables_mapping
 
 
@@ -311,7 +324,10 @@ def load_debugtalk_module(start_path=None):
         }
 
     imported_module = importlib.import_module(module_name)
-    return load_python_module(imported_module)
+    loaded_module = load_python_module(imported_module)
+
+    project_mapping["debugtalk"] = loaded_module
+    return loaded_module
 
 
 def get_module_item(module_mapping, item_type, item_name):
@@ -348,9 +364,8 @@ def get_module_item(module_mapping, item_type, item_name):
 
 
 ###############################################################################
-##   suite loader
+##   testcase loader
 ###############################################################################
-
 
 overall_def_dict = {
     "api": {},
@@ -689,11 +704,16 @@ def _merge_extractor(def_extrators, current_extractors):
 
 def load_testcases(path):
     """ load testcases from file path
-    @param path: path could be in several type
-        - absolute/relative file path
-        - absolute/relative folder path
-        - list/set container with file(s) and/or folder(s)
-    @return testcases list, each testcase is corresponding to a file
+
+    Args:
+        path (str): testcase file/foler path.
+            path could be in several types:
+                - absolute/relative file path
+                - absolute/relative folder path
+                - list/set container with file(s) and/or folder(s)
+
+    Returns:
+        list: testcases list, each testcase is corresponding to a file
         [
             testcase_dict_1,
             testcase_dict_2
@@ -823,6 +843,7 @@ def load_api_folder(api_folder_path=None):
             api_dict["function_meta"] = function_meta
             api_definition_mapping[func_name] = api_dict
 
+    project_mapping["tests"]["api"] = api_definition_mapping
     return api_definition_mapping
 
 
@@ -904,6 +925,7 @@ def load_test_folder(test_folder_path=None):
                 # key == "test":
                 testcase["tests"].append(block)
 
+    project_mapping["tests"]["testcases"] = test_definition_mapping
     return test_definition_mapping
 
 
@@ -919,13 +941,12 @@ def load_project_tests(folder_path=None):
 
     """
     folder_path = folder_path or os.getcwd()
-    return {
-        "debugtalk": load_debugtalk_module(folder_path),
-        "tests": {
-            "api": load_api_folder(os.path.join(folder_path, "api")),
-            "testcases": load_test_folder(os.path.join(folder_path, "suite"))
-        }
-    }
+
+    load_debugtalk_module(folder_path)
+    load_api_folder(os.path.join(folder_path, "api"))
+    load_test_folder(os.path.join(folder_path, "suite"))
+
+    return project_mapping
 
 
 def load(path):
