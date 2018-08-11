@@ -3,26 +3,17 @@ import time
 import unittest
 
 import requests
-from httprunner import utils
+from tests.api_server import FLASK_APP_PORT, HTTPBIN_HOST, HTTPBIN_PORT
 from tests.api_server import app as flask_app
-
-try:
-    from httpbin import app as httpbin_app
-    HTTPBIN_HOST = "127.0.0.1"
-    HTTPBIN_PORT = 3458
-except ImportError:
-    HTTPBIN_HOST = "httpbin.org"
-    HTTPBIN_PORT = 80
-
-FLASK_APP_PORT = 5000
-HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
+from tests.api_server import gen_md5, gen_random_string, get_sign, httpbin_app
 
 
 def run_flask():
     flask_app.run(port=FLASK_APP_PORT)
 
+
 def run_httpbin():
-    if HTTPBIN_HOST == "127.0.0.1":
+    if httpbin_app:
         httpbin_app.run(host=HTTPBIN_HOST, port=HTTPBIN_PORT)
 
 
@@ -59,7 +50,7 @@ class ApiServerUnittest(unittest.TestCase):
             'app_version': app_version
         }
         data = {
-            'sign': utils.get_sign(user_agent, device_sn, os_platform, app_version)
+            'sign': get_sign(user_agent, device_sn, os_platform, app_version)
         }
 
         resp = self.api_client.post(url, json=data, headers=headers)
@@ -71,7 +62,7 @@ class ApiServerUnittest(unittest.TestCase):
 
     def get_authenticated_headers(self):
         user_agent = 'iOS/10.3'
-        device_sn = utils.gen_random_string(15)
+        device_sn = gen_random_string(15)
         os_platform = 'ios'
         app_version = '2.8.6'
 

@@ -197,17 +197,17 @@ class TestModuleLoader(unittest.TestCase):
         from httprunner import utils
         module_mapping = loader.load_python_module(utils)
 
-        gen_md5 = loader.get_module_item(module_mapping, "functions", "gen_md5")
-        self.assertTrue(validator.is_function(("gen_md5", gen_md5)))
-        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
+        get_uniform_comparator = loader.get_module_item(
+            module_mapping, "functions", "get_uniform_comparator")
+        self.assertTrue(validator.is_function(("get_uniform_comparator", get_uniform_comparator)))
+        self.assertEqual(get_uniform_comparator("=="), "equals")
 
         with self.assertRaises(exceptions.FunctionNotFound):
             loader.get_module_item(module_mapping, "functions", "gen_md4")
 
     def test_get_module_item_variables(self):
-        from httprunner import utils
-        module_mapping = loader.load_python_module(utils)
-
+        from tests import debugtalk
+        module_mapping = loader.load_python_module(debugtalk)
 
         SECRET_KEY = loader.get_module_item(module_mapping, "variables", "SECRET_KEY")
         self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))

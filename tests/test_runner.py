@@ -3,7 +3,8 @@ import time
 
 from httprunner import HttpRunner, exceptions, loader, runner
 from httprunner.utils import deep_update_dict
-from tests.base import HTTPBIN_SERVER, ApiServerUnittest
+from tests.api_server import HTTPBIN_SERVER
+from tests.base import ApiServerUnittest
 
 
 class TestRunner(ApiServerUnittest):

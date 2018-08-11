@@ -1,34 +1,16 @@
 # encoding: utf-8
 
 import copy
-import hashlib
-import hmac
 import io
 import itertools
 import json
 import os.path
-import random
 import string
 from datetime import datetime
 
 from httprunner import exceptions, logger
 from httprunner.compat import OrderedDict, basestring, is_py2
 
-SECRET_KEY = "DebugTalk"
-
-
-def gen_random_string(str_len):
-    return ''.join(
-        random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
-
-def gen_md5(*str_args):
-    return hashlib.md5("".join(str_args).encode('utf-8')).hexdigest()
-
-def get_sign(*args):
-    content = ''.join(args).encode('ascii')
-    sign_key = SECRET_KEY.encode('ascii')
-    sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
-    return sign
 
 def remove_prefix(text, prefix):
     """ remove prefix from text
