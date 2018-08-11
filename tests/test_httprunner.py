@@ -23,7 +23,7 @@ class TestHttpRunner(ApiServerUnittest):
                 'output': ['token']
             },
             'api': {},
-            'testcases': [
+            'teststeps': [
                 {
                     'name': '/api/get-token',
                     'request': {
@@ -114,7 +114,7 @@ class TestHttpRunner(ApiServerUnittest):
         testsets = [
             {
                 "name": "post data",
-                "testcases": [
+                "teststeps": [
                     {
                         "name": "post data",
                         "request": {
