@@ -170,7 +170,7 @@ class TestRunner(ApiServerUnittest):
                 "config": {
                     'path': 'tests/httpbin/hooks.yml',
                 },
-                "testcases": [
+                "teststeps": [
                     {
                         "name": "test teardown hooks",
                         "request": {
@@ -206,7 +206,7 @@ class TestRunner(ApiServerUnittest):
                 "config": {
                     'path': 'tests/httpbin/hooks.yml',
                 },
-                "testcases": [
+                "teststeps": [
                     {
                         "name": "test teardown hooks",
                         "request": {
@@ -236,7 +236,7 @@ class TestRunner(ApiServerUnittest):
                 "config": {
                     'path': 'tests/httpbin/hooks.yml',
                 },
-                "testcases": [
+                "teststeps": [
                     {
                         "name": "test teardown hooks",
                         "request": {
@@ -384,7 +384,7 @@ class TestRunner(ApiServerUnittest):
         testsets = loader.load_testcases(testcase_file_path)
         testset = testsets[0]
         config_dict_headers = testset["config"]["request"]["headers"]
-        test_dict_headers = testset["testcases"][0]["request"]["headers"]
+        test_dict_headers = testset["teststeps"][0]["request"]["headers"]
         headers = deep_update_dict(
             config_dict_headers,
             test_dict_headers

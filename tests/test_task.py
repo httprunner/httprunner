@@ -37,7 +37,7 @@ class TestTask(ApiServerUnittest):
                     'output': ['token']
                 },
                 'api': {},
-                'testcases': [
+                'teststeps': [
                     {
                         'name': '/api/get-token',
                         'request': {

@@ -34,39 +34,39 @@ class TestCase(unittest.TestCase):
 
 
 class TestSuite(unittest.TestSuite):
-    """ create test suite with a testset, it may include one or several testcases.
-        each suite should initialize a separate Runner() with testset config.
-    @param
-        (dict) testset
+    """ create test suite with a testcase, it may include one or several teststeps.
+        each suite should initialize a separate Runner() with testcase config.
+
+    Args:
+        testcase (dict): testcase dict
             {
-                "name": "testset description",
                 "config": {
-                    "name": "testset description",
+                    "name": "testcase description",
                     "parameters": {},
                     "variables": [],
                     "request": {},
                     "output": []
                 },
-                "testcases": [
+                "teststeps": [
                     {
-                        "name": "testcase description",
+                        "name": "teststep1 description",
                         "parameters": {},
                         "variables": [],    # optional, override
                         "request": {},
                         "extract": {},      # optional
                         "validate": {}      # optional
                     },
-                    testcase12
+                    teststep2
                 ]
             }
-        (dict) variables_mapping:
-            passed in variables mapping, it will override variables in config block
+        variables_mapping (dict): passed in variables mapping, it will override variables in config block.
+
     """
-    def __init__(self, testset, variables_mapping=None, http_client_session=None):
+    def __init__(self, testcase, variables_mapping=None, http_client_session=None):
         super(TestSuite, self).__init__()
         self.test_runner_list = []
 
-        self.config = testset.get("config", {})
+        self.config = testcase.get("config", {})
         self.output_variables_list = self.config.get("output", [])
         self.testset_file_path = self.config.get("path")
         config_dict_parameters = self.config.get("parameters", [])
@@ -80,22 +80,22 @@ class TestSuite(unittest.TestSuite):
             config_dict_parameters
         )
         self.testcase_parser = context.TestcaseParser()
-        testcases = testset.get("testcases", [])
+        teststeps = testcase.get("teststeps", [])
 
         for config_variables in config_parametered_variables_list:
             # config level
             self.config["variables"] = config_variables
             test_runner = runner.Runner(self.config, http_client_session)
 
-            for testcase_dict in testcases:
-                testcase_dict = copy.copy(testcase_dict)
+            for teststep_dict in teststeps:
+                teststep_dict = copy.copy(teststep_dict)
                 # testcase level
                 testcase_parametered_variables_list = self._get_parametered_variables(
-                    testcase_dict.get("variables", []),
-                    testcase_dict.get("parameters", [])
+                    teststep_dict.get("variables", []),
+                    teststep_dict.get("parameters", [])
                 )
                 for testcase_variables in testcase_parametered_variables_list:
-                    testcase_dict["variables"] = testcase_variables
+                    teststep_dict["variables"] = testcase_variables
 
                     # eval testcase name with bind variables
                     variables = utils.override_variables_binds(
@@ -104,13 +104,13 @@ class TestSuite(unittest.TestSuite):
                     )
                     self.testcase_parser.update_binded_variables(variables)
                     try:
-                        testcase_name = self.testcase_parser.eval_content_with_bindings(testcase_dict["name"])
+                        testcase_name = self.testcase_parser.eval_content_with_bindings(teststep_dict["name"])
                     except (AssertionError, exceptions.ParamsError):
-                        logger.log_warning("failed to eval testcase name: {}".format(testcase_dict["name"]))
-                        testcase_name = testcase_dict["name"]
+                        logger.log_warning("failed to eval testcase name: {}".format(teststep_dict["name"]))
+                        testcase_name = teststep_dict["name"]
                     self.test_runner_list.append((test_runner, variables))
 
-                    self._add_test_to_suite(testcase_name, test_runner, testcase_dict)
+                    self._add_test_to_suite(testcase_name, test_runner, teststep_dict)
 
     def _get_parametered_variables(self, variables, parameters):
         """ parameterize varaibles with parameters
@@ -166,15 +166,14 @@ def init_test_suites(path_or_testcases, mapping=None, http_client_session=None):
     Args:
         path_or_testcases (str/dict/list): testcase file path or testcase dict or testcases list
 
-            testset_dict
+            testcase_dict
             or
             [
-                testset_dict_1,
-                testset_dict_2,
+                testcase_dict_1,
+                testcase_dict_2,
                 {
                     "config": {},
-                    "api": {},
-                    "testcases": [testcase11, testcase12]
+                    "teststeps": [teststep11, teststep12]
                 }
             ]
 
@@ -188,7 +187,7 @@ def init_test_suites(path_or_testcases, mapping=None, http_client_session=None):
     if validator.is_testcases(path_or_testcases):
         testcases = path_or_testcases
     else:
-        testcases = loader.load(path_or_testcases)
+        testcases = loader.load_testcases(path_or_testcases)
 
     # TODO: move comparator uniform here
     mapping = mapping or {}
@@ -237,12 +236,12 @@ class HttpRunner(object):
         """ start to run test with varaibles mapping.
 
         Args:
-            path_or_testcases (str/list/dict): YAML/JSON testset file path or testset list
+            path_or_testcases (str/list/dict): YAML/JSON testcase file path or testcase list
                 path: path could be in several type
                     - absolute/relative file path
                     - absolute/relative folder path
                     - list/set container with file(s) and/or folder(s)
-                testsets: testset or list of testset
+                testcases: testcase dict or list of testcases
                     - (dict) testset_dict
                     - (list) list of testset_dict
                         [

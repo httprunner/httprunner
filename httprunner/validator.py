@@ -6,35 +6,48 @@ TODO: refactor with JSON schema validate
 """
 
 def is_testcase(data_structure):
-    """ check if data_structure is a testcase
-    testcase should always be in the following data structure:
-        {
-            "name": "desc1",
-            "config": {},
-            "api": {},
-            "testcases": [testcase11, testcase12]
-        }
+    """ check if data_structure is a testcase.
+
+    Args:
+        data_structure (dict): testcase should always be in the following data structure:
+
+            {
+                "name": "desc1",
+                "config": {},
+                "api": {},
+                "testcases": [testcase11, testcase12]
+            }
+
+    Returns:
+        bool: True if data_structure is valid testcase, otherwise False.
+
     """
     if not isinstance(data_structure, dict):
         return False
 
-    if "name" not in data_structure or "testcases" not in data_structure:
+    if "name" not in data_structure or "teststeps" not in data_structure:
         return False
 
-    if not isinstance(data_structure["testcases"], list):
+    if not isinstance(data_structure["teststeps"], list):
         return False
 
     return True
 
 def is_testcases(data_structure):
-    """ check if data_structure is testcase or testcases list
-    testsets should always be in the following data structure:
-        testset_dict
-        or
-        [
-            testset_dict_1,
-            testset_dict_2
-        ]
+    """ check if data_structure is testcase or testcases list.
+
+    Args:
+        data_structure (dict): testcase(s) should always be in the following data structure:
+
+            testcase_dict
+            or
+            [
+                testcase_dict_1,
+                testcase_dict_2
+            ]
+    Returns:
+        bool: True if data_structure is valid testcase(s), otherwise False.
+
     """
     if not isinstance(data_structure, list):
         return is_testcase(data_structure)

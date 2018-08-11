@@ -13,18 +13,18 @@ from httprunner.compat import OrderedDict
 project_mapping = {
     "debugtalk": {},
     "env": {},
-    "tests": {
-        "api": {},
-        "testcases": {}
-    }
+    "def-api": {},
+    "def-testcase": {}
 }
-""" dict: save project loaded api/testcases, environments and debugtalk.py module.
+""" dict: save project loaded api/testcases definitions, environments and debugtalk.py module.
 """
+
+testcases_cache_mapping = {}
+
 
 ###############################################################################
 ##   file loader
 ###############################################################################
-
 
 def _check_format(file_path, content):
     """ check testcase format if valid
@@ -367,84 +367,12 @@ def get_module_item(module_mapping, item_type, item_name):
 ##   testcase loader
 ###############################################################################
 
-overall_def_dict = {
-    "api": {},
-    "suite": {}
-}
-testcases_cache_mapping = {}
-
-
-def _load_test_dependencies():
-    """ load all api and suite definitions.
-        default api folder is "$CWD/tests/api/".
-        default suite folder is "$CWD/tests/suite/".
-    """
-    # TODO: cache api and suite loading
-    # load api definitions
-    api_def_folder = os.path.join(os.getcwd(), "tests", "api")
-    for test_file in load_folder_files(api_def_folder):
-        _load_api_file(test_file)
-
-    # load suite definitions
-    suite_def_folder = os.path.join(os.getcwd(), "tests", "suite")
-    for suite_file in load_folder_files(suite_def_folder):
-        suite = _load_test_file(suite_file)
-        if "def" not in suite["config"]:
-            raise exceptions.ParamsError("def missed in suite file: {}!".format(suite_file))
-
-        call_func = suite["config"]["def"]
-        function_meta = parser.parse_function(call_func)
-        suite["function_meta"] = function_meta
-        overall_def_dict["suite"][function_meta["func_name"]] = suite
-
-
-def _load_api_file(file_path):
-    """ load api definition from file and store in overall_def_dict["api"]
-        api file should be in format below:
-            [
-                {
-                    "api": {
-                        "def": "api_login",
-                        "request": {},
-                        "validate": []
-                    }
-                },
-                {
-                    "api": {
-                        "def": "api_logout",
-                        "request": {},
-                        "validate": []
-                    }
-                }
-            ]
-    """
-    api_items = load_file(file_path)
-    if not isinstance(api_items, list):
-        raise exceptions.FileFormatError("API format error: {}".format(file_path))
-
-    for api_item in api_items:
-        if not isinstance(api_item, dict) or len(api_item) != 1:
-            raise exceptions.FileFormatError("API format error: {}".format(file_path))
-
-        key, api_dict = api_item.popitem()
-        if key != "api" or not isinstance(api_dict, dict) or "def" not in api_dict:
-            raise exceptions.FileFormatError("API format error: {}".format(file_path))
-
-        api_def = api_dict.pop("def")
-        function_meta = parser.parse_function(api_def)
-        func_name = function_meta["func_name"]
-
-        if func_name in overall_def_dict["api"]:
-            logger.log_warning("API definition duplicated: {}".format(func_name))
-
-        api_dict["function_meta"] = function_meta
-        overall_def_dict["api"][func_name] = api_dict
-
-
 def _load_test_file(file_path):
     """ load testcase file or testsuite file
-    @param file_path: absolute valid file path
-        file_path should be in format below:
+
+    Args:
+        file_path (str): absolute valid file path. file_path should be in the following format:
+
             [
                 {
                     "config": {
@@ -462,25 +390,37 @@ def _load_test_file(file_path):
                 },
                 {
                     "test": {
+                        "name": "add product to cart",
+                        "suite": "create_and_check()",
+                        "validate": []
+                    }
+                },
+                {
+                    "test": {
                         "name": "checkout cart",
                         "request": {},
                         "validate": []
                     }
                 }
             ]
-    @return testset dict
-        {
-            "config": {},
-            "testcases": [testcase11, testcase12]
-        }
+
+    Returns:
+        dict: testcase dict
+            {
+                "config": {},
+                "teststeps": [teststep11, teststep12]
+            }
+
     """
-    testset = {
+    testcase = {
         "config": {
             "path": file_path
         },
-        "testcases": []     # TODO: rename to tests
+        "teststeps": []
     }
+
     for item in load_file(file_path):
+        # TODO: add json schema validation
         if not isinstance(item, dict) or len(item) != 1:
             raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
 
@@ -489,43 +429,69 @@ def _load_test_file(file_path):
             raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
 
         if key == "config":
-            testset["config"].update(test_block)
+            testcase["config"].update(test_block)
 
         elif key == "test":
+
+            def extend_api_definition(block):
+                ref_call = block["api"]
+                def_block = _get_block_by_name(ref_call, "def-api")
+                _extend_block(block, def_block)
+
+            # reference api
             if "api" in test_block:
-                ref_call = test_block["api"]
-                def_block = _get_block_by_name(ref_call, "api")
-                _override_block(def_block, test_block)
-                testset["testcases"].append(test_block)
-            elif "suite" in test_block:
+                extend_api_definition(test_block)
+                testcase["teststeps"].append(test_block)
+
+            # reference testcase
+            elif "suite" in test_block: # TODO: replace suite with testcase
                 ref_call = test_block["suite"]
-                block = _get_block_by_name(ref_call, "suite")
-                testset["testcases"].extend(block["testcases"])
+                block = _get_block_by_name(ref_call, "def-testcase")
+                # TODO: bugfix lost block config variables
+                for teststep in block["teststeps"]:
+                    if "api" in teststep:
+                        extend_api_definition(teststep)
+                    testcase["teststeps"].append(teststep)
+
+            # define directly
             else:
-                testset["testcases"].append(test_block)
+                testcase["teststeps"].append(test_block)
 
         else:
             logger.log_warning(
                 "unexpected block key: {}. block key should only be 'config' or 'test'.".format(key)
             )
 
-    return testset
+    return testcase
 
 
 def _get_block_by_name(ref_call, ref_type):
-    """ get test content by reference name
-    @params:
-        ref_call: e.g. api_v1_Account_Login_POST($UserName, $Password)
-        ref_type: "api" or "suite"
+    """ get test content by reference name.
+
+    Args:
+        ref_call (str): call function.
+            e.g. api_v1_Account_Login_POST($UserName, $Password)
+        ref_type (enum): "def-api" or "def-testcase"
+
+    Returns:
+        dict: api/testcase definition.
+
+    Raises:
+        exceptions.ParamsError: call args number is not equal to defined args number.
+
     """
     function_meta = parser.parse_function(ref_call)
     func_name = function_meta["func_name"]
     call_args = function_meta["args"]
     block = _get_test_definition(func_name, ref_type)
-    def_args = block.get("function_meta").get("args", [])
+    def_args = block.get("function_meta", {}).get("args", [])
 
     if len(call_args) != len(def_args):
-        raise exceptions.ParamsError("call args mismatch defined args!")
+        err_msg = "{}: call args number is not equal to defined args number!\n".format(func_name)
+        err_msg += "defined args: {}\n".format(def_args)
+        err_msg += "reference args: {}".format(call_args)
+        logger.log_error(err_msg)
+        raise exceptions.ParamsError(err_msg)
 
     args_mapping = {}
     for index, item in enumerate(def_args):
@@ -542,80 +508,104 @@ def _get_block_by_name(ref_call, ref_type):
 
 def _get_test_definition(name, ref_type):
     """ get expected api or testcase.
-    @params:
-        name: api or testcase name
-        ref_type: "api" or "suite"
-    @return
-        expected api info if found, otherwise raise ApiNotFound exception
+
+    Args:
+        name (str): api or testcase name
+        ref_type (enum): "def-api" or "def-testcase"
+
+    Returns:
+        dict: expected api/testcase info if found.
+
+    Raises:
+        exceptions.ApiNotFound: api not found
+        exceptions.TestcaseNotFound: testcase not found
+
     """
-    block = overall_def_dict.get(ref_type, {}).get(name)
+    block = project_mapping.get(ref_type, {}).get(name)
 
     if not block:
         err_msg = "{} not found!".format(name)
-        if ref_type == "api":
+        if ref_type == "def-api":
             raise exceptions.ApiNotFound(err_msg)
         else:
-            # ref_type == "suite":
+            # ref_type == "def-testcase":
             raise exceptions.TestcaseNotFound(err_msg)
 
     return block
 
 
-def _override_block(def_block, current_block):
-    """ override def_block with current_block
-    @param def_block:
-        {
-            "name": "get token",
-            "request": {...},
-            "validate": [{'eq': ['status_code', 200]}]
-        }
-    @param current_block:
-        {
-            "name": "get token",
-            "extract": [{"token": "content.token"}],
-            "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
-        }
-    @return
-        {
-            "name": "get token",
-            "request": {...},
-            "extract": [{"token": "content.token"}],
-            "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
-        }
+def _extend_block(ref_block, def_block):
+    """ extend ref_block with def_block.
+
+    Args:
+        def_block (dict): api definition dict.
+        ref_block (dict): reference block
+
+    Returns:
+        dict: extended reference block.
+
+    Examples:
+        >>> def_block = {
+                "name": "get token 1",
+                "request": {...},
+                "validate": [{'eq': ['status_code', 200]}]
+            }
+        >>> ref_block = {
+                "name": "get token 2",
+                "extract": [{"token": "content.token"}],
+                "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+            }
+        >>> _extend_block(def_block, ref_block)
+            {
+                "name": "get token 2",
+                "request": {...},
+                "extract": [{"token": "content.token"}],
+                "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+            }
+
     """
+    # TODO: override variables
     def_validators = def_block.get("validate") or def_block.get("validators", [])
-    current_validators = current_block.get("validate") or current_block.get("validators", [])
+    ref_validators = ref_block.get("validate") or ref_block.get("validators", [])
 
     def_extrators = def_block.get("extract") \
         or def_block.get("extractors") \
         or def_block.get("extract_binds", [])
-    current_extractors = current_block.get("extract") \
-        or current_block.get("extractors") \
-        or current_block.get("extract_binds", [])
+    ref_extractors = ref_block.get("extract") \
+        or ref_block.get("extractors") \
+        or ref_block.get("extract_binds", [])
 
-    current_block.update(def_block)
-    current_block["validate"] = _merge_validator(
+    ref_block.update(def_block)
+    ref_block["validate"] = _merge_validator(
         def_validators,
-        current_validators
+        ref_validators
     )
-    current_block["extract"] = _merge_extractor(
+    ref_block["extract"] = _merge_extractor(
         def_extrators,
-        current_extractors
+        ref_extractors
     )
 
 
-def _get_validators_mapping(validators):
-    """ get validators mapping from api or test validators
-    @param (list) validators:
-        [
-            {"check": "v1", "expect": 201, "comparator": "eq"},
-            {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-        ]
-    @return
-        {
-            ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
-            ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-        }
+def _convert_validators_to_mapping(validators):
+    """ convert validators list to mapping.
+
+    Args:
+        validators (list): validators in list
+
+    Returns:
+        dict: validators mapping, use (check, comparator) as key.
+
+    Examples:
+        >>> validators = [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            ]
+        >>> _convert_validators_to_mapping(validators)
+            {
+                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            }
+
     """
     validators_mapping = {}
 
@@ -633,48 +623,66 @@ def _get_validators_mapping(validators):
     return validators_mapping
 
 
-def _merge_validator(def_validators, current_validators):
-    """ merge def_validators with current_validators
-    @params:
-        def_validators: [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
-        current_validators: [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
-    @return:
-        [
-            {"check": "v1", "expect": 201, "comparator": "eq"},
-            {"check": "s2", "expect": 16, "comparator": "len_eq"},
-            {"check": "s3", "expect": 12, "comparator": "len_eq"}
-        ]
+def _merge_validator(def_validators, ref_validators):
+    """ merge def_validators with ref_validators.
+
+    Args:
+        def_validators (list):
+        ref_validators (list):
+
+    Returns:
+        list: merged validators
+
+    Examples:
+        >>> def_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
+        >>> ref_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
+        >>> _merge_validator(def_validators, ref_validators)
+            [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": "s2", "expect": 16, "comparator": "len_eq"},
+                {"check": "s3", "expect": 12, "comparator": "len_eq"}
+            ]
+
     """
     if not def_validators:
-        return current_validators
+        return ref_validators
 
-    elif not current_validators:
+    elif not ref_validators:
         return def_validators
 
     else:
-        api_validators_mapping = _get_validators_mapping(def_validators)
-        test_validators_mapping = _get_validators_mapping(current_validators)
+        def_validators_mapping = _convert_validators_to_mapping(def_validators)
+        ref_validators_mapping = _convert_validators_to_mapping(ref_validators)
 
-        api_validators_mapping.update(test_validators_mapping)
-        return list(api_validators_mapping.values())
+        def_validators_mapping.update(ref_validators_mapping)
+        return list(def_validators_mapping.values())
 
 
-def _merge_extractor(def_extrators, current_extractors):
-    """ merge def_extrators with current_extractors
-    @params:
-        def_extrators: [{"var1": "val1"}, {"var2": "val2"}]
-        current_extractors: [{"var1": "val111"}, {"var3": "val3"}]
-    @return:
-        [
-            {"var1": "val111"},
-            {"var2": "val2"},
-            {"var3": "val3"}
-        ]
+def _merge_extractor(def_extrators, ref_extractors):
+    """ merge def_extrators with ref_extractors
+
+    Args:
+        def_extrators (list): [{"var1": "val1"}, {"var2": "val2"}]
+        ref_extractors (list): [{"var1": "val111"}, {"var3": "val3"}]
+
+    Returns:
+        list: merged extractors
+
+    Examples:
+        >>> def_extrators = [{"var1": "val1"}, {"var2": "val2"}]
+        >>> ref_extractors = [{"var1": "val111"}, {"var3": "val3"}]
+        >>> _merge_extractor(def_extrators, ref_extractors)
+            [
+                {"var1": "val111"},
+                {"var2": "val2"},
+                {"var3": "val3"}
+            ]
+
     """
     if not def_extrators:
-        return current_extractors
+        return ref_extractors
 
-    elif not current_extractors:
+    elif not ref_extractors:
         return def_extrators
 
     else:
@@ -687,7 +695,7 @@ def _merge_extractor(def_extrators, current_extractors):
             var_name = list(api_extrator.keys())[0]
             extractor_dict[var_name] = api_extrator[var_name]
 
-        for test_extrator in current_extractors:
+        for test_extrator in ref_extractors:
             if len(test_extrator) != 1:
                 logger.log_warning("incorrect extractor: {}".format(test_extrator))
                 continue
@@ -700,63 +708,6 @@ def _merge_extractor(def_extrators, current_extractors):
             extractor_list.append({key: value})
 
         return extractor_list
-
-
-def load_testcases(path):
-    """ load testcases from file path
-
-    Args:
-        path (str): testcase file/foler path.
-            path could be in several types:
-                - absolute/relative file path
-                - absolute/relative folder path
-                - list/set container with file(s) and/or folder(s)
-
-    Returns:
-        list: testcases list, each testcase is corresponding to a file
-        [
-            testcase_dict_1,
-            testcase_dict_2
-        ]
-    """
-    if isinstance(path, (list, set)):
-        testcases_list = []
-
-        for file_path in set(path):
-            testcases = load_testcases(file_path)
-            if not testcases:
-                continue
-            testcases_list.extend(testcases)
-
-        return testcases_list
-
-    if not os.path.isabs(path):
-        path = os.path.join(os.getcwd(), path)
-
-    if path in testcases_cache_mapping:
-        return testcases_cache_mapping[path]
-
-    if os.path.isdir(path):
-        files_list = load_folder_files(path)
-        testcases_list = load_testcases(files_list)
-
-    elif os.path.isfile(path):
-        try:
-            testcase = _load_test_file(path)
-            if testcase["testcases"]:
-                testcases_list = [testcase]
-            else:
-                testcases_list = []
-        except exceptions.FileFormatError:
-            testcases_list = []
-
-    else:
-        err_msg = "path not exist: {}".format(path)
-        logger.log_error(err_msg)
-        raise exceptions.FileNotFound(err_msg)
-
-    testcases_cache_mapping[path] = testcases_list
-    return testcases_list
 
 
 def load_folder_content(folder_path):
@@ -843,7 +794,7 @@ def load_api_folder(api_folder_path=None):
             api_dict["function_meta"] = function_meta
             api_definition_mapping[func_name] = api_dict
 
-    project_mapping["tests"]["api"] = api_definition_mapping
+    project_mapping["def-api"] = api_definition_mapping
     return api_definition_mapping
 
 
@@ -874,7 +825,7 @@ def load_test_folder(test_folder_path=None):
         dict: testcases definition mapping.
 
             {
-                "tests/testcases/setup.yml": [
+                "create_and_check": [
                     {"config": {}},
                     {"test": {}},
                     {"test": {}}
@@ -900,7 +851,7 @@ def load_test_folder(test_folder_path=None):
             "config": {
                 "path": test_file_path
             },
-            "tests": []
+            "teststeps": []
         }
         for item in items:
             key, block = item.popitem()
@@ -919,13 +870,13 @@ def load_test_folder(test_folder_path=None):
                 if func_name in test_definition_mapping:
                     logger.log_warning("API definition duplicated: {}".format(func_name))
 
-                block["function_meta"] = function_meta
+                testcase["function_meta"] = function_meta
                 test_definition_mapping[func_name] = testcase
             else:
                 # key == "test":
-                testcase["tests"].append(block)
+                testcase["teststeps"].append(block)
 
-    project_mapping["tests"]["testcases"] = test_definition_mapping
+    project_mapping["def-testcase"] = test_definition_mapping
     return test_definition_mapping
 
 
@@ -949,15 +900,59 @@ def load_project_tests(folder_path=None):
     return project_mapping
 
 
-def load(path):
-    """ main interface for loading testcases
+def load_testcases(path):
+    """ load testcases from file path
 
     Args:
-        path (str): testcase file/folder path
+        path (str): testcase file/foler path.
+            path could be in several types:
+                - absolute/relative file path
+                - absolute/relative folder path
+                - list/set container with file(s) and/or folder(s)
 
     Returns:
-        list: testcases list
+        list: testcases list, each testcase is corresponding to a file
+        [
+            testcase_dict_1,
+            testcase_dict_2
+        ]
 
     """
-    _load_test_dependencies()
-    return load_testcases(path)
+    if isinstance(path, (list, set)):
+        testcases_list = []
+
+        for file_path in set(path):
+            testcases = load_testcases(file_path)
+            if not testcases:
+                continue
+            testcases_list.extend(testcases)
+
+        return testcases_list
+
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), path)
+
+    if path in testcases_cache_mapping:
+        return testcases_cache_mapping[path]
+
+    if os.path.isdir(path):
+        files_list = load_folder_files(path)
+        testcases_list = load_testcases(files_list)
+
+    elif os.path.isfile(path):
+        try:
+            testcase = _load_test_file(path)
+            if testcase["teststeps"]:
+                testcases_list = [testcase]
+            else:
+                testcases_list = []
+        except exceptions.FileFormatError:
+            testcases_list = []
+
+    else:
+        err_msg = "path not exist: {}".format(path)
+        logger.log_error(err_msg)
+        raise exceptions.FileNotFound(err_msg)
+
+    testcases_cache_mapping[path] = testcases_list
+    return testcases_list
