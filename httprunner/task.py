@@ -210,7 +210,7 @@ def init_test_suites(path_or_testcases, mapping=None, http_client_session=None):
 class HttpRunner(object):
 
     def __init__(self, **kwargs):
-        """ initialize HttpRunner
+        """ initialize HttpRunner.
 
         Args:
             kwargs (dict): key-value arguments used to initialize TextTestRunner.
@@ -218,15 +218,17 @@ class HttpRunner(object):
 
             resultclass (class): HtmlTestResult or TextTestResult
             failfast (bool): False/True, stop the test run on the first error or failure.
-            dot_env_path (str): .env file path
+            dot_env_path (str): .env file path.
+
+        Attributes:
+            project_mapping (dict): save project loaded api/testcases, environments and debugtalk.py module.
 
         """
         dot_env_path = kwargs.pop("dot_env_path", None)
-        env_mapping = loader.load_dot_env_file(dot_env_path)
-        utils.set_os_environ(env_mapping)
-        # TODO: remove tests
-        self.project_mapping = loader.load_project_tests("tests")
-        self.project_mapping["env"] = env_mapping
+        loader.load_dot_env_file(dot_env_path)
+        loader.load_project_tests("tests")  # TODO: remove tests
+        self.project_mapping = loader.project_mapping
+        utils.set_os_environ(self.project_mapping["env"])
 
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)
