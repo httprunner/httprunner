@@ -4,7 +4,8 @@ import copy
 import sys
 import unittest
 
-from httprunner import context, exceptions, loader, logger, runner, utils
+from httprunner import (context, exceptions, loader, logger, runner, utils,
+                        validator)
 from httprunner.compat import is_py3
 from httprunner.report import (HtmlTestResult, get_platform, get_summary,
                                render_html_report)
@@ -33,39 +34,39 @@ class TestCase(unittest.TestCase):
 
 
 class TestSuite(unittest.TestSuite):
-    """ create test suite with a testset, it may include one or several testcases.
-        each suite should initialize a separate Runner() with testset config.
-    @param
-        (dict) testset
+    """ create test suite with a testcase, it may include one or several teststeps.
+        each suite should initialize a separate Runner() with testcase config.
+
+    Args:
+        testcase (dict): testcase dict
             {
-                "name": "testset description",
                 "config": {
-                    "name": "testset description",
+                    "name": "testcase description",
                     "parameters": {},
                     "variables": [],
                     "request": {},
                     "output": []
                 },
-                "testcases": [
+                "teststeps": [
                     {
-                        "name": "testcase description",
+                        "name": "teststep1 description",
                         "parameters": {},
                         "variables": [],    # optional, override
                         "request": {},
                         "extract": {},      # optional
                         "validate": {}      # optional
                     },
-                    testcase12
+                    teststep2
                 ]
             }
-        (dict) variables_mapping:
-            passed in variables mapping, it will override variables in config block
+        variables_mapping (dict): passed in variables mapping, it will override variables in config block.
+
     """
-    def __init__(self, testset, variables_mapping=None, http_client_session=None):
+    def __init__(self, testcase, variables_mapping=None, http_client_session=None):
         super(TestSuite, self).__init__()
         self.test_runner_list = []
 
-        self.config = testset.get("config", {})
+        self.config = testcase.get("config", {})
         self.output_variables_list = self.config.get("output", [])
         self.testset_file_path = self.config.get("path")
         config_dict_parameters = self.config.get("parameters", [])
@@ -79,22 +80,22 @@ class TestSuite(unittest.TestSuite):
             config_dict_parameters
         )
         self.testcase_parser = context.TestcaseParser()
-        testcases = testset.get("testcases", [])
+        teststeps = testcase.get("teststeps", [])
 
         for config_variables in config_parametered_variables_list:
             # config level
             self.config["variables"] = config_variables
             test_runner = runner.Runner(self.config, http_client_session)
 
-            for testcase_dict in testcases:
-                testcase_dict = copy.copy(testcase_dict)
+            for teststep_dict in teststeps:
+                teststep_dict = copy.copy(teststep_dict)
                 # testcase level
                 testcase_parametered_variables_list = self._get_parametered_variables(
-                    testcase_dict.get("variables", []),
-                    testcase_dict.get("parameters", [])
+                    teststep_dict.get("variables", []),
+                    teststep_dict.get("parameters", [])
                 )
                 for testcase_variables in testcase_parametered_variables_list:
-                    testcase_dict["variables"] = testcase_variables
+                    teststep_dict["variables"] = testcase_variables
 
                     # eval testcase name with bind variables
                     variables = utils.override_variables_binds(
@@ -103,13 +104,13 @@ class TestSuite(unittest.TestSuite):
                     )
                     self.testcase_parser.update_binded_variables(variables)
                     try:
-                        testcase_name = self.testcase_parser.eval_content_with_bindings(testcase_dict["name"])
+                        testcase_name = self.testcase_parser.eval_content_with_bindings(teststep_dict["name"])
                     except (AssertionError, exceptions.ParamsError):
-                        logger.log_warning("failed to eval testcase name: {}".format(testcase_dict["name"]))
-                        testcase_name = testcase_dict["name"]
+                        logger.log_warning("failed to eval testcase name: {}".format(teststep_dict["name"]))
+                        testcase_name = teststep_dict["name"]
                     self.test_runner_list.append((test_runner, variables))
 
-                    self._add_test_to_suite(testcase_name, test_runner, testcase_dict)
+                    self._add_test_to_suite(testcase_name, test_runner, teststep_dict)
 
     def _get_parametered_variables(self, variables, parameters):
         """ parameterize varaibles with parameters
@@ -159,38 +160,47 @@ class TestSuite(unittest.TestSuite):
         return outputs
 
 
-def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
-    """ initialize TestSuite list with testset path or testset dict
-    @params
-        testsets (dict/list): testset or list of testset
-            testset_dict
+def init_test_suites(path_or_testcases, mapping=None, http_client_session=None):
+    """ initialize TestSuite list with testcase path or testcase(s).
+
+    Args:
+        path_or_testcases (str/dict/list): testcase file path or testcase dict or testcases list
+
+            testcase_dict
             or
             [
-                testset_dict_1,
-                testset_dict_2,
+                testcase_dict_1,
+                testcase_dict_2,
                 {
                     "config": {},
-                    "api": {},
-                    "testcases": [testcase11, testcase12]
+                    "teststeps": [teststep11, teststep12]
                 }
             ]
-        mapping (dict):
-            passed in variables mapping, it will override variables in config block
+
+        mapping (dict): passed in variables mapping, it will override variables in config block.
+        http_client_session (instance): requests.Session(), or locusts.client.Session() instance.
+
+    Returns:
+        list: TestSuite() instance list.
+
     """
-    testsets = loader.load(path_or_testsets)
+    if validator.is_testcases(path_or_testcases):
+        testcases = path_or_testcases
+    else:
+        testcases = loader.load_testcases(path_or_testcases)
 
     # TODO: move comparator uniform here
     mapping = mapping or {}
 
-    if not testsets:
+    if not testcases:
         raise exceptions.TestcaseNotFound
 
-    if isinstance(testsets, dict):
-        testsets = [testsets]
+    if isinstance(testcases, dict):
+        testcases = [testcases]
 
     test_suite_list = []
-    for testset in testsets:
-        test_suite = TestSuite(testset, mapping, http_client_session)
+    for testcase in testcases:
+        test_suite = TestSuite(testcase, mapping, http_client_session)
         test_suite_list.append(test_suite)
 
     return test_suite_list
@@ -199,39 +209,55 @@ def init_test_suites(path_or_testsets, mapping=None, http_client_session=None):
 class HttpRunner(object):
 
     def __init__(self, **kwargs):
-        """ initialize test runner
-        @param (dict) kwargs: key-value arguments used to initialize TextTestRunner
-            - resultclass: HtmlTestResult or TextTestResult
-            - failfast: False/True, stop the test run on the first error or failure.
-            - dot_env_path: .env file path
+        """ initialize HttpRunner.
+
+        Args:
+            kwargs (dict): key-value arguments used to initialize TextTestRunner.
+            Commonly used arguments:
+
+            resultclass (class): HtmlTestResult or TextTestResult
+            failfast (bool): False/True, stop the test run on the first error or failure.
+            dot_env_path (str): .env file path.
+
+        Attributes:
+            project_mapping (dict): save project loaded api/testcases, environments and debugtalk.py module.
+
         """
         dot_env_path = kwargs.pop("dot_env_path", None)
-        utils.set_os_environ(loader.load_dot_env_file(dot_env_path))
+        loader.load_dot_env_file(dot_env_path)
+        loader.load_project_tests("tests")  # TODO: remove tests
+        self.project_mapping = loader.project_mapping
+        utils.set_os_environ(self.project_mapping["env"])
 
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)
 
-    def run(self, path_or_testsets, mapping=None):
-        """ start to run test with varaibles mapping
-        @param path_or_testsets: YAML/JSON testset file path or testset list
-            path: path could be in several type
-                - absolute/relative file path
-                - absolute/relative folder path
-                - list/set container with file(s) and/or folder(s)
-            testsets: testset or list of testset
-                - (dict) testset_dict
-                - (list) list of testset_dict
-                    [
-                        testset_dict_1,
-                        testset_dict_2
-                    ]
-        @param (dict) mapping:
-            if mapping specified, it will override variables in config block
+    def run(self, path_or_testcases, mapping=None):
+        """ start to run test with varaibles mapping.
+
+        Args:
+            path_or_testcases (str/list/dict): YAML/JSON testcase file path or testcase list
+                path: path could be in several type
+                    - absolute/relative file path
+                    - absolute/relative folder path
+                    - list/set container with file(s) and/or folder(s)
+                testcases: testcase dict or list of testcases
+                    - (dict) testset_dict
+                    - (list) list of testset_dict
+                        [
+                            testset_dict_1,
+                            testset_dict_2
+                        ]
+            mapping (dict): if mapping specified, it will override variables in config block.
+
+        Returns:
+            instance: HttpRunner() instance
+
         """
         try:
-            test_suite_list = init_test_suites(path_or_testsets, mapping)
+            test_suite_list = init_test_suites(path_or_testcases, mapping)
         except exceptions.TestcaseNotFound:
-            logger.log_error("Testcases not found in {}".format(path_or_testsets))
+            logger.log_error("Testcases not found in {}".format(path_or_testcases))
             sys.exit(1)
 
         self.summary = {
@@ -243,8 +269,7 @@ class HttpRunner(object):
         }
 
         def accumulate_stat(origin_stat, new_stat):
-            """ accumulate new_stat to origin_stat
-            """
+            """accumulate new_stat to origin_stat."""
             for key in new_stat:
                 if key not in origin_stat:
                     origin_stat[key] = new_stat[key]
@@ -272,11 +297,15 @@ class HttpRunner(object):
         return self
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
-        """ generate html report and return report path
-        @param (str) html_report_name:
-            output html report file name
-        @param (str) html_report_template:
-            report template file path, template should be in Jinja2 format
+        """ generate html report and return report path.
+
+        Args:
+            html_report_name (str): output html report file name
+            html_report_template (str): report template file path, template should be in Jinja2 format
+
+        Returns:
+            str: generated html report path
+
         """
         return render_html_report(
             self.summary,
@@ -287,8 +316,8 @@ class HttpRunner(object):
 
 class LocustTask(object):
 
-    def __init__(self, path_or_testsets, locust_client, mapping=None):
-        self.test_suite_list = init_test_suites(path_or_testsets, mapping, locust_client)
+    def __init__(self, path_or_testcases, locust_client, mapping=None):
+        self.test_suite_list = init_test_suites(path_or_testcases, mapping, locust_client)
 
     def run(self):
         for test_suite in self.test_suite_list:

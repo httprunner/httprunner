@@ -2,7 +2,8 @@ import os
 import shutil
 
 from httprunner import HttpRunner
-from tests.base import HTTPBIN_SERVER, ApiServerUnittest
+from tests.api_server import HTTPBIN_SERVER
+from tests.base import ApiServerUnittest
 
 
 class TestHttpRunner(ApiServerUnittest):
@@ -22,7 +23,7 @@ class TestHttpRunner(ApiServerUnittest):
                 'output': ['token']
             },
             'api': {},
-            'testcases': [
+            'teststeps': [
                 {
                     'name': '/api/get-token',
                     'request': {
@@ -113,7 +114,7 @@ class TestHttpRunner(ApiServerUnittest):
         testsets = [
             {
                 "name": "post data",
-                "testcases": [
+                "teststeps": [
                     {
                         "name": "post data",
                         "request": {

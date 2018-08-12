@@ -1,7 +1,8 @@
 import requests
 from httprunner import built_in, exceptions, loader, response
 from httprunner.compat import basestring, bytes
-from tests.base import HTTPBIN_SERVER, ApiServerUnittest
+from tests.api_server import HTTPBIN_SERVER
+from tests.base import ApiServerUnittest
 
 
 class TestResponse(ApiServerUnittest):
