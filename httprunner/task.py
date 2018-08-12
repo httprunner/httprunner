@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import copy
+import os
 import sys
 import unittest
 
@@ -83,13 +84,13 @@ class TestSuite(unittest.TestSuite):
         teststeps = testcase.get("teststeps", [])
 
         for config_variables in config_parametered_variables_list:
-            # config level
+            # testcase config level
             self.config["variables"] = config_variables
             test_runner = runner.Runner(self.config, http_client_session)
 
             for teststep_dict in teststeps:
                 teststep_dict = copy.copy(teststep_dict)
-                # testcase level
+                # teststep level
                 testcase_parametered_variables_list = self._get_parametered_variables(
                     teststep_dict.get("variables", []),
                     teststep_dict.get("parameters", [])
@@ -97,7 +98,7 @@ class TestSuite(unittest.TestSuite):
                 for testcase_variables in testcase_parametered_variables_list:
                     teststep_dict["variables"] = testcase_variables
 
-                    # eval testcase name with bind variables
+                    # eval teststep name with bind variables
                     variables = utils.override_variables_binds(
                         config_variables,
                         testcase_variables
@@ -106,14 +107,14 @@ class TestSuite(unittest.TestSuite):
                     try:
                         testcase_name = self.testcase_parser.eval_content_with_bindings(teststep_dict["name"])
                     except (AssertionError, exceptions.ParamsError):
-                        logger.log_warning("failed to eval testcase name: {}".format(teststep_dict["name"]))
+                        logger.log_warning("failed to eval teststep name: {}".format(teststep_dict["name"]))
                         testcase_name = teststep_dict["name"]
                     self.test_runner_list.append((test_runner, variables))
 
                     self._add_test_to_suite(testcase_name, test_runner, teststep_dict)
 
     def _get_parametered_variables(self, variables, parameters):
-        """ parameterize varaibles with parameters
+        """ parameterize variables with parameters
         """
         cartesian_product_parameters = context.parse_parameters(
             parameters,
@@ -224,16 +225,36 @@ class HttpRunner(object):
 
         """
         dot_env_path = kwargs.pop("dot_env_path", None)
-        loader.load_dot_env_file(dot_env_path)
-        loader.load_project_tests("tests")  # TODO: remove tests
-        self.project_mapping = loader.project_mapping
-        utils.set_os_environ(self.project_mapping["env"])
+        self.project_mapping = self.loader(dot_env_path)
 
         kwargs.setdefault("resultclass", HtmlTestResult)
         self.runner = unittest.TextTestRunner(**kwargs)
 
+    def loader(self, dot_env_path=None):
+        """ load project files, including api/testcase definitions, testcases,
+            environment variables and debugtalk.py module.
+
+        Args:
+            dot_env_path (str): .env file path
+
+        Returns:
+            dict: project tests info mapping.
+
+        """
+        # load .env
+        loader.load_dot_env_file(dot_env_path)
+
+        # load api/testcase definition and debugtalk.py module
+        project_folder_path = os.path.join(os.getcwd(), "tests") # TODO: remove tests
+        loader.load_project_tests(project_folder_path)
+
+        project_mapping = loader.project_mapping
+        utils.set_os_environ(project_mapping["env"])
+
+        return project_mapping
+
     def run(self, path_or_testcases, mapping=None):
-        """ start to run test with varaibles mapping.
+        """ start to run test with variables mapping.
 
         Args:
             path_or_testcases (str/list/dict): YAML/JSON testcase file path or testcase list
