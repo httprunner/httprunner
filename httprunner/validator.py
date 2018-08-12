@@ -12,16 +12,30 @@ def is_testcase(data_structure):
         data_structure (dict): testcase should always be in the following data structure:
 
             {
-                "name": "desc1",
-                "config": {},
-                "api": {},
-                "testcases": [testcase11, testcase12]
+                "config": {
+                    "name": "desc1",
+                    "path": "",
+                    "variables": [],    # optional
+                    "request": {}       # optional
+                },
+                "teststeps": [
+                    teststep1,
+                    {   # teststep2
+                        'name': 'test step desc2',
+                        'variables': [],    # optional
+                        'extract': [],      # optional
+                        'validate': [],
+                        'request': {},
+                        'function_meta': {}
+                    }
+                ]
             }
 
     Returns:
         bool: True if data_structure is valid testcase, otherwise False.
 
     """
+    # TODO: replace with JSON schema validation
     if not isinstance(data_structure, dict):
         return False
 
