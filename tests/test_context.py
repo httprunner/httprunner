@@ -409,40 +409,6 @@ class TestTestcaseParser(unittest.TestCase):
             3
         )
 
-    def test_extract_functions(self):
-        self.assertEqual(
-            parser.extract_functions("${func()}"),
-            ["func()"]
-        )
-        self.assertEqual(
-            parser.extract_functions("${func(5)}"),
-            ["func(5)"]
-        )
-        self.assertEqual(
-            parser.extract_functions("${func(a=1, b=2)}"),
-            ["func(a=1, b=2)"]
-        )
-        self.assertEqual(
-            parser.extract_functions("${func(1, $b, c=$x, d=4)}"),
-            ["func(1, $b, c=$x, d=4)"]
-        )
-        self.assertEqual(
-            parser.extract_functions("/api/1000?_t=${get_timestamp()}"),
-            ["get_timestamp()"]
-        )
-        self.assertEqual(
-            parser.extract_functions("/api/${add(1, 2)}"),
-            ["add(1, 2)"]
-        )
-        self.assertEqual(
-            parser.extract_functions("/api/${add(1, 2)}?_t=${get_timestamp()}"),
-            ["add(1, 2)", "get_timestamp()"]
-        )
-        self.assertEqual(
-            parser.extract_functions("abc${func(1, 2, a=3, b=4)}def"),
-            ["func(1, 2, a=3, b=4)"]
-        )
-
     def test_eval_content_functions(self):
         functions = {
             "add_two_nums": lambda a, b=1: a + b

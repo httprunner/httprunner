@@ -501,7 +501,7 @@ def _get_block_by_name(ref_call, ref_type):
         args_mapping[item] = call_args[index]
 
     if args_mapping:
-        block = parser.parse_data(block, args_mapping)
+        block = parser.substitute_variables(block, args_mapping)
 
     return block
 
