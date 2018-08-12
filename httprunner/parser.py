@@ -200,24 +200,32 @@ def parse_validator(validator):
     }
 
 
-def parse_data(content, mapping):
-    """ substitute variables in content with mapping
-    e.g.
-    @params
-        content = {
-            'request': {
-                'url': '/api/users/$uid',
-                'headers': {'token': '$token'}
+def parse_data(content, variables_mapping=None):
+    """ parse content with variables mapping
+
+    Args:
+        content (str/dict/list/numeric/bool/type): content to be parsed
+        variables_mapping (dict): variables mapping
+
+    Returns:
+        parsed content.
+
+    Examples:
+        >>> content = {
+                'request': {
+                    'url': '/api/users/$uid',
+                    'headers': {'token': '$token'}
+                }
             }
-        }
-        mapping = {"$uid": 1000}
-    @return
-        {
-            'request': {
-                'url': '/api/users/1000',
-                'headers': {'token': '$token'}
+        >>> variables_mapping = {"$uid": 1000}
+        >>> parse_data(content, variables_mapping)
+            {
+                'request': {
+                    'url': '/api/users/1000',
+                    'headers': {'token': '$token'}
+                }
             }
-        }
+
     """
     # TODO: refactor type check
     # TODO: combine this with TestcaseParser
@@ -226,21 +234,22 @@ def parse_data(content, mapping):
 
     if isinstance(content, (list, set, tuple)):
         return [
-            parse_data(item, mapping)
+            parse_data(item, variables_mapping)
             for item in content
         ]
 
     if isinstance(content, dict):
-        substituted_data = {}
+        parsed_data = {}
         for key, value in content.items():
-            eval_key = parse_data(key, mapping)
-            eval_value = parse_data(value, mapping)
-            substituted_data[eval_key] = eval_value
+            eval_key = parse_data(key, variables_mapping)
+            eval_value = parse_data(value, variables_mapping)
+            parsed_data[eval_key] = eval_value
 
-        return substituted_data
+        return parsed_data
 
     # content is in string format here
-    for var, value in mapping.items():
+    variables_mapping = variables_mapping or {}
+    for var, value in variables_mapping.items():
         if content == var:
             # content is a variable
             content = value
