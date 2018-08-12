@@ -40,7 +40,7 @@ def gen_locustfile(testcase_file_path):
         "templates",
         "locustfile_template"
     )
-    testcases = loader.load(testcase_file_path)
+    testcases = loader.load_testcases(testcase_file_path)
     host = testcases[0].get("config", {}).get("request", {}).get("base_url", "")
 
     with io.open(template_path, encoding='utf-8') as template:
