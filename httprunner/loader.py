@@ -880,19 +880,16 @@ def load_test_folder(test_folder_path=None):
     return test_definition_mapping
 
 
-def load_project_tests(folder_path=None):
+def load_project_tests(folder_path):
     """ load api, testcases and debugtalk.py module.
 
     Args:
         folder_path (str): folder path.
-            If not set, defautls to current working directory.
 
     Returns:
         dict: project tests mapping.
 
     """
-    folder_path = folder_path or os.getcwd()
-
     load_debugtalk_module(folder_path)
     load_api_folder(os.path.join(folder_path, "api"))
     load_test_folder(os.path.join(folder_path, "suite"))
