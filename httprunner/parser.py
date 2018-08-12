@@ -5,7 +5,7 @@ import os
 import re
 
 from httprunner import exceptions
-from httprunner.compat import builtin_str, numeric_types, str
+from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 variable_regexp = r"\$([\w_]+)"
 function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
@@ -200,12 +200,205 @@ def parse_validator(validator):
     }
 
 
-def parse_data(content, variables_mapping=None):
+def substitute_variables(content, variables_mapping):
+    """ substitute variables in content with variables_mapping
+
+    Args:
+        content (str/dict/list/numeric/bool/type): content to be substituted.
+        variables_mapping (dict): variables mapping.
+
+    Returns:
+        substituted content.
+
+    Examples:
+        >>> content = {
+                'request': {
+                    'url': '/api/users/$uid',
+                    'headers': {'token': '$token'}
+                }
+            }
+        >>> variables_mapping = {"$uid": 1000}
+        >>> substitute_variables(content, variables_mapping)
+            {
+                'request': {
+                    'url': '/api/users/1000',
+                    'headers': {'token': '$token'}
+                }
+            }
+
+    """
+    if isinstance(content, (list, set, tuple)):
+        return [
+            substitute_variables(item, variables_mapping)
+            for item in content
+        ]
+
+    if isinstance(content, dict):
+        substituted_data = {}
+        for key, value in content.items():
+            eval_key = substitute_variables(key, variables_mapping)
+            eval_value = substitute_variables(value, variables_mapping)
+            substituted_data[eval_key] = eval_value
+
+        return substituted_data
+
+    if isinstance(content, basestring):
+        # content is in string format here
+        for var, value in variables_mapping.items():
+            if content == var:
+                # content is a variable
+                content = value
+            else:
+                if not isinstance(value, str):
+                    value = builtin_str(value)
+                content = content.replace(var, value)
+
+    return content
+
+
+###############################################################################
+##  parse content with variables and functions mapping
+###############################################################################
+
+def get_mapping_variable(variable_name, variables_mapping):
+    """ get variable from variables_mapping.
+
+    Args:
+        variable_name (str): variable name
+        variables_mapping (dict): variables mapping
+
+    Returns:
+        mapping variable value.
+
+    Raises:
+        exceptions.VariableNotFound: variable is not found.
+
+    """
+    try:
+        return variables_mapping[variable_name]
+    except KeyError:
+        raise exceptions.VariableNotFound("{} is not found.".format(variable_name))
+
+
+def get_mapping_function(function_name, functions_mapping):
+    """ get function from functions_mapping,
+        if not found, then try to check if builtin function.
+
+    Args:
+        variable_name (str): variable name
+        variables_mapping (dict): variables mapping
+
+    Returns:
+        mapping function object.
+
+    Raises:
+        exceptions.FunctionNotFound: function is neither defined in debugtalk.py nor builtin.
+
+    """
+    if function_name in functions_mapping:
+        return functions_mapping[function_name]
+
+    try:
+        # check if builtin functions
+        item_func = eval(function_name)
+        if callable(item_func):
+            # is builtin function
+            return item_func
+    except (NameError, TypeError):
+        # is not builtin function
+        raise exceptions.FunctionNotFound("{} is not found.".format(function_name))
+
+
+def parse_string_functions(content, variables_mapping, functions_mapping):
+    """ parse string content with functions mapping.
+
+    Args:
+        content (str): string content to be parsed.
+        variables_mapping (dict): variables mapping.
+        functions_mapping (dict): functions mapping.
+
+    Returns:
+        str: parsed string content.
+
+    Examples:
+        >>> content = "abc${add_one(3)}def"
+        >>> functions_mapping = {"add_one": lambda x: x + 1}
+        >>> parse_string_functions(content, functions_mapping)
+            "abc4def"
+
+    """
+    functions_list = extract_functions(content)
+    for func_content in functions_list:
+        function_meta = parse_function(func_content)
+        func_name = function_meta["func_name"]
+
+        args = function_meta.get("args", [])
+        kwargs = function_meta.get("kwargs", {})
+        args = parse_data(args, variables_mapping, functions_mapping)
+        kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
+
+        func = get_mapping_function(func_name, functions_mapping)
+        eval_value = func(*args, **kwargs)
+
+        func_content = "${" + func_content + "}"
+        if func_content == content:
+            # content is a function, e.g. "${add_one(3)}"
+            content = eval_value
+        else:
+            # content contains one or many functions, e.g. "abc${add_one(3)}def"
+            content = content.replace(
+                func_content,
+                str(eval_value), 1
+            )
+
+    return content
+
+
+def parse_string_variables(content, variables_mapping):
+    """ parse string content with variables mapping.
+
+    Args:
+        content (str): string content to be parsed.
+        variables_mapping (dict): variables mapping.
+
+    Returns:
+        str: parsed string content.
+
+    Examples:
+        >>> content = "/api/users/$uid"
+        >>> variables_mapping = {"$uid": 1000}
+        >>> parse_string_variables(content, variables_mapping)
+            "/api/users/1000"
+
+    """
+    variables_list = extract_variables(content)
+    for variable_name in variables_list:
+        variable_value = get_mapping_variable(variable_name, variables_mapping)
+
+        # TODO: replace variable label from $var to {{var}}
+        if "${}".format(variable_name) == content:
+            # content is a variable
+            content = variable_value
+        else:
+            # content contains one or several variables
+            if not isinstance(variable_value, str):
+                variable_value = builtin_str(variable_value)
+
+            content = content.replace(
+                "${}".format(variable_name),
+                variable_value, 1
+            )
+
+    return content
+
+
+def parse_data(content, variables_mapping=None, functions_mapping=None):
     """ parse content with variables mapping
 
     Args:
         content (str/dict/list/numeric/bool/type): content to be parsed
-        variables_mapping (dict): variables mapping
+        variables_mapping (dict): variables mapping.
+        functions_mapping (dict): functions mapping.
 
     Returns:
         parsed content.
@@ -217,12 +410,12 @@ def parse_data(content, variables_mapping=None):
                     'headers': {'token': '$token'}
                 }
             }
-        >>> variables_mapping = {"$uid": 1000}
+        >>> variables_mapping = {"uid": 1000, "token": "abcdef"}
         >>> parse_data(content, variables_mapping)
             {
                 'request': {
                     'url': '/api/users/1000',
-                    'headers': {'token': '$token'}
+                    'headers': {'token': 'abcdef'}
                 }
             }
 
@@ -234,28 +427,30 @@ def parse_data(content, variables_mapping=None):
 
     if isinstance(content, (list, set, tuple)):
         return [
-            parse_data(item, variables_mapping)
+            parse_data(item, variables_mapping, functions_mapping)
             for item in content
         ]
 
     if isinstance(content, dict):
-        parsed_data = {}
+        parsed_content = {}
         for key, value in content.items():
-            eval_key = parse_data(key, variables_mapping)
-            eval_value = parse_data(value, variables_mapping)
-            parsed_data[eval_key] = eval_value
+            parsed_key = parse_data(key, variables_mapping, functions_mapping)
+            parsed_value = parse_data(value, variables_mapping, functions_mapping)
+            parsed_content[parsed_key] = parsed_value
 
-        return parsed_data
+        return parsed_content
 
-    # content is in string format here
-    variables_mapping = variables_mapping or {}
-    for var, value in variables_mapping.items():
-        if content == var:
-            # content is a variable
-            content = value
-        else:
-            if not isinstance(value, str):
-                value = builtin_str(value)
-            content = content.replace(var, value)
+    if isinstance(content, basestring):
+        # content is in string format here
+        variables_mapping = variables_mapping or {}
+        functions_mapping = functions_mapping or {}
+        content = content.strip()
+
+        # replace functions with evaluated value
+        # Notice: _eval_content_functions must be called before _eval_content_variables
+        content = parse_string_functions(content, variables_mapping, functions_mapping)
+
+        # replace variables with binding value
+        content = parse_string_variables(content, variables_mapping)
 
     return content
