@@ -898,7 +898,7 @@ def load_project_tests(folder_path):
 
 
 def load_testcases(path):
-    """ load testcases from file path
+    """ load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:
         path (str): testcase file/foler path.

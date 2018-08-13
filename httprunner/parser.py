@@ -4,7 +4,7 @@ import ast
 import os
 import re
 
-from httprunner import exceptions
+from httprunner import exceptions, utils
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 variable_regexp = r"\$([\w_]+)"
@@ -256,6 +256,72 @@ def substitute_variables(content, variables_mapping):
     return content
 
 
+def parse_parameters(parameters, variables_mapping, functions_mapping):
+    """ parse parameters and generate cartesian product.
+
+    Args:
+        parameters (list) parameters: parameter name and value in list
+            parameter value may be in three types:
+                (1) data list, e.g. ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
+                (2) call built-in parameterize function, "${parameterize(account.csv)}"
+                (3) call custom function in debugtalk.py, "${gen_app_version()}"
+
+        variables_mapping (dict): variables mapping loaded from debugtalk.py
+        functions_mapping (dict): functions mapping loaded from debugtalk.py
+
+    Returns:
+        list: cartesian product list
+
+    Examples:
+        >>> parameters = [
+            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+            {"username-password": "${parameterize(account.csv)}"},
+            {"app_version": "${gen_app_version()}"}
+        ]
+        >>> parse_parameters(parameters)
+
+    """
+    parsed_parameters_list = []
+    for parameter in parameters:
+        parameter_name, parameter_content = list(parameter.items())[0]
+        parameter_name_list = parameter_name.split("-")
+
+        if isinstance(parameter_content, list):
+            # (1) data list
+            # e.g. {"app_version": ["2.8.5", "2.8.6"]}
+            #       => [{"app_version": "2.8.5", "app_version": "2.8.6"}]
+            # e.g. {"username-password": [["user1", "111111"], ["test2", "222222"]}
+            #       => [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
+            parameter_content_list = []
+            for parameter_item in parameter_content:
+                if not isinstance(parameter_item, (list, tuple)):
+                    # "2.8.5" => ["2.8.5"]
+                    parameter_item = [parameter_item]
+
+                # ["app_version"], ["2.8.5"] => {"app_version": "2.8.5"}
+                # ["username", "password"], ["user1", "111111"] => {"username": "user1", "password": "111111"}
+                parameter_content_dict = dict(zip(parameter_name_list, parameter_item))
+
+                parameter_content_list.append(parameter_content_dict)
+        else:
+            # (2) & (3)
+            parsed_parameter_content = parse_data(parameter_content, variables_mapping, functions_mapping)
+            # e.g. [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
+            # e.g. [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
+            if not isinstance(parsed_parameter_content, list):
+                raise exceptions.ParamsError("parameters syntax error!")
+
+            parameter_content_list = [
+                # get subset by parameter name
+                {key: parameter_item[key] for key in parameter_name_list}
+                for parameter_item in parsed_parameter_content
+            ]
+
+        parsed_parameters_list.append(parameter_content_list)
+
+    return utils.gen_cartesian_product(*parsed_parameters_list)
+
+
 ###############################################################################
 ##  parse content with variables and functions mapping
 ###############################################################################
@@ -337,8 +403,13 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
         args = parse_data(args, variables_mapping, functions_mapping)
         kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
 
-        func = get_mapping_function(func_name, functions_mapping)
-        eval_value = func(*args, **kwargs)
+        if func_name in ["parameterize", "P"]:
+            # TODO: add parameterize
+            # eval_value = load_csv_list(*args, **kwargs)
+            pass
+        else:
+            func = get_mapping_function(func_name, functions_mapping)
+            eval_value = func(*args, **kwargs)
 
         func_content = "${" + func_content + "}"
         if func_content == content:

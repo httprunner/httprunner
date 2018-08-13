@@ -2,7 +2,7 @@ import os
 import time
 import unittest
 
-from httprunner import exceptions, parser
+from httprunner import exceptions, loader, parser
 
 
 class TestParser(unittest.TestCase):
@@ -356,3 +356,74 @@ class TestParser(unittest.TestCase):
         substituted_data = parser.substitute_variables(content, variables_mapping)
         self.assertEqual(substituted_data["request"]["url"], "/api/users/1000")
         self.assertEqual(substituted_data["request"]["headers"], {'token': '$token'})
+
+    def test_parse_parameters_raw_list(self):
+        parameters = [
+            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+            {"username-password": [("user1", "111111"), ["test2", "222222"]]}
+        ]
+        variables_mapping = {}
+        functions_mapping = {}
+        cartesian_product_parameters = parser.parse_parameters(
+            parameters, variables_mapping, functions_mapping)
+        self.assertEqual(
+            len(cartesian_product_parameters),
+            3 * 2
+        )
+        self.assertEqual(
+            cartesian_product_parameters[0],
+            {'user_agent': 'iOS/10.1', 'username': 'user1', 'password': '111111'}
+        )
+
+    def test_parse_parameters_custom_function(self):
+        parameters = [
+            {"app_version": "${gen_app_version()}"},
+            {"username-password": "${get_account()}"}
+        ]
+        testset_path = os.path.join(
+            os.getcwd(),
+            "tests/data/demo_parameters.yml"
+        )
+        variables_mapping = {}
+        functions_mapping = {}
+        from tests import debugtalk
+        debugtalk_module = loader.load_python_module(debugtalk)
+        cartesian_product_parameters = parser.parse_parameters(
+            parameters,
+            debugtalk_module["variables"],
+            debugtalk_module["functions"]
+        )
+        self.assertEqual(
+            len(cartesian_product_parameters),
+            2 * 2
+        )
+
+    # def test_parse_parameters_parameterize(self):
+    #     parameters = [
+    #         {"app_version": "${parameterize(app_version.csv)}"},
+    #         {"username-password": "${parameterize(account.csv)}"}
+    #     ]
+
+    #     cartesian_product_parameters = parser.parse_parameters(
+    #         parameters, variables_mapping, functions_mapping)
+    #     self.assertEqual(
+    #         len(cartesian_product_parameters),
+    #         2 * 3
+    #     )
+
+    # def test_parse_parameters_mix(self):
+    #     parameters = [
+    #         {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+    #         {"app_version": "${gen_app_version()}"},
+    #         {"username-password": "${parameterize(account.csv)}"}
+    #     ]
+    #     testset_path = os.path.join(
+    #         os.getcwd(),
+    #         "tests/data/demo_parameters.yml"
+    #     )
+    #     cartesian_product_parameters = parser.parse_parameters(
+    #         parameters, variables_mapping, functions_mapping)
+    #     self.assertEqual(
+    #         len(cartesian_product_parameters),
+    #         3 * 2 * 3
+    #     )
