@@ -178,21 +178,21 @@ def convert_to_order_dict(map_list):
     return ordered_dict
 
 def update_ordered_dict(ordered_dict, override_mapping):
-    """ override ordered_dict with new mapping
-    @param
-        (OrderDict) ordered_dict
-            OrderDict({
-                "a": 1,
-                "b": 2
-            })
-        (dict) override_mapping
-            {"a": 3, "c": 4}
-    @return (OrderDict)
-        OrderDict({
-            "a": 3,
-            "b": 2,
-            "c": 4
-        })
+    """ override ordered_dict with new mapping.
+
+    Args:
+        ordered_dict (OrderDict): original ordered dict
+        override_mapping (dict): new variables mapping
+
+    Returns:
+        OrderDict: new overrided variables mapping.
+
+    Examples:
+        >>> ordered_dict = OrderDict({"a": 1, "b": 2})
+        >>> override_mapping = {"a": 3, "c": 4}
+        >>> update_ordered_dict(ordered_dict, override_mapping)
+            OrderDict({"a": 3, "b": 2, "c": 4})
+
     """
     new_ordered_dict = copy.copy(ordered_dict)
     for var, value in override_mapping.items():
