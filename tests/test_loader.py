@@ -170,6 +170,7 @@ class TestFileLoader(unittest.TestCase):
             "tests/debugtalk.py"
         )
 
+
 class TestModuleLoader(unittest.TestCase):
 
     def test_filter_module_functions(self):
@@ -180,8 +181,10 @@ class TestModuleLoader(unittest.TestCase):
 
     def test_load_debugtalk_module(self):
         imported_module_items = loader.load_debugtalk_module()
-        self.assertEqual(imported_module_items["functions"], {})
-        self.assertEqual(imported_module_items["variables"], {})
+        self.assertIn("basestring", imported_module_items["variables"])
+        self.assertIn("equals", imported_module_items["functions"])
+        self.assertNotIn("SECRET_KEY", imported_module_items["variables"])
+        self.assertNotIn("alter_response", imported_module_items["functions"])
 
         imported_module_items = loader.load_debugtalk_module("tests")
         self.assertEqual(
