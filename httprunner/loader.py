@@ -6,9 +6,8 @@ import json
 import os
 
 import yaml
-from httprunner import exceptions, logger, parser, validator
+from httprunner import built_in, exceptions, logger, parser, validator
 from httprunner.compat import OrderedDict
-
 
 project_mapping = {
     "debugtalk": {},
@@ -297,7 +296,7 @@ def load_python_module(module):
 
 
 def load_debugtalk_module(start_path=None):
-    """ load debugtalk.py module.
+    """ load built_in module and project debugtalk.py module.
 
     Args:
         start_path (str, optional): start locating path, maybe file path or directory path.
@@ -312,22 +311,27 @@ def load_debugtalk_module(start_path=None):
             }
 
     """
+    # load built_in module
+    built_in_module = load_python_module(built_in)
+
     start_path = start_path or os.getcwd()
 
     try:
         module_path = locate_file(start_path, "debugtalk.py")
         module_name = convert_module_name(module_path)
     except exceptions.FileNotFound:
-        return {
-            "variables": {},
-            "functions": {}
-        }
+        return built_in_module
 
+    # load debugtalk.py module
     imported_module = importlib.import_module(module_name)
-    loaded_module = load_python_module(imported_module)
+    debugtalk_module = load_python_module(imported_module)
 
-    project_mapping["debugtalk"] = loaded_module
-    return loaded_module
+    # override built_in module with debugtalk.py module
+    debugtalk_module["variables"].update(built_in_module["variables"])
+    debugtalk_module["functions"].update(built_in_module["functions"])
+
+    project_mapping["debugtalk"] = debugtalk_module
+    return debugtalk_module
 
 
 def get_module_item(module_mapping, item_type, item_name):
