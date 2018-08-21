@@ -39,7 +39,7 @@ def is_testcase(data_structure):
     if not isinstance(data_structure, dict):
         return False
 
-    if "name" not in data_structure or "teststeps" not in data_structure:
+    if "teststeps" not in data_structure:
         return False
 
     if not isinstance(data_structure["teststeps"], list):

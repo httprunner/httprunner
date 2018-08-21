@@ -365,7 +365,7 @@ class Context(object):
             })
         """
         if isinstance(variables, list):
-            variables = utils.convert_to_order_dict(variables)
+            variables = utils.convert_mappinglist_to_orderdict(variables)
 
         for variable_name, value in variables.items():
             variable_eval_value = self.eval_content(value)
