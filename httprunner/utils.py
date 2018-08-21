@@ -270,11 +270,7 @@ def add_teststep(test_runner, teststep_dict):
                 self.meta_data["validators"] = test_runner.context.evaluated_validators
                 test_runner.http_client_session.init_meta_data()
 
-    if is_py2:
-        test.__func__.__doc__ = teststep_dict["name"]
-    else:
-        test.__doc__ = teststep_dict["name"]
-
+    test.__doc__ = teststep_dict["name"]
     return test
 
 
