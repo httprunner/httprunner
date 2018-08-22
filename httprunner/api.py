@@ -221,6 +221,7 @@ class HttpRunner(object):
 
             loaded_testcase = loader.loadTestsFromTestCase(TestSequense)
             setattr(loaded_testcase, "config", config)
+            setattr(loaded_testcase, "teststeps", testcase.get("teststeps", []))
             setattr(loaded_testcase, "runner", test_runner)
             loaded_testcases.append(loaded_testcase)
 
