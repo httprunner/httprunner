@@ -10,7 +10,10 @@ from httprunner import built_in, exceptions, logger, parser, validator
 from httprunner.compat import OrderedDict
 
 project_mapping = {
-    "debugtalk": {},
+    "debugtalk": {
+        "variables": {},
+        "functions": {}
+    },
     "env": {},
     "def-api": {},
     "def-testcase": {}
@@ -887,7 +890,10 @@ def load_test_folder(test_folder_path=None):
 def reset_loader():
     """ reset project mapping.
     """
-    project_mapping["debugtalk"] = {}
+    project_mapping["debugtalk"] = {
+        "variables": {},
+        "functions": {}
+    }
     project_mapping["env"] = {}
     project_mapping["def-api"] = {}
     project_mapping["def-testcase"] = {}
