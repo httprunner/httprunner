@@ -18,5 +18,6 @@ coverage = "*"
 coveralls = "*"
 twine = "*"
 contextlib2 = "*"
+locustio = "*"
 
 [scripts]

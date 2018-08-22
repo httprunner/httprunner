@@ -1,15 +1,18 @@
 #coding: utf-8
 import zmq
 from locust import HttpLocust, TaskSet, task
-from httprunner.task import LocustTask
+from httprunner import LocustRunner
+
 
 class WebPageTasks(TaskSet):
     def on_start(self):
-        self.test_runner = LocustTask(self.locust.file_path, self.client)
+        self.test_runner = LocustRunner(self.client)
+        self.file_path = self.locust.file_path
 
     @task
     def test_specified_scenario(self):
-        self.test_runner.run()
+        self.test_runner.run(self.file_path)
+
 
 class WebPageUser(HttpLocust):
     host = "$HOST"

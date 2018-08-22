@@ -76,7 +76,7 @@
         method: GET
     validate:
         - eq: ["status_code", 200]
-        - eq: [cookies.name, "value"]
+        # - eq: [cookies.name, "value"]
 
 - test:
     name: post data

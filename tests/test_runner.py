@@ -1,7 +1,7 @@
 import os
 import time
 
-from httprunner import HttpRunner, exceptions, loader, runner
+from httprunner import exceptions, loader, runner
 from httprunner.utils import deep_update_dict
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -10,15 +10,16 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        self.test_runner = runner.Runner()
+        project_dir = os.path.join(os.getcwd(), "tests")
+        loader.load_project_tests(project_dir)
+        loader.load_debugtalk_module(project_dir)
+        self.debugtalk_module = loader.project_mapping["debugtalk"]
+        config_dict = {
+            "variables": self.debugtalk_module["variables"],
+            "functions": self.debugtalk_module["functions"]
+        }
+        self.test_runner = runner.Runner(config_dict)
         self.reset_all()
-
-        self.testcase_file_path_list = [
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testset_hardcode.yml'),
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testset_hardcode.json')
-        ]
 
     def reset_all(self):
         url = "%s/api/reset-all" % self.host
@@ -26,22 +27,30 @@ class TestRunner(ApiServerUnittest):
         return self.api_client.get(url, headers=headers)
 
     def test_run_single_testcase(self):
-        for testcase_file_path in self.testcase_file_path_list:
+        testcase_file_path_list = [
+            os.path.join(
+                os.getcwd(), 'tests/data/demo_testset_hardcode.yml'),
+            os.path.join(
+                os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+        ]
+
+        for testcase_file_path in testcase_file_path_list:
             testcases = loader.load_file(testcase_file_path)
 
             config_dict = {
-                "path": testcase_file_path
+                "variables": self.debugtalk_module["variables"],
+                "functions": self.debugtalk_module["functions"]
             }
-            self.test_runner.init_config(config_dict, "testset")
+            test_runner = runner.Runner(config_dict)
 
             test = testcases[0]["test"]
-            self.test_runner.run_test(test)
+            test_runner.run_test(test)
 
             test = testcases[1]["test"]
-            self.test_runner.run_test(test)
+            test_runner.run_test(test)
 
             test = testcases[2]["test"]
-            self.test_runner.run_test(test)
+            test_runner.run_test(test)
 
     def test_run_single_testcase_fail(self):
         test = {
@@ -75,6 +84,8 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
+            "variables": self.debugtalk_module["variables"],
+            "functions": self.debugtalk_module["functions"],
             "request": {
                 "base_url": HTTPBIN_SERVER
             },
@@ -123,6 +134,8 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
+            "variables": self.debugtalk_module["variables"],
+            "functions": self.debugtalk_module["functions"],
             "request": {
                 "base_url": HTTPBIN_SERVER
             }
@@ -152,110 +165,6 @@ class TestRunner(ApiServerUnittest):
         test_runner = runner.Runner(config_dict)
         test_runner.run_test(test)
 
-    def test_run_httprunner_with_hooks(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/httpbin/hooks.yml')
-
-        start_time = time.time()
-        runner = HttpRunner().run(testcase_file_path)
-        end_time = time.time()
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-        self.assertLess(end_time - start_time, 10)
-
-    def test_run_httprunner_with_teardown_hooks_alter_response(self):
-        testsets = [
-            {
-                "name": "test teardown hooks",
-                "config": {
-                    'path': 'tests/httpbin/hooks.yml',
-                },
-                "teststeps": [
-                    {
-                        "name": "test teardown hooks",
-                        "request": {
-                            "url": "{}/headers".format(HTTPBIN_SERVER),
-                            "method": "GET",
-                            "data": "abc"
-                        },
-                        "teardown_hooks": [
-                            "${alter_response($response)}"
-                        ],
-                        "validate": [
-                            {"eq": ["status_code", 500]},
-                            {"eq": ["headers.content-type", "html/text"]},
-                            {"eq": ["json.headers.Host", "127.0.0.1:8888"]},
-                            {"eq": ["content.headers.Host", "127.0.0.1:8888"]},
-                            {"eq": ["text.headers.Host", "127.0.0.1:8888"]},
-                            {"eq": ["new_attribute", "new_attribute_value"]},
-                            {"eq": ["new_attribute_dict", {"key": 123}]},
-                            {"eq": ["new_attribute_dict.key", 123]}
-                        ]
-                    }
-                ]
-            }
-        ]
-        runner = HttpRunner().run(testsets)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-
-    def test_run_httprunner_with_teardown_hooks_not_exist_attribute(self):
-        testsets = [
-            {
-                "name": "test teardown hooks",
-                "config": {
-                    'path': 'tests/httpbin/hooks.yml',
-                },
-                "teststeps": [
-                    {
-                        "name": "test teardown hooks",
-                        "request": {
-                            "url": "{}/headers".format(HTTPBIN_SERVER),
-                            "method": "GET",
-                            "data": "abc"
-                        },
-                        "teardown_hooks": [
-                            "${alter_response($response)}"
-                        ],
-                        "validate": [
-                            {"eq": ["attribute_not_exist", "new_attribute"]}
-                        ]
-                    }
-                ]
-            }
-        ]
-        runner = HttpRunner().run(testsets)
-        summary = runner.summary
-        self.assertFalse(summary["success"])
-        self.assertEqual(summary["stat"]["errors"], 1)
-
-    def test_run_httprunner_with_teardown_hooks_error(self):
-        testsets = [
-            {
-                "name": "test teardown hooks",
-                "config": {
-                    'path': 'tests/httpbin/hooks.yml',
-                },
-                "teststeps": [
-                    {
-                        "name": "test teardown hooks",
-                        "request": {
-                            "url": "{}/headers".format(HTTPBIN_SERVER),
-                            "method": "GET",
-                            "data": "abc"
-                        },
-                        "teardown_hooks": [
-                            "${alter_response_error($response)}"
-                        ]
-                    }
-                ]
-            }
-        ]
-        runner = HttpRunner().run(testsets)
-        summary = runner.summary
-        self.assertFalse(summary["success"])
-        self.assertEqual(summary["stat"]["errors"], 1)
-
     def test_run_testset_with_teardown_hooks_success(self):
         test = {
             "name": "get token",
@@ -281,7 +190,7 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__)
         }
-        self.test_runner.init_config(config_dict, "testset")
+        self.test_runner.init_config(config_dict, "testcase")
 
         start_time = time.time()
         self.test_runner.run_test(test)
@@ -314,69 +223,13 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__)
         }
-        self.test_runner.init_config(config_dict, "testset")
+        self.test_runner.init_config(config_dict, "testcase")
 
         start_time = time.time()
         self.test_runner.run_test(test)
         end_time = time.time()
         # check if teardown function executed
         self.assertGreater(end_time - start_time, 2)
-
-    def test_run_testset_hardcode(self):
-        for testcase_file_path in self.testcase_file_path_list:
-            runner = HttpRunner().run(testcase_file_path)
-            self.assertTrue(runner.summary["success"])
-
-    def test_run_testsets_hardcode(self):
-        runner = HttpRunner().run(self.testcase_file_path_list)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 6)
-        self.assertEqual(summary["stat"]["successes"], 6)
-
-    def test_run_testset_template_variables(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_variables.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-
-    def test_run_testset_template_import_functions(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_functions.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-
-    def test_run_testset_layered(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-
-    def test_run_testset_output(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-        self.assertIn("token", summary["details"][0]["output"][0]["out"])
-        #TODO: fix
-        self.assertEqual(len(summary["details"][0]["output"]), 3)
-
-    def test_run_testset_with_variables_mapping(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        variables_mapping = {
-            "app_version": '2.9.7'
-        }
-        runner = HttpRunner().run(testcase_file_path, mapping=variables_mapping)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-        self.assertIn("token", summary["details"][0]["output"][0]["out"])
-        #TODO: fix
-        self.assertEqual(len(summary["details"][0]["output"]), 3)
 
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
@@ -398,19 +251,10 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": testcase_file_path
         }
-        self.test_runner.init_config(config_dict, "testset")
+        self.test_runner.init_config(config_dict, "testcase")
 
         test = testcases[2]["test"]
         self.test_runner.run_test(test)
-
-    def test_run_testset_with_parameters(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_parameters.yml')
-        runner = HttpRunner().run(testcase_file_path)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-        self.assertEqual(len(summary["details"][0]["output"]), 3 * 2 * 2)
-        self.assertEqual(summary["stat"]["testsRun"], 3 * 2 * 2)
 
     def test_run_validate_elapsed(self):
         test = {
