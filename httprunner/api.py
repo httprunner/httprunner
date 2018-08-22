@@ -48,6 +48,8 @@ class HttpRunner(object):
                 }
 
         """
+        loader.reset_loader()
+
         # load .env
         loader.load_dot_env_file(dot_env_path)
 
@@ -98,6 +100,21 @@ class HttpRunner(object):
 
         """
         if validator.is_testcases(path_or_testcases):
+            # TODO: refactor
+            if isinstance(path_or_testcases, list):
+                for testcase in path_or_testcases:
+                    try:
+                        dir_path = os.path.dirname(testcase["config"]["path"])
+                        loader.load_debugtalk_module(dir_path)
+                    except KeyError:
+                        pass
+            else:
+                try:
+                    dir_path = os.path.dirname(path_or_testcases["config"]["path"])
+                    loader.load_debugtalk_module(dir_path)
+                except KeyError:
+                    pass
+
             testcases = path_or_testcases
         else:
             testcases = loader.load_testcases(path_or_testcases)
@@ -170,6 +187,9 @@ class HttpRunner(object):
                     config_variables,
                     self.project_mapping["debugtalk"]["functions"]
                 )
+
+                # put loaded project functions to config
+                testcase["config"]["functions"] = self.project_mapping["debugtalk"]["functions"]
                 parsed_testcases_list.append(testcase)
 
         return parsed_testcases_list
@@ -300,6 +320,7 @@ class LocustRunner(object):
         try:
             self.runner.run(path)
         except exceptions.MyBaseError as ex:
+            # TODO: refactor
             from locust.events import request_failure
             request_failure.fire(
                 request_type=test.testcase_dict.get("request", {}).get("method"),

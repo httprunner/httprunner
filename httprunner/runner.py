@@ -4,69 +4,83 @@ from unittest.case import SkipTest
 
 from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
+from httprunner.compat import OrderedDict
 from httprunner.context import Context
 
 
 class Runner(object):
 
     def __init__(self, config_dict=None, http_client_session=None):
+        """
+        """
         self.http_client_session = http_client_session
-        self.context = Context()
-
         config_dict = config_dict or {}
+        self.evaluated_validators = []
 
-        # testset setup hooks
-        testset_setup_hooks = config_dict.pop("setup_hooks", [])
-        # testset teardown hooks
-        self.testset_teardown_hooks = config_dict.pop("teardown_hooks", [])
+        # testcase variables
+        config_variables = config_dict.get("variables", {})
+        # testcase functions
+        config_functions = config_dict.get("functions", {})
+        # testcase setup hooks
+        testcase_setup_hooks = config_dict.pop("setup_hooks", [])
+        # testcase teardown hooks
+        self.testcase_teardown_hooks = config_dict.pop("teardown_hooks", [])
 
-        self.init_config(config_dict, "testset")
+        self.context = Context(config_variables, config_functions)
+        self.init_config(config_dict, "testcase")
 
-        if testset_setup_hooks:
-            self.do_hook_actions(testset_setup_hooks)
+        if testcase_setup_hooks:
+            self.do_hook_actions(testcase_setup_hooks)
 
     def __del__(self):
-        if self.testset_teardown_hooks:
-            self.do_hook_actions(self.testset_teardown_hooks)
+        if self.testcase_teardown_hooks:
+            self.do_hook_actions(self.testcase_teardown_hooks)
 
     def init_config(self, config_dict, level):
         """ create/update context variables binds
-        @param (dict) config_dict
-        @param (str) level, "testset" or "testcase"
-        testset:
-            {
-                "name": "smoke testset",
-                "path": "tests/data/demo_testset_variables.yml",
-                "variables": [],   # optional
-                "request": {
-                    "base_url": "http://127.0.0.1:5000",
-                    "headers": {
-                        "User-Agent": "iOS/2.8.3"
+
+        Args:
+            config_dict (dict):
+            level (enum): "testcase" or "teststep"
+                testcase:
+                    {
+                        "name": "testcase description",
+                        "path": "tests/data/demo_testset_variables.yml",
+                        "variables": [],   # optional
+                        "request": {
+                            "base_url": "http://127.0.0.1:5000",
+                            "headers": {
+                                "User-Agent": "iOS/2.8.3"
+                            }
+                        }
                     }
-                }
-            }
-        testcase:
-            {
-                "name": "testcase description",
-                "variables": [],   # optional
-                "request": {
-                    "url": "/api/get-token",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json"
+                teststep:
+                    {
+                        "name": "teststep description",
+                        "variables": [],   # optional
+                        "request": {
+                            "url": "/api/get-token",
+                            "method": "POST",
+                            "headers": {
+                                "Content-Type": "application/json"
+                            }
+                        },
+                        "json": {
+                            "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                        }
                     }
-                },
-                "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
-                }
-            }
-        @param (str) context level, testcase or testset
+
+        Returns:
+            dict: parsed request dict
+
         """
         # convert keys in request headers to lowercase
         config_dict = utils.lower_config_dict_key(config_dict)
 
-        self.context.init_context(level)
-        self.context.config_context(config_dict, level)
+        self.context.init_context_variables(level)
+        variables = config_dict.get('variables') \
+            or config_dict.get('variable_binds', OrderedDict())
+        self.context.update_context_variables(variables, level)
 
         request_config = config_dict.get('request', {})
         parsed_request = self.context.get_parsed_request(request_config, level)
@@ -76,24 +90,32 @@ class Runner(object):
 
         return parsed_request
 
-    def _handle_skip_feature(self, testcase_dict):
-        """ handle skip feature for testcase
+    def _handle_skip_feature(self, teststep_dict):
+        """ handle skip feature for teststep
             - skip: skip current test unconditionally
             - skipIf: skip current test if condition is true
             - skipUnless: skip current test unless condition is true
+
+        Args:
+            teststep_dict (dict): teststep info
+
+        Raises:
+            SkipTest: skip teststep
+
         """
+        # TODO: move skip to __initialize
         skip_reason = None
 
-        if "skip" in testcase_dict:
-            skip_reason = testcase_dict["skip"]
+        if "skip" in teststep_dict:
+            skip_reason = teststep_dict["skip"]
 
-        elif "skipIf" in testcase_dict:
-            skip_if_condition = testcase_dict["skipIf"]
+        elif "skipIf" in teststep_dict:
+            skip_if_condition = teststep_dict["skipIf"]
             if self.context.eval_content(skip_if_condition):
                 skip_reason = "{} evaluate to True".format(skip_if_condition)
 
-        elif "skipUnless" in testcase_dict:
-            skip_unless_condition = testcase_dict["skipUnless"]
+        elif "skipUnless" in teststep_dict:
+            skip_unless_condition = teststep_dict["skipUnless"]
             if not self.context.eval_content(skip_unless_condition):
                 skip_reason = "{} evaluate to False".format(skip_unless_condition)
 
@@ -106,40 +128,49 @@ class Runner(object):
             # TODO: check hook function if valid
             self.context.eval_content(action)
 
-    def run_test(self, testcase_dict):
-        """ run single testcase.
-        @param (dict) testcase_dict
-            {
-                "name": "testcase description",
-                "skip": "skip this test unconditionally",
-                "times": 3,
-                "variables": [],        # optional, override
-                "request": {
-                    "url": "http://127.0.0.1:5000/api/users/1000",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json",
-                        "authorization": "$authorization",
-                        "random": "$random"
+    def run_test(self, teststep_dict):
+        """ run single teststep.
+
+        Args:
+            teststep_dict (dict): teststep info
+                {
+                    "name": "teststep description",
+                    "skip": "skip this test unconditionally",
+                    "times": 3,
+                    "variables": [],        # optional, override
+                    "request": {
+                        "url": "http://127.0.0.1:5000/api/users/1000",
+                        "method": "POST",
+                        "headers": {
+                            "Content-Type": "application/json",
+                            "authorization": "$authorization",
+                            "random": "$random"
+                        },
+                        "body": '{"name": "user", "password": "123456"}'
                     },
-                    "body": '{"name": "user", "password": "123456"}'
-                },
-                "extract": [],              # optional
-                "validate": [],             # optional
-                "setup_hooks": [],          # optional
-                "teardown_hooks": []        # optional
-            }
-        @return True or raise exception during test
+                    "extract": [],              # optional
+                    "validate": [],             # optional
+                    "setup_hooks": [],          # optional
+                    "teardown_hooks": []        # optional
+                }
+
+        Raises:
+            exceptions.ParamsError
+            exceptions.ValidationFailure
+            exceptions.ExtractFailure
+
         """
         # check skip
-        self._handle_skip_feature(testcase_dict)
+        self._handle_skip_feature(teststep_dict)
 
         # prepare
-        parsed_request = self.init_config(testcase_dict, level="testcase")
-        self.context.bind_testcase_variable("request", parsed_request)
+        extractors = teststep_dict.pop("extract", []) or teststep_dict.pop("extractors", [])
+        validators = teststep_dict.pop("validate", []) or teststep_dict.pop("validators", [])
+        parsed_request = self.init_config(teststep_dict, level="teststep")
+        self.context.update_teststep_variables_mapping("request", parsed_request)
 
         # setup hooks
-        setup_hooks = testcase_dict.get("setup_hooks", [])
+        setup_hooks = teststep_dict.get("setup_hooks", [])
         setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
         self.do_hook_actions(setup_hooks)
 
@@ -171,21 +202,19 @@ class Runner(object):
         resp_obj = response.ResponseObject(resp)
 
         # teardown hooks
-        teardown_hooks = testcase_dict.get("teardown_hooks", [])
+        teardown_hooks = teststep_dict.get("teardown_hooks", [])
         if teardown_hooks:
             logger.log_info("start to run teardown hooks")
-            self.context.bind_testcase_variable("response", resp_obj)
+            self.context.update_teststep_variables_mapping("response", resp_obj)
             self.do_hook_actions(teardown_hooks)
 
         # extract
-        extractors = testcase_dict.get("extract", []) or testcase_dict.get("extractors", [])
         extracted_variables_mapping = resp_obj.extract_response(extractors)
-        self.context.bind_extracted_variables(extracted_variables_mapping)
+        self.context.update_testcase_runtime_variables_mapping(extracted_variables_mapping)
 
         # validate
-        validators = testcase_dict.get("validate", []) or testcase_dict.get("validators", [])
         try:
-            self.context.validate(validators, resp_obj)
+            self.evaluated_validators = self.context.validate(validators, resp_obj)
         except (exceptions.ParamsError, \
                 exceptions.ValidationFailure, exceptions.ExtractFailure):
             # log request
@@ -207,7 +236,7 @@ class Runner(object):
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
-        variables_mapping = self.context.testcase_variables_mapping
+        variables_mapping = self.context.teststep_variables_mapping
 
         output = {}
         for variable in output_variables_list:
