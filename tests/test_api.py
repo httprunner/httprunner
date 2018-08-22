@@ -343,6 +343,22 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("get_token", hrunner.project_mapping["def-api"])
         self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
 
+    def test_load_tests(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testcase.yml')
+        runner = HttpRunner()
+        testcases = runner.load_tests(testcase_file_path)
+        self.assertIsInstance(testcases, list)
+        self.assertEqual(
+            testcases[0]["config"]["request"],
+            '$demo_default_request'
+        )
+        self.assertEqual(testcases[0]["config"]["name"], '123$var_a')
+        self.assertIn(
+            "sum_two",
+            runner.project_mapping["debugtalk"]["functions"]
+        )
+
 
 class TestLocustRunner(ApiServerUnittest):
 
