@@ -8,8 +8,8 @@ from httprunner import exceptions, utils
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 variable_regexp = r"\$([\w_]+)"
-function_regexp = r"\$\{([\w_]+\([\$\w\.\-_ =,]*\))\}"
-function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w\.\-_ =,]*)\)$")
+function_regexp = r"\$\{([\w_]+\([\$\w\.\-/_ =,]*\))\}"
+function_regexp_compile = re.compile(r"^([\w_]+)\(([\$\w\.\-/_ =,]*)\)$")
 
 
 def parse_string_value(str_value):
@@ -255,7 +255,6 @@ def substitute_variables(content, variables_mapping):
 
     return content
 
-
 def parse_parameters(parameters, variables_mapping, functions_mapping):
     """ parse parameters and generate cartesian product.
 
@@ -404,9 +403,8 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
         kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
 
         if func_name in ["parameterize", "P"]:
-            # TODO: add parameterize
-            # eval_value = load_csv_list(*args, **kwargs)
-            pass
+            from httprunner import loader
+            eval_value = loader.load_csv_file(*args, **kwargs)
         else:
             func = get_mapping_function(func_name, functions_mapping)
             eval_value = func(*args, **kwargs)
