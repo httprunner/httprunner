@@ -23,44 +23,39 @@ class HttpRunner(object):
 
         Attributes:
             project_mapping (dict): save project loaded api/testcases, environments and debugtalk.py module.
-
-        """
-        self.kwargs = kwargs
-        dot_env_path = self.kwargs.pop("dot_env_path", None)
-        self.project_mapping = self.__loader(dot_env_path)
-        self.http_client_session = self.kwargs.pop("http_client_session", None)
-
-    def __loader(self, dot_env_path=None):
-        """ load project dependent files, including api/testcase definitions,
-            environment variables and debugtalk.py module.
-
-        Args:
-            dot_env_path (str): .env file path
-
-        Returns:
-            dict: project dependent info mapping.
-
                 {
-                    "debugtalk": {},
+                    "debugtalk": {
+                        "variables": {},
+                        "functions": {}
+                    },
                     "env": {},
                     "def-api": {},
                     "def-testcase": {}
                 }
 
         """
+        self.kwargs = kwargs
+        self.http_client_session = self.kwargs.pop("http_client_session", None)
+
+        self.__loader()
+
+    def __loader(self):
+        """ load project dependent files, including api/testcase definitions,
+            environment variables and builtin module.
+
+        """
         loader.reset_loader()
 
         # load .env
+        dot_env_path = self.kwargs.pop("dot_env_path", None)
         loader.load_dot_env_file(dot_env_path)
 
         # load api/testcase definition and debugtalk.py module
         project_folder_path = os.path.join(os.getcwd(), "tests") # TODO: remove tests
         loader.load_project_tests(project_folder_path)
 
-        project_mapping = loader.project_mapping
-        utils.set_os_environ(project_mapping["env"])
-
-        return project_mapping
+        self.project_mapping = loader.project_mapping
+        utils.set_os_environ(self.project_mapping["env"])
 
     def __load_testcases(self, path_or_testcases):
         """ load testcases, extend and merge with api/testcase definitions.
