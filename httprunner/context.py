@@ -110,8 +110,8 @@ class Context(object):
         """
         if level == "testcase":
             # testcase config request dict has been parsed in parse_tests
-            self.TESTCASE_SHARED_REQUEST_MAPPING = request_dict
-            return request_dict
+            self.TESTCASE_SHARED_REQUEST_MAPPING = copy.deepcopy(request_dict)
+            return self.TESTCASE_SHARED_REQUEST_MAPPING
 
         else:
             # teststep

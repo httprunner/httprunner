@@ -164,8 +164,8 @@ class Runner(object):
         self._handle_skip_feature(teststep_dict)
 
         # prepare
-        extractors = teststep_dict.pop("extract", []) or teststep_dict.pop("extractors", [])
-        validators = teststep_dict.pop("validate", []) or teststep_dict.pop("validators", [])
+        extractors = teststep_dict.get("extract", []) or teststep_dict.get("extractors", [])
+        validators = teststep_dict.get("validate", []) or teststep_dict.get("validators", [])
         parsed_request = self.init_config(teststep_dict, level="teststep")
         self.context.update_teststep_variables_mapping("request", parsed_request)
 
