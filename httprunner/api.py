@@ -57,7 +57,7 @@ class HttpRunner(object):
         self.project_mapping = loader.project_mapping
         utils.set_os_environ(self.project_mapping["env"])
 
-    def __load_testcases(self, path_or_testcases):
+    def load_tests(self, path_or_testcases):
         """ load testcases, extend and merge with api/testcase definitions.
 
         Args:
@@ -122,7 +122,7 @@ class HttpRunner(object):
 
         return testcases
 
-    def __parse_testcases(self, testcases, variables_mapping=None):
+    def parse_tests(self, testcases, variables_mapping=None):
         """ parse testcases configs, including variables/parameters/name/request.
 
         Args:
@@ -250,8 +250,8 @@ class HttpRunner(object):
 
         """
         # parser
-        testcases_list = self.__load_testcases(path_or_testcases)
-        parsed_testcases_list = self.__parse_testcases(testcases_list)
+        testcases_list = self.load_tests(path_or_testcases)
+        parsed_testcases_list = self.parse_tests(testcases_list)
 
         # initialize
         unittest_runner, test_suite = self.__initialize(parsed_testcases_list)
