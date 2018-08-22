@@ -303,26 +303,26 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 1)
 
-    def test_run_testset_output(self):
+    def test_run_testcase_output(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
-        runner = HttpRunner().run(testcase_file_path)
+        runner = HttpRunner(failfast=True).run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
         self.assertIn("user_agent", summary["details"][0]["in_out"]["in"])
 
-    def test_run_testset_with_variables_mapping(self):
+    def test_run_testcase_with_variables_mapping(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         variables_mapping = {
             "app_version": '2.9.7'
         }
-        runner = HttpRunner().run(testcase_file_path, mapping=variables_mapping)
+        runner = HttpRunner(failfast=True).run(testcase_file_path, mapping=variables_mapping)
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
-        self.assertEqual(len(summary["details"][0]["in_out"]["in"]), 7)
+        self.assertEqual(len(summary["details"][0]["in_out"]["in"]), 9)
 
     def test_run_testset_with_parameters(self):
         testcase_file_path = os.path.join(
@@ -340,11 +340,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(hrunner.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
         self.assertIn("debugtalk", hrunner.project_mapping)
         self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
-        self.assertEqual(
-            hrunner.project_mapping["debugtalk"]["variables"]["SECRET_KEY"],
-            "DebugTalk"
-        )
-        self.assertIn("get_sign", hrunner.project_mapping["debugtalk"]["functions"])
         self.assertIn("get_token", hrunner.project_mapping["def-api"])
         self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
 

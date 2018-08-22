@@ -267,7 +267,7 @@ def add_teststep(test_runner, teststep_dict):
         finally:
             if hasattr(test_runner.http_client_session, "meta_data"):
                 self.meta_data = test_runner.http_client_session.meta_data
-                self.meta_data["validators"] = test_runner.context.evaluated_validators
+                self.meta_data["validators"] = test_runner.evaluated_validators
                 test_runner.http_client_session.init_meta_data()
 
     test.__doc__ = teststep_dict["name"]
@@ -331,6 +331,8 @@ def print_io(in_out):
     def prepare_content(var_type, in_out):
         content = ""
         for variable, value in in_out.items():
+            if isinstance(value, tuple):
+                continue
 
             if is_py2:
                 if isinstance(variable, unicode):

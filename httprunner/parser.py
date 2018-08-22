@@ -492,7 +492,6 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
 
     """
     # TODO: refactor type check
-    # TODO: combine this with TestcaseParser
     if content is None or isinstance(content, (numeric_types, bool, type)):
         return content
 

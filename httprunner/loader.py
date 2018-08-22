@@ -295,8 +295,15 @@ def load_python_module(module):
     return debugtalk_module
 
 
+def load_builtin_module():
+    """ load built_in module
+    """
+    built_in_module = load_python_module(built_in)
+    project_mapping["debugtalk"] = built_in_module
+
+
 def load_debugtalk_module(start_path=None):
-    """ load built_in module and project debugtalk.py module.
+    """ load project debugtalk.py module and merge with builtin module.
 
     Args:
         start_path (str, optional): start locating path, maybe file path or directory path.
@@ -304,34 +311,27 @@ def load_debugtalk_module(start_path=None):
 
     Returns:
         dict: variables and functions mapping for debugtalk.py
-
             {
                 "variables": {},
                 "functions": {}
             }
 
     """
-    # load built_in module
-    built_in_module = load_python_module(built_in)
-
     start_path = start_path or os.getcwd()
 
     try:
         module_path = locate_file(start_path, "debugtalk.py")
         module_name = convert_module_name(module_path)
     except exceptions.FileNotFound:
-        return built_in_module
+        return
 
     # load debugtalk.py module
     imported_module = importlib.import_module(module_name)
     debugtalk_module = load_python_module(imported_module)
 
     # override built_in module with debugtalk.py module
-    debugtalk_module["variables"].update(built_in_module["variables"])
-    debugtalk_module["functions"].update(built_in_module["functions"])
-
-    project_mapping["debugtalk"] = debugtalk_module
-    return debugtalk_module
+    project_mapping["debugtalk"]["variables"].update(debugtalk_module["variables"])
+    project_mapping["debugtalk"]["functions"].update(debugtalk_module["functions"])
 
 
 def get_module_item(module_mapping, item_type, item_name):
@@ -884,21 +884,26 @@ def load_test_folder(test_folder_path=None):
     return test_definition_mapping
 
 
+def reset_loader():
+    """ reset project mapping.
+    """
+    project_mapping["debugtalk"] = {}
+    project_mapping["env"] = {}
+    project_mapping["def-api"] = {}
+    project_mapping["def-testcase"] = {}
+    testcases_cache_mapping.clear()
+
+
 def load_project_tests(folder_path):
-    """ load api, testcases and debugtalk.py module.
+    """ load api, testcases and builtin module.
 
     Args:
         folder_path (str): folder path.
 
-    Returns:
-        dict: project tests mapping.
-
     """
-    load_debugtalk_module(folder_path)
+    load_builtin_module()
     load_api_folder(os.path.join(folder_path, "api"))
     load_test_folder(os.path.join(folder_path, "suite"))
-
-    return project_mapping
 
 
 def load_testcases(path):
@@ -937,11 +942,14 @@ def load_testcases(path):
         return testcases_cache_mapping[path]
 
     if os.path.isdir(path):
+        load_debugtalk_module(path)
         files_list = load_folder_files(path)
         testcases_list = load_testcases(files_list)
 
     elif os.path.isfile(path):
         try:
+            dir_path = os.path.dirname(path)
+            load_debugtalk_module(dir_path)
             testcase = _load_test_file(path)
             if testcase["teststeps"]:
                 testcases_list = [testcase]

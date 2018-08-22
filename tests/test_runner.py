@@ -10,7 +10,15 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        self.test_runner = runner.Runner()
+        project_dir = os.path.join(os.getcwd(), "tests")
+        loader.load_project_tests(project_dir)
+        loader.load_debugtalk_module(project_dir)
+        self.debugtalk_module = loader.project_mapping["debugtalk"]
+        config_dict = {
+            "variables": self.debugtalk_module["variables"],
+            "functions": self.debugtalk_module["functions"]
+        }
+        self.test_runner = runner.Runner(config_dict)
         self.reset_all()
 
     def reset_all(self):
@@ -30,18 +38,19 @@ class TestRunner(ApiServerUnittest):
             testcases = loader.load_file(testcase_file_path)
 
             config_dict = {
-                "path": testcase_file_path
+                "variables": self.debugtalk_module["variables"],
+                "functions": self.debugtalk_module["functions"]
             }
-            self.test_runner.init_config(config_dict, "testset")
+            test_runner = runner.Runner(config_dict)
 
             test = testcases[0]["test"]
-            self.test_runner.run_test(test)
+            test_runner.run_test(test)
 
             test = testcases[1]["test"]
-            self.test_runner.run_test(test)
+            test_runner.run_test(test)
 
             test = testcases[2]["test"]
-            self.test_runner.run_test(test)
+            test_runner.run_test(test)
 
     def test_run_single_testcase_fail(self):
         test = {
@@ -75,6 +84,8 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
+            "variables": self.debugtalk_module["variables"],
+            "functions": self.debugtalk_module["functions"],
             "request": {
                 "base_url": HTTPBIN_SERVER
             },
@@ -123,6 +134,8 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
+            "variables": self.debugtalk_module["variables"],
+            "functions": self.debugtalk_module["functions"],
             "request": {
                 "base_url": HTTPBIN_SERVER
             }
@@ -177,7 +190,7 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__)
         }
-        self.test_runner.init_config(config_dict, "testset")
+        self.test_runner.init_config(config_dict, "testcase")
 
         start_time = time.time()
         self.test_runner.run_test(test)
@@ -210,7 +223,7 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": os.path.join(os.getcwd(), __file__)
         }
-        self.test_runner.init_config(config_dict, "testset")
+        self.test_runner.init_config(config_dict, "testcase")
 
         start_time = time.time()
         self.test_runner.run_test(test)
@@ -238,7 +251,7 @@ class TestRunner(ApiServerUnittest):
         config_dict = {
             "path": testcase_file_path
         }
-        self.test_runner.init_config(config_dict, "testset")
+        self.test_runner.init_config(config_dict, "testcase")
 
         test = testcases[2]["test"]
         self.test_runner.run_test(test)
