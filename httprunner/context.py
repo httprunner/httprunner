@@ -109,7 +109,7 @@ class Context(object):
 
         """
         if level == "testcase":
-            # testcase config request dict has been parsed in __parse_testcases
+            # testcase config request dict has been parsed in parse_tests
             self.TESTCASE_SHARED_REQUEST_MAPPING = request_dict
             return request_dict
 
