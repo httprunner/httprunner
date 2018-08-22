@@ -329,6 +329,10 @@ class TestHttpRunner(ApiServerUnittest):
             os.getcwd(), 'tests/data/demo_parameters.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
+        self.assertEqual(
+            summary["details"][0]["in_out"]["in"]["user_agent"],
+            "iOS/10.3"
+        )
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 3 * 2)
         self.assertEqual(summary["stat"]["testsRun"], 3 * 2)
