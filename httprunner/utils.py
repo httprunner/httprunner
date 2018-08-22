@@ -158,41 +158,49 @@ def lower_config_dict_key(config_dict):
 
     return config_dict
 
-def convert_to_order_dict(map_list):
-    """ convert mapping in list to ordered dict
-    @param (list) map_list
-        [
-            {"a": 1},
-            {"b": 2}
-        ]
-    @return (OrderDict)
-        OrderDict({
-            "a": 1,
-            "b": 2
-        })
+def convert_mappinglist_to_orderdict(mapping_list):
+    """ convert mapping list to ordered dict
+
+    Args:
+        mapping_list (list):
+            [
+                {"a": 1},
+                {"b": 2}
+            ]
+
+    Returns:
+        OrderedDict: converted mapping in OrderedDict
+            OrderDict(
+                {
+                    "a": 1,
+                    "b": 2
+                }
+            )
+
     """
     ordered_dict = OrderedDict()
-    for map_dict in map_list:
+    for map_dict in mapping_list:
         ordered_dict.update(map_dict)
 
     return ordered_dict
 
+
 def update_ordered_dict(ordered_dict, override_mapping):
-    """ override ordered_dict with new mapping
-    @param
-        (OrderDict) ordered_dict
-            OrderDict({
-                "a": 1,
-                "b": 2
-            })
-        (dict) override_mapping
-            {"a": 3, "c": 4}
-    @return (OrderDict)
-        OrderDict({
-            "a": 3,
-            "b": 2,
-            "c": 4
-        })
+    """ override ordered_dict with new mapping.
+
+    Args:
+        ordered_dict (OrderDict): original ordered dict
+        override_mapping (dict): new variables mapping
+
+    Returns:
+        OrderDict: new overrided variables mapping.
+
+    Examples:
+        >>> ordered_dict = OrderDict({"a": 1, "b": 2})
+        >>> override_mapping = {"a": 3, "c": 4}
+        >>> update_ordered_dict(ordered_dict, override_mapping)
+            OrderDict({"a": 3, "b": 2, "c": 4})
+
     """
     new_ordered_dict = copy.copy(ordered_dict)
     for var, value in override_mapping.items():
@@ -200,11 +208,43 @@ def update_ordered_dict(ordered_dict, override_mapping):
 
     return new_ordered_dict
 
-def override_variables_binds(variables, new_mapping):
-    """ convert variables in testcase to ordered mapping, with new_mapping overrided
+
+def override_mapping_list(variables, new_mapping):
+    """ override variables with new mapping.
+
+    Args:
+        variables (list): variables list
+            [
+                {"var_a": 1},
+                {"var_b": "world"}
+            ]
+        new_mapping (dict): overrided variables mapping
+            {
+                "var_a": "hello"
+            }
+
+    Returns:
+        OrderedDict: overrided variables mapping.
+
+    Examples:
+        >>> variables = [
+                {"var_a": 1},
+                {"var_b": "world"}
+            ]
+        >>> new_mapping = {
+                "var_a": "hello"
+            }
+        >>> override_mapping_list(variables, new_mapping)
+            OrderedDict(
+                {
+                    "var_a": "hello",
+                    "var_b": "world"
+                }
+            )
+
     """
     if isinstance(variables, list):
-        variables_ordered_dict = convert_to_order_dict(variables)
+        variables_ordered_dict = convert_mappinglist_to_orderdict(variables)
     elif isinstance(variables, (OrderedDict, dict)):
         variables_ordered_dict = variables
     else:
@@ -215,18 +255,84 @@ def override_variables_binds(variables, new_mapping):
         new_mapping
     )
 
-def print_output(outputs):
 
-    if not outputs:
-        return
+def add_teststep(test_runner, teststep_dict):
+    """ add teststep to testcase.
+    """
+    def test(self):
+        try:
+            test_runner.run_test(teststep_dict)
+        except exceptions.MyBaseFailure as ex:
+            self.fail(repr(ex))
+        finally:
+            if hasattr(test_runner.http_client_session, "meta_data"):
+                self.meta_data = test_runner.http_client_session.meta_data
+                self.meta_data["validators"] = test_runner.evaluated_validators
+                test_runner.http_client_session.init_meta_data()
 
+    test.__doc__ = teststep_dict["name"]
+    return test
+
+
+def get_testcase_io(testcase):
+    """ get testcase input(variables) and output.
+
+    Args:
+        testcase (unittest.suite.TestSuite): corresponding to one YAML/JSON file, it has been set two attributes:
+            config: parsed config block
+            runner: initialized runner.Runner() with config
+
+    Returns:
+        dict: input(variables) and output mapping.
+
+    """
+    runner = testcase.runner
+    variables = testcase.config.get("variables", [])
+    output_list = testcase.config.get("output", [])
+
+    return {
+        "in": dict(variables),
+        "out": runner.extract_output(output_list)
+    }
+
+
+def print_io(in_out):
+    """ print input(variables) and output.
+
+    Args:
+        in_out (dict): input(variables) and output mapping.
+
+    Examples:
+        >>> in_out = {
+                "in": {
+                    "var_a": "hello",
+                    "var_b": "world"
+                },
+                "out": {
+                    "status_code": 500
+                }
+            }
+        >>> print_io(in_out)
+        ================== Variables & Output ==================
+        Type   | Variable         :  Value
+        ------ | ---------------- :  ---------------------------
+        Var    | var_a            :  hello
+        Var    | var_b            :  world
+
+        Out    | status_code      :  500
+        --------------------------------------------------------
+
+    """
+    content_format = "{:<6} | {:<16} :  {:<}\n"
     content = "\n================== Variables & Output ==================\n"
-    content += '{:<6} | {:<16} :  {:<}\n'.format("Type", "Variable", "Value")
-    content += '{:<6} | {:<16} :  {:<}\n'.format("-" * 6, "-" * 16, "-" * 27)
+    content += content_format.format("Type", "Variable", "Value")
+    content += content_format.format("-" * 6, "-" * 16, "-" * 27)
 
     def prepare_content(var_type, in_out):
         content = ""
         for variable, value in in_out.items():
+            if isinstance(value, tuple):
+                continue
 
             if is_py2:
                 if isinstance(variable, unicode):
@@ -234,21 +340,17 @@ def print_output(outputs):
                 if isinstance(value, unicode):
                     value = value.encode("utf-8")
 
-            content += '{:<6} | {:<16} :  {:<}\n'.format(var_type, variable, value)
+            content += content_format.format(var_type, variable, value)
 
         return content
 
-    for output in outputs:
-        _in = output["in"]
-        _out = output["out"]
+    _in = in_out["in"]
+    _out = in_out["out"]
 
-        if not _out:
-            continue
-
-        content += prepare_content("Var", _in)
-        content += "\n"
-        content += prepare_content("Out", _out)
-        content += "-" * 56 + "\n"
+    content += prepare_content("Var", _in)
+    content += "\n"
+    content += prepare_content("Out", _out)
+    content += "-" * 56 + "\n"
 
     logger.log_debug(content)
 
@@ -336,6 +438,7 @@ def validate_json_file(file_list):
 
         print("OK")
 
+
 def prettify_json_file(file_list):
     """ prettify JSON testset format
     """
@@ -361,6 +464,7 @@ def prettify_json_file(file_list):
             out.write('\n')
 
         print("success: {}".format(outfile))
+
 
 def get_python2_retire_msg():
     retire_day = datetime(2020, 1, 1)

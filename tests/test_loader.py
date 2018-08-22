@@ -1,7 +1,8 @@
+
 import os
 import unittest
 
-from httprunner import exceptions, loader, task, validator
+from httprunner import exceptions, loader, validator
 
 
 class TestFileLoader(unittest.TestCase):
@@ -169,6 +170,7 @@ class TestFileLoader(unittest.TestCase):
             "tests/debugtalk.py"
         )
 
+
 class TestModuleLoader(unittest.TestCase):
 
     def test_filter_module_functions(self):
@@ -178,11 +180,16 @@ class TestModuleLoader(unittest.TestCase):
         self.assertNotIn("is_py3", functions_dict)
 
     def test_load_debugtalk_module(self):
-        imported_module_items = loader.load_debugtalk_module()
-        self.assertEqual(imported_module_items["functions"], {})
-        self.assertEqual(imported_module_items["variables"], {})
+        project_dir = os.path.join(os.getcwd(), "tests")
+        loader.load_project_tests(project_dir)
+        loader.load_debugtalk_module()
+        imported_module_items = loader.project_mapping["debugtalk"]
+        self.assertIn("equals", imported_module_items["functions"])
+        self.assertNotIn("SECRET_KEY", imported_module_items["variables"])
+        self.assertNotIn("alter_response", imported_module_items["functions"])
 
-        imported_module_items = loader.load_debugtalk_module("tests")
+        loader.load_debugtalk_module("tests")
+        imported_module_items = loader.project_mapping["debugtalk"]
         self.assertEqual(
             imported_module_items["variables"]["SECRET_KEY"],
             "DebugTalk"
@@ -472,20 +479,9 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_project_tests(self):
         project_dir = os.path.join(os.getcwd(), "tests")
-        project_tests = loader.load_project_tests(project_dir)
-        self.assertEqual(project_tests["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
-        self.assertIn("get_token", project_tests["def-api"])
-        self.assertIn("setup_and_reset", project_tests["def-testcase"])
-
-    def test_loader(self):
-        hrunner = task.HttpRunner(dot_env_path="tests/data/test.env")
-        self.assertEqual(hrunner.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
-        self.assertIn("debugtalk", hrunner.project_mapping)
-        self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
-        self.assertEqual(
-            hrunner.project_mapping["debugtalk"]["variables"]["SECRET_KEY"],
-            "DebugTalk"
-        )
-        self.assertIn("get_sign", hrunner.project_mapping["debugtalk"]["functions"])
-        self.assertIn("get_token", hrunner.project_mapping["def-api"])
-        self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
+        loader.load_project_tests(project_dir)
+        loader.load_debugtalk_module(project_dir)
+        project_mapping = loader.project_mapping
+        self.assertEqual(project_mapping["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
+        self.assertIn("get_token", project_mapping["def-api"])
+        self.assertIn("setup_and_reset", project_mapping["def-testcase"])

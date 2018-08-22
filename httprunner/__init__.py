@@ -1,3 +1,3 @@
 # encoding: utf-8
 
-from httprunner.task import HttpRunner
+from httprunner.api import HttpRunner, LocustRunner

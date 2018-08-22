@@ -210,7 +210,7 @@ class TestUtils(ApiServerUnittest):
             {"a": 1},
             {"b": 2}
         ]
-        ordered_dict = utils.convert_to_order_dict(map_list)
+        ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
 
@@ -219,7 +219,7 @@ class TestUtils(ApiServerUnittest):
             {"a": 1},
             {"b": 2}
         ]
-        ordered_dict = utils.convert_to_order_dict(map_list)
+        ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
         override_mapping = {"a": 3, "c": 4}
         new_dict = utils.update_ordered_dict(ordered_dict, override_mapping)
         self.assertEqual(3, new_dict["a"])
@@ -231,7 +231,7 @@ class TestUtils(ApiServerUnittest):
             {"b": 2}
         ]
         override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_variables_binds(map_list, override_mapping)
+        new_dict = utils.override_mapping_list(map_list, override_mapping)
         self.assertEqual(3, new_dict["a"])
         self.assertEqual(4, new_dict["c"])
 
@@ -242,14 +242,14 @@ class TestUtils(ApiServerUnittest):
             }
         )
         override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_variables_binds(map_list, override_mapping)
+        new_dict = utils.override_mapping_list(map_list, override_mapping)
         self.assertEqual(3, new_dict["a"])
         self.assertEqual(4, new_dict["c"])
 
         map_list = "invalid"
         override_mapping = {"a": 3, "c": 4}
         with self.assertRaises(exceptions.ParamsError):
-            utils.override_variables_binds(map_list, override_mapping)
+            utils.override_mapping_list(map_list, override_mapping)
 
     def test_create_scaffold(self):
         project_path = os.path.join(os.getcwd(), "projectABC")

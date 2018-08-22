@@ -9,7 +9,7 @@ import unittest
 from httprunner import logger
 from httprunner.__about__ import __description__, __version__
 from httprunner.compat import is_py2
-from httprunner.task import HttpRunner
+from httprunner.api import HttpRunner
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
                               prettify_json_file, validate_json_file)
 

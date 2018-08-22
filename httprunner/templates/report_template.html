@@ -204,12 +204,10 @@
                           <th>variables</th>
                           <th>output</th>
                         </tr>
-                        {% for in_out in test_suite_summary.output %}
                         <tr>
-                          <td>{{in_out.in}}</td>
-                          <td>{{in_out.out}}</td>
+                          <td>{{test_suite_summary.in_out.in}}</td>
+                          <td>{{test_suite_summary.in_out.out}}</td>
                         </tr>
-                        {% endfor %}
                       </table>
                   </div>
                 </div>
