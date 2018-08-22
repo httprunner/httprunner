@@ -322,7 +322,7 @@ class TestHttpRunner(ApiServerUnittest):
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
-        self.assertEqual(len(summary["details"][0]["in_out"]["in"]), 9)
+        self.assertGreater(len(summary["details"][0]["in_out"]["in"]), 7)
 
     def test_run_testset_with_parameters(self):
         testcase_file_path = os.path.join(
