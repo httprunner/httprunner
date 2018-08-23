@@ -246,7 +246,6 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_test_file_testcase(self):
         testcase = loader._load_test_file("tests/testcases/smoketest.yml")
         self.assertEqual(testcase["config"]["name"], "smoketest")
-        self.assertEqual(testcase["config"]["path"], "tests/testcases/smoketest.yml")
         self.assertIn("device_sn", testcase["config"]["variables"][0])
         self.assertEqual(len(testcase["teststeps"]), 8)
         self.assertEqual(testcase["teststeps"][0]["name"], "get token")
@@ -365,8 +364,6 @@ class TestSuiteLoader(unittest.TestCase):
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertIn("path", testset_list[0]["config"])
-        self.assertEqual(testset_list[0]["config"]["path"], path)
         self.assertEqual(len(testset_list[0]["teststeps"]), 3)
         testsets_list.extend(testset_list)
 
@@ -374,8 +371,6 @@ class TestSuiteLoader(unittest.TestCase):
         path = 'tests/data/demo_testset_hardcode.yml'
         testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertIn("path", testset_list[0]["config"])
-        self.assertIn(path, testset_list[0]["config"]["path"])
         self.assertEqual(len(testset_list[0]["teststeps"]), 3)
         testsets_list.extend(testset_list)
 

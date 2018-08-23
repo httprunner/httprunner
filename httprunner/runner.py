@@ -45,7 +45,6 @@ class Runner(object):
                 testcase:
                     {
                         "name": "testcase description",
-                        "path": "tests/data/demo_testset_variables.yml",
                         "variables": [],   # optional
                         "request": {
                             "base_url": "http://127.0.0.1:5000",

@@ -424,9 +424,7 @@ def _load_test_file(file_path):
 
     """
     testcase = {
-        "config": {
-            "path": file_path
-        },
+        "config": {},
         "teststeps": []
     }
 
@@ -856,9 +854,7 @@ def load_test_folder(test_folder_path):
         # TODO: add JSON schema validation
 
         testcase = {
-            "config": {
-                "path": test_file_path
-            },
+            "config": {},
             "teststeps": []
         }
         for item in items:
@@ -914,12 +910,12 @@ def load_project_tests(test_path):
     """
     reset_loader()
     locate_pwd(test_path)
-    load_builtin_module()
-    load_api_folder(os.path.join(project_working_directory, "api"))
-    load_test_folder(os.path.join(project_working_directory, "suite"))
-    # load .env
     load_dot_env_file()
+    load_builtin_module()
     load_debugtalk_module()
+    load_api_folder(os.path.join(project_working_directory, "api"))
+    # TODO: replace suite with testcases
+    load_test_folder(os.path.join(project_working_directory, "suite"))
 
 
 def load_testcases(path):

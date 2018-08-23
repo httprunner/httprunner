@@ -21,7 +21,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.testcase = {
             'name': 'testset description',
             'config': {
-                'path': 'docs/data/demo-quickstart-2.yml',
                 'name': 'testset description',
                 'request': {
                     'base_url': '',
@@ -181,7 +180,7 @@ class TestHttpRunner(ApiServerUnittest):
             {
                 "config": {
                     "name": "test teardown hooks",
-                    'path': 'tests/httpbin/hooks.yml',
+                    "path": "tests/httpbin/hooks.yml"
                 },
                 "teststeps": [
                     {
@@ -217,7 +216,7 @@ class TestHttpRunner(ApiServerUnittest):
             {
                 "name": "test teardown hooks",
                 "config": {
-                    'path': 'tests/httpbin/hooks.yml',
+                    "path": "tests/httpbin/hooks.yml"
                 },
                 "teststeps": [
                     {
@@ -246,9 +245,7 @@ class TestHttpRunner(ApiServerUnittest):
         testcases = [
             {
                 "name": "test teardown hooks",
-                "config": {
-                    'path': 'tests/httpbin/hooks.yml',
-                },
+                "config": {},
                 "teststeps": [
                     {
                         "name": "test teardown hooks",
