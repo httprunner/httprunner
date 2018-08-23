@@ -374,11 +374,12 @@ def create_scaffold(project_path):
 
     path_list = [
         (project_path, "folder"),
-        (os.path.join(project_path, "tests"), "folder"),
-        (os.path.join(project_path, "tests", "api"), "folder"),
-        (os.path.join(project_path, "tests", "suite"), "folder"),
-        (os.path.join(project_path, "tests", "testcases"), "folder"),
-        (os.path.join(project_path, "tests", "debugtalk.py"), "file")
+        (os.path.join(project_path, "api"), "folder"),
+        (os.path.join(project_path, "testcases"), "folder"),
+        (os.path.join(project_path, "testsuites"), "folder"),
+        (os.path.join(project_path, "reports"), "folder"),
+        (os.path.join(project_path, "debugtalk.py"), "file"),
+        (os.path.join(project_path, ".env"), "file")
     ]
 
     msg = ""

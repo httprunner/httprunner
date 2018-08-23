@@ -254,11 +254,12 @@ class TestUtils(ApiServerUnittest):
     def test_create_scaffold(self):
         project_path = os.path.join(os.getcwd(), "projectABC")
         utils.create_scaffold(project_path)
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "api")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "suite")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "testcases")))
-        self.assertTrue(os.path.isfile(os.path.join(project_path, "tests", "debugtalk.py")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "api")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "testcases")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "testsuites")))
+        self.assertTrue(os.path.isdir(os.path.join(project_path, "reports")))
+        self.assertTrue(os.path.isfile(os.path.join(project_path, "debugtalk.py")))
+        self.assertTrue(os.path.isfile(os.path.join(project_path, ".env")))
         shutil.rmtree(project_path)
 
     def test_cartesian_product_one(self):
