@@ -18,7 +18,6 @@ class HttpRunner(object):
 
             resultclass (class): HtmlTestResult or TextTestResult
             failfast (bool): False/True, stop the test run on the first error or failure.
-            dot_env_path (str): .env file path.
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         Attributes:
@@ -37,26 +36,6 @@ class HttpRunner(object):
         self.kwargs = kwargs
         self.http_client_session = self.kwargs.pop("http_client_session", None)
 
-        self.__loader()
-
-    def __loader(self):
-        """ load project dependent files, including api/testcase definitions,
-            environment variables and builtin module.
-
-        """
-        loader.reset_loader()
-
-        # load .env
-        dot_env_path = self.kwargs.pop("dot_env_path", None)
-        loader.load_dot_env_file(dot_env_path)
-
-        # load api/testcase definition and debugtalk.py module
-        project_folder_path = os.path.join(os.getcwd(), "tests") # TODO: remove tests
-        loader.load_project_tests(project_folder_path)
-
-        self.project_mapping = loader.project_mapping
-        utils.set_os_environ(self.project_mapping["env"])
-
     def load_tests(self, path_or_testcases):
         """ load testcases, extend and merge with api/testcase definitions.
 
@@ -73,7 +52,7 @@ class HttpRunner(object):
                     {
                         "config": {
                             "name": "desc1",
-                            "path": "",
+                            "path": "",         # optional
                             "variables": [],    # optional
                             "request": {}       # optional
                         },
@@ -99,20 +78,22 @@ class HttpRunner(object):
             if isinstance(path_or_testcases, list):
                 for testcase in path_or_testcases:
                     try:
-                        dir_path = os.path.dirname(testcase["config"]["path"])
-                        loader.load_debugtalk_module(dir_path)
+                        test_path = os.path.dirname(testcase["config"]["path"])
                     except KeyError:
-                        pass
+                        test_path = os.getcwd()
+                    loader.load_project_tests(test_path)
             else:
                 try:
-                    dir_path = os.path.dirname(path_or_testcases["config"]["path"])
-                    loader.load_debugtalk_module(dir_path)
+                    test_path = os.path.dirname(path_or_testcases["config"]["path"])
                 except KeyError:
-                    pass
+                    test_path = os.getcwd()
+                loader.load_project_tests(test_path)
 
             testcases = path_or_testcases
         else:
             testcases = loader.load_testcases(path_or_testcases)
+
+        self.project_mapping = loader.project_mapping
 
         if not testcases:
             raise exceptions.TestcaseNotFound
@@ -250,8 +231,9 @@ class HttpRunner(object):
             instance: HttpRunner() instance
 
         """
-        # parser
+        # loader
         testcases_list = self.load_tests(path_or_testcases)
+        # parser
         parsed_testcases_list = self.parse_tests(testcases_list)
 
         # initialize

@@ -133,13 +133,18 @@ class TestFileLoader(unittest.TestCase):
         self.assertEqual([], files)
 
     def test_load_dot_env_file(self):
-        env_variables_mapping = loader.load_dot_env_file("tests/data/test.env")
+        loader.project_working_directory = os.path.join(
+            os.getcwd(), "tests",
+        )
+        env_variables_mapping = loader.load_dot_env_file()
         self.assertIn("PROJECT_KEY", env_variables_mapping)
         self.assertEqual(env_variables_mapping["UserName"], "debugtalk")
 
     def test_load_env_path_not_exist(self):
-        with self.assertRaises(exceptions.FileNotFound):
-            loader.load_dot_env_file("not_exist.env")
+        loader.project_working_directory = os.path.join(
+            os.getcwd(), "tests", "data",
+        )
+        loader.load_dot_env_file()
 
     def test_locate_file(self):
         with self.assertRaises(exceptions.FileNotFound):
@@ -166,7 +171,7 @@ class TestFileLoader(unittest.TestCase):
             "tests/debugtalk.py"
         )
         self.assertEqual(
-            loader.locate_file("tests/data/test.env", "debugtalk.py"),
+            loader.locate_file("tests/data/demo_testcase.yml", "debugtalk.py"),
             "tests/debugtalk.py"
         )
 
@@ -180,15 +185,13 @@ class TestModuleLoader(unittest.TestCase):
         self.assertNotIn("is_py3", functions_dict)
 
     def test_load_debugtalk_module(self):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_project_tests(project_dir)
-        loader.load_debugtalk_module()
+        loader.load_project_tests(os.path.join(os.getcwd(), "httprunner"))
         imported_module_items = loader.project_mapping["debugtalk"]
         self.assertIn("equals", imported_module_items["functions"])
         self.assertNotIn("SECRET_KEY", imported_module_items["variables"])
         self.assertNotIn("alter_response", imported_module_items["functions"])
 
-        loader.load_debugtalk_module("tests")
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         imported_module_items = loader.project_mapping["debugtalk"]
         self.assertEqual(
             imported_module_items["variables"]["SECRET_KEY"],
@@ -223,18 +226,26 @@ class TestModuleLoader(unittest.TestCase):
         with self.assertRaises(exceptions.VariableNotFound):
             loader.get_module_item(module_mapping, "variables", "SECRET_KEY2")
 
+    def test_locate_pwd(self):
+        loader.locate_pwd("tests/data/demo_testcase.yml")
+        self.assertEqual(loader.project_working_directory, "tests")
+
+        loader.locate_pwd("tests/base.py")
+        self.assertEqual(loader.project_working_directory, "tests")
+
+        loader.locate_pwd("httprunner/__init__.py")
+        self.assertEqual(loader.project_working_directory, os.getcwd())
+
 
 class TestSuiteLoader(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_project_tests(project_dir)
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
 
     def test_load_test_file_testcase(self):
         testcase = loader._load_test_file("tests/testcases/smoketest.yml")
         self.assertEqual(testcase["config"]["name"], "smoketest")
-        self.assertEqual(testcase["config"]["path"], "tests/testcases/smoketest.yml")
         self.assertIn("device_sn", testcase["config"]["variables"][0])
         self.assertEqual(len(testcase["teststeps"]), 8)
         self.assertEqual(testcase["teststeps"][0]["name"], "get token")
@@ -353,8 +364,6 @@ class TestSuiteLoader(unittest.TestCase):
             os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertIn("path", testset_list[0]["config"])
-        self.assertEqual(testset_list[0]["config"]["path"], path)
         self.assertEqual(len(testset_list[0]["teststeps"]), 3)
         testsets_list.extend(testset_list)
 
@@ -362,8 +371,6 @@ class TestSuiteLoader(unittest.TestCase):
         path = 'tests/data/demo_testset_hardcode.yml'
         testset_list = loader.load_testcases(path)
         self.assertEqual(len(testset_list), 1)
-        self.assertIn("path", testset_list[0]["config"])
-        self.assertIn(path, testset_list[0]["config"]["path"])
         self.assertEqual(len(testset_list[0]["teststeps"]), 3)
         testsets_list.extend(testset_list)
 
@@ -478,10 +485,9 @@ class TestSuiteLoader(unittest.TestCase):
         )
 
     def test_load_project_tests(self):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_project_tests(project_dir)
-        loader.load_debugtalk_module(project_dir)
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         project_mapping = loader.project_mapping
         self.assertEqual(project_mapping["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
         self.assertIn("get_token", project_mapping["def-api"])
         self.assertIn("setup_and_reset", project_mapping["def-testcase"])
+        self.assertEqual(project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
