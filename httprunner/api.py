@@ -52,7 +52,7 @@ class HttpRunner(object):
                     {
                         "config": {
                             "name": "desc1",
-                            "path": "",
+                            "path": "",         # optional
                             "variables": [],    # optional
                             "request": {}       # optional
                         },
@@ -79,15 +79,15 @@ class HttpRunner(object):
                 for testcase in path_or_testcases:
                     try:
                         test_path = os.path.dirname(testcase["config"]["path"])
-                        loader.load_project_tests(test_path)
                     except KeyError:
-                        pass
+                        test_path = os.getcwd()
+                    loader.load_project_tests(test_path)
             else:
                 try:
                     test_path = os.path.dirname(path_or_testcases["config"]["path"])
-                    loader.load_project_tests(test_path)
                 except KeyError:
-                    pass
+                    test_path = os.getcwd()
+                loader.load_project_tests(test_path)
 
             testcases = path_or_testcases
         else:

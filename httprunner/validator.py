@@ -14,7 +14,6 @@ def is_testcase(data_structure):
             {
                 "config": {
                     "name": "desc1",
-                    "path": "",
                     "variables": [],    # optional
                     "request": {}       # optional
                 },
