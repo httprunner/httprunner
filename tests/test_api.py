@@ -367,6 +367,12 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIsInstance(parsed_testcases, list)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')
 
+    def test_validate_response_content(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/httpbin/basic.yml')
+        runner = HttpRunner().run(testcase_file_path)
+        self.assertTrue(runner.summary["success"])
+
 
 class TestLocustRunner(ApiServerUnittest):
 
