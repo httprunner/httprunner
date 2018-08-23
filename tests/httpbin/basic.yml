@@ -89,5 +89,15 @@
     validate:
         - eq: ["status_code", 200]
 
+- test:
+    name: validate content length
+    request:
+        url: /spec.json
+        method: GET
+    validate:
+        - len_eq: ["content", 9]
+        - len_eq: ["json", 9]
+        - len_eq: ["text", 9]
+
 
 
