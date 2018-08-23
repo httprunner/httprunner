@@ -4,10 +4,13 @@ import importlib
 import io
 import json
 import os
+import sys
 
 import yaml
 from httprunner import built_in, exceptions, logger, parser, utils, validator
 from httprunner.compat import OrderedDict
+
+sys.path.insert(0, os.getcwd())
 
 project_mapping = {
     "debugtalk": {
@@ -220,63 +223,19 @@ def locate_file(start_path, file_name):
 
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
-        if os.path.isabs(file_path):
-            file_path = file_path[len(os.getcwd())+1:]
-
         return file_path
 
     # current working directory
-    if os.path.abspath(start_dir_path) == os.getcwd():
+    if os.path.abspath(start_dir_path) in [os.getcwd(), os.path.abspath(os.sep)]:
         raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
 
     # locate recursive upward
     return locate_file(os.path.dirname(start_dir_path), file_name)
 
 
-def locate_pwd(start_path):
-    """ locate project working directory.
-        The folder contains debugtalk.py will be used as PWD.
-        If debugtalk.py is not found, use os.getcwd() as default PWD.
-
-    Args:
-        start_path (str): start locating path, maybe testcase file path or directory path
-
-    """
-    global project_working_directory
-    try:
-        debugtalk_path = locate_file(start_path, "debugtalk.py")
-        project_working_directory = os.path.dirname(debugtalk_path)
-    except exceptions.FileNotFound:
-        project_working_directory = os.getcwd()
-
-
 ###############################################################################
 ##   debugtalk.py module loader
 ###############################################################################
-
-def convert_module_name(python_file_path):
-    """ convert python file relative path to module name.
-
-    Args:
-        python_file_path (str): python file relative path
-
-    Returns:
-        str: module name
-
-    Examples:
-        >>> convert_module_name("debugtalk.py")
-        debugtalk
-
-        >>> convert_module_name("tests/debugtalk.py")
-        tests.debugtalk
-
-        >>> convert_module_name("tests/data/debugtalk.py")
-        tests.data.debugtalk
-
-    """
-    module_name = python_file_path.replace("/", ".").rstrip(".py")
-    return module_name
-
 
 def load_python_module(module):
     """ load python module.
@@ -326,14 +285,8 @@ def load_debugtalk_module():
             }
 
     """
-    try:
-        module_path = locate_file(project_working_directory, "debugtalk.py")
-        module_name = convert_module_name(module_path)
-    except exceptions.FileNotFound:
-        return
-
     # load debugtalk.py module
-    imported_module = importlib.import_module(module_name)
+    imported_module = importlib.import_module("debugtalk")
     debugtalk_module = load_python_module(imported_module)
 
     # override built_in module with debugtalk.py module
@@ -900,6 +853,20 @@ def reset_loader():
     testcases_cache_mapping.clear()
 
 
+def locate_debugtalk_py(start_path):
+    """ locate debugtalk.py file.
+
+    Args:
+        start_path (str): start locating path, maybe testcase file path or directory path
+
+    """
+    try:
+        debugtalk_path = locate_file(start_path, "debugtalk.py")
+        return os.path.abspath(debugtalk_path)
+    except exceptions.FileNotFound:
+        return None
+
+
 def load_project_tests(test_path):
     """ load api, testcases, .env, builtin module and debugtalk.py.
         api/testcases folder is relative to project_working_directory
@@ -908,11 +875,25 @@ def load_project_tests(test_path):
         test_path (str): test file/folder path, locate pwd from this path.
 
     """
+    global project_working_directory
+
     reset_loader()
-    locate_pwd(test_path)
-    load_dot_env_file()
     load_builtin_module()
-    load_debugtalk_module()
+
+    debugtalk_path = locate_debugtalk_py(test_path)
+    if debugtalk_path:
+        # The folder contains debugtalk.py will be treated as PWD.
+        # add PWD to sys.path
+        project_working_directory = os.path.dirname(debugtalk_path)
+
+        # load debugtalk.py
+        sys.path.insert(0, project_working_directory)
+        load_debugtalk_module()
+    else:
+        # debugtalk.py not found, use os.getcwd() as PWD.
+        project_working_directory = os.getcwd()
+
+    load_dot_env_file()
     load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
     load_test_folder(os.path.join(project_working_directory, "suite"))
