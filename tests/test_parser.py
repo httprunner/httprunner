@@ -412,8 +412,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_debugtalk_module(project_dir)
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         project_mapping = loader.project_mapping
 
         parameters = [

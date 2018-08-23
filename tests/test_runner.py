@@ -10,9 +10,7 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_project_tests(project_dir)
-        loader.load_debugtalk_module(project_dir)
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         self.debugtalk_module = loader.project_mapping["debugtalk"]
         config_dict = {
             "variables": self.debugtalk_module["variables"],
@@ -82,7 +80,6 @@ class TestRunner(ApiServerUnittest):
         start_time = time.time()
 
         config_dict = {
-            "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
             "variables": self.debugtalk_module["variables"],
             "functions": self.debugtalk_module["functions"],
@@ -132,7 +129,6 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_testset_with_hooks_modify_request(self):
         config_dict = {
-            "path": os.path.join(os.getcwd(), __file__),
             "name": "basic test with httpbin",
             "variables": self.debugtalk_module["variables"],
             "functions": self.debugtalk_module["functions"],
@@ -187,9 +183,7 @@ class TestRunner(ApiServerUnittest):
             ],
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
-        config_dict = {
-            "path": os.path.join(os.getcwd(), __file__)
-        }
+        config_dict = {}
         self.test_runner.init_config(config_dict, "testcase")
 
         start_time = time.time()
@@ -220,9 +214,7 @@ class TestRunner(ApiServerUnittest):
             ],
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
-        config_dict = {
-            "path": os.path.join(os.getcwd(), __file__)
-        }
+        config_dict = {}
         self.test_runner.init_config(config_dict, "testcase")
 
         start_time = time.time()
@@ -248,9 +240,7 @@ class TestRunner(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
         testcases = loader.load_file(testcase_file_path)
-        config_dict = {
-            "path": testcase_file_path
-        }
+        config_dict = {}
         self.test_runner.init_config(config_dict, "testcase")
 
         test = testcases[2]["test"]

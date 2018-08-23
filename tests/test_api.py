@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 
-from httprunner import HttpRunner, LocustRunner
+from httprunner import HttpRunner, LocustRunner, loader
 from locust import HttpLocust
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -21,7 +21,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.testcase = {
             'name': 'testset description',
             'config': {
-                'path': 'docs/data/demo-quickstart-2.yml',
                 'name': 'testset description',
                 'request': {
                     'base_url': '',
@@ -89,7 +88,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["skipped"], 4)
 
         runner.gen_html_report(html_report_name=output_folder_name)
-        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
+        report_save_dir = os.path.join(loader.project_working_directory, 'reports', output_folder_name)
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
@@ -155,7 +154,7 @@ class TestHttpRunner(ApiServerUnittest):
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
         report = runner.gen_html_report(html_report_name=output_folder_name)
         self.assertTrue(os.path.isfile(report))
-        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
+        report_save_dir = os.path.join(loader.project_working_directory, 'reports', output_folder_name)
         shutil.rmtree(report_save_dir)
 
     def test_testcase_layer(self):
@@ -181,7 +180,7 @@ class TestHttpRunner(ApiServerUnittest):
             {
                 "config": {
                     "name": "test teardown hooks",
-                    'path': 'tests/httpbin/hooks.yml',
+                    "path": "tests/httpbin/hooks.yml"
                 },
                 "teststeps": [
                     {
@@ -217,7 +216,7 @@ class TestHttpRunner(ApiServerUnittest):
             {
                 "name": "test teardown hooks",
                 "config": {
-                    'path': 'tests/httpbin/hooks.yml',
+                    "path": "tests/httpbin/hooks.yml"
                 },
                 "teststeps": [
                     {
@@ -246,9 +245,7 @@ class TestHttpRunner(ApiServerUnittest):
         testcases = [
             {
                 "name": "test teardown hooks",
-                "config": {
-                    'path': 'tests/httpbin/hooks.yml',
-                },
+                "config": {},
                 "teststeps": [
                     {
                         "name": "test teardown hooks",
@@ -338,14 +335,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["testsRun"], 3 * 2)
         self.assertIn("in", summary["details"][0]["in_out"])
         self.assertIn("out", summary["details"][0]["in_out"])
-
-    def test_loader(self):
-        hrunner = HttpRunner(dot_env_path="tests/data/test.env")
-        self.assertEqual(hrunner.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
-        self.assertIn("debugtalk", hrunner.project_mapping)
-        self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
-        self.assertIn("get_token", hrunner.project_mapping["def-api"])
-        self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
 
     def test_load_tests(self):
         testcase_file_path = os.path.join(
