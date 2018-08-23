@@ -339,14 +339,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("in", summary["details"][0]["in_out"])
         self.assertIn("out", summary["details"][0]["in_out"])
 
-    def test_loader(self):
-        hrunner = HttpRunner(dot_env_path="tests/data/test.env")
-        self.assertEqual(hrunner.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
-        self.assertIn("debugtalk", hrunner.project_mapping)
-        self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
-        self.assertIn("get_token", hrunner.project_mapping["def-api"])
-        self.assertIn("setup_and_reset", hrunner.project_mapping["def-testcase"])
-
     def test_load_tests(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')

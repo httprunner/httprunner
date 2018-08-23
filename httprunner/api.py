@@ -18,7 +18,6 @@ class HttpRunner(object):
 
             resultclass (class): HtmlTestResult or TextTestResult
             failfast (bool): False/True, stop the test run on the first error or failure.
-            dot_env_path (str): .env file path.
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         Attributes:
@@ -45,10 +44,6 @@ class HttpRunner(object):
 
         """
         loader.reset_loader()
-
-        # load .env
-        dot_env_path = self.kwargs.pop("dot_env_path", None)
-        loader.load_dot_env_file(dot_env_path)
 
         # load api/testcase definition and debugtalk.py module
         project_folder_path = os.path.join(os.getcwd(), "tests") # TODO: remove tests

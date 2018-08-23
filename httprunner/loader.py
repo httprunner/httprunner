@@ -22,6 +22,7 @@ project_mapping = {
 """
 
 testcases_cache_mapping = {}
+project_working_directory = os.getcwd()
 
 
 ###############################################################################
@@ -156,12 +157,8 @@ def load_folder_files(folder_path, recursive=True):
     return file_list
 
 
-def load_dot_env_file(path):
-    """ load .env file
-
-    Args:
-        path (str): .env file path.
-            If path is None, it will find .env file in current working directory.
+def load_dot_env_file():
+    """ load .env file, .env file should be located in project working directory.
 
     Returns:
         dict: environment variables mapping
@@ -173,18 +170,13 @@ def load_dot_env_file(path):
             }
 
     Raises:
-        exceptions.FileNotFound: If specified env file is not exist.
         exceptions.FileFormatError: If env file format is invalid.
 
     """
-    if not path:
-        path = os.path.join(os.getcwd(), ".env")
-        if not os.path.isfile(path):
-            logger.log_debug(".env file not exist: {}".format(path))
-            return {}
-    else:
-        if not os.path.isfile(path):
-            raise exceptions.FileNotFound("env file not exist: {}".format(path))
+    path = os.path.join(project_working_directory, ".env")
+    if not os.path.isfile(path):
+        logger.log_debug(".env file not exist in : {}".format(project_working_directory))
+        return {}
 
     logger.log_info("Loading environment variables from {}".format(path))
     env_variables_mapping = {}
@@ -910,6 +902,8 @@ def load_project_tests(folder_path):
     load_builtin_module()
     load_api_folder(os.path.join(folder_path, "api"))
     load_test_folder(os.path.join(folder_path, "suite"))
+    # load .env
+    load_dot_env_file()
 
 
 def load_testcases(path):
