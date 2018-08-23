@@ -156,7 +156,9 @@ class TestFileLoader(unittest.TestCase):
         start_path = os.path.join(os.getcwd(), "tests")
         self.assertEqual(
             loader.locate_file(start_path, "debugtalk.py"),
-            "tests/debugtalk.py"
+            os.path.join(
+                os.getcwd(), "tests/debugtalk.py"
+            )
         )
         self.assertEqual(
             loader.locate_file("tests/", "debugtalk.py"),
@@ -226,15 +228,24 @@ class TestModuleLoader(unittest.TestCase):
         with self.assertRaises(exceptions.VariableNotFound):
             loader.get_module_item(module_mapping, "variables", "SECRET_KEY2")
 
-    def test_locate_pwd(self):
-        loader.locate_pwd("tests/data/demo_testcase.yml")
-        self.assertEqual(loader.project_working_directory, "tests")
+    def test_locate_debugtalk_py(self):
+        debugtalk_path = loader.locate_debugtalk_py("tests/data/demo_testcase.yml")
+        self.assertEqual(
+            debugtalk_path,
+            os.path.join(os.getcwd(), "tests", "debugtalk.py")
+        )
 
-        loader.locate_pwd("tests/base.py")
-        self.assertEqual(loader.project_working_directory, "tests")
+        debugtalk_path = loader.locate_debugtalk_py("tests/base.py")
+        self.assertEqual(
+            debugtalk_path,
+            os.path.join(os.getcwd(), "tests", "debugtalk.py")
+        )
 
-        loader.locate_pwd("httprunner/__init__.py")
-        self.assertEqual(loader.project_working_directory, os.getcwd())
+        debugtalk_path = loader.locate_debugtalk_py("httprunner/__init__.py")
+        self.assertEqual(
+            debugtalk_path,
+            None
+        )
 
 
 class TestSuiteLoader(unittest.TestCase):
