@@ -12,4 +12,3 @@ logs/%
 .coverage
 locustfile.py
 site/
-.env

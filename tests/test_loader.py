@@ -133,13 +133,18 @@ class TestFileLoader(unittest.TestCase):
         self.assertEqual([], files)
 
     def test_load_dot_env_file(self):
-        env_variables_mapping = loader.load_dot_env_file("tests/data/test.env")
+        loader.project_working_directory = os.path.join(
+            os.getcwd(), "tests",
+        )
+        env_variables_mapping = loader.load_dot_env_file()
         self.assertIn("PROJECT_KEY", env_variables_mapping)
         self.assertEqual(env_variables_mapping["UserName"], "debugtalk")
 
     def test_load_env_path_not_exist(self):
-        with self.assertRaises(exceptions.FileNotFound):
-            loader.load_dot_env_file("not_exist.env")
+        loader.project_working_directory = os.path.join(
+            os.getcwd(), "tests", "data",
+        )
+        loader.load_dot_env_file()
 
     def test_locate_file(self):
         with self.assertRaises(exceptions.FileNotFound):
@@ -166,7 +171,7 @@ class TestFileLoader(unittest.TestCase):
             "tests/debugtalk.py"
         )
         self.assertEqual(
-            loader.locate_file("tests/data/test.env", "debugtalk.py"),
+            loader.locate_file("tests/data/demo_testcase.yml", "debugtalk.py"),
             "tests/debugtalk.py"
         )
 
@@ -478,10 +483,11 @@ class TestSuiteLoader(unittest.TestCase):
         )
 
     def test_load_project_tests(self):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_project_tests(project_dir)
-        loader.load_debugtalk_module(project_dir)
+        loader.project_working_directory = os.path.join(os.getcwd(), "tests")
+        loader.load_project_tests(loader.project_working_directory)
+        loader.load_debugtalk_module(loader.project_working_directory)
         project_mapping = loader.project_mapping
         self.assertEqual(project_mapping["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
         self.assertIn("get_token", project_mapping["def-api"])
         self.assertIn("setup_and_reset", project_mapping["def-testcase"])
+        self.assertEqual(project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
