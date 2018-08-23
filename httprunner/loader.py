@@ -6,7 +6,7 @@ import json
 import os
 
 import yaml
-from httprunner import built_in, exceptions, logger, parser, validator
+from httprunner import built_in, exceptions, logger, parser, utils, validator
 from httprunner.compat import OrderedDict
 
 project_mapping = {
@@ -192,6 +192,8 @@ def load_dot_env_file():
             env_variables_mapping[variable.strip()] = value.strip()
 
     project_mapping["env"] = env_variables_mapping
+    utils.set_os_environ(env_variables_mapping)
+
     return env_variables_mapping
 
 
@@ -229,6 +231,23 @@ def locate_file(start_path, file_name):
 
     # locate recursive upward
     return locate_file(os.path.dirname(start_dir_path), file_name)
+
+
+def locate_pwd(start_path):
+    """ locate project working directory.
+        The folder contains debugtalk.py will be used as PWD.
+        If debugtalk.py is not found, use os.getcwd() as default PWD.
+
+    Args:
+        start_path (str): start locating path, maybe testcase file path or directory path
+
+    """
+    global project_working_directory
+    try:
+        debugtalk_path = locate_file(start_path, "debugtalk.py")
+        project_working_directory = os.path.dirname(debugtalk_path)
+    except exceptions.FileNotFound:
+        project_working_directory = os.getcwd()
 
 
 ###############################################################################
@@ -297,25 +316,18 @@ def load_builtin_module():
     project_mapping["debugtalk"] = built_in_module
 
 
-def load_debugtalk_module(start_path=None):
+def load_debugtalk_module():
     """ load project debugtalk.py module and merge with builtin module.
-
-    Args:
-        start_path (str, optional): start locating path, maybe file path or directory path.
-            Defaults to current working directory.
-
-    Returns:
-        dict: variables and functions mapping for debugtalk.py
+        debugtalk.py should be located in project working directory.
+        variables and functions mapping for debugtalk.py
             {
                 "variables": {},
                 "functions": {}
             }
 
     """
-    start_path = start_path or os.getcwd()
-
     try:
-        module_path = locate_file(start_path, "debugtalk.py")
+        module_path = locate_file(project_working_directory, "debugtalk.py")
         module_name = convert_module_name(module_path)
     except exceptions.FileNotFound:
         return
@@ -734,7 +746,7 @@ def load_folder_content(folder_path):
     return items_mapping
 
 
-def load_api_folder(api_folder_path=None):
+def load_api_folder(api_folder_path):
     """ load api definitions from api folder.
 
     Args:
@@ -775,7 +787,6 @@ def load_api_folder(api_folder_path=None):
     """
     api_definition_mapping = {}
 
-    api_folder_path = api_folder_path or os.path.join(os.getcwd(), "api")
     api_items_mapping = load_folder_content(api_folder_path)
 
     for api_file_path, api_items in api_items_mapping.items():
@@ -797,7 +808,7 @@ def load_api_folder(api_folder_path=None):
     return api_definition_mapping
 
 
-def load_test_folder(test_folder_path=None):
+def load_test_folder(test_folder_path):
     """ load testcases definitions from folder.
 
     Args:
@@ -839,8 +850,6 @@ def load_test_folder(test_folder_path=None):
     """
     test_definition_mapping = {}
 
-    # TODO: replace suite with testcases
-    test_folder_path = test_folder_path or os.path.join(os.getcwd(), "suite")
     test_items_mapping = load_folder_content(test_folder_path)
 
     for test_file_path, items in test_items_mapping.items():
@@ -882,6 +891,9 @@ def load_test_folder(test_folder_path=None):
 def reset_loader():
     """ reset project mapping.
     """
+    global project_working_directory
+    project_working_directory = os.getcwd()
+
     project_mapping["debugtalk"] = {
         "variables": {},
         "functions": {}
@@ -892,18 +904,22 @@ def reset_loader():
     testcases_cache_mapping.clear()
 
 
-def load_project_tests(folder_path):
-    """ load api, testcases and builtin module.
+def load_project_tests(test_path):
+    """ load api, testcases, .env, builtin module and debugtalk.py.
+        api/testcases folder is relative to project_working_directory
 
     Args:
-        folder_path (str): folder path.
+        test_path (str): test file/folder path, locate pwd from this path.
 
     """
+    reset_loader()
+    locate_pwd(test_path)
     load_builtin_module()
-    load_api_folder(os.path.join(folder_path, "api"))
-    load_test_folder(os.path.join(folder_path, "suite"))
+    load_api_folder(os.path.join(project_working_directory, "api"))
+    load_test_folder(os.path.join(project_working_directory, "suite"))
     # load .env
     load_dot_env_file()
+    load_debugtalk_module()
 
 
 def load_testcases(path):
@@ -942,14 +958,13 @@ def load_testcases(path):
         return testcases_cache_mapping[path]
 
     if os.path.isdir(path):
-        load_debugtalk_module(path)
+        load_project_tests(path)
         files_list = load_folder_files(path)
         testcases_list = load_testcases(files_list)
 
     elif os.path.isfile(path):
         try:
-            dir_path = os.path.dirname(path)
-            load_debugtalk_module(dir_path)
+            load_project_tests(path)
             testcase = _load_test_file(path)
             if testcase["teststeps"]:
                 testcases_list = [testcase]

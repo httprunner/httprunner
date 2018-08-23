@@ -10,9 +10,7 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        project_dir = os.path.join(os.getcwd(), "tests")
-        loader.load_project_tests(project_dir)
-        loader.load_debugtalk_module(project_dir)
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         self.debugtalk_module = loader.project_mapping["debugtalk"]
         config_dict = {
             "variables": self.debugtalk_module["variables"],
