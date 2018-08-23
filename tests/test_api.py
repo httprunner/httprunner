@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 
-from httprunner import HttpRunner, LocustRunner
+from httprunner import HttpRunner, LocustRunner, loader
 from locust import HttpLocust
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -89,7 +89,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["skipped"], 4)
 
         runner.gen_html_report(html_report_name=output_folder_name)
-        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
+        report_save_dir = os.path.join(loader.project_working_directory, 'reports', output_folder_name)
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
@@ -155,7 +155,7 @@ class TestHttpRunner(ApiServerUnittest):
         output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
         report = runner.gen_html_report(html_report_name=output_folder_name)
         self.assertTrue(os.path.isfile(report))
-        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
+        report_save_dir = os.path.join(loader.project_working_directory, 'reports', output_folder_name)
         shutil.rmtree(report_save_dir)
 
     def test_testcase_layer(self):
