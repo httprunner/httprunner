@@ -140,6 +140,16 @@ class TestFileLoader(unittest.TestCase):
         self.assertIn("PROJECT_KEY", env_variables_mapping)
         self.assertEqual(env_variables_mapping["UserName"], "debugtalk")
 
+    def test_load_custom_dot_env_file(self):
+        loader.project_working_directory = os.path.join(
+            os.getcwd(), "tests",
+        )
+        loader.dot_env_path = "tests/data/test.env"
+        env_variables_mapping = loader.load_dot_env_file()
+        self.assertIn("PROJECT_KEY", env_variables_mapping)
+        self.assertEqual(env_variables_mapping["UserName"], "test")
+        loader.dot_env_path = None
+
     def test_load_env_path_not_exist(self):
         loader.project_working_directory = os.path.join(
             os.getcwd(), "tests", "data",
