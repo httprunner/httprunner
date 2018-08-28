@@ -40,6 +40,9 @@ def main_hrun():
         '--log-file',
         help="Write logs to specified file path.")
     parser.add_argument(
+        '--dot-env-path',
+        help="Specify .env file path, which is useful for keeping sensitive data.")
+    parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
     parser.add_argument(
@@ -75,7 +78,7 @@ def main_hrun():
         create_scaffold(project_path)
         exit(0)
 
-    runner = HttpRunner(failfast=args.failfast).run(args.testset_paths)
+    runner = HttpRunner(failfast=args.failfast, dot_env_path=args.dot_env_path).run(args.testset_paths)
 
     if not args.no_html_report:
         runner.gen_html_report(

@@ -263,7 +263,7 @@ def add_teststep(test_runner, teststep_dict):
         try:
             test_runner.run_test(teststep_dict)
         except exceptions.MyBaseFailure as ex:
-            self.fail(repr(ex))
+            self.fail(str(ex))
         finally:
             if hasattr(test_runner.http_client_session, "meta_data"):
                 self.meta_data = test_runner.http_client_session.meta_data
