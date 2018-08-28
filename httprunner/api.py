@@ -19,6 +19,7 @@ class HttpRunner(object):
             resultclass (class): HtmlTestResult or TextTestResult
             failfast (bool): False/True, stop the test run on the first error or failure.
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
+            dot_env_path (str): .env file path.
 
         Attributes:
             project_mapping (dict): save project loaded api/testcases, environments and debugtalk.py module.
@@ -33,8 +34,9 @@ class HttpRunner(object):
                 }
 
         """
+        loader.dot_env_path = kwargs.pop("dot_env_path", None)
+        self.http_client_session = kwargs.pop("http_client_session", None)
         self.kwargs = kwargs
-        self.http_client_session = self.kwargs.pop("http_client_session", None)
 
     def load_tests(self, path_or_testcases):
         """ load testcases, extend and merge with api/testcase definitions.

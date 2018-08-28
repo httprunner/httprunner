@@ -24,6 +24,8 @@ project_mapping = {
 """ dict: save project loaded api/testcases definitions, environments and debugtalk.py module.
 """
 
+dot_env_path = None
+
 testcases_cache_mapping = {}
 project_working_directory = os.getcwd()
 
@@ -161,7 +163,8 @@ def load_folder_files(folder_path, recursive=True):
 
 
 def load_dot_env_file():
-    """ load .env file, .env file should be located in project working directory.
+    """ load .env file, .env file should be located in project working directory by default.
+        If dot_env_path is specified, it will be loaded instead.
 
     Returns:
         dict: environment variables mapping
@@ -176,10 +179,14 @@ def load_dot_env_file():
         exceptions.FileFormatError: If env file format is invalid.
 
     """
-    path = os.path.join(project_working_directory, ".env")
+    path = dot_env_path or os.path.join(project_working_directory, ".env")
     if not os.path.isfile(path):
-        logger.log_debug(".env file not exist in : {}".format(project_working_directory))
-        return {}
+        if dot_env_path:
+            logger.log_error(".env file not exist: {}".format(dot_env_path))
+            sys.exit(1)
+        else:
+            logger.log_debug(".env file not exist in: {}".format(project_working_directory))
+            return {}
 
     logger.log_info("Loading environment variables from {}".format(path))
     env_variables_mapping = {}
