@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+import copy
 import os
 import unittest
 
@@ -120,11 +121,8 @@ class HttpRunner(object):
 
         parsed_testcases_list = []
         for testcase in testcases:
-
-            config = testcase.setdefault("config", {})
-
             # parse config parameters
-            config_parameters = config.pop("parameters", [])
+            config_parameters = testcase.setdefault("config", {}).pop("parameters", [])
             cartesian_product_parameters_list = parser.parse_parameters(
                 config_parameters,
                 self.project_mapping["debugtalk"]["variables"],
@@ -132,6 +130,9 @@ class HttpRunner(object):
             ) or [{}]
 
             for parameter_mapping in cartesian_product_parameters_list:
+                testcase_dict = copy.deepcopy(testcase)
+                config = testcase_dict.setdefault("config", {})
+
                 # parse config variables
                 raw_config_variables = config.get("variables", [])
                 parsed_config_variables = parser.parse_data(
@@ -150,25 +151,25 @@ class HttpRunner(object):
                 config_variables = utils.override_mapping_list(
                     config_variables, variables_mapping)
 
-                testcase["config"]["variables"] = config_variables
+                testcase_dict["config"]["variables"] = config_variables
 
                 # parse config name
-                testcase["config"]["name"] = parser.parse_data(
-                    testcase["config"].get("name", ""),
+                testcase_dict["config"]["name"] = parser.parse_data(
+                    testcase_dict["config"].get("name", ""),
                     config_variables,
                     self.project_mapping["debugtalk"]["functions"]
                 )
 
                 # parse config request
-                testcase["config"]["request"] = parser.parse_data(
-                    testcase["config"].get("request", {}),
+                testcase_dict["config"]["request"] = parser.parse_data(
+                    testcase_dict["config"].get("request", {}),
                     config_variables,
                     self.project_mapping["debugtalk"]["functions"]
                 )
 
                 # put loaded project functions to config
-                testcase["config"]["functions"] = self.project_mapping["debugtalk"]["functions"]
-                parsed_testcases_list.append(testcase)
+                testcase_dict["config"]["functions"] = self.project_mapping["debugtalk"]["functions"]
+                parsed_testcases_list.append(testcase_dict)
 
         return parsed_testcases_list
 
