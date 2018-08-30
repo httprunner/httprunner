@@ -321,13 +321,21 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
         self.assertGreater(len(summary["details"][0]["in_out"]["in"]), 7)
 
-    def test_run_testset_with_parameters(self):
+    def test_run_testcase_with_parameters(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_parameters.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertEqual(
             summary["details"][0]["in_out"]["in"]["user_agent"],
+            "iOS/10.1"
+        )
+        self.assertEqual(
+            summary["details"][2]["in_out"]["in"]["user_agent"],
+            "iOS/10.2"
+        )
+        self.assertEqual(
+            summary["details"][4]["in_out"]["in"]["user_agent"],
             "iOS/10.3"
         )
         self.assertTrue(summary["success"])
@@ -362,6 +370,10 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(
             parsed_testcases[0]["config"]["request"]["base_url"],
+            '$BASE_URL'
+        )
+        self.assertEqual(
+            parsed_testcases[0]["config"]["variables"]["BASE_URL"],
             'http://127.0.0.1:5000'
         )
         self.assertIsInstance(parsed_testcases, list)
