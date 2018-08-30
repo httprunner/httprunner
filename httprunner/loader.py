@@ -268,6 +268,8 @@ def load_python_module(module):
         if validator.is_function((name, item)):
             debugtalk_module["functions"][name] = item
         elif validator.is_variable((name, item)):
+            if isinstance(item, tuple):
+                continue
             debugtalk_module["variables"][name] = item
         else:
             pass
