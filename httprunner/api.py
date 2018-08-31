@@ -35,6 +35,7 @@ class HttpRunner(object):
                 }
 
         """
+        loader.reset_loader()
         loader.dot_env_path = kwargs.pop("dot_env_path", None)
         self.http_client_session = kwargs.pop("http_client_session", None)
         self.kwargs = kwargs
@@ -173,7 +174,7 @@ class HttpRunner(object):
 
         return parsed_testcases_list
 
-    def __initialize(self, testcases):
+    def initialize(self, testcases):
         """ initialize test runner with parsed testcases.
 
         Args:
@@ -183,6 +184,32 @@ class HttpRunner(object):
             tuple: (unittest.TextTestRunner(), unittest.TestSuite())
 
         """
+        def __add_teststep(test_runner, config, teststep_dict):
+            """ add teststep to testcase.
+            """
+            def test(self):
+                try:
+                    test_runner.run_test(teststep_dict)
+                except exceptions.MyBaseFailure as ex:
+                    self.fail(str(ex))
+                finally:
+                    if hasattr(test_runner.http_client_session, "meta_data"):
+                        self.meta_data = test_runner.http_client_session.meta_data
+                        self.meta_data["validators"] = test_runner.evaluated_validators
+                        test_runner.http_client_session.init_meta_data()
+
+            try:
+                teststep_dict["name"] = parser.parse_data(
+                    teststep_dict["name"],
+                    config.get("variables", {}),
+                    config.get("functions", {})
+                )
+            except exceptions.VariableNotFound:
+                pass
+
+            test.__doc__ = teststep_dict["name"]
+            return test
+
         self.kwargs.setdefault("resultclass", report.HtmlTestResult)
         unittest_runner = unittest.TextTestRunner(**self.kwargs)
 
@@ -200,7 +227,7 @@ class HttpRunner(object):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_method = utils.add_teststep(test_runner, teststep_dict)
+                    test_method = __add_teststep(test_runner, config, teststep_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
             loaded_testcase = loader.loadTestsFromTestCase(TestSequense)
@@ -240,7 +267,7 @@ class HttpRunner(object):
         parsed_testcases_list = self.parse_tests(testcases_list)
 
         # initialize
-        unittest_runner, test_suite = self.__initialize(parsed_testcases_list)
+        unittest_runner, test_suite = self.initialize(parsed_testcases_list)
 
         # aggregate
         self.summary = {
