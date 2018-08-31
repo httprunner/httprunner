@@ -892,19 +892,23 @@ def load_project_tests(test_path):
     load_builtin_module()
 
     debugtalk_path = locate_debugtalk_py(test_path)
+    # locate PWD with debugtalk.py path
     if debugtalk_path:
         # The folder contains debugtalk.py will be treated as PWD.
         # add PWD to sys.path
         project_working_directory = os.path.dirname(debugtalk_path)
-
-        # load debugtalk.py
-        sys.path.insert(0, project_working_directory)
-        load_debugtalk_module()
     else:
         # debugtalk.py not found, use os.getcwd() as PWD.
         project_working_directory = os.getcwd()
 
+    # load .env
     load_dot_env_file()
+
+    # load debugtalk.py
+    if debugtalk_path:
+        sys.path.insert(0, project_working_directory)
+        load_debugtalk_module()
+
     load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
     load_test_folder(os.path.join(project_working_directory, "suite"))
