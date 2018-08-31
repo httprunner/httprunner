@@ -266,12 +266,12 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertFalse(summary["success"])
         self.assertEqual(summary["stat"]["errors"], 1)
 
-    def test_run_testset_hardcode(self):
+    def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             runner = HttpRunner().run(testcase_file_path)
             self.assertTrue(runner.summary["success"])
 
-    def test_run_testsets_hardcode(self):
+    def test_run_testcases_hardcode(self):
         runner = HttpRunner().run(self.testcase_file_path_list)
         summary = runner.summary
         self.assertTrue(summary["success"])
@@ -343,6 +343,39 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["testsRun"], 3 * 2)
         self.assertIn("in", summary["details"][0]["in_out"])
         self.assertIn("out", summary["details"][0]["in_out"])
+
+    def test_run_testcase_with_parameters_name(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_parameters.yml')
+        runner = HttpRunner()
+        testcases = runner.load_tests(testcase_file_path)
+        parsed_testcases = runner.parse_tests(testcases)
+        unittest_runner, test_suite = runner.initialize(parsed_testcases)
+
+        self.assertEqual(
+            test_suite._tests[0].teststeps[0]['name'],
+            'get token with iOS/10.1 and test1'
+        )
+        self.assertEqual(
+            test_suite._tests[1].teststeps[0]['name'],
+            'get token with iOS/10.1 and test2'
+        )
+        self.assertEqual(
+            test_suite._tests[2].teststeps[0]['name'],
+            'get token with iOS/10.2 and test1'
+        )
+        self.assertEqual(
+            test_suite._tests[3].teststeps[0]['name'],
+            'get token with iOS/10.2 and test2'
+        )
+        self.assertEqual(
+            test_suite._tests[4].teststeps[0]['name'],
+            'get token with iOS/10.3 and test1'
+        )
+        self.assertEqual(
+            test_suite._tests[5].teststeps[0]['name'],
+            'get token with iOS/10.3 and test2'
+        )
 
     def test_load_tests(self):
         testcase_file_path = os.path.join(
