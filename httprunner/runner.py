@@ -102,7 +102,7 @@ class Runner(object):
             SkipTest: skip teststep
 
         """
-        # TODO: move skip to __initialize
+        # TODO: move skip to initialize
         skip_reason = None
 
         if "skip" in teststep_dict:

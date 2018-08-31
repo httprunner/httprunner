@@ -256,24 +256,6 @@ def override_mapping_list(variables, new_mapping):
     )
 
 
-def add_teststep(test_runner, teststep_dict):
-    """ add teststep to testcase.
-    """
-    def test(self):
-        try:
-            test_runner.run_test(teststep_dict)
-        except exceptions.MyBaseFailure as ex:
-            self.fail(str(ex))
-        finally:
-            if hasattr(test_runner.http_client_session, "meta_data"):
-                self.meta_data = test_runner.http_client_session.meta_data
-                self.meta_data["validators"] = test_runner.evaluated_validators
-                test_runner.http_client_session.init_meta_data()
-
-    test.__doc__ = teststep_dict["name"]
-    return test
-
-
 def get_testcase_io(testcase):
     """ get testcase input(variables) and output.
 
