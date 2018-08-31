@@ -18,7 +18,7 @@
         - token
 
 - test:
-    name: get token with $user_agent and $app_version
+    name: get token with $user_agent and $username
     api: get_token($user_agent, $device_sn, $os_platform, $app_version)
     extract:
         - token: content.token

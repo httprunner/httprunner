@@ -25,7 +25,6 @@ project_mapping = {
 """
 
 dot_env_path = None
-
 testcases_cache_mapping = {}
 project_working_directory = os.getcwd()
 
@@ -852,6 +851,9 @@ def reset_loader():
     global project_working_directory
     project_working_directory = os.getcwd()
 
+    global dot_env_path
+    dot_env_path = None
+
     project_mapping["debugtalk"] = {
         "variables": {},
         "functions": {}
@@ -937,20 +939,25 @@ def load_testcases(path):
 
         return testcases_list
 
+    if not os.path.exists(path):
+        err_msg = "path not exist: {}".format(path)
+        logger.log_error(err_msg)
+        raise exceptions.FileNotFound(err_msg)
+
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
 
-    if path in testcases_cache_mapping:
+    if path not in testcases_cache_mapping:
+        load_project_tests(path)
+    else:
         return testcases_cache_mapping[path]
 
     if os.path.isdir(path):
-        load_project_tests(path)
         files_list = load_folder_files(path)
         testcases_list = load_testcases(files_list)
 
     elif os.path.isfile(path):
         try:
-            load_project_tests(path)
             testcase = _load_test_file(path)
             if testcase["teststeps"]:
                 testcases_list = [testcase]
@@ -958,11 +965,6 @@ def load_testcases(path):
                 testcases_list = []
         except exceptions.FileFormatError:
             testcases_list = []
-
-    else:
-        err_msg = "path not exist: {}".format(path)
-        logger.log_error(err_msg)
-        raise exceptions.FileNotFound(err_msg)
 
     testcases_cache_mapping[path] = testcases_list
     return testcases_list
