@@ -43,10 +43,12 @@ def multipart_encoder(field_name, file_path, file_type=None, file_headers=None):
         file_path = os.path.join(os.getcwd(), file_path)
 
     filename = os.path.basename(file_path)
+    if isinstance(file_headers, dict):
+        fields = file_headers.copy()
+    else:
+        fields = {}
     with open(file_path, 'rb') as f:
-        fields = {
-            field_name: (filename, f.read(), file_type)
-        }
+        fields[field_name] = (filename, f.read(), file_type)
 
     return MultipartEncoder(fields)
 
