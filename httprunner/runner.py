@@ -214,6 +214,12 @@ class Runner(object):
         # validate
         try:
             self.evaluated_validators = self.context.validate(validators, resp_obj)
+            success_count = 0
+            for validator in self.evaluated_validators:
+                if validator['check_result'] == 'pass':
+                    success_count += 1
+            if not success_count == len(self.evaluated_validators):
+                raise exceptions.ValidationFailure
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
             # log request
             err_req_msg = "request: \n"

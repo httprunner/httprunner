@@ -229,7 +229,6 @@ class Context(object):
             return evaluated_validators
 
         logger.log_info("start to validate.")
-        validate_pass = True
         failures = []
 
         for validator in validators:
@@ -242,13 +241,8 @@ class Context(object):
             try:
                 self._do_validation(evaluated_validator)
             except exceptions.ValidationFailure as ex:
-                validate_pass = False
                 failures.append(str(ex))
 
             evaluated_validators.append(evaluated_validator)
-
-        if not validate_pass:
-            failures_string = "\n".join([failure for failure in failures])
-            raise exceptions.ValidationFailure(failures_string)
 
         return evaluated_validators
