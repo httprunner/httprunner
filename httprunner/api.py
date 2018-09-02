@@ -35,6 +35,7 @@ class HttpRunner(object):
                 }
 
         """
+        self.exception_stage = "initialize HttpRunner()"
         loader.reset_loader()
         loader.dot_env_path = kwargs.pop("dot_env_path", None)
         self.http_client_session = kwargs.pop("http_client_session", None)
@@ -77,6 +78,7 @@ class HttpRunner(object):
                 ]
 
         """
+        self.exception_stage = "load tests"
         if validator.is_testcases(path_or_testcases):
             # TODO: refactor
             if isinstance(path_or_testcases, list):
@@ -118,6 +120,7 @@ class HttpRunner(object):
             list: parsed testcases list, with config variables/parameters/name/request parsed.
 
         """
+        self.exception_stage = "parse tests"
         variables_mapping = variables_mapping or {}
 
         parsed_testcases_list = []
@@ -210,6 +213,7 @@ class HttpRunner(object):
             test.__doc__ = teststep_dict["name"]
             return test
 
+        self.exception_stage = "initialize unittest Runner() and TestSuite()"
         self.kwargs.setdefault("resultclass", report.HtmlTestResult)
         unittest_runner = unittest.TextTestRunner(**self.kwargs)
 
@@ -239,6 +243,62 @@ class HttpRunner(object):
         test_suite = unittest.TestSuite(loaded_testcases)
         return (unittest_runner, test_suite)
 
+    def run_tests(self, unittest_runner, test_suite):
+        """ run tests with unittest_runner and test_suite
+
+        Args:
+            unittest_runner: unittest.TextTestRunner()
+            test_suite: unittest.TestSuite()
+
+        Returns:
+            list: tests_results
+
+        """
+        self.exception_stage = "running tests"
+        tests_results = []
+
+        for testcase in test_suite:
+            testcase_name = testcase.config.get("name")
+            logger.log_info("Start to run testcase: {}".format(testcase_name))
+
+            result = unittest_runner.run(testcase)
+            tests_results.append((testcase, result))
+
+        return tests_results
+
+    def aggregate(self, tests_results):
+        """ aggregate results
+
+        Args:
+            tests_results (list): list of (testcase, result)
+
+        """
+        self.exception_stage = "aggregate results"
+        self.summary = {
+            "success": True,
+            "stat": {},
+            "time": {},
+            "platform": report.get_platform(),
+            "details": []
+        }
+
+        for tests_result in tests_results:
+            testcase, result = tests_result
+            testcase_summary = report.get_summary(result)
+
+            self.summary["success"] &= testcase_summary["success"]
+            testcase_summary["name"] = testcase.config.get("name")
+            testcase_summary["base_url"] = testcase.config.get("request", {}).get("base_url", "")
+
+            in_out = utils.get_testcase_io(testcase)
+            utils.print_io(in_out)
+            testcase_summary["in_out"] = in_out
+
+            report.aggregate_stat(self.summary["stat"], testcase_summary["stat"])
+            report.aggregate_stat(self.summary["time"], testcase_summary["time"])
+
+            self.summary["details"].append(testcase_summary)
+
     def run(self, path_or_testcases, mapping=None):
         """ start to run test with variables mapping.
 
@@ -263,41 +323,18 @@ class HttpRunner(object):
         """
         # loader
         testcases_list = self.load_tests(path_or_testcases)
+
         # parser
         parsed_testcases_list = self.parse_tests(testcases_list)
 
         # initialize
         unittest_runner, test_suite = self.initialize(parsed_testcases_list)
 
+        # running tests
+        results = self.run_tests(unittest_runner, test_suite)
+
         # aggregate
-        self.summary = {
-            "success": True,
-            "stat": {},
-            "time": {},
-            "platform": report.get_platform(),
-            "details": []
-        }
-
-        # execution
-        for testcase in test_suite:
-            testcase_name = testcase.config.get("name")
-            logger.log_info("Start to run testcase: {}".format(testcase_name))
-
-            result = unittest_runner.run(testcase)
-            testcase_summary = report.get_summary(result)
-
-            self.summary["success"] &= testcase_summary["success"]
-            testcase_summary["name"] = testcase_name
-            testcase_summary["base_url"] = testcase.config.get("request", {}).get("base_url", "")
-
-            in_out = utils.get_testcase_io(testcase)
-            utils.print_io(in_out)
-            testcase_summary["in_out"] = in_out
-
-            report.aggregate_stat(self.summary["stat"], testcase_summary["stat"])
-            report.aggregate_stat(self.summary["time"], testcase_summary["time"])
-
-            self.summary["details"].append(testcase_summary)
+        self.aggregate(results)
 
         return self
 
@@ -312,6 +349,7 @@ class HttpRunner(object):
             str: generated html report path
 
         """
+        self.exception_stage = "generate report"
         return report.render_html_report(
             self.summary,
             html_report_name,
