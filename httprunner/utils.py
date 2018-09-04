@@ -315,7 +315,7 @@ def print_io(in_out):
         for variable, value in in_out.items():
             if isinstance(value, tuple):
                 continue
-            elif isinstance(value, dict):
+            elif isinstance(value, (dict, list)):
                 value = json.dumps(value)
 
             if is_py2:
