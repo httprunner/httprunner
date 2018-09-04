@@ -162,19 +162,19 @@ def lower_dict_keys(origin_dict):
         for key, value in origin_dict.items()
     }
 
-def lower_config_dict_key(config_dict):
-    """ convert key in config dict to lower case, convertion will occur in three places:
-        1, all keys in config dict;
-        2, all keys in config["request"]
+def lower_test_dict_keys(test_dict):
+    """ convert keys in test_dict to lower case, convertion will occur in two places:
+        1, all keys in test_dict;
+        2, all keys in test_dict["request"]
     """
-    # convert keys in config dict
-    config_dict = lower_dict_keys(config_dict)
+    # convert keys in test_dict
+    test_dict = lower_dict_keys(test_dict)
 
-    if "request" in config_dict:
-        # convert keys in config["request"]
-        config_dict["request"] = lower_dict_keys(config_dict["request"])
+    if "request" in test_dict:
+        # convert keys in test_dict["request"]
+        test_dict["request"] = lower_dict_keys(test_dict["request"])
 
-    return config_dict
+    return test_dict
 
 def convert_mappinglist_to_orderdict(mapping_list):
     """ convert mapping list to ordered dict

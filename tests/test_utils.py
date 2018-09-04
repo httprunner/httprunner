@@ -167,7 +167,7 @@ class TestUtils(ApiServerUnittest):
                 }
             }
         }
-        new_dict = utils.lower_config_dict_key(origin_dict)
+        new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("name", new_dict)
         self.assertIn("request", new_dict)
         self.assertIn("method", new_dict["request"])
@@ -179,7 +179,7 @@ class TestUtils(ApiServerUnittest):
             "Name": "test",
             "Request": "$default_request"
         }
-        new_dict = utils.lower_config_dict_key(origin_dict)
+        new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("$default_request", new_dict["request"])
 
     def test_lower_dict_keys(self):
