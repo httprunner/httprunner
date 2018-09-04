@@ -184,7 +184,7 @@ class TestRunner(ApiServerUnittest):
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
         config_dict = {}
-        self.test_runner.init_config(config_dict, "testcase")
+        self.test_runner.init_test(config_dict, "testcase")
 
         start_time = time.time()
         self.test_runner.run_test(test)
@@ -215,7 +215,7 @@ class TestRunner(ApiServerUnittest):
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
         config_dict = {}
-        self.test_runner.init_config(config_dict, "testcase")
+        self.test_runner.init_test(config_dict, "testcase")
 
         start_time = time.time()
         self.test_runner.run_test(test)
@@ -241,7 +241,7 @@ class TestRunner(ApiServerUnittest):
             os.getcwd(), 'tests/data/test_bugfix.yml')
         testcases = loader.load_file(testcase_file_path)
         config_dict = {}
-        self.test_runner.init_config(config_dict, "testcase")
+        self.test_runner.init_test(config_dict, "testcase")
 
         test = testcases[2]["test"]
         self.test_runner.run_test(test)

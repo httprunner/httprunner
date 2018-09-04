@@ -27,7 +27,7 @@ class Runner(object):
         self.testcase_teardown_hooks = config_dict.pop("teardown_hooks", [])
 
         self.context = Context(config_variables, config_functions)
-        self.init_config(config_dict, "testcase")
+        self.init_test(config_dict, "testcase")
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks)
@@ -36,11 +36,11 @@ class Runner(object):
         if self.testcase_teardown_hooks:
             self.do_hook_actions(self.testcase_teardown_hooks)
 
-    def init_config(self, config_dict, level):
+    def init_test(self, test_dict, level):
         """ create/update context variables binds
 
         Args:
-            config_dict (dict):
+            test_dict (dict):
             level (enum): "testcase" or "teststep"
                 testcase:
                     {
@@ -73,15 +73,14 @@ class Runner(object):
             dict: parsed request dict
 
         """
-        # convert keys in request headers to lowercase
-        config_dict = utils.lower_config_dict_key(config_dict)
+        test_dict = utils.lower_test_dict_keys(test_dict)
 
         self.context.init_context_variables(level)
-        variables = config_dict.get('variables') \
-            or config_dict.get('variable_binds', OrderedDict())
+        variables = test_dict.get('variables') \
+            or test_dict.get('variable_binds', OrderedDict())
         self.context.update_context_variables(variables, level)
 
-        request_config = config_dict.get('request', {})
+        request_config = test_dict.get('request', {})
         parsed_request = self.context.get_parsed_request(request_config, level)
 
         base_url = parsed_request.pop("base_url", None)
@@ -165,7 +164,7 @@ class Runner(object):
         # prepare
         extractors = teststep_dict.get("extract", []) or teststep_dict.get("extractors", [])
         validators = teststep_dict.get("validate", []) or teststep_dict.get("validators", [])
-        parsed_request = self.init_config(teststep_dict, level="teststep")
+        parsed_request = self.init_test(teststep_dict, level="teststep")
         self.context.update_teststep_variables_mapping("request", parsed_request)
 
         # setup hooks

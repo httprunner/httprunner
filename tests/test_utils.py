@@ -167,19 +167,19 @@ class TestUtils(ApiServerUnittest):
                 }
             }
         }
-        new_dict = utils.lower_config_dict_key(origin_dict)
+        new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("name", new_dict)
         self.assertIn("request", new_dict)
         self.assertIn("method", new_dict["request"])
         self.assertIn("headers", new_dict["request"])
-        self.assertIn("accept", new_dict["request"]["headers"])
-        self.assertIn("user-agent", new_dict["request"]["headers"])
+        self.assertIn("Accept", new_dict["request"]["headers"])
+        self.assertIn("User-Agent", new_dict["request"]["headers"])
 
         origin_dict = {
             "Name": "test",
             "Request": "$default_request"
         }
-        new_dict = utils.lower_config_dict_key(origin_dict)
+        new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("$default_request", new_dict["request"])
 
     def test_lower_dict_keys(self):

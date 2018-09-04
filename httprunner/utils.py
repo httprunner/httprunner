@@ -127,9 +127,32 @@ def deep_update_dict(origin_dict, override_dict):
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
-    e.g.
-        Name => name, Request => request
-        URL => url, METHOD => method, Headers => headers, Data => data
+
+    Args:
+        origin_dict (dict): mapping data structure
+
+    Returns:
+        dict: mapping with all keys lowered.
+
+    Examples:
+        >>> origin_dict = {
+            "Name": "",
+            "Request": "",
+            "URL": "",
+            "METHOD": "",
+            "Headers": "",
+            "Data": ""
+        }
+        >>> lower_dict_keys(origin_dict)
+            {
+                "name": "",
+                "request": "",
+                "url": "",
+                "method": "",
+                "headers": "",
+                "data": ""
+            }
+
     """
     if not origin_dict or not isinstance(origin_dict, dict):
         return origin_dict
@@ -139,24 +162,19 @@ def lower_dict_keys(origin_dict):
         for key, value in origin_dict.items()
     }
 
-def lower_config_dict_key(config_dict):
-    """ convert key in config dict to lower case, convertion will occur in three places:
-        1, all keys in config dict;
-        2, all keys in config["request"]
-        3, all keys in config["request"]["headers"]
+def lower_test_dict_keys(test_dict):
+    """ convert keys in test_dict to lower case, convertion will occur in two places:
+        1, all keys in test_dict;
+        2, all keys in test_dict["request"]
     """
-    # convert keys in config dict
-    config_dict = lower_dict_keys(config_dict)
+    # convert keys in test_dict
+    test_dict = lower_dict_keys(test_dict)
 
-    if "request" in config_dict:
-        # convert keys in config["request"]
-        config_dict["request"] = lower_dict_keys(config_dict["request"])
+    if "request" in test_dict:
+        # convert keys in test_dict["request"]
+        test_dict["request"] = lower_dict_keys(test_dict["request"])
 
-        # convert keys in config["request"]["headers"]
-        if "headers" in config_dict["request"]:
-            config_dict["request"]["headers"] = lower_dict_keys(config_dict["request"]["headers"])
-
-    return config_dict
+    return test_dict
 
 def convert_mappinglist_to_orderdict(mapping_list):
     """ convert mapping list to ordered dict
