@@ -127,9 +127,32 @@ def deep_update_dict(origin_dict, override_dict):
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
-    e.g.
-        Name => name, Request => request
-        URL => url, METHOD => method, Headers => headers, Data => data
+
+    Args:
+        origin_dict (dict): mapping data structure
+
+    Returns:
+        dict: mapping with all keys lowered.
+
+    Examples:
+        >>> origin_dict = {
+            "Name": "",
+            "Request": "",
+            "URL": "",
+            "METHOD": "",
+            "Headers": "",
+            "Data": ""
+        }
+        >>> lower_dict_keys(origin_dict)
+            {
+                "name": "",
+                "request": "",
+                "url": "",
+                "method": "",
+                "headers": "",
+                "data": ""
+            }
+
     """
     if not origin_dict or not isinstance(origin_dict, dict):
         return origin_dict
