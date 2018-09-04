@@ -172,8 +172,8 @@ class TestUtils(ApiServerUnittest):
         self.assertIn("request", new_dict)
         self.assertIn("method", new_dict["request"])
         self.assertIn("headers", new_dict["request"])
-        self.assertIn("accept", new_dict["request"]["headers"])
-        self.assertIn("user-agent", new_dict["request"]["headers"])
+        self.assertIn("Accept", new_dict["request"]["headers"])
+        self.assertIn("User-Agent", new_dict["request"]["headers"])
 
         origin_dict = {
             "Name": "test",

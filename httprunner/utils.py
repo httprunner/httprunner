@@ -166,7 +166,6 @@ def lower_config_dict_key(config_dict):
     """ convert key in config dict to lower case, convertion will occur in three places:
         1, all keys in config dict;
         2, all keys in config["request"]
-        3, all keys in config["request"]["headers"]
     """
     # convert keys in config dict
     config_dict = lower_dict_keys(config_dict)
@@ -174,10 +173,6 @@ def lower_config_dict_key(config_dict):
     if "request" in config_dict:
         # convert keys in config["request"]
         config_dict["request"] = lower_dict_keys(config_dict["request"])
-
-        # convert keys in config["request"]["headers"]
-        if "headers" in config_dict["request"]:
-            config_dict["request"]["headers"] = lower_dict_keys(config_dict["request"]["headers"])
 
     return config_dict
 
