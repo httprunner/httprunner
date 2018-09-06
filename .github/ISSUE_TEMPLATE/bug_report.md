@@ -20,10 +20,12 @@ Please complete the following information:
 
 Traceback when bug occurs.
 
-## Project file structure
+## Project structure
 
-File structure of your project. A good way is to run `tree` command.
+File structure of your project. A good way is to run `tree -a` command.
 
 ## Project files (If possible)
 
 Provide your project files to help locate and debug bugs faster. This is not mandatory.
+
+NOTICE: Before uploading your project files, don't forget to remove sensitive data, e.g. IP, username and password, key info etc.
