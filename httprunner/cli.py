@@ -74,8 +74,7 @@ def main_hrun():
 
     project_name = args.startproject
     if project_name:
-        project_path = os.path.join(os.getcwd(), project_name)
-        create_scaffold(project_path)
+        create_scaffold(project_name)
         exit(0)
 
     try:
