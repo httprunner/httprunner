@@ -252,15 +252,15 @@ class TestUtils(ApiServerUnittest):
             utils.override_mapping_list(map_list, override_mapping)
 
     def test_create_scaffold(self):
-        project_path = os.path.join(os.getcwd(), "projectABC")
-        utils.create_scaffold(project_path)
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "api")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "testcases")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "testsuites")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "reports")))
-        self.assertTrue(os.path.isfile(os.path.join(project_path, "debugtalk.py")))
-        self.assertTrue(os.path.isfile(os.path.join(project_path, ".env")))
-        shutil.rmtree(project_path)
+        project_name = "projectABC"
+        utils.create_scaffold(project_name)
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "api")))
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "testcases")))
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "testsuites")))
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "reports")))
+        self.assertTrue(os.path.isfile(os.path.join(project_name, "debugtalk.py")))
+        self.assertTrue(os.path.isfile(os.path.join(project_name, ".env")))
+        shutil.rmtree(project_name)
 
     def test_cartesian_product_one(self):
         parameters_content_list = [
