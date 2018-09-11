@@ -356,13 +356,16 @@ def print_io(in_out):
 
     logger.log_debug(content)
 
-def create_scaffold(project_path):
-    if os.path.isdir(project_path):
-        folder_name = os.path.basename(project_path)
-        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(folder_name))
+
+def create_scaffold(project_name):
+    """ create scaffold with specified project name.
+    """
+    if os.path.isdir(project_name):
+        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
         return
 
-    logger.color_print("Start to create new project: {}\n".format(project_path), "GREEN")
+    logger.color_print("Start to create new project: {}".format(project_name), "GREEN")
+    logger.color_print("CWD: {}\n".format(os.getcwd()), "BLUE")
 
     def create_path(path, ptype):
         if ptype == "folder":
@@ -370,23 +373,19 @@ def create_scaffold(project_path):
         elif ptype == "file":
             open(path, 'w').close()
 
-        return "created {}: {}\n".format(ptype, path)
+        msg = "created {}: {}".format(ptype, path)
+        logger.color_print(msg, "BLUE")
 
     path_list = [
-        (project_path, "folder"),
-        (os.path.join(project_path, "api"), "folder"),
-        (os.path.join(project_path, "testcases"), "folder"),
-        (os.path.join(project_path, "testsuites"), "folder"),
-        (os.path.join(project_path, "reports"), "folder"),
-        (os.path.join(project_path, "debugtalk.py"), "file"),
-        (os.path.join(project_path, ".env"), "file")
+        (project_name, "folder"),
+        (os.path.join(project_name, "api"), "folder"),
+        (os.path.join(project_name, "testcases"), "folder"),
+        (os.path.join(project_name, "testsuites"), "folder"),
+        (os.path.join(project_name, "reports"), "folder"),
+        (os.path.join(project_name, "debugtalk.py"), "file"),
+        (os.path.join(project_name, ".env"), "file")
     ]
-
-    msg = ""
-    for p in path_list:
-        msg += create_path(p[0], p[1])
-
-    logger.color_print(msg, "BLUE")
+    [create_path(p[0], p[1]) for p in path_list]
 
 
 def gen_cartesian_product(*args):
