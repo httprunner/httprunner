@@ -41,6 +41,7 @@ class HttpRunner(object):
         self.http_client_session = kwargs.pop("http_client_session", None)
         kwargs.setdefault("resultclass", report.HtmlTestResult)
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
+        self.test_loader = unittest.TestLoader()
 
     def load_tests(self, path_or_testcases):
         """ load testcases, extend and merge with api/testcase definitions.
@@ -216,9 +217,7 @@ class HttpRunner(object):
 
         self.exception_stage = "add tests to test suite"
 
-        testcases_list = []
-        loader = unittest.TestLoader()
-        loaded_testcases = []
+        test_suite = unittest.TestSuite()
         for testcase in testcases:
             config = testcase.get("config", {})
             test_runner = runner.Runner(config, self.http_client_session)
@@ -233,13 +232,12 @@ class HttpRunner(object):
                     test_method = __add_teststep(test_runner, config, teststep_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
-            loaded_testcase = loader.loadTestsFromTestCase(TestSequense)
+            loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
             setattr(loaded_testcase, "config", config)
             setattr(loaded_testcase, "teststeps", testcase.get("teststeps", []))
             setattr(loaded_testcase, "runner", test_runner)
-            loaded_testcases.append(loaded_testcase)
+            test_suite.addTest(loaded_testcase)
 
-        test_suite = unittest.TestSuite(loaded_testcases)
         return test_suite
 
     def run_tests(self, test_suite):
