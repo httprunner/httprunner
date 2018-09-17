@@ -350,7 +350,7 @@ class TestHttpRunner(ApiServerUnittest):
         runner = HttpRunner()
         testcases = runner.load_tests(testcase_file_path)
         parsed_testcases = runner.parse_tests(testcases)
-        unittest_runner, test_suite = runner.initialize(parsed_testcases)
+        test_suite = runner.initialize(parsed_testcases)
 
         self.assertEqual(
             test_suite._tests[0].teststeps[0]['name'],

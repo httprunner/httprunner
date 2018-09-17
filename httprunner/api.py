@@ -39,7 +39,8 @@ class HttpRunner(object):
         loader.reset_loader()
         loader.dot_env_path = kwargs.pop("dot_env_path", None)
         self.http_client_session = kwargs.pop("http_client_session", None)
-        self.kwargs = kwargs
+        kwargs.setdefault("resultclass", report.HtmlTestResult)
+        self.unittest_runner = unittest.TextTestRunner(**kwargs)
 
     def load_tests(self, path_or_testcases):
         """ load testcases, extend and merge with api/testcase definitions.
@@ -184,7 +185,7 @@ class HttpRunner(object):
             testcases (list): testcases list
 
         Returns:
-            tuple: (unittest.TextTestRunner(), unittest.TestSuite())
+            tuple: unittest.TestSuite()
 
         """
         def __add_teststep(test_runner, config, teststep_dict):
@@ -214,8 +215,6 @@ class HttpRunner(object):
             return test
 
         self.exception_stage = "initialize unittest Runner() and TestSuite()"
-        self.kwargs.setdefault("resultclass", report.HtmlTestResult)
-        unittest_runner = unittest.TextTestRunner(**self.kwargs)
 
         testcases_list = []
         loader = unittest.TestLoader()
@@ -241,13 +240,12 @@ class HttpRunner(object):
             loaded_testcases.append(loaded_testcase)
 
         test_suite = unittest.TestSuite(loaded_testcases)
-        return (unittest_runner, test_suite)
+        return test_suite
 
-    def run_tests(self, unittest_runner, test_suite):
-        """ run tests with unittest_runner and test_suite
+    def run_tests(self, test_suite):
+        """ run tests in test_suite
 
         Args:
-            unittest_runner: unittest.TextTestRunner()
             test_suite: unittest.TestSuite()
 
         Returns:
@@ -261,7 +259,7 @@ class HttpRunner(object):
             testcase_name = testcase.config.get("name")
             logger.log_info("Start to run testcase: {}".format(testcase_name))
 
-            result = unittest_runner.run(testcase)
+            result = self.unittest_runner.run(testcase)
             tests_results.append((testcase, result))
 
         return tests_results
@@ -328,10 +326,10 @@ class HttpRunner(object):
         parsed_testcases_list = self.parse_tests(testcases_list)
 
         # initialize
-        unittest_runner, test_suite = self.initialize(parsed_testcases_list)
+        test_suite = self.initialize(parsed_testcases_list)
 
         # running tests
-        results = self.run_tests(unittest_runner, test_suite)
+        results = self.run_tests(test_suite)
 
         # aggregate
         self.aggregate(results)
