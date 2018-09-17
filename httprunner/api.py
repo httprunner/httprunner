@@ -178,8 +178,8 @@ class HttpRunner(object):
 
         return parsed_testcases_list
 
-    def initialize(self, testcases):
-        """ initialize test runner with parsed testcases.
+    def add_tests(self, testcases):
+        """ initialize testcase with Runner() and add to test suite.
 
         Args:
             testcases (list): testcases list
@@ -214,7 +214,7 @@ class HttpRunner(object):
             test.__doc__ = teststep_dict["name"]
             return test
 
-        self.exception_stage = "initialize unittest Runner() and TestSuite()"
+        self.exception_stage = "add tests to test suite"
 
         testcases_list = []
         loader = unittest.TestLoader()
@@ -252,7 +252,7 @@ class HttpRunner(object):
             list: tests_results
 
         """
-        self.exception_stage = "running tests"
+        self.exception_stage = "run test suite"
         tests_results = []
 
         for testcase in test_suite:
@@ -326,7 +326,7 @@ class HttpRunner(object):
         parsed_testcases_list = self.parse_tests(testcases_list)
 
         # initialize
-        test_suite = self.initialize(parsed_testcases_list)
+        test_suite = self.add_tests(parsed_testcases_list)
 
         # running tests
         results = self.run_tests(test_suite)
