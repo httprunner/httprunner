@@ -315,11 +315,11 @@
                       {% elif validator.check_result == "unchecked" %}
                       <td class="unchecked">
                       {% endif %}
-                        {{validator.check}}
+                        {{validator.check | e}}
                       </td>
                       <td>{{validator.comparator}}</td>
-                      <td>{{validator.expect}}</td>
-                      <td>{{validator.check_value}}</td>
+                      <td>{{validator.expect | e}}</td>
+                      <td>{{validator.check_value | e}}</td>
                     </tr>
                     {% endfor %}
                   </table>

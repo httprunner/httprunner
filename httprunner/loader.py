@@ -191,10 +191,11 @@ def load_dot_env_file():
     env_variables_mapping = {}
     with io.open(path, 'r', encoding='utf-8') as fp:
         for line in fp:
+            # maxsplit=1
             if "=" in line:
-                variable, value = line.split("=")
+                variable, value = line.split("=", 1)
             elif ":" in line:
-                variable, value = line.split(":")
+                variable, value = line.split(":", 1)
             else:
                 raise exceptions.FileFormatError(".env format error")
 
