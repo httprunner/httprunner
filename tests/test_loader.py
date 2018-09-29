@@ -148,6 +148,7 @@ class TestFileLoader(unittest.TestCase):
         env_variables_mapping = loader.load_dot_env_file()
         self.assertIn("PROJECT_KEY", env_variables_mapping)
         self.assertEqual(env_variables_mapping["UserName"], "test")
+        self.assertEqual(env_variables_mapping["content_type"], "application/json; charset=UTF-8")
         loader.dot_env_path = None
 
     def test_load_env_path_not_exist(self):
