@@ -9,8 +9,8 @@ from tests.base import ApiServerUnittest
 class TestContext(ApiServerUnittest):
 
     def setUp(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.debugtalk_module = loader.project_mapping["debugtalk"]
+        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        self.debugtalk_module = project_mapping["debugtalk"]
 
         self.context = context.Context(
             self.debugtalk_module["variables"],
@@ -22,7 +22,6 @@ class TestContext(ApiServerUnittest):
     def test_init_context_functions(self):
         context_functions = self.context.TESTCASE_SHARED_FUNCTIONS_MAPPING
         self.assertIn("gen_md5", context_functions)
-        self.assertIn("equals", context_functions)
 
     def test_init_context_variables(self):
         self.assertEqual(

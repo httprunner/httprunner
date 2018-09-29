@@ -2,16 +2,17 @@
 import zmq
 from locust import HttpLocust, TaskSet, task
 from httprunner import LocustRunner
+from httprunner.loader import load_tests
 
 
 class WebPageTasks(TaskSet):
     def on_start(self):
         self.test_runner = LocustRunner(self.client)
-        self.file_path = self.locust.file_path
+        self.testcases = loader.load_tests(self.locust.file_path)
 
     @task
     def test_specified_scenario(self):
-        self.test_runner.run(self.file_path)
+        self.test_runner.run(self.testcases)
 
 
 class WebPageUser(HttpLocust):

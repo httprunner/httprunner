@@ -183,10 +183,7 @@ class Context(object):
         """
         # TODO: move comparator uniform to init_test_suites
         comparator = utils.get_uniform_comparator(validator_dict["comparator"])
-        validate_func = self.TESTCASE_SHARED_FUNCTIONS_MAPPING.get(comparator)
-
-        if not validate_func:
-            raise exceptions.FunctionNotFound("comparator not found: {}".format(comparator))
+        validate_func = parser.get_mapping_function(comparator, self.TESTCASE_SHARED_FUNCTIONS_MAPPING)
 
         check_item = validator_dict["check"]
         check_value = validator_dict["check_value"]
