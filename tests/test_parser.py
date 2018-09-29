@@ -384,6 +384,10 @@ class TestParser(unittest.TestCase):
             os.getcwd(),
             "tests/data/demo_parameters.yml"
         )
+        dot_env_path = os.path.join(
+            os.getcwd(), "tests", ".env"
+        )
+        loader.load_dot_env_file(dot_env_path)
         from tests import debugtalk
         debugtalk_module = loader.load_python_module(debugtalk)
         cartesian_product_parameters = parser.parse_parameters(
@@ -412,8 +416,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
+        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
 
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},

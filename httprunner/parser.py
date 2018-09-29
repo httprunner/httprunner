@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import ast
+import copy
 import os
 import re
 
@@ -325,6 +326,34 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
 ##  parse content with variables and functions mapping
 ###############################################################################
 
+def get_builtin_item(item_type, item_name):
+    """
+
+    Args:
+        item_type (enum): "variables" or "functions"
+        item_name (str): variable name or function name
+
+    Returns:
+        variable or function with the name of item_name
+
+    """
+    # override built_in module with debugtalk.py module
+    from httprunner import loader
+    built_in_module = loader.load_builtin_module()
+
+    if item_type == "variables":
+        try:
+            return built_in_module["variables"][item_name]
+        except KeyError:
+            raise exceptions.VariableNotFound("{} is not found.".format(item_name))
+    else:
+        # item_type == "functions":
+        try:
+            return built_in_module["functions"][item_name]
+        except KeyError:
+            raise exceptions.FunctionNotFound("{} is not found.".format(item_name))
+
+
 def get_mapping_variable(variable_name, variables_mapping):
     """ get variable from variables_mapping.
 
@@ -339,10 +368,10 @@ def get_mapping_variable(variable_name, variables_mapping):
         exceptions.VariableNotFound: variable is not found.
 
     """
-    try:
+    if variable_name in variables_mapping:
         return variables_mapping[variable_name]
-    except KeyError:
-        raise exceptions.VariableNotFound("{} is not found.".format(variable_name))
+    else:
+        return get_builtin_item("variables", variable_name)
 
 
 def get_mapping_function(function_name, functions_mapping):
@@ -362,6 +391,11 @@ def get_mapping_function(function_name, functions_mapping):
     """
     if function_name in functions_mapping:
         return functions_mapping[function_name]
+
+    try:
+        return get_builtin_item("functions", function_name)
+    except exceptions.FunctionNotFound:
+        pass
 
     try:
         # check if builtin functions
