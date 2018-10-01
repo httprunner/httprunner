@@ -435,3 +435,21 @@ class TestParser(unittest.TestCase):
             len(cartesian_product_parameters),
             3 * 2 * 3
         )
+
+    def test_parse_tests(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testcase.yml')
+        testcases = loader.load_tests(testcase_file_path)
+        parsed_testcases = parser.parse_tests(testcases)
+        self.assertEqual(parsed_testcases[0]["config"]["variables"]["var_c"], 3)
+        self.assertEqual(len(parsed_testcases), 2 * 2)
+        self.assertEqual(
+            parsed_testcases[0]["config"]["request"]["base_url"],
+            '$BASE_URL'
+        )
+        self.assertEqual(
+            parsed_testcases[0]["config"]["variables"]["BASE_URL"],
+            'http://127.0.0.1:5000'
+        )
+        self.assertIsInstance(parsed_testcases, list)
+        self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')
