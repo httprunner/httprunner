@@ -224,7 +224,7 @@ class HttpRunner(object):
 
         """
         testcases = loader.load_tests(testcase_path)
-        return self.run_tests(testcases)
+        return self.run_tests(testcases, mapping)
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
         """ generate html report and return report path.
