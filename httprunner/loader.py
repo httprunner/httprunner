@@ -935,7 +935,7 @@ def load_tests(path, dot_env_path=None):
         testcases_list = []
 
         for file_path in set(path):
-            testcases = load_tests(file_path)
+            testcases = load_tests(file_path, dot_env_path)
             if not testcases:
                 continue
             testcases_list.extend(testcases)
@@ -952,7 +952,7 @@ def load_tests(path, dot_env_path=None):
 
     if os.path.isdir(path):
         files_list = load_folder_files(path)
-        testcases_list = load_tests(files_list)
+        testcases_list = load_tests(files_list, dot_env_path)
 
     elif os.path.isfile(path):
         try:

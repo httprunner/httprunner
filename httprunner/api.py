@@ -212,18 +212,19 @@ class HttpRunner(object):
 
         return self
 
-    def run(self, testcase_path, mapping=None):
+    def run(self, testcase_path, dot_env_path=None, mapping=None):
         """ main entrance, run testcase path with variables mapping.
 
         Args:
             testcase_path (str/list): testcase file/foler path.
+            dot_env_path (str): specified .env file path.
             mapping (dict): if mapping is specified, it will override variables in config block.
 
         Returns:
             instance: HttpRunner() instance
 
         """
-        testcases = loader.load_tests(testcase_path)
+        testcases = loader.load_tests(testcase_path, dot_env_path)
         return self.run_tests(testcases, mapping)
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
