@@ -38,6 +38,7 @@ class HttpRunner(object):
         kwargs.setdefault("resultclass", report.HtmlTestResult)
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
+        self.summary = None
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
@@ -245,6 +246,9 @@ class HttpRunner(object):
             str: generated html report path
 
         """
+        if not self.summary:
+            raise exceptions.MyBaseError("run method should be called before gen_html_report.")
+
         self.exception_stage = "generate report"
         return report.render_html_report(
             self.summary,
