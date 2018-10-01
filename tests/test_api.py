@@ -89,7 +89,7 @@ class TestHttpRunner(ApiServerUnittest):
         shutil.rmtree(report_save_dir)
 
     def test_run_testcases(self):
-        runner = HttpRunner().run_tests(self.testcases)
+        runner = HttpRunner().run(self.testcases)
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 2)
@@ -130,11 +130,10 @@ class TestHttpRunner(ApiServerUnittest):
                             {"eq": ["status_code", 200]}
                         ]
                     }
-
                 ]
             }
         ]
-        runner = HttpRunner().run_tests(testcases)
+        runner = HttpRunner().run(testcases)
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
@@ -197,7 +196,7 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        runner = HttpRunner().run_tests(testcases)
+        runner = HttpRunner().run(testcases)
         summary = runner.summary
         self.assertTrue(summary["success"])
 
@@ -225,7 +224,7 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        runner = HttpRunner().run_tests(testcases)
+        runner = HttpRunner().run(testcases)
         summary = runner.summary
         self.assertFalse(summary["success"])
         self.assertEqual(summary["stat"]["errors"], 1)
@@ -251,7 +250,7 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        runner = HttpRunner().run_tests(testcases)
+        runner = HttpRunner().run(testcases)
         summary = runner.summary
         self.assertFalse(summary["success"])
         self.assertEqual(summary["stat"]["errors"], 1)

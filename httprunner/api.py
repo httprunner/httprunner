@@ -49,7 +49,7 @@ class HttpRunner(object):
             tuple: unittest.TestSuite()
 
         """
-        def __add_teststep(test_runner, config, teststep_dict):
+        def _add_teststep(test_runner, config, teststep_dict):
             """ add teststep to testcase.
             """
             def test(self):
@@ -87,7 +87,7 @@ class HttpRunner(object):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_method = __add_teststep(test_runner, config, teststep_dict)
+                    test_method = _add_teststep(test_runner, config, teststep_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
             loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
@@ -151,7 +151,7 @@ class HttpRunner(object):
 
             self.summary["details"].append(testcase_summary)
 
-    def run_tests(self, testcases, mapping=None):
+    def _run_tests(self, testcases, mapping=None):
         """ start to run test with variables mapping.
 
         Args:
@@ -208,11 +208,11 @@ class HttpRunner(object):
 
         return self
 
-    def run(self, testcase_path, dot_env_path=None, mapping=None):
-        """ main entrance, run testcase path with variables mapping.
+    def run(self, path_or_testcases, dot_env_path=None, mapping=None):
+        """ main interface, run testcases with variables mapping.
 
         Args:
-            testcase_path (str/list): testcase file/foler path.
+            path_or_testcases (str/list/dict): testcase file/foler path, or valid testcases.
             dot_env_path (str): specified .env file path.
             mapping (dict): if mapping is specified, it will override variables in config block.
 
@@ -221,8 +221,18 @@ class HttpRunner(object):
 
         """
         self.exception_stage = "load tests"
-        testcases = loader.load_tests(testcase_path, dot_env_path)
-        return self.run_tests(testcases, mapping)
+
+        if validator.is_testcases(path_or_testcases):
+            if isinstance(path_or_testcases, dict):
+                testcases = [path_or_testcases]
+            else:
+                testcases = path_or_testcases
+        elif validator.is_testcase_path(path_or_testcases):
+            testcases = loader.load_tests(path_or_testcases, dot_env_path)
+        else:
+            raise exceptions.ParamsError("invalid testcase path or testcases.")
+
+        return self._run_tests(testcases, mapping)
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
         """ generate html report and return report path.
