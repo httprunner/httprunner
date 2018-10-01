@@ -858,6 +858,9 @@ def load_project_tests(test_path, dot_env_path=None):
         # debugtalk.py is not found, use os.getcwd() as PWD.
         project_working_directory = os.getcwd()
 
+    # add PWD to sys.path
+    sys.path.insert(0, project_working_directory)
+
     # load .env
     dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
     if os.path.isfile(dot_env_path):
@@ -867,8 +870,6 @@ def load_project_tests(test_path, dot_env_path=None):
 
     # load debugtalk.py
     if debugtalk_path:
-        # add PWD to sys.path
-        sys.path.insert(0, project_working_directory)
         project_mapping["debugtalk"] = load_debugtalk_module()
     else:
         project_mapping["debugtalk"] = {
