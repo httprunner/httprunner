@@ -342,7 +342,7 @@ class TestHttpRunner(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_parameters.yml')
         testcases = loader.load_tests(testcase_file_path)
-        parsed_testcases = api.parse_tests(testcases)
+        parsed_testcases = parser.parse_tests(testcases)
         runner = HttpRunner()
         test_suite = runner._add_tests(parsed_testcases)
 
@@ -376,24 +376,6 @@ class TestHttpRunner(ApiServerUnittest):
             os.getcwd(), 'tests/httpbin/basic.yml')
         runner = HttpRunner().run(testcase_file_path)
         self.assertTrue(runner.summary["success"])
-
-    def test_parse_tests(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase.yml')
-        testcases = loader.load_tests(testcase_file_path)
-        parsed_testcases = api.parse_tests(testcases)
-        self.assertEqual(parsed_testcases[0]["config"]["variables"]["var_c"], 3)
-        self.assertEqual(len(parsed_testcases), 2 * 2)
-        self.assertEqual(
-            parsed_testcases[0]["config"]["request"]["base_url"],
-            '$BASE_URL'
-        )
-        self.assertEqual(
-            parsed_testcases[0]["config"]["variables"]["BASE_URL"],
-            'http://127.0.0.1:5000'
-        )
-        self.assertIsInstance(parsed_testcases, list)
-        self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')
 
 
 class TestLocustRunner(ApiServerUnittest):
