@@ -75,8 +75,6 @@ class HttpRunner(object):
             test.__doc__ = teststep_dict["name"]
             return test
 
-        self.exception_stage = "add tests to test suite"
-
         test_suite = unittest.TestSuite()
         for testcase in testcases:
             config = testcase.get("config", {})
@@ -110,7 +108,6 @@ class HttpRunner(object):
             list: tests_results
 
         """
-        self.exception_stage = "run test suite"
         tests_results = []
 
         for testcase in test_suite:
@@ -129,7 +126,6 @@ class HttpRunner(object):
             tests_results (list): list of (testcase, result)
 
         """
-        self.exception_stage = "aggregate results"
         self.summary = {
             "success": True,
             "stat": {},
@@ -198,16 +194,16 @@ class HttpRunner(object):
             instance: HttpRunner() instance
 
         """
-        # parser
+        self.exception_stage = "parse tests"
         parsed_testcases_list = parser.parse_tests(testcases, mapping)
 
-        # initialize
+        self.exception_stage = "add tests to test suite"
         test_suite = self._add_tests(parsed_testcases_list)
 
-        # running test suite
+        self.exception_stage = "run test suite"
         results = self._run_suite(test_suite)
 
-        # aggregate
+        self.exception_stage = "aggregate results"
         self._aggregate(results)
 
         return self
@@ -224,6 +220,7 @@ class HttpRunner(object):
             instance: HttpRunner() instance
 
         """
+        self.exception_stage = "load tests"
         testcases = loader.load_tests(testcase_path, dot_env_path)
         return self.run_tests(testcases, mapping)
 
