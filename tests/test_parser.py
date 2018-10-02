@@ -380,7 +380,7 @@ class TestParser(unittest.TestCase):
             {"app_version": "${gen_app_version()}"},
             {"username-password": "${get_account()}"}
         ]
-        testset_path = os.path.join(
+        testcase_path = os.path.join(
             os.getcwd(),
             "tests/data/demo_parameters.yml"
         )
@@ -425,7 +425,7 @@ class TestParser(unittest.TestCase):
         ]
         variables_mapping = {}
         functions_mapping = project_mapping["debugtalk"]["functions"]
-        testset_path = os.path.join(
+        testcase_path = os.path.join(
             os.getcwd(),
             "tests/data/demo_parameters.yml"
         )

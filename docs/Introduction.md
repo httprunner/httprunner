@@ -10,7 +10,7 @@ Take full reuse of Python's existing powerful libraries: [`Requests`][requests],
 - Define testcases in YAML or JSON format in concise and elegant manner.
 - Supports `function`/`variable`/`extract`/`validate` mechanisms to create full test scenarios.
 - With `debugtalk.py` plugin, module functions can be auto-discovered in recursive upward directories.
-- Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
+- Testcases can be run in diverse ways, with single testcase, multiple testcases, or entire project folder.
 - Test report is concise and clear, with detailed log records. See [`PyUnitReport`][PyUnitReport].
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
 - CLI command supported, perfect combination with [Jenkins][Jenkins].
