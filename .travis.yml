@@ -5,9 +5,10 @@ python:
   - 3.4
   - 3.5
   - 3.6
+  - 3.7-dev
 install:
   - pip install pipenv --upgrade-strategy=only-if-needed
-  - pipenv install --dev
+  - pipenv install --dev --skip-lock
 script:
   - pipenv run python setup.py install
   - pipenv run coverage run --source=httprunner -m unittest discover

@@ -79,10 +79,12 @@ def main_hrun():
 
     try:
         runner = HttpRunner(
-            failfast=args.failfast,
+            failfast=args.failfast
+        )
+        runner.run(
+            args.testset_paths,
             dot_env_path=args.dot_env_path
         )
-        runner.run(args.testset_paths)
     except Exception:
         logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
         raise

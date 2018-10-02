@@ -95,7 +95,7 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
     logger.log_info("Start to render Html report ...")
     logger.log_debug("render data: {}".format(summary))
 
-    report_dir_path = os.path.join(loader.project_working_directory, "reports")
+    report_dir_path = os.path.join(os.getcwd(), "reports")
     start_at_timestamp = int(summary["time"]["start_at"])
     summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
     if html_report_name:

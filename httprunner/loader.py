@@ -10,24 +10,6 @@ import yaml
 from httprunner import built_in, exceptions, logger, parser, utils, validator
 from httprunner.compat import OrderedDict
 
-sys.path.insert(0, os.getcwd())
-
-project_mapping = {
-    "debugtalk": {
-        "variables": {},
-        "functions": {}
-    },
-    "env": {},
-    "def-api": {},
-    "def-testcase": {}
-}
-""" dict: save project loaded api/testcases definitions, environments and debugtalk.py module.
-"""
-
-dot_env_path = None
-testcases_cache_mapping = {}
-project_working_directory = os.getcwd()
-
 
 ###############################################################################
 ##   file loader
@@ -161,9 +143,11 @@ def load_folder_files(folder_path, recursive=True):
     return file_list
 
 
-def load_dot_env_file():
-    """ load .env file, .env file should be located in project working directory by default.
-        If dot_env_path is specified, it will be loaded instead.
+def load_dot_env_file(dot_env_path):
+    """ load .env file.
+
+    Args:
+        dot_env_path (str): .env file path
 
     Returns:
         dict: environment variables mapping
@@ -175,21 +159,15 @@ def load_dot_env_file():
             }
 
     Raises:
-        exceptions.FileFormatError: If env file format is invalid.
+        exceptions.FileFormatError: If .env file format is invalid.
 
     """
-    path = dot_env_path or os.path.join(project_working_directory, ".env")
-    if not os.path.isfile(path):
-        if dot_env_path:
-            logger.log_error(".env file not exist: {}".format(dot_env_path))
-            sys.exit(1)
-        else:
-            logger.log_debug(".env file not exist in: {}".format(project_working_directory))
-            return {}
+    if not os.path.isfile(dot_env_path):
+        raise exceptions.FileNotFound(".env file path is not exist.")
 
-    logger.log_info("Loading environment variables from {}".format(path))
+    logger.log_info("Loading environment variables from {}".format(dot_env_path))
     env_variables_mapping = {}
-    with io.open(path, 'r', encoding='utf-8') as fp:
+    with io.open(dot_env_path, 'r', encoding='utf-8') as fp:
         for line in fp:
             # maxsplit=1
             if "=" in line:
@@ -201,9 +179,7 @@ def load_dot_env_file():
 
             env_variables_mapping[variable.strip()] = value.strip()
 
-    project_mapping["env"] = env_variables_mapping
     utils.set_os_environ(env_variables_mapping)
-
     return env_variables_mapping
 
 
@@ -281,13 +257,15 @@ def load_builtin_module():
     """ load built_in module
     """
     built_in_module = load_python_module(built_in)
-    project_mapping["debugtalk"] = built_in_module
+    return built_in_module
 
 
 def load_debugtalk_module():
-    """ load project debugtalk.py module and merge with builtin module.
+    """ load project debugtalk.py module
         debugtalk.py should be located in project working directory.
-        variables and functions mapping for debugtalk.py
+
+    Returns:
+        dict: debugtalk module mapping
             {
                 "variables": {},
                 "functions": {}
@@ -297,10 +275,7 @@ def load_debugtalk_module():
     # load debugtalk.py module
     imported_module = importlib.import_module("debugtalk")
     debugtalk_module = load_python_module(imported_module)
-
-    # override built_in module with debugtalk.py module
-    project_mapping["debugtalk"]["variables"].update(debugtalk_module["variables"])
-    project_mapping["debugtalk"]["functions"].update(debugtalk_module["functions"])
+    return debugtalk_module
 
 
 def get_module_item(module_mapping, item_type, item_name):
@@ -340,12 +315,11 @@ def get_module_item(module_mapping, item_type, item_name):
 ##   testcase loader
 ###############################################################################
 
-def _load_test_file(file_path):
+def _load_test_file(file_path, project_mapping):
     """ load testcase file or testsuite file
 
     Args:
         file_path (str): absolute valid file path. file_path should be in the following format:
-
             [
                 {
                     "config": {
@@ -376,6 +350,7 @@ def _load_test_file(file_path):
                     }
                 }
             ]
+        project_mapping (dict): project_mapping
 
     Returns:
         dict: testcase dict
@@ -406,7 +381,7 @@ def _load_test_file(file_path):
 
             def extend_api_definition(block):
                 ref_call = block["api"]
-                def_block = _get_block_by_name(ref_call, "def-api")
+                def_block = _get_block_by_name(ref_call, "def-api", project_mapping)
                 _extend_block(block, def_block)
 
             # reference api
@@ -417,7 +392,7 @@ def _load_test_file(file_path):
             # reference testcase
             elif "suite" in test_block: # TODO: replace suite with testcase
                 ref_call = test_block["suite"]
-                block = _get_block_by_name(ref_call, "def-testcase")
+                block = _get_block_by_name(ref_call, "def-testcase", project_mapping)
                 # TODO: bugfix lost block config variables
                 for teststep in block["teststeps"]:
                     if "api" in teststep:
@@ -436,13 +411,14 @@ def _load_test_file(file_path):
     return testcase
 
 
-def _get_block_by_name(ref_call, ref_type):
+def _get_block_by_name(ref_call, ref_type, project_mapping):
     """ get test content by reference name.
 
     Args:
         ref_call (str): call function.
             e.g. api_v1_Account_Login_POST($UserName, $Password)
         ref_type (enum): "def-api" or "def-testcase"
+        project_mapping (dict): project_mapping
 
     Returns:
         dict: api/testcase definition.
@@ -454,7 +430,7 @@ def _get_block_by_name(ref_call, ref_type):
     function_meta = parser.parse_function(ref_call)
     func_name = function_meta["func_name"]
     call_args = function_meta["args"]
-    block = _get_test_definition(func_name, ref_type)
+    block = _get_test_definition(func_name, ref_type, project_mapping)
     def_args = block.get("function_meta", {}).get("args", [])
 
     if len(call_args) != len(def_args):
@@ -477,12 +453,13 @@ def _get_block_by_name(ref_call, ref_type):
     return block
 
 
-def _get_test_definition(name, ref_type):
+def _get_test_definition(name, ref_type, project_mapping):
     """ get expected api or testcase.
 
     Args:
         name (str): api or testcase name
         ref_type (enum): "def-api" or "def-testcase"
+        project_mapping (dict): project_mapping
 
     Returns:
         dict: expected api/testcase info if found.
@@ -764,7 +741,6 @@ def load_api_folder(api_folder_path):
             api_dict["function_meta"] = function_meta
             api_definition_mapping[func_name] = api_dict
 
-    project_mapping["def-api"] = api_definition_mapping
     return api_definition_mapping
 
 
@@ -842,27 +818,7 @@ def load_test_folder(test_folder_path):
                 # key == "test":
                 testcase["teststeps"].append(block)
 
-    project_mapping["def-testcase"] = test_definition_mapping
     return test_definition_mapping
-
-
-def reset_loader():
-    """ reset project mapping.
-    """
-    global project_working_directory
-    project_working_directory = os.getcwd()
-
-    global dot_env_path
-    dot_env_path = None
-
-    project_mapping["debugtalk"] = {
-        "variables": {},
-        "functions": {}
-    }
-    project_mapping["env"] = {}
-    project_mapping["def-api"] = {}
-    project_mapping["def-testcase"] = {}
-    testcases_cache_mapping.clear()
 
 
 def locate_debugtalk_py(start_path):
@@ -879,57 +835,99 @@ def locate_debugtalk_py(start_path):
         return None
 
 
-def load_project_tests(test_path):
+def load_project_tests(test_path, dot_env_path=None):
     """ load api, testcases, .env, builtin module and debugtalk.py.
         api/testcases folder is relative to project_working_directory
 
     Args:
         test_path (str): test file/folder path, locate pwd from this path.
+        dot_env_path (str): specified .env file path
+
+    Returns:
+        dict: project loaded api/testcases definitions, environments and debugtalk.py module.
 
     """
-    global project_working_directory
-
-    reset_loader()
-    load_builtin_module()
+    project_mapping = {}
 
     debugtalk_path = locate_debugtalk_py(test_path)
     # locate PWD with debugtalk.py path
     if debugtalk_path:
         # The folder contains debugtalk.py will be treated as PWD.
-        # add PWD to sys.path
         project_working_directory = os.path.dirname(debugtalk_path)
     else:
-        # debugtalk.py not found, use os.getcwd() as PWD.
+        # debugtalk.py is not found, use os.getcwd() as PWD.
         project_working_directory = os.getcwd()
 
+    # add PWD to sys.path
+    sys.path.insert(0, project_working_directory)
+
     # load .env
-    load_dot_env_file()
+    dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
+    if os.path.isfile(dot_env_path):
+        project_mapping["env"] = load_dot_env_file(dot_env_path)
+    else:
+        project_mapping["env"] = {}
 
     # load debugtalk.py
     if debugtalk_path:
-        sys.path.insert(0, project_working_directory)
-        load_debugtalk_module()
+        project_mapping["debugtalk"] = load_debugtalk_module()
+    else:
+        project_mapping["debugtalk"] = {
+            "variables": {},
+            "functions": {}
+        }
 
-    load_api_folder(os.path.join(project_working_directory, "api"))
+    project_mapping["def-api"] = load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
-    load_test_folder(os.path.join(project_working_directory, "suite"))
+    project_mapping["def-testcase"] = load_test_folder(os.path.join(project_working_directory, "suite"))
+
+    return project_mapping
 
 
-def load_testcases(path):
+def load_tests(path, dot_env_path=None):
     """ load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:
-        path (str): testcase file/foler path.
+        path (str/list): testcase file/foler path.
             path could be in several types:
                 - absolute/relative file path
                 - absolute/relative folder path
                 - list/set container with file(s) and/or folder(s)
+        dot_env_path (str): specified .env file path
 
     Returns:
         list: testcases list, each testcase is corresponding to a file
         [
-            testcase_dict_1,
-            testcase_dict_2
+            {   # testcase data structure
+                "config": {
+                    "name": "desc1",
+                    "path": "testcase1_path",
+                    "variables": [],                    # optional
+                    "request": {}                       # optional
+                    "refs": {
+                        "debugtalk": {
+                            "variables": {},
+                            "functions": {}
+                        },
+                        "env": {},
+                        "def-api": {},
+                        "def-testcase": {}
+                    }
+                },
+                "teststeps": [
+                    # teststep data structure
+                    {
+                        'name': 'test step desc2',
+                        'variables': [],    # optional
+                        'extract': [],      # optional
+                        'validate': [],
+                        'request': {},
+                        'function_meta': {}
+                    },
+                    teststep2   # another teststep dict
+                ]
+            },
+            testcase_dict_2     # another testcase dict
         ]
 
     """
@@ -937,7 +935,7 @@ def load_testcases(path):
         testcases_list = []
 
         for file_path in set(path):
-            testcases = load_testcases(file_path)
+            testcases = load_tests(file_path, dot_env_path)
             if not testcases:
                 continue
             testcases_list.extend(testcases)
@@ -952,24 +950,18 @@ def load_testcases(path):
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
 
-    if path not in testcases_cache_mapping:
-        load_project_tests(path)
-    else:
-        return testcases_cache_mapping[path]
-
     if os.path.isdir(path):
         files_list = load_folder_files(path)
-        testcases_list = load_testcases(files_list)
+        testcases_list = load_tests(files_list, dot_env_path)
 
     elif os.path.isfile(path):
         try:
-            testcase = _load_test_file(path)
-            if testcase["teststeps"]:
-                testcases_list = [testcase]
-            else:
-                testcases_list = []
+            project_mapping = load_project_tests(path, dot_env_path)
+            testcase = _load_test_file(path, project_mapping)
+            testcase["config"]["path"] = path
+            testcase["config"]["refs"] = project_mapping
+            testcases_list = [testcase]
         except exceptions.FileFormatError:
             testcases_list = []
 
-    testcases_cache_mapping[path] = testcases_list
     return testcases_list

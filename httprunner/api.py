@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-import copy
 import os
 import unittest
 
@@ -20,7 +19,6 @@ class HttpRunner(object):
             resultclass (class): HtmlTestResult or TextTestResult
             failfast (bool): False/True, stop the test run on the first error or failure.
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
-            dot_env_path (str): .env file path.
 
         Attributes:
             project_mapping (dict): save project loaded api/testcases, environments and debugtalk.py module.
@@ -36,158 +34,23 @@ class HttpRunner(object):
 
         """
         self.exception_stage = "initialize HttpRunner()"
-        loader.reset_loader()
-        loader.dot_env_path = kwargs.pop("dot_env_path", None)
         self.http_client_session = kwargs.pop("http_client_session", None)
-        self.kwargs = kwargs
+        kwargs.setdefault("resultclass", report.HtmlTestResult)
+        self.unittest_runner = unittest.TextTestRunner(**kwargs)
+        self.test_loader = unittest.TestLoader()
+        self.summary = None
 
-    def load_tests(self, path_or_testcases):
-        """ load testcases, extend and merge with api/testcase definitions.
-
-        Args:
-            path_or_testcases (str/dict/list): YAML/JSON testcase file path or testcase list
-                path (str): testcase file/folder path
-                testcases (dict/list): testcase dict or list of testcases
-
-        Returns:
-            list: valid testcases list.
-
-                [
-                    # testcase data structure
-                    {
-                        "config": {
-                            "name": "desc1",
-                            "path": "",         # optional
-                            "variables": [],    # optional
-                            "request": {}       # optional
-                        },
-                        "teststeps": [
-                            # teststep data structure
-                            {
-                                'name': 'test step desc2',
-                                'variables': [],    # optional
-                                'extract': [],      # optional
-                                'validate': [],
-                                'request': {},
-                                'function_meta': {}
-                            },
-                            teststep2   # another teststep dict
-                        ]
-                    },
-                    {}  # another testcase dict
-                ]
-
-        """
-        self.exception_stage = "load tests"
-        if validator.is_testcases(path_or_testcases):
-            # TODO: refactor
-            if isinstance(path_or_testcases, list):
-                for testcase in path_or_testcases:
-                    try:
-                        test_path = os.path.dirname(testcase["config"]["path"])
-                    except KeyError:
-                        test_path = os.getcwd()
-                    loader.load_project_tests(test_path)
-            else:
-                try:
-                    test_path = os.path.dirname(path_or_testcases["config"]["path"])
-                except KeyError:
-                    test_path = os.getcwd()
-                loader.load_project_tests(test_path)
-
-            testcases = path_or_testcases
-        else:
-            testcases = loader.load_testcases(path_or_testcases)
-
-        self.project_mapping = loader.project_mapping
-
-        if not testcases:
-            raise exceptions.TestcaseNotFound
-
-        if isinstance(testcases, dict):
-            testcases = [testcases]
-
-        return testcases
-
-    def parse_tests(self, testcases, variables_mapping=None):
-        """ parse testcases configs, including variables/parameters/name/request.
+    def _add_tests(self, testcases):
+        """ initialize testcase with Runner() and add to test suite.
 
         Args:
-            testcases (list): testcase list, with config unparsed.
-            variables_mapping (dict): if variables_mapping is specified, it will override variables in config block.
+            testcases (list): parsed testcases list
 
         Returns:
-            list: parsed testcases list, with config variables/parameters/name/request parsed.
+            tuple: unittest.TestSuite()
 
         """
-        self.exception_stage = "parse tests"
-        variables_mapping = variables_mapping or {}
-
-        parsed_testcases_list = []
-        for testcase in testcases:
-            # parse config parameters
-            config_parameters = testcase.setdefault("config", {}).pop("parameters", [])
-            cartesian_product_parameters_list = parser.parse_parameters(
-                config_parameters,
-                self.project_mapping["debugtalk"]["variables"],
-                self.project_mapping["debugtalk"]["functions"]
-            ) or [{}]
-
-            for parameter_mapping in cartesian_product_parameters_list:
-                testcase_dict = copy.deepcopy(testcase)
-                config = testcase_dict.setdefault("config", {})
-
-                # parse config variables
-                raw_config_variables = config.get("variables", [])
-                parsed_config_variables = parser.parse_data(
-                    raw_config_variables,
-                    self.project_mapping["debugtalk"]["variables"],
-                    self.project_mapping["debugtalk"]["functions"]
-                )
-
-                # priority: passed in > debugtalk.py > parameters > variables
-                # override variables mapping with parameters mapping
-                config_variables = utils.override_mapping_list(
-                    parsed_config_variables, parameter_mapping)
-                # merge debugtalk.py module variables
-                config_variables.update(self.project_mapping["debugtalk"]["variables"])
-                # override variables mapping with passed in variables_mapping
-                config_variables = utils.override_mapping_list(
-                    config_variables, variables_mapping)
-
-                testcase_dict["config"]["variables"] = config_variables
-
-                # parse config name
-                testcase_dict["config"]["name"] = parser.parse_data(
-                    testcase_dict["config"].get("name", ""),
-                    config_variables,
-                    self.project_mapping["debugtalk"]["functions"]
-                )
-
-                # parse config request
-                testcase_dict["config"]["request"] = parser.parse_data(
-                    testcase_dict["config"].get("request", {}),
-                    config_variables,
-                    self.project_mapping["debugtalk"]["functions"]
-                )
-
-                # put loaded project functions to config
-                testcase_dict["config"]["functions"] = self.project_mapping["debugtalk"]["functions"]
-                parsed_testcases_list.append(testcase_dict)
-
-        return parsed_testcases_list
-
-    def initialize(self, testcases):
-        """ initialize test runner with parsed testcases.
-
-        Args:
-            testcases (list): testcases list
-
-        Returns:
-            tuple: (unittest.TextTestRunner(), unittest.TestSuite())
-
-        """
-        def __add_teststep(test_runner, config, teststep_dict):
+        def _add_teststep(test_runner, config, teststep_dict):
             """ add teststep to testcase.
             """
             def test(self):
@@ -213,13 +76,7 @@ class HttpRunner(object):
             test.__doc__ = teststep_dict["name"]
             return test
 
-        self.exception_stage = "initialize unittest Runner() and TestSuite()"
-        self.kwargs.setdefault("resultclass", report.HtmlTestResult)
-        unittest_runner = unittest.TextTestRunner(**self.kwargs)
-
-        testcases_list = []
-        loader = unittest.TestLoader()
-        loaded_testcases = []
+        test_suite = unittest.TestSuite()
         for testcase in testcases:
             config = testcase.get("config", {})
             test_runner = runner.Runner(config, self.http_client_session)
@@ -231,49 +88,45 @@ class HttpRunner(object):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_method = __add_teststep(test_runner, config, teststep_dict)
+                    test_method = _add_teststep(test_runner, config, teststep_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
-            loaded_testcase = loader.loadTestsFromTestCase(TestSequense)
+            loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
             setattr(loaded_testcase, "config", config)
             setattr(loaded_testcase, "teststeps", testcase.get("teststeps", []))
             setattr(loaded_testcase, "runner", test_runner)
-            loaded_testcases.append(loaded_testcase)
+            test_suite.addTest(loaded_testcase)
 
-        test_suite = unittest.TestSuite(loaded_testcases)
-        return (unittest_runner, test_suite)
+        return test_suite
 
-    def run_tests(self, unittest_runner, test_suite):
-        """ run tests with unittest_runner and test_suite
+    def _run_suite(self, test_suite):
+        """ run tests in test_suite
 
         Args:
-            unittest_runner: unittest.TextTestRunner()
             test_suite: unittest.TestSuite()
 
         Returns:
             list: tests_results
 
         """
-        self.exception_stage = "running tests"
         tests_results = []
 
         for testcase in test_suite:
             testcase_name = testcase.config.get("name")
             logger.log_info("Start to run testcase: {}".format(testcase_name))
 
-            result = unittest_runner.run(testcase)
+            result = self.unittest_runner.run(testcase)
             tests_results.append((testcase, result))
 
         return tests_results
 
-    def aggregate(self, tests_results):
+    def _aggregate(self, tests_results):
         """ aggregate results
 
         Args:
             tests_results (list): list of (testcase, result)
 
         """
-        self.exception_stage = "aggregate results"
         self.summary = {
             "success": True,
             "stat": {},
@@ -299,44 +152,88 @@ class HttpRunner(object):
 
             self.summary["details"].append(testcase_summary)
 
-    def run(self, path_or_testcases, mapping=None):
+    def _run_tests(self, testcases, mapping=None):
         """ start to run test with variables mapping.
 
         Args:
-            path_or_testcases (str/list/dict): YAML/JSON testcase file path or testcase list
-                path: path could be in several type
-                    - absolute/relative file path
-                    - absolute/relative folder path
-                    - list/set container with file(s) and/or folder(s)
-                testcases: testcase dict or list of testcases
-                    - (dict) testset_dict
-                    - (list) list of testset_dict
-                        [
-                            testset_dict_1,
-                            testset_dict_2
+            testcases (list): list of testcase_dict, each testcase is corresponding to a YAML/JSON file
+                [
+                    {   # testcase data structure
+                        "config": {
+                            "name": "desc1",
+                            "path": "testcase1_path",
+                            "variables": [],        # optional
+                            "request": {}           # optional
+                            "refs": {
+                                "debugtalk": {
+                                    "variables": {},
+                                    "functions": {}
+                                },
+                                "env": {},
+                                "def-api": {},
+                                "def-testcase": {}
+                            }
+                        },
+                        "teststeps": [
+                            # teststep data structure
+                            {
+                                'name': 'test step desc2',
+                                'variables': [],    # optional
+                                'extract': [],      # optional
+                                'validate': [],
+                                'request': {},
+                                'function_meta': {}
+                            },
+                            teststep2   # another teststep dict
                         ]
-            mapping (dict): if mapping specified, it will override variables in config block.
+                    },
+                    testcase_dict_2     # another testcase dict
+                ]
+            mapping (dict): if mapping is specified, it will override variables in config block.
 
         Returns:
             instance: HttpRunner() instance
 
         """
-        # loader
-        testcases_list = self.load_tests(path_or_testcases)
+        self.exception_stage = "parse tests"
+        parsed_testcases_list = parser.parse_tests(testcases, mapping)
 
-        # parser
-        parsed_testcases_list = self.parse_tests(testcases_list)
+        self.exception_stage = "add tests to test suite"
+        test_suite = self._add_tests(parsed_testcases_list)
 
-        # initialize
-        unittest_runner, test_suite = self.initialize(parsed_testcases_list)
+        self.exception_stage = "run test suite"
+        results = self._run_suite(test_suite)
 
-        # running tests
-        results = self.run_tests(unittest_runner, test_suite)
-
-        # aggregate
-        self.aggregate(results)
+        self.exception_stage = "aggregate results"
+        self._aggregate(results)
 
         return self
+
+    def run(self, path_or_testcases, dot_env_path=None, mapping=None):
+        """ main interface, run testcases with variables mapping.
+
+        Args:
+            path_or_testcases (str/list/dict): testcase file/foler path, or valid testcases.
+            dot_env_path (str): specified .env file path.
+            mapping (dict): if mapping is specified, it will override variables in config block.
+
+        Returns:
+            instance: HttpRunner() instance
+
+        """
+        self.exception_stage = "load tests"
+
+        if validator.is_testcases(path_or_testcases):
+            if isinstance(path_or_testcases, dict):
+                testcases = [path_or_testcases]
+            else:
+                testcases = path_or_testcases
+        elif validator.is_testcase_path(path_or_testcases):
+            testcases = loader.load_tests(path_or_testcases, dot_env_path)
+        else:
+            raise exceptions.ParamsError("invalid testcase path or testcases.")
+
+        return self._run_tests(testcases, mapping)
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
         """ generate html report and return report path.
@@ -349,6 +246,9 @@ class HttpRunner(object):
             str: generated html report path
 
         """
+        if not self.summary:
+            raise exceptions.MyBaseError("run method should be called before gen_html_report.")
+
         self.exception_stage = "generate report"
         return report.render_html_report(
             self.summary,
