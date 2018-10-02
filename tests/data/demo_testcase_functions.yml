@@ -1,7 +1,10 @@
 - config:
-    name: "create user testsets."
+    name: "create user testcases."
     variables:
-        - device_sn: 'HZfFBh6tU59EdXJ'
+        - user_agent: 'iOS/10.3'
+        - device_sn: ${gen_random_string(15)}
+        - os_platform: 'ios'
+        - app_version: '2.8.6'
     request:
         base_url: $BASE_URL
         headers:
@@ -10,22 +13,16 @@
 
 - test:
     name: get token
-    variables:
-        - user_agent: 'iOS/10.3'
-        - os_platform: 'ios'
-        - app_version: '2.8.6'
-        - sign: f1219719911caae89ccc301679857ebfda115ca2
     request:
         url: /api/get-token
         method: POST
         headers:
-            Content-Type: application/json
             user_agent: $user_agent
             device_sn: $device_sn
             os_platform: $os_platform
             app_version: $app_version
         json:
-            sign: $sign
+            sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     extract:
         - token: content.token
     validate:

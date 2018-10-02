@@ -2,11 +2,11 @@ It is recommended to write testcases in `YAML` format.
 
 ## demo
 
-Here is a testset example of typical scenario: get `token` at the beginning, and each subsequent requests should take the `token` in the headers.
+Here is a testcase example of typical scenario: get `token` at the beginning, and each subsequent requests should take the `token` in the headers.
 
 ```yaml
 - config:
-    name: "create user testsets."
+    name: "create user testcases."
     variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}

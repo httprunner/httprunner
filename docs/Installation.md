@@ -47,25 +47,43 @@ To see available options, run:
 
 ```bash
 $ httprunner -h     # same as: hrun -h
-usage: httprunner [-h] [-V] [--log-level LOG_LEVEL] [--report-name REPORT_NAME]
-        [--failfast] [--startproject STARTPROJECT]
-        [testset_paths [testset_paths ...]]
+usage: main-debug.py [-h] [-V] [--no-html-report]
+                     [--html-report-name HTML_REPORT_NAME]
+                     [--html-report-template HTML_REPORT_TEMPLATE]
+                     [--log-level LOG_LEVEL] [--log-file LOG_FILE]
+                     [--dot-env-path DOT_ENV_PATH] [--failfast]
+                     [--startproject STARTPROJECT]
+                     [--validate [VALIDATE [VALIDATE ...]]]
+                     [--prettify [PRETTIFY [PRETTIFY ...]]]
+                     [testcase_paths [testcase_paths ...]]
 
-HttpRunner.
+One-stop solution for HTTP(S) testing.
 
 positional arguments:
-testset_paths         testset file path
+  testcase_paths        testcase file path
 
 optional arguments:
--h, --help            show this help message and exit
--V, --version         show version
---log-level LOG_LEVEL
+  -h, --help            show this help message and exit
+  -V, --version         show version
+  --no-html-report      do not generate html report.
+  --html-report-name HTML_REPORT_NAME
+                        specify html report name, only effective when
+                        generating html report.
+  --html-report-template HTML_REPORT_TEMPLATE
+                        specify html report template path.
+  --log-level LOG_LEVEL
                         Specify logging level, default is INFO.
---report-name REPORT_NAME
-                        Specify report name, default is generated time.
---failfast            Stop the test run on the first error or failure.
---startproject STARTPROJECT
+  --log-file LOG_FILE   Write logs to specified file path.
+  --dot-env-path DOT_ENV_PATH
+                        Specify .env file path, which is useful for keeping
+                        sensitive data.
+  --failfast            Stop the test run on the first error or failure.
+  --startproject STARTPROJECT
                         Specify new project name.
+  --validate [VALIDATE [VALIDATE ...]]
+                        Validate JSON testcase format.
+  --prettify [PRETTIFY [PRETTIFY ...]]
+                        Prettify JSON testcase format.
 ```
 
 ## Supported Python Versions

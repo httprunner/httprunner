@@ -22,8 +22,8 @@ def main_hrun():
         '-V', '--version', dest='version', action='store_true',
         help="show version")
     parser.add_argument(
-        'testset_paths', nargs='*',
-        help="testset file path")
+        'testcase_paths', nargs='*',
+        help="testcase file path")
     parser.add_argument(
         '--no-html-report', action='store_true', default=False,
         help="do not generate html report.")
@@ -50,10 +50,10 @@ def main_hrun():
         help="Specify new project name.")
     parser.add_argument(
         '--validate', nargs='*',
-        help="Validate JSON testset format.")
+        help="Validate JSON testcase format.")
     parser.add_argument(
         '--prettify', nargs='*',
-        help="Prettify JSON testset format.")
+        help="Prettify JSON testcase format.")
 
     args = parser.parse_args()
     logger.setup_logger(args.log_level, args.log_file)
@@ -82,7 +82,7 @@ def main_hrun():
             failfast=args.failfast
         )
         runner.run(
-            args.testset_paths,
+            args.testcase_paths,
             dot_env_path=args.dot_env_path
         )
     except Exception:

@@ -1,5 +1,5 @@
 - config:
-    name: "user management testset."
+    name: "user management testcase."
     parameters:
         - user_agent: ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
         - username-password:

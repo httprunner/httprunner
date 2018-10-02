@@ -20,7 +20,7 @@ Former name: `ApiTestEngine`.
 - Supports `function`/`variable`/`extract`/`validate` mechanisms to create full test scenarios.
 - Supports perfect hook mechanism.
 - With `debugtalk.py` plugin, module functions can be auto-discovered in recursive upward directories.
-- Testcases can be run in diverse ways, with single testset, multiple testsets, or entire project folder.
+- Testcases can be run in diverse ways, with single testcase, multiple testcases, or entire project folder.
 - Test report is concise and clear, with detailed log records.
 - With reuse of [`Locust`][Locust], you can run performance test without extra work.
 - CLI command supported, perfect combination with `CI/CD`.
