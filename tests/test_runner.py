@@ -10,8 +10,8 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.debugtalk_module = loader.project_mapping["debugtalk"]
+        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        self.debugtalk_module = project_mapping["debugtalk"]
         config_dict = {
             "variables": self.debugtalk_module["variables"],
             "functions": self.debugtalk_module["functions"]
@@ -226,7 +226,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testsets = loader.load_testcases(testcase_file_path)
+        testsets = loader.load_tests(testcase_file_path)
         testset = testsets[0]
         config_dict_headers = testset["config"]["request"]["headers"]
         test_dict_headers = testset["teststeps"][0]["request"]["headers"]

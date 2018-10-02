@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 
-from httprunner import HttpRunner, LocustRunner, loader
+from httprunner import HttpRunner, LocustRunner, api, loader, parser
 from locust import HttpLocust
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -11,25 +11,22 @@ from tests.base import ApiServerUnittest
 class TestHttpRunner(ApiServerUnittest):
 
     def setUp(self):
-        self.testset_path = "tests/data/demo_testset_cli.yml"
+        self.testcase_cli_path = "tests/data/demo_testset_cli.yml"
         self.testcase_file_path_list = [
             os.path.join(
                 os.getcwd(), 'tests/data/demo_testset_hardcode.yml'),
             os.path.join(
                 os.getcwd(), 'tests/data/demo_testset_hardcode.json')
         ]
-        self.testcase = {
-            'name': 'testset description',
+        self.testcases = [{
             'config': {
-                'name': 'testset description',
+                'name': 'testcase description',
                 'request': {
                     'base_url': '',
                     'headers': {'User-Agent': 'python-requests/2.18.4'}
                 },
-                'variables': [],
-                'output': ['token']
+                'variables': []
             },
-            'api': {},
             'teststeps': [
                 {
                     'name': '/api/get-token',
@@ -63,7 +60,7 @@ class TestHttpRunner(ApiServerUnittest):
                     ]
                 }
             ]
-        }
+        }]
         self.reset_all()
 
     def reset_all(self):
@@ -72,46 +69,35 @@ class TestHttpRunner(ApiServerUnittest):
         return self.api_client.get(url, headers=headers)
 
     def test_text_run_times(self):
-        runner = HttpRunner().run(self.testset_path)
+        runner = HttpRunner().run(self.testcase_cli_path)
         self.assertEqual(runner.summary["stat"]["testsRun"], 10)
 
     def test_text_skip(self):
-        runner = HttpRunner().run(self.testset_path)
+        runner = HttpRunner().run(self.testcase_cli_path)
         self.assertEqual(runner.summary["stat"]["skipped"], 4)
 
     def test_html_report(self):
-        kwargs = {}
-        output_folder_name = os.path.basename(os.path.splitext(self.testset_path)[0])
-        runner = HttpRunner().run(self.testset_path)
+        runner = HttpRunner().run(self.testcase_cli_path)
         summary = runner.summary
         self.assertEqual(summary["stat"]["testsRun"], 10)
         self.assertEqual(summary["stat"]["skipped"], 4)
 
+        output_folder_name = "demo"
         runner.gen_html_report(html_report_name=output_folder_name)
-        report_save_dir = os.path.join(loader.project_working_directory, 'reports', output_folder_name)
+        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
     def test_run_testcases(self):
-        testcases = [self.testcase]
-        runner = HttpRunner().run(testcases)
+        runner = HttpRunner().run(self.testcases)
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 2)
         self.assertIn("details", summary)
         self.assertIn("records", summary["details"][0])
 
-    def test_run_testcase(self):
-        testcases = self.testcase
-        runner = HttpRunner().run(testcases)
-        summary = runner.summary
-        self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 2)
-        self.assertIn("records", summary["details"][0])
-
     def test_run_yaml_upload(self):
-        testset_path = "tests/httpbin/upload.yml"
-        runner = HttpRunner().run(testset_path)
+        runner = HttpRunner().run("tests/httpbin/upload.yml")
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
@@ -121,7 +107,14 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_post_data(self):
         testcases = [
             {
-                "name": "post data",
+                "config": {
+                    'name': "post data",
+                    'request': {
+                        'base_url': '',
+                        'headers': {'User-Agent': 'python-requests/2.18.4'}
+                    },
+                    'variables': []
+                },
                 "teststeps": [
                     {
                         "name": "post data",
@@ -137,7 +130,6 @@ class TestHttpRunner(ApiServerUnittest):
                             {"eq": ["status_code", 200]}
                         ]
                     }
-
                 ]
             }
         ]
@@ -148,18 +140,16 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["details"][0]["records"][0]["meta_data"]["response"]["json"]["data"], "abc")
 
     def test_html_report_repsonse_image(self):
-        testset_path = "tests/httpbin/load_image.yml"
-        runner = HttpRunner().run(testset_path)
+        runner = HttpRunner().run("tests/httpbin/load_image.yml")
         summary = runner.summary
-        output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
+        output_folder_name = "demo"
         report = runner.gen_html_report(html_report_name=output_folder_name)
         self.assertTrue(os.path.isfile(report))
-        report_save_dir = os.path.join(loader.project_working_directory, 'reports', output_folder_name)
+        report_save_dir = os.path.join(os.getcwd(), 'reports', output_folder_name)
         shutil.rmtree(report_save_dir)
 
     def test_testcase_layer(self):
-        testcase_path = "tests/testcases/smoketest.yml"
-        runner = HttpRunner(failfast=True).run(testcase_path)
+        runner = HttpRunner(failfast=True).run("tests/testcases/smoketest.yml")
         summary = runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 8)
@@ -167,7 +157,6 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/httpbin/hooks.yml')
-
         start_time = time.time()
         runner = HttpRunner().run(testcase_file_path)
         end_time = time.time()
@@ -180,7 +169,7 @@ class TestHttpRunner(ApiServerUnittest):
             {
                 "config": {
                     "name": "test teardown hooks",
-                    "path": "tests/httpbin/hooks.yml"
+                    "refs": loader.load_project_tests("tests")
                 },
                 "teststeps": [
                     {
@@ -214,9 +203,8 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_httprunner_with_teardown_hooks_not_exist_attribute(self):
         testcases = [
             {
-                "name": "test teardown hooks",
                 "config": {
-                    "path": "tests/httpbin/hooks.yml"
+                    "name": "test teardown hooks"
                 },
                 "teststeps": [
                     {
@@ -244,8 +232,9 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_httprunner_with_teardown_hooks_error(self):
         testcases = [
             {
-                "name": "test teardown hooks",
-                "config": {},
+                "config": {
+                    "name": "test teardown hooks"
+                },
                 "teststeps": [
                     {
                         "name": "test teardown hooks",
@@ -269,30 +258,34 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             runner = HttpRunner().run(testcase_file_path)
-            self.assertTrue(runner.summary["success"])
+            summary = runner.summary
+            self.assertTrue(summary["success"])
+            self.assertEqual(summary["stat"]["testsRun"], 3)
+            self.assertEqual(summary["stat"]["successes"], 3)
 
     def test_run_testcases_hardcode(self):
         runner = HttpRunner().run(self.testcase_file_path_list)
         summary = runner.summary
         self.assertTrue(summary["success"])
+        self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 6)
         self.assertEqual(summary["stat"]["successes"], 6)
 
-    def test_run_testset_template_variables(self):
+    def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_variables.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
 
-    def test_run_testset_template_import_functions(self):
+    def test_run_testcase_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_functions.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
 
-    def test_run_testset_layered(self):
+    def test_run_testcase_layered(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testset_layer.yml')
         runner = HttpRunner().run(testcase_file_path)
@@ -347,10 +340,10 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_testcase_with_parameters_name(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_parameters.yml')
+        testcases = loader.load_tests(testcase_file_path)
+        parsed_testcases = parser.parse_tests(testcases)
         runner = HttpRunner()
-        testcases = runner.load_tests(testcase_file_path)
-        parsed_testcases = runner.parse_tests(testcases)
-        unittest_runner, test_suite = runner.initialize(parsed_testcases)
+        test_suite = runner._add_tests(parsed_testcases)
 
         self.assertEqual(
             test_suite._tests[0].teststeps[0]['name'],
@@ -376,41 +369,6 @@ class TestHttpRunner(ApiServerUnittest):
             test_suite._tests[5].teststeps[0]['name'],
             'get token with iOS/10.3 and test2'
         )
-
-    def test_load_tests(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase.yml')
-        runner = HttpRunner()
-        testcases = runner.load_tests(testcase_file_path)
-        self.assertIsInstance(testcases, list)
-        self.assertEqual(
-            testcases[0]["config"]["request"],
-            '$demo_default_request'
-        )
-        self.assertEqual(testcases[0]["config"]["name"], '123$var_a')
-        self.assertIn(
-            "sum_two",
-            runner.project_mapping["debugtalk"]["functions"]
-        )
-
-    def test_parse_tests(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase.yml')
-        runner = HttpRunner()
-        testcases = runner.load_tests(testcase_file_path)
-        parsed_testcases = runner.parse_tests(testcases)
-        self.assertEqual(parsed_testcases[0]["config"]["variables"]["var_c"], 3)
-        self.assertEqual(len(parsed_testcases), 2 * 2)
-        self.assertEqual(
-            parsed_testcases[0]["config"]["request"]["base_url"],
-            '$BASE_URL'
-        )
-        self.assertEqual(
-            parsed_testcases[0]["config"]["variables"]["BASE_URL"],
-            'http://127.0.0.1:5000'
-        )
-        self.assertIsInstance(parsed_testcases, list)
-        self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')
 
     def test_validate_response_content(self):
         testcase_file_path = os.path.join(

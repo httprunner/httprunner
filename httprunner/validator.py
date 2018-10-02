@@ -1,5 +1,7 @@
 # encoding: utf-8
+import os
 import types
+
 
 """ validate data format
 TODO: refactor with JSON schema validate
@@ -46,6 +48,7 @@ def is_testcase(data_structure):
 
     return True
 
+
 def is_testcases(data_structure):
     """ check if data_structure is testcase or testcases list.
 
@@ -67,6 +70,31 @@ def is_testcases(data_structure):
 
     for item in data_structure:
         if not is_testcase(item):
+            return False
+
+    return True
+
+
+def is_testcase_path(path):
+    """ check if path is testcase path or path list.
+
+    Args:
+        path (str/list): file path or file path list.
+
+    Returns:
+        bool: True if path is valid file path or path list, otherwise False.
+
+    """
+    if not isinstance(path, (str, list)):
+        return False
+
+    if isinstance(path, list):
+        for p in path:
+            if not is_testcase_path(p):
+                return False
+
+    if isinstance(path, str):
+        if not os.path.exists(path):
             return False
 
     return True
@@ -101,4 +129,3 @@ def is_variable(tup):
         return False
 
     return True
-
