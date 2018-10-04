@@ -11,12 +11,12 @@ from tests.base import ApiServerUnittest
 class TestHttpRunner(ApiServerUnittest):
 
     def setUp(self):
-        self.testcase_cli_path = "tests/data/demo_testset_cli.yml"
+        self.testcase_cli_path = "tests/data/demo_testcase_cli.yml"
         self.testcase_file_path_list = [
             os.path.join(
-                os.getcwd(), 'tests/data/demo_testset_hardcode.yml'),
+                os.getcwd(), 'tests/data/demo_testcase_hardcode.yml'),
             os.path.join(
-                os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+                os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
         ]
         self.testcases = [{
             'config': {
@@ -273,21 +273,21 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_variables.yml')
+            os.getcwd(), 'tests/data/demo_testcase_variables.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
 
     def test_run_testcase_template_import_functions(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_functions.yml')
+            os.getcwd(), 'tests/data/demo_testcase_functions.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
 
     def test_run_testcase_layered(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
         runner = HttpRunner().run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
@@ -295,7 +295,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_output(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
         runner = HttpRunner(failfast=True).run(testcase_file_path)
         summary = runner.summary
         self.assertTrue(summary["success"])
@@ -304,7 +304,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_with_variables_mapping(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
         variables_mapping = {
             "app_version": '2.9.7'
         }

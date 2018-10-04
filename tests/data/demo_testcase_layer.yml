@@ -1,5 +1,5 @@
 - config:
-    name: "user management testset."
+    name: "user management testcase."
     variables:
         - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}

@@ -156,7 +156,7 @@ However, the test cases are only `YAML` documents, it is impossible to generate 
 
 To achieve this goal, we can utilize `debugtalk.py` plugin and `variables` mechanisms.
 
-To be specific, we can create a Python file (`examples/debugtalk.py`) and implement the related algorithm in it. The `debugtalk.py` file can not only be located beside `YAML/JSON` testset file, but also can be in any upward recursive folder. Since we want `debugtalk.py` to be importable, we should put a `__init__.py` in its folder to make it as a Python module.
+To be specific, we can create a Python file (`examples/debugtalk.py`) and implement the related algorithm in it. The `debugtalk.py` file can not only be located beside `YAML/JSON` testcase file, but also can be in any upward recursive folder. Since we want `debugtalk.py` to be importable, we should put a `__init__.py` in its folder to make it as a Python module.
 
 ```python
 import hashlib
