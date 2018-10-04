@@ -423,7 +423,7 @@ def gen_cartesian_product(*args):
 
 
 def validate_json_file(file_list):
-    """ validate JSON testset format
+    """ validate JSON testcase format
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
@@ -442,7 +442,7 @@ def validate_json_file(file_list):
 
 
 def prettify_json_file(file_list):
-    """ prettify JSON testset format
+    """ prettify JSON testcase format
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):

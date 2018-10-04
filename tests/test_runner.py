@@ -27,9 +27,9 @@ class TestRunner(ApiServerUnittest):
     def test_run_single_testcase(self):
         testcase_file_path_list = [
             os.path.join(
-                os.getcwd(), 'tests/data/demo_testset_hardcode.yml'),
+                os.getcwd(), 'tests/data/demo_testcase_hardcode.yml'),
             os.path.join(
-                os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+                os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
         ]
 
         for testcase_file_path in testcase_file_path_list:
@@ -76,7 +76,7 @@ class TestRunner(ApiServerUnittest):
         with self.assertRaises(exceptions.ValidationFailure):
             self.test_runner.run_test(test)
 
-    def test_run_testset_with_hooks(self):
+    def test_run_testcase_with_hooks(self):
         start_time = time.time()
 
         config_dict = {
@@ -117,17 +117,17 @@ class TestRunner(ApiServerUnittest):
         }
         test_runner = runner.Runner(config_dict)
         end_time = time.time()
-        # check if testset setup hook executed
+        # check if testcase setup hook executed
         self.assertGreater(end_time - start_time, 0.5)
 
         start_time = time.time()
         test_runner.run_test(test)
         test_runner.run_test(test)
         end_time = time.time()
-        # testset teardown hook has not been executed now
+        # testcase teardown hook has not been executed now
         self.assertLess(end_time - start_time, 1)
 
-    def test_run_testset_with_hooks_modify_request(self):
+    def test_run_testcase_with_hooks_modify_request(self):
         config_dict = {
             "name": "basic test with httpbin",
             "variables": self.debugtalk_module["variables"],
@@ -161,7 +161,7 @@ class TestRunner(ApiServerUnittest):
         test_runner = runner.Runner(config_dict)
         test_runner.run_test(test)
 
-    def test_run_testset_with_teardown_hooks_success(self):
+    def test_run_testcase_with_teardown_hooks_success(self):
         test = {
             "name": "get token",
             "request": {
@@ -192,7 +192,7 @@ class TestRunner(ApiServerUnittest):
         # check if teardown function executed
         self.assertLess(end_time - start_time, 0.5)
 
-    def test_run_testset_with_teardown_hooks_fail(self):
+    def test_run_testcase_with_teardown_hooks_fail(self):
         test = {
             "name": "get token",
             "request": {
@@ -226,10 +226,10 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testsets = loader.load_tests(testcase_file_path)
-        testset = testsets[0]
-        config_dict_headers = testset["config"]["request"]["headers"]
-        test_dict_headers = testset["teststeps"][0]["request"]["headers"]
+        testcases = loader.load_tests(testcase_file_path)
+        testcase = testcases[0]
+        config_dict_headers = testcase["config"]["request"]["headers"]
+        test_dict_headers = testcase["teststeps"][0]["request"]["headers"]
         headers = deep_update_dict(
             config_dict_headers,
             test_dict_headers

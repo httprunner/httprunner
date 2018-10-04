@@ -64,7 +64,7 @@ class TestFileLoader(unittest.TestCase):
 
     def test_load_json_testcases(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+            os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
         testcases = loader.load_file(testcase_file_path)
         self.assertEqual(len(testcases), 3)
         test = testcases[0]["test"]
@@ -75,7 +75,7 @@ class TestFileLoader(unittest.TestCase):
 
     def test_load_yaml_testcases(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_hardcode.yml')
+            os.getcwd(), 'tests/data/demo_testcase_hardcode.yml')
         testcases = loader.load_file(testcase_file_path)
         self.assertEqual(len(testcases), 3)
         test = testcases[0]["test"]
@@ -404,7 +404,7 @@ class TestSuiteLoader(unittest.TestCase):
 
         # absolute file path
         path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_hardcode.json')
+            os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 1)
         self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
@@ -415,7 +415,7 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["debugtalk"]["functions"])
 
         # relative file path
-        path = 'tests/data/demo_testset_hardcode.yml'
+        path = 'tests/data/demo_testcase_hardcode.yml'
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 1)
         self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
@@ -427,8 +427,8 @@ class TestSuiteLoader(unittest.TestCase):
 
         # list/set container with file(s)
         path = [
-            os.path.join(os.getcwd(), 'tests/data/demo_testset_hardcode.json'),
-            'tests/data/demo_testset_hardcode.yml'
+            os.path.join(os.getcwd(), 'tests/data/demo_testcase_hardcode.json'),
+            'tests/data/demo_testcase_hardcode.yml'
         ]
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 2)
@@ -447,21 +447,21 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_testcases_by_path_folder(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
-        testset_list_1 = loader.load_tests(path)
-        self.assertGreater(len(testset_list_1), 4)
+        testcase_list_1 = loader.load_tests(path)
+        self.assertGreater(len(testcase_list_1), 4)
 
         # relative folder path
         path = 'tests/data/'
-        testset_list_2 = loader.load_tests(path)
-        self.assertEqual(len(testset_list_1), len(testset_list_2))
+        testcase_list_2 = loader.load_tests(path)
+        self.assertEqual(len(testcase_list_1), len(testcase_list_2))
 
         # list/set container with file(s)
         path = [
             os.path.join(os.getcwd(), 'tests/data'),
             'tests/data/'
         ]
-        testset_list_3 = loader.load_tests(path)
-        self.assertEqual(len(testset_list_3), 2 * len(testset_list_1))
+        testcase_list_3 = loader.load_tests(path)
+        self.assertEqual(len(testcase_list_3), 2 * len(testcase_list_1))
 
     def test_load_testcases_by_path_not_exist(self):
         # absolute folder path
@@ -484,7 +484,7 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_testcases_by_path_layered(self):
         path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testset_layer.yml')
+            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
         testcases_list = loader.load_tests(path)
         self.assertIn("variables", testcases_list[0]["config"])
         self.assertIn("request", testcases_list[0]["config"])
