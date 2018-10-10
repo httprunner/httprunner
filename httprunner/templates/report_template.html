@@ -204,10 +204,12 @@
                           <th>variables</th>
                           <th>output</th>
                         </tr>
+                        {% if in_out in test_suite_summary %}
                         <tr>
                           <td>{{test_suite_summary.in_out.in}}</td>
                           <td>{{test_suite_summary.in_out.out}}</td>
                         </tr>
+                        {% endif %}
                       </table>
                   </div>
                 </div>
