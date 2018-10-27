@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 import ast
-import copy
 import os
 import re
 
@@ -601,7 +600,6 @@ def parse_tests(testcases, variables_mapping=None):
         list: parsed testcases list, with config variables/parameters/name/request parsed.
 
     """
-    # exception_stage = "parse tests"
     variables_mapping = variables_mapping or {}
     parsed_testcases_list = []
 
@@ -629,7 +627,7 @@ def parse_tests(testcases, variables_mapping=None):
         ) or [{}]
 
         for parameter_mapping in cartesian_product_parameters_list:
-            testcase_dict = copy.deepcopy(testcase)
+            testcase_dict = utils.deepcopy_dict(testcase)
             config = testcase_dict.get("config")
 
             # parse config variables
