@@ -203,6 +203,42 @@ def convert_mappinglist_to_orderdict(mapping_list):
     return ordered_dict
 
 
+def deepcopy_dict(data):
+    """ deepcopy dict data, ignore file object (_io.BufferedReader)
+
+    Args:
+        data (dict): dict data structure
+            {
+                'a': 1,
+                'b': [2, 4],
+                'c': lambda x: x+1,
+                'd': open('LICENSE'),
+                'f': {
+                    'f1': {'a1': 2},
+                    'f2': io.open('LICENSE', 'rb'),
+                }
+            }
+
+    Returns:
+        dict: deep copied dict data, with file object unchanged.
+
+    """
+    try:
+        return copy.deepcopy(data)
+    except TypeError:
+        copied_data = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                copied_data[key] = deepcopy_dict(value)
+            else:
+                try:
+                    copied_data[key] = copy.deepcopy(value)
+                except TypeError:
+                    copied_data[key] = value
+
+        return copied_data
+
+
 def update_ordered_dict(ordered_dict, override_mapping):
     """ override ordered_dict with new mapping.
 

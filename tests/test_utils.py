@@ -1,3 +1,4 @@
+import io
 import os
 import shutil
 
@@ -213,6 +214,26 @@ class TestUtils(ApiServerUnittest):
         ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
+
+    def test_deepcopy_dict(self):
+        data = {
+            'a': 1,
+            'b': [2, 4],
+            'c': lambda x: x+1,
+            'd': open('LICENSE'),
+            'f': {
+                'f1': {'a1': 2},
+                'f2': io.open('LICENSE', 'rb'),
+            }
+        }
+        new_data = utils.deepcopy_dict(data)
+        data["a"] = 0
+        self.assertEqual(new_data["a"], 1)
+        data["f"]["f1"] = 123
+        self.assertEqual(new_data["f"]["f1"], {'a1': 2})
+        self.assertEqual(id(new_data["d"]), id(data["d"]))
+        self.assertNotEqual(id(new_data["b"]), id(data["b"]))
+        self.assertEqual(id(new_data["c"]), id(data["c"]))
 
     def test_update_ordered_dict(self):
         map_list = [
