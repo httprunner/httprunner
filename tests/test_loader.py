@@ -284,7 +284,8 @@ class TestSuiteLoader(unittest.TestCase):
         cls.project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
 
     def test_load_test_file_testcase(self):
-        testcase = loader._load_test_file("tests/testcases/smoketest.yml", self.project_mapping)
+        raw_testcase = loader.load_file("tests/testcases/smoketest.yml")
+        testcase = loader._load_testcase(raw_testcase, self.project_mapping)
         self.assertEqual(testcase["config"]["name"], "smoketest")
         self.assertIn("device_sn", testcase["config"]["variables"][0])
         self.assertEqual(len(testcase["teststeps"]), 8)

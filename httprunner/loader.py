@@ -315,11 +315,11 @@ def get_module_item(module_mapping, item_type, item_name):
 ##   testcase loader
 ###############################################################################
 
-def _load_test_file(file_path, project_mapping):
-    """ load testcase file or testsuite file
+def _load_testcase(raw_testcase, project_mapping):
+    """ load testcase/testsuite with api/testcase references
 
     Args:
-        file_path (str): absolute valid file path. file_path should be in the following format:
+        raw_testcase (list): raw testcase content loaded from JSON/YAML file:
             [
                 {
                     "config": {
@@ -353,29 +353,29 @@ def _load_test_file(file_path, project_mapping):
         project_mapping (dict): project_mapping
 
     Returns:
-        dict: testcase dict
+        dict: loaded testcase content
             {
                 "config": {},
                 "teststeps": [teststep11, teststep12]
             }
 
     """
-    testcase = {
+    loaded_testcase = {
         "config": {},
         "teststeps": []
     }
 
-    for item in load_file(file_path):
+    for item in raw_testcase:
         # TODO: add json schema validation
         if not isinstance(item, dict) or len(item) != 1:
-            raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
+            raise exceptions.FileFormatError("Testcase format error: {}".format(item))
 
         key, test_block = item.popitem()
         if not isinstance(test_block, dict):
-            raise exceptions.FileFormatError("Testcase format error: {}".format(file_path))
+            raise exceptions.FileFormatError("Testcase format error: {}".format(item))
 
         if key == "config":
-            testcase["config"].update(test_block)
+            loaded_testcase["config"].update(test_block)
 
         elif key == "test":
 
@@ -387,7 +387,7 @@ def _load_test_file(file_path, project_mapping):
             # reference api
             if "api" in test_block:
                 extend_api_definition(test_block)
-                testcase["teststeps"].append(test_block)
+                loaded_testcase["teststeps"].append(test_block)
 
             # reference testcase
             elif "suite" in test_block: # TODO: replace suite with testcase
@@ -397,18 +397,18 @@ def _load_test_file(file_path, project_mapping):
                 for teststep in block["teststeps"]:
                     if "api" in teststep:
                         extend_api_definition(teststep)
-                    testcase["teststeps"].append(teststep)
+                    loaded_testcase["teststeps"].append(teststep)
 
             # define directly
             else:
-                testcase["teststeps"].append(test_block)
+                loaded_testcase["teststeps"].append(test_block)
 
         else:
             logger.log_warning(
                 "unexpected block key: {}. block key should only be 'config' or 'test'.".format(key)
             )
 
-    return testcase
+    return loaded_testcase
 
 
 def _get_block_by_name(ref_call, ref_type, project_mapping):
@@ -956,8 +956,9 @@ def load_tests(path, dot_env_path=None):
 
     elif os.path.isfile(path):
         try:
+            raw_testcase = load_file(path)
             project_mapping = load_project_tests(path, dot_env_path)
-            testcase = _load_test_file(path, project_mapping)
+            testcase = _load_testcase(raw_testcase, project_mapping)
             testcase["config"]["path"] = path
             testcase["config"]["refs"] = project_mapping
             testcases_list = [testcase]
