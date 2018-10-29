@@ -7,6 +7,7 @@ httprunner.compat
 This module handles import compatibility issues between Python 2 and
 Python 3.
 """
+from collections import OrderedDict
 
 try:
     import simplejson as json
@@ -39,8 +40,6 @@ except AttributeError:
     JSONDecodeError = ValueError
 
 if is_py2:
-    from urllib3.packages.ordered_dict import OrderedDict
-
     builtin_str = str
     bytes = str
     str = unicode
@@ -51,8 +50,6 @@ if is_py2:
     FileNotFoundError = IOError
 
 elif is_py3:
-    from collections import OrderedDict
-
     builtin_str = str
     str = str
     bytes = bytes
