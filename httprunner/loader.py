@@ -315,12 +315,70 @@ def get_module_item(module_mapping, item_type, item_name):
 ##   testcase loader
 ###############################################################################
 
+def _load_teststeps(test_block, project_mapping):
+    """ load teststeps with api/testcase references
+
+    Args:
+        test_block (dict): test block content, maybe in 3 formats.
+            # api reference
+            {
+                "name": "add product to cart",
+                "api": "api_add_cart()",
+                "validate": []
+            }
+            # testcase reference
+            {
+                "name": "add product to cart",
+                "suite": "create_and_check()",
+                "validate": []
+            }
+            # define directly
+            {
+                "name": "checkout cart",
+                "request": {},
+                "validate": []
+            }
+
+    Returns:
+        list: loaded teststeps list
+
+    """
+    def extend_api_definition(block):
+        ref_call = block["api"]
+        def_block = _get_block_by_name(ref_call, "def-api", project_mapping)
+        _extend_block(block, def_block)
+
+    teststeps = []
+
+    # reference api
+    if "api" in test_block:
+        extend_api_definition(test_block)
+        teststeps.append(test_block)
+
+    # reference testcase
+    elif "suite" in test_block: # TODO: replace suite with testcase
+        ref_call = test_block["suite"]
+        block = _get_block_by_name(ref_call, "def-testcase", project_mapping)
+        # TODO: bugfix lost block config variables
+        for teststep in block["teststeps"]:
+            if "api" in teststep:
+                extend_api_definition(teststep)
+            teststeps.append(teststep)
+
+    # define directly
+    else:
+        teststeps.append(test_block)
+
+    return teststeps
+
+
 def _load_testcase(raw_testcase, project_mapping):
     """ load testcase/testsuite with api/testcase references
 
     Args:
         raw_testcase (list): raw testcase content loaded from JSON/YAML file:
             [
+                # config part
                 {
                     "config": {
                         "name": "",
@@ -328,26 +386,12 @@ def _load_testcase(raw_testcase, project_mapping):
                         "request": {}
                     }
                 },
+                # teststeps part
                 {
-                    "test": {
-                        "name": "add product to cart",
-                        "api": "api_add_cart()",
-                        "validate": []
-                    }
+                    "test": {...}
                 },
                 {
-                    "test": {
-                        "name": "add product to cart",
-                        "suite": "create_and_check()",
-                        "validate": []
-                    }
-                },
-                {
-                    "test": {
-                        "name": "checkout cart",
-                        "request": {},
-                        "validate": []
-                    }
+                    "test": {...}
                 }
             ]
         project_mapping (dict): project_mapping
@@ -378,30 +422,7 @@ def _load_testcase(raw_testcase, project_mapping):
             loaded_testcase["config"].update(test_block)
 
         elif key == "test":
-
-            def extend_api_definition(block):
-                ref_call = block["api"]
-                def_block = _get_block_by_name(ref_call, "def-api", project_mapping)
-                _extend_block(block, def_block)
-
-            # reference api
-            if "api" in test_block:
-                extend_api_definition(test_block)
-                loaded_testcase["teststeps"].append(test_block)
-
-            # reference testcase
-            elif "suite" in test_block: # TODO: replace suite with testcase
-                ref_call = test_block["suite"]
-                block = _get_block_by_name(ref_call, "def-testcase", project_mapping)
-                # TODO: bugfix lost block config variables
-                for teststep in block["teststeps"]:
-                    if "api" in teststep:
-                        extend_api_definition(teststep)
-                    loaded_testcase["teststeps"].append(teststep)
-
-            # define directly
-            else:
-                loaded_testcase["teststeps"].append(test_block)
+            loaded_testcase["teststeps"].extend(_load_teststeps(test_block, project_mapping))
 
         else:
             logger.log_warning(
@@ -917,7 +938,7 @@ def load_tests(path, dot_env_path=None):
                 "teststeps": [
                     # teststep data structure
                     {
-                        'name': 'test step desc2',
+                        'name': 'test step desc1',
                         'variables': [],    # optional
                         'extract': [],      # optional
                         'validate': [],
