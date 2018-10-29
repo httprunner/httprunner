@@ -14,8 +14,13 @@ class Context(object):
         """ init Context with testcase variables and functions.
         """
         # testcase level context
-        ## TESTCASE_SHARED_VARIABLES_MAPPING and TESTCASE_SHARED_FUNCTIONS_MAPPING will not change.
-        self.TESTCASE_SHARED_VARIABLES_MAPPING = variables or OrderedDict()
+        ## TESTCASE_SHARED_VARIABLES_MAPPING and TESTCASE_SHARED_FUNCTIONS_MAPPING are unchangeable.
+        if isinstance(variables, list):
+            self.TESTCASE_SHARED_VARIABLES_MAPPING = utils.convert_mappinglist_to_orderdict(variables)
+        else:
+            # dict
+            self.TESTCASE_SHARED_VARIABLES_MAPPING = variables or OrderedDict()
+
         self.TESTCASE_SHARED_FUNCTIONS_MAPPING = functions or OrderedDict()
 
         # testcase level request, will not change

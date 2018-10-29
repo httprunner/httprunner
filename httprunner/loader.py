@@ -987,3 +987,50 @@ def load_tests(path, dot_env_path=None):
             testcases_list = []
 
     return testcases_list
+
+
+def load_locust_tests(path, dot_env_path=None):
+    """ load locust testcases
+
+    Args:
+        path (str): testcase/testsuite file path.
+        dot_env_path (str): specified .env file path
+
+    Returns:
+        dict: locust testcases with weight
+        {
+            "config": {...},
+            "tests": [
+                # weight 3
+                [teststep11],
+                [teststep11],
+                [teststep11],
+                # weight 2
+                [teststep21, teststep22],
+                [teststep21, teststep22]
+            ]
+        }
+
+    """
+    raw_testcase = load_file(path)
+    project_mapping = load_project_tests(path, dot_env_path)
+
+    config = {
+        "refs": project_mapping
+    }
+    tests = []
+    for item in raw_testcase:
+        key, test_block = item.popitem()
+
+        if key == "config":
+            config.update(test_block)
+        elif key == "test":
+            teststeps = _load_teststeps(test_block, project_mapping)
+            weight = test_block.pop("weight", 1)
+            for _ in range(weight):
+                tests.append(teststeps)
+
+    return {
+        "config": config,
+        "tests": tests
+    }
