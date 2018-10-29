@@ -283,7 +283,18 @@ class TestSuiteLoader(unittest.TestCase):
     def setUpClass(cls):
         cls.project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
 
-    def test_load_test_file_testcase(self):
+    def test_load_teststeps(self):
+        test_block = {
+            "name": "setup and reset all.",
+            "suite": "setup_and_reset($device_sn)",
+            "output": ["token", "device_sn"]
+        }
+        teststeps = loader._load_teststeps(test_block, self.project_mapping)
+        self.assertEqual(len(teststeps), 2)
+        self.assertEqual(teststeps[0]["name"], "get token")
+        self.assertEqual(teststeps[1]["name"], "reset all users")
+
+    def test_load_testcase(self):
         raw_testcase = loader.load_file("tests/testcases/smoketest.yml")
         testcase = loader._load_testcase(raw_testcase, self.project_mapping)
         self.assertEqual(testcase["config"]["name"], "smoketest")
