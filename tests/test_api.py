@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 
-from httprunner import HttpRunner, LocustRunner, api, loader, parser
+from httprunner import HttpRunner, api, loader, parser
 from locust import HttpLocust
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -375,15 +375,3 @@ class TestHttpRunner(ApiServerUnittest):
             os.getcwd(), 'tests/httpbin/basic.yml')
         runner = HttpRunner().run(testcase_file_path)
         self.assertTrue(runner.summary["success"])
-
-
-class TestLocustRunner(ApiServerUnittest):
-
-    def setUp(self):
-        WebPageUser = type('WebPageUser', (HttpLocust,), {})
-        self.locust_client = WebPageUser.client
-
-    def test_LocustRunner(self):
-        testcase_file = os.path.join(os.getcwd(), 'tests', 'httpbin', 'basic.yml')
-        locust_runner = LocustRunner(self.locust_client)
-        locust_runner.run(testcase_file)
