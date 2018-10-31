@@ -113,6 +113,10 @@ def main_locust():
     if len(sys.argv) == 1:
         sys.argv.extend(["-h"])
 
+    if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
+        locusts.main()
+        sys.exit(0)
+
     # set logging level
     if "-L" in sys.argv:
         loglevel_index = sys.argv.index('-L') + 1
@@ -129,15 +133,18 @@ def main_locust():
 
     logger.setup_logger(loglevel)
 
-    if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
-        locusts.main()
-        sys.exit(0)
-
+    # get testcase file path
     try:
-        testcase_index = sys.argv.index('-f') + 1
-        assert testcase_index < len(sys.argv)
-    except (ValueError, AssertionError):
-        logger.log_error("Testcase file is not specified, exit.")
+        if "-f" in sys.argv:
+            testcase_index = sys.argv.index('-f') + 1
+        elif "--locustfile" in sys.argv:
+            testcase_index = sys.argv.index('--locustfile') + 1
+        else:
+            testcase_index = None
+
+        assert testcase_index and testcase_index < len(sys.argv)
+    except AssertionError:
+        print("Testcase file is not specified, exit.")
         sys.exit(1)
 
     testcase_file_path = sys.argv[testcase_index]
