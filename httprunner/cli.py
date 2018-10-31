@@ -101,19 +101,33 @@ def main_hrun():
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
-    logger.setup_logger("INFO")
-
     try:
         from httprunner import locusts
     except ImportError:
         msg = "Locust is not installed, install first and try again.\n"
         msg += "install command: pip install locustio"
-        logger.log_warning(msg)
+        print(msg)
         exit(1)
 
     sys.argv[0] = 'locust'
     if len(sys.argv) == 1:
         sys.argv.extend(["-h"])
+
+    # set logging level
+    if "-L" in sys.argv:
+        loglevel_index = sys.argv.index('-L') + 1
+    elif "--loglevel" in sys.argv:
+        loglevel_index = sys.argv.index('--loglevel') + 1
+    else:
+        loglevel_index = None
+
+    if loglevel_index and loglevel_index < len(sys.argv):
+        loglevel = sys.argv[loglevel_index]
+    else:
+        # default
+        loglevel = "INFO"
+
+    logger.setup_logger(loglevel)
 
     if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
         locusts.main()
