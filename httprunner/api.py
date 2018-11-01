@@ -255,22 +255,3 @@ class HttpRunner(object):
             html_report_name,
             html_report_template
         )
-
-
-class LocustRunner(object):
-
-    def __init__(self, locust_client):
-        self.runner = HttpRunner(http_client_session=locust_client)
-
-    def run(self, path):
-        try:
-            self.runner.run(path)
-        except exceptions.MyBaseError as ex:
-            # TODO: refactor
-            from locust.events import request_failure
-            request_failure.fire(
-                request_type=test.testcase_dict.get("request", {}).get("method"),
-                name=test.testcase_dict.get("request", {}).get("url"),
-                response_time=0,
-                exception=ex
-            )

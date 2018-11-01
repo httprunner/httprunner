@@ -101,14 +101,12 @@ def main_hrun():
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
-    logger.setup_logger("INFO")
-
     try:
         from httprunner import locusts
     except ImportError:
         msg = "Locust is not installed, install first and try again.\n"
         msg += "install command: pip install locustio"
-        logger.log_warning(msg)
+        print(msg)
         exit(1)
 
     sys.argv[0] = 'locust'
@@ -119,11 +117,34 @@ def main_locust():
         locusts.main()
         sys.exit(0)
 
+    # set logging level
+    if "-L" in sys.argv:
+        loglevel_index = sys.argv.index('-L') + 1
+    elif "--loglevel" in sys.argv:
+        loglevel_index = sys.argv.index('--loglevel') + 1
+    else:
+        loglevel_index = None
+
+    if loglevel_index and loglevel_index < len(sys.argv):
+        loglevel = sys.argv[loglevel_index]
+    else:
+        # default
+        loglevel = "INFO"
+
+    logger.setup_logger(loglevel)
+
+    # get testcase file path
     try:
-        testcase_index = sys.argv.index('-f') + 1
-        assert testcase_index < len(sys.argv)
-    except (ValueError, AssertionError):
-        logger.log_error("Testcase file is not specified, exit.")
+        if "-f" in sys.argv:
+            testcase_index = sys.argv.index('-f') + 1
+        elif "--locustfile" in sys.argv:
+            testcase_index = sys.argv.index('--locustfile') + 1
+        else:
+            testcase_index = None
+
+        assert testcase_index and testcase_index < len(sys.argv)
+    except AssertionError:
+        print("Testcase file is not specified, exit.")
         sys.exit(1)
 
     testcase_file_path = sys.argv[testcase_index]

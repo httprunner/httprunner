@@ -40,13 +40,10 @@ def gen_locustfile(testcase_file_path):
         "templates",
         "locustfile_template"
     )
-    testcases = loader.load_tests(testcase_file_path)
-    host = testcases[0].get("config", {}).get("request", {}).get("base_url", "")
 
     with io.open(template_path, encoding='utf-8') as template:
         with io.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
             template_content = template.read()
-            template_content = template_content.replace("$HOST", host)
             template_content = template_content.replace("$TESTCASE_FILE", testcase_file_path)
             locustfile.write(template_content)
 
