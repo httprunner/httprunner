@@ -283,8 +283,20 @@ class TestSuiteLoader(unittest.TestCase):
     def setUpClass(cls):
         cls.project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
 
-    def test_load_test_file_testcase(self):
-        testcase = loader._load_test_file("tests/testcases/smoketest.yml", self.project_mapping)
+    def test_load_teststeps(self):
+        test_block = {
+            "name": "setup and reset all.",
+            "suite": "setup_and_reset($device_sn)",
+            "output": ["token", "device_sn"]
+        }
+        teststeps = loader._load_teststeps(test_block, self.project_mapping)
+        self.assertEqual(len(teststeps), 2)
+        self.assertEqual(teststeps[0]["name"], "get token")
+        self.assertEqual(teststeps[1]["name"], "reset all users")
+
+    def test_load_testcase(self):
+        raw_testcase = loader.load_file("tests/testcases/smoketest.yml")
+        testcase = loader._load_testcase(raw_testcase, self.project_mapping)
         self.assertEqual(testcase["config"]["name"], "smoketest")
         self.assertIn("device_sn", testcase["config"]["variables"][0])
         self.assertEqual(len(testcase["teststeps"]), 8)
@@ -541,3 +553,12 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn("get_token", project_mapping["def-api"])
         self.assertIn("setup_and_reset", project_mapping["def-testcase"])
         self.assertEqual(project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
+
+    def test_load_locust_tests(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_locust.yml')
+        locust_tests = loader.load_locust_tests(path)
+        self.assertEqual(locust_tests["config"]["refs"]["env"]["UserName"], "debugtalk")
+        self.assertEqual(len(locust_tests["tests"]), 10)
+        self.assertEqual(locust_tests["tests"][0][0]["name"], "index")
+        self.assertEqual(locust_tests["tests"][9][0]["name"], "user-agent")

@@ -6,4 +6,4 @@ try:
 except ImportError:
     pass
 
-from httprunner.api import HttpRunner, LocustRunner
+from httprunner.api import HttpRunner
