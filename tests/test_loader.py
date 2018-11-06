@@ -285,7 +285,7 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_teststeps(self):
         test_block = {
-            "name": "setup and reset all.",
+            "name": "setup and reset all (override).",
             "suite": "setup_and_reset($device_sn)",
             "output": ["token", "device_sn"]
         }
@@ -322,21 +322,28 @@ class TestSuiteLoader(unittest.TestCase):
         )
         test_block = {
             "name": "override block",
+            "times": 3,
             "variables": [
                 {"var": 123}
             ],
             'request': {
-                'url': '/api/get-token', 'method': 'POST', 'headers': {'user_agent': '$user_agent', 'device_sn': '$device_sn', 'os_platform': '$os_platform', 'app_version': '$app_version'}, 'json': {'sign': '${get_sign($user_agent, $device_sn, $os_platform, $app_version)}'}},
+                'url': '/api/get-token',
+                'method': 'POST',
+                'headers': {'user_agent': '$user_agent', 'device_sn': '$device_sn', 'os_platform': '$os_platform', 'app_version': '$app_version'},
+                'json': {'sign': '${get_sign($user_agent, $device_sn, $os_platform, $app_version)}'}
+            },
             'validate': [
                 {'eq': ['status_code', 201]},
                 {'len_eq': ['content.token', 32]}
             ]
         }
 
-        loader._extend_block(test_block, def_block)
-        self.assertEqual(test_block["name"], "override block")
-        self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, test_block["validate"])
-        self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, test_block["validate"])
+        extended_block = loader._extend_block(test_block, def_block)
+        self.assertEqual(extended_block["name"], "override block")
+        self.assertIn({'var': 123}, extended_block["variables"])
+        self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, extended_block["validate"])
+        self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, extended_block["validate"])
+        self.assertEqual(extended_block["times"], 3)
 
     def test_get_test_definition_api(self):
         api_def = loader._get_test_definition("get_headers", "def-api", self.project_mapping)
@@ -354,7 +361,7 @@ class TestSuiteLoader(unittest.TestCase):
         with self.assertRaises(exceptions.TestcaseNotFound):
             loader._get_test_definition("create_and_check_XXX", "def-testcase", self.project_mapping)
 
-    def test_merge_validator(self):
+    def test_extend_validators(self):
         def_validators = [
             {'eq': ['v1', 200]},
             {"check": "s2", "expect": 16, "comparator": "len_eq"}
@@ -364,21 +371,21 @@ class TestSuiteLoader(unittest.TestCase):
             {'len_eq': ['s3', 12]}
         ]
 
-        merged_validators = loader._merge_validator(def_validators, current_validators)
+        extended_validators = loader._extend_validators(def_validators, current_validators)
         self.assertIn(
             {"check": "v1", "expect": 201, "comparator": "eq"},
-            merged_validators
+            extended_validators
         )
         self.assertIn(
             {"check": "s2", "expect": 16, "comparator": "len_eq"},
-            merged_validators
+            extended_validators
         )
         self.assertIn(
             {"check": "s3", "expect": 12, "comparator": "len_eq"},
-            merged_validators
+            extended_validators
         )
 
-    def test_merge_validator_with_dict(self):
+    def test_extend_validators_with_dict(self):
         def_validators = [
             {'eq': ["a", {"v": 1}]},
             {'eq': [{"b": 1}, 200]}
@@ -388,27 +395,27 @@ class TestSuiteLoader(unittest.TestCase):
             {'eq': [{"b": 1}, 201]}
         ]
 
-        merged_validators = loader._merge_validator(def_validators, current_validators)
-        self.assertEqual(len(merged_validators), 3)
-        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, merged_validators)
-        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, merged_validators)
+        extended_validators = loader._extend_validators(def_validators, current_validators)
+        self.assertEqual(len(extended_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, extended_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, extended_validators)
 
-    def test_merge_extractor(self):
-        api_extrators = [{"var1": "val1"}, {"var2": "val2"}]
-        current_extractors = [{"var1": "val111"}, {"var3": "val3"}]
+    def test_extend_variables(self):
+        def_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        ref_variables = [{"var1": "val111"}, {"var3": "val3"}]
 
-        merged_extractors = loader._merge_extractor(api_extrators, current_extractors)
+        extended_variables = loader._extend_variables(def_variables, ref_variables)
         self.assertIn(
             {"var1": "val111"},
-            merged_extractors
+            extended_variables
         )
         self.assertIn(
             {"var2": "val2"},
-            merged_extractors
+            extended_variables
         )
         self.assertIn(
             {"var3": "val3"},
-            merged_extractors
+            extended_variables
         )
 
     def test_load_testcases_by_path_files(self):
