@@ -16,7 +16,6 @@ logging.getLogger('locust.runners').setLevel(logging.INFO)
 class WebPageTasks(TaskSet):
     def on_start(self):
         self.test_runner = Runner(self.locust.config, self.client)
-        self.testcases = load_locust_tests(self.locust.file_path)
 
     @task(weight=1)
     def test_any(self):
