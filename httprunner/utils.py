@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+import collections
 import copy
 import io
 import itertools
@@ -367,7 +368,7 @@ def print_io(in_out):
     def prepare_content(var_type, in_out):
         content = ""
         for variable, value in in_out.items():
-            if isinstance(value, tuple):
+            if isinstance(value, (tuple, collections.deque)):
                 continue
             elif isinstance(value, (dict, list)):
                 value = json.dumps(value)
