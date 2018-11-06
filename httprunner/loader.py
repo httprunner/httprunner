@@ -1,4 +1,5 @@
 import collections
+import copy
 import csv
 import importlib
 import io
@@ -9,7 +10,6 @@ import sys
 import yaml
 from httprunner import built_in, exceptions, logger, parser, utils, validator
 from httprunner.compat import OrderedDict
-
 
 ###############################################################################
 ##   file loader
@@ -235,6 +235,7 @@ def load_python_module(module):
             }
 
     """
+    # TODO (2.0): remove variables from debugtalk.py
     debugtalk_module = {
         "variables": {},
         "functions": {}
@@ -324,46 +325,46 @@ def _load_teststeps(test_block, project_mapping):
             {
                 "name": "add product to cart",
                 "api": "api_add_cart()",
-                "validate": []
+                "variables": [],
+                "validate": [],
+                "extract": []
             }
             # testcase reference
             {
                 "name": "add product to cart",
                 "suite": "create_and_check()",
-                "validate": []
+                "variables": []
             }
             # define directly
             {
                 "name": "checkout cart",
                 "request": {},
-                "validate": []
+                "variables": [],
+                "validate": [],
+                "extract": []
             }
 
     Returns:
         list: loaded teststeps list
 
     """
-    def extend_api_definition(block):
-        ref_call = block["api"]
-        def_block = _get_block_by_name(ref_call, "def-api", project_mapping)
-        _extend_block(block, def_block)
-
     teststeps = []
 
     # reference api
     if "api" in test_block:
-        extend_api_definition(test_block)
-        teststeps.append(test_block)
+        ref_call = test_block.pop("api")
+        def_block = _get_block_by_name(ref_call, "def-api", project_mapping)
+        extended_block = _extend_block(test_block, def_block)
+        teststeps.append(extended_block)
 
     # reference testcase
     elif "suite" in test_block: # TODO: replace suite with testcase
-        ref_call = test_block["suite"]
-        block = _get_block_by_name(ref_call, "def-testcase", project_mapping)
+        ref_call = test_block.pop("suite")
+        def_block = _get_block_by_name(ref_call, "def-testcase", project_mapping)
         # TODO: bugfix lost block config variables
-        for teststep in block["teststeps"]:
-            if "api" in teststep:
-                extend_api_definition(teststep)
-            teststeps.append(teststep)
+        for teststep in def_block["teststeps"]:
+            _teststeps = _load_teststeps(teststep, project_mapping)
+            teststeps.extend(_teststeps)
 
     # define directly
     else:
@@ -491,6 +492,8 @@ def _get_test_definition(name, ref_type, project_mapping):
 
     """
     block = project_mapping.get(ref_type, {}).get(name)
+    # NOTICE: avoid project_mapping been changed during iteration.
+    block = copy.deepcopy(block)
 
     if not block:
         err_msg = "{} not found!".format(name)
@@ -504,7 +507,7 @@ def _get_test_definition(name, ref_type, project_mapping):
 
 
 def _extend_block(ref_block, def_block):
-    """ extend ref_block with def_block.
+    """ extend ref_block with def_block, ref_block will merge and override def_block.
 
     Args:
         def_block (dict): api definition dict.
@@ -533,26 +536,58 @@ def _extend_block(ref_block, def_block):
             }
 
     """
-    # TODO: override variables
-    def_validators = def_block.get("validate") or def_block.get("validators", [])
-    ref_validators = ref_block.get("validate") or ref_block.get("validators", [])
+    extended_block = {}
 
-    def_extrators = def_block.get("extract") \
-        or def_block.get("extractors") \
-        or def_block.get("extract_binds", [])
-    ref_extractors = ref_block.get("extract") \
-        or ref_block.get("extractors") \
-        or ref_block.get("extract_binds", [])
+    # override name
+    extended_block["name"] = ref_block.pop("name", None) or def_block.pop("name", "")
 
-    ref_block.update(def_block)
-    ref_block["validate"] = _merge_validator(
+    # override variables
+    def_variables = def_block.pop("variables", [])
+    ref_variables = ref_block.pop("variables", [])
+    extended_block["variables"] = _extend_variables(
+        def_variables,
+        ref_variables
+    )
+
+    # merge & override validators
+    def_validators = def_block.pop("validate", None) or def_block.pop("validators", [])
+    ref_validators = ref_block.pop("validate", None) or ref_block.pop("validators", [])
+    extended_block["validate"] = _extend_validators(
         def_validators,
         ref_validators
     )
-    ref_block["extract"] = _merge_extractor(
+
+    # merge & override extractors
+    def_extrators = def_block.pop("extract", None) \
+        or def_block.pop("extractors", None) \
+        or def_block.pop("extract_binds", [])
+    ref_extractors = ref_block.pop("extract", None) \
+        or ref_block.pop("extractors", None) \
+        or ref_block.pop("extract_binds", [])
+    extended_block["extract"] = _extend_variables(
         def_extrators,
         ref_extractors
     )
+
+    # TODO: merge & override request
+    def_request = def_block.pop("request", {})
+    ref_request = ref_block.pop("request", {})
+    extended_block["request"] = def_request
+
+    # merge & override setup_hooks
+    def_setup_hooks = def_block.pop("setup_hooks", [])
+    ref_setup_hooks = ref_block.pop("setup_hooks", [])
+    extended_block["setup_hooks"] = list(set(def_setup_hooks + ref_setup_hooks))
+    # merge & override teardown_hooks
+    def_teardown_hooks = def_block.pop("teardown_hooks", [])
+    ref_teardown_hooks = ref_block.pop("teardown_hooks", [])
+    extended_block["teardown_hooks"] = list(set(def_teardown_hooks + ref_teardown_hooks))
+
+    # TODO: extend with other ref block items, e.g. times
+    # extended_block.update(def_block)
+    extended_block.update(ref_block)
+
+    return extended_block
 
 
 def _convert_validators_to_mapping(validators):
@@ -592,20 +627,21 @@ def _convert_validators_to_mapping(validators):
     return validators_mapping
 
 
-def _merge_validator(def_validators, ref_validators):
-    """ merge def_validators with ref_validators.
+def _extend_validators(def_validators, ref_validators):
+    """ extend ref_validators with def_validators.
+        ref_validators will merge and override def_validators.
 
     Args:
         def_validators (list):
         ref_validators (list):
 
     Returns:
-        list: merged validators
+        list: extended validators
 
     Examples:
         >>> def_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
         >>> ref_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
-        >>> _merge_validator(def_validators, ref_validators)
+        >>> _extend_validators(def_validators, ref_validators)
             [
                 {"check": "v1", "expect": 201, "comparator": "eq"},
                 {"check": "s2", "expect": 16, "comparator": "len_eq"},
@@ -627,20 +663,21 @@ def _merge_validator(def_validators, ref_validators):
         return list(def_validators_mapping.values())
 
 
-def _merge_extractor(def_extrators, ref_extractors):
-    """ merge def_extrators with ref_extractors
+def _extend_variables(def_variables, ref_variables):
+    """ extend ref_variables with def_variables.
+        ref_variables will merge and override def_variables.
 
     Args:
-        def_extrators (list): [{"var1": "val1"}, {"var2": "val2"}]
-        ref_extractors (list): [{"var1": "val111"}, {"var3": "val3"}]
+        def_variables (list):
+        ref_variables (list):
 
     Returns:
-        list: merged extractors
+        list: extended variables
 
     Examples:
-        >>> def_extrators = [{"var1": "val1"}, {"var2": "val2"}]
-        >>> ref_extractors = [{"var1": "val111"}, {"var3": "val3"}]
-        >>> _merge_extractor(def_extrators, ref_extractors)
+        >>> def_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        >>> ref_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        >>> _extend_variables(def_variables, ref_variables)
             [
                 {"var1": "val111"},
                 {"var2": "val2"},
@@ -648,35 +685,29 @@ def _merge_extractor(def_extrators, ref_extractors):
             ]
 
     """
-    if not def_extrators:
-        return ref_extractors
+    if not def_variables:
+        return ref_variables
 
-    elif not ref_extractors:
-        return def_extrators
+    elif not ref_variables:
+        return def_variables
 
     else:
-        extractor_dict = OrderedDict()
-        for api_extrator in def_extrators:
-            if len(api_extrator) != 1:
-                logger.log_warning("incorrect extractor: {}".format(api_extrator))
+        extended_variables_dict = OrderedDict()
+        for def_variable in def_variables:
+            var_name = list(def_variable.keys())[0]
+            extended_variables_dict[var_name] = def_variable[var_name]
+
+        for ref_variable in ref_variables:
+            if not ref_variable:
                 continue
+            var_name = list(ref_variable.keys())[0]
+            extended_variables_dict[var_name] = ref_variable[var_name]
 
-            var_name = list(api_extrator.keys())[0]
-            extractor_dict[var_name] = api_extrator[var_name]
+        extended_variables = []
+        for key, value in extended_variables_dict.items():
+            extended_variables.append({key: value})
 
-        for test_extrator in ref_extractors:
-            if len(test_extrator) != 1:
-                logger.log_warning("incorrect extractor: {}".format(test_extrator))
-                continue
-
-            var_name = list(test_extrator.keys())[0]
-            extractor_dict[var_name] = test_extrator[var_name]
-
-        extractor_list = []
-        for key, value in extractor_dict.items():
-            extractor_list.append({key: value})
-
-        return extractor_list
+        return extended_variables
 
 
 def load_folder_content(folder_path):
@@ -743,6 +774,7 @@ def load_api_folder(api_folder_path):
             }
 
     """
+    # TODO: refactor api storage format, use one file for each api.
     api_definition_mapping = {}
 
     api_items_mapping = load_folder_content(api_folder_path)
@@ -752,6 +784,7 @@ def load_api_folder(api_folder_path):
         for api_item in api_items:
             key, api_dict = api_item.popitem()
 
+            # TODO: replace def with api file path
             api_def = api_dict.pop("def")
             function_meta = parser.parse_function(api_def)
             func_name = function_meta["func_name"]
@@ -826,6 +859,7 @@ def load_test_folder(test_folder_path):
                     test_definition_mapping[test_file_path] = testcase
                     continue
 
+                # TODO: replace def with testcase file path
                 testcase_def = block.pop("def")
                 function_meta = parser.parse_function(testcase_def)
                 func_name = function_meta["func_name"]
@@ -837,6 +871,7 @@ def load_test_folder(test_folder_path):
                 test_definition_mapping[func_name] = testcase
             else:
                 # key == "test":
+                ### TODO: extend suite with api
                 testcase["teststeps"].append(block)
 
     return test_definition_mapping
@@ -1016,6 +1051,8 @@ def load_locust_tests(path, dot_env_path=None):
     project_mapping = load_project_tests(path, dot_env_path)
 
     config = {
+        "variables": project_mapping["debugtalk"]["variables"],
+        "functions": project_mapping["debugtalk"]["functions"],
         "refs": project_mapping
     }
     tests = []
