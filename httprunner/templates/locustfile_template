@@ -23,7 +23,7 @@ class WebPageTasks(TaskSet):
         for teststep in teststeps:
             try:
                 self.test_runner.run_test(teststep)
-            except (MyBaseError, MyBaseFailure) as ex:
+            except (AssertionError, MyBaseError, MyBaseFailure) as ex:
                 request_failure.fire(
                     request_type=teststep.get("request", {}).get("method"),
                     name=teststep.get("name"),
