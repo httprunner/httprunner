@@ -129,7 +129,7 @@ def main_locust():
         loglevel = sys.argv[loglevel_index]
     else:
         # default
-        loglevel = "INFO"
+        loglevel = "WARNING"
 
     logger.setup_logger(loglevel)
 
