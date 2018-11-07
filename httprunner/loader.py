@@ -1052,8 +1052,7 @@ def load_locust_tests(path, dot_env_path=None):
 
     config = {
         "variables": project_mapping["debugtalk"]["variables"],
-        "functions": project_mapping["debugtalk"]["functions"],
-        "refs": project_mapping
+        "functions": project_mapping["debugtalk"]["functions"]
     }
     tests = []
     for item in raw_testcase:
@@ -1066,6 +1065,35 @@ def load_locust_tests(path, dot_env_path=None):
             weight = test_block.pop("weight", 1)
             for _ in range(weight):
                 tests.append(teststeps)
+
+    # parse config variables
+    raw_config_variables = config.get("variables", [])
+    parsed_config_variables = parser.parse_data(
+        raw_config_variables,
+        project_mapping["debugtalk"]["variables"],
+        project_mapping["debugtalk"]["functions"]
+    )
+
+    # priority: passed in > debugtalk.py > parameters > variables
+    # override variables mapping with parameters mapping
+    config_variables = utils.override_mapping_list(
+        parsed_config_variables, {})
+    # merge debugtalk.py module variables
+    config_variables.update(project_mapping["debugtalk"]["variables"])
+
+    # parse config name
+    config["name"] = parser.parse_data(
+        config.get("name", ""),
+        config_variables,
+        project_mapping["debugtalk"]["functions"]
+    )
+
+    # parse config request
+    config["request"] = parser.parse_data(
+        config.get("request", {}),
+        config_variables,
+        project_mapping["debugtalk"]["functions"]
+    )
 
     return {
         "config": config,
