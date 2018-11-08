@@ -26,7 +26,7 @@ class WebPageTasks(TaskSet):
             except (AssertionError, MyBaseError, MyBaseFailure) as ex:
                 request_failure.fire(
                     request_type=teststep.get("request", {}).get("method"),
-                    name=teststep.get("name"),
+                    name=teststep.get("request", {}).get("url"),
                     response_time=0,
                     exception=ex
                 )
