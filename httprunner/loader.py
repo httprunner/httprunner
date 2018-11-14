@@ -933,10 +933,9 @@ def load_project_tests(test_path, dot_env_path=None):
             "functions": {}
         }
 
-    # TODO: add tests layer temporally, remove later.
-    project_mapping["def-api"] = load_api_folder(os.path.join(project_working_directory, "tests", "api"))
+    project_mapping["def-api"] = load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
-    project_mapping["def-testcase"] = load_test_folder(os.path.join(project_working_directory, "tests", "suite"))
+    project_mapping["def-testcase"] = load_test_folder(os.path.join(project_working_directory, "suite"))
 
     return project_mapping
 

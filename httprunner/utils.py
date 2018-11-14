@@ -264,6 +264,39 @@ def update_ordered_dict(ordered_dict, override_mapping):
     return new_ordered_dict
 
 
+def ensure_mapping_format(variables):
+    """ ensure variables are in mapping format.
+
+    Args:
+        variables (list/dict/OrderedDict): original variables
+
+    Returns:
+        OrderedDict: ensured variables in OrderedDict
+
+    Examples:
+        >>> variables = [
+                {"a": 1},
+                {"b": 2}
+            ]
+        >>> print(ensure_mapping_format(variables))
+            OrderDict(
+                {
+                    "a": 1,
+                    "b": 2
+                }
+            )
+
+    """
+    if isinstance(variables, list):
+        variables_ordered_dict = convert_mappinglist_to_orderdict(variables)
+    elif isinstance(variables, (OrderedDict, dict)):
+        variables_ordered_dict = variables
+    else:
+        raise exceptions.ParamsError("variables format error!")
+
+    return variables_ordered_dict
+
+
 def override_mapping_list(variables, new_mapping):
     """ override variables with new mapping.
 
@@ -298,12 +331,7 @@ def override_mapping_list(variables, new_mapping):
             )
 
     """
-    if isinstance(variables, list):
-        variables_ordered_dict = convert_mappinglist_to_orderdict(variables)
-    elif isinstance(variables, (OrderedDict, dict)):
-        variables_ordered_dict = variables
-    else:
-        raise exceptions.ParamsError("variables error!")
+    variables_ordered_dict = ensure_mapping_format(variables)
 
     return update_ordered_dict(
         variables_ordered_dict,
