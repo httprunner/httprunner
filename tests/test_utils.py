@@ -206,12 +206,12 @@ class TestUtils(ApiServerUnittest):
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertEqual(None, request_dict)
 
-    def test_convert_to_order_dict(self):
+    def test_ensure_mapping_format(self):
         map_list = [
             {"a": 1},
             {"b": 2}
         ]
-        ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
+        ordered_dict = utils.ensure_mapping_format(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
 
@@ -240,7 +240,7 @@ class TestUtils(ApiServerUnittest):
             {"a": 1},
             {"b": 2}
         ]
-        ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
+        ordered_dict = utils.ensure_mapping_format(map_list)
         override_mapping = {"a": 3, "c": 4}
         new_dict = utils.update_ordered_dict(ordered_dict, override_mapping)
         self.assertEqual(3, new_dict["a"])

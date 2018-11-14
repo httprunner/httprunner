@@ -221,7 +221,7 @@ class ResponseObject(object):
 
         logger.log_info("start to extract from response object.")
         extracted_variables_mapping = OrderedDict()
-        extract_binds_order_dict = utils.convert_mappinglist_to_orderdict(extractors)
+        extract_binds_order_dict = utils.ensure_mapping_format(extractors)
 
         for key, field in extract_binds_order_dict.items():
             extracted_variables_mapping[key] = self.extract_field(field)

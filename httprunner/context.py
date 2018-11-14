@@ -15,12 +15,7 @@ class Context(object):
         """
         # testcase level context
         ## TESTCASE_SHARED_VARIABLES_MAPPING and TESTCASE_SHARED_FUNCTIONS_MAPPING are unchangeable.
-        if isinstance(variables, list):
-            self.TESTCASE_SHARED_VARIABLES_MAPPING = utils.convert_mappinglist_to_orderdict(variables)
-        else:
-            # dict
-            self.TESTCASE_SHARED_VARIABLES_MAPPING = variables or OrderedDict()
-
+        self.TESTCASE_SHARED_VARIABLES_MAPPING = utils.ensure_mapping_format(variables)
         self.TESTCASE_SHARED_FUNCTIONS_MAPPING = functions or OrderedDict()
 
         # testcase level request, will not change
@@ -65,10 +60,9 @@ class Context(object):
             level (enum): "testcase" or "teststep"
 
         """
-        if isinstance(variables, list):
-            variables = utils.convert_mappinglist_to_orderdict(variables)
+        variables_mapping = utils.ensure_mapping_format(variables)
 
-        for variable_name, variable_value in variables.items():
+        for variable_name, variable_value in variables_mapping.items():
             variable_eval_value = self.eval_content(variable_value)
 
             if level == "testcase":
