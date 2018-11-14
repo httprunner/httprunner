@@ -177,32 +177,6 @@ def lower_test_dict_keys(test_dict):
 
     return test_dict
 
-def convert_mappinglist_to_orderdict(mapping_list):
-    """ convert mapping list to ordered dict
-
-    Args:
-        mapping_list (list):
-            [
-                {"a": 1},
-                {"b": 2}
-            ]
-
-    Returns:
-        OrderedDict: converted mapping in OrderedDict
-            OrderDict(
-                {
-                    "a": 1,
-                    "b": 2
-                }
-            )
-
-    """
-    ordered_dict = OrderedDict()
-    for map_dict in mapping_list:
-        ordered_dict.update(map_dict)
-
-    return ordered_dict
-
 
 def deepcopy_dict(data):
     """ deepcopy dict data, ignore file object (_io.BufferedReader)
@@ -288,7 +262,9 @@ def ensure_mapping_format(variables):
 
     """
     if isinstance(variables, list):
-        variables_ordered_dict = convert_mappinglist_to_orderdict(variables)
+        variables_ordered_dict = OrderedDict()
+        for map_dict in variables:
+            variables_ordered_dict.update(map_dict)
     elif isinstance(variables, (OrderedDict, dict)):
         variables_ordered_dict = variables
     else:
