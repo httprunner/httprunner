@@ -26,7 +26,15 @@ def set_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
-        logger.log_debug("Loaded variable: {}".format(variable))
+        logger.log_debug("Set OS environment variable: {}".format(variable))
+
+
+def unset_os_environ(variables_mapping):
+    """ set variables mapping to os.environ
+    """
+    for variable in variables_mapping:
+        os.environ.pop(variable)
+        logger.log_debug("Unset OS environment variable: {}".format(variable))
 
 
 def query_json(json_content, query, delimiter='.'):
