@@ -565,7 +565,6 @@ class TestSuiteLoader(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_locust.yml')
         locust_tests = loader.load_locust_tests(path)
-        self.assertEqual(locust_tests["config"]["variables"]["UserName"], "debugtalk")
         self.assertEqual(len(locust_tests["tests"]), 10)
         self.assertEqual(locust_tests["tests"][0][0]["name"], "index")
         self.assertEqual(locust_tests["tests"][9][0]["name"], "user-agent")

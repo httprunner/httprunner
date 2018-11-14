@@ -179,7 +179,6 @@ def load_dot_env_file(dot_env_path):
 
             env_variables_mapping[variable.strip()] = value.strip()
 
-    utils.set_os_environ(env_variables_mapping)
     return env_variables_mapping
 
 

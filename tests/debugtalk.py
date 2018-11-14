@@ -7,7 +7,6 @@ import time
 from tests.api_server import HTTPBIN_SERVER, SECRET_KEY, gen_md5, get_sign
 
 BASE_URL = "http://127.0.0.1:5000"
-UserName = os.environ['UserName']
 
 
 demo_default_request = {

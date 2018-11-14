@@ -618,6 +618,10 @@ def parse_tests(testcases, variables_mapping=None):
             }
         )
 
+        env_mapping = project_mapping["env"]
+        # set OS environment variables
+        utils.set_os_environ(env_mapping)
+
         # parse config parameters
         config_parameters = testcase_config.pop("parameters", [])
         cartesian_product_parameters_list = parse_parameters(
@@ -672,5 +676,8 @@ def parse_tests(testcases, variables_mapping=None):
             # put loaded project functions to config
             testcase_dict["config"]["functions"] = project_mapping["debugtalk"]["functions"]
             parsed_testcases_list.append(testcase_dict)
+
+        # unset OS environment variables
+        utils.unset_os_environ(env_mapping)
 
     return parsed_testcases_list
