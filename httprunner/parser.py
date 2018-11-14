@@ -629,24 +629,29 @@ def parse_tests(testcases, variables_mapping=None):
         for parameter_mapping in cartesian_product_parameters_list:
             testcase_dict = utils.deepcopy_dict(testcase)
             config = testcase_dict.get("config")
-
-            # parse config variables
+            # get config variables
             raw_config_variables = config.get("variables", [])
-            parsed_config_variables = parse_data(
-                raw_config_variables,
-                project_mapping["debugtalk"]["variables"],
-                project_mapping["debugtalk"]["functions"]
-            )
+            raw_config_variables_mapping = utils.ensure_mapping_format(raw_config_variables)
 
-            # priority: passed in > debugtalk.py > parameters > variables
-            # override variables mapping with parameters mapping
-            config_variables = utils.override_mapping_list(
-                parsed_config_variables, parameter_mapping)
-            # merge debugtalk.py module variables
+            # priority: passed in > .env > debugtalk.py > parameters > variables
+
+            config_variables = utils.deepcopy_dict(parameter_mapping)
             config_variables.update(project_mapping["debugtalk"]["variables"])
-            # override variables mapping with passed in variables_mapping
-            config_variables = utils.override_mapping_list(
-                config_variables, variables_mapping)
+            config_variables.update(variables_mapping)
+
+            for key, value in raw_config_variables_mapping.items():
+
+                if key in config_variables:
+                    # passed in & .env & parameters
+                    continue
+                else:
+                    # config variables
+                    parsed_value = parse_data(
+                        value,
+                        config_variables,
+                        project_mapping["debugtalk"]["functions"]
+                    )
+                    config_variables[key] = parsed_value
 
             testcase_dict["config"]["variables"] = config_variables
 
