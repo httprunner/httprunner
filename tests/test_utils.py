@@ -9,14 +9,6 @@ from tests.base import ApiServerUnittest
 
 class TestUtils(ApiServerUnittest):
 
-    def test_remove_prefix(self):
-        full_url = "http://debugtalk.com/post/123"
-        prefix = "http://debugtalk.com"
-        self.assertEqual(
-            utils.remove_prefix(full_url, prefix),
-            "/post/123"
-        )
-
     def test_set_os_environ(self):
         self.assertNotIn("abc", os.environ)
         variables_mapping = {
@@ -233,43 +225,6 @@ class TestUtils(ApiServerUnittest):
         self.assertNotEqual(id(new_data["b"]), id(data["b"]))
         self.assertEqual(id(new_data["c"]), id(data["c"]))
         # self.assertEqual(id(new_data["d"]), id(data["d"]))
-
-    def test_update_ordered_dict(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
-        ordered_dict = utils.ensure_mapping_format(map_list)
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.update_ordered_dict(ordered_dict, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-    def test_override_variables_binds(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_mapping_list(map_list, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-        map_list = OrderedDict(
-            {
-                "a": 1,
-                "b": 2
-            }
-        )
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_mapping_list(map_list, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-        map_list = "invalid"
-        override_mapping = {"a": 3, "c": 4}
-        with self.assertRaises(exceptions.ParamsError):
-            utils.override_mapping_list(map_list, override_mapping)
 
     def test_create_scaffold(self):
         project_name = "projectABC"
