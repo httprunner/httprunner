@@ -172,19 +172,19 @@ class TestFileLoader(unittest.TestCase):
         )
         self.assertEqual(
             loader.locate_file("tests/", "debugtalk.py"),
-            "tests/debugtalk.py"
+            os.path.join(os.getcwd(), "tests", "debugtalk.py")
         )
         self.assertEqual(
             loader.locate_file("tests", "debugtalk.py"),
-            "tests/debugtalk.py"
+            os.path.join(os.getcwd(), "tests", "debugtalk.py")
         )
         self.assertEqual(
             loader.locate_file("tests/base.py", "debugtalk.py"),
-            "tests/debugtalk.py"
+            os.path.join(os.getcwd(), "tests", "debugtalk.py")
         )
         self.assertEqual(
             loader.locate_file("tests/data/demo_testcase.yml", "debugtalk.py"),
-            "tests/debugtalk.py"
+            os.path.join(os.getcwd(), "tests", "debugtalk.py")
         )
 
 
@@ -206,24 +206,27 @@ class TestModuleLoader(unittest.TestCase):
         self.assertTrue(is_status_code_200(200))
         self.assertFalse(is_status_code_200(500))
 
-    def test_locate_debugtalk_py(self):
-        debugtalk_path = loader.locate_debugtalk_py("tests/data/demo_testcase.yml")
+    def test_load_debugtalk_py(self):
+        project_working_directory, debugtalk_functions = loader.load_debugtalk_py("tests/data/demo_testcase.yml")
         self.assertEqual(
-            debugtalk_path,
-            os.path.join(os.getcwd(), "tests", "debugtalk.py")
+            project_working_directory,
+            os.path.join(os.getcwd(), "tests")
         )
+        self.assertIn("gen_md5", debugtalk_functions)
 
-        debugtalk_path = loader.locate_debugtalk_py("tests/base.py")
+        project_working_directory, debugtalk_functions = loader.load_debugtalk_py("tests/base.py")
         self.assertEqual(
-            debugtalk_path,
-            os.path.join(os.getcwd(), "tests", "debugtalk.py")
+            project_working_directory,
+            os.path.join(os.getcwd(), "tests")
         )
+        self.assertIn("gen_md5", debugtalk_functions)
 
-        debugtalk_path = loader.locate_debugtalk_py("httprunner/__init__.py")
+        project_working_directory, debugtalk_functions = loader.load_debugtalk_py("httprunner/__init__.py")
         self.assertEqual(
-            debugtalk_path,
-            None
+            project_working_directory,
+            os.getcwd()
         )
+        self.assertEqual(debugtalk_functions, {})
 
     def test_load_tests(self):
         testcase_file_path = os.path.join(

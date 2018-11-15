@@ -184,7 +184,7 @@ def load_dot_env_file(dot_env_path):
 
 
 def locate_file(start_path, file_name):
-    """ locate filename and return file path.
+    """ locate filename and return absolute file path.
         searching will be recursive upward until current working directory.
 
     Args:
@@ -206,7 +206,7 @@ def locate_file(start_path, file_name):
 
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
-        return file_path
+        return os.path.abspath(file_path)
 
     # current working directory
     if os.path.abspath(start_dir_path) in [os.getcwd(), os.path.abspath(os.sep)]:
@@ -251,12 +251,9 @@ def load_builtin_functions():
     return load_module_functions(built_in)
 
 
-def load_debugtalk_functions(debugtalk_path):
+def load_debugtalk_functions():
     """ load project debugtalk.py module functions
         debugtalk.py should be located in project working directory.
-
-    Args:
-        debugtalk_path(str): debugtalk.py path
 
     Returns:
         dict: debugtalk module functions mapping
@@ -266,9 +263,6 @@ def load_debugtalk_functions(debugtalk_path):
             }
 
     """
-    if not debugtalk_path:
-        return {}
-
     # load debugtalk.py module
     imported_module = importlib.import_module("debugtalk")
     return load_module_functions(imported_module)
@@ -839,18 +833,40 @@ def load_test_folder(test_folder_path):
     return test_definition_mapping
 
 
-def locate_debugtalk_py(start_path):
-    """ locate debugtalk.py file.
+def load_debugtalk_py(start_path):
+    """ locate debugtalk.py file and returns PWD and debugtalk.py functions.
 
     Args:
         start_path (str): start locating path, maybe testcase file path or directory path
 
+    Returns:
+        tuple: (project_working_directory, debugtalk_functions)
+
     """
     try:
+        # locate debugtalk.py file.
         debugtalk_path = locate_file(start_path, "debugtalk.py")
-        return os.path.abspath(debugtalk_path)
+
+        # The folder contains debugtalk.py will be treated as PWD.
+        project_working_directory = os.path.dirname(debugtalk_path)
+
+        # add PWD to sys.path
+        sys.path.insert(0, project_working_directory)
+
+        # load debugtalk.py functions
+        debugtalk_functions = load_debugtalk_functions()
+
     except exceptions.FileNotFound:
-        return None
+
+        # debugtalk.py not found, use os.getcwd() as PWD.
+        project_working_directory = os.getcwd()
+
+        # add PWD to sys.path
+        sys.path.insert(0, project_working_directory)
+
+        debugtalk_functions = {}
+
+    return project_working_directory, debugtalk_functions
 
 
 def load_project_tests(test_path, dot_env_path=None):
@@ -867,17 +883,9 @@ def load_project_tests(test_path, dot_env_path=None):
     """
     project_mapping = {}
 
-    debugtalk_path = locate_debugtalk_py(test_path)
-    # locate PWD with debugtalk.py path
-    if debugtalk_path:
-        # The folder contains debugtalk.py will be treated as PWD.
-        project_working_directory = os.path.dirname(debugtalk_path)
-    else:
-        # debugtalk.py is not found, use os.getcwd() as PWD.
-        project_working_directory = os.getcwd()
-
-    # add PWD to sys.path
-    sys.path.insert(0, project_working_directory)
+    # locate PWD and load debugtalk.py functions
+    project_working_directory, debugtalk_functions = load_debugtalk_py(test_path)
+    project_mapping["functions"] = debugtalk_functions
 
     # load .env
     dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
@@ -885,9 +893,6 @@ def load_project_tests(test_path, dot_env_path=None):
         project_mapping["env"] = load_dot_env_file(dot_env_path)
     else:
         project_mapping["env"] = {}
-
-    # load debugtalk.py
-    project_mapping["functions"] = load_debugtalk_functions(debugtalk_path)
 
     project_mapping["def-api"] = load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
