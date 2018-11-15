@@ -153,8 +153,8 @@ class TestFileLoader(unittest.TestCase):
         dot_env_path = os.path.join(
             os.getcwd(), "tests", "data",
         )
-        with self.assertRaises(exceptions.FileNotFound):
-            loader.load_dot_env_file(dot_env_path)
+        env_variables_mapping = loader.load_dot_env_file(dot_env_path)
+        self.assertEqual(env_variables_mapping, {})
 
     def test_locate_file(self):
         with self.assertRaises(exceptions.FileNotFound):

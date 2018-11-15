@@ -163,10 +163,11 @@ def load_dot_env_file(dot_env_path):
 
     """
     if not os.path.isfile(dot_env_path):
-        raise exceptions.FileNotFound(".env file path is not exist.")
+        return {}
 
     logger.log_info("Loading environment variables from {}".format(dot_env_path))
     env_variables_mapping = {}
+
     with io.open(dot_env_path, 'r', encoding='utf-8') as fp:
         for line in fp:
             # maxsplit=1
@@ -889,11 +890,9 @@ def load_project_tests(test_path, dot_env_path=None):
 
     # load .env
     dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
-    if os.path.isfile(dot_env_path):
-        project_mapping["env"] = load_dot_env_file(dot_env_path)
-    else:
-        project_mapping["env"] = {}
+    project_mapping["env"] = load_dot_env_file(dot_env_path)
 
+    # load api/testcases
     project_mapping["def-api"] = load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
     project_mapping["def-testcase"] = load_test_folder(os.path.join(project_working_directory, "suite"))
