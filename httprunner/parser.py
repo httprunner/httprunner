@@ -255,7 +255,7 @@ def substitute_variables(content, variables_mapping):
 
     return content
 
-def parse_parameters(parameters, variables_mapping, functions_mapping):
+def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
     """ parse parameters and generate cartesian product.
 
     Args:
@@ -265,7 +265,7 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
                 (2) call built-in parameterize function, "${parameterize(account.csv)}"
                 (3) call custom function in debugtalk.py, "${gen_app_version()}"
 
-        variables_mapping (dict): variables mapping loaded from debugtalk.py
+        variables_mapping (dict): variables mapping loaded from testcase config
         functions_mapping (dict): functions mapping loaded from debugtalk.py
 
     Returns:
@@ -280,7 +280,10 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
         >>> parse_parameters(parameters)
 
     """
+    variables_mapping = variables_mapping or {}
+    functions_mapping = functions_mapping or {}
     parsed_parameters_list = []
+
     for parameter in parameters:
         parameter_name, parameter_content = list(parameter.items())[0]
         parameter_name_list = parameter_name.split("-")
@@ -542,7 +545,7 @@ def parse_tests(testcases, variables_mapping=None):
                     "config": {
                         "name": "desc1",
                         "path": "testcase1_path",
-                        "variables": [],         # optional
+                        "variables": {},         # optional
                         "request": {}            # optional
                         "refs": {
                             "debugtalk": {
@@ -598,7 +601,7 @@ def parse_tests(testcases, variables_mapping=None):
         config_parameters = testcase_config.pop("parameters", [])
         cartesian_product_parameters_list = parse_parameters(
             config_parameters,
-            {},
+            testcase_config.get("variables", {}),
             project_mapping["functions"]
         ) or [{}]
 

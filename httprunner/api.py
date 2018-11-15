@@ -20,18 +20,6 @@ class HttpRunner(object):
             failfast (bool): False/True, stop the test run on the first error or failure.
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
-        Attributes:
-            project_mapping (dict): save project loaded api/testcases, environments and debugtalk.py module.
-                {
-                    "debugtalk": {
-                        "variables": {},
-                        "functions": {}
-                    },
-                    "env": {},
-                    "def-api": {},
-                    "def-testcase": {}
-                }
-
         """
         self.exception_stage = "initialize HttpRunner()"
         self.http_client_session = kwargs.pop("http_client_session", None)
@@ -47,7 +35,7 @@ class HttpRunner(object):
             testcases (list): parsed testcases list
 
         Returns:
-            tuple: unittest.TestSuite()
+            unittest.TestSuite()
 
         """
         def _add_teststep(test_runner, config, teststep_dict):
@@ -165,10 +153,7 @@ class HttpRunner(object):
                             "variables": [],        # optional
                             "request": {}           # optional
                             "refs": {
-                                "debugtalk": {
-                                    "variables": {},
-                                    "functions": {}
-                                },
+                                "functions": {},
                                 "env": {},
                                 "def-api": {},
                                 "def-testcase": {}
