@@ -11,7 +11,8 @@ from httprunner.context import Context
 class Runner(object):
 
     def __init__(self, config_dict=None, http_client_session=None):
-        """
+        """ Each testcase is corresponding to one Runner() instance
+            and one Context() instance.
         """
         self.http_client_session = http_client_session
         config_dict = config_dict or {}
@@ -76,8 +77,7 @@ class Runner(object):
         test_dict = utils.lower_test_dict_keys(test_dict)
 
         self.context.init_context_variables(level)
-        variables = test_dict.get('variables') \
-            or test_dict.get('variable_binds', OrderedDict())
+        variables = test_dict.get('variables', OrderedDict())
         self.context.update_context_variables(variables, level)
 
         request_config = test_dict.get('request', {})
@@ -162,8 +162,8 @@ class Runner(object):
         self._handle_skip_feature(teststep_dict)
 
         # prepare
-        extractors = teststep_dict.get("extract", []) or teststep_dict.get("extractors", [])
-        validators = teststep_dict.get("validate", []) or teststep_dict.get("validators", [])
+        extractors = teststep_dict.get("extract", [])
+        validators = teststep_dict.get("validate", [])
         parsed_request = self.init_test(teststep_dict, level="teststep")
         self.context.update_teststep_variables_mapping("request", parsed_request)
 

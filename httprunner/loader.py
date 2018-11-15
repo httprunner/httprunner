@@ -507,20 +507,16 @@ def _extend_block(ref_block, def_block):
     )
 
     # merge & override validators
-    def_validators = def_block.pop("validate", None) or def_block.pop("validators", [])
-    ref_validators = ref_block.pop("validate", None) or ref_block.pop("validators", [])
+    def_validators = def_block.pop("validate", [])
+    ref_validators = ref_block.pop("validate", [])
     extended_block["validate"] = _extend_validators(
         def_validators,
         ref_validators
     )
 
     # merge & override extractors
-    def_extrators = def_block.pop("extract", None) \
-        or def_block.pop("extractors", None) \
-        or def_block.pop("extract_binds", [])
-    ref_extractors = ref_block.pop("extract", None) \
-        or ref_block.pop("extractors", None) \
-        or ref_block.pop("extract_binds", [])
+    def_extrators = def_block.pop("extract", [])
+    ref_extractors = ref_block.pop("extract", [])
     extended_block["extract"] = _extend_variables(
         def_extrators,
         ref_extractors
