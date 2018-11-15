@@ -165,12 +165,11 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertLess(end_time - start_time, 60)
 
     def test_run_httprunner_with_teardown_hooks_alter_response(self):
+        config = {"name": "test teardown hooks"}
+        config.update(loader.load_project_tests("tests"))
         testcases = [
             {
-                "config": {
-                    "name": "test teardown hooks",
-                    "refs": loader.load_project_tests("tests")
-                },
+                "config": config,
                 "teststeps": [
                     {
                         "name": "test teardown hooks",

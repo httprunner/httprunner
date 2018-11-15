@@ -240,7 +240,7 @@ class TestModuleLoader(unittest.TestCase):
         self.assertEqual(testcases[0]["config"]["name"], '123$var_a')
         self.assertIn(
             "sum_two",
-            testcases[0]["config"]["refs"]["functions"]
+            testcases[0]["config"]["functions"]
         )
 
 
@@ -394,14 +394,14 @@ class TestSuiteLoader(unittest.TestCase):
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 1)
         self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
-        self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["functions"])
+        self.assertIn("get_sign", testcases_list[0]["config"]["functions"])
 
         # relative file path
         path = 'tests/data/demo_testcase_hardcode.yml'
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 1)
         self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
-        self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["functions"])
+        self.assertIn("get_sign", testcases_list[0]["config"]["functions"])
 
         # list/set container with file(s)
         path = [

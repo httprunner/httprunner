@@ -151,13 +151,11 @@ class HttpRunner(object):
                             "name": "desc1",
                             "path": "testcase1_path",
                             "variables": [],        # optional
-                            "request": {}           # optional
-                            "refs": {
-                                "functions": {},
-                                "env": {},
-                                "def-api": {},
-                                "def-testcase": {}
-                            }
+                            "request": {},          # optional
+                            "functions": {},
+                            "env": {},
+                            "def-api": {},
+                            "def-testcase": {}
                         },
                         "teststeps": [
                             # teststep data structure
