@@ -105,10 +105,9 @@ def is_testcase_path(path):
 ###############################################################################
 
 
-def is_function(tup):
-    """ Takes (name, object) tuple, returns True if it is a function.
+def is_function(item):
+    """ Takes item object, returns True if it is a function.
     """
-    name, item = tup
     return isinstance(item, types.FunctionType)
 
 
