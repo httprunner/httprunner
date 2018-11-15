@@ -13,14 +13,6 @@ from httprunner import exceptions, logger
 from httprunner.compat import OrderedDict, basestring, is_py2
 
 
-def remove_prefix(text, prefix):
-    """ remove prefix from text
-    """
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text
-
-
 def set_os_environ(variables_mapping):
     """ set variables mapping to os.environ
     """
@@ -222,30 +214,6 @@ def deepcopy_dict(data):
         return copied_data
 
 
-def update_ordered_dict(ordered_dict, override_mapping):
-    """ override ordered_dict with new mapping.
-
-    Args:
-        ordered_dict (OrderDict): original ordered dict
-        override_mapping (dict): new variables mapping
-
-    Returns:
-        OrderDict: new overrided variables mapping.
-
-    Examples:
-        >>> ordered_dict = OrderDict({"a": 1, "b": 2})
-        >>> override_mapping = {"a": 3, "c": 4}
-        >>> update_ordered_dict(ordered_dict, override_mapping)
-            OrderDict({"a": 3, "b": 2, "c": 4})
-
-    """
-    new_ordered_dict = copy.copy(ordered_dict)
-    for var, value in override_mapping.items():
-        new_ordered_dict.update({var: value})
-
-    return new_ordered_dict
-
-
 def ensure_mapping_format(variables):
     """ ensure variables are in mapping format.
 
@@ -279,48 +247,6 @@ def ensure_mapping_format(variables):
         raise exceptions.ParamsError("variables format error!")
 
     return variables_ordered_dict
-
-
-def override_mapping_list(variables, new_mapping):
-    """ override variables with new mapping.
-
-    Args:
-        variables (list): variables list
-            [
-                {"var_a": 1},
-                {"var_b": "world"}
-            ]
-        new_mapping (dict): overrided variables mapping
-            {
-                "var_a": "hello"
-            }
-
-    Returns:
-        OrderedDict: overrided variables mapping.
-
-    Examples:
-        >>> variables = [
-                {"var_a": 1},
-                {"var_b": "world"}
-            ]
-        >>> new_mapping = {
-                "var_a": "hello"
-            }
-        >>> override_mapping_list(variables, new_mapping)
-            OrderedDict(
-                {
-                    "var_a": "hello",
-                    "var_b": "world"
-                }
-            )
-
-    """
-    variables_ordered_dict = ensure_mapping_format(variables)
-
-    return update_ordered_dict(
-        variables_ordered_dict,
-        new_mapping
-    )
 
 
 def get_testcase_io(testcase):
