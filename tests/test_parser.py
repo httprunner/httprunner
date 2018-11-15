@@ -364,8 +364,7 @@ class TestParser(unittest.TestCase):
         ]
         variables_mapping = {}
         functions_mapping = {}
-        cartesian_product_parameters = parser.parse_parameters(
-            parameters, variables_mapping, functions_mapping)
+        cartesian_product_parameters = parser.parse_parameters(parameters)
         self.assertEqual(
             len(cartesian_product_parameters),
             3 * 2
@@ -389,11 +388,9 @@ class TestParser(unittest.TestCase):
         )
         loader.load_dot_env_file(dot_env_path)
         from tests import debugtalk
-        functions = loader.load_module_functions(debugtalk)
         cartesian_product_parameters = parser.parse_parameters(
             parameters,
-            {},
-            functions
+            functions_mapping=loader.load_module_functions(debugtalk)
         )
         self.assertEqual(
             len(cartesian_product_parameters),
@@ -405,11 +402,7 @@ class TestParser(unittest.TestCase):
             {"app_version": "${parameterize(tests/data/app_version.csv)}"},
             {"username-password": "${parameterize(tests/data/account.csv)}"}
         ]
-        variables_mapping = {}
-        functions_mapping = {}
-
-        cartesian_product_parameters = parser.parse_parameters(
-            parameters, variables_mapping, functions_mapping)
+        cartesian_product_parameters = parser.parse_parameters(parameters)
         self.assertEqual(
             len(cartesian_product_parameters),
             2 * 3
@@ -424,13 +417,12 @@ class TestParser(unittest.TestCase):
             {"username-password": "${parameterize(tests/data/account.csv)}"}
         ]
         variables_mapping = {}
-        functions_mapping = project_mapping["functions"]
         testcase_path = os.path.join(
             os.getcwd(),
             "tests/data/demo_parameters.yml"
         )
         cartesian_product_parameters = parser.parse_parameters(
-            parameters, variables_mapping, functions_mapping)
+            parameters, functions_mapping=project_mapping["functions"])
         self.assertEqual(
             len(cartesian_product_parameters),
             3 * 2 * 3
