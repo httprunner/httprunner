@@ -191,56 +191,20 @@ class TestFileLoader(unittest.TestCase):
 class TestModuleLoader(unittest.TestCase):
 
     def test_filter_module_functions(self):
-        module_mapping = loader.load_python_module(loader)
-        functions_dict = module_mapping["functions"]
-        self.assertIn("load_python_module", functions_dict)
-        self.assertNotIn("is_py3", functions_dict)
+        module_functions = loader.load_module_functions(loader)
+        self.assertIn("load_module_functions", module_functions)
+        self.assertNotIn("is_py3", module_functions)
 
     def test_load_debugtalk_module(self):
         project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "httprunner"))
-        imported_module_items = project_mapping["debugtalk"]
-        self.assertNotIn("SECRET_KEY", imported_module_items["variables"])
-        self.assertNotIn("alter_response", imported_module_items["functions"])
+        self.assertNotIn("alter_response", project_mapping["functions"])
 
         project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        imported_module_items = project_mapping["debugtalk"]
-        self.assertEqual(
-            imported_module_items["variables"]["SECRET_KEY"],
-            "DebugTalk"
-        )
-        self.assertIn("alter_response", imported_module_items["functions"])
+        self.assertIn("alter_response", project_mapping["functions"])
 
-        is_status_code_200 = imported_module_items["functions"]["is_status_code_200"]
+        is_status_code_200 = project_mapping["functions"]["is_status_code_200"]
         self.assertTrue(is_status_code_200(200))
         self.assertFalse(is_status_code_200(500))
-
-    def test_get_module_item_functions(self):
-        from httprunner import utils
-        module_mapping = loader.load_python_module(utils)
-
-        get_uniform_comparator = loader.get_module_item(
-            module_mapping, "functions", "get_uniform_comparator")
-        self.assertTrue(validator.is_function(("get_uniform_comparator", get_uniform_comparator)))
-        self.assertEqual(get_uniform_comparator("=="), "equals")
-
-        with self.assertRaises(exceptions.FunctionNotFound):
-            loader.get_module_item(module_mapping, "functions", "gen_md4")
-
-    def test_get_module_item_variables(self):
-        dot_env_path = os.path.join(
-            os.getcwd(), "tests", ".env"
-        )
-        loader.load_dot_env_file(dot_env_path)
-
-        from tests import debugtalk
-        module_mapping = loader.load_python_module(debugtalk)
-
-        SECRET_KEY = loader.get_module_item(module_mapping, "variables", "SECRET_KEY")
-        self.assertTrue(validator.is_variable(("SECRET_KEY", SECRET_KEY)))
-        self.assertEqual(SECRET_KEY, "DebugTalk")
-
-        with self.assertRaises(exceptions.VariableNotFound):
-            loader.get_module_item(module_mapping, "variables", "SECRET_KEY2")
 
     def test_locate_debugtalk_py(self):
         debugtalk_path = loader.locate_debugtalk_py("tests/data/demo_testcase.yml")
@@ -268,12 +232,12 @@ class TestModuleLoader(unittest.TestCase):
         self.assertIsInstance(testcases, list)
         self.assertEqual(
             testcases[0]["config"]["request"],
-            '$demo_default_request'
+            '${get_default_request()}'
         )
         self.assertEqual(testcases[0]["config"]["name"], '123$var_a')
         self.assertIn(
             "sum_two",
-            testcases[0]["config"]["refs"]["debugtalk"]["functions"]
+            testcases[0]["config"]["refs"]["functions"]
         )
 
 
@@ -427,22 +391,14 @@ class TestSuiteLoader(unittest.TestCase):
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 1)
         self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
-        self.assertEqual(
-            testcases_list[0]["config"]["refs"]["debugtalk"]["variables"]["SECRET_KEY"],
-            "DebugTalk"
-        )
-        self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["debugtalk"]["functions"])
+        self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["functions"])
 
         # relative file path
         path = 'tests/data/demo_testcase_hardcode.yml'
         testcases_list = loader.load_tests(path)
         self.assertEqual(len(testcases_list), 1)
         self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
-        self.assertEqual(
-            testcases_list[0]["config"]["refs"]["debugtalk"]["variables"]["SECRET_KEY"],
-            "DebugTalk"
-        )
-        self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["debugtalk"]["functions"])
+        self.assertIn("get_sign", testcases_list[0]["config"]["refs"]["functions"])
 
         # list/set container with file(s)
         path = [
@@ -556,7 +512,6 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_project_tests(self):
         project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.assertEqual(project_mapping["debugtalk"]["variables"]["SECRET_KEY"], "DebugTalk")
         self.assertIn("get_token", project_mapping["def-api"])
         self.assertIn("setup_and_reset", project_mapping["def-testcase"])
         self.assertEqual(project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")

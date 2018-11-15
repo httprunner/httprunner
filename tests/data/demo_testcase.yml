@@ -8,7 +8,7 @@
             - [11, 21]
             - [12, 22]
         - "app_version": "${gen_app_version()}"
-    request: $demo_default_request
+    request: ${get_default_request()}
 
 - test:
     name: testcase1-$var_a

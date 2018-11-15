@@ -94,4 +94,4 @@
         - ${teardown_hook_sleep_N_secs($response, $n_secs)}
     validate:
         - eq: ["status_code", 200]
-        - contained_by: [content.headers.Host, $HTTPBIN_SERVER]
+        - contained_by: [content.headers.Host, "${get_httpbin_server()}"]

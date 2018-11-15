@@ -1,14 +1,13 @@
+# fix #258
 - config:
     name: "user management testcase."
-    parameters:
-        - user_agent: ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
-        - username-password:
-            - ["test1","111111"]
-            - ["test2","222222"]
     variables:
+        - user_agent: 'iOS/10.3'
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
-        - app_version: 2.8.5
+        - app_version: '2.8.6'
+    parameters:
+        - user_agent: ['iOS', 'android']
     request:
         base_url: ${get_base_url()}
         headers:
@@ -18,10 +17,11 @@
         - token
 
 - test:
-    name: get token with $user_agent and $username
+    name: get token with $user_agent, $app_version
     api: get_token($user_agent, $device_sn, $os_platform, $app_version)
     extract:
         - token: content.token
     validate:
         - "eq": ["status_code", 200]
         - "len_eq": ["content.token", 16]
+        - "contains": [{"a": 1, "b": 2}, "b"]

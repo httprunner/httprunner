@@ -325,34 +325,6 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
 ##  parse content with variables and functions mapping
 ###############################################################################
 
-def get_builtin_item(item_type, item_name):
-    """
-
-    Args:
-        item_type (enum): "variables" or "functions"
-        item_name (str): variable name or function name
-
-    Returns:
-        variable or function with the name of item_name
-
-    """
-    # override built_in module with debugtalk.py module
-    from httprunner import loader
-    built_in_module = loader.load_builtin_module()
-
-    if item_type == "variables":
-        try:
-            return built_in_module["variables"][item_name]
-        except KeyError:
-            raise exceptions.VariableNotFound("{} is not found.".format(item_name))
-    else:
-        # item_type == "functions":
-        try:
-            return built_in_module["functions"][item_name]
-        except KeyError:
-            raise exceptions.FunctionNotFound("{} is not found.".format(item_name))
-
-
 def get_mapping_variable(variable_name, variables_mapping):
     """ get variable from variables_mapping.
 
@@ -367,10 +339,10 @@ def get_mapping_variable(variable_name, variables_mapping):
         exceptions.VariableNotFound: variable is not found.
 
     """
-    if variable_name in variables_mapping:
+    try:
         return variables_mapping[variable_name]
-    else:
-        return get_builtin_item("variables", variable_name)
+    except KeyError:
+        raise exceptions.VariableNotFound("{} is not found.".format(variable_name))
 
 
 def get_mapping_function(function_name, functions_mapping):
@@ -392,12 +364,15 @@ def get_mapping_function(function_name, functions_mapping):
         return functions_mapping[function_name]
 
     try:
-        return get_builtin_item("functions", function_name)
-    except exceptions.FunctionNotFound:
+        # check if HttpRunner builtin functions
+        from httprunner import loader
+        built_in_functions = loader.load_builtin_functions()
+        return built_in_functions[function_name]
+    except KeyError:
         pass
 
     try:
-        # check if builtin functions
+        # check if Python builtin functions
         item_func = eval(function_name)
         if callable(item_func):
             # is builtin function
@@ -608,10 +583,7 @@ def parse_tests(testcases, variables_mapping=None):
         project_mapping = testcase_config.pop(
             "refs",
             {
-                "debugtalk": {
-                    "variables": {},
-                    "functions": {}
-                },
+                "functions": {},
                 "env": {},
                 "def-api": {},
                 "def-testcase": {}
@@ -626,8 +598,8 @@ def parse_tests(testcases, variables_mapping=None):
         config_parameters = testcase_config.pop("parameters", [])
         cartesian_product_parameters_list = parse_parameters(
             config_parameters,
-            project_mapping["debugtalk"]["variables"],
-            project_mapping["debugtalk"]["functions"]
+            {},
+            project_mapping["functions"]
         ) or [{}]
 
         for parameter_mapping in cartesian_product_parameters_list:
@@ -637,10 +609,9 @@ def parse_tests(testcases, variables_mapping=None):
             raw_config_variables = config.get("variables", [])
             raw_config_variables_mapping = utils.ensure_mapping_format(raw_config_variables)
 
-            # priority: passed in > .env > debugtalk.py > parameters > variables
+            # priority: passed in > parameters > variables
 
             config_variables = utils.deepcopy_dict(parameter_mapping)
-            config_variables.update(project_mapping["debugtalk"]["variables"])
             config_variables.update(variables_mapping)
 
             for key, value in raw_config_variables_mapping.items():
@@ -653,7 +624,7 @@ def parse_tests(testcases, variables_mapping=None):
                     parsed_value = parse_data(
                         value,
                         config_variables,
-                        project_mapping["debugtalk"]["functions"]
+                        project_mapping["functions"]
                     )
                     config_variables[key] = parsed_value
 
@@ -663,18 +634,18 @@ def parse_tests(testcases, variables_mapping=None):
             testcase_dict["config"]["name"] = parse_data(
                 testcase_dict["config"].get("name", ""),
                 config_variables,
-                project_mapping["debugtalk"]["functions"]
+                project_mapping["functions"]
             )
 
             # parse config request
             testcase_dict["config"]["request"] = parse_data(
                 testcase_dict["config"].get("request", {}),
                 config_variables,
-                project_mapping["debugtalk"]["functions"]
+                project_mapping["functions"]
             )
 
             # put loaded project functions to config
-            testcase_dict["config"]["functions"] = project_mapping["debugtalk"]["functions"]
+            testcase_dict["config"]["functions"] = project_mapping["functions"]
             parsed_testcases_list.append(testcase_dict)
 
         # unset OS environment variables

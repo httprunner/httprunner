@@ -389,11 +389,11 @@ class TestParser(unittest.TestCase):
         )
         loader.load_dot_env_file(dot_env_path)
         from tests import debugtalk
-        debugtalk_module = loader.load_python_module(debugtalk)
+        functions = loader.load_module_functions(debugtalk)
         cartesian_product_parameters = parser.parse_parameters(
             parameters,
-            debugtalk_module["variables"],
-            debugtalk_module["functions"]
+            {},
+            functions
         )
         self.assertEqual(
             len(cartesian_product_parameters),
@@ -424,7 +424,7 @@ class TestParser(unittest.TestCase):
             {"username-password": "${parameterize(tests/data/account.csv)}"}
         ]
         variables_mapping = {}
-        functions_mapping = project_mapping["debugtalk"]["functions"]
+        functions_mapping = project_mapping["functions"]
         testcase_path = os.path.join(
             os.getcwd(),
             "tests/data/demo_parameters.yml"
@@ -445,11 +445,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(
             parsed_testcases[0]["config"]["request"]["base_url"],
-            '$BASE_URL'
-        )
-        self.assertEqual(
-            parsed_testcases[0]["config"]["variables"]["BASE_URL"],
-            'http://127.0.0.1:5000'
+            "http://127.0.0.1:5000"
         )
         self.assertIsInstance(parsed_testcases, list)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')

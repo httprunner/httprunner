@@ -101,8 +101,7 @@ class TestUtils(ApiServerUnittest):
 
     def current_validators(self):
         from httprunner import built_in
-        module_mapping = loader.load_python_module(built_in)
-        functions_mapping = module_mapping["functions"]
+        functions_mapping = loader.load_module_functions(built_in)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
