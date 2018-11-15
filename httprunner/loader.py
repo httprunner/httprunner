@@ -8,7 +8,7 @@ import os
 import sys
 
 import yaml
-from httprunner import built_in, exceptions, logger, parser, utils, validator
+from httprunner import exceptions, logger, parser, utils, validator
 from httprunner.compat import OrderedDict
 
 ###############################################################################
@@ -179,6 +179,7 @@ def load_dot_env_file(dot_env_path):
 
             env_variables_mapping[variable.strip()] = value.strip()
 
+    utils.set_os_environ(env_variables_mapping)
     return env_variables_mapping
 
 
@@ -219,96 +220,58 @@ def locate_file(start_path, file_name):
 ##   debugtalk.py module loader
 ###############################################################################
 
-def load_python_module(module):
-    """ load python module.
+def load_module_functions(module):
+    """ load python module functions.
 
     Args:
         module: python module
 
     Returns:
-        dict: variables and functions mapping for specified python module
+        dict: functions mapping for specified python module
 
             {
-                "variables": {},
-                "functions": {}
+                "func1_name": func1,
+                "func2_name": func2
             }
 
     """
-    # TODO (2.0): remove variables from debugtalk.py
-    debugtalk_module = {
-        "variables": {},
-        "functions": {}
-    }
+    module_functions = {}
 
     for name, item in vars(module).items():
         if validator.is_function((name, item)):
-            debugtalk_module["functions"][name] = item
-        elif validator.is_variable((name, item)):
-            if isinstance(item, tuple):
-                continue
-            debugtalk_module["variables"][name] = item
-        else:
-            pass
+            module_functions[name] = item
 
-    return debugtalk_module
+    return module_functions
 
 
-def load_builtin_module():
-    """ load built_in module
+def load_builtin_functions():
+    """ load built_in module functions
     """
-    built_in_module = load_python_module(built_in)
-    return built_in_module
+    from httprunner import built_in
+    return load_module_functions(built_in)
 
 
-def load_debugtalk_module():
-    """ load project debugtalk.py module
+def load_debugtalk_functions(debugtalk_path):
+    """ load project debugtalk.py module functions
         debugtalk.py should be located in project working directory.
 
+    Args:
+        debugtalk_path(str): debugtalk.py path
+
     Returns:
-        dict: debugtalk module mapping
+        dict: debugtalk module functions mapping
             {
-                "variables": {},
-                "functions": {}
+                "func1_name": func1,
+                "func2_name": func2
             }
 
     """
+    if not debugtalk_path:
+        return {}
+
     # load debugtalk.py module
     imported_module = importlib.import_module("debugtalk")
-    debugtalk_module = load_python_module(imported_module)
-    return debugtalk_module
-
-
-def get_module_item(module_mapping, item_type, item_name):
-    """ get expected function or variable from module mapping.
-
-    Args:
-        module_mapping(dict): module mapping with variables and functions.
-
-            {
-                "variables": {},
-                "functions": {}
-            }
-
-        item_type(str): "functions" or "variables"
-        item_name(str): function name or variable name
-
-    Returns:
-        object: specified variable or function object.
-
-    Raises:
-        exceptions.FunctionNotFound: If specified function not found in module mapping
-        exceptions.VariableNotFound: If specified variable not found in module mapping
-
-    """
-    try:
-        return module_mapping[item_type][item_name]
-    except KeyError:
-        err_msg = "{} not found in debugtalk.py module!\n".format(item_name)
-        err_msg += "module mapping: {}".format(module_mapping)
-        if item_type == "functions":
-            raise exceptions.FunctionNotFound(err_msg)
-        else:
-            raise exceptions.VariableNotFound(err_msg)
+    return load_module_functions(imported_module)
 
 
 ###############################################################################
@@ -899,7 +862,7 @@ def load_project_tests(test_path, dot_env_path=None):
         dot_env_path (str): specified .env file path
 
     Returns:
-        dict: project loaded api/testcases definitions, environments and debugtalk.py module.
+        dict: project loaded api/testcases definitions, environments and debugtalk.py functions.
 
     """
     project_mapping = {}
@@ -924,13 +887,7 @@ def load_project_tests(test_path, dot_env_path=None):
         project_mapping["env"] = {}
 
     # load debugtalk.py
-    if debugtalk_path:
-        project_mapping["debugtalk"] = load_debugtalk_module()
-    else:
-        project_mapping["debugtalk"] = {
-            "variables": {},
-            "functions": {}
-        }
+    project_mapping["functions"] = load_debugtalk_functions(debugtalk_path)
 
     project_mapping["def-api"] = load_api_folder(os.path.join(project_working_directory, "api"))
     # TODO: replace suite with testcases
@@ -960,10 +917,7 @@ def load_tests(path, dot_env_path=None):
                     "variables": [],                    # optional
                     "request": {}                       # optional
                     "refs": {
-                        "debugtalk": {
-                            "variables": {},
-                            "functions": {}
-                        },
+                        "functions": {},
                         "env": {},
                         "def-api": {},
                         "def-testcase": {}
@@ -1049,10 +1003,7 @@ def load_locust_tests(path, dot_env_path=None):
     raw_testcase = load_file(path)
     project_mapping = load_project_tests(path, dot_env_path)
 
-    config = {
-        "variables": project_mapping["debugtalk"]["variables"],
-        "functions": project_mapping["debugtalk"]["functions"]
-    }
+    config = {}
     tests = []
     for item in raw_testcase:
         key, test_block = item.popitem()
@@ -1067,31 +1018,25 @@ def load_locust_tests(path, dot_env_path=None):
 
     # parse config variables
     raw_config_variables = config.get("variables", [])
-    parsed_config_variables = parser.parse_data(
-        raw_config_variables,
-        project_mapping["debugtalk"]["variables"],
-        project_mapping["debugtalk"]["functions"]
-    )
 
-    # priority: passed in > debugtalk.py > parameters > variables
-    # override variables mapping with parameters mapping
-    config_variables = utils.override_mapping_list(
-        parsed_config_variables, {})
-    # merge debugtalk.py module variables
-    config_variables.update(project_mapping["debugtalk"]["variables"])
+    config_variables = parser.parse_data(
+        raw_config_variables,
+        {},
+        project_mapping["functions"]
+    )
 
     # parse config name
     config["name"] = parser.parse_data(
         config.get("name", ""),
         config_variables,
-        project_mapping["debugtalk"]["functions"]
+        project_mapping["functions"]
     )
 
     # parse config request
     config["request"] = parser.parse_data(
         config.get("request", {}),
         config_variables,
-        project_mapping["debugtalk"]["functions"]
+        project_mapping["functions"]
     )
 
     return {

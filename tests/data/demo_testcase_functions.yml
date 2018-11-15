@@ -6,7 +6,7 @@
         - os_platform: 'ios'
         - app_version: '2.8.6'
     request:
-        base_url: $BASE_URL
+        base_url: ${get_base_url()}
         headers:
             Content-Type: application/json
             device_sn: $device_sn

@@ -4,17 +4,23 @@ import random
 import string
 import time
 
-from tests.api_server import HTTPBIN_SERVER, SECRET_KEY, gen_md5, get_sign
+from tests.api_server import HTTPBIN_SERVER, gen_md5, get_sign
 
 BASE_URL = "http://127.0.0.1:5000"
 
+def get_httpbin_server():
+    return HTTPBIN_SERVER
 
-demo_default_request = {
-    "base_url": "$BASE_URL",
-    "headers": {
-        "content-type": "application/json"
+def get_base_url():
+    return BASE_URL
+
+def get_default_request():
+    return {
+        "base_url": BASE_URL,
+        "headers": {
+            "content-type": "application/json"
+        }
     }
-}
 
 def sum_two(m, n):
     return m + n

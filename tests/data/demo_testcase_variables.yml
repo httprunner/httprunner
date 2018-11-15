@@ -3,7 +3,7 @@
     variables:
         - device_sn: 'HZfFBh6tU59EdXJ'
     request:
-        base_url: $BASE_URL
+        base_url: ${get_base_url()}
         headers:
             Content-Type: application/json
             device_sn: $device_sn

@@ -13,10 +13,12 @@ class Context(object):
     def __init__(self, variables=None, functions=None):
         """ init Context with testcase variables and functions.
         """
+        variables = variables or {}
+        functions = functions or {}
         # testcase level context
         ## TESTCASE_SHARED_VARIABLES_MAPPING and TESTCASE_SHARED_FUNCTIONS_MAPPING are unchangeable.
         self.TESTCASE_SHARED_VARIABLES_MAPPING = utils.ensure_mapping_format(variables)
-        self.TESTCASE_SHARED_FUNCTIONS_MAPPING = functions or OrderedDict()
+        self.TESTCASE_SHARED_FUNCTIONS_MAPPING = functions
 
         # testcase level request, will not change
         self.TESTCASE_SHARED_REQUEST_MAPPING = {}

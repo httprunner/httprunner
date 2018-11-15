@@ -10,11 +10,9 @@ class TestContext(ApiServerUnittest):
 
     def setUp(self):
         project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.debugtalk_module = project_mapping["debugtalk"]
-
         self.context = context.Context(
-            self.debugtalk_module["variables"],
-            self.debugtalk_module["functions"]
+            variables={"SECRET_KEY": "DebugTalk"},
+            functions=project_mapping["functions"]
         )
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
         self.testcases = loader.load_file(testcase_file_path)

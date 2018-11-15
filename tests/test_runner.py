@@ -11,10 +11,10 @@ class TestRunner(ApiServerUnittest):
 
     def setUp(self):
         project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.debugtalk_module = project_mapping["debugtalk"]
+        self.debugtalk_functions = project_mapping["functions"]
         config_dict = {
-            "variables": self.debugtalk_module["variables"],
-            "functions": self.debugtalk_module["functions"]
+            "variables": {},
+            "functions": self.debugtalk_functions
         }
         self.test_runner = runner.Runner(config_dict)
         self.reset_all()
@@ -36,8 +36,8 @@ class TestRunner(ApiServerUnittest):
             testcases = loader.load_file(testcase_file_path)
 
             config_dict = {
-                "variables": self.debugtalk_module["variables"],
-                "functions": self.debugtalk_module["functions"]
+                "variables": {},
+                "functions": self.debugtalk_functions
             }
             test_runner = runner.Runner(config_dict)
 
@@ -81,8 +81,8 @@ class TestRunner(ApiServerUnittest):
 
         config_dict = {
             "name": "basic test with httpbin",
-            "variables": self.debugtalk_module["variables"],
-            "functions": self.debugtalk_module["functions"],
+            "variables": {},
+            "functions": self.debugtalk_functions,
             "request": {
                 "base_url": HTTPBIN_SERVER
             },
@@ -130,8 +130,8 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_hooks_modify_request(self):
         config_dict = {
             "name": "basic test with httpbin",
-            "variables": self.debugtalk_module["variables"],
-            "functions": self.debugtalk_module["functions"],
+            "variables": {},
+            "functions": self.debugtalk_functions,
             "request": {
                 "base_url": HTTPBIN_SERVER
             }
