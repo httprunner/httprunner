@@ -3,7 +3,6 @@
 import copy
 
 from httprunner import exceptions, logger, parser, utils
-from httprunner.compat import OrderedDict
 
 
 class Context(object):

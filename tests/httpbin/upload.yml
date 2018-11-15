@@ -5,7 +5,7 @@
 
 - test:
     name: upload file
-    variable_binds:
+    variables:
         - field_name: "file"
         - file_path: "LICENSE"
         - file_type: "text/html"
