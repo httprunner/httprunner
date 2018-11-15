@@ -50,6 +50,5 @@ class TestValidator(unittest.TestCase):
 
     def test_is_function(self):
         func = lambda x: x + 1
-        self.assertTrue(validator.is_function(("func", func)))
-
-        self.assertTrue(validator.is_function(("func", validator.is_testcase)))
+        self.assertTrue(validator.is_function(func))
+        self.assertTrue(validator.is_function(validator.is_testcase))

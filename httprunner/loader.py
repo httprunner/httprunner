@@ -239,7 +239,7 @@ def load_module_functions(module):
     module_functions = {}
 
     for name, item in vars(module).items():
-        if validator.is_function((name, item)):
+        if validator.is_function(item):
             module_functions[name] = item
 
     return module_functions
