@@ -867,7 +867,7 @@ def load_debugtalk_py(start_path):
 
 
 def load_project_tests(test_path, dot_env_path=None):
-    """ load api, testcases, .env, builtin module and debugtalk.py.
+    """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
     Args:
@@ -915,13 +915,11 @@ def load_tests(path, dot_env_path=None):
                     "name": "desc1",
                     "path": "testcase1_path",
                     "variables": [],                    # optional
-                    "request": {}                       # optional
-                    "refs": {
-                        "functions": {},
-                        "env": {},
-                        "def-api": {},
-                        "def-testcase": {}
-                    }
+                    "request": {},                      # optional
+                    "functions": {},
+                    "env": {},
+                    "def-api": {},
+                    "def-testcase": {}
                 },
                 "teststeps": [
                     # teststep data structure
@@ -969,7 +967,7 @@ def load_tests(path, dot_env_path=None):
             project_mapping = load_project_tests(path, dot_env_path)
             testcase = _load_testcase(raw_testcase, project_mapping)
             testcase["config"]["path"] = path
-            testcase["config"]["refs"] = project_mapping
+            testcase["config"].update(project_mapping)
             testcases_list = [testcase]
         except exceptions.FileFormatError:
             testcases_list = []

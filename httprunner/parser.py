@@ -547,15 +547,10 @@ def parse_tests(testcases, variables_mapping=None):
                         "path": "testcase1_path",
                         "variables": {},         # optional
                         "request": {}            # optional
-                        "refs": {
-                            "debugtalk": {
-                                "variables": {},
-                                "functions": {}
-                            },
-                            "env": {},
-                            "def-api": {},
-                            "def-testcase": {}
-                        }
+                        "functions": {},
+                        "env": {},
+                        "def-api": {},
+                        "def-testcase": {}
                     },
                     "teststeps": [
                         # teststep data structure
@@ -583,17 +578,9 @@ def parse_tests(testcases, variables_mapping=None):
 
     for testcase in testcases:
         testcase_config = testcase.setdefault("config", {})
-        project_mapping = testcase_config.pop(
-            "refs",
-            {
-                "functions": {},
-                "env": {},
-                "def-api": {},
-                "def-testcase": {}
-            }
-        )
+        functions = testcase_config.get("functions", {})
 
-        env_mapping = project_mapping["env"]
+        env_mapping = testcase_config.get("env", {})
         # set OS environment variables
         utils.set_os_environ(env_mapping)
 
@@ -602,7 +589,7 @@ def parse_tests(testcases, variables_mapping=None):
         cartesian_product_parameters_list = parse_parameters(
             config_parameters,
             testcase_config.get("variables", {}),
-            project_mapping["functions"]
+            functions
         ) or [{}]
 
         for parameter_mapping in cartesian_product_parameters_list:
@@ -627,7 +614,7 @@ def parse_tests(testcases, variables_mapping=None):
                     parsed_value = parse_data(
                         value,
                         config_variables,
-                        project_mapping["functions"]
+                        functions
                     )
                     config_variables[key] = parsed_value
 
@@ -637,18 +624,18 @@ def parse_tests(testcases, variables_mapping=None):
             testcase_dict["config"]["name"] = parse_data(
                 testcase_dict["config"].get("name", ""),
                 config_variables,
-                project_mapping["functions"]
+                functions
             )
 
             # parse config request
             testcase_dict["config"]["request"] = parse_data(
                 testcase_dict["config"].get("request", {}),
                 config_variables,
-                project_mapping["functions"]
+                functions
             )
 
             # put loaded project functions to config
-            testcase_dict["config"]["functions"] = project_mapping["functions"]
+            testcase_dict["config"]["functions"] = functions
             parsed_testcases_list.append(testcase_dict)
 
         # unset OS environment variables
