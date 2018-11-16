@@ -451,3 +451,28 @@ class TestParser(unittest.TestCase):
         )
         self.assertIsInstance(parsed_testcases, list)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')
+
+    def test_parse_environ(self):
+        os.environ["PROJECT_KEY"] = "ABCDEFGH"
+        content = {
+            "variables": [
+                {"PROJECT_KEY": "${ENV(PROJECT_KEY)}"}
+            ]
+        }
+        result = parser.parse_data(content)
+
+        content = {
+            "variables": [
+                {"PROJECT_KEY": "${ENV(PROJECT_KEY, abc)}"}
+            ]
+        }
+        with self.assertRaises(exceptions.ParamsError):
+            parser.parse_data(content)
+
+        content = {
+            "variables": [
+                {"PROJECT_KEY": "${ENV(abc=123)}"}
+            ]
+        }
+        with self.assertRaises(exceptions.ParamsError):
+            parser.parse_data(content)

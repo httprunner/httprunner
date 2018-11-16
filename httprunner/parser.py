@@ -414,10 +414,14 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
         kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
 
         if func_name in ["parameterize", "P"]:
+            if len(args) != 1 or kwargs:
+                raise exceptions.ParamsError("P() should only pass in one argument!")
             from httprunner import loader
-            eval_value = loader.load_csv_file(*args)
+            eval_value = loader.load_csv_file(args[0])
         elif func_name in ["environ", "ENV"]:
-            eval_value = utils.get_os_environ(*args)
+            if len(args) != 1 or kwargs:
+                raise exceptions.ParamsError("ENV() should only pass in one argument!")
+            eval_value = utils.get_os_environ(args[0])
         else:
             func = get_mapping_function(func_name, functions_mapping)
             eval_value = func(*args, **kwargs)
