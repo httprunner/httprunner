@@ -3,6 +3,7 @@
     variables:
         - var_a: 0
         - var_c: "${sum_two(1, 2)}"
+        - PROJECT_KEY: ${ENV(PROJECT_KEY)}
     parameters:
         - "var_a-var_b":
             - [11, 21]

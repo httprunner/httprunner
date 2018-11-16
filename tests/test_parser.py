@@ -432,8 +432,18 @@ class TestParser(unittest.TestCase):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
         testcases = loader.load_tests(testcase_file_path)
+        self.assertEqual(
+            testcases[0]["config"]["variables"][1]["var_c"],
+            "${sum_two(1, 2)}"
+        )
+        self.assertEqual(
+            testcases[0]["config"]["variables"][2]["PROJECT_KEY"],
+            "${ENV(PROJECT_KEY)}"
+        )
+
         parsed_testcases = parser.parse_tests(testcases)
         self.assertEqual(parsed_testcases[0]["config"]["variables"]["var_c"], 3)
+        self.assertEqual(parsed_testcases[0]["config"]["variables"]["PROJECT_KEY"], "ABCDEFGH")
         self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(
             parsed_testcases[0]["config"]["request"]["base_url"],

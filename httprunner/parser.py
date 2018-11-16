@@ -415,7 +415,9 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
 
         if func_name in ["parameterize", "P"]:
             from httprunner import loader
-            eval_value = loader.load_csv_file(*args, **kwargs)
+            eval_value = loader.load_csv_file(*args)
+        elif func_name in ["environ", "ENV"]:
+            eval_value = utils.get_os_environ(*args)
         else:
             func = get_mapping_function(func_name, functions_mapping)
             eval_value = func(*args, **kwargs)

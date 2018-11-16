@@ -29,6 +29,25 @@ def unset_os_environ(variables_mapping):
         logger.log_debug("Unset OS environment variable: {}".format(variable))
 
 
+def get_os_environ(variable_name):
+    """ get value of environment variable.
+
+    Args:
+        variable_name(str): variable name
+
+    Returns:
+        value of environment variable.
+
+    Raises:
+        exceptions.EnvNotFound: If environment variable not found.
+
+    """
+    try:
+        return os.environ[variable_name]
+    except KeyError:
+        raise exceptions.EnvNotFound(variable_name)
+
+
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
     @param (dict/list/string) json_content
