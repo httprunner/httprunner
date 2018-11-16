@@ -465,6 +465,17 @@ class TestSuiteLoader(unittest.TestCase):
         testcases_list = loader.load_tests(path)
         self.assertIn("variables", testcases_list[0]["config"])
         self.assertIn("request", testcases_list[0]["config"])
+
+        # variables in testcase teststep should override api's
+        self.assertEqual(
+            testcases_list[0]["teststeps"][3]["variables"][0]["user_name"],
+            "user1"
+        )
+        self.assertEqual(
+            testcases_list[0]["teststeps"][3]["variables"][2]["uid"],
+            2000
+        )
+
         self.assertIn("request", testcases_list[0]["teststeps"][0])
         self.assertIn("url", testcases_list[0]["teststeps"][0]["request"])
         self.assertIn("validate", testcases_list[0]["teststeps"][0])
