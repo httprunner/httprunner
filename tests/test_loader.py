@@ -27,7 +27,6 @@ class TestFileLoader(unittest.TestCase):
 
         os.remove(yaml_tmp_file)
 
-
     def test_load_json_file_file_format_error(self):
         json_tmp_file = "tests/data/tmp.json"
         # create empty file
