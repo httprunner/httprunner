@@ -46,6 +46,9 @@ def main_hrun():
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
     parser.add_argument(
+        '--save-tests', action='store_true', default=False,
+        help="Save loaded tests and parsed tests to JSON file.")
+    parser.add_argument(
         '--startproject',
         help="Specify new project name.")
     parser.add_argument(
@@ -80,7 +83,11 @@ def main_hrun():
     for path in args.testcase_paths:
         try:
             runner = HttpRunner(failfast=args.failfast)
-            runner.run(path, dot_env_path=args.dot_env_path)
+            runner.run(
+                path,
+                dot_env_path=args.dot_env_path,
+                save_tests=args.save_tests
+            )
         except Exception:
             logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
             raise

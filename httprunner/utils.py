@@ -583,6 +583,33 @@ def prettify_json_file(file_list):
         print("success: {}".format(outfile))
 
 
+def dump_tests(tests_mapping, tag_name):
+    """ dump all tests data (except functions) to json file.
+
+    Args:
+        tests_mapping (dict): data to dump
+        tag_name (str): tag name, loaded/parsed
+
+    """
+    project_mapping = tests_mapping.get("project_mapping", {})
+    test_path = project_mapping.get("test_path") or "tests_mapping"
+    dir_path = project_mapping.get("PWD") or os.getcwd()
+    file_name, file_suffix = os.path.splitext(os.path.basename(test_path))
+    dump_file_path = os.path.join(dir_path, "{}.{}.json".format(file_name, tag_name))
+
+    tests_to_dump = {
+        "project_mapping": {
+            key: project_mapping[key] for key in project_mapping if key != "functions"
+        },
+        "testcases": tests_mapping["testcases"]
+    }
+    with open(dump_file_path, 'w', encoding='utf-8') as outfile:
+        json.dump(tests_to_dump, outfile, indent=4, separators=(',', ': '))
+
+    msg = "{} file generated successfully: {}".format(tag_name, dump_file_path)
+    logger.color_print(msg, "BLUE")
+
+
 def get_python2_retire_msg():
     retire_day = datetime(2020, 1, 1)
     today = datetime.now()
