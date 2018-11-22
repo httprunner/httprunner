@@ -2,8 +2,7 @@ import io
 import os
 import shutil
 
-from httprunner import exceptions, loader, utils
-from httprunner.compat import OrderedDict
+from httprunner import exceptions, loader, parser, utils
 from tests.base import ApiServerUnittest
 
 
@@ -205,6 +204,69 @@ class TestUtils(ApiServerUnittest):
         ordered_dict = utils.ensure_mapping_format(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
+
+    def test_extend_validators(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+        def_validators = [
+            parser.parse_validator(validator)
+            for validator in def_validators
+        ]
+        ref_validators = [
+            parser.parse_validator(validator)
+            for validator in current_validators
+        ]
+
+        extended_validators = utils.extend_validators(def_validators, ref_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            extended_validators
+        )
+
+    def test_extend_validators_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+        def_validators = [
+            parser.parse_validator(validator)
+            for validator in def_validators
+        ]
+        ref_validators = [
+            parser.parse_validator(validator)
+            for validator in current_validators
+        ]
+
+        extended_validators = utils.extend_validators(def_validators, ref_validators)
+        self.assertEqual(len(extended_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, extended_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, extended_validators)
+
+    def test_extend_variables(self):
+        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        override_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        self.assertEqual(extended_variables_mapping["var1"], "val111")
+        self.assertEqual(extended_variables_mapping["var2"], "val2")
+        self.assertEqual(extended_variables_mapping["var3"], "val3")
 
     def test_deepcopy_dict(self):
         data = {

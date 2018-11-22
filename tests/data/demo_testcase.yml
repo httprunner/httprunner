@@ -4,12 +4,11 @@
         - var_a: 0
         - var_c: "${sum_two(1, 2)}"
         - PROJECT_KEY: ${ENV(PROJECT_KEY)}
-    parameters:
-        - "var_a-var_b":
-            - [11, 21]
-            - [12, 22]
-        - "app_version": "${gen_app_version()}"
-    request: ${get_default_request()}
+    # parameters:
+    #     - "var_a-var_b":
+    #         - [11, 21]
+    #         - [12, 22]
+    #     - "app_version": "${gen_app_version()}"
 
 - test:
     name: testcase1-$var_a

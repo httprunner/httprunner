@@ -12,12 +12,34 @@ class TestValidator(unittest.TestCase):
         self.assertFalse(validator.is_testcases(data_structure))
 
         data_structure = {
-            "name": "desc1",
-            "config": {},
-            "api": {},
-            "testcases": ["testcase11", "testcase12"]
+            "project_mapping": {
+                "PWD": "XXXXX",
+                "functions": {},
+                "env": {}
+            },
+            "testcases": [
+                {   # testcase data structure
+                    "config": {
+                        "name": "desc1",
+                        "path": "testcase1_path",
+                        "variables": [],                    # optional
+                    },
+                    "teststeps": [
+                        # teststep data structure
+                        {
+                            'name': 'test step desc1',
+                            'variables': [],    # optional
+                            'extract': [],      # optional
+                            'validate': [],
+                            'request': {}
+                        },
+                        # teststep2   # another teststep dict
+                    ]
+                },
+                # testcase_dict_2     # another testcase dict
+            ]
         }
-        self.assertTrue(data_structure)
+        self.assertTrue(validator.is_testcases(data_structure))
         data_structure = [
             {
                 "name": "desc1",

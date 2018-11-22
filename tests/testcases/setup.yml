@@ -1,22 +1,19 @@
 - config:
     name: "setup and reset all."
-    def: setup_and_reset($device_sn)
+    id: setup_and_reset
     variables:
         - user_agent: 'iOS/10.3'
-        - device_sn: ${gen_random_string(15)}
+        - device_sn: "TESTCASE_SETUP_XXX"
         - os_platform: 'ios'
         - app_version: '2.8.6'
-    request:
-        "base_url": "http://127.0.0.1:5000"
-        "headers":
-            "Content-Type": "application/json"
-            "device_sn": "$device_sn"
+    base_url: "http://127.0.0.1:5000"
+    verify: False
     output:
         - token
 
 - test:
-    name: get token
-    api: get_token($user_agent, $device_sn, $os_platform, $app_version)
+    name: get token (setup)
+    api: get_token
     variables:
         - user_agent: 'iOS/10.3'
         - device_sn: $device_sn
@@ -30,4 +27,6 @@
 
 - test:
     name: reset all users
-    api: reset_all($token)
+    api: reset_all
+    variables:
+        - token: $token

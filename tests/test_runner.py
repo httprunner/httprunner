@@ -10,13 +10,16 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        project_mapping = loader.project_mapping
         self.debugtalk_functions = project_mapping["functions"]
-        config_dict = {
-            "variables": {},
-            "functions": self.debugtalk_functions
+
+        config = {
+            "name": "XXX",
+            "base_url": "http://127.0.0.1",
+            "verify": False
         }
-        self.test_runner = runner.Runner(config_dict)
+        self.test_runner = runner.Runner(config, self.debugtalk_functions)
         self.reset_all()
 
     def reset_all(self):
@@ -35,11 +38,8 @@ class TestRunner(ApiServerUnittest):
         for testcase_file_path in testcase_file_path_list:
             testcases = loader.load_file(testcase_file_path)
 
-            config_dict = {
-                "variables": {},
-                "functions": self.debugtalk_functions
-            }
-            test_runner = runner.Runner(config_dict)
+            config_dict = {}
+            test_runner = runner.Runner(config_dict, self.debugtalk_functions)
 
             test = testcases[0]["test"]
             test_runner.run_test(test)
@@ -81,11 +81,7 @@ class TestRunner(ApiServerUnittest):
 
         config_dict = {
             "name": "basic test with httpbin",
-            "variables": {},
-            "functions": self.debugtalk_functions,
-            "request": {
-                "base_url": HTTPBIN_SERVER
-            },
+            "base_url": HTTPBIN_SERVER,
             "setup_hooks": [
                 "${sleep_N_secs(0.5)}"
                 "${hook_print(setup)}"
@@ -115,7 +111,7 @@ class TestRunner(ApiServerUnittest):
                 {"check": "status_code", "expect": 200}
             ]
         }
-        test_runner = runner.Runner(config_dict)
+        test_runner = runner.Runner(config_dict, self.debugtalk_functions)
         end_time = time.time()
         # check if testcase setup hook executed
         self.assertGreater(end_time - start_time, 0.5)
@@ -130,11 +126,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_hooks_modify_request(self):
         config_dict = {
             "name": "basic test with httpbin",
-            "variables": {},
-            "functions": self.debugtalk_functions,
-            "request": {
-                "base_url": HTTPBIN_SERVER
-            }
+            "base_url": HTTPBIN_SERVER
         }
         test = {
             "name": "modify request headers",
@@ -158,7 +150,7 @@ class TestRunner(ApiServerUnittest):
                 {"check": "content.headers.Os-Platform", "expect": "android"}
             ]
         }
-        test_runner = runner.Runner(config_dict)
+        test_runner = runner.Runner(config_dict, self.debugtalk_functions)
         test_runner.run_test(test)
 
     def test_run_testcase_with_teardown_hooks_success(self):
@@ -183,9 +175,6 @@ class TestRunner(ApiServerUnittest):
             ],
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
-        config_dict = {}
-        self.test_runner.init_test(config_dict, "testcase")
-
         start_time = time.time()
         self.test_runner.run_test(test)
         end_time = time.time()
@@ -214,9 +203,6 @@ class TestRunner(ApiServerUnittest):
             ],
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
-        config_dict = {}
-        self.test_runner.init_test(config_dict, "testcase")
-
         start_time = time.time()
         self.test_runner.run_test(test)
         end_time = time.time()
@@ -226,8 +212,8 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_empty_header(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
-        testcases = loader.load_tests(testcase_file_path)
-        testcase = testcases[0]
+        tests_mapping = loader.load_tests(testcase_file_path)
+        testcase = tests_mapping["testcases"][0]
         config_dict_headers = testcase["config"]["request"]["headers"]
         test_dict_headers = testcase["teststeps"][0]["request"]["headers"]
         headers = deep_update_dict(
@@ -240,8 +226,6 @@ class TestRunner(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
         testcases = loader.load_file(testcase_file_path)
-        config_dict = {}
-        self.test_runner.init_test(config_dict, "testcase")
 
         test = testcases[2]["test"]
         self.test_runner.run_test(test)

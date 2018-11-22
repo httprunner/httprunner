@@ -268,6 +268,113 @@ def ensure_mapping_format(variables):
     return variables_ordered_dict
 
 
+def _convert_validators_to_mapping(validators):
+    """ convert validators list to mapping.
+
+    Args:
+        validators (list): validators in list
+
+    Returns:
+        dict: validators mapping, use (check, comparator) as key.
+
+    Examples:
+        >>> validators = [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            ]
+        >>> _convert_validators_to_mapping(validators)
+            {
+                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            }
+
+    """
+    validators_mapping = {}
+
+    for validator in validators:
+        if not isinstance(validator["check"], collections.Hashable):
+            check = json.dumps(validator["check"])
+        else:
+            check = validator["check"]
+
+        key = (check, validator["comparator"])
+        validators_mapping[key] = validator
+
+    return validators_mapping
+
+
+def extend_validators(raw_validators, override_validators):
+    """ extend raw_validators with override_validators.
+        override_validators will merge and override raw_validators.
+
+    Args:
+        raw_validators (dict):
+        override_validators (dict):
+
+    Returns:
+        list: extended validators
+
+    Examples:
+        >>> raw_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
+        >>> override_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
+        >>> extend_validators(raw_validators, override_validators)
+            [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": "s2", "expect": 16, "comparator": "len_eq"},
+                {"check": "s3", "expect": 12, "comparator": "len_eq"}
+            ]
+
+    """
+
+    if not raw_validators:
+        return override_validators
+
+    elif not override_validators:
+        return raw_validators
+
+    else:
+        def_validators_mapping = _convert_validators_to_mapping(raw_validators)
+        ref_validators_mapping = _convert_validators_to_mapping(override_validators)
+
+        def_validators_mapping.update(ref_validators_mapping)
+        return list(def_validators_mapping.values())
+
+
+def extend_variables(raw_variables, override_variables):
+    """ extend raw_variables with override_variables.
+        override_variables will merge and override raw_variables.
+
+    Args:
+        raw_variables (list):
+        override_variables (list):
+
+    Returns:
+        OrderedDict: extended variables mapping
+
+    Examples:
+        >>> raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        >>> override_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        >>> extend_variables(raw_variables, override_variables)
+            OrderedDict([
+                ('var1', 'val111'),
+                ('var2', 'val2'),
+                ('var3', 'val3')
+            ])
+
+    """
+    if not raw_variables:
+        return override_variables
+
+    elif not override_variables:
+        return raw_variables
+
+    else:
+        raw_variables_mapping = ensure_mapping_format(raw_variables)
+        override_variables_mapping = ensure_mapping_format(override_variables)
+        raw_variables_mapping.update(override_variables_mapping)
+        return raw_variables_mapping
+
+
 def get_testcase_io(testcase):
     """ get testcase input(variables) and output.
 

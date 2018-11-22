@@ -409,7 +409,8 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        project_mapping = loader.project_mapping
 
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
@@ -431,7 +432,8 @@ class TestParser(unittest.TestCase):
     def test_parse_tests(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
-        testcases = loader.load_tests(testcase_file_path)
+        tests_mapping = loader.load_tests(testcase_file_path)
+        testcases = tests_mapping["testcases"]
         self.assertEqual(
             testcases[0]["config"]["variables"][1]["var_c"],
             "${sum_two(1, 2)}"
@@ -440,17 +442,15 @@ class TestParser(unittest.TestCase):
             testcases[0]["config"]["variables"][2]["PROJECT_KEY"],
             "${ENV(PROJECT_KEY)}"
         )
-
-        parsed_testcases = parser.parse_tests(testcases)
-        self.assertEqual(parsed_testcases[0]["config"]["variables"]["var_c"], 3)
-        self.assertEqual(parsed_testcases[0]["config"]["variables"]["PROJECT_KEY"], "ABCDEFGH")
-        self.assertEqual(len(parsed_testcases), 2 * 2)
-        self.assertEqual(
-            parsed_testcases[0]["config"]["request"]["base_url"],
-            "http://127.0.0.1:5000"
-        )
+        parser.parse_tests(tests_mapping)
+        parsed_testcases = tests_mapping["testcases"]
         self.assertIsInstance(parsed_testcases, list)
-        self.assertEqual(parsed_testcases[0]["config"]["name"], '12311')
+        teststep1 = parsed_testcases[0]["teststeps"][0]
+        self.assertEqual(teststep1["variables"]["var_c"], 3)
+        self.assertEqual(teststep1["variables"]["PROJECT_KEY"], "ABCDEFGH")
+        # TODO: parameters
+        # self.assertEqual(len(parsed_testcases), 2 * 2)
+        self.assertEqual(parsed_testcases[0]["config"]["name"], '1230')
 
     def test_parse_environ(self):
         os.environ["PROJECT_KEY"] = "ABCDEFGH"
@@ -476,3 +476,35 @@ class TestParser(unittest.TestCase):
         }
         with self.assertRaises(exceptions.ParamsError):
             parser.parse_data(content)
+
+    def test_extend_with_api(self):
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        raw_stepinfo = {
+            "name": "get token",
+            "api": "get_token",
+        }
+        api_def_dict = loader.load_teststep(raw_stepinfo)
+        test_block = {
+            "name": "override block",
+            "times": 3,
+            "variables": [
+                {"var": 123}
+            ],
+            'request': {
+                'url': '/api/get-token',
+                'method': 'POST',
+                'headers': {'user_agent': '$user_agent', 'device_sn': '$device_sn', 'os_platform': '$os_platform', 'app_version': '$app_version'},
+                'json': {'sign': '${get_sign($user_agent, $device_sn, $os_platform, $app_version)}'}
+            },
+            'validate': [
+                {'eq': ['status_code', 201]},
+                {'len_eq': ['content.token', 32]}
+            ]
+        }
+
+        extended_block = parser._extend_with_api(test_block, api_def_dict)
+        self.assertEqual(extended_block["name"], "override block")
+        self.assertIn({'var': 123}, extended_block["variables"])
+        self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, extended_block["validate"])
+        self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, extended_block["validate"])
+        self.assertEqual(extended_block["times"], 3)

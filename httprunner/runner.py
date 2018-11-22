@@ -4,31 +4,62 @@ from unittest.case import SkipTest
 
 from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
-from httprunner.compat import OrderedDict
-from httprunner.context import Context
+from httprunner.context import SessionContext
 
 
 class Runner(object):
+    """ Running testcases.
 
-    def __init__(self, config_dict=None, http_client_session=None):
-        """ Each testcase is corresponding to one Runner() instance
-            and one Context() instance.
+    Examples:
+        >>> functions={...}
+        >>> config = {
+                "name": "XXXX",
+                "base_url": "http://127.0.0.1",
+                "verify": False
+            }
+        >>> runner = Runner(config, functions)
+
+        >>> teststep = {
+                "name": "teststep description",
+                "variables": [],        # optional
+                "request": {
+                    "url": "http://127.0.0.1:5000/api/users/1000",
+                    "method": "GET"
+                }
+            }
+        >>> runner.run_test(teststep)
+
+    """
+
+    def __init__(self, config, functions, http_client_session=None):
+        """ run testcase or testsuite.
+
+        Args:
+            config (dict): testcase/testsuite config dict
+
+                {
+                    "name": "ABC",
+                    "variables": {},
+                    "setup_hooks", [],
+                    "teardown_hooks", []
+                }
+
+            http_client_session (instance): requests.Session(), or locust.client.Session() instance.
+
         """
-        self.http_client_session = http_client_session
-        config_dict = config_dict or {}
+        base_url = config.get("base_url")
+        self.verify = config.get("verify", True)
+        self.output = config.get("output", [])
+        self.functions = functions
         self.evaluated_validators = []
 
-        # testcase variables
-        config_variables = config_dict.get("variables", {})
-        # testcase functions
-        config_functions = config_dict.get("functions", {})
         # testcase setup hooks
-        testcase_setup_hooks = config_dict.pop("setup_hooks", [])
+        testcase_setup_hooks = config.get("setup_hooks", [])
         # testcase teardown hooks
-        self.testcase_teardown_hooks = config_dict.pop("teardown_hooks", [])
+        self.testcase_teardown_hooks = config.get("teardown_hooks", [])
 
-        self.context = Context(config_variables, config_functions)
-        self.init_test(config_dict, "testcase")
+        self.http_client_session = http_client_session or HttpSession(base_url)
+        self.session_context = SessionContext(self.functions)
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks)
@@ -36,57 +67,6 @@ class Runner(object):
     def __del__(self):
         if self.testcase_teardown_hooks:
             self.do_hook_actions(self.testcase_teardown_hooks)
-
-    def init_test(self, test_dict, level):
-        """ create/update context variables binds
-
-        Args:
-            test_dict (dict):
-            level (enum): "testcase" or "teststep"
-                testcase:
-                    {
-                        "name": "testcase description",
-                        "variables": [],   # optional
-                        "request": {
-                            "base_url": "http://127.0.0.1:5000",
-                            "headers": {
-                                "User-Agent": "iOS/2.8.3"
-                            }
-                        }
-                    }
-                teststep:
-                    {
-                        "name": "teststep description",
-                        "variables": [],   # optional
-                        "request": {
-                            "url": "/api/get-token",
-                            "method": "POST",
-                            "headers": {
-                                "Content-Type": "application/json"
-                            }
-                        },
-                        "json": {
-                            "sign": "f1219719911caae89ccc301679857ebfda115ca2"
-                        }
-                    }
-
-        Returns:
-            dict: parsed request dict
-
-        """
-        test_dict = utils.lower_test_dict_keys(test_dict)
-
-        self.context.init_context_variables(level)
-        variables = test_dict.get('variables', OrderedDict())
-        self.context.update_context_variables(variables, level)
-
-        request_config = test_dict.get('request', {})
-        parsed_request = self.context.get_parsed_request(request_config, level)
-
-        base_url = parsed_request.pop("base_url", None)
-        self.http_client_session = self.http_client_session or HttpSession(base_url)
-
-        return parsed_request
 
     def _handle_skip_feature(self, teststep_dict):
         """ handle skip feature for teststep
@@ -109,12 +89,12 @@ class Runner(object):
 
         elif "skipIf" in teststep_dict:
             skip_if_condition = teststep_dict["skipIf"]
-            if self.context.eval_content(skip_if_condition):
+            if self.session_context.eval_content(skip_if_condition):
                 skip_reason = "{} evaluate to True".format(skip_if_condition)
 
         elif "skipUnless" in teststep_dict:
             skip_unless_condition = teststep_dict["skipUnless"]
-            if not self.context.eval_content(skip_unless_condition):
+            if not self.session_context.eval_content(skip_unless_condition):
                 skip_reason = "{} evaluate to False".format(skip_unless_condition)
 
         if skip_reason:
@@ -124,9 +104,9 @@ class Runner(object):
         for action in actions:
             logger.log_debug("call hook: {}".format(action))
             # TODO: check hook function if valid
-            self.context.eval_content(action)
+            self.session_context.eval_content(action)
 
-    def run_test(self, teststep_dict):
+    def _run_teststep(self, teststep_dict):
         """ run single teststep.
 
         Args:
@@ -135,7 +115,7 @@ class Runner(object):
                     "name": "teststep description",
                     "skip": "skip this test unconditionally",
                     "times": 3,
-                    "variables": [],        # optional, override
+                    "variables": [],            # optional, override
                     "request": {
                         "url": "http://127.0.0.1:5000/api/users/1000",
                         "method": "POST",
@@ -162,10 +142,14 @@ class Runner(object):
         self._handle_skip_feature(teststep_dict)
 
         # prepare
-        extractors = teststep_dict.get("extract", [])
-        validators = teststep_dict.get("validate", [])
-        parsed_request = self.init_test(teststep_dict, level="teststep")
-        self.context.update_teststep_variables_mapping("request", parsed_request)
+        teststep_dict = utils.lower_test_dict_keys(teststep_dict)
+        teststep_variables = teststep_dict.get("variables", {})
+        self.session_context.init_teststep_variables(teststep_variables)
+
+        # parse teststep request
+        raw_request = teststep_dict.get('request', {})
+        parsed_teststep_request = self.session_context.eval_content(raw_request)
+        self.session_context.update_teststep_variables("request", parsed_teststep_request)
 
         # setup hooks
         setup_hooks = teststep_dict.get("setup_hooks", [])
@@ -173,9 +157,10 @@ class Runner(object):
         self.do_hook_actions(setup_hooks)
 
         try:
-            url = parsed_request.pop('url')
-            method = parsed_request.pop('method')
-            group_name = parsed_request.pop("group", None)
+            url = parsed_teststep_request.pop('url')
+            method = parsed_teststep_request.pop('method')
+            parsed_teststep_request.setdefault("verify", self.verify)
+            group_name = parsed_teststep_request.pop("group", None)
         except KeyError:
             raise exceptions.ParamsError("URL or METHOD missed!")
 
@@ -188,14 +173,14 @@ class Runner(object):
             raise exceptions.ParamsError(err_msg)
 
         logger.log_info("{method} {url}".format(method=method, url=url))
-        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_request))
+        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_teststep_request))
 
         # request
         resp = self.http_client_session.request(
             method,
             url,
             name=group_name,
-            **parsed_request
+            **parsed_teststep_request
         )
         resp_obj = response.ResponseObject(resp)
 
@@ -203,21 +188,23 @@ class Runner(object):
         teardown_hooks = teststep_dict.get("teardown_hooks", [])
         if teardown_hooks:
             logger.log_info("start to run teardown hooks")
-            self.context.update_teststep_variables_mapping("response", resp_obj)
+            self.session_context.update_teststep_variables("response", resp_obj)
             self.do_hook_actions(teardown_hooks)
 
         # extract
+        extractors = teststep_dict.get("extract", [])
         extracted_variables_mapping = resp_obj.extract_response(extractors)
-        self.context.update_testcase_runtime_variables_mapping(extracted_variables_mapping)
+        self.session_context.update_seesion_variables(extracted_variables_mapping)
 
         # validate
+        validators = teststep_dict.get("validate", [])
         try:
-            self.evaluated_validators = self.context.validate(validators, resp_obj)
+            self.evaluated_validators = self.session_context.validate(validators, resp_obj)
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
             # log request
             err_req_msg = "request: \n"
-            err_req_msg += "headers: {}\n".format(parsed_request.pop("headers", {}))
-            for k, v in parsed_request.items():
+            err_req_msg += "headers: {}\n".format(parsed_teststep_request.pop("headers", {}))
+            for k, v in parsed_teststep_request.items():
                 err_req_msg += "{}: {}\n".format(k, repr(v))
             logger.log_error(err_req_msg)
 
@@ -230,10 +217,66 @@ class Runner(object):
 
             raise
 
+    def _run_testcase(self, testcase_dict):
+        """ run single testcase.
+        """
+        config = testcase_dict.get("config", {})
+        test_runner = Runner(config, self.functions, self.http_client_session)
+
+        teststeps = testcase_dict.get("teststeps", [])
+        for index, teststep_dict in enumerate(teststeps):
+            test_runner.run_test(teststep_dict)
+
+        self.session_context.update_seesion_variables(test_runner.extract_sessions())
+
+    def run_test(self, teststep_dict):
+        """ run single teststep of testcase.
+            teststep_dict may be in 3 types.
+
+        Args:
+            teststep_dict (dict):
+
+                # teststep
+                {
+                    "name": "teststep description",
+                    "variables": [],        # optional
+                    "request": {
+                        "url": "http://127.0.0.1:5000/api/users/1000",
+                        "method": "GET"
+                    }
+                }
+
+                # embeded testcase
+                {
+                    "config": {...},
+                    "teststeps": [
+                        {...},
+                        {...}
+                    ]
+                }
+
+                # TODO: function
+                {
+                    "name": "exec function",
+                    "function": "${func()}"
+                }
+
+        """
+        if "config" in teststep_dict:
+            self._run_testcase(teststep_dict)
+        else:
+            # api
+            self._run_teststep(teststep_dict)
+
+    def extract_sessions(self):
+        """
+        """
+        return self.extract_output(self.output)
+
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
-        variables_mapping = self.context.teststep_variables_mapping
+        variables_mapping = self.session_context.session_variables_mapping
 
         output = {}
         for variable in output_variables_list:

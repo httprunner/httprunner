@@ -2,11 +2,7 @@
     name: "create user testcases."
     variables:
         - device_sn: 'HZfFBh6tU59EdXJ'
-    request:
-        base_url: ${get_base_url()}
-        headers:
-            Content-Type: application/json
-            device_sn: $device_sn
+    base_url: ${get_base_url()}
 
 - test:
     name: get token
@@ -41,6 +37,8 @@
         url: /api/users/1000
         method: POST
         headers:
+            Content-Type: application/json
+            device_sn: $device_sn
             token: $token
         json:
             name: $user_name
@@ -55,6 +53,8 @@
         url: /api/users/1000
         method: POST
         headers:
+            Content-Type: application/json
+            device_sn: $device_sn
             token: $token
         json:
             name: "user1"

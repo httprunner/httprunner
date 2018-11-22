@@ -28,17 +28,17 @@ class HttpRunner(object):
         self.test_loader = unittest.TestLoader()
         self.summary = None
 
-    def _add_tests(self, testcases):
+    def _add_tests(self, tests_mapping):
         """ initialize testcase with Runner() and add to test suite.
 
         Args:
-            testcases (list): parsed testcases list
+            tests_mapping (dict): project info and testcases list.
 
         Returns:
             unittest.TestSuite()
 
         """
-        def _add_teststep(test_runner, config, teststep_dict):
+        def _add_teststep(test_runner, teststep_dict):
             """ add teststep to testcase.
             """
             def test(self):
@@ -52,22 +52,16 @@ class HttpRunner(object):
                         self.meta_data["validators"] = test_runner.evaluated_validators
                         test_runner.http_client_session.init_meta_data()
 
-            try:
-                teststep_dict["name"] = parser.parse_data(
-                    teststep_dict["name"],
-                    config.get("variables", {}),
-                    config.get("functions", {})
-                )
-            except exceptions.VariableNotFound:
-                pass
-
-            test.__doc__ = teststep_dict["name"]
+            # TODO: refactor
+            test.__doc__ = teststep_dict.get("name") or teststep_dict.get("config", {}).get("name")
             return test
 
         test_suite = unittest.TestSuite()
-        for testcase in testcases:
+        functions = tests_mapping.get("project_mapping", {}).get("functions", {})
+
+        for testcase in tests_mapping["testcases"]:
             config = testcase.get("config", {})
-            test_runner = runner.Runner(config, self.http_client_session)
+            test_runner = runner.Runner(config, functions, self.http_client_session)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
             teststeps = testcase.get("teststeps", [])
@@ -76,12 +70,12 @@ class HttpRunner(object):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_method = _add_teststep(test_runner, config, teststep_dict)
+                    test_method = _add_teststep(test_runner, teststep_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
             loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
             setattr(loaded_testcase, "config", config)
-            setattr(loaded_testcase, "teststeps", testcase.get("teststeps", []))
+            setattr(loaded_testcase, "teststeps", teststeps)
             setattr(loaded_testcase, "runner", test_runner)
             test_suite.addTest(loaded_testcase)
 
@@ -140,49 +134,21 @@ class HttpRunner(object):
 
             self.summary["details"].append(testcase_summary)
 
-    def _run_tests(self, testcases, mapping=None):
+    def _run_tests(self, tests_mapping):
         """ start to run test with variables mapping.
 
         Args:
-            testcases (list): list of testcase_dict, each testcase is corresponding to a YAML/JSON file
-                [
-                    {   # testcase data structure
-                        "config": {
-                            "name": "desc1",
-                            "path": "testcase1_path",
-                            "variables": [],        # optional
-                            "request": {},          # optional
-                            "functions": {},
-                            "env": {},
-                            "def-api": {},
-                            "def-testcase": {}
-                        },
-                        "teststeps": [
-                            # teststep data structure
-                            {
-                                'name': 'test step desc2',
-                                'variables': [],    # optional
-                                'extract': [],      # optional
-                                'validate': [],
-                                'request': {},
-                                'function_meta': {}
-                            },
-                            teststep2   # another teststep dict
-                        ]
-                    },
-                    testcase_dict_2     # another testcase dict
-                ]
-            mapping (dict): if mapping is specified, it will override variables in config block.
+            tests_mapping (dict): list of testcase_dict, each testcase is corresponding to a YAML/JSON file
 
         Returns:
             instance: HttpRunner() instance
 
         """
         self.exception_stage = "parse tests"
-        parsed_testcases_list = parser.parse_tests(testcases, mapping)
+        parser.parse_tests(tests_mapping)
 
         self.exception_stage = "add tests to test suite"
-        test_suite = self._add_tests(parsed_testcases_list)
+        test_suite = self._add_tests(tests_mapping)
 
         self.exception_stage = "run test suite"
         results = self._run_suite(test_suite)
@@ -207,16 +173,14 @@ class HttpRunner(object):
         self.exception_stage = "load tests"
 
         if validator.is_testcases(path_or_testcases):
-            if isinstance(path_or_testcases, dict):
-                testcases = [path_or_testcases]
-            else:
-                testcases = path_or_testcases
+            tests_mapping = path_or_testcases
         elif validator.is_testcase_path(path_or_testcases):
-            testcases = loader.load_tests(path_or_testcases, dot_env_path)
+            tests_mapping = loader.load_tests(path_or_testcases, dot_env_path)
+            tests_mapping["project_mapping"]["variables"] = mapping or {}
         else:
             raise exceptions.ParamsError("invalid testcase path or testcases.")
 
-        return self._run_tests(testcases, mapping)
+        return self._run_tests(tests_mapping)
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
         """ generate html report and return report path.

@@ -1,7 +1,6 @@
 - config:
     name: test upload file with httpbin
-    request:
-        base_url: ${get_httpbin_server()}
+    base_url: ${get_httpbin_server()}
 
 - test:
     name: upload file
