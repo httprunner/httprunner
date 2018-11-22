@@ -509,40 +509,23 @@ def load_api_folder(api_folder_path):
     return api_definition_mapping
 
 
-def load_debugtalk_py(start_path):
-    """ locate debugtalk.py file and returns PWD and debugtalk.py functions.
+def locate_debugtalk_py(start_path):
+    """ locate debugtalk.py file
 
     Args:
         start_path (str): start locating path, maybe testcase file path or directory path
 
     Returns:
-        tuple: (project_working_directory, debugtalk_functions)
+        str: debugtalk.py file path, None if not found
 
     """
     try:
         # locate debugtalk.py file.
         debugtalk_path = locate_file(start_path, "debugtalk.py")
-
-        # The folder contains debugtalk.py will be treated as PWD.
-        project_working_directory = os.path.dirname(debugtalk_path)
-
-        # add PWD to sys.path
-        sys.path.insert(0, project_working_directory)
-
-        # load debugtalk.py functions
-        debugtalk_functions = load_debugtalk_functions()
-
     except exceptions.FileNotFound:
+        debugtalk_path = None
 
-        # debugtalk.py not found, use os.getcwd() as PWD.
-        project_working_directory = os.getcwd()
-
-        # add PWD to sys.path
-        sys.path.insert(0, project_working_directory)
-
-        debugtalk_functions = {}
-
-    return project_working_directory, debugtalk_functions
+    return debugtalk_path
 
 
 def load_project_tests(test_path, dot_env_path=None):
@@ -557,14 +540,36 @@ def load_project_tests(test_path, dot_env_path=None):
         dict: project loaded api/testcases definitions, environments and debugtalk.py functions.
 
     """
-    # locate PWD and load debugtalk.py functions
-    project_working_directory, debugtalk_functions = load_debugtalk_py(test_path)
-    project_mapping["PWD"] = project_working_directory
-    project_mapping["functions"] = debugtalk_functions
+    # locate debugtalk.py file
+    debugtalk_path = locate_debugtalk_py(test_path)
 
-    # load .env
+    if debugtalk_path:
+        # The folder contains debugtalk.py will be treated as PWD.
+        project_working_directory = os.path.dirname(debugtalk_path)
+    else:
+        # debugtalk.py not found, use os.getcwd() as PWD.
+        project_working_directory = os.getcwd()
+
+    # add PWD to sys.path
+    sys.path.insert(0, project_working_directory)
+
+    # load .env file
+    # NOTICE:
+    # environment variable maybe loaded in debugtalk.py
+    # thus .env file should be loaded before loading debugtalk.py
     dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
     project_mapping["env"] = load_dot_env_file(dot_env_path)
+
+    if debugtalk_path:
+        # load debugtalk.py functions
+        debugtalk_functions = load_debugtalk_functions()
+    else:
+        debugtalk_functions = {}
+
+    # locate PWD and load debugtalk.py functions
+
+    project_mapping["PWD"] = project_working_directory
+    project_mapping["functions"] = debugtalk_functions
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))

@@ -208,21 +208,27 @@ class TestModuleLoader(unittest.TestCase):
         self.assertFalse(is_status_code_200(500))
 
     def test_load_debugtalk_py(self):
-        project_working_directory, debugtalk_functions = loader.load_debugtalk_py("tests/data/demo_testcase.yml")
+        loader.load_project_tests("tests/data/demo_testcase.yml")
+        project_working_directory = loader.project_mapping["PWD"]
+        debugtalk_functions = loader.project_mapping["functions"]
         self.assertEqual(
             project_working_directory,
             os.path.join(os.getcwd(), "tests")
         )
         self.assertIn("gen_md5", debugtalk_functions)
 
-        project_working_directory, debugtalk_functions = loader.load_debugtalk_py("tests/base.py")
+        loader.load_project_tests("tests/base.py")
+        project_working_directory = loader.project_mapping["PWD"]
+        debugtalk_functions = loader.project_mapping["functions"]
         self.assertEqual(
             project_working_directory,
             os.path.join(os.getcwd(), "tests")
         )
         self.assertIn("gen_md5", debugtalk_functions)
 
-        project_working_directory, debugtalk_functions = loader.load_debugtalk_py("httprunner/__init__.py")
+        loader.load_project_tests("httprunner/__init__.py")
+        project_working_directory = loader.project_mapping["PWD"]
+        debugtalk_functions = loader.project_mapping["functions"]
         self.assertEqual(
             project_working_directory,
             os.getcwd()
