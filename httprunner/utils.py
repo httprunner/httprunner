@@ -6,11 +6,15 @@ import io
 import itertools
 import json
 import os.path
+import re
 import string
 from datetime import datetime
 
 from httprunner import exceptions, logger
 from httprunner.compat import OrderedDict, basestring, is_py2
+from httprunner.exceptions import ParamsError
+
+absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
 
 def set_os_environ(variables_mapping):
@@ -46,6 +50,16 @@ def get_os_environ(variable_name):
         return os.environ[variable_name]
     except KeyError:
         raise exceptions.EnvNotFound(variable_name)
+
+
+def build_url(base_url, path):
+    """ prepend url with hostname unless it's already an absolute URL """
+    if absolute_http_url_regexp.match(path):
+        return path
+    elif base_url:
+        return "{}/{}".format(base_url.rstrip("/"), path.lstrip("/"))
+    else:
+        raise ParamsError("base url missed!")
 
 
 def query_json(json_content, query, delimiter='.'):

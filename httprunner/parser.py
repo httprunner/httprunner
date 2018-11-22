@@ -609,9 +609,12 @@ def _extend_with_api(teststep_dict, api_def_dict):
     # TODO: merge & override request
     teststep_dict["request"] = api_def_dict.pop("request", {})
     # base_url
-    base_url = teststep_dict.pop("base_url", None)
-    if base_url:
-        teststep_dict["request"]["url"] = "{}/{}".format(base_url.rstrip("/"), teststep_dict["request"]["url"].lstrip("/"))
+    if "base_url" in teststep_dict:
+        base_url = teststep_dict.pop("base_url")
+        teststep_dict["request"]["url"] = utils.build_url(
+            base_url,
+            teststep_dict["request"]["url"]
+        )
 
     # verify
     if "verify" in teststep_dict:
@@ -744,8 +747,9 @@ def __parse_teststeps(teststeps, config, project_mapping):
 
     for teststep in teststeps:
 
-        # priority teststep > config
-        teststep.setdefault("base_url", config_base_url)
+        # base_url & verify: priority teststep > config
+        if config_base_url:
+            teststep.setdefault("base_url", config_base_url)
         teststep.setdefault("verify", config_verify)
 
         if "testcase_def" in teststep:
@@ -776,6 +780,10 @@ def __parse_teststeps(teststeps, config, project_mapping):
             _parse_testcase(teststep, project_mapping)
 
         else:
+            # teststep is API test, has two cases.
+            # (1) teststep has API reference
+            # (2) teststep is defined directly
+
             # 1, config => teststeps
             # override teststep variables
             teststep["variables"] = utils.extend_variables(
@@ -794,14 +802,18 @@ def __parse_teststeps(teststeps, config, project_mapping):
                 pass
 
             if "api_def" in teststep:
+                # case (1)
                 # 2, teststep => api
                 api_def_dict = teststep.pop("api_def")
                 _extend_with_api(teststep, api_def_dict)
             else:
-                # base_url
-                base_url = teststep.pop("base_url", None)
-                if base_url:
-                    teststep["request"]["url"] = "{}/{}".format(base_url.rstrip("/"), teststep["request"]["url"].lstrip("/"))
+                # case (2)
+                if "base_url" in teststep:
+                    base_url = teststep.pop("base_url")
+                    teststep["request"]["url"] = utils.build_url(
+                        base_url,
+                        teststep["request"]["url"]
+                    )
 
 
 def _parse_testcase(testcase, project_mapping):

@@ -1,19 +1,16 @@
 # encoding: utf-8
 
-import re
 import time
 
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.exceptions import ParamsError
+from httprunner.utils import build_url
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
 
 class ApiResponse(Response):
@@ -41,15 +38,6 @@ class HttpSession(requests.Session):
         super(HttpSession, self).__init__(*args, **kwargs)
         self.base_url = base_url if base_url else ""
         self.init_meta_data()
-
-    def _build_url(self, path):
-        """ prepend url with hostname unless it's already an absolute URL """
-        if absolute_http_url_regexp.match(path):
-            return path
-        elif self.base_url:
-            return "{}/{}".format(self.base_url.rstrip("/"), path.lstrip("/"))
-        else:
-            raise ParamsError("base url missed!")
 
     def init_meta_data(self):
         """ initialize meta_data, it will store detail data of request and response
@@ -125,7 +113,7 @@ class HttpSession(requests.Session):
         self.meta_data["request"]["start_timestamp"] = time.time()
 
         # prepend url with hostname unless it's already an absolute URL
-        url = self._build_url(url)
+        url = build_url(self.base_url, url)
 
         kwargs.setdefault("timeout", 120)
         response = self._send_request_safe_mode(method, url, **kwargs)
