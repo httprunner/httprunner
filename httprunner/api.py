@@ -134,37 +134,14 @@ class HttpRunner(object):
 
             self.summary["details"].append(testcase_summary)
 
-    def _run_tests(self, tests_mapping):
-        """ start to run test with variables mapping.
-
-        Args:
-            tests_mapping (dict): list of testcase_dict, each testcase is corresponding to a YAML/JSON file
-
-        Returns:
-            instance: HttpRunner() instance
-
-        """
-        self.exception_stage = "parse tests"
-        parser.parse_tests(tests_mapping)
-
-        self.exception_stage = "add tests to test suite"
-        test_suite = self._add_tests(tests_mapping)
-
-        self.exception_stage = "run test suite"
-        results = self._run_suite(test_suite)
-
-        self.exception_stage = "aggregate results"
-        self._aggregate(results)
-
-        return self
-
-    def run(self, path_or_testcases, dot_env_path=None, mapping=None):
+    def run(self, path_or_testcases, dot_env_path=None, mapping=None, save_tests=False):
         """ main interface, run testcases with variables mapping.
 
         Args:
             path_or_testcases (str/list/dict): testcase file/foler path, or valid testcases.
             dot_env_path (str): specified .env file path.
             mapping (dict): if mapping is specified, it will override variables in config block.
+            save_tests (bool): set if save loaded/parsed tests to JSON file.
 
         Returns:
             instance: HttpRunner() instance
@@ -177,10 +154,29 @@ class HttpRunner(object):
         elif validator.is_testcase_path(path_or_testcases):
             tests_mapping = loader.load_tests(path_or_testcases, dot_env_path)
             tests_mapping["project_mapping"]["variables"] = mapping or {}
+            tests_mapping["project_mapping"]["test_path"] = path_or_testcases
         else:
             raise exceptions.ParamsError("invalid testcase path or testcases.")
 
-        return self._run_tests(tests_mapping)
+        if save_tests:
+            utils.dump_tests(tests_mapping, "loaded")
+
+        self.exception_stage = "parse tests"
+        parser.parse_tests(tests_mapping)
+
+        if save_tests:
+            utils.dump_tests(tests_mapping, "parsed")
+
+        self.exception_stage = "add tests to test suite"
+        test_suite = self._add_tests(tests_mapping)
+
+        self.exception_stage = "run test suite"
+        results = self._run_suite(test_suite)
+
+        self.exception_stage = "aggregate results"
+        self._aggregate(results)
+
+        return self
 
     def gen_html_report(self, html_report_name=None, html_report_template=None):
         """ generate html report and return report path.
