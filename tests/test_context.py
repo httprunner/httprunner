@@ -2,63 +2,37 @@ import os
 import time
 
 import requests
-from httprunner import context, exceptions, loader, response
+from httprunner import context, exceptions, loader, response, utils
 from tests.base import ApiServerUnittest
 
 
 class TestContext(ApiServerUnittest):
 
     def setUp(self):
-        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.context = context.Context(
-            variables={"SECRET_KEY": "DebugTalk"},
-            functions=project_mapping["functions"]
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        project_mapping = loader.project_mapping
+        self.context = context.SessionContext(
+            functions=project_mapping["functions"],
+            variables={"SECRET_KEY": "DebugTalk"}
         )
         testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
         self.testcases = loader.load_file(testcase_file_path)
 
     def test_init_context_functions(self):
-        context_functions = self.context.TESTCASE_SHARED_FUNCTIONS_MAPPING
+        context_functions = self.context.FUNCTIONS_MAPPING
         self.assertIn("gen_md5", context_functions)
 
-    def test_init_context_variables(self):
+    def test_init_teststep_variables(self):
         self.assertEqual(
-            self.context.teststep_variables_mapping["SECRET_KEY"],
-            "DebugTalk"
-        )
-        self.assertEqual(
-            self.context.testcase_runtime_variables_mapping["SECRET_KEY"],
-            "DebugTalk"
+            self.context.teststep_variables_mapping,
+            {'SECRET_KEY': 'DebugTalk'}
         )
 
-    def test_update_context_testcase_level(self):
-        variables = [
-            {"TOKEN": "debugtalk"},
-            {"data": '{"name": "user", "password": "123456"}'}
-        ]
-        self.context.update_context_variables(variables, "testcase")
+    def test_update_seesion_variables(self):
+        self.context.update_seesion_variables({"TOKEN": "debugtalk"})
         self.assertEqual(
-            self.context.teststep_variables_mapping["TOKEN"],
+            self.context.session_variables_mapping["TOKEN"],
             "debugtalk"
-        )
-        self.assertEqual(
-            self.context.testcase_runtime_variables_mapping["TOKEN"],
-            "debugtalk"
-        )
-
-    def test_update_context_teststep_level(self):
-        variables = [
-            {"TOKEN": "debugtalk"},
-            {"data": '{"name": "user", "password": "123456"}'}
-        ]
-        self.context.update_context_variables(variables, "teststep")
-        self.assertEqual(
-            self.context.teststep_variables_mapping["TOKEN"],
-            "debugtalk"
-        )
-        self.assertNotIn(
-            "TOKEN",
-            self.context.testcase_runtime_variables_mapping
         )
 
     def test_eval_content_functions(self):
@@ -82,29 +56,6 @@ class TestContext(ApiServerUnittest):
         #     "abcDebugTalkdef"
         # )
 
-    def test_update_testcase_runtime_variables_mapping(self):
-        variables = {"abc": 123}
-        self.context.update_testcase_runtime_variables_mapping(variables)
-        self.assertEqual(
-            self.context.testcase_runtime_variables_mapping["abc"],
-            123
-        )
-        self.assertEqual(
-            self.context.teststep_variables_mapping["abc"],
-            123
-        )
-
-    def test_update_teststep_variables_mapping(self):
-        self.context.update_teststep_variables_mapping("abc", 123)
-        self.assertEqual(
-            self.context.teststep_variables_mapping["abc"],
-            123
-        )
-        self.assertNotIn(
-            "abc",
-            self.context.testcase_runtime_variables_mapping
-        )
-
     def test_get_parsed_request(self):
         variables = [
             {"TOKEN": "debugtalk"},
@@ -112,7 +63,7 @@ class TestContext(ApiServerUnittest):
             {"data": '{"name": "user", "password": "123456"}'},
             {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
         ]
-        self.context.update_context_variables(variables, "teststep")
+        self.context.init_teststep_variables(variables)
 
         request = {
             "url": "http://127.0.0.1:5000/api/users/1000",
@@ -125,7 +76,7 @@ class TestContext(ApiServerUnittest):
             },
             "data": "$data"
         }
-        parsed_request = self.context.get_parsed_request(request, level="teststep")
+        parsed_request = self.context.eval_content(request)
         self.assertIn("authorization", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["authorization"]), 32)
         self.assertIn("random", parsed_request["headers"])
@@ -159,7 +110,7 @@ class TestContext(ApiServerUnittest):
             {"resp_status_code": 200},
             {"resp_body_success": True}
         ]
-        self.context.update_context_variables(variables, "teststep")
+        self.context.init_teststep_variables(variables)
 
         with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)
@@ -174,7 +125,7 @@ class TestContext(ApiServerUnittest):
             {"resp_status_code": 201},
             {"resp_body_success": True}
         ]
-        self.context.update_context_variables(variables, "teststep")
+        self.context.init_teststep_variables(variables)
         self.context.validate(validators, resp_obj)
 
     def test_validate_exception(self):
@@ -188,7 +139,7 @@ class TestContext(ApiServerUnittest):
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201}
         ]
         variables = []
-        self.context.update_context_variables(variables, "teststep")
+        self.context.init_teststep_variables(variables)
 
         with self.assertRaises(exceptions.VariableNotFound):
             self.context.validate(validators, resp_obj)
@@ -197,7 +148,7 @@ class TestContext(ApiServerUnittest):
         variables = [
             {"resp_status_code": 200}
         ]
-        self.context.update_context_variables(variables, "teststep")
+        self.context.init_teststep_variables(variables)
 
         with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)

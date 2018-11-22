@@ -1,7 +1,6 @@
 - config:
     name: basic test with httpbin
-    request:
-        base_url: ${get_httpbin_server()}
+    base_url: ${get_httpbin_server()}
     setup_hooks:
         - ${hook_print(setup)}
     teardown_hooks:

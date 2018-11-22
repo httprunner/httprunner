@@ -1,5 +1,11 @@
 - api:
-    def: get_token($user_agent, $device_sn, $os_platform, $app_version)
+    id: get_token
+    name: get token
+    variables:
+        - user_agent: XXX
+        - device_sn: API_XXX
+        - os_platform: XXX
+        - app_version: XXX
     request:
         url: /api/get-token
         method: POST
@@ -8,6 +14,8 @@
             device_sn: $device_sn
             os_platform: $os_platform
             app_version: $app_version
+            Content-Type: "application/json"
+            device_sn: $device_sn
         json:
             sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
     validate:
@@ -16,15 +24,18 @@
         - contains: [{"a": 1, "b": 2}, "a"]
 
 - api:
-    def: create_user($uid, $user_name, $user_password, $token)
+    id: create_user
     variables:
         - user_name: user0
         - user_password: "000000"
-        - uid: 2000
+        - uid: 9000
+        - token: XXX
     request:
         url: /api/users/$uid
         method: POST
         headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
             token: $token
         json:
             name: $user_name
@@ -33,21 +44,33 @@
         - eq: ["status_code", 201]
 
 - api:
-    def: get_user($uid, $token)
+    id: get_user
+    variables:
+        - uid: 9000
+        - token: XXX
     request:
         url: /api/users/$uid
         method: GET
         headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
             token: $token
     validate:
         - eq: ["status_code", 200]
 
 - api:
-    def: update_user($uid, $user_name, $user_password, $token)
+    id: update_user
+    variables:
+        - user_name: user0
+        - user_password: "000000"
+        - uid: 9000
+        - token: XXX
     request:
         url: /api/users/$uid
         method: PUT
         headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
             token: $token
         json:
             name: $user_name
@@ -56,40 +79,58 @@
         - eq: ["status_code", 200]
 
 - api:
-    def: delete_user($uid, $token)
+    id: delete_user
+    variables:
+        - uid: 9000
+        - token: XXX
     request:
         url: /api/users/$uid
         method: DELETE
         headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
             token: $token
     validate:
         - eq: ["status_code", 200]
 
 - api:
-    def: get_users($token)
+    id: get_users
+    variables:
+        - token: XXX
     request:
         url: /api/users
         method: GET
         headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
             token: $token
     validate:
         - eq: ["status_code", 200]
 
 - api:
-    def: reset_all($token)
+    id: reset_all
+    variables:
+        - token: XXX
     request:
         url: /api/reset-all
         method: GET
         headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
             token: $token
     validate:
         - eq: ["status_code", 200]
         - eq: ["content.success", true]
 
 - api:
-    def: get_headers($n_secs)
+    id: get_headers
+    variables:
+        - n_secs: 1
     request:
         url: /headers
+        headers:
+            Content-Type: "application/json"
+            device_sn: $device_sn
         method: GET
     setup_hooks:
         - ${setup_hook_add_kwargs($request)}

@@ -6,20 +6,18 @@
             - ["test1","111111"]
             - ["test2","222222"]
     variables:
+        - username: test1
+        - user_agent: "iOS/10.1"
         - device_sn: ${gen_random_string(15)}
         - os_platform: 'ios'
         - app_version: 2.8.5
-    request:
-        base_url: ${get_base_url()}
-        headers:
-            Content-Type: application/json
-            device_sn: $device_sn
+    base_url: ${get_base_url()}
     output:
         - token
 
 - test:
     name: get token with $user_agent and $username
-    api: get_token($user_agent, $device_sn, $os_platform, $app_version)
+    api: get_token
     extract:
         - token: content.token
     validate:

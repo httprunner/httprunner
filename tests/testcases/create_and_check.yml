@@ -1,35 +1,47 @@
 
 - config:
     name: "create user and check result."
-    def: create_and_check($uid, $token)
-    request:
-        "base_url": "http://127.0.0.1:5000"
-        "headers":
-            "Content-Type": "application/json"
-            "device_sn": "$device_sn"
+    id: create_and_check
+    variables:
+        - uid: 9001
+        - token: XXX
+        - device_sn: "TESTCASE_CREATE_XXX"
+    base_url: "http://127.0.0.1:5000"
+
+- test:
+    name: setup and reset all (override).
+    testcase: testcases/setup.yml
     output:
         - token
 
 - test:
     name: make sure user $uid does not exist
-    api: get_user($uid, $token)
+    api: get_user
+    variables:
+        - uid: $uid
+        - token: $token
     validate:
         - eq: ["status_code", 404]
         - eq: ["content.success", false]
 
 - test:
     name: create user $uid
+    api: create_user
     variables:
         - user_name: "user1"
         - user_password: "123456"
-    api: create_user($uid, $user_name, $user_password, $token)
+        - uid: $uid
+        - token: $token
     validate:
         - eq: ["status_code", 201]
         - eq: ["content.success", true]
 
 - test:
     name: check if user $uid exists
-    api: get_user($uid, $token)
+    api: get_user
+    variables:
+        - uid: $uid
+        - token: $token
     validate:
         - eq: ["status_code", 200]
         - eq: ["content.success", true]

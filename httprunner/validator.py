@@ -54,21 +54,50 @@ def is_testcases(data_structure):
 
     Args:
         data_structure (dict): testcase(s) should always be in the following data structure:
+            {
+                "project_mapping": {
+                    "PWD": "XXXXX",
+                    "functions": {},
+                    "env": {}
+                },
+                "testcases": [
+                    {   # testcase data structure
+                        "config": {
+                            "name": "desc1",
+                            "path": "testcase1_path",
+                            "variables": [],                    # optional
+                        },
+                        "teststeps": [
+                            # teststep data structure
+                            {
+                                'name': 'test step desc1',
+                                'variables': [],    # optional
+                                'extract': [],      # optional
+                                'validate': [],
+                                'request': {}
+                            },
+                            teststep2   # another teststep dict
+                        ]
+                    },
+                    testcase_dict_2     # another testcase dict
+                ]
+            }
 
-            testcase_dict
-            or
-            [
-                testcase_dict_1,
-                testcase_dict_2
-            ]
     Returns:
         bool: True if data_structure is valid testcase(s), otherwise False.
 
     """
-    if not isinstance(data_structure, list):
-        return is_testcase(data_structure)
+    if not isinstance(data_structure, dict):
+        return False
 
-    for item in data_structure:
+    if "testcases" not in data_structure:
+        return False
+
+    testcases = data_structure["testcases"]
+    if not isinstance(testcases, list):
+        return False
+
+    for item in testcases:
         if not is_testcase(item):
             return False
 

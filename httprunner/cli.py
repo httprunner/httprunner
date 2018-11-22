@@ -77,17 +77,13 @@ def main_hrun():
         create_scaffold(project_name)
         exit(0)
 
-    try:
-        runner = HttpRunner(
-            failfast=args.failfast
-        )
-        runner.run(
-            args.testcase_paths,
-            dot_env_path=args.dot_env_path
-        )
-    except Exception:
-        logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
-        raise
+    for path in args.testcase_paths:
+        try:
+            runner = HttpRunner(failfast=args.failfast)
+            runner.run(path, dot_env_path=args.dot_env_path)
+        except Exception:
+            logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
+            raise
 
     if not args.no_html_report:
         runner.gen_html_report(

@@ -3,6 +3,7 @@
 import ast
 import os
 import re
+from collections import OrderedDict
 
 from httprunner import exceptions, utils
 from httprunner.compat import basestring, builtin_str, numeric_types, str
@@ -516,7 +517,7 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
             for item in content
         ]
 
-    if isinstance(content, dict):
+    if isinstance(content, (dict, OrderedDict)):
         parsed_content = {}
         for key, value in content.items():
             parsed_key = parse_data(key, variables_mapping, functions_mapping)
@@ -527,7 +528,7 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
 
     if isinstance(content, basestring):
         # content is in string format here
-        variables_mapping = variables_mapping or {}
+        variables_mapping = utils.ensure_mapping_format(variables_mapping or {})
         functions_mapping = functions_mapping or {}
         content = content.strip()
 
@@ -541,110 +542,327 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
     return content
 
 
-def parse_tests(testcases, variables_mapping=None):
-    """ parse testcases configs, including variables/parameters/name/request.
+def _extend_with_api(teststep_dict, api_def_dict):
+    """ extend teststep with api definition, teststep will merge and override api definition.
 
     Args:
-        testcases (list): testcase list, with config unparsed.
-            [
-                {   # testcase data structure
-                    "config": {
-                        "name": "desc1",
-                        "path": "testcase1_path",
-                        "variables": {},         # optional
-                        "request": {}            # optional
-                        "functions": {},
-                        "env": {},
-                        "def-api": {},
-                        "def-testcase": {}
-                    },
-                    "teststeps": [
-                        # teststep data structure
-                        {
-                            'name': 'test step desc2',
-                            'variables': [],    # optional
-                            'extract': [],      # optional
-                            'validate': [],
-                            'request': {},
-                            'function_meta': {}
-                        },
-                        teststep2   # another teststep dict
-                    ]
+        teststep_dict (dict): teststep block
+        api_def_dict (dict): api definition
+
+    Returns:
+        dict: extended teststep dict.
+
+    Examples:
+        >>> api_def_dict = {
+                "name": "get token 1",
+                "request": {...},
+                "validate": [{'eq': ['status_code', 200]}]
+            }
+        >>> teststep_dict = {
+                "name": "get token 2",
+                "extract": [{"token": "content.token"}],
+                "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+            }
+        >>> _extend_with_api(teststep_dict, api_def_dict)
+            {
+                "name": "get token 2",
+                "request": {...},
+                "extract": [{"token": "content.token"}],
+                "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+            }
+
+    """
+    # override name
+    api_def_name = api_def_dict.pop("name", "")
+    teststep_dict["name"] = teststep_dict.get("name") or api_def_name
+
+    # override variables
+    def_variables = api_def_dict.pop("variables", [])
+    teststep_dict["variables"] = utils.extend_variables(
+        def_variables,
+        teststep_dict.get("variables", {})
+    )
+
+    # merge & override validators TODO: relocate
+    def_raw_validators = api_def_dict.pop("validate", [])
+    ref_raw_validators = teststep_dict.get("validate", [])
+    def_validators = [
+        parse_validator(validator)
+        for validator in def_raw_validators
+    ]
+    ref_validators = [
+        parse_validator(validator)
+        for validator in ref_raw_validators
+    ]
+    teststep_dict["validate"] = utils.extend_validators(
+        def_validators,
+        ref_validators
+    )
+
+    # merge & override extractors
+    def_extrators = api_def_dict.pop("extract", [])
+    teststep_dict["extract"] = utils.extend_variables(
+        def_extrators,
+        teststep_dict.get("extract", [])
+    )
+
+    # TODO: merge & override request
+    teststep_dict["request"] = api_def_dict.pop("request", {})
+    # base_url
+    base_url = teststep_dict.pop("base_url", None)
+    if base_url:
+        teststep_dict["request"]["url"] = "{}/{}".format(base_url.rstrip("/"), teststep_dict["request"]["url"].lstrip("/"))
+
+    # verify
+    if "verify" in teststep_dict:
+        verify = teststep_dict.pop("verify")
+    elif "verify" in api_def_dict:
+        verify = api_def_dict.pop("verify")
+    else:
+        verify = True
+    teststep_dict["request"]["verify"] = verify
+
+    # merge & override setup_hooks
+    def_setup_hooks = api_def_dict.pop("setup_hooks", [])
+    ref_setup_hooks = teststep_dict.get("setup_hooks", [])
+    extended_setup_hooks = list(set(def_setup_hooks + ref_setup_hooks))
+    if extended_setup_hooks:
+        teststep_dict["setup_hooks"] = extended_setup_hooks
+    # merge & override teardown_hooks
+    def_teardown_hooks = api_def_dict.pop("teardown_hooks", [])
+    ref_teardown_hooks = teststep_dict.get("teardown_hooks", [])
+    extended_teardown_hooks = list(set(def_teardown_hooks + ref_teardown_hooks))
+    if extended_teardown_hooks:
+        teststep_dict["teardown_hooks"] = extended_teardown_hooks
+
+    # TODO: extend with other api definition items, e.g. times
+    teststep_dict.update(api_def_dict)
+
+    return teststep_dict
+
+
+def _extend_with_testcase(teststep_dict, testcase_def_dict):
+    """ extend teststep with testcase definition
+        teststep will merge and override testcase config definition.
+
+    Args:
+        teststep_dict (dict): teststep block
+        testcase_def_dict (dict): testcase definition
+
+    Returns:
+        dict: extended teststep dict.
+
+    """
+    # override testcase config variables
+    testcase_def_dict["config"].setdefault("variables", {})
+    testcase_def_variables = utils.ensure_mapping_format(testcase_def_dict["config"].get("variables", {}))
+    testcase_def_variables.update(teststep_dict.pop("variables", {}))
+    testcase_def_dict["config"]["variables"] = testcase_def_variables
+
+    # override base_url, verify
+    # priority: testcase config > testsuite teststep
+    teststep_base_url = teststep_dict.pop("base_url", None)
+    teststep_verify = teststep_dict.pop("verify", True)
+    testcase_def_dict["config"].setdefault("base_url", teststep_base_url)
+    testcase_def_dict["config"].setdefault("verify", teststep_verify)
+
+    # override testcase config name, output, etc.
+    testcase_def_dict["config"].update(teststep_dict)
+
+    teststep_dict.clear()
+    teststep_dict.update(testcase_def_dict)
+
+
+def __parse_config(config, project_mapping):
+    """ parse testcase config, include variables and name.
+    """
+    # get config variables
+    raw_config_variables = config.pop("variables", {})
+    raw_config_variables_mapping = utils.ensure_mapping_format(raw_config_variables)
+    override_variables = utils.deepcopy_dict(project_mapping.get("variables", {}))
+    functions = project_mapping.get("functions", {})
+
+    # override testcase config variables with passed in variables
+    for key, value in raw_config_variables_mapping.items():
+
+        if key in override_variables:
+            # passed in
+            continue
+        else:
+            # config variables
+            try:
+                parsed_value = parse_data(
+                    value,
+                    override_variables,
+                    functions
+                )
+            except exceptions.VariableNotFound:
+                pass
+            override_variables[key] = parsed_value
+
+    if override_variables:
+        config["variables"] = override_variables
+
+    # parse config name
+    config["name"] = parse_data(
+        config.get("name", ""),
+        override_variables,
+        functions
+    )
+
+    # parse config base_url
+    if "base_url" in config:
+        config["base_url"] = parse_data(
+            config["base_url"],
+            override_variables,
+            functions
+        )
+
+
+def __parse_teststeps(teststeps, config, project_mapping):
+    """ override teststeps with testcase config variables, base_url and verify.
+        teststep maybe nested testcase.
+
+        variables priority:
+        testsuite config > testsuite teststep > testcase config > testcase teststep > api
+
+        base_url/verify priority:
+        testcase teststep > testcase config > testsuite teststep > testsuite config > api
+
+    Args:
+        teststeps (list):
+        config (dict):
+
+    Returns:
+        list: overrided teststeps
+
+    """
+    config_variables = config.pop("variables", {})
+    config_base_url = config.pop("base_url", None)
+    config_verify = config.pop("verify", True)
+    functions = project_mapping.get("functions", {})
+
+    for teststep in teststeps:
+
+        # priority teststep > config
+        teststep.setdefault("base_url", config_base_url)
+        teststep.setdefault("verify", config_verify)
+
+        if "testcase_def" in teststep:
+            # teststep is nested testcase
+
+            # 1, testsuite config => testsuite teststeps
+            # override teststep variables
+            teststep["variables"] = utils.extend_variables(
+                teststep.pop("variables", {}),
+                config_variables
+            )
+
+            # parse teststep name
+            try:
+                teststep["name"] = parse_data(
+                    teststep.pop("name", ""),
+                    teststep["variables"],
+                    functions
+                )
+            except exceptions.VariableNotFound:
+                pass
+
+            # 2, testsuite teststep => testcase config
+            testcase_def = teststep.pop("testcase_def")
+            _extend_with_testcase(teststep, testcase_def)
+
+            # 3, testcase config => testcase teststep
+            _parse_testcase(teststep, project_mapping)
+
+        else:
+            # 1, config => teststeps
+            # override teststep variables
+            teststep["variables"] = utils.extend_variables(
+                teststep.pop("variables", {}),
+                config_variables
+            )
+
+            # parse teststep name
+            try:
+                teststep["name"] = parse_data(
+                    teststep.pop("name", ""),
+                    teststep["variables"],
+                    functions
+                )
+            except exceptions.VariableNotFound:
+                pass
+
+            if "api_def" in teststep:
+                # 2, teststep => api
+                api_def_dict = teststep.pop("api_def")
+                _extend_with_api(teststep, api_def_dict)
+            else:
+                # base_url
+                base_url = teststep.pop("base_url", None)
+                if base_url:
+                    teststep["request"]["url"] = "{}/{}".format(base_url.rstrip("/"), teststep["request"]["url"].lstrip("/"))
+
+
+def _parse_testcase(testcase, project_mapping):
+    __parse_config(testcase["config"], project_mapping)
+    __parse_teststeps(testcase["teststeps"], testcase["config"], project_mapping)
+
+
+def parse_tests(tests_mapping):
+    """ parse testcases configs, including variables/name/request.
+
+    Args:
+        tests_mapping (dict): project info and testcases list.
+
+            {
+                "project_mapping": {
+                    "PWD": "XXXXX",
+                    "functions": {},
+                    "variables": {},                        # optional, priority 1
+                    "env": {}
                 },
-                testcase_dict_2     # another testcase dict
-            ]
+                "testcases": [
+                    {   # testcase data structure
+                        "config": {
+                            "name": "desc1",
+                            "path": "testcase1_path",
+                            "variables": [],                # optional, priority 2
+                        },
+                        "teststeps": [
+                            # teststep data structure
+                            {
+                                'name': 'test step desc1',
+                                'variables': [],            # optional, priority 3
+                                'extract': [],
+                                'validate': [],
+                                'api_def': {
+                                    "variables": {}         # optional, priority 4
+                                    'request': {},
+                                }
+                            },
+                            teststep2   # another teststep dict
+                        ]
+                    },
+                    testcase_dict_2     # another testcase dict
+                ]
+            }
+
         variables_mapping (dict): if variables_mapping is specified, it will override variables in config block.
 
     Returns:
         list: parsed testcases list, with config variables/parameters/name/request parsed.
 
     """
-    variables_mapping = variables_mapping or {}
-    parsed_testcases_list = []
+    project_mapping = tests_mapping.get("project_mapping", {})
 
-    for testcase in testcases:
-        testcase_config = testcase.setdefault("config", {})
-        functions = testcase_config.get("functions", {})
+    env_mapping = project_mapping.get("env", {})
+    # set OS environment variables
+    utils.set_os_environ(env_mapping)
 
-        env_mapping = testcase_config.get("env", {})
-        # set OS environment variables
-        utils.set_os_environ(env_mapping)
+    for testcase in tests_mapping["testcases"]:
+        testcase.setdefault("config", {})
+        _parse_testcase(testcase, project_mapping)
 
-        # parse config parameters
-        config_parameters = testcase_config.pop("parameters", [])
-        cartesian_product_parameters_list = parse_parameters(
-            config_parameters,
-            testcase_config.get("variables", {}),
-            functions
-        ) or [{}]
-
-        for parameter_mapping in cartesian_product_parameters_list:
-            testcase_dict = utils.deepcopy_dict(testcase)
-            config = testcase_dict.get("config")
-            # get config variables
-            raw_config_variables = config.get("variables", [])
-            raw_config_variables_mapping = utils.ensure_mapping_format(raw_config_variables)
-
-            # priority: passed in > parameters > variables
-
-            config_variables = utils.deepcopy_dict(parameter_mapping)
-            config_variables.update(variables_mapping)
-
-            for key, value in raw_config_variables_mapping.items():
-
-                if key in config_variables:
-                    # passed in & .env & parameters
-                    continue
-                else:
-                    # config variables
-                    parsed_value = parse_data(
-                        value,
-                        config_variables,
-                        functions
-                    )
-                    config_variables[key] = parsed_value
-
-            testcase_dict["config"]["variables"] = config_variables
-
-            # parse config name
-            testcase_dict["config"]["name"] = parse_data(
-                testcase_dict["config"].get("name", ""),
-                config_variables,
-                functions
-            )
-
-            # parse config request
-            testcase_dict["config"]["request"] = parse_data(
-                testcase_dict["config"].get("request", {}),
-                config_variables,
-                functions
-            )
-
-            # put loaded project functions to config
-            testcase_dict["config"]["functions"] = functions
-            parsed_testcases_list.append(testcase_dict)
-
-        # unset OS environment variables
-        utils.unset_os_environ(env_mapping)
-
-    return parsed_testcases_list
+    # unset OS environment variables
+    utils.unset_os_environ(env_mapping)
