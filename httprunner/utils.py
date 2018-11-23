@@ -597,12 +597,19 @@ def dump_tests(tests_mapping, tag_name):
     file_name, file_suffix = os.path.splitext(os.path.basename(test_path))
     dump_file_path = os.path.join(dir_path, "{}.{}.json".format(file_name, tag_name))
 
-    tests_to_dump = {
-        "project_mapping": {
-            key: project_mapping[key] for key in project_mapping if key != "functions"
-        },
-        "testcases": tests_mapping["testcases"]
-    }
+    tests_to_dump = {}
+
+    for key in project_mapping:
+        if key != "functions":
+            tests_to_dump[key] = project_mapping[key]
+            continue
+
+        if project_mapping["functions"]:
+            debugtalk_py_path = os.path.join(dir_path, "debugtalk.py")
+            tests_to_dump["debugtalk.py"] = debugtalk_py_path
+
+    tests_to_dump["testcases"] = tests_mapping["testcases"]
+
     with open(dump_file_path, 'w', encoding='utf-8') as outfile:
         json.dump(tests_to_dump, outfile, indent=4, separators=(',', ': '))
 
