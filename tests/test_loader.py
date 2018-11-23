@@ -444,11 +444,3 @@ class TestSuiteLoader(unittest.TestCase):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         self.assertIn("get_token", self.tests_def_mapping["api"])
         self.assertEqual(self.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
-
-    def test_load_locust_tests(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/data/demo_locust.yml')
-        locust_tests = loader.load_locust_tests(path)
-        self.assertEqual(len(locust_tests["tests"]), 10)
-        self.assertEqual(locust_tests["tests"][0]["name"], "index")
-        self.assertEqual(locust_tests["tests"][9]["name"], "user-agent")

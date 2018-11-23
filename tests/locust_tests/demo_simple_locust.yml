@@ -1,7 +1,6 @@
 - config:
     name: basic test with httpbin
-    request:
-        base_url: https://httpbin.org/
+    base_url: https://httpbin.org/
 
 - test:
     name: index

@@ -199,3 +199,44 @@ class HttpRunner(object):
             html_report_name,
             html_report_template
         )
+
+
+def prepare_locust_tests(path):
+    """ prepare locust testcases
+
+    Args:
+        path (str): testcase file path.
+
+    Returns:
+        dict: locust tests data
+
+            {
+                "functions": {},
+                "tests": []
+            }
+
+    """
+    tests_mapping = loader.load_tests(path)
+    parser.parse_tests(tests_mapping)
+
+    functions = tests_mapping.get("project_mapping", {}).get("functions", {})
+    testcase = tests_mapping["testcases"][0]
+    items = testcase.get("teststeps", [])
+
+    tests = []
+    for item in items:
+        if "config" in item:
+            # embeded testcase
+            weight = item["config"].get("weight", 1)
+        else:
+            # API test
+            weight = item.get("weight", 1)
+
+        # implement weight for tests
+        for _ in range(weight):
+            tests.append(item)
+
+    return {
+        "functions": functions,
+        "tests": tests
+    }
