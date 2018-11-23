@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+import unittest
 
 from httprunner import HttpRunner, api, loader, parser
 from locust import HttpLocust
@@ -565,3 +566,15 @@ class TestApi(ApiServerUnittest):
             results.records[1]["name"],
             "create user 1001 and check result."
         )
+
+
+class TestLocust(unittest.TestCase):
+
+    def test_prepare_locust_tests(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/locust_tests/demo_simple_locust.yml')
+        locust_tests = api.prepare_locust_tests(path)
+        self.assertIn("gen_md5", locust_tests["functions"])
+        self.assertEqual(len(locust_tests["tests"]), 10)
+        self.assertEqual(locust_tests["tests"][0]["name"], "index")
+        self.assertEqual(locust_tests["tests"][9]["name"], "user-agent")

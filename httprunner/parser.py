@@ -860,11 +860,6 @@ def parse_tests(tests_mapping):
                 ]
             }
 
-        variables_mapping (dict): if variables_mapping is specified, it will override variables in config block.
-
-    Returns:
-        list: parsed testcases list, with config variables/parameters/name/request parsed.
-
     """
     project_mapping = tests_mapping.get("project_mapping", {})
 
