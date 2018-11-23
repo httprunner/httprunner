@@ -17,7 +17,6 @@ class SessionContext(object):
     def __init__(self, functions, variables=None):
         self.session_variables_mapping = utils.ensure_mapping_format(variables or {})
         self.FUNCTIONS_MAPPING = functions
-        self.test_variables_mapping = {}
         self.init_test_variables()
 
     def init_test_variables(self, variables_mapping=None):
@@ -34,6 +33,7 @@ class SessionContext(object):
                 ]
 
         """
+        self.test_variables_mapping = {}
         variables_mapping = variables_mapping or {}
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
         for variable_name, variable_value in variables_mapping.items():
