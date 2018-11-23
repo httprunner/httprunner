@@ -58,21 +58,27 @@ def load_json_file(json_file):
 
 def load_csv_file(csv_file):
     """ load csv file and check file content format
-    @param
-        csv_file: csv file path
-        e.g. csv file content:
-            username,password
-            test1,111111
-            test2,222222
-            test3,333333
-    @return
-        list of parameter, each parameter is in dict format
-        e.g.
+
+    Args:
+        csv_file (str): csv file path, csv file content is like below:
+
+    Returns:
+        list: list of parameters, each parameter is in dict format
+
+    Examples:
+        >>> cat csv_file
+        username,password
+        test1,111111
+        test2,222222
+        test3,333333
+
+        >>> load_csv_file(csv_file)
         [
             {'username': 'test1', 'password': '111111'},
             {'username': 'test2', 'password': '222222'},
             {'username': 'test3', 'password': '333333'}
         ]
+
     """
     csv_content_list = []
 
