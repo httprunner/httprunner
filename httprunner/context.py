@@ -34,13 +34,13 @@ class SessionContext(object):
 
         """
         self.test_variables_mapping = {}
+        self.test_variables_mapping.update(self.session_variables_mapping)
+
         variables_mapping = variables_mapping or {}
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
         for variable_name, variable_value in variables_mapping.items():
             variable_value = self.eval_content(variable_value)
             self.update_test_variables(variable_name, variable_value)
-
-        self.test_variables_mapping.update(self.session_variables_mapping)
 
     def update_test_variables(self, variable_name, variable_value):
         """ update test variables, these variables are only valid in the current test.
