@@ -4,7 +4,6 @@
     id: create_and_check
     variables:
         - uid: 9001
-        - token: XXX
         - device_sn: "TESTCASE_CREATE_XXX"
     base_url: "http://127.0.0.1:5000"
 
