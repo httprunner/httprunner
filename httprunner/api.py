@@ -153,8 +153,9 @@ class HttpRunner(object):
             tests_mapping = path_or_testcases
         elif validator.is_testcase_path(path_or_testcases):
             tests_mapping = loader.load_tests(path_or_testcases, dot_env_path)
-            tests_mapping["project_mapping"]["variables"] = mapping or {}
             tests_mapping["project_mapping"]["test_path"] = path_or_testcases
+            if "variables" in tests_mapping["project_mapping"]:
+                tests_mapping["project_mapping"]["variables"] = mapping
         else:
             raise exceptions.ParamsError("invalid testcase path or testcases.")
 
