@@ -62,11 +62,11 @@ class Runner(object):
         self.session_context = SessionContext(self.functions)
 
         if testcase_setup_hooks:
-            self.do_hook_actions(testcase_setup_hooks)
+            self.do_hook_actions(testcase_setup_hooks, "setup")
 
     def __del__(self):
         if self.testcase_teardown_hooks:
-            self.do_hook_actions(self.testcase_teardown_hooks)
+            self.do_hook_actions(self.testcase_teardown_hooks, "teardown")
 
     def _handle_skip_feature(self, test_dict):
         """ handle skip feature for test
@@ -100,11 +100,35 @@ class Runner(object):
         if skip_reason:
             raise SkipTest(skip_reason)
 
-    def do_hook_actions(self, actions):
+    def do_hook_actions(self, actions, hook_type):
+        """ call hook actions.
+
+        Args:
+            actions (str/dict): actions maybe in two format.
+
+                format1: only call hook functions.
+                    ${func()}
+                format2: assignment, the value returned by hook function will be assigned to variable.
+                    {"var": "${func()}"}
+
+            hook_type (enum): setup/teardown
+
+        """
+        logger.log_info("call {} hook actions.".format(hook_type))
         for action in actions:
-            logger.log_debug("call hook: {}".format(action))
-            # TODO: check hook function if valid
-            self.session_context.eval_content(action)
+
+            if isinstance(action, dict) and len(action) == 1:
+                # {"var": "${func()}"}
+                var_name, hook_content = list(action.items())[0]
+                logger.log_debug("assignment with hook: {} = {}".format(var_name, hook_content))
+                self.session_context.update_test_variables(
+                    var_name,
+                    self.session_context.eval_content(hook_content)
+                )
+            else:
+                logger.log_debug("call hook function: {}".format(action))
+                # TODO: check hook function if valid
+                self.session_context.eval_content(action)
 
     def _run_test(self, test_dict):
         """ run single teststep.
@@ -154,7 +178,7 @@ class Runner(object):
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
         setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
-        self.do_hook_actions(setup_hooks)
+        self.do_hook_actions(setup_hooks, "setup")
 
         try:
             url = parsed_test_request.pop('url')
@@ -189,7 +213,7 @@ class Runner(object):
         if teardown_hooks:
             logger.log_info("start to run teardown hooks")
             self.session_context.update_test_variables("response", resp_obj)
-            self.do_hook_actions(teardown_hooks)
+            self.do_hook_actions(teardown_hooks, "teardown")
 
         # extract
         extractors = test_dict.get("extract", [])

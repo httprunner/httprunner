@@ -123,6 +123,35 @@ class TestRunner(ApiServerUnittest):
         # testcase teardown hook has not been executed now
         self.assertLess(end_time - start_time, 1)
 
+    def test_run_testcase_with_hooks_assignment(self):
+        config_dict = {
+            "name": "basic test with httpbin",
+            "base_url": HTTPBIN_SERVER
+        }
+        test = {
+            "name": "modify request headers",
+            "request": {
+                "url": "/anything",
+                "method": "POST",
+                "headers": {
+                    "user_agent": "iOS/10.3",
+                    "os_platform": "ios"
+                },
+                "data": "a=1&b=2"
+            },
+            "setup_hooks": [
+                {"total": "${sum_two(1, 5)}"}
+            ],
+            "validate": [
+                {"check": "status_code", "expect": 200}
+            ]
+        }
+        test_runner = runner.Runner(config_dict, self.debugtalk_functions)
+        test_runner.run_test(test)
+        test_variables_mapping = test_runner.session_context.test_variables_mapping
+        self.assertEqual(test_variables_mapping["total"], 6)
+        self.assertEqual(test_variables_mapping["request"]["data"], "a=1&b=2")
+
     def test_run_testcase_with_hooks_modify_request(self):
         config_dict = {
             "name": "basic test with httpbin",
