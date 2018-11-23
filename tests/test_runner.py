@@ -215,7 +215,7 @@ class TestRunner(ApiServerUnittest):
         tests_mapping = loader.load_tests(testcase_file_path)
         testcase = tests_mapping["testcases"][0]
         config_dict_headers = testcase["config"]["request"]["headers"]
-        test_dict_headers = testcase["teststeps"][0]["request"]["headers"]
+        test_dict_headers = testcase["tests"][0]["request"]["headers"]
         headers = deep_update_dict(
             config_dict_headers,
             test_dict_headers

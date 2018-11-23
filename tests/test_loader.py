@@ -264,8 +264,8 @@ class TestSuiteLoader(unittest.TestCase):
         cls.project_mapping = loader.project_mapping
         cls.tests_def_mapping = loader.tests_def_mapping
 
-    def test_load_teststep_testcase(self):
-        raw_teststep = {
+    def test_load_test_testcase(self):
+        raw_test = {
             "name": "setup and reset all (override).",
             "testcase": "testcases/setup.yml",
             "variables": [
@@ -273,24 +273,24 @@ class TestSuiteLoader(unittest.TestCase):
             ],
             "output": ["token", "device_sn"]
         }
-        testcase = loader.load_teststep(raw_teststep)
+        testcase = loader.load_test(raw_test)
         self.assertEqual(
             "setup and reset all (override).",
             testcase["name"]
         )
-        teststeps = testcase["testcase_def"]["teststeps"]
-        self.assertEqual(len(teststeps), 2)
-        self.assertEqual(teststeps[0]["name"], "get token (setup)")
-        self.assertEqual(teststeps[1]["name"], "reset all users")
+        tests = testcase["testcase_def"]["tests"]
+        self.assertEqual(len(tests), 2)
+        self.assertEqual(tests[0]["name"], "get token (setup)")
+        self.assertEqual(tests[1]["name"], "reset all users")
 
     def test_load_testcase(self):
         raw_testcase = loader.load_file("tests/testsuites/create_users.yml")
         testcase = loader.load_testcase(raw_testcase)
         self.assertEqual(testcase["config"]["name"], "create users with uid")
         self.assertIn("device_sn", testcase["config"]["variables"][0])
-        self.assertEqual(len(testcase["teststeps"]), 2)
-        self.assertEqual(testcase["teststeps"][0]["name"], "create user 1000 and check result.")
-        self.assertEqual(testcase["teststeps"][0]["testcase_def"]["config"]["name"], "create user and check result.")
+        self.assertEqual(len(testcase["tests"]), 2)
+        self.assertEqual(testcase["tests"][0]["name"], "create user 1000 and check result.")
+        self.assertEqual(testcase["tests"][0]["testcase_def"]["config"]["name"], "create user and check result.")
 
     def test_load_testcases_by_path_files(self):
         # absolute file path
@@ -300,7 +300,7 @@ class TestSuiteLoader(unittest.TestCase):
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
         self.assertEqual(len(testcases_list), 1)
-        self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
+        self.assertEqual(len(testcases_list[0]["tests"]), 3)
         self.assertIn("get_sign", project_mapping["functions"])
 
         # relative file path
@@ -309,7 +309,7 @@ class TestSuiteLoader(unittest.TestCase):
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
         self.assertEqual(len(testcases_list), 1)
-        self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
+        self.assertEqual(len(testcases_list[0]["tests"]), 3)
         self.assertIn("get_sign", project_mapping["functions"])
 
         # TODO: list/set container with file(s)
@@ -319,17 +319,17 @@ class TestSuiteLoader(unittest.TestCase):
         # ]
         # testcases_list = loader.load_tests(path)
         # self.assertEqual(len(testcases_list), 2)
-        # self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
-        # self.assertEqual(len(testcases_list[1]["teststeps"]), 3)
+        # self.assertEqual(len(testcases_list[0]["tests"]), 3)
+        # self.assertEqual(len(testcases_list[1]["tests"]), 3)
         # testcases_list.extend(testcases_list)
         # self.assertEqual(len(testcases_list), 4)
 
         # for testcase in testcases_list:
-        #     for teststep in testcase["teststeps"]:
-        #         self.assertIn('name', teststep)
-        #         self.assertIn('request', teststep)
-        #         self.assertIn('url', teststep['request'])
-        #         self.assertIn('method', teststep['request'])
+        #     for test_dict in testcase["tests"]:
+        #         self.assertIn('name', test_dict)
+        #         self.assertIn('request', test_dict)
+        #         self.assertIn('url', test_dict['request'])
+        #         self.assertIn('method', test_dict['request'])
 
     def test_load_testcases_by_path_folder(self):
         # absolute folder path
@@ -381,15 +381,15 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn({'device_sn': '${gen_random_string(15)}'}, testcases_list[0]["config"]["variables"])
         self.assertIn("gen_md5", project_mapping["functions"])
         self.assertIn("base_url", testcases_list[0]["config"])
-        teststep0 = testcases_list[0]["teststeps"][0]
+        test_dict0 = testcases_list[0]["tests"][0]
         self.assertEqual(
             "get token with $user_agent, $app_version",
-            teststep0["name"]
+            test_dict0["name"]
         )
-        self.assertIn("/api/get-token", teststep0["api_def"]["request"]["url"])
+        self.assertIn("/api/get-token", test_dict0["api_def"]["request"]["url"])
         self.assertIn(
             {'eq': ['status_code', 200]},
-            teststep0["validate"]
+            test_dict0["validate"]
         )
 
     def test_load_testcases_with_testcase_ref(self):
@@ -407,7 +407,7 @@ class TestSuiteLoader(unittest.TestCase):
             {'device_sn': '${gen_random_string(15)}'},
             testcases_list[0]["config"]["variables"][0]
         )
-        testcase0 = testcases_list[0]["teststeps"][0]
+        testcase0 = testcases_list[0]["tests"][0]
         self.assertEqual(
             "create user 1000 and check result.",
             testcase0["name"]
@@ -417,7 +417,7 @@ class TestSuiteLoader(unittest.TestCase):
             testcase0["testcase_def"]["config"]["name"]
         )
 
-        testcase1 = testcases_list[0]["teststeps"][1]
+        testcase1 = testcases_list[0]["tests"][1]
         self.assertEqual(
             "create user 1001 and check result.",
             testcase1["name"]

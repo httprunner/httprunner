@@ -22,9 +22,9 @@ class TestContext(ApiServerUnittest):
         context_functions = self.context.FUNCTIONS_MAPPING
         self.assertIn("gen_md5", context_functions)
 
-    def test_init_teststep_variables(self):
+    def test_init_test_variables(self):
         self.assertEqual(
-            self.context.teststep_variables_mapping,
+            self.context.test_variables_mapping,
             {'SECRET_KEY': 'DebugTalk'}
         )
 
@@ -63,7 +63,7 @@ class TestContext(ApiServerUnittest):
             {"data": '{"name": "user", "password": "123456"}'},
             {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
         ]
-        self.context.init_teststep_variables(variables)
+        self.context.init_test_variables(variables)
 
         request = {
             "url": "http://127.0.0.1:5000/api/users/1000",
@@ -110,7 +110,7 @@ class TestContext(ApiServerUnittest):
             {"resp_status_code": 200},
             {"resp_body_success": True}
         ]
-        self.context.init_teststep_variables(variables)
+        self.context.init_test_variables(variables)
 
         with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)
@@ -125,7 +125,7 @@ class TestContext(ApiServerUnittest):
             {"resp_status_code": 201},
             {"resp_body_success": True}
         ]
-        self.context.init_teststep_variables(variables)
+        self.context.init_test_variables(variables)
         self.context.validate(validators, resp_obj)
 
     def test_validate_exception(self):
@@ -139,7 +139,7 @@ class TestContext(ApiServerUnittest):
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201}
         ]
         variables = []
-        self.context.init_teststep_variables(variables)
+        self.context.init_test_variables(variables)
 
         with self.assertRaises(exceptions.VariableNotFound):
             self.context.validate(validators, resp_obj)
@@ -148,7 +148,7 @@ class TestContext(ApiServerUnittest):
         variables = [
             {"resp_status_code": 200}
         ]
-        self.context.init_teststep_variables(variables)
+        self.context.init_test_variables(variables)
 
         with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)

@@ -38,12 +38,12 @@ class HttpRunner(object):
             unittest.TestSuite()
 
         """
-        def _add_teststep(test_runner, teststep_dict):
-            """ add teststep to testcase.
+        def _add_test(test_runner, test_dict):
+            """ add test to testcase.
             """
             def test(self):
                 try:
-                    test_runner.run_test(teststep_dict)
+                    test_runner.run_test(test_dict)
                 except exceptions.MyBaseFailure as ex:
                     self.fail(str(ex))
                 finally:
@@ -53,7 +53,7 @@ class HttpRunner(object):
                         test_runner.http_client_session.init_meta_data()
 
             # TODO: refactor
-            test.__doc__ = teststep_dict.get("name") or teststep_dict.get("config", {}).get("name")
+            test.__doc__ = test_dict.get("name") or test_dict.get("config", {}).get("name")
             return test
 
         test_suite = unittest.TestSuite()
@@ -64,18 +64,18 @@ class HttpRunner(object):
             test_runner = runner.Runner(config, functions, self.http_client_session)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
-            teststeps = testcase.get("teststeps", [])
-            for index, teststep_dict in enumerate(teststeps):
-                for times_index in range(int(teststep_dict.get("times", 1))):
+            tests = testcase.get("tests", [])
+            for index, test_dict in enumerate(tests):
+                for times_index in range(int(test_dict.get("times", 1))):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_method = _add_teststep(test_runner, teststep_dict)
+                    test_method = _add_test(test_runner, test_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
             loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
             setattr(loaded_testcase, "config", config)
-            setattr(loaded_testcase, "teststeps", teststeps)
+            setattr(loaded_testcase, "tests", tests)
             setattr(loaded_testcase, "runner", test_runner)
             test_suite.addTest(loaded_testcase)
 
@@ -221,7 +221,7 @@ def prepare_locust_tests(path):
 
     functions = tests_mapping.get("project_mapping", {}).get("functions", {})
     testcase = tests_mapping["testcases"][0]
-    items = testcase.get("teststeps", [])
+    items = testcase.get("tests", [])
 
     tests = []
     for item in items:

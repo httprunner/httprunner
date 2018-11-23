@@ -445,9 +445,9 @@ class TestParser(unittest.TestCase):
         parser.parse_tests(tests_mapping)
         parsed_testcases = tests_mapping["testcases"]
         self.assertIsInstance(parsed_testcases, list)
-        teststep1 = parsed_testcases[0]["teststeps"][0]
-        self.assertEqual(teststep1["variables"]["var_c"], 3)
-        self.assertEqual(teststep1["variables"]["PROJECT_KEY"], "ABCDEFGH")
+        test_dict1 = parsed_testcases[0]["tests"][0]
+        self.assertEqual(test_dict1["variables"]["var_c"], 3)
+        self.assertEqual(test_dict1["variables"]["PROJECT_KEY"], "ABCDEFGH")
         # TODO: parameters
         # self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '1230')
@@ -479,11 +479,11 @@ class TestParser(unittest.TestCase):
 
     def test_extend_with_api(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        raw_stepinfo = {
+        raw_testinfo = {
             "name": "get token",
             "api": "get_token",
         }
-        api_def_dict = loader.load_teststep(raw_stepinfo)
+        api_def_dict = loader.load_test(raw_testinfo)
         test_block = {
             "name": "override block",
             "times": 3,

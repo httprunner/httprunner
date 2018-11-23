@@ -279,11 +279,11 @@ tests_def_mapping = {
     "testcases": {}
 }
 
-def load_teststep(raw_stepinfo):
-    """ load teststep with api/testcase/proc references
+def load_test(raw_testinfo):
+    """ load test with api/testcase/proc references
 
     Args:
-        raw_stepinfo (dict): teststep data, maybe in 3 formats.
+        raw_testinfo (dict): test data, maybe in 3 formats.
             # api reference
             {
                 "name": "add product to cart",
@@ -308,24 +308,24 @@ def load_teststep(raw_stepinfo):
             }
 
     Returns:
-        list: loaded teststeps list
+        list: loaded tests list
 
     Args:
-        raw_stepinfo (dict): teststep info
+        raw_testinfo (dict): test info
 
     """
     # reference api
-    if "api" in raw_stepinfo:
-        api_name = raw_stepinfo["api"]
-        raw_stepinfo["api_def"] = _get_api_definition(api_name)
+    if "api" in raw_testinfo:
+        api_name = raw_testinfo["api"]
+        raw_testinfo["api_def"] = _get_api_definition(api_name)
 
     # TODO: reference proc functions
-    elif "func" in raw_stepinfo:
+    elif "func" in raw_testinfo:
         pass
 
     # reference testcase
-    elif "testcase" in raw_stepinfo:
-        testcase_path = raw_stepinfo["testcase"]
+    elif "testcase" in raw_testinfo:
+        testcase_path = raw_testinfo["testcase"]
 
         if testcase_path not in tests_def_mapping["testcases"]:
             testcase_path = os.path.join(
@@ -337,13 +337,13 @@ def load_teststep(raw_stepinfo):
         else:
             testcase_dict = tests_def_mapping[testcase_path]
 
-        raw_stepinfo["testcase_def"] = testcase_dict
+        raw_testinfo["testcase_def"] = testcase_dict
 
     # define directly
     else:
         pass
 
-    return raw_stepinfo
+    return raw_testinfo
 
 
 def load_testcase(raw_testcase):
@@ -360,7 +360,7 @@ def load_testcase(raw_testcase):
                         "request": {}
                     }
                 },
-                # teststeps part
+                # tests part
                 {
                     "test": {...}
                 },
@@ -374,12 +374,12 @@ def load_testcase(raw_testcase):
             {
                 "name": "XYZ",
                 "config": {},
-                "teststeps": [teststep11, teststep12]
+                "tests": [test11, test12]
             }
 
     """
     config = {}
-    teststeps = []
+    tests = []
 
     for item in raw_testcase:
         # TODO: add json schema validation
@@ -394,7 +394,7 @@ def load_testcase(raw_testcase):
             config.update(test_block)
 
         elif key == "test":
-            teststeps.append(load_teststep(test_block))
+            tests.append(load_test(test_block))
 
         else:
             logger.log_warning(
@@ -403,7 +403,7 @@ def load_testcase(raw_testcase):
 
     return {
         "config": config,
-        "teststeps": teststeps
+        "tests": tests
     }
 
 
@@ -601,16 +601,16 @@ def load_tests(path, dot_env_path=None):
                             "path": "testcase1_path",
                             "variables": [],                    # optional
                         },
-                        "teststeps": [
-                            # teststep data structure
+                        "tests": [
+                            # test data structure
                             {
-                                'name': 'test step desc1',
+                                'name': 'test desc1',
                                 'variables': [],    # optional
                                 'extract': [],      # optional
                                 'validate': [],
                                 'request': {}
                             },
-                            teststep2   # another teststep dict
+                            test_dict_2   # another test dict
                         ]
                     },
                     testcase_dict_2     # another testcase dict

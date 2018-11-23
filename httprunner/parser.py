@@ -542,15 +542,15 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
     return content
 
 
-def _extend_with_api(teststep_dict, api_def_dict):
-    """ extend teststep with api definition, teststep will merge and override api definition.
+def _extend_with_api(test_dict, api_def_dict):
+    """ extend test with api definition, test will merge and override api definition.
 
     Args:
-        teststep_dict (dict): teststep block
+        test_dict (dict): test block
         api_def_dict (dict): api definition
 
     Returns:
-        dict: extended teststep dict.
+        dict: extended test dict.
 
     Examples:
         >>> api_def_dict = {
@@ -558,12 +558,12 @@ def _extend_with_api(teststep_dict, api_def_dict):
                 "request": {...},
                 "validate": [{'eq': ['status_code', 200]}]
             }
-        >>> teststep_dict = {
+        >>> test_dict = {
                 "name": "get token 2",
                 "extract": [{"token": "content.token"}],
                 "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
             }
-        >>> _extend_with_api(teststep_dict, api_def_dict)
+        >>> _extend_with_api(test_dict, api_def_dict)
             {
                 "name": "get token 2",
                 "request": {...},
@@ -574,18 +574,18 @@ def _extend_with_api(teststep_dict, api_def_dict):
     """
     # override name
     api_def_name = api_def_dict.pop("name", "")
-    teststep_dict["name"] = teststep_dict.get("name") or api_def_name
+    test_dict["name"] = test_dict.get("name") or api_def_name
 
     # override variables
     def_variables = api_def_dict.pop("variables", [])
-    teststep_dict["variables"] = utils.extend_variables(
+    test_dict["variables"] = utils.extend_variables(
         def_variables,
-        teststep_dict.get("variables", {})
+        test_dict.get("variables", {})
     )
 
     # merge & override validators TODO: relocate
     def_raw_validators = api_def_dict.pop("validate", [])
-    ref_raw_validators = teststep_dict.get("validate", [])
+    ref_raw_validators = test_dict.get("validate", [])
     def_validators = [
         parse_validator(validator)
         for validator in def_raw_validators
@@ -594,86 +594,86 @@ def _extend_with_api(teststep_dict, api_def_dict):
         parse_validator(validator)
         for validator in ref_raw_validators
     ]
-    teststep_dict["validate"] = utils.extend_validators(
+    test_dict["validate"] = utils.extend_validators(
         def_validators,
         ref_validators
     )
 
     # merge & override extractors
     def_extrators = api_def_dict.pop("extract", [])
-    teststep_dict["extract"] = utils.extend_variables(
+    test_dict["extract"] = utils.extend_variables(
         def_extrators,
-        teststep_dict.get("extract", [])
+        test_dict.get("extract", [])
     )
 
     # TODO: merge & override request
-    teststep_dict["request"] = api_def_dict.pop("request", {})
+    test_dict["request"] = api_def_dict.pop("request", {})
     # base_url
-    if "base_url" in teststep_dict:
-        base_url = teststep_dict.pop("base_url")
-        teststep_dict["request"]["url"] = utils.build_url(
+    if "base_url" in test_dict:
+        base_url = test_dict.pop("base_url")
+        test_dict["request"]["url"] = utils.build_url(
             base_url,
-            teststep_dict["request"]["url"]
+            test_dict["request"]["url"]
         )
 
     # verify
-    if "verify" in teststep_dict:
-        verify = teststep_dict.pop("verify")
+    if "verify" in test_dict:
+        verify = test_dict.pop("verify")
     elif "verify" in api_def_dict:
         verify = api_def_dict.pop("verify")
     else:
         verify = True
-    teststep_dict["request"]["verify"] = verify
+    test_dict["request"]["verify"] = verify
 
     # merge & override setup_hooks
     def_setup_hooks = api_def_dict.pop("setup_hooks", [])
-    ref_setup_hooks = teststep_dict.get("setup_hooks", [])
+    ref_setup_hooks = test_dict.get("setup_hooks", [])
     extended_setup_hooks = list(set(def_setup_hooks + ref_setup_hooks))
     if extended_setup_hooks:
-        teststep_dict["setup_hooks"] = extended_setup_hooks
+        test_dict["setup_hooks"] = extended_setup_hooks
     # merge & override teardown_hooks
     def_teardown_hooks = api_def_dict.pop("teardown_hooks", [])
-    ref_teardown_hooks = teststep_dict.get("teardown_hooks", [])
+    ref_teardown_hooks = test_dict.get("teardown_hooks", [])
     extended_teardown_hooks = list(set(def_teardown_hooks + ref_teardown_hooks))
     if extended_teardown_hooks:
-        teststep_dict["teardown_hooks"] = extended_teardown_hooks
+        test_dict["teardown_hooks"] = extended_teardown_hooks
 
     # TODO: extend with other api definition items, e.g. times
-    teststep_dict.update(api_def_dict)
+    test_dict.update(api_def_dict)
 
-    return teststep_dict
+    return test_dict
 
 
-def _extend_with_testcase(teststep_dict, testcase_def_dict):
-    """ extend teststep with testcase definition
-        teststep will merge and override testcase config definition.
+def _extend_with_testcase(test_dict, testcase_def_dict):
+    """ extend test with testcase definition
+        test will merge and override testcase config definition.
 
     Args:
-        teststep_dict (dict): teststep block
+        test_dict (dict): test block
         testcase_def_dict (dict): testcase definition
 
     Returns:
-        dict: extended teststep dict.
+        dict: extended test dict.
 
     """
     # override testcase config variables
     testcase_def_dict["config"].setdefault("variables", {})
     testcase_def_variables = utils.ensure_mapping_format(testcase_def_dict["config"].get("variables", {}))
-    testcase_def_variables.update(teststep_dict.pop("variables", {}))
+    testcase_def_variables.update(test_dict.pop("variables", {}))
     testcase_def_dict["config"]["variables"] = testcase_def_variables
 
     # override base_url, verify
-    # priority: testcase config > testsuite teststep
-    teststep_base_url = teststep_dict.pop("base_url", None)
-    teststep_verify = teststep_dict.pop("verify", True)
-    testcase_def_dict["config"].setdefault("base_url", teststep_base_url)
-    testcase_def_dict["config"].setdefault("verify", teststep_verify)
+    # priority: testcase config > testsuite tests
+    test_base_url = test_dict.pop("base_url", None)
+    test_verify = test_dict.pop("verify", True)
+    testcase_def_dict["config"].setdefault("base_url", test_base_url)
+    testcase_def_dict["config"].setdefault("verify", test_verify)
 
     # override testcase config name, output, etc.
-    testcase_def_dict["config"].update(teststep_dict)
+    testcase_def_dict["config"].update(test_dict)
 
-    teststep_dict.clear()
-    teststep_dict.update(testcase_def_dict)
+    test_dict.clear()
+    test_dict.update(testcase_def_dict)
 
 
 def __parse_config(config, project_mapping):
@@ -722,22 +722,22 @@ def __parse_config(config, project_mapping):
         )
 
 
-def __parse_teststeps(teststeps, config, project_mapping):
-    """ override teststeps with testcase config variables, base_url and verify.
-        teststep maybe nested testcase.
+def __parse_tests(tests, config, project_mapping):
+    """ override tests with testcase config variables, base_url and verify.
+        test maybe nested testcase.
 
         variables priority:
-        testsuite config > testsuite teststep > testcase config > testcase teststep > api
+        testsuite config > testsuite test > testcase config > testcase test > api
 
         base_url/verify priority:
-        testcase teststep > testcase config > testsuite teststep > testsuite config > api
+        testcase test > testcase config > testsuite test > testsuite config > api
 
     Args:
-        teststeps (list):
+        tests (list):
         config (dict):
 
     Returns:
-        list: overrided teststeps
+        list: overrided tests
 
     """
     config_variables = config.pop("variables", {})
@@ -745,80 +745,80 @@ def __parse_teststeps(teststeps, config, project_mapping):
     config_verify = config.pop("verify", True)
     functions = project_mapping.get("functions", {})
 
-    for teststep in teststeps:
+    for test_dict in tests:
 
-        # base_url & verify: priority teststep > config
+        # base_url & verify: priority test_dict > config
         if config_base_url:
-            teststep.setdefault("base_url", config_base_url)
-        teststep.setdefault("verify", config_verify)
+            test_dict.setdefault("base_url", config_base_url)
+        test_dict.setdefault("verify", config_verify)
 
-        if "testcase_def" in teststep:
-            # teststep is nested testcase
+        if "testcase_def" in test_dict:
+            # test_dict is nested testcase
 
-            # 1, testsuite config => testsuite teststeps
-            # override teststep variables
-            teststep["variables"] = utils.extend_variables(
-                teststep.pop("variables", {}),
+            # 1, testsuite config => testsuite tests
+            # override test_dict variables
+            test_dict["variables"] = utils.extend_variables(
+                test_dict.pop("variables", {}),
                 config_variables
             )
 
-            # parse teststep name
+            # parse test_dict name
             try:
-                teststep["name"] = parse_data(
-                    teststep.pop("name", ""),
-                    teststep["variables"],
+                test_dict["name"] = parse_data(
+                    test_dict.pop("name", ""),
+                    test_dict["variables"],
                     functions
                 )
             except exceptions.VariableNotFound:
                 pass
 
-            # 2, testsuite teststep => testcase config
-            testcase_def = teststep.pop("testcase_def")
-            _extend_with_testcase(teststep, testcase_def)
+            # 2, testsuite test_dict => testcase config
+            testcase_def = test_dict.pop("testcase_def")
+            _extend_with_testcase(test_dict, testcase_def)
 
-            # 3, testcase config => testcase teststep
-            _parse_testcase(teststep, project_mapping)
+            # 3, testcase config => testcase test_dict
+            _parse_testcase(test_dict, project_mapping)
 
         else:
-            # teststep is API test, has two cases.
-            # (1) teststep has API reference
-            # (2) teststep is defined directly
+            # test_dict is API test, has two cases.
+            # (1) test_dict has API reference
+            # (2) test_dict is defined directly
 
-            # 1, config => teststeps
-            # override teststep variables
-            teststep["variables"] = utils.extend_variables(
-                teststep.pop("variables", {}),
+            # 1, config => tests
+            # override test_dict variables
+            test_dict["variables"] = utils.extend_variables(
+                test_dict.pop("variables", {}),
                 config_variables
             )
 
-            # parse teststep name
+            # parse test_dict name
             try:
-                teststep["name"] = parse_data(
-                    teststep.pop("name", ""),
-                    teststep["variables"],
+                test_dict["name"] = parse_data(
+                    test_dict.pop("name", ""),
+                    test_dict["variables"],
                     functions
                 )
             except exceptions.VariableNotFound:
                 pass
 
-            if "api_def" in teststep:
+            if "api_def" in test_dict:
                 # case (1)
-                # 2, teststep => api
-                api_def_dict = teststep.pop("api_def")
-                _extend_with_api(teststep, api_def_dict)
+                # 2, test_dict => api
+                api_def_dict = test_dict.pop("api_def")
+                _extend_with_api(test_dict, api_def_dict)
             else:
                 # case (2)
-                if "base_url" in teststep:
-                    base_url = teststep.pop("base_url")
-                    teststep["request"]["url"] = utils.build_url(
+                if "base_url" in test_dict:
+                    base_url = test_dict.pop("base_url")
+                    test_dict["request"]["url"] = utils.build_url(
                         base_url,
-                        teststep["request"]["url"]
+                        test_dict["request"]["url"]
                     )
 
 
 def _parse_testcase(testcase, project_mapping):
     __parse_config(testcase["config"], project_mapping)
-    __parse_teststeps(testcase["teststeps"], testcase["config"], project_mapping)
+    __parse_tests(testcase["tests"], testcase["config"], project_mapping)
 
 
 def parse_tests(tests_mapping):
@@ -841,8 +841,8 @@ def parse_tests(tests_mapping):
                             "path": "testcase1_path",
                             "variables": [],                # optional, priority 2
                         },
-                        "teststeps": [
-                            # teststep data structure
+                        "tests": [
+                            # test data structure
                             {
                                 'name': 'test step desc1',
                                 'variables': [],            # optional, priority 3
@@ -853,7 +853,7 @@ def parse_tests(tests_mapping):
                                     'request': {},
                                 }
                             },
-                            teststep2   # another teststep dict
+                            test_dict_2   # another test dict
                         ]
                     },
                     testcase_dict_2     # another testcase dict
