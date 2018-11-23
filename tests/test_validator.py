@@ -24,8 +24,8 @@ class TestValidator(unittest.TestCase):
                         "path": "testcase1_path",
                         "variables": [],                    # optional
                     },
-                    "teststeps": [
-                        # teststep data structure
+                    "tests": [
+                        # test data structure
                         {
                             'name': 'test step desc1',
                             'variables': [],    # optional
@@ -33,7 +33,7 @@ class TestValidator(unittest.TestCase):
                             'validate': [],
                             'request': {}
                         },
-                        # teststep2   # another teststep dict
+                        # test_dict2   # another test dict
                     ]
                 },
                 # testcase_dict_2     # another testcase dict

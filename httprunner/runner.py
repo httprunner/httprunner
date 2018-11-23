@@ -19,15 +19,15 @@ class Runner(object):
             }
         >>> runner = Runner(config, functions)
 
-        >>> teststep = {
-                "name": "teststep description",
+        >>> test_dict = {
+                "name": "test description",
                 "variables": [],        # optional
                 "request": {
                     "url": "http://127.0.0.1:5000/api/users/1000",
                     "method": "GET"
                 }
             }
-        >>> runner.run_test(teststep)
+        >>> runner.run_test(test_dict)
 
     """
 
@@ -68,32 +68,32 @@ class Runner(object):
         if self.testcase_teardown_hooks:
             self.do_hook_actions(self.testcase_teardown_hooks)
 
-    def _handle_skip_feature(self, teststep_dict):
-        """ handle skip feature for teststep
+    def _handle_skip_feature(self, test_dict):
+        """ handle skip feature for test
             - skip: skip current test unconditionally
             - skipIf: skip current test if condition is true
             - skipUnless: skip current test unless condition is true
 
         Args:
-            teststep_dict (dict): teststep info
+            test_dict (dict): test info
 
         Raises:
-            SkipTest: skip teststep
+            SkipTest: skip test
 
         """
         # TODO: move skip to initialize
         skip_reason = None
 
-        if "skip" in teststep_dict:
-            skip_reason = teststep_dict["skip"]
+        if "skip" in test_dict:
+            skip_reason = test_dict["skip"]
 
-        elif "skipIf" in teststep_dict:
-            skip_if_condition = teststep_dict["skipIf"]
+        elif "skipIf" in test_dict:
+            skip_if_condition = test_dict["skipIf"]
             if self.session_context.eval_content(skip_if_condition):
                 skip_reason = "{} evaluate to True".format(skip_if_condition)
 
-        elif "skipUnless" in teststep_dict:
-            skip_unless_condition = teststep_dict["skipUnless"]
+        elif "skipUnless" in test_dict:
+            skip_unless_condition = test_dict["skipUnless"]
             if not self.session_context.eval_content(skip_unless_condition):
                 skip_reason = "{} evaluate to False".format(skip_unless_condition)
 
@@ -106,11 +106,11 @@ class Runner(object):
             # TODO: check hook function if valid
             self.session_context.eval_content(action)
 
-    def _run_teststep(self, teststep_dict):
+    def _run_test(self, test_dict):
         """ run single teststep.
 
         Args:
-            teststep_dict (dict): teststep info
+            test_dict (dict): teststep info
                 {
                     "name": "teststep description",
                     "skip": "skip this test unconditionally",
@@ -139,28 +139,28 @@ class Runner(object):
 
         """
         # check skip
-        self._handle_skip_feature(teststep_dict)
+        self._handle_skip_feature(test_dict)
 
         # prepare
-        teststep_dict = utils.lower_test_dict_keys(teststep_dict)
-        teststep_variables = teststep_dict.get("variables", {})
-        self.session_context.init_teststep_variables(teststep_variables)
+        test_dict = utils.lower_test_dict_keys(test_dict)
+        test_variables = test_dict.get("variables", {})
+        self.session_context.init_test_variables(test_variables)
 
-        # parse teststep request
-        raw_request = teststep_dict.get('request', {})
-        parsed_teststep_request = self.session_context.eval_content(raw_request)
-        self.session_context.update_teststep_variables("request", parsed_teststep_request)
+        # parse test request
+        raw_request = test_dict.get('request', {})
+        parsed_test_request = self.session_context.eval_content(raw_request)
+        self.session_context.update_test_variables("request", parsed_test_request)
 
         # setup hooks
-        setup_hooks = teststep_dict.get("setup_hooks", [])
+        setup_hooks = test_dict.get("setup_hooks", [])
         setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
         self.do_hook_actions(setup_hooks)
 
         try:
-            url = parsed_teststep_request.pop('url')
-            method = parsed_teststep_request.pop('method')
-            parsed_teststep_request.setdefault("verify", self.verify)
-            group_name = parsed_teststep_request.pop("group", None)
+            url = parsed_test_request.pop('url')
+            method = parsed_test_request.pop('method')
+            parsed_test_request.setdefault("verify", self.verify)
+            group_name = parsed_test_request.pop("group", None)
         except KeyError:
             raise exceptions.ParamsError("URL or METHOD missed!")
 
@@ -173,38 +173,38 @@ class Runner(object):
             raise exceptions.ParamsError(err_msg)
 
         logger.log_info("{method} {url}".format(method=method, url=url))
-        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_teststep_request))
+        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
 
         # request
         resp = self.http_client_session.request(
             method,
             url,
             name=group_name,
-            **parsed_teststep_request
+            **parsed_test_request
         )
         resp_obj = response.ResponseObject(resp)
 
         # teardown hooks
-        teardown_hooks = teststep_dict.get("teardown_hooks", [])
+        teardown_hooks = test_dict.get("teardown_hooks", [])
         if teardown_hooks:
             logger.log_info("start to run teardown hooks")
-            self.session_context.update_teststep_variables("response", resp_obj)
+            self.session_context.update_test_variables("response", resp_obj)
             self.do_hook_actions(teardown_hooks)
 
         # extract
-        extractors = teststep_dict.get("extract", [])
+        extractors = test_dict.get("extract", [])
         extracted_variables_mapping = resp_obj.extract_response(extractors)
         self.session_context.update_seesion_variables(extracted_variables_mapping)
 
         # validate
-        validators = teststep_dict.get("validate", [])
+        validators = test_dict.get("validate", [])
         try:
             self.evaluated_validators = self.session_context.validate(validators, resp_obj)
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
             # log request
             err_req_msg = "request: \n"
-            err_req_msg += "headers: {}\n".format(parsed_teststep_request.pop("headers", {}))
-            for k, v in parsed_teststep_request.items():
+            err_req_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
+            for k, v in parsed_test_request.items():
                 err_req_msg += "{}: {}\n".format(k, repr(v))
             logger.log_error(err_req_msg)
 
@@ -223,18 +223,18 @@ class Runner(object):
         config = testcase_dict.get("config", {})
         test_runner = Runner(config, self.functions, self.http_client_session)
 
-        teststeps = testcase_dict.get("teststeps", [])
-        for index, teststep_dict in enumerate(teststeps):
-            test_runner.run_test(teststep_dict)
+        tests = testcase_dict.get("tests", [])
+        for index, test_dict in enumerate(tests):
+            test_runner.run_test(test_dict)
 
         self.session_context.update_seesion_variables(test_runner.extract_sessions())
 
-    def run_test(self, teststep_dict):
+    def run_test(self, test_dict):
         """ run single teststep of testcase.
-            teststep_dict may be in 3 types.
+            test_dict may be in 3 types.
 
         Args:
-            teststep_dict (dict):
+            test_dict (dict):
 
                 # teststep
                 {
@@ -249,7 +249,7 @@ class Runner(object):
                 # embeded testcase
                 {
                     "config": {...},
-                    "teststeps": [
+                    "tests": [
                         {...},
                         {...}
                     ]
@@ -262,11 +262,11 @@ class Runner(object):
                 }
 
         """
-        if "config" in teststep_dict:
-            self._run_testcase(teststep_dict)
+        if "config" in test_dict:
+            self._run_testcase(test_dict)
         else:
             # api
-            self._run_teststep(teststep_dict)
+            self._run_test(test_dict)
 
     def extract_sessions(self):
         """

@@ -19,9 +19,9 @@ def is_testcase(data_structure):
                     "variables": [],    # optional
                     "request": {}       # optional
                 },
-                "teststeps": [
-                    teststep1,
-                    {   # teststep2
+                "tests": [
+                    test_dict1,
+                    {   # test_dict2
                         'name': 'test step desc2',
                         'variables': [],    # optional
                         'extract': [],      # optional
@@ -40,10 +40,10 @@ def is_testcase(data_structure):
     if not isinstance(data_structure, dict):
         return False
 
-    if "teststeps" not in data_structure:
+    if "tests" not in data_structure:
         return False
 
-    if not isinstance(data_structure["teststeps"], list):
+    if not isinstance(data_structure["tests"], list):
         return False
 
     return True
@@ -67,8 +67,8 @@ def is_testcases(data_structure):
                             "path": "testcase1_path",
                             "variables": [],                    # optional
                         },
-                        "teststeps": [
-                            # teststep data structure
+                        "tests": [
+                            # test data structure
                             {
                                 'name': 'test step desc1',
                                 'variables': [],    # optional
@@ -76,7 +76,7 @@ def is_testcases(data_structure):
                                 'validate': [],
                                 'request': {}
                             },
-                            teststep2   # another teststep dict
+                            test_dict_2   # another test dict
                         ]
                     },
                     testcase_dict_2     # another testcase dict

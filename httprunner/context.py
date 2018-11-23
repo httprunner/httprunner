@@ -17,11 +17,11 @@ class SessionContext(object):
     def __init__(self, functions, variables=None):
         self.session_variables_mapping = utils.ensure_mapping_format(variables or {})
         self.FUNCTIONS_MAPPING = functions
-        self.teststep_variables_mapping = {}
-        self.init_teststep_variables()
+        self.test_variables_mapping = {}
+        self.init_test_variables()
 
-    def init_teststep_variables(self, variables_mapping=None):
-        """ init teststep variables, called when each teststep(api) starts.
+    def init_test_variables(self, variables_mapping=None):
+        """ init test variables, called when each test(api) starts.
             variables_mapping will be evaluated first.
 
         Args:
@@ -38,14 +38,14 @@ class SessionContext(object):
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
         for variable_name, variable_value in variables_mapping.items():
             variable_value = self.eval_content(variable_value)
-            self.update_teststep_variables(variable_name, variable_value)
+            self.update_test_variables(variable_name, variable_value)
 
-        self.teststep_variables_mapping.update(self.session_variables_mapping)
+        self.test_variables_mapping.update(self.session_variables_mapping)
 
-    def update_teststep_variables(self, variable_name, variable_value):
-        """ update teststep variables, these variables are only valid in the current teststep.
+    def update_test_variables(self, variable_name, variable_value):
+        """ update test variables, these variables are only valid in the current test.
         """
-        self.teststep_variables_mapping[variable_name] = variable_value
+        self.test_variables_mapping[variable_name] = variable_value
 
     def update_seesion_variables(self, variables_mapping):
         """ update session with extracted variables mapping.
@@ -53,7 +53,7 @@ class SessionContext(object):
         """
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
         self.session_variables_mapping.update(variables_mapping)
-        self.teststep_variables_mapping.update(self.session_variables_mapping)
+        self.test_variables_mapping.update(self.session_variables_mapping)
 
     def eval_content(self, content):
         """ evaluate content recursively, take effect on each variable and function in content.
@@ -61,7 +61,7 @@ class SessionContext(object):
         """
         return parser.parse_data(
             content,
-            self.teststep_variables_mapping,
+            self.test_variables_mapping,
             self.FUNCTIONS_MAPPING
         )
 

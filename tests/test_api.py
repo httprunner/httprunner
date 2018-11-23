@@ -28,7 +28,7 @@ class TestHttpRunner(ApiServerUnittest):
                 },
                 'variables': []
             },
-            'teststeps': [
+            'tests': [
                 {
                     'name': '/api/get-token',
                     'request': {
@@ -119,7 +119,7 @@ class TestHttpRunner(ApiServerUnittest):
                     },
                     'variables': []
                 },
-                "teststeps": [
+                "tests": [
                     {
                         "name": "post data",
                         "request": {
@@ -182,7 +182,7 @@ class TestHttpRunner(ApiServerUnittest):
         testcases = [
             {
                 "config": {"name": "test teardown hooks"},
-                "teststeps": [
+                "tests": [
                     {
                         "name": "test teardown hooks",
                         "request": {
@@ -222,7 +222,7 @@ class TestHttpRunner(ApiServerUnittest):
                 "config": {
                     "name": "test teardown hooks"
                 },
-                "teststeps": [
+                "tests": [
                     {
                         "name": "test teardown hooks",
                         "request": {
@@ -256,7 +256,7 @@ class TestHttpRunner(ApiServerUnittest):
                 "config": {
                     "name": "test teardown hooks"
                 },
-                "teststeps": [
+                "tests": [
                     {
                         "name": "test teardown hooks",
                         "request": {
@@ -368,28 +368,28 @@ class TestHttpRunner(ApiServerUnittest):
         test_suite = runner._add_tests(tests_mapping)
 
         self.assertEqual(
-            test_suite._tests[0].teststeps[0]['name'],
+            test_suite._tests[0].tests[0]['name'],
             'get token with iOS/10.1 and test1'
         )
         # TODO: add parameterize
         # self.assertEqual(
-        #     test_suite._tests[1].teststeps[0]['name'],
+        #     test_suite._tests[1].tests[0]['name'],
         #     'get token with iOS/10.1 and test2'
         # )
         # self.assertEqual(
-        #     test_suite._tests[2].teststeps[0]['name'],
+        #     test_suite._tests[2].tests[0]['name'],
         #     'get token with iOS/10.2 and test1'
         # )
         # self.assertEqual(
-        #     test_suite._tests[3].teststeps[0]['name'],
+        #     test_suite._tests[3].tests[0]['name'],
         #     'get token with iOS/10.2 and test2'
         # )
         # self.assertEqual(
-        #     test_suite._tests[4].teststeps[0]['name'],
+        #     test_suite._tests[4].tests[0]['name'],
         #     'get token with iOS/10.3 and test1'
         # )
         # self.assertEqual(
-        #     test_suite._tests[5].teststeps[0]['name'],
+        #     test_suite._tests[5].tests[0]['name'],
         #     'get token with iOS/10.3 and test2'
         # )
 
@@ -419,13 +419,13 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(testcase_config["name"], "setup and reset all.")
         self.assertIn("path", testcase_config)
 
-        testcase_teststeps = testcases[0]["teststeps"]
-        self.assertEqual(len(testcase_teststeps), 2)
-        self.assertIn("api", testcase_teststeps[0])
-        self.assertEqual(testcase_teststeps[0]["name"], "get token (setup)")
-        self.assertIsInstance(testcase_teststeps[0]["variables"], list)
-        self.assertIn("api_def", testcase_teststeps[0])
-        self.assertEqual(testcase_teststeps[0]["api_def"]["request"]["url"], "/api/get-token")
+        testcase_tests = testcases[0]["tests"]
+        self.assertEqual(len(testcase_tests), 2)
+        self.assertIn("api", testcase_tests[0])
+        self.assertEqual(testcase_tests[0]["name"], "get token (setup)")
+        self.assertIsInstance(testcase_tests[0]["variables"], list)
+        self.assertIn("api_def", testcase_tests[0])
+        self.assertEqual(testcase_tests[0]["api_def"]["request"]["url"], "/api/get-token")
 
     def test_testcase_parser(self):
         testcase_path = "tests/testcases/setup.yml"
@@ -437,13 +437,13 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(parsed_testcases), 1)
 
         self.assertNotIn("variables", parsed_testcases[0]["config"])
-        self.assertEqual(len(parsed_testcases[0]["teststeps"]), 2)
+        self.assertEqual(len(parsed_testcases[0]["tests"]), 2)
 
-        teststep1 = parsed_testcases[0]["teststeps"][0]
-        self.assertEqual(teststep1["name"], "get token (setup)")
-        self.assertNotIn("api_def", teststep1)
-        self.assertEqual(teststep1["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
-        self.assertEqual(teststep1["request"]["url"], "http://127.0.0.1:5000/api/get-token")
+        test_dict1 = parsed_testcases[0]["tests"][0]
+        self.assertEqual(test_dict1["name"], "get token (setup)")
+        self.assertNotIn("api_def", test_dict1)
+        self.assertEqual(test_dict1["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
+        self.assertEqual(test_dict1["request"]["url"], "http://127.0.0.1:5000/api/get-token")
 
     def test_testcase_add_tests(self):
         testcase_path = "tests/testcases/setup.yml"
@@ -454,10 +454,10 @@ class TestApi(ApiServerUnittest):
         test_suite = runner._add_tests(tests_mapping)
 
         self.assertEqual(len(test_suite._tests), 1)
-        teststeps = test_suite._tests[0].teststeps
-        self.assertEqual(teststeps[0]["name"], "get token (setup)")
-        self.assertEqual(teststeps[0]["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
-        self.assertIn("api", teststeps[0])
+        tests = test_suite._tests[0].tests
+        self.assertEqual(tests[0]["name"], "get token (setup)")
+        self.assertEqual(tests[0]["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
+        self.assertIn("api", tests[0])
 
     def test_testcase_simple_run_suite(self):
         testcase_path = "tests/testcases/setup.yml"
@@ -504,14 +504,14 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(testcase_config["name"], "create users with uid")
         self.assertIn("path", testcase_config)
 
-        testcase_teststeps = testcases[0]["teststeps"]
-        self.assertEqual(len(testcase_teststeps), 2)
-        self.assertIn("testcase_def", testcase_teststeps[0])
-        self.assertEqual(testcase_teststeps[0]["name"], "create user 1000 and check result.")
-        self.assertIsInstance(testcase_teststeps[0]["testcase_def"], dict)
-        self.assertEqual(testcase_teststeps[0]["testcase_def"]["config"]["name"], "create user and check result.")
-        self.assertEqual(len(testcase_teststeps[0]["testcase_def"]["teststeps"]), 4)
-        self.assertEqual(testcase_teststeps[0]["testcase_def"]["teststeps"][0]["name"], "setup and reset all (override).")
+        testcase_tests = testcases[0]["tests"]
+        self.assertEqual(len(testcase_tests), 2)
+        self.assertIn("testcase_def", testcase_tests[0])
+        self.assertEqual(testcase_tests[0]["name"], "create user 1000 and check result.")
+        self.assertIsInstance(testcase_tests[0]["testcase_def"], dict)
+        self.assertEqual(testcase_tests[0]["testcase_def"]["config"]["name"], "create user and check result.")
+        self.assertEqual(len(testcase_tests[0]["testcase_def"]["tests"]), 4)
+        self.assertEqual(testcase_tests[0]["testcase_def"]["tests"][0]["name"], "setup and reset all (override).")
 
     def test_testsuite_parser(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -521,17 +521,17 @@ class TestApi(ApiServerUnittest):
 
         parsed_testcases = tests_mapping["testcases"]
         self.assertEqual(len(parsed_testcases), 1)
-        self.assertEqual(len(parsed_testcases[0]["teststeps"]), 2)
+        self.assertEqual(len(parsed_testcases[0]["tests"]), 2)
 
-        testcase1 = parsed_testcases[0]["teststeps"][0]
+        testcase1 = parsed_testcases[0]["tests"][0]
         self.assertEqual(testcase1["config"]["name"], "create user 1000 and check result.")
         self.assertNotIn("testcase_def", testcase1)
-        self.assertEqual(len(testcase1["teststeps"]), 4)
+        self.assertEqual(len(testcase1["tests"]), 4)
         self.assertEqual(
-            testcase1["teststeps"][0]["teststeps"][0]["request"]["url"],
+            testcase1["tests"][0]["tests"][0]["request"]["url"],
             "http://127.0.0.1:5000/api/get-token"
         )
-        self.assertEqual(len(testcase1["teststeps"][0]["teststeps"][0]["variables"]["device_sn"]), 15)
+        self.assertEqual(len(testcase1["tests"][0]["tests"][0]["variables"]["device_sn"]), 15)
 
     def test_testsuite_add_tests(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -542,8 +542,8 @@ class TestApi(ApiServerUnittest):
         test_suite = runner._add_tests(tests_mapping)
 
         self.assertEqual(len(test_suite._tests), 1)
-        teststeps = test_suite._tests[0].teststeps
-        self.assertEqual(teststeps[0]["config"]["name"], "create user 1000 and check result.")
+        tests = test_suite._tests[0].tests
+        self.assertEqual(tests[0]["config"]["name"], "create user 1000 and check result.")
 
     def test_testsuite_run_suite(self):
         testcase_path = "tests/testsuites/create_users.yml"
