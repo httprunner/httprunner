@@ -15,7 +15,10 @@ class ResponseObject(object):
 
     def __init__(self, resp_obj):
         """ initialize with a requests.Response object
-        @param (requests.Response instance) resp_obj
+
+        Args:
+            resp_obj (instance): requests.Response instance
+
         """
         self.resp_obj = resp_obj
 
@@ -36,11 +39,22 @@ class ResponseObject(object):
     def _extract_field_with_regex(self, field):
         """ extract field from response content with regex.
             requests.Response body could be json or html text.
-        @param (str) field should only be regex string that matched r".*\(.*\).*"
-        e.g.
-            self.text: "LB123abcRB789"
-            field: "LB[\d]*(.*)RB[\d]*"
-            return: abc
+
+        Args:
+            field (str): regex string that matched r".*\(.*\).*"
+
+        Returns:
+            str: matched content.
+
+        Raises:
+            exceptions.ExtractFailure: If no content matched with regex.
+
+        Examples:
+            >>> # self.text: "LB123abcRB789"
+            >>> filed = "LB[\d]*(.*)RB[\d]*"
+            >>> _extract_field_with_regex(field)
+            abc
+
         """
         matched = re.search(field, self.text)
         if not matched:
@@ -53,14 +67,17 @@ class ResponseObject(object):
 
     def _extract_field_with_delimiter(self, field):
         """ response content could be json or html text.
-        @param (str) field should be string joined by delimiter.
-        e.g.
-            "status_code"
-            "headers"
-            "cookies"
-            "content"
-            "headers.content-type"
-            "content.person.name.first_name"
+
+        Args:
+            field (str): string joined by delimiter.
+            e.g.
+                "status_code"
+                "headers"
+                "cookies"
+                "content"
+                "headers.content-type"
+                "content.person.name.first_name"
+
         """
         # string.split(sep=None, maxsplit=-1) -> list of strings
         # e.g. "content.person.name" => ["content", "person.name"]
@@ -207,14 +224,20 @@ class ResponseObject(object):
 
     def extract_response(self, extractors):
         """ extract value from requests.Response and store in OrderedDict.
-        @param (list) extractors
-            [
-                {"resp_status_code": "status_code"},
-                {"resp_headers_content_type": "headers.content-type"},
-                {"resp_content": "content"},
-                {"resp_content_person_first_name": "content.person.name.first_name"}
-            ]
-        @return (OrderDict) variable binds ordered dict
+
+        Args:
+            extractors (list):
+
+                [
+                    {"resp_status_code": "status_code"},
+                    {"resp_headers_content_type": "headers.content-type"},
+                    {"resp_content": "content"},
+                    {"resp_content_person_first_name": "content.person.name.first_name"}
+                ]
+
+        Returns:
+            OrderDict: variable binds ordered dict
+
         """
         if not extractors:
             return {}

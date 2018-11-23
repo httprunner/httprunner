@@ -150,20 +150,27 @@ def parse_function(content):
 
 
 def parse_validator(validator):
-    """ parse validator, validator maybe in two format
-    @param (dict) validator
-        format1: this is kept for compatiblity with the previous versions.
-            {"check": "status_code", "comparator": "eq", "expect": 201}
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
-        format2: recommended new version
-            {'eq': ['status_code', 201]}
-            {'eq': ['$resp_body_success', True]}
-    @return (dict) validator info
-        {
-            "check": "status_code",
-            "expect": 201,
-            "comparator": "eq"
-        }
+    """ parse validator
+
+    Args:
+        validator (dict): validator maybe in two formats:
+
+            format1: this is kept for compatiblity with the previous versions.
+                {"check": "status_code", "comparator": "eq", "expect": 201}
+                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+            format2: recommended new version
+                {'eq': ['status_code', 201]}
+                {'eq': ['$resp_body_success', True]}
+
+    Returns
+        dict: validator info
+
+            {
+                "check": "status_code",
+                "expect": 201,
+                "comparator": "eq"
+            }
+
     """
     if not isinstance(validator, dict):
         raise exceptions.ParamsError("invalid validator: {}".format(validator))

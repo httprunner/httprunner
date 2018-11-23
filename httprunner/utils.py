@@ -64,8 +64,17 @@ def build_url(base_url, path):
 
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
-    @param (dict/list/string) json_content
-        json_content = {
+
+    Args:
+        json_content (dict/list/string): content to be queried.
+        query (str): query string.
+        delimiter (str): delimiter symbol.
+
+    Returns:
+        str: queried result.
+
+    Examples:
+        >>> json_content = {
             "ids": [1, 2, 3, 4],
             "person": {
                 "name": {
@@ -76,11 +85,16 @@ def query_json(json_content, query, delimiter='.'):
                 "cities": ["Guangzhou", "Shenzhen"]
             }
         }
-    @param (str) query
-        "person.name.first_name"  =>  "Leo"
-        "person.name.first_name.0"  =>  "L"
-        "person.cities.0"         =>  "Guangzhou"
-    @return queried result
+        >>>
+        >>> query_json(json_content, "person.name.first_name")
+        >>> Leo
+        >>>
+        >>> query_json(json_content, "person.name.first_name.0")
+        >>> L
+        >>>
+        >>> query_json(json_content, "person.cities.0")
+        >>> Guangzhou
+
     """
     raise_flag = False
     response_body = u"response body: {}\n".format(json_content)
@@ -505,21 +519,28 @@ def create_scaffold(project_name):
 
 def gen_cartesian_product(*args):
     """ generate cartesian product for lists
-    @param
-        (list) args
-            [{"a": 1}, {"a": 2}],
+
+    Args:
+        args (list of list): lists to be generated with cartesian product
+
+    Returns:
+        list: cartesian product in list
+
+    Examples:
+
+        >>> arg1 = [{"a": 1}, {"a": 2}]
+        >>> arg2 = [{"x": 111, "y": 112}, {"x": 121, "y": 122}]
+        >>> args = [arg1, arg2]
+        >>> gen_cartesian_product(*args)
+        >>> # same as below
+        >>> gen_cartesian_product(arg1, arg2)
             [
-                {"x": 111, "y": 112},
-                {"x": 121, "y": 122}
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
             ]
-    @return
-        cartesian product in list
-        [
-            {'a': 1, 'x': 111, 'y': 112},
-            {'a': 1, 'x': 121, 'y': 122},
-            {'a': 2, 'x': 111, 'y': 112},
-            {'a': 2, 'x': 121, 'y': 122}
-        ]
+
     """
     if not args:
         return []
