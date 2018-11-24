@@ -47,13 +47,15 @@ class HttpRunner(object):
                 except exceptions.MyBaseFailure as ex:
                     self.fail(str(ex))
                 finally:
-                    if hasattr(test_runner.http_client_session, "meta_data"):
-                        self.meta_data = test_runner.http_client_session.meta_data
-                        self.meta_data["validators"] = test_runner.evaluated_validators
-                        test_runner.http_client_session.init_meta_data()
+                    self.meta_data = test_runner.get_test_data()
 
-            # TODO: refactor
-            test.__doc__ = test_dict.get("name") or test_dict.get("config", {}).get("name")
+            if "config" in test_dict:
+                # run nested testcase
+                test.__doc__ = test_dict["config"].get("name")
+            else:
+                # run api test
+                test.__doc__ = test_dict.get("name")
+
             return test
 
         test_suite = unittest.TestSuite()
