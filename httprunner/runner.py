@@ -68,6 +68,19 @@ class Runner(object):
         if self.testcase_teardown_hooks:
             self.do_hook_actions(self.testcase_teardown_hooks, "teardown")
 
+    def clear_test_data(self):
+        """ clear request and response data
+        """
+        self.evaluated_validators = []
+        self.http_client_session.init_meta_data()
+
+    def get_test_data(self):
+        """ get request/response data and validate results
+        """
+        meta_data = self.http_client_session.meta_data
+        meta_data["validators"] = self.evaluated_validators
+        return meta_data
+
     def _handle_skip_feature(self, test_dict):
         """ handle skip feature for test
             - skip: skip current test unconditionally
@@ -162,6 +175,9 @@ class Runner(object):
             exceptions.ExtractFailure
 
         """
+        # clear meta data first to ensure independence for each test
+        self.clear_test_data()
+
         # check skip
         self._handle_skip_feature(test_dict)
 
@@ -270,7 +286,7 @@ class Runner(object):
                     }
                 }
 
-                # embeded testcase
+                # nested testcase
                 {
                     "config": {...},
                     "tests": [
@@ -287,6 +303,7 @@ class Runner(object):
 
         """
         if "config" in test_dict:
+            # nested testcase
             self._run_testcase(test_dict)
         else:
             # api

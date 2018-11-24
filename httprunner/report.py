@@ -186,11 +186,8 @@ class HtmlTestResult(unittest.TextTestResult):
             'name': test.shortDescription(),
             'status': status,
             'attachment': attachment,
-            "meta_data": {}
+            "meta_data": test.meta_data
         }
-        if hasattr(test, "meta_data"):
-            data["meta_data"] = test.meta_data
-
         self.records.append(data)
 
     def startTestRun(self):
