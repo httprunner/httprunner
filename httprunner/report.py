@@ -78,37 +78,36 @@ def aggregate_stat(origin_stat, new_stat):
             origin_stat[key] += new_stat[key]
 
 
-def render_html_report(summary, html_report_name=None, html_report_template=None):
+def render_html_report(summary, report_template=None, report_dir=None):
     """ render html report with specified report name and template
-        if html_report_name is not specified, use current datetime
-        if html_report_template is not specified, use default report template
+
+    Args:
+        report_template (str): specify html report template path
+        report_dir (str): specify html report save directory
+
     """
-    if not html_report_template:
-        html_report_template = os.path.join(
+    if not report_template:
+        report_template = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
             "templates",
             "report_template.html"
         )
         logger.log_debug("No html report template specified, use default.")
     else:
-        logger.log_info("render with html report template: {}".format(html_report_template))
+        logger.log_info("render with html report template: {}".format(report_template))
 
     logger.log_info("Start to render Html report ...")
     logger.log_debug("render data: {}".format(summary))
 
-    report_dir_path = os.path.join(os.getcwd(), "reports")
+    report_dir = report_dir or os.path.join(os.getcwd(), "reports")
+    if not os.path.isdir(report_dir):
+        os.makedirs(report_dir)
+
     start_at_timestamp = int(summary["time"]["start_at"])
     summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-    if html_report_name:
-        summary["html_report_name"] = html_report_name
-        report_dir_path = os.path.join(report_dir_path, html_report_name)
-        html_report_name += "-{}.html".format(start_at_timestamp)
-    else:
-        summary["html_report_name"] = ""
-        html_report_name = "{}.html".format(start_at_timestamp)
-
-    if not os.path.isdir(report_dir_path):
-        os.makedirs(report_dir_path)
+    summary["html_report_name"] = ""
+    html_report_name = "{}.html".format(start_at_timestamp)
+    report_path = os.path.join(report_dir, html_report_name)
 
     for index, suite_summary in enumerate(summary["details"]):
         if not suite_summary.get("name"):
@@ -118,9 +117,8 @@ def render_html_report(summary, html_report_name=None, html_report_template=None
             stringify_data(meta_data, 'request')
             stringify_data(meta_data, 'response')
 
-    with io.open(html_report_template, "r", encoding='utf-8') as fp_r:
+    with io.open(report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
-        report_path = os.path.join(report_dir_path, html_report_name)
         with io.open(report_path, 'w', encoding='utf-8') as fp_w:
             rendered_content = Template(
                 template_content,

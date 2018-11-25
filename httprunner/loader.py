@@ -585,7 +585,7 @@ def load_tests(path, dot_env_path=None):
     """ load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:
-        path (str/list): testcase file/foler path.
+        path (str): testcase/testsuite file/foler path.
             path could be in 2 types:
                 - absolute/relative file path
                 - absolute/relative folder path

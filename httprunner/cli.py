@@ -25,15 +25,6 @@ def main_hrun():
         'testcase_paths', nargs='*',
         help="testcase file path")
     parser.add_argument(
-        '--no-html-report', action='store_true', default=False,
-        help="do not generate html report.")
-    parser.add_argument(
-        '--html-report-name',
-        help="specify html report name, only effective when generating html report.")
-    parser.add_argument(
-        '--html-report-template',
-        help="specify html report template path.")
-    parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
     parser.add_argument(
@@ -42,6 +33,12 @@ def main_hrun():
     parser.add_argument(
         '--dot-env-path',
         help="Specify .env file path, which is useful for keeping sensitive data.")
+    parser.add_argument(
+        '--report-template',
+        help="specify report template path.")
+    parser.add_argument(
+        '--report-dir',
+        help="specify report save directory.")
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
@@ -80,26 +77,20 @@ def main_hrun():
         create_scaffold(project_name)
         exit(0)
 
-    for path in args.testcase_paths:
-        try:
-            runner = HttpRunner(failfast=args.failfast)
-            runner.run(
-                path,
-                dot_env_path=args.dot_env_path,
-                save_tests=args.save_tests
-            )
-        except Exception:
-            logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
-            raise
+    runner = HttpRunner(
+        failfast=args.failfast,
+        save_tests=args.save_tests,
+        report_template=args.report_template,
+        report_dir=args.report_dir
+    )
+    try:
+        for path in args.testcase_paths:
+            runner.run(path, dot_env_path=args.dot_env_path)
+    except Exception:
+        logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
+        raise
 
-    if not args.no_html_report:
-        runner.gen_html_report(
-            html_report_name=args.html_report_name,
-            html_report_template=args.html_report_template
-        )
-
-    summary = runner.summary
-    return 0 if summary["success"] else 1
+    return 0
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
