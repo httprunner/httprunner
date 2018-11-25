@@ -604,9 +604,36 @@ def prettify_json_file(file_list):
         print("success: {}".format(outfile))
 
 
+def dump_json_file(json_data, pwd_dir_path, dump_file_name):
+    """ dump json data to file
+    """
+    logs_dir_path = os.path.join(pwd_dir_path, "logs")
+    if not os.path.isdir(logs_dir_path):
+        os.makedirs(logs_dir_path)
+
+    dump_file_path = os.path.join(logs_dir_path, dump_file_name)
+
+    with open(dump_file_path, 'w', encoding='utf-8') as outfile:
+        json.dump(json_data, outfile, indent=4, separators=(',', ': '))
+
+    msg = "dump file: {}".format(dump_file_path)
+    logger.color_print(msg, "BLUE")
+
+
+def _prepare_dump_info(project_mapping, tag_name):
+    """ prepare dump file info.
+    """
+    test_path = project_mapping.get("test_path") or "tests_mapping"
+    pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
+    file_name, file_suffix = os.path.splitext(os.path.basename(test_path))
+    dump_file_name = "{}.{}.json".format(file_name, tag_name)
+
+    return pwd_dir_path, dump_file_name
+
+
 def dump_tests(tests_mapping, tag_name):
-    """ dump all tests data (except functions) to json file.
-        the dumped files are located in PWD/logs folder.
+    """ dump loaded/parsed tests data (except functions) to json file.
+        the dumped file is located in PWD/logs folder.
 
     Args:
         tests_mapping (dict): data to dump
@@ -614,15 +641,7 @@ def dump_tests(tests_mapping, tag_name):
 
     """
     project_mapping = tests_mapping.get("project_mapping", {})
-    test_path = project_mapping.get("test_path") or "tests_mapping"
-    pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
-    file_name, file_suffix = os.path.splitext(os.path.basename(test_path))
-
-    logs_dir_path = os.path.join(pwd_dir_path, "logs")
-    if not os.path.isdir(logs_dir_path):
-        os.makedirs(logs_dir_path)
-
-    dump_file_path = os.path.join(logs_dir_path, "{}.{}.json".format(file_name, tag_name))
+    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, tag_name)
 
     tests_to_dump = {
         "project_mapping": {}
@@ -639,11 +658,14 @@ def dump_tests(tests_mapping, tag_name):
 
     tests_to_dump["testcases"] = tests_mapping["testcases"]
 
-    with open(dump_file_path, 'w', encoding='utf-8') as outfile:
-        json.dump(tests_to_dump, outfile, indent=4, separators=(',', ': '))
+    dump_json_file(tests_to_dump, pwd_dir_path, dump_file_name)
 
-    msg = "{} file generated successfully: {}".format(tag_name, dump_file_path)
-    logger.color_print(msg, "BLUE")
+
+def dump_summary(summary, project_mapping):
+    """ dump test result summary to json file.
+    """
+    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, "summary")
+    dump_json_file(summary, pwd_dir_path, dump_file_name)
 
 
 def get_python2_retire_msg():
