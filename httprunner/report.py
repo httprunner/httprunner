@@ -28,6 +28,10 @@ def get_platform():
 
 def get_summary(result):
     """ get summary from test result
+
+    Args:
+        result (instance): HtmlTestResult() instance
+
     """
     summary = {
         "success": result.wasSuccessful(),
@@ -47,14 +51,11 @@ def get_summary(result):
         - summary["stat"]["expectedFailures"] \
         - summary["stat"]["unexpectedSuccesses"]
 
-    if getattr(result, "records", None):
-        summary["time"] = {
-            'start_at': result.start_at,
-            'duration': result.duration
-        }
-        summary["records"] = result.records
-    else:
-        summary["records"] = []
+    summary["time"] = {
+        'start_at': result.start_at,
+        'duration': result.duration
+    }
+    summary["records"] = result.records
 
     return summary
 
@@ -173,9 +174,8 @@ def stringify_data(meta_data, request_or_response):
 
 
 class HtmlTestResult(unittest.TextTestResult):
-    """A html result class that can generate formatted html results.
-
-    Used by TextTestRunner.
+    """ A html result class that can generate formatted html results.
+        Used by TextTestRunner.
     """
     def __init__(self, stream, descriptions, verbosity):
         super(HtmlTestResult, self).__init__(stream, descriptions, verbosity)

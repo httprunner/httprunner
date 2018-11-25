@@ -16,14 +16,11 @@ class HttpRunner(object):
             kwargs (dict): key-value arguments used to initialize TextTestRunner.
             Commonly used arguments:
 
-            resultclass (class): HtmlTestResult or TextTestResult
             failfast (bool): False/True, stop the test run on the first error or failure.
-            http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         """
         self.exception_stage = "initialize HttpRunner()"
-        self.http_client_session = kwargs.pop("http_client_session", None)
-        kwargs.setdefault("resultclass", report.HtmlTestResult)
+        kwargs["resultclass"] = report.HtmlTestResult
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
         self.summary = None
@@ -63,7 +60,7 @@ class HttpRunner(object):
 
         for testcase in tests_mapping["testcases"]:
             config = testcase.get("config", {})
-            test_runner = runner.Runner(config, functions, self.http_client_session)
+            test_runner = runner.Runner(config, functions)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
             tests = testcase.get("tests", [])
@@ -125,7 +122,6 @@ class HttpRunner(object):
 
             self.summary["success"] &= testcase_summary["success"]
             testcase_summary["name"] = testcase.config.get("name")
-            testcase_summary["base_url"] = testcase.config.get("request", {}).get("base_url", "")
 
             in_out = utils.get_testcase_io(testcase)
             utils.print_io(in_out)

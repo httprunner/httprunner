@@ -870,13 +870,6 @@ def parse_tests(tests_mapping):
     """
     project_mapping = tests_mapping.get("project_mapping", {})
 
-    env_mapping = project_mapping.get("env", {})
-    # set OS environment variables
-    utils.set_os_environ(env_mapping)
-
     for testcase in tests_mapping["testcases"]:
         testcase.setdefault("config", {})
         _parse_testcase(testcase, project_mapping)
-
-    # unset OS environment variables
-    utils.unset_os_environ(env_mapping)
