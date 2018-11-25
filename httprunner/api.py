@@ -162,6 +162,9 @@ class HttpRunner(object):
         self.exception_stage = "aggregate results"
         self._summary = self._aggregate(results)
 
+        if self.save_tests:
+            utils.dump_summary(self._summary, tests_mapping["project_mapping"])
+
         # generate html report
         self.exception_stage = "generate html report"
         report_path = report.render_html_report(
