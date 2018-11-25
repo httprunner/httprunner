@@ -9,21 +9,27 @@ from httprunner import (exceptions, loader, logger, parser, report, runner,
 
 class HttpRunner(object):
 
-    def __init__(self, **kwargs):
+    def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None):
         """ initialize HttpRunner.
 
         Args:
-            kwargs (dict): key-value arguments used to initialize TextTestRunner.
-            Commonly used arguments:
-
-            failfast (bool): False/True, stop the test run on the first error or failure.
+            failfast (bool): stop the test run on the first error or failure.
+            save_tests (bool): save loaded/parsed tests to JSON file.
+            report_template (str): report template file path, template should be in Jinja2 format.
+            report_dir (str): html report save directory.
 
         """
         self.exception_stage = "initialize HttpRunner()"
-        kwargs["resultclass"] = report.HtmlTestResult
+        kwargs = {
+            "failfast": failfast,
+            "resultclass": report.HtmlTestResult
+        }
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
-        self.summary = None
+        self.save_tests = save_tests
+        self.report_template = report_template
+        self.report_dir = report_dir
+        self._summary = None
 
     def _add_tests(self, tests_mapping):
         """ initialize testcase with Runner() and add to test suite.
@@ -108,7 +114,7 @@ class HttpRunner(object):
             tests_results (list): list of (testcase, result)
 
         """
-        self.summary = {
+        summary = {
             "success": True,
             "stat": {},
             "time": {},
@@ -120,83 +126,98 @@ class HttpRunner(object):
             testcase, result = tests_result
             testcase_summary = report.get_summary(result)
 
-            self.summary["success"] &= testcase_summary["success"]
+            summary["success"] &= testcase_summary["success"]
             testcase_summary["name"] = testcase.config.get("name")
 
             in_out = utils.get_testcase_io(testcase)
             utils.print_io(in_out)
             testcase_summary["in_out"] = in_out
 
-            report.aggregate_stat(self.summary["stat"], testcase_summary["stat"])
-            report.aggregate_stat(self.summary["time"], testcase_summary["time"])
+            report.aggregate_stat(summary["stat"], testcase_summary["stat"])
+            report.aggregate_stat(summary["time"], testcase_summary["time"])
 
-            self.summary["details"].append(testcase_summary)
+            summary["details"].append(testcase_summary)
 
-    def run(self, path_or_testcases, dot_env_path=None, mapping=None, save_tests=False):
-        """ main interface, run testcases with variables mapping.
+        return summary
+
+    def run_tests(self, tests_mapping):
+        """ run testcase/testsuite data
+        """
+        # parse tests
+        self.exception_stage = "parse tests"
+        parser.parse_tests(tests_mapping)
+
+        if self.save_tests:
+            utils.dump_tests(tests_mapping, "parsed")
+
+        # add tests to test suite
+        self.exception_stage = "add tests to test suite"
+        test_suite = self._add_tests(tests_mapping)
+
+        # run test suite
+        self.exception_stage = "run test suite"
+        results = self._run_suite(test_suite)
+
+        # aggregate results
+        self.exception_stage = "aggregate results"
+        self._summary = self._aggregate(results)
+
+        # generate html report
+        self.exception_stage = "generate html report"
+        report_path = report.render_html_report(
+            self._summary,
+            self.report_template,
+            self.report_dir
+        )
+
+        return report_path
+
+    def run_path(self, path, dot_env_path=None, mapping=None):
+        """ run testcase/testsuite file or folder.
 
         Args:
-            path_or_testcases (str/list/dict): testcase file/foler path, or valid testcases.
+            path (str): testcase/testsuite file/foler path.
             dot_env_path (str): specified .env file path.
             mapping (dict): if mapping is specified, it will override variables in config block.
-            save_tests (bool): set if save loaded/parsed tests to JSON file.
 
         Returns:
             instance: HttpRunner() instance
 
         """
+        # load tests
         self.exception_stage = "load tests"
+        tests_mapping = loader.load_tests(path, dot_env_path)
+        tests_mapping["project_mapping"]["test_path"] = path
 
-        if validator.is_testcases(path_or_testcases):
-            tests_mapping = path_or_testcases
-        elif validator.is_testcase_path(path_or_testcases):
-            tests_mapping = loader.load_tests(path_or_testcases, dot_env_path)
-            tests_mapping["project_mapping"]["test_path"] = path_or_testcases
-            if "variables" in tests_mapping["project_mapping"]:
-                tests_mapping["project_mapping"]["variables"] = mapping
+        if mapping:
+            tests_mapping["project_mapping"]["variables"] = mapping
+
+        if self.save_tests:
+            utils.dump_tests(tests_mapping, "loaded")
+
+        return self.run_tests(tests_mapping)
+
+    def run(self, path_or_tests, dot_env_path=None, mapping=None):
+        """ main interface.
+
+        Args:
+            path_or_tests:
+                str: testcase/testsuite file/foler path
+                dict: valid testcase/testsuite data
+
+        """
+        if validator.is_testcases(path_or_tests):
+            return self.run_tests(path_or_tests)
+        elif validator.is_testcase_path(path_or_tests):
+            return self.run_path(path_or_tests, dot_env_path, mapping)
         else:
             raise exceptions.ParamsError("invalid testcase path or testcases.")
 
-        if save_tests:
-            utils.dump_tests(tests_mapping, "loaded")
-
-        self.exception_stage = "parse tests"
-        parser.parse_tests(tests_mapping)
-
-        if save_tests:
-            utils.dump_tests(tests_mapping, "parsed")
-
-        self.exception_stage = "add tests to test suite"
-        test_suite = self._add_tests(tests_mapping)
-
-        self.exception_stage = "run test suite"
-        results = self._run_suite(test_suite)
-
-        self.exception_stage = "aggregate results"
-        self._aggregate(results)
-
-        return self
-
-    def gen_html_report(self, html_report_name=None, html_report_template=None):
-        """ generate html report and return report path.
-
-        Args:
-            html_report_name (str): output html report file name
-            html_report_template (str): report template file path, template should be in Jinja2 format
-
-        Returns:
-            str: generated html report path
-
+    @property
+    def summary(self):
+        """ get test reuslt summary.
         """
-        if not self.summary:
-            raise exceptions.MyBaseError("run method should be called before gen_html_report.")
-
-        self.exception_stage = "generate report"
-        return report.render_html_report(
-            self.summary,
-            html_report_name,
-            html_report_template
-        )
+        return self._summary
 
 
 def prepare_locust_tests(path):
