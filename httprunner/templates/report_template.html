@@ -272,7 +272,7 @@
               <div style="overflow: auto">
                 <table>
                     {% for key, value in record.meta_data.response.items() %}
-                      {% if key in ["text", "json", "elapsed_ms", "response_time_ms", "content_size", "content_type"] %}
+                      {% if key in ["elapsed_ms", "response_time_ms", "content_size", "content_type"] %}
                         {% continue %}
                       {% endif %}
                       <tr>
@@ -288,10 +288,12 @@
                             {% if "image" in record.meta_data.response.content_type %}
                               <img src="{{ record.meta_data.response.content }}" />
                             {% else %}
-                              <pre>{{ record.meta_data.response.text | e }}</pre>
+                              {{ value }}
                             {% endif %}
+                          {% elif key == "text" %}
+                              <pre>{{ record.meta_data.response.text | e }}</pre>
                           {% else %}
-                            {{value}}
+                            {{ value }}
                           {% endif %}
                         </td>
                       </tr>
