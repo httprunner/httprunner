@@ -97,7 +97,6 @@ def render_html_report(summary, report_template=None, report_dir=None):
         logger.log_info("render with html report template: {}".format(report_template))
 
     logger.log_info("Start to render Html report ...")
-    logger.log_debug("render data: {}".format(summary))
 
     report_dir = report_dir or os.path.join(os.getcwd(), "reports")
     if not os.path.isdir(report_dir):
