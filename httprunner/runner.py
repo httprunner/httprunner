@@ -71,12 +71,18 @@ class Runner(object):
     def clear_test_data(self):
         """ clear request and response data
         """
+        if not isinstance(self.http_client_session, HttpSession):
+            return
+
         self.evaluated_validators = []
         self.http_client_session.init_meta_data()
 
     def get_test_data(self):
         """ get request/response data and validate results
         """
+        if not isinstance(self.http_client_session, HttpSession):
+            raise exceptions.FunctionNotFound("get_test_data is only valid in HttpSession!")
+
         meta_data = self.http_client_session.meta_data
         meta_data["validators"] = self.evaluated_validators
         return meta_data
