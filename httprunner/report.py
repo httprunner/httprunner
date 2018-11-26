@@ -78,6 +78,24 @@ def aggregate_stat(origin_stat, new_stat):
             origin_stat[key] += new_stat[key]
 
 
+def stringify_summary(summary):
+    """ stringify summary, in order to dump json file and generate html report.
+    """
+    start_at_timestamp = int(summary["time"]["start_at"])
+    summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    summary["html_report_name"] = "{}.html".format(start_at_timestamp)
+
+    for index, suite_summary in enumerate(summary["details"]):
+
+        if not suite_summary.get("name"):
+            suite_summary["name"] = "test suite {}".format(index)
+
+        for record in suite_summary.get("records"):
+            meta_data = record['meta_data']
+            stringify_data(meta_data, 'request')
+            stringify_data(meta_data, 'response')
+
+
 def render_html_report(summary, report_template=None, report_dir=None):
     """ render html report with specified report name and template
 
@@ -102,19 +120,7 @@ def render_html_report(summary, report_template=None, report_dir=None):
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
 
-    start_at_timestamp = int(summary["time"]["start_at"])
-    summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-    summary["html_report_name"] = ""
-    html_report_name = "{}.html".format(start_at_timestamp)
-    report_path = os.path.join(report_dir, html_report_name)
-
-    for index, suite_summary in enumerate(summary["details"]):
-        if not suite_summary.get("name"):
-            suite_summary["name"] = "test suite {}".format(index)
-        for record in suite_summary.get("records"):
-            meta_data = record['meta_data']
-            stringify_data(meta_data, 'request')
-            stringify_data(meta_data, 'response')
+    report_path = os.path.join(report_dir, summary["html_report_name"])
 
     with io.open(report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
