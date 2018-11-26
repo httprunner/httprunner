@@ -138,20 +138,26 @@ class HttpSession(requests.Session):
         self.meta_data["response"]["headers"] = dict(response.headers)
         self.meta_data["response"]["cookies"] = response.cookies or {}
         self.meta_data["response"]["encoding"] = response.encoding
-        self.meta_data["response"]["content_type"] = response.headers.get("Content-Type", "")
 
-        try:
-            # try to only record json data
-            self.meta_data["response"]["json"] = response.json()
-        except ValueError:
-            # only record at most 1000 text charactors
-            resp_text = response.text
-            resp_text_length = len(resp_text)
-            if resp_text_length > 1000:
-                resp_text = resp_text[0:1000] \
-                    + " ... OMITTED {} CHARACTORS ...".format(resp_text_length-1000)
+        content_type = response.headers.get("Content-Type", "")
+        self.meta_data["response"]["content_type"] = content_type
 
-            self.meta_data["response"]["text"] = resp_text
+        if "image" in content_type:
+            # response is image type, record bytes content only
+            self.meta_data["response"]["content"] = response.content
+        else:
+            try:
+                # try to record json data
+                self.meta_data["response"]["json"] = response.json()
+            except ValueError:
+                # only record at most 1000 text charactors
+                resp_text = response.text
+                resp_text_length = len(resp_text)
+                if resp_text_length > 1000:
+                    resp_text = resp_text[0:1000] \
+                        + " ... OMITTED {} CHARACTORS ...".format(resp_text_length-1000)
+
+                self.meta_data["response"]["text"] = resp_text
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body
