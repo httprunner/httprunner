@@ -415,13 +415,13 @@ def get_testcase_io(testcase):
         dict: input(variables) and output mapping.
 
     """
-    runner = testcase.runner
-    variables = testcase.config.get("variables", [])
+    test_runner = testcase.runner
+    variables = testcase.config.get("variables", {})
     output_list = testcase.config.get("output", [])
 
     return {
-        "in": dict(variables),
-        "out": runner.extract_output(output_list)
+        "in": variables,
+        "out": test_runner.extract_output(output_list)
     }
 
 
@@ -625,7 +625,7 @@ def _prepare_dump_info(project_mapping, tag_name):
     """
     test_path = project_mapping.get("test_path") or "tests_mapping"
     pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
-    file_name, file_suffix = os.path.splitext(os.path.basename(test_path))
+    file_name, file_suffix = os.path.splitext(os.path.basename(test_path.rstrip("/")))
     dump_file_name = "{}.{}.json".format(file_name, tag_name)
 
     return pwd_dir_path, dump_file_name
