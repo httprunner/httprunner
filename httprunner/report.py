@@ -81,10 +81,6 @@ def aggregate_stat(origin_stat, new_stat):
 def stringify_summary(summary):
     """ stringify summary, in order to dump json file and generate html report.
     """
-    start_at_timestamp = int(summary["time"]["start_at"])
-    summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-    summary["html_report_name"] = "{}.html".format(start_at_timestamp)
-
     for index, suite_summary in enumerate(summary["details"]):
 
         if not suite_summary.get("name"):
@@ -280,7 +276,10 @@ def render_html_report(summary, report_template=None, report_dir=None):
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
 
-    report_path = os.path.join(report_dir, summary["html_report_name"])
+    start_at_timestamp = int(summary["time"]["start_at"])
+    summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+
+    report_path = os.path.join(report_dir, "{}.html".format(start_at_timestamp))
 
     with io.open(report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
