@@ -125,7 +125,6 @@ class HttpSession(requests.Session):
         # record actual request info
         self.meta_data["request"]["url"] = (response.history and response.history[0] or response).request.url
         self.meta_data["request"]["headers"] = dict(response.request.headers)
-        self.meta_data["request"]["body"] = response.request.body
 
         # log request details in debug mode
         log_print("request")
