@@ -233,28 +233,31 @@
 
     {% for record in test_suite_summary.records %}
     {% set record_index = "{}_{}".format(suite_index, loop.index) %}
+    {% set record_meta_datas = record.meta_datas_expanded %}
     <tr id="record_{{record_index}}">
       <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
       <td colspan="2">{{record.name}}</td>
-      <td style="text-align:center;width:6em;">{{ record.meta_data.response.response_time_ms }} ms</td>
+      <td style="text-align:center;width:6em;">{{ record.response_time }} ms</td>
       <td class="detail">
 
-        <a class="button" href="#popup_log_{{record_index}}">log</a>
-        <div id="popup_log_{{record_index}}" class="overlay">
+        {% for meta_data in record_meta_datas %}
+        {% set meta_data_index = "{}_{}".format(record_index, loop.index) %}
+        <a class="button" href="#popup_log_{{meta_data_index}}">log-{{loop.index}}</a>
+        <div id="popup_log_{{meta_data_index}}" class="overlay">
           <div class="popup">
             <h2>Request and Response data</h2>
-            <a class="close" href="#record_{{record_index}}">&times;</a>
+            <a class="close" href="#record_{{meta_data_index}}">&times;</a>
 
             <div class="content">
               <h3>Request:</h3>
               <div style="overflow: auto">
                 <table>
-                  {% for key, value in record.meta_data.request.items() %}
+                  {% for key, value in meta_data.request.items() %}
                     <tr>
                       <th>{{key}}</th>
                       <td>
                         {% if key == "headers" %}
-                          {% for header_key, header_value in record.meta_data.request.headers.items() %}
+                          {% for header_key, header_value in meta_data.request.headers.items() %}
                           <div>
                             <strong>{{ header_key }}</strong>: {{ header_value }}
                           </div>
@@ -271,7 +274,7 @@
               <h3>Response:</h3>
               <div style="overflow: auto">
                 <table>
-                    {% for key, value in record.meta_data.response.items() %}
+                    {% for key, value in meta_data.response.items() %}
                       {% if key in ["elapsed_ms", "response_time_ms", "content_size", "content_type"] %}
                         {% continue %}
                       {% endif %}
@@ -279,19 +282,19 @@
                         <th>{{key}}</th>
                         <td>
                           {% if key == "headers" %}
-                            {% for header_key, header_value in record.meta_data.response.headers.items() %}
+                            {% for header_key, header_value in meta_data.response.headers.items() %}
                             <div>
                               <strong>{{ header_key }}</strong>: {{ header_value }}
                             </div>
                             {% endfor %}
                           {% elif key == "content" %}
-                            {% if "image" in record.meta_data.response.content_type %}
-                              <img src="{{ record.meta_data.response.content }}" />
+                            {% if "image" in meta_data.response.content_type %}
+                              <img src="{{ meta_data.response.content }}" />
                             {% else %}
                               {{ value }}
                             {% endif %}
                           {% elif key == "text" %}
-                              <pre>{{ record.meta_data.response.text | e }}</pre>
+                              <pre>{{ meta_data.response.text | e }}</pre>
                           {% else %}
                             {{ value }}
                           {% endif %}
@@ -310,7 +313,7 @@
                       <th>expect value</th>
                       <th>actual value</th>
                     </tr>
-                    {% for validator in record.meta_data.validators %}
+                    {% for validator in meta_data.validators %}
                     <tr>
                       {% if validator.check_result == "pass" %}
                       <td class="passed">
@@ -334,15 +337,15 @@
                 <table>
                   <tr>
                       <th>content_size(bytes)</th>
-                      <td>{{ record.meta_data.response.content_size }}</td>
+                      <td>{{ meta_data.response.content_size }}</td>
                     </tr>
                   <tr>
                     <th>response_time(ms)</th>
-                    <td>{{ record.meta_data.response.response_time_ms }}</td>
+                    <td>{{ meta_data.response.response_time_ms }}</td>
                   </tr>
                   <tr>
                     <th>elapsed(ms)</th>
-                    <td>{{ record.meta_data.response.elapsed_ms }}</td>
+                    <td>{{ meta_data.response.elapsed_ms }}</td>
                   </tr>
                 </table>
               </div>
@@ -350,6 +353,7 @@
             </div>
           </div>
         </div>
+        {% endfor %}
 
         {% if record.attachment %}
           <a class="button" href="#popup_attachment_{{record_index}}">traceback</a>
