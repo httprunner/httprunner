@@ -452,6 +452,34 @@ class TestParser(unittest.TestCase):
         # self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '1230')
 
+    def test_parse_tests_fix_override_variables(self):
+        tests_mapping = {
+            'testcases': [
+                {
+                    'config': {
+                        'name': '',
+                        'variables': [
+                            {"password": "123456"},
+                            {"creator": "user_test_001"}
+                        ]
+                    },
+                    'tests': [
+                        {
+                            'name': 'testcase1',
+                            "variables": [
+                                {"creator": "user_test_002"},
+                                {"username": "$creator"}
+                            ],
+                            'request': {'url': '/api1', 'method': 'GET'}
+                        }
+                    ]
+                }
+            ]
+        }
+        parser.parse_tests(tests_mapping)
+        test_dict1_variables = tests_mapping["testcases"][0]["tests"][0]["variables"]
+        self.assertEqual(test_dict1_variables["username"], "user_test_001")
+
     def test_parse_environ(self):
         os.environ["PROJECT_KEY"] = "ABCDEFGH"
         content = {

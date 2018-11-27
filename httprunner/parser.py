@@ -768,6 +768,12 @@ def __parse_tests(tests, config, project_mapping):
                 test_dict.pop("variables", {}),
                 config_variables
             )
+            # parse test variables with config variables
+            test_dict["variables"] = parse_data(
+                test_dict["variables"],
+                test_dict["variables"],
+                functions
+            )
 
             # parse test_dict name
             try:
@@ -796,6 +802,12 @@ def __parse_tests(tests, config, project_mapping):
             test_dict["variables"] = utils.extend_variables(
                 test_dict.pop("variables", {}),
                 config_variables
+            )
+            # parse test variables with config variables
+            test_dict["variables"] = parse_data(
+                test_dict["variables"],
+                test_dict["variables"],
+                functions
             )
 
             # parse test_dict name
