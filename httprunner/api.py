@@ -50,7 +50,7 @@ class HttpRunner(object):
                 except exceptions.MyBaseFailure as ex:
                     self.fail(str(ex))
                 finally:
-                    self.meta_data = test_runner.get_test_data()
+                    self.meta_datas = test_runner.meta_datas
 
             if "config" in test_dict:
                 # run nested testcase

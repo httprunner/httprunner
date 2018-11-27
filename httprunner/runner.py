@@ -68,7 +68,7 @@ class Runner(object):
         if self.testcase_teardown_hooks:
             self.do_hook_actions(self.testcase_teardown_hooks, "teardown")
 
-    def clear_test_data(self):
+    def __clear_test_data(self):
         """ clear request and response data
         """
         if not isinstance(self.http_client_session, HttpSession):
@@ -77,11 +77,11 @@ class Runner(object):
         self.evaluated_validators = []
         self.http_client_session.init_meta_data()
 
-    def get_test_data(self):
+    def __get_test_data(self):
         """ get request/response data and validate results
         """
         if not isinstance(self.http_client_session, HttpSession):
-            raise exceptions.FunctionNotFound("get_test_data is only valid in HttpSession!")
+            return
 
         meta_data = self.http_client_session.meta_data
         meta_data["validators"] = self.evaluated_validators
@@ -167,7 +167,7 @@ class Runner(object):
                             "authorization": "$authorization",
                             "random": "$random"
                         },
-                        "body": '{"name": "user", "password": "123456"}'
+                        "json": {"name": "user", "password": "123456"}
                     },
                     "extract": [],              # optional
                     "validate": [],             # optional
@@ -182,7 +182,7 @@ class Runner(object):
 
         """
         # clear meta data first to ensure independence for each test
-        self.clear_test_data()
+        self.__clear_test_data()
 
         # check skip
         self._handle_skip_feature(test_dict)
@@ -266,14 +266,18 @@ class Runner(object):
     def _run_testcase(self, testcase_dict):
         """ run single testcase.
         """
+        meta_data_list = []
         config = testcase_dict.get("config", {})
         test_runner = Runner(config, self.functions, self.http_client_session)
 
         tests = testcase_dict.get("tests", [])
         for index, test_dict in enumerate(tests):
             test_runner.run_test(test_dict)
+            meta_datas = test_runner.meta_datas
+            meta_data_list.append(meta_datas)
 
         self.session_context.update_seesion_variables(test_runner.extract_sessions())
+        return meta_data_list
 
     def run_test(self, test_dict):
         """ run single teststep of testcase.
@@ -308,12 +312,14 @@ class Runner(object):
                 }
 
         """
+        self.meta_datas = None
         if "config" in test_dict:
             # nested testcase
-            self._run_testcase(test_dict)
+            self.meta_datas = self._run_testcase(test_dict)
         else:
             # api
             self._run_test(test_dict)
+            self.meta_datas = self.__get_test_data()
 
     def extract_sessions(self):
         """

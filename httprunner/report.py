@@ -91,9 +91,169 @@ def stringify_summary(summary):
             suite_summary["name"] = "test suite {}".format(index)
 
         for record in suite_summary.get("records"):
-            meta_data = record['meta_data']
-            stringify_data(meta_data, 'request')
-            stringify_data(meta_data, 'response')
+            meta_datas = record['meta_datas']
+            __stringify_meta_datas(meta_datas)
+            meta_datas_expanded = []
+            __expand_meta_datas(meta_datas, meta_datas_expanded)
+            record["meta_datas_expanded"] = meta_datas_expanded
+            record["response_time"] = __get_total_response_time(meta_datas_expanded)
+
+
+def __stringify_request(request_data):
+    """ stringfy HTTP request data
+
+    Args:
+        request_data (dict): HTTP request data in dict.
+
+            {
+                "url": "http://127.0.0.1:5000/api/get-token",
+                "method": "POST",
+                "headers": {
+                    "User-Agent": "python-requests/2.20.0",
+                    "Accept-Encoding": "gzip, deflate",
+                    "Accept": "*/*",
+                    "Connection": "keep-alive",
+                    "user_agent": "iOS/10.3",
+                    "device_sn": "TESTCASE_CREATE_XXX",
+                    "os_platform": "ios",
+                    "app_version": "2.8.6",
+                    "Content-Type": "application/json",
+                    "Content-Length": "52"
+                },
+                "start_timestamp": 1543299567.6505039,
+                "json": {
+                    "sign": "cb9d60acd09080ea66c8e63a1c78c6459ea00168"
+                },
+                "verify": false
+            }
+
+    """
+    for key, value in request_data.items():
+
+        if isinstance(value, list):
+            value = json.dumps(value, indent=2, ensure_ascii=False)
+
+        elif isinstance(value, bytes):
+            try:
+                encoding = "utf-8"
+                value = escape(value.decode(encoding))
+            except UnicodeDecodeError:
+                pass
+
+        elif not isinstance(value, (basestring, numeric_types, Iterable)):
+            # class instance, e.g. MultipartEncoder()
+            value = repr(value)
+
+        request_data[key] = value
+
+
+def __stringify_response(response_data):
+    """ stringfy HTTP response data
+
+    Args:
+        response_data (dict):
+
+            {
+                "status_code": 404,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Content-Length": "30",
+                    "Server": "Werkzeug/0.14.1 Python/3.7.0",
+                    "Date": "Tue, 27 Nov 2018 06:19:27 GMT"
+                },
+                "content_size": 30,
+                "response_time_ms": 3.63,
+                "elapsed_ms": 2.197,
+                "encoding": "None",
+                "content_type": "application/json",
+                "ok": false,
+                "url": "http://127.0.0.1:5000/api/users/9001",
+                "reason": "NOT FOUND",
+                "cookies": {},
+                "json": {
+                    "success": false,
+                    "data": {}
+                }
+            }
+
+    """
+    for key, value in response_data.items():
+
+        if isinstance(value, list):
+            value = json.dumps(value, indent=2, ensure_ascii=False)
+
+        elif isinstance(value, bytes):
+            try:
+                encoding = response_data.get("encoding")
+                if not encoding or encoding == "None":
+                    encoding = "utf-8"
+
+                if key == "content" and "image" in response_data["content_type"]:
+                    # display image
+                    value = "data:{};base64,{}".format(
+                        response_data["content_type"],
+                        b64encode(value).decode(encoding)
+                    )
+                else:
+                    value = escape(value.decode(encoding))
+            except UnicodeDecodeError:
+                pass
+
+        elif not isinstance(value, (basestring, numeric_types, Iterable)):
+            # class instance, e.g. MultipartEncoder()
+            value = repr(value)
+
+        response_data[key] = value
+
+
+def __expand_meta_datas(meta_datas, meta_datas_expanded):
+    """ expand meta_datas to one level
+
+    Args:
+        meta_datas (dict/list): maybe in nested format
+
+    Returns:
+        list: expanded list in one level
+
+    Examples:
+        >>> meta_datas = [
+                [
+                    dict1,
+                    dict2
+                ],
+                dict3
+            ]
+        >>> meta_datas_expanded = []
+        >>> __expand_meta_datas(meta_datas, meta_datas_expanded)
+        >>> print(meta_datas_expanded)
+            [dict1, dict2, dict3]
+
+    """
+    if isinstance(meta_datas, dict):
+        meta_datas_expanded.append(meta_datas)
+    elif isinstance(meta_datas, list):
+        for meta_data in meta_datas:
+            __expand_meta_datas(meta_data, meta_datas_expanded)
+
+
+def __get_total_response_time(meta_datas_expanded):
+    """ caculate total response time of all meta_datas
+    """
+    response_time = 0
+    for meta_data in meta_datas_expanded:
+        response_time += meta_data["response"]["response_time_ms"]
+
+    return "{:.2f}".format(response_time)
+
+
+def __stringify_meta_datas(meta_datas):
+
+    if isinstance(meta_datas, list):
+        for _meta_data in meta_datas:
+            __stringify_meta_datas(_meta_data)
+    elif isinstance(meta_datas, dict):
+        __stringify_request(meta_datas["request"])
+        __stringify_response(meta_datas["response"])
 
 
 def render_html_report(summary, report_template=None, report_dir=None):
@@ -136,46 +296,6 @@ def render_html_report(summary, report_template=None, report_dir=None):
     return report_path
 
 
-def stringify_data(meta_data, request_or_response):
-    """
-    meta_data = {
-        "request": {},
-        "response": {}
-    }
-    """
-    headers = meta_data[request_or_response]["headers"]
-    request_or_response_dict = meta_data[request_or_response]
-
-    for key, value in request_or_response_dict.items():
-
-        if isinstance(value, list):
-            value = json.dumps(value, indent=2, ensure_ascii=False)
-
-        elif isinstance(value, bytes):
-            try:
-                encoding = meta_data["response"].get("encoding")
-                if not encoding or encoding == "None":
-                    encoding = "utf-8"
-
-                if request_or_response == "response" and key == "content" \
-                    and "image" in meta_data["response"]["content_type"]:
-                    # display image
-                    value = "data:{};base64,{}".format(
-                        meta_data["response"]["content_type"],
-                        b64encode(value).decode(encoding)
-                    )
-                else:
-                    value = escape(value.decode(encoding))
-            except UnicodeDecodeError:
-                pass
-
-        elif not isinstance(value, (basestring, numeric_types, Iterable)):
-            # class instance, e.g. MultipartEncoder()
-            value = repr(value)
-
-        meta_data[request_or_response][key] = value
-
-
 class HtmlTestResult(unittest.TextTestResult):
     """ A html result class that can generate formatted html results.
         Used by TextTestRunner.
@@ -189,7 +309,7 @@ class HtmlTestResult(unittest.TextTestResult):
             'name': test.shortDescription(),
             'status': status,
             'attachment': attachment,
-            "meta_data": test.meta_data
+            "meta_datas": test.meta_datas
         }
         self.records.append(data)
 

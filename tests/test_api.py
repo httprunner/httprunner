@@ -143,7 +143,7 @@ class TestHttpRunner(ApiServerUnittest):
         summary = self.runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
-        self.assertEqual(summary["details"][0]["records"][0]["meta_data"]["response"]["json"]["data"], "abc")
+        self.assertEqual(summary["details"][0]["records"][0]["meta_datas"]["response"]["json"]["data"], "abc")
 
     def test_html_report_repsonse_image(self):
         report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
