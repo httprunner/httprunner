@@ -318,8 +318,12 @@ class Runner(object):
             self.meta_datas = self._run_testcase(test_dict)
         else:
             # api
-            self._run_test(test_dict)
-            self.meta_datas = self.__get_test_data()
+            try:
+                self._run_test(test_dict)
+            except Exception:
+                raise
+            finally:
+                self.meta_datas = self.__get_test_data()
 
     def extract_sessions(self):
         """

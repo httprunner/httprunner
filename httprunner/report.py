@@ -235,11 +235,16 @@ def __expand_meta_datas(meta_datas, meta_datas_expanded):
 def __get_total_response_time(meta_datas_expanded):
     """ caculate total response time of all meta_datas
     """
-    response_time = 0
-    for meta_data in meta_datas_expanded:
-        response_time += meta_data["response"]["response_time_ms"]
+    try:
+        response_time = 0
+        for meta_data in meta_datas_expanded:
+            response_time += meta_data["response"]["response_time_ms"]
 
-    return "{:.2f}".format(response_time)
+        return "{:.2f}".format(response_time)
+
+    except TypeError:
+        # failure exists
+        return "N/A"
 
 
 def __stringify_meta_datas(meta_datas):
