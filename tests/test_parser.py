@@ -435,11 +435,11 @@ class TestParser(unittest.TestCase):
         tests_mapping = loader.load_tests(testcase_file_path)
         testcases = tests_mapping["testcases"]
         self.assertEqual(
-            testcases[0]["config"]["variables"][1]["var_c"],
+            testcases[0]["config"]["variables"]["var_c"],
             "${sum_two(1, 2)}"
         )
         self.assertEqual(
-            testcases[0]["config"]["variables"][2]["PROJECT_KEY"],
+            testcases[0]["config"]["variables"]["PROJECT_KEY"],
             "${ENV(PROJECT_KEY)}"
         )
         parser.parse_tests(tests_mapping)
@@ -478,6 +478,7 @@ class TestParser(unittest.TestCase):
         }
         parser.parse_tests(tests_mapping)
         test_dict1_variables = tests_mapping["testcases"][0]["tests"][0]["variables"]
+        self.assertEqual(test_dict1_variables["creator"], "user_test_001")
         self.assertEqual(test_dict1_variables["username"], "user_test_001")
 
     def test_parse_environ(self):

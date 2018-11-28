@@ -2,10 +2,11 @@
     id: get_token
     name: get token
     variables:
-        - user_agent: XXX
-        - device_sn: API_XXX
-        - os_platform: XXX
-        - app_version: XXX
+
+        user_agent: XXX
+        device_sn: API_XXX
+        os_platform: XXX
+        app_version: XXX
     request:
         url: /api/get-token
         method: POST
@@ -26,10 +27,10 @@
 - api:
     id: create_user
     variables:
-        - user_name: user0
-        - user_password: "000000"
-        - uid: 9000
-        - token: XXX
+        user_name: user0
+        user_password: "000000"
+        uid: 9000
+        token: XXX
     request:
         url: /api/users/$uid
         method: POST
@@ -46,8 +47,8 @@
 - api:
     id: get_user
     variables:
-        - uid: 9000
-        - token: XXX
+        uid: 9000
+        token: XXX
     request:
         url: /api/users/$uid
         method: GET
@@ -61,10 +62,10 @@
 - api:
     id: update_user
     variables:
-        - user_name: user0
-        - user_password: "000000"
-        - uid: 9000
-        - token: XXX
+        user_name: user0
+        user_password: "000000"
+        uid: 9000
+        token: XXX
     request:
         url: /api/users/$uid
         method: PUT
@@ -81,8 +82,8 @@
 - api:
     id: delete_user
     variables:
-        - uid: 9000
-        - token: XXX
+        uid: 9000
+        token: XXX
     request:
         url: /api/users/$uid
         method: DELETE
@@ -96,7 +97,7 @@
 - api:
     id: get_users
     variables:
-        - token: XXX
+        token: XXX
     request:
         url: /api/users
         method: GET
@@ -110,7 +111,7 @@
 - api:
     id: reset_all
     variables:
-        - token: XXX
+        token: XXX
     request:
         url: /api/reset-all
         method: GET
@@ -125,7 +126,7 @@
 - api:
     id: get_headers
     variables:
-        - n_secs: 1
+        n_secs: 1
     request:
         url: /headers
         headers:

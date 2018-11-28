@@ -11,7 +11,7 @@ import string
 from datetime import datetime
 
 from httprunner import exceptions, logger
-from httprunner.compat import OrderedDict, basestring, is_py2
+from httprunner.compat import basestring, is_py2
 from httprunner.exceptions import ParamsError
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
@@ -265,10 +265,10 @@ def ensure_mapping_format(variables):
     """ ensure variables are in mapping format.
 
     Args:
-        variables (list/dict/OrderedDict): original variables
+        variables (list/dict): original variables
 
     Returns:
-        OrderedDict: ensured variables in OrderedDict
+        dict: ensured variables in dict format
 
     Examples:
         >>> variables = [
@@ -276,19 +276,17 @@ def ensure_mapping_format(variables):
                 {"b": 2}
             ]
         >>> print(ensure_mapping_format(variables))
-            OrderDict(
-                {
-                    "a": 1,
-                    "b": 2
-                }
-            )
+            {
+                "a": 1,
+                "b": 2
+            }
 
     """
     if isinstance(variables, list):
-        variables_ordered_dict = OrderedDict()
+        variables_ordered_dict = {}
         for map_dict in variables:
             variables_ordered_dict.update(map_dict)
-    elif isinstance(variables, (OrderedDict, dict)):
+    elif isinstance(variables, dict):
         variables_ordered_dict = variables
     else:
         raise exceptions.ParamsError("variables format error!")
@@ -377,17 +375,17 @@ def extend_variables(raw_variables, override_variables):
         override_variables (list):
 
     Returns:
-        OrderedDict: extended variables mapping
+        dict: extended variables mapping
 
     Examples:
         >>> raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
         >>> override_variables = [{"var1": "val111"}, {"var3": "val3"}]
         >>> extend_variables(raw_variables, override_variables)
-            OrderedDict([
-                ('var1', 'val111'),
-                ('var2', 'val2'),
-                ('var3', 'val3')
-            ])
+            {
+                'var1', 'val111',
+                'var2', 'val2',
+                'var3', 'val3'
+            }
 
     """
     if not raw_variables:
