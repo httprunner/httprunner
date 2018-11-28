@@ -247,11 +247,11 @@ class TestModuleLoader(unittest.TestCase):
             tests_mapping["project_mapping"]["functions"]
         )
         self.assertEqual(
-            testcases[0]["config"]["variables"][1]["var_c"],
+            testcases[0]["config"]["variables"]["var_c"],
             "${sum_two(1, 2)}"
         )
         self.assertEqual(
-            testcases[0]["config"]["variables"][2]["PROJECT_KEY"],
+            testcases[0]["config"]["variables"]["PROJECT_KEY"],
             "${ENV(PROJECT_KEY)}"
         )
 
@@ -287,7 +287,7 @@ class TestSuiteLoader(unittest.TestCase):
         raw_testcase = loader.load_file("tests/testsuites/create_users.yml")
         testcase = loader.load_testcase(raw_testcase)
         self.assertEqual(testcase["config"]["name"], "create users with uid")
-        self.assertIn("device_sn", testcase["config"]["variables"][0])
+        self.assertIn("device_sn", testcase["config"]["variables"])
         self.assertEqual(len(testcase["tests"]), 2)
         self.assertEqual(testcase["tests"][0]["name"], "create user 1000 and check result.")
         self.assertEqual(testcase["tests"][0]["testcase_def"]["config"]["name"], "create user and check result.")
@@ -378,7 +378,7 @@ class TestSuiteLoader(unittest.TestCase):
         tests_mapping = loader.load_tests(path)
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
-        self.assertIn({'device_sn': '${gen_random_string(15)}'}, testcases_list[0]["config"]["variables"])
+        self.assertIn('device_sn', testcases_list[0]["config"]["variables"])
         self.assertIn("gen_md5", project_mapping["functions"])
         self.assertIn("base_url", testcases_list[0]["config"])
         test_dict0 = testcases_list[0]["tests"][0]
@@ -405,7 +405,7 @@ class TestSuiteLoader(unittest.TestCase):
         )
         self.assertEqual(
             {'device_sn': '${gen_random_string(15)}'},
-            testcases_list[0]["config"]["variables"][0]
+            testcases_list[0]["config"]["variables"]
         )
         testcase0 = testcases_list[0]["tests"][0]
         self.assertEqual(
@@ -424,7 +424,7 @@ class TestSuiteLoader(unittest.TestCase):
         )
         self.assertEqual(
             {'uid': 1001},
-            testcase1["variables"][0]
+            testcase1["variables"]
         )
 
     def test_load_folder_content(self):
