@@ -613,8 +613,18 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
 
     dump_file_path = os.path.join(logs_dir_path, dump_file_name)
 
-    with open(dump_file_path, 'w', encoding='utf-8') as outfile:
-        json.dump(json_data, outfile, indent=4, separators=(',', ': '))
+    with io.open(dump_file_path, 'w', encoding='utf-8') as outfile:
+        if is_py2:
+            outfile.write(
+                unicode(json.dumps(
+                    json_data,
+                    indent=4,
+                    separators=(',', ': '),
+                    ensure_ascii=False
+                ))
+            )
+        else:
+            json.dump(json_data, outfile, indent=4, separators=(',', ': '))
 
     msg = "dump file: {}".format(dump_file_path)
     logger.color_print(msg, "BLUE")
