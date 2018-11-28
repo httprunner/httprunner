@@ -9,6 +9,7 @@ from base64 import b64encode
 from collections import Iterable
 from datetime import datetime
 
+import requests
 from httprunner import loader, logger
 from httprunner.__about__ import __version__
 from httprunner.compat import basestring, bytes, json, numeric_types
@@ -140,6 +141,9 @@ def __stringify_request(request_data):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
+        elif isinstance(value, requests.cookies.RequestsCookieJar):
+            value = value.get_dict()
+
         request_data[key] = value
 
 
@@ -198,6 +202,9 @@ def __stringify_response(response_data):
         elif not isinstance(value, (basestring, numeric_types, Iterable)):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
+
+        elif isinstance(value, requests.cookies.RequestsCookieJar):
+            value = value.get_dict()
 
         response_data[key] = value
 
