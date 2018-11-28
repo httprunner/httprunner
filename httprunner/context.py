@@ -24,20 +24,23 @@ class SessionContext(object):
             variables_mapping will be evaluated first.
 
         Args:
-            variables_mapping (dict/list)
-                [
-                    {"TOKEN": "debugtalk"},
-                    {"random": "${gen_random_string(5)}"},
-                    {"data": '{"name": "user", "password": "123456"}'},
-                    {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
-                ]
+            variables_mapping (dict)
+                {
+                    "random": "${gen_random_string(5)}",
+                    "authorization": "${gen_md5($TOKEN, $data, $random)}",
+                    "data": '{"name": "user", "password": "123456"}',
+                    "TOKEN": "debugtalk",
+                }
 
         """
-        self.test_variables_mapping = {}
-        self.test_variables_mapping.update(self.session_variables_mapping)
-
         variables_mapping = variables_mapping or {}
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
+
+        self.test_variables_mapping = {}
+        # priority: extracted variable > teststep variable
+        self.test_variables_mapping.update(variables_mapping)
+        self.test_variables_mapping.update(self.session_variables_mapping)
+
         for variable_name, variable_value in variables_mapping.items():
             variable_value = self.eval_content(variable_value)
             self.update_test_variables(variable_name, variable_value)
