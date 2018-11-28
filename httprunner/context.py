@@ -18,6 +18,7 @@ class SessionContext(object):
         self.session_variables_mapping = utils.ensure_mapping_format(variables or {})
         self.FUNCTIONS_MAPPING = functions
         self.init_test_variables()
+        self.validation_results = []
 
     def init_test_variables(self, variables_mapping=None):
         """ init test variables, called when each test(api) starts.
@@ -167,11 +168,12 @@ class SessionContext(object):
     def validate(self, validators, resp_obj):
         """ make validations
         """
-        evaluated_validators = []
         if not validators:
-            return evaluated_validators
+            return
 
-        logger.log_info("start to validate.")
+        logger.log_debug("start to validate.")
+
+        self.validation_results = []
         validate_pass = True
         failures = []
 
@@ -188,10 +190,8 @@ class SessionContext(object):
                 validate_pass = False
                 failures.append(str(ex))
 
-            evaluated_validators.append(evaluated_validator)
+            self.validation_results.append(evaluated_validator)
 
         if not validate_pass:
             failures_string = "\n".join([failure for failure in failures])
             raise exceptions.ValidationFailure(failures_string)
-
-        return evaluated_validators
