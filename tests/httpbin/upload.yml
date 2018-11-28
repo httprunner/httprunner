@@ -5,10 +5,10 @@
 - test:
     name: upload file
     variables:
-        - field_name: "file"
-        - file_path: "LICENSE"
-        - file_type: "text/html"
-        - multipart_encoder: ${multipart_encoder($field_name, $file_path, $file_type)}
+        field_name: "file"
+        file_path: "LICENSE"
+        file_type: "text/html"
+        multipart_encoder: ${multipart_encoder($field_name, $file_path, $file_type)}
     request:
         url: /post
         method: POST

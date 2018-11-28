@@ -9,7 +9,7 @@ import sys
 
 import yaml
 from httprunner import exceptions, logger, parser, utils, validator
-from httprunner.compat import OrderedDict
+
 
 ###############################################################################
 ##   file loader

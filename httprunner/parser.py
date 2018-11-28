@@ -3,7 +3,6 @@
 import ast
 import os
 import re
-from collections import OrderedDict
 
 from httprunner import exceptions, utils
 from httprunner.compat import basestring, builtin_str, numeric_types, str
@@ -524,7 +523,7 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
             for item in content
         ]
 
-    if isinstance(content, (dict, OrderedDict)):
+    if isinstance(content, dict):
         parsed_content = {}
         for key, value in content.items():
             parsed_key = parse_data(key, variables_mapping, functions_mapping)

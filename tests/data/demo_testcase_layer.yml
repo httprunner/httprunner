@@ -1,10 +1,10 @@
 - config:
     name: "user management testcase."
     variables:
-        - user_agent: 'iOS/10.3'
-        - device_sn: ${gen_random_string(15)}
-        - os_platform: 'ios'
-        - app_version: '2.8.6'
+        user_agent: 'iOS/10.3'
+        device_sn: ${gen_random_string(15)}
+        os_platform: 'ios'
+        app_version: '2.8.6'
     base_url: ${get_base_url()}
     output:
         - token
@@ -23,7 +23,7 @@
     name: reset all users
     api: reset_all
     variables:
-        - token: $token
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.success", "expect": true}
@@ -32,8 +32,8 @@
     name: get user that does not exist
     api: get_user
     variables:
-        - uid: 1000
-        - token: $token
+        uid: 1000
+        token: $token
     validate:
         - {"check": "status_code", "expect": 404}
         - {"check": "content.success", "expect": false}
@@ -41,10 +41,10 @@
 - test:
     name: create user which does not exist
     variables:
-        - uid: 1000
-        - user_name: "user1"
-        - user_password: "123456"
-        - token: $token
+        uid: 1000
+        user_name: "user1"
+        user_password: "123456"
+        token: $token
     api: create_user
     validate:
         - {"check": "status_code", "expect": 201}
@@ -54,8 +54,8 @@
     name: get user that has been created
     api: get_user
     variables:
-        - uid: 1000
-        - token: $token
+        uid: 1000
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.success", "expect": true}
@@ -64,10 +64,10 @@
 - test:
     name: create user which exists
     variables:
-        - uid: 1000
-        - user_name: "user1"
-        - user_password: "123456"
-        - token: $token
+        uid: 1000
+        user_name: "user1"
+        user_password: "123456"
+        token: $token
     api: create_user
     validate:
         - {"check": "status_code", "expect": 500}
@@ -76,10 +76,10 @@
 - test:
     name: update user which exists
     variables:
-        - uid: 1000
-        - user_name: "user1"
-        - user_password: "654321"
-        - token: $token
+        uid: 1000
+        user_name: "user1"
+        user_password: "654321"
+        token: $token
     api: update_user
     validate:
         - {"check": "status_code", "expect": 200}
@@ -89,8 +89,8 @@
     name: get user that has been updated
     api: get_user
     variables:
-        - uid: 1000
-        - token: $token
+        uid: 1000
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.success", "expect": true}
@@ -100,7 +100,7 @@
     name: get users
     api: get_users
     variables:
-        - token: $token
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.count", "expect": 1}
@@ -109,8 +109,8 @@
     name: delete user that exists
     api: delete_user
     variables:
-        - uid: 1000
-        - token: $token
+        uid: 1000
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.success", "expect": true}
@@ -119,7 +119,7 @@
     name: get users
     api: get_users
     variables:
-        - token: $token
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.count", "expect": 0}
@@ -127,10 +127,10 @@
 - test:
     name: create user which has been deleted
     variables:
-        - uid: 1000
-        - user_name: "user1"
-        - user_password: "123456"
-        - token: $token
+        uid: 1000
+        user_name: "user1"
+        user_password: "123456"
+        token: $token
     api: create_user
     validate:
         - {"check": "status_code", "expect": 201}
@@ -140,7 +140,7 @@
     name: get users
     api: get_users
     variables:
-        - token: $token
+        token: $token
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.count", "expect": 1}

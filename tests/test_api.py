@@ -419,7 +419,7 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(testcase_tests), 2)
         self.assertIn("api", testcase_tests[0])
         self.assertEqual(testcase_tests[0]["name"], "get token (setup)")
-        self.assertIsInstance(testcase_tests[0]["variables"], list)
+        self.assertIsInstance(testcase_tests[0]["variables"], dict)
         self.assertIn("api_def", testcase_tests[0])
         self.assertEqual(testcase_tests[0]["api_def"]["request"]["url"], "/api/get-token")
 
