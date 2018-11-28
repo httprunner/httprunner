@@ -22,11 +22,26 @@ class TestContext(ApiServerUnittest):
         context_functions = self.context.FUNCTIONS_MAPPING
         self.assertIn("gen_md5", context_functions)
 
-    def test_init_test_variables(self):
+    def test_init_test_variables_initialize(self):
         self.assertEqual(
             self.context.test_variables_mapping,
             {'SECRET_KEY': 'DebugTalk'}
         )
+
+    def test_init_test_variables(self):
+        variables = {
+            "random": "${gen_random_string($num)}",
+            "authorization": "${gen_md5($TOKEN, $data, $random)}",
+            "data": '{"name": "$username", "password": "123456"}',
+            "TOKEN": "debugtalk",
+            "username": "user1",
+            "num": 6
+        }
+        self.context.init_test_variables(variables)
+        variables_mapping = self.context.test_variables_mapping
+        self.assertEqual(len(variables_mapping["random"]), 6)
+        self.assertEqual(len(variables_mapping["authorization"]), 32)
+        self.assertEqual(variables_mapping["data"], '{"name": "user1", "password": "123456"}')
 
     def test_update_seesion_variables(self):
         self.context.update_seesion_variables({"TOKEN": "debugtalk"})
@@ -57,12 +72,13 @@ class TestContext(ApiServerUnittest):
         # )
 
     def test_get_parsed_request(self):
-        variables = [
-            {"TOKEN": "debugtalk"},
-            {"random": "${gen_random_string(5)}"},
-            {"data": '{"name": "user", "password": "123456"}'},
-            {"authorization": "${gen_md5($TOKEN, $data, $random)}"}
-        ]
+        variables = {
+            "random": "${gen_random_string(5)}",
+            "data": '{"name": "user", "password": "123456"}',
+            "authorization": "${gen_md5($TOKEN, $data, $random)}",
+            "TOKEN": "debugtalk"
+        }
+
         self.context.init_test_variables(variables)
 
         request = {
@@ -82,7 +98,10 @@ class TestContext(ApiServerUnittest):
         self.assertIn("random", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["random"]), 5)
         self.assertIn("data", parsed_request)
-        self.assertEqual(parsed_request["data"], variables[2]["data"])
+        self.assertEqual(
+            parsed_request["data"],
+            '{"name": "user", "password": "123456"}'
+        )
         self.assertEqual(parsed_request["headers"]["secret_key"], "DebugTalk")
 
     def test_do_validation(self):
@@ -106,10 +125,11 @@ class TestContext(ApiServerUnittest):
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
             {"check": "$resp_body_success", "comparator": "eq", "expect": True}
         ]
-        variables = [
-            {"resp_status_code": 200},
-            {"resp_body_success": True}
-        ]
+        variables = {
+            "resp_status_code": 200,
+            "resp_body_success": True
+        }
+
         self.context.init_test_variables(variables)
 
         with self.assertRaises(exceptions.ValidationFailure):
