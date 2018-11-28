@@ -51,7 +51,7 @@ class Runner(object):
         self.verify = config.get("verify", True)
         self.output = config.get("output", [])
         self.functions = functions
-        self.evaluated_validators = []
+        self.validation_results = []
 
         # testcase setup hooks
         testcase_setup_hooks = config.get("setup_hooks", [])
@@ -74,7 +74,7 @@ class Runner(object):
         if not isinstance(self.http_client_session, HttpSession):
             return
 
-        self.evaluated_validators = []
+        self.validation_results = []
         self.http_client_session.init_meta_data()
 
     def __get_test_data(self):
@@ -84,7 +84,7 @@ class Runner(object):
             return
 
         meta_data = self.http_client_session.meta_data
-        meta_data["validators"] = self.evaluated_validators
+        meta_data["validators"] = self.validation_results
         return meta_data
 
     def _handle_skip_feature(self, test_dict):
@@ -133,7 +133,7 @@ class Runner(object):
             hook_type (enum): setup/teardown
 
         """
-        logger.log_info("call {} hook actions.".format(hook_type))
+        logger.log_debug("call {} hook actions.".format(hook_type))
         for action in actions:
 
             if isinstance(action, dict) and len(action) == 1:
@@ -245,7 +245,8 @@ class Runner(object):
         # validate
         validators = test_dict.get("validate", [])
         try:
-            self.evaluated_validators = self.session_context.validate(validators, resp_obj)
+            self.session_context.validate(validators, resp_obj)
+
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
             # log request
             err_req_msg = "request: \n"
@@ -263,21 +264,30 @@ class Runner(object):
 
             raise
 
+        finally:
+            self.validation_results = self.session_context.validation_results
+
     def _run_testcase(self, testcase_dict):
         """ run single testcase.
         """
-        meta_data_list = []
+        self.meta_datas = []
         config = testcase_dict.get("config", {})
         test_runner = Runner(config, self.functions, self.http_client_session)
 
         tests = testcase_dict.get("tests", [])
-        for index, test_dict in enumerate(tests):
-            test_runner.run_test(test_dict)
-            meta_datas = test_runner.meta_datas
-            meta_data_list.append(meta_datas)
 
-        self.session_context.update_seesion_variables(test_runner.extract_sessions())
-        return meta_data_list
+        try:
+            for index, test_dict in enumerate(tests):
+                test_runner.run_test(test_dict)
+                _meta_datas = test_runner.meta_datas
+                self.meta_datas.append(_meta_datas)
+
+            self.session_context.update_seesion_variables(test_runner.extract_sessions())
+
+        except Exception as ex:
+            meta_datas = test_runner.meta_datas
+            self.meta_datas.append(meta_datas)
+            raise exceptions.MyBaseFailure(ex)
 
     def run_test(self, test_dict):
         """ run single teststep of testcase.
@@ -315,12 +325,12 @@ class Runner(object):
         self.meta_datas = None
         if "config" in test_dict:
             # nested testcase
-            self.meta_datas = self._run_testcase(test_dict)
+            self._run_testcase(test_dict)
         else:
             # api
             try:
                 self._run_test(test_dict)
-            except Exception:
+            except:
                 raise
             finally:
                 self.meta_datas = self.__get_test_data()

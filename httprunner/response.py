@@ -242,7 +242,7 @@ class ResponseObject(object):
         if not extractors:
             return {}
 
-        logger.log_info("start to extract from response object.")
+        logger.log_debug("start to extract from response object.")
         extracted_variables_mapping = OrderedDict()
         extract_binds_order_dict = utils.ensure_mapping_format(extractors)
 
