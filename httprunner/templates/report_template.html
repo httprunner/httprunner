@@ -361,7 +361,7 @@
             <div class="popup">
               <h2>Traceback Message</h2>
               <a class="close" href="#record_{{record_index}}">&times;</a>
-              <div class="content"><pre>{{ record.attachment }}</pre></div>
+              <div class="content"><pre>{{ record.attachment | e }}</pre></div>
             </div>
           </div>
         {% endif %}
