@@ -286,12 +286,14 @@ def ensure_mapping_format(variables):
         variables_ordered_dict = {}
         for map_dict in variables:
             variables_ordered_dict.update(map_dict)
+
+        return variables_ordered_dict
+
     elif isinstance(variables, dict):
-        variables_ordered_dict = variables
+        return variables
+
     else:
         raise exceptions.ParamsError("variables format error!")
-
-    return variables_ordered_dict
 
 
 def _convert_validators_to_mapping(validators):
