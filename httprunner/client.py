@@ -174,7 +174,7 @@ class HttpSession(requests.Session):
             logger.log_error(u"{exception}".format(exception=str(e)))
         else:
             logger.log_info(
-                """status_code: {}, response_time(ms): {} ms, response_length: {} bytes""".format(
+                """status_code: {}, response_time(ms): {} ms, response_length: {} bytes\n""".format(
                     self.meta_data["response"]["status_code"],
                     self.meta_data["response"]["response_time_ms"],
                     self.meta_data["response"]["content_size"]
