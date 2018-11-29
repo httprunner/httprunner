@@ -806,15 +806,33 @@ def __parse_tests(tests, config, project_mapping):
                     test_dict["variables"],
                     functions
                 )
-                request_url = parse_data(
-                    test_dict["request"]["url"],
-                    test_dict["variables"],
-                    functions
-                )
-                test_dict["request"]["url"] = utils.build_url(
-                    base_url,
-                    request_url
-                )
+                try:
+                    request_url = parse_data(
+                        test_dict["request"]["url"],
+                        test_dict["variables"],
+                        functions
+                    )
+                    test_dict["request"]["url"] = utils.build_url(
+                        base_url,
+                        request_url
+                    )
+                except exceptions.VariableNotFound:
+                    """ variable in current url maybe extracted from former api
+                        "tests": [
+                            {
+                                "request": {},
+                                "extract": {
+                                    "host1": content.host1
+                                }
+                            },
+                            {
+                                "request": {
+                                    "url": "$host1/path1"
+                                }
+                            }
+                        ]
+                    """
+                    pass
 
 
 def _parse_testcase(testcase, project_mapping):
