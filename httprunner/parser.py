@@ -616,7 +616,7 @@ def _extend_with_api(test_dict, api_def_dict):
     test_dict["request"] = api_def_dict.pop("request", {})
 
     # base_url & verify: priority api_def_dict > test_dict
-    if "base_url" in api_def_dict:
+    if api_def_dict.get("base_url"):
         test_dict["base_url"] = api_def_dict["base_url"]
 
     if "verify" in api_def_dict:
@@ -661,9 +661,11 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
 
     # override base_url, verify
     # priority: testcase config > testsuite tests
-    test_base_url = test_dict.pop("base_url", None)
+    test_base_url = test_dict.pop("base_url", "")
+    if not testcase_def_dict["config"].get("base_url"):
+        testcase_def_dict["config"]["base_url"] = test_base_url
+
     test_verify = test_dict.pop("verify", True)
-    testcase_def_dict["config"].setdefault("base_url", test_base_url)
     testcase_def_dict["config"].setdefault("verify", test_verify)
 
     # override testcase config name, output, etc.
@@ -738,15 +740,16 @@ def __parse_tests(tests, config, project_mapping):
 
     """
     config_variables = config.pop("variables", {})
-    config_base_url = config.pop("base_url", None)
+    config_base_url = config.pop("base_url", "")
     config_verify = config.pop("verify", True)
     functions = project_mapping.get("functions", {})
 
     for test_dict in tests:
 
         # base_url & verify: priority test_dict > config
-        if config_base_url:
-            test_dict.setdefault("base_url", config_base_url)
+        if (not test_dict.get("base_url")) and config_base_url:
+            test_dict["base_url"] = config_base_url
+
         test_dict.setdefault("verify", config_verify)
 
         if "testcase_def" in test_dict:
@@ -800,7 +803,7 @@ def __parse_tests(tests, config, project_mapping):
                 api_def_dict = test_dict.pop("api_def")
                 _extend_with_api(test_dict, api_def_dict)
 
-            if "base_url" in test_dict:
+            if test_dict.get("base_url"):
                 base_url = parse_data(
                     test_dict.pop("base_url"),
                     test_dict["variables"],
