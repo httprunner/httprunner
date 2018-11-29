@@ -296,7 +296,7 @@ def load_test(raw_testinfo):
                 "api": "api_add_cart",
                 "variables": [],
                 "validate": [],
-                "extract": []
+                "extract": {}
             }
             # testcase reference
             {
@@ -310,7 +310,7 @@ def load_test(raw_testinfo):
                 "request": {},
                 "variables": [],
                 "validate": [],
-                "extract": []
+                "extract": {}
             }
 
     Returns:
