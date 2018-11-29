@@ -244,15 +244,15 @@ def substitute_variables(content, variables_mapping):
 
     if isinstance(content, basestring):
         # content is in string format here
+        if content in variables_mapping.keys():
+            # content is a variable
+            return variables_mapping[content]
+        # replace var with str(value) in content
         for var, value in variables_mapping.items():
-            if content == var:
-                # content is a variable
-                content = value
-            else:
-                if not isinstance(value, str):
-                    value = builtin_str(value)
-                content = content.replace(var, value)
-
+            if not isinstance(value, str):
+                value = builtin_str(value)
+            content = content.replace(var, value)
+    
     return content
 
 def parse_parameters(parameters, variables_mapping, functions_mapping):
