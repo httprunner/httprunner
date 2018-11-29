@@ -481,6 +481,94 @@ class TestParser(unittest.TestCase):
         self.assertEqual(test_dict1_variables["creator"], "user_test_001")
         self.assertEqual(test_dict1_variables["username"], "$creator")
 
+    def test_parse_tests_base_url_priority(self):
+        """ base_url & verify: priority test_dict > config
+        """
+        tests_mapping = {
+            'testcases': [
+                {
+                    'config': {
+                        'name': '',
+                        "base_url": "$host",
+                        'variables': {
+                            "host": "https://debugtalk"
+                        },
+                        "verify": False
+                    },
+                    'tests': [
+                        {
+                            'name': 'testcase1',
+                            "base_url": "https://httprunner.org",
+                            "variables": [
+                                {"creator": "user_test_002"},
+                                {"username": "$creator"}
+                            ],
+                            'request': {'url': '/api1', 'method': 'GET', "verify": True}
+                        }
+                    ]
+                }
+            ]
+        }
+        parser.parse_tests(tests_mapping)
+        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
+        self.assertEqual(test_dict["request"]["verify"], True)
+
+    def test_parse_tests_base_url_path_with_variable(self):
+        tests_mapping = {
+            'testcases': [
+                {
+                    'config': {
+                        'name': '',
+                        "base_url": "$host1",
+                        'variables': {
+                            "host1": "https://debugtalk"
+                        }
+                    },
+                    'tests': [
+                        {
+                            'name': 'testcase1',
+                            "variables": {
+                                "host2": "https://httprunner.org"
+                            },
+                            'request': {'url': '$host2/api1', 'method': 'GET'}
+                        }
+                    ]
+                }
+            ]
+        }
+        parser.parse_tests(tests_mapping)
+        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
+
+    def test_parse_tests_base_url_test_dict(self):
+        tests_mapping = {
+            'testcases': [
+                {
+                    'config': {
+                        'name': '',
+                        "base_url": "$host1",
+                        'variables': {
+                            "host1": "https://debugtalk"
+                        }
+                    },
+                    'tests': [
+                        {
+                            'name': 'testcase1',
+                            "base_url": "$host2",
+                            "variables": {
+                                "host2": "https://httprunner.org"
+                            },
+                            'request': {'url': '/api1', 'method': 'GET'}
+                        }
+                    ]
+                }
+            ]
+        }
+        parser.parse_tests(tests_mapping)
+        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
+
     def test_parse_environ(self):
         os.environ["PROJECT_KEY"] = "ABCDEFGH"
         content = {
