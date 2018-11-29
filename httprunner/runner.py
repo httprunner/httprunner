@@ -169,7 +169,7 @@ class Runner(object):
                         },
                         "json": {"name": "user", "password": "123456"}
                     },
-                    "extract": [],              # optional
+                    "extract": {},              # optional
                     "validate": [],             # optional
                     "setup_hooks": [],          # optional
                     "teardown_hooks": []        # optional
@@ -238,7 +238,7 @@ class Runner(object):
             self.do_hook_actions(teardown_hooks, "teardown")
 
         # extract
-        extractors = test_dict.get("extract", [])
+        extractors = test_dict.get("extract", {})
         extracted_variables_mapping = resp_obj.extract_response(extractors)
         self.session_context.update_seesion_variables(extracted_variables_mapping)
 
