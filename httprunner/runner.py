@@ -192,6 +192,9 @@ class Runner(object):
         test_variables = test_dict.get("variables", {})
         self.session_context.init_test_variables(test_variables)
 
+        # teststep name
+        test_name = test_dict.get("name", "")
+
         # parse test request
         raw_request = test_dict.get('request', {})
         parsed_test_request = self.session_context.eval_content(raw_request)
@@ -225,7 +228,7 @@ class Runner(object):
         resp = self.http_client_session.request(
             method,
             url,
-            name=group_name,
+            name=(group_name or test_name),
             **parsed_test_request
         )
         resp_obj = response.ResponseObject(resp)

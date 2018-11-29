@@ -43,6 +43,7 @@ class HttpSession(requests.Session):
         """ initialize meta_data, it will store detail data of request and response
         """
         self.meta_data = {
+            "name": "",
             "request": {
                 "url": "N/A",
                 "method": "N/A",
@@ -104,6 +105,9 @@ class HttpSession(requests.Session):
             for key, value in self.meta_data[request_response].items():
                 msg += "{:<16} : {}\n".format(key, repr(value))
             logger.log_debug(msg)
+
+        # record test name
+        self.meta_data["name"] = name
 
         # record original request info
         self.meta_data["request"]["method"] = method
