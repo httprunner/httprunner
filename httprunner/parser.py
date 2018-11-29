@@ -815,10 +815,19 @@ def __parse_tests(tests, config, project_mapping):
             else:
                 # case (2)
                 if "base_url" in test_dict:
-                    base_url = test_dict.pop("base_url")
+                    base_url = parse_data(
+                        test_dict.pop("base_url"),
+                        test_dict["variables"],
+                        functions
+                    )
+                    request_url = parse_data(
+                        test_dict["request"]["url"],
+                        test_dict["variables"],
+                        functions
+                    )
                     test_dict["request"]["url"] = utils.build_url(
                         base_url,
-                        test_dict["request"]["url"]
+                        request_url
                     )
 
 
