@@ -598,6 +598,7 @@ class TestParser(unittest.TestCase):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         raw_testinfo = {
             "name": "get token",
+            "base_url": "https://debugtalk.com",
             "api": "get_token",
         }
         api_def_dict = loader.load_test(raw_testinfo)
@@ -607,6 +608,7 @@ class TestParser(unittest.TestCase):
             "variables": [
                 {"var": 123}
             ],
+            "base_url": "https://httprunner.org",
             'request': {
                 'url': '/api/get-token',
                 'method': 'POST',
@@ -620,6 +622,7 @@ class TestParser(unittest.TestCase):
         }
 
         extended_block = parser._extend_with_api(test_block, api_def_dict)
+        self.assertEqual(extended_block["base_url"], "https://debugtalk.com")
         self.assertEqual(extended_block["name"], "override block")
         self.assertIn({'var': 123}, extended_block["variables"])
         self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, extended_block["validate"])
