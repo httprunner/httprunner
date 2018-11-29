@@ -566,14 +566,14 @@ def _extend_with_api(test_dict, api_def_dict):
             }
         >>> test_dict = {
                 "name": "get token 2",
-                "extract": [{"token": "content.token"}],
+                "extract": {"token": "content.token"},
                 "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
             }
         >>> _extend_with_api(test_dict, api_def_dict)
             {
                 "name": "get token 2",
                 "request": {...},
-                "extract": [{"token": "content.token"}],
+                "extract": {"token": "content.token"},
                 "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
             }
 
@@ -606,10 +606,10 @@ def _extend_with_api(test_dict, api_def_dict):
     )
 
     # merge & override extractors
-    def_extrators = api_def_dict.pop("extract", [])
+    def_extrators = api_def_dict.pop("extract", {})
     test_dict["extract"] = utils.extend_variables(
         def_extrators,
-        test_dict.get("extract", [])
+        test_dict.get("extract", {})
     )
 
     # TODO: merge & override request
