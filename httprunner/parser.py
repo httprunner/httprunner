@@ -614,22 +614,13 @@ def _extend_with_api(test_dict, api_def_dict):
 
     # TODO: merge & override request
     test_dict["request"] = api_def_dict.pop("request", {})
-    # base_url
-    if "base_url" in test_dict:
-        base_url = test_dict.pop("base_url")
-        test_dict["request"]["url"] = utils.build_url(
-            base_url,
-            test_dict["request"]["url"]
-        )
 
-    # verify
-    if "verify" in test_dict:
-        verify = test_dict.pop("verify")
-    elif "verify" in api_def_dict:
-        verify = api_def_dict.pop("verify")
-    else:
-        verify = True
-    test_dict["request"]["verify"] = verify
+    # base_url & verify: priority api_def_dict > test_dict
+    if "base_url" in api_def_dict:
+        test_dict["base_url"] = api_def_dict["base_url"]
+
+    if "verify" in api_def_dict:
+        test_dict["request"]["verify"] = api_def_dict["verify"]
 
     # merge & override setup_hooks
     def_setup_hooks = api_def_dict.pop("setup_hooks", [])
@@ -786,10 +777,6 @@ def __parse_tests(tests, config, project_mapping):
             _parse_testcase(test_dict, project_mapping)
 
         else:
-            # test_dict is API test, has two cases.
-            # (1) test_dict has API reference
-            # (2) test_dict is defined directly
-
             # 1, config => tests
             # override test_dict variables
             test_dict["variables"] = utils.extend_variables(
@@ -808,27 +795,26 @@ def __parse_tests(tests, config, project_mapping):
                 pass
 
             if "api_def" in test_dict:
-                # case (1)
+                # test_dict has API reference
                 # 2, test_dict => api
                 api_def_dict = test_dict.pop("api_def")
                 _extend_with_api(test_dict, api_def_dict)
-            else:
-                # case (2)
-                if "base_url" in test_dict:
-                    base_url = parse_data(
-                        test_dict.pop("base_url"),
-                        test_dict["variables"],
-                        functions
-                    )
-                    request_url = parse_data(
-                        test_dict["request"]["url"],
-                        test_dict["variables"],
-                        functions
-                    )
-                    test_dict["request"]["url"] = utils.build_url(
-                        base_url,
-                        request_url
-                    )
+
+            if "base_url" in test_dict:
+                base_url = parse_data(
+                    test_dict.pop("base_url"),
+                    test_dict["variables"],
+                    functions
+                )
+                request_url = parse_data(
+                    test_dict["request"]["url"],
+                    test_dict["variables"],
+                    functions
+                )
+                test_dict["request"]["url"] = utils.build_url(
+                    base_url,
+                    request_url
+                )
 
 
 def _parse_testcase(testcase, project_mapping):
