@@ -287,7 +287,7 @@ class Runner(object):
         except Exception as ex:
             meta_datas = test_runner.meta_datas
             self.meta_datas.append(meta_datas)
-            raise exceptions.MyBaseFailure(ex)
+            raise
 
     def run_test(self, test_dict):
         """ run single teststep of testcase.
@@ -330,7 +330,7 @@ class Runner(object):
             # api
             try:
                 self._run_test(test_dict)
-            except:
+            except Exception:
                 raise
             finally:
                 self.meta_datas = self.__get_test_data()
