@@ -14,6 +14,7 @@ import time
 
 from httprunner.compat import basestring, builtin_str, integer_types, str
 from httprunner.exceptions import ParamsError
+from httprunner.utils import convert_dict_to_params, lower_dict_keys
 from requests_toolbelt import MultipartEncoder
 
 
@@ -134,14 +135,23 @@ def endswith(check_value, expect_value):
 """
 def setup_hook_prepare_kwargs(request):
     if request["method"] == "POST":
-        content_type = request.get("headers", {}).get("content-type")
+        req_headers = lower_dict_keys(request.get("headers", {}))
+        content_type = req_headers.get("content-type")
         if content_type and "data" in request:
-            # if request content-type is application/json, request data should be dumped
-            if content_type.startswith("application/json") and isinstance(request["data"], (dict, list)):
-                request["data"] = json.dumps(request["data"])
+            req_data = request["data"]
 
-            if isinstance(request["data"], str):
-                request["data"] = request["data"].encode('utf-8')
+            # if request content-type is application/json, request data should be dumped
+            if content_type.startswith("application/json") and isinstance(req_data, (dict, list)):
+                req_data = json.dumps(req_data)
+
+            # if request content-type is application/x-www-form-urlencoded, request data should be in params format
+            elif content_type.startswith("application/x-www-form-urlencoded") and isinstance(req_data, dict):
+                req_data = convert_dict_to_params(req_data)
+
+            if isinstance(req_data, str):
+                req_data = req_data.encode('utf-8')
+
+            request["data"] = req_data
 
 def sleep_N_secs(n_secs):
     """ sleep n seconds
