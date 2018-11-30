@@ -5,7 +5,7 @@ import time
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.utils import build_url
+from httprunner.utils import build_url, lower_dict_keys
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
@@ -138,11 +138,13 @@ class HttpSession(requests.Session):
         self.meta_data["response"]["url"] = response.url
         self.meta_data["response"]["status_code"] = response.status_code
         self.meta_data["response"]["reason"] = response.reason
-        self.meta_data["response"]["headers"] = dict(response.headers)
         self.meta_data["response"]["cookies"] = response.cookies or {}
         self.meta_data["response"]["encoding"] = response.encoding
+        resp_headers = dict(response.headers)
+        self.meta_data["response"]["headers"] = resp_headers
 
-        content_type = response.headers.get("Content-Type", "")
+        lower_resp_headers = lower_dict_keys(resp_headers)
+        content_type = lower_resp_headers.get("content-type", "")
         self.meta_data["response"]["content_type"] = content_type
 
         if "image" in content_type:

@@ -152,6 +152,7 @@ def get_uniform_comparator(comparator):
     else:
         return comparator
 
+
 def deep_update_dict(origin_dict, override_dict):
     """ update origin dict with override dict recursively
     e.g. origin_dict = {'a': 1, 'b': {'c': 2, 'd': 4}}
@@ -172,6 +173,31 @@ def deep_update_dict(origin_dict, override_dict):
             origin_dict[key] = override_dict[key]
 
     return origin_dict
+
+
+def convert_dict_to_params(src_dict):
+    """ convert dict to params string
+
+    Args:
+        src_dict (dict): source mapping data structure
+
+    Returns:
+        str: string params data
+
+    Examples:
+        >>> src_dict = {
+            "a": 1,
+            "b": 2
+        }
+        >>> convert_dict_to_params(src_dict)
+        >>> "a=1&b=2"
+
+    """
+    return "&".join([
+        "{}={}".format(key, value)
+        for key, value in src_dict.items()
+    ])
+
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
@@ -209,6 +235,7 @@ def lower_dict_keys(origin_dict):
         key.lower(): value
         for key, value in origin_dict.items()
     }
+
 
 def lower_test_dict_keys(test_dict):
     """ convert keys in test_dict to lower case, convertion will occur in two places:
