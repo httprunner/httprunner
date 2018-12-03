@@ -815,10 +815,6 @@ def __parse_tests(tests, config, project_mapping):
                         test_dict["variables"],
                         functions
                     )
-                    test_dict["request"]["url"] = utils.build_url(
-                        base_url,
-                        request_url
-                    )
                 except exceptions.VariableNotFound:
                     """ variable in current url maybe extracted from former api
                         "tests": [
@@ -835,7 +831,12 @@ def __parse_tests(tests, config, project_mapping):
                             }
                         ]
                     """
-                    pass
+                    request_url = test_dict["request"]["url"]
+                finally:
+                    test_dict["request"]["url"] = utils.build_url(
+                        base_url,
+                        request_url
+                    )
 
 
 def _parse_testcase(testcase, project_mapping):
