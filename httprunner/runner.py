@@ -3,8 +3,13 @@
 from unittest.case import SkipTest
 
 from httprunner import exceptions, logger, response, utils
-from httprunner.client import HttpSession
+from httprunner.client import HttpSession as HttpRunnerSession
 from httprunner.context import SessionContext
+
+try:
+    from locust.clients import HttpSession as LocustHttpSession
+except ImportError:
+    LocustHttpSession = None
 
 
 class Runner(object):
@@ -58,7 +63,7 @@ class Runner(object):
         # testcase teardown hooks
         self.testcase_teardown_hooks = config.get("teardown_hooks", [])
 
-        self.http_client_session = http_client_session or HttpSession(base_url)
+        self.http_client_session = http_client_session or HttpRunnerSession(base_url)
         self.session_context = SessionContext(self.functions)
 
         if testcase_setup_hooks:
@@ -71,7 +76,7 @@ class Runner(object):
     def __clear_test_data(self):
         """ clear request and response data
         """
-        if not isinstance(self.http_client_session, HttpSession):
+        if not isinstance(self.http_client_session, HttpRunnerSession):
             return
 
         self.validation_results = []
@@ -80,7 +85,7 @@ class Runner(object):
     def __get_test_data(self):
         """ get request/response data and validate results
         """
-        if not isinstance(self.http_client_session, HttpSession):
+        if not isinstance(self.http_client_session, HttpRunnerSession):
             return
 
         meta_data = self.http_client_session.meta_data
@@ -236,7 +241,6 @@ class Runner(object):
         # teardown hooks
         teardown_hooks = test_dict.get("teardown_hooks", [])
         if teardown_hooks:
-            logger.log_info("start to run teardown hooks")
             self.session_context.update_test_variables("response", resp_obj)
             self.do_hook_actions(teardown_hooks, "teardown")
 
@@ -275,7 +279,15 @@ class Runner(object):
         """
         self.meta_datas = []
         config = testcase_dict.get("config", {})
-        test_runner = Runner(config, self.functions, self.http_client_session)
+        base_url = config.get("base_url")
+
+        # each testcase should have individual session.
+        if LocustHttpSession and isinstance(self.http_client_session, LocustHttpSession):
+            http_client_session = LocustHttpSession(base_url)
+        else:
+            http_client_session = HttpRunnerSession(base_url)
+
+        test_runner = Runner(config, self.functions, http_client_session)
 
         tests = testcase_dict.get("tests", [])
 
