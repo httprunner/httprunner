@@ -47,7 +47,8 @@
       background-color: lightgrey;
       font-size: smaller;
       padding: 5px 10px;
-      text-align: center;
+      line-height: 20px;
+      text-align: left;
     }
     .details .success {
       background-color: greenyellow;
@@ -75,6 +76,7 @@
     a.button{
       color: gray;
       text-decoration: none;
+      display: inline-block;
     }
     .button:hover {
       background: #2cffbd;
@@ -90,6 +92,7 @@
       transition: opacity 500ms;
       visibility: hidden;
       opacity: 0;
+      line-height: 25px;
     }
     .overlay:target {
       visibility: visible;
@@ -189,35 +192,6 @@
   <h3>{{test_suite_summary.name}}</h3>
   <table id="suite_{{suite_index}}" class="details">
     <tr>
-      <th>base_url</th>
-      <td colspan="2">{{test_suite_summary.base_url}}</td>
-      <th colspan="2" class="detail">
-        <a class="button" href="#suite_output_{{suite_index}}">parameters & output</a>
-        <div id="suite_output_{{suite_index}}" class="overlay">
-            <div class="popup">
-                <h2>Parameters and Output</h2>
-                <a class="close" href="#suite_{{suite_index}}">&times;</a>
-                <div class="content">
-                  <div style="overflow: auto">
-                      <table>
-                        <tr>
-                          <th>variables</th>
-                          <th>output</th>
-                        </tr>
-                        {% if in_out in test_suite_summary %}
-                        <tr>
-                          <td>{{test_suite_summary.in_out.in}}</td>
-                          <td>{{test_suite_summary.in_out.out}}</td>
-                        </tr>
-                        {% endif %}
-                      </table>
-                  </div>
-                </div>
-            </div>
-        </div>
-      </td>
-    </tr>
-    <tr>
       <td>TOTAL: {{test_suite_summary.stat.testsRun}}</td>
       <td>SUCCESS: {{test_suite_summary.stat.successes}}</td>
       <td>FAILED: {{test_suite_summary.stat.failures}}</td>
@@ -235,7 +209,7 @@
     {% set record_index = "{}_{}".format(suite_index, loop.index) %}
     {% set record_meta_datas = record.meta_datas_expanded %}
     <tr id="record_{{record_index}}">
-      <th class="{{record.status}}" style="width:5em;">{{record.status}}</td>
+      <th class="{{record.status}}" style="width:5em;">{{record.status}}</th>
       <td colspan="2">{{record.name}}</td>
       <td style="text-align:center;width:6em;">{{ record.response_time }} ms</td>
       <td class="detail">
