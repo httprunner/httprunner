@@ -1,22 +1,16 @@
 # encoding: utf-8
 
-import argparse
-import multiprocessing
-import os
-import sys
-import unittest
-
-from httprunner import logger
-from httprunner.__about__ import __description__, __version__
-from httprunner.api import HttpRunner
-from httprunner.compat import is_py2
-from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                              prettify_json_file, validate_json_file)
-
-
 def main_hrun():
     """ API test: parse command line options and run commands.
     """
+    import argparse
+    from httprunner import logger
+    from httprunner.__about__ import __description__, __version__
+    from httprunner.api import HttpRunner
+    from httprunner.compat import is_py2
+    from httprunner.utils import (create_scaffold, get_python2_retire_msg,
+                                prettify_json_file, validate_json_file)
+
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         '-V', '--version', dest='version', action='store_true',
@@ -92,9 +86,14 @@ def main_hrun():
 
     return 0
 
+
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
+    import multiprocessing
+    import sys
+    from httprunner import logger
+
     try:
         from httprunner import locusts
     except ImportError:
@@ -108,7 +107,7 @@ def main_locust():
         sys.argv.extend(["-h"])
 
     if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
-        locusts.main()
+        locusts.start_locust_main()
         sys.exit(0)
 
     # set logging level
@@ -174,4 +173,4 @@ def main_locust():
         sys.argv.pop(processes_index)
         locusts.run_locusts_with_processes(sys.argv, processes_count)
     else:
-        locusts.main()
+        locusts.start_locust_main()
