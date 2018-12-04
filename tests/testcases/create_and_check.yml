@@ -15,7 +15,7 @@
 
 - test:
     name: make sure user $uid does not exist
-    api: get_user
+    api: api/get_user.yml
     variables:
         uid: $uid
         token: $token
@@ -25,7 +25,7 @@
 
 - test:
     name: create user $uid
-    api: create_user
+    api: api/create_user.yml
     variables:
         user_name: "user1"
         user_password: "123456"
@@ -37,7 +37,7 @@
 
 - test:
     name: check if user $uid exists
-    api: get_user
+    api: api/get_user.yml
     variables:
         uid: $uid
         token: $token

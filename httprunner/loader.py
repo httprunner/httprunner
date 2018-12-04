@@ -281,6 +281,7 @@ def load_debugtalk_functions():
 
 project_mapping = {}
 tests_def_mapping = {
+    "PWD": None,
     "api": {},
     "testcases": {}
 }
@@ -323,6 +324,16 @@ def load_test(raw_testinfo):
     # reference api
     if "api" in raw_testinfo:
         api_name = raw_testinfo["api"]
+
+        # api maybe defined in two types:
+        # 1, individual file: each file is corresponding to one api definition
+        # 2, api sets file: one file contains a list of api definitions
+        if not os.path.isabs(api_name):
+            api_path = os.path.join(tests_def_mapping["PWD"], api_name)
+            if os.path.isfile(api_path):
+                # type 1: api is defined in individual file
+                api_name = api_path
+
         raw_testinfo["api_def"] = _get_api_definition(api_name)
 
     # TODO: reference proc functions
@@ -495,22 +506,26 @@ def load_api_folder(api_folder_path):
             }
 
     """
-    # TODO: refactor api storage format, use one file for each api.
     api_definition_mapping = {}
 
     api_items_mapping = load_folder_content(api_folder_path)
 
     for api_file_path, api_items in api_items_mapping.items():
         # TODO: add JSON schema validation
-        for api_item in api_items:
-            key, api_dict = api_item.popitem()
+        if isinstance(api_items, list):
+            for api_item in api_items:
+                key, api_dict = api_item.popitem()
+                api_id = api_dict.get("id")
+                if api_id in api_definition_mapping:
+                    logger.log_warning("API definition duplicated: {}".format(api_id))
 
-            # TODO: replace id with api file path
-            api_id = api_dict.get("id")
-            if api_id in api_definition_mapping:
-                logger.log_warning("API definition duplicated: {}".format(api_id))
+                api_definition_mapping[api_id] = api_dict
 
-            api_definition_mapping[api_id] = api_dict
+        elif isinstance(api_items, dict):
+            if api_file_path in api_definition_mapping:
+                logger.log_warning("API definition duplicated: {}".format(api_file_path))
+
+            api_definition_mapping[api_file_path] = api_items
 
     return api_definition_mapping
 
@@ -579,6 +594,7 @@ def load_project_tests(test_path, dot_env_path=None):
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
+    tests_def_mapping["PWD"] = project_working_directory
 
 
 def load_tests(path, dot_env_path=None):

@@ -13,7 +13,7 @@
 
 - test:
     name: get token (setup)
-    api: get_token
+    api: api/get_token.yml
     variables:
         user_agent: 'iOS/10.3'
         device_sn: $device_sn
@@ -27,6 +27,6 @@
 
 - test:
     name: reset all users
-    api: reset_all
+    api: api/reset_all.yml
     variables:
         token: $token

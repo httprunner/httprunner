@@ -2,7 +2,6 @@
     id: get_token
     name: get token
     variables:
-
         user_agent: XXX
         device_sn: API_XXX
         os_platform: XXX
