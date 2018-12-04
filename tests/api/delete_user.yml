@@ -1,0 +1,12 @@
+variables:
+    uid: 9000
+    token: XXX
+request:
+    url: /api/users/$uid
+    method: DELETE
+    headers:
+        Content-Type: "application/json"
+        device_sn: $device_sn
+        token: $token
+validate:
+    - eq: ["status_code", 200]
