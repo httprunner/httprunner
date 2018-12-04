@@ -247,7 +247,7 @@ class Runner(object):
         # extract
         extractors = test_dict.get("extract", {})
         extracted_variables_mapping = resp_obj.extract_response(extractors)
-        self.session_context.update_seesion_variables(extracted_variables_mapping)
+        self.session_context.update_session_variables(extracted_variables_mapping)
 
         # validate
         validators = test_dict.get("validate", [])
@@ -297,7 +297,7 @@ class Runner(object):
                 _meta_datas = test_runner.meta_datas
                 self.meta_datas.append(_meta_datas)
 
-            self.session_context.update_seesion_variables(test_runner.extract_sessions())
+            self.session_context.update_session_variables(test_runner.extract_sessions())
 
         except Exception as ex:
             meta_datas = test_runner.meta_datas
