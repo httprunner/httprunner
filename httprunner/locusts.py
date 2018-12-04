@@ -7,7 +7,6 @@ import sys
 
 from httprunner.logger import color_print
 from httprunner import loader
-from locust.main import main
 
 
 def parse_locustfile(file_path):
@@ -31,6 +30,7 @@ def parse_locustfile(file_path):
 
     return locustfile_path
 
+
 def gen_locustfile(testcase_file_path):
     """ generate locustfile from template.
     """
@@ -49,17 +49,25 @@ def gen_locustfile(testcase_file_path):
 
     return locustfile_path
 
+
+def start_locust_main():
+    from locust.main import main
+    main()
+
+
 def start_master(sys_argv):
     sys_argv.append("--master")
     sys.argv = sys_argv
-    main()
+    start_locust_main()
+
 
 def start_slave(sys_argv):
     if "--slave" not in sys_argv:
         sys_argv.extend(["--slave"])
 
     sys.argv = sys_argv
-    main()
+    start_locust_main()
+
 
 def run_locusts_with_processes(sys_argv, processes_count):
     processes = []
