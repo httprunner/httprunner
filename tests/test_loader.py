@@ -439,6 +439,8 @@ class TestSuiteLoader(unittest.TestCase):
         api_definition_mapping = loader.load_api_folder(path)
         self.assertIn("get_token", api_definition_mapping)
         self.assertIn("request", api_definition_mapping["get_token"])
+        api_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
+        self.assertIn(api_path, api_definition_mapping)
 
     def test_load_project_tests(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
