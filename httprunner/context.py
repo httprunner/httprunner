@@ -11,7 +11,7 @@ class SessionContext(object):
 
         Equivalent to:
         >>> context = SessionContext(functions)
-        >>> context.update_seesion_variables(variables)
+        >>> context.update_session_variables(variables)
 
     """
     def __init__(self, functions, variables=None):
@@ -51,7 +51,7 @@ class SessionContext(object):
         """
         self.test_variables_mapping[variable_name] = variable_value
 
-    def update_seesion_variables(self, variables_mapping):
+    def update_session_variables(self, variables_mapping):
         """ update session with extracted variables mapping.
             these variables are valid in the whole running session.
         """

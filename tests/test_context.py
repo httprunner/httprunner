@@ -44,7 +44,7 @@ class TestContext(ApiServerUnittest):
         self.assertEqual(variables_mapping["data"], '{"name": "user1", "password": "123456"}')
 
     def test_update_seesion_variables(self):
-        self.context.update_seesion_variables({"TOKEN": "debugtalk"})
+        self.context.update_session_variables({"TOKEN": "debugtalk"})
         self.assertEqual(
             self.context.session_variables_mapping["TOKEN"],
             "debugtalk"
