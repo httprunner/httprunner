@@ -90,6 +90,9 @@ def main_hrun():
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
+    # monkey patch ssl at beginning to avoid RecursionError when running locust.
+    from gevent import monkey; monkey.patch_ssl()
+
     import multiprocessing
     import sys
     from httprunner import logger

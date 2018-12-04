@@ -3,7 +3,8 @@ import shutil
 import time
 import unittest
 
-from httprunner import HttpRunner, api, loader, parser
+from httprunner import loader, parser
+from httprunner.api import HttpRunner, prepare_locust_tests
 from locust import HttpLocust
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -570,7 +571,7 @@ class TestLocust(unittest.TestCase):
     def test_prepare_locust_tests(self):
         path = os.path.join(
             os.getcwd(), 'tests/locust_tests/demo_simple_locust.yml')
-        locust_tests = api.prepare_locust_tests(path)
+        locust_tests = prepare_locust_tests(path)
         self.assertIn("gen_md5", locust_tests["functions"])
         self.assertEqual(len(locust_tests["tests"]), 10)
         self.assertEqual(locust_tests["tests"][0]["name"], "index")
