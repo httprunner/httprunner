@@ -26,6 +26,8 @@ class ResponseObject(object):
         try:
             if key == "json":
                 value = self.resp_obj.json()
+            elif key == "cookies":
+                value =  self.resp_obj.cookies.get_dict()
             else:
                 value =  getattr(self.resp_obj, key)
 
@@ -99,7 +101,7 @@ class ResponseObject(object):
 
         # cookies
         elif top_query == "cookies":
-            cookies = self.cookies.get_dict()
+            cookies = self.cookies
             if not sub_query:
                 # extract cookies
                 return cookies
