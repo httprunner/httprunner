@@ -123,12 +123,12 @@ class Runner(object):
         """ call hook actions.
 
         Args:
-            actions (str/dict): actions maybe in two format.
+            actions (list): each action in actions list maybe in two format.
 
-                format1: only call hook functions.
-                    ${func()}
-                format2: assignment, the value returned by hook function will be assigned to variable.
+                format1 (dict): assignment, the value returned by hook function will be assigned to variable.
                     {"var": "${func()}"}
+                format2 (str): only call hook functions.
+                    ${func()}
 
             hook_type (enum): setup/teardown
 
@@ -137,6 +137,7 @@ class Runner(object):
         for action in actions:
 
             if isinstance(action, dict) and len(action) == 1:
+                # format 1
                 # {"var": "${func()}"}
                 var_name, hook_content = list(action.items())[0]
                 logger.log_debug("assignment with hook: {} = {}".format(var_name, hook_content))
@@ -145,6 +146,7 @@ class Runner(object):
                     self.session_context.eval_content(hook_content)
                 )
             else:
+                # format 2
                 logger.log_debug("call hook function: {}".format(action))
                 # TODO: check hook function if valid
                 self.session_context.eval_content(action)
@@ -201,8 +203,8 @@ class Runner(object):
         self.session_context.update_test_variables("request", parsed_test_request)
 
         # setup hooks
-        setup_hooks = test_dict.get("setup_hooks", [])
-        setup_hooks.insert(0, "${setup_hook_prepare_kwargs($request)}")
+        setup_hooks = ["${setup_hook_prepare_kwargs($request)}"]
+        setup_hooks.extend(test_dict.get("setup_hooks", []))
         self.do_hook_actions(setup_hooks, "setup")
 
         try:
