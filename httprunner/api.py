@@ -69,7 +69,7 @@ class HttpRunner(object):
             test_runner = runner.Runner(config, functions)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
-            tests = testcase.get("tests", [])
+            tests = testcase.get("teststeps", [])
             for index, test_dict in enumerate(tests):
                 for times_index in range(int(test_dict.get("times", 1))):
                     # suppose one testcase should not have more than 9999 steps,
@@ -80,7 +80,7 @@ class HttpRunner(object):
 
             loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
             setattr(loaded_testcase, "config", config)
-            setattr(loaded_testcase, "tests", tests)
+            setattr(loaded_testcase, "teststeps", tests)
             setattr(loaded_testcase, "runner", test_runner)
             test_suite.addTest(loaded_testcase)
 
@@ -145,14 +145,14 @@ class HttpRunner(object):
         """
         # parse tests
         self.exception_stage = "parse tests"
-        parser.parse_tests(tests_mapping)
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
 
         if self.save_tests:
-            utils.dump_tests(tests_mapping, "parsed")
+            utils.dump_tests(parsed_tests_mapping, "parsed")
 
         # add tests to test suite
         self.exception_stage = "add tests to test suite"
-        test_suite = self._add_tests(tests_mapping)
+        test_suite = self._add_tests(parsed_tests_mapping)
 
         # run test suite
         self.exception_stage = "run test suite"
@@ -236,16 +236,16 @@ def prepare_locust_tests(path):
 
             {
                 "functions": {},
-                "tests": []
+                "teststeps": []
             }
 
     """
     tests_mapping = loader.load_tests(path)
-    parser.parse_tests(tests_mapping)
+    parsed_tests_mapping = parser.parse_tests(tests_mapping)
 
-    functions = tests_mapping.get("project_mapping", {}).get("functions", {})
-    testcase = tests_mapping["testcases"][0]
-    items = testcase.get("tests", [])
+    functions = parsed_tests_mapping.get("project_mapping", {}).get("functions", {})
+    testcase = parsed_tests_mapping["testcases"][0]
+    items = testcase.get("teststeps", [])
 
     tests = []
     for item in items:

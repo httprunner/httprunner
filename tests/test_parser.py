@@ -429,7 +429,7 @@ class TestParser(unittest.TestCase):
             3 * 2 * 3
         )
 
-    def test_parse_tests(self):
+    def test_parse_tests_testcase(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
         tests_mapping = loader.load_tests(testcase_file_path)
@@ -442,10 +442,10 @@ class TestParser(unittest.TestCase):
             testcases[0]["config"]["variables"]["PROJECT_KEY"],
             "${ENV(PROJECT_KEY)}"
         )
-        parser.parse_tests(tests_mapping)
-        parsed_testcases = tests_mapping["testcases"]
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        parsed_testcases = parsed_tests_mapping["testcases"]
         self.assertIsInstance(parsed_testcases, list)
-        test_dict1 = parsed_testcases[0]["tests"][0]
+        test_dict1 = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict1["variables"]["var_c"], 3)
         self.assertEqual(test_dict1["variables"]["PROJECT_KEY"], "ABCDEFGH")
         # TODO: parameters
@@ -456,14 +456,14 @@ class TestParser(unittest.TestCase):
         tests_mapping = {
             'testcases': [
                 {
-                    'config': {
+                    "config": {
                         'name': '',
                         'variables': [
                             {"password": "123456"},
                             {"creator": "user_test_001"}
                         ]
                     },
-                    'tests': [
+                    "teststeps": [
                         {
                             'name': 'testcase1',
                             "variables": [
@@ -476,8 +476,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parser.parse_tests(tests_mapping)
-        test_dict1_variables = tests_mapping["testcases"][0]["tests"][0]["variables"]
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict1_variables = parsed_tests_mapping["testcases"][0]["teststeps"][0]["variables"]
         self.assertEqual(test_dict1_variables["creator"], "user_test_001")
         self.assertEqual(test_dict1_variables["username"], "$creator")
 
@@ -487,7 +487,7 @@ class TestParser(unittest.TestCase):
         tests_mapping = {
             'testcases': [
                 {
-                    'config': {
+                    "config": {
                         'name': '',
                         "base_url": "$host",
                         'variables': {
@@ -495,7 +495,7 @@ class TestParser(unittest.TestCase):
                         },
                         "verify": False
                     },
-                    'tests': [
+                    "teststeps": [
                         {
                             'name': 'testcase1',
                             "base_url": "https://httprunner.org",
@@ -505,8 +505,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parser.parse_tests(tests_mapping)
-        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
         self.assertEqual(test_dict["request"]["verify"], True)
 
@@ -514,14 +514,14 @@ class TestParser(unittest.TestCase):
         tests_mapping = {
             'testcases': [
                 {
-                    'config': {
+                    "config": {
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
                             "host1": "https://debugtalk"
                         }
                     },
-                    'tests': [
+                    "teststeps": [
                         {
                             'name': 'testcase1',
                             "variables": {
@@ -533,22 +533,22 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parser.parse_tests(tests_mapping)
-        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
 
     def test_parse_tests_base_url_test_dict(self):
         tests_mapping = {
             'testcases': [
                 {
-                    'config': {
+                    "config": {
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
                             "host1": "https://debugtalk"
                         }
                     },
-                    'tests': [
+                    "teststeps": [
                         {
                             'name': 'testcase1',
                             "base_url": "$host2",
@@ -561,8 +561,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parser.parse_tests(tests_mapping)
-        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
 
     def test_parse_tests_base_url_teststep_empty(self):
@@ -571,7 +571,7 @@ class TestParser(unittest.TestCase):
         tests_mapping = {
             'testcases': [
                 {
-                    'config': {
+                    "config": {
                         'name': '',
                         "base_url": "$host",
                         'variables': {
@@ -579,7 +579,7 @@ class TestParser(unittest.TestCase):
                         },
                         "verify": False
                     },
-                    'tests': [
+                    "teststeps": [
                         {
                             'name': 'testcase1',
                             "base_url": "",
@@ -589,8 +589,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parser.parse_tests(tests_mapping)
-        test_dict = tests_mapping["testcases"][0]["tests"][0]
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["url"], "https://debugtalk/api1")
         self.assertEqual(test_dict["request"]["verify"], True)
 
@@ -626,7 +626,7 @@ class TestParser(unittest.TestCase):
             "base_url": "https://debugtalk.com",
             "api": "get_token",
         }
-        api_def_dict = loader.load_test(raw_testinfo)
+        api_def_dict = loader.load_teststep(raw_testinfo)
         test_block = {
             "name": "override block",
             "times": 3,
