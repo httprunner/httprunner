@@ -689,11 +689,17 @@ def dump_tests(tests_mapping, tag_name):
             tests_to_dump["project_mapping"][key] = project_mapping[key]
             continue
 
+        # remove functions in order to dump
         if project_mapping["functions"]:
             debugtalk_py_path = os.path.join(pwd_dir_path, "debugtalk.py")
             tests_to_dump["project_mapping"]["debugtalk.py"] = debugtalk_py_path
 
-    tests_to_dump["testcases"] = tests_mapping["testcases"]
+    if "api" in tests_mapping:
+        tests_to_dump["api"] = tests_mapping["api"]
+    elif "testcases" in tests_mapping:
+        tests_to_dump["testcases"] = tests_mapping["testcases"]
+    elif "testsuites" in tests_mapping:
+        tests_to_dump["testsuites"] = tests_mapping["testsuites"]
 
     dump_json_file(tests_to_dump, pwd_dir_path, dump_file_name)
 

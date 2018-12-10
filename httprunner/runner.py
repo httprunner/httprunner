@@ -282,7 +282,7 @@ class Runner(object):
         http_client_session = self.http_client_session.__class__(base_url)
         test_runner = Runner(config, self.functions, http_client_session)
 
-        tests = testcase_dict.get("tests", [])
+        tests = testcase_dict.get("teststeps", [])
 
         try:
             for index, test_dict in enumerate(tests):
@@ -317,7 +317,7 @@ class Runner(object):
                 # nested testcase
                 {
                     "config": {...},
-                    "tests": [
+                    "teststeps": [
                         {...},
                         {...}
                     ]
