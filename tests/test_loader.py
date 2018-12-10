@@ -186,6 +186,13 @@ class TestFileLoader(unittest.TestCase):
             os.path.join(os.getcwd(), "tests", "debugtalk.py")
         )
 
+    def test_load_folder_content(self):
+        path = os.path.join(os.getcwd(), "tests", "api")
+        items_mapping = loader.load_folder_content(path)
+        file_path = os.path.join(os.getcwd(), "tests", "api", "basic.yml")
+        self.assertIn(file_path, items_mapping)
+        self.assertIsInstance(items_mapping[file_path], list)
+
 
 class TestModuleLoader(unittest.TestCase):
 
@@ -235,7 +242,111 @@ class TestModuleLoader(unittest.TestCase):
         )
         self.assertEqual(debugtalk_functions, {})
 
-    def test_load_tests(self):
+
+class TestSuiteLoader(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        cls.project_mapping = loader.project_mapping
+        cls.tests_def_mapping = loader.tests_def_mapping
+
+    def test_load_teststep_api(self):
+        raw_test = {
+            "name": "create user (override).",
+            "api": "api/create_user.yml",
+            "variables": [
+                {"uid": "999"}
+            ]
+        }
+        teststep = loader.load_teststep(raw_test)
+        self.assertEqual(
+            "create user (override).",
+            teststep["name"]
+        )
+        self.assertIn("api_def", teststep)
+        api_def = teststep["api_def"]
+        self.assertEqual(api_def["name"], "create user")
+        self.assertEqual(api_def["request"]["url"], "/api/users/$uid")
+
+    def test_load_teststep_testcase(self):
+        raw_test = {
+            "name": "setup and reset all (override).",
+            "testcase": "testcases/setup.yml",
+            "variables": [
+                {"device_sn": "$device_sn"}
+            ],
+            "output": ["token", "device_sn"]
+        }
+        testcase = loader.load_teststep(raw_test)
+        self.assertEqual(
+            "setup and reset all (override).",
+            testcase["name"]
+        )
+        tests = testcase["testcase_def"]["teststeps"]
+        self.assertEqual(len(tests), 2)
+        self.assertEqual(tests[0]["name"], "get token (setup)")
+        self.assertEqual(tests[1]["name"], "reset all users")
+
+    def test_load_test_file_api(self):
+        loaded_content = loader.load_test_file("tests/api/create_user.yml")
+        self.assertEqual(loaded_content["type"], "api")
+        self.assertIn("path", loaded_content)
+        self.assertIn("request", loaded_content)
+        self.assertEqual(loaded_content["request"]["url"], "/api/users/$uid")
+
+    def test_load_test_file_testcase(self):
+        loaded_content = loader.load_test_file("tests/testcases/setup.yml")
+        self.assertEqual(loaded_content["type"], "testcase")
+        self.assertIn("path", loaded_content)
+        self.assertIn("config", loaded_content)
+        self.assertEqual(loaded_content["config"]["name"], "setup and reset all.")
+        self.assertIn("teststeps", loaded_content)
+        self.assertEqual(len(loaded_content["teststeps"]), 2)
+
+    def test_load_test_file_testsuite(self):
+        loaded_content = loader.load_test_file("tests/testsuites/create_users.yml")
+        self.assertEqual(loaded_content["type"], "testsuite")
+
+        testcases = loaded_content["testcases"]
+        self.assertEqual(len(testcases), 2)
+        self.assertIn('create user 1000 and check result.', testcases)
+        self.assertIn('testcase_def', testcases["create user 1000 and check result."])
+        self.assertEqual(
+            testcases["create user 1000 and check result."]["testcase_def"]["config"]["name"],
+            "create user and check result."
+        )
+
+    def test_load_tests_api_file(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/api/create_user.yml')
+        tests_mapping = loader.load_tests(path)
+        project_mapping = tests_mapping["project_mapping"]
+        api_list = tests_mapping["api"]
+        self.assertEqual(len(api_list), 1)
+        self.assertEqual(api_list[0]["request"]["url"], "/api/users/$uid")
+
+    def test_load_tests_testcase_file(self):
+        # absolute file path
+        path = os.path.join(
+            os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
+        tests_mapping = loader.load_tests(path)
+        project_mapping = tests_mapping["project_mapping"]
+        testcases_list = tests_mapping["testcases"]
+        self.assertEqual(len(testcases_list), 1)
+        self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
+        self.assertIn("get_sign", project_mapping["functions"])
+
+        # relative file path
+        path = 'tests/data/demo_testcase_hardcode.yml'
+        tests_mapping = loader.load_tests(path)
+        project_mapping = tests_mapping["project_mapping"]
+        testcases_list = tests_mapping["testcases"]
+        self.assertEqual(len(testcases_list), 1)
+        self.assertEqual(len(testcases_list[0]["teststeps"]), 3)
+        self.assertIn("get_sign", project_mapping["functions"])
+
+    def test_load_tests_testcase_file_2(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
         tests_mapping = loader.load_tests(testcase_file_path)
@@ -255,83 +366,52 @@ class TestModuleLoader(unittest.TestCase):
             "${ENV(PROJECT_KEY)}"
         )
 
-
-class TestSuiteLoader(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        cls.project_mapping = loader.project_mapping
-        cls.tests_def_mapping = loader.tests_def_mapping
-
-    def test_load_test_testcase(self):
-        raw_test = {
-            "name": "setup and reset all (override).",
-            "testcase": "testcases/setup.yml",
-            "variables": [
-                {"device_sn": "$device_sn"}
-            ],
-            "output": ["token", "device_sn"]
-        }
-        testcase = loader.load_test(raw_test)
-        self.assertEqual(
-            "setup and reset all (override).",
-            testcase["name"]
-        )
-        tests = testcase["testcase_def"]["tests"]
-        self.assertEqual(len(tests), 2)
-        self.assertEqual(tests[0]["name"], "get token (setup)")
-        self.assertEqual(tests[1]["name"], "reset all users")
-
-    def test_load_testcase(self):
-        raw_testcase = loader.load_file("tests/testsuites/create_users.yml")
-        testcase = loader.load_testcase(raw_testcase)
-        self.assertEqual(testcase["config"]["name"], "create users with uid")
-        self.assertIn("device_sn", testcase["config"]["variables"])
-        self.assertEqual(len(testcase["tests"]), 2)
-        self.assertEqual(testcase["tests"][0]["name"], "create user 1000 and check result.")
-        self.assertEqual(testcase["tests"][0]["testcase_def"]["config"]["name"], "create user and check result.")
-
-    def test_load_testcases_by_path_files(self):
-        # absolute file path
+    def test_load_tests_testcase_file_with_api_ref(self):
         path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
+            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
         tests_mapping = loader.load_tests(path)
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
-        self.assertEqual(len(testcases_list), 1)
-        self.assertEqual(len(testcases_list[0]["tests"]), 3)
-        self.assertIn("get_sign", project_mapping["functions"])
+        self.assertIn('device_sn', testcases_list[0]["config"]["variables"])
+        self.assertIn("gen_md5", project_mapping["functions"])
+        self.assertIn("base_url", testcases_list[0]["config"])
+        test_dict0 = testcases_list[0]["teststeps"][0]
+        self.assertEqual(
+            "get token with $user_agent, $app_version",
+            test_dict0["name"]
+        )
+        self.assertIn("/api/get-token", test_dict0["api_def"]["request"]["url"])
+        self.assertIn(
+            {'eq': ['status_code', 200]},
+            test_dict0["validate"]
+        )
 
-        # relative file path
-        path = 'tests/data/demo_testcase_hardcode.yml'
+    def test_load_tests_testsuite_file_with_testcase_ref(self):
+        path = os.path.join(
+            os.getcwd(), 'tests/testsuites/create_users.yml')
         tests_mapping = loader.load_tests(path)
         project_mapping = tests_mapping["project_mapping"]
-        testcases_list = tests_mapping["testcases"]
-        self.assertEqual(len(testcases_list), 1)
-        self.assertEqual(len(testcases_list[0]["tests"]), 3)
-        self.assertIn("get_sign", project_mapping["functions"])
+        testsuites_list = tests_mapping["testsuites"]
 
-        # TODO: list/set container with file(s)
-        # path = [
-        #     os.path.join(os.getcwd(), 'tests/data/demo_testcase_hardcode.json'),
-        #     'tests/data/demo_testcase_hardcode.yml'
-        # ]
-        # testcases_list = loader.load_tests(path)
-        # self.assertEqual(len(testcases_list), 2)
-        # self.assertEqual(len(testcases_list[0]["tests"]), 3)
-        # self.assertEqual(len(testcases_list[1]["tests"]), 3)
-        # testcases_list.extend(testcases_list)
-        # self.assertEqual(len(testcases_list), 4)
+        self.assertEqual(
+            "create users with uid",
+            testsuites_list[0]["config"]["name"]
+        )
+        self.assertEqual(
+            {'device_sn': '${gen_random_string(15)}'},
+            testsuites_list[0]["config"]["variables"]
+        )
+        self.assertIn(
+            "create user 1000 and check result.",
+            testsuites_list[0]["testcases"]
+        )
 
-        # for testcase in testcases_list:
-        #     for test_dict in testcase["tests"]:
-        #         self.assertIn('name', test_dict)
-        #         self.assertIn('request', test_dict)
-        #         self.assertIn('url', test_dict['request'])
-        #         self.assertIn('method', test_dict['request'])
+        self.assertEqual(
+            testsuites_list[0]["testcases"]["create user 1000 and check result."]["testcase_def"]["config"]["name"],
+            "create user and check result."
+        )
 
-    def test_load_testcases_by_path_folder(self):
+    def test_load_tests_folder_path(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
         tests_mapping = loader.load_tests(path)
@@ -344,16 +424,7 @@ class TestSuiteLoader(unittest.TestCase):
         testcase_list_2 = tests_mapping["testcases"]
         self.assertEqual(len(testcase_list_1), len(testcase_list_2))
 
-        # TODO: list/set container with file(s)
-        # path = [
-        #     os.path.join(os.getcwd(), 'tests/data'),
-        #     'tests/data/'
-        # ]
-        # tests_mapping = loader.load_tests(path)
-        # testcase_list_3 = tests_mapping["testcases"]
-        # self.assertEqual(len(testcase_list_3), 2 * len(testcase_list_1))
-
-    def test_load_testcases_by_path_not_exist(self):
+    def test_load_tests_path_not_exist(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data_not_exist')
         with self.assertRaises(exceptions.FileNotFound):
@@ -363,76 +434,6 @@ class TestSuiteLoader(unittest.TestCase):
         path = 'tests/data_not_exist'
         with self.assertRaises(exceptions.FileNotFound):
             loader.load_tests(path)
-
-        # TODO: list/set container with file(s)
-        # path = [
-        #     os.path.join(os.getcwd(), 'tests/data_not_exist'),
-        #     'tests/data_not_exist/'
-        # ]
-        # with self.assertRaises(exceptions.FileNotFound):
-        #     loader.load_tests(path)
-
-    def test_load_testcases_with_api_ref(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
-        tests_mapping = loader.load_tests(path)
-        project_mapping = tests_mapping["project_mapping"]
-        testcases_list = tests_mapping["testcases"]
-        self.assertIn('device_sn', testcases_list[0]["config"]["variables"])
-        self.assertIn("gen_md5", project_mapping["functions"])
-        self.assertIn("base_url", testcases_list[0]["config"])
-        test_dict0 = testcases_list[0]["tests"][0]
-        self.assertEqual(
-            "get token with $user_agent, $app_version",
-            test_dict0["name"]
-        )
-        self.assertIn("/api/get-token", test_dict0["api_def"]["request"]["url"])
-        self.assertIn(
-            {'eq': ['status_code', 200]},
-            test_dict0["validate"]
-        )
-
-    def test_load_testcases_with_testcase_ref(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/testsuites/create_users.yml')
-        tests_mapping = loader.load_tests(path)
-        project_mapping = tests_mapping["project_mapping"]
-        testcases_list = tests_mapping["testcases"]
-
-        self.assertEqual(
-            "create users with uid",
-            testcases_list[0]["config"]["name"]
-        )
-        self.assertEqual(
-            {'device_sn': '${gen_random_string(15)}'},
-            testcases_list[0]["config"]["variables"]
-        )
-        testcase0 = testcases_list[0]["tests"][0]
-        self.assertEqual(
-            "create user 1000 and check result.",
-            testcase0["name"]
-        )
-        self.assertEqual(
-            "create user and check result.",
-            testcase0["testcase_def"]["config"]["name"]
-        )
-
-        testcase1 = testcases_list[0]["tests"][1]
-        self.assertEqual(
-            "create user 1001 and check result.",
-            testcase1["name"]
-        )
-        self.assertEqual(
-            {'uid': 1001},
-            testcase1["variables"]
-        )
-
-    def test_load_folder_content(self):
-        path = os.path.join(os.getcwd(), "tests", "api")
-        items_mapping = loader.load_folder_content(path)
-        file_path = os.path.join(os.getcwd(), "tests", "api", "basic.yml")
-        self.assertIn(file_path, items_mapping)
-        self.assertIsInstance(items_mapping[file_path], list)
 
     def test_load_api_folder(self):
         path = os.path.join(os.getcwd(), "tests", "api")

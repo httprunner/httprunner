@@ -1,3 +1,4 @@
+name: create user
 variables:
     user_name: user0
     user_password: "000000"

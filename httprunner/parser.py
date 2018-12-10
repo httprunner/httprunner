@@ -676,7 +676,7 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
 
 
 def __parse_config(config, project_mapping):
-    """ parse testcase config, include variables and name.
+    """ parse testcase/testsuite config, include variables and name.
     """
     # get config variables
     raw_config_variables = config.pop("variables", {})
@@ -684,31 +684,29 @@ def __parse_config(config, project_mapping):
     override_variables = utils.deepcopy_dict(project_mapping.get("variables", {}))
     functions = project_mapping.get("functions", {})
 
-    # override testcase config variables with passed in variables
+    # override config variables with passed in variables
+    raw_config_variables_mapping.update(override_variables)
+
+    # parse config variables
+    parsed_config_variables = {}
     for key, value in raw_config_variables_mapping.items():
+        try:
+            parsed_value = parse_data(
+                value,
+                raw_config_variables_mapping,
+                functions
+            )
+        except exceptions.VariableNotFound:
+            pass
+        parsed_config_variables[key] = parsed_value
 
-        if key in override_variables:
-            # passed in
-            continue
-        else:
-            # config variables
-            try:
-                parsed_value = parse_data(
-                    value,
-                    override_variables,
-                    functions
-                )
-            except exceptions.VariableNotFound:
-                pass
-            override_variables[key] = parsed_value
-
-    if override_variables:
-        config["variables"] = override_variables
+    if parsed_config_variables:
+        config["variables"] = parsed_config_variables
 
     # parse config name
     config["name"] = parse_data(
         config.get("name", ""),
-        override_variables,
+        parsed_config_variables,
         functions
     )
 
@@ -716,17 +714,17 @@ def __parse_config(config, project_mapping):
     if "base_url" in config:
         config["base_url"] = parse_data(
             config["base_url"],
-            override_variables,
+            parsed_config_variables,
             functions
         )
 
 
-def __parse_tests(tests, config, project_mapping):
+def __parse_testcase_tests(tests, config, project_mapping):
     """ override tests with testcase config variables, base_url and verify.
         test maybe nested testcase.
 
         variables priority:
-        testsuite config > testsuite test > testcase config > testcase test > api
+        testcase config > testcase test > testcase_def config > testcase_def test > api
 
         base_url/verify priority:
         testcase test > testcase config > testsuite test > testsuite config > api
@@ -734,9 +732,7 @@ def __parse_tests(tests, config, project_mapping):
     Args:
         tests (list):
         config (dict):
-
-    Returns:
-        list: overrided tests
+        project_mapping (dict):
 
     """
     config_variables = config.pop("variables", {})
@@ -752,51 +748,34 @@ def __parse_tests(tests, config, project_mapping):
 
         test_dict.setdefault("verify", config_verify)
 
+        # 1, testcase config => testcase tests
+        # override test_dict variables
+        test_dict["variables"] = utils.extend_variables(
+            test_dict.pop("variables", {}),
+            config_variables
+        )
+
+        # parse test_dict name
+        try:
+            test_dict["name"] = parse_data(
+                test_dict.pop("name", ""),
+                test_dict["variables"],
+                functions
+            )
+        except exceptions.VariableNotFound:
+            pass
+
         if "testcase_def" in test_dict:
             # test_dict is nested testcase
 
-            # 1, testsuite config => testsuite tests
-            # override test_dict variables
-            test_dict["variables"] = utils.extend_variables(
-                test_dict.pop("variables", {}),
-                config_variables
-            )
-
-            # parse test_dict name
-            try:
-                test_dict["name"] = parse_data(
-                    test_dict.pop("name", ""),
-                    test_dict["variables"],
-                    functions
-                )
-            except exceptions.VariableNotFound:
-                pass
-
-            # 2, testsuite test_dict => testcase config
+            # 2, testcase test_dict => testcase_def config
             testcase_def = test_dict.pop("testcase_def")
             _extend_with_testcase(test_dict, testcase_def)
 
-            # 3, testcase config => testcase test_dict
+            # 3, testcase_def config => testcase_def test_dict
             _parse_testcase(test_dict, project_mapping)
 
         else:
-            # 1, config => tests
-            # override test_dict variables
-            test_dict["variables"] = utils.extend_variables(
-                test_dict.pop("variables", {}),
-                config_variables
-            )
-
-            # parse test_dict name
-            try:
-                test_dict["name"] = parse_data(
-                    test_dict.pop("name", ""),
-                    test_dict["variables"],
-                    functions
-                )
-            except exceptions.VariableNotFound:
-                pass
-
             if "api_def" in test_dict:
                 # test_dict has API reference
                 # 2, test_dict => api
@@ -804,11 +783,14 @@ def __parse_tests(tests, config, project_mapping):
                 _extend_with_api(test_dict, api_def_dict)
 
             if test_dict.get("base_url"):
+                # parse base_url
                 base_url = parse_data(
                     test_dict.pop("base_url"),
                     test_dict["variables"],
                     functions
                 )
+
+                # build path with base_url
                 try:
                     request_url = parse_data(
                         test_dict["request"]["url"],
@@ -817,7 +799,7 @@ def __parse_tests(tests, config, project_mapping):
                     )
                 except exceptions.VariableNotFound:
                     """ variable in current url maybe extracted from former api
-                        "tests": [
+                        "teststeps": [
                             {
                                 "request": {},
                                 "extract": {
@@ -840,12 +822,125 @@ def __parse_tests(tests, config, project_mapping):
 
 
 def _parse_testcase(testcase, project_mapping):
+    """ parse testcase
+
+    Args:
+        testcase (dict):
+            {
+                "config": {},
+                "teststeps": []
+            }
+
+    """
+    testcase.setdefault("config", {})
     __parse_config(testcase["config"], project_mapping)
-    __parse_tests(testcase["tests"], testcase["config"], project_mapping)
+    __parse_testcase_tests(testcase["teststeps"], testcase["config"], project_mapping)
+
+
+def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mapping):
+    """ override testscases with testsuite config variables, base_url and verify.
+
+        variables priority:
+        testsuite config > testcase config > testcase_def config > testcase_def tests > api
+
+    Args:
+        testcases (dict):
+            {
+                "testcase1 name": {
+                    "testcase": "testcases/create_and_check.yml",
+                    "weight": 2,
+                    "variables": {
+                        "uid": 1000
+                    },
+                    "parameters": {
+                        "uid": [100, 101, 102]
+                    },
+                    "testcase_def": {
+                        "config": {},
+                        "teststeps": []
+                    }
+                },
+                "testcase2 name": {}
+            }
+        testsuite_config (dict):
+            {
+                "name": "testsuite name",
+                "variables": {
+                    "device_sn": "${gen_random_string(15)}"
+                },
+                "base_url": "http://127.0.0.1:5000"
+            }
+        project_mapping (dict):
+            {
+                "env": {},
+                "functions": {}
+            }
+
+    """
+    testsuite_config_variables = testsuite_config.get("variables", {})
+    functions = project_mapping.get("functions", {})
+    parsed_testcase_list = []
+
+    for testcase_name, testcase in testcases.items():
+
+        # TODO: add parameterize
+        # parameters = testcase.get("parameters")
+
+        parsed_testcase = testcase.pop("testcase_def")
+        parsed_testcase.setdefault("config", {})
+        parsed_testcase["path"] = testcase["testcase"]
+        parsed_testcase["config"]["name"] = testcase_name
+
+        # 1, testsuite config => testcase config
+        # override test_dict variables
+        testcase_config_variables = utils.extend_variables(
+            testcase.pop("variables", {}),
+            testsuite_config_variables
+        )
+
+        # 2, testcase config > testcase_def config
+        # override testcase_def config variables
+        parsed_testcase_config_variables = utils.extend_variables(
+            parsed_testcase["config"].pop("variables", {}),
+            testcase_config_variables
+        )
+
+        # parse config variables
+        parsed_config_variables = {}
+        for key, value in parsed_testcase_config_variables.items():
+            try:
+                parsed_value = parse_data(
+                    value,
+                    parsed_testcase_config_variables,
+                    functions
+                )
+            except exceptions.VariableNotFound:
+                pass
+            parsed_config_variables[key] = parsed_value
+
+        if parsed_config_variables:
+            parsed_testcase["config"]["variables"] = parsed_config_variables
+
+        _parse_testcase(parsed_testcase, project_mapping)
+        parsed_testcase_list.append(parsed_testcase)
+
+    return parsed_testcase_list
+
+
+def _parse_testsuite(testsuite, project_mapping):
+    testsuite.setdefault("config", {})
+    __parse_config(testsuite["config"], project_mapping)
+    parsed_testcase_list = __get_parsed_testsuite_testcases(
+        testsuite["testcases"],
+        testsuite["config"],
+        project_mapping
+    )
+    return parsed_testcase_list
 
 
 def parse_tests(tests_mapping):
-    """ parse testcases configs, including variables/name/request.
+    """ parse tests and load to parsed testcases
+        tests include api, testcases and testsuites.
 
     Args:
         tests_mapping (dict): project info and testcases list.
@@ -857,14 +952,34 @@ def parse_tests(tests_mapping):
                     "variables": {},                        # optional, priority 1
                     "env": {}
                 },
+                "testsuites": [
+                    {   # testsuite data structure
+                        "config": {},
+                        "testcases": {
+                            "testcase1 name": {
+                                "variables": {
+                                    "uid": 1000
+                                },
+                                "parameters": {
+                                    "uid": [100, 101, 102]
+                                },
+                                "testcase_def": {
+                                    "config": {},
+                                    "teststeps": []
+                                }
+                            },
+                            "testcase2 name": {}
+                        }
+                    }
+                ],
                 "testcases": [
                     {   # testcase data structure
                         "config": {
                             "name": "desc1",
                             "path": "testcase1_path",
-                            "variables": [],                # optional, priority 2
+                            "variables": {},                # optional, priority 2
                         },
-                        "tests": [
+                        "teststeps": [
                             # test data structure
                             {
                                 'name': 'test step desc1',
@@ -880,12 +995,41 @@ def parse_tests(tests_mapping):
                         ]
                     },
                     testcase_dict_2     # another testcase dict
-                ]
+                ],
+                "api": {
+                    "variables": {},
+                    "request": {}
+                }
             }
 
     """
     project_mapping = tests_mapping.get("project_mapping", {})
+    parsed_tests_mapping = {
+        "project_mapping": project_mapping,
+        "testcases": []
+    }
 
-    for testcase in tests_mapping["testcases"]:
-        testcase.setdefault("config", {})
-        _parse_testcase(testcase, project_mapping)
+    for test_type in tests_mapping:
+
+        if test_type == "testsuites":
+            # load testcases of testsuite
+            testsuites = tests_mapping["testsuites"]
+            for testsuite in testsuites:
+                parsed_testcases = _parse_testsuite(testsuite, project_mapping)
+                for parsed_testcase in parsed_testcases:
+                    parsed_tests_mapping["testcases"].append(parsed_testcase)
+
+        elif test_type == "testcases":
+            for testcase in tests_mapping["testcases"]:
+                _parse_testcase(testcase, project_mapping)
+                parsed_tests_mapping["testcases"].append(testcase)
+
+        elif test_type == "api":
+            # encapsulate api as a testcase
+            testcase = {
+                "teststeps": tests_mapping["api"]
+            }
+            _parse_testcase(testcase, project_mapping)
+            parsed_tests_mapping["testcases"].append(testcase)
+
+    return parsed_tests_mapping

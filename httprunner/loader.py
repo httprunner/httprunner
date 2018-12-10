@@ -286,75 +286,95 @@ tests_def_mapping = {
     "testcases": {}
 }
 
-def load_test(raw_testinfo):
-    """ load test with api/testcase/proc references
+
+def __extend_with_api_ref(raw_testinfo):
+    """ extend with api reference
+
+    Raises:
+        exceptions.ApiNotFound: api not found
+
+    """
+    api_name = raw_testinfo["api"]
+
+    # api maybe defined in two types:
+    # 1, individual file: each file is corresponding to one api definition
+    # 2, api sets file: one file contains a list of api definitions
+    if not os.path.isabs(api_name):
+        api_path = os.path.join(tests_def_mapping["PWD"], api_name)
+        if os.path.isfile(api_path):
+            # type 1: api is defined in individual file
+            api_name = api_path
+
+    try:
+        block = tests_def_mapping["api"][api_name]
+        # NOTICE: avoid project_mapping been changed during iteration.
+        raw_testinfo["api_def"] = utils.deepcopy_dict(block)
+    except KeyError:
+        raise exceptions.ApiNotFound("{} not found!".format(name))
+
+
+def __extend_with_testcase_ref(raw_testinfo):
+    """ extend with testcase reference
+    """
+    testcase_path = raw_testinfo["testcase"]
+
+    if testcase_path not in tests_def_mapping["testcases"]:
+        testcase_path = os.path.join(
+            project_mapping["PWD"],
+            testcase_path
+        )
+        testcase_dict = load_testcase(load_file(testcase_path))
+        tests_def_mapping[testcase_path] = testcase_dict
+    else:
+        testcase_dict = tests_def_mapping[testcase_path]
+
+    raw_testinfo["testcase_def"] = testcase_dict
+
+
+def load_teststep(raw_testinfo):
+    """ load testcase step content.
+        teststep maybe defined directly, or reference api/testcase.
 
     Args:
         raw_testinfo (dict): test data, maybe in 3 formats.
             # api reference
             {
                 "name": "add product to cart",
-                "api": "api_add_cart",
-                "variables": [],
+                "api": "/path/to/api",
+                "variables": {},
                 "validate": [],
                 "extract": {}
             }
             # testcase reference
             {
                 "name": "add product to cart",
-                "testcase": "create_and_check",
-                "variables": []
+                "testcase": "/path/to/testcase",
+                "variables": {}
             }
             # define directly
             {
                 "name": "checkout cart",
                 "request": {},
-                "variables": [],
+                "variables": {},
                 "validate": [],
                 "extract": {}
             }
 
     Returns:
-        list: loaded tests list
-
-    Args:
-        raw_testinfo (dict): test info
+        dict: loaded teststep content
 
     """
     # reference api
     if "api" in raw_testinfo:
-        api_name = raw_testinfo["api"]
-
-        # api maybe defined in two types:
-        # 1, individual file: each file is corresponding to one api definition
-        # 2, api sets file: one file contains a list of api definitions
-        if not os.path.isabs(api_name):
-            api_path = os.path.join(tests_def_mapping["PWD"], api_name)
-            if os.path.isfile(api_path):
-                # type 1: api is defined in individual file
-                api_name = api_path
-
-        raw_testinfo["api_def"] = _get_api_definition(api_name)
+        __extend_with_api_ref(raw_testinfo)
 
     # TODO: reference proc functions
-    elif "func" in raw_testinfo:
-        pass
+    # elif "func" in raw_testinfo:
+    #     pass
 
     # reference testcase
     elif "testcase" in raw_testinfo:
-        testcase_path = raw_testinfo["testcase"]
-
-        if testcase_path not in tests_def_mapping["testcases"]:
-            testcase_path = os.path.join(
-                project_mapping["PWD"],
-                testcase_path
-            )
-            testcase_dict = load_testcase(load_file(testcase_path))
-            tests_def_mapping[testcase_path] = testcase_dict
-        else:
-            testcase_dict = tests_def_mapping[testcase_path]
-
-        raw_testinfo["testcase_def"] = testcase_dict
+        __extend_with_testcase_ref(raw_testinfo)
 
     # define directly
     else:
@@ -364,7 +384,7 @@ def load_test(raw_testinfo):
 
 
 def load_testcase(raw_testcase):
-    """ load testcase/testsuite with api/testcase references
+    """ load testcase with api/testcase references.
 
     Args:
         raw_testcase (list): raw testcase content loaded from JSON/YAML file:
@@ -372,12 +392,11 @@ def load_testcase(raw_testcase):
                 # config part
                 {
                     "config": {
-                        "name": "",
-                        "def": "suite_order()",
-                        "request": {}
+                        "name": "XXXX",
+                        "base_url": "https://debugtalk.com"
                     }
                 },
-                # tests part
+                # teststeps part
                 {
                     "test": {...}
                 },
@@ -389,9 +408,8 @@ def load_testcase(raw_testcase):
     Returns:
         dict: loaded testcase content
             {
-                "name": "XYZ",
                 "config": {},
-                "tests": [test11, test12]
+                "teststeps": [test11, test12]
             }
 
     """
@@ -399,20 +417,11 @@ def load_testcase(raw_testcase):
     tests = []
 
     for item in raw_testcase:
-        # TODO: add json schema validation
-        if not isinstance(item, dict) or len(item) != 1:
-            raise exceptions.FileFormatError("Testcase format error: {}".format(item))
-
         key, test_block = item.popitem()
-        if not isinstance(test_block, dict):
-            raise exceptions.FileFormatError("Testcase format error: {}".format(item))
-
         if key == "config":
             config.update(test_block)
-
         elif key == "test":
-            tests.append(load_test(test_block))
-
+            tests.append(load_teststep(test_block))
         else:
             logger.log_warning(
                 "unexpected block key: {}. block key should only be 'config' or 'test'.".format(key)
@@ -420,26 +429,113 @@ def load_testcase(raw_testcase):
 
     return {
         "config": config,
-        "tests": tests
+        "teststeps": tests
     }
 
 
-def _get_api_definition(name):
-    """ get api definition by name.
+def load_testsuite(raw_testsuite):
+    """ load testsuite with testcase references.
+
+    Args:
+        raw_testsuite (dict): raw testsuite content loaded from JSON/YAML file:
+            {
+                "config": {
+                    "name": "",
+                    "request": {}
+                }
+                "testcases": {
+                    "testcase1": {
+                        "testcase": "/path/to/testcase",
+                        "variables": {...},
+                        "parameters": {...}
+                    },
+                    "testcase2": {}
+                }
+            }
 
     Returns:
-        dict: expected api definition if found.
-
-    Raises:
-        exceptions.ApiNotFound: api not found
+        dict: loaded testsuite content
+            {
+                "config": {},
+                "testcases": [testcase1, testcase2]
+            }
 
     """
-    try:
-        block = tests_def_mapping["api"][name]
-        # NOTICE: avoid project_mapping been changed during iteration.
-        return utils.deepcopy_dict(block)
-    except KeyError:
-        raise exceptions.ApiNotFound("{} not found!".format(name))
+    testcases = raw_testsuite["testcases"]
+    for name, raw_testcase in testcases.items():
+        __extend_with_testcase_ref(raw_testcase)
+        raw_testcase.setdefault("name", name)
+
+    return raw_testsuite
+
+
+def load_test_file(path):
+    """ load test file, file maybe testcase/testsuite/api
+
+    Args:
+        path (str): test file path
+
+    Returns:
+        dict: loaded test content
+
+            # api
+            {
+                "path": path,
+                "type": "api",
+                "name": "",
+                "request": {}
+            }
+
+            # testcase
+            {
+                "path": path,
+                "type": "testcase",
+                "config": {},
+                "teststeps": []
+            }
+
+            # testsuite
+            {
+                "path": path,
+                "type": "testsuite",
+                "config": {},
+                "testcases": {}
+            }
+
+    """
+    raw_content = load_file(path)
+    loaded_content = None
+
+    if isinstance(raw_content, dict):
+
+        if "testcases" in raw_content:
+            # file_type: testsuite
+            # TODO: add json schema validation for testsuite
+            loaded_content = load_testsuite(raw_content)
+            loaded_content["path"] = path
+            loaded_content["type"] = "testsuite"
+        elif "request" in raw_content:
+            # file_type: api
+            # TODO: add json schema validation for api
+            loaded_content = raw_content
+            loaded_content["path"] = path
+            loaded_content["type"] = "api"
+        else:
+            # invalid format
+            logger.log_warning("Invalid test file format: {}".format(path))
+
+    elif isinstance(raw_content, list) and len(raw_content) > 0:
+        # file_type: testcase
+        # TODO: add json schema validation for testcase
+        loaded_content = load_testcase(raw_content)
+        loaded_content["path"] = path
+        loaded_content["type"] = "testcase"
+
+    else:
+        # invalid format
+        logger.log_warning("Invalid test file format: {}".format(path))
+
+    return loaded_content
 
 
 def load_folder_content(folder_path):
@@ -623,7 +719,7 @@ def load_tests(path, dot_env_path=None):
                             "path": "testcase1_path",
                             "variables": [],                    # optional
                         },
-                        "tests": [
+                        "teststeps": [
                             # test data structure
                             {
                                 'name': 'test desc1',
@@ -635,7 +731,17 @@ def load_tests(path, dot_env_path=None):
                             test_dict_2   # another test dict
                         ]
                     },
-                    testcase_dict_2     # another testcase dict
+                    testcase_2_dict     # another testcase dict
+                ],
+                "testsuites": [
+                    {   # testsuite data structure
+                        "config": {},
+                        "testcases": {
+                            "testcase1": {},
+                            "testcase2": {},
+                        }
+                    },
+                    testsuite_2_dict
                 ]
             }
 
@@ -653,33 +759,23 @@ def load_tests(path, dot_env_path=None):
         "project_mapping": project_mapping
     }
 
-    def load_test_file(path):
-        raw_testcase = load_file(path)
-
-        try:
-            testcase = load_testcase(raw_testcase)
-            testcase["config"]["path"] = path
-        except exceptions.FileFormatError:
-            testcase = {}
-
-        return testcase
-
-    testcases_list = []
+    def __load_file_content(path):
+        loaded_content = load_test_file(path)
+        if not loaded_content:
+            pass
+        elif loaded_content["type"] == "testsuite":
+            tests_mapping.setdefault("testsuites", []).append(loaded_content)
+        elif loaded_content["type"] == "testcase":
+            tests_mapping.setdefault("testcases", []).append(loaded_content)
+        elif loaded_content["type"] == "api":
+            tests_mapping.setdefault("api", []).append(loaded_content)
 
     if os.path.isdir(path):
         files_list = load_folder_files(path)
         for path in files_list:
-            testcase = load_test_file(path)
-            if not testcase:
-                continue
-            testcases_list.append(testcase)
+            __load_file_content(path)
 
     elif os.path.isfile(path):
-
-        testcase = load_test_file(path)
-        if testcase:
-            testcases_list.append(testcase)
-
-    tests_mapping["testcases"] = testcases_list
+        __load_file_content(path)
 
     return tests_mapping
