@@ -284,18 +284,19 @@ class Runner(object):
 
         tests = testcase_dict.get("teststeps", [])
 
-        try:
-            for index, test_dict in enumerate(tests):
+        for index, test_dict in enumerate(tests):
+            try:
                 test_runner.run_test(test_dict)
+            except Exception:
+                # log exception request_type and name for locust stat
+                self.exception_request_type = test_runner.exception_request_type
+                self.exception_name = test_runner.exception_name
+                raise
+            finally:
                 _meta_datas = test_runner.meta_datas
                 self.meta_datas.append(_meta_datas)
 
-            self.session_context.update_session_variables(test_runner.extract_sessions())
-
-        except Exception as ex:
-            meta_datas = test_runner.meta_datas
-            self.meta_datas.append(meta_datas)
-            raise
+        self.session_context.update_session_variables(test_runner.extract_sessions())
 
     def run_test(self, test_dict):
         """ run single teststep of testcase.
@@ -331,7 +332,7 @@ class Runner(object):
 
         """
         self.meta_datas = None
-        if "config" in test_dict:
+        if "teststeps" in test_dict:
             # nested testcase
             self._run_testcase(test_dict)
         else:
@@ -339,6 +340,9 @@ class Runner(object):
             try:
                 self._run_test(test_dict)
             except Exception:
+                # log exception request_type and name for locust stat
+                self.exception_request_type = test_dict["request"]["method"]
+                self.exception_name = test_dict.get("name")
                 raise
             finally:
                 self.meta_datas = self.__get_test_data()

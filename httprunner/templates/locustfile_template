@@ -24,8 +24,8 @@ class WebPageTasks(TaskSet):
             self.test_runner.run_test(test_dict)
         except (AssertionError, MyBaseError, MyBaseFailure) as ex:
             request_failure.fire(
-                request_type=test_dict.get("request", {}).get("method"),
-                name=test_dict.get("name"),
+                request_type=self.test_runner.exception_request_type,
+                name=self.test_runner.exception_name,
                 response_time=0,
                 exception=ex
             )
