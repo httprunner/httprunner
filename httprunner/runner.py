@@ -252,19 +252,23 @@ class Runner(object):
             self.session_context.validate(validators, resp_obj)
 
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
+            err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
+
             # log request
-            err_req_msg = "request: \n"
-            err_req_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
+            err_msg += "====== request details ======\n"
+            err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
             for k, v in parsed_test_request.items():
-                err_req_msg += "{}: {}\n".format(k, repr(v))
-            logger.log_error(err_req_msg)
+                v = utils.omit_long_data(v)
+                err_msg += "{}: {}\n".format(k, repr(v))
+
+            err_msg += "\n"
 
             # log response
-            err_resp_msg = "response: \n"
-            err_resp_msg += "status_code: {}\n".format(resp_obj.status_code)
-            err_resp_msg += "headers: {}\n".format(resp_obj.headers)
-            err_resp_msg += "body: {}\n".format(repr(resp_obj.text))
-            logger.log_error(err_resp_msg)
+            err_msg += "====== response details ======\n"
+            err_msg += "status_code: {}\n".format(resp_obj.status_code)
+            err_msg += "headers: {}\n".format(resp_obj.headers)
+            err_msg += "body: {}\n".format(repr(resp_obj.text))
+            logger.log_error(err_msg)
 
             raise
 
