@@ -31,6 +31,9 @@ class ResponseObject(object):
             else:
                 value =  getattr(self.resp_obj, key)
 
+            if key in ["text", "content"]:
+                value = utils.omit_long_data(value)
+
             self.__dict__[key] = value
             return value
         except AttributeError:
