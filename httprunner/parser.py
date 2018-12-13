@@ -4,7 +4,7 @@ import ast
 import os
 import re
 
-from httprunner import exceptions, utils
+from httprunner import exceptions, utils, logger
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 variable_regexp = r"\$([\w_]+)"
@@ -439,7 +439,11 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
             from httprunner import loader
             eval_value = loader.load_csv_file(*args, **kwargs)
         else:
-            func = get_mapping_function(func_name, functions_mapping)
+            try:
+                func = get_mapping_function(func_name, functions_mapping)
+            except exceptions.FunctionNotFound:
+                logger.log_warning('function {} not found, skip'.format(func_name))
+                continue
             eval_value = func(*args, **kwargs)
 
         func_content = "${" + func_content + "}"
@@ -475,7 +479,11 @@ def parse_string_variables(content, variables_mapping):
     """
     variables_list = extract_variables(content)
     for variable_name in variables_list:
-        variable_value = get_mapping_variable(variable_name, variables_mapping)
+        try:
+            variable_value = get_mapping_variable(variable_name, variables_mapping)
+        except exceptions.VariableNotFound:
+            logger.log_warning('ver {} not found, skip'.format(variable_name))
+            continue
 
         # TODO: replace variable label from $var to {{var}}
         if "${}".format(variable_name) == content:
