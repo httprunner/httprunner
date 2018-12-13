@@ -5,7 +5,7 @@ import time
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.utils import build_url, lower_dict_keys
+from httprunner.utils import build_url, lower_dict_keys, omit_long_data
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
@@ -115,6 +115,10 @@ class HttpSession(requests.Session):
         self.meta_data["request"].update(kwargs)
         self.meta_data["request"]["start_timestamp"] = time.time()
 
+        request_data = self.meta_data["request"].get("data")
+        if request_data:
+            self.meta_data["request"]["data"] = omit_long_data(request_data)
+
         # prepend url with hostname unless it's already an absolute URL
         url = build_url(self.base_url, url)
 
@@ -155,14 +159,9 @@ class HttpSession(requests.Session):
                 # try to record json data
                 self.meta_data["response"]["json"] = response.json()
             except ValueError:
-                # only record at most 1000 text charactors
+                # only record at most 512 text charactors
                 resp_text = response.text
-                resp_text_length = len(resp_text)
-                if resp_text_length > 1000:
-                    resp_text = resp_text[0:1000] \
-                        + " ... OMITTED {} CHARACTORS ...".format(resp_text_length-1000)
-
-                self.meta_data["response"]["text"] = resp_text
+                self.meta_data["response"]["text"] = omit_long_data(resp_text)
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body

@@ -11,7 +11,7 @@ import string
 from datetime import datetime
 
 from httprunner import exceptions, logger
-from httprunner.compat import basestring, is_py2
+from httprunner.compat import basestring, bytes, is_py2
 from httprunner.exceptions import ParamsError
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
@@ -631,6 +631,25 @@ def prettify_json_file(file_list):
         print("success: {}".format(outfile))
 
 
+def omit_long_data(body, omit_len=512):
+    """ omit too long str/bytes
+    """
+    if not isinstance(body, basestring):
+        return body
+
+    body_len = len(body)
+    if body_len <= omit_len:
+        return body
+
+    omitted_body = body[0:omit_len]
+
+    appendix_str = " ... OMITTED {} CHARACTORS ...".format(body_len - omit_len)
+    if isinstance(body, bytes):
+        appendix_str = appendix_str.encode("utf-8")
+
+    return omitted_body + appendix_str
+
+
 def dump_json_file(json_data, pwd_dir_path, dump_file_name):
     """ dump json data to file
     """
@@ -640,21 +659,26 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
 
     dump_file_path = os.path.join(logs_dir_path, dump_file_name)
 
-    with io.open(dump_file_path, 'w', encoding='utf-8') as outfile:
-        if is_py2:
-            outfile.write(
-                unicode(json.dumps(
-                    json_data,
-                    indent=4,
-                    separators=(',', ': '),
-                    ensure_ascii=False
-                ))
-            )
-        else:
-            json.dump(json_data, outfile, indent=4, separators=(',', ': '))
+    try:
+        with io.open(dump_file_path, 'w', encoding='utf-8') as outfile:
+            if is_py2:
+                outfile.write(
+                    unicode(json.dumps(
+                        json_data,
+                        indent=4,
+                        separators=(',', ':'),
+                        ensure_ascii=False
+                    ))
+                )
+            else:
+                json.dump(json_data, outfile, indent=4, separators=(',', ':'))
 
-    msg = "dump file: {}".format(dump_file_path)
-    logger.color_print(msg, "BLUE")
+        msg = "dump file: {}".format(dump_file_path)
+        logger.color_print(msg, "BLUE")
+
+    except TypeError:
+        msg = "Failed to dump json file: {}".format(dump_file_path)
+        logger.color_print(msg, "RED")
 
 
 def _prepare_dump_info(project_mapping, tag_name):
