@@ -291,8 +291,8 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
     functions_mapping = functions_mapping or {}
     parsed_parameters_list = []
 
-    for parameter in parameters:
-        parameter_name, parameter_content = list(parameter.items())[0]
+    parameters = utils.ensure_mapping_format(parameters)
+    for parameter_name, parameter_content in parameters.items():
         parameter_name_list = parameter_name.split("-")
 
         if isinstance(parameter_content, list):
