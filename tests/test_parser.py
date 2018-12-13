@@ -379,10 +379,6 @@ class TestParser(unittest.TestCase):
             {"app_version": "${gen_app_version()}"},
             {"username-password": "${get_account()}"}
         ]
-        testcase_path = os.path.join(
-            os.getcwd(),
-            "tests/data/demo_parameters.yml"
-        )
         dot_env_path = os.path.join(
             os.getcwd(), "tests", ".env"
         )
@@ -417,11 +413,6 @@ class TestParser(unittest.TestCase):
             {"app_version": "${gen_app_version()}"},
             {"username-password": "${parameterize(tests/data/account.csv)}"}
         ]
-        variables_mapping = {}
-        testcase_path = os.path.join(
-            os.getcwd(),
-            "tests/data/demo_parameters.yml"
-        )
         cartesian_product_parameters = parser.parse_parameters(
             parameters, functions_mapping=project_mapping["functions"])
         self.assertEqual(
