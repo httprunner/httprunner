@@ -334,61 +334,36 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_with_parameters(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_parameters.yml')
+            os.getcwd(), 'tests/testsuites/create_users_with_parameters.yml')
         self.runner.run(testcase_file_path)
         summary = self.runner.summary
-        # TODO: add parameterize
-        # self.assertEqual(
-        #     summary["details"][0]["in_out"]["in"]["user_agent"],
-        #     "iOS/10.1"
-        # )
-        # self.assertEqual(
-        #     summary["details"][2]["in_out"]["in"]["user_agent"],
-        #     "iOS/10.2"
-        # )
-        # self.assertEqual(
-        #     summary["details"][4]["in_out"]["in"]["user_agent"],
-        #     "iOS/10.3"
-        # )
         self.assertTrue(summary["success"])
-        self.assertEqual(len(summary["details"]), 1)
-        # self.assertEqual(len(summary["details"]), 3 * 2)
-        # self.assertEqual(summary["stat"]["testsRun"], 3 * 2)
-        self.assertIn("in", summary["details"][0]["in_out"])
-        self.assertIn("out", summary["details"][0]["in_out"])
-
-    def test_run_testcase_with_parameters_name(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_parameters.yml')
-        tests_mapping = loader.load_tests(testcase_file_path)
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_suite = self.runner._add_tests(parsed_tests_mapping)
-
+        self.assertEqual(len(summary["details"]), 3 * 2)
+        self.assertEqual(summary["stat"]["testsRun"], 3 * 2 * 4)
         self.assertEqual(
-            test_suite._tests[0].teststeps[0]['name'],
-            'get token with iOS/10.1 and test1'
+            summary["details"][0]["name"],
+            "create user 101 and check result for TESTSUITE_X1."
         )
-        # TODO: add parameterize
-        # self.assertEqual(
-        #     test_suite._tests[1].tests[0]['name'],
-        #     'get token with iOS/10.1 and test2'
-        # )
-        # self.assertEqual(
-        #     test_suite._tests[2].tests[0]['name'],
-        #     'get token with iOS/10.2 and test1'
-        # )
-        # self.assertEqual(
-        #     test_suite._tests[3].tests[0]['name'],
-        #     'get token with iOS/10.2 and test2'
-        # )
-        # self.assertEqual(
-        #     test_suite._tests[4].tests[0]['name'],
-        #     'get token with iOS/10.3 and test1'
-        # )
-        # self.assertEqual(
-        #     test_suite._tests[5].tests[0]['name'],
-        #     'get token with iOS/10.3 and test2'
-        # )
+        self.assertEqual(
+            summary["details"][5]["name"],
+            "create user 103 and check result for TESTSUITE_X2."
+        )
+        self.assertEqual(
+            summary["details"][0]["stat"]["testsRun"],
+            4
+        )
+        self.assertEqual(
+            summary["details"][0]["records"][2]["name"],
+            "create user 101 for TESTSUITE_X1"
+        )
+        self.assertEqual(
+            summary["details"][3]["records"][2]["name"],
+            "create user 102 for TESTSUITE_X2"
+        )
+        self.assertEqual(
+            summary["details"][5]["records"][2]["name"],
+            "create user 103 for TESTSUITE_X2"
+        )
 
     # def test_validate_response_content(self):
     #     # TODO: fix compatibility with Python 2.7
@@ -478,7 +453,7 @@ class TestApi(ApiServerUnittest):
         results = tests_results[0][1]
         self.assertEqual(
             results.records[0]["name"],
-            "setup and reset all (override)."
+            "setup and reset all (override) for TESTCASE_CREATE_XXX."
         )
         self.assertEqual(
             results.records[1]["name"],
@@ -512,7 +487,10 @@ class TestApi(ApiServerUnittest):
         self.assertIsInstance(testcase_tests["testcase_def"], dict)
         self.assertEqual(testcase_tests["testcase_def"]["config"]["name"], "create user and check result.")
         self.assertEqual(len(testcase_tests["testcase_def"]["teststeps"]), 4)
-        self.assertEqual(testcase_tests["testcase_def"]["teststeps"][0]["name"], "setup and reset all (override).")
+        self.assertEqual(
+            testcase_tests["testcase_def"]["teststeps"][0]["name"],
+            "setup and reset all (override) for $device_sn."
+        )
 
     def test_testsuite_parser(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -525,7 +503,7 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(parsed_testcases[0]["teststeps"]), 4)
 
         testcase1 = parsed_testcases[0]["teststeps"][0]
-        self.assertEqual(testcase1["config"]["name"], "setup and reset all (override).")
+        self.assertIn("setup and reset all (override)", testcase1["config"]["name"])
         self.assertNotIn("testcase_def", testcase1)
         self.assertEqual(len(testcase1["teststeps"]), 2)
         self.assertEqual(
@@ -544,7 +522,7 @@ class TestApi(ApiServerUnittest):
 
         self.assertEqual(len(test_suite._tests), 2)
         tests = test_suite._tests[0].teststeps
-        self.assertEqual(tests[0]["config"]["name"], "setup and reset all (override).")
+        self.assertIn("setup and reset all (override)", tests[0]["config"]["name"])
 
     def test_testsuite_run_suite(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -559,9 +537,9 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(tests_results[0][1].records), 4)
 
         results = tests_results[0][1]
-        self.assertEqual(
-            results.records[0]["name"],
-            "setup and reset all (override)."
+        self.assertIn(
+            "setup and reset all (override)",
+            results.records[0]["name"]
         )
         self.assertIn(
             results.records[1]["name"],
