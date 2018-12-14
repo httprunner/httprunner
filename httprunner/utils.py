@@ -310,11 +310,11 @@ def ensure_mapping_format(variables):
 
     """
     if isinstance(variables, list):
-        variables_ordered_dict = {}
+        variables_dict = {}
         for map_dict in variables:
-            variables_ordered_dict.update(map_dict)
+            variables_dict.update(map_dict)
 
-        return variables_ordered_dict
+        return variables_dict
 
     elif isinstance(variables, dict):
         return variables
