@@ -8,7 +8,7 @@
     base_url: "http://127.0.0.1:5000"
 
 - test:
-    name: setup and reset all (override).
+    name: setup and reset all (override) for $device_sn.
     testcase: testcases/setup.yml
     output:
         - token
@@ -24,7 +24,7 @@
         - eq: ["content.success", false]
 
 - test:
-    name: create user $uid
+    name: create user $uid for $device_sn
     api: api/create_user.yml
     variables:
         user_name: "user1"

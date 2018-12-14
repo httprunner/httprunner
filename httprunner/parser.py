@@ -841,7 +841,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
     """ override testscases with testsuite config variables, base_url and verify.
 
         variables priority:
-        testsuite config > testcase config > testcase_def config > testcase_def tests > api
+        parameters > testsuite config > testcase config > testcase_def config > testcase_def tests > api
 
     Args:
         testcases (dict):
@@ -883,9 +883,6 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
 
     for testcase_name, testcase in testcases.items():
 
-        # TODO: add parameterize
-        # parameters = testcase.get("parameters")
-
         parsed_testcase = testcase.pop("testcase_def")
         parsed_testcase.setdefault("config", {})
         parsed_testcase["path"] = testcase["testcase"]
@@ -921,8 +918,28 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         if parsed_config_variables:
             parsed_testcase["config"]["variables"] = parsed_config_variables
 
-        _parse_testcase(parsed_testcase, project_mapping)
-        parsed_testcase_list.append(parsed_testcase)
+        # parse parameters
+        if "parameters" in testcase:
+            cartesian_product_parameters = parse_parameters(
+                testcase["parameters"],
+                parsed_config_variables,
+                functions
+            )
+
+            for parameter_variables in cartesian_product_parameters:
+                # deepcopy to avoid influence between parameters
+                parsed_testcase_copied = utils.deepcopy_dict(parsed_testcase)
+                parsed_config_variables_copied = utils.deepcopy_dict(parsed_config_variables)
+                parsed_testcase_copied["config"]["variables"] = utils.extend_variables(
+                    parsed_config_variables_copied,
+                    parameter_variables
+                )
+                _parse_testcase(parsed_testcase_copied, project_mapping)
+                parsed_testcase_list.append(parsed_testcase_copied)
+
+        else:
+            _parse_testcase(parsed_testcase, project_mapping)
+            parsed_testcase_list.append(parsed_testcase)
 
     return parsed_testcase_list
 
