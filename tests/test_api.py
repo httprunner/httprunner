@@ -360,17 +360,20 @@ class TestHttpRunner(ApiServerUnittest):
             summary["details"][0]["stat"]["testsRun"],
             4
         )
+        records_name_list = [
+            summary["details"][i]["records"][2]["name"]
+            for i in range(6)
+        ]
         self.assertEqual(
-            summary["details"][0]["records"][2]["name"],
-            "create user 101 for TESTSUITE_X1"
-        )
-        self.assertEqual(
-            summary["details"][3]["records"][2]["name"],
-            "create user 102 for TESTSUITE_X2"
-        )
-        self.assertEqual(
-            summary["details"][5]["records"][2]["name"],
-            "create user 103 for TESTSUITE_X2"
+            set(records_name_list),
+            {
+                "create user 101 for TESTSUITE_X1",
+                "create user 101 for TESTSUITE_X2",
+                "create user 102 for TESTSUITE_X1",
+                "create user 102 for TESTSUITE_X2",
+                "create user 103 for TESTSUITE_X1",
+                "create user 103 for TESTSUITE_X2"
+            }
         )
 
     # def test_validate_response_content(self):
