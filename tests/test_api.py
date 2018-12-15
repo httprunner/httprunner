@@ -279,6 +279,14 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertFalse(summary["success"])
         self.assertEqual(summary["stat"]["errors"], 1)
 
+    def test_run_api(self):
+        path = "tests/httpbin/api/get_headers.yml"
+        self.runner.run(path)
+        summary = self.runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertEqual(summary["stat"]["successes"], 1)
+
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             self.runner.run(testcase_file_path)

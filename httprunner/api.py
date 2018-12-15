@@ -211,10 +211,10 @@ class HttpRunner(object):
                 dict: valid testcase/testsuite data
 
         """
-        if validator.is_testcases(path_or_tests):
-            return self.run_tests(path_or_tests)
-        elif validator.is_testcase_path(path_or_tests):
+        if validator.is_testcase_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
+        elif validator.is_testcases(path_or_tests):
+            return self.run_tests(path_or_tests)
         else:
             raise exceptions.ParamsError("invalid testcase path or testcases.")
 
