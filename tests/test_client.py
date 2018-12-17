@@ -53,3 +53,17 @@ class TestHttpClient(ApiServerUnittest):
         self.assertIn("name=user1", resp.request.body)
         self.assertIn("&", resp.request.body)
         self.assertIn("password=123456", resp.request.body)
+
+    def test_request_with_cookies(self):
+        url = "/api/users/1000"
+        data = {
+            'name': 'user1',
+            'password': '123456'
+        }
+        cookies = {
+            "a": "1",
+            "b": "2"
+        }
+        resp = self.api_client.get(url, cookies=cookies, headers=self.headers)
+        self.assertEqual(resp.request._cookies["a"], "1")
+        self.assertEqual(resp.request._cookies["b"], "2")
