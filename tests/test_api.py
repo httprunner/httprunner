@@ -252,8 +252,7 @@ class TestHttpRunner(ApiServerUnittest):
         ]
         runner = HttpRunner().run(testcases)
         summary = runner.summary
-        self.assertFalse(summary["success"])
-        self.assertEqual(summary["stat"]["errors"], 1)
+        self.assertTrue(summary["success"])
 
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:

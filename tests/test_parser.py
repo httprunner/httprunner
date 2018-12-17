@@ -239,10 +239,10 @@ class TestParser(unittest.TestCase):
             parser.parse_data("$var_6", variables_mapping),
             None
         )
-
-        with self.assertRaises(exceptions.VariableNotFound):
-            parser.parse_data("/api/$SECRET_KEY", variables_mapping)
-
+        self.assertEqual(
+            parser.parse_data("/api/$SECRET_KEY", variables_mapping),
+            "/api/$SECRET_KEY"
+        )
         self.assertEqual(
             parser.parse_data(["$var_1", "$var_2"], variables_mapping),
             ["abc", "def"]
@@ -297,9 +297,10 @@ class TestParser(unittest.TestCase):
             parser.parse_data("/api/${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
             "/api/3"
         )
-
-        with self.assertRaises(exceptions.FunctionNotFound):
-            parser.parse_data("/api/${gen_md5(abc)}")
+        self.assertEqual(
+            parser.parse_data("/api/${gen_md5(abc)}", functions_mapping=functions_mapping),
+            "/api/${gen_md5(abc)}"
+        )
 
     def test_parse_data_testcase(self):
         variables = {

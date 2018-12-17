@@ -192,7 +192,7 @@ class TestContext(ApiServerUnittest):
         variables = []
         self.context.update_context_variables(variables, "teststep")
 
-        with self.assertRaises(exceptions.VariableNotFound):
+        with self.assertRaises(exceptions.ValidationFailure):
             self.context.validate(validators, resp_obj)
 
         # expected value missed in variables mapping
