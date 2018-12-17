@@ -122,7 +122,7 @@ class TestFileLoader(unittest.TestCase):
         self.assertNotIn(file1, files)
 
         files = loader.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'basic.yml')
+        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'reset_all.yml')
         self.assertIn(api_file, files)
 
         files = loader.load_folder_files("not_existed_foulder", recursive=False)
@@ -189,9 +189,9 @@ class TestFileLoader(unittest.TestCase):
     def test_load_folder_content(self):
         path = os.path.join(os.getcwd(), "tests", "api")
         items_mapping = loader.load_folder_content(path)
-        file_path = os.path.join(os.getcwd(), "tests", "api", "basic.yml")
+        file_path = os.path.join(os.getcwd(), "tests", "api", "reset_all.yml")
         self.assertIn(file_path, items_mapping)
-        self.assertIsInstance(items_mapping[file_path], list)
+        self.assertIsInstance(items_mapping[file_path], dict)
 
 
 class TestModuleLoader(unittest.TestCase):
