@@ -133,26 +133,6 @@ def endswith(check_value, expect_value):
 
 """ built-in hooks
 """
-def setup_hook_prepare_kwargs(request):
-    if request["method"] == "POST":
-        req_headers = lower_dict_keys(request.get("headers", {}))
-        content_type = req_headers.get("content-type")
-        if content_type and "data" in request:
-            req_data = request["data"]
-
-            # if request content-type is application/json, request data should be dumped
-            if content_type.startswith("application/json") and isinstance(req_data, (dict, list)):
-                req_data = json.dumps(req_data)
-
-            # if request content-type is application/x-www-form-urlencoded, request data should be in params format
-            elif content_type.startswith("application/x-www-form-urlencoded") and isinstance(req_data, dict):
-                req_data = convert_dict_to_params(req_data)
-
-            if isinstance(req_data, str):
-                req_data = req_data.encode('utf-8')
-
-            request["data"] = req_data
-
 def sleep_N_secs(n_secs):
     """ sleep n seconds
     """
