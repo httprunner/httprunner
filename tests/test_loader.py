@@ -438,12 +438,12 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_api_folder(self):
         path = os.path.join(os.getcwd(), "tests", "api")
         api_definition_mapping = loader.load_api_folder(path)
-        self.assertIn("get_token", api_definition_mapping)
-        self.assertIn("request", api_definition_mapping["get_token"])
-        api_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
-        self.assertIn(api_path, api_definition_mapping)
+        api_file_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
+        self.assertIn(api_file_path, api_definition_mapping)
+        self.assertIn("request", api_definition_mapping[api_file_path])
 
     def test_load_project_tests(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        self.assertIn("get_token", self.tests_def_mapping["api"])
+        api_file_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
+        self.assertIn(api_file_path, self.tests_def_mapping["api"])
         self.assertEqual(self.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
