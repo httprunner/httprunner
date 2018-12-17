@@ -11,7 +11,7 @@
 
 - test:
     name: get token with $user_agent, $app_version
-    api: get_token
+    api: api/get_token.yml
     extract:
         - token: content.token
     validate:
@@ -21,7 +21,7 @@
 
 - test:
     name: reset all users
-    api: reset_all
+    api: api/reset_all.yml
     variables:
         token: $token
     validate:
@@ -30,7 +30,7 @@
 
 - test:
     name: get user that does not exist
-    api: get_user
+    api: api/get_user.yml
     variables:
         uid: 1000
         token: $token
@@ -45,14 +45,14 @@
         user_name: "user1"
         user_password: "123456"
         token: $token
-    api: create_user
+    api: api/create_user.yml
     validate:
         - {"check": "status_code", "expect": 201}
         - {"check": "content.success", "expect": true}
 
 - test:
     name: get user that has been created
-    api: get_user
+    api: api/get_user.yml
     variables:
         uid: 1000
         token: $token
@@ -68,7 +68,7 @@
         user_name: "user1"
         user_password: "123456"
         token: $token
-    api: create_user
+    api: api/create_user.yml
     validate:
         - {"check": "status_code", "expect": 500}
         - {"check": "content.success", "expect": false}
@@ -80,14 +80,14 @@
         user_name: "user1"
         user_password: "654321"
         token: $token
-    api: update_user
+    api: api/update_user.yml
     validate:
         - {"check": "status_code", "expect": 200}
         - {"check": "content.success", "expect": true}
 
 - test:
     name: get user that has been updated
-    api: get_user
+    api: api/get_user.yml
     variables:
         uid: 1000
         token: $token
@@ -98,7 +98,7 @@
 
 - test:
     name: get users
-    api: get_users
+    api: api/get_users.yml
     variables:
         token: $token
     validate:
@@ -107,7 +107,7 @@
 
 - test:
     name: delete user that exists
-    api: delete_user
+    api: api/delete_user.yml
     variables:
         uid: 1000
         token: $token
@@ -117,7 +117,7 @@
 
 - test:
     name: get users
-    api: get_users
+    api: api/get_users.yml
     variables:
         token: $token
     validate:
@@ -131,14 +131,14 @@
         user_name: "user1"
         user_password: "123456"
         token: $token
-    api: create_user
+    api: api/create_user.yml
     validate:
         - {"check": "status_code", "expect": 201}
         - {"check": "content.success", "expect": true}
 
 - test:
     name: get users
-    api: get_users
+    api: api/get_users.yml
     variables:
         token: $token
     validate:
