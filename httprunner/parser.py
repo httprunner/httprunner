@@ -315,16 +315,33 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
         else:
             # (2) & (3)
             parsed_parameter_content = parse_data(parameter_content, variables_mapping, functions_mapping)
-            # e.g. [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
-            # e.g. [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
             if not isinstance(parsed_parameter_content, list):
                 raise exceptions.ParamsError("parameters syntax error!")
 
-            parameter_content_list = [
-                # get subset by parameter name
-                {key: parameter_item[key] for key in parameter_name_list}
-                for parameter_item in parsed_parameter_content
-            ]
+            parameter_content_list = []
+            for parameter_item in parsed_parameter_content:
+                if isinstance(parameter_item, dict):
+                    # get subset by parameter name
+                    # {"app_version": "${gen_app_version()}"}
+                    # gen_app_version() => [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
+                    # {"username-password": "${get_account()}"}
+                    # get_account() => [
+                    #       {"username": "user1", "password": "111111"},
+                    #       {"username": "user2", "password": "222222"}
+                    # ]
+                    parameter_dict = {key: parameter_item[key] for key in parameter_name_list}
+                elif isinstance(parameter_item, (list, tuple)):
+                    # {"username-password": "${get_account()}"}
+                    # get_account() => [("user1", "111111"), ("user2", "222222")]
+                    parameter_dict = dict(zip(parameter_name_list, parameter_item))
+                elif len(parameter_name_list) == 1:
+                    # {"user_agent": "${get_user_agent()}"}
+                    # get_user_agent() => ["iOS/10.1", "iOS/10.2"]
+                    parameter_dict = {
+                        parameter_name_list[0]: parameter_item
+                    }
+
+                parameter_content_list.append(parameter_dict)
 
         parsed_parameters_list.append(parameter_content_list)
 
