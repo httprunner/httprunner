@@ -1,4 +1,3 @@
-from httprunner.built_in import setup_hook_prepare_kwargs
 from httprunner.client import HttpSession
 from httprunner.compat import bytes
 from tests.base import ApiServerUnittest
@@ -39,52 +38,18 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(201, resp.status_code)
         self.assertEqual(True, resp.json()['success'])
 
-    def test_prepare_kwargs_content_type_application_json_without_charset(self):
-        request = {
-            "url": "/path",
-            "method": "POST",
-            "headers": {
-                "content-type": "application/json"
-            },
-            "data": {
-                "a": 1,
-                "b": 2
-            }
+    def test_request_post_data(self):
+        url = "/api/users/1000"
+        data = {
+            'name': 'user1',
+            'password': '123456'
         }
-        setup_hook_prepare_kwargs(request)
-        self.assertIsInstance(request["data"], bytes)
-        self.assertIn(b'"a": 1', request["data"])
-        self.assertIn(b'"b": 2', request["data"])
-
-    def test_prepare_kwargs_content_type_application_json_charset_utf8(self):
-        request = {
-            "url": "/path",
-            "method": "POST",
-            "headers": {
-                "content-type": "application/json; charset=utf-8"
-            },
-            "data": {
-                "a": 1,
-                "b": 2
-            }
-        }
-        setup_hook_prepare_kwargs(request)
-        self.assertIsInstance(request["data"], bytes)
-
-    def test_prepare_kwargs_content_type_x_www_form_urlencoded(self):
-        request = {
-            "url": "/path",
-            "method": "POST",
-            "headers": {
-                "content-type": "application/x-www-form-urlencoded; charset=utf-8"
-            },
-            "data": {
-                "a": 1,
-                "b": 2
-            }
-        }
-        setup_hook_prepare_kwargs(request)
-        self.assertIsInstance(request["data"], bytes)
-        self.assertIn(b'a=1', request["data"])
-        self.assertIn(b'&', request["data"])
-        self.assertIn(b'b=2', request["data"])
+        resp = self.api_client.post(url, json=data, headers=self.headers)
+        # b'{"name": "user1", "password": "123456"}'
+        self.assertIn(b'"name": "user1"', resp.request.body)
+        self.assertIn(b'"password": "123456"', resp.request.body)
+        resp = self.api_client.post(url, data=data, headers=self.headers)
+        # name=user1&password=123456
+        self.assertIn("name=user1", resp.request.body)
+        self.assertIn("&", resp.request.body)
+        self.assertIn("password=123456", resp.request.body)

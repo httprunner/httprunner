@@ -203,9 +203,9 @@ class Runner(object):
         self.session_context.update_test_variables("request", parsed_test_request)
 
         # setup hooks
-        setup_hooks = ["${setup_hook_prepare_kwargs($request)}"]
-        setup_hooks.extend(test_dict.get("setup_hooks", []))
-        self.do_hook_actions(setup_hooks, "setup")
+        setup_hooks = test_dict.get("setup_hooks", [])
+        if setup_hooks:
+            self.do_hook_actions(setup_hooks, "setup")
 
         try:
             url = parsed_test_request.pop('url')
