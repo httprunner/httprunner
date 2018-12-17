@@ -376,8 +376,10 @@ class TestParser(unittest.TestCase):
 
     def test_parse_parameters_custom_function(self):
         parameters = [
+            {"user_agent": "${get_user_agent()}"},
             {"app_version": "${gen_app_version()}"},
-            {"username-password": "${get_account()}"}
+            {"username-password": "${get_account()}"},
+            {"username2-password2": "${get_account_in_tuple()}"}
         ]
         dot_env_path = os.path.join(
             os.getcwd(), "tests", ".env"
@@ -388,9 +390,20 @@ class TestParser(unittest.TestCase):
             parameters,
             functions_mapping=loader.load_module_functions(debugtalk)
         )
+        self.assertIn(
+            {
+                'user_agent': 'iOS/10.1',
+                'app_version': '2.8.5',
+                'username': 'user1',
+                'password': '111111',
+                'username2': 'user1',
+                'password2': '111111'
+            },
+            cartesian_product_parameters
+        )
         self.assertEqual(
             len(cartesian_product_parameters),
-            2 * 2
+            2 * 2 * 2 * 2
         )
 
     def test_parse_parameters_parameterize(self):
