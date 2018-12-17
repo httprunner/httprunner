@@ -17,7 +17,7 @@
 
 - test:
     name: get token with $user_agent and $username
-    api: get_token
+    api: api/get_token.yml
     extract:
         - token: content.token
     validate:

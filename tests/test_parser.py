@@ -628,7 +628,7 @@ class TestParser(unittest.TestCase):
         raw_testinfo = {
             "name": "get token",
             "base_url": "https://debugtalk.com",
-            "api": "get_token",
+            "api": "api/get_token.yml",
         }
         api_def_dict = loader.load_teststep(raw_testinfo)
         test_block = {
