@@ -1,5 +1,6 @@
 from httprunner.client import HttpSession
 from httprunner.compat import bytes
+from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
 
 
@@ -67,3 +68,19 @@ class TestHttpClient(ApiServerUnittest):
         resp = self.api_client.get(url, cookies=cookies, headers=self.headers)
         self.assertEqual(resp.request._cookies["a"], "1")
         self.assertEqual(resp.request._cookies["b"], "2")
+
+    def test_request_redirect(self):
+        url = "{}/redirect-to?url=https%3A%2F%2Fdebugtalk.com&status_code=302".format(HTTPBIN_SERVER)
+        headers = {"accept: text/html"}
+        cookies = {
+            "a": "1",
+            "b": "2"
+        }
+        resp = self.api_client.get(url, cookies=cookies, headers=self.headers)
+        raw_request = resp.history[0].request
+        self.assertEqual(raw_request._cookies["a"], "1")
+        self.assertEqual(raw_request._cookies["b"], "2")
+        redirect_request = resp.request
+        self.assertEqual(redirect_request.url, "https://debugtalk.com")
+        self.assertEqual(redirect_request._cookies["a"], "1")
+        self.assertEqual(redirect_request._cookies["b"], "2")
