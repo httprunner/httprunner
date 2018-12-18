@@ -5,7 +5,6 @@ import unittest
 
 from httprunner import loader, parser
 from httprunner.api import HttpRunner, prepare_locust_tests
-from locust import HttpLocust
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
 
