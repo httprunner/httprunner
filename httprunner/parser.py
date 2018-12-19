@@ -464,7 +464,7 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
     return content
 
 
-def parse_string_variables(content, variables_mapping):
+def parse_string_variables(content, variables_mapping, functions_mapping):
     """ parse string content with variables mapping.
 
     Args:
@@ -477,7 +477,7 @@ def parse_string_variables(content, variables_mapping):
     Examples:
         >>> content = "/api/users/$uid"
         >>> variables_mapping = {"$uid": 1000}
-        >>> parse_string_variables(content, variables_mapping)
+        >>> parse_string_variables(content, variables_mapping, {})
             "/api/users/1000"
 
     """
@@ -485,30 +485,52 @@ def parse_string_variables(content, variables_mapping):
     for variable_name in variables_list:
         variable_value = get_mapping_variable(variable_name, variables_mapping)
 
+        if variable_name == "request" and isinstance(variable_value, dict) \
+            and "url" in variable_value and "method" in variable_value:
+            # call setup_hooks action with $request
+            for key, value in variable_value.items():
+                variable_value[key] = parse_data(
+                    value,
+                    variables_mapping,
+                    functions_mapping
+                )
+            parsed_variable_value = variable_value
+        elif "${}".format(variable_name) == variable_value:
+            # variable_name = "token"
+            # variables_mapping = {"token": "$token"}
+            parsed_variable_value = variable_value
+        else:
+            parsed_variable_value = parse_data(
+                variable_value,
+                variables_mapping,
+                functions_mapping
+            )
+
         # TODO: replace variable label from $var to {{var}}
         if "${}".format(variable_name) == content:
             # content is a variable
-            content = variable_value
+            content = parsed_variable_value
         else:
             # content contains one or several variables
-            if not isinstance(variable_value, str):
-                variable_value = builtin_str(variable_value)
+            if not isinstance(parsed_variable_value, str):
+                parsed_variable_value = builtin_str(parsed_variable_value)
 
             content = content.replace(
                 "${}".format(variable_name),
-                variable_value, 1
+                parsed_variable_value, 1
             )
 
     return content
 
 
-def parse_data(content, variables_mapping=None, functions_mapping=None):
+def parse_data(content, variables_mapping=None, functions_mapping=None, raise_if_variable_not_found=True):
     """ parse content with variables mapping
 
     Args:
         content (str/dict/list/numeric/bool/type): content to be parsed
         variables_mapping (dict): variables mapping.
         functions_mapping (dict): functions mapping.
+        raise_if_variable_not_found (bool): if set False, exception will not raise when VariableNotFound occurred.
 
     Returns:
         parsed content.
@@ -536,15 +558,30 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
 
     if isinstance(content, (list, set, tuple)):
         return [
-            parse_data(item, variables_mapping, functions_mapping)
+            parse_data(
+                item,
+                variables_mapping,
+                functions_mapping,
+                raise_if_variable_not_found
+            )
             for item in content
         ]
 
     if isinstance(content, dict):
         parsed_content = {}
         for key, value in content.items():
-            parsed_key = parse_data(key, variables_mapping, functions_mapping)
-            parsed_value = parse_data(value, variables_mapping, functions_mapping)
+            parsed_key = parse_data(
+                key,
+                variables_mapping,
+                functions_mapping,
+                raise_if_variable_not_found
+            )
+            parsed_value = parse_data(
+                value,
+                variables_mapping,
+                functions_mapping,
+                raise_if_variable_not_found
+            )
             parsed_content[parsed_key] = parsed_value
 
         return parsed_content
@@ -555,12 +592,23 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
         functions_mapping = functions_mapping or {}
         content = content.strip()
 
-        # replace functions with evaluated value
-        # Notice: _eval_content_functions must be called before _eval_content_variables
-        content = parse_string_functions(content, variables_mapping, functions_mapping)
-
-        # replace variables with binding value
-        content = parse_string_variables(content, variables_mapping)
+        try:
+            # replace functions with evaluated value
+            # Notice: parse_string_functions must be called before parse_string_variables
+            content = parse_string_functions(
+                content,
+                variables_mapping,
+                functions_mapping
+            )
+            # replace variables with binding value
+            content = parse_string_variables(
+                content,
+                variables_mapping,
+                functions_mapping
+            )
+        except exceptions.VariableNotFound:
+            if raise_if_variable_not_found:
+                raise
 
     return content
 
@@ -707,14 +755,12 @@ def __parse_config(config, project_mapping):
     # parse config variables
     parsed_config_variables = {}
     for key, value in raw_config_variables_mapping.items():
-        try:
-            parsed_value = parse_data(
-                value,
-                raw_config_variables_mapping,
-                functions
-            )
-        except exceptions.VariableNotFound:
-            pass
+        parsed_value = parse_data(
+            value,
+            raw_config_variables_mapping,
+            functions,
+            raise_if_variable_not_found=False
+        )
         parsed_config_variables[key] = parsed_value
 
     if parsed_config_variables:
@@ -771,16 +817,20 @@ def __parse_testcase_tests(tests, config, project_mapping):
             test_dict.pop("variables", {}),
             config_variables
         )
+        test_dict["variables"] = parse_data(
+            test_dict["variables"],
+            test_dict["variables"],
+            functions,
+            raise_if_variable_not_found=False
+        )
 
         # parse test_dict name
-        try:
-            test_dict["name"] = parse_data(
-                test_dict.pop("name", ""),
-                test_dict["variables"],
-                functions
-            )
-        except exceptions.VariableNotFound:
-            pass
+        test_dict["name"] = parse_data(
+            test_dict.pop("name", ""),
+            test_dict["variables"],
+            functions,
+            raise_if_variable_not_found=False
+        )
 
         if "testcase_def" in test_dict:
             # test_dict is nested testcase
@@ -808,34 +858,17 @@ def __parse_testcase_tests(tests, config, project_mapping):
                 )
 
                 # build path with base_url
-                try:
-                    request_url = parse_data(
-                        test_dict["request"]["url"],
-                        test_dict["variables"],
-                        functions
-                    )
-                except exceptions.VariableNotFound:
-                    """ variable in current url maybe extracted from former api
-                        "teststeps": [
-                            {
-                                "request": {},
-                                "extract": {
-                                    "host1": content.host1
-                                }
-                            },
-                            {
-                                "request": {
-                                    "url": "$host1/path1"
-                                }
-                            }
-                        ]
-                    """
-                    request_url = test_dict["request"]["url"]
-                finally:
-                    test_dict["request"]["url"] = utils.build_url(
-                        base_url,
-                        request_url
-                    )
+                # variable in current url maybe extracted from former api
+                request_url = parse_data(
+                    test_dict["request"]["url"],
+                    test_dict["variables"],
+                    functions,
+                    raise_if_variable_not_found=False
+                )
+                test_dict["request"]["url"] = utils.build_url(
+                    base_url,
+                    request_url
+                )
 
 
 def _parse_testcase(testcase, project_mapping):
