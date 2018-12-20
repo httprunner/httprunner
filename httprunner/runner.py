@@ -256,6 +256,8 @@ class Runner(object):
 
             # log request
             err_msg += "====== request details ======\n"
+            err_msg += "url: {}\n".format(url)
+            err_msg += "method: {}\n".format(method)
             err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
             for k, v in parsed_test_request.items():
                 v = utils.omit_long_data(v)

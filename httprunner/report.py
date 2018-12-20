@@ -117,7 +117,6 @@ def __stringify_request(request_data):
                     "Content-Type": "application/json",
                     "Content-Length": "52"
                 },
-                "start_timestamp": 1543299567.6505039,
                 "json": {
                     "sign": "cb9d60acd09080ea66c8e63a1c78c6459ea00168"
                 },
@@ -161,9 +160,6 @@ def __stringify_response(response_data):
                     "Server": "Werkzeug/0.14.1 Python/3.7.0",
                     "Date": "Tue, 27 Nov 2018 06:19:27 GMT"
                 },
-                "content_size": 30,
-                "response_time_ms": 3.63,
-                "elapsed_ms": 2.197,
                 "encoding": "None",
                 "content_type": "application/json",
                 "ok": false,
@@ -245,7 +241,7 @@ def __get_total_response_time(meta_datas_expanded):
     try:
         response_time = 0
         for meta_data in meta_datas_expanded:
-            response_time += meta_data["response"]["response_time_ms"]
+            response_time += meta_data["stat"]["response_time_ms"]
 
         return "{:.2f}".format(response_time)
 
@@ -260,8 +256,10 @@ def __stringify_meta_datas(meta_datas):
         for _meta_data in meta_datas:
             __stringify_meta_datas(_meta_data)
     elif isinstance(meta_datas, dict):
-        __stringify_request(meta_datas["request"])
-        __stringify_response(meta_datas["response"])
+        data_list = meta_datas["data"]
+        for data in data_list:
+            __stringify_request(data["request"])
+            __stringify_response(data["response"])
 
 
 def render_html_report(summary, report_template=None, report_dir=None):
