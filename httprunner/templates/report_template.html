@@ -132,6 +132,9 @@
       overflow: auto;
       text-align: left;
     }
+    .popup .separator {
+      color:royalblue
+    }
 
     @media screen and (max-width: 700px) {
       .box {
@@ -224,15 +227,22 @@
 
             <div class="content">
               <h3>Name: {{ meta_data.name }}</h3>
+
+              {% for req_resp in meta_data.data %}
+
+              {% if loop.index > 1 %}
+              <div class="separator">==================================== redirect to ====================================</div>
+              {% endif %}
+
               <h3>Request:</h3>
               <div style="overflow: auto">
                 <table>
-                  {% for key, value in meta_data.request.items() %}
+                  {% for key, value in req_resp.request.items() %}
                     <tr>
                       <th>{{key}}</th>
                       <td>
                         {% if key == "headers" %}
-                          {% for header_key, header_value in meta_data.request.headers.items() %}
+                          {% for header_key, header_value in req_resp.request.headers.items() %}
                           <div>
                             <strong>{{ header_key }}</strong>: {{ header_value }}
                           </div>
@@ -249,27 +259,24 @@
               <h3>Response:</h3>
               <div style="overflow: auto">
                 <table>
-                    {% for key, value in meta_data.response.items() %}
-                      {% if key in ["elapsed_ms", "response_time_ms", "content_size", "content_type"] %}
-                        {% continue %}
-                      {% endif %}
+                    {% for key, value in req_resp.response.items() %}
                       <tr>
                         <th>{{key}}</th>
                         <td>
                           {% if key == "headers" %}
-                            {% for header_key, header_value in meta_data.response.headers.items() %}
+                            {% for header_key, header_value in req_resp.response.headers.items() %}
                             <div>
                               <strong>{{ header_key }}</strong>: {{ header_value }}
                             </div>
                             {% endfor %}
                           {% elif key == "content" %}
-                            {% if "image" in meta_data.response.content_type %}
-                              <img src="{{ meta_data.response.content }}" />
+                            {% if "image" in req_resp.response.content_type %}
+                              <img src="{{ req_resp.response.content }}" />
                             {% else %}
                               {{ value }}
                             {% endif %}
                           {% elif key == "text" %}
-                              <pre>{{ meta_data.response.text | e }}</pre>
+                              <pre>{{ req_resp.response.text | e }}</pre>
                           {% else %}
                             {{ value }}
                           {% endif %}
@@ -278,6 +285,7 @@
                     {% endfor %}
                   </table>
               </div>
+              {% endfor %}
 
               <h3>Validators:</h3>
               <div style="overflow: auto">
@@ -312,15 +320,15 @@
                 <table>
                   <tr>
                       <th>content_size(bytes)</th>
-                      <td>{{ meta_data.response.content_size }}</td>
+                      <td>{{ meta_data.stat.content_size }}</td>
                     </tr>
                   <tr>
                     <th>response_time(ms)</th>
-                    <td>{{ meta_data.response.response_time_ms }}</td>
+                    <td>{{ meta_data.stat.response_time_ms }}</td>
                   </tr>
                   <tr>
                     <th>elapsed(ms)</th>
-                    <td>{{ meta_data.response.elapsed_ms }}</td>
+                    <td>{{ meta_data.stat.elapsed_ms }}</td>
                   </tr>
                 </table>
               </div>
