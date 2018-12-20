@@ -310,7 +310,7 @@ def __extend_with_api_ref(raw_testinfo):
         # NOTICE: avoid project_mapping been changed during iteration.
         raw_testinfo["api_def"] = utils.deepcopy_dict(block)
     except KeyError:
-        raise exceptions.ApiNotFound("{} not found!".format(name))
+        raise exceptions.ApiNotFound("{} not found!".format(api_name))
 
 
 def __extend_with_testcase_ref(raw_testinfo):
