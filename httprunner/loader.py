@@ -300,7 +300,8 @@ def __extend_with_api_ref(raw_testinfo):
     # 1, individual file: each file is corresponding to one api definition
     # 2, api sets file: one file contains a list of api definitions
     if not os.path.isabs(api_name):
-        api_path = os.path.join(tests_def_mapping["PWD"], api_name)
+        # make compatible with Windows/Linux
+        api_path = os.path.join(tests_def_mapping["PWD"], *api_name.split("/"))
         if os.path.isfile(api_path):
             # type 1: api is defined in individual file
             api_name = api_path
@@ -319,9 +320,10 @@ def __extend_with_testcase_ref(raw_testinfo):
     testcase_path = raw_testinfo["testcase"]
 
     if testcase_path not in tests_def_mapping["testcases"]:
+        # make compatible with Windows/Linux
         testcase_path = os.path.join(
             project_mapping["PWD"],
-            testcase_path
+            *testcase_path.split("/")
         )
         testcase_dict = load_testcase(load_file(testcase_path))
         tests_def_mapping[testcase_path] = testcase_dict
