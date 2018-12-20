@@ -143,7 +143,10 @@ class TestHttpRunner(ApiServerUnittest):
         summary = self.runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
-        self.assertEqual(summary["details"][0]["records"][0]["meta_datas"]["response"]["json"]["data"], "abc")
+        self.assertEqual(
+            summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["json"]["data"],
+            "abc"
+        )
 
     def test_html_report_repsonse_image(self):
         report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
@@ -285,6 +288,19 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testsRun"], 1)
         self.assertEqual(summary["stat"]["successes"], 1)
+
+    def test_request_302_logs(self):
+        path = "tests/httpbin/api/302_redirect.yml"
+        self.runner.run(path)
+        summary = self.runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertEqual(summary["stat"]["successes"], 1)
+
+        req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
+        self.assertEqual(len(req_resp_data), 2)
+        self.assertEqual(req_resp_data[0]["response"]["status_code"], 302)
+        self.assertEqual(req_resp_data[1]["response"]["status_code"], 200)
 
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
