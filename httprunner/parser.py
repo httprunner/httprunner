@@ -893,6 +893,9 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         variables priority:
         parameters > testsuite config > testcase config > testcase_def config > testcase_def tests > api
 
+        base_url priority:
+        testcase_def tests > testcase_def config > testcase config > testsuite config
+
     Args:
         testcases (dict):
             {
@@ -927,6 +930,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
             }
 
     """
+    testsuite_base_url = testsuite_config.get("base_url")
     testsuite_config_variables = testsuite_config.get("variables", {})
     functions = project_mapping.get("functions", {})
     parsed_testcase_list = []
@@ -937,6 +941,9 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         parsed_testcase.setdefault("config", {})
         parsed_testcase["path"] = testcase["testcase"]
         parsed_testcase["config"]["name"] = testcase_name
+
+        # base_url priority: testcase config > testsuite config
+        parsed_testcase["config"].setdefault("base_url", testsuite_base_url)
 
         # 1, testsuite config => testcase config
         # override test_dict variables
