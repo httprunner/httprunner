@@ -5,7 +5,6 @@
     variables:
         uid: 9001
         device_sn: "TESTCASE_CREATE_XXX"
-    base_url: "http://127.0.0.1:5000"
 
 - test:
     name: setup and reset all (override) for $device_sn.
