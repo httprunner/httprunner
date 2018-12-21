@@ -244,21 +244,27 @@ def prepare_locust_tests(path):
     parsed_tests_mapping = parser.parse_tests(tests_mapping)
 
     functions = parsed_tests_mapping.get("project_mapping", {}).get("functions", {})
-    testcase = parsed_tests_mapping["testcases"][0]
-    items = testcase.get("teststeps", [])
 
     tests = []
-    for item in items:
-        if "config" in item:
-            # embeded testcase
-            weight = item["config"].get("weight", 1)
-        else:
-            # API test
-            weight = item.get("weight", 1)
 
-        # implement weight for tests
-        for _ in range(weight):
-            tests.append(item)
+    for testcase in parsed_tests_mapping["testcases"]:
+        testcase_weight = testcase.get("config", {}).get("weight", 1)
+        items = testcase.get("teststeps", [])
+
+        testcase_tests = []
+        for item in items:
+            if "config" in item:
+                # embeded testcase
+                weight = item["config"].get("weight", 1)
+            else:
+                # API test
+                weight = item.get("weight", 1)
+
+            # implement weight for tests
+            for _ in range(weight):
+                testcase_tests.append(item)
+
+        tests.extend(testcase_tests * testcase_weight)
 
     return {
         "functions": functions,
