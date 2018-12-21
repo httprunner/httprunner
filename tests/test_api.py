@@ -302,6 +302,21 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(req_resp_data[0]["response"]["status_code"], 302)
         self.assertEqual(req_resp_data[1]["response"]["status_code"], 200)
 
+    def test_request_with_params(self):
+        path = "tests/httpbin/api/302_redirect.yml"
+        self.runner.run(path)
+        summary = self.runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertEqual(summary["stat"]["successes"], 1)
+
+        req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
+        self.assertEqual(len(req_resp_data), 2)
+        self.assertEqual(
+            req_resp_data[0]["request"]["url"],
+            "https://httpbin.org/redirect-to?url=https%3A%2F%2Fdebugtalk.com&status_code=302"
+        )
+
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             self.runner.run(testcase_file_path)
