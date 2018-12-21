@@ -942,6 +942,9 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         parsed_testcase["path"] = testcase["testcase"]
         parsed_testcase["config"]["name"] = testcase_name
 
+        if "weight" in testcase:
+            parsed_testcase["config"]["weight"] = testcase["weight"]
+
         # base_url priority: testcase config > testsuite config
         parsed_testcase["config"].setdefault("base_url", testsuite_base_url)
 
