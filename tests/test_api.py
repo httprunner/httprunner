@@ -312,9 +312,9 @@ class TestHttpRunner(ApiServerUnittest):
 
         req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
         self.assertEqual(len(req_resp_data), 2)
-        self.assertEqual(
-            req_resp_data[0]["request"]["url"],
-            "https://httpbin.org/redirect-to?url=https%3A%2F%2Fdebugtalk.com&status_code=302"
+        self.assertIn(
+            "url=https%3A%2F%2Fdebugtalk.com",
+            req_resp_data[0]["request"]["url"]
         )
 
     def test_run_testcase_hardcode(self):
