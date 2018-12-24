@@ -322,7 +322,7 @@ class TestSuiteLoader(unittest.TestCase):
             os.getcwd(), 'tests/api/create_user.yml')
         tests_mapping = loader.load_tests(path)
         project_mapping = tests_mapping["project_mapping"]
-        api_list = tests_mapping["api"]
+        api_list = tests_mapping["apis"]
         self.assertEqual(len(api_list), 1)
         self.assertEqual(api_list[0]["request"]["url"], "/api/users/$uid")
 
