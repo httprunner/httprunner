@@ -770,7 +770,7 @@ def load_tests(path, dot_env_path=None):
         elif loaded_content["type"] == "testcase":
             tests_mapping.setdefault("testcases", []).append(loaded_content)
         elif loaded_content["type"] == "api":
-            tests_mapping.setdefault("api", []).append(loaded_content)
+            tests_mapping.setdefault("apis", []).append(loaded_content)
 
     if os.path.isdir(path):
         files_list = load_folder_files(path)

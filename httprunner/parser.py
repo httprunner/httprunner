@@ -1101,12 +1101,13 @@ def parse_tests(tests_mapping):
                 _parse_testcase(testcase, project_mapping)
                 parsed_tests_mapping["testcases"].append(testcase)
 
-        elif test_type == "api":
+        elif test_type == "apis":
             # encapsulate api as a testcase
-            testcase = {
-                "teststeps": tests_mapping["api"]
-            }
-            _parse_testcase(testcase, project_mapping)
-            parsed_tests_mapping["testcases"].append(testcase)
+            for api_content in tests_mapping["apis"]:
+                testcase = {
+                    "teststeps": [api_content]
+                }
+                _parse_testcase(testcase, project_mapping)
+                parsed_tests_mapping["testcases"].append(testcase)
 
     return parsed_tests_mapping
