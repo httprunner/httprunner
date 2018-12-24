@@ -317,6 +317,17 @@ class TestHttpRunner(ApiServerUnittest):
             req_resp_data[0]["request"]["url"]
         )
 
+    def test_run_api_folder(self):
+        api_folder = "tests/httpbin/api/"
+        self.runner.run(api_folder)
+        summary = self.runner.summary
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testsRun"], 2)
+        self.assertEqual(summary["stat"]["successes"], 2)
+        self.assertEqual(len(summary["details"]), 2)
+        self.assertEqual(summary["details"][0]["stat"]["testsRun"], 1)
+        self.assertEqual(summary["details"][1]["stat"]["testsRun"], 1)
+
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             self.runner.run(testcase_file_path)
