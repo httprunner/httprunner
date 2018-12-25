@@ -9,7 +9,8 @@ from httprunner import (exceptions, loader, logger, parser, report, runner,
 
 class HttpRunner(object):
 
-    def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None):
+    def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
+        log_level=None, log_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -17,6 +18,8 @@ class HttpRunner(object):
             save_tests (bool): save loaded/parsed tests to JSON file.
             report_template (str): report template file path, template should be in Jinja2 format.
             report_dir (str): html report save directory.
+            log_level (str): logging level.
+            log_file (str): log file path.
 
         """
         self.exception_stage = "initialize HttpRunner()"
@@ -30,6 +33,8 @@ class HttpRunner(object):
         self.report_template = report_template
         self.report_dir = report_dir
         self._summary = None
+        if log_level and log_file:
+            logger.setup_logger(log_level, log_file)
 
     def _add_tests(self, tests_mapping):
         """ initialize testcase with Runner() and add to test suite.
