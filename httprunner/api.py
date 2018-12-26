@@ -10,7 +10,7 @@ from httprunner import (exceptions, loader, logger, parser, report, runner,
 class HttpRunner(object):
 
     def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-        log_level=None, log_file=None):
+        log_level="INFO", log_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -33,7 +33,7 @@ class HttpRunner(object):
         self.report_template = report_template
         self.report_dir = report_dir
         self._summary = None
-        if log_level and log_file:
+        if log_file:
             logger.setup_logger(log_level, log_file)
 
     def _add_tests(self, tests_mapping):
