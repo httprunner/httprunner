@@ -610,18 +610,9 @@ class TestLocust(unittest.TestCase):
 
     def test_prepare_locust_tests(self):
         path = os.path.join(
-            os.getcwd(), 'tests/locust_tests/demo_simple_locust.yml')
+            os.getcwd(), 'tests/locust_tests/demo_locusts.yml')
         locust_tests = prepare_locust_tests(path)
         self.assertIn("gen_md5", locust_tests["functions"])
-        self.assertEqual(len(locust_tests["tests"]), 10)
-        self.assertEqual(locust_tests["tests"][0]["name"], "index")
-        self.assertEqual(locust_tests["tests"][9]["name"], "user-agent")
-
-    def test_prepare_locust_tests_with_layer(self):
-        path = os.path.join(
-            os.getcwd(), 'tests/locust_tests/demo_locust_with_layer.yml')
-        locust_tests = prepare_locust_tests(path)
-        self.assertIn("gen_md5", locust_tests["functions"])
-        self.assertEqual(len(locust_tests["tests"]), 4 * 2 + 4 * 3)
-        self.assertIn("setup and reset all (override)", locust_tests["tests"][0]["config"]["name"])
-        self.assertIn("check if user ", locust_tests["tests"][19]["name"])
+        self.assertEqual(len(locust_tests["tests"]), 2 + 3)
+        self.assertIn("create user 1000 and check result.", locust_tests["tests"][0]["config"]["name"])
+        self.assertIn("create user 1001 and check result.", locust_tests["tests"][4]["config"]["name"])
