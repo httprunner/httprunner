@@ -15,8 +15,6 @@ class TestContext(ApiServerUnittest):
             functions=project_mapping["functions"],
             variables={"SECRET_KEY": "DebugTalk"}
         )
-        testcase_file_path = os.path.join(os.getcwd(), 'tests/data/demo_binds.yml')
-        self.testcases = loader.load_file(testcase_file_path)
 
     def test_init_context_functions(self):
         context_functions = self.context.FUNCTIONS_MAPPING
