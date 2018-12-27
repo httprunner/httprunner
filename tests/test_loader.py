@@ -112,18 +112,14 @@ class TestFileLoader(unittest.TestCase):
     def test_load_folder_files(self):
         folder = os.path.join(os.getcwd(), 'tests')
         file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
-        file2 = os.path.join(os.getcwd(), 'tests', 'data', 'demo_binds.yml')
+        file2 = os.path.join(os.getcwd(), 'tests', 'api', 'reset_all.yml')
 
         files = loader.load_folder_files(folder, recursive=False)
-        self.assertNotIn(file2, files)
+        self.assertEqual(files, [])
 
         files = loader.load_folder_files(folder)
         self.assertIn(file2, files)
         self.assertNotIn(file1, files)
-
-        files = loader.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'reset_all.yml')
-        self.assertIn(api_file, files)
 
         files = loader.load_folder_files("not_existed_foulder", recursive=False)
         self.assertEqual([], files)
