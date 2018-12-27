@@ -7,7 +7,6 @@ config:
 testcases:
     create user $uid and check result for $device_sn.:
         testcase: testcases/create_and_check.yml
-        weight: 2
         variables:
             uid: 1000
             device_sn: TESTSUITE_XXX
