@@ -91,6 +91,13 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
+    def test_log_file(self):
+        log_file_path = os.path.join(os.getcwd(), 'reports', "test_log_file.log")
+        runner = HttpRunner(failfast=True, log_file=log_file_path)
+        runner.run(self.testcase_cli_path)
+        self.assertTrue(os.path.isfile(log_file_path))
+        os.remove(log_file_path)
+
     def test_run_testcases(self):
         self.runner.run_tests(self.tests_mapping)
         summary = self.runner.summary
