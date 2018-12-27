@@ -614,5 +614,9 @@ class TestLocust(unittest.TestCase):
         locust_tests = prepare_locust_tests(path)
         self.assertIn("gen_md5", locust_tests["functions"])
         self.assertEqual(len(locust_tests["tests"]), 2 + 3)
-        self.assertIn("create user 1000 and check result.", locust_tests["tests"][0]["config"]["name"])
-        self.assertIn("create user 1001 and check result.", locust_tests["tests"][4]["config"]["name"])
+        name_list = [
+            "create user 1000 and check result.",
+            "create user 1001 and check result."
+        ]
+        self.assertIn(locust_tests["tests"][0]["config"]["name"], name_list)
+        self.assertIn(locust_tests["tests"][4]["config"]["name"], name_list)
