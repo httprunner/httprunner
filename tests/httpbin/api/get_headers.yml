@@ -1,7 +1,8 @@
 
 name: headers
+base_url: http://httpbin.org
 request:
-    url: http://httpbin.org/headers
+    url: /headers
     method: GET
 validate:
     - eq: ["status_code", 200]
