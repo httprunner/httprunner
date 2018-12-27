@@ -241,7 +241,7 @@ def prepare_locust_tests(path):
 
             {
                 "functions": {},
-                "teststeps": []
+                "tests": []
             }
 
     """
@@ -253,23 +253,9 @@ def prepare_locust_tests(path):
     tests = []
 
     for testcase in parsed_tests_mapping["testcases"]:
-        testcase_weight = testcase.get("config", {}).get("weight", 1)
-        items = testcase.get("teststeps", [])
-
-        testcase_tests = []
-        for item in items:
-            if "config" in item:
-                # embeded testcase
-                weight = item["config"].get("weight", 1)
-            else:
-                # API test
-                weight = item.get("weight", 1)
-
-            # implement weight for tests
-            for _ in range(weight):
-                testcase_tests.append(item)
-
-        tests.extend(testcase_tests * testcase_weight)
+        testcase_weight = testcase.get("config", {}).pop("weight", 1)
+        for _ in range(testcase_weight):
+            tests.append(testcase)
 
     return {
         "functions": functions,
