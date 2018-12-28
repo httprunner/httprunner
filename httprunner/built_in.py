@@ -14,7 +14,6 @@ import time
 
 from httprunner.compat import basestring, builtin_str, integer_types, str
 from httprunner.exceptions import ParamsError
-from httprunner.utils import convert_dict_to_params, lower_dict_keys
 from requests_toolbelt import MultipartEncoder
 
 
