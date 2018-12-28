@@ -787,7 +787,7 @@ class TestParser(unittest.TestCase):
         extended_block = parser._extend_with_api(test_block, api_def_dict)
         self.assertEqual(extended_block["base_url"], "https://debugtalk.com")
         self.assertEqual(extended_block["name"], "override block")
-        self.assertIn({'var': 123}, extended_block["variables"])
+        self.assertEqual({'var': 123}, extended_block["variables"])
         self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, extended_block["validate"])
         self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, extended_block["validate"])
         self.assertEqual(extended_block["times"], 3)

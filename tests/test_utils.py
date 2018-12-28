@@ -268,6 +268,12 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(extended_variables_mapping["var2"], "val2")
         self.assertEqual(extended_variables_mapping["var3"], "val3")
 
+    def test_extend_variables_fix(self):
+        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        override_variables = {}
+        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        self.assertEqual(extended_variables_mapping["var1"], "val1")
+
     def test_deepcopy_dict(self):
         data = {
             'a': 1,
