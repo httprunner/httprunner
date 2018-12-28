@@ -121,7 +121,14 @@ class HttpRunner(object):
         """
         summary = {
             "success": True,
-            "stat": {},
+            "stat": {
+                "testcases": {
+                    "total": len(tests_results),
+                    "success": 0,
+                    "fail": 0
+                },
+                "teststeps": {}
+            },
             "time": {},
             "platform": report.get_platform(),
             "details": []
@@ -131,6 +138,11 @@ class HttpRunner(object):
             testcase, result = tests_result
             testcase_summary = report.get_summary(result)
 
+            if testcase_summary["success"]:
+                summary["stat"]["testcases"]["success"] += 1
+            else:
+                summary["stat"]["testcases"]["fail"] += 1
+
             summary["success"] &= testcase_summary["success"]
             testcase_summary["name"] = testcase.config.get("name")
 
@@ -138,7 +150,7 @@ class HttpRunner(object):
             utils.print_io(in_out)
             testcase_summary["in_out"] = in_out
 
-            report.aggregate_stat(summary["stat"], testcase_summary["stat"])
+            report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
             report.aggregate_stat(summary["time"], testcase_summary["time"])
 
             summary["details"].append(testcase_summary)
