@@ -86,7 +86,14 @@ class HttpSession(requests.Session):
 
         request_body = resp_obj.request.body
         if request_body:
-            req_resp_dict["request"]["body"] = omit_long_data(request_body)
+            request_content_type = lower_dict_keys(
+                req_resp_dict["request"]["headers"]
+            ).get("content-type")
+            if request_content_type and "multipart/form-data" in request_content_type:
+                # upload file type
+                req_resp_dict["request"]["body"] = "upload file stream (OMITTED)"
+            else:
+                req_resp_dict["request"]["body"] = request_body
 
         # log request details in debug mode
         log_print(req_resp_dict, "request")
