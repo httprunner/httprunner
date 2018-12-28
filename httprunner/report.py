@@ -33,11 +33,21 @@ def get_summary(result):
     Args:
         result (instance): HtmlTestResult() instance
 
+    Returns:
+        dict: summary extracted from result.
+
+            {
+                "success": True,
+                "stat": {},
+                "time": {},
+                "records": []
+            }
+
     """
     summary = {
         "success": result.wasSuccessful(),
         "stat": {
-            'testsRun': result.testsRun,
+            'total': result.testsRun,
             'failures': len(result.failures),
             'errors': len(result.errors),
             'skipped': len(result.skipped),
@@ -45,7 +55,7 @@ def get_summary(result):
             'unexpectedSuccesses': len(result.unexpectedSuccesses)
         }
     }
-    summary["stat"]["successes"] = summary["stat"]["testsRun"] \
+    summary["stat"]["successes"] = summary["stat"]["total"] \
         - summary["stat"]["failures"] \
         - summary["stat"]["errors"] \
         - summary["stat"]["skipped"] \
