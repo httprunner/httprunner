@@ -75,19 +75,21 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_text_run_times(self):
         self.runner.run(self.testcase_cli_path)
-        self.assertEqual(self.runner.summary["stat"]["testsRun"], 10)
+        self.assertEqual(self.runner.summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(self.runner.summary["stat"]["teststeps"]["total"], 10)
 
     def test_text_skip(self):
         self.runner.run(self.testcase_cli_path)
-        self.assertEqual(self.runner.summary["stat"]["skipped"], 4)
+        self.assertEqual(self.runner.summary["stat"]["teststeps"]["skipped"], 4)
 
     def test_html_report(self):
         report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
         runner = HttpRunner(failfast=True, report_dir=report_save_dir)
         runner.run(self.testcase_cli_path)
         summary = runner.summary
-        self.assertEqual(summary["stat"]["testsRun"], 10)
-        self.assertEqual(summary["stat"]["skipped"], 4)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 10)
+        self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
@@ -102,7 +104,8 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run_tests(self.tests_mapping)
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 2)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
         self.assertIn("details", summary)
         self.assertIn("records", summary["details"][0])
 
@@ -110,7 +113,8 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run("tests/httpbin/upload.yml")
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
         self.assertIn("details", summary)
         self.assertIn("records", summary["details"][0])
 
@@ -149,7 +153,8 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run_tests(tests_mapping)
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 1)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
         self.assertEqual(
             summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["json"]["data"],
             "abc"
@@ -167,13 +172,15 @@ class TestHttpRunner(ApiServerUnittest):
         summary = self.runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["details"][0]["records"][0]["name"], "get token (setup)")
-        self.assertEqual(summary["stat"]["testsRun"], 2)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
 
     def test_testcase_layer_with_testcase(self):
         self.runner.run("tests/testsuites/create_users.yml")
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 8)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 2)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 8)
 
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
@@ -255,7 +262,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run_tests(tests_mapping)
         summary = self.runner.summary
         self.assertFalse(summary["success"])
-        self.assertEqual(summary["stat"]["errors"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["errors"], 1)
 
     def test_run_httprunner_with_teardown_hooks_error(self):
         testcases = [
@@ -286,23 +293,25 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run_tests(tests_mapping)
         summary = self.runner.summary
         self.assertFalse(summary["success"])
-        self.assertEqual(summary["stat"]["errors"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["errors"], 1)
 
     def test_run_api(self):
         path = "tests/httpbin/api/get_headers.yml"
         self.runner.run(path)
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 1)
-        self.assertEqual(summary["stat"]["successes"], 1)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["successes"], 1)
 
     def test_request_302_logs(self):
         path = "tests/httpbin/api/302_redirect.yml"
         self.runner.run(path)
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 1)
-        self.assertEqual(summary["stat"]["successes"], 1)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["successes"], 1)
 
         req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
         self.assertEqual(len(req_resp_data), 2)
@@ -314,8 +323,9 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run(path)
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 1)
-        self.assertEqual(summary["stat"]["successes"], 1)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["successes"], 1)
 
         req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
         self.assertEqual(len(req_resp_data), 2)
@@ -329,19 +339,22 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run(api_folder)
         summary = self.runner.summary
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testsRun"], 2)
-        self.assertEqual(summary["stat"]["successes"], 2)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 2)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
+        self.assertEqual(summary["stat"]["teststeps"]["successes"], 2)
         self.assertEqual(len(summary["details"]), 2)
-        self.assertEqual(summary["details"][0]["stat"]["testsRun"], 1)
-        self.assertEqual(summary["details"][1]["stat"]["testsRun"], 1)
+        self.assertEqual(summary["details"][0]["stat"]["total"], 1)
+        self.assertEqual(summary["details"][1]["stat"]["total"], 1)
 
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             self.runner.run(testcase_file_path)
             summary = self.runner.summary
             self.assertTrue(summary["success"])
-            self.assertEqual(summary["stat"]["testsRun"], 3)
-            self.assertEqual(summary["stat"]["successes"], 3)
+            self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+            self.assertEqual(summary["stat"]["teststeps"]["total"], 3)
+            self.assertEqual(summary["stat"]["teststeps"]["successes"], 3)
+
 
     def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(
@@ -395,7 +408,9 @@ class TestHttpRunner(ApiServerUnittest):
         summary = self.runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 3 * 2)
-        self.assertEqual(summary["stat"]["testsRun"], 3 * 2 * 4)
+
+        self.assertEqual(summary["stat"]["testcases"]["total"], 6)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 3 * 2 * 4)
         self.assertEqual(
             summary["details"][0]["name"],
             "create user 101 and check result for TESTSUITE_X1."
@@ -405,7 +420,7 @@ class TestHttpRunner(ApiServerUnittest):
             "create user 103 and check result for TESTSUITE_X2."
         )
         self.assertEqual(
-            summary["details"][0]["stat"]["testsRun"],
+            summary["details"][0]["stat"]["total"],
             4
         )
         records_name_list = [

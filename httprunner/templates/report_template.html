@@ -153,7 +153,6 @@
 
   <h2>Summary</h2>
   <table id="summary">
-
     <tr>
       <th>START AT</th>
       <td colspan="4">{{time.start_datetime}}</td>
@@ -169,22 +168,14 @@
       <td colspan="2">{{ platform.platform }}</td>
     </tr>
     <tr>
-      <th>TOTAL</th>
-      <th>SUCCESS</th>
-      <th>FAILED</th>
-      <th>ERROR</th>
-      <th>SKIPPED</th>
-      <!-- <th>ExpectedFailure</th>
-      <th>UnexpectedSuccess</th> -->
+      <th>STAT</th>
+      <th colspan="2">TESTCASES (success/fail)</th>
+      <th colspan="2">TESTSTEPS (success/fail/error/skip)</th>
     </tr>
     <tr>
-      <td>{{stat.testsRun}}</td>
-      <td>{{stat.successes}}</td>
-      <td>{{stat.failures}}</td>
-      <td>{{stat.errors}}</td>
-      <td>{{stat.skipped}}</td>
-      <!-- <td>{{stat.expectedFailures}}</td>
-      <td>{{stat.unexpectedSuccesses}}</td> -->
+      <td>total (details) =></td>
+      <td colspan="2">{{stat.testcases.total}} ({{stat.testcases.success}}/{{stat.testcases.fail}})</td>
+      <td colspan="2">{{stat.teststeps.total}} ({{stat.teststeps.successes}}/{{stat.teststeps.failures}}/{{stat.teststeps.errors}}/{{stat.teststeps.skipped}})</td>
     </tr>
   </table>
 
@@ -195,7 +186,7 @@
   <h3>{{test_suite_summary.name}}</h3>
   <table id="suite_{{suite_index}}" class="details">
     <tr>
-      <td>TOTAL: {{test_suite_summary.stat.testsRun}}</td>
+      <td>TOTAL: {{test_suite_summary.stat.total}}</td>
       <td>SUCCESS: {{test_suite_summary.stat.successes}}</td>
       <td>FAILED: {{test_suite_summary.stat.failures}}</td>
       <td>ERROR: {{test_suite_summary.stat.errors}}</td>
