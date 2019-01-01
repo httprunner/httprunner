@@ -1,7 +1,6 @@
 - config:
     name: load images
-    request:
-        base_url: $HTTPBIN_SERVER
+    base_url: ${get_httpbin_server()}
 
 - test:
     name: get png image

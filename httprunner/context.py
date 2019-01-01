@@ -1,80 +1,63 @@
-# encoding: utf-8
-
-import copy
-
 from httprunner import exceptions, logger, parser, utils
-from httprunner.compat import OrderedDict
 
 
-class Context(object):
-    """ Manages context functions and variables.
-        context has two levels, testcase and teststep.
+class SessionContext(object):
+    """ HttpRunner session, store runtime variables.
+
+    Examples:
+        >>> functions={...}
+        >>> variables = {"SECRET_KEY": "DebugTalk"}
+        >>> context = SessionContext(functions, variables)
+
+        Equivalent to:
+        >>> context = SessionContext(functions)
+        >>> context.update_session_variables(variables)
+
     """
-    def __init__(self, variables=None, functions=None):
-        """ init Context with testcase variables and functions.
-        """
-        # testcase level context
-        ## TESTCASE_SHARED_VARIABLES_MAPPING and TESTCASE_SHARED_FUNCTIONS_MAPPING are unchangeable.
-        if isinstance(variables, list):
-            self.TESTCASE_SHARED_VARIABLES_MAPPING = utils.convert_mappinglist_to_orderdict(variables)
-        else:
-            # dict
-            self.TESTCASE_SHARED_VARIABLES_MAPPING = variables or OrderedDict()
+    def __init__(self, functions, variables=None):
+        self.session_variables_mapping = utils.ensure_mapping_format(variables or {})
+        self.FUNCTIONS_MAPPING = functions
+        self.init_test_variables()
+        self.validation_results = []
 
-        self.TESTCASE_SHARED_FUNCTIONS_MAPPING = functions or OrderedDict()
-
-        # testcase level request, will not change
-        self.TESTCASE_SHARED_REQUEST_MAPPING = {}
-
-        self.evaluated_validators = []
-        self.init_context_variables(level="testcase")
-
-    def init_context_variables(self, level="testcase"):
-        """ initialize testcase/teststep context
+    def init_test_variables(self, variables_mapping=None):
+        """ init test variables, called when each test(api) starts.
+            variables_mapping will be evaluated first.
 
         Args:
-            level (enum): "testcase" or "teststep"
-
-        """
-        if level == "testcase":
-            # testcase level runtime context, will be updated with extracted variables in each teststep.
-            self.testcase_runtime_variables_mapping = copy.deepcopy(self.TESTCASE_SHARED_VARIABLES_MAPPING)
-
-        # teststep level context, will be altered in each teststep.
-        # teststep config shall inherit from testcase configs,
-        # but can not change testcase configs, that's why we use copy.deepcopy here.
-        self.teststep_variables_mapping = copy.deepcopy(self.testcase_runtime_variables_mapping)
-
-    def update_context_variables(self, variables, level):
-        """ update context variables, with level specified.
-
-        Args:
-            variables (list/OrderedDict): testcase config block or teststep block
-                [
-                    {"TOKEN": "debugtalk"},
-                    {"random": "${gen_random_string(5)}"},
-                    {"json": {'name': 'user', 'password': '123456'}},
-                    {"md5": "${gen_md5($TOKEN, $json, $random)}"}
-                ]
-                OrderDict({
-                    "TOKEN": "debugtalk",
+            variables_mapping (dict)
+                {
                     "random": "${gen_random_string(5)}",
-                    "json": {'name': 'user', 'password': '123456'},
-                    "md5": "${gen_md5($TOKEN, $json, $random)}"
-                })
-            level (enum): "testcase" or "teststep"
+                    "authorization": "${gen_md5($TOKEN, $data, $random)}",
+                    "data": '{"name": "user", "password": "123456"}',
+                    "TOKEN": "debugtalk",
+                }
 
         """
-        if isinstance(variables, list):
-            variables = utils.convert_mappinglist_to_orderdict(variables)
+        variables_mapping = variables_mapping or {}
+        variables_mapping = utils.ensure_mapping_format(variables_mapping)
 
-        for variable_name, variable_value in variables.items():
-            variable_eval_value = self.eval_content(variable_value)
+        self.test_variables_mapping = {}
+        # priority: extracted variable > teststep variable
+        self.test_variables_mapping.update(variables_mapping)
+        self.test_variables_mapping.update(self.session_variables_mapping)
 
-            if level == "testcase":
-                self.testcase_runtime_variables_mapping[variable_name] = variable_eval_value
+        for variable_name, variable_value in variables_mapping.items():
+            variable_value = self.eval_content(variable_value)
+            self.update_test_variables(variable_name, variable_value)
 
-            self.update_teststep_variables_mapping(variable_name, variable_eval_value)
+    def update_test_variables(self, variable_name, variable_value):
+        """ update test variables, these variables are only valid in the current test.
+        """
+        self.test_variables_mapping[variable_name] = variable_value
+
+    def update_session_variables(self, variables_mapping):
+        """ update session with extracted variables mapping.
+            these variables are valid in the whole running session.
+        """
+        variables_mapping = utils.ensure_mapping_format(variables_mapping)
+        self.session_variables_mapping.update(variables_mapping)
+        self.test_variables_mapping.update(self.session_variables_mapping)
 
     def eval_content(self, content):
         """ evaluate content recursively, take effect on each variable and function in content.
@@ -82,50 +65,9 @@ class Context(object):
         """
         return parser.parse_data(
             content,
-            self.teststep_variables_mapping,
-            self.TESTCASE_SHARED_FUNCTIONS_MAPPING
+            self.test_variables_mapping,
+            self.FUNCTIONS_MAPPING
         )
-
-    def update_testcase_runtime_variables_mapping(self, variables):
-        """ update testcase_runtime_variables_mapping with extracted vairables in teststep.
-
-        Args:
-            variables (OrderDict): extracted variables in teststep
-
-        """
-        for variable_name, variable_value in variables.items():
-            self.testcase_runtime_variables_mapping[variable_name] = variable_value
-            self.update_teststep_variables_mapping(variable_name, variable_value)
-
-    def update_teststep_variables_mapping(self, variable_name, variable_value):
-        """ bind and update testcase variables mapping
-        """
-        self.teststep_variables_mapping[variable_name] = variable_value
-
-    def get_parsed_request(self, request_dict, level="teststep"):
-        """ get parsed request with variables and functions.
-
-        Args:
-            request_dict (dict): request config mapping
-            level (enum): "testcase" or "teststep"
-
-        Returns:
-            dict: parsed request dict
-
-        """
-        if level == "testcase":
-            # testcase config request dict has been parsed in parse_tests
-            self.TESTCASE_SHARED_REQUEST_MAPPING = copy.deepcopy(request_dict)
-            return self.TESTCASE_SHARED_REQUEST_MAPPING
-
-        else:
-            # teststep
-            return self.eval_content(
-                utils.deep_update_dict(
-                    copy.deepcopy(self.TESTCASE_SHARED_REQUEST_MAPPING),
-                    request_dict
-                )
-            )
 
     def __eval_check_item(self, validator, resp_obj):
         """ evaluate check item in validator.
@@ -188,7 +130,7 @@ class Context(object):
         """
         # TODO: move comparator uniform to init_test_suites
         comparator = utils.get_uniform_comparator(validator_dict["comparator"])
-        validate_func = parser.get_mapping_function(comparator, self.TESTCASE_SHARED_FUNCTIONS_MAPPING)
+        validate_func = parser.get_mapping_function(comparator, self.FUNCTIONS_MAPPING)
 
         check_item = validator_dict["check"]
         check_value = validator_dict["check_value"]
@@ -226,11 +168,12 @@ class Context(object):
     def validate(self, validators, resp_obj):
         """ make validations
         """
-        evaluated_validators = []
         if not validators:
-            return evaluated_validators
+            return
 
-        logger.log_info("start to validate.")
+        logger.log_debug("start to validate.")
+
+        self.validation_results = []
         validate_pass = True
         failures = []
 
@@ -247,10 +190,8 @@ class Context(object):
                 validate_pass = False
                 failures.append(str(ex))
 
-            evaluated_validators.append(evaluated_validator)
+            self.validation_results.append(evaluated_validator)
 
         if not validate_pass:
             failures_string = "\n".join([failure for failure in failures])
             raise exceptions.ValidationFailure(failures_string)
-
-        return evaluated_validators

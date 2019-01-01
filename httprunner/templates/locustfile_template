@@ -3,7 +3,7 @@ import random
 
 import zmq
 from httprunner.exceptions import MyBaseError, MyBaseFailure
-from httprunner.loader import load_locust_tests
+from httprunner.api import prepare_locust_tests
 from httprunner.runner import Runner
 from locust import HttpLocust, TaskSet, task
 from locust.events import request_failure
@@ -15,22 +15,20 @@ logging.getLogger('locust.runners').setLevel(logging.INFO)
 
 class WebPageTasks(TaskSet):
     def on_start(self):
-        self.test_runner = Runner(self.locust.config, self.client)
-        self.testcases = load_locust_tests(self.locust.file_path)
+        self.test_runner = Runner(self.locust.config, self.locust.functions, self.client)
 
-    @task(weight=1)
+    @task
     def test_any(self):
-        teststeps = random.choice(self.locust.tests)
-        for teststep in teststeps:
-            try:
-                self.test_runner.run_test(teststep)
-            except (MyBaseError, MyBaseFailure) as ex:
-                request_failure.fire(
-                    request_type=teststep.get("request", {}).get("method"),
-                    name=teststep.get("name"),
-                    response_time=0,
-                    exception=ex
-                )
+        test_dict = random.choice(self.locust.tests)
+        try:
+            self.test_runner.run_test(test_dict)
+        except (AssertionError, MyBaseError, MyBaseFailure) as ex:
+            request_failure.fire(
+                request_type=self.test_runner.exception_request_type,
+                name=self.test_runner.exception_name,
+                response_time=0,
+                exception=ex
+            )
 
 
 class WebPageUser(HttpLocust):
@@ -39,8 +37,9 @@ class WebPageUser(HttpLocust):
     max_wait = 30
 
     file_path = "$TESTCASE_FILE"
-    locust_tests = load_locust_tests(file_path)
-    config = locust_tests["config"]
+    locust_tests = prepare_locust_tests(file_path)
+    functions = locust_tests["functions"]
     tests = locust_tests["tests"]
+    config = {}
 
-    host = config.get('request', {}).get('base_url', '')
+    host = config.get('base_url', '')

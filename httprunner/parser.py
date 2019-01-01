@@ -149,20 +149,27 @@ def parse_function(content):
 
 
 def parse_validator(validator):
-    """ parse validator, validator maybe in two format
-    @param (dict) validator
-        format1: this is kept for compatiblity with the previous versions.
-            {"check": "status_code", "comparator": "eq", "expect": 201}
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
-        format2: recommended new version
-            {'eq': ['status_code', 201]}
-            {'eq': ['$resp_body_success', True]}
-    @return (dict) validator info
-        {
-            "check": "status_code",
-            "expect": 201,
-            "comparator": "eq"
-        }
+    """ parse validator
+
+    Args:
+        validator (dict): validator maybe in two formats:
+
+            format1: this is kept for compatiblity with the previous versions.
+                {"check": "status_code", "comparator": "eq", "expect": 201}
+                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+            format2: recommended new version
+                {'eq': ['status_code', 201]}
+                {'eq': ['$resp_body_success', True]}
+
+    Returns
+        dict: validator info
+
+            {
+                "check": "status_code",
+                "expect": 201,
+                "comparator": "eq"
+            }
+
     """
     if not isinstance(validator, dict):
         raise exceptions.ParamsError("invalid validator: {}".format(validator))
@@ -255,7 +262,7 @@ def substitute_variables(content, variables_mapping):
 
     return content
 
-def parse_parameters(parameters, variables_mapping, functions_mapping):
+def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
     """ parse parameters and generate cartesian product.
 
     Args:
@@ -265,7 +272,7 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
                 (2) call built-in parameterize function, "${parameterize(account.csv)}"
                 (3) call custom function in debugtalk.py, "${gen_app_version()}"
 
-        variables_mapping (dict): variables mapping loaded from debugtalk.py
+        variables_mapping (dict): variables mapping loaded from testcase config
         functions_mapping (dict): functions mapping loaded from debugtalk.py
 
     Returns:
@@ -280,9 +287,12 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
         >>> parse_parameters(parameters)
 
     """
+    variables_mapping = variables_mapping or {}
+    functions_mapping = functions_mapping or {}
     parsed_parameters_list = []
-    for parameter in parameters:
-        parameter_name, parameter_content = list(parameter.items())[0]
+
+    parameters = utils.ensure_mapping_format(parameters)
+    for parameter_name, parameter_content in parameters.items():
         parameter_name_list = parameter_name.split("-")
 
         if isinstance(parameter_content, list):
@@ -305,16 +315,33 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
         else:
             # (2) & (3)
             parsed_parameter_content = parse_data(parameter_content, variables_mapping, functions_mapping)
-            # e.g. [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
-            # e.g. [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
             if not isinstance(parsed_parameter_content, list):
                 raise exceptions.ParamsError("parameters syntax error!")
 
-            parameter_content_list = [
-                # get subset by parameter name
-                {key: parameter_item[key] for key in parameter_name_list}
-                for parameter_item in parsed_parameter_content
-            ]
+            parameter_content_list = []
+            for parameter_item in parsed_parameter_content:
+                if isinstance(parameter_item, dict):
+                    # get subset by parameter name
+                    # {"app_version": "${gen_app_version()}"}
+                    # gen_app_version() => [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
+                    # {"username-password": "${get_account()}"}
+                    # get_account() => [
+                    #       {"username": "user1", "password": "111111"},
+                    #       {"username": "user2", "password": "222222"}
+                    # ]
+                    parameter_dict = {key: parameter_item[key] for key in parameter_name_list}
+                elif isinstance(parameter_item, (list, tuple)):
+                    # {"username-password": "${get_account()}"}
+                    # get_account() => [("user1", "111111"), ("user2", "222222")]
+                    parameter_dict = dict(zip(parameter_name_list, parameter_item))
+                elif len(parameter_name_list) == 1:
+                    # {"user_agent": "${get_user_agent()}"}
+                    # get_user_agent() => ["iOS/10.1", "iOS/10.2"]
+                    parameter_dict = {
+                        parameter_name_list[0]: parameter_item
+                    }
+
+                parameter_content_list.append(parameter_dict)
 
         parsed_parameters_list.append(parameter_content_list)
 
@@ -324,34 +351,6 @@ def parse_parameters(parameters, variables_mapping, functions_mapping):
 ###############################################################################
 ##  parse content with variables and functions mapping
 ###############################################################################
-
-def get_builtin_item(item_type, item_name):
-    """
-
-    Args:
-        item_type (enum): "variables" or "functions"
-        item_name (str): variable name or function name
-
-    Returns:
-        variable or function with the name of item_name
-
-    """
-    # override built_in module with debugtalk.py module
-    from httprunner import loader
-    built_in_module = loader.load_builtin_module()
-
-    if item_type == "variables":
-        try:
-            return built_in_module["variables"][item_name]
-        except KeyError:
-            raise exceptions.VariableNotFound("{} is not found.".format(item_name))
-    else:
-        # item_type == "functions":
-        try:
-            return built_in_module["functions"][item_name]
-        except KeyError:
-            raise exceptions.FunctionNotFound("{} is not found.".format(item_name))
-
 
 def get_mapping_variable(variable_name, variables_mapping):
     """ get variable from variables_mapping.
@@ -367,10 +366,10 @@ def get_mapping_variable(variable_name, variables_mapping):
         exceptions.VariableNotFound: variable is not found.
 
     """
-    if variable_name in variables_mapping:
+    try:
         return variables_mapping[variable_name]
-    else:
-        return get_builtin_item("variables", variable_name)
+    except KeyError:
+        raise exceptions.VariableNotFound("{} is not found.".format(variable_name))
 
 
 def get_mapping_function(function_name, functions_mapping):
@@ -392,12 +391,15 @@ def get_mapping_function(function_name, functions_mapping):
         return functions_mapping[function_name]
 
     try:
-        return get_builtin_item("functions", function_name)
-    except exceptions.FunctionNotFound:
+        # check if HttpRunner builtin functions
+        from httprunner import loader
+        built_in_functions = loader.load_builtin_functions()
+        return built_in_functions[function_name]
+    except KeyError:
         pass
 
     try:
-        # check if builtin functions
+        # check if Python builtin functions
         item_func = eval(function_name)
         if callable(item_func):
             # is builtin function
@@ -436,8 +438,14 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
         kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
 
         if func_name in ["parameterize", "P"]:
+            if len(args) != 1 or kwargs:
+                raise exceptions.ParamsError("P() should only pass in one argument!")
             from httprunner import loader
-            eval_value = loader.load_csv_file(*args, **kwargs)
+            eval_value = loader.load_csv_file(args[0])
+        elif func_name in ["environ", "ENV"]:
+            if len(args) != 1 or kwargs:
+                raise exceptions.ParamsError("ENV() should only pass in one argument!")
+            eval_value = utils.get_os_environ(args[0])
         else:
             func = get_mapping_function(func_name, functions_mapping)
             eval_value = func(*args, **kwargs)
@@ -456,7 +464,7 @@ def parse_string_functions(content, variables_mapping, functions_mapping):
     return content
 
 
-def parse_string_variables(content, variables_mapping):
+def parse_string_variables(content, variables_mapping, functions_mapping):
     """ parse string content with variables mapping.
 
     Args:
@@ -469,7 +477,7 @@ def parse_string_variables(content, variables_mapping):
     Examples:
         >>> content = "/api/users/$uid"
         >>> variables_mapping = {"$uid": 1000}
-        >>> parse_string_variables(content, variables_mapping)
+        >>> parse_string_variables(content, variables_mapping, {})
             "/api/users/1000"
 
     """
@@ -477,30 +485,52 @@ def parse_string_variables(content, variables_mapping):
     for variable_name in variables_list:
         variable_value = get_mapping_variable(variable_name, variables_mapping)
 
+        if variable_name == "request" and isinstance(variable_value, dict) \
+            and "url" in variable_value and "method" in variable_value:
+            # call setup_hooks action with $request
+            for key, value in variable_value.items():
+                variable_value[key] = parse_data(
+                    value,
+                    variables_mapping,
+                    functions_mapping
+                )
+            parsed_variable_value = variable_value
+        elif "${}".format(variable_name) == variable_value:
+            # variable_name = "token"
+            # variables_mapping = {"token": "$token"}
+            parsed_variable_value = variable_value
+        else:
+            parsed_variable_value = parse_data(
+                variable_value,
+                variables_mapping,
+                functions_mapping
+            )
+
         # TODO: replace variable label from $var to {{var}}
         if "${}".format(variable_name) == content:
             # content is a variable
-            content = variable_value
+            content = parsed_variable_value
         else:
             # content contains one or several variables
-            if not isinstance(variable_value, str):
-                variable_value = builtin_str(variable_value)
+            if not isinstance(parsed_variable_value, str):
+                parsed_variable_value = builtin_str(parsed_variable_value)
 
             content = content.replace(
                 "${}".format(variable_name),
-                variable_value, 1
+                parsed_variable_value, 1
             )
 
     return content
 
 
-def parse_data(content, variables_mapping=None, functions_mapping=None):
+def parse_data(content, variables_mapping=None, functions_mapping=None, raise_if_variable_not_found=True):
     """ parse content with variables mapping
 
     Args:
         content (str/dict/list/numeric/bool/type): content to be parsed
         variables_mapping (dict): variables mapping.
         functions_mapping (dict): functions mapping.
+        raise_if_variable_not_found (bool): if set False, exception will not raise when VariableNotFound occurred.
 
     Returns:
         parsed content.
@@ -528,144 +558,556 @@ def parse_data(content, variables_mapping=None, functions_mapping=None):
 
     if isinstance(content, (list, set, tuple)):
         return [
-            parse_data(item, variables_mapping, functions_mapping)
+            parse_data(
+                item,
+                variables_mapping,
+                functions_mapping,
+                raise_if_variable_not_found
+            )
             for item in content
         ]
 
     if isinstance(content, dict):
         parsed_content = {}
         for key, value in content.items():
-            parsed_key = parse_data(key, variables_mapping, functions_mapping)
-            parsed_value = parse_data(value, variables_mapping, functions_mapping)
+            parsed_key = parse_data(
+                key,
+                variables_mapping,
+                functions_mapping,
+                raise_if_variable_not_found
+            )
+            parsed_value = parse_data(
+                value,
+                variables_mapping,
+                functions_mapping,
+                raise_if_variable_not_found
+            )
             parsed_content[parsed_key] = parsed_value
 
         return parsed_content
 
     if isinstance(content, basestring):
         # content is in string format here
-        variables_mapping = variables_mapping or {}
+        variables_mapping = utils.ensure_mapping_format(variables_mapping or {})
         functions_mapping = functions_mapping or {}
         content = content.strip()
 
-        # replace functions with evaluated value
-        # Notice: _eval_content_functions must be called before _eval_content_variables
-        content = parse_string_functions(content, variables_mapping, functions_mapping)
-
-        # replace variables with binding value
-        content = parse_string_variables(content, variables_mapping)
+        try:
+            # replace functions with evaluated value
+            # Notice: parse_string_functions must be called before parse_string_variables
+            content = parse_string_functions(
+                content,
+                variables_mapping,
+                functions_mapping
+            )
+            # replace variables with binding value
+            content = parse_string_variables(
+                content,
+                variables_mapping,
+                functions_mapping
+            )
+        except exceptions.VariableNotFound:
+            if raise_if_variable_not_found:
+                raise
 
     return content
 
 
-def parse_tests(testcases, variables_mapping=None):
-    """ parse testcases configs, including variables/parameters/name/request.
+def _extend_with_api(test_dict, api_def_dict):
+    """ extend test with api definition, test will merge and override api definition.
 
     Args:
-        testcases (list): testcase list, with config unparsed.
-            [
-                {   # testcase data structure
-                    "config": {
-                        "name": "desc1",
-                        "path": "testcase1_path",
-                        "variables": [],         # optional
-                        "request": {}            # optional
-                        "refs": {
-                            "debugtalk": {
-                                "variables": {},
-                                "functions": {}
-                            },
-                            "env": {},
-                            "def-api": {},
-                            "def-testcase": {}
-                        }
-                    },
-                    "teststeps": [
-                        # teststep data structure
-                        {
-                            'name': 'test step desc2',
-                            'variables': [],    # optional
-                            'extract': [],      # optional
-                            'validate': [],
-                            'request': {},
-                            'function_meta': {}
-                        },
-                        teststep2   # another teststep dict
-                    ]
-                },
-                testcase_dict_2     # another testcase dict
-            ]
-        variables_mapping (dict): if variables_mapping is specified, it will override variables in config block.
+        test_dict (dict): test block
+        api_def_dict (dict): api definition
 
     Returns:
-        list: parsed testcases list, with config variables/parameters/name/request parsed.
+        dict: extended test dict.
+
+    Examples:
+        >>> api_def_dict = {
+                "name": "get token 1",
+                "request": {...},
+                "validate": [{'eq': ['status_code', 200]}]
+            }
+        >>> test_dict = {
+                "name": "get token 2",
+                "extract": {"token": "content.token"},
+                "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+            }
+        >>> _extend_with_api(test_dict, api_def_dict)
+            {
+                "name": "get token 2",
+                "request": {...},
+                "extract": {"token": "content.token"},
+                "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
+            }
 
     """
-    variables_mapping = variables_mapping or {}
-    parsed_testcases_list = []
+    # override name
+    api_def_name = api_def_dict.pop("name", "")
+    test_dict["name"] = test_dict.get("name") or api_def_name
 
-    for testcase in testcases:
-        testcase_config = testcase.setdefault("config", {})
-        project_mapping = testcase_config.pop(
-            "refs",
-            {
-                "debugtalk": {
-                    "variables": {},
-                    "functions": {}
-                },
-                "env": {},
-                "def-api": {},
-                "def-testcase": {}
-            }
+    # override variables
+    def_variables = api_def_dict.pop("variables", [])
+    test_dict["variables"] = utils.extend_variables(
+        def_variables,
+        test_dict.get("variables", {})
+    )
+
+    # merge & override validators TODO: relocate
+    def_raw_validators = api_def_dict.pop("validate", [])
+    ref_raw_validators = test_dict.get("validate", [])
+    def_validators = [
+        parse_validator(validator)
+        for validator in def_raw_validators
+    ]
+    ref_validators = [
+        parse_validator(validator)
+        for validator in ref_raw_validators
+    ]
+    test_dict["validate"] = utils.extend_validators(
+        def_validators,
+        ref_validators
+    )
+
+    # merge & override extractors
+    def_extrators = api_def_dict.pop("extract", {})
+    test_dict["extract"] = utils.extend_variables(
+        def_extrators,
+        test_dict.get("extract", {})
+    )
+
+    # TODO: merge & override request
+    test_dict["request"] = api_def_dict.pop("request", {})
+
+    # base_url & verify: priority api_def_dict > test_dict
+    if api_def_dict.get("base_url"):
+        test_dict["base_url"] = api_def_dict["base_url"]
+
+    if "verify" in api_def_dict:
+        test_dict["request"]["verify"] = api_def_dict["verify"]
+
+    # merge & override setup_hooks
+    def_setup_hooks = api_def_dict.pop("setup_hooks", [])
+    ref_setup_hooks = test_dict.get("setup_hooks", [])
+    extended_setup_hooks = list(set(def_setup_hooks + ref_setup_hooks))
+    if extended_setup_hooks:
+        test_dict["setup_hooks"] = extended_setup_hooks
+    # merge & override teardown_hooks
+    def_teardown_hooks = api_def_dict.pop("teardown_hooks", [])
+    ref_teardown_hooks = test_dict.get("teardown_hooks", [])
+    extended_teardown_hooks = list(set(def_teardown_hooks + ref_teardown_hooks))
+    if extended_teardown_hooks:
+        test_dict["teardown_hooks"] = extended_teardown_hooks
+
+    # TODO: extend with other api definition items, e.g. times
+    test_dict.update(api_def_dict)
+
+    return test_dict
+
+
+def _extend_with_testcase(test_dict, testcase_def_dict):
+    """ extend test with testcase definition
+        test will merge and override testcase config definition.
+
+    Args:
+        test_dict (dict): test block
+        testcase_def_dict (dict): testcase definition
+
+    Returns:
+        dict: extended test dict.
+
+    """
+    # override testcase config variables
+    testcase_def_dict["config"].setdefault("variables", {})
+    testcase_def_variables = utils.ensure_mapping_format(testcase_def_dict["config"].get("variables", {}))
+    testcase_def_variables.update(test_dict.pop("variables", {}))
+    testcase_def_dict["config"]["variables"] = testcase_def_variables
+
+    # override base_url, verify
+    # priority: testcase config > testsuite tests
+    test_base_url = test_dict.pop("base_url", "")
+    if not testcase_def_dict["config"].get("base_url"):
+        testcase_def_dict["config"]["base_url"] = test_base_url
+
+    test_verify = test_dict.pop("verify", True)
+    testcase_def_dict["config"].setdefault("verify", test_verify)
+
+    # override testcase config name, output, etc.
+    testcase_def_dict["config"].update(test_dict)
+
+    test_dict.clear()
+    test_dict.update(testcase_def_dict)
+
+
+def __parse_config(config, project_mapping):
+    """ parse testcase/testsuite config, include variables and name.
+    """
+    # get config variables
+    raw_config_variables = config.pop("variables", {})
+    raw_config_variables_mapping = utils.ensure_mapping_format(raw_config_variables)
+    override_variables = utils.deepcopy_dict(project_mapping.get("variables", {}))
+    functions = project_mapping.get("functions", {})
+
+    # override config variables with passed in variables
+    raw_config_variables_mapping.update(override_variables)
+
+    # parse config variables
+    parsed_config_variables = {}
+    for key, value in raw_config_variables_mapping.items():
+        parsed_value = parse_data(
+            value,
+            raw_config_variables_mapping,
+            functions,
+            raise_if_variable_not_found=False
+        )
+        parsed_config_variables[key] = parsed_value
+
+    if parsed_config_variables:
+        config["variables"] = parsed_config_variables
+
+    # parse config name
+    config["name"] = parse_data(
+        config.get("name", ""),
+        parsed_config_variables,
+        functions
+    )
+
+    # parse config base_url
+    if "base_url" in config:
+        config["base_url"] = parse_data(
+            config["base_url"],
+            parsed_config_variables,
+            functions
         )
 
-        # parse config parameters
-        config_parameters = testcase_config.pop("parameters", [])
-        cartesian_product_parameters_list = parse_parameters(
-            config_parameters,
-            project_mapping["debugtalk"]["variables"],
-            project_mapping["debugtalk"]["functions"]
-        ) or [{}]
 
-        for parameter_mapping in cartesian_product_parameters_list:
-            testcase_dict = utils.deepcopy_dict(testcase)
-            config = testcase_dict.get("config")
+def __parse_testcase_tests(tests, config, project_mapping):
+    """ override tests with testcase config variables, base_url and verify.
+        test maybe nested testcase.
 
-            # parse config variables
-            raw_config_variables = config.get("variables", [])
-            parsed_config_variables = parse_data(
-                raw_config_variables,
-                project_mapping["debugtalk"]["variables"],
-                project_mapping["debugtalk"]["functions"]
+        variables priority:
+        testcase config > testcase test > testcase_def config > testcase_def test > api
+
+        base_url/verify priority:
+        testcase test > testcase config > testsuite test > testsuite config > api
+
+    Args:
+        tests (list):
+        config (dict):
+        project_mapping (dict):
+
+    """
+    config_variables = config.pop("variables", {})
+    config_base_url = config.pop("base_url", "")
+    config_verify = config.pop("verify", True)
+    functions = project_mapping.get("functions", {})
+
+    for test_dict in tests:
+
+        # base_url & verify: priority test_dict > config
+        if (not test_dict.get("base_url")) and config_base_url:
+            test_dict["base_url"] = config_base_url
+
+        test_dict.setdefault("verify", config_verify)
+
+        # 1, testcase config => testcase tests
+        # override test_dict variables
+        test_dict["variables"] = utils.extend_variables(
+            test_dict.pop("variables", {}),
+            config_variables
+        )
+        test_dict["variables"] = parse_data(
+            test_dict["variables"],
+            test_dict["variables"],
+            functions,
+            raise_if_variable_not_found=False
+        )
+
+        # parse test_dict name
+        test_dict["name"] = parse_data(
+            test_dict.pop("name", ""),
+            test_dict["variables"],
+            functions,
+            raise_if_variable_not_found=False
+        )
+
+        if "testcase_def" in test_dict:
+            # test_dict is nested testcase
+
+            # 2, testcase test_dict => testcase_def config
+            testcase_def = test_dict.pop("testcase_def")
+            _extend_with_testcase(test_dict, testcase_def)
+
+            # 3, testcase_def config => testcase_def test_dict
+            _parse_testcase(test_dict, project_mapping)
+
+        else:
+            if "api_def" in test_dict:
+                # test_dict has API reference
+                # 2, test_dict => api
+                api_def_dict = test_dict.pop("api_def")
+                _extend_with_api(test_dict, api_def_dict)
+
+            if test_dict.get("base_url"):
+                # parse base_url
+                base_url = parse_data(
+                    test_dict.pop("base_url"),
+                    test_dict["variables"],
+                    functions
+                )
+
+                # build path with base_url
+                # variable in current url maybe extracted from former api
+                request_url = parse_data(
+                    test_dict["request"]["url"],
+                    test_dict["variables"],
+                    functions,
+                    raise_if_variable_not_found=False
+                )
+                test_dict["request"]["url"] = utils.build_url(
+                    base_url,
+                    request_url
+                )
+
+
+def _parse_testcase(testcase, project_mapping):
+    """ parse testcase
+
+    Args:
+        testcase (dict):
+            {
+                "config": {},
+                "teststeps": []
+            }
+
+    """
+    testcase.setdefault("config", {})
+    __parse_config(testcase["config"], project_mapping)
+    __parse_testcase_tests(testcase["teststeps"], testcase["config"], project_mapping)
+
+
+def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mapping):
+    """ override testscases with testsuite config variables, base_url and verify.
+
+        variables priority:
+        parameters > testsuite config > testcase config > testcase_def config > testcase_def tests > api
+
+        base_url priority:
+        testcase_def tests > testcase_def config > testcase config > testsuite config
+
+    Args:
+        testcases (dict):
+            {
+                "testcase1 name": {
+                    "testcase": "testcases/create_and_check.yml",
+                    "weight": 2,
+                    "variables": {
+                        "uid": 1000
+                    },
+                    "parameters": {
+                        "uid": [100, 101, 102]
+                    },
+                    "testcase_def": {
+                        "config": {},
+                        "teststeps": []
+                    }
+                },
+                "testcase2 name": {}
+            }
+        testsuite_config (dict):
+            {
+                "name": "testsuite name",
+                "variables": {
+                    "device_sn": "${gen_random_string(15)}"
+                },
+                "base_url": "http://127.0.0.1:5000"
+            }
+        project_mapping (dict):
+            {
+                "env": {},
+                "functions": {}
+            }
+
+    """
+    testsuite_base_url = testsuite_config.get("base_url")
+    testsuite_config_variables = testsuite_config.get("variables", {})
+    functions = project_mapping.get("functions", {})
+    parsed_testcase_list = []
+
+    for testcase_name, testcase in testcases.items():
+
+        parsed_testcase = testcase.pop("testcase_def")
+        parsed_testcase.setdefault("config", {})
+        parsed_testcase["path"] = testcase["testcase"]
+        parsed_testcase["config"]["name"] = testcase_name
+
+        if "weight" in testcase:
+            parsed_testcase["config"]["weight"] = testcase["weight"]
+
+        # base_url priority: testcase config > testsuite config
+        parsed_testcase["config"].setdefault("base_url", testsuite_base_url)
+
+        # 1, testsuite config => testcase config
+        # override test_dict variables
+        testcase_config_variables = utils.extend_variables(
+            testcase.pop("variables", {}),
+            testsuite_config_variables
+        )
+
+        # 2, testcase config > testcase_def config
+        # override testcase_def config variables
+        parsed_testcase_config_variables = utils.extend_variables(
+            parsed_testcase["config"].pop("variables", {}),
+            testcase_config_variables
+        )
+
+        # parse config variables
+        parsed_config_variables = {}
+        for key, value in parsed_testcase_config_variables.items():
+            try:
+                parsed_value = parse_data(
+                    value,
+                    parsed_testcase_config_variables,
+                    functions
+                )
+            except exceptions.VariableNotFound:
+                pass
+            parsed_config_variables[key] = parsed_value
+
+        if parsed_config_variables:
+            parsed_testcase["config"]["variables"] = parsed_config_variables
+
+        # parse parameters
+        if "parameters" in testcase and testcase["parameters"]:
+            cartesian_product_parameters = parse_parameters(
+                testcase["parameters"],
+                parsed_config_variables,
+                functions
             )
 
-            # priority: passed in > debugtalk.py > parameters > variables
-            # override variables mapping with parameters mapping
-            config_variables = utils.override_mapping_list(
-                parsed_config_variables, parameter_mapping)
-            # merge debugtalk.py module variables
-            config_variables.update(project_mapping["debugtalk"]["variables"])
-            # override variables mapping with passed in variables_mapping
-            config_variables = utils.override_mapping_list(
-                config_variables, variables_mapping)
+            for parameter_variables in cartesian_product_parameters:
+                # deepcopy to avoid influence between parameters
+                parsed_testcase_copied = utils.deepcopy_dict(parsed_testcase)
+                parsed_config_variables_copied = utils.deepcopy_dict(parsed_config_variables)
+                parsed_testcase_copied["config"]["variables"] = utils.extend_variables(
+                    parsed_config_variables_copied,
+                    parameter_variables
+                )
+                _parse_testcase(parsed_testcase_copied, project_mapping)
+                parsed_testcase_list.append(parsed_testcase_copied)
 
-            testcase_dict["config"]["variables"] = config_variables
+        else:
+            _parse_testcase(parsed_testcase, project_mapping)
+            parsed_testcase_list.append(parsed_testcase)
 
-            # parse config name
-            testcase_dict["config"]["name"] = parse_data(
-                testcase_dict["config"].get("name", ""),
-                config_variables,
-                project_mapping["debugtalk"]["functions"]
-            )
+    return parsed_testcase_list
 
-            # parse config request
-            testcase_dict["config"]["request"] = parse_data(
-                testcase_dict["config"].get("request", {}),
-                config_variables,
-                project_mapping["debugtalk"]["functions"]
-            )
 
-            # put loaded project functions to config
-            testcase_dict["config"]["functions"] = project_mapping["debugtalk"]["functions"]
-            parsed_testcases_list.append(testcase_dict)
+def _parse_testsuite(testsuite, project_mapping):
+    testsuite.setdefault("config", {})
+    __parse_config(testsuite["config"], project_mapping)
+    parsed_testcase_list = __get_parsed_testsuite_testcases(
+        testsuite["testcases"],
+        testsuite["config"],
+        project_mapping
+    )
+    return parsed_testcase_list
 
-    return parsed_testcases_list
+
+def parse_tests(tests_mapping):
+    """ parse tests and load to parsed testcases
+        tests include api, testcases and testsuites.
+
+    Args:
+        tests_mapping (dict): project info and testcases list.
+
+            {
+                "project_mapping": {
+                    "PWD": "XXXXX",
+                    "functions": {},
+                    "variables": {},                        # optional, priority 1
+                    "env": {}
+                },
+                "testsuites": [
+                    {   # testsuite data structure
+                        "config": {},
+                        "testcases": {
+                            "testcase1 name": {
+                                "variables": {
+                                    "uid": 1000
+                                },
+                                "parameters": {
+                                    "uid": [100, 101, 102]
+                                },
+                                "testcase_def": {
+                                    "config": {},
+                                    "teststeps": []
+                                }
+                            },
+                            "testcase2 name": {}
+                        }
+                    }
+                ],
+                "testcases": [
+                    {   # testcase data structure
+                        "config": {
+                            "name": "desc1",
+                            "path": "testcase1_path",
+                            "variables": {},                # optional, priority 2
+                        },
+                        "teststeps": [
+                            # test data structure
+                            {
+                                'name': 'test step desc1',
+                                'variables': [],            # optional, priority 3
+                                'extract': [],
+                                'validate': [],
+                                'api_def': {
+                                    "variables": {}         # optional, priority 4
+                                    'request': {},
+                                }
+                            },
+                            test_dict_2   # another test dict
+                        ]
+                    },
+                    testcase_dict_2     # another testcase dict
+                ],
+                "api": {
+                    "variables": {},
+                    "request": {}
+                }
+            }
+
+    """
+    project_mapping = tests_mapping.get("project_mapping", {})
+    parsed_tests_mapping = {
+        "project_mapping": project_mapping,
+        "testcases": []
+    }
+
+    for test_type in tests_mapping:
+
+        if test_type == "testsuites":
+            # load testcases of testsuite
+            testsuites = tests_mapping["testsuites"]
+            for testsuite in testsuites:
+                parsed_testcases = _parse_testsuite(testsuite, project_mapping)
+                for parsed_testcase in parsed_testcases:
+                    parsed_tests_mapping["testcases"].append(parsed_testcase)
+
+        elif test_type == "testcases":
+            for testcase in tests_mapping["testcases"]:
+                _parse_testcase(testcase, project_mapping)
+                parsed_tests_mapping["testcases"].append(testcase)
+
+        elif test_type == "apis":
+            # encapsulate api as a testcase
+            for api_content in tests_mapping["apis"]:
+                testcase = {
+                    "teststeps": [api_content]
+                }
+                _parse_testcase(testcase, project_mapping)
+                parsed_tests_mapping["testcases"].append(testcase)
+
+    return parsed_tests_mapping

@@ -12,12 +12,34 @@ class TestValidator(unittest.TestCase):
         self.assertFalse(validator.is_testcases(data_structure))
 
         data_structure = {
-            "name": "desc1",
-            "config": {},
-            "api": {},
-            "testcases": ["testcase11", "testcase12"]
+            "project_mapping": {
+                "PWD": "XXXXX",
+                "functions": {},
+                "env": {}
+            },
+            "testcases": [
+                {   # testcase data structure
+                    "config": {
+                        "name": "desc1",
+                        "path": "testcase1_path",
+                        "variables": [],                    # optional
+                    },
+                    "teststeps": [
+                        # test data structure
+                        {
+                            'name': 'test step desc1',
+                            'variables': [],    # optional
+                            'extract': [],      # optional
+                            'validate': [],
+                            'request': {}
+                        },
+                        # test_dict2   # another test dict
+                    ]
+                },
+                # testcase_dict_2     # another testcase dict
+            ]
         }
-        self.assertTrue(data_structure)
+        self.assertTrue(validator.is_testcases(data_structure))
         data_structure = [
             {
                 "name": "desc1",
@@ -50,6 +72,5 @@ class TestValidator(unittest.TestCase):
 
     def test_is_function(self):
         func = lambda x: x + 1
-        self.assertTrue(validator.is_function(("func", func)))
-
-        self.assertTrue(validator.is_function(("func", validator.is_testcase)))
+        self.assertTrue(validator.is_function(func))
+        self.assertTrue(validator.is_function(validator.is_testcase))
