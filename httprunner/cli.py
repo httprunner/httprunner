@@ -1,22 +1,16 @@
 # encoding: utf-8
 
-import argparse
-import multiprocessing
-import os
-import sys
-import unittest
-
-from httprunner import logger
-from httprunner.__about__ import __description__, __version__
-from httprunner.api import HttpRunner
-from httprunner.compat import is_py2
-from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                              prettify_json_file, validate_json_file)
-
-
 def main_hrun():
     """ API test: parse command line options and run commands.
     """
+    import argparse
+    from httprunner import logger
+    from httprunner.__about__ import __description__, __version__
+    from httprunner.api import HttpRunner
+    from httprunner.compat import is_py2
+    from httprunner.utils import (create_scaffold, get_python2_retire_msg,
+                                prettify_json_file, validate_json_file)
+
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         '-V', '--version', dest='version', action='store_true',
@@ -24,15 +18,6 @@ def main_hrun():
     parser.add_argument(
         'testcase_paths', nargs='*',
         help="testcase file path")
-    parser.add_argument(
-        '--no-html-report', action='store_true', default=False,
-        help="do not generate html report.")
-    parser.add_argument(
-        '--html-report-name',
-        help="specify html report name, only effective when generating html report.")
-    parser.add_argument(
-        '--html-report-template',
-        help="specify html report template path.")
     parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
@@ -43,8 +28,17 @@ def main_hrun():
         '--dot-env-path',
         help="Specify .env file path, which is useful for keeping sensitive data.")
     parser.add_argument(
+        '--report-template',
+        help="specify report template path.")
+    parser.add_argument(
+        '--report-dir',
+        help="specify report save directory.")
+    parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
+    parser.add_argument(
+        '--save-tests', action='store_true', default=False,
+        help="Save loaded tests and parsed tests to JSON file.")
     parser.add_argument(
         '--startproject',
         help="Specify new project name.")
@@ -77,30 +71,32 @@ def main_hrun():
         create_scaffold(project_name)
         exit(0)
 
+    runner = HttpRunner(
+        failfast=args.failfast,
+        save_tests=args.save_tests,
+        report_template=args.report_template,
+        report_dir=args.report_dir
+    )
     try:
-        runner = HttpRunner(
-            failfast=args.failfast
-        )
-        runner.run(
-            args.testcase_paths,
-            dot_env_path=args.dot_env_path
-        )
+        for path in args.testcase_paths:
+            runner.run(path, dot_env_path=args.dot_env_path)
     except Exception:
         logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
         raise
 
-    if not args.no_html_report:
-        runner.gen_html_report(
-            html_report_name=args.html_report_name,
-            html_report_template=args.html_report_template
-        )
+    return 0
 
-    summary = runner.summary
-    return 0 if summary["success"] else 1
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
+    # monkey patch ssl at beginning to avoid RecursionError when running locust.
+    from gevent import monkey; monkey.patch_ssl()
+
+    import multiprocessing
+    import sys
+    from httprunner import logger
+
     try:
         from httprunner import locusts
     except ImportError:
@@ -114,7 +110,7 @@ def main_locust():
         sys.argv.extend(["-h"])
 
     if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
-        locusts.main()
+        locusts.start_locust_main()
         sys.exit(0)
 
     # set logging level
@@ -129,7 +125,7 @@ def main_locust():
         loglevel = sys.argv[loglevel_index]
     else:
         # default
-        loglevel = "INFO"
+        loglevel = "WARNING"
 
     logger.setup_logger(loglevel)
 
@@ -180,4 +176,4 @@ def main_locust():
         sys.argv.pop(processes_index)
         locusts.run_locusts_with_processes(sys.argv, processes_count)
     else:
-        locusts.main()
+        locusts.start_locust_main()

@@ -2,20 +2,11 @@ import io
 import os
 import shutil
 
-from httprunner import exceptions, loader, utils
-from httprunner.compat import OrderedDict
+from httprunner import exceptions, loader, parser, utils
 from tests.base import ApiServerUnittest
 
 
 class TestUtils(ApiServerUnittest):
-
-    def test_remove_prefix(self):
-        full_url = "http://debugtalk.com/post/123"
-        prefix = "http://debugtalk.com"
-        self.assertEqual(
-            utils.remove_prefix(full_url, prefix),
-            "/post/123"
-        )
 
     def test_set_os_environ(self):
         self.assertNotIn("abc", os.environ)
@@ -101,8 +92,7 @@ class TestUtils(ApiServerUnittest):
 
     def current_validators(self):
         from httprunner import built_in
-        module_mapping = loader.load_python_module(built_in)
-        functions_mapping = module_mapping["functions"]
+        functions_mapping = loader.load_module_functions(built_in)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
@@ -206,14 +196,83 @@ class TestUtils(ApiServerUnittest):
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertEqual(None, request_dict)
 
-    def test_convert_to_order_dict(self):
+    def test_ensure_mapping_format(self):
         map_list = [
             {"a": 1},
             {"b": 2}
         ]
-        ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
+        ordered_dict = utils.ensure_mapping_format(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
+
+    def test_extend_validators(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+        def_validators = [
+            parser.parse_validator(validator)
+            for validator in def_validators
+        ]
+        ref_validators = [
+            parser.parse_validator(validator)
+            for validator in current_validators
+        ]
+
+        extended_validators = utils.extend_validators(def_validators, ref_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            extended_validators
+        )
+
+    def test_extend_validators_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+        def_validators = [
+            parser.parse_validator(validator)
+            for validator in def_validators
+        ]
+        ref_validators = [
+            parser.parse_validator(validator)
+            for validator in current_validators
+        ]
+
+        extended_validators = utils.extend_validators(def_validators, ref_validators)
+        self.assertEqual(len(extended_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, extended_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, extended_validators)
+
+    def test_extend_variables(self):
+        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        override_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        self.assertEqual(extended_variables_mapping["var1"], "val111")
+        self.assertEqual(extended_variables_mapping["var2"], "val2")
+        self.assertEqual(extended_variables_mapping["var3"], "val3")
+
+    def test_extend_variables_fix(self):
+        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        override_variables = {}
+        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        self.assertEqual(extended_variables_mapping["var1"], "val1")
 
     def test_deepcopy_dict(self):
         data = {
@@ -234,43 +293,6 @@ class TestUtils(ApiServerUnittest):
         self.assertNotEqual(id(new_data["b"]), id(data["b"]))
         self.assertEqual(id(new_data["c"]), id(data["c"]))
         # self.assertEqual(id(new_data["d"]), id(data["d"]))
-
-    def test_update_ordered_dict(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
-        ordered_dict = utils.convert_mappinglist_to_orderdict(map_list)
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.update_ordered_dict(ordered_dict, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-    def test_override_variables_binds(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_mapping_list(map_list, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-        map_list = OrderedDict(
-            {
-                "a": 1,
-                "b": 2
-            }
-        )
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_mapping_list(map_list, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-        map_list = "invalid"
-        override_mapping = {"a": 3, "c": 4}
-        with self.assertRaises(exceptions.ParamsError):
-            utils.override_mapping_list(map_list, override_mapping)
 
     def test_create_scaffold(self):
         project_name = "projectABC"

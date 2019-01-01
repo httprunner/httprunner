@@ -1,0 +1,9 @@
+
+name: headers
+base_url: http://httpbin.org
+request:
+    url: /headers
+    method: GET
+validate:
+    - eq: ["status_code", 200]
+    - eq: [content.headers.Host, "httpbin.org"]
