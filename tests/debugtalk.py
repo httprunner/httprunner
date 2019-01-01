@@ -4,18 +4,23 @@ import random
 import string
 import time
 
-from tests.api_server import HTTPBIN_SERVER, SECRET_KEY, gen_md5, get_sign
+from tests.api_server import HTTPBIN_SERVER, gen_md5, get_sign
 
 BASE_URL = "http://127.0.0.1:5000"
-UserName = os.environ['UserName']
 
+def get_httpbin_server():
+    return HTTPBIN_SERVER
 
-demo_default_request = {
-    "base_url": "$BASE_URL",
-    "headers": {
-        "content-type": "application/json"
+def get_base_url():
+    return BASE_URL
+
+def get_default_request():
+    return {
+        "base_url": BASE_URL,
+        "headers": {
+            "content-type": "application/json"
+        }
     }
-}
 
 def sum_two(m, n):
     return m + n
@@ -40,6 +45,9 @@ def skip_test_in_production_env():
     """
     return os.environ["TEST_ENV"] == "PRODUCTION"
 
+def get_user_agent():
+    return ["iOS/10.1", "iOS/10.2"]
+
 def gen_app_version():
     return [
         {"app_version": "2.8.5"},
@@ -51,6 +59,9 @@ def get_account():
         {"username": "user1", "password": "111111"},
         {"username": "user2", "password": "222222"}
     ]
+
+def get_account_in_tuple():
+    return [("user1", "111111"), ("user2", "222222")]
 
 def gen_random_string(str_len):
     random_char_list = []

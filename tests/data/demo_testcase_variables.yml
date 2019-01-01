@@ -1,20 +1,16 @@
 - config:
     name: "create user testcases."
     variables:
-        - device_sn: 'HZfFBh6tU59EdXJ'
-    request:
-        base_url: $BASE_URL
-        headers:
-            Content-Type: application/json
-            device_sn: $device_sn
+        device_sn: 'HZfFBh6tU59EdXJ'
+    base_url: ${get_base_url()}
 
 - test:
     name: get token
     variables:
-        - user_agent: 'iOS/10.3'
-        - os_platform: 'ios'
-        - app_version: '2.8.6'
-        - sign: f1219719911caae89ccc301679857ebfda115ca2
+        user_agent: 'iOS/10.3'
+        os_platform: 'ios'
+        app_version: '2.8.6'
+        sign: f1219719911caae89ccc301679857ebfda115ca2
     request:
         url: /api/get-token
         method: POST
@@ -35,12 +31,14 @@
 - test:
     name: create user which does not exist
     variables:
-        - user_name: "user1"
-        - user_password: "123456"
+        user_name: "user1"
+        user_password: "123456"
     request:
         url: /api/users/1000
         method: POST
         headers:
+            Content-Type: application/json
+            device_sn: $device_sn
             token: $token
         json:
             name: $user_name
@@ -55,6 +53,8 @@
         url: /api/users/1000
         method: POST
         headers:
+            Content-Type: application/json
+            device_sn: $device_sn
             token: $token
         json:
             name: "user1"

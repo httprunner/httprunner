@@ -10,13 +10,14 @@ try:
     from httpbin import app as httpbin_app
     HTTPBIN_HOST = "127.0.0.1"
     HTTPBIN_PORT = 3458
+    HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
 except ImportError:
     httpbin_app = None
     HTTPBIN_HOST = "httpbin.org"
-    HTTPBIN_PORT = 80
+    HTTPBIN_PORT = 443
+    HTTPBIN_SERVER = "https://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
 
 FLASK_APP_PORT = 5000
-HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
 SECRET_KEY = "DebugTalk"
 
 app = Flask(__name__)

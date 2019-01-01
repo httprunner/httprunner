@@ -1,0 +1,16 @@
+variables:
+    n_secs: 1
+request:
+    url: /headers
+    headers:
+        Content-Type: "application/json"
+        device_sn: $device_sn
+    method: GET
+setup_hooks:
+    - ${setup_hook_add_kwargs($request)}
+    - ${setup_hook_remove_kwargs($request)}
+teardown_hooks:
+    - ${teardown_hook_sleep_N_secs($response, $n_secs)}
+validate:
+    - eq: ["status_code", 200]
+    - contained_by: [content.headers.Host, "${get_httpbin_server()}"]
