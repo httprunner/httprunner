@@ -1,23 +1,20 @@
 # encoding: utf-8
 
+import collections
 import copy
 import io
 import itertools
 import json
 import os.path
+import re
 import string
 from datetime import datetime
 
 from httprunner import exceptions, logger
-from httprunner.compat import OrderedDict, basestring, is_py2
+from httprunner.compat import basestring, bytes, is_py2
+from httprunner.exceptions import ParamsError
 
-
-def remove_prefix(text, prefix):
-    """ remove prefix from text
-    """
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text
+absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
 
 def set_os_environ(variables_mapping):
@@ -25,13 +22,59 @@ def set_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
-        logger.log_debug("Loaded variable: {}".format(variable))
+        logger.log_debug("Set OS environment variable: {}".format(variable))
+
+
+def unset_os_environ(variables_mapping):
+    """ set variables mapping to os.environ
+    """
+    for variable in variables_mapping:
+        os.environ.pop(variable)
+        logger.log_debug("Unset OS environment variable: {}".format(variable))
+
+
+def get_os_environ(variable_name):
+    """ get value of environment variable.
+
+    Args:
+        variable_name(str): variable name
+
+    Returns:
+        value of environment variable.
+
+    Raises:
+        exceptions.EnvNotFound: If environment variable not found.
+
+    """
+    try:
+        return os.environ[variable_name]
+    except KeyError:
+        raise exceptions.EnvNotFound(variable_name)
+
+
+def build_url(base_url, path):
+    """ prepend url with hostname unless it's already an absolute URL """
+    if absolute_http_url_regexp.match(path):
+        return path
+    elif base_url:
+        return "{}/{}".format(base_url.rstrip("/"), path.lstrip("/"))
+    else:
+        raise ParamsError("base url missed!")
 
 
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
-    @param (dict/list/string) json_content
-        json_content = {
+
+    Args:
+        json_content (dict/list/string): content to be queried.
+        query (str): query string.
+        delimiter (str): delimiter symbol.
+
+    Returns:
+        str: queried result.
+
+    Examples:
+        >>> json_content = {
             "ids": [1, 2, 3, 4],
             "person": {
                 "name": {
@@ -42,11 +85,16 @@ def query_json(json_content, query, delimiter='.'):
                 "cities": ["Guangzhou", "Shenzhen"]
             }
         }
-    @param (str) query
-        "person.name.first_name"  =>  "Leo"
-        "person.name.first_name.0"  =>  "L"
-        "person.cities.0"         =>  "Guangzhou"
-    @return queried result
+        >>>
+        >>> query_json(json_content, "person.name.first_name")
+        >>> Leo
+        >>>
+        >>> query_json(json_content, "person.name.first_name.0")
+        >>> L
+        >>>
+        >>> query_json(json_content, "person.cities.0")
+        >>> Guangzhou
+
     """
     raise_flag = False
     response_body = u"response body: {}\n".format(json_content)
@@ -104,6 +152,7 @@ def get_uniform_comparator(comparator):
     else:
         return comparator
 
+
 def deep_update_dict(origin_dict, override_dict):
     """ update origin dict with override dict recursively
     e.g. origin_dict = {'a': 1, 'b': {'c': 2, 'd': 4}}
@@ -124,6 +173,31 @@ def deep_update_dict(origin_dict, override_dict):
             origin_dict[key] = override_dict[key]
 
     return origin_dict
+
+
+def convert_dict_to_params(src_dict):
+    """ convert dict to params string
+
+    Args:
+        src_dict (dict): source mapping data structure
+
+    Returns:
+        str: string params data
+
+    Examples:
+        >>> src_dict = {
+            "a": 1,
+            "b": 2
+        }
+        >>> convert_dict_to_params(src_dict)
+        >>> "a=1&b=2"
+
+    """
+    return "&".join([
+        "{}={}".format(key, value)
+        for key, value in src_dict.items()
+    ])
+
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
@@ -162,6 +236,7 @@ def lower_dict_keys(origin_dict):
         for key, value in origin_dict.items()
     }
 
+
 def lower_test_dict_keys(test_dict):
     """ convert keys in test_dict to lower case, convertion will occur in two places:
         1, all keys in test_dict;
@@ -175,32 +250,6 @@ def lower_test_dict_keys(test_dict):
         test_dict["request"] = lower_dict_keys(test_dict["request"])
 
     return test_dict
-
-def convert_mappinglist_to_orderdict(mapping_list):
-    """ convert mapping list to ordered dict
-
-    Args:
-        mapping_list (list):
-            [
-                {"a": 1},
-                {"b": 2}
-            ]
-
-    Returns:
-        OrderedDict: converted mapping in OrderedDict
-            OrderDict(
-                {
-                    "a": 1,
-                    "b": 2
-                }
-            )
-
-    """
-    ordered_dict = OrderedDict()
-    for map_dict in mapping_list:
-        ordered_dict.update(map_dict)
-
-    return ordered_dict
 
 
 def deepcopy_dict(data):
@@ -239,75 +288,148 @@ def deepcopy_dict(data):
         return copied_data
 
 
-def update_ordered_dict(ordered_dict, override_mapping):
-    """ override ordered_dict with new mapping.
+def ensure_mapping_format(variables):
+    """ ensure variables are in mapping format.
 
     Args:
-        ordered_dict (OrderDict): original ordered dict
-        override_mapping (dict): new variables mapping
+        variables (list/dict): original variables
 
     Returns:
-        OrderDict: new overrided variables mapping.
-
-    Examples:
-        >>> ordered_dict = OrderDict({"a": 1, "b": 2})
-        >>> override_mapping = {"a": 3, "c": 4}
-        >>> update_ordered_dict(ordered_dict, override_mapping)
-            OrderDict({"a": 3, "b": 2, "c": 4})
-
-    """
-    new_ordered_dict = copy.copy(ordered_dict)
-    for var, value in override_mapping.items():
-        new_ordered_dict.update({var: value})
-
-    return new_ordered_dict
-
-
-def override_mapping_list(variables, new_mapping):
-    """ override variables with new mapping.
-
-    Args:
-        variables (list): variables list
-            [
-                {"var_a": 1},
-                {"var_b": "world"}
-            ]
-        new_mapping (dict): overrided variables mapping
-            {
-                "var_a": "hello"
-            }
-
-    Returns:
-        OrderedDict: overrided variables mapping.
+        dict: ensured variables in dict format
 
     Examples:
         >>> variables = [
-                {"var_a": 1},
-                {"var_b": "world"}
+                {"a": 1},
+                {"b": 2}
             ]
-        >>> new_mapping = {
-                "var_a": "hello"
+        >>> print(ensure_mapping_format(variables))
+            {
+                "a": 1,
+                "b": 2
             }
-        >>> override_mapping_list(variables, new_mapping)
-            OrderedDict(
-                {
-                    "var_a": "hello",
-                    "var_b": "world"
-                }
-            )
 
     """
     if isinstance(variables, list):
-        variables_ordered_dict = convert_mappinglist_to_orderdict(variables)
-    elif isinstance(variables, (OrderedDict, dict)):
-        variables_ordered_dict = variables
-    else:
-        raise exceptions.ParamsError("variables error!")
+        variables_dict = {}
+        for map_dict in variables:
+            variables_dict.update(map_dict)
 
-    return update_ordered_dict(
-        variables_ordered_dict,
-        new_mapping
-    )
+        return variables_dict
+
+    elif isinstance(variables, dict):
+        return variables
+
+    else:
+        raise exceptions.ParamsError("variables format error!")
+
+
+def _convert_validators_to_mapping(validators):
+    """ convert validators list to mapping.
+
+    Args:
+        validators (list): validators in list
+
+    Returns:
+        dict: validators mapping, use (check, comparator) as key.
+
+    Examples:
+        >>> validators = [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            ]
+        >>> _convert_validators_to_mapping(validators)
+            {
+                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            }
+
+    """
+    validators_mapping = {}
+
+    for validator in validators:
+        if not isinstance(validator["check"], collections.Hashable):
+            check = json.dumps(validator["check"])
+        else:
+            check = validator["check"]
+
+        key = (check, validator["comparator"])
+        validators_mapping[key] = validator
+
+    return validators_mapping
+
+
+def extend_validators(raw_validators, override_validators):
+    """ extend raw_validators with override_validators.
+        override_validators will merge and override raw_validators.
+
+    Args:
+        raw_validators (dict):
+        override_validators (dict):
+
+    Returns:
+        list: extended validators
+
+    Examples:
+        >>> raw_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
+        >>> override_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
+        >>> extend_validators(raw_validators, override_validators)
+            [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": "s2", "expect": 16, "comparator": "len_eq"},
+                {"check": "s3", "expect": 12, "comparator": "len_eq"}
+            ]
+
+    """
+
+    if not raw_validators:
+        return override_validators
+
+    elif not override_validators:
+        return raw_validators
+
+    else:
+        def_validators_mapping = _convert_validators_to_mapping(raw_validators)
+        ref_validators_mapping = _convert_validators_to_mapping(override_validators)
+
+        def_validators_mapping.update(ref_validators_mapping)
+        return list(def_validators_mapping.values())
+
+
+def extend_variables(raw_variables, override_variables):
+    """ extend raw_variables with override_variables.
+        override_variables will merge and override raw_variables.
+
+    Args:
+        raw_variables (list):
+        override_variables (list):
+
+    Returns:
+        dict: extended variables mapping
+
+    Examples:
+        >>> raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        >>> override_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        >>> extend_variables(raw_variables, override_variables)
+            {
+                'var1', 'val111',
+                'var2', 'val2',
+                'var3', 'val3'
+            }
+
+    """
+    if not raw_variables:
+        override_variables_mapping = ensure_mapping_format(override_variables)
+        return override_variables_mapping
+
+    elif not override_variables:
+        raw_variables_mapping = ensure_mapping_format(raw_variables)
+        return raw_variables_mapping
+
+    else:
+        raw_variables_mapping = ensure_mapping_format(raw_variables)
+        override_variables_mapping = ensure_mapping_format(override_variables)
+        raw_variables_mapping.update(override_variables_mapping)
+        return raw_variables_mapping
 
 
 def get_testcase_io(testcase):
@@ -322,13 +444,13 @@ def get_testcase_io(testcase):
         dict: input(variables) and output mapping.
 
     """
-    runner = testcase.runner
-    variables = testcase.config.get("variables", [])
+    test_runner = testcase.runner
+    variables = testcase.config.get("variables", {})
     output_list = testcase.config.get("output", [])
 
     return {
-        "in": dict(variables),
-        "out": runner.extract_output(output_list)
+        "in": variables,
+        "out": test_runner.extract_output(output_list)
     }
 
 
@@ -367,7 +489,7 @@ def print_io(in_out):
     def prepare_content(var_type, in_out):
         content = ""
         for variable, value in in_out.items():
-            if isinstance(value, tuple):
+            if isinstance(value, (tuple, collections.deque)):
                 continue
             elif isinstance(value, (dict, list)):
                 value = json.dumps(value)
@@ -426,21 +548,28 @@ def create_scaffold(project_name):
 
 def gen_cartesian_product(*args):
     """ generate cartesian product for lists
-    @param
-        (list) args
-            [{"a": 1}, {"a": 2}],
+
+    Args:
+        args (list of list): lists to be generated with cartesian product
+
+    Returns:
+        list: cartesian product in list
+
+    Examples:
+
+        >>> arg1 = [{"a": 1}, {"a": 2}]
+        >>> arg2 = [{"x": 111, "y": 112}, {"x": 121, "y": 122}]
+        >>> args = [arg1, arg2]
+        >>> gen_cartesian_product(*args)
+        >>> # same as below
+        >>> gen_cartesian_product(arg1, arg2)
             [
-                {"x": 111, "y": 112},
-                {"x": 121, "y": 122}
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
             ]
-    @return
-        cartesian product in list
-        [
-            {'a': 1, 'x': 111, 'y': 112},
-            {'a': 1, 'x': 121, 'y': 122},
-            {'a': 2, 'x': 111, 'y': 112},
-            {'a': 2, 'x': 121, 'y': 122}
-        ]
+
     """
     if not args:
         return []
@@ -502,6 +631,110 @@ def prettify_json_file(file_list):
             out.write('\n')
 
         print("success: {}".format(outfile))
+
+
+def omit_long_data(body, omit_len=512):
+    """ omit too long str/bytes
+    """
+    if not isinstance(body, basestring):
+        return body
+
+    body_len = len(body)
+    if body_len <= omit_len:
+        return body
+
+    omitted_body = body[0:omit_len]
+
+    appendix_str = " ... OMITTED {} CHARACTORS ...".format(body_len - omit_len)
+    if isinstance(body, bytes):
+        appendix_str = appendix_str.encode("utf-8")
+
+    return omitted_body + appendix_str
+
+
+def dump_json_file(json_data, pwd_dir_path, dump_file_name):
+    """ dump json data to file
+    """
+    logs_dir_path = os.path.join(pwd_dir_path, "logs")
+    if not os.path.isdir(logs_dir_path):
+        os.makedirs(logs_dir_path)
+
+    dump_file_path = os.path.join(logs_dir_path, dump_file_name)
+
+    try:
+        with io.open(dump_file_path, 'w', encoding='utf-8') as outfile:
+            if is_py2:
+                outfile.write(
+                    unicode(json.dumps(
+                        json_data,
+                        indent=4,
+                        separators=(',', ':'),
+                        ensure_ascii=False
+                    ))
+                )
+            else:
+                json.dump(json_data, outfile, indent=4, separators=(',', ':'))
+
+        msg = "dump file: {}".format(dump_file_path)
+        logger.color_print(msg, "BLUE")
+
+    except TypeError:
+        msg = "Failed to dump json file: {}".format(dump_file_path)
+        logger.color_print(msg, "RED")
+
+
+def _prepare_dump_info(project_mapping, tag_name):
+    """ prepare dump file info.
+    """
+    test_path = project_mapping.get("test_path") or "tests_mapping"
+    pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
+    file_name, file_suffix = os.path.splitext(os.path.basename(test_path.rstrip("/")))
+    dump_file_name = "{}.{}.json".format(file_name, tag_name)
+
+    return pwd_dir_path, dump_file_name
+
+
+def dump_tests(tests_mapping, tag_name):
+    """ dump loaded/parsed tests data (except functions) to json file.
+        the dumped file is located in PWD/logs folder.
+
+    Args:
+        tests_mapping (dict): data to dump
+        tag_name (str): tag name, loaded/parsed
+
+    """
+    project_mapping = tests_mapping.get("project_mapping", {})
+    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, tag_name)
+
+    tests_to_dump = {
+        "project_mapping": {}
+    }
+
+    for key in project_mapping:
+        if key != "functions":
+            tests_to_dump["project_mapping"][key] = project_mapping[key]
+            continue
+
+        # remove functions in order to dump
+        if project_mapping["functions"]:
+            debugtalk_py_path = os.path.join(pwd_dir_path, "debugtalk.py")
+            tests_to_dump["project_mapping"]["debugtalk.py"] = debugtalk_py_path
+
+    if "api" in tests_mapping:
+        tests_to_dump["api"] = tests_mapping["api"]
+    elif "testcases" in tests_mapping:
+        tests_to_dump["testcases"] = tests_mapping["testcases"]
+    elif "testsuites" in tests_mapping:
+        tests_to_dump["testsuites"] = tests_mapping["testsuites"]
+
+    dump_json_file(tests_to_dump, pwd_dir_path, dump_file_name)
+
+
+def dump_summary(summary, project_mapping):
+    """ dump test result summary to json file.
+    """
+    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, "summary")
+    dump_json_file(summary, pwd_dir_path, dump_file_name)
 
 
 def get_python2_retire_msg():

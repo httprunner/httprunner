@@ -1,15 +1,14 @@
 - config:
     name: test upload file with httpbin
-    request:
-        base_url: $HTTPBIN_SERVER
+    base_url: ${get_httpbin_server()}
 
 - test:
     name: upload file
-    variable_binds:
-        - field_name: "file"
-        - file_path: "LICENSE"
-        - file_type: "text/html"
-        - multipart_encoder: ${multipart_encoder($field_name, $file_path, $file_type)}
+    variables:
+        field_name: "file"
+        file_path: "LICENSE"
+        file_type: "text/html"
+        multipart_encoder: ${multipart_encoder($field_name, $file_path, $file_type)}
     request:
         url: /post
         method: POST

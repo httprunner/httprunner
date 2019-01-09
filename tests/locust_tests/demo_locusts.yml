@@ -1,0 +1,18 @@
+config:
+    name: create users with uid
+    variables:
+        - device_sn: ${gen_random_string(15)}
+    base_url: "http://127.0.0.1:5000"
+
+testcases:
+    create user 1000 and check result.:
+        testcase: testcases/create_and_check.yml
+        weight: 2
+        variables:
+            uid: 1000
+
+    create user 1001 and check result.:
+        testcase: testcases/create_and_check.yml
+        weight: 3
+        variables:
+            uid: 1001

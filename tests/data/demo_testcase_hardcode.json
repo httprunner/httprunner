@@ -20,11 +20,9 @@
                 {"expect_status_code": 200},
                 {"token_len": 16}
             ],
-            "extract": [
-                {
-                    "token": "content.token"
-                }
-            ],
+            "extract": {
+                "token": "content.token"
+            },
             "validate": [
                 {"check": "status_code", "comparator": "eq", "expect": 200},
                 {"eq": ["status_code", "$expect_status_code"]},
