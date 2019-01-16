@@ -733,8 +733,12 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
     test_verify = test_dict.pop("verify", True)
     testcase_def_dict["config"].setdefault("verify", test_verify)
 
+    # override name
+    test_name = test_dict.pop("name") or testcase_def_dict["config"].pop("name") or "Undefined name"
+
     # override testcase config name, output, etc.
     testcase_def_dict["config"].update(test_dict)
+    testcase_def_dict["config"]["name"] = test_name
 
     test_dict.clear()
     test_dict.update(testcase_def_dict)
