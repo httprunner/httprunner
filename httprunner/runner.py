@@ -291,6 +291,13 @@ class Runner(object):
         tests = testcase_dict.get("teststeps", [])
 
         for index, test_dict in enumerate(tests):
+
+            # override current teststep variables with former testcase output variables
+            former_output_variables = self.session_context.test_variables_mapping
+            if former_output_variables:
+                test_dict.setdefault("variables", {})
+                test_dict["variables"].update(former_output_variables)
+
             try:
                 test_runner.run_test(test_dict)
             except Exception:
