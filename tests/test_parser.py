@@ -700,7 +700,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(test_dict["variables"]["num4"], "${sum_two($num0, 5)}")
         self.assertEqual(
             test_dict["request"]["url"],
-            "https://httprunner.org/api1/?num1=$num1&num2=$num2&num3=$num3&num4=$num4"
+            "https://httprunner.org/api1/?num1=3&num2=6&num3=10&num4=${sum_two($num0, 5)}"
         )
 
     def test_parse_tests_base_url_teststep_empty(self):

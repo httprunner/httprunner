@@ -503,7 +503,8 @@ def parse_string_variables(content, variables_mapping, functions_mapping):
             parsed_variable_value = parse_data(
                 variable_value,
                 variables_mapping,
-                functions_mapping
+                functions_mapping,
+                raise_if_variable_not_found=False
             )
 
         # TODO: replace variable label from $var to {{var}}
