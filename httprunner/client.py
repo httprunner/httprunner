@@ -82,6 +82,7 @@ class HttpSession(requests.Session):
 
         # record actual request info
         req_resp_dict["request"]["url"] = resp_obj.request.url
+        req_resp_dict["request"]["method"] = resp_obj.request.method
         req_resp_dict["request"]["headers"] = dict(resp_obj.request.headers)
 
         request_body = resp_obj.request.body
