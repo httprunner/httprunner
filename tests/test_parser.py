@@ -348,13 +348,13 @@ class TestParser(unittest.TestCase):
     def test_substitute_variables(self):
         content = {
             'request': {
-                'url': '/api/users/$uid',
+                'url': '/api/users/$uid?id=$id',
                 'headers': {'token': '$token'}
             }
         }
-        variables_mapping = {"$uid": 1000}
+        variables_mapping = {"$uid": 1000, "$id": 2}
         substituted_data = parser.substitute_variables(content, variables_mapping)
-        self.assertEqual(substituted_data["request"]["url"], "/api/users/1000")
+        self.assertEqual(substituted_data["request"]["url"], "/api/users/1000?id=2")
         self.assertEqual(substituted_data["request"]["headers"], {'token': '$token'})
 
     def test_parse_parameters_raw_list(self):
@@ -700,7 +700,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(test_dict["variables"]["num4"], "${sum_two($num0, 5)}")
         self.assertEqual(
             test_dict["request"]["url"],
-            "https://httprunner.org/api1/?num1=$num1&num2=$num2&num3=$num3&num4=$num4"
+            "https://httprunner.org/api1/?num1=3&num2=6&num3=10&num4=${sum_two($num0, 5)}"
         )
 
     def test_parse_tests_base_url_teststep_empty(self):
