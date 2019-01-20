@@ -47,7 +47,7 @@ class Runner(object):
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         """
-        base_url = config.get("base_url")
+        base_url = config.get("request").get("base_url")
         self.verify = config.get("verify", True)
         self.output = config.get("output", [])
         self.functions = functions
