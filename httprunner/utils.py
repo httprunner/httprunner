@@ -512,7 +512,7 @@ def print_io(in_out):
     content += prepare_content("Out", _out)
     content += "-" * 56 + "\n"
 
-    logger.log_debug(content)
+    logger.log_info(content)
 
 
 def create_scaffold(project_name):
