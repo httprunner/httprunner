@@ -233,7 +233,7 @@ class HttpRunner(object):
         elif validator.is_testcases(path_or_tests):
             return self.run_tests(path_or_tests)
         else:
-            raise exceptions.ParamsError("invalid testcase path or testcases.")
+            raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
 
     @property
     def summary(self):
