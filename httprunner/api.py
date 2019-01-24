@@ -145,10 +145,7 @@ class HttpRunner(object):
 
             summary["success"] &= testcase_summary["success"]
             testcase_summary["name"] = testcase.config.get("name")
-
-            in_out = utils.get_testcase_io(testcase)
-            utils.print_io(in_out)
-            testcase_summary["in_out"] = in_out
+            testcase_summary["in_out"] = utils.get_testcase_io(testcase)
 
             report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
             report.aggregate_stat(summary["time"], testcase_summary["time"])
