@@ -309,7 +309,9 @@ class Runner(object):
                 _meta_datas = test_runner.meta_datas
                 self.meta_datas.append(_meta_datas)
 
-        self.session_context.update_session_variables(test_runner.extract_sessions())
+        self.session_context.update_session_variables(
+            test_runner.extract_output(test_runner.output)
+        )
 
     def run_test(self, test_dict):
         """ run single teststep of testcase.
@@ -360,11 +362,6 @@ class Runner(object):
             finally:
                 self.meta_datas = self.__get_test_data()
 
-    def extract_sessions(self):
-        """
-        """
-        return self.extract_output(self.output)
-
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
@@ -381,4 +378,5 @@ class Runner(object):
 
             output[variable] = variables_mapping[variable]
 
+        utils.print_info(output)
         return output
