@@ -282,11 +282,9 @@ class Runner(object):
         """
         self.meta_datas = []
         config = testcase_dict.get("config", {})
-        base_url = config.get("base_url")
 
-        # each testcase should have individual session.
-        http_client_session = self.http_client_session.__class__(base_url)
-        test_runner = Runner(config, self.functions, http_client_session)
+        # each teststeps in one testcase (YAML/JSON) share the same session.
+        test_runner = Runner(config, self.functions, self.http_client_session)
 
         tests = testcase_dict.get("teststeps", [])
 

@@ -169,6 +169,8 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
+        self.init_meta_data()
+
         # record test name
         self.meta_data["name"] = name
 
