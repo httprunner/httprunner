@@ -433,13 +433,12 @@ def extend_variables(raw_variables, override_variables):
 
 
 def get_testcase_io(testcase):
-    """ get testcase input(variables) and output.
+    """ get and print testcase input(variables) and output.
 
     Args:
         testcase (unittest.suite.TestSuite): corresponding to one YAML/JSON file, it has been set two attributes:
             config: parsed config block
             runner: initialized runner.Runner() with config
-
     Returns:
         dict: input(variables) and output mapping.
 
@@ -447,72 +446,61 @@ def get_testcase_io(testcase):
     test_runner = testcase.runner
     variables = testcase.config.get("variables", {})
     output_list = testcase.config.get("output", [])
+    output_mapping = test_runner.extract_output(output_list)
 
     return {
         "in": variables,
-        "out": test_runner.extract_output(output_list)
+        "out": output_mapping
     }
 
 
-def print_io(in_out):
-    """ print input(variables) and output.
+def print_info(info_mapping):
+    """ print info in mapping.
 
     Args:
-        in_out (dict): input(variables) and output mapping.
+        info_mapping (dict): input(variables) or output mapping.
 
     Examples:
-        >>> in_out = {
-                "in": {
-                    "var_a": "hello",
-                    "var_b": "world"
-                },
-                "out": {
-                    "status_code": 500
-                }
+        >>> info_mapping = {
+                "var_a": "hello",
+                "var_b": "world"
             }
-        >>> print_io(in_out)
-        ================== Variables & Output ==================
-        Type   | Variable         :  Value
-        ------ | ---------------- :  ---------------------------
-        Var    | var_a            :  hello
-        Var    | var_b            :  world
-
-        Out    | status_code      :  500
-        --------------------------------------------------------
+        >>> info_mapping = {
+                "status_code": 500
+            }
+        >>> print_info(info_mapping)
+        ==================== Output ====================
+        Key              :  Value
+        ---------------- :  ----------------------------
+        var_a            :  hello
+        var_b            :  world
+        ------------------------------------------------
 
     """
-    content_format = "{:<6} | {:<16} :  {:<}\n"
-    content = "\n================== Variables & Output ==================\n"
-    content += content_format.format("Type", "Variable", "Value")
-    content += content_format.format("-" * 6, "-" * 16, "-" * 27)
+    if not info_mapping:
+        return
 
-    def prepare_content(var_type, in_out):
-        content = ""
-        for variable, value in in_out.items():
-            if isinstance(value, (tuple, collections.deque)):
-                continue
-            elif isinstance(value, (dict, list)):
-                value = json.dumps(value)
+    content_format = "{:<16} : {:<}\n"
+    content = "\n==================== Output ====================\n"
+    content += content_format.format("Variable", "Value")
+    content += content_format.format("-" * 16, "-" * 29)
 
-            if is_py2:
-                if isinstance(variable, unicode):
-                    variable = variable.encode("utf-8")
-                if isinstance(value, unicode):
-                    value = value.encode("utf-8")
+    for key, value in info_mapping.items():
+        if isinstance(value, (tuple, collections.deque)):
+            continue
+        elif isinstance(value, (dict, list)):
+            value = json.dumps(value)
 
-            content += content_format.format(var_type, variable, value)
+        if is_py2:
+            if isinstance(key, unicode):
+                key = key.encode("utf-8")
+            if isinstance(value, unicode):
+                value = value.encode("utf-8")
 
-        return content
+        content += content_format.format(key, value)
 
-    _in = in_out["in"]
-    _out = in_out["out"]
-
-    content += prepare_content("Var", _in)
-    content += "\n"
-    content += prepare_content("Out", _out)
-    content += "-" * 56 + "\n"
-
-    logger.log_debug(content)
+    content += "-" * 48 + "\n"
+    logger.log_info(content)
 
 
 def create_scaffold(project_name):
