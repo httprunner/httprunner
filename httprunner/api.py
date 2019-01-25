@@ -145,10 +145,7 @@ class HttpRunner(object):
 
             summary["success"] &= testcase_summary["success"]
             testcase_summary["name"] = testcase.config.get("name")
-
-            in_out = utils.get_testcase_io(testcase)
-            utils.print_io(in_out)
-            testcase_summary["in_out"] = in_out
+            testcase_summary["in_out"] = utils.get_testcase_io(testcase)
 
             report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
             report.aggregate_stat(summary["time"], testcase_summary["time"])
@@ -233,7 +230,7 @@ class HttpRunner(object):
         elif validator.is_testcases(path_or_tests):
             return self.run_tests(path_or_tests)
         else:
-            raise exceptions.ParamsError("invalid testcase path or testcases.")
+            raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
 
     @property
     def summary(self):

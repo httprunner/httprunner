@@ -140,10 +140,14 @@ class Runner(object):
                 # format 1
                 # {"var": "${func()}"}
                 var_name, hook_content = list(action.items())[0]
-                logger.log_debug("assignment with hook: {} = {}".format(var_name, hook_content))
+                hook_content_eval = self.session_context.eval_content(hook_content)
+                logger.log_debug(
+                    "assignment with hook: {} = {} => {}".format(
+                        var_name, hook_content, hook_content_eval
+                    )
+                )
                 self.session_context.update_test_variables(
-                    var_name,
-                    self.session_context.eval_content(hook_content)
+                    var_name, hook_content_eval
                 )
             else:
                 # format 2
@@ -282,11 +286,9 @@ class Runner(object):
         """
         self.meta_datas = []
         config = testcase_dict.get("config", {})
-        base_url = config.get("base_url")
 
-        # each testcase should have individual session.
-        http_client_session = self.http_client_session.__class__(base_url)
-        test_runner = Runner(config, self.functions, http_client_session)
+        # each teststeps in one testcase (YAML/JSON) share the same session.
+        test_runner = Runner(config, self.functions, self.http_client_session)
 
         tests = testcase_dict.get("teststeps", [])
 
@@ -309,7 +311,9 @@ class Runner(object):
                 _meta_datas = test_runner.meta_datas
                 self.meta_datas.append(_meta_datas)
 
-        self.session_context.update_session_variables(test_runner.extract_sessions())
+        self.session_context.update_session_variables(
+            test_runner.extract_output(test_runner.output)
+        )
 
     def run_test(self, test_dict):
         """ run single teststep of testcase.
@@ -360,11 +364,6 @@ class Runner(object):
             finally:
                 self.meta_datas = self.__get_test_data()
 
-    def extract_sessions(self):
-        """
-        """
-        return self.extract_output(self.output)
-
     def extract_output(self, output_variables_list):
         """ extract output variables
         """
@@ -381,4 +380,5 @@ class Runner(object):
 
             output[variable] = variables_mapping[variable]
 
+        utils.print_info(output)
         return output
