@@ -130,6 +130,15 @@ class HttpSession(requests.Session):
 
         return req_resp_dict
 
+    def update_last_req_resp_record(self, resp_obj):
+        """
+        update request and response info from Response() object.
+        :param resp_obj:
+        :return:
+        """
+        self.meta_data["data"].pop()
+        self.meta_data["data"].append(self.get_req_resp_record(resp_obj))
+
     def request(self, method, url, name=None, **kwargs):
         """
         Constructs and sends a :py:class:`requests.Request`.
