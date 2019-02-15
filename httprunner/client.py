@@ -4,7 +4,7 @@ import time
 
 import requests
 import urllib3
-from httprunner import logger
+from httprunner import logger,response
 from httprunner.utils import build_url, lower_dict_keys, omit_long_data
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
@@ -119,7 +119,10 @@ class HttpSession(requests.Session):
         else:
             try:
                 # try to record json data
-                req_resp_dict["response"]["json"] = resp_obj.json()
+                if isinstance(resp_obj,response.ResponseObject):
+                    req_resp_dict["response"]["json"] = resp_obj.json
+                else:
+                    req_resp_dict["response"]["json"] = resp_obj.json()
             except ValueError:
                 # only record at most 512 text charactors
                 resp_text = resp_obj.text
@@ -129,6 +132,15 @@ class HttpSession(requests.Session):
         log_print(req_resp_dict, "response")
 
         return req_resp_dict
+
+    def update_last_req_resp_record(self, resp_obj):
+        """
+        update request and response info from Response() object.
+        :param resp_obj:
+        :return:
+        """
+        self.meta_data["data"].pop()
+        self.meta_data["data"].append(self.get_req_resp_record(resp_obj))
 
     def request(self, method, url, name=None, **kwargs):
         """
