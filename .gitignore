@@ -12,3 +12,5 @@ logs/%
 .coverage
 locustfile.py
 site/
+Pipfile.lock
+reports/*
