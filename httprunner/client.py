@@ -119,7 +119,7 @@ class HttpSession(requests.Session):
         else:
             try:
                 # try to record json data
-                req_resp_dict["response"]["json"] = resp_obj.json()
+                req_resp_dict["response"]["json"] = resp_obj.json
             except ValueError:
                 # only record at most 512 text charactors
                 resp_text = resp_obj.text
