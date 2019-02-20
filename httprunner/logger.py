@@ -37,7 +37,7 @@ def setup_logger(log_level, log_file=None):
     )
 
     if log_file:
-        handler = logging.FileHandler(log_file)
+        handler = logging.FileHandler(log_file, encoding="utf-8")
     else:
         handler = logging.StreamHandler()
 
