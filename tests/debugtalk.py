@@ -89,8 +89,8 @@ def teardown_hook_sleep_N_secs(response, n_secs):
 def hook_print(msg):
     print(msg)
 
-def modify_headers_os_platform(request, os_platform):
-    request["headers"]["os_platform"] = os_platform
+def modify_request_json(request, os_platform):
+    request["json"]["os_platform"] = os_platform
 
 def setup_hook_httpntlmauth(request):
     if "httpntlmauth" in request:
