@@ -661,7 +661,13 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
                     ))
                 )
             else:
-                json.dump(json_data, outfile, indent=4, separators=(',', ':'))
+                json.dump(
+                    json_data,
+                    outfile,
+                    indent=4,
+                    separators=(',', ':'),
+                    ensure_ascii=False
+                )
 
         msg = "dump file: {}".format(dump_file_path)
         logger.color_print(msg, "BLUE")

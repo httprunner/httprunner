@@ -164,19 +164,19 @@ class TestRunner(ApiServerUnittest):
                 "method": "POST",
                 "headers": {
                     "content-type": "application/json",
-                    "user_agent": "iOS/10.3",
-                    "os_platform": "ios"
+                    "user_agent": "iOS/10.3"
                 },
                 "json": {
+                    "os_platform": "ios",
                     "sign": "f1219719911caae89ccc301679857ebfda115ca2"
                 }
             },
             "setup_hooks": [
-                "${modify_headers_os_platform($request, android)}"
+                "${modify_request_json($request, android)}"
             ],
             "validate": [
                 {"check": "status_code", "expect": 200},
-                {"check": "content.headers.Os-Platform", "expect": "android"}
+                {"check": "content.json.os_platform", "expect": "android"}
             ]
         }
         test_runner = runner.Runner(config_dict, self.debugtalk_functions)
