@@ -1,111 +1,108 @@
-import argparse
-import logging
-import multiprocessing
-import os
-import sys
-from collections import OrderedDict
+# encoding: utf-8
 
-from httprunner import __version__ as ate_version
-from httprunner import exception
-from httprunner.task import TaskSuite
-from httprunner.utils import create_scaffold, string_type
-from pyunitreport import __version__ as pyu_version
-from pyunitreport import HTMLTestRunner
-
-
-def main_ate():
+def main_hrun():
     """ API test: parse command line options and run commands.
     """
-    parser = argparse.ArgumentParser(
-        description='HTTP test runner, not just about api test and load test.')
+    import argparse
+    from httprunner import logger
+    from httprunner.__about__ import __description__, __version__
+    from httprunner.api import HttpRunner
+    from httprunner.compat import is_py2
+    from httprunner.utils import (create_scaffold, get_python2_retire_msg,
+                                prettify_json_file, validate_json_file)
+
+    parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         '-V', '--version', dest='version', action='store_true',
         help="show version")
     parser.add_argument(
-        'testset_paths', nargs='*',
-        help="testset file path")
+        'testcase_paths', nargs='*',
+        help="testcase file path")
     parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
     parser.add_argument(
-        '--report-name',
-        help="Specify report name, default is generated time.")
+        '--log-file',
+        help="Write logs to specified file path.")
+    parser.add_argument(
+        '--dot-env-path',
+        help="Specify .env file path, which is useful for keeping sensitive data.")
+    parser.add_argument(
+        '--report-template',
+        help="specify report template path.")
+    parser.add_argument(
+        '--report-dir',
+        help="specify report save directory.")
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
     parser.add_argument(
+        '--save-tests', action='store_true', default=False,
+        help="Save loaded tests and parsed tests to JSON file.")
+    parser.add_argument(
         '--startproject',
         help="Specify new project name.")
+    parser.add_argument(
+        '--validate', nargs='*',
+        help="Validate JSON testcase format.")
+    parser.add_argument(
+        '--prettify', nargs='*',
+        help="Prettify JSON testcase format.")
 
     args = parser.parse_args()
+    logger.setup_logger(args.log_level, args.log_file)
+
+    if is_py2:
+        logger.log_warning(get_python2_retire_msg())
 
     if args.version:
-        print("HttpRunner version: {}".format(ate_version))
-        print("PyUnitReport version: {}".format(pyu_version))
+        logger.color_print("{}".format(__version__), "GREEN")
         exit(0)
 
-    log_level = getattr(logging, args.log_level.upper())
-    logging.basicConfig(level=log_level)
+    if args.validate:
+        validate_json_file(args.validate)
+        exit(0)
+    if args.prettify:
+        prettify_json_file(args.prettify)
+        exit(0)
 
     project_name = args.startproject
     if project_name:
-        project_path = os.path.join(os.getcwd(), project_name)
-        create_scaffold(project_path)
+        create_scaffold(project_name)
         exit(0)
 
-    report_name = args.report_name
-    if report_name and len(args.testset_paths) > 1:
-        report_name = None
-        logging.warning("More than one testset paths specified, \
-                        report name is ignored, use generated time instead.")
+    runner = HttpRunner(
+        failfast=args.failfast,
+        save_tests=args.save_tests,
+        report_template=args.report_template,
+        report_dir=args.report_dir
+    )
+    try:
+        for path in args.testcase_paths:
+            runner.run(path, dot_env_path=args.dot_env_path)
+    except Exception:
+        logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
+        raise
 
-    results = {}
-    success = True
+    return 0
 
-    for testset_path in set(args.testset_paths):
-
-        testset_path = testset_path.rstrip('/')
-
-        try:
-            task_suite = TaskSuite(testset_path)
-        except exception.TestcaseNotFound:
-            success = False
-            continue
-
-        output_folder_name = os.path.basename(os.path.splitext(testset_path)[0])
-        kwargs = {
-            "output": output_folder_name,
-            "report_name": report_name,
-            "failfast": args.failfast
-        }
-        result = HTMLTestRunner(**kwargs).run(task_suite)
-        results[testset_path] = OrderedDict({
-            "total": result.testsRun,
-            "successes": len(result.successes),
-            "failures": len(result.failures),
-            "errors": len(result.errors),
-            "skipped": len(result.skipped)
-        })
-
-        if len(result.successes) != result.testsRun:
-            success = False
-
-        for task in task_suite.tasks:
-            task.print_output()
-
-    return 0 if success is True else 1
 
 def main_locust():
     """ Performance test with locust: parse command line options and run commands.
     """
-    logging.basicConfig(level="INFO")
+    # monkey patch ssl at beginning to avoid RecursionError when running locust.
+    from gevent import monkey; monkey.patch_ssl()
+
+    import multiprocessing
+    import sys
+    from httprunner import logger
 
     try:
         from httprunner import locusts
     except ImportError:
         msg = "Locust is not installed, install first and try again.\n"
         msg += "install command: pip install locustio"
-        logging.info(msg)
+        print(msg)
         exit(1)
 
     sys.argv[0] = 'locust'
@@ -113,47 +110,70 @@ def main_locust():
         sys.argv.extend(["-h"])
 
     if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
-        locusts.main()
+        locusts.start_locust_main()
         sys.exit(0)
 
+    # set logging level
+    if "-L" in sys.argv:
+        loglevel_index = sys.argv.index('-L') + 1
+    elif "--loglevel" in sys.argv:
+        loglevel_index = sys.argv.index('--loglevel') + 1
+    else:
+        loglevel_index = None
+
+    if loglevel_index and loglevel_index < len(sys.argv):
+        loglevel = sys.argv[loglevel_index]
+    else:
+        # default
+        loglevel = "WARNING"
+
+    logger.setup_logger(loglevel)
+
+    # get testcase file path
     try:
-        testcase_index = sys.argv.index('-f') + 1
-        assert testcase_index < len(sys.argv)
-    except (ValueError, AssertionError):
-        logging.error("Testcase file is not specified, exit.")
+        if "-f" in sys.argv:
+            testcase_index = sys.argv.index('-f') + 1
+        elif "--locustfile" in sys.argv:
+            testcase_index = sys.argv.index('--locustfile') + 1
+        else:
+            testcase_index = None
+
+        assert testcase_index and testcase_index < len(sys.argv)
+    except AssertionError:
+        print("Testcase file is not specified, exit.")
         sys.exit(1)
 
     testcase_file_path = sys.argv[testcase_index]
     sys.argv[testcase_index] = locusts.parse_locustfile(testcase_file_path)
 
-    if "--cpu-cores" in sys.argv:
-        """ locusts -f locustfile.py --cpu-cores 4
+    if "--processes" in sys.argv:
+        """ locusts -f locustfile.py --processes 4
         """
         if "--no-web" in sys.argv:
-            logging.error("conflict parameter args: --cpu-cores & --no-web. \nexit.")
+            logger.log_error("conflict parameter args: --processes & --no-web. \nexit.")
             sys.exit(1)
 
-        cpu_cores_index = sys.argv.index('--cpu-cores')
+        processes_index = sys.argv.index('--processes')
 
-        cpu_cores_num_index = cpu_cores_index + 1
+        processes_count_index = processes_index + 1
 
-        if cpu_cores_num_index >= len(sys.argv):
-            """ do not specify cpu cores explicitly
-                locusts -f locustfile.py --cpu-cores
+        if processes_count_index >= len(sys.argv):
+            """ do not specify processes count explicitly
+                locusts -f locustfile.py --processes
             """
-            cpu_cores_num_value = multiprocessing.cpu_count()
-            logging.warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+            processes_count = multiprocessing.cpu_count()
+            logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
         else:
             try:
-                """ locusts -f locustfile.py --cpu-cores 4 """
-                cpu_cores_num_value = int(sys.argv[cpu_cores_num_index])
-                sys.argv.pop(cpu_cores_num_index)
+                """ locusts -f locustfile.py --processes 4 """
+                processes_count = int(sys.argv[processes_count_index])
+                sys.argv.pop(processes_count_index)
             except ValueError:
-                """ locusts -f locustfile.py --cpu-cores -P 8888 """
-                cpu_cores_num_value = multiprocessing.cpu_count()
-                logging.warning("cpu cores number not specified, use {} by default.".format(cpu_cores_num_value))
+                """ locusts -f locustfile.py --processes -P 8888 """
+                processes_count = multiprocessing.cpu_count()
+                logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
 
-        sys.argv.pop(cpu_cores_index)
-        locusts.run_locusts_on_cpu_cores(sys.argv, cpu_cores_num_value)
+        sys.argv.pop(processes_index)
+        locusts.run_locusts_with_processes(sys.argv, processes_count)
     else:
-        locusts.main()
+        locusts.start_locust_main()

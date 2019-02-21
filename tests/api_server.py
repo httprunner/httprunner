@@ -1,9 +1,24 @@
 import hashlib
+import hmac
 import json
 from functools import wraps
 
-from httprunner import utils
 from flask import Flask, make_response, request
+from httprunner.built_in import gen_random_string
+
+try:
+    from httpbin import app as httpbin_app
+    HTTPBIN_HOST = "127.0.0.1"
+    HTTPBIN_PORT = 3458
+    HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
+except ImportError:
+    httpbin_app = None
+    HTTPBIN_HOST = "httpbin.org"
+    HTTPBIN_PORT = 443
+    HTTPBIN_SERVER = "https://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
+
+FLASK_APP_PORT = 5000
+SECRET_KEY = "DebugTalk"
 
 app = Flask(__name__)
 
@@ -30,6 +45,17 @@ data structure:
     }
 """
 token_dict = {}
+
+
+def get_sign(*args):
+    content = ''.join(args).encode('ascii')
+    sign_key = SECRET_KEY.encode('ascii')
+    sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
+    return sign
+
+def gen_md5(*args):
+    return hashlib.md5("".join(args).encode('utf-8')).hexdigest()
+
 
 def validate_request(func):
 
@@ -74,7 +100,7 @@ def get_token():
     data = request.get_json()
     sign = data.get('sign', "")
 
-    expected_sign = utils.get_sign(user_agent, device_sn, os_platform, app_version)
+    expected_sign = get_sign(user_agent, device_sn, os_platform, app_version)
 
     if expected_sign != sign:
         result = {
@@ -83,7 +109,7 @@ def get_token():
         }
         response = make_response(json.dumps(result), 403)
     else:
-        token = utils.gen_random_string(16)
+        token = gen_random_string(16)
         token_dict[device_sn] = token
 
         result = {
@@ -93,19 +119,6 @@ def get_token():
         response = make_response(json.dumps(result))
 
     response.headers["Content-Type"] = "application/json"
-    return response
-
-@app.route('/customize-response', methods=['POST'])
-def get_customized_response():
-    expected_resp_json = request.get_json()
-    status_code = expected_resp_json.get('status_code', 200)
-    headers_dict = expected_resp_json.get('headers', {})
-    body = expected_resp_json.get('body', {})
-    response = make_response(json.dumps(body), status_code)
-
-    for header_key, header_value in headers_dict.items():
-        response.headers[header_key] = header_value
-
     return response
 
 @app.route('/api/users')

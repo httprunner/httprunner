@@ -113,32 +113,3 @@ class TestApiServer(ApiServerUnittest):
         resp = self.delete_user(1000)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json()['success'], True)
-
-    def test_get_customized_response_status_code(self):
-        status_code = random.randint(200, 511)
-        url = "%s/customize-response" % self.host
-        expected_response = {
-            'status_code': status_code,
-        }
-        resp = self.api_client.post(
-            url,
-            headers=self.headers,
-            json=expected_response
-        )
-        self.assertEqual(status_code, resp.status_code)
-
-    def test_get_customized_response_headers(self):
-        expected_response = {
-            'headers': {
-                'abc': 123,
-                'def': 456
-            }
-        }
-        url = "%s/customize-response" % self.host
-        resp = self.api_client.post(
-            url,
-            headers=self.headers,
-            json=expected_response
-        )
-        self.assertIn('abc', resp.headers)
-        self.assertIn('123', resp.headers['abc'])

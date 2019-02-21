@@ -1,4 +1,0 @@
-requests[security]
-flask
-PyYAML
-PyUnitReport

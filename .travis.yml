@@ -5,11 +5,12 @@ python:
   - 3.4
   - 3.5
   - 3.6
+  - 3.7-dev
 install:
-  - pip install coverage
-  - pip install coveralls
-  - pip install -r requirements.txt
+  - pip install pipenv --upgrade-strategy=only-if-needed
+  - pipenv install --dev --skip-lock
 script:
-  - coverage run --source=httprunner -m unittest discover
+  - pipenv run python setup.py install
+  - pipenv run coverage run --source=httprunner -m unittest discover
 after_success:
-  - coveralls
+  - pipenv run coveralls

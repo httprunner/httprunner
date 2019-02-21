@@ -3,12 +3,18 @@ import time
 import unittest
 
 import requests
-from httprunner import utils
-from tests import api_server
+from tests.api_server import FLASK_APP_PORT, HTTPBIN_HOST, HTTPBIN_PORT
+from tests.api_server import app as flask_app
+from tests.api_server import gen_md5, gen_random_string, get_sign, httpbin_app
 
 
-def apprun():
-    api_server.app.run()
+def run_flask():
+    flask_app.run(port=FLASK_APP_PORT)
+
+
+def run_httpbin():
+    if httpbin_app:
+        httpbin_app.run(host=HTTPBIN_HOST, port=HTTPBIN_PORT)
 
 
 class ApiServerUnittest(unittest.TestCase):
@@ -18,16 +24,21 @@ class ApiServerUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.host = "http://127.0.0.1:5000"
-        cls.api_server_process = multiprocessing.Process(
-            target=apprun
+        cls.flask_process = multiprocessing.Process(
+            target=run_flask
         )
-        cls.api_server_process.start()
+        cls.httpbin_process = multiprocessing.Process(
+            target=run_httpbin
+        )
+        cls.flask_process.start()
+        cls.httpbin_process.start()
         time.sleep(0.1)
         cls.api_client = requests.Session()
 
     @classmethod
     def tearDownClass(cls):
-        cls.api_server_process.terminate()
+        cls.flask_process.terminate()
+        cls.httpbin_process.terminate()
 
     def get_token(self, user_agent, device_sn, os_platform, app_version):
         url = "%s/api/get-token" % self.host
@@ -39,7 +50,7 @@ class ApiServerUnittest(unittest.TestCase):
             'app_version': app_version
         }
         data = {
-            'sign': utils.get_sign(user_agent, device_sn, os_platform, app_version)
+            'sign': get_sign(user_agent, device_sn, os_platform, app_version)
         }
 
         resp = self.api_client.post(url, json=data, headers=headers)
@@ -51,7 +62,7 @@ class ApiServerUnittest(unittest.TestCase):
 
     def get_authenticated_headers(self):
         user_agent = 'iOS/10.3'
-        device_sn = utils.gen_random_string(15)
+        device_sn = gen_random_string(15)
         os_platform = 'ios'
         app_version = '2.8.6'
 

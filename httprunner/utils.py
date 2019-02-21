@@ -1,90 +1,80 @@
-import hashlib
-import hmac
-import imp
-import importlib
-import logging
+# encoding: utf-8
+
+import collections
+import copy
+import io
+import itertools
+import json
 import os.path
-import random
 import re
 import string
-import types
-from collections import OrderedDict
+from datetime import datetime
 
-from httprunner import exception
-from requests.structures import CaseInsensitiveDict
+from httprunner import exceptions, logger
+from httprunner.compat import basestring, bytes, is_py2
+from httprunner.exceptions import ParamsError
 
-try:
-    string_type = basestring
-    long_type = long
-    PYTHON_VERSION = 2
-except NameError:
-    string_type = str
-    long_type = int
-    PYTHON_VERSION = 3
-
-SECRET_KEY = "DebugTalk"
+absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
 
-def gen_random_string(str_len):
-    return ''.join(
-        random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
-
-def gen_md5(*str_args):
-    return hashlib.md5("".join(str_args).encode('utf-8')).hexdigest()
-
-def get_sign(*args):
-    content = ''.join(args).encode('ascii')
-    sign_key = SECRET_KEY.encode('ascii')
-    sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
-    return sign
-
-def remove_prefix(text, prefix):
-    """ remove prefix from text
+def set_os_environ(variables_mapping):
+    """ set variables mapping to os.environ
     """
-    if text.startswith(prefix):
-        return text[len(prefix):]
-    return text
+    for variable in variables_mapping:
+        os.environ[variable] = variables_mapping[variable]
+        logger.log_debug("Set OS environment variable: {}".format(variable))
 
-def load_folder_files(folder_path, recursive=True):
-    """ load folder path, return all files in list format.
-    @param
-        folder_path: specified folder path to load
-        recursive: if True, will load files recursively
+
+def unset_os_environ(variables_mapping):
+    """ set variables mapping to os.environ
     """
-    if isinstance(folder_path, (list, set)):
-        files = []
-        for path in set(folder_path):
-            files.extend(load_folder_files(path, recursive))
+    for variable in variables_mapping:
+        os.environ.pop(variable)
+        logger.log_debug("Unset OS environment variable: {}".format(variable))
 
-        return files
 
-    if not os.path.exists(folder_path):
-        return []
+def get_os_environ(variable_name):
+    """ get value of environment variable.
 
-    file_list = []
+    Args:
+        variable_name(str): variable name
 
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        filenames_list = []
+    Returns:
+        value of environment variable.
 
-        for filename in filenames:
-            if not filename.endswith(('.yml', '.yaml', '.json')):
-                continue
+    Raises:
+        exceptions.EnvNotFound: If environment variable not found.
 
-            filenames_list.append(filename)
+    """
+    try:
+        return os.environ[variable_name]
+    except KeyError:
+        raise exceptions.EnvNotFound(variable_name)
 
-        for filename in filenames_list:
-            file_path = os.path.join(dirpath, filename)
-            file_list.append(file_path)
 
-        if not recursive:
-            break
+def build_url(base_url, path):
+    """ prepend url with hostname unless it's already an absolute URL """
+    if absolute_http_url_regexp.match(path):
+        return path
+    elif base_url:
+        return "{}/{}".format(base_url.rstrip("/"), path.lstrip("/"))
+    else:
+        raise ParamsError("base url missed!")
 
-    return file_list
 
 def query_json(json_content, query, delimiter='.'):
     """ Do an xpath-like query with json_content.
-    @param (json_content) json_content
-        json_content = {
+
+    Args:
+        json_content (dict/list/string): content to be queried.
+        query (str): query string.
+        delimiter (str): delimiter symbol.
+
+    Returns:
+        str: queried result.
+
+    Examples:
+        >>> json_content = {
             "ids": [1, 2, 3, 4],
             "person": {
                 "name": {
@@ -95,32 +85,45 @@ def query_json(json_content, query, delimiter='.'):
                 "cities": ["Guangzhou", "Shenzhen"]
             }
         }
-    @param (str) query
-        "person.name.first_name"  =>  "Leo"
-        "person.cities.0"         =>  "Guangzhou"
-    @return queried result
-    """
-    if json_content == "":
-        raise exception.ResponseError("response content is empty!")
+        >>>
+        >>> query_json(json_content, "person.name.first_name")
+        >>> Leo
+        >>>
+        >>> query_json(json_content, "person.name.first_name.0")
+        >>> L
+        >>>
+        >>> query_json(json_content, "person.cities.0")
+        >>> Guangzhou
 
+    """
+    raise_flag = False
+    response_body = u"response body: {}\n".format(json_content)
     try:
         for key in query.split(delimiter):
-            if isinstance(json_content, list):
+            if isinstance(json_content, (list, basestring)):
                 json_content = json_content[int(key)]
-            elif isinstance(json_content, (dict, CaseInsensitiveDict)):
+            elif isinstance(json_content, dict):
                 json_content = json_content[key]
             else:
-                raise exception.ParseResponseError(
-                    "response content is in text format! failed to query key {}!".format(key))
+                logger.log_error(
+                    "invalid type value: {}({})".format(json_content, type(json_content)))
+                raise_flag = True
     except (KeyError, ValueError, IndexError):
-        raise exception.ParseResponseError("failed to query json when extracting response!")
+        raise_flag = True
+
+    if raise_flag:
+        err_msg = u"Failed to extract! => {}\n".format(query)
+        err_msg += response_body
+        logger.log_error(err_msg)
+        raise exceptions.ExtractFailure(err_msg)
 
     return json_content
+
 
 def get_uniform_comparator(comparator):
     """ convert comparator alias to uniform name
     """
-    if comparator in ["eq", "equals", "=="]:
+    if comparator in ["eq", "equals", "==", "is"]:
         return "equals"
     elif comparator in ["lt", "less_than"]:
         return "less_than"
@@ -149,6 +152,7 @@ def get_uniform_comparator(comparator):
     else:
         return comparator
 
+
 def deep_update_dict(origin_dict, override_dict):
     """ update origin dict with override dict recursively
     e.g. origin_dict = {'a': 1, 'b': {'c': 2, 'd': 4}}
@@ -170,91 +174,59 @@ def deep_update_dict(origin_dict, override_dict):
 
     return origin_dict
 
-def is_function(tup):
-    """ Takes (name, object) tuple, returns True if it is a function.
+
+def convert_dict_to_params(src_dict):
+    """ convert dict to params string
+
+    Args:
+        src_dict (dict): source mapping data structure
+
+    Returns:
+        str: string params data
+
+    Examples:
+        >>> src_dict = {
+            "a": 1,
+            "b": 2
+        }
+        >>> convert_dict_to_params(src_dict)
+        >>> "a=1&b=2"
+
     """
-    name, item = tup
-    return isinstance(item, types.FunctionType)
+    return "&".join([
+        "{}={}".format(key, value)
+        for key, value in src_dict.items()
+    ])
 
-def is_variable(tup):
-    """ Takes (name, object) tuple, returns True if it is a variable.
-    """
-    name, item = tup
-    if callable(item):
-        # function or class
-        return False
-
-    if isinstance(item, types.ModuleType):
-        # imported module
-        return False
-
-    if name.startswith("_"):
-        # private property
-        return False
-
-    return True
-
-def get_imported_module(module_name):
-    """ import module and return imported module
-    """
-    return importlib.import_module(module_name)
-
-def get_imported_module_from_file(file_path):
-    """ import module from python file path and return imported module
-    """
-
-    if PYTHON_VERSION == 3:
-        imported_module = importlib.machinery.SourceFileLoader(
-            'module_name', file_path).load_module()
-    else:
-        # Python 2.7
-        imported_module = imp.load_source('module_name', file_path)
-
-    return imported_module
-
-def filter_module(module, filter_type):
-    """ filter functions or variables from import module
-    @params
-        module: imported module
-        filter_type: "function" or "variable"
-    """
-    filter_type = is_function if filter_type == "function" else is_variable
-    module_functions_dict = dict(filter(filter_type, vars(module).items()))
-    return module_functions_dict
-
-def search_conf_item(start_path, item_type, item_name):
-    """ search expected function or variable recursive upward
-    @param
-        start_path: search start path
-        item_type: "function" or "variable"
-        item_name: function name or variable name
-    """
-    dir_path = os.path.dirname(os.path.abspath(start_path))
-    target_file = os.path.join(dir_path, "debugtalk.py")
-
-    if os.path.isfile(target_file):
-        imported_module = get_imported_module_from_file(target_file)
-        items_dict = filter_module(imported_module, item_type)
-        if item_name in items_dict:
-            return items_dict[item_name]
-        else:
-            return search_conf_item(dir_path, item_type, item_name)
-
-    if dir_path == start_path:
-        # system root path
-        err_msg = "{} not found in recursive upward path!".format(item_name)
-        if item_type == "function":
-            raise exception.FunctionNotFound(err_msg)
-        else:
-            raise exception.VariableNotFound(err_msg)
-
-    return search_conf_item(dir_path, item_type, item_name)
 
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
-    e.g.
-        Name => name, Request => request
-        URL => url, METHOD => method, Headers => headers, Data => data
+
+    Args:
+        origin_dict (dict): mapping data structure
+
+    Returns:
+        dict: mapping with all keys lowered.
+
+    Examples:
+        >>> origin_dict = {
+            "Name": "",
+            "Request": "",
+            "URL": "",
+            "METHOD": "",
+            "Headers": "",
+            "Data": ""
+        }
+        >>> lower_dict_keys(origin_dict)
+            {
+                "name": "",
+                "request": "",
+                "url": "",
+                "method": "",
+                "headers": "",
+                "data": ""
+            }
+
     """
     if not origin_dict or not isinstance(origin_dict, dict):
         return origin_dict
@@ -264,102 +236,282 @@ def lower_dict_keys(origin_dict):
         for key, value in origin_dict.items()
     }
 
-def lower_config_dict_key(config_dict):
-    """ convert key in config dict to lower case, convertion will occur in two places:
-        1, all keys in config dict;
-        2, all keys in config["request"]
+
+def lower_test_dict_keys(test_dict):
+    """ convert keys in test_dict to lower case, convertion will occur in two places:
+        1, all keys in test_dict;
+        2, all keys in test_dict["request"]
     """
-    config_dict = lower_dict_keys(config_dict)
-    if "request" in config_dict:
-        config_dict["request"] = lower_dict_keys(config_dict["request"])
+    # convert keys in test_dict
+    test_dict = lower_dict_keys(test_dict)
 
-    return config_dict
+    if "request" in test_dict:
+        # convert keys in test_dict["request"]
+        test_dict["request"] = lower_dict_keys(test_dict["request"])
 
-def convert_to_order_dict(map_list):
-    """ convert mapping in list to ordered dict
-    @param (list) map_list
-        [
-            {"a": 1},
-            {"b": 2}
-        ]
-    @return (OrderDict)
-        OrderDict({
-            "a": 1,
-            "b": 2
-        })
+    return test_dict
+
+
+def deepcopy_dict(data):
+    """ deepcopy dict data, ignore file object (_io.BufferedReader)
+
+    Args:
+        data (dict): dict data structure
+            {
+                'a': 1,
+                'b': [2, 4],
+                'c': lambda x: x+1,
+                'd': open('LICENSE'),
+                'f': {
+                    'f1': {'a1': 2},
+                    'f2': io.open('LICENSE', 'rb'),
+                }
+            }
+
+    Returns:
+        dict: deep copied dict data, with file object unchanged.
+
     """
-    ordered_dict = OrderedDict()
-    for map_dict in map_list:
-        ordered_dict.update(map_dict)
+    try:
+        return copy.deepcopy(data)
+    except TypeError:
+        copied_data = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                copied_data[key] = deepcopy_dict(value)
+            else:
+                try:
+                    copied_data[key] = copy.deepcopy(value)
+                except TypeError:
+                    copied_data[key] = value
 
-    return ordered_dict
+        return copied_data
 
-def update_ordered_dict(ordered_dict, override_mapping):
-    """ override ordered_dict with new mapping
-    @param
-        (OrderDict) ordered_dict
-            OrderDict({
+
+def ensure_mapping_format(variables):
+    """ ensure variables are in mapping format.
+
+    Args:
+        variables (list/dict): original variables
+
+    Returns:
+        dict: ensured variables in dict format
+
+    Examples:
+        >>> variables = [
+                {"a": 1},
+                {"b": 2}
+            ]
+        >>> print(ensure_mapping_format(variables))
+            {
                 "a": 1,
                 "b": 2
-            })
-        (dict) override_mapping
-            {"a": 3, "c": 4}
-    @return (OrderDict)
-        OrderDict({
-            "a": 3,
-            "b": 2,
-            "c": 4
-        })
-    """
-    for var, value in override_mapping.items():
-        ordered_dict.update({var: value})
+            }
 
-    return ordered_dict
-
-def override_variables_binds(variables, new_mapping):
-    """ convert variables in testcase to ordered mapping, with new_mapping overrided
     """
     if isinstance(variables, list):
-        variables_ordered_dict = convert_to_order_dict(variables)
-    elif isinstance(variables, OrderedDict):
-        variables_ordered_dict = variables
+        variables_dict = {}
+        for map_dict in variables:
+            variables_dict.update(map_dict)
+
+        return variables_dict
+
+    elif isinstance(variables, dict):
+        return variables
+
     else:
-        raise exception.ParamsError("variables error!")
+        raise exceptions.ParamsError("variables format error!")
 
-    return update_ordered_dict(
-        variables_ordered_dict,
-        new_mapping
-    )
 
-def print_output(output):
-    if not output:
+def _convert_validators_to_mapping(validators):
+    """ convert validators list to mapping.
+
+    Args:
+        validators (list): validators in list
+
+    Returns:
+        dict: validators mapping, use (check, comparator) as key.
+
+    Examples:
+        >>> validators = [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            ]
+        >>> _convert_validators_to_mapping(validators)
+            {
+                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+            }
+
+    """
+    validators_mapping = {}
+
+    for validator in validators:
+        if not isinstance(validator["check"], collections.Hashable):
+            check = json.dumps(validator["check"])
+        else:
+            check = validator["check"]
+
+        key = (check, validator["comparator"])
+        validators_mapping[key] = validator
+
+    return validators_mapping
+
+
+def extend_validators(raw_validators, override_validators):
+    """ extend raw_validators with override_validators.
+        override_validators will merge and override raw_validators.
+
+    Args:
+        raw_validators (dict):
+        override_validators (dict):
+
+    Returns:
+        list: extended validators
+
+    Examples:
+        >>> raw_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
+        >>> override_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
+        >>> extend_validators(raw_validators, override_validators)
+            [
+                {"check": "v1", "expect": 201, "comparator": "eq"},
+                {"check": "s2", "expect": 16, "comparator": "len_eq"},
+                {"check": "s3", "expect": 12, "comparator": "len_eq"}
+            ]
+
+    """
+
+    if not raw_validators:
+        return override_validators
+
+    elif not override_validators:
+        return raw_validators
+
+    else:
+        def_validators_mapping = _convert_validators_to_mapping(raw_validators)
+        ref_validators_mapping = _convert_validators_to_mapping(override_validators)
+
+        def_validators_mapping.update(ref_validators_mapping)
+        return list(def_validators_mapping.values())
+
+
+def extend_variables(raw_variables, override_variables):
+    """ extend raw_variables with override_variables.
+        override_variables will merge and override raw_variables.
+
+    Args:
+        raw_variables (list):
+        override_variables (list):
+
+    Returns:
+        dict: extended variables mapping
+
+    Examples:
+        >>> raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        >>> override_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        >>> extend_variables(raw_variables, override_variables)
+            {
+                'var1', 'val111',
+                'var2', 'val2',
+                'var3', 'val3'
+            }
+
+    """
+    if not raw_variables:
+        override_variables_mapping = ensure_mapping_format(override_variables)
+        return override_variables_mapping
+
+    elif not override_variables:
+        raw_variables_mapping = ensure_mapping_format(raw_variables)
+        return raw_variables_mapping
+
+    else:
+        raw_variables_mapping = ensure_mapping_format(raw_variables)
+        override_variables_mapping = ensure_mapping_format(override_variables)
+        raw_variables_mapping.update(override_variables_mapping)
+        return raw_variables_mapping
+
+
+def get_testcase_io(testcase):
+    """ get and print testcase input(variables) and output.
+
+    Args:
+        testcase (unittest.suite.TestSuite): corresponding to one YAML/JSON file, it has been set two attributes:
+            config: parsed config block
+            runner: initialized runner.Runner() with config
+    Returns:
+        dict: input(variables) and output mapping.
+
+    """
+    test_runner = testcase.runner
+    variables = testcase.config.get("variables", {})
+    output_list = testcase.config.get("output", [])
+    output_mapping = test_runner.extract_output(output_list)
+
+    return {
+        "in": variables,
+        "out": output_mapping
+    }
+
+
+def print_info(info_mapping):
+    """ print info in mapping.
+
+    Args:
+        info_mapping (dict): input(variables) or output mapping.
+
+    Examples:
+        >>> info_mapping = {
+                "var_a": "hello",
+                "var_b": "world"
+            }
+        >>> info_mapping = {
+                "status_code": 500
+            }
+        >>> print_info(info_mapping)
+        ==================== Output ====================
+        Key              :  Value
+        ---------------- :  ----------------------------
+        var_a            :  hello
+        var_b            :  world
+        ------------------------------------------------
+
+    """
+    if not info_mapping:
         return
 
-    content = "\n================== Output ==================\n"
-    content += '{:<16}:  {:<}\n'.format("Variable", "Value")
-    content += '{:<16}:  {:<}\n'.format("--------", "-----")
+    content_format = "{:<16} : {:<}\n"
+    content = "\n==================== Output ====================\n"
+    content += content_format.format("Variable", "Value")
+    content += content_format.format("-" * 16, "-" * 29)
 
-    for variable, value in output.items():
+    for key, value in info_mapping.items():
+        if isinstance(value, (tuple, collections.deque)):
+            continue
+        elif isinstance(value, (dict, list)):
+            value = json.dumps(value)
 
-        if PYTHON_VERSION == 2:
-            if isinstance(variable, unicode):
-                variable = variable.encode("utf-8")
+        if is_py2:
+            if isinstance(key, unicode):
+                key = key.encode("utf-8")
             if isinstance(value, unicode):
                 value = value.encode("utf-8")
 
-        content += '{:<16}:  {:<}\n'.format(variable, value)
+        content += content_format.format(key, value)
 
-    content += "============================================\n"
+    content += "-" * 48 + "\n"
+    logger.log_info(content)
 
-    logging.debug(content)
 
-def create_scaffold(project_path):
-    logging.info(" Start to create new project: {}".format(project_path))
-
-    if os.path.isdir(project_path):
-        folder_name = os.path.basename(project_path)
-        logging.warning(u" Folder {} exists, please specify a new folder name.".format(folder_name))
+def create_scaffold(project_name):
+    """ create scaffold with specified project name.
+    """
+    if os.path.isdir(project_name):
+        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
         return
+
+    logger.color_print("Start to create new project: {}".format(project_name), "GREEN")
+    logger.color_print("CWD: {}\n".format(os.getcwd()), "BLUE")
 
     def create_path(path, ptype):
         if ptype == "folder":
@@ -367,14 +519,226 @@ def create_scaffold(project_path):
         elif ptype == "file":
             open(path, 'w').close()
 
-        logging.info("\tcreated {}: {}".format(ptype, path))
+        msg = "created {}: {}".format(ptype, path)
+        logger.color_print(msg, "BLUE")
 
     path_list = [
-        (project_path, "folder"),
-        (os.path.join(project_path, "tests"), "folder"),
-        (os.path.join(project_path, "tests", "api"), "folder"),
-        (os.path.join(project_path, "tests", "suite"), "folder"),
-        (os.path.join(project_path, "tests", "testcases"), "folder"),
-        (os.path.join(project_path, "tests", "debugtalk.py"), "file")
+        (project_name, "folder"),
+        (os.path.join(project_name, "api"), "folder"),
+        (os.path.join(project_name, "testcases"), "folder"),
+        (os.path.join(project_name, "testsuites"), "folder"),
+        (os.path.join(project_name, "reports"), "folder"),
+        (os.path.join(project_name, "debugtalk.py"), "file"),
+        (os.path.join(project_name, ".env"), "file")
     ]
     [create_path(p[0], p[1]) for p in path_list]
+
+
+def gen_cartesian_product(*args):
+    """ generate cartesian product for lists
+
+    Args:
+        args (list of list): lists to be generated with cartesian product
+
+    Returns:
+        list: cartesian product in list
+
+    Examples:
+
+        >>> arg1 = [{"a": 1}, {"a": 2}]
+        >>> arg2 = [{"x": 111, "y": 112}, {"x": 121, "y": 122}]
+        >>> args = [arg1, arg2]
+        >>> gen_cartesian_product(*args)
+        >>> # same as below
+        >>> gen_cartesian_product(arg1, arg2)
+            [
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
+            ]
+
+    """
+    if not args:
+        return []
+    elif len(args) == 1:
+        return args[0]
+
+    product_list = []
+    for product_item_tuple in itertools.product(*args):
+        product_item_dict = {}
+        for item in product_item_tuple:
+            product_item_dict.update(item)
+
+        product_list.append(product_item_dict)
+
+    return product_list
+
+
+def validate_json_file(file_list):
+    """ validate JSON testcase format
+    """
+    for json_file in set(file_list):
+        if not json_file.endswith(".json"):
+            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
+            continue
+
+        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
+
+        with io.open(json_file) as stream:
+            try:
+                json.load(stream)
+            except ValueError as e:
+                raise SystemExit(e)
+
+        print("OK")
+
+
+def prettify_json_file(file_list):
+    """ prettify JSON testcase format
+    """
+    for json_file in set(file_list):
+        if not json_file.endswith(".json"):
+            logger.log_warning("Only JSON file format can be prettified, skip: {}".format(json_file))
+            continue
+
+        logger.color_print("Start to prettify JSON file: {}".format(json_file), "GREEN")
+
+        dir_path = os.path.dirname(json_file)
+        file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
+        outfile = os.path.join(dir_path, "{}.pretty.json".format(file_name))
+
+        with io.open(json_file, 'r', encoding='utf-8') as stream:
+            try:
+                obj = json.load(stream)
+            except ValueError as e:
+                raise SystemExit(e)
+
+        with io.open(outfile, 'w', encoding='utf-8') as out:
+            json.dump(obj, out, indent=4, separators=(',', ': '))
+            out.write('\n')
+
+        print("success: {}".format(outfile))
+
+
+def omit_long_data(body, omit_len=512):
+    """ omit too long str/bytes
+    """
+    if not isinstance(body, basestring):
+        return body
+
+    body_len = len(body)
+    if body_len <= omit_len:
+        return body
+
+    omitted_body = body[0:omit_len]
+
+    appendix_str = " ... OMITTED {} CHARACTORS ...".format(body_len - omit_len)
+    if isinstance(body, bytes):
+        appendix_str = appendix_str.encode("utf-8")
+
+    return omitted_body + appendix_str
+
+
+def dump_json_file(json_data, pwd_dir_path, dump_file_name):
+    """ dump json data to file
+    """
+    logs_dir_path = os.path.join(pwd_dir_path, "logs")
+    if not os.path.isdir(logs_dir_path):
+        os.makedirs(logs_dir_path)
+
+    dump_file_path = os.path.join(logs_dir_path, dump_file_name)
+
+    try:
+        with io.open(dump_file_path, 'w', encoding='utf-8') as outfile:
+            if is_py2:
+                outfile.write(
+                    unicode(json.dumps(
+                        json_data,
+                        indent=4,
+                        separators=(',', ':'),
+                        ensure_ascii=False
+                    ))
+                )
+            else:
+                json.dump(
+                    json_data,
+                    outfile,
+                    indent=4,
+                    separators=(',', ':'),
+                    ensure_ascii=False
+                )
+
+        msg = "dump file: {}".format(dump_file_path)
+        logger.color_print(msg, "BLUE")
+
+    except TypeError:
+        msg = "Failed to dump json file: {}".format(dump_file_path)
+        logger.color_print(msg, "RED")
+
+
+def _prepare_dump_info(project_mapping, tag_name):
+    """ prepare dump file info.
+    """
+    test_path = project_mapping.get("test_path") or "tests_mapping"
+    pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
+    file_name, file_suffix = os.path.splitext(os.path.basename(test_path.rstrip("/")))
+    dump_file_name = "{}.{}.json".format(file_name, tag_name)
+
+    return pwd_dir_path, dump_file_name
+
+
+def dump_tests(tests_mapping, tag_name):
+    """ dump loaded/parsed tests data (except functions) to json file.
+        the dumped file is located in PWD/logs folder.
+
+    Args:
+        tests_mapping (dict): data to dump
+        tag_name (str): tag name, loaded/parsed
+
+    """
+    project_mapping = tests_mapping.get("project_mapping", {})
+    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, tag_name)
+
+    tests_to_dump = {
+        "project_mapping": {}
+    }
+
+    for key in project_mapping:
+        if key != "functions":
+            tests_to_dump["project_mapping"][key] = project_mapping[key]
+            continue
+
+        # remove functions in order to dump
+        if project_mapping["functions"]:
+            debugtalk_py_path = os.path.join(pwd_dir_path, "debugtalk.py")
+            tests_to_dump["project_mapping"]["debugtalk.py"] = debugtalk_py_path
+
+    if "api" in tests_mapping:
+        tests_to_dump["api"] = tests_mapping["api"]
+    elif "testcases" in tests_mapping:
+        tests_to_dump["testcases"] = tests_mapping["testcases"]
+    elif "testsuites" in tests_mapping:
+        tests_to_dump["testsuites"] = tests_mapping["testsuites"]
+
+    dump_json_file(tests_to_dump, pwd_dir_path, dump_file_name)
+
+
+def dump_summary(summary, project_mapping):
+    """ dump test result summary to json file.
+    """
+    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, "summary")
+    dump_json_file(summary, pwd_dir_path, dump_file_name)
+
+
+def get_python2_retire_msg():
+    retire_day = datetime(2020, 1, 1)
+    today = datetime.now()
+    left_days = (retire_day - today).days
+
+    if left_days > 0:
+        retire_msg = "Python 2 will retire in {} days, why not move to Python 3?".format(left_days)
+    else:
+        retire_msg = "Python 2 has been retired, you should move to Python 3."
+
+    return retire_msg

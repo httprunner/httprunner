@@ -1,0 +1,18 @@
+name: create user
+variables:
+    user_name: user0
+    user_password: "000000"
+    uid: 9000
+    token: XXX
+request:
+    url: /api/users/$uid
+    method: POST
+    headers:
+        Content-Type: "application/json"
+        device_sn: $device_sn
+        token: $token
+    json:
+        name: $user_name
+        password: $user_password
+validate:
+    - eq: ["status_code", 201]

@@ -1,0 +1,35 @@
+- config:
+    name: basic test with httpbin
+    base_url: ${get_httpbin_server()}
+    setup_hooks:
+        - ${hook_print(setup)}
+    teardown_hooks:
+        - ${hook_print(teardown)}
+
+- test:
+    name: headers
+    request:
+        url: /headers
+        method: GET
+    setup_hooks:
+        - ${setup_hook_add_kwargs($request)}
+        - ${setup_hook_remove_kwargs($request)}
+    teardown_hooks:
+        - ${teardown_hook_sleep_N_secs($response, 1)}
+    validate:
+        - eq: ["status_code", 200]
+        - contained_by: [content.headers.Host, "${get_httpbin_server()}"]
+
+- test:
+    name: alter response
+    request:
+        url: /headers
+        method: GET
+    teardown_hooks:
+        - ${alter_response($response)}
+    validate:
+        - eq: ["status_code", 500]
+        - eq: ["headers.content-type", "html/text"]
+        - eq: [json.headers.Host, "127.0.0.1:8888"]
+        - eq: [content.headers.Host, "127.0.0.1:8888"]
+        - eq: [text.headers.Host, "127.0.0.1:8888"]

@@ -1,246 +1,384 @@
-import logging
+# encoding: utf-8
 
-from httprunner import exception, response, testcase, utils
+from unittest.case import SkipTest
+
+from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
-from httprunner.context import Context
+from httprunner.context import SessionContext
 
 
 class Runner(object):
+    """ Running testcases.
 
-    def __init__(self, http_client_session=None, request_failure_hook=None):
-        self.http_client_session = http_client_session
-        self.context = Context()
-        testcase.load_test_dependencies()
-        self.request_failure_hook = request_failure_hook
-
-    def init_config(self, config_dict, level):
-        """ create/update context variables binds
-        @param (dict) config_dict
-        @param (str) level, "testset" or "testcase"
-        testset:
-            {
-                "name": "smoke testset",
-                "path": "tests/data/demo_testset_variables.yml",
-                "requires": [],         # optional
-                "function_binds": {},   # optional
-                "import_module_items": [],  # optional
-                "variables": [],   # optional
-                "request": {
-                    "base_url": "http://127.0.0.1:5000",
-                    "headers": {
-                        "User-Agent": "iOS/2.8.3"
-                    }
-                }
+    Examples:
+        >>> functions={...}
+        >>> config = {
+                "name": "XXXX",
+                "base_url": "http://127.0.0.1",
+                "verify": False
             }
-        testcase:
-            {
-                "name": "testcase description",
-                "requires": [],         # optional
-                "function_binds": {},   # optional
-                "import_module_items": [],  # optional
-                "variables": [],   # optional
-                "request": {
-                    "url": "/api/get-token",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json"
-                    }
-                },
-                "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
-                }
-            }
-        @param (str) context level, testcase or testset
-        """
-        # convert keys in request headers to lowercase
-        config_dict = utils.lower_config_dict_key(config_dict)
+        >>> runner = Runner(config, functions)
 
-        self.context.init_context(level)
-        self.context.config_context(config_dict, level)
-
-        request_config = config_dict.get('request', {})
-        parsed_request = self.context.get_parsed_request(request_config, level)
-
-        base_url = parsed_request.pop("base_url", None)
-        self.http_client_session = self.http_client_session or HttpSession(base_url)
-
-        return parsed_request
-
-    def _run_test(self, testcase_dict):
-        """ run single testcase.
-        @param (dict) testcase_dict
-            {
-                "name": "testcase description",
-                "times": 3,
-                "requires": [],         # optional, override
-                "function_binds": {},   # optional, override
-                "variables": [],        # optional, override
+        >>> test_dict = {
+                "name": "test description",
+                "variables": [],        # optional
                 "request": {
                     "url": "http://127.0.0.1:5000/api/users/1000",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/json",
-                        "authorization": "$authorization",
-                        "random": "$random"
-                    },
-                    "body": '{"name": "user", "password": "123456"}'
-                },
-                "extract": [], # optional
-                "validate": [],      # optional
-                "setup": [],         # optional
-                "teardown": []       # optional
+                    "method": "GET"
+                }
             }
-        @return True or raise exception during test
+        >>> runner.run_test(test_dict)
+
+    """
+
+    def __init__(self, config, functions, http_client_session=None):
+        """ run testcase or testsuite.
+
+        Args:
+            config (dict): testcase/testsuite config dict
+
+                {
+                    "name": "ABC",
+                    "variables": {},
+                    "setup_hooks", [],
+                    "teardown_hooks", []
+                }
+
+            http_client_session (instance): requests.Session(), or locust.client.Session() instance.
+
         """
-        parsed_request = self.init_config(testcase_dict, level="testcase")
+        base_url = config.get("base_url")
+        self.verify = config.get("verify", True)
+        self.output = config.get("output", [])
+        self.functions = functions
+        self.validation_results = []
+
+        # testcase setup hooks
+        testcase_setup_hooks = config.get("setup_hooks", [])
+        # testcase teardown hooks
+        self.testcase_teardown_hooks = config.get("teardown_hooks", [])
+
+        self.http_client_session = http_client_session or HttpSession(base_url)
+        self.session_context = SessionContext(self.functions)
+
+        if testcase_setup_hooks:
+            self.do_hook_actions(testcase_setup_hooks, "setup")
+
+    def __del__(self):
+        if self.testcase_teardown_hooks:
+            self.do_hook_actions(self.testcase_teardown_hooks, "teardown")
+
+    def __clear_test_data(self):
+        """ clear request and response data
+        """
+        if not isinstance(self.http_client_session, HttpSession):
+            return
+
+        self.validation_results = []
+        self.http_client_session.init_meta_data()
+
+    def __get_test_data(self):
+        """ get request/response data and validate results
+        """
+        if not isinstance(self.http_client_session, HttpSession):
+            return
+
+        meta_data = self.http_client_session.meta_data
+        meta_data["validators"] = self.validation_results
+        return meta_data
+
+    def _handle_skip_feature(self, test_dict):
+        """ handle skip feature for test
+            - skip: skip current test unconditionally
+            - skipIf: skip current test if condition is true
+            - skipUnless: skip current test unless condition is true
+
+        Args:
+            test_dict (dict): test info
+
+        Raises:
+            SkipTest: skip test
+
+        """
+        # TODO: move skip to initialize
+        skip_reason = None
+
+        if "skip" in test_dict:
+            skip_reason = test_dict["skip"]
+
+        elif "skipIf" in test_dict:
+            skip_if_condition = test_dict["skipIf"]
+            if self.session_context.eval_content(skip_if_condition):
+                skip_reason = "{} evaluate to True".format(skip_if_condition)
+
+        elif "skipUnless" in test_dict:
+            skip_unless_condition = test_dict["skipUnless"]
+            if not self.session_context.eval_content(skip_unless_condition):
+                skip_reason = "{} evaluate to False".format(skip_unless_condition)
+
+        if skip_reason:
+            raise SkipTest(skip_reason)
+
+    def do_hook_actions(self, actions, hook_type):
+        """ call hook actions.
+
+        Args:
+            actions (list): each action in actions list maybe in two format.
+
+                format1 (dict): assignment, the value returned by hook function will be assigned to variable.
+                    {"var": "${func()}"}
+                format2 (str): only call hook functions.
+                    ${func()}
+
+            hook_type (enum): setup/teardown
+
+        """
+        logger.log_debug("call {} hook actions.".format(hook_type))
+        for action in actions:
+
+            if isinstance(action, dict) and len(action) == 1:
+                # format 1
+                # {"var": "${func()}"}
+                var_name, hook_content = list(action.items())[0]
+                hook_content_eval = self.session_context.eval_content(hook_content)
+                logger.log_debug(
+                    "assignment with hook: {} = {} => {}".format(
+                        var_name, hook_content, hook_content_eval
+                    )
+                )
+                self.session_context.update_test_variables(
+                    var_name, hook_content_eval
+                )
+            else:
+                # format 2
+                logger.log_debug("call hook function: {}".format(action))
+                # TODO: check hook function if valid
+                self.session_context.eval_content(action)
+
+    def _run_test(self, test_dict):
+        """ run single teststep.
+
+        Args:
+            test_dict (dict): teststep info
+                {
+                    "name": "teststep description",
+                    "skip": "skip this test unconditionally",
+                    "times": 3,
+                    "variables": [],            # optional, override
+                    "request": {
+                        "url": "http://127.0.0.1:5000/api/users/1000",
+                        "method": "POST",
+                        "headers": {
+                            "Content-Type": "application/json",
+                            "authorization": "$authorization",
+                            "random": "$random"
+                        },
+                        "json": {"name": "user", "password": "123456"}
+                    },
+                    "extract": {},              # optional
+                    "validate": [],             # optional
+                    "setup_hooks": [],          # optional
+                    "teardown_hooks": []        # optional
+                }
+
+        Raises:
+            exceptions.ParamsError
+            exceptions.ValidationFailure
+            exceptions.ExtractFailure
+
+        """
+        # clear meta data first to ensure independence for each test
+        self.__clear_test_data()
+
+        # check skip
+        self._handle_skip_feature(test_dict)
+
+        # prepare
+        test_dict = utils.lower_test_dict_keys(test_dict)
+        test_variables = test_dict.get("variables", {})
+        self.session_context.init_test_variables(test_variables)
+
+        # teststep name
+        test_name = test_dict.get("name", "")
+
+        # parse test request
+        raw_request = test_dict.get('request', {})
+        parsed_test_request = self.session_context.eval_content(raw_request)
+        self.session_context.update_test_variables("request", parsed_test_request)
+
+        # setup hooks
+        setup_hooks = test_dict.get("setup_hooks", [])
+        if setup_hooks:
+            self.do_hook_actions(setup_hooks, "setup")
 
         try:
-            url = parsed_request.pop('url')
-            method = parsed_request.pop('method')
-            group_name = parsed_request.pop("group", None)
+            url = parsed_test_request.pop('url')
+            method = parsed_test_request.pop('method')
+            parsed_test_request.setdefault("verify", self.verify)
+            group_name = parsed_test_request.pop("group", None)
         except KeyError:
-            raise exception.ParamsError("URL or METHOD missed!")
+            raise exceptions.ParamsError("URL or METHOD missed!")
 
-        run_times = int(testcase_dict.get("times", 1))
-        extractors = testcase_dict.get("extract", [])
-        validators = testcase_dict.get("validate", [])
-        setup_actions = testcase_dict.get("setup", [])
-        teardown_actions = testcase_dict.get("teardown", [])
+        # TODO: move method validation to json schema
+        valid_methods = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+        if method.upper() not in valid_methods:
+            err_msg = u"Invalid HTTP method! => {}\n".format(method)
+            err_msg += "Available HTTP methods: {}".format("/".join(valid_methods))
+            logger.log_error(err_msg)
+            raise exceptions.ParamsError(err_msg)
 
-        def setup_teardown(actions):
-            for action in actions:
-                self.context.exec_content_functions(action)
+        logger.log_info("{method} {url}".format(method=method, url=url))
+        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
 
-        for _ in range(run_times):
-            setup_teardown(setup_actions)
+        # request
+        resp = self.http_client_session.request(
+            method,
+            url,
+            name=(group_name or test_name),
+            **parsed_test_request
+        )
+        resp_obj = response.ResponseObject(resp)
 
-            resp = self.http_client_session.request(
-                method,
-                url,
-                name=group_name,
-                **parsed_request
-            )
-            resp_obj = response.ResponseObject(resp)
+        # teardown hooks
+        teardown_hooks = test_dict.get("teardown_hooks", [])
+        if teardown_hooks:
+            self.session_context.update_test_variables("response", resp_obj)
+            self.do_hook_actions(teardown_hooks, "teardown")
 
-            extracted_variables_mapping = resp_obj.extract_response(extractors)
-            self.context.bind_extracted_variables(extracted_variables_mapping)
+        # extract
+        extractors = test_dict.get("extract", {})
+        extracted_variables_mapping = resp_obj.extract_response(extractors)
+        self.session_context.update_session_variables(extracted_variables_mapping)
+
+        # validate
+        validators = test_dict.get("validate", [])
+        try:
+            self.session_context.validate(validators, resp_obj)
+
+        except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
+            err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
+
+            # log request
+            err_msg += "====== request details ======\n"
+            err_msg += "url: {}\n".format(url)
+            err_msg += "method: {}\n".format(method)
+            err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
+            for k, v in parsed_test_request.items():
+                v = utils.omit_long_data(v)
+                err_msg += "{}: {}\n".format(k, repr(v))
+
+            err_msg += "\n"
+
+            # log response
+            err_msg += "====== response details ======\n"
+            err_msg += "status_code: {}\n".format(resp_obj.status_code)
+            err_msg += "headers: {}\n".format(resp_obj.headers)
+            err_msg += "body: {}\n".format(repr(resp_obj.text))
+            logger.log_error(err_msg)
+
+            raise
+
+        finally:
+            self.validation_results = self.session_context.validation_results
+
+    def _run_testcase(self, testcase_dict):
+        """ run single testcase.
+        """
+        self.meta_datas = []
+        config = testcase_dict.get("config", {})
+
+        # each teststeps in one testcase (YAML/JSON) share the same session.
+        test_runner = Runner(config, self.functions, self.http_client_session)
+
+        tests = testcase_dict.get("teststeps", [])
+
+        for index, test_dict in enumerate(tests):
+
+            # override current teststep variables with former testcase output variables
+            former_output_variables = self.session_context.test_variables_mapping
+            if former_output_variables:
+                test_dict.setdefault("variables", {})
+                test_dict["variables"].update(former_output_variables)
 
             try:
-                self.context.validate(validators, resp_obj)
-            except (exception.ParamsError, exception.ResponseError, exception.ValidationError):
-                err_msg = u"Exception occured.\n"
-                err_msg += u"HTTP request url: {}\n".format(url)
-                err_msg += u"HTTP request kwargs: {}\n".format(parsed_request)
-                err_msg += u"HTTP response status_code: {}\n".format(resp.status_code)
-                err_msg += u"HTTP response content: \n{}".format(resp.text)
-                logging.error(err_msg)
+                test_runner.run_test(test_dict)
+            except Exception:
+                # log exception request_type and name for locust stat
+                self.exception_request_type = test_runner.exception_request_type
+                self.exception_name = test_runner.exception_name
                 raise
             finally:
-                setup_teardown(teardown_actions)
+                _meta_datas = test_runner.meta_datas
+                self.meta_datas.append(_meta_datas)
 
-        return True
+        self.session_context.update_session_variables(
+            test_runner.extract_output(test_runner.output)
+        )
 
-    def _run_testset(self, testset, variables_mapping=None):
-        """ run single testset, including one or several testcases.
-        @param
-            (dict) testset
+    def run_test(self, test_dict):
+        """ run single teststep of testcase.
+            test_dict may be in 3 types.
+
+        Args:
+            test_dict (dict):
+
+                # teststep
                 {
-                    "name": "testset description",
-                    "config": {
-                        "name": "testset description",
-                        "requires": [],
-                        "function_binds": {},
-                        "variables": [],
-                        "request": {}
-                    },
-                    "testcases": [
-                        {
-                            "name": "testcase description",
-                            "variables": [],    # optional, override
-                            "request": {},
-                            "extract": {},      # optional
-                            "validate": {}      # optional
-                        },
-                        testcase12
+                    "name": "teststep description",
+                    "variables": [],        # optional
+                    "request": {
+                        "url": "http://127.0.0.1:5000/api/users/1000",
+                        "method": "GET"
+                    }
+                }
+
+                # nested testcase
+                {
+                    "config": {...},
+                    "teststeps": [
+                        {...},
+                        {...}
                     ]
                 }
-            (dict) variables_mapping:
-                passed in variables mapping, it will override variables in config block
 
-        @return (dict) test result of testset
-            {
-                "success": True,
-                "output": {}    # variables mapping
-            }
+                # TODO: function
+                {
+                    "name": "exec function",
+                    "function": "${func()}"
+                }
+
         """
-        success = True
-        config_dict = testset.get("config", {})
-
-        variables = config_dict.get("variables", [])
-        variables_mapping = variables_mapping or {}
-        config_dict["variables"] = utils.override_variables_binds(variables, variables_mapping)
-
-        self.init_config(config_dict, level="testset")
-        testcases = testset.get("testcases", [])
-        for testcase_dict in testcases:
+        self.meta_datas = None
+        if "teststeps" in test_dict:
+            # nested testcase
+            self._run_testcase(test_dict)
+        else:
+            # api
             try:
-                self._run_test(testcase_dict)
-            except exception.MyBaseError as ex:
-                success = False
-                if self.request_failure_hook:
-                    self.request_failure_hook.fire(
-                        request_type=testcase_dict.get("request", {}).get("method"),
-                        name=testcase_dict.get("request", {}).get("url"),
-                        response_time=0,
-                        exception=ex
-                    )
-                else:
-                    logging.exception(
-                        "Exception occured in testcase: {}".format(testcase_dict.get("name")))
-                break
+                self._run_test(test_dict)
+            except Exception:
+                # log exception request_type and name for locust stat
+                self.exception_request_type = test_dict["request"]["method"]
+                self.exception_name = test_dict.get("name")
+                raise
+            finally:
+                self.meta_datas = self.__get_test_data()
 
-        output_variables_list = config_dict.get("output", [])
-
-        return {
-            "success": success,
-            "output": self.generate_output(output_variables_list)
-        }
-
-    def run(self, path, mapping=None):
-        """ run specified testset path or folder path.
-        @param
-            path: path could be in several type
-                - absolute/relative file path
-                - absolute/relative folder path
-                - list/set container with file(s) and/or folder(s)
-            (dict) mapping:
-                passed in variables mapping, it will override variables in config block
+    def extract_output(self, output_variables_list):
+        """ extract output variables
         """
-        success = True
-        mapping = mapping or {}
+        variables_mapping = self.session_context.session_variables_mapping
+
         output = {}
-        testsets = testcase.load_testcases_by_path(path)
-        for testset in testsets:
-            try:
-                result = self._run_testset(testset, mapping)
-                assert result["success"]
-                output.update(result["output"])
-            except AssertionError:
-                success = False
+        for variable in output_variables_list:
+            if variable not in variables_mapping:
+                logger.log_warning(
+                    "variable '{}' can not be found in variables mapping, failed to output!"\
+                        .format(variable)
+                )
+                continue
 
-        return {
-            "success": success,
-            "output": output
-        }
+            output[variable] = variables_mapping[variable]
 
-    def generate_output(self, output_variables_list):
-        """ generate and print output
-        """
-        variables_mapping = self.context.get_testcase_variables_mapping()
-        output = {
-            variable: variables_mapping[variable]
-            for variable in output_variables_list
-        }
-        utils.print_output(output)
-
+        utils.print_info(output)
         return output

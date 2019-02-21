@@ -1,0 +1,146 @@
+- config:
+    name: "user management testcase."
+    variables:
+        user_agent: 'iOS/10.3'
+        device_sn: ${gen_random_string(15)}
+        os_platform: 'ios'
+        app_version: '2.8.6'
+    base_url: ${get_base_url()}
+    output:
+        - token
+
+- test:
+    name: get token with $user_agent, $app_version
+    api: api/get_token.yml
+    extract:
+        - token: content.token
+    validate:
+        - "eq": ["status_code", 200]
+        - "len_eq": ["content.token", 16]
+        - "contains": [{"a": 1, "b": 2}, "b"]
+
+- test:
+    name: reset all users
+    api: api/reset_all.yml
+    variables:
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+
+- test:
+    name: get user that does not exist
+    api: api/get_user.yml
+    variables:
+        uid: 1000
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 404}
+        - {"check": "content.success", "expect": false}
+
+- test:
+    name: create user which does not exist
+    variables:
+        uid: 1000
+        user_name: "user1"
+        user_password: "123456"
+        token: $token
+    api: api/create_user.yml
+    validate:
+        - {"check": "status_code", "expect": 201}
+        - {"check": "content.success", "expect": true}
+
+- test:
+    name: get user that has been created
+    api: api/get_user.yml
+    variables:
+        uid: 1000
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+        - {"check": "content.data.password", "expect": "123456"}
+
+- test:
+    name: create user which exists
+    variables:
+        uid: 1000
+        user_name: "user1"
+        user_password: "123456"
+        token: $token
+    api: api/create_user.yml
+    validate:
+        - {"check": "status_code", "expect": 500}
+        - {"check": "content.success", "expect": false}
+
+- test:
+    name: update user which exists
+    variables:
+        uid: 1000
+        user_name: "user1"
+        user_password: "654321"
+        token: $token
+    api: api/update_user.yml
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+
+- test:
+    name: get user that has been updated
+    api: api/get_user.yml
+    variables:
+        uid: 1000
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+        - {"check": "content.data.password", "expect": "654321"}
+
+- test:
+    name: get users
+    api: api/get_users.yml
+    variables:
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.count", "expect": 1}
+
+- test:
+    name: delete user that exists
+    api: api/delete_user.yml
+    variables:
+        uid: 1000
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.success", "expect": true}
+
+- test:
+    name: get users
+    api: api/get_users.yml
+    variables:
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.count", "expect": 0}
+
+- test:
+    name: create user which has been deleted
+    variables:
+        uid: 1000
+        user_name: "user1"
+        user_password: "123456"
+        token: $token
+    api: api/create_user.yml
+    validate:
+        - {"check": "status_code", "expect": 201}
+        - {"check": "content.success", "expect": true}
+
+- test:
+    name: get users
+    api: api/get_users.yml
+    variables:
+        token: $token
+    validate:
+        - {"check": "status_code", "expect": 200}
+        - {"check": "content.count", "expect": 1}

@@ -1,26 +1,16 @@
-import json
-import logging
-import re
+# encoding: utf-8
+
 import time
 
 import requests
 import urllib3
-from httprunner.exception import ParamsError
+from httprunner import logger
+from httprunner.utils import build_url, lower_dict_keys, omit_long_data
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-absolute_http_url_regexp = re.compile(r"^https?://", re.I)
-
-
-def prepare_kwargs(method, kwargs):
-    if method == "POST":
-        # if request content-type is application/json, request data should be dumped
-        content_type = kwargs.get("headers", {}).get("content-type", "")
-        if content_type.startswith("application/json") and "data" in kwargs:
-            kwargs["data"] = json.dumps(kwargs["data"])
 
 
 class ApiResponse(Response):
@@ -47,15 +37,98 @@ class HttpSession(requests.Session):
     def __init__(self, base_url=None, *args, **kwargs):
         super(HttpSession, self).__init__(*args, **kwargs)
         self.base_url = base_url if base_url else ""
+        self.init_meta_data()
 
-    def _build_url(self, path):
-        """ prepend url with hostname unless it's already an absolute URL """
-        if absolute_http_url_regexp.match(path):
-            return path
-        elif self.base_url:
-            return "%s%s" % (self.base_url, path)
+    def init_meta_data(self):
+        """ initialize meta_data, it will store detail data of request and response
+        """
+        self.meta_data = {
+            "name": "",
+            "data": [
+                {
+                    "request": {
+                        "url": "N/A",
+                        "method": "N/A",
+                        "headers": {}
+                    },
+                    "response": {
+                        "status_code": "N/A",
+                        "headers": {},
+                        "encoding": None,
+                        "content_type": ""
+                    }
+                }
+            ],
+            "stat": {
+                "content_size": "N/A",
+                "response_time_ms": "N/A",
+                "elapsed_ms": "N/A",
+            }
+        }
+
+    def get_req_resp_record(self, resp_obj):
+        """ get request and response info from Response() object.
+        """
+        def log_print(req_resp_dict, r_type):
+            msg = "\n================== {} details ==================\n".format(r_type)
+            for key, value in req_resp_dict[r_type].items():
+                msg += "{:<16} : {}\n".format(key, repr(value))
+            logger.log_debug(msg)
+
+        req_resp_dict = {
+            "request": {},
+            "response": {}
+        }
+
+        # record actual request info
+        req_resp_dict["request"]["url"] = resp_obj.request.url
+        req_resp_dict["request"]["method"] = resp_obj.request.method
+        req_resp_dict["request"]["headers"] = dict(resp_obj.request.headers)
+
+        request_body = resp_obj.request.body
+        if request_body:
+            request_content_type = lower_dict_keys(
+                req_resp_dict["request"]["headers"]
+            ).get("content-type")
+            if request_content_type and "multipart/form-data" in request_content_type:
+                # upload file type
+                req_resp_dict["request"]["body"] = "upload file stream (OMITTED)"
+            else:
+                req_resp_dict["request"]["body"] = request_body
+
+        # log request details in debug mode
+        log_print(req_resp_dict, "request")
+
+        # record response info
+        req_resp_dict["response"]["ok"] = resp_obj.ok
+        req_resp_dict["response"]["url"] = resp_obj.url
+        req_resp_dict["response"]["status_code"] = resp_obj.status_code
+        req_resp_dict["response"]["reason"] = resp_obj.reason
+        req_resp_dict["response"]["cookies"] = resp_obj.cookies or {}
+        req_resp_dict["response"]["encoding"] = resp_obj.encoding
+        resp_headers = dict(resp_obj.headers)
+        req_resp_dict["response"]["headers"] = resp_headers
+
+        lower_resp_headers = lower_dict_keys(resp_headers)
+        content_type = lower_resp_headers.get("content-type", "")
+        req_resp_dict["response"]["content_type"] = content_type
+
+        if "image" in content_type:
+            # response is image type, record bytes content only
+            req_resp_dict["response"]["content"] = resp_obj.content
         else:
-            raise ParamsError("base url missed!")
+            try:
+                # try to record json data
+                req_resp_dict["response"]["json"] = resp_obj.json()
+            except ValueError:
+                # only record at most 512 text charactors
+                resp_text = resp_obj.text
+                req_resp_dict["response"]["text"] = omit_long_data(resp_text)
+
+        # log response details in debug mode
+        log_print(req_resp_dict, "response")
+
+        return req_resp_dict
 
     def request(self, method, url, name=None, **kwargs):
         """
@@ -96,58 +169,57 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
+        self.init_meta_data()
+
+        # record test name
+        self.meta_data["name"] = name
+
+        # record original request info
+        self.meta_data["data"][0]["request"]["method"] = method
+        self.meta_data["data"][0]["request"]["url"] = url
+        kwargs.setdefault("timeout", 120)
+        self.meta_data["data"][0]["request"].update(kwargs)
 
         # prepend url with hostname unless it's already an absolute URL
-        url = self._build_url(url)
-        logging.info(" Start to {method} {url}".format(method=method, url=url))
-        logging.debug(" kwargs: {kwargs}".format(kwargs=kwargs))
-        # store meta data that is used when reporting the request to locust's statistics
-        request_meta = {}
+        url = build_url(self.base_url, url)
 
-        # set up pre_request hook for attaching meta data to the request object
-        request_meta["method"] = method
-        request_meta["start_time"] = time.time()
-
-        if "httpntlmauth" in kwargs:
-            from requests_ntlm import HttpNtlmAuth
-            auth_account = kwargs.pop("httpntlmauth")
-            kwargs["auth"] = HttpNtlmAuth(
-                auth_account["username"], auth_account["password"])
-
-        kwargs.setdefault("timeout", 120)
-
+        start_timestamp = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
-        request_meta["url"] = (response.history and response.history[0] or response)\
-            .request.path_url
-
-        # record the consumed time
-        request_meta["response_time"] = int((time.time() - request_meta["start_time"]) * 1000)
+        response_time_ms = round((time.time() - start_timestamp) * 1000, 2)
 
         # get the length of the content, but if the argument stream is set to True, we take
         # the size from the content-length header, in order to not trigger fetching of the body
         if kwargs.get("stream", False):
-            request_meta["content_size"] = int(response.headers.get("content-length") or 0)
+            content_size = int(dict(response.headers).get("content-length") or 0)
         else:
-            request_meta["content_size"] = len(response.content or "")
+            content_size = len(response.content or "")
 
-        request_meta["request_headers"] = response.request.headers
-        request_meta["request_body"] = response.request.body
-        request_meta["status_code"] = response.status_code
-        request_meta["response_headers"] = response.headers
-        request_meta["response_content"] = response.content
+        # record the consumed time
+        self.meta_data["stat"] = {
+            "response_time_ms": response_time_ms,
+            "elapsed_ms": response.elapsed.microseconds / 1000.0,
+            "content_size": content_size
+        }
 
-        logging.debug(" response: {response}".format(response=request_meta))
+        # record request and response histories, include 30X redirection
+        response_list = response.history + [response]
+        self.meta_data["data"] = [
+            self.get_req_resp_record(resp_obj)
+            for resp_obj in response_list
+        ]
 
         try:
             response.raise_for_status()
         except RequestException as e:
-            logging.error(u" Failed to {method} {url}! exception msg: {exception}".format(
-                method=method, url=url, exception=str(e)))
+            logger.log_error(u"{exception}".format(exception=str(e)))
         else:
-            logging.info(
-                """ status_code: {}, response_time: {} ms, response_length: {} bytes"""\
-                .format(request_meta["status_code"], request_meta["response_time"], \
-                    request_meta["content_size"]))
+            logger.log_info(
+                """status_code: {}, response_time(ms): {} ms, response_length: {} bytes\n""".format(
+                    response.status_code,
+                    response_time_ms,
+                    content_size
+                )
+            )
 
         return response
 
@@ -157,7 +229,10 @@ class HttpSession(requests.Session):
         Safe mode has been removed from requests 1.x.
         """
         try:
-            prepare_kwargs(method, kwargs)
+            msg = "processed request:\n"
+            msg += "> {method} {url}\n".format(method=method, url=url)
+            msg += "> kwargs: {kwargs}".format(kwargs=kwargs)
+            logger.log_debug(msg)
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise

@@ -1,47 +1,21 @@
+import io
 import os
 import shutil
-from collections import OrderedDict
 
-from httprunner import exception, utils
+from httprunner import exceptions, loader, parser, utils
 from tests.base import ApiServerUnittest
 
 
 class TestUtils(ApiServerUnittest):
 
-    def test_remove_prefix(self):
-        full_url = "http://debugtalk.com/post/123"
-        prefix = "http://debugtalk.com"
-        self.assertEqual(
-            utils.remove_prefix(full_url, prefix),
-            "/post/123"
-        )
-
-    def test_load_folder_files(self):
-        folder = os.path.join(os.getcwd(), 'tests')
-        file1 = os.path.join(os.getcwd(), 'tests', 'test_utils.py')
-        file2 = os.path.join(os.getcwd(), 'tests', 'data', 'demo_binds.yml')
-
-        files = utils.load_folder_files(folder, recursive=False)
-        self.assertNotIn(file2, files)
-
-        files = utils.load_folder_files(folder)
-        self.assertIn(file2, files)
-        self.assertNotIn(file1, files)
-
-        files_1 = utils.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
-        self.assertEqual(files_1[0], api_file)
-
-        files_2 = utils.load_folder_files(folder)
-        api_file = os.path.join(os.getcwd(), 'tests', 'api', 'demo.yml')
-        self.assertEqual(files_2[0], api_file)
-        self.assertEqual(len(files_1), len(files_2))
-
-        files = utils.load_folder_files("not_existed_foulder", recursive=False)
-        self.assertEqual([], files)
-
-        files = utils.load_folder_files(file2, recursive=False)
-        self.assertEqual([], files)
+    def test_set_os_environ(self):
+        self.assertNotIn("abc", os.environ)
+        variables_mapping = {
+            "abc": "123"
+        }
+        utils.set_os_environ(variables_mapping)
+        self.assertIn("abc", os.environ)
+        self.assertEqual(os.environ["abc"], "123")
 
     def test_query_json(self):
         json_content = {
@@ -60,11 +34,11 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 3)
 
         query = "ids.str_key"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exceptions.ExtractFailure):
             utils.query_json(json_content, query)
 
         query = "ids.5"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exceptions.ExtractFailure):
             utils.query_json(json_content, query)
 
         query = "person.age"
@@ -72,7 +46,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, 29)
 
         query = "person.not_exist_key"
-        with self.assertRaises(exception.ParseResponseError):
+        with self.assertRaises(exceptions.ExtractFailure):
             utils.query_json(json_content, query)
 
         query = "person.cities.0"
@@ -83,16 +57,9 @@ class TestUtils(ApiServerUnittest):
         result = utils.query_json(json_content, query)
         self.assertEqual(result, "Leo")
 
-    def test_query_json_content_is_text(self):
-        json_content = ""
-        query = "key"
-        with self.assertRaises(exception.ResponseError):
-            utils.query_json(json_content, query)
-
-        json_content = "<html><body>content</body></html>"
-        query = "key"
-        with self.assertRaises(exception.ParseResponseError):
-            utils.query_json(json_content, query)
+        query = "person.name.first_name.0"
+        result = utils.query_json(json_content, query)
+        self.assertEqual(result, "L")
 
     def test_get_uniform_comparator(self):
         self.assertEqual(utils.get_uniform_comparator("eq"), "equals")
@@ -123,9 +90,9 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(utils.get_uniform_comparator("count_le"), "length_less_than_or_equals")
         self.assertEqual(utils.get_uniform_comparator("count_less_than_or_equals"), "length_less_than_or_equals")
 
-    def test_validators(self):
-        imported_module = utils.get_imported_module("httprunner.built_in")
-        functions_mapping = utils.filter_module(imported_module, "function")
+    def current_validators(self):
+        from httprunner import built_in
+        functions_mapping = loader.load_module_functions(built_in)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
@@ -164,6 +131,11 @@ class TestUtils(ApiServerUnittest):
 
         functions_mapping["type_match"](580509390, int)
         functions_mapping["type_match"](580509390, "int")
+        functions_mapping["type_match"]([], list)
+        functions_mapping["type_match"]([], "list")
+        functions_mapping["type_match"]([1], "list")
+        functions_mapping["type_match"]({}, "dict")
+        functions_mapping["type_match"]({"a": 1}, "dict")
 
     def test_deep_update_dict(self):
         origin_dict = {'a': 1, 'b': {'c': 3, 'd': 4}, 'f': 6, 'h': 123}
@@ -173,74 +145,6 @@ class TestUtils(ApiServerUnittest):
             updated_dict,
             {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7, 'h': 123}
         )
-
-    def test_get_imported_module(self):
-        imported_module = utils.get_imported_module("os")
-        self.assertIn("walk", dir(imported_module))
-
-    def test_filter_module_functions(self):
-        imported_module = utils.get_imported_module("httprunner.utils")
-        self.assertIn("PYTHON_VERSION", dir(imported_module))
-
-        functions_dict = utils.filter_module(imported_module, "function")
-        self.assertIn("filter_module", functions_dict)
-        self.assertNotIn("PYTHON_VERSION", functions_dict)
-
-    def test_get_imported_module_from_file(self):
-        imported_module = utils.get_imported_module_from_file("tests/data/debugtalk.py")
-        self.assertIn("gen_md5", dir(imported_module))
-
-        functions_dict = utils.filter_module(imported_module, "function")
-        self.assertIn("gen_md5", functions_dict)
-        self.assertNotIn("PYTHON_VERSION", functions_dict)
-
-        with self.assertRaises(exception.FileNotFoundError):
-            utils.get_imported_module_from_file("tests/data/debugtalk2.py")
-
-    def test_search_conf_function(self):
-        gen_md5 = utils.search_conf_item("tests/data/demo_binds.yml", "function", "gen_md5")
-        self.assertTrue(utils.is_function(("gen_md5", gen_md5)))
-        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
-
-        gen_md5 = utils.search_conf_item("tests/data/subfolder/test.yml", "function", "gen_md5")
-        self.assertTrue(utils.is_function(("_", gen_md5)))
-        self.assertEqual(gen_md5("abc"), "900150983cd24fb0d6963f7d28e17f72")
-
-        with self.assertRaises(exception.FunctionNotFound):
-            utils.search_conf_item("tests/data/subfolder/test.yml", "function", "func_not_exist")
-
-        with self.assertRaises(exception.FunctionNotFound):
-            utils.search_conf_item("/user/local/bin", "function", "gen_md5")
-
-    def test_search_conf_variable(self):
-        SECRET_KEY = utils.search_conf_item("tests/data/demo_binds.yml", "variable", "SECRET_KEY")
-        self.assertTrue(utils.is_variable(("SECRET_KEY", SECRET_KEY)))
-        self.assertEqual(SECRET_KEY, "DebugTalk")
-
-        SECRET_KEY = utils.search_conf_item("tests/data/subfolder/test.yml", "variable", "SECRET_KEY")
-        self.assertTrue(utils.is_variable(("SECRET_KEY", SECRET_KEY)))
-        self.assertEqual(SECRET_KEY, "DebugTalk")
-
-        with self.assertRaises(exception.VariableNotFound):
-            utils.search_conf_item("tests/data/subfolder/test.yml", "variable", "variable_not_exist")
-
-        with self.assertRaises(exception.VariableNotFound):
-            utils.search_conf_item("/user/local/bin", "variable", "SECRET_KEY")
-
-    def test_is_variable(self):
-        var1 = 123
-        var2 = "abc"
-        self.assertTrue(utils.is_variable(("var1", var1)))
-        self.assertTrue(utils.is_variable(("var2", var2)))
-
-        __var = 123
-        self.assertFalse(utils.is_variable(("__var", __var)))
-
-        func = lambda x: x + 1
-        self.assertFalse(utils.is_variable(("func", func)))
-
-        self.assertFalse(utils.is_variable(("os", os)))
-        self.assertFalse(utils.is_variable(("utils", utils)))
 
     def test_handle_config_key_case(self):
         origin_dict = {
@@ -254,7 +158,7 @@ class TestUtils(ApiServerUnittest):
                 }
             }
         }
-        new_dict = utils.lower_config_dict_key(origin_dict)
+        new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("name", new_dict)
         self.assertIn("request", new_dict)
         self.assertIn("method", new_dict["request"])
@@ -266,7 +170,7 @@ class TestUtils(ApiServerUnittest):
             "Name": "test",
             "Request": "$default_request"
         }
-        new_dict = utils.lower_config_dict_key(origin_dict)
+        new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("$default_request", new_dict["request"])
 
     def test_lower_dict_keys(self):
@@ -292,58 +196,154 @@ class TestUtils(ApiServerUnittest):
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertEqual(None, request_dict)
 
-    def test_convert_to_order_dict(self):
+    def test_ensure_mapping_format(self):
         map_list = [
             {"a": 1},
             {"b": 2}
         ]
-        ordered_dict = utils.convert_to_order_dict(map_list)
+        ordered_dict = utils.ensure_mapping_format(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
 
-    def test_update_ordered_dict(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
+    def test_extend_validators(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
         ]
-        ordered_dict = utils.convert_to_order_dict(map_list)
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.update_ordered_dict(ordered_dict, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
-
-    def test_override_variables_binds(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
         ]
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_variables_binds(map_list, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
+        def_validators = [
+            parser.parse_validator(validator)
+            for validator in def_validators
+        ]
+        ref_validators = [
+            parser.parse_validator(validator)
+            for validator in current_validators
+        ]
 
-        map_list = OrderedDict(
-            {
-                "a": 1,
-                "b": 2
-            }
+        extended_validators = utils.extend_validators(def_validators, ref_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            extended_validators
         )
-        override_mapping = {"a": 3, "c": 4}
-        new_dict = utils.override_variables_binds(map_list, override_mapping)
-        self.assertEqual(3, new_dict["a"])
-        self.assertEqual(4, new_dict["c"])
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "len_eq"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "len_eq"},
+            extended_validators
+        )
 
-        map_list = "invalid"
-        override_mapping = {"a": 3, "c": 4}
-        with self.assertRaises(exception.ParamsError):
-            utils.override_variables_binds(map_list, override_mapping)
+    def test_extend_validators_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+        def_validators = [
+            parser.parse_validator(validator)
+            for validator in def_validators
+        ]
+        ref_validators = [
+            parser.parse_validator(validator)
+            for validator in current_validators
+        ]
+
+        extended_validators = utils.extend_validators(def_validators, ref_validators)
+        self.assertEqual(len(extended_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'eq'}, extended_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'eq'}, extended_validators)
+
+    def test_extend_variables(self):
+        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        override_variables = [{"var1": "val111"}, {"var3": "val3"}]
+        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        self.assertEqual(extended_variables_mapping["var1"], "val111")
+        self.assertEqual(extended_variables_mapping["var2"], "val2")
+        self.assertEqual(extended_variables_mapping["var3"], "val3")
+
+    def test_extend_variables_fix(self):
+        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
+        override_variables = {}
+        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        self.assertEqual(extended_variables_mapping["var1"], "val1")
+
+    def test_deepcopy_dict(self):
+        data = {
+            'a': 1,
+            'b': [2, 4],
+            'c': lambda x: x+1,
+            'd': open('LICENSE'),
+            'f': {
+                'f1': {'a1': 2},
+                'f2': io.open('LICENSE', 'rb'),
+            }
+        }
+        new_data = utils.deepcopy_dict(data)
+        data["a"] = 0
+        self.assertEqual(new_data["a"], 1)
+        data["f"]["f1"] = 123
+        self.assertEqual(new_data["f"]["f1"], {'a1': 2})
+        self.assertNotEqual(id(new_data["b"]), id(data["b"]))
+        self.assertEqual(id(new_data["c"]), id(data["c"]))
+        # self.assertEqual(id(new_data["d"]), id(data["d"]))
 
     def test_create_scaffold(self):
-        project_path = os.path.join(os.getcwd(), "projectABC")
-        utils.create_scaffold(project_path)
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "api")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "suite")))
-        self.assertTrue(os.path.isdir(os.path.join(project_path, "tests", "testcases")))
-        self.assertTrue(os.path.isfile(os.path.join(project_path, "tests", "debugtalk.py")))
-        shutil.rmtree(project_path)
+        project_name = "projectABC"
+        utils.create_scaffold(project_name)
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "api")))
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "testcases")))
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "testsuites")))
+        self.assertTrue(os.path.isdir(os.path.join(project_name, "reports")))
+        self.assertTrue(os.path.isfile(os.path.join(project_name, "debugtalk.py")))
+        self.assertTrue(os.path.isfile(os.path.join(project_name, ".env")))
+        shutil.rmtree(project_name)
+
+    def test_cartesian_product_one(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        ]
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        )
+
+    def test_cartesian_product_multiple(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ],
+            [
+                {"x": 111, "y": 112},
+                {"x": 121, "y": 122}
+            ]
+        ]
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
+            ]
+        )
+
+    def test_cartesian_product_empty(self):
+        parameters_content_list = []
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(product_list, [])

@@ -1,0 +1,10 @@
+
+name: 302 redirect
+request:
+    url: https://httpbin.org/redirect-to
+    params:
+      url: https://debugtalk.com
+      status_code: 302
+    method: GET
+validate:
+    - eq: ["status_code", 200]
