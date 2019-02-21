@@ -506,7 +506,7 @@ def parse_string_variables(content, variables_mapping, functions_mapping):
                 functions_mapping,
                 raise_if_variable_not_found=False
             )
-
+            variables_mapping[variable_name] = parsed_variable_value
         # TODO: replace variable label from $var to {{var}}
         if "${}".format(variable_name) == content:
             # content is a variable
@@ -759,13 +759,15 @@ def __parse_config(config, project_mapping):
 
     # parse config variables
     parsed_config_variables = {}
-    for key, value in raw_config_variables_mapping.items():
+
+    for key in raw_config_variables_mapping:
         parsed_value = parse_data(
-            value,
+            raw_config_variables_mapping[key],
             raw_config_variables_mapping,
             functions,
             raise_if_variable_not_found=False
         )
+        raw_config_variables_mapping[key] = parsed_value
         parsed_config_variables[key] = parsed_value
 
     if parsed_config_variables:
@@ -823,12 +825,22 @@ def __parse_testcase_tests(tests, config, project_mapping):
             test_dict.pop("variables", {}),
             config_variables
         )
-        test_dict["variables"] = parse_data(
-            test_dict["variables"],
-            test_dict["variables"],
-            functions,
-            raise_if_variable_not_found=False
-        )
+
+        for key in test_dict["variables"]:
+            parsed_key = parse_data(
+                key,
+                test_dict["variables"],
+                functions,
+                raise_if_variable_not_found=False
+            )
+            parsed_value = parse_data(
+                test_dict["variables"][key],
+                test_dict["variables"],
+                functions,
+                raise_if_variable_not_found=False
+            )
+            if parsed_key in test_dict["variables"]:
+                test_dict["variables"][parsed_key] = parsed_value
 
         # parse test_dict name
         test_dict["name"] = parse_data(
@@ -974,15 +986,17 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
 
         # parse config variables
         parsed_config_variables = {}
-        for key, value in parsed_testcase_config_variables.items():
+
+        for key in parsed_testcase_config_variables:
             try:
                 parsed_value = parse_data(
-                    value,
+                    parsed_testcase_config_variables[key],
                     parsed_testcase_config_variables,
                     functions
                 )
             except exceptions.VariableNotFound:
                 pass
+            parsed_testcase_config_variables[key] = parsed_value
             parsed_config_variables[key] = parsed_value
 
         if parsed_config_variables:

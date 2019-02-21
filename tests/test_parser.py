@@ -452,6 +452,7 @@ class TestParser(unittest.TestCase):
         test_dict1 = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict1["variables"]["var_c"], 3)
         self.assertEqual(test_dict1["variables"]["PROJECT_KEY"], "ABCDEFGH")
+        self.assertEqual(test_dict1["variables"]["var_d"], test_dict1["variables"]["var_e"])
         # TODO: parameters
         # self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '1230')
@@ -612,11 +613,12 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parsed_testcase["num4"], "${sum_two($num0, 5)}")
 
     def test_parse_tests_variable_with_function(self):
-        from tests.debugtalk import sum_two
+        from tests.debugtalk import sum_two, gen_random_string
         tests_mapping = {
             "project_mapping": {
                 "functions": {
-                    "sum_two": sum_two
+                    "sum_two": sum_two,
+                    "gen_random_string": gen_random_string
                 }
             },
             'testcases': [
@@ -625,7 +627,9 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
-                            "host1": "https://debugtalk.com"
+                            "host1": "https://debugtalk.com",
+                            "var_a": "${gen_random_string(5)}",
+                            "var_b": "$var_a"
                         }
                     },
                     "teststeps": [
@@ -636,7 +640,9 @@ class TestParser(unittest.TestCase):
                                 "host2": "https://httprunner.org",
                                 "num3": "${sum_two($num2, 4)}",
                                 "num2": "${sum_two($num1, 3)}",
-                                "num1": "${sum_two(1, 2)}"
+                                "num1": "${sum_two(1, 2)}",
+                                "str1": "${gen_random_string(5)}",
+                                "str2": "$str1"
                             },
                             'request': {
                                 'url': '/api1/?num1=$num1&num2=$num2&num3=$num3',
@@ -651,6 +657,7 @@ class TestParser(unittest.TestCase):
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
         self.assertEqual(test_dict["variables"]["num3"], 10)
         self.assertEqual(test_dict["variables"]["num2"], 6)
+        self.assertEqual(test_dict["variables"]["str1"], test_dict["variables"]["str2"])
         self.assertEqual(
             test_dict["request"]["url"],
             "https://httprunner.org/api1/?num1=3&num2=6&num3=10"
