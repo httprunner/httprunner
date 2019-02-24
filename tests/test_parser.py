@@ -732,6 +732,77 @@ class TestParser(unittest.TestCase):
         self.assertEqual(test_dict["request"]["url"], "https://debugtalk.com/api1")
         self.assertEqual(test_dict["request"]["verify"], True)
 
+    def test_parse_tests_verify_config_set(self):
+        """ verify priority: test_dict > config
+        """
+        tests_mapping = {
+            'testcases': [
+                {
+                    "config": {
+                        'name': 'bugfix verify',
+                        "base_url": "https://httpbin.org/",
+                        "verify": False
+                    },
+                    "teststeps": [
+                        {
+                            'name': 'testcase1',
+                            'request': {'url': '/headers', 'method': 'GET'}
+                        }
+                    ]
+                }
+            ]
+        }
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        self.assertEqual(test_dict["request"]["verify"], False)
+
+    def test_parse_tests_verify_config_unset(self):
+        """ verify priority: test_dict > config
+        """
+        tests_mapping = {
+            'testcases': [
+                {
+                    "config": {
+                        'name': 'bugfix verify',
+                        "base_url": "https://httpbin.org/",
+                    },
+                    "teststeps": [
+                        {
+                            'name': 'testcase1',
+                            'request': {'url': '/headers', 'method': 'GET'}
+                        }
+                    ]
+                }
+            ]
+        }
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        self.assertEqual(test_dict["request"]["verify"], True)
+
+    def test_parse_tests_verify_step_set_false(self):
+        """ verify priority: test_dict > config
+        """
+        tests_mapping = {
+            'testcases': [
+                {
+                    "config": {
+                        'name': 'bugfix verify',
+                        "base_url": "https://httpbin.org/",
+                        "verify": True
+                    },
+                    "teststeps": [
+                        {
+                            'name': 'testcase1',
+                            'request': {'url': '/headers', 'method': 'GET', "verify": False}
+                        }
+                    ]
+                }
+            ]
+        }
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        self.assertEqual(test_dict["request"]["verify"], False)
+
     def test_parse_environ(self):
         os.environ["PROJECT_KEY"] = "ABCDEFGH"
         content = {

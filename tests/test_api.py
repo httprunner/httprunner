@@ -491,6 +491,10 @@ class TestApi(ApiServerUnittest):
         self.assertNotIn("api_def", test_dict1)
         self.assertEqual(test_dict1["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
         self.assertEqual(test_dict1["request"]["url"], "http://127.0.0.1:5000/api/get-token")
+        self.assertEqual(test_dict1["request"]["verify"], False)
+
+        test_dict2 = parsed_testcases[0]["teststeps"][1]
+        self.assertEqual(test_dict2["request"]["verify"], False)
 
     def test_testcase_add_tests(self):
         testcase_path = "tests/testcases/setup.yml"
@@ -505,6 +509,22 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(teststeps[0]["name"], "get token (setup)")
         self.assertEqual(teststeps[0]["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
         self.assertIn("api", teststeps[0])
+
+    def test_testcase_complex_verify(self):
+        testcase_path = "tests/testcases/create_and_check.yml"
+        tests_mapping = loader.load_tests(testcase_path)
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        teststeps = parsed_tests_mapping["testcases"][0]["teststeps"]
+
+        # testcases/setup.yml
+        teststep1 = teststeps[0]
+        self.assertEqual(teststep1["teststeps"][0]["request"]["verify"], False)
+        self.assertEqual(teststep1["teststeps"][1]["request"]["verify"], False)
+
+        # testcases/create_and_check.yml teststep 2/3/4
+        self.assertEqual(teststeps[1]["request"]["verify"], True)
+        self.assertEqual(teststeps[2]["request"]["verify"], True)
+        self.assertEqual(teststeps[3]["request"]["verify"], True)
 
     def test_testcase_simple_run_suite(self):
         testcase_path = "tests/testcases/setup.yml"
