@@ -238,25 +238,12 @@ class TestRunner(ApiServerUnittest):
         # check if teardown function executed
         self.assertGreater(end_time - start_time, 2)
 
-    def test_run_testcase_with_empty_header(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/test_bugfix.yml')
-        tests_mapping = loader.load_tests(testcase_file_path)
-        testcase = tests_mapping["testcases"][0]
-        config_dict_headers = testcase["config"]["request"]["headers"]
-        test_dict_headers = testcase["teststeps"][0]["request"]["headers"]
-        headers = deep_update_dict(
-            config_dict_headers,
-            test_dict_headers
-        )
-        self.assertEqual(headers["Content-Type"], "application/json")
-
     def test_bugfix_type_match(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/test_bugfix.yml')
         testcases = loader.load_file(testcase_file_path)
 
-        test = testcases[2]["test"]
+        test = testcases[1]["test"]
         self.test_runner.run_test(test)
 
     def test_run_validate_elapsed(self):
