@@ -794,8 +794,11 @@ def __parse_testcase_tests(tests, config, project_mapping):
         variables priority:
         testcase config > testcase test > testcase_def config > testcase_def test > api
 
-        base_url/verify priority:
+        base_url priority:
         testcase test > testcase config > testsuite test > testsuite config > api
+
+        verify priority:
+        testcase teststep (api) > testcase config > testsuite config
 
     Args:
         tests (list):
@@ -813,8 +816,6 @@ def __parse_testcase_tests(tests, config, project_mapping):
         # base_url & verify: priority test_dict > config
         if (not test_dict.get("base_url")) and config_base_url:
             test_dict["base_url"] = config_base_url
-
-        test_dict.setdefault("verify", config_verify)
 
         # 1, testcase config => testcase tests
         # override test_dict variables
@@ -874,6 +875,10 @@ def __parse_testcase_tests(tests, config, project_mapping):
                     base_url,
                     request_url
                 )
+
+        # verify priority: testcase teststep > testcase config
+        if "request" in test_dict and "verify" not in test_dict["request"]:
+            test_dict["request"]["verify"] = config_verify
 
 
 def _parse_testcase(testcase, project_mapping):
