@@ -240,7 +240,7 @@ class TestRunner(ApiServerUnittest):
 
     def test_bugfix_type_match(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/test_bugfix.yml')
+            os.getcwd(), 'tests/data/bugfix_type_match.yml')
         testcases = loader.load_file(testcase_file_path)
 
         test = testcases[1]["test"]
