@@ -1,5 +1,13 @@
 # Release History
 
+## 2.0.3 (2019-02-24)
+
+**Bugfixes**
+
+- fix verify priority: teststep > config
+- fix Chinese charactor in log_file encoding error in Windows
+- fix dump file with Chinese charactor in Python 3
+
 ## 2.0.2 (2019-01-21)
 
 **Bugfixes**
