@@ -157,6 +157,9 @@ class HttpRunner(object):
     def run_tests(self, tests_mapping):
         """ run testcase/testsuite data
         """
+        if self.save_tests:
+            utils.dump_tests(tests_mapping, "loaded")
+
         # parse tests
         self.exception_stage = "parse tests"
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
@@ -210,9 +213,6 @@ class HttpRunner(object):
 
         if mapping:
             tests_mapping["project_mapping"]["variables"] = mapping
-
-        if self.save_tests:
-            utils.dump_tests(tests_mapping, "loaded")
 
         return self.run_tests(tests_mapping)
 
