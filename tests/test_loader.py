@@ -394,8 +394,8 @@ class TestSuiteLoader(unittest.TestCase):
             testsuites_list[0]["config"]["name"]
         )
         self.assertEqual(
-            {'device_sn': '${gen_random_string(15)}'},
-            testsuites_list[0]["config"]["variables"]
+            '${gen_random_string(15)}',
+            testsuites_list[0]["config"]["variables"]['device_sn']
         )
         self.assertIn(
             "create user 1000 and check result.",
