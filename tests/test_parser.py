@@ -810,6 +810,41 @@ class TestParser(unittest.TestCase):
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["verify"], False)
 
+    def test_parse_tests_verify_nested_testcase_unset(self):
+        tests_mapping = {
+            'testcases': [
+                {
+                    'config': {
+                        'name': 'inquiry price',
+                        'verify': False
+                    },
+                    'teststeps': [
+                        {
+                            'name': 'login system',
+                            'testcase': 'testcases/deps/login.yml',
+                            'testcase_def': {
+                                'config': {
+                                    'name': 'login system'
+                                },
+                                'teststeps': [
+                                    {
+                                        'name': '/',
+                                        'request': {
+                                            'method': 'GET',
+                                            'url': 'https://httpbin.org/'
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        self.assertEqual(test_dict["teststeps"][0]["request"]["verify"], False)
+
     def test_parse_environ(self):
         os.environ["PROJECT_KEY"] = "ABCDEFGH"
         content = {
