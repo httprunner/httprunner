@@ -598,6 +598,9 @@ class TestApi(ApiServerUnittest):
 
         testcase1 = parsed_testcases[0]["teststeps"][0]
         self.assertIn("setup and reset all (override)", testcase1["config"]["name"])
+        self.assertEqual(testcase1["teststeps"][0]["variables"]["var_c"], testcase1["teststeps"][0]["variables"]["var_d"])
+        self.assertEqual(testcase1["teststeps"][0]["variables"]["var_a"], testcase1["teststeps"][0]["variables"]["var_b"])
+        self.assertNotEqual(testcase1["teststeps"][0]["variables"]["var_a"], testcase1["teststeps"][0]["variables"]["var_c"])
         self.assertNotIn("testcase_def", testcase1)
         self.assertEqual(len(testcase1["teststeps"]), 2)
         self.assertEqual(
