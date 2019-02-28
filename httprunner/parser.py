@@ -731,9 +731,6 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
     if not testcase_def_dict["config"].get("base_url"):
         testcase_def_dict["config"]["base_url"] = test_base_url
 
-    test_verify = test_dict.pop("verify", True)
-    testcase_def_dict["config"].setdefault("verify", test_verify)
-
     # override name
     test_name = test_dict.pop("name") or testcase_def_dict["config"].pop("name") or "Undefined name"
 
@@ -844,6 +841,9 @@ def __parse_testcase_tests(tests, config, project_mapping):
             # 2, testcase test_dict => testcase_def config
             testcase_def = test_dict.pop("testcase_def")
             _extend_with_testcase(test_dict, testcase_def)
+
+            # verify priority: nested testcase config > testcase config
+            test_dict["config"].setdefault("verify", config_verify)
 
             # 3, testcase_def config => testcase_def test_dict
             _parse_testcase(test_dict, project_mapping)
