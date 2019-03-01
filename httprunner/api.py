@@ -194,6 +194,35 @@ class HttpRunner(object):
 
         return report_path
 
+    def get_vars_out(self):
+        """ get variables and output
+        Returns:
+            list: list of variables and output.
+                if tests are parameterized, list items are corresponded to parameters.
+
+                [
+                    {
+                        "in": {
+                            "user1": "leo"
+                        },
+                        "out": {
+                            "out1": "out_value_1"
+                        }
+                    },
+                    {...}
+                ]
+
+            None: returns None if tests not started or finished or corrupted.
+
+        """
+        if not self._summary:
+            return None
+
+        return [
+            summary["in_out"]
+            for summary in self._summary["details"]
+        ]
+
     def run_path(self, path, dot_env_path=None, mapping=None):
         """ run testcase/testsuite file or folder.
 
