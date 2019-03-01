@@ -82,6 +82,68 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run(self.testcase_cli_path)
         self.assertEqual(self.runner.summary["stat"]["teststeps"]["skipped"], 4)
 
+    def test_save_variables_output(self):
+        testcases = [
+            {
+                "config": {
+                    'name': "post data",
+                    'variables': {
+                        "var1": "abc",
+                        "var2": "def"
+                    },
+                    "output": ["status_code", "req_data"]
+                },
+                "teststeps": [
+                    {
+                        "name": "post data",
+                        "request": {
+                            "url": "{}/post".format(HTTPBIN_SERVER),
+                            "method": "POST",
+                            "headers": {
+                                "User-Agent": "python-requests/2.18.4",
+                                "Content-Type": "application/json"
+                            },
+                            "data": "$var1"
+                        },
+                        "extract": {
+                            "status_code": "status_code",
+                            "req_data": "content.data"
+                        },
+                        "validate": [
+                            {"eq": ["status_code", 200]}
+                        ]
+                    }
+                ]
+            }
+        ]
+        tests_mapping = {
+            "testcases": testcases
+        }
+        self.runner.run_tests(tests_mapping)
+        vars_out = self.runner.get_vars_out()
+        self.assertIsInstance(vars_out, list)
+        self.assertEqual(vars_out[0]["in"]["var1"], "abc")
+        self.assertEqual(vars_out[0]["in"]["var2"], "def")
+        self.assertEqual(vars_out[0]["out"]["status_code"], 200)
+        self.assertEqual(vars_out[0]["out"]["req_data"], "abc")
+
+    def test_save_variables_output_with_parameters(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/testsuites/create_users_with_parameters.yml')
+        self.runner.run(testcase_file_path)
+        vars_out = self.runner.get_vars_out()
+        self.assertIsInstance(vars_out, list)
+        self.assertEqual(len(vars_out), 6)
+        self.assertEqual(vars_out[0]["in"]["uid"], 101)
+        self.assertEqual(vars_out[0]["in"]["device_sn"], "TESTSUITE_X1")
+        token1 = vars_out[0]["out"]["token"]
+        self.assertEqual(len(token1), 16)
+        self.assertEqual(vars_out[5]["in"]["uid"], 103)
+        self.assertEqual(vars_out[5]["in"]["device_sn"], "TESTSUITE_X2")
+        token2 = vars_out[0]["out"]["token"]
+        self.assertEqual(len(token2), 16)
+        self.assertEqual(token1, token2)
+
     def test_html_report(self):
         report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
         runner = HttpRunner(failfast=True, report_dir=report_save_dir)
@@ -483,7 +545,7 @@ class TestApi(ApiServerUnittest):
 
         self.assertEqual(len(parsed_testcases), 1)
 
-        self.assertNotIn("variables", parsed_testcases[0]["config"])
+        self.assertIn("variables", parsed_testcases[0]["config"])
         self.assertEqual(len(parsed_testcases[0]["teststeps"]), 2)
 
         test_dict1 = parsed_testcases[0]["teststeps"][0]
