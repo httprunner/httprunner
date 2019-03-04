@@ -6,6 +6,8 @@
     variables:
         uid: 9001
         device_sn: "TESTCASE_CREATE_XXX"
+    output:
+        - token
 
 - test:
     name: setup and reset all (override) for $device_sn.

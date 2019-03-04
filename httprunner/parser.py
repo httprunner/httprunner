@@ -805,7 +805,7 @@ def __parse_testcase_tests(tests, config, project_mapping):
         project_mapping (dict):
 
     """
-    config_variables = config.pop("variables", {})
+    config_variables = config.get("variables", {})
     config_base_url = config.pop("base_url", "")
     config_verify = config.pop("verify", True)
     functions = project_mapping.get("functions", {})
