@@ -1,5 +1,15 @@
 # Release History
 
+## 2.0.5 (2019-03-04)
+
+**Features**
+
+- implement method to get variables and output
+
+**Bugfixes**
+
+- fix xss in response json
+
 ## 2.0.4 (2019-02-28)
 
 **Bugfixes**
