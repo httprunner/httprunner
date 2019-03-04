@@ -266,8 +266,8 @@
                             {% else %}
                               {{ value }}
                             {% endif %}
-                          {% elif key == "text" %}
-                              <pre>{{ req_resp.response.text | e }}</pre>
+                          {% elif key in ["text", "json"] %}
+                              <pre>{{ value | e }}</pre>
                           {% else %}
                             {{ value }}
                           {% endif %}
