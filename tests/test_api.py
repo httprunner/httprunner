@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import time
 import unittest
@@ -185,10 +186,6 @@ class TestHttpRunner(ApiServerUnittest):
             {
                 "config": {
                     'name': "post data",
-                    'request': {
-                        'base_url': '',
-                        'headers': {'User-Agent': 'python-requests/2.18.4'}
-                    },
                     'variables': []
                 },
                 "teststeps": [
@@ -198,6 +195,7 @@ class TestHttpRunner(ApiServerUnittest):
                             "url": "{}/post".format(HTTPBIN_SERVER),
                             "method": "POST",
                             "headers": {
+                                "User-Agent": "python-requests/2.18.4",
                                 "Content-Type": "application/json"
                             },
                             "data": "abc"
@@ -507,6 +505,45 @@ class TestHttpRunner(ApiServerUnittest):
     #         os.getcwd(), 'tests/httpbin/basic.yml')
     #     self.runner.run(testcase_file_path)
     #     self.assertTrue(self.runner.summary["success"])
+
+    def test_html_report_xss(self):
+        testcases = [
+            {
+                "config": {
+                    'name': "post data"
+                },
+                "teststeps": [
+                    {
+                        "name": "post data",
+                        "request": {
+                            "url": "{}/anything".format(HTTPBIN_SERVER),
+                            "method": "POST",
+                            "headers": {
+                                "Content-Type": "application/json"
+                            },
+                            "json": {
+                                'success': False,
+                                "person": "<img src=x onerror=alert(1)>"
+                            }
+                        },
+                        "validate": [
+                            {"eq": ["status_code", 200]}
+                        ]
+                    }
+                ]
+            }
+        ]
+        tests_mapping = {
+            "testcases": testcases
+        }
+        report_path = self.runner.run(tests_mapping)
+        with open(report_path) as f:
+            content = f.read()
+            m = re.findall(
+                re.escape("&#34;person&#34;: &#34;&lt;img src=x onerror=alert(1)&gt;&#34;"),
+                content
+            )
+            self.assertEqual(len(m), 2)
 
 
 class TestApi(ApiServerUnittest):
