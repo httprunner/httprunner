@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import time
 import unittest
@@ -537,10 +538,12 @@ class TestHttpRunner(ApiServerUnittest):
         }
         report_path = self.runner.run(tests_mapping)
         with open(report_path) as f:
-            self.assertIn(
-                "&#34;&lt;img src=x onerror=alert(1)&gt;&#34;}&#39;",
-                f.read()
+            content = f.read()
+            m = re.findall(
+                re.escape("&#34;person&#34;: &#34;&lt;img src=x onerror=alert(1)&gt;&#34;"),
+                content
             )
+            self.assertEqual(len(m), 2)
 
 
 class TestApi(ApiServerUnittest):
