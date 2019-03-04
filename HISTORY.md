@@ -1,5 +1,13 @@
 # Release History
 
+## 2.0.4 (2019-02-28)
+
+**Bugfixes**
+
+- fix verify priority with nested testcase
+- fix function in config variables called multiple times
+- dump loaded tests when running tests_mapping directly
+
 ## 2.0.3 (2019-02-24)
 
 **Bugfixes**
