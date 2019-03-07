@@ -50,6 +50,9 @@ class VariableNotFound(NotFoundError):
 class EnvNotFound(NotFoundError):
     pass
 
+class CSVNotFound(NotFoundError):
+    pass
+
 class ApiNotFound(NotFoundError):
     pass
 
