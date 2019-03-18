@@ -453,8 +453,6 @@ class TestParser(unittest.TestCase):
         self.assertEqual(test_dict1["variables"]["var_c"], 3)
         self.assertEqual(test_dict1["variables"]["PROJECT_KEY"], "ABCDEFGH")
         self.assertEqual(test_dict1["variables"]["var_d"], test_dict1["variables"]["var_e"])
-        # TODO: parameters
-        # self.assertEqual(len(parsed_testcases), 2 * 2)
         self.assertEqual(parsed_testcases[0]["config"]["name"], '1230')
 
     def test_parse_tests_override_variables(self):
