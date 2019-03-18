@@ -168,12 +168,12 @@ class SessionContext(object):
     def validate(self, validators, resp_obj):
         """ make validations
         """
+        self.validation_results = []
         if not validators:
             return
 
         logger.log_debug("start to validate.")
 
-        self.validation_results = []
         validate_pass = True
         failures = []
 
