@@ -146,6 +146,9 @@ class TestContext(ApiServerUnittest):
         self.context.init_test_variables(variables)
         self.context.validate(validators, resp_obj)
 
+        self.context.validate([], resp_obj)
+        self.assertEqual(self.context.validation_results, [])
+
     def test_validate_exception(self):
         url = "http://127.0.0.1:5000/"
         resp = requests.get(url)
