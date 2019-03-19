@@ -533,6 +533,12 @@ def create_scaffold(project_name):
     ]
     [create_path(p[0], p[1]) for p in path_list]
 
+    # create .gitignore file
+    ignore_file = os.path.join(project_name, ".gitignore")
+    ignore_content = ".env\nreports/*"
+    with open(ignore_file, "w") as f:
+        f.write(ignore_content)
+
 
 def gen_cartesian_product(*args):
     """ generate cartesian product for lists
