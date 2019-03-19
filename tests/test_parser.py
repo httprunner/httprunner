@@ -407,9 +407,10 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_parameterize(self):
+        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         parameters = [
-            {"app_version": "${parameterize(tests/data/app_version.csv)}"},
-            {"username-password": "${parameterize(tests/data/account.csv)}"}
+            {"app_version": "${parameterize(data/app_version.csv)}"},
+            {"username-password": "${parameterize(data/account.csv)}"}
         ]
         cartesian_product_parameters = parser.parse_parameters(parameters)
         self.assertEqual(
@@ -424,7 +425,7 @@ class TestParser(unittest.TestCase):
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
             {"app_version": "${gen_app_version()}"},
-            {"username-password": "${parameterize(tests/data/account.csv)}"}
+            {"username-password": "${parameterize(data/account.csv)}"}
         ]
         cartesian_product_parameters = parser.parse_parameters(
             parameters, functions_mapping=project_mapping["functions"])
