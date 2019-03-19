@@ -1,5 +1,16 @@
 # Release History
 
+## 2.0.6 (2019-03-18)
+
+**Features**
+
+- create .gitignore file when initializing new project
+
+**Bugfixes**
+
+- fix CSV relative path detection
+- fix current validators displaying the former one when they are empty
+
 ## 2.0.5 (2019-03-04)
 
 **Features**
