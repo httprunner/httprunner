@@ -649,6 +649,13 @@ def omit_long_data(body, omit_len=512):
 def dump_json_file(json_data, pwd_dir_path, dump_file_name):
     """ dump json data to file
     """
+    class PythonObjectEncoder(json.JSONEncoder):
+        def default(self, obj):
+            try:
+                return super().default(self, obj)
+            except TypeError:
+                return str(obj)
+
     logs_dir_path = os.path.join(pwd_dir_path, "logs")
     if not os.path.isdir(logs_dir_path):
         os.makedirs(logs_dir_path)
@@ -663,7 +670,8 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
                         json_data,
                         indent=4,
                         separators=(',', ':'),
-                        ensure_ascii=False
+                        ensure_ascii=False,
+                        cls=PythonObjectEncoder
                     ))
                 )
             else:
@@ -672,14 +680,15 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
                     outfile,
                     indent=4,
                     separators=(',', ':'),
-                    ensure_ascii=False
+                    ensure_ascii=False,
+                    cls=PythonObjectEncoder
                 )
 
         msg = "dump file: {}".format(dump_file_path)
         logger.color_print(msg, "BLUE")
 
-    except TypeError:
-        msg = "Failed to dump json file: {}".format(dump_file_path)
+    except TypeError as ex:
+        msg = "Failed to dump json file: {}\nReason: {}".format(dump_file_path, ex)
         logger.color_print(msg, "RED")
 
 
@@ -711,14 +720,13 @@ def dump_tests(tests_mapping, tag_name):
     }
 
     for key in project_mapping:
-        if key != "functions":
+        if key == "functions" and project_mapping["functions"]:
+            tests_to_dump["project_mapping"]["debugtalk.py"] = {
+                "path": os.path.join(pwd_dir_path, "debugtalk.py"),
+                "functions": project_mapping["functions"]
+            }
+        else:
             tests_to_dump["project_mapping"][key] = project_mapping[key]
-            continue
-
-        # remove functions in order to dump
-        if project_mapping["functions"]:
-            debugtalk_py_path = os.path.join(pwd_dir_path, "debugtalk.py")
-            tests_to_dump["project_mapping"]["debugtalk.py"] = debugtalk_py_path
 
     if "api" in tests_mapping:
         tests_to_dump["api"] = tests_mapping["api"]
