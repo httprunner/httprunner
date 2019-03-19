@@ -80,6 +80,15 @@ def load_csv_file(csv_file):
         ]
 
     """
+    if not os.path.isabs(csv_file):
+        project_working_directory = tests_def_mapping["PWD"] or os.getcwd()
+        # make compatible with Windows/Linux
+        csv_file = os.path.join(project_working_directory, *csv_file.split("/"))
+
+    if not os.path.isfile(csv_file):
+        # file path not exist
+        raise exceptions.CSVNotFound(csv_file)
+
     csv_content_list = []
 
     with io.open(csv_file, encoding='utf-8') as csvfile:
