@@ -345,18 +345,6 @@ class TestParser(unittest.TestCase):
             3
         )
 
-    def test_substitute_variables(self):
-        content = {
-            'request': {
-                'url': '/api/users/$uid?id=$id',
-                'headers': {'token': '$token'}
-            }
-        }
-        variables_mapping = {"$uid": 1000, "$id": 2}
-        substituted_data = parser.substitute_variables(content, variables_mapping)
-        self.assertEqual(substituted_data["request"]["url"], "/api/users/1000?id=2")
-        self.assertEqual(substituted_data["request"]["headers"], {'token': '$token'})
-
     def test_parse_parameters_raw_list(self):
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},

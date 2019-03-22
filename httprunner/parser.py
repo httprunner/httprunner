@@ -207,61 +207,6 @@ def parse_validator(validator):
     }
 
 
-def substitute_variables(content, variables_mapping):
-    """ substitute variables in content with variables_mapping
-
-    Args:
-        content (str/dict/list/numeric/bool/type): content to be substituted.
-        variables_mapping (dict): variables mapping.
-
-    Returns:
-        substituted content.
-
-    Examples:
-        >>> content = {
-                'request': {
-                    'url': '/api/users/$uid',
-                    'headers': {'token': '$token'}
-                }
-            }
-        >>> variables_mapping = {"$uid": 1000}
-        >>> substitute_variables(content, variables_mapping)
-            {
-                'request': {
-                    'url': '/api/users/1000',
-                    'headers': {'token': '$token'}
-                }
-            }
-
-    """
-    if isinstance(content, (list, set, tuple)):
-        return [
-            substitute_variables(item, variables_mapping)
-            for item in content
-        ]
-
-    if isinstance(content, dict):
-        substituted_data = {}
-        for key, value in content.items():
-            eval_key = substitute_variables(key, variables_mapping)
-            eval_value = substitute_variables(value, variables_mapping)
-            substituted_data[eval_key] = eval_value
-
-        return substituted_data
-
-    if isinstance(content, basestring):
-        # content is in string format here
-        for var, value in variables_mapping.items():
-            if content == var:
-                # content is a variable
-                content = value
-            else:
-                if not isinstance(value, str):
-                    value = builtin_str(value)
-                content = content.replace(var, value)
-
-    return content
-
 def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
     """ parse parameters and generate cartesian product.
 
