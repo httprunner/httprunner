@@ -2,8 +2,8 @@ import os
 import time
 
 import requests
-from httprunner import context, exceptions, loader, response, utils
-from tests.base import ApiServerUnittest
+from httprunner import context, exceptions, loader, parser, response, utils
+from tests.base import ApiServerUnittest, gen_md5, gen_random_string
 
 
 class TestContext(ApiServerUnittest):
@@ -11,8 +11,9 @@ class TestContext(ApiServerUnittest):
     def setUp(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         project_mapping = loader.project_mapping
+        self.functions = project_mapping["functions"]
         self.context = context.SessionContext(
-            functions=project_mapping["functions"],
+            functions=self.functions,
             variables={"SECRET_KEY": "DebugTalk"}
         )
 
@@ -30,16 +31,24 @@ class TestContext(ApiServerUnittest):
         variables = {
             "random": "${gen_random_string($num)}",
             "authorization": "${gen_md5($TOKEN, $data, $random)}",
-            "data": '{"name": "$username", "password": "123456"}',
+            "data": "$username",
+            # TODO: escape '{' and '}'
+            # "data": '{"name": "$username", "password": "123456"}',
             "TOKEN": "debugtalk",
             "username": "user1",
             "num": 6
         }
+        functions = {
+            "gen_random_string": gen_random_string,
+            "gen_md5": gen_md5
+        }
+        variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        variables = parser.parse_variables_mapping(variables)
         self.context.init_test_variables(variables)
         variables_mapping = self.context.test_variables_mapping
         self.assertEqual(len(variables_mapping["random"]), 6)
         self.assertEqual(len(variables_mapping["authorization"]), 32)
-        self.assertEqual(variables_mapping["data"], '{"name": "user1", "password": "123456"}')
+        self.assertEqual(variables_mapping["data"], 'user1')
 
     def test_update_seesion_variables(self):
         self.context.update_session_variables({"TOKEN": "debugtalk"})
@@ -49,14 +58,17 @@ class TestContext(ApiServerUnittest):
         )
 
     def test_eval_content_functions(self):
-        content = "${sleep_N_secs(1)}"
+        content = parser.prepare_lazy_data("${sleep_N_secs(1)}", self.functions)
         start_time = time.time()
         self.context.eval_content(content)
         elapsed_time = time.time() - start_time
         self.assertGreater(elapsed_time, 1)
 
     def test_eval_content_variables(self):
-        content = "abc$SECRET_KEY"
+        variables = {
+            "SECRET_KEY": "DebugTalk"
+        }
+        content = parser.prepare_lazy_data("abc$SECRET_KEY", {}, variables.keys())
         self.assertEqual(
             self.context.eval_content(content),
             "abcDebugTalk"
@@ -76,7 +88,12 @@ class TestContext(ApiServerUnittest):
             "authorization": "${gen_md5($TOKEN, $data, $random)}",
             "TOKEN": "debugtalk"
         }
-
+        functions = {
+            "gen_random_string": gen_random_string,
+            "gen_md5": gen_md5
+        }
+        variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        variables = parser.parse_variables_mapping(variables)
         self.context.init_test_variables(variables)
 
         request = {
@@ -90,7 +107,12 @@ class TestContext(ApiServerUnittest):
             },
             "data": "$data"
         }
-        parsed_request = self.context.eval_content(request)
+        prepared_request = parser.prepare_lazy_data(
+            request,
+            functions,
+            {"authorization", "random", "SECRET_KEY", "data"}
+        )
+        parsed_request = self.context.eval_content(prepared_request)
         self.assertIn("authorization", parsed_request["headers"])
         self.assertEqual(len(parsed_request["headers"]["authorization"]), 32)
         self.assertIn("random", parsed_request["headers"])
@@ -123,6 +145,7 @@ class TestContext(ApiServerUnittest):
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
             {"check": "$resp_body_success", "comparator": "eq", "expect": True}
         ]
+        validators = parser.prepare_lazy_data(validators, {}, {"resp_status_code", "resp_body_success"})
         variables = {
             "resp_status_code": 200,
             "resp_body_success": True
@@ -139,6 +162,12 @@ class TestContext(ApiServerUnittest):
             {"check": "$resp_body_success", "comparator": "eq", "expect": True},
             {"check": "${is_status_code_200($resp_status_code)}", "comparator": "eq", "expect": False}
         ]
+        from tests.debugtalk import is_status_code_200
+        functions = {
+            "is_status_code_200": is_status_code_200
+        }
+        validators = parser.prepare_lazy_data(
+            validators, functions, {"resp_status_code", "resp_body_success"})
         variables = [
             {"resp_status_code": 201},
             {"resp_body_success": True}
@@ -159,6 +188,7 @@ class TestContext(ApiServerUnittest):
             {"eq": ["$resp_status_code", 201]},
             {"check": "$resp_status_code", "comparator": "eq", "expect": 201}
         ]
+        validators = parser.prepare_lazy_data(validators, {}, {"resp_status_code"})
         variables = []
         self.context.init_test_variables(variables)
 

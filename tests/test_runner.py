@@ -1,7 +1,7 @@
 import os
 import time
 
-from httprunner import exceptions, loader, runner
+from httprunner import exceptions, loader, parser, runner
 from httprunner.utils import deep_update_dict
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -37,7 +37,11 @@ class TestRunner(ApiServerUnittest):
 
         for testcase_file_path in testcase_file_path_list:
             testcases = loader.load_file(testcase_file_path)
-
+            testcases = parser.prepare_lazy_data(
+                testcases,
+                self.debugtalk_functions,
+                {"expect_status_code", "token_len", "token", "success"}
+            )
             config_dict = {}
             test_runner = runner.Runner(config_dict, self.debugtalk_functions)
 
@@ -83,7 +87,7 @@ class TestRunner(ApiServerUnittest):
             "name": "basic test with httpbin",
             "base_url": HTTPBIN_SERVER,
             "setup_hooks": [
-                "${sleep_N_secs(0.5)}"
+                "${sleep_N_secs(0.5)}",
                 "${hook_print(setup)}"
             ],
             "teardown_hooks": [
@@ -91,6 +95,13 @@ class TestRunner(ApiServerUnittest):
                 "${hook_print(teardown)}"
             ]
         }
+        prepared_config_dict = parser.prepare_lazy_data(config_dict, self.debugtalk_functions)
+        test_runner = runner.Runner(prepared_config_dict, self.debugtalk_functions)
+        end_time = time.time()
+        # check if testcase setup hook executed
+        self.assertGreater(end_time - start_time, 0.5)
+
+        start_time = time.time()
         test = {
             "name": "get token",
             "request": {
@@ -111,12 +122,6 @@ class TestRunner(ApiServerUnittest):
                 {"check": "status_code", "expect": 200}
             ]
         }
-        test_runner = runner.Runner(config_dict, self.debugtalk_functions)
-        end_time = time.time()
-        # check if testcase setup hook executed
-        self.assertGreater(end_time - start_time, 0.5)
-
-        start_time = time.time()
         test_runner.run_test(test)
         test_runner.run_test(test)
         end_time = time.time()
@@ -130,6 +135,7 @@ class TestRunner(ApiServerUnittest):
         }
         test = {
             "name": "modify request headers",
+            "base_url": HTTPBIN_SERVER,
             "request": {
                 "url": "/anything",
                 "method": "POST",
@@ -146,8 +152,9 @@ class TestRunner(ApiServerUnittest):
                 {"check": "status_code", "expect": 200}
             ]
         }
+        parsed_test = parser.prepare_lazy_data(test, self.debugtalk_functions)
         test_runner = runner.Runner(config_dict, self.debugtalk_functions)
-        test_runner.run_test(test)
+        test_runner.run_test(parsed_test)
         test_variables_mapping = test_runner.session_context.test_variables_mapping
         self.assertEqual(test_variables_mapping["total"], 6)
         self.assertEqual(test_variables_mapping["request"]["data"], "a=1&b=2")
@@ -159,6 +166,7 @@ class TestRunner(ApiServerUnittest):
         }
         test = {
             "name": "modify request headers",
+            "base_url": HTTPBIN_SERVER,
             "request": {
                 "url": "/anything",
                 "method": "POST",
@@ -180,7 +188,8 @@ class TestRunner(ApiServerUnittest):
             ]
         }
         test_runner = runner.Runner(config_dict, self.debugtalk_functions)
-        test_runner.run_test(test)
+        parsed_test = parser.prepare_lazy_data(test, self.debugtalk_functions, {"request"})
+        test_runner.run_test(parsed_test)
 
     def test_run_testcase_with_teardown_hooks_success(self):
         test = {
@@ -232,8 +241,9 @@ class TestRunner(ApiServerUnittest):
             ],
             "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
         }
+        prepared_test = parser.prepare_lazy_data(test, self.debugtalk_functions, {"response"})
         start_time = time.time()
-        self.test_runner.run_test(test)
+        self.test_runner.run_test(prepared_test)
         end_time = time.time()
         # check if teardown function executed
         self.assertGreater(end_time - start_time, 2)

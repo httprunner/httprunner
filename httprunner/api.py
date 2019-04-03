@@ -60,9 +60,16 @@ class HttpRunner(object):
             if "config" in test_dict:
                 # run nested testcase
                 test.__doc__ = test_dict["config"].get("name")
+                variables = test_dict["config"].get("variables", {})
             else:
                 # run api test
                 test.__doc__ = test_dict.get("name")
+                variables = test_dict.get("variables", {})
+
+            if isinstance(test.__doc__, parser.LazyString):
+                parsed_variables = parser.parse_variables_mapping(variables, ignore=True)
+                test.__doc__ = parser.parse_lazy_data(
+                    test.__doc__, parsed_variables)
 
             return test
 
