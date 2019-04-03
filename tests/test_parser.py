@@ -1,11 +1,13 @@
 import os
+import re
 import time
 import unittest
 
 from httprunner import exceptions, loader, parser
+from tests.debugtalk import gen_random_string, sum_two
 
 
-class TestParser(unittest.TestCase):
+class TestParserBasic(unittest.TestCase):
 
     def test_parse_string_value(self):
         self.assertEqual(parser.parse_string_value("123"), 123)
@@ -14,92 +16,92 @@ class TestParser(unittest.TestCase):
         self.assertEqual(parser.parse_string_value("$var"), "$var")
         self.assertEqual(parser.parse_string_value("${func}"), "${func}")
 
-    def test_extract_variables(self):
+    def test_regex_findall_variables(self):
         self.assertEqual(
-            parser.extract_variables("$var"),
+            parser.regex_findall_variables("$var"),
             ["var"]
         )
         self.assertEqual(
-            parser.extract_variables("$var123"),
+            parser.regex_findall_variables("$var123"),
             ["var123"]
         )
         self.assertEqual(
-            parser.extract_variables("$var_name"),
+            parser.regex_findall_variables("$var_name"),
             ["var_name"]
         )
         self.assertEqual(
-            parser.extract_variables("var"),
+            parser.regex_findall_variables("var"),
             []
         )
         self.assertEqual(
-            parser.extract_variables("a$var"),
+            parser.regex_findall_variables("a$var"),
             ["var"]
         )
         self.assertEqual(
-            parser.extract_variables("$v ar"),
+            parser.regex_findall_variables("$v ar"),
             ["v"]
         )
         self.assertEqual(
-            parser.extract_variables(" "),
+            parser.regex_findall_variables(" "),
             []
         )
         self.assertEqual(
-            parser.extract_variables("$abc*"),
+            parser.regex_findall_variables("$abc*"),
             ["abc"]
         )
         self.assertEqual(
-            parser.extract_variables("${func()}"),
+            parser.regex_findall_variables("${func()}"),
             []
         )
         self.assertEqual(
-            parser.extract_variables("${func(1,2)}"),
+            parser.regex_findall_variables("${func(1,2)}"),
             []
         )
         self.assertEqual(
-            parser.extract_variables("${gen_md5($TOKEN, $data, $random)}"),
+            parser.regex_findall_variables("${gen_md5($TOKEN, $data, $random)}"),
             ["TOKEN", "data", "random"]
         )
 
-    def test_parse_function(self):
+    def test_parse_function_params(self):
         self.assertEqual(
-            parser.parse_function("func()"),
-            {'func_name': 'func', 'args': [], 'kwargs': {}}
+            parser.parse_function_params(""),
+            {'args': [], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_function("func(5)"),
-            {'func_name': 'func', 'args': [5], 'kwargs': {}}
+            parser.parse_function_params("5"),
+            {'args': [5], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_function("func(1, 2)"),
-            {'func_name': 'func', 'args': [1, 2], 'kwargs': {}}
+            parser.parse_function_params("1, 2"),
+            {'args': [1, 2], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_function("func(a=1, b=2)"),
-            {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+            parser.parse_function_params("a=1, b=2"),
+            {'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
         self.assertEqual(
-            parser.parse_function("func(a= 1, b =2)"),
-            {'func_name': 'func', 'args': [], 'kwargs': {'a': 1, 'b': 2}}
+            parser.parse_function_params("a= 1, b =2"),
+            {'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
         self.assertEqual(
-            parser.parse_function("func(1, 2, a=3, b=4)"),
-            {'func_name': 'func', 'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
+            parser.parse_function_params("1, 2, a=3, b=4"),
+            {'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
         )
         self.assertEqual(
-            parser.parse_function("func($request, 123)"),
-            {'func_name': 'func', 'args': ["$request", 123], 'kwargs': {}}
+            parser.parse_function_params("$request, 123"),
+            {'args': ["$request", 123], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_function("func( )"),
-            {'func_name': 'func', 'args': [], 'kwargs': {}}
+            parser.parse_function_params("  "),
+            {'args': [], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_function("func(hello world, a=3, b=4)"),
-            {'func_name': 'func', 'args': ["hello world"], 'kwargs': {'a': 3, 'b': 4}}
+            parser.parse_function_params("hello world, a=3, b=4"),
+            {'args': ["hello world"], 'kwargs': {'a': 3, 'b': 4}}
         )
         self.assertEqual(
-            parser.parse_function("func($request, 12 3)"),
-            {'func_name': 'func', 'args': ["$request", '12 3'], 'kwargs': {}}
+            parser.parse_function_params("$request, 12 3"),
+            {'args': ["$request", '12 3'], 'kwargs': {}}
         )
 
     def test_parse_validator(self):
@@ -115,38 +117,82 @@ class TestParser(unittest.TestCase):
             {"check": "status_code", "comparator": "eq", "expect": 201}
         )
 
+    def test_extract_variables(self):
+        prepared_content = parser.prepare_lazy_data("123$a", {}, {"a"})
+        self.assertEqual(
+            parser.extract_variables(prepared_content),
+            {"a"}
+        )
+        prepared_content = parser.prepare_lazy_data("$a$b", {}, {"a", "b"})
+        self.assertEqual(
+            parser.extract_variables(prepared_content),
+            {"a", "b"}
+        )
+        prepared_content = parser.prepare_lazy_data(["$a$b", "$c", "d"], {}, {"a", "b", "c", "d"})
+        self.assertEqual(
+            parser.extract_variables(prepared_content),
+            {"a", "b", "c"}
+        )
+        prepared_content = parser.prepare_lazy_data(
+            {"a": 1, "b": {"c": "$d", "e": 3}},
+            {},
+            {"d"}
+        )
+        self.assertEqual(
+            parser.extract_variables(prepared_content),
+            {"d"}
+        )
+        prepared_content = parser.prepare_lazy_data(
+            {"a": ["$b"], "b": {"c": "$d", "e": 3}},
+            {},
+            {"b", "d"}
+        )
+        self.assertEqual(
+            parser.extract_variables(prepared_content),
+            {"b", "d"}
+        )
+        prepared_content = parser.prepare_lazy_data(
+            ["$a$b", "$c", {"c": "$d"}],
+            {},
+            {"a", "b", "c", "d"}
+        )
+        self.assertEqual(
+            parser.extract_variables(prepared_content),
+            {"a", "b", "c", "d"}
+        )
+
     def test_extract_functions(self):
         self.assertEqual(
-            parser.extract_functions("${func()}"),
-            ["func()"]
+            parser.regex_findall_functions("${func()}"),
+            [('func', '')]
         )
         self.assertEqual(
-            parser.extract_functions("${func(5)}"),
-            ["func(5)"]
+            parser.regex_findall_functions("${func(5)}"),
+            [('func', '5')]
         )
         self.assertEqual(
-            parser.extract_functions("${func(a=1, b=2)}"),
-            ["func(a=1, b=2)"]
+            parser.regex_findall_functions("${func(a=1, b=2)}"),
+            [('func', 'a=1, b=2')]
         )
         self.assertEqual(
-            parser.extract_functions("${func(1, $b, c=$x, d=4)}"),
-            ["func(1, $b, c=$x, d=4)"]
+            parser.regex_findall_functions("${func(1, $b, c=$x, d=4)}"),
+            [('func', '1, $b, c=$x, d=4')]
         )
         self.assertEqual(
-            parser.extract_functions("/api/1000?_t=${get_timestamp()}"),
-            ["get_timestamp()"]
+            parser.regex_findall_functions("/api/1000?_t=${get_timestamp()}"),
+            [('get_timestamp', '')]
         )
         self.assertEqual(
-            parser.extract_functions("/api/${add(1, 2)}"),
-            ["add(1, 2)"]
+            parser.regex_findall_functions("/api/${add(1, 2)}"),
+            [('add', '1, 2')]
         )
         self.assertEqual(
-            parser.extract_functions("/api/${add(1, 2)}?_t=${get_timestamp()}"),
-            ["add(1, 2)", "get_timestamp()"]
+            parser.regex_findall_functions("/api/${add(1, 2)}?_t=${get_timestamp()}"),
+            [('add', '1, 2'), ('get_timestamp', '')]
         )
         self.assertEqual(
-            parser.extract_functions("abc${func(1, 2, a=3, b=4)}def"),
-            ["func(1, 2, a=3, b=4)"]
+            parser.regex_findall_functions("abc${func(1, 2, a=3, b=4)}def"),
+            [('func', '1, 2, a=3, b=4')]
         )
 
     def test_parse_data(self):
@@ -172,7 +218,7 @@ class TestParser(unittest.TestCase):
         functions_mapping = {
             "add_one": lambda x: x + 1
         }
-        result = parser.parse_data(content, variables_mapping, functions_mapping)
+        result = parser.eval_lazy_data(content, variables_mapping, functions_mapping)
         self.assertEqual("/api/users/1000", result["request"]["url"])
         self.assertEqual("abc123", result["request"]["headers"]["token"])
         self.assertEqual("POST", result["request"]["method"])
@@ -182,7 +228,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual("", result["request"]["data"]["empty_str"])
         self.assertEqual("abc4def", result["request"]["data"]["value"])
 
-    def test_parse_data_variables(self):
+    def test_eval_lazy_data(self):
         variables_mapping = {
             "var_1": "abc",
             "var_2": "def",
@@ -192,65 +238,149 @@ class TestParser(unittest.TestCase):
             "var_6": None
         }
         self.assertEqual(
-            parser.parse_data("$var_1", variables_mapping),
+            parser.eval_lazy_data("$var_1", variables_mapping=variables_mapping),
             "abc"
         )
         self.assertEqual(
-            parser.parse_data("var_1", variables_mapping),
+            parser.eval_lazy_data("var_1", variables_mapping=variables_mapping),
             "var_1"
         )
         self.assertEqual(
-            parser.parse_data("$var_1#XYZ", variables_mapping),
+            parser.eval_lazy_data("$var_1#XYZ", variables_mapping=variables_mapping),
             "abc#XYZ"
         )
         self.assertEqual(
-            parser.parse_data("/$var_1/$var_2/var3", variables_mapping),
+            parser.eval_lazy_data("/$var_1/$var_2/var3", variables_mapping=variables_mapping),
             "/abc/def/var3"
         )
         self.assertEqual(
-            parser.parse_data("/$var_1/$var_2/$var_1", variables_mapping),
+            parser.eval_lazy_data("/$var_1/$var_2/$var_1", variables_mapping=variables_mapping),
             "/abc/def/abc"
         )
         self.assertEqual(
-            parser.parse_string_variables("${func($var_1, $var_2, xyz)}", variables_mapping, {}),
-            "${func(abc, def, xyz)}"
-        )
-        self.assertEqual(
-            parser.parse_data("$var_3", variables_mapping),
+            parser.eval_lazy_data("$var_3", variables_mapping=variables_mapping),
             123
         )
         self.assertEqual(
-            parser.parse_data("$var_4", variables_mapping),
+            parser.eval_lazy_data("$var_4", variables_mapping=variables_mapping),
             {"a": 1}
         )
         self.assertEqual(
-            parser.parse_data("$var_5", variables_mapping),
+            parser.eval_lazy_data("$var_5", variables_mapping=variables_mapping),
             True
         )
         self.assertEqual(
-            parser.parse_data("abc$var_5", variables_mapping),
+            parser.eval_lazy_data("abc$var_5", variables_mapping=variables_mapping),
             "abcTrue"
         )
         self.assertEqual(
-            parser.parse_data("abc$var_4", variables_mapping),
+            parser.eval_lazy_data("abc$var_4", variables_mapping=variables_mapping),
             "abc{'a': 1}"
         )
         self.assertEqual(
-            parser.parse_data("$var_6", variables_mapping),
+            parser.eval_lazy_data("$var_6", variables_mapping=variables_mapping),
             None
         )
 
         with self.assertRaises(exceptions.VariableNotFound):
-            parser.parse_data("/api/$SECRET_KEY", variables_mapping)
+            parser.eval_lazy_data("/api/$SECRET_KEY", variables_mapping=variables_mapping)
 
         self.assertEqual(
-            parser.parse_data(["$var_1", "$var_2"], variables_mapping),
+            parser.eval_lazy_data(["$var_1", "$var_2"], variables_mapping=variables_mapping),
             ["abc", "def"]
         )
         self.assertEqual(
-            parser.parse_data({"$var_1": "$var_2"}, variables_mapping),
+            parser.eval_lazy_data({"$var_1": "$var_2"}, variables_mapping=variables_mapping),
             {"abc": "def"}
         )
+
+    def test_lazy_string(self):
+        variables_mapping = {
+            "var_1": "abc",
+            "var_2": "def",
+            "var_3": 123,
+            "var_4": {"a": 1},
+            "var_5": True,
+            "var_6": None
+        }
+        check_variables_set = variables_mapping.keys()
+        functions_mapping = {
+            "func1": lambda x,y: str(x) + str(y)
+        }
+
+        var = parser.LazyString("ABC$var_1", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc")
+
+        var = parser.LazyString("ABC$var_1$var_3", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}{}")
+        self.assertEqual(var._args, ["var_1", "var_3"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123")
+
+        var = parser.LazyString("ABC$var_1/$var_3", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}/{}")
+        self.assertEqual(var._args, ["var_1", "var_3"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc/123")
+
+        var = parser.LazyString("ABC$var_1/", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}/")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc/")
+
+        var = parser.LazyString("ABC$var_1$", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}$")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc$")
+
+        var = parser.LazyString("ABC$var_1{", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}{")
+        self.assertEqual(var._args, ["var_1"])
+        # self.assertEqual(var.to_value(variables_mapping), "ABCabc{")
+
+        var = parser.LazyString("ABC$$var_1{", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC${}{")
+        self.assertEqual(var._args, ["var_1"])
+
+        var = parser.LazyString("ABC$var_1${", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}${")
+        self.assertEqual(var._args, ["var_1"])
+
+        var = parser.LazyString("ABC$var_1${a", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}${a")
+        self.assertEqual(var._args, ["var_1"])
+
+        var = parser.LazyString("ABC$var_1/$var_2/$var_1", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}/{}/{}")
+        self.assertEqual(var._args, ["var_1", "var_2", "var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc/def/abc")
+
+        var = parser.LazyString("func1($var_1, $var_3)", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "func1({}, {})")
+        self.assertEqual(var._args, ["var_1", "var_3"])
+        self.assertEqual(var.to_value(variables_mapping), "func1(abc, 123)")
+
+        var = parser.LazyString("${func1($var_1, $var_3)}", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "{}")
+        self.assertIsInstance(var._args[0], parser.LazyFunction)
+        self.assertEqual(var.to_value(variables_mapping), "abc123")
+
+        var = parser.LazyString("ABC${func1($var_1, $var_3)}DE", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}DE")
+        self.assertIsInstance(var._args[0], parser.LazyFunction)
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123DE")
+
+        var = parser.LazyString("ABC${func1($var_1, $var_3)}$var_5", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123True")
+
+        var = parser.LazyString("ABC${func1($var_1, $var_3)}DE$var_4", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}DE{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123DE{'a': 1}")
+
+        var = parser.LazyString("ABC$var_5${func1($var_1, $var_3)}", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABCTrueabc123")
 
     def test_parse_data_multiple_identical_variables(self):
         variables_mapping = {
@@ -259,7 +389,7 @@ class TestParser(unittest.TestCase):
         }
         content = "/users/$userid/training/$data?userId=$userid&data=$data"
         self.assertEqual(
-            parser.parse_data(content, variables_mapping),
+            parser.eval_lazy_data(content, variables_mapping=variables_mapping),
             "/users/100/training/1498?userId=100&data=1498"
         )
 
@@ -270,36 +400,35 @@ class TestParser(unittest.TestCase):
         }
         content = "/users/$user/$userid/$data?userId=$userid&data=$data"
         self.assertEqual(
-            parser.parse_data(content, variables_mapping),
+            parser.eval_lazy_data(content, variables_mapping=variables_mapping),
             "/users/100/1000/1498?userId=1000&data=1498"
         )
 
     def test_parse_data_functions(self):
         import random, string
         functions_mapping = {
-            "gen_random_string": lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
-                for _ in range(str_len))
+            "gen_random_string": gen_random_string
         }
-        result = parser.parse_data("${gen_random_string(5)}", functions_mapping=functions_mapping)
+        result = parser.eval_lazy_data("${gen_random_string(5)}", functions_mapping=functions_mapping)
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
         functions_mapping["add_two_nums"] = add_two_nums
         self.assertEqual(
-            parser.parse_data("${add_two_nums(1)}", functions_mapping=functions_mapping),
+            parser.eval_lazy_data("${add_two_nums(1)}", functions_mapping=functions_mapping),
             2
         )
         self.assertEqual(
-            parser.parse_data("${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
+            parser.eval_lazy_data("${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
             3
         )
         self.assertEqual(
-            parser.parse_data("/api/${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
+            parser.eval_lazy_data("/api/${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
             "/api/3"
         )
 
         with self.assertRaises(exceptions.FunctionNotFound):
-            parser.parse_data("/api/${gen_md5(abc)}")
+            parser.eval_lazy_data("/api/${gen_md5(abc)}", functions_mapping=functions_mapping)
 
     def test_parse_data_testcase(self):
         variables = {
@@ -323,7 +452,11 @@ class TestParser(unittest.TestCase):
             },
             "body": "$data"
         }
-        parsed_testcase = parser.parse_data(testcase_template, variables, functions)
+        parsed_testcase = parser.eval_lazy_data(
+            testcase_template,
+            variables_mapping=variables,
+            functions_mapping=functions
+        )
         self.assertEqual(
             parsed_testcase["url"],
             "http://127.0.0.1:5000/api/users/1000/3"
@@ -345,13 +478,123 @@ class TestParser(unittest.TestCase):
             3
         )
 
+    def test_parse_variables_mapping(self):
+        variables = {
+            "varA": "123$varB",
+            "varB": "456$varC",
+            "varC": "${sum_two($a, $b)}",
+            "a": 1,
+            "b": 2
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        prepared_variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        parsed_variables = parser.parse_variables_mapping(prepared_variables)
+        self.assertEqual(parsed_variables["varA"], "1234563")
+        self.assertEqual(parsed_variables["varB"], "4563")
+        self.assertEqual(parsed_variables["varC"], 3)
+
+    def test_parse_variables_mapping_fix_duplicate_function_call(self):
+        # fix duplicate function calling
+        variables = {
+            "varA": "$varB",
+            "varB": "${gen_random_string(5)}"
+        }
+        functions = {
+            "gen_random_string": gen_random_string
+        }
+        prepared_variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        parsed_variables = parser.parse_variables_mapping(prepared_variables)
+        self.assertEqual(parsed_variables["varA"], parsed_variables["varB"])
+
+    def test_parse_variables_mapping_not_found(self):
+        variables = {
+            "varA": "123$varB",
+            "varB": "456$varC",
+            "varC": "${sum_two($a, $b)}",
+            "b": 2
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        with self.assertRaises(exceptions.VariableNotFound):
+            parser.prepare_lazy_data(variables, functions, variables.keys())
+
+    def test_parse_variables_mapping_ref_self(self):
+        variables = {
+            "varC": "${sum_two($a, $b)}",
+            "a": 1,
+            "b": 2,
+            "token": "$token"
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        prepared_variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        with self.assertRaises(exceptions.VariableNotFound):
+            parser.parse_variables_mapping(prepared_variables)
+
+    def test_parse_variables_mapping_2(self):
+        variables = {
+            "host2": "https://httprunner.org",
+            "num3": "${sum_two($num2, 4)}",
+            "num2": "${sum_two($num1, 3)}",
+            "num1": "${sum_two(1, 2)}"
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        prepared_variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        parsed_testcase = parser.parse_variables_mapping(prepared_variables)
+        self.assertEqual(parsed_testcase["num3"], 10)
+        self.assertEqual(parsed_testcase["num2"], 6)
+        self.assertEqual(parsed_testcase["num1"], 3)
+
+    def test_prepare_lazy_data(self):
+        variables = {
+            "host": "https://httprunner.org",
+            "num4": "${sum_two($num0, 5)}",
+            "num3": "${sum_two($num2, 4)}",
+            "num2": "${sum_two($num1, 3)}",
+            "num1": "${sum_two(1, 2)}",
+            "num0": 0
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        parser.prepare_lazy_data(
+            variables,
+            functions,
+            variables.keys()
+        )
+
+    def test_prepare_lazy_data_not_found(self):
+        variables = {
+            "host": "https://httprunner.org",
+            "num4": "${sum_two($num0, 5)}",
+            "num3": "${sum_two($num2, 4)}",
+            "num2": "${sum_two($num1, 3)}",
+            "num1": "${sum_two(1, 2)}"
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        with self.assertRaises(exceptions.VariableNotFound):
+            parser.prepare_lazy_data(
+                variables,
+                functions,
+                variables.keys()
+            )
+
+
+class TestParser(unittest.TestCase):
+
     def test_parse_parameters_raw_list(self):
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
             {"username-password": [("user1", "111111"), ["test2", "222222"]]}
         ]
-        variables_mapping = {}
-        functions_mapping = {}
         cartesian_product_parameters = parser.parse_parameters(parameters)
         self.assertEqual(
             len(cartesian_product_parameters),
@@ -429,7 +672,7 @@ class TestParser(unittest.TestCase):
         testcases = tests_mapping["testcases"]
         self.assertEqual(
             testcases[0]["config"]["variables"]["var_c"],
-            "${sum_two(1, 2)}"
+            "${sum_two($var_a, $var_b)}"
         )
         self.assertEqual(
             testcases[0]["config"]["variables"]["PROJECT_KEY"],
@@ -439,10 +682,9 @@ class TestParser(unittest.TestCase):
         parsed_testcases = parsed_tests_mapping["testcases"]
         self.assertIsInstance(parsed_testcases, list)
         test_dict1 = parsed_testcases[0]["teststeps"][0]
-        self.assertEqual(test_dict1["variables"]["var_c"], 3)
-        self.assertEqual(test_dict1["variables"]["PROJECT_KEY"], "ABCDEFGH")
-        self.assertEqual(test_dict1["variables"]["var_d"], test_dict1["variables"]["var_e"])
-        self.assertEqual(parsed_testcases[0]["config"]["name"], '1230')
+        self.assertEqual(test_dict1["variables"]["var_c"].raw_string, "${sum_two($var_a, $var_b)}")
+        self.assertEqual(test_dict1["variables"]["PROJECT_KEY"].raw_string, "${ENV(PROJECT_KEY)}")
+        self.assertIsInstance(parsed_testcases[0]["config"]["name"], parser.LazyString)
 
     def test_parse_tests_override_variables(self):
         tests_mapping = {
@@ -471,7 +713,7 @@ class TestParser(unittest.TestCase):
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
         test_dict1_variables = parsed_tests_mapping["testcases"][0]["teststeps"][0]["variables"]
         self.assertEqual(test_dict1_variables["creator"], "user_test_001")
-        self.assertEqual(test_dict1_variables["username"], "user_test_001")
+        self.assertEqual(test_dict1_variables["username"].raw_string, "$creator")
 
     def test_parse_tests_base_url_priority(self):
         """ base_url & verify: priority test_dict > config
@@ -499,7 +741,7 @@ class TestParser(unittest.TestCase):
         }
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
-        self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
+        self.assertEqual(test_dict["request"]["url"], "/api1")
         self.assertEqual(test_dict["request"]["verify"], True)
 
     def test_parse_tests_base_url_path_with_variable(self):
@@ -527,7 +769,9 @@ class TestParser(unittest.TestCase):
         }
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
-        self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
+        self.assertEqual(test_dict["variables"]["host2"], "https://httprunner.org")
+        parsed_test_dict = parser.parse_lazy_data(test_dict, test_dict["variables"])
+        self.assertEqual(parsed_test_dict["request"]["url"], "https://httprunner.org/api1")
 
     def test_parse_tests_base_url_test_dict(self):
         tests_mapping = {
@@ -555,52 +799,10 @@ class TestParser(unittest.TestCase):
         }
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
-        self.assertEqual(test_dict["request"]["url"], "https://httprunner.org/api1")
-
-    def test_parse_data_with_variables(self):
-        variables = {
-            "host2": "https://httprunner.org",
-            "num3": "${sum_two($num2, 4)}",
-            "num2": "${sum_two($num1, 3)}",
-            "num1": "${sum_two(1, 2)}"
-        }
-        from tests.debugtalk import sum_two
-        functions = {
-            "sum_two": sum_two
-        }
-        parsed_testcase = parser.parse_data(variables, variables, functions)
-        self.assertEqual(parsed_testcase["num3"], 10)
-        self.assertEqual(parsed_testcase["num2"], 6)
-        self.assertEqual(parsed_testcase["num1"], 3)
-
-    def test_parse_data_with_variables_not_found(self):
-        variables = {
-            "host": "https://httprunner.org",
-            "num4": "${sum_two($num0, 5)}",
-            "num3": "${sum_two($num2, 4)}",
-            "num2": "${sum_two($num1, 3)}",
-            "num1": "${sum_two(1, 2)}"
-        }
-        from tests.debugtalk import sum_two
-        functions = {
-            "sum_two": sum_two
-        }
-        with self.assertRaises(exceptions.VariableNotFound):
-            parser.parse_data(variables, variables, functions)
-
-        parsed_testcase = parser.parse_data(
-            variables,
-            variables,
-            functions,
-            raise_if_variable_not_found=False
-        )
-        self.assertEqual(parsed_testcase["num3"], 10)
-        self.assertEqual(parsed_testcase["num2"], 6)
-        self.assertEqual(parsed_testcase["num1"], 3)
-        self.assertEqual(parsed_testcase["num4"], "${sum_two($num0, 5)}")
+        parsed_test_dict = parser.parse_lazy_data(test_dict, test_dict["variables"])
+        self.assertEqual(parsed_test_dict["base_url"], "https://httprunner.org")
 
     def test_parse_tests_variable_with_function(self):
-        from tests.debugtalk import sum_two, gen_random_string
         tests_mapping = {
             "project_mapping": {
                 "functions": {
@@ -642,16 +844,18 @@ class TestParser(unittest.TestCase):
         }
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
-        self.assertEqual(test_dict["variables"]["num3"], 10)
-        self.assertEqual(test_dict["variables"]["num2"], 6)
-        self.assertEqual(test_dict["variables"]["str1"], test_dict["variables"]["str2"])
+        variables = parser.parse_variables_mapping(test_dict["variables"])
+        self.assertEqual(variables["num3"], 10)
+        self.assertEqual(variables["num2"], 6)
+        parsed_test_dict = parser.parse_lazy_data(test_dict, variables)
+        self.assertEqual(parsed_test_dict["base_url"], "https://httprunner.org")
         self.assertEqual(
-            test_dict["request"]["url"],
-            "https://httprunner.org/api1/?num1=3&num2=6&num3=10"
+            parsed_test_dict["request"]["url"],
+            "/api1/?num1=3&num2=6&num3=10"
         )
+        self.assertEqual(variables["str1"], variables["str2"])
 
     def test_parse_tests_variable_not_found(self):
-        from tests.debugtalk import sum_two
         tests_mapping = {
             "project_mapping": {
                 "functions": {
@@ -687,15 +891,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
-        self.assertEqual(test_dict["variables"]["num3"], 10)
-        self.assertEqual(test_dict["variables"]["num2"], 6)
-        self.assertEqual(test_dict["variables"]["num4"], "${sum_two($num0, 5)}")
-        self.assertEqual(
-            test_dict["request"]["url"],
-            "https://httprunner.org/api1/?num1=3&num2=6&num3=10&num4=${sum_two($num0, 5)}"
-        )
+        with self.assertRaises(exceptions.VariableNotFound):
+            parser.parse_tests(tests_mapping)
 
     def test_parse_tests_base_url_teststep_empty(self):
         """ base_url & verify: priority test_dict > config
@@ -723,7 +920,7 @@ class TestParser(unittest.TestCase):
         }
         parsed_tests_mapping = parser.parse_tests(tests_mapping)
         test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
-        self.assertEqual(test_dict["request"]["url"], "https://debugtalk.com/api1")
+        self.assertEqual(str(test_dict["base_url"]), 'LazyString($host)')
         self.assertEqual(test_dict["request"]["verify"], True)
 
     def test_parse_tests_verify_config_set(self):
@@ -839,7 +1036,7 @@ class TestParser(unittest.TestCase):
                 {"PROJECT_KEY": "${ENV(PROJECT_KEY)}"}
             ]
         }
-        result = parser.parse_data(content)
+        result = parser.eval_lazy_data(content)
 
         content = {
             "variables": [
@@ -847,7 +1044,7 @@ class TestParser(unittest.TestCase):
             ]
         }
         with self.assertRaises(exceptions.ParamsError):
-            parser.parse_data(content)
+            parser.eval_lazy_data(content)
 
         content = {
             "variables": [
@@ -855,7 +1052,7 @@ class TestParser(unittest.TestCase):
             ]
         }
         with self.assertRaises(exceptions.ParamsError):
-            parser.parse_data(content)
+            parser.eval_lazy_data(content)
 
     def test_extend_with_api(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))

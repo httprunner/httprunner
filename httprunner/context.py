@@ -36,15 +36,13 @@ class SessionContext(object):
         """
         variables_mapping = variables_mapping or {}
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
+        variables_mapping.update(self.session_variables_mapping)
+        parsed_variables_mapping = parser.parse_variables_mapping(variables_mapping)
 
         self.test_variables_mapping = {}
         # priority: extracted variable > teststep variable
-        self.test_variables_mapping.update(variables_mapping)
+        self.test_variables_mapping.update(parsed_variables_mapping)
         self.test_variables_mapping.update(self.session_variables_mapping)
-
-        for variable_name, variable_value in variables_mapping.items():
-            variable_value = self.eval_content(variable_value)
-            self.update_test_variables(variable_name, variable_value)
 
     def update_test_variables(self, variable_name, variable_value):
         """ update test variables, these variables are only valid in the current test.
@@ -63,11 +61,7 @@ class SessionContext(object):
         """ evaluate content recursively, take effect on each variable and function in content.
             content may be in any data structure, include dict, list, tuple, number, string, etc.
         """
-        return parser.parse_data(
-            content,
-            self.test_variables_mapping,
-            self.FUNCTIONS_MAPPING
-        )
+        return parser.parse_lazy_data(content, self.test_variables_mapping)
 
     def __eval_check_item(self, validator, resp_obj):
         """ evaluate check item in validator.
@@ -95,10 +89,8 @@ class SessionContext(object):
         # 3, dict or list, maybe containing variable/function reference, e.g. {"var": "$abc"}
         # 4, string joined by delimiter. e.g. "status_code", "headers.content-type"
         # 5, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
-
         if isinstance(check_item, (dict, list)) \
-            or parser.extract_variables(check_item) \
-            or parser.extract_functions(check_item):
+            or isinstance(check_item, parser.LazyString):
             # format 1/2/3
             check_value = self.eval_content(check_item)
         else:

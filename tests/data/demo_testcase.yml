@@ -1,8 +1,9 @@
 - config:
-    name: "123$var_a"
+    name: "123t$var_a"
     variables:
-        var_a: 0
-        var_c: "${sum_two(1, 2)}"
+        var_a: 1
+        var_b: 2
+        var_c: "${sum_two($var_a, $var_b)}"
         var_d: "${gen_random_string(5)}"
         var_e: $var_d
         PROJECT_KEY: ${ENV(PROJECT_KEY)}

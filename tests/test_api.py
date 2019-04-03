@@ -589,7 +589,7 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(test_dict1["name"], "get token (setup)")
         self.assertNotIn("api_def", test_dict1)
         self.assertEqual(test_dict1["variables"]["device_sn"], "TESTCASE_SETUP_XXX")
-        self.assertEqual(test_dict1["request"]["url"], "http://127.0.0.1:5000/api/get-token")
+        self.assertEqual(test_dict1["request"]["url"], "/api/get-token")
         self.assertEqual(test_dict1["request"]["verify"], False)
 
         test_dict2 = parsed_testcases[0]["teststeps"][1]
@@ -696,17 +696,14 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(parsed_testcases[0]["teststeps"]), 4)
 
         testcase1 = parsed_testcases[0]["teststeps"][0]
-        self.assertIn("setup and reset all (override)", testcase1["config"]["name"])
-        self.assertEqual(testcase1["teststeps"][0]["variables"]["var_c"], testcase1["teststeps"][0]["variables"]["var_d"])
-        self.assertEqual(testcase1["teststeps"][0]["variables"]["var_a"], testcase1["teststeps"][0]["variables"]["var_b"])
-        self.assertNotEqual(testcase1["teststeps"][0]["variables"]["var_a"], testcase1["teststeps"][0]["variables"]["var_c"])
+        self.assertIn("setup and reset all (override)", testcase1["config"]["name"].raw_string)
+        teststeps = testcase1["teststeps"]
         self.assertNotIn("testcase_def", testcase1)
-        self.assertEqual(len(testcase1["teststeps"]), 2)
+        self.assertEqual(len(teststeps), 2)
         self.assertEqual(
-            testcase1["teststeps"][0]["request"]["url"],
-            "http://127.0.0.1:5000/api/get-token"
+            teststeps[0]["request"]["url"],
+            "/api/get-token"
         )
-        self.assertEqual(len(testcase1["teststeps"][0]["variables"]["device_sn"]), 15)
 
     def test_testsuite_add_tests(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -718,7 +715,7 @@ class TestApi(ApiServerUnittest):
 
         self.assertEqual(len(test_suite._tests), 2)
         tests = test_suite._tests[0].teststeps
-        self.assertIn("setup and reset all (override)", tests[0]["config"]["name"])
+        self.assertIn("setup and reset all (override)", tests[0]["config"]["name"].raw_string)
 
     def test_testsuite_run_suite(self):
         testcase_path = "tests/testsuites/create_users.yml"
