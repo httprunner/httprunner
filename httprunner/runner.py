@@ -199,7 +199,9 @@ class Runner(object):
         self.session_context.init_test_variables(test_variables)
 
         # teststep name
-        test_name = test_dict.get("name", "")
+        test_name = self.session_context.eval_content(test_dict.get("name", ""))
+        # TODO: refactor
+        self.http_client_session.base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
 
         # parse test request
         raw_request = test_dict.get('request', {})
@@ -254,7 +256,6 @@ class Runner(object):
         validators = test_dict.get("validate", [])
         try:
             self.session_context.validate(validators, resp_obj)
-
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
             err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
 
