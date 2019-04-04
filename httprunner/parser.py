@@ -724,7 +724,7 @@ def parse_variables_mapping(variables_mapping, ignore=False):
                 # reference other variable, or function call with other variable
                 # e.g. {"varA": "123$varB", "varB": "456$varC"}
                 # e.g. {"varC": "${sum_two($a, $b)}"}
-                if any([var_name not in parsed_variables_mapping for var_name in variables]):
+                if any([_var_name not in parsed_variables_mapping for _var_name in variables]):
                     # reference variable not parsed
                     continue
 
