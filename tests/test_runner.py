@@ -68,7 +68,7 @@ class TestRunner(ApiServerUnittest):
                     "app_version": "2.8.6"
                 },
                 "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                    "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
                 }
             },
             "validate": [
@@ -115,7 +115,7 @@ class TestRunner(ApiServerUnittest):
                     "app_version": "2.8.6"
                 },
                 "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                    "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
                 }
             },
             "validate": [
@@ -176,7 +176,7 @@ class TestRunner(ApiServerUnittest):
                 },
                 "json": {
                     "os_platform": "ios",
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                    "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
                 }
             },
             "setup_hooks": [
@@ -205,7 +205,7 @@ class TestRunner(ApiServerUnittest):
                     "app_version": "2.8.6"
                 },
                 "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                    "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
                 }
             },
             "validate": [
@@ -233,7 +233,7 @@ class TestRunner(ApiServerUnittest):
                     "app_version": "2.8.6"
                 },
                 "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                    "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
                 }
             },
             "validate": [
@@ -270,7 +270,7 @@ class TestRunner(ApiServerUnittest):
                     "app_version": "2.8.6"
                 },
                 "json": {
-                    "sign": "f1219719911caae89ccc301679857ebfda115ca2"
+                    "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
                 }
             },
             "validate": [

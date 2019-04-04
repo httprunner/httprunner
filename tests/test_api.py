@@ -36,7 +36,7 @@ class TestHttpRunner(ApiServerUnittest):
                         'url': 'http://127.0.0.1:5000/api/get-token',
                         'method': 'POST',
                         'headers': {'Content-Type': 'application/json', 'app_version': '2.8.6', 'device_sn': 'FwgRiO7CNA50DSU', 'os_platform': 'ios', 'user_agent': 'iOS/10.3'},
-                        'json': {'sign': '958a05393efef0ac7c0fb80a7eac45e24fd40c27'}
+                        'json': {'sign': '9c0c7e51c91ae963c833a4ccbab8d683c4a90c98'}
                     },
                     'extract': [
                         {'token': 'content.token'}
@@ -52,7 +52,8 @@ class TestHttpRunner(ApiServerUnittest):
                     'request': {
                         'url': 'http://127.0.0.1:5000/api/users/1000',
                         'method': 'POST',
-                        'headers': {'Content-Type': 'application/json', 'device_sn': 'FwgRiO7CNA50DSU','token': '$token'}, 'json': {'name': 'user1', 'password': '123456'}
+                        'headers': {'Content-Type': 'application/json', 'device_sn': 'FwgRiO7CNA50DSU','token': '$token'},
+                        'json': {'name': 'user1', 'password': '123456'}
                     },
                     'validate': [
                         {'eq': ['status_code', 201]},
