@@ -10,7 +10,7 @@
             os_platform: 'ios'
             app_version: '2.8.6'
         json:
-            sign: f1219719911caae89ccc301679857ebfda115ca2
+            sign: 5188962c489d1a35effa99e9346dd5efd4fdabad
     variables:
         expect_status_code: 200
         token_len: 16

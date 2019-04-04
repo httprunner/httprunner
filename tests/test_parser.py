@@ -1073,7 +1073,7 @@ class TestParser(unittest.TestCase):
                 'url': '/api/get-token',
                 'method': 'POST',
                 'headers': {'user_agent': '$user_agent', 'device_sn': '$device_sn', 'os_platform': '$os_platform', 'app_version': '$app_version'},
-                'json': {'sign': '${get_sign($user_agent, $device_sn, $os_platform, $app_version)}'}
+                'json': {'sign': '${get_sign($device_sn, $os_platform, $app_version)}'}
             },
             'validate': [
                 {'eq': ['status_code', 201]},

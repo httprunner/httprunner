@@ -15,7 +15,7 @@ request:
         Content-Type: "application/json"
         device_sn: $device_sn
     json:
-        sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
+        sign: ${get_sign($device_sn, $os_platform, $app_version)}
 validate:
     - eq: ["status_code", 0]
     - len_eq: ["content.token", 12]
