@@ -747,11 +747,10 @@ class TestLocust(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/locust_tests/demo_locusts.yml')
         locust_tests = prepare_locust_tests(path)
-        self.assertIn("gen_md5", locust_tests["functions"])
-        self.assertEqual(len(locust_tests["tests"]), 2 + 3)
+        self.assertEqual(len(locust_tests), 2 + 3)
         name_list = [
             "create user 1000 and check result.",
             "create user 1001 and check result."
         ]
-        self.assertIn(locust_tests["tests"][0]["config"]["name"], name_list)
-        self.assertIn(locust_tests["tests"][4]["config"]["name"], name_list)
+        self.assertIn(locust_tests[0]["config"]["name"], name_list)
+        self.assertIn(locust_tests[4]["config"]["name"], name_list)
