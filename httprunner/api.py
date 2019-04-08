@@ -280,27 +280,22 @@ def prepare_locust_tests(path):
         path (str): testcase file path.
 
     Returns:
-        dict: locust tests data
+        list: locust tests data
 
-            {
-                "functions": {},
-                "tests": []
-            }
+            [
+                testcase1_dict,
+                testcase2_dict
+            ]
 
     """
     tests_mapping = loader.load_tests(path)
     parsed_tests_mapping = parser.parse_tests(tests_mapping)
 
-    functions = parsed_tests_mapping.get("project_mapping", {}).get("functions", {})
-
-    tests = []
+    locust_tests = []
 
     for testcase in parsed_tests_mapping["testcases"]:
         testcase_weight = testcase.get("config", {}).pop("weight", 1)
         for _ in range(testcase_weight):
-            tests.append(testcase)
+            locust_tests.append(testcase)
 
-    return {
-        "functions": functions,
-        "tests": tests
-    }
+    return locust_tests
