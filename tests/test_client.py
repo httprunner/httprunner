@@ -76,7 +76,7 @@ class TestHttpClient(ApiServerUnittest):
             "a": "1",
             "b": "2"
         }
-        resp = self.api_client.get(url, cookies=cookies, headers=self.headers)
+        resp = self.api_client.get(url, cookies=cookies, headers=self.headers, verify=False)
         raw_request = resp.history[0].request
         self.assertEqual(raw_request._cookies["a"], "1")
         self.assertEqual(raw_request._cookies["b"], "2")

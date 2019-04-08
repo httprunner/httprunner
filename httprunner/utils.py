@@ -120,39 +120,6 @@ def query_json(json_content, query, delimiter='.'):
     return json_content
 
 
-def get_uniform_comparator(comparator):
-    """ convert comparator alias to uniform name
-    """
-    if comparator in ["eq", "equals", "==", "is"]:
-        return "equals"
-    elif comparator in ["lt", "less_than"]:
-        return "less_than"
-    elif comparator in ["le", "less_than_or_equals"]:
-        return "less_than_or_equals"
-    elif comparator in ["gt", "greater_than"]:
-        return "greater_than"
-    elif comparator in ["ge", "greater_than_or_equals"]:
-        return "greater_than_or_equals"
-    elif comparator in ["ne", "not_equals"]:
-        return "not_equals"
-    elif comparator in ["str_eq", "string_equals"]:
-        return "string_equals"
-    elif comparator in ["len_eq", "length_equals", "count_eq"]:
-        return "length_equals"
-    elif comparator in ["len_gt", "count_gt", "length_greater_than", "count_greater_than"]:
-        return "length_greater_than"
-    elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals", \
-        "count_greater_than_or_equals"]:
-        return "length_greater_than_or_equals"
-    elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
-        return "length_less_than"
-    elif comparator in ["len_le", "count_le", "length_less_than_or_equals", \
-        "count_less_than_or_equals"]:
-        return "length_less_than_or_equals"
-    else:
-        return comparator
-
-
 def deep_update_dict(origin_dict, override_dict):
     """ update origin dict with override dict recursively
     e.g. origin_dict = {'a': 1, 'b': {'c': 2, 'd': 4}}
@@ -321,78 +288,6 @@ def ensure_mapping_format(variables):
 
     else:
         raise exceptions.ParamsError("variables format error!")
-
-
-def _convert_validators_to_mapping(validators):
-    """ convert validators list to mapping.
-
-    Args:
-        validators (list): validators in list
-
-    Returns:
-        dict: validators mapping, use (check, comparator) as key.
-
-    Examples:
-        >>> validators = [
-                {"check": "v1", "expect": 201, "comparator": "eq"},
-                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-            ]
-        >>> _convert_validators_to_mapping(validators)
-            {
-                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
-                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-            }
-
-    """
-    validators_mapping = {}
-
-    for validator in validators:
-        if not isinstance(validator["check"], collections.Hashable):
-            check = json.dumps(validator["check"])
-        else:
-            check = validator["check"]
-
-        key = (check, validator["comparator"])
-        validators_mapping[key] = validator
-
-    return validators_mapping
-
-
-def extend_validators(raw_validators, override_validators):
-    """ extend raw_validators with override_validators.
-        override_validators will merge and override raw_validators.
-
-    Args:
-        raw_validators (dict):
-        override_validators (dict):
-
-    Returns:
-        list: extended validators
-
-    Examples:
-        >>> raw_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
-        >>> override_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
-        >>> extend_validators(raw_validators, override_validators)
-            [
-                {"check": "v1", "expect": 201, "comparator": "eq"},
-                {"check": "s2", "expect": 16, "comparator": "len_eq"},
-                {"check": "s3", "expect": 12, "comparator": "len_eq"}
-            ]
-
-    """
-
-    if not raw_validators:
-        return override_validators
-
-    elif not override_validators:
-        return raw_validators
-
-    else:
-        def_validators_mapping = _convert_validators_to_mapping(raw_validators)
-        ref_validators_mapping = _convert_validators_to_mapping(override_validators)
-
-        def_validators_mapping.update(ref_validators_mapping)
-        return list(def_validators_mapping.values())
 
 
 def extend_variables(raw_variables, override_variables):
@@ -579,25 +474,6 @@ def gen_cartesian_product(*args):
         product_list.append(product_item_dict)
 
     return product_list
-
-
-def validate_json_file(file_list):
-    """ validate JSON testcase format
-    """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
-            continue
-
-        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
-
-        with io.open(json_file) as stream:
-            try:
-                json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
-
-        print("OK")
 
 
 def prettify_json_file(file_list):
