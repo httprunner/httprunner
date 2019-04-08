@@ -60,7 +60,6 @@ class Runner(object):
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         """
-        base_url = config.get("base_url")
         self.verify = config.get("verify", True)
         self.output = config.get("output", [])
         self.validation_results = []
@@ -70,7 +69,7 @@ class Runner(object):
         # testcase teardown hooks
         self.testcase_teardown_hooks = config.get("teardown_hooks", [])
 
-        self.http_client_session = http_client_session or HttpSession(base_url)
+        self.http_client_session = http_client_session or HttpSession()
         self.session_context = SessionContext()
 
         if testcase_setup_hooks:
@@ -212,13 +211,16 @@ class Runner(object):
 
         # teststep name
         test_name = self.session_context.eval_content(test_dict.get("name", ""))
-        # TODO: refactor
-        self.http_client_session.base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
 
         # parse test request
         raw_request = test_dict.get('request', {})
         parsed_test_request = self.session_context.eval_content(raw_request)
         self.session_context.update_test_variables("request", parsed_test_request)
+
+        # prepend url with base_url unless it's already an absolute URL
+        url = parsed_test_request.pop('url')
+        base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
+        parsed_url = utils.build_url(base_url, url)
 
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
@@ -226,7 +228,6 @@ class Runner(object):
             self.do_hook_actions(setup_hooks, "setup")
 
         try:
-            url = parsed_test_request.pop('url')
             method = parsed_test_request.pop('method')
             parsed_test_request.setdefault("verify", self.verify)
             group_name = parsed_test_request.pop("group", None)
@@ -241,13 +242,13 @@ class Runner(object):
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
-        logger.log_info("{method} {url}".format(method=method, url=url))
+        logger.log_info("{method} {url}".format(method=method, url=parsed_url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
 
         # request
         resp = self.http_client_session.request(
             method,
-            url,
+            parsed_url,
             name=(group_name or test_name),
             **parsed_test_request
         )
@@ -273,7 +274,7 @@ class Runner(object):
 
             # log request
             err_msg += "====== request details ======\n"
-            err_msg += "url: {}\n".format(url)
+            err_msg += "url: {}\n".format(parsed_url)
             err_msg += "method: {}\n".format(method)
             err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
             for k, v in parsed_test_request.items():

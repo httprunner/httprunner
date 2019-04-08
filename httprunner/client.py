@@ -5,7 +5,7 @@ import time
 import requests
 import urllib3
 from httprunner import logger
-from httprunner.utils import build_url, lower_dict_keys, omit_long_data
+from httprunner.utils import lower_dict_keys, omit_long_data
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
@@ -28,15 +28,10 @@ class HttpSession(requests.Session):
     display statistics.
 
     This is a slightly extended version of `python-request <http://python-requests.org>`_'s
-    :py:class:`requests.Session` class and mostly this class works exactly the same. However
-    the methods for making requests (get, post, delete, put, head, options, patch, request)
-    can now take a *url* argument that's only the path part of the URL, in which case the host
-    part of the URL will be prepended with the HttpSession.base_url which is normally inherited
-    from a HttpRunner class' host property.
+    :py:class:`requests.Session` class and mostly this class works exactly the same.
     """
-    def __init__(self, base_url=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(HttpSession, self).__init__(*args, **kwargs)
-        self.base_url = base_url if base_url else ""
         self.init_meta_data()
 
     def init_meta_data(self):
@@ -179,9 +174,6 @@ class HttpSession(requests.Session):
         self.meta_data["data"][0]["request"]["url"] = url
         kwargs.setdefault("timeout", 120)
         self.meta_data["data"][0]["request"].update(kwargs)
-
-        # prepend url with hostname unless it's already an absolute URL
-        url = build_url(self.base_url, url)
 
         start_timestamp = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
