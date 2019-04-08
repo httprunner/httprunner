@@ -890,7 +890,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
             extract_mapping = utils.ensure_mapping_format(test_dict["extract"])
             session_variables.update(extract_mapping)
 
-        check_variables_set = set(test_dict["variables"].keys()) \
+        check_variables_set = set(test_dict.get("variables", {}).keys()) \
             | set(session_variables.keys()) | {"request", "response"}
 
         # convert validators to lazy function
@@ -1142,10 +1142,7 @@ def parse_tests(tests_mapping):
 
     """
     project_mapping = tests_mapping.get("project_mapping", {})
-    parsed_tests_mapping = {
-        "project_mapping": project_mapping,
-        "testcases": []
-    }
+    testcases = []
 
     for test_type in tests_mapping:
 
@@ -1155,12 +1152,12 @@ def parse_tests(tests_mapping):
             for testsuite in testsuites:
                 parsed_testcases = _parse_testsuite(testsuite, project_mapping)
                 for parsed_testcase in parsed_testcases:
-                    parsed_tests_mapping["testcases"].append(parsed_testcase)
+                    testcases.append(parsed_testcase)
 
         elif test_type == "testcases":
             for testcase in tests_mapping["testcases"]:
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
-                parsed_tests_mapping["testcases"].append(parsed_testcase)
+                testcases.append(parsed_testcase)
 
         elif test_type == "apis":
             # encapsulate api as a testcase
@@ -1169,6 +1166,6 @@ def parse_tests(tests_mapping):
                     "teststeps": [api_content]
                 }
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
-                parsed_tests_mapping["testcases"].append(parsed_testcase)
+                testcases.append(parsed_testcase)
 
-    return parsed_tests_mapping
+    return testcases

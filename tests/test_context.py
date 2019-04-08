@@ -146,8 +146,8 @@ class TestContext(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         teststep = parsed_testcase["teststeps"][0]
         test_runner.run_test(teststep)
@@ -181,8 +181,8 @@ class TestContext(ApiServerUnittest):
         tests_mapping = {
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         teststep = parsed_testcase["teststeps"][0]
         with self.assertRaises(exceptions.ValidationFailure):
