@@ -890,7 +890,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
             extract_mapping = utils.ensure_mapping_format(test_dict["extract"])
             session_variables.update(extract_mapping)
 
-        check_variables_set = set(test_dict_variables.keys()) \
+        check_variables_set = set(test_dict["variables"].keys()) \
             | set(session_variables.keys()) | {"request", "response"}
 
         # convert validators to lazy function
