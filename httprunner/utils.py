@@ -53,7 +53,7 @@ def get_os_environ(variable_name):
 
 
 def build_url(base_url, path):
-    """ prepend url with hostname unless it's already an absolute URL """
+    """ prepend url with base_url unless it's already an absolute URL """
     if absolute_http_url_regexp.match(path):
         return path
     elif base_url:

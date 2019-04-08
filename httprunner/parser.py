@@ -795,8 +795,7 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
 
 
 def __prepare_config(config, project_mapping):
-    """ parse testcase/testsuite config,
-        including everything (name and base_url) except variables.
+    """ parse testcase/testsuite config.
     """
     # get config variables
     raw_config_variables = config.pop("variables", {})
