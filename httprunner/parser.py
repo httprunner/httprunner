@@ -841,8 +841,10 @@ def __prepare_testcase_tests(tests, config, project_mapping):
     functions = project_mapping.get("functions", {})
 
     prepared_testcase_tests = []
-    session_variables = {}
+    session_variables_set = set()
     for test_dict in tests:
+
+        teststep_variables_set = {"request", "response"}
 
         # 1, testcase config => testcase tests
         # override test_dict variables
@@ -867,6 +869,9 @@ def __prepare_testcase_tests(tests, config, project_mapping):
         if "testcase_def" in test_dict:
             # test_dict is nested testcase
 
+            if "output" in test_dict:
+                session_variables_set |= set(test_dict["output"])
+
             # 2, testcase test_dict => testcase_def config
             testcase_def = test_dict.pop("testcase_def")
             _extend_with_testcase(test_dict, testcase_def)
@@ -877,11 +882,17 @@ def __prepare_testcase_tests(tests, config, project_mapping):
             # 3, testcase_def config => testcase_def test_dict
             test_dict = _parse_testcase(test_dict, project_mapping)
 
+            config = test_dict.get("config", {})
+            teststep_variables_set |= set(config.get("variables", []))
+
         elif "api_def" in test_dict:
             # test_dict has API reference
             # 2, test_dict => api
             api_def_dict = test_dict.pop("api_def")
             _extend_with_api(test_dict, api_def_dict)
+
+        # current teststep variables
+        teststep_variables_set |= set(test_dict.get("variables", {}).keys())
 
         # verify priority: testcase teststep > testcase config
         if "request" in test_dict and "verify" not in test_dict["request"]:
@@ -890,11 +901,9 @@ def __prepare_testcase_tests(tests, config, project_mapping):
         # move extracted variable to session variables
         if "extract" in test_dict:
             extract_mapping = utils.ensure_mapping_format(test_dict["extract"])
-            session_variables.update(extract_mapping)
+            session_variables_set |= set(extract_mapping.keys())
 
-        check_variables_set = set(test_dict.get("variables", {}).keys()) \
-            | set(session_variables.keys()) | {"request", "response"} \
-            | set(test_dict.get("output", []))
+        teststep_variables_set |= session_variables_set
 
         # convert validators to lazy function
         validators = test_dict.pop("validate", [])
@@ -912,7 +921,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
                 LazyFunction(
                     function_meta,
                     functions,
-                    check_variables_set
+                    teststep_variables_set
                 )
             )
         test_dict["validate"] = prepared_validators
@@ -922,7 +931,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
         prepared_test_dict = prepare_lazy_data(
             test_dict,
             functions,
-            check_variables_set
+            teststep_variables_set
         )
         prepared_testcase_tests.append(prepared_test_dict)
 
