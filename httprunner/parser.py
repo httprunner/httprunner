@@ -704,7 +704,7 @@ def _extend_with_api(test_dict, api_def_dict):
 
     """
     # override api name
-    test_dict.setdefault("name", api_def_dict.pop("name", ""))
+    test_dict.setdefault("name", api_def_dict.pop("name", "api name undefined"))
 
     # override variables
     def_variables = api_def_dict.pop("variables", [])
@@ -784,7 +784,9 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
         testcase_def_dict["config"]["base_url"] = test_base_url
 
     # override name
-    test_name = test_dict.pop("name") or testcase_def_dict["config"].pop("name") or "Undefined name"
+    test_name = test_dict.pop("name", None) \
+        or testcase_def_dict["config"].pop("name", None) \
+        or "testcase name undefined"
 
     # override testcase config name, output, etc.
     testcase_def_dict["config"].update(test_dict)
