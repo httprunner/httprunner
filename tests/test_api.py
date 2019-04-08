@@ -578,8 +578,7 @@ class TestApi(ApiServerUnittest):
         testcase_path = "tests/testcases/setup.yml"
         tests_mapping = loader.load_tests(testcase_path)
 
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcases = parsed_tests_mapping["testcases"]
+        parsed_testcases = parser.parse_tests(tests_mapping)
 
         self.assertEqual(len(parsed_testcases), 1)
 
@@ -600,9 +599,9 @@ class TestApi(ApiServerUnittest):
         testcase_path = "tests/testcases/setup.yml"
         tests_mapping = loader.load_tests(testcase_path)
 
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
-        test_suite = runner._add_tests(parsed_tests_mapping)
+        test_suite = runner._add_tests(testcases)
 
         self.assertEqual(len(test_suite._tests), 1)
         teststeps = test_suite._tests[0].teststeps
@@ -613,8 +612,8 @@ class TestApi(ApiServerUnittest):
     def test_testcase_complex_verify(self):
         testcase_path = "tests/testcases/create_and_check.yml"
         tests_mapping = loader.load_tests(testcase_path)
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        teststeps = parsed_tests_mapping["testcases"][0]["teststeps"]
+        testcases = parser.parse_tests(tests_mapping)
+        teststeps = testcases[0]["teststeps"]
 
         # testcases/setup.yml
         teststep1 = teststeps[0]
@@ -629,18 +628,18 @@ class TestApi(ApiServerUnittest):
     def test_testcase_simple_run_suite(self):
         testcase_path = "tests/testcases/setup.yml"
         tests_mapping = loader.load_tests(testcase_path)
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
-        test_suite = runner._add_tests(parsed_tests_mapping)
+        test_suite = runner._add_tests(testcases)
         tests_results = runner._run_suite(test_suite)
         self.assertEqual(len(tests_results[0][1].records), 2)
 
     def test_testcase_complex_run_suite(self):
         testcase_path = "tests/testcases/create_and_check.yml"
         tests_mapping = loader.load_tests(testcase_path)
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
-        test_suite = runner._add_tests(parsed_tests_mapping)
+        test_suite = runner._add_tests(testcases)
         tests_results = runner._run_suite(test_suite)
         self.assertEqual(len(tests_results[0][1].records), 4)
 
@@ -690,9 +689,7 @@ class TestApi(ApiServerUnittest):
         testcase_path = "tests/testsuites/create_users.yml"
         tests_mapping = loader.load_tests(testcase_path)
 
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-
-        parsed_testcases = parsed_tests_mapping["testcases"]
+        parsed_testcases = parser.parse_tests(tests_mapping)
         self.assertEqual(len(parsed_testcases), 2)
         self.assertEqual(len(parsed_testcases[0]["teststeps"]), 4)
 
@@ -710,9 +707,9 @@ class TestApi(ApiServerUnittest):
         testcase_path = "tests/testsuites/create_users.yml"
         tests_mapping = loader.load_tests(testcase_path)
 
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
-        test_suite = runner._add_tests(parsed_tests_mapping)
+        test_suite = runner._add_tests(testcases)
 
         self.assertEqual(len(test_suite._tests), 2)
         tests = test_suite._tests[0].teststeps
@@ -722,10 +719,10 @@ class TestApi(ApiServerUnittest):
         testcase_path = "tests/testsuites/create_users.yml"
         tests_mapping = loader.load_tests(testcase_path)
 
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        testcases = parser.parse_tests(tests_mapping)
 
         runner = HttpRunner()
-        test_suite = runner._add_tests(parsed_tests_mapping)
+        test_suite = runner._add_tests(testcases)
         tests_results = runner._run_suite(test_suite)
 
         self.assertEqual(len(tests_results[0][1].records), 4)

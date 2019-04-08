@@ -36,8 +36,8 @@ class Runner(object):
                 ]
             }
 
-        >>> parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        >>> parsed_testcase = parsed_tests_mapping["testcases"][0]
+        >>> testcases = parser.parse_tests(tests_mapping)
+        >>> parsed_testcase = testcases[0]
 
         >>> test_runner = runner.Runner(parsed_testcase["config"])
         >>> test_runner.run_test(parsed_testcase["teststeps"][0])

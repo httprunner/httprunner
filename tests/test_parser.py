@@ -665,8 +665,7 @@ class TestParser(unittest.TestCase):
             testcases[0]["config"]["variables"]["PROJECT_KEY"],
             "${ENV(PROJECT_KEY)}"
         )
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcases = parsed_tests_mapping["testcases"]
+        parsed_testcases = parser.parse_tests(tests_mapping)
         self.assertIsInstance(parsed_testcases, list)
         test_dict1 = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict1["variables"]["var_c"].raw_string, "${sum_two($var_a, $var_b)}")
@@ -697,8 +696,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict1_variables = parsed_tests_mapping["testcases"][0]["teststeps"][0]["variables"]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict1_variables = parsed_testcases[0]["teststeps"][0]["variables"]
         self.assertEqual(test_dict1_variables["creator"], "user_test_001")
         self.assertEqual(test_dict1_variables["username"].raw_string, "$creator")
 
@@ -726,8 +725,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["url"], "/api1")
         self.assertEqual(test_dict["request"]["verify"], True)
 
@@ -754,8 +753,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict["variables"]["host2"], "https://httprunner.org")
         parsed_test_dict = parser.parse_lazy_data(test_dict, test_dict["variables"])
         self.assertEqual(parsed_test_dict["request"]["url"], "https://httprunner.org/api1")
@@ -784,8 +783,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         parsed_test_dict = parser.parse_lazy_data(test_dict, test_dict["variables"])
         self.assertEqual(parsed_test_dict["base_url"], "https://httprunner.org")
 
@@ -829,8 +828,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         variables = parser.parse_variables_mapping(test_dict["variables"])
         self.assertEqual(variables["num3"], 10)
         self.assertEqual(variables["num2"], 6)
@@ -905,8 +904,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(str(test_dict["base_url"]), 'LazyString($host)')
         self.assertEqual(test_dict["request"]["verify"], True)
 
@@ -930,8 +929,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["verify"], False)
 
     def test_parse_tests_verify_config_unset(self):
@@ -953,8 +952,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["verify"], True)
 
     def test_parse_tests_verify_step_set_false(self):
@@ -977,8 +976,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict["request"]["verify"], False)
 
     def test_parse_tests_verify_nested_testcase_unset(self):
@@ -1012,8 +1011,8 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        test_dict = parsed_tests_mapping["testcases"][0]["teststeps"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        test_dict = parsed_testcases[0]["teststeps"][0]
         self.assertEqual(test_dict["teststeps"][0]["request"]["verify"], False)
 
     def test_parse_environ(self):

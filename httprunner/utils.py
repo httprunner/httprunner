@@ -579,46 +579,18 @@ def _prepare_dump_info(project_mapping, tag_name):
     return pwd_dir_path, dump_file_name
 
 
-def dump_tests(tests_mapping, tag_name):
-    """ dump loaded/parsed tests data (except functions) to json file.
+def dump_logs(json_data, project_mapping, tag_name):
+    """ dump tests data to json file.
         the dumped file is located in PWD/logs folder.
 
     Args:
-        tests_mapping (dict): data to dump
-        tag_name (str): tag name, loaded/parsed
+        json_data (list/dict): json data to dump
+        project_mapping (dict): project info
+        tag_name (str): tag name, loaded/parsed/summary
 
     """
-    project_mapping = tests_mapping.get("project_mapping", {})
     pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, tag_name)
-
-    tests_to_dump = {
-        "project_mapping": {}
-    }
-
-    for key in project_mapping:
-        if key == "functions" and project_mapping["functions"]:
-            tests_to_dump["project_mapping"]["debugtalk.py"] = {
-                "path": os.path.join(pwd_dir_path, "debugtalk.py"),
-                "functions": project_mapping["functions"]
-            }
-        else:
-            tests_to_dump["project_mapping"][key] = project_mapping[key]
-
-    if "api" in tests_mapping:
-        tests_to_dump["api"] = tests_mapping["api"]
-    elif "testcases" in tests_mapping:
-        tests_to_dump["testcases"] = tests_mapping["testcases"]
-    elif "testsuites" in tests_mapping:
-        tests_to_dump["testsuites"] = tests_mapping["testsuites"]
-
-    dump_json_file(tests_to_dump, pwd_dir_path, dump_file_name)
-
-
-def dump_summary(summary, project_mapping):
-    """ dump test result summary to json file.
-    """
-    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, "summary")
-    dump_json_file(summary, pwd_dir_path, dump_file_name)
+    dump_json_file(json_data, pwd_dir_path, dump_file_name)
 
 
 def get_python2_retire_msg():

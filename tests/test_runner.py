@@ -36,8 +36,8 @@ class TestRunner(ApiServerUnittest):
 
         for testcase_file_path in testcase_file_path_list:
             tests_mapping = loader.load_tests(testcase_file_path)
-            parsed_tests_mapping = parser.parse_tests(tests_mapping)
-            parsed_testcase = parsed_tests_mapping["testcases"][0]
+            parsed_testcases = parser.parse_tests(tests_mapping)
+            parsed_testcase = parsed_testcases[0]
             test_runner = runner.Runner(parsed_testcase["config"])
             test_runner.run_test(parsed_testcase["teststeps"][0])
             test_runner.run_test(parsed_testcase["teststeps"][1])
@@ -90,8 +90,8 @@ class TestRunner(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         end_time = time.time()
         # check if testcase setup hook executed
@@ -139,8 +139,8 @@ class TestRunner(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         test_runner.run_test(parsed_testcase["teststeps"][0])
         test_variables_mapping = test_runner.session_context.test_variables_mapping
@@ -187,8 +187,8 @@ class TestRunner(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         test_runner.run_test(parsed_testcase["teststeps"][0])
 
@@ -229,8 +229,8 @@ class TestRunner(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
 
         start_time = time.time()
@@ -276,8 +276,8 @@ class TestRunner(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
 
         start_time = time.time()
@@ -290,8 +290,8 @@ class TestRunner(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/bugfix_type_match.yml')
         tests_mapping = loader.load_tests(testcase_file_path)
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         test_runner.run_test(parsed_testcase["teststeps"][0])
 
@@ -333,7 +333,7 @@ class TestRunner(ApiServerUnittest):
             },
             "testcases": testcases
         }
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
-        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         test_runner.run_test(parsed_testcase["teststeps"][0])
