@@ -74,11 +74,9 @@ class HttpRunner(object):
             return test
 
         test_suite = unittest.TestSuite()
-        functions = tests_mapping.get("project_mapping", {}).get("functions", {})
-
         for testcase in tests_mapping["testcases"]:
             config = testcase.get("config", {})
-            test_runner = runner.Runner(config, functions)
+            test_runner = runner.Runner(config)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
             tests = testcase.get("teststeps", [])

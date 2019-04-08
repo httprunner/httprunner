@@ -11,27 +11,40 @@ class Runner(object):
     """ Running testcases.
 
     Examples:
-        >>> functions={...}
-        >>> config = {
-                "name": "XXXX",
-                "base_url": "http://127.0.0.1",
-                "verify": False
+        >>> tests_mapping = {
+                "project_mapping": {
+                    "functions": {}
+                },
+                "testcases": [
+                    {
+                        "config": {
+                            "name": "XXXX",
+                            "base_url": "http://127.0.0.1",
+                            "verify": False
+                        },
+                        "teststeps": [
+                            {
+                                "name": "test description",
+                                "variables": [],        # optional
+                                "request": {
+                                    "url": "http://127.0.0.1:5000/api/users/1000",
+                                    "method": "GET"
+                                }
+                            }
+                        ]
+                    }
+                ]
             }
-        >>> runner = Runner(config, functions)
 
-        >>> test_dict = {
-                "name": "test description",
-                "variables": [],        # optional
-                "request": {
-                    "url": "http://127.0.0.1:5000/api/users/1000",
-                    "method": "GET"
-                }
-            }
-        >>> runner.run_test(test_dict)
+        >>> parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        >>> parsed_testcase = parsed_tests_mapping["testcases"][0]
+
+        >>> test_runner = runner.Runner(parsed_testcase["config"])
+        >>> test_runner.run_test(parsed_testcase["teststeps"][0])
 
     """
 
-    def __init__(self, config, functions, http_client_session=None):
+    def __init__(self, config, http_client_session=None):
         """ run testcase or testsuite.
 
         Args:
@@ -50,7 +63,6 @@ class Runner(object):
         base_url = config.get("base_url")
         self.verify = config.get("verify", True)
         self.output = config.get("output", [])
-        self.functions = functions
         self.validation_results = []
 
         # testcase setup hooks
@@ -59,7 +71,7 @@ class Runner(object):
         self.testcase_teardown_hooks = config.get("teardown_hooks", [])
 
         self.http_client_session = http_client_session or HttpSession(base_url)
-        self.session_context = SessionContext(self.functions)
+        self.session_context = SessionContext()
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks, "setup")
@@ -289,7 +301,7 @@ class Runner(object):
         config = testcase_dict.get("config", {})
 
         # each teststeps in one testcase (YAML/JSON) share the same session.
-        test_runner = Runner(config, self.functions, self.http_client_session)
+        test_runner = Runner(config, self.http_client_session)
 
         tests = testcase_dict.get("teststeps", [])
 

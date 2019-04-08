@@ -104,19 +104,6 @@ class TestParserBasic(unittest.TestCase):
             {'args': ["$request", '12 3'], 'kwargs': {}}
         )
 
-    def test_parse_validator(self):
-        validator = {"check": "status_code", "comparator": "eq", "expect": 201}
-        self.assertEqual(
-            parser.parse_validator(validator),
-            {"check": "status_code", "comparator": "eq", "expect": 201}
-        )
-
-        validator = {'eq': ['status_code', 201]}
-        self.assertEqual(
-            parser.parse_validator(validator),
-            {"check": "status_code", "comparator": "eq", "expect": 201}
-        )
-
     def test_extract_variables(self):
         prepared_content = parser.prepare_lazy_data("123$a", {}, {"a"})
         self.assertEqual(
@@ -1076,15 +1063,15 @@ class TestParser(unittest.TestCase):
                 'json': {'sign': '${get_sign($device_sn, $os_platform, $app_version)}'}
             },
             'validate': [
-                {'eq': ['status_code', 201]},
-                {'len_eq': ['content.token', 32]}
+                {"check": "status_code", "comparator": "equals", "expect": 201},
+                {"check": "content.token", "comparator": "length_equals", "expect": 32}
             ]
         }
 
-        extended_block = parser._extend_with_api(test_block, api_def_dict)
-        self.assertEqual(extended_block["base_url"], "https://debugtalk.com")
-        self.assertEqual(extended_block["name"], "override block")
-        self.assertEqual({'var': 123}, extended_block["variables"])
-        self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'eq'}, extended_block["validate"])
-        self.assertIn({'check': 'content.token', 'comparator': 'len_eq', 'expect': 32}, extended_block["validate"])
-        self.assertEqual(extended_block["times"], 3)
+        parser._extend_with_api(test_block, api_def_dict)
+        self.assertEqual(test_block["base_url"], "https://debugtalk.com")
+        self.assertEqual(test_block["name"], "override block")
+        self.assertEqual({'var': 123}, test_block["variables"])
+        self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'equals'}, test_block["validate"])
+        self.assertIn({'check': 'content.token', 'comparator': 'length_equals', 'expect': 32}, test_block["validate"])
+        self.assertEqual(test_block["times"], 3)

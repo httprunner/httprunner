@@ -1,8 +1,7 @@
 import os
 import time
 
-import requests
-from httprunner import context, exceptions, loader, parser, response, utils
+from httprunner import context, exceptions, loader, parser, runner
 from tests.base import ApiServerUnittest, gen_md5, gen_random_string
 
 
@@ -11,15 +10,9 @@ class TestContext(ApiServerUnittest):
     def setUp(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         project_mapping = loader.project_mapping
-        self.functions = project_mapping["functions"]
         self.context = context.SessionContext(
-            functions=self.functions,
             variables={"SECRET_KEY": "DebugTalk"}
         )
-
-    def test_init_context_functions(self):
-        context_functions = self.context.FUNCTIONS_MAPPING
-        self.assertIn("gen_md5", context_functions)
 
     def test_init_test_variables_initialize(self):
         self.assertEqual(
@@ -56,13 +49,6 @@ class TestContext(ApiServerUnittest):
             self.context.session_variables_mapping["TOKEN"],
             "debugtalk"
         )
-
-    def test_eval_content_functions(self):
-        content = parser.prepare_lazy_data("${sleep_N_secs(1)}", self.functions)
-        start_time = time.time()
-        self.context.eval_content(content)
-        elapsed_time = time.time() - start_time
-        self.assertGreater(elapsed_time, 1)
 
     def test_eval_content_variables(self):
         variables = {
@@ -124,82 +110,80 @@ class TestContext(ApiServerUnittest):
         )
         self.assertEqual(parsed_request["headers"]["secret_key"], "DebugTalk")
 
-    def test_do_validation(self):
-        self.context._do_validation(
-            {"check": "check", "check_value": 1, "expect": 1, "comparator": "eq"}
-        )
-        self.context._do_validation(
-            {"check": "check", "check_value": "abc", "expect": "abc", "comparator": "=="}
-        )
-        self.context._do_validation(
-            {"check": "status_code", "check_value": "201", "expect": 3, "comparator": "sum_status_code"}
-        )
-
     def test_validate(self):
-        url = "http://127.0.0.1:5000/"
-        resp = requests.get(url)
-        resp_obj = response.ResponseObject(resp)
-
-        validators = [
-            {"eq": ["$resp_status_code", 201]},
-            {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
-        ]
-        validators = parser.prepare_lazy_data(validators, {}, {"resp_status_code", "resp_body_success"})
-        variables = {
-            "resp_status_code": 200,
-            "resp_body_success": True
-        }
-
-        self.context.init_test_variables(variables)
-
-        with self.assertRaises(exceptions.ValidationFailure):
-            self.context.validate(validators, resp_obj)
-
-        validators = [
-            {"eq": ["$resp_status_code", 201]},
-            {"check": "$resp_status_code", "comparator": "eq", "expect": 201},
-            {"check": "$resp_body_success", "comparator": "eq", "expect": True},
-            {"check": "${is_status_code_200($resp_status_code)}", "comparator": "eq", "expect": False}
+        testcases = [
+            {
+                "config": {
+                    'name': "test validation"
+                },
+                "teststeps": [
+                    {
+                        "name": "test validation",
+                        "request": {
+                            "url": "http://127.0.0.1:5000/",
+                            "method": "GET",
+                        },
+                        "variables": {
+                            "resp_status_code": 200,
+                            "resp_body_success": True
+                        },
+                        "validate": [
+                            {"eq": ["$resp_status_code", 200]},
+                            {"check": "$resp_status_code", "comparator": "eq", "expect": 200},
+                            {"check": "$resp_body_success", "expect": True},
+                            {"check": "${is_status_code_200($resp_status_code)}", "expect": True}
+                        ]
+                    }
+                ]
+            }
         ]
         from tests.debugtalk import is_status_code_200
-        functions = {
-            "is_status_code_200": is_status_code_200
+        tests_mapping = {
+            "project_mapping": {
+                "functions": {
+                    "is_status_code_200": is_status_code_200
+                }
+            },
+            "testcases": testcases
         }
-        validators = parser.prepare_lazy_data(
-            validators, functions, {"resp_status_code", "resp_body_success"})
-        variables = [
-            {"resp_status_code": 201},
-            {"resp_body_success": True}
-        ]
-        self.context.init_test_variables(variables)
-        self.context.validate(validators, resp_obj)
-
-        self.context.validate([], resp_obj)
-        self.assertEqual(self.context.validation_results, [])
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        test_runner = runner.Runner(parsed_testcase["config"])
+        teststep = parsed_testcase["teststeps"][0]
+        test_runner.run_test(teststep)
 
     def test_validate_exception(self):
-        url = "http://127.0.0.1:5000/"
-        resp = requests.get(url)
-        resp_obj = response.ResponseObject(resp)
-
-        # expected value missed in validators
-        validators = [
-            {"eq": ["$resp_status_code", 201]},
-            {"check": "$resp_status_code", "comparator": "eq", "expect": 201}
+        testcases = [
+            {
+                "config": {
+                    'name': "test validation"
+                },
+                "teststeps": [
+                    {
+                        "name": "test validation",
+                        "request": {
+                            "url": "http://127.0.0.1:5000/",
+                            "method": "GET",
+                        },
+                        "variables": {
+                            "resp_status_code": 200,
+                            "resp_body_success": True
+                        },
+                        "validate": [
+                            {"eq": ["$resp_status_code", 201]},
+                            {"check": "$resp_status_code", "expect": 201},
+                            {"check": "$resp_body_success", "comparator": "eq", "expect": True}
+                        ]
+                    }
+                ]
+            }
         ]
-        validators = parser.prepare_lazy_data(validators, {}, {"resp_status_code"})
-        variables = []
-        self.context.init_test_variables(variables)
-
-        with self.assertRaises(exceptions.VariableNotFound):
-            self.context.validate(validators, resp_obj)
-
-        # expected value missed in variables mapping
-        variables = [
-            {"resp_status_code": 200}
-        ]
-        self.context.init_test_variables(variables)
-
+        tests_mapping = {
+            "testcases": testcases
+        }
+        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_tests_mapping["testcases"][0]
+        test_runner = runner.Runner(parsed_testcase["config"])
+        teststep = parsed_testcase["teststeps"][0]
         with self.assertRaises(exceptions.ValidationFailure):
-            self.context.validate(validators, resp_obj)
+            test_runner.run_test(teststep)

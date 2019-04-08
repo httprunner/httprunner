@@ -8,8 +8,9 @@ def main_hrun():
     from httprunner.__about__ import __description__, __version__
     from httprunner.api import HttpRunner
     from httprunner.compat import is_py2
+    from httprunner.validator import validate_json_file
     from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                                prettify_json_file, validate_json_file)
+                                prettify_json_file)
 
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(

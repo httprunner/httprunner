@@ -4,7 +4,7 @@ import ast
 import os
 import re
 
-from httprunner import exceptions, utils
+from httprunner import exceptions, utils, validator
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 # TODO: change variable notation from $var to {{var}}
@@ -103,65 +103,6 @@ def regex_findall_functions(content):
         return function_regex_compile.findall(content)
     except TypeError:
         return []
-
-
-def parse_validator(validator):
-    """ parse validator
-
-    Args:
-        validator (dict): validator maybe in two formats:
-
-            format1: this is kept for compatiblity with the previous versions.
-                {"check": "status_code", "comparator": "eq", "expect": 201}
-                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
-            format2: recommended new version
-                {'eq': ['status_code', 201]}
-                {'eq': ['$resp_body_success', True]}
-
-    Returns
-        dict: validator info
-
-            {
-                "check": "status_code",
-                "expect": 201,
-                "comparator": "eq"
-            }
-
-    """
-    if not isinstance(validator, dict):
-        raise exceptions.ParamsError("invalid validator: {}".format(validator))
-
-    if "check" in validator and len(validator) > 1:
-        # format1
-        check_item = validator.get("check")
-
-        if "expect" in validator:
-            expect_value = validator.get("expect")
-        elif "expected" in validator:
-            expect_value = validator.get("expected")
-        else:
-            raise exceptions.ParamsError("invalid validator: {}".format(validator))
-
-        comparator = validator.get("comparator", "eq")
-
-    elif len(validator) == 1:
-        # format2
-        comparator = list(validator.keys())[0]
-        compare_values = validator[comparator]
-
-        if not isinstance(compare_values, list) or len(compare_values) != 2:
-            raise exceptions.ParamsError("invalid validator: {}".format(validator))
-
-        check_item, expect_value = compare_values
-
-    else:
-        raise exceptions.ParamsError("invalid validator: {}".format(validator))
-
-    return {
-        "check": check_item,
-        "expect": expect_value,
-        "comparator": comparator
-    }
 
 
 def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
@@ -738,11 +679,8 @@ def _extend_with_api(test_dict, api_def_dict):
     """ extend test with api definition, test will merge and override api definition.
 
     Args:
-        test_dict (dict): test block
+        test_dict (dict): test block, this will override api_def_dict
         api_def_dict (dict): api definition
-
-    Returns:
-        dict: extended test dict.
 
     Examples:
         >>> api_def_dict = {
@@ -756,6 +694,7 @@ def _extend_with_api(test_dict, api_def_dict):
                 "validate": [{'eq': ['status_code', 201]}, {'len_eq': ['content.token', 16]}]
             }
         >>> _extend_with_api(test_dict, api_def_dict)
+        >>> print(test_dict)
             {
                 "name": "get token 2",
                 "request": {...},
@@ -764,9 +703,8 @@ def _extend_with_api(test_dict, api_def_dict):
             }
 
     """
-    # override name
-    api_def_name = api_def_dict.pop("name", "")
-    test_dict["name"] = test_dict.get("name") or api_def_name
+    # override api name
+    test_dict.setdefault("name", api_def_dict.pop("name", ""))
 
     # override variables
     def_variables = api_def_dict.pop("variables", [])
@@ -777,16 +715,12 @@ def _extend_with_api(test_dict, api_def_dict):
 
     # merge & override validators TODO: relocate
     def_raw_validators = api_def_dict.pop("validate", [])
-    ref_raw_validators = test_dict.get("validate", [])
     def_validators = [
-        parse_validator(validator)
-        for validator in def_raw_validators
+        validator.uniform_validator(_validator)
+        for _validator in def_raw_validators
     ]
-    ref_validators = [
-        parse_validator(validator)
-        for validator in ref_raw_validators
-    ]
-    test_dict["validate"] = utils.extend_validators(
+    ref_validators = test_dict.pop("validate", [])
+    test_dict["validate"] = validator.extend_validators(
         def_validators,
         ref_validators
     )
@@ -798,7 +732,7 @@ def _extend_with_api(test_dict, api_def_dict):
         test_dict.get("extract", {})
     )
 
-    # TODO: merge & override request
+    # merge & override request
     test_dict["request"] = api_def_dict.pop("request", {})
 
     # base_url & verify: priority api_def_dict > test_dict
@@ -823,8 +757,6 @@ def _extend_with_api(test_dict, api_def_dict):
 
     # TODO: extend with other api definition items, e.g. times
     test_dict.update(api_def_dict)
-
-    return test_dict
 
 
 def _extend_with_testcase(test_dict, testcase_def_dict):
@@ -923,6 +855,14 @@ def __prepare_testcase_tests(tests, config, project_mapping):
         if (not test_dict.get("base_url")) and config_base_url:
             test_dict["base_url"] = config_base_url
 
+        # unify validators' format
+        if "validate" in test_dict:
+            ref_raw_validators = test_dict.pop("validate", [])
+            test_dict["validate"] = [
+                validator.uniform_validator(_validator)
+                for _validator in ref_raw_validators
+            ]
+
         if "testcase_def" in test_dict:
             # test_dict is nested testcase
 
@@ -953,6 +893,27 @@ def __prepare_testcase_tests(tests, config, project_mapping):
 
         check_variables_set = set(test_dict_variables.keys()) \
             | set(session_variables.keys()) | {"request", "response"}
+
+        # convert validators to lazy function
+        validators = test_dict.pop("validate", [])
+        prepared_validators = []
+        for _validator in validators:
+            function_meta = {
+                "func_name": _validator["comparator"],
+                "args": [
+                    _validator["check"],
+                    _validator["expect"]
+                ],
+                "kwargs": {}
+            }
+            prepared_validators.append(
+                LazyFunction(
+                    function_meta,
+                    functions,
+                    check_variables_set
+                )
+            )
+        test_dict["validate"] = prepared_validators
 
         # convert variables and functions to lazy object.
         # raises VariableNotFound if undefined variable exists in test_dict

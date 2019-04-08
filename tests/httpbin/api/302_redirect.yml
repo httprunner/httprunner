@@ -6,5 +6,6 @@ request:
       url: https://debugtalk.com
       status_code: 302
     method: GET
+    verify: False
 validate:
     - eq: ["status_code", 200]
