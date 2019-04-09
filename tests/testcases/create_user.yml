@@ -1,0 +1,22 @@
+
+- config:
+    name: "create user and check result."
+    id: create_user
+    base_url: "http://127.0.0.1:5000"
+    variables:
+        uid: 9001
+        device_sn: "TESTCASE_CREATE_XXX"
+    output:
+        - session_token
+
+- test:
+    name: setup and reset all (override) for $device_sn.
+    testcase: testcases/setup.yml
+    output:
+        - session_token
+
+- test:
+    name: create user and check result.
+    variables:
+        token: $session_token
+    testcase: testcases/deps/check_and_create.yml

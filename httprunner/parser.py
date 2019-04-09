@@ -637,7 +637,6 @@ def parse_variables_mapping(variables_mapping, ignore=False):
             }
 
     """
-    variables_mapping = variables_mapping or {}
     run_times = 0
     parsed_variables_mapping = {}
 
@@ -806,7 +805,7 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
     test_dict.update(testcase_def_dict)
 
 
-def __prepare_config(config, project_mapping):
+def __prepare_config(config, project_mapping, session_variables_set=None):
     """ parse testcase/testsuite config.
     """
     # get config variables
@@ -821,12 +820,13 @@ def __prepare_config(config, project_mapping):
     if raw_config_variables_mapping:
         config["variables"] = raw_config_variables_mapping
 
-    check_variables_set = raw_config_variables_mapping.keys()
+    check_variables_set = set(raw_config_variables_mapping.keys())
+    check_variables_set |= (session_variables_set or set())
     prepared_config = prepare_lazy_data(config, functions, check_variables_set, cached=True)
     return prepared_config
 
 
-def __prepare_testcase_tests(tests, config, project_mapping):
+def __prepare_testcase_tests(tests, config, project_mapping, session_variables_set=None):
     """ override tests with testcase config variables, base_url and verify.
         test maybe nested testcase.
 
@@ -851,7 +851,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
     functions = project_mapping.get("functions", {})
 
     prepared_testcase_tests = []
-    session_variables_set = set()
+    session_variables_set = set(config_variables.keys()) | (session_variables_set or set())
     for test_dict in tests:
 
         teststep_variables_set = {"request", "response"}
@@ -890,10 +890,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
             test_dict["config"].setdefault("verify", config_verify)
 
             # 3, testcase_def config => testcase_def test_dict
-            test_dict = _parse_testcase(test_dict, project_mapping)
-
-            config = test_dict.get("config", {})
-            teststep_variables_set |= set(config.get("variables", []))
+            test_dict = _parse_testcase(test_dict, project_mapping, session_variables_set)
 
         elif "api_def" in test_dict:
             # test_dict has API reference
@@ -948,7 +945,7 @@ def __prepare_testcase_tests(tests, config, project_mapping):
     return prepared_testcase_tests
 
 
-def _parse_testcase(testcase, project_mapping):
+def _parse_testcase(testcase, project_mapping, session_variables_set=None):
     """ parse testcase
 
     Args:
@@ -962,12 +959,14 @@ def _parse_testcase(testcase, project_mapping):
     testcase.setdefault("config", {})
     prepared_config = __prepare_config(
         testcase["config"],
-        project_mapping
+        project_mapping,
+        session_variables_set
     )
     prepared_testcase_tests = __prepare_testcase_tests(
         testcase["teststeps"],
         prepared_config,
-        project_mapping
+        project_mapping,
+        session_variables_set
     )
     return {
         "config": prepared_config,
@@ -988,7 +987,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         testcases (dict):
             {
                 "testcase1 name": {
-                    "testcase": "testcases/create_and_check.yml",
+                    "testcase": "testcases/create_user.yml",
                     "weight": 2,
                     "variables": {
                         "uid": 1000

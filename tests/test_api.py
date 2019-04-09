@@ -138,11 +138,11 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(len(vars_out), 6)
         self.assertEqual(vars_out[0]["in"]["uid"], 101)
         self.assertEqual(vars_out[0]["in"]["device_sn"], "TESTSUITE_X1")
-        token1 = vars_out[0]["out"]["token"]
+        token1 = vars_out[0]["out"]["session_token"]
         self.assertEqual(len(token1), 16)
         self.assertEqual(vars_out[5]["in"]["uid"], 103)
         self.assertEqual(vars_out[5]["in"]["device_sn"], "TESTSUITE_X2")
-        token2 = vars_out[0]["out"]["token"]
+        token2 = vars_out[0]["out"]["session_token"]
         self.assertEqual(len(token2), 16)
         self.assertEqual(token1, token2)
 
@@ -241,7 +241,7 @@ class TestHttpRunner(ApiServerUnittest):
         summary = self.runner.summary
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 2)
-        self.assertEqual(summary["stat"]["teststeps"]["total"], 8)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 4)
 
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
@@ -471,7 +471,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(len(summary["details"]), 3 * 2)
 
         self.assertEqual(summary["stat"]["testcases"]["total"], 6)
-        self.assertEqual(summary["stat"]["teststeps"]["total"], 3 * 2 * 4)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 3 * 2 * 2)
         self.assertEqual(
             summary["details"][0]["name"],
             "create user 101 and check result for TESTSUITE_X1."
@@ -482,10 +482,10 @@ class TestHttpRunner(ApiServerUnittest):
         )
         self.assertEqual(
             summary["details"][0]["stat"]["total"],
-            4
+            2
         )
         records_name_list = [
-            summary["details"][i]["records"][2]["name"]
+            summary["details"][i]["records"][1]["meta_datas"][1]["name"]
             for i in range(6)
         ]
         self.assertEqual(
@@ -610,20 +610,21 @@ class TestApi(ApiServerUnittest):
         self.assertIn("api", teststeps[0])
 
     def test_testcase_complex_verify(self):
-        testcase_path = "tests/testcases/create_and_check.yml"
+        testcase_path = "tests/testcases/create_user.yml"
         tests_mapping = loader.load_tests(testcase_path)
         testcases = parser.parse_tests(tests_mapping)
         teststeps = testcases[0]["teststeps"]
 
         # testcases/setup.yml
-        teststep1 = teststeps[0]
-        self.assertEqual(teststep1["teststeps"][0]["request"]["verify"], False)
-        self.assertEqual(teststep1["teststeps"][1]["request"]["verify"], False)
+        teststep0 = teststeps[0]
+        self.assertEqual(teststep0["teststeps"][0]["request"]["verify"], False)
+        self.assertEqual(teststep0["teststeps"][1]["request"]["verify"], False)
 
-        # testcases/create_and_check.yml teststep 2/3/4
-        self.assertEqual(teststeps[1]["request"]["verify"], True)
-        self.assertEqual(teststeps[2]["request"]["verify"], True)
-        self.assertEqual(teststeps[3]["request"]["verify"], True)
+        # testcases/create_user.yml
+        teststep1 = teststeps[1]
+        self.assertEqual(teststep1["teststeps"][0]["request"]["verify"], True)
+        self.assertEqual(teststep1["teststeps"][1]["request"]["verify"], True)
+        self.assertEqual(teststep1["teststeps"][2]["request"]["verify"], True)
 
     def test_testcase_simple_run_suite(self):
         testcase_path = "tests/testcases/setup.yml"
@@ -635,13 +636,13 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(tests_results[0][1].records), 2)
 
     def test_testcase_complex_run_suite(self):
-        testcase_path = "tests/testcases/create_and_check.yml"
+        testcase_path = "tests/testcases/create_user.yml"
         tests_mapping = loader.load_tests(testcase_path)
         testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
         test_suite = runner._add_tests(testcases)
         tests_results = runner._run_suite(test_suite)
-        self.assertEqual(len(tests_results[0][1].records), 4)
+        self.assertEqual(len(tests_results[0][1].records), 2)
 
         results = tests_results[0][1]
         self.assertEqual(
@@ -650,7 +651,7 @@ class TestApi(ApiServerUnittest):
         )
         self.assertEqual(
             results.records[1]["name"],
-            "make sure user 9001 does not exist"
+            "create user and check result."
         )
 
     def test_testsuite_loader(self):
@@ -679,7 +680,7 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(testcase_tests["name"], "create user 1000 and check result.")
         self.assertIsInstance(testcase_tests["testcase_def"], dict)
         self.assertEqual(testcase_tests["testcase_def"]["config"]["name"], "create user and check result.")
-        self.assertEqual(len(testcase_tests["testcase_def"]["teststeps"]), 4)
+        self.assertEqual(len(testcase_tests["testcase_def"]["teststeps"]), 2)
         self.assertEqual(
             testcase_tests["testcase_def"]["teststeps"][0]["name"],
             "setup and reset all (override) for $device_sn."
@@ -691,7 +692,7 @@ class TestApi(ApiServerUnittest):
 
         parsed_testcases = parser.parse_tests(tests_mapping)
         self.assertEqual(len(parsed_testcases), 2)
-        self.assertEqual(len(parsed_testcases[0]["teststeps"]), 4)
+        self.assertEqual(len(parsed_testcases[0]["teststeps"]), 2)
 
         testcase1 = parsed_testcases[0]["teststeps"][0]
         self.assertIn("setup and reset all (override)", testcase1["config"]["name"].raw_string)
@@ -725,16 +726,16 @@ class TestApi(ApiServerUnittest):
         test_suite = runner._add_tests(testcases)
         tests_results = runner._run_suite(test_suite)
 
-        self.assertEqual(len(tests_results[0][1].records), 4)
+        self.assertEqual(len(tests_results[0][1].records), 2)
 
         results = tests_results[0][1]
         self.assertIn(
             "setup and reset all (override)",
             results.records[0]["name"]
         )
-        self.assertIn(
+        self.assertEqual(
             results.records[1]["name"],
-            ["make sure user 1000 does not exist", "make sure user 1001 does not exist"]
+            "create user and check result."
         )
 
 

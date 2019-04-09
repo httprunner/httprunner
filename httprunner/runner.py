@@ -63,6 +63,7 @@ class Runner(object):
         self.verify = config.get("verify", True)
         self.output = config.get("output", [])
         self.validation_results = []
+        config_variables = config.get("variables", {})
 
         # testcase setup hooks
         testcase_setup_hooks = config.get("setup_hooks", [])
@@ -70,7 +71,7 @@ class Runner(object):
         self.testcase_teardown_hooks = config.get("teardown_hooks", [])
 
         self.http_client_session = http_client_session or HttpSession()
-        self.session_context = SessionContext()
+        self.session_context = SessionContext(config_variables)
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks, "setup")
@@ -365,6 +366,9 @@ class Runner(object):
         self.meta_datas = None
         if "teststeps" in test_dict:
             # nested testcase
+            test_dict.setdefault("config", {}).setdefault("variables", {})
+            test_dict["config"]["variables"].update(
+                self.session_context.session_variables_mapping)
             self._run_testcase(test_dict)
         else:
             # api

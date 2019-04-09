@@ -6,13 +6,13 @@ config:
 
 testcases:
     create user 1000 and check result.:
-        testcase: testcases/create_and_check.yml
+        testcase: testcases/create_user.yml
         weight: 2
         variables:
             uid: 1000
 
     create user 1001 and check result.:
-        testcase: testcases/create_and_check.yml
+        testcase: testcases/create_user.yml
         weight: 3
         variables:
             uid: 1001
