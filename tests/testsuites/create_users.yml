@@ -8,14 +8,14 @@ config:
 
 testcases:
     create user 1000 and check result.:
-        testcase: testcases/create_and_check.yml
+        testcase: testcases/create_user.yml
         variables:
             uid: 1000
             var_c: ${gen_random_string(5)}
             var_d: $var_c
 
     create user 1001 and check result.:
-        testcase: testcases/create_and_check.yml
+        testcase: testcases/create_user.yml
         variables:
             uid: 1001
             var_c: ${gen_random_string(5)}
