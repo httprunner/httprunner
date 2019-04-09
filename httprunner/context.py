@@ -14,7 +14,8 @@ class SessionContext(object):
 
     """
     def __init__(self, variables=None):
-        self.session_variables_mapping = utils.ensure_mapping_format(variables or {})
+        variables_mapping = utils.ensure_mapping_format(variables or {})
+        self.session_variables_mapping = parser.parse_variables_mapping(variables_mapping)
         self.init_test_variables()
         self.validation_results = []
 

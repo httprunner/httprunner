@@ -9,7 +9,7 @@
     base_url: "http://127.0.0.1:5000"
     verify: False
     output:
-        - token
+        - session_token
 
 - test:
     name: get token (setup)
@@ -20,7 +20,7 @@
         os_platform: 'ios'
         app_version: '2.8.6'
     extract:
-        - token: content.token
+        - session_token: content.token
     validate:
         - eq: ["status_code", 200]
         - len_eq: ["content.token", 16]
@@ -29,4 +29,4 @@
     name: reset all users
     api: api/reset_all.yml
     variables:
-        token: $token
+        token: $session_token
