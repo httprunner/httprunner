@@ -638,11 +638,21 @@ def parse_variables_mapping(variables_mapping, ignore=False):
 
     """
     variables_mapping = variables_mapping or {}
-    ref_variables_set = set()
-
+    run_times = 0
     parsed_variables_mapping = {}
+
     while len(parsed_variables_mapping) != len(variables_mapping):
         for var_name in variables_mapping:
+
+            run_times += 1
+            if run_times > len(variables_mapping) * 4:
+                not_found_variables = {
+                    key: variables_mapping[key]
+                    for key in variables_mapping
+                    if key not in parsed_variables_mapping
+                }
+                raise exceptions.VariableNotFound(not_found_variables)
+
             if var_name in parsed_variables_mapping:
                 continue
 
