@@ -495,6 +495,16 @@ class TestParserBasic(unittest.TestCase):
         parsed_variables = parser.parse_variables_mapping(prepared_variables)
         self.assertEqual(parsed_variables["varA"], parsed_variables["varB"])
 
+    def test_parse_variables_mapping_dead_circle(self):
+        variables = {
+            "varA": "$varB",
+            "varB": "123$varC"
+        }
+        check_variables_set = {"varA", "varB", "varC"}
+        prepared_variables = parser.prepare_lazy_data(variables, {}, check_variables_set)
+        with self.assertRaises(exceptions.VariableNotFound):
+            parser.parse_variables_mapping(prepared_variables)
+
     def test_parse_variables_mapping_not_found(self):
         variables = {
             "varA": "123$varB",
