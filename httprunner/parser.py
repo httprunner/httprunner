@@ -369,7 +369,21 @@ class LazyFunction(object):
             self._args = [self._args[0]]
 
     def __repr__(self):
-        return "LazyFunction({})".format(self._func.__name__)
+        args_string = ""
+
+        if self._args:
+            str_args = [str(arg) for arg in self._args]
+            args_string += ", ".join(str_args)
+
+        if self._kwargs:
+            args_string += ", "
+            str_kwargs = [
+                "{}={}".format(key, str(value))
+                for key, value in self._kwargs.items()
+            ]
+            args_string += ", ".join(str_kwargs)
+
+        return "LazyFunction({}({}))".format(self._func.__name__, args_string)
 
     def __prepare_cache_key(self, args, kwargs):
         return (self._func.__name__, repr(args), repr(kwargs))
