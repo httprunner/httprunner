@@ -117,16 +117,16 @@ class SessionContext(object):
                     "validator should be parsed first: {}".format(validators))
 
             # evaluate validator args with context variable mapping.
-            validator_args = validator._args
+            validator_args = validator.get_args()
             check_item, expect_item = validator_args
             check_value = self.__eval_validator_check(
                 check_item,
                 resp_obj
             )
             expect_value = self.__eval_validator_expect(expect_item)
-            validator._args = [check_value, expect_value]
+            validator.update_args([check_value, expect_value])
 
-            comparator = validator._func.__name__
+            comparator = validator.func_name
             validator_dict = {
                 "comparator": comparator,
                 "check": check_item,
@@ -163,7 +163,7 @@ class SessionContext(object):
             self.validation_results.append(validator_dict)
 
             # restore validator args, in case of running multiple times
-            validator._args = validator_args
+            validator.update_args(validator_args)
 
         if not validate_pass:
             failures_string = "\n".join([failure for failure in failures])

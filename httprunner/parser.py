@@ -348,6 +348,7 @@ class LazyFunction(object):
             function_meta["func_name"],
             self.functions_mapping
         )
+        self.func_name = self._func.__name__
         self._args = prepare_lazy_data(
             function_meta.get("args", []),
             self.functions_mapping,
@@ -359,14 +360,20 @@ class LazyFunction(object):
             self.check_variables_set
         )
 
-        if self._func.__name__ == "load_csv_file":
+        if self.func_name == "load_csv_file":
             if len(self._args) != 1 or self._kwargs:
                 raise exceptions.ParamsError("P() should only pass in one argument!")
             self._args = [self._args[0]]
-        elif self._func.__name__ == "get_os_environ":
+        elif self.func_name == "get_os_environ":
             if len(self._args) != 1 or self._kwargs:
                 raise exceptions.ParamsError("ENV() should only pass in one argument!")
             self._args = [self._args[0]]
+
+    def get_args(self):
+        return self._args
+
+    def update_args(self, args):
+        self._args = args
 
     def __repr__(self):
         args_string = ""
@@ -383,10 +390,10 @@ class LazyFunction(object):
             ]
             args_string += ", ".join(str_kwargs)
 
-        return "LazyFunction({}({}))".format(self._func.__name__, args_string)
+        return "LazyFunction({}({}))".format(self.func_name, args_string)
 
     def __prepare_cache_key(self, args, kwargs):
-        return (self._func.__name__, repr(args), repr(kwargs))
+        return (self.func_name, repr(args), repr(kwargs))
 
     def to_value(self, variables_mapping=None):
         """ parse lazy data with evaluated variables mapping.
