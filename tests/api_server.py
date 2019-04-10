@@ -93,15 +93,13 @@ def index():
 
 @app.route('/api/get-token', methods=['POST'])
 def get_token():
-    user_agent = request.headers.get('User-Agent', "")
     device_sn = request.headers.get('device_sn', "")
     os_platform = request.headers.get('os_platform', "")
     app_version = request.headers.get('app_version', "")
     data = request.get_json()
     sign = data.get('sign', "")
 
-    expected_sign = get_sign(user_agent, device_sn, os_platform, app_version)
-
+    expected_sign = get_sign(device_sn, os_platform, app_version)
     if expected_sign != sign:
         result = {
             'success': False,

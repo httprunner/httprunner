@@ -36,11 +36,11 @@ class HttpRunner(object):
         if log_file:
             logger.setup_logger(log_level, log_file)
 
-    def _add_tests(self, tests_mapping):
+    def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
 
         Args:
-            tests_mapping (dict): project info and testcases list.
+            testcases (list): testcases list.
 
         Returns:
             unittest.TestSuite()
@@ -60,18 +60,23 @@ class HttpRunner(object):
             if "config" in test_dict:
                 # run nested testcase
                 test.__doc__ = test_dict["config"].get("name")
+                variables = test_dict["config"].get("variables", {})
             else:
                 # run api test
                 test.__doc__ = test_dict.get("name")
+                variables = test_dict.get("variables", {})
+
+            if isinstance(test.__doc__, parser.LazyString):
+                parsed_variables = parser.parse_variables_mapping(variables, ignore=True)
+                test.__doc__ = parser.parse_lazy_data(
+                    test.__doc__, parsed_variables)
 
             return test
 
         test_suite = unittest.TestSuite()
-        functions = tests_mapping.get("project_mapping", {}).get("functions", {})
-
-        for testcase in tests_mapping["testcases"]:
+        for testcase in testcases:
             config = testcase.get("config", {})
-            test_runner = runner.Runner(config, functions)
+            test_runner = runner.Runner(config)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
             tests = testcase.get("teststeps", [])
@@ -157,19 +162,20 @@ class HttpRunner(object):
     def run_tests(self, tests_mapping):
         """ run testcase/testsuite data
         """
+        project_mapping = tests_mapping.get("project_mapping", {})
         if self.save_tests:
-            utils.dump_tests(tests_mapping, "loaded")
+            utils.dump_logs(tests_mapping, project_mapping, "loaded")
 
         # parse tests
         self.exception_stage = "parse tests"
-        parsed_tests_mapping = parser.parse_tests(tests_mapping)
+        parsed_testcases = parser.parse_tests(tests_mapping)
 
         if self.save_tests:
-            utils.dump_tests(parsed_tests_mapping, "parsed")
+            utils.dump_logs(parsed_testcases, project_mapping, "parsed")
 
         # add tests to test suite
         self.exception_stage = "add tests to test suite"
-        test_suite = self._add_tests(parsed_tests_mapping)
+        test_suite = self._add_tests(parsed_testcases)
 
         # run test suite
         self.exception_stage = "run test suite"
@@ -184,7 +190,7 @@ class HttpRunner(object):
         report.stringify_summary(self._summary)
 
         if self.save_tests:
-            utils.dump_summary(self._summary, tests_mapping["project_mapping"])
+            utils.dump_logs(self._summary, project_mapping, "summary")
 
         report_path = report.render_html_report(
             self._summary,
@@ -275,27 +281,22 @@ def prepare_locust_tests(path):
         path (str): testcase file path.
 
     Returns:
-        dict: locust tests data
+        list: locust tests data
 
-            {
-                "functions": {},
-                "tests": []
-            }
+            [
+                testcase1_dict,
+                testcase2_dict
+            ]
 
     """
     tests_mapping = loader.load_tests(path)
-    parsed_tests_mapping = parser.parse_tests(tests_mapping)
+    testcases = parser.parse_tests(tests_mapping)
 
-    functions = parsed_tests_mapping.get("project_mapping", {}).get("functions", {})
+    locust_tests = []
 
-    tests = []
-
-    for testcase in parsed_tests_mapping["testcases"]:
+    for testcase in testcases:
         testcase_weight = testcase.get("config", {}).pop("weight", 1)
         for _ in range(testcase_weight):
-            tests.append(testcase)
+            locust_tests.append(testcase)
 
-    return {
-        "functions": functions,
-        "tests": tests
-    }
+    return locust_tests
