@@ -2,9 +2,9 @@
 
 [![LICENSE](https://img.shields.io/github/license/HttpRunner/HttpRunner.svg)](https://github.com/HttpRunner/HttpRunner/blob/master/LICENSE) [![travis-ci](https://travis-ci.org/HttpRunner/HttpRunner.svg?branch=master)](https://travis-ci.org/HttpRunner/HttpRunner) [![coveralls](https://coveralls.io/repos/github/HttpRunner/HttpRunner/badge.svg?branch=master)](https://coveralls.io/github/HttpRunner/HttpRunner?branch=master) [![pypi version](https://img.shields.io/pypi/v/HttpRunner.svg)](https://pypi.python.org/pypi/HttpRunner) [![pyversions](https://img.shields.io/pypi/pyversions/HttpRunner.svg)](https://pypi.python.org/pypi/HttpRunner)
 
-Httprunner is an HTTP(S) protocol-oriented universal testing framework. Write testing scripts in `YAML/JSON` once, you can then achieve automated testing, performance testing, online monitoring, continuous integration and other testing needs.
+HttpRunner is an HTTP(S) protocol-oriented universal testing framework. Write testing scripts in `YAML/JSON` once, you can then achieve automated testing, performance testing, online monitoring, continuous integration and other testing needs.
 
-Former name: `ApiTestEngine`.
+Formerly known as `ApiTestEngine`.
 
 ## Design Philosophy
 
@@ -29,7 +29,7 @@ Former name: `ApiTestEngine`.
 
 HttpRunner is rich documented.
 
-- [`User documentation in English`][user-docs-en]
+- [`User documentation in English (outdated)`][user-docs-en]
 - [`中文用户使用手册`][user-docs-zh]
 - [`开发历程记录博客`][development-blogs]
 
