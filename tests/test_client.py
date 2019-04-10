@@ -7,7 +7,7 @@ from tests.base import ApiServerUnittest
 class TestHttpClient(ApiServerUnittest):
     def setUp(self):
         super(TestHttpClient, self).setUp()
-        self.api_client = HttpSession(self.host)
+        self.api_client = HttpSession()
         self.headers = self.get_authenticated_headers()
         self.reset_all()
 
@@ -30,7 +30,7 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(True, resp.json()['success'])
 
     def test_request_without_base_url(self):
-        url = "/api/users/1000"
+        url = "{}/api/users/1000".format(self.host)
         data = {
             'name': 'user1',
             'password': '123456'
@@ -40,7 +40,7 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(True, resp.json()['success'])
 
     def test_request_post_data(self):
-        url = "/api/users/1000"
+        url = "{}/api/users/1000".format(self.host)
         data = {
             'name': 'user1',
             'password': '123456'
@@ -56,7 +56,7 @@ class TestHttpClient(ApiServerUnittest):
         self.assertIn("password=123456", resp.request.body)
 
     def test_request_with_cookies(self):
-        url = "/api/users/1000"
+        url = "{}/api/users/1000".format(self.host)
         data = {
             'name': 'user1',
             'password': '123456'
@@ -76,7 +76,7 @@ class TestHttpClient(ApiServerUnittest):
             "a": "1",
             "b": "2"
         }
-        resp = self.api_client.get(url, cookies=cookies, headers=self.headers)
+        resp = self.api_client.get(url, cookies=cookies, headers=self.headers, verify=False)
         raw_request = resp.history[0].request
         self.assertEqual(raw_request._cookies["a"], "1")
         self.assertEqual(raw_request._cookies["b"], "2")

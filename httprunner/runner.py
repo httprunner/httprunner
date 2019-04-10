@@ -11,27 +11,40 @@ class Runner(object):
     """ Running testcases.
 
     Examples:
-        >>> functions={...}
-        >>> config = {
-                "name": "XXXX",
-                "base_url": "http://127.0.0.1",
-                "verify": False
+        >>> tests_mapping = {
+                "project_mapping": {
+                    "functions": {}
+                },
+                "testcases": [
+                    {
+                        "config": {
+                            "name": "XXXX",
+                            "base_url": "http://127.0.0.1",
+                            "verify": False
+                        },
+                        "teststeps": [
+                            {
+                                "name": "test description",
+                                "variables": [],        # optional
+                                "request": {
+                                    "url": "http://127.0.0.1:5000/api/users/1000",
+                                    "method": "GET"
+                                }
+                            }
+                        ]
+                    }
+                ]
             }
-        >>> runner = Runner(config, functions)
 
-        >>> test_dict = {
-                "name": "test description",
-                "variables": [],        # optional
-                "request": {
-                    "url": "http://127.0.0.1:5000/api/users/1000",
-                    "method": "GET"
-                }
-            }
-        >>> runner.run_test(test_dict)
+        >>> testcases = parser.parse_tests(tests_mapping)
+        >>> parsed_testcase = testcases[0]
+
+        >>> test_runner = runner.Runner(parsed_testcase["config"])
+        >>> test_runner.run_test(parsed_testcase["teststeps"][0])
 
     """
 
-    def __init__(self, config, functions, http_client_session=None):
+    def __init__(self, config, http_client_session=None):
         """ run testcase or testsuite.
 
         Args:
@@ -47,19 +60,18 @@ class Runner(object):
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         """
-        base_url = config.get("base_url")
         self.verify = config.get("verify", True)
         self.output = config.get("output", [])
-        self.functions = functions
         self.validation_results = []
+        config_variables = config.get("variables", {})
 
         # testcase setup hooks
         testcase_setup_hooks = config.get("setup_hooks", [])
         # testcase teardown hooks
         self.testcase_teardown_hooks = config.get("teardown_hooks", [])
 
-        self.http_client_session = http_client_session or HttpSession(base_url)
-        self.session_context = SessionContext(self.functions)
+        self.http_client_session = http_client_session or HttpSession()
+        self.session_context = SessionContext(config_variables)
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks, "setup")
@@ -199,12 +211,17 @@ class Runner(object):
         self.session_context.init_test_variables(test_variables)
 
         # teststep name
-        test_name = test_dict.get("name", "")
+        test_name = self.session_context.eval_content(test_dict.get("name", ""))
 
         # parse test request
         raw_request = test_dict.get('request', {})
         parsed_test_request = self.session_context.eval_content(raw_request)
         self.session_context.update_test_variables("request", parsed_test_request)
+
+        # prepend url with base_url unless it's already an absolute URL
+        url = parsed_test_request.pop('url')
+        base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
+        parsed_url = utils.build_url(base_url, url)
 
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
@@ -212,7 +229,6 @@ class Runner(object):
             self.do_hook_actions(setup_hooks, "setup")
 
         try:
-            url = parsed_test_request.pop('url')
             method = parsed_test_request.pop('method')
             parsed_test_request.setdefault("verify", self.verify)
             group_name = parsed_test_request.pop("group", None)
@@ -227,13 +243,13 @@ class Runner(object):
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
-        logger.log_info("{method} {url}".format(method=method, url=url))
+        logger.log_info("{method} {url}".format(method=method, url=parsed_url))
         logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
 
         # request
         resp = self.http_client_session.request(
             method,
-            url,
+            parsed_url,
             name=(group_name or test_name),
             **parsed_test_request
         )
@@ -254,13 +270,12 @@ class Runner(object):
         validators = test_dict.get("validate", [])
         try:
             self.session_context.validate(validators, resp_obj)
-
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
             err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
 
             # log request
             err_msg += "====== request details ======\n"
-            err_msg += "url: {}\n".format(url)
+            err_msg += "url: {}\n".format(parsed_url)
             err_msg += "method: {}\n".format(method)
             err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
             for k, v in parsed_test_request.items():
@@ -288,7 +303,7 @@ class Runner(object):
         config = testcase_dict.get("config", {})
 
         # each teststeps in one testcase (YAML/JSON) share the same session.
-        test_runner = Runner(config, self.functions, self.http_client_session)
+        test_runner = Runner(config, self.http_client_session)
 
         tests = testcase_dict.get("teststeps", [])
 
@@ -351,6 +366,9 @@ class Runner(object):
         self.meta_datas = None
         if "teststeps" in test_dict:
             # nested testcase
+            test_dict.setdefault("config", {}).setdefault("variables", {})
+            test_dict["config"]["variables"].update(
+                self.session_context.session_variables_mapping)
             self._run_testcase(test_dict)
         else:
             # api

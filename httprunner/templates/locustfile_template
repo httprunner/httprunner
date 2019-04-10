@@ -15,7 +15,8 @@ logging.getLogger('locust.runners').setLevel(logging.INFO)
 
 class WebPageTasks(TaskSet):
     def on_start(self):
-        self.test_runner = Runner(self.locust.config, self.locust.functions, self.client)
+        config = {}
+        self.test_runner = Runner(config, self.client)
 
     @task
     def test_any(self):
@@ -32,14 +33,10 @@ class WebPageTasks(TaskSet):
 
 
 class WebPageUser(HttpLocust):
+    host = ""
     task_set = WebPageTasks
     min_wait = 10
     max_wait = 30
 
     file_path = "$TESTCASE_FILE"
-    locust_tests = prepare_locust_tests(file_path)
-    functions = locust_tests["functions"]
-    tests = locust_tests["tests"]
-    config = {}
-
-    host = config.get('base_url', '')
+    tests = prepare_locust_tests(file_path)

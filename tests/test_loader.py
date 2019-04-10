@@ -348,14 +348,14 @@ class TestSuiteLoader(unittest.TestCase):
         tests_mapping = loader.load_tests(testcase_file_path)
         testcases = tests_mapping["testcases"]
         self.assertIsInstance(testcases, list)
-        self.assertEqual(testcases[0]["config"]["name"], '123$var_a')
+        self.assertEqual(testcases[0]["config"]["name"], '123t$var_a')
         self.assertIn(
             "sum_two",
             tests_mapping["project_mapping"]["functions"]
         )
         self.assertEqual(
             testcases[0]["config"]["variables"]["var_c"],
-            "${sum_two(1, 2)}"
+            "${sum_two($var_a, $var_b)}"
         )
         self.assertEqual(
             testcases[0]["config"]["variables"]["PROJECT_KEY"],
