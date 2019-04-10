@@ -1,0 +1,13 @@
+- config:
+    name: basic test with httpbin
+    base_url: https://httpbin.org/
+    verify: False
+
+- test:
+    name: headers
+    request:
+        url: /headers
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+        - eq: [content.headers.Host, "httpbin.org"]

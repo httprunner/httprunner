@@ -1,5 +1,11 @@
 # Release History
 
+## 2.1.0 (2019-03-19)
+
+**Features**
+
+- implement json dump Python objects when save tests
+
 ## 2.0.6 (2019-03-18)
 
 **Features**

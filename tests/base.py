@@ -50,7 +50,7 @@ class ApiServerUnittest(unittest.TestCase):
             'app_version': app_version
         }
         data = {
-            'sign': get_sign(user_agent, device_sn, os_platform, app_version)
+            'sign': get_sign(device_sn, os_platform, app_version)
         }
 
         resp = self.api_client.post(url, json=data, headers=headers)

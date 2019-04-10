@@ -53,7 +53,7 @@ def get_os_environ(variable_name):
 
 
 def build_url(base_url, path):
-    """ prepend url with hostname unless it's already an absolute URL """
+    """ prepend url with base_url unless it's already an absolute URL """
     if absolute_http_url_regexp.match(path):
         return path
     elif base_url:
@@ -118,39 +118,6 @@ def query_json(json_content, query, delimiter='.'):
         raise exceptions.ExtractFailure(err_msg)
 
     return json_content
-
-
-def get_uniform_comparator(comparator):
-    """ convert comparator alias to uniform name
-    """
-    if comparator in ["eq", "equals", "==", "is"]:
-        return "equals"
-    elif comparator in ["lt", "less_than"]:
-        return "less_than"
-    elif comparator in ["le", "less_than_or_equals"]:
-        return "less_than_or_equals"
-    elif comparator in ["gt", "greater_than"]:
-        return "greater_than"
-    elif comparator in ["ge", "greater_than_or_equals"]:
-        return "greater_than_or_equals"
-    elif comparator in ["ne", "not_equals"]:
-        return "not_equals"
-    elif comparator in ["str_eq", "string_equals"]:
-        return "string_equals"
-    elif comparator in ["len_eq", "length_equals", "count_eq"]:
-        return "length_equals"
-    elif comparator in ["len_gt", "count_gt", "length_greater_than", "count_greater_than"]:
-        return "length_greater_than"
-    elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals", \
-        "count_greater_than_or_equals"]:
-        return "length_greater_than_or_equals"
-    elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
-        return "length_less_than"
-    elif comparator in ["len_le", "count_le", "length_less_than_or_equals", \
-        "count_less_than_or_equals"]:
-        return "length_less_than_or_equals"
-    else:
-        return comparator
 
 
 def deep_update_dict(origin_dict, override_dict):
@@ -321,78 +288,6 @@ def ensure_mapping_format(variables):
 
     else:
         raise exceptions.ParamsError("variables format error!")
-
-
-def _convert_validators_to_mapping(validators):
-    """ convert validators list to mapping.
-
-    Args:
-        validators (list): validators in list
-
-    Returns:
-        dict: validators mapping, use (check, comparator) as key.
-
-    Examples:
-        >>> validators = [
-                {"check": "v1", "expect": 201, "comparator": "eq"},
-                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-            ]
-        >>> _convert_validators_to_mapping(validators)
-            {
-                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
-                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-            }
-
-    """
-    validators_mapping = {}
-
-    for validator in validators:
-        if not isinstance(validator["check"], collections.Hashable):
-            check = json.dumps(validator["check"])
-        else:
-            check = validator["check"]
-
-        key = (check, validator["comparator"])
-        validators_mapping[key] = validator
-
-    return validators_mapping
-
-
-def extend_validators(raw_validators, override_validators):
-    """ extend raw_validators with override_validators.
-        override_validators will merge and override raw_validators.
-
-    Args:
-        raw_validators (dict):
-        override_validators (dict):
-
-    Returns:
-        list: extended validators
-
-    Examples:
-        >>> raw_validators = [{'eq': ['v1', 200]}, {"check": "s2", "expect": 16, "comparator": "len_eq"}]
-        >>> override_validators = [{"check": "v1", "expect": 201}, {'len_eq': ['s3', 12]}]
-        >>> extend_validators(raw_validators, override_validators)
-            [
-                {"check": "v1", "expect": 201, "comparator": "eq"},
-                {"check": "s2", "expect": 16, "comparator": "len_eq"},
-                {"check": "s3", "expect": 12, "comparator": "len_eq"}
-            ]
-
-    """
-
-    if not raw_validators:
-        return override_validators
-
-    elif not override_validators:
-        return raw_validators
-
-    else:
-        def_validators_mapping = _convert_validators_to_mapping(raw_validators)
-        ref_validators_mapping = _convert_validators_to_mapping(override_validators)
-
-        def_validators_mapping.update(ref_validators_mapping)
-        return list(def_validators_mapping.values())
 
 
 def extend_variables(raw_variables, override_variables):
@@ -581,25 +476,6 @@ def gen_cartesian_product(*args):
     return product_list
 
 
-def validate_json_file(file_list):
-    """ validate JSON testcase format
-    """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
-            continue
-
-        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
-
-        with io.open(json_file) as stream:
-            try:
-                json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
-
-        print("OK")
-
-
 def prettify_json_file(file_list):
     """ prettify JSON testcase format
     """
@@ -649,6 +525,13 @@ def omit_long_data(body, omit_len=512):
 def dump_json_file(json_data, pwd_dir_path, dump_file_name):
     """ dump json data to file
     """
+    class PythonObjectEncoder(json.JSONEncoder):
+        def default(self, obj):
+            try:
+                return super().default(self, obj)
+            except TypeError:
+                return str(obj)
+
     logs_dir_path = os.path.join(pwd_dir_path, "logs")
     if not os.path.isdir(logs_dir_path):
         os.makedirs(logs_dir_path)
@@ -663,7 +546,8 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
                         json_data,
                         indent=4,
                         separators=(',', ':'),
-                        ensure_ascii=False
+                        ensure_ascii=False,
+                        cls=PythonObjectEncoder
                     ))
                 )
             else:
@@ -672,14 +556,15 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
                     outfile,
                     indent=4,
                     separators=(',', ':'),
-                    ensure_ascii=False
+                    ensure_ascii=False,
+                    cls=PythonObjectEncoder
                 )
 
         msg = "dump file: {}".format(dump_file_path)
         logger.color_print(msg, "BLUE")
 
-    except TypeError:
-        msg = "Failed to dump json file: {}".format(dump_file_path)
+    except TypeError as ex:
+        msg = "Failed to dump json file: {}\nReason: {}".format(dump_file_path, ex)
         logger.color_print(msg, "RED")
 
 
@@ -694,47 +579,18 @@ def _prepare_dump_info(project_mapping, tag_name):
     return pwd_dir_path, dump_file_name
 
 
-def dump_tests(tests_mapping, tag_name):
-    """ dump loaded/parsed tests data (except functions) to json file.
+def dump_logs(json_data, project_mapping, tag_name):
+    """ dump tests data to json file.
         the dumped file is located in PWD/logs folder.
 
     Args:
-        tests_mapping (dict): data to dump
-        tag_name (str): tag name, loaded/parsed
+        json_data (list/dict): json data to dump
+        project_mapping (dict): project info
+        tag_name (str): tag name, loaded/parsed/summary
 
     """
-    project_mapping = tests_mapping.get("project_mapping", {})
     pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, tag_name)
-
-    tests_to_dump = {
-        "project_mapping": {}
-    }
-
-    for key in project_mapping:
-        if key != "functions":
-            tests_to_dump["project_mapping"][key] = project_mapping[key]
-            continue
-
-        # remove functions in order to dump
-        if project_mapping["functions"]:
-            debugtalk_py_path = os.path.join(pwd_dir_path, "debugtalk.py")
-            tests_to_dump["project_mapping"]["debugtalk.py"] = debugtalk_py_path
-
-    if "api" in tests_mapping:
-        tests_to_dump["api"] = tests_mapping["api"]
-    elif "testcases" in tests_mapping:
-        tests_to_dump["testcases"] = tests_mapping["testcases"]
-    elif "testsuites" in tests_mapping:
-        tests_to_dump["testsuites"] = tests_mapping["testsuites"]
-
-    dump_json_file(tests_to_dump, pwd_dir_path, dump_file_name)
-
-
-def dump_summary(summary, project_mapping):
-    """ dump test result summary to json file.
-    """
-    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, "summary")
-    dump_json_file(summary, pwd_dir_path, dump_file_name)
+    dump_json_file(json_data, pwd_dir_path, dump_file_name)
 
 
 def get_python2_retire_msg():
