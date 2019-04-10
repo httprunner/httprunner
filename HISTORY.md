@@ -1,10 +1,17 @@
 # Release History
 
-## 2.1.0 (2019-03-19)
+## 2.1.0 (2019-04-10)
 
 **Features**
 
 - implement json dump Python objects when save tests
+- implement lazy parser
+- remove project_mapping from parse_tests result
+
+**Bugfixes**
+
+- reference output variables
+- pass output variables between testcases
 
 ## 2.0.6 (2019-03-18)
 
