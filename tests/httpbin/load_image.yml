@@ -7,7 +7,7 @@
     request:
         url: /image/png
         method: GET
-    validators:
+    validate:
         - eq: ["status_code", 200]
 
 - test:
@@ -15,7 +15,7 @@
     request:
         url: /image/jpeg
         method: GET
-    validators:
+    validate:
         - eq: ["status_code", 200]
 
 - test:
@@ -23,7 +23,7 @@
     request:
         url: /image/webp
         method: GET
-    validators:
+    validate:
         - eq: ["status_code", 200]
 
 - test:
@@ -31,6 +31,6 @@
     request:
         url: /image/svg
         method: GET
-    validators:
+    validate:
         - eq: ["status_code", 200]
 
