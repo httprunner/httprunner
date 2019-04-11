@@ -267,7 +267,7 @@ class Runner(object):
         self.session_context.update_session_variables(extracted_variables_mapping)
 
         # validate
-        validators = test_dict.get("validate", [])
+        validators = test_dict.get("validate") or test_dict.get("validators") or []
         try:
             self.session_context.validate(validators, resp_obj)
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
