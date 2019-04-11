@@ -20,8 +20,10 @@ from requests_toolbelt import MultipartEncoder
 PWD = os.getcwd()
 
 
-""" built-in functions
-"""
+###############################################################################
+##  built-in functions
+###############################################################################
+
 def gen_random_string(str_len):
     """ generate random string with specified length
     """
@@ -42,24 +44,27 @@ def get_current_date(fmt="%Y-%m-%d"):
     return datetime.datetime.now().strftime(fmt)
 
 
+###############################################################################
+##  upload files with requests-toolbelt
+#   e.g.
+#   - test:
+#      name: upload file
+#      variables:
+#          file_path: "data/test.env"
+#          multipart_encoder: ${multipart_encoder(file=$file_path)}
+#      request:
+#          url: /post
+#          method: POST
+#          headers:
+#              Content-Type: ${multipart_content_type($multipart_encoder)}
+#          data: $multipart_encoder
+#      validate:
+#          - eq: ["status_code", 200]
+#          - startswith: ["content.files.file", "UserName=test"]
+###############################################################################
+
 def multipart_encoder(**kwargs):
-    """ upload files with requests-toolbelt
-
-        - test:
-            name: upload file
-            variables:
-                file_path: "data/test.env"
-                multipart_encoder: ${multipart_encoder(file=$file_path)}
-            request:
-                url: /post
-                method: POST
-                headers:
-                    Content-Type: ${multipart_content_type($multipart_encoder)}
-                data: $multipart_encoder
-            validate:
-                - eq: ["status_code", 200]
-                - startswith: ["content.files.file", "UserName=test"]
-
+    """ initialize MultipartEncoder with uploading fields.
     """
     def get_filetype(file_path):
         file_type = filetype.guess(file_path)
@@ -91,11 +96,15 @@ def multipart_encoder(**kwargs):
 
 
 def multipart_content_type(multipart_encoder):
+    """ prepare Content-Type for request headers
+    """
     return multipart_encoder.content_type
 
 
-""" built-in comparators
-"""
+###############################################################################
+##  built-in comparators
+###############################################################################
+
 def equals(check_value, expect_value):
     assert check_value == expect_value
 
