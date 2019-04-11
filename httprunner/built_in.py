@@ -12,9 +12,12 @@ import re
 import string
 import time
 
+import filetype
 from httprunner.compat import basestring, builtin_str, integer_types, str
 from httprunner.exceptions import ParamsError
 from requests_toolbelt import MultipartEncoder
+
+PWD = os.getcwd()
 
 
 """ built-in functions
@@ -38,17 +41,54 @@ def get_current_date(fmt="%Y-%m-%d"):
     """
     return datetime.datetime.now().strftime(fmt)
 
-def multipart_encoder(field_name, file_path, file_type=None, file_headers=None):
-    if not os.path.isabs(file_path):
-        file_path = os.path.join(os.getcwd(), file_path)
 
-    filename = os.path.basename(file_path)
-    with open(file_path, 'rb') as f:
-        fields = {
-            field_name: (filename, f.read(), file_type)
-        }
+def multipart_encoder(**kwargs):
+    """ upload files with requests-toolbelt
 
-    return MultipartEncoder(fields)
+        - test:
+            name: upload file
+            variables:
+                file_path: "data/test.env"
+                multipart_encoder: ${multipart_encoder(file=$file_path)}
+            request:
+                url: /post
+                method: POST
+                headers:
+                    Content-Type: ${multipart_content_type($multipart_encoder)}
+                data: $multipart_encoder
+            validate:
+                - eq: ["status_code", 200]
+                - startswith: ["content.files.file", "UserName=test"]
+
+    """
+    def get_filetype(file_path):
+        file_type = filetype.guess(file_path)
+        if file_type:
+            return file_type.mime
+        else:
+            return "text/html"
+
+    fields_dict = {}
+    for key, value in kwargs.items():
+
+        if os.path.isabs(value):
+            _file_path = value
+            is_file = True
+        else:
+            global PWD
+            _file_path = os.path.join(PWD, value)
+            is_file = os.path.isfile(_file_path)
+
+        if is_file:
+            filename = os.path.basename(_file_path)
+            with open(_file_path, 'rb') as f:
+                mime_type = get_filetype(_file_path)
+                fields_dict[key] = (filename, f.read(), mime_type)
+        else:
+            fields_dict[key] = value
+
+    return MultipartEncoder(fields=fields_dict)
+
 
 def multipart_content_type(multipart_encoder):
     return multipart_encoder.content_type
