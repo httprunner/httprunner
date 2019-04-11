@@ -5,17 +5,15 @@
 - test:
     name: upload file
     variables:
-        field_name: "file"
-        file_path: "LICENSE"
-        file_type: "text/html"
-        multipart_encoder: ${multipart_encoder($field_name, $file_path, $file_type)}
+        file_path: "data/test.env"
+        multipart_encoder: ${multipart_encoder(file=$file_path)}
     request:
         url: /post
         method: POST
         headers:
             Content-Type: ${multipart_content_type($multipart_encoder)}
         data: $multipart_encoder
-    validators:
+    validate:
         - eq: ["status_code", 200]
-        - startswith: ["content.files.file", "MIT License"]
+        - startswith: ["content.files.file", "UserName=test"]
 

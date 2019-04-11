@@ -21,7 +21,8 @@ install_requires = [
     "har2case",
     "colorama",
     "colorlog",
-    "requests_toolbelt"
+    "requests_toolbelt",
+    "filetype"
 ]
 
 class UploadCommand(Command):
