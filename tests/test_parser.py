@@ -320,6 +320,11 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(var._args, ["var_1"])
         self.assertEqual(var.to_value(variables_mapping), "ABCabc$")
 
+        var = parser.LazyString("ABC$var_1/123$var_1/456", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}/123{}/456")
+        self.assertEqual(var._args, ["var_1", "var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc/123abc/456")
+
         var = parser.LazyString("ABC$var_1{", functions_mapping, check_variables_set)
         self.assertEqual(var._string, "ABC{}{")
         self.assertEqual(var._args, ["var_1"])
@@ -360,6 +365,27 @@ class TestParserBasic(unittest.TestCase):
         var = parser.LazyString("ABC${func1($var_1, $var_3)}$var_5", functions_mapping, check_variables_set)
         self.assertEqual(var._string, "ABC{}{}")
         self.assertEqual(var.to_value(variables_mapping), "ABCabc123True")
+
+        var = parser.LazyString(
+            "ABC${func1($var_1, $var_3)}--${func1($var_1, $var_3)}",
+            functions_mapping,
+            check_variables_set
+        )
+        self.assertEqual(var._string, "ABC{}--{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123--abc123")
+
+        var = parser.LazyString("ABC${func1($var_1, $var_3)}$var_1", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123abc")
+
+        # TODO: fix
+        # var = parser.LazyString(
+        #     "ABC${func1($var_1, $var_3)}$var_1--${func1($var_1, $var_3)}$var_1",
+        #     functions_mapping,
+        #     check_variables_set
+        # )
+        # self.assertEqual(var._string, "ABC{}{}--{}{}")
+        # self.assertEqual(var.to_value(variables_mapping), "ABCabc123abc--abc123abc")
 
         var = parser.LazyString("ABC${func1($var_1, $var_3)}DE$var_4", functions_mapping, check_variables_set)
         self.assertEqual(var._string, "ABC{}DE{}")
