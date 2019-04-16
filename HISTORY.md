@@ -1,5 +1,14 @@
 # Release History
 
+## 2.1.1 (2019-04-11)
+
+**Features**
+
+refactor upload files mechanism with [requests-toolbelt](https://toolbelt.readthedocs.io/en/latest/user.html#multipart-form-data-encoder):
+
+- simplify usage syntax, detect mimetype with [filetype](https://github.com/h2non/filetype.py).
+- support upload multiple fields.
+
 ## 2.1.0 (2019-04-10)
 
 **Features**
