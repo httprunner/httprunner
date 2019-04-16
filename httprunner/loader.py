@@ -8,8 +8,7 @@ import os
 import sys
 
 import yaml
-from httprunner import exceptions, logger, parser, utils, validator
-
+from httprunner import built_in, exceptions, logger, parser, utils, validator
 
 ###############################################################################
 ##   file loader
@@ -263,7 +262,6 @@ def load_module_functions(module):
 def load_builtin_functions():
     """ load built_in module functions
     """
-    from httprunner import built_in
     return load_module_functions(built_in)
 
 
@@ -703,6 +701,7 @@ def load_project_tests(test_path, dot_env_path=None):
     # locate PWD and load debugtalk.py functions
 
     project_mapping["PWD"] = project_working_directory
+    built_in.PWD = project_working_directory
     project_mapping["functions"] = debugtalk_functions
 
     # load api
