@@ -11,6 +11,7 @@ har2case = "*"
 colorama = "*"
 colorlog = "*"
 requests-toolbelt = "*"
+filetype = "*"
 
 [dev-packages]
 Flask = "<1.0.0"
