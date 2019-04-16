@@ -458,6 +458,7 @@ class LazyString(object):
                 self.check_variables_set
             )
             args_mapping[match_start_position] = lazy_func
+            match_start_position += len(func_str)
 
         # search variable like $var
         var_match_list = regex_findall_variables(self._string)
@@ -474,6 +475,7 @@ class LazyString(object):
             # self._string = self._string.replace("}", "}}")
             self._string = self._string.replace(var, "{}", 1)
             args_mapping[match_start_position] = var_name
+            match_start_position += len(var)
 
         self._args = [args_mapping[key] for key in sorted(args_mapping.keys())]
 
