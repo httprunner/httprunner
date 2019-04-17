@@ -9,10 +9,9 @@ from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 # use $$ to escape $ notation
 dolloar_regex_compile = re.compile(r"\$\$")
-# TODO: change variable notation from $var to {{var}}
-# $var_1
-variable_regex_compile = re.compile(r"\$(\w+)")
-# ${func1($var_1, $var_3)}
+# variable notation, e.g. ${var} or $var
+variable_regex_compile = re.compile(r"\$\{(\w+)\}|\$(\w+)")
+# function notation, e.g. ${func1($var_1, $var_3)}
 function_regex_compile = re.compile(r"\$\{(\w+)\(([\$\w\.\-/\s=,]*)\)\}")
 
 
@@ -70,7 +69,12 @@ def regex_findall_variables(content):
 
     """
     try:
-        return variable_regex_compile.findall(content)
+        vars_list = []
+        for var_tuple in variable_regex_compile.findall(content):
+            vars_list.append(
+                var_tuple[0] or var_tuple[1]
+            )
+        return vars_list
     except TypeError:
         return []
 
@@ -477,10 +481,10 @@ class LazyString(object):
                 self._string += "{}"
                 continue
 
-            # search variable like $var
+            # search variable like ${var} or $var
             var_match = variable_regex_compile.match(raw_string, match_start_position)
             if var_match:
-                var_name = var_match.group(1)
+                var_name = var_match.group(1) or var_match.group(2)
                 # check if any variable undefined in check_variables_set
                 if var_name not in self.check_variables_set:
                     raise exceptions.VariableNotFound(var_name)
