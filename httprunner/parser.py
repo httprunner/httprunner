@@ -451,11 +451,11 @@ class LazyString(object):
             # search function like ${func($a, $b)}
             func_match = function_regex_compile.match(raw_string, match_start_position)
             if func_match:
-                function_meta = parse_function_params(func_match[1])
+                function_meta = parse_function_params(func_match.group(1))
                 function_meta = {
-                    "func_name": func_match[1]
+                    "func_name": func_match.group(1)
                 }
-                function_meta.update(parse_function_params(func_match[2]))
+                function_meta.update(parse_function_params(func_match.group(2)))
                 lazy_func = LazyFunction(
                     function_meta,
                     self.functions_mapping,
