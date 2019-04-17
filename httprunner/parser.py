@@ -436,48 +436,57 @@ class LazyString(object):
             args: ["${func2($a, $b)}", "$c"]
 
         """
-        self._string = raw_string
-        args_mapping = {}
+        self._args = []
 
-        # Notice: functions must be handled before variables
-        # search function like ${func($a, $b)}
-        func_match_list = regex_findall_functions(self._string)
-        match_start_position = 0
-        for func_match in func_match_list:
-            func_str = "${%s(%s)}" % (func_match[0], func_match[1])
-            match_start_position = raw_string.index(func_str, match_start_position)
-            self._string = self._string.replace(func_str, "{}", 1)
-            function_meta = parse_function_params(func_match[1])
-            function_meta = {
-                "func_name": func_match[0]
-            }
-            function_meta.update(parse_function_params(func_match[1]))
-            lazy_func = LazyFunction(
-                function_meta,
-                self.functions_mapping,
-                self.check_variables_set
-            )
-            args_mapping[match_start_position] = lazy_func
-            match_start_position += len(func_str)
+        try:
+            match_start_position = raw_string.index("$", 0)
+            self._string = raw_string[0:match_start_position]
+        except ValueError:
+            self._string = raw_string
+            return
 
-        # search variable like $var
-        var_match_list = regex_findall_variables(self._string)
-        match_start_position = 0
-        for var_name in var_match_list:
-            # check if any variable undefined in check_variables_set
-            if var_name not in self.check_variables_set:
-                raise exceptions.VariableNotFound(var_name)
+        while match_start_position < len(raw_string):
 
-            var = "${}".format(var_name)
-            match_start_position = raw_string.index(var, match_start_position)
-            # TODO: escape '{' and '}'
-            # self._string = self._string.replace("{", "{{")
-            # self._string = self._string.replace("}", "}}")
-            self._string = self._string.replace(var, "{}", 1)
-            args_mapping[match_start_position] = var_name
-            match_start_position += len(var)
+            # Notice: functions must be handled before variables
+            # search function like ${func($a, $b)}
+            func_match = function_regex_compile.match(raw_string, match_start_position)
+            if func_match:
+                function_meta = parse_function_params(func_match[1])
+                function_meta = {
+                    "func_name": func_match[1]
+                }
+                function_meta.update(parse_function_params(func_match[2]))
+                lazy_func = LazyFunction(
+                    function_meta,
+                    self.functions_mapping,
+                    self.check_variables_set
+                )
+                self._args.append(lazy_func)
+                match_start_position = func_match.end()
+                self._string += "{}"
+                continue
 
-        self._args = [args_mapping[key] for key in sorted(args_mapping.keys())]
+            # search variable like $var
+            var_match = variable_regex_compile.match(raw_string, match_start_position)
+            if var_match:
+                var_name = var_match.group(1)
+                # check if any variable undefined in check_variables_set
+                if var_name not in self.check_variables_set:
+                    raise exceptions.VariableNotFound(var_name)
+
+                self._args.append(var_name)
+                match_start_position = var_match.end()
+                self._string += "{}"
+                continue
+
+            curr_position = match_start_position
+            try:
+                # find next $ location
+                match_start_position = raw_string.index("$", curr_position+1)
+                self._string += raw_string[curr_position:match_start_position]
+            except ValueError:
+                self._string += raw_string[curr_position:]
+                break
 
     def __repr__(self):
         return "LazyString({})".format(self.raw_string)
