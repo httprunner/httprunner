@@ -730,8 +730,8 @@ class TestParserBasic(unittest.TestCase):
         }
         prepared_variables = parser.prepare_lazy_data(variables, functions, variables.keys())
         parsed_testcase = parser.parse_variables_mapping(prepared_variables)
-        self.assertEqual(parsed_testcase["varB"], "456$$0")
-        self.assertEqual(parsed_testcase["varA"], "123456$$0")
+        self.assertEqual(parsed_testcase["varA"], "123456$0")
+        self.assertEqual(parsed_testcase["varB"], "456$0")
         self.assertEqual(parsed_testcase["varC"], 3)
 
     def test_prepare_lazy_data(self):
@@ -770,6 +770,29 @@ class TestParserBasic(unittest.TestCase):
                 variables.keys()
             )
 
+    def test_prepare_lazy_data_dual_dollar(self):
+        variables = {
+            "num0": 123,
+            "var1": "abc$$num0",
+            "var2": "abc$$$num0",
+            "var3": "abc$$$$num0",
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        prepared_variables = parser.prepare_lazy_data(
+            variables,
+            functions,
+            variables.keys()
+        )
+        self.assertEqual(prepared_variables["var1"], "abc$num0")
+        self.assertIsInstance(prepared_variables["var2"], parser.LazyString)
+        self.assertEqual(prepared_variables["var3"], "abc$$num0")
+
+        parsed_variables = parser.parse_variables_mapping(prepared_variables)
+        self.assertEqual(parsed_variables["var1"], "abc$num0")
+        self.assertEqual(parsed_variables["var2"], "abc$123")
+        self.assertEqual(parsed_variables["var3"], "abc$$num0")
 
 class TestParser(unittest.TestCase):
 
