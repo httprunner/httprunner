@@ -31,18 +31,32 @@ def parse_string_value(str_value):
         return str_value
 
 
-def is_variable_exist(content):
+def is_var_or_func_exist(content):
+    """ check if variable or function exist
+    """
     if not isinstance(content, basestring):
         return False
 
-    return True if variable_regex_compile.search(content) else False
-
-
-def is_function_exist(content):
-    if not isinstance(content, basestring):
+    try:
+        match_start_position = content.index("$", 0)
+    except ValueError:
         return False
 
-    return True if function_regex_compile.search(content) else False
+    while match_start_position < len(content):
+        dollar_match = dolloar_regex_compile.match(content, match_start_position)
+        if dollar_match:
+            match_start_position = dollar_match.end()
+            continue
+
+        func_match = function_regex_compile.match(content, match_start_position)
+        if func_match:
+            return True
+
+        var_match = variable_regex_compile.match(content, match_start_position)
+        if var_match:
+            return True
+
+        return False
 
 
 def regex_findall_variables(content):
@@ -580,7 +594,7 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
 
     elif isinstance(content, basestring):
         # content is in string format here
-        if not (is_variable_exist(content) or is_function_exist(content)):
+        if not is_var_or_func_exist(content):
             # content is neither variable nor function
             return content
 
