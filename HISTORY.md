@@ -1,5 +1,16 @@
 # Release History
 
+## 2.1.2 (2019-04-17)
+
+**Features**
+
+- use \$\$ to escape \$ notation
+
+**Bugfixes**
+
+- match duplicate variable/function in single raw string
+- escape '{' and '}' notation in raw string
+
 ## 2.1.1 (2019-04-11)
 
 **Features**
