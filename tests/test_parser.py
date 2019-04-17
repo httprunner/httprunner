@@ -703,6 +703,37 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parsed_testcase["num2"], 6)
         self.assertEqual(parsed_testcase["num1"], 3)
 
+    def test_is_var_or_func_exist(self):
+        self.assertTrue(parser.is_var_or_func_exist("$var"))
+        self.assertTrue(parser.is_var_or_func_exist("${var}"))
+        self.assertTrue(parser.is_var_or_func_exist("$var${var}"))
+        self.assertFalse(parser.is_var_or_func_exist("${var"))
+        self.assertFalse(parser.is_var_or_func_exist("$$var"))
+        self.assertFalse(parser.is_var_or_func_exist("var$$0"))
+        self.assertTrue(parser.is_var_or_func_exist("var$$$0"))
+        self.assertFalse(parser.is_var_or_func_exist("var$$$$0"))
+        self.assertTrue(parser.is_var_or_func_exist("${func()}"))
+        self.assertTrue(parser.is_var_or_func_exist("${func($a)}"))
+        self.assertTrue(parser.is_var_or_func_exist("${func($a)}$b"))
+
+    def test_parse_variables_mapping_dollar_notation(self):
+        variables = {
+            "varA": "123$varB",
+            "varB": "456$$0",
+            "varC": "${sum_two($a, $b)}",
+            "a": 1,
+            "b": 2,
+            "c": "abc"
+        }
+        functions = {
+            "sum_two": sum_two
+        }
+        prepared_variables = parser.prepare_lazy_data(variables, functions, variables.keys())
+        parsed_testcase = parser.parse_variables_mapping(prepared_variables)
+        self.assertEqual(parsed_testcase["varB"], "456$$0")
+        self.assertEqual(parsed_testcase["varA"], "123456$$0")
+        self.assertEqual(parsed_testcase["varC"], 3)
+
     def test_prepare_lazy_data(self):
         variables = {
             "host": "https://httprunner.org",
