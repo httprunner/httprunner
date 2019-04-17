@@ -378,14 +378,13 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(var._string, "ABC{}{}")
         self.assertEqual(var.to_value(variables_mapping), "ABCabc123abc")
 
-        # TODO: fix
-        # var = parser.LazyString(
-        #     "ABC${func1($var_1, $var_3)}$var_1--${func1($var_1, $var_3)}$var_1",
-        #     functions_mapping,
-        #     check_variables_set
-        # )
-        # self.assertEqual(var._string, "ABC{}{}--{}{}")
-        # self.assertEqual(var.to_value(variables_mapping), "ABCabc123abc--abc123abc")
+        var = parser.LazyString(
+            "ABC${func1($var_1, $var_3)}$var_1--${func1($var_1, $var_3)}$var_1",
+            functions_mapping,
+            check_variables_set
+        )
+        self.assertEqual(var._string, "ABC{}{}--{}{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc123abc--abc123abc")
 
         var = parser.LazyString("ABC${func1($var_1, $var_3)}DE$var_4", functions_mapping, check_variables_set)
         self.assertEqual(var._string, "ABC{}DE{}")
