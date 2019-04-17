@@ -326,21 +326,44 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(var.to_value(variables_mapping), "ABCabc/123abc/456")
 
         var = parser.LazyString("ABC$var_1{", functions_mapping, check_variables_set)
-        self.assertEqual(var._string, "ABC{}{")
+        self.assertEqual(var._string, "ABC{}{{")
         self.assertEqual(var._args, ["var_1"])
-        # self.assertEqual(var.to_value(variables_mapping), "ABCabc{")
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc{")
+
+        var = parser.LazyString("ABC$var_1}", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}}}")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc}")
 
         var = parser.LazyString("ABC$$var_1{", functions_mapping, check_variables_set)
-        self.assertEqual(var._string, "ABC${}{")
+        self.assertEqual(var._string, "ABC${}{{")
         self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABC$abc{")
 
         var = parser.LazyString("ABC$var_1${", functions_mapping, check_variables_set)
-        self.assertEqual(var._string, "ABC{}${")
+        self.assertEqual(var._string, "ABC{}${{")
         self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc${")
 
         var = parser.LazyString("ABC$var_1${a", functions_mapping, check_variables_set)
-        self.assertEqual(var._string, "ABC{}${a")
+        self.assertEqual(var._string, "ABC{}${{a")
         self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc${a")
+
+        var = parser.LazyString("ABC$var_1$}a", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}$}}a")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc$}a")
+
+        var = parser.LazyString("ABC$var_1}{a", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}}}{{a")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc}{a")
+
+        var = parser.LazyString("ABC$var_1{}a", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}{{}}a")
+        self.assertEqual(var._args, ["var_1"])
+        self.assertEqual(var.to_value(variables_mapping), "ABCabc{}a")
 
         var = parser.LazyString("ABC$var_1/$var_2/$var_1", functions_mapping, check_variables_set)
         self.assertEqual(var._string, "ABC{}/{}/{}")
