@@ -483,10 +483,15 @@ class LazyString(object):
             try:
                 # find next $ location
                 match_start_position = raw_string.index("$", curr_position+1)
-                self._string += raw_string[curr_position:match_start_position]
+                remain_string = raw_string[curr_position:match_start_position]
             except ValueError:
-                self._string += raw_string[curr_position:]
-                break
+                remain_string = raw_string[curr_position:]
+                # break while loop
+                match_start_position = len(raw_string)
+
+            remain_string = remain_string.replace("{", "{{")
+            remain_string = remain_string.replace("}", "}}")
+            self._string += remain_string
 
     def __repr__(self):
         return "LazyString({})".format(self.raw_string)
