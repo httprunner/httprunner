@@ -4,6 +4,7 @@
 
 **Features**
 
+- support new variable notation ${var}
 - use \$\$ to escape \$ notation
 
 **Bugfixes**
