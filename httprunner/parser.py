@@ -596,7 +596,9 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
         # content is in string format here
         if not is_var_or_func_exist(content):
             # content is neither variable nor function
-            return content
+            # replace $$ notation with $ and consider it as normal char.
+            # e.g. abc => abc, abc$$def => abc$def, abc$$$$def$$h => abc$$def$h
+            return content.replace("$$", "$")
 
         functions_mapping = functions_mapping or {}
         check_variables_set = check_variables_set or set()
