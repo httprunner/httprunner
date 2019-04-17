@@ -7,6 +7,8 @@ import re
 from httprunner import exceptions, utils, validator
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
+# use $$ to escape $ notation
+dolloar_regex_compile = re.compile(r"\$\$")
 # TODO: change variable notation from $var to {{var}}
 # $var_1
 variable_regex_compile = re.compile(r"\$(\w+)")
@@ -447,7 +449,16 @@ class LazyString(object):
 
         while match_start_position < len(raw_string):
 
-            # Notice: functions must be handled before variables
+            # Notice: notation priority
+            # $$ > ${func($a, $b)} > $var
+
+            # search $$
+            dollar_match = dolloar_regex_compile.match(raw_string, match_start_position)
+            if dollar_match:
+                match_start_position = dollar_match.end()
+                self._string += "$"
+                continue
+
             # search function like ${func($a, $b)}
             func_match = function_regex_compile.match(raw_string, match_start_position)
             if func_match:
