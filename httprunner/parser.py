@@ -1254,6 +1254,9 @@ def parse_tests(tests_mapping):
             # encapsulate api as a testcase
             for api_content in tests_mapping["apis"]:
                 testcase = {
+                    "config": {
+                        "name": api_content.get("name")
+                    },
                     "teststeps": [api_content]
                 }
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
