@@ -458,11 +458,15 @@ class LazyString(object):
         """
         self._args = []
 
+        def escape_braces(origin_string):
+            return origin_string.replace("{", "{{").replace("}", "}}")
+
         try:
             match_start_position = raw_string.index("$", 0)
-            self._string = raw_string[0:match_start_position]
+            begin_string = raw_string[0:match_start_position]
+            self._string = escape_braces(begin_string)
         except ValueError:
-            self._string = raw_string
+            self._string = escape_braces(raw_string)
             return
 
         while match_start_position < len(raw_string):
@@ -518,9 +522,7 @@ class LazyString(object):
                 # break while loop
                 match_start_position = len(raw_string)
 
-            remain_string = remain_string.replace("{", "{{")
-            remain_string = remain_string.replace("}", "}}")
-            self._string += remain_string
+            self._string += escape_braces(remain_string)
 
     def __repr__(self):
         return "LazyString({})".format(self.raw_string)
