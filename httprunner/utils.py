@@ -385,6 +385,8 @@ def print_info(info_mapping):
             continue
         elif isinstance(value, (dict, list)):
             value = json.dumps(value)
+        elif value is None:
+            value = "None"
 
         if is_py2:
             if isinstance(key, unicode):

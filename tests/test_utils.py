@@ -263,3 +263,15 @@ class TestUtils(ApiServerUnittest):
         parameters_content_list = []
         product_list = utils.gen_cartesian_product(*parameters_content_list)
         self.assertEqual(product_list, [])
+
+    def test_print_info(self):
+        info_mapping = {
+            "a": 1,
+            "t": (1, 2),
+            "b": {
+                "b1": 123
+            },
+            "c": None,
+            "d": [4, 5]
+        }
+        utils.print_info(info_mapping)
