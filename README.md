@@ -33,6 +33,13 @@ HttpRunner is rich documented.
 - [`中文用户使用手册`][user-docs-zh]
 - [`开发历程记录博客`][development-blogs]
 
+## How to Contribute
+
+1. Check for [open issues](https://github.com/HttpRunner/HttpRunner/issues) or [open a fresh issue](https://github.com/HttpRunner/HttpRunner/issues/new/choose) to start a discussion around a feature idea or a bug.
+2. Fork [the repository](https://github.com/httprunner/httprunner) on GitHub to start making your changes to the **master** branch (or branch off of it).
+3. Write a test which shows that the bug was fixed or that the feature works as expected.
+4. Send a pull request, you will then become a [contributor](https://github.com/HttpRunner/HttpRunner/graphs/contributors) after it gets merged and published.
+
 ## Subscribe
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
