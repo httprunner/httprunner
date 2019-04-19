@@ -5,7 +5,11 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - 3.7-dev
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
 install:
   - pip install pipenv --upgrade-strategy=only-if-needed
   - pipenv install --dev --skip-lock

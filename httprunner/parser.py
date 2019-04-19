@@ -7,10 +7,11 @@ import re
 from httprunner import exceptions, utils, validator
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
-# TODO: change variable notation from $var to {{var}}
-# $var_1
-variable_regex_compile = re.compile(r"\$(\w+)")
-# ${func1($var_1, $var_3)}
+# use $$ to escape $ notation
+dolloar_regex_compile = re.compile(r"\$\$")
+# variable notation, e.g. ${var} or $var
+variable_regex_compile = re.compile(r"\$\{(\w+)\}|\$(\w+)")
+# function notation, e.g. ${func1($var_1, $var_3)}
 function_regex_compile = re.compile(r"\$\{(\w+)\(([\$\w\.\-/\s=,]*)\)\}")
 
 
@@ -30,18 +31,32 @@ def parse_string_value(str_value):
         return str_value
 
 
-def is_variable_exist(content):
+def is_var_or_func_exist(content):
+    """ check if variable or function exist
+    """
     if not isinstance(content, basestring):
         return False
 
-    return True if variable_regex_compile.search(content) else False
-
-
-def is_function_exist(content):
-    if not isinstance(content, basestring):
+    try:
+        match_start_position = content.index("$", 0)
+    except ValueError:
         return False
 
-    return True if function_regex_compile.search(content) else False
+    while match_start_position < len(content):
+        dollar_match = dolloar_regex_compile.match(content, match_start_position)
+        if dollar_match:
+            match_start_position = dollar_match.end()
+            continue
+
+        func_match = function_regex_compile.match(content, match_start_position)
+        if func_match:
+            return True
+
+        var_match = variable_regex_compile.match(content, match_start_position)
+        if var_match:
+            return True
+
+        return False
 
 
 def regex_findall_variables(content):
@@ -68,7 +83,12 @@ def regex_findall_variables(content):
 
     """
     try:
-        return variable_regex_compile.findall(content)
+        vars_list = []
+        for var_tuple in variable_regex_compile.findall(content):
+            vars_list.append(
+                var_tuple[0] or var_tuple[1]
+            )
+        return vars_list
     except TypeError:
         return []
 
@@ -436,46 +456,73 @@ class LazyString(object):
             args: ["${func2($a, $b)}", "$c"]
 
         """
-        self._string = raw_string
-        args_mapping = {}
+        self._args = []
 
-        # Notice: functions must be handled before variables
-        # search function like ${func($a, $b)}
-        func_match_list = regex_findall_functions(self._string)
-        match_start_position = 0
-        for func_match in func_match_list:
-            func_str = "${%s(%s)}" % (func_match[0], func_match[1])
-            match_start_position = raw_string.index(func_str, match_start_position)
-            self._string = self._string.replace(func_str, "{}", 1)
-            function_meta = parse_function_params(func_match[1])
-            function_meta = {
-                "func_name": func_match[0]
-            }
-            function_meta.update(parse_function_params(func_match[1]))
-            lazy_func = LazyFunction(
-                function_meta,
-                self.functions_mapping,
-                self.check_variables_set
-            )
-            args_mapping[match_start_position] = lazy_func
+        def escape_braces(origin_string):
+            return origin_string.replace("{", "{{").replace("}", "}}")
 
-        # search variable like $var
-        var_match_list = regex_findall_variables(self._string)
-        match_start_position = 0
-        for var_name in var_match_list:
-            # check if any variable undefined in check_variables_set
-            if var_name not in self.check_variables_set:
-                raise exceptions.VariableNotFound(var_name)
+        try:
+            match_start_position = raw_string.index("$", 0)
+            begin_string = raw_string[0:match_start_position]
+            self._string = escape_braces(begin_string)
+        except ValueError:
+            self._string = escape_braces(raw_string)
+            return
 
-            var = "${}".format(var_name)
-            match_start_position = raw_string.index(var, match_start_position)
-            # TODO: escape '{' and '}'
-            # self._string = self._string.replace("{", "{{")
-            # self._string = self._string.replace("}", "}}")
-            self._string = self._string.replace(var, "{}", 1)
-            args_mapping[match_start_position] = var_name
+        while match_start_position < len(raw_string):
 
-        self._args = [args_mapping[key] for key in sorted(args_mapping.keys())]
+            # Notice: notation priority
+            # $$ > ${func($a, $b)} > $var
+
+            # search $$
+            dollar_match = dolloar_regex_compile.match(raw_string, match_start_position)
+            if dollar_match:
+                match_start_position = dollar_match.end()
+                self._string += "$"
+                continue
+
+            # search function like ${func($a, $b)}
+            func_match = function_regex_compile.match(raw_string, match_start_position)
+            if func_match:
+                function_meta = parse_function_params(func_match.group(1))
+                function_meta = {
+                    "func_name": func_match.group(1)
+                }
+                function_meta.update(parse_function_params(func_match.group(2)))
+                lazy_func = LazyFunction(
+                    function_meta,
+                    self.functions_mapping,
+                    self.check_variables_set
+                )
+                self._args.append(lazy_func)
+                match_start_position = func_match.end()
+                self._string += "{}"
+                continue
+
+            # search variable like ${var} or $var
+            var_match = variable_regex_compile.match(raw_string, match_start_position)
+            if var_match:
+                var_name = var_match.group(1) or var_match.group(2)
+                # check if any variable undefined in check_variables_set
+                if var_name not in self.check_variables_set:
+                    raise exceptions.VariableNotFound(var_name)
+
+                self._args.append(var_name)
+                match_start_position = var_match.end()
+                self._string += "{}"
+                continue
+
+            curr_position = match_start_position
+            try:
+                # find next $ location
+                match_start_position = raw_string.index("$", curr_position+1)
+                remain_string = raw_string[curr_position:match_start_position]
+            except ValueError:
+                remain_string = raw_string[curr_position:]
+                # break while loop
+                match_start_position = len(raw_string)
+
+            self._string += escape_braces(remain_string)
 
     def __repr__(self):
         return "LazyString({})".format(self.raw_string)
@@ -549,9 +596,11 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
 
     elif isinstance(content, basestring):
         # content is in string format here
-        if not (is_variable_exist(content) or is_function_exist(content)):
+        if not is_var_or_func_exist(content):
             # content is neither variable nor function
-            return content
+            # replace $$ notation with $ and consider it as normal char.
+            # e.g. abc => abc, abc$$def => abc$def, abc$$$$def$$h => abc$$def$h
+            return content.replace("$$", "$")
 
         functions_mapping = functions_mapping or {}
         check_variables_set = check_variables_set or set()
@@ -1205,6 +1254,9 @@ def parse_tests(tests_mapping):
             # encapsulate api as a testcase
             for api_content in tests_mapping["apis"]:
                 testcase = {
+                    "config": {
+                        "name": api_content.get("name")
+                    },
                     "teststeps": [api_content]
                 }
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
