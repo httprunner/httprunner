@@ -1,5 +1,5 @@
 config:
-    name: create users with uid
+    name: create users with parameters
     variables:
         device_sn: ${gen_random_string(15)}
     base_url: "http://127.0.0.1:5000"

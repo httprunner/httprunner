@@ -1,5 +1,20 @@
 # Release History
 
+## 2.1.2 (2019-04-17)
+
+**Features**
+
+- support new variable notation ${var}
+- use \$\$ to escape \$ notation
+- add Python 3.7 for travis CI
+
+**Bugfixes**
+
+- match duplicate variable/function in single raw string
+- escape '{' and '}' notation in raw string
+- print_info: TypeError when value is None
+- display api name when running api as testcase
+
 ## 2.1.1 (2019-04-11)
 
 **Features**
