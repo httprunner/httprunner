@@ -25,6 +25,11 @@ install_requires = [
     "filetype"
 ]
 
+# Python 2.x?
+is_py2 = (sys.version_info[0] == 2)
+if is_py2:
+    install_requires.append("future")
+
 class UploadCommand(Command):
     """ Build and publish this package.
         Support setup.py upload. Copied from requests_html.
