@@ -1,5 +1,11 @@
 # Release History
 
+## 2.1.3 (2019-04-24)
+
+**Bugfixes**
+
+- replace eval mechanism with builtins to prevent security vulnerabilities
+
 ## 2.1.2 (2019-04-17)
 
 **Features**
