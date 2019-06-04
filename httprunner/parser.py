@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import ast
+import builtins
 import os
 import re
 
@@ -277,11 +278,8 @@ def get_mapping_function(function_name, functions_mapping):
 
     try:
         # check if Python builtin functions
-        item_func = eval(function_name)
-        if callable(item_func):
-            # is builtin function
-            return item_func
-    except (NameError, TypeError):
+        return getattr(builtins, function_name)
+    except AttributeError:
         # is not builtin function
         raise exceptions.FunctionNotFound("{} is not found.".format(function_name))
 

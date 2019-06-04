@@ -437,6 +437,10 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(var._string, "ABC{}{}")
         self.assertEqual(var.to_value(variables_mapping), "ABCTrueabc123")
 
+        # Python builtin functions
+        var = parser.LazyString("ABC${ord(a)}DEF${len(abcd)}", functions_mapping, check_variables_set)
+        self.assertEqual(var._string, "ABC{}DEF{}")
+        self.assertEqual(var.to_value(variables_mapping), "ABC97DEF4")
 
     def test_parse_variable(self):
         """ variable format ${var} and $var
