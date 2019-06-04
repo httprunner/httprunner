@@ -11,7 +11,7 @@ matrix:
       dist: xenial
       sudo: true
 install:
-  - pip install pipenv --upgrade-strategy=only-if-needed
+  - pip install pipenv --upgrade
   - pipenv install --dev --skip-lock
 script:
   - pipenv run python setup.py install
