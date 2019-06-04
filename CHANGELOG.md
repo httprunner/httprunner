@@ -5,6 +5,7 @@
 **Bugfixes**
 
 - replace eval mechanism with builtins to prevent security vulnerabilities
+- ImportError for builtins in Python2.7
 
 ## 2.1.2 (2019-04-17)
 
