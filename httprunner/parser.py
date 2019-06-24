@@ -1121,8 +1121,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
             parsed_testcase["config"]["variables"] = overrided_testcase_config_variables
 
         # parse config variables
-        parsed_config_variables = parse_variables_mapping(
-            overrided_testcase_config_variables, functions)
+        parsed_config_variables = parse_variables_mapping(overrided_testcase_config_variables)
 
         # parse parameters
         if "parameters" in testcase and testcase["parameters"]:
