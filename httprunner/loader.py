@@ -536,12 +536,17 @@ def load_testsuite(raw_testsuite):
             __extend_with_testcase_ref(raw_testcase)
             raw_testcase.setdefault("name", name)
             raw_testsuite["testcases"][name] = raw_testcase
+
     elif isinstance(raw_testcases, list):
         # format version 2, implemented in 2.2.0
         for raw_testcase in raw_testcases:
             __extend_with_testcase_ref(raw_testcase)
             testcase_name = raw_testcase["name"]
             raw_testsuite["testcases"][testcase_name] = raw_testcase
+
+    else:
+        # invalid format
+        raise exceptions.FileFormatError("Invalid testsuite format!")
 
     return raw_testsuite
 
@@ -607,7 +612,7 @@ def load_test_file(path):
 
         else:
             # invalid format
-            logger.log_warning("Invalid test file format: {}".format(path))
+            raise exceptions.FileFormatError("Invalid test file format!")
 
     elif isinstance(raw_content, list) and len(raw_content) > 0:
         # file_type: testcase
@@ -619,7 +624,7 @@ def load_test_file(path):
 
     else:
         # invalid format
-        logger.log_warning("Invalid test file format: {}".format(path))
+        raise exceptions.FileFormatError("Invalid test file format!")
 
     return loaded_content
 
@@ -853,7 +858,11 @@ def load_tests(path, dot_env_path=None):
     }
 
     def __load_file_content(path):
-        loaded_content = load_test_file(path)
+        try:
+            loaded_content = load_test_file(path)
+        except exceptions.FileFormatError:
+            logger.log_warning("Invalid test file format: {}".format(path))
+
         if not loaded_content:
             pass
         elif loaded_content["type"] == "testsuite":
