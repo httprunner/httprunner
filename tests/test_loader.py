@@ -292,26 +292,60 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(loaded_content["request"]["url"], "/api/users/$uid")
 
     def test_load_test_file_testcase(self):
-        loaded_content = loader.load_test_file("tests/testcases/setup.yml")
-        self.assertEqual(loaded_content["type"], "testcase")
-        self.assertIn("path", loaded_content)
-        self.assertIn("config", loaded_content)
-        self.assertEqual(loaded_content["config"]["name"], "setup and reset all.")
-        self.assertIn("teststeps", loaded_content)
-        self.assertEqual(len(loaded_content["teststeps"]), 2)
+        for loaded_content in [
+            loader.load_test_file("tests/testcases/setup.yml"),
+            loader.load_test_file("tests/testcases/setup.json")
+        ]:
+            self.assertEqual(loaded_content["type"], "testcase")
+            self.assertIn("path", loaded_content)
+            self.assertIn("config", loaded_content)
+            self.assertEqual(loaded_content["config"]["name"], "setup and reset all.")
+            self.assertIn("teststeps", loaded_content)
+            self.assertEqual(len(loaded_content["teststeps"]), 2)
+
+    def test_load_test_file_testcase_v2(self):
+        for loaded_content in [
+            loader.load_test_file("tests/testcases/setup.v2.yml"),
+            loader.load_test_file("tests/testcases/setup.v2.json")
+        ]:
+            self.assertEqual(loaded_content["type"], "testcase")
+            self.assertIn("path", loaded_content)
+            self.assertIn("config", loaded_content)
+            self.assertEqual(loaded_content["config"]["name"], "setup and reset all.")
+            self.assertIn("teststeps", loaded_content)
+            self.assertEqual(len(loaded_content["teststeps"]), 2)
 
     def test_load_test_file_testsuite(self):
-        loaded_content = loader.load_test_file("tests/testsuites/create_users.yml")
-        self.assertEqual(loaded_content["type"], "testsuite")
+        for loaded_content in [
+            loader.load_test_file("tests/testsuites/create_users.yml"),
+            loader.load_test_file("tests/testsuites/create_users.json")
+        ]:
+            self.assertEqual(loaded_content["type"], "testsuite")
 
-        testcases = loaded_content["testcases"]
-        self.assertEqual(len(testcases), 2)
-        self.assertIn('create user 1000 and check result.', testcases)
-        self.assertIn('testcase_def', testcases["create user 1000 and check result."])
-        self.assertEqual(
-            testcases["create user 1000 and check result."]["testcase_def"]["config"]["name"],
-            "create user and check result."
-        )
+            testcases = loaded_content["testcases"]
+            self.assertEqual(len(testcases), 2)
+            self.assertIn('create user 1000 and check result.', testcases)
+            self.assertIn('testcase_def', testcases["create user 1000 and check result."])
+            self.assertEqual(
+                testcases["create user 1000 and check result."]["testcase_def"]["config"]["name"],
+                "create user and check result."
+            )
+
+    def test_load_test_file_testsuite_v2(self):
+        for loaded_content in [
+            loader.load_test_file("tests/testsuites/create_users.v2.yml"),
+            loader.load_test_file("tests/testsuites/create_users.v2.json")
+        ]:
+            self.assertEqual(loaded_content["type"], "testsuite")
+
+            testcases = loaded_content["testcases"]
+            self.assertEqual(len(testcases), 2)
+            self.assertIn('create user 1000 and check result.', testcases)
+            self.assertIn('testcase_def', testcases["create user 1000 and check result."])
+            self.assertEqual(
+                testcases["create user 1000 and check result."]["testcase_def"]["config"]["name"],
+                "create user and check result."
+            )
 
     def test_load_tests_api_file(self):
         path = os.path.join(
