@@ -1,0 +1,43 @@
+{
+    "config": {
+        "name": "setup and reset all.",
+        "base_url": "http://127.0.0.1:5000",
+        "variables": {
+            "device_sn": "TESTCASE_SETUP_XXX",
+            "app_version": "2.8.6",
+            "os_platform": "ios",
+            "user_agent": "iOS/10.3"
+        },
+        "id": "setup_and_reset",
+        "verify": false,
+        "output": [
+            "session_token"
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "get token (setup)",
+            "api": "api/get_token.yml",
+            "variables": {
+                "device_sn": "$device_sn",
+                "app_version": "2.8.6",
+                "os_platform": "ios",
+                "user_agent": "iOS/10.3"
+            },
+            "extract": [
+                {"session_token": "content.token"}
+            ],
+            "validate": [
+                {"eq": ["status_code", 200]},
+                {"len_eq": ["content.token", 16]}
+            ]
+        },
+        {
+            "name": "reset all users",
+            "api": "api/reset_all.yml",
+            "variables": {
+                "token": "$session_token"
+            }
+        }
+    ]
+}
