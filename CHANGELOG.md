@@ -9,6 +9,7 @@
 **Bugfixes**
 
 - add wheel in dev packages
+- fix exception when teststep name reference former extracted variable
 
 ## 2.1.3 (2019-04-24)
 
