@@ -443,7 +443,7 @@ def load_testcase(raw_testcase):
 
 
 def load_testcase_v2(raw_testcase):
-    """ load testcase in version 2.
+    """ load testcase in format version 2.
 
     Args:
         raw_testcase (dict): raw testcase content loaded from JSON/YAML file:
@@ -482,13 +482,15 @@ def load_testcase_v2(raw_testcase):
 
 def load_testsuite(raw_testsuite):
     """ load testsuite with testcase references.
+        support two different formats.
 
     Args:
         raw_testsuite (dict): raw testsuite content loaded from JSON/YAML file:
+            # version 1, compatible with version < 2.2.0
             {
                 "config": {
-                    "name": "",
-                    "request": {}
+                    "name": "xxx",
+                    "variables": {}
                 }
                 "testcases": {
                     "testcase1": {
@@ -500,6 +502,23 @@ def load_testsuite(raw_testsuite):
                 }
             }
 
+            # version 2, implemented in 2.2.0
+            {
+                "config": {
+                    "name": "xxx",
+                    "variables": {}
+                }
+                "testcases": [
+                    {
+                        "name": "testcase1",
+                        "testcase": "/path/to/testcase",
+                        "variables": {...},
+                        "parameters": {...}
+                    },
+                    {}
+                ]
+            }
+
     Returns:
         dict: loaded testsuite content
             {
@@ -508,10 +527,21 @@ def load_testsuite(raw_testsuite):
             }
 
     """
-    testcases = raw_testsuite["testcases"]
-    for name, raw_testcase in testcases.items():
-        __extend_with_testcase_ref(raw_testcase)
-        raw_testcase.setdefault("name", name)
+    raw_testcases = raw_testsuite.pop("testcases")
+    raw_testsuite["testcases"] = {}
+
+    if isinstance(raw_testcases, dict):
+        # make compatible with version < 2.2.0
+        for name, raw_testcase in raw_testcases.items():
+            __extend_with_testcase_ref(raw_testcase)
+            raw_testcase.setdefault("name", name)
+            raw_testsuite["testcases"][name] = raw_testcase
+    elif isinstance(raw_testcases, list):
+        # format version 2, implemented in 2.2.0
+        for raw_testcase in raw_testcases:
+            __extend_with_testcase_ref(raw_testcase)
+            testcase_name = raw_testcase["name"]
+            raw_testsuite["testcases"][testcase_name] = raw_testcase
 
     return raw_testsuite
 
