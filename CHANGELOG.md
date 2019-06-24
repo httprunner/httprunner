@@ -1,5 +1,15 @@
 # Release History
 
+## 2.2.0 (2019-06-24)
+
+**Features**
+
+- support testcase/testsuite in format version 2
+
+**Bugfixes**
+
+- add wheel in dev packages
+
 ## 2.1.3 (2019-04-24)
 
 **Bugfixes**
