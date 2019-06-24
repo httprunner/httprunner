@@ -20,5 +20,6 @@ coveralls = "*"
 twine = "*"
 contextlib2 = "*"
 locustio = "*"
+wheel = "*"
 
 [scripts]
