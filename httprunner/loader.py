@@ -442,6 +442,44 @@ def load_testcase(raw_testcase):
     }
 
 
+def load_testcase_v2(raw_testcase):
+    """ load testcase in version 2.
+
+    Args:
+        raw_testcase (dict): raw testcase content loaded from JSON/YAML file:
+            {
+                "config": {
+                    "name": "xxx",
+                    "variables": {}
+                }
+                "teststeps": [
+                    {
+                        "name": "teststep 1",
+                        "request" {...}
+                    },
+                    {
+                        "name": "teststep 2",
+                        "request" {...}
+                    },
+                ]
+            }
+
+    Returns:
+        dict: loaded testcase content
+            {
+                "config": {},
+                "teststeps": [test11, test12]
+            }
+
+    """
+    raw_teststeps = raw_testcase.pop("teststeps")
+    raw_testcase["teststeps"] = [
+        load_teststep(teststep)
+        for teststep in raw_teststeps
+    ]
+    return raw_testcase
+
+
 def load_testsuite(raw_testsuite):
     """ load testsuite with testcase references.
 
@@ -523,18 +561,27 @@ def load_test_file(path):
             loaded_content = load_testsuite(raw_content)
             loaded_content["path"] = path
             loaded_content["type"] = "testsuite"
+
+        elif "teststeps" in raw_content:
+            # file_type: testcase (format version 2)
+            loaded_content = load_testcase_v2(raw_content)
+            loaded_content["path"] = path
+            loaded_content["type"] = "testcase"
+
         elif "request" in raw_content:
             # file_type: api
             # TODO: add json schema validation for api
             loaded_content = raw_content
             loaded_content["path"] = path
             loaded_content["type"] = "api"
+
         else:
             # invalid format
             logger.log_warning("Invalid test file format: {}".format(path))
 
     elif isinstance(raw_content, list) and len(raw_content) > 0:
         # file_type: testcase
+        # make compatible with version < 2.2.0
         # TODO: add json schema validation for testcase
         loaded_content = load_testcase(raw_content)
         loaded_content["path"] = path
