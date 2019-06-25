@@ -432,7 +432,14 @@ def create_scaffold(project_name):
 
     # create .gitignore file
     ignore_file = os.path.join(project_name, ".gitignore")
-    ignore_content = ".env\nreports/*"
+    ignore_content = "\n".join([
+        ".env",
+        "reports/*",
+        "__pycache__/*",
+        "*.pyc",
+        ".python-version",
+        "logs/*"
+    ])
     with open(ignore_file, "w") as f:
         f.write(ignore_content)
 

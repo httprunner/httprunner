@@ -2,6 +2,10 @@
 
 ## 2.2.1 (2019-06-25)
 
+**Features**
+
+- update default `.gitignore` of new created scaffold project
+
 **Bugfixes**
 
 - fix extend with testcase reference in format version 2
