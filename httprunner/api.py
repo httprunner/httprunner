@@ -67,9 +67,13 @@ class HttpRunner(object):
                 variables = test_dict.get("variables", {})
 
             if isinstance(test.__doc__, parser.LazyString):
-                parsed_variables = parser.parse_variables_mapping(variables, ignore=True)
-                test.__doc__ = parser.parse_lazy_data(
-                    test.__doc__, parsed_variables)
+                try:
+                    parsed_variables = parser.parse_variables_mapping(variables)
+                    test.__doc__ = parser.parse_lazy_data(
+                        test.__doc__, parsed_variables
+                    )
+                except exceptions.VariableNotFound:
+                    test.__doc__ = str(test.__doc__)
 
             return test
 
