@@ -11,6 +11,7 @@
 **Bugfixes**
 
 - fix extend with testcase reference in format version 2
+- fix ImportError when locustio is not installed
 
 ## 2.2.0 (2019-06-24)
 
