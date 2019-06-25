@@ -410,28 +410,82 @@ def create_scaffold(project_name):
     logger.color_print("Start to create new project: {}".format(project_name), "GREEN")
     logger.color_print("CWD: {}\n".format(os.getcwd()), "BLUE")
 
-    def create_path(path, ptype):
+    def create_folder(path):
+        os.makedirs(path)
+        msg = "created folder: {}".format(path)
+        logger.color_print(msg, "BLUE")
+
+    def create_file(path, file_content=""):
+        with open(path, 'w') as f:
+            f.write(file_content)
+        msg = "created file: {}".format(path)
+        logger.color_print(msg, "BLUE")
+
+    def create_path(path, ptype, file_content=""):
         if ptype == "folder":
             os.makedirs(path)
         elif ptype == "file":
-            open(path, 'w').close()
+            with open(path, 'w') as f:
+                f.write(file_content)
 
-        msg = "created {}: {}".format(ptype, path)
-        logger.color_print(msg, "BLUE")
+    demo_api_content = """
+name: demo api
+variables:
+    var1: value1
+    var2: value2
+request:
+    url: /api/path/$var1
+    method: POST
+    headers:
+        Content-Type: "application/json"
+    json:
+        key: $var2
+validate:
+    - eq: ["status_code", 200]
+"""
+    demo_testcase_content = """
+config:
+    name: "demo testcase"
+    variables:
+        device_sn: "ABC"
+    base_url: "http://127.0.0.1:5000"
 
-    path_list = [
-        (project_name, "folder"),
-        (os.path.join(project_name, "api"), "folder"),
-        (os.path.join(project_name, "testcases"), "folder"),
-        (os.path.join(project_name, "testsuites"), "folder"),
-        (os.path.join(project_name, "reports"), "folder"),
-        (os.path.join(project_name, "debugtalk.py"), "file"),
-        (os.path.join(project_name, ".env"), "file")
-    ]
-    [create_path(p[0], p[1]) for p in path_list]
+teststeps:
+-
+    name: demo step 1
+    api: path/to/api1.yml
+    variables:
+        user_agent: 'iOS/10.3'
+        device_sn: $device_sn
+    extract:
+        - token: content.token
+    validate:
+        - eq: ["status_code", 200]
+-
+    name: demo step 2
+    api: path/to/api2.yml
+    variables:
+        token: $token
+"""
+    demo_testsuite_content = """
+config:
+    name: "demo testsuite"
+    variables:
+        device_sn: "XYZ"
+    base_url: "http://127.0.0.1:5000"
 
-    # create .gitignore file
-    ignore_file = os.path.join(project_name, ".gitignore")
+testcases:
+-
+    name: call demo_testcase with data 1
+    testcase: path/to/demo_testcase.yml
+    variables:
+        device_sn: $device_sn
+-
+    name: call demo_testcase with data 2
+    testcase: path/to/demo_testcase.yml
+    variables:
+        device_sn: $device_sn
+"""
     ignore_content = "\n".join([
         ".env",
         "reports/*",
@@ -440,8 +494,18 @@ def create_scaffold(project_name):
         ".python-version",
         "logs/*"
     ])
-    with open(ignore_file, "w") as f:
-        f.write(ignore_content)
+
+    create_folder(project_name)
+    create_folder(os.path.join(project_name, "api"))
+    create_folder(os.path.join(project_name, "testcases"))
+    create_folder(os.path.join(project_name, "testsuites"))
+    create_folder(os.path.join(project_name, "reports"))
+    create_file(os.path.join(project_name, "api", "demo_api.yml"), demo_api_content)
+    create_file(os.path.join(project_name, "testcases", "demo_testcase.yml"), demo_testcase_content)
+    create_file(os.path.join(project_name, "testsuites", "demo_testsuite.yml"), demo_testsuite_content)
+    create_file(os.path.join(project_name, "debugtalk.py"), "")
+    create_file(os.path.join(project_name, ".env"), "")
+    create_file(os.path.join(project_name, ".gitignore"), ignore_content)
 
 
 def gen_cartesian_product(*args):

@@ -4,6 +4,7 @@
 
 **Features**
 
+- add demo api/testcase/testsuite to new created scaffold project
 - update default `.gitignore` of new created scaffold project
 
 **Bugfixes**
