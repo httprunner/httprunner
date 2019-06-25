@@ -448,6 +448,8 @@ config:
     name: "demo testcase"
     variables:
         device_sn: "ABC"
+        username: ${ENV(USERNAME)}
+        password: ${ENV(PASSWORD)}
     base_url: "http://127.0.0.1:5000"
 
 teststeps:
@@ -494,6 +496,16 @@ testcases:
         ".python-version",
         "logs/*"
     ])
+    demo_debugtalk_content = """
+import time
+
+def sleep(n_secs):
+    time.sleep(n_secs)
+"""
+    demo_env_content = "\n".join([
+        "USERNAME=leolee",
+        "PASSWORD=123456"
+    ])
 
     create_folder(project_name)
     create_folder(os.path.join(project_name, "api"))
@@ -503,8 +515,8 @@ testcases:
     create_file(os.path.join(project_name, "api", "demo_api.yml"), demo_api_content)
     create_file(os.path.join(project_name, "testcases", "demo_testcase.yml"), demo_testcase_content)
     create_file(os.path.join(project_name, "testsuites", "demo_testsuite.yml"), demo_testsuite_content)
-    create_file(os.path.join(project_name, "debugtalk.py"), "")
-    create_file(os.path.join(project_name, ".env"), "")
+    create_file(os.path.join(project_name, "debugtalk.py"), demo_debugtalk_content)
+    create_file(os.path.join(project_name, ".env"), demo_env_content)
     create_file(os.path.join(project_name, ".gitignore"), ignore_content)
 
 
