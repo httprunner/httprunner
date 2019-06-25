@@ -675,7 +675,7 @@ def extract_variables(content):
     return set()
 
 
-def parse_variables_mapping(variables_mapping, ignore=False):
+def parse_variables_mapping(variables_mapping):
     """ eval each prepared variable and function in variables_mapping.
 
     Args:
@@ -689,8 +689,6 @@ def parse_variables_mapping(variables_mapping, ignore=False):
                 "c": {"key": LazyString($b)},
                 "d": [LazyString($a), 3]
             }
-        ignore (bool): If set True, VariableNotFound will be ignored.
-            This is used when initializing tests.
 
     Returns:
         dict: parsed variables_mapping should not contain any variable or function.
@@ -733,9 +731,6 @@ def parse_variables_mapping(variables_mapping, ignore=False):
                 # variables_mapping = {"token": LazyString($token)}
                 # var_name = "key"
                 # variables_mapping = {"key": [LazyString($key), 2]}
-                if ignore:
-                    parsed_variables_mapping[var_name] = value
-                    continue
                 raise exceptions.VariableNotFound(var_name)
 
             if variables:
@@ -1121,8 +1116,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
             parsed_testcase["config"]["variables"] = overrided_testcase_config_variables
 
         # parse config variables
-        parsed_config_variables = parse_variables_mapping(
-            overrided_testcase_config_variables, functions)
+        parsed_config_variables = parse_variables_mapping(overrided_testcase_config_variables)
 
         # parse parameters
         if "parameters" in testcase and testcase["parameters"]:
