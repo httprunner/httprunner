@@ -1,5 +1,11 @@
 # Release History
 
+## 2.2.1 (2019-06-25)
+
+**Bugfixes**
+
+- fix extend with testcase reference in format version 2
+
 ## 2.2.0 (2019-06-24)
 
 **Features**
