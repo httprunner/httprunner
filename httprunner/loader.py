@@ -332,7 +332,18 @@ def __extend_with_testcase_ref(raw_testinfo):
             project_mapping["PWD"],
             *testcase_path.split("/")
         )
-        testcase_dict = load_testcase(load_file(testcase_path))
+        loaded_testcase = load_file(testcase_path)
+
+        if isinstance(loaded_testcase, list):
+            # make compatible with version < 2.2.0
+            testcase_dict = load_testcase(loaded_testcase)
+        elif isinstance(loaded_testcase, dict) and "teststeps" in loaded_testcase:
+            # format version 2, implemented in 2.2.0
+            testcase_dict = load_testcase_v2(loaded_testcase)
+        else:
+            raise exceptions.FileFormatError(
+                "Invalid format testcase: {}".format(testcase_path))
+
         tests_def_mapping[testcase_path] = testcase_dict
     else:
         testcase_dict = tests_def_mapping[testcase_path]

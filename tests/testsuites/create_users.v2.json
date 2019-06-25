@@ -11,7 +11,7 @@
     "testcases": [
         {
             "name": "create user 1000 and check result.",
-            "testcase": "testcases/create_user.yml",
+            "testcase": "testcases/create_user.v2.yml",
             "variables": {
                 "var_d": "$var_c",
                 "var_c": "${gen_random_string(5)}",
@@ -20,7 +20,7 @@
         },
         {
             "name": "create user 1001 and check result.",
-            "testcase": "testcases/create_user.yml",
+            "testcase": "testcases/create_user.v2.yml",
             "variables": {
                 "var_d": "$var_c",
                 "var_c": "${gen_random_string(5)}",
