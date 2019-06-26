@@ -12,7 +12,7 @@
 - test:
     name: setup and reset all (override) for $device_sn.
     testcase: testcases/setup.yml
-    output:
+    extract:
         - session_token
 
 - test:

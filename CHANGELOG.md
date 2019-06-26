@@ -1,5 +1,11 @@
 # Release History
 
+## 2.2.2 (2019-06-26)
+
+**Features**
+
+- `extract` is used to replace `output` when passing former teststep's (as a testcase) export value to next teststep
+
 ## 2.2.1 (2019-06-25)
 
 **Features**

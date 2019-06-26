@@ -942,7 +942,13 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
         if "testcase_def" in test_dict:
             # test_dict is nested testcase
 
-            if "output" in test_dict:
+            # pass former teststep's (as a testcase) export value to next teststep
+            # Since V2.2.2, `extract` is used to replace `output`,
+            # `output` is also kept for compatibility
+            if "extract" in test_dict:
+                session_variables_set |= set(test_dict["extract"])
+            elif "output" in test_dict:
+                # kept for compatibility
                 session_variables_set |= set(test_dict["output"])
 
             # 2, testcase test_dict => testcase_def config

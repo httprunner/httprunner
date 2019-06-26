@@ -636,23 +636,28 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(tests_results[0][1].records), 2)
 
     def test_testcase_complex_run_suite(self):
-        testcase_path = "tests/testcases/create_user.yml"
-        tests_mapping = loader.load_tests(testcase_path)
-        testcases = parser.parse_tests(tests_mapping)
-        runner = HttpRunner()
-        test_suite = runner._add_tests(testcases)
-        tests_results = runner._run_suite(test_suite)
-        self.assertEqual(len(tests_results[0][1].records), 2)
+        for testcase_path in [
+            "tests/testcases/create_user.yml",
+            "tests/testcases/create_user.v2.yml",
+            "tests/testcases/create_user.json",
+            "tests/testcases/create_user.v2.json"
+        ]:
+            tests_mapping = loader.load_tests(testcase_path)
+            testcases = parser.parse_tests(tests_mapping)
+            runner = HttpRunner()
+            test_suite = runner._add_tests(testcases)
+            tests_results = runner._run_suite(test_suite)
+            self.assertEqual(len(tests_results[0][1].records), 2)
 
-        results = tests_results[0][1]
-        self.assertEqual(
-            results.records[0]["name"],
-            "setup and reset all (override) for TESTCASE_CREATE_XXX."
-        )
-        self.assertEqual(
-            results.records[1]["name"],
-            "create user and check result."
-        )
+            results = tests_results[0][1]
+            self.assertEqual(
+                results.records[0]["name"],
+                "setup and reset all (override) for TESTCASE_CREATE_XXX."
+            )
+            self.assertEqual(
+                results.records[1]["name"],
+                "create user and check result."
+            )
 
     def test_testsuite_loader(self):
         testcase_path = "tests/testsuites/create_users.yml"
