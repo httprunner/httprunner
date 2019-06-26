@@ -1,5 +1,19 @@
 # Release History
 
+## 2.2.1 (2019-06-25)
+
+**Features**
+
+- add demo api/testcase/testsuite to new created scaffold project
+- update default `.gitignore` of new created scaffold project
+- add demo content to `debugtalk.py`/`.env` of new created scaffold project
+
+**Bugfixes**
+
+- fix extend with testcase reference in format version 2
+- fix ImportError when locustio is not installed
+- fix YAMLLoadWarning by specify yaml loader
+
 ## 2.2.0 (2019-06-24)
 
 **Features**
