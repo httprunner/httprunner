@@ -12,9 +12,8 @@ teststeps:
 -
     name: setup and reset all (override) for $device_sn.
     testcase: testcases/setup.yml
-    output:
+    extract:
         - session_token
-
 -
     name: create user and check result.
     variables:

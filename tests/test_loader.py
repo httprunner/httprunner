@@ -271,8 +271,7 @@ class TestSuiteLoader(unittest.TestCase):
             "testcase": "testcases/setup.yml",
             "variables": [
                 {"device_sn": "$device_sn"}
-            ],
-            "output": ["token", "device_sn"]
+            ]
         }
         testcase = loader.load_teststep(raw_test)
         self.assertEqual(
