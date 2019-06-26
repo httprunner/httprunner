@@ -9,7 +9,7 @@ config:
 testcases:
 -
     name: create user 1000 and check result.
-    testcase: testcases/create_user.yml
+    testcase: testcases/create_user.v2.yml
     variables:
         uid: 1000
         var_c: ${gen_random_string(5)}
@@ -17,7 +17,7 @@ testcases:
 
 -
     name: create user 1001 and check result.
-    testcase: testcases/create_user.yml
+    testcase: testcases/create_user.v2.yml
     variables:
         uid: 1001
         var_c: ${gen_random_string(5)}
