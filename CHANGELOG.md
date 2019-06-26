@@ -5,6 +5,7 @@
 **Features**
 
 - `extract` is used to replace `output` when passing former teststep's (as a testcase) export value to next teststep
+- `export` is used to replace `output` in testcase config
 
 ## 2.2.1 (2019-06-25)
 

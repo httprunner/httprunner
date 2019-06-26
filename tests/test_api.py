@@ -93,7 +93,7 @@ class TestHttpRunner(ApiServerUnittest):
                         "var1": "abc",
                         "var2": "def"
                     },
-                    "output": ["status_code", "req_data"]
+                    "export": ["status_code", "req_data"]
                 },
                 "teststeps": [
                     {
