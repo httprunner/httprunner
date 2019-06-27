@@ -6,13 +6,13 @@
     variables:
         uid: 9001
         device_sn: "TESTCASE_CREATE_XXX"
-    output:
+    export:
         - session_token
 
 - test:
     name: setup and reset all (override) for $device_sn.
     testcase: testcases/setup.yml
-    output:
+    extract:
         - session_token
 
 - test:

@@ -328,7 +328,7 @@ def extend_variables(raw_variables, override_variables):
 
 
 def get_testcase_io(testcase):
-    """ get and print testcase input(variables) and output.
+    """ get and print testcase input(variables) and output(export).
 
     Args:
         testcase (unittest.suite.TestSuite): corresponding to one YAML/JSON file, it has been set two attributes:
@@ -340,12 +340,13 @@ def get_testcase_io(testcase):
     """
     test_runner = testcase.runner
     variables = testcase.config.get("variables", {})
-    output_list = testcase.config.get("output", [])
-    output_mapping = test_runner.extract_output(output_list)
+    output_list = testcase.config.get("export") \
+        or testcase.config.get("output", [])
+    export_mapping = test_runner.export_variables(output_list)
 
     return {
         "in": variables,
-        "out": output_mapping
+        "out": export_mapping
     }
 
 
