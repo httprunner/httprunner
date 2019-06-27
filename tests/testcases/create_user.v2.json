@@ -1,0 +1,30 @@
+{
+  "config": {
+    "id": "create_user",
+    "variables": {
+      "device_sn": "TESTCASE_CREATE_XXX",
+      "uid": 9001
+    },
+    "output": [
+      "session_token"
+    ],
+    "base_url": "http://127.0.0.1:5000",
+    "name": "create user and check result."
+  },
+  "teststeps": [
+    {
+      "testcase": "testcases/setup.yml",
+      "extract": [
+        "session_token"
+      ],
+      "name": "setup and reset all (override) for $device_sn."
+    },
+    {
+      "testcase": "testcases/deps/check_and_create.yml",
+      "variables": {
+        "token": "$session_token"
+      },
+      "name": "create user and check result."
+    }
+  ]
+}
