@@ -10,6 +10,13 @@ import sys
 import yaml
 from httprunner import built_in, exceptions, logger, parser, utils, validator
 
+try:
+    # PyYAML version >= 5.1
+    # ref: https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+    yaml.warnings({'YAMLLoadWarning': False})
+except AttributeError:
+    pass
+
 ###############################################################################
 ##   file loader
 ###############################################################################
@@ -35,7 +42,7 @@ def load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
     with io.open(yaml_file, 'r', encoding='utf-8') as stream:
-        yaml_content = yaml.load(stream, Loader=yaml.FullLoader)
+        yaml_content = yaml.load(stream)
         _check_format(yaml_file, yaml_content)
         return yaml_content
 
