@@ -1,5 +1,11 @@
 # Release History
 
+## 2.2.3
+
+**Bugfixes**
+
+- fix yaml FullLoader AttributeError when PyYAML version < 5.1
+
 ## 2.2.2 (2019-06-26)
 
 **Features**
