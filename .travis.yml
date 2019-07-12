@@ -12,7 +12,7 @@ matrix:
       sudo: true
 install:
   - pip install poetry
-  - poetry install
+  - poetry install -v
 script:
   - poetry build
   - poetry run coverage run --source=httprunner -m unittest discover
