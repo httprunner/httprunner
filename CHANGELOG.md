@@ -5,6 +5,7 @@
 **Features**
 
 - replace pipenv & setup.py with poetry
+- drop support for Python 3.4 as it was EOL on 2019-03-16
 
 ## 2.2.3
 
