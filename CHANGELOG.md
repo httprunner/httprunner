@@ -1,5 +1,11 @@
 # Release History
 
+## 2.2.4
+
+**Features**
+
+- replace pipenv & setup.py with poetry
+
 ## 2.2.3
 
 **Bugfixes**

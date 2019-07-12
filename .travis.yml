@@ -11,10 +11,10 @@ matrix:
       dist: xenial
       sudo: true
 install:
-  - pip install pipenv --upgrade
-  - pipenv install --dev --skip-lock
+  - pip install poetry
+  - poetry install
 script:
-  - pipenv run python setup.py install
-  - pipenv run coverage run --source=httprunner -m unittest discover
+  - poetry build
+  - poetry run coverage run --source=httprunner -m unittest discover
 after_success:
-  - pipenv run coveralls
+  - poetry run coveralls
