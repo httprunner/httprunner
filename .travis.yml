@@ -2,7 +2,6 @@ sudo: false
 language: python
 python:
   - 2.7
-  - 3.4
   - 3.5
   - 3.6
 matrix:
@@ -12,7 +11,7 @@ matrix:
       sudo: true
 install:
   - pip install poetry
-  - poetry install -v
+  - poetry install -vvv
 script:
   - poetry build
   - poetry run coverage run --source=httprunner -m unittest discover
