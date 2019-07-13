@@ -1,34 +1,34 @@
 # Release History
 
-## 2.2.4
+## 2.2.4 (2019-07-13)
 
-**Features**
+**Changed**
 
 - replace pipenv & setup.py with poetry
 - drop support for Python 3.4 as it was EOL on 2019-03-16
 
-## 2.2.3
+## 2.2.3 (2019-06-30)
 
-**Bugfixes**
+**Fixed**
 
 - fix yaml FullLoader AttributeError when PyYAML version < 5.1
 
 ## 2.2.2 (2019-06-26)
 
-**Features**
+**Changed**
 
 - `extract` is used to replace `output` when passing former teststep's (as a testcase) export value to next teststep
 - `export` is used to replace `output` in testcase config
 
 ## 2.2.1 (2019-06-25)
 
-**Features**
+**Added**
 
 - add demo api/testcase/testsuite to new created scaffold project
 - update default `.gitignore` of new created scaffold project
 - add demo content to `debugtalk.py`/`.env` of new created scaffold project
 
-**Bugfixes**
+**Fixed**
 
 - fix extend with testcase reference in format version 2
 - fix ImportError when locustio is not installed
@@ -36,31 +36,31 @@
 
 ## 2.2.0 (2019-06-24)
 
-**Features**
+**Added**
 
 - support testcase/testsuite in format version 2
 
-**Bugfixes**
+**Fixed**
 
 - add wheel in dev packages
 - fix exception when teststep name reference former extracted variable
 
 ## 2.1.3 (2019-04-24)
 
-**Bugfixes**
+**Fixed**
 
 - replace eval mechanism with builtins to prevent security vulnerabilities
 - ImportError for builtins in Python2.7
 
 ## 2.1.2 (2019-04-17)
 
-**Features**
+**Added**
 
 - support new variable notation ${var}
 - use \$\$ to escape \$ notation
 - add Python 3.7 for travis CI
 
-**Bugfixes**
+**Fixed**
 
 - match duplicate variable/function in single raw string
 - escape '{' and '}' notation in raw string
@@ -69,7 +69,7 @@
 
 ## 2.1.1 (2019-04-11)
 
-**Features**
+**Changed**
 
 refactor upload files mechanism with [requests-toolbelt](https://toolbelt.readthedocs.io/en/latest/user.html#multipart-form-data-encoder):
 
@@ -78,41 +78,41 @@ refactor upload files mechanism with [requests-toolbelt](https://toolbelt.readth
 
 ## 2.1.0 (2019-04-10)
 
-**Features**
+**Added**
 
 - implement json dump Python objects when save tests
 - implement lazy parser
 - remove project_mapping from parse_tests result
 
-**Bugfixes**
+**Fixed**
 
 - reference output variables
 - pass output variables between testcases
 
 ## 2.0.6 (2019-03-18)
 
-**Features**
+**Added**
 
 - create .gitignore file when initializing new project
 
-**Bugfixes**
+**Fixed**
 
 - fix CSV relative path detection
 - fix current validators displaying the former one when they are empty
 
 ## 2.0.5 (2019-03-04)
 
-**Features**
+**Added**
 
 - implement method to get variables and output
 
-**Bugfixes**
+**Fixed**
 
 - fix xss in response json
 
 ## 2.0.4 (2019-02-28)
 
-**Bugfixes**
+**Fixed**
 
 - fix verify priority with nested testcase
 - fix function in config variables called multiple times
@@ -120,7 +120,7 @@ refactor upload files mechanism with [requests-toolbelt](https://toolbelt.readth
 
 ## 2.0.3 (2019-02-24)
 
-**Bugfixes**
+**Fixed**
 
 - fix verify priority: teststep > config
 - fix Chinese charactor in log_file encoding error in Windows
@@ -128,12 +128,12 @@ refactor upload files mechanism with [requests-toolbelt](https://toolbelt.readth
 
 ## 2.0.2 (2019-01-21)
 
-**Bugfixes**
+**Fixed**
 
 - each teststeps in one testcase share the same session
 - fix duplicate API definition output
 
-**Improvements**
+**Changed**
 
 - display result from hook functions in DEBUG level log
 - change log level of "Variables & Output" to INFO
@@ -142,14 +142,19 @@ refactor upload files mechanism with [requests-toolbelt](https://toolbelt.readth
 
 ## 2.0.1 (2019-01-18)
 
-**Bugfixes**
+**Fixed**
 
 - override current teststep variables with former testcase output variables
-- make compatible with testcase name is empty
+- Fixed compatibility when testcase name is empty
 - skip undefined variable when parsing string content
+
+**Changed**
+
 - add back request method in report
 
 ## 2.0.0 (2019-01-01)
+
+**Changed**
 
 - Massive Refactor and Simplification
 - Redesign testcase structure
