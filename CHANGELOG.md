@@ -11,6 +11,7 @@
 
 - fix #574: delete unnecessary code
 - fix #551: raise if times is not digit
+- fix #572: tests_def_mapping["testcases"] typo error
 
 ## 2.2.3 (2019-06-30)
 
