@@ -85,7 +85,14 @@ class HttpRunner(object):
 
             tests = testcase.get("teststeps", [])
             for index, test_dict in enumerate(tests):
-                for times_index in range(int(test_dict.get("times", 1))):
+                times = test_dict.get("times", 1)
+                try:
+                    times = int(times)
+                except ValueError:
+                    raise exceptions.ParamsError(
+                        "times should be digit, given: {}".format(times))
+
+                for times_index in range(times):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
