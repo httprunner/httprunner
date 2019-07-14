@@ -4,7 +4,7 @@ import shutil
 import time
 import unittest
 
-from httprunner import loader, parser
+from httprunner import exceptions, loader, parser
 from httprunner.api import HttpRunner, prepare_locust_tests
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
@@ -79,6 +79,39 @@ class TestHttpRunner(ApiServerUnittest):
         self.runner.run(self.testcase_cli_path)
         self.assertEqual(self.runner.summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(self.runner.summary["stat"]["teststeps"]["total"], 10)
+
+    def test_text_run_times_invalid(self):
+        testcases = [
+            {
+                "config": {
+                    'name': "post data",
+                    'variables': []
+                },
+                "teststeps": [
+                    {
+                        "name": "post data",
+                        "times": "1.5",
+                        "request": {
+                            "url": "{}/post".format(HTTPBIN_SERVER),
+                            "method": "POST",
+                            "headers": {
+                                "User-Agent": "python-requests/2.18.4",
+                                "Content-Type": "application/json"
+                            },
+                            "data": "abc"
+                        },
+                        "validate": [
+                            {"eq": ["status_code", 200]}
+                        ]
+                    }
+                ]
+            }
+        ]
+        tests_mapping = {
+            "testcases": testcases
+        }
+        with self.assertRaises(exceptions.ParamsError):
+            self.runner.run_tests(tests_mapping)
 
     def test_text_skip(self):
         self.runner.run(self.testcase_cli_path)

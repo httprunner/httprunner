@@ -10,6 +10,7 @@
 **Fixed**
 
 - fix #574: delete unnecessary code
+- fix #551: raise if times is not digit
 
 ## 2.2.3 (2019-06-30)
 
