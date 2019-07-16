@@ -43,6 +43,7 @@ ate = "httprunner.cli:main_hrun"
 httprunner = "httprunner.cli:main_hrun"
 locusts = "httprunner.cli:main_locust"
 
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+# commenting for https://github.com/sdispater/poetry/issues/1049
+# [build-system]
+# requires = ["poetry>=0.12"]
+# build-backend = "poetry.masonry.api"
