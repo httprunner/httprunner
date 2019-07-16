@@ -5,7 +5,7 @@ def main_hrun():
     """
     import argparse
     from httprunner import logger
-    from httprunner.__about__ import __description__, __version__
+    from httprunner import __description__, __version__
     from httprunner.api import HttpRunner
     from httprunner.compat import is_py2
     from httprunner.validator import validate_json_file

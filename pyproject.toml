@@ -4,7 +4,7 @@ version = "2.2.4"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
-authors = ["debugtalk <mail@debugtalk.com>"]
+authors = ["debugtalk <debugtalk@gmail.com>"]
 
 homepage = "https://github.com/HttpRunner/HttpRunner"
 repository = "https://github.com/HttpRunner/HttpRunner"
