@@ -6,6 +6,7 @@
 
 - replace pipenv & setup.py with poetry
 - drop support for Python 3.4 as it was EOL on 2019-03-16
+- relocate debugging scripts, move from main-debug.py to httprunner.cli
 
 **Fixed**
 
