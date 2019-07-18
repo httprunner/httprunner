@@ -944,7 +944,7 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host",
                         'variables': {
-                            "host": "https://debugtalk.com"
+                            "host": "https://github.com"
                         },
                         "verify": False
                     },
@@ -971,7 +971,7 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
-                            "host1": "https://debugtalk.com"
+                            "host1": "https://github.com"
                         }
                     },
                     "teststeps": [
@@ -1000,7 +1000,7 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
-                            "host1": "https://debugtalk.com"
+                            "host1": "https://github.com"
                         }
                     },
                     "teststeps": [
@@ -1035,7 +1035,7 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
-                            "host1": "https://debugtalk.com",
+                            "host1": "https://github.com",
                             "var_a": "${gen_random_string(5)}",
                             "var_b": "$var_a"
                         }
@@ -1087,7 +1087,7 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host1",
                         'variables': {
-                            "host1": "https://debugtalk.com"
+                            "host1": "https://github.com"
                         }
                     },
                     "teststeps": [
@@ -1123,7 +1123,7 @@ class TestParser(unittest.TestCase):
                         'name': '',
                         "base_url": "$host",
                         'variables': {
-                            "host": "https://debugtalk.com"
+                            "host": "https://github.com"
                         },
                         "verify": False
                     },
@@ -1277,7 +1277,7 @@ class TestParser(unittest.TestCase):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
         raw_testinfo = {
             "name": "get token",
-            "base_url": "https://debugtalk.com",
+            "base_url": "https://github.com",
             "api": "api/get_token.yml",
         }
         api_def_dict = loader.load_teststep(raw_testinfo)
@@ -1301,7 +1301,7 @@ class TestParser(unittest.TestCase):
         }
 
         parser._extend_with_api(test_block, api_def_dict)
-        self.assertEqual(test_block["base_url"], "https://debugtalk.com")
+        self.assertEqual(test_block["base_url"], "https://github.com")
         self.assertEqual(test_block["name"], "override block")
         self.assertEqual({'var': 123}, test_block["variables"])
         self.assertIn({'check': 'status_code', 'expect': 201, 'comparator': 'equals'}, test_block["validate"])
