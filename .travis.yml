@@ -2,19 +2,18 @@ sudo: false
 language: python
 python:
   - 2.7
-  - 3.4
   - 3.5
   - 3.6
 matrix:
   include:
     - python: 3.7
-      dist: xenial
-      sudo: true
+      dist: xenial  # Required for Python 3.7
+      sudo: true    # Required for Python 3.7
 install:
-  - pip install pipenv --upgrade
-  - pipenv install --dev --skip-lock
+  - pip install poetry
+  - poetry install -vvv
 script:
-  - pipenv run python setup.py install
-  - pipenv run coverage run --source=httprunner -m unittest discover
+  - poetry build
+  - poetry run coverage run --source=httprunner -m unittest discover
 after_success:
-  - pipenv run coveralls
+  - poetry run coveralls

@@ -70,7 +70,7 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(resp.request._cookies["b"], "2")
 
     def test_request_redirect(self):
-        url = "{}/redirect-to?url=https%3A%2F%2Fdebugtalk.com&status_code=302".format(HTTPBIN_SERVER)
+        url = "{}/redirect-to?url=https%3A%2F%2Fgithub.com&status_code=302".format(HTTPBIN_SERVER)
         headers = {"accept: text/html"}
         cookies = {
             "a": "1",
@@ -81,6 +81,6 @@ class TestHttpClient(ApiServerUnittest):
         self.assertEqual(raw_request._cookies["a"], "1")
         self.assertEqual(raw_request._cookies["b"], "2")
         redirect_request = resp.request
-        self.assertEqual(redirect_request.url, "https://debugtalk.com")
+        self.assertEqual(redirect_request.url, "https://github.com")
         self.assertEqual(redirect_request._cookies["a"], "1")
         self.assertEqual(redirect_request._cookies["b"], "2")
