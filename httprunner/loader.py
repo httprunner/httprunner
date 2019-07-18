@@ -351,9 +351,9 @@ def __extend_with_testcase_ref(raw_testinfo):
             raise exceptions.FileFormatError(
                 "Invalid format testcase: {}".format(testcase_path))
 
-        tests_def_mapping[testcase_path] = testcase_dict
+        tests_def_mapping["testcases"][testcase_path] = testcase_dict
     else:
-        testcase_dict = tests_def_mapping[testcase_path]
+        testcase_dict = tests_def_mapping["testcases"][testcase_path]
 
     raw_testinfo["testcase_def"] = testcase_dict
 
