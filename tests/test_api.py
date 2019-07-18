@@ -424,7 +424,7 @@ class TestHttpRunner(ApiServerUnittest):
         req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
         self.assertEqual(len(req_resp_data), 2)
         self.assertIn(
-            "url=https%3A%2F%2Fdebugtalk.com",
+            "url=https%3A%2F%2Fgithub.com",
             req_resp_data[0]["request"]["url"]
         )
 
