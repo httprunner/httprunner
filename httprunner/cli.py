@@ -5,7 +5,7 @@ def main_hrun():
     """
     import sys
     import argparse
-    from httprunner import logger
+    from httprunner.logger import color_print
     from httprunner import __description__, __version__
     from httprunner.api import HttpRunner
     from httprunner.compat import is_py2
@@ -52,13 +52,12 @@ def main_hrun():
         help="Prettify JSON testcase format.")
 
     args = parser.parse_args()
-    logger.setup_logger(args.log_level, args.log_file)
 
     if is_py2:
-        logger.log_warning(get_python2_retire_msg())
+        color_print(get_python2_retire_msg(), "YELLOW")
 
     if args.version:
-        logger.color_print("{}".format(__version__), "GREEN")
+        color_print("{}".format(__version__), "GREEN")
         exit(0)
 
     if args.validate:
@@ -77,13 +76,15 @@ def main_hrun():
         failfast=args.failfast,
         save_tests=args.save_tests,
         report_template=args.report_template,
-        report_dir=args.report_dir
+        report_dir=args.report_dir,
+        log_level=args.log_level,
+        log_file=args.log_file
     )
     try:
         for path in args.testcase_paths:
             runner.run(path, dot_env_path=args.dot_env_path)
     except Exception:
-        logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
+        color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
         raise
 
     if runner.summary and runner.summary["success"]:

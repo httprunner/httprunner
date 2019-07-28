@@ -19,10 +19,7 @@ logger = logging.getLogger("httprunner")
 
 
 def setup_logger(log_level, log_file=None):
-    """setup root logger with ColoredFormatter."""
-    if len(logger.handlers) > 0:
-        return
-
+    """setup logger with ColoredFormatter."""
     level = getattr(logging, log_level.upper(), None)
     if not level:
         color_print("Invalid log level: %s" % log_level, "RED")
