@@ -2,6 +2,10 @@
 
 ## 2.2.5 (2019-07-28)
 
+**Added**
+
+- log HttpRunner version when initializing
+
 **Fixed**
 
 - fix #658: sys.exit 1 if any testcase failed
