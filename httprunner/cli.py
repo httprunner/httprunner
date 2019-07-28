@@ -3,6 +3,7 @@
 def main_hrun():
     """ API test: parse command line options and run commands.
     """
+    import sys
     import argparse
     from httprunner import logger
     from httprunner import __description__, __version__
@@ -85,7 +86,10 @@ def main_hrun():
         logger.log_error("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage))
         raise
 
-    return 0
+    if runner.summary and runner.summary["success"]:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
 
 def main_locust():
