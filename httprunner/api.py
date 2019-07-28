@@ -3,8 +3,8 @@
 import os
 import unittest
 
-from httprunner import (exceptions, loader, logger, parser, report, runner,
-                        utils, validator)
+from httprunner import (__version__, exceptions, loader, logger, parser,
+                        report, runner, utils, validator)
 
 
 class HttpRunner(object):
@@ -22,6 +22,9 @@ class HttpRunner(object):
             log_file (str): log file path.
 
         """
+        logger.setup_logger(log_level, log_file)
+        logger.log_info("HttpRunner version: {}".format(__version__))
+
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
             "failfast": failfast,
@@ -33,8 +36,6 @@ class HttpRunner(object):
         self.report_template = report_template
         self.report_dir = report_dir
         self._summary = None
-        if log_file:
-            logger.setup_logger(log_level, log_file)
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
