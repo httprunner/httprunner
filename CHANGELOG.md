@@ -5,6 +5,7 @@
 **Fixed**
 
 - fix #658: sys.exit 1 if any testcase failed
+- fix ModuleNotFoundError in debugging mode if httprunner uninstalled
 
 ## 2.2.4 (2019-07-18)
 
