@@ -186,9 +186,12 @@ if __name__ == "__main__":
     """ debugging mode
     """
     import sys
+    import os
+
     if len(sys.argv) == 0:
         exit(0)
 
+    sys.path.insert(0, os.getcwd())
     cmd = sys.argv.pop(1)
 
     if cmd in ["hrun", "httprunner", "ate"]:
@@ -200,7 +203,7 @@ if __name__ == "__main__":
         color_print("Miss debugging type.", "RED")
         example = "\n".join([
             "e.g.",
-            "python main-debug.py hrun /path/to/testcase_file",
-            "python main-debug.py locusts -f /path/to/testcase_file"
+            "python -m httprunner.cli hrun /path/to/testcase_file",
+            "python -m httprunner.cli locusts -f /path/to/testcase_file"
         ])
         color_print(example, "yellow")
