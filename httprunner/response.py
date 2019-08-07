@@ -242,7 +242,9 @@ class ResponseObject(object):
 
         msg = "extract: {}".format(field)
 
-        if text_extractor_regexp_compile.match(field):
+        if field.startswith("$"):
+            value = self._extract_field_with_jsonpath(field)
+        elif text_extractor_regexp_compile.match(field):
             value = self._extract_field_with_regex(field)
         else:
             value = self._extract_field_with_delimiter(field)
