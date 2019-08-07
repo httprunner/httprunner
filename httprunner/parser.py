@@ -2,11 +2,10 @@
 
 import ast
 import builtins
-import os
 import re
 
 from httprunner import exceptions, utils, validator
-from httprunner.compat import basestring, builtin_str, numeric_types, str
+from httprunner.compat import basestring, numeric_types, str
 
 # use $$ to escape $ notation
 dolloar_regex_compile = re.compile(r"\$\$")
