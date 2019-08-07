@@ -2,11 +2,13 @@
 
 import json
 import re
+import jsonpath
 
 from httprunner import exceptions, logger, utils
 from httprunner.compat import OrderedDict, basestring, is_py2
 from requests.models import PreparedRequest
 from requests.structures import CaseInsensitiveDict
+
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 
@@ -38,6 +40,35 @@ class ResponseObject(object):
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
+    def _extract_field_with_jsonpath(self, field):
+        """
+        JSONPath Docs: https://goessner.net/articles/JsonPath/
+        For example, response body like below:
+        {
+            "code": 200,
+            "data": {
+                "items": [{
+                        "id": 1,
+                        "name": "Bob"
+                    },
+                    {
+                        "id": 2,
+                        "name": "James"
+                    }
+                ]
+            },
+            "message": "操作成功"
+        }
+
+        :param field:  Jsonpath expression, e.g. 1)$.code   2) $..items.*.id
+        :return:       A list that extracted from json repsonse example.    1) [200]   2) [1, 2]
+        """
+        result = jsonpath.jsonpath(self.parsed_body(), field)
+        if result:
+            return result
+        else:
+            raise exceptions.ExtractFailure("\tjsonpath {} get nothing\n".format(field))
+            
     def _extract_field_with_regex(self, field):
         """ extract field from response content with regex.
             requests.Response body could be json or html text.
