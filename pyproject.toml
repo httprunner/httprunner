@@ -30,7 +30,7 @@ colorama = "^0.4.1"
 colorlog = "^4.0"
 filetype = "^1.0"
 future = { version = "^0.17.1", python = "~2.7" }
-jsonpath = "^0.82"
+jsonpath = "0.82"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
