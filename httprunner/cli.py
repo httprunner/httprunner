@@ -36,6 +36,9 @@ def main_hrun():
         '--report-dir',
         help="specify report save directory.")
     parser.add_argument(
+        '--report-file',
+        help="specify report file name.")
+    parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
     parser.add_argument(
@@ -78,7 +81,8 @@ def main_hrun():
         report_template=args.report_template,
         report_dir=args.report_dir,
         log_level=args.log_level,
-        log_file=args.log_file
+        log_file=args.log_file,
+        report_file=args.report_file
     )
     try:
         for path in args.testcase_paths:
