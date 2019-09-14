@@ -10,7 +10,7 @@ from httprunner import (__version__, exceptions, loader, logger, parser,
 class HttpRunner(object):
 
     def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-        log_level="INFO", log_file=None):
+        log_level="INFO", log_file=None, report_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -35,6 +35,7 @@ class HttpRunner(object):
         self.save_tests = save_tests
         self.report_template = report_template
         self.report_dir = report_dir
+        self.report_file = report_file
         self._summary = None
 
     def _add_tests(self, testcases):
@@ -207,7 +208,8 @@ class HttpRunner(object):
         report_path = report.render_html_report(
             self._summary,
             self.report_template,
-            self.report_dir
+            self.report_dir,
+            self.report_file
         )
 
         return report_path
