@@ -111,3 +111,10 @@ def alter_response(response):
 def alter_response_error(response):
     # NameError
     not_defined_variable
+
+
+def gen_variables():
+    return {
+        "var_a": 1,
+        "var_b": 2
+    }
