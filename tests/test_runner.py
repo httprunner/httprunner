@@ -337,3 +337,46 @@ class TestRunner(ApiServerUnittest):
         parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])
         test_runner.run_test(parsed_testcase["teststeps"][0])
+
+    def test_run_testcase_config_variables_parsed_from_function(self):
+        testcases = [
+            {
+                "config": {
+                    "name": "basic test with httpbin",
+                    "base_url": HTTPBIN_SERVER,
+                    "variables": "${gen_variables()}"
+                },
+                "teststeps": [
+                    {
+                        "name": "modify request headers",
+                        "base_url": HTTPBIN_SERVER,
+                        "request": {
+                            "url": "/anything",
+                            "method": "POST",
+                            "headers": {
+                                "user_agent": "iOS/10.3",
+                                "os_platform": "ios"
+                            },
+                            "data": "a=1&b=2"
+                        },
+                        "validate": [
+                            {"check": "status_code", "expect": 200}
+                        ]
+                    }
+                ]
+            }
+        ]
+        tests_mapping = {
+            "project_mapping": {
+                "functions": self.debugtalk_functions
+            },
+            "testcases": testcases
+        }
+        parsed_testcases = parser.parse_tests(tests_mapping)
+        parsed_testcase = parsed_testcases[0]
+        test_runner = runner.Runner(parsed_testcase["config"])
+        test_runner.run_test(parsed_testcase["teststeps"][0])
+        test_variables_mapping = test_runner.session_context.test_variables_mapping
+        self.assertEqual(test_variables_mapping["var_a"], 1)
+        self.assertEqual(test_variables_mapping["var_b"], 2)
+        self.assertEqual(test_variables_mapping["request"]["data"], "a=1&b=2")
