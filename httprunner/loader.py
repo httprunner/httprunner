@@ -17,9 +17,11 @@ try:
 except AttributeError:
     pass
 
+
 ###############################################################################
-##   file loader
+#   file loader
 ###############################################################################
+
 
 def _check_format(file_path, content):
     """ check testcase format if valid
@@ -239,8 +241,9 @@ def locate_file(start_path, file_name):
 
 
 ###############################################################################
-##   debugtalk.py module loader
+#   debugtalk.py module loader
 ###############################################################################
+
 
 def load_module_functions(module):
     """ load python module functions.
@@ -290,8 +293,9 @@ def load_debugtalk_functions():
 
 
 ###############################################################################
-##   testcase loader
+#   testcase loader
 ###############################################################################
+
 
 project_mapping = {}
 tests_def_mapping = {
@@ -720,14 +724,16 @@ def load_api_folder(api_folder_path):
         if isinstance(api_items, list):
             for api_item in api_items:
                 key, api_dict = api_item.popitem()
-                api_id = api_dict.get("id") or api_dict.get("def") or api_dict.get("name")
+                api_id = api_dict.get("id") or api_dict.get("def") \
+                    or api_dict.get("name")
                 if key != "api" or not api_id:
                     raise exceptions.ParamsError(
                         "Invalid API defined in {}".format(api_file_path))
 
                 if api_id in api_definition_mapping:
                     raise exceptions.ParamsError(
-                        "Duplicated API ({}) defined in {}".format(api_id, api_file_path))
+                        "Duplicated API ({}) defined in {}".format(
+                            api_id, api_file_path))
                 else:
                     api_definition_mapping[api_id] = api_dict
 
@@ -745,7 +751,8 @@ def locate_debugtalk_py(start_path):
     """ locate debugtalk.py file
 
     Args:
-        start_path (str): start locating path, maybe testcase file path or directory path
+        start_path (str): start locating path,
+            maybe testcase file path or directory path
 
     Returns:
         str: debugtalk.py file path, None if not found
@@ -769,7 +776,8 @@ def load_project_tests(test_path, dot_env_path=None):
         dot_env_path (str): specified .env file path
 
     Returns:
-        dict: project loaded api/testcases definitions, environments and debugtalk.py functions.
+        dict: project loaded api/testcases definitions,
+            environments and debugtalk.py functions.
 
     """
     # locate debugtalk.py file
@@ -876,6 +884,7 @@ def load_tests(path, dot_env_path=None):
     }
 
     def __load_file_content(path):
+        loaded_content = None
         try:
             loaded_content = load_test_file(path)
         except exceptions.FileFormatError:
