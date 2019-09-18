@@ -190,6 +190,19 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
+    def test_html_report_with_fixed_report_file(self):
+        report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
+        report_file = 'test.html'
+        runner = HttpRunner(failfast=True, report_dir=report_save_dir, report_file=report_file)
+        runner.run(self.testcase_cli_path)
+        summary = runner.summary
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 10)
+        self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
+        self.assertEqual(len(os.listdir(report_save_dir)), 1)
+        self.assertTrue(os.path.isfile(os.path.join(report_save_dir, report_file)))
+        shutil.rmtree(report_save_dir)
+
     def test_log_file(self):
         log_file_path = os.path.join(os.getcwd(), 'reports', "test_log_file.log")
         runner = HttpRunner(failfast=True, log_file=log_file_path)

@@ -271,7 +271,7 @@ def __stringify_meta_datas(meta_datas):
             __stringify_response(data["response"])
 
 
-def render_html_report(summary, report_template=None, report_dir=None):
+def render_html_report(summary, report_template=None, report_dir=None, report_file=None):
     """ render html report with specified report name and template
 
     Args:
@@ -298,7 +298,10 @@ def render_html_report(summary, report_template=None, report_dir=None):
     start_at_timestamp = int(summary["time"]["start_at"])
     summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
-    report_path = os.path.join(report_dir, "{}.html".format(start_at_timestamp))
+    if report_file:
+        report_path = os.path.join(report_dir, report_file)
+    else:
+        report_path = os.path.join(report_dir, "{}.html".format(start_at_timestamp))
 
     with io.open(report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
