@@ -6,8 +6,6 @@ import jsonpath
 
 from httprunner import exceptions, logger, utils
 from httprunner.compat import OrderedDict, basestring, is_py2
-from requests.models import PreparedRequest
-from requests.structures import CaseInsensitiveDict
 
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
@@ -112,7 +110,7 @@ class ResponseObject(object):
                 "content.person.name.first_name"
 
         """
-        # string.split(sep=None, maxsplit=-1) -> list of strings
+        # string.split(sep=None, maxsplit=1) -> list of strings
         # e.g. "content.person.name" => ["content", "person.name"]
         try:
             top_query, sub_query = field.split('.', 1)

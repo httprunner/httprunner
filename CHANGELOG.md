@@ -1,5 +1,16 @@
 # Release History
 
+## 2.2.6 (2019-09-18)
+
+**Added**
+
+- config variables support parsing from function
+
+**Changed**
+
+- remove unused import
+- adjust code format
+
 ## 2.2.5 (2019-07-28)
 
 **Added**
