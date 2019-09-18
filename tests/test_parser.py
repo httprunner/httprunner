@@ -1,5 +1,4 @@
 import os
-import re
 import time
 import unittest
 
@@ -561,7 +560,6 @@ class TestParserBasic(unittest.TestCase):
         )
 
     def test_parse_data_functions(self):
-        import random, string
         functions_mapping = {
             "gen_random_string": gen_random_string
         }
