@@ -2,13 +2,16 @@
 __pycache__
 .DS_Store
 .vscode
+.idea
 .pypirc
 */tmp/*
 build/*
 dist/*
 *.egg-info
 .python-version
-logs/%
+logs
 .coverage
 locustfile.py
 site/
+poetry.lock
+reports
