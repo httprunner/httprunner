@@ -4,12 +4,18 @@
 
 **Added**
 
-- config variables support parsing from function
+- feat: config variables support parsing from function
+- feat: support [jsonpath](https://goessner.net/articles/JsonPath/) to parse json response [#679](https://github.com/httprunner/httprunner/pull/679)
+- feat: generate html report with specified report file [#704](https://github.com/httprunner/httprunner/pull/704)
 
 **Changed**
 
 - remove unused import
 - adjust code format
+
+**Fixed**
+
+- fix: dev-rules link 404
 
 ## 2.2.5 (2019-07-28)
 
