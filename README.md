@@ -59,3 +59,6 @@ HttpRunner is rich documented.
 [Swagger]: https://swagger.io/
 [Postman Collection Format]: http://blog.getpostman.com/2015/06/05/travelogue-of-postman-collection-format-v2/
 [qrcode_for_httprunner]: https://raw.githubusercontent.com/HttpRunner/HttpRunner/master/docs/images/qrcode_for_httprunner.jpg
+
+
+
