@@ -1,5 +1,3 @@
-import collections
-import copy
 import csv
 import importlib
 import io
@@ -8,7 +6,8 @@ import os
 import sys
 
 import yaml
-from httprunner import built_in, exceptions, logger, parser, utils, validator
+
+from httprunner import built_in, exceptions, logger, utils, validator
 
 try:
     # PyYAML version >= 5.1

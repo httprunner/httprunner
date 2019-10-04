@@ -10,9 +10,10 @@ from collections import Iterable
 from datetime import datetime
 
 import requests
-from httprunner import __version__, loader, logger
-from httprunner.compat import basestring, bytes, json, numeric_types
 from jinja2 import Template, escape
+
+from httprunner import __version__, logger
+from httprunner.compat import basestring, bytes, json, numeric_types
 
 
 def get_platform():

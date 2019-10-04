@@ -1,12 +1,11 @@
 # encoding: utf-8
 
-import json
 import re
+
 import jsonpath
 
 from httprunner import exceptions, logger, utils
 from httprunner.compat import OrderedDict, basestring, is_py2
-
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 

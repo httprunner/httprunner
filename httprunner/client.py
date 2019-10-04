@@ -4,11 +4,12 @@ import time
 
 import requests
 import urllib3
-from httprunner import logger
-from httprunner.utils import lower_dict_keys, omit_long_data
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
+
+from httprunner import logger
+from httprunner.utils import lower_dict_keys, omit_long_data
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

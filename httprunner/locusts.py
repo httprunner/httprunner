@@ -6,7 +6,6 @@ import os
 import sys
 
 from httprunner.logger import color_print
-from httprunner import loader
 
 
 def parse_locustfile(file_path):

@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from httprunner import exceptions, loader, validator
+from httprunner import exceptions, loader
 
 
 class TestFileLoader(unittest.TestCase):
