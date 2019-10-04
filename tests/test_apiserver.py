@@ -1,6 +1,3 @@
-import random
-import requests
-
 from tests.base import ApiServerUnittest
 
 

@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-import os
 import unittest
 
 from httprunner import (__version__, exceptions, loader, logger, parser,
