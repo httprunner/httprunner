@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from httprunner.plugins.locusts import prepare_locust_tests
+from httprunner.plugins.locusts.utils import prepare_locust_tests
 
 
 class TestLocust(unittest.TestCase):
