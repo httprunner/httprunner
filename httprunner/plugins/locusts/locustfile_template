@@ -1,12 +1,12 @@
 import logging
 import random
 
-import zmq
-from httprunner.exceptions import MyBaseError, MyBaseFailure
-from httprunner.api import prepare_locust_tests
-from httprunner.runner import Runner
 from locust import HttpLocust, TaskSet, task
 from locust.events import request_failure
+
+from httprunner.exceptions import MyBaseError, MyBaseFailure
+from httprunner.runner import Runner
+from httprunner.plugins.locusts import prepare_locust_tests
 
 logging.getLogger().setLevel(logging.CRITICAL)
 logging.getLogger('locust.main').setLevel(logging.INFO)

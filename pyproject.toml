@@ -42,7 +42,7 @@ contextlib2 = "^0.5.5"
 hrun = "httprunner.cli:main"
 ate = "httprunner.cli:main"
 httprunner = "httprunner.cli:main"
-locusts = "httprunner.locusts:main"
+locusts = "httprunner.plugins.locusts:main"
 
 [build-system]
 requires = ["poetry>=0.12"]

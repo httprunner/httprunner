@@ -15,7 +15,7 @@ import multiprocessing
 import os
 import sys
 
-from httprunner import logger
+from httprunner import logger, loader, parser
 
 
 def parse_locustfile(file_path):
@@ -46,7 +46,6 @@ def gen_locustfile(testcase_file_path):
     locustfile_path = 'locustfile.py'
     template_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        "templates",
         "locustfile_template"
     )
 
@@ -168,5 +167,29 @@ def main():
         start_locust_main()
 
 
-if __name__ == '__main__':
-    main()
+def prepare_locust_tests(path):
+    """ prepare locust testcases
+
+    Args:
+        path (str): testcase file path.
+
+    Returns:
+        list: locust tests data
+
+            [
+                testcase1_dict,
+                testcase2_dict
+            ]
+
+    """
+    tests_mapping = loader.load_tests(path)
+    testcases = parser.parse_tests(tests_mapping)
+
+    locust_tests = []
+
+    for testcase in testcases:
+        testcase_weight = testcase.get("config", {}).pop("weight", 1)
+        for _ in range(testcase_weight):
+            locust_tests.append(testcase)
+
+    return locust_tests
