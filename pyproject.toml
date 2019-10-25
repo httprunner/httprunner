@@ -17,7 +17,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-include = ["CHANGELOG.md", "httprunner/templates/*"]
+include = ["CHANGELOG.md", "httprunner/static/*"]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
