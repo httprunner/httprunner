@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 from colorama import Fore, init
@@ -49,6 +50,9 @@ def get_logger(name=None):
     _logger.setLevel(level)
 
     if LOG_FILE_PATH:
+        log_dir = os.path.dirname(LOG_FILE_PATH)
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
         handler = logging.FileHandler(LOG_FILE_PATH, encoding="utf-8")
     else:
         handler = logging.StreamHandler(sys.stdout)
