@@ -1,5 +1,11 @@
 # locusts
 
+## Installation
+
+```shell script
+$ pip install locustio
+```
+
 ## Usage
 
 ```shell script
@@ -7,7 +13,11 @@ $ locusts -f xxx.yml
 ```
 
 ```shell script
-$ python3 -m plugins.locusts
+$ locusts -f xxx.yml --processes
+```
+
+```shell script
+$ python3 -m httprunner.plugins.locusts -h
 
 Usage: locust [options] [LocustClass [LocustClass2 ... ]]
 
@@ -91,10 +101,4 @@ Options:
   -V, --version         show program's version number and exit
   --exit-code-on-error=EXIT_CODE_ON_ERROR
                         sets the exit code to post on error
-```
-
-## tests
-
-```shell script
-$ python -m plugins.locusts.test_main
 ```
