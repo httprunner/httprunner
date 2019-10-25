@@ -79,10 +79,9 @@ def color_print(msg, color="WHITE"):
 def log_with_color(level):
     """ log with color by different level
     """
-    _logger = get_logger()
-
     def wrapper(text):
         color = log_colors_config[level.upper()]
+        _logger = get_logger()
         getattr(_logger, level.lower())(coloring(text, color))
 
     return wrapper
