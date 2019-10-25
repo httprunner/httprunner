@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import unittest
 
 from httprunner import (__version__, exceptions, loader, logger, parser,
@@ -9,7 +7,7 @@ from httprunner import (__version__, exceptions, loader, logger, parser,
 class HttpRunner(object):
 
     def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-        log_level="INFO", log_file=None, report_file=None):
+                 log_level="INFO", log_file=None, report_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -22,7 +20,6 @@ class HttpRunner(object):
 
         """
         logger.setup_logger(log_level, log_file)
-        logger.log_info("HttpRunner version: {}".format(__version__))
 
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
@@ -273,6 +270,7 @@ class HttpRunner(object):
                 dict: valid testcase/testsuite data
 
         """
+        logger.log_info("HttpRunner version: {}".format(__version__))
         if validator.is_testcase_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif validator.is_testcases(path_or_tests):
