@@ -21,22 +21,23 @@ include = ["CHANGELOG.md", "httprunner/static/*"]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
-requests = "^2.14"
-requests-toolbelt = "^0.8.0"
+requests = "*"
+requests-toolbelt = "*"
 pyyaml = "^5.1"
-jinja2 = "^2.10"
-har2case = "^0.3.1"
-colorama = "^0.4.1"
-colorlog = "^4.0"
-filetype = "^1.0"
+jinja2 = "*"
+har2case = "*"
+colorama = "*"
+colorlog = "*"
+filetype = "*"
 future = { version = "^0.17.1", python = "~2.7" }
-jsonpath = "^0.82"
+jsonpath = "*"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
-coverage = "^4.5"
-coveralls = "^1.8"
-contextlib2 = "^0.5.5"
+coverage = "*"
+coveralls = "*"
+contextlib2 = "*"
+locustio = "*"
 
 [tool.poetry.scripts]
 hrun = "httprunner.cli:main"
