@@ -31,8 +31,8 @@ class HttpSession(requests.Session):
     This is a slightly extended version of `python-request <http://python-requests.org>`_'s
     :py:class:`requests.Session` class and mostly this class works exactly the same.
     """
-    def __init__(self, *args, **kwargs):
-        super(HttpSession, self).__init__(*args, **kwargs)
+    def __init__(self):
+        super(HttpSession, self).__init__()
         self.init_meta_data()
 
     def init_meta_data(self):
