@@ -186,30 +186,3 @@ def main_locust():
         locusts.run_locusts_with_processes(sys.argv, processes_count)
     else:
         locusts.start_locust_main()
-
-
-if __name__ == "__main__":
-    """ debugging mode
-    """
-    import sys
-    import os
-
-    if len(sys.argv) == 0:
-        exit(0)
-
-    sys.path.insert(0, os.getcwd())
-    cmd = sys.argv.pop(1)
-
-    if cmd in ["hrun", "httprunner", "ate"]:
-        main_hrun()
-    elif cmd in ["locust", "locusts"]:
-        main_locust()
-    else:
-        from httprunner.logger import color_print
-        color_print("Miss debugging type.", "RED")
-        example = "\n".join([
-            "e.g.",
-            "python -m httprunner.cli hrun /path/to/testcase_file",
-            "python -m httprunner.cli locusts -f /path/to/testcase_file"
-        ])
-        color_print(example, "yellow")
