@@ -13,5 +13,4 @@ logs
 .coverage
 locustfile.py
 site/
-poetry.lock
 reports
