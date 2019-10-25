@@ -283,31 +283,3 @@ class HttpRunner(object):
         """ get test reuslt summary.
         """
         return self._summary
-
-
-def prepare_locust_tests(path):
-    """ prepare locust testcases
-
-    Args:
-        path (str): testcase file path.
-
-    Returns:
-        list: locust tests data
-
-            [
-                testcase1_dict,
-                testcase2_dict
-            ]
-
-    """
-    tests_mapping = loader.load_tests(path)
-    testcases = parser.parse_tests(tests_mapping)
-
-    locust_tests = []
-
-    for testcase in testcases:
-        testcase_weight = testcase.get("config", {}).pop("weight", 1)
-        for _ in range(testcase_weight):
-            locust_tests.append(testcase)
-
-    return locust_tests
