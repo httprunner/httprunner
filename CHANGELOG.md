@@ -15,6 +15,10 @@
 - log httprunner version before running tests
 - remove unused import & code
 
+**Fixed**
+
+- fix #707: duration stat error in multiple testsuites
+
 ## 2.2.6 (2019-09-18)
 
 **Added**
