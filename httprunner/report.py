@@ -82,8 +82,9 @@ def aggregate_stat(origin_stat, new_stat):
         if key not in origin_stat:
             origin_stat[key] = new_stat[key]
         elif key == "start_at":
-            # start datetime
+            # start datetime , duration=current_time - min(stat_at)
             origin_stat[key] = min(origin_stat[key], new_stat[key])
+            origin_stat["duration"] = time.time() - origin_stat[key]
         else:
             origin_stat[key] += new_stat[key]
 
