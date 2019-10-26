@@ -206,6 +206,7 @@ class TestHttpRunner(ApiServerUnittest):
         log_file_path = os.path.join(os.getcwd(), 'reports', "test_log_file.log")
         runner = HttpRunner(failfast=True, log_file=log_file_path)
         runner.run(self.testcase_cli_path)
+        time.sleep(1)
         self.assertTrue(os.path.isfile(log_file_path))
         os.remove(log_file_path)
 
