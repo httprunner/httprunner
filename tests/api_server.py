@@ -4,6 +4,7 @@ import json
 from functools import wraps
 
 from flask import Flask, make_response, request
+
 from httprunner.built_in import gen_random_string
 
 try:
@@ -52,6 +53,7 @@ def get_sign(*args):
     sign_key = SECRET_KEY.encode('ascii')
     sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
     return sign
+
 
 def gen_md5(*args):
     return hashlib.md5("".join(args).encode('utf-8')).hexdigest()

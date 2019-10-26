@@ -3,9 +3,10 @@ import time
 import unittest
 
 import requests
+
 from tests.api_server import FLASK_APP_PORT, HTTPBIN_HOST, HTTPBIN_PORT
 from tests.api_server import app as flask_app
-from tests.api_server import gen_md5, gen_random_string, get_sign, httpbin_app
+from tests.api_server import gen_random_string, get_sign, httpbin_app
 
 
 def run_flask():

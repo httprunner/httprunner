@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import io
 import os
 import platform
@@ -9,10 +7,11 @@ from base64 import b64encode
 from collections import Iterable
 from datetime import datetime
 
-import requests
-from httprunner import __version__, loader, logger
-from httprunner.compat import basestring, bytes, json, numeric_types
 from jinja2 import Template, escape
+from requests.cookies import RequestsCookieJar
+
+from httprunner import __version__, logger
+from httprunner.compat import basestring, bytes, json, numeric_types
 
 
 def get_platform():
@@ -55,11 +54,11 @@ def get_summary(result):
         }
     }
     summary["stat"]["successes"] = summary["stat"]["total"] \
-        - summary["stat"]["failures"] \
-        - summary["stat"]["errors"] \
-        - summary["stat"]["skipped"] \
-        - summary["stat"]["expectedFailures"] \
-        - summary["stat"]["unexpectedSuccesses"]
+                                   - summary["stat"]["failures"] \
+                                   - summary["stat"]["errors"] \
+                                   - summary["stat"]["skipped"] \
+                                   - summary["stat"]["expectedFailures"] \
+                                   - summary["stat"]["unexpectedSuccesses"]
 
     summary["time"] = {
         'start_at': result.start_at,
@@ -82,9 +81,14 @@ def aggregate_stat(origin_stat, new_stat):
         if key not in origin_stat:
             origin_stat[key] = new_stat[key]
         elif key == "start_at":
-            # start datetime , duration=current_time - min(stat_at)
-            origin_stat[key] = min(origin_stat[key], new_stat[key])
-            origin_stat["duration"] = time.time() - origin_stat[key]
+            # start datetime
+            origin_stat["start_at"] = min(origin_stat["start_at"], new_stat["start_at"])
+        elif key == "duration":
+            # duration = max_end_time - min_start_time
+            max_end_time = max(origin_stat["start_at"] + origin_stat["duration"],
+                               new_stat["start_at"] + new_stat["duration"])
+            min_start_time = min(origin_stat["start_at"], new_stat["start_at"])
+            origin_stat["duration"] = max_end_time - min_start_time
         else:
             origin_stat[key] += new_stat[key]
 
@@ -150,7 +154,7 @@ def __stringify_request(request_data):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
-        elif isinstance(value, requests.cookies.RequestsCookieJar):
+        elif isinstance(value, RequestsCookieJar):
             value = value.get_dict()
 
         request_data[key] = value
@@ -209,7 +213,7 @@ def __stringify_response(response_data):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
-        elif isinstance(value, requests.cookies.RequestsCookieJar):
+        elif isinstance(value, RequestsCookieJar):
             value = value.get_dict()
 
         response_data[key] = value
@@ -283,7 +287,7 @@ def render_html_report(summary, report_template=None, report_dir=None, report_fi
     if not report_template:
         report_template = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            "templates",
+            "static",
             "report_template.html"
         )
         logger.log_debug("No html report template specified, use default.")

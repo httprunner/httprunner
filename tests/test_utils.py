@@ -2,7 +2,7 @@ import io
 import os
 import shutil
 
-from httprunner import exceptions, loader, parser, utils
+from httprunner import exceptions, loader, utils
 from tests.base import ApiServerUnittest
 
 

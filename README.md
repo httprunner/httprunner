@@ -47,7 +47,7 @@ HttpRunner is rich documented.
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
-![](httprunner/templates/qrcode.jpg)
+![](httprunner/static/qrcode.jpg)
 
 [Requests]: http://docs.python-requests.org/en/master/
 [unittest]: https://docs.python.org/3/library/unittest.html

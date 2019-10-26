@@ -1,5 +1,4 @@
 from httprunner.client import HttpSession
-from httprunner.compat import bytes
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
 

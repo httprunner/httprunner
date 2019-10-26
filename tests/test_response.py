@@ -1,4 +1,5 @@
 import requests
+
 from httprunner import built_in, exceptions, loader, response
 from httprunner.compat import basestring, bytes
 from tests.api_server import HTTPBIN_SERVER
