@@ -8,7 +8,7 @@ from colorlog import ColoredFormatter
 init(autoreset=True)
 
 LOG_LEVEL = "INFO"
-LOG_FILE_PATH = None
+LOG_FILE_PATH = ""
 
 log_colors_config = {
     'DEBUG':    'cyan',
@@ -32,8 +32,9 @@ def setup_logger(log_level, log_file=None):
 def get_logger(name=None):
     """setup logger with ColoredFormatter."""
     name = name or "httprunner"
-    if name in loggers:
-        return loggers[name]
+    logger_key = "".join([name, LOG_LEVEL, LOG_FILE_PATH])
+    if logger_key in loggers:
+        return loggers[logger_key]
 
     _logger = logging.getLogger(name)
 
@@ -47,6 +48,7 @@ def get_logger(name=None):
     if level >= logging.INFO:
         sys.tracebacklimit = 0
 
+    _logger.setLevel(level)
     if LOG_FILE_PATH:
         log_dir = os.path.dirname(LOG_FILE_PATH)
         if not os.path.isdir(log_dir):
@@ -63,9 +65,8 @@ def get_logger(name=None):
     )
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
-    _logger.setLevel(level)
 
-    loggers[name] = _logger
+    loggers[logger_key] = _logger
     return _logger
 
 
