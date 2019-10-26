@@ -1,8 +1,8 @@
 import os
-import time
 
 from httprunner import context, exceptions, loader, parser, runner
-from tests.base import ApiServerUnittest, gen_md5, gen_random_string
+from tests.api_server import gen_md5
+from tests.base import ApiServerUnittest, gen_random_string
 
 
 class TestContext(ApiServerUnittest):

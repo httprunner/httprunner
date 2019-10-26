@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "2.2.6"
+version = "2.3.0"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -17,32 +17,31 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-include = ["CHANGELOG.md", "httprunner/templates/*"]
+include = ["CHANGELOG.md", "httprunner/static/*"]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
-requests = "^2.14"
-requests-toolbelt = "^0.8.0"
-pyyaml = "^5.1"
-jinja2 = "^2.10"
+requests = "^2.22.0"
+requests-toolbelt = "^0.9.1"
+pyyaml = "^5.1.2"
+jinja2 = "^2.10.3"
 har2case = "^0.3.1"
 colorama = "^0.4.1"
-colorlog = "^4.0"
-filetype = "^1.0"
-future = { version = "^0.17.1", python = "~2.7" }
+colorlog = "^4.0.2"
+filetype = "^1.0.5"
 jsonpath = "^0.82"
+future = { version = "^0.18.1", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
-coverage = "^4.5"
-coveralls = "^1.8"
-contextlib2 = "^0.5.5"
+coverage = "^4.5.4"
+coveralls = "^1.8.2"
 
 [tool.poetry.scripts]
-hrun = "httprunner.cli:main_hrun"
-ate = "httprunner.cli:main_hrun"
-httprunner = "httprunner.cli:main_hrun"
-locusts = "httprunner.cli:main_locust"
+hrun = "httprunner.cli:main"
+ate = "httprunner.cli:main"
+httprunner = "httprunner.cli:main"
+locusts = "httprunner.plugins.locusts:main"
 
 [build-system]
 requires = ["poetry>=0.12"]

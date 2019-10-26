@@ -5,7 +5,6 @@ Built-in dependent functions used in YAML/JSON testcases.
 """
 
 import datetime
-import json
 import os
 import random
 import re
@@ -13,9 +12,10 @@ import string
 import time
 
 import filetype
-from httprunner.compat import basestring, builtin_str, integer_types, str
-from httprunner.exceptions import ParamsError
 from requests_toolbelt import MultipartEncoder
+
+from httprunner.compat import basestring, builtin_str, integer_types
+from httprunner.exceptions import ParamsError
 
 PWD = os.getcwd()
 

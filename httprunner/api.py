@@ -1,6 +1,3 @@
-# encoding: utf-8
-
-import os
 import unittest
 
 from httprunner import (__version__, exceptions, loader, logger, parser,
@@ -10,7 +7,7 @@ from httprunner import (__version__, exceptions, loader, logger, parser,
 class HttpRunner(object):
 
     def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-        log_level="INFO", log_file=None, report_file=None):
+                 log_level="INFO", log_file=None, report_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -23,7 +20,6 @@ class HttpRunner(object):
 
         """
         logger.setup_logger(log_level, log_file)
-        logger.log_info("HttpRunner version: {}".format(__version__))
 
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
@@ -274,6 +270,7 @@ class HttpRunner(object):
                 dict: valid testcase/testsuite data
 
         """
+        logger.log_info("HttpRunner version: {}".format(__version__))
         if validator.is_testcase_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif validator.is_testcases(path_or_tests):
@@ -286,31 +283,3 @@ class HttpRunner(object):
         """ get test reuslt summary.
         """
         return self._summary
-
-
-def prepare_locust_tests(path):
-    """ prepare locust testcases
-
-    Args:
-        path (str): testcase file path.
-
-    Returns:
-        list: locust tests data
-
-            [
-                testcase1_dict,
-                testcase2_dict
-            ]
-
-    """
-    tests_mapping = loader.load_tests(path)
-    testcases = parser.parse_tests(tests_mapping)
-
-    locust_tests = []
-
-    for testcase in testcases:
-        testcase_weight = testcase.get("config", {}).pop("weight", 1)
-        for _ in range(testcase_weight):
-            locust_tests.append(testcase)
-
-    return locust_tests

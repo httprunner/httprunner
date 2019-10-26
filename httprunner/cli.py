@@ -1,18 +1,20 @@
-# encoding: utf-8
+import argparse
+import sys
+
+from httprunner import __description__, __version__
+from httprunner.api import HttpRunner
+from httprunner.compat import is_py2
+from httprunner.logger import color_print
+from httprunner.utils import (create_scaffold, get_python2_retire_msg,
+                              prettify_json_file)
+from httprunner.validator import validate_json_file
 
 
-def main_hrun():
+def main():
     """ API test: parse command line options and run commands.
     """
-    import sys
-    import argparse
-    from httprunner.logger import color_print
-    from httprunner import __description__, __version__
-    from httprunner.api import HttpRunner
-    from httprunner.compat import is_py2
-    from httprunner.validator import validate_json_file
-    from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                                  prettify_json_file)
+    if is_py2:
+        color_print(get_python2_retire_msg(), "YELLOW")
 
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
@@ -57,24 +59,26 @@ def main_hrun():
 
     args = parser.parse_args()
 
-    if is_py2:
-        color_print(get_python2_retire_msg(), "YELLOW")
+    if len(sys.argv) == 1:
+        # no argument passed
+        parser.print_help()
+        return 0
 
     if args.version:
         color_print("{}".format(__version__), "GREEN")
-        exit(0)
+        return 0
 
     if args.validate:
         validate_json_file(args.validate)
-        exit(0)
+        return 0
     if args.prettify:
         prettify_json_file(args.prettify)
-        exit(0)
+        return 0
 
     project_name = args.startproject
     if project_name:
         create_scaffold(project_name)
-        exit(0)
+        return 0
 
     runner = HttpRunner(
         failfast=args.failfast,
@@ -85,6 +89,7 @@ def main_hrun():
         log_file=args.log_file,
         report_file=args.report_file
     )
+
     try:
         for path in args.testcase_paths:
             runner.run(path, dot_env_path=args.dot_env_path)
@@ -93,123 +98,10 @@ def main_hrun():
         raise
 
     if runner.summary and runner.summary["success"]:
-        sys.exit(0)
+        return 0
     else:
-        sys.exit(1)
+        return 1
 
 
-def main_locust():
-    """ Performance test with locust: parse command line options and run commands.
-    """
-    try:
-        # monkey patch ssl at beginning to avoid RecursionError when running locust.
-        from gevent import monkey; monkey.patch_ssl()
-        import multiprocessing
-        import sys
-        from httprunner import logger
-        from httprunner import locusts
-    except ImportError:
-        msg = "Locust is not installed, install first and try again.\n"
-        msg += "install command: pip install locustio"
-        print(msg)
-        exit(1)
-
-    sys.argv[0] = 'locust'
-    if len(sys.argv) == 1:
-        sys.argv.extend(["-h"])
-
-    if sys.argv[1] in ["-h", "--help", "-V", "--version"]:
-        locusts.start_locust_main()
-        sys.exit(0)
-
-    # set logging level
-    if "-L" in sys.argv:
-        loglevel_index = sys.argv.index('-L') + 1
-    elif "--loglevel" in sys.argv:
-        loglevel_index = sys.argv.index('--loglevel') + 1
-    else:
-        loglevel_index = None
-
-    if loglevel_index and loglevel_index < len(sys.argv):
-        loglevel = sys.argv[loglevel_index]
-    else:
-        # default
-        loglevel = "WARNING"
-
-    logger.setup_logger(loglevel)
-
-    # get testcase file path
-    try:
-        if "-f" in sys.argv:
-            testcase_index = sys.argv.index('-f') + 1
-        elif "--locustfile" in sys.argv:
-            testcase_index = sys.argv.index('--locustfile') + 1
-        else:
-            testcase_index = None
-
-        assert testcase_index and testcase_index < len(sys.argv)
-    except AssertionError:
-        print("Testcase file is not specified, exit.")
-        sys.exit(1)
-
-    testcase_file_path = sys.argv[testcase_index]
-    sys.argv[testcase_index] = locusts.parse_locustfile(testcase_file_path)
-
-    if "--processes" in sys.argv:
-        """ locusts -f locustfile.py --processes 4
-        """
-        if "--no-web" in sys.argv:
-            logger.log_error("conflict parameter args: --processes & --no-web. \nexit.")
-            sys.exit(1)
-
-        processes_index = sys.argv.index('--processes')
-
-        processes_count_index = processes_index + 1
-
-        if processes_count_index >= len(sys.argv):
-            """ do not specify processes count explicitly
-                locusts -f locustfile.py --processes
-            """
-            processes_count = multiprocessing.cpu_count()
-            logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
-        else:
-            try:
-                """ locusts -f locustfile.py --processes 4 """
-                processes_count = int(sys.argv[processes_count_index])
-                sys.argv.pop(processes_count_index)
-            except ValueError:
-                """ locusts -f locustfile.py --processes -P 8888 """
-                processes_count = multiprocessing.cpu_count()
-                logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
-
-        sys.argv.pop(processes_index)
-        locusts.run_locusts_with_processes(sys.argv, processes_count)
-    else:
-        locusts.start_locust_main()
-
-
-if __name__ == "__main__":
-    """ debugging mode
-    """
-    import sys
-    import os
-
-    if len(sys.argv) == 0:
-        exit(0)
-
-    sys.path.insert(0, os.getcwd())
-    cmd = sys.argv.pop(1)
-
-    if cmd in ["hrun", "httprunner", "ate"]:
-        main_hrun()
-    elif cmd in ["locust", "locusts"]:
-        main_locust()
-    else:
-        from httprunner.logger import color_print
-        color_print("Miss debugging type.", "RED")
-        example = "\n".join([
-            "e.g.",
-            "python -m httprunner.cli hrun /path/to/testcase_file",
-            "python -m httprunner.cli locusts -f /path/to/testcase_file"
-        ])
-        color_print(example, "yellow")
+if __name__ == '__main__':
+    sys.exit(main())
