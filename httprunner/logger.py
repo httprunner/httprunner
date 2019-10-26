@@ -47,8 +47,6 @@ def get_logger(name=None):
     if level >= logging.INFO:
         sys.tracebacklimit = 0
 
-    _logger.setLevel(level)
-
     if LOG_FILE_PATH:
         log_dir = os.path.dirname(LOG_FILE_PATH)
         if not os.path.isdir(log_dir):
@@ -65,6 +63,7 @@ def get_logger(name=None):
     )
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
+    _logger.setLevel(level)
 
     loggers[name] = _logger
     return _logger
