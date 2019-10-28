@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "2.3.0"
+version = "2.3.1"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -13,8 +13,18 @@ documentation = "https://cn.httprunner.org"
 keywords = ["HTTP", "api", "test", "requests", "locustio"]
 
 classifiers = [
-    "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8"
 ]
 
 include = ["CHANGELOG.md", "httprunner/static/*"]
@@ -41,7 +51,7 @@ coveralls = "^1.8.2"
 hrun = "httprunner.cli:main"
 ate = "httprunner.cli:main"
 httprunner = "httprunner.cli:main"
-locusts = "httprunner.plugins.locusts:main"
+locusts = "httprunner.plugins.locusts.cli:main"
 
 [build-system]
 requires = ["poetry>=0.12"]
