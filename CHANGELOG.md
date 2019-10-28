@@ -6,6 +6,10 @@
 
 - fix locusts entry configuration
 
+**Changed**
+
+- update PyPi classifiers
+
 ## 2.3.0 (2019-10-27)
 
 **Added**
