@@ -1,5 +1,15 @@
 # Release History
 
+## 2.3.1 (2019-10-28)
+
+**Fixed**
+
+- fix locusts entry configuration
+
+**Changed**
+
+- update PyPi classifiers
+
 ## 2.3.0 (2019-10-27)
 
 **Added**
