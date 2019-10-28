@@ -13,8 +13,15 @@ documentation = "https://cn.httprunner.org"
 keywords = ["HTTP", "api", "test", "requests", "locustio"]
 
 classifiers = [
-    "Topic :: Software Development :: Build Tools",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8"
 ]
 
 include = ["CHANGELOG.md", "httprunner/static/*"]
