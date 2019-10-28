@@ -38,7 +38,7 @@ HttpRunner is rich documented.
 
 ## Sponsors
 
-Thank you to all our sponsors! ([become a sponsor](docs/sponsors.md))
+Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](docs/sponsors.md))
 
 ### 白金赞助商（Platinum Sponsor）
 
