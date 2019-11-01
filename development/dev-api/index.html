@@ -598,7 +598,7 @@
         
           <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    调用方法说明
+    调用方法说明
   </a>
   
     <nav class="md-nav">
@@ -781,7 +781,7 @@
         
           <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    调用方法说明
+    调用方法说明
   </a>
   
     <nav class="md-nav">
@@ -854,7 +854,7 @@
 <p>简单来说，HttpRunner 提供了运行 YAML/JSON 格式测试用例的能力，并能返回详细的测试结果信息。</p>
 <h2 id="httprunner-class">HttpRunner class<a class="headerlink" href="#httprunner-class" title="Permanent link">&para;</a></h2>
 <h3 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">&para;</a></h3>
-<p>HttpRunner 以 <code>类（class）</code> 的形式对外提供调用支持，类名为<code>HttpRunner</code>。使用方式如下：</p>
+<p>HttpRunner 以 <code>类（class）</code> 的形式对外提供调用支持，类名为 <code>HttpRunner</code>。使用方式如下：</p>
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">httprunner.api</span> <span class="kn">import</span> <span class="n">HttpRunner</span>
 
 <span class="n">runner</span> <span class="o">=</span> <span class="n">HttpRunner</span><span class="p">(</span>
@@ -875,7 +875,7 @@
 <li><code>log_level</code>（可选）: 设置日志级别，默认为 "INFO"</li>
 <li><code>log_file</code>（可选）: 设置日志文件路径，指定后将同时输出日志文件；默认不输出日志文件</li>
 </ul>
-<h3 id="_3">调用方法说明<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<h3 id="_3">调用方法说明<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p>在 <code>HttpRunner</code> 中，对外提供了一个 <code>run</code> 方法，用于运行测试用例。</p>
 <p>run 方法有三个参数：</p>
 <ul>
@@ -997,8 +997,8 @@
 
 
 <h3 id="debugtalkpy-env">加载 <code>debugtalk.py</code> &amp;&amp; <code>.env</code><a class="headerlink" href="#debugtalkpy-env" title="Permanent link">&para;</a></h3>
-<p>通过传入测试用例文件路径运行测试用例时，HttpRunner 会自动以指定测试用例文件路径为起点，向上搜索 <code>debugtalk.py</code> 文件，并将 <code>debugtalk.py</code> 文件所在的文件目录作为当前工作目录（PWD）。</p>
-<p>同时，HttpRunner 会在当前工作目录（PWD）下搜索 <code>.env</code> 文件，以及 <code>api</code> 和 <code>testcases</code> 文件夹，并自动进行加载。</p>
+<p>通过传入测试用例文件路径运行测试用例时，HttpRunner 会自动以指定测试用例文件路径为起点，向上搜索 <code>debugtalk.py</code> 文件，并将 <code>debugtalk.py</code> 文件所在的文件目录作为当前工作目录（PWD）。</p>
+<p>同时，HttpRunner 会在当前工作目录（PWD）下搜索 <code>.env</code> 文件，以及 <code>api</code> 和 <code>testcases</code> 文件夹，并自动进行加载。</p>
 <p>最终加载得到的存储结构如下所示：</p>
 <div class="codehilite"><pre><span></span><span class="p">{</span>
   <span class="nt">&quot;env&quot;</span><span class="p">:</span> <span class="p">{},</span>
@@ -1142,10 +1142,10 @@
 
 
 <h2 id="html">生成 HTML 测试报告<a class="headerlink" href="#html" title="Permanent link">&para;</a></h2>
-<p>如需生成 HTML 测试报告，可调用 <code>report.render_html_report</code> 方法。</p>
+<p>如需生成 HTML 测试报告，可调用 <code>report.gen_html_report</code> 方法。</p>
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">httprunner</span> <span class="kn">import</span> <span class="n">report</span>
 
-<span class="n">report_path</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">render_html_report</span><span class="p">(</span>
+<span class="n">report_path</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">gen_html_report</span><span class="p">(</span>
     <span class="n">summary</span><span class="p">,</span>
     <span class="n">report_template</span><span class="o">=</span><span class="s2">&quot;/path/to/custom_report_template&quot;</span><span class="p">,</span>
     <span class="n">report_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/reports_dir&quot;</span><span class="p">,</span>
@@ -1154,7 +1154,7 @@
 </pre></div>
 
 
-<p><code>render_html_report()</code> 的参数有四个：</p>
+<p><code>gen_html_report()</code> 的参数有四个：</p>
 <ul>
 <li>summary（必传）: 测试运行结果汇总数据 </li>
 <li>report_template（可选）: 指定自定义的 HTML 报告模板，模板必须采用 Jinja2 的格式</li>
