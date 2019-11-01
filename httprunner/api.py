@@ -6,6 +6,19 @@ from httprunner import (__version__, exceptions, loader, logger, parser,
 
 
 class HttpRunner(object):
+    """ Developer Interface: Main Interface
+        Usage:
+
+            from httprunner.api import HttpRunner
+            runner = HttpRunner(
+                failfast=True,
+                save_tests=True,
+                log_level="INFO",
+                log_file="test.log"
+            )
+            summary = runner.run(path_or_tests)
+
+    """
 
     def __init__(self, failfast=False, save_tests=False, log_level="INFO", log_file=None):
         """ initialize HttpRunner.
