@@ -280,7 +280,7 @@ def render_html_report(summary, report_template=None, report_dir=None, report_fi
     """ render html report with specified report name and template
 
     Args:
-        report_template (str): specify html report template path
+        report_template (str): specify html report template path, template should be in Jinja2 format.
         report_dir (str): specify html report save directory
 
     """
