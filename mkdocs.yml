@@ -1,0 +1,81 @@
+# require mkdocs-material 3.x
+
+# Project information
+site_name: HttpRunner V2.x 中文使用文档
+site_description: HttpRunner V2.x User Documentation
+site_author: 'debugtalk'
+
+# Repository
+repo_name: HttpRunner
+repo_url: https://github.com/HttpRunner/HttpRunner
+edit_uri: ""
+
+# Copyright
+copyright: 'Copyright &copy; 2017 - 2019 debugtalk'
+
+# Configuration
+theme:
+    name: 'material'
+    language: 'zh'
+    palette:
+        primary: 'indigo'
+        accent: 'indigo'
+    font:
+        text: 'Roboto'
+        code: 'Roboto Mono'
+
+# Google Analytics
+google_analytics:
+    - 'UA-114587036-2'
+    - 'auto'
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+
+# extra
+extra:
+    search:
+        language: 'jp'
+    social:
+        - type: globe
+          link: https://debugtalk.com
+        - type: 'github'
+          link: 'https://github.com/httprunner'
+
+# index pages
+nav:
+    - 介绍: index.md
+    - 安装说明: Installation.md
+    - 快速上手: quickstart.md
+    - 基础概念:
+        - 名词解释: concept/nominal.md
+    - 测试准备:
+        - 录制生成用例: prepare/record.md
+        - 项目文件组织: prepare/project-structure.md
+        - 测试用例组织: prepare/testcase-structure.md
+        - hook机制: prepare/request-hook.md
+        - 环境变量: prepare/dot-env.md
+        - 测试用例分层: prepare/testcase-layer.md
+        - 参数化数据驱动: prepare/parameters.md
+        - Validate & Prettify: prepare/validate-pretty.md
+        - 信息安全: prepare/security.md
+    - 测试执行:
+        - 运行测试(CLI): run-tests/cli.md
+        - 测试报告: run-tests/report.md
+        - 性能测试: run-tests/load-test.md
+    - 开发扩展:
+        - Pipline: development/architecture.md
+        - 基础库调用: development/dev-api.md
+    - FAQ: FAQ.md
+    - 实践案例:
+        - TesterHome 登录: examples/testerhome-login.md
+    - 相关资料: related-docs.md
+    - CHANGELOG: CHANGELOG.md
+
+extra_javascript:
+  - 'js/slardar.js'
