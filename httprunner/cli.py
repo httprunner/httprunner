@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 
 from httprunner import __description__, __version__
@@ -41,7 +42,7 @@ def main():
         help="specify report save directory.")
     parser.add_argument(
         '--report-file',
-        help="specify report file name.")
+        help="specify report file path, this has higher priority than specifying report dir.")
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
@@ -91,10 +92,11 @@ def main():
     try:
         for path in args.testcase_paths:
             summary = runner.run(path, dot_env_path=args.dot_env_path)
+            report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
             render_html_report(
                 summary,
                 args.report_template,
-                args.report_dir,
+                report_dir,
                 args.report_file
             )
     except Exception:
