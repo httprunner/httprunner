@@ -583,50 +583,43 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tldr" class="md-nav__link">
+    TL;DR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    可用初始化参数
+    初始化参数说明
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    可用调用方法
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    可用属性
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    运行测试用例
+    调用方法说明
   </a>
   
     <nav class="md-nav">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     传入测试用例文件路径
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     传入标准的测试用例结构体
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -643,7 +636,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     返回详细测试结果数据
   </a>
   
@@ -773,50 +766,43 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tldr" class="md-nav__link">
+    TL;DR
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    可用初始化参数
+    初始化参数说明
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    可用调用方法
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    可用属性
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
-    运行测试用例
+    调用方法说明
   </a>
   
     <nav class="md-nav">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     传入测试用例文件路径
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     传入标准的测试用例结构体
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -833,7 +819,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     返回详细测试结果数据
   </a>
   
@@ -867,46 +853,41 @@
 <p>HttpRunner 除了作为命令行工具使用外，还可以作为软件包集成到你自己的项目中。</p>
 <p>简单来说，HttpRunner 提供了运行 YAML/JSON 格式测试用例的能力，并能返回详细的测试结果信息。</p>
 <h2 id="httprunner-class">HttpRunner class<a class="headerlink" href="#httprunner-class" title="Permanent link">&para;</a></h2>
-<p>HttpRunner 以 <code>类（class）</code> 的形式对外提供调用支持，类名为<code>HttpRunner</code>，导入方式如下：</p>
+<h3 id="tldr">TL;DR<a class="headerlink" href="#tldr" title="Permanent link">&para;</a></h3>
+<p>HttpRunner 以 <code>类（class）</code> 的形式对外提供调用支持，类名为<code>HttpRunner</code>。使用方式如下：</p>
 <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">httprunner.api</span> <span class="kn">import</span> <span class="n">HttpRunner</span>
+
+<span class="n">runner</span> <span class="o">=</span> <span class="n">HttpRunner</span><span class="p">(</span>
+    <span class="n">failfast</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">save_tests</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+    <span class="n">log_file</span><span class="o">=</span><span class="s2">&quot;test.log&quot;</span>
+<span class="p">)</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">path_or_tests</span><span class="p">)</span>
 </pre></div>
 
 
-<h3 id="_2">可用初始化参数<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
-<p><code>HttpRunner</code> 内部用于驱动测试执行的是 <code>unittest.TextTestRunner</code>，在初始化 <code>HttpRunner</code> 时可以使用 TextTestRunner 的所有可用参数（详情可阅读<a href="https://docs.python.org/3.6/library/unittest.html#unittest.TextTestRunner">官方文档</a>）。除此之外，<code>HttpRunner</code>还额外支持一个参数，<code>http_client_session</code>，可用于指定不同的客户端类型。</p>
-<p>通常情况下，初始化 <code>HttpRunner</code> 时常用的参数有如下几个：</p>
+<h3 id="_2">初始化参数说明<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>通常情况下，初始化 <code>HttpRunner</code> 时的参数有如下几个：</p>
 <ul>
-<li><code>resultclass</code>: HtmlTestResult/TextTestResult，默认值为 HtmlTestResult</li>
-<li><code>failfast</code>: 设置为 True 时，测试在首次遇到错误或失败时会停止运行；默认值为 False</li>
-<li><code>http_client_session</code>: 传入<code>requests.Session()</code>时进行自动化测试（默认），传入<code>locust.client.Session()</code>时进行性能测试</li>
+<li><code>failfast</code>（可选）: 设置为 True 时，测试在首次遇到错误或失败时会停止运行；默认值为 False</li>
+<li><code>save_tests</code>（可选）: 设置为 True 时，会将运行过程中的状态（loaded/parsed/summary）保存为 JSON 文件，存储于 logs 目录下；默认为 False</li>
+<li><code>log_level</code>（可选）: 设置日志级别，默认为 "INFO"</li>
+<li><code>log_file</code>（可选）: 设置日志文件路径，指定后将同时输出日志文件；默认不输出日志文件</li>
 </ul>
-<p>例如，如需初始化 <code>HttpRunner</code> 时设置 <code>failfast</code> 为 False，初始化方式如下所示：</p>
-<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">httprunner.api</span> <span class="kn">import</span> <span class="n">HttpRunner</span>
-
-<span class="n">runner</span> <span class="o">=</span> <span class="n">HttpRunner</span><span class="p">(</span><span class="n">failfast</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-</pre></div>
-
-
-<h3 id="_3">可用调用方法<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
-<p>在 <code>HttpRunner</code> 中，对外提供了两个方法：</p>
+<h3 id="_3">调用方法说明<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>在 <code>HttpRunner</code> 中，对外提供了一个 <code>run</code> 方法，用于运行测试用例。</p>
+<p>run 方法有三个参数：</p>
 <ul>
-<li><code>run</code>: 运行测试用例</li>
-<li><code>gen_html_report</code>: 生成 HTML 测试报告</li>
+<li><code>path_or_tests</code>（必传）: 指定要运行的测试用例；支持传入两类参数<ul>
+<li>str: YAML/JSON 格式测试用例文件路径</li>
+<li>dict: 标准的测试用例结构体</li>
 </ul>
-<h3 id="_4">可用属性<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<p>在 <code>HttpRunner</code> 中，对外提供了一个属性：</p>
-<ul>
-<li><code>summary</code>: 测试执行结果</li>
-</ul>
-<p>该属性需要在调用 <code>run</code> 方法后获取。</p>
-<h2 id="_5">运行测试用例<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
-<p><code>HttpRunner</code> 的 run 方法有三个参数：</p>
-<ul>
-<li><code>path_or_testcases</code>: 指定要运行的测试用例；支持传入两类参数，YAML/JSON 格式测试用例文件路径，或者标准的测试用例结构体；</li>
+</li>
 <li><code>dot_env_path</code>（可选）: 指定加载环境变量文件（.env）的路径，默认值为当前工作目录（PWD）中的 <code>.env</code> 文件</li>
 <li><code>mapping</code>（可选）: 变量映射，可用于对传入测试用例中的变量进行覆盖替换。</li>
 </ul>
-<h3 id="_6">传入测试用例文件路径<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<h4 id="_4">传入测试用例文件路径<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
 <p>指定测试用例文件路径支持三种形式：</p>
 <ul>
 <li>YAML/JSON 文件路径，支持绝对路径和相对路径</li>
@@ -936,7 +917,7 @@
 </pre></div>
 
 
-<h3 id="_7">传入标准的测试用例结构体<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<h4 id="_5">传入标准的测试用例结构体<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
 <p>除了传入测试用例文件路径，还可以直接传入标准的测试用例结构体。</p>
 <p>以 <a href="/data/demo-quickstart-2.yml">demo-quickstart-2.yml</a> 为例，对应的数据结构体如下所示：</p>
 <div class="codehilite"><pre><span></span><span class="p">[</span>
@@ -1041,10 +1022,9 @@
 
 <p>其中，<code>env</code> 对应的是 <code>.env</code> 文件中的环境变量，<code>debugtalk</code> 对应的是 <code>debugtalk.py</code> 文件中定义的变量和函数，<code>def-api</code> 对应的是 <code>api</code> 文件夹下定义的接口描述，<code>def-testcase</code> 对应的是 <code>testcases</code> 文件夹下定义的测试用例。</p>
 <p>通过传入标准的测试用例结构体执行测试时，传入的数据应包含所有信息，包括 <code>debugtalk.py</code>、<code>.env</code>、依赖的 api 和 测试用例等；因此也无需再使用 <code>dot_env_path</code> 和 <code>mapping</code> 参数，所有信息都要通过 <code>refs</code> 传入。</p>
-<h2 id="_8">返回详细测试结果数据<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
-<p>运行完成后，通过 <code>summary</code> 属性可获取详尽的运行结果数据。</p>
-<div class="codehilite"><pre><span></span><span class="c1"># get result summary</span>
-<span class="n">summary</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">summary</span>
+<h2 id="_6">返回详细测试结果数据<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<p>运行完成后，通过 <code>run()</code> 方法的返回结果可获取详尽的运行结果数据。</p>
+<div class="codehilite"><pre><span></span><span class="n">summary</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">path_or_tests</span><span class="p">)</span>
 </pre></div>
 
 
@@ -1162,17 +1142,25 @@
 
 
 <h2 id="html">生成 HTML 测试报告<a class="headerlink" href="#html" title="Permanent link">&para;</a></h2>
-<p>如需生成 HTML 测试报告，可调用 <code>gen_html_report</code> 方法。</p>
-<div class="codehilite"><pre><span></span><span class="c1"># generate html report</span>
-<span class="n">runner</span><span class="o">.</span><span class="n">gen_html_report</span><span class="p">(</span>
-    <span class="n">html_report_name</span><span class="o">=</span><span class="s2">&quot;demo&quot;</span><span class="p">,</span>
-    <span class="n">html_report_template</span><span class="o">=</span><span class="s2">&quot;/path/to/custom_report_template&quot;</span>
-<span class="p">)</span>
+<p>如需生成 HTML 测试报告，可调用 <code>report.render_html_report</code> 方法。</p>
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">httprunner</span> <span class="kn">import</span> <span class="n">report</span>
 
-<span class="c1"># =&gt; reports/demo/demo-1532078874.html</span>
+<span class="n">report_path</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">render_html_report</span><span class="p">(</span>
+    <span class="n">summary</span><span class="p">,</span>
+    <span class="n">report_template</span><span class="o">=</span><span class="s2">&quot;/path/to/custom_report_template&quot;</span><span class="p">,</span>
+    <span class="n">report_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/reports_dir&quot;</span><span class="p">,</span>
+    <span class="n">report_file</span><span class="o">=</span><span class="s2">&quot;/path/to/report_file_path&quot;</span>
+<span class="p">)</span>
 </pre></div>
 
 
+<p><code>render_html_report()</code> 的参数有四个：</p>
+<ul>
+<li>summary（必传）: 测试运行结果汇总数据 </li>
+<li>report_template（可选）: 指定自定义的 HTML 报告模板，模板必须采用 Jinja2 的格式</li>
+<li>report_dir（可选）: 指定生成报告的文件夹路径</li>
+<li>report_file（可选）: 指定生成报告的文件路径，该参数的优先级高于 report_dir</li>
+</ul>
 <p>关于测试报告的详细内容，请查看<a href="/run-tests/report/">测试报告</a>部分。</p>
                 
                   
