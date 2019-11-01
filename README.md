@@ -35,6 +35,7 @@ HttpRunner is rich documented.
 
 - [`中文用户使用手册`][user-docs-zh]
 - [`开发历程记录博客`][development-blogs]
+- [CHANGELOG](docs/CHANGELOG.md)
 
 ## Sponsors
 
@@ -65,7 +66,7 @@ Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](docs/sponsors.md))
 [unittest]: https://docs.python.org/3/library/unittest.html
 [Locust]: http://locust.io/
 [har2case]: https://github.com/httprunner/har2case
-[user-docs-zh]: http://cn.httprunner.org/
+[user-docs-zh]: http://docs.httprunner.org/
 [development-blogs]: http://debugtalk.com/tags/httprunner/
 [HAR]: http://httparchive.org/
 [Swagger]: https://swagger.io/
