@@ -1,5 +1,12 @@
 # Release History
 
+## 2.3.2 (2019-11-01)
+
+**Changed**
+
+- make render_html_report separate with HttpRunner().run_tests()
+- `--report-file`: specify report file path, this has higher priority than specifying report dir.
+
 ## 2.3.1 (2019-10-28)
 
 **Fixed**
