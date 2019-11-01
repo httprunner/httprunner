@@ -276,7 +276,7 @@ def __stringify_meta_datas(meta_datas):
             __stringify_response(data["response"])
 
 
-def render_html_report(summary, report_template=None, report_dir=None, report_file=None):
+def gen_html_report(summary, report_template=None, report_dir=None, report_file=None):
     """ render html report with specified report name and template
 
     Args:

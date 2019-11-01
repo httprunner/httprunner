@@ -314,12 +314,12 @@ summary = runner.run(path_or_tests)
 
 ## 生成 HTML 测试报告
 
-如需生成 HTML 测试报告，可调用 `report.render_html_report` 方法。
+如需生成 HTML 测试报告，可调用 `report.gen_html_report` 方法。
 
 ```python
 from httprunner import report
 
-report_path = report.render_html_report(
+report_path = report.gen_html_report(
     summary,
     report_template="/path/to/custom_report_template",
     report_dir="/path/to/reports_dir",
@@ -327,7 +327,7 @@ report_path = report.render_html_report(
 )
 ```
 
-`render_html_report()` 的参数有四个：
+`gen_html_report()` 的参数有四个：
 
 - summary（必传）: 测试运行结果汇总数据 
 - report_template（可选）: 指定自定义的 HTML 报告模板，模板必须采用 Jinja2 的格式

@@ -6,7 +6,7 @@ from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
 from httprunner.logger import color_print
-from httprunner.report import render_html_report
+from httprunner.report import gen_html_report
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
                               prettify_json_file)
 from httprunner.validator import validate_json_file
@@ -94,7 +94,7 @@ def main():
         for path in args.testcase_paths:
             summary = runner.run(path, dot_env_path=args.dot_env_path)
             report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
-            render_html_report(
+            gen_html_report(
                 summary,
                 args.report_template,
                 report_dir,
