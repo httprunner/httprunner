@@ -271,9 +271,3 @@ class HttpRunner(object):
             return self.run_tests(path_or_tests)
         else:
             raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
-
-    @property
-    def summary(self):
-        """ get test reuslt summary.
-        """
-        return self._summary

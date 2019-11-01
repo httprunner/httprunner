@@ -77,9 +77,9 @@ class TestHttpRunner(ApiServerUnittest):
         return self.api_client.get(url, headers=headers)
 
     def test_text_run_times(self):
-        self.runner.run(self.testcase_cli_path)
-        self.assertEqual(self.runner.summary["stat"]["testcases"]["total"], 1)
-        self.assertEqual(self.runner.summary["stat"]["teststeps"]["total"], 10)
+        summary = self.runner.run(self.testcase_cli_path)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 10)
 
     def test_text_run_times_invalid(self):
         testcases = [
@@ -115,8 +115,8 @@ class TestHttpRunner(ApiServerUnittest):
             self.runner.run_tests(tests_mapping)
 
     def test_text_skip(self):
-        self.runner.run(self.testcase_cli_path)
-        self.assertEqual(self.runner.summary["stat"]["teststeps"]["skipped"], 4)
+        summary = self.runner.run(self.testcase_cli_path)
+        self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
 
     def test_save_variables_output(self):
         testcases = [
@@ -194,8 +194,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_html_report_with_fixed_report_file(self):
         runner = HttpRunner(failfast=True)
-        runner.run(self.testcase_cli_path)
-        summary = runner.summary
+        summary = runner.run(self.testcase_cli_path)
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 10)
         self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
@@ -215,8 +214,7 @@ class TestHttpRunner(ApiServerUnittest):
         os.remove(log_file_path)
 
     def test_run_testcases(self):
-        self.runner.run_tests(self.tests_mapping)
-        summary = self.runner.summary
+        summary = self.runner.run_tests(self.tests_mapping)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
@@ -224,8 +222,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("records", summary["details"][0])
 
     def test_run_yaml_upload(self):
-        self.runner.run("tests/httpbin/upload.yml")
-        summary = self.runner.summary
+        summary = self.runner.run("tests/httpbin/upload.yml")
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
@@ -261,8 +258,7 @@ class TestHttpRunner(ApiServerUnittest):
         tests_mapping = {
             "testcases": testcases
         }
-        self.runner.run_tests(tests_mapping)
-        summary = self.runner.summary
+        summary = self.runner.run_tests(tests_mapping)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
@@ -281,16 +277,14 @@ class TestHttpRunner(ApiServerUnittest):
         shutil.rmtree(report_save_dir)
 
     def test_testcase_layer_with_api(self):
-        self.runner.run("tests/testcases/setup.yml")
-        summary = self.runner.summary
+        summary = self.runner.run("tests/testcases/setup.yml")
         self.assertTrue(summary["success"])
         self.assertEqual(summary["details"][0]["records"][0]["name"], "get token (setup)")
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
 
     def test_testcase_layer_with_testcase(self):
-        self.runner.run("tests/testsuites/create_users.yml")
-        summary = self.runner.summary
+        summary = self.runner.run("tests/testsuites/create_users.yml")
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 2)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 4)
@@ -299,9 +293,8 @@ class TestHttpRunner(ApiServerUnittest):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/httpbin/hooks.yml')
         start_time = time.time()
-        self.runner.run(testcase_file_path)
+        summary = self.runner.run(testcase_file_path)
         end_time = time.time()
-        summary = self.runner.summary
         self.assertTrue(summary["success"])
         self.assertLess(end_time - start_time, 60)
 
@@ -339,8 +332,7 @@ class TestHttpRunner(ApiServerUnittest):
             "project_mapping": loader.project_mapping,
             "testcases": testcases
         }
-        self.runner.run_tests(tests_mapping)
-        summary = self.runner.summary
+        summary = self.runner.run_tests(tests_mapping)
         self.assertTrue(summary["success"])
 
     def test_run_httprunner_with_teardown_hooks_not_exist_attribute(self):
@@ -372,8 +364,7 @@ class TestHttpRunner(ApiServerUnittest):
             "project_mapping": loader.project_mapping,
             "testcases": testcases
         }
-        self.runner.run_tests(tests_mapping)
-        summary = self.runner.summary
+        summary = self.runner.run_tests(tests_mapping)
         self.assertFalse(summary["success"])
         self.assertEqual(summary["stat"]["teststeps"]["errors"], 1)
 
@@ -403,15 +394,13 @@ class TestHttpRunner(ApiServerUnittest):
             "project_mapping": loader.project_mapping,
             "testcases": testcases
         }
-        self.runner.run_tests(tests_mapping)
-        summary = self.runner.summary
+        summary = self.runner.run_tests(tests_mapping)
         self.assertFalse(summary["success"])
         self.assertEqual(summary["stat"]["teststeps"]["errors"], 1)
 
     def test_run_api(self):
         path = "tests/httpbin/api/get_headers.yml"
-        self.runner.run(path)
-        summary = self.runner.summary
+        summary = self.runner.run(path)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
@@ -419,8 +408,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_request_302_logs(self):
         path = "tests/httpbin/api/302_redirect.yml"
-        self.runner.run(path)
-        summary = self.runner.summary
+        summary = self.runner.run(path)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
@@ -433,8 +421,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_request_with_params(self):
         path = "tests/httpbin/api/302_redirect.yml"
-        self.runner.run(path)
-        summary = self.runner.summary
+        summary = self.runner.run(path)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
@@ -449,8 +436,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_api_folder(self):
         api_folder = "tests/httpbin/api/"
-        self.runner.run(api_folder)
-        summary = self.runner.summary
+        summary = self.runner.run(api_folder)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 2)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
@@ -461,8 +447,7 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
-            self.runner.run(testcase_file_path)
-            summary = self.runner.summary
+            summary = self.runner.run(testcase_file_path)
             self.assertTrue(summary["success"])
             self.assertEqual(summary["stat"]["testcases"]["total"], 1)
             self.assertEqual(summary["stat"]["teststeps"]["total"], 3)
@@ -472,30 +457,26 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_variables.yml')
-        self.runner.run(testcase_file_path)
-        summary = self.runner.summary
+        summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
 
     def test_run_testcase_template_import_functions(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_functions.yml')
-        self.runner.run(testcase_file_path)
-        summary = self.runner.summary
+        summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
 
     def test_run_testcase_layered(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_layer.yml')
-        self.runner.run(testcase_file_path)
-        summary = self.runner.summary
+        summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 1)
 
     def test_run_testcase_output(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_layer.yml')
-        self.runner.run(testcase_file_path)
-        summary = self.runner.summary
+        summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
         # TODO: add
@@ -507,8 +488,7 @@ class TestHttpRunner(ApiServerUnittest):
         variables_mapping = {
             "app_version": '2.9.7'
         }
-        self.runner.run(testcase_file_path, mapping=variables_mapping)
-        summary = self.runner.summary
+        summary = self.runner.run(testcase_file_path, mapping=variables_mapping)
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
         # TODO: add
@@ -517,8 +497,7 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_testcase_with_parameters(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/testsuites/create_users_with_parameters.yml')
-        self.runner.run(testcase_file_path)
-        summary = self.runner.summary
+        summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 3 * 2)
 
@@ -556,8 +535,8 @@ class TestHttpRunner(ApiServerUnittest):
     #     # TODO: fix compatibility with Python 2.7
     #     testcase_file_path = os.path.join(
     #         os.getcwd(), 'tests/httpbin/basic.yml')
-    #     self.runner.run(testcase_file_path)
-    #     self.assertTrue(self.runner.summary["success"])
+    #     summary = self.runner.run(testcase_file_path)
+    #     self.assertTrue(summary["success"])
 
     def test_html_report_xss(self):
         testcases = [
