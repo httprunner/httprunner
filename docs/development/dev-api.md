@@ -6,54 +6,44 @@ HttpRunner 除了作为命令行工具使用外，还可以作为软件包集成
 
 ## HttpRunner class
 
-HttpRunner 以 `类（class）` 的形式对外提供调用支持，类名为`HttpRunner`，导入方式如下：
+### TL;DR
 
-```python
-from httprunner.api import HttpRunner
-```
-
-### 可用初始化参数
-
-`HttpRunner` 内部用于驱动测试执行的是`unittest.TextTestRunner`，在初始化 `HttpRunner` 时可以使用 TextTestRunner 的所有可用参数（详情可阅读[官方文档][TextTestRunner]）。除此之外，`HttpRunner`还额外支持一个参数，`http_client_session`，可用于指定不同的客户端类型。
-
-通常情况下，初始化 `HttpRunner` 时常用的参数有如下几个：
-
-- `resultclass`: HtmlTestResult/TextTestResult，默认值为 HtmlTestResult
-- `failfast`: 设置为 True 时，测试在首次遇到错误或失败时会停止运行；默认值为 False
-- `http_client_session`: 传入`requests.Session()`时进行自动化测试（默认），传入`locust.client.Session()`时进行性能测试
-
-例如，如需初始化 `HttpRunner` 时设置 `failfast` 为 False，初始化方式如下所示：
+HttpRunner 以 `类（class）` 的形式对外提供调用支持，类名为 `HttpRunner`。使用方式如下：
 
 ```python
 from httprunner.api import HttpRunner
 
-runner = HttpRunner(failfast=False)
+runner = HttpRunner(
+    failfast=True,
+    save_tests=True,
+    log_level="INFO",
+    log_file="test.log"
+)
+summary = runner.run(path_or_tests)
 ```
 
-### 可用调用方法
+### 初始化参数说明
 
-在 `HttpRunner` 中，对外提供了两个方法：
+通常情况下，初始化 `HttpRunner` 时的参数有如下几个：
 
-- `run`: 运行测试用例
-- `gen_html_report`: 生成 HTML 测试报告
+- `failfast`（可选）: 设置为 True 时，测试在首次遇到错误或失败时会停止运行；默认值为 False
+- `save_tests`（可选）: 设置为 True 时，会将运行过程中的状态（loaded/parsed/summary）保存为 JSON 文件，存储于 logs 目录下；默认为 False
+- `log_level`（可选）: 设置日志级别，默认为 "INFO"
+- `log_file`（可选）: 设置日志文件路径，指定后将同时输出日志文件；默认不输出日志文件
 
-### 可用属性
+### 调用方法说明
 
-在 `HttpRunner` 中，对外提供了一个属性：
+在 `HttpRunner` 中，对外提供了一个 `run` 方法，用于运行测试用例。
 
-- `summary`: 测试执行结果
+run 方法有三个参数：
 
-该属性需要在调用 `run` 方法后获取。
-
-## 运行测试用例
-
-`HttpRunner` 的 run 方法有三个参数：
-
-- `path_or_testcases`: 指定要运行的测试用例；支持传入两类参数，YAML/JSON 格式测试用例文件路径，或者标准的测试用例结构体；
+- `path_or_tests`（必传）: 指定要运行的测试用例；支持传入两类参数
+    - str: YAML/JSON 格式测试用例文件路径
+    - dict: 标准的测试用例结构体
 - `dot_env_path`（可选）: 指定加载环境变量文件（.env）的路径，默认值为当前工作目录（PWD）中的 `.env` 文件
 - `mapping`（可选）: 变量映射，可用于对传入测试用例中的变量进行覆盖替换。
 
-### 传入测试用例文件路径
+#### 传入测试用例文件路径
 
 指定测试用例文件路径支持三种形式：
 
@@ -85,7 +75,7 @@ override_mapping = {
 runner.run("docs/data/demo-quickstart-2.yml", mapping=override_mapping)
 ```
 
-### 传入标准的测试用例结构体
+#### 传入标准的测试用例结构体
 
 除了传入测试用例文件路径，还可以直接传入标准的测试用例结构体。
 
@@ -170,9 +160,9 @@ runner.run([testcase1, testcase2])
 
 ### 加载 `debugtalk.py` && `.env`
 
-通过传入测试用例文件路径运行测试用例时，HttpRunner 会自动以指定测试用例文件路径为起点，向上搜索 `debugtalk.py` 文件，并将 `debugtalk.py` 文件所在的文件目录作为当前工作目录（PWD）。
+通过传入测试用例文件路径运行测试用例时，HttpRunner 会自动以指定测试用例文件路径为起点，向上搜索 `debugtalk.py` 文件，并将 `debugtalk.py` 文件所在的文件目录作为当前工作目录（PWD）。
 
-同时，HttpRunner 会在当前工作目录（PWD）下搜索 `.env` 文件，以及 `api` 和 `testcases` 文件夹，并自动进行加载。
+同时，HttpRunner 会在当前工作目录（PWD）下搜索 `.env` 文件，以及 `api` 和 `testcases` 文件夹，并自动进行加载。
 
 最终加载得到的存储结构如下所示：
 
@@ -202,11 +192,10 @@ runner.run([testcase1, testcase2])
 
 ## 返回详细测试结果数据
 
-运行完成后，通过 `summary` 属性可获取详尽的运行结果数据。
+运行完成后，通过 `run()` 方法的返回结果可获取详尽的运行结果数据。
 
 ```python
-# get result summary
-summary = runner.summary
+summary = runner.run(path_or_tests)
 ```
 
 其数据结构为：
@@ -325,17 +314,25 @@ summary = runner.summary
 
 ## 生成 HTML 测试报告
 
-如需生成 HTML 测试报告，可调用 `gen_html_report` 方法。
+如需生成 HTML 测试报告，可调用 `report.render_html_report` 方法。
 
 ```python
-# generate html report
-runner.gen_html_report(
-    html_report_name="demo",
-    html_report_template="/path/to/custom_report_template"
-)
+from httprunner import report
 
-# => reports/demo/demo-1532078874.html
+report_path = report.render_html_report(
+    summary,
+    report_template="/path/to/custom_report_template",
+    report_dir="/path/to/reports_dir",
+    report_file="/path/to/report_file_path"
+)
 ```
+
+`render_html_report()` 的参数有四个：
+
+- summary（必传）: 测试运行结果汇总数据 
+- report_template（可选）: 指定自定义的 HTML 报告模板，模板必须采用 Jinja2 的格式
+- report_dir（可选）: 指定生成报告的文件夹路径
+- report_file（可选）: 指定生成报告的文件路径，该参数的优先级高于 report_dir
 
 关于测试报告的详细内容，请查看[测试报告](/run-tests/report/)部分。
 
