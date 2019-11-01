@@ -5,6 +5,7 @@ from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
 from httprunner.logger import color_print
+from httprunner.report import render_html_report
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
                               prettify_json_file)
 from httprunner.validator import validate_json_file
@@ -83,16 +84,19 @@ def main():
     runner = HttpRunner(
         failfast=args.failfast,
         save_tests=args.save_tests,
-        report_template=args.report_template,
-        report_dir=args.report_dir,
         log_level=args.log_level,
-        log_file=args.log_file,
-        report_file=args.report_file
+        log_file=args.log_file
     )
 
     try:
         for path in args.testcase_paths:
-            runner.run(path, dot_env_path=args.dot_env_path)
+            summary = runner.run(path, dot_env_path=args.dot_env_path)
+            render_html_report(
+                summary,
+                args.report_template,
+                args.report_dir,
+                args.report_file
+            )
     except Exception:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
         raise

@@ -6,15 +6,12 @@ from httprunner import (__version__, exceptions, loader, logger, parser,
 
 class HttpRunner(object):
 
-    def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-                 log_level="INFO", log_file=None, report_file=None):
+    def __init__(self, failfast=False, save_tests=False, log_level="INFO", log_file=None):
         """ initialize HttpRunner.
 
         Args:
             failfast (bool): stop the test run on the first error or failure.
             save_tests (bool): save loaded/parsed tests to JSON file.
-            report_template (str): report template file path, template should be in Jinja2 format.
-            report_dir (str): html report save directory.
             log_level (str): logging level.
             log_file (str): log file path.
 
@@ -29,9 +26,6 @@ class HttpRunner(object):
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
         self.save_tests = save_tests
-        self.report_template = report_template
-        self.report_dir = report_dir
-        self.report_file = report_file
         self._summary = None
 
     def _add_tests(self, testcases):
@@ -201,14 +195,7 @@ class HttpRunner(object):
         if self.save_tests:
             utils.dump_logs(self._summary, project_mapping, "summary")
 
-        report_path = report.render_html_report(
-            self._summary,
-            self.report_template,
-            self.report_dir,
-            self.report_file
-        )
-
-        return report_path
+        return self._summary
 
     def get_vars_out(self):
         """ get variables and output
@@ -248,7 +235,7 @@ class HttpRunner(object):
             mapping (dict): if mapping is specified, it will override variables in config block.
 
         Returns:
-            instance: HttpRunner() instance
+            dict: result summary
 
         """
         # load tests
@@ -268,6 +255,9 @@ class HttpRunner(object):
             path_or_tests:
                 str: testcase/testsuite file/foler path
                 dict: valid testcase/testsuite data
+
+        Returns:
+            dict: result summary
 
         """
         logger.log_info("HttpRunner version: {}".format(__version__))
