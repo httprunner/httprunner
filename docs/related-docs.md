@@ -10,8 +10,8 @@
 - [MTSC 2019][MTSC2019]: [《HttpRunner 2.0 技术架构与接口测试应用》][httprunner-2.0]
 
 [MTSC2018]: https://www.bagevent.com/event/1193113
+[dji-httprunner]: https://github.com/debugtalk/speech/blob/master/DJI-HttpRunner.pdf
 [PyConChina2018]: http://cn.pycon.org/2018/city_beijing.html
-[dji-httprunner]: /attachments/DJI-HttpRunner.pdf
-[PyCon-HttpRunner]: /attachments/PyCon-HttpRunner.pdf
+[PyCon-HttpRunner]: https://github.com/debugtalk/speech/blob/master/PyCon-HttpRunner.pdf
 [MTSC2019]: https://testerhome.com/mtsc/2019
-[httprunner-2.0]: /attachments/MTSC2019-HttpRunner-2.0.pdf
+[httprunner-2.0]: https://github.com/debugtalk/speech/blob/master/MTSC2019-HttpRunner-2.0.pdf
