@@ -1,5 +1,19 @@
 # Release History
 
+## 2.3.2 (2019-11-01)
+
+**Added**
+
+- docs: add docs content to repo, visit at `https://docs.httprunner.org`
+- docs: update developer interface docs
+
+**Changed**
+
+- rename `render_html_report` to `gen_html_report`
+- make gen_html_report separate with HttpRunner().run_tests()
+- `--report-file`: specify report file path, this has higher priority than specifying report dir.
+- remove `summary` property from HttpRunner
+
 ## 2.3.1 (2019-10-28)
 
 **Fixed**

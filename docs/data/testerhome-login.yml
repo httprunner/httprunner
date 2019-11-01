@@ -1,0 +1,66 @@
+- config:
+    name: testcase description
+    variables: {}
+    verify: False
+
+- test:
+    name: /account/sign_in
+    request:
+        headers:
+            If-None-Match: W/"bc9ae267fdcbd89bf1dfaea10dea2b0e"
+            User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36
+                (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36
+        method: GET
+        url: https://testerhome.com/account/sign_in
+    extract:
+        X_CSRF_Token: <meta name="csrf-token" content="(.*)" />
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, text/html; charset=utf-8]
+
+- test:
+    name: /assets/big_logo-cd32144f74c18746f3dce33e1040e7dfe4c07c8e611e37f3868b1c16b5095da3.png
+    request:
+        headers:
+            User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36
+                (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36
+        method: GET
+        url: https://testerhome.com/assets/big_logo-cd32144f74c18746f3dce33e1040e7dfe4c07c8e611e37f3868b1c16b5095da3.png
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, image/png]
+
+- test:
+    name: /account/sign_in
+    request:
+        data:
+            commit: Sign In
+            user[login]: debugtalk
+            user[password]: XXXXXXXX
+            user[remember_me]: '1'
+            utf8: ✓
+        headers:
+            Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+            User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36
+                (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36
+            X-CSRF-Token: $X_CSRF_Token
+            X-Requested-With: XMLHttpRequest
+        method: POST
+        url: https://testerhome.com/account/sign_in
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, text/javascript; charset=utf-8]
+
+- test:
+    name: /
+    request:
+        headers:
+            If-None-Match: W/"bad62c68dac27b01151516aad5c7f0be"
+            Turbolinks-Referrer: https://testerhome.com/account/sign_in
+            User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36
+                (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36
+        method: GET
+        url: https://testerhome.com/
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, text/html; charset=utf-8]

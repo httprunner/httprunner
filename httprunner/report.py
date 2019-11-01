@@ -276,12 +276,14 @@ def __stringify_meta_datas(meta_datas):
             __stringify_response(data["response"])
 
 
-def render_html_report(summary, report_template=None, report_dir=None, report_file=None):
+def gen_html_report(summary, report_template=None, report_dir=None, report_file=None):
     """ render html report with specified report name and template
 
     Args:
-        report_template (str): specify html report template path
+        summary (dict): test result summary data
+        report_template (str): specify html report template path, template should be in Jinja2 format.
         report_dir (str): specify html report save directory
+        report_file (str): specify html report file path, this has higher priority than specifying report dir.
 
     """
     if not report_template:
@@ -296,18 +298,20 @@ def render_html_report(summary, report_template=None, report_dir=None, report_fi
 
     logger.log_info("Start to render Html report ...")
 
-    report_dir = report_dir or os.path.join(os.getcwd(), "reports")
-    if not os.path.isdir(report_dir):
-        os.makedirs(report_dir)
-
     start_at_timestamp = int(summary["time"]["start_at"])
     summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
     if report_file:
-        report_path = os.path.join(report_dir, report_file)
+        report_dir = os.path.dirname(report_file)
+        report_file_name = os.path.basename(report_file)
     else:
-        report_path = os.path.join(report_dir, "{}.html".format(start_at_timestamp))
+        report_dir = report_dir or os.path.join(os.getcwd(), "reports")
+        report_file_name = "{}.html".format(start_at_timestamp)
 
+    if not os.path.isdir(report_dir):
+        os.makedirs(report_dir)
+
+    report_path = os.path.join(report_dir, report_file_name)
     with io.open(report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
         with io.open(report_path, 'w', encoding='utf-8') as fp_w:

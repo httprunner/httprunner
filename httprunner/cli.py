@@ -1,10 +1,12 @@
 import argparse
+import os
 import sys
 
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
 from httprunner.logger import color_print
+from httprunner.report import gen_html_report
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
                               prettify_json_file)
 from httprunner.validator import validate_json_file
@@ -40,7 +42,7 @@ def main():
         help="specify report save directory.")
     parser.add_argument(
         '--report-file',
-        help="specify report file name.")
+        help="specify report file path, this has higher priority than specifying report dir.")
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
@@ -83,24 +85,27 @@ def main():
     runner = HttpRunner(
         failfast=args.failfast,
         save_tests=args.save_tests,
-        report_template=args.report_template,
-        report_dir=args.report_dir,
         log_level=args.log_level,
-        log_file=args.log_file,
-        report_file=args.report_file
+        log_file=args.log_file
     )
 
+    err_code = 0
     try:
         for path in args.testcase_paths:
-            runner.run(path, dot_env_path=args.dot_env_path)
+            summary = runner.run(path, dot_env_path=args.dot_env_path)
+            report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
+            gen_html_report(
+                summary,
+                args.report_template,
+                report_dir,
+                args.report_file
+            )
+            err_code |= (0 if summary and summary["success"] else 1)
     except Exception:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
         raise
 
-    if runner.summary and runner.summary["success"]:
-        return 0
-    else:
-        return 1
+    return err_code
 
 
 if __name__ == '__main__':
