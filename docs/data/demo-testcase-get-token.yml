@@ -1,0 +1,27 @@
+- config:
+    name: get token
+    base_url: http://127.0.0.1:5000
+    variables:
+        device_sn: ${gen_random_string(15)}
+        os_platform: 'ios'
+        app_version: '2.8.6'
+
+- test:
+    name: get token with $device_sn, $os_platform, $app_version
+    request:
+        headers:
+            Content-Type: application/json
+            User-Agent: python-requests/2.18.4
+            app_version: $app_version
+            device_sn: $device_sn
+            os_platform: $os_platform
+        json:
+            sign: ${get_sign($device_sn, $os_platform, $app_version)}
+        method: POST
+        url: /api/get-token
+    extract:
+        token: content.token
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, application/json]
+        - eq: [content.success, true]
