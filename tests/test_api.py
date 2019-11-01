@@ -188,7 +188,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
 
         report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
-        report.render_html_report(summary, report_dir=report_save_dir)
+        report.gen_html_report(summary, report_dir=report_save_dir)
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
 
@@ -200,7 +200,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
 
         report_file = os.path.join(os.getcwd(), 'reports', "demo", "test.html")
-        report.render_html_report(summary, report_file=report_file)
+        report.gen_html_report(summary, report_file=report_file)
         report_save_dir = os.path.dirname(report_file)
         self.assertEqual(len(os.listdir(report_save_dir)), 1)
         self.assertTrue(os.path.isfile(report_file))
@@ -272,7 +272,7 @@ class TestHttpRunner(ApiServerUnittest):
         summary = runner.run("tests/httpbin/load_image.yml")
 
         report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
-        report_path = report.render_html_report(summary, report_dir=report_save_dir)
+        report_path = report.gen_html_report(summary, report_dir=report_save_dir)
         self.assertTrue(os.path.isfile(report_path))
         shutil.rmtree(report_save_dir)
 
@@ -569,7 +569,7 @@ class TestHttpRunner(ApiServerUnittest):
             "testcases": testcases
         }
         summary = self.runner.run(tests_mapping)
-        report_path = report.render_html_report(summary)
+        report_path = report.gen_html_report(summary)
         with open(report_path) as f:
             content = f.read()
             m = re.findall(
