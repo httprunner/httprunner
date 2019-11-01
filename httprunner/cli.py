@@ -89,6 +89,7 @@ def main():
         log_file=args.log_file
     )
 
+    err_code = 0
     try:
         for path in args.testcase_paths:
             summary = runner.run(path, dot_env_path=args.dot_env_path)
@@ -99,14 +100,12 @@ def main():
                 report_dir,
                 args.report_file
             )
+            err_code |= (0 if summary and summary["success"] else 1)
     except Exception:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
         raise
 
-    if runner.summary and runner.summary["success"]:
-        return 0
-    else:
-        return 1
+    return err_code
 
 
 if __name__ == '__main__':

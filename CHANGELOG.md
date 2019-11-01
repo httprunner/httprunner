@@ -6,6 +6,7 @@
 
 - make render_html_report separate with HttpRunner().run_tests()
 - `--report-file`: specify report file path, this has higher priority than specifying report dir.
+- remove `summary` property from HttpRunner
 
 ## 2.3.1 (2019-10-28)
 
