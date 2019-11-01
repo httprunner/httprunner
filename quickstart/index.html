@@ -1,0 +1,1551 @@
+
+
+
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="HttpRunner V2.x User Documentation">
+      
+      
+      
+        <meta name="author" content="debugtalk">
+      
+      
+        <meta name="lang:clipboard.copy" content="复制">
+      
+        <meta name="lang:clipboard.copied" content="已复制">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
+      
+        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
+      
+        <meta name="lang:search.result.other" content="# 个符合条件的结果">
+      
+        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.3">
+    
+    
+      
+        <title>快速上手 - HttpRunner V2.x 中文使用文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.30686662.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.a8b3c06d.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#3f51b5">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+    
+      
+        
+<script>
+  window.ga = window.ga || function() {
+    (ga.q = ga.q || []).push(arguments)
+  }
+  ga.l = +new Date
+  /* Setup integration and send page view */
+  ga("create", "UA-114587036-2", "auto")
+  ga("set", "anonymizeIp", true)
+  ga("send", "pageview")
+  /* Register handler to log search on blur */
+  document.addEventListener("DOMContentLoaded", () => {
+    if (document.forms.search) {
+      var query = document.forms.search.query
+      query.addEventListener("blur", function() {
+        if (this.value) {
+          var path = document.location.pathname;
+          ga("send", "pageview", path + "?q=" + this.value)
+        }
+      })
+    }
+  })
+</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#_1" tabindex="1" class="md-skip">
+        跳转至
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href=".." title="HttpRunner V2.x 中文使用文档" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              HttpRunner V2.x 中文使用文档
+            </span>
+            <span class="md-header-nav__topic">
+              
+                快速上手
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            键入以开始搜索
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+<a href="https://github.com/HttpRunner/HttpRunner" title="前往 Github 仓库" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    HttpRunner
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main" role="main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href=".." title="HttpRunner V2.x 中文使用文档" class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </a>
+    HttpRunner V2.x 中文使用文档
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+<a href="https://github.com/HttpRunner/HttpRunner" title="前往 Github 仓库" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    HttpRunner
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../Installation/" title="安装说明" class="md-nav__link">
+      安装说明
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        快速上手
+      </label>
+    
+    <a href="./" title="快速上手" class="md-nav__link md-nav__link--active">
+      快速上手
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    案例介绍
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    测试准备
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    抓包分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    生成测试用例
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    首次运行测试用例
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    优化测试用例
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    调整校验器
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    参数关联
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base_url" class="md-nav__link">
+    base_url
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    变量的申明和引用
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    抽取公共变量
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    实现动态运算逻辑
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    参数化数据驱动
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    查看测试报告
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    总结
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      基础概念
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        基础概念
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../concept/nominal/" title="名词解释" class="md-nav__link">
+      名词解释
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      测试准备
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        测试准备
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/record/" title="录制生成用例" class="md-nav__link">
+      录制生成用例
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/project-structure/" title="项目文件组织" class="md-nav__link">
+      项目文件组织
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/testcase-structure/" title="测试用例组织" class="md-nav__link">
+      测试用例组织
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/request-hook/" title="hook机制" class="md-nav__link">
+      hook机制
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/dot-env/" title="环境变量" class="md-nav__link">
+      环境变量
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/testcase-layer/" title="测试用例分层" class="md-nav__link">
+      测试用例分层
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/parameters/" title="参数化数据驱动" class="md-nav__link">
+      参数化数据驱动
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/validate-pretty/" title="Validate & Prettify" class="md-nav__link">
+      Validate & Prettify
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../prepare/security/" title="信息安全" class="md-nav__link">
+      信息安全
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      测试执行
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        测试执行
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../run-tests/cli/" title="运行测试(CLI)" class="md-nav__link">
+      运行测试(CLI)
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../run-tests/report/" title="测试报告" class="md-nav__link">
+      测试报告
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../run-tests/load-test/" title="性能测试" class="md-nav__link">
+      性能测试
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      开发扩展
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        开发扩展
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../development/architecture/" title="Pipline" class="md-nav__link">
+      Pipline
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../development/dev-api/" title="基础库调用" class="md-nav__link">
+      基础库调用
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../FAQ/" title="FAQ" class="md-nav__link">
+      FAQ
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
+    
+    <label class="md-nav__link" for="nav-9">
+      实践案例
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        实践案例
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/testerhome-login/" title="TesterHome 登录" class="md-nav__link">
+      TesterHome 登录
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../related-docs/" title="相关资料" class="md-nav__link">
+      相关资料
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    案例介绍
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    测试准备
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    抓包分析
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    生成测试用例
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    首次运行测试用例
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    优化测试用例
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    调整校验器
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    参数关联
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base_url" class="md-nav__link">
+    base_url
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    变量的申明和引用
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    抽取公共变量
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    实现动态运算逻辑
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    参数化数据驱动
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    查看测试报告
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    总结
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  <h1>快速上手</h1>
+                
+                <p>本文将通过一个简单的示例来展示 HttpRunner 的核心功能使用方法。</p>
+<h2 id="_1">案例介绍<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>该案例作为被测服务，主要有两类接口：</p>
+<ul>
+<li>权限校验，获取 token</li>
+<li>支持 CRUD 操作的 RESTful APIs，所有接口的请求头域中都必须包含有效的 token</li>
+</ul>
+<p>案例的实现形式为 flask 应用服务（<a href="../data/api_server.py">api_server.py</a>），启动方式如下：</p>
+<div class="codehilite"><pre><span></span>$ export FLASK_APP=docs/data/api_server.py
+$ export FLASK_ENV=development
+$ flask run
+ * Serving Flask app &quot;docs/data/api_server.py&quot; (lazy loading)
+ * Environment: development
+ * Debug mode: on
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 989-476-348
+</pre></div>
+
+
+<p>服务启动成功后，我们就可以开始对其进行测试了。</p>
+<h2 id="_2">测试准备<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h3 id="_3">抓包分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>在开始测试之前，我们需要先了解接口的请求和响应细节，而最佳的方式就是采用 <code>Charles Proxy</code> 或者 <code>Fiddler</code> 这类网络抓包工具进行抓包分析。</p>
+<p>例如，在本案例中，我们先进行权限校验，然后成功创建一个用户，对应的网络抓包内容如下图所示：</p>
+<p><img alt="" src="../images/demo-quickstart-http-1.jpg" /></p>
+<p><img alt="" src="../images/demo-quickstart-http-2.jpg" /></p>
+<p>通过抓包，我们可以看到具体的接口信息，包括请求的URL、Method、headers、参数和响应内容等内容，基于这些信息，我们就可以开始编写测试用例了。</p>
+<h3 id="_4">生成测试用例<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>为了简化测试用例的编写工作，HttpRunner 实现了测试用例生成的功能。</p>
+<p>首先，需要将抓取得到的数据包导出为 HAR 格式的文件，假设导出的文件名称为 <a href="../data/demo-quickstart.har">demo-quickstart.har</a>。</p>
+<p>然后，在命令行终端中运行如下命令，即可将 demo-quickstart.har 转换为 HttpRunner 的测试用例文件。</p>
+<div class="codehilite"><pre><span></span>$ har2case docs/data/demo-quickstart.har -2y
+INFO:root:Start to generate testcase.
+INFO:root:dump testcase to YAML format.
+INFO:root:Generate YAML testcase successfully: docs/data/demo-quickstart.yml
+</pre></div>
+
+
+<p>使用 <code>har2case</code> 转换脚本时默认转换为 JSON 格式，加上 <code>-2y</code> 参数后转换为 YAML 格式。两种格式完全等价，YAML 格式更简洁，JSON 格式支持的工具更丰富，大家可根据个人喜好进行选择。关于 <a href="https://github.com/HttpRunner/har2case">har2case</a> 的详细使用说明，请查看<a href="/prepare/record/">《录制生成测试用例》</a>。</p>
+<p>经过转换，在源 demo-quickstart.har 文件的同级目录下生成了相同文件名称的 YAML 格式测试用例文件 <a href="../data/demo-quickstart.yml">demo-quickstart.yml</a>，其内容如下：</p>
+<div class="codehilite"><pre><span></span><span class="p p-Indicator">-</span> <span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">testcase description</span>
+    <span class="nt">variables</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/api/get-token</span>
+    <span class="nt">request</span><span class="p">:</span>
+        <span class="nt">headers</span><span class="p">:</span>
+            <span class="nt">Content-Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">application/json</span>
+            <span class="nt">User-Agent</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">python-requests/2.18.4</span>
+            <span class="nt">app_version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.8.6</span>
+            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FwgRiO7CNA50DSU</span>
+            <span class="nt">os_platform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ios</span>
+        <span class="nt">json</span><span class="p">:</span>
+            <span class="nt">sign</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9c0c7e51c91ae963c833a4ccbab8d683c4a90c98</span>
+        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/get-token</span>
+    <span class="nt">validate</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">status_code</span><span class="p p-Indicator">,</span> <span class="nv">200</span><span class="p p-Indicator">]</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">headers.Content-Type</span><span class="p p-Indicator">,</span> <span class="nv">application/json</span><span class="p p-Indicator">]</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">content.success</span><span class="p p-Indicator">,</span> <span class="nv">true</span><span class="p p-Indicator">]</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">content.token</span><span class="p p-Indicator">,</span> <span class="nv">baNLX1zhFYP11Seb</span><span class="p p-Indicator">]</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/api/users/1000</span>
+    <span class="nt">request</span><span class="p">:</span>
+        <span class="nt">headers</span><span class="p">:</span>
+            <span class="nt">Content-Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">application/json</span>
+            <span class="nt">User-Agent</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">python-requests/2.18.4</span>
+            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FwgRiO7CNA50DSU</span>
+            <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">baNLX1zhFYP11Seb</span>
+        <span class="nt">json</span><span class="p">:</span>
+            <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">user1</span>
+            <span class="nt">password</span><span class="p">:</span> <span class="s">&#39;123456&#39;</span>
+        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/users/1000</span>
+    <span class="nt">validate</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">status_code</span><span class="p p-Indicator">,</span> <span class="nv">201</span><span class="p p-Indicator">]</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">headers.Content-Type</span><span class="p p-Indicator">,</span> <span class="nv">application/json</span><span class="p p-Indicator">]</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">content.success</span><span class="p p-Indicator">,</span> <span class="nv">true</span><span class="p p-Indicator">]</span>
+        <span class="p p-Indicator">-</span> <span class="nt">eq</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">content.msg</span><span class="p p-Indicator">,</span> <span class="nv">user created successfully.</span><span class="p p-Indicator">]</span>
+</pre></div>
+
+
+<p>现在我们只需要知道如下几点：</p>
+<ul>
+<li>每个 YAML/JSON 文件对应一个测试用例（testcase）</li>
+<li>每个测试用例为一个<code>list of dict</code>结构，其中可能包含全局配置项（config）和若干个测试步骤（test）</li>
+<li><code>config</code> 为全局配置项，作用域为整个测试用例</li>
+<li><code>test</code> 对应单个测试步骤，作用域仅限于本身</li>
+</ul>
+<p>如上便是 HttpRunner 测试用例的基本结构。</p>
+<p>关于测试用例的更多内容，请查看<a href="/prepare/testcase-structure/">《测试用例结构描述》</a>。</p>
+<h3 id="_5">首次运行测试用例<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<p>测试用例就绪后，我们可以开始调试运行了。</p>
+<p>为了演示测试用例文件的迭代优化过程，我们先将 demo-quickstart.json 重命名为 <a href="../data/demo-quickstart-0.json">demo-quickstart-0.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-0.yml">demo-quickstart-0.yml</a>）。</p>
+<p>运行测试用例的命令为<code>hrun</code>，后面直接指定测试用例文件的路径即可。</p>
+<div class="codehilite"><pre><span></span>$ hrun docs/data/demo-quickstart-0.yml
+INFO     Start to run testcase: testcase description
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 9.26 ms, response_length: 46 bytes
+
+ERROR    validate: content.token equals baNLX1zhFYP11Seb(str)   ==&gt; fail
+tXGuSQgOCVXcltkz(str) equals baNLX1zhFYP11Seb(str)
+ERROR    ******************************** DETAILED REQUEST &amp; RESPONSE ********************************
+====== request details ======
+url: http://127.0.0.1:5000/api/get-token
+method: POST
+headers: {&#39;Content-Type&#39;: &#39;application/json&#39;, &#39;User-Agent&#39;: &#39;python-requests/2.18.4&#39;, &#39;app_version&#39;: &#39;2.8.6&#39;, &#39;device_sn&#39;: &#39;FwgRiO7CNA50DSU&#39;, &#39;os_platform&#39;: &#39;ios&#39;}
+json: {&#39;sign&#39;: &#39;9c0c7e51c91ae963c833a4ccbab8d683c4a90c98&#39;}
+verify: True
+
+====== response details ======
+status_code: 200
+headers: {&#39;Content-Type&#39;: &#39;application/json&#39;, &#39;Content-Length&#39;: &#39;46&#39;, &#39;Server&#39;: &#39;Werkzeug/0.14.1 Python/3.7.0&#39;, &#39;Date&#39;: &#39;Sat, 26 Jan 2019 14:43:55 GMT&#39;}
+body: &#39;{&quot;success&quot;: true, &quot;token&quot;: &quot;tXGuSQgOCVXcltkz&quot;}&#39;
+
+F
+/api/users/1000
+INFO     POST http://127.0.0.1:5000/api/users/1000
+ERROR    403 Client Error: FORBIDDEN for url: http://127.0.0.1:5000/api/users/1000
+ERROR    validate: status_code equals 201(int)  ==&gt; fail
+403(int) equals 201(int)
+ERROR    validate: content.success equals True(bool)    ==&gt; fail
+False(bool) equals True(bool)
+ERROR    validate: content.msg equals user created successfully.(str)   ==&gt; fail
+Authorization failed!(str) equals user created successfully.(str)
+ERROR    ******************************** DETAILED REQUEST &amp; RESPONSE ********************************
+====== request details ======
+url: http://127.0.0.1:5000/api/users/1000
+method: POST
+headers: {&#39;Content-Type&#39;: &#39;application/json&#39;, &#39;User-Agent&#39;: &#39;python-requests/2.18.4&#39;, &#39;device_sn&#39;: &#39;FwgRiO7CNA50DSU&#39;, &#39;token&#39;: &#39;baNLX1zhFYP11Seb&#39;}
+json: {&#39;name&#39;: &#39;user1&#39;, &#39;password&#39;: &#39;123456&#39;}
+verify: True
+
+====== response details ======
+status_code: 403
+headers: {&#39;Content-Type&#39;: &#39;application/json&#39;, &#39;Content-Length&#39;: &#39;50&#39;, &#39;Server&#39;: &#39;Werkzeug/0.14.1 Python/3.7.0&#39;, &#39;Date&#39;: &#39;Sat, 26 Jan 2019 14:43:55 GMT&#39;}
+body: &#39;{&quot;success&quot;: false, &quot;msg&quot;: &quot;Authorization failed!&quot;}&#39;
+
+F
+
+======================================================================
+FAIL: test_0000_000 (httprunner.api.TestSequense)
+/api/get-token
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;/Users/debugtalk/.pyenv/versions/3.6-dev/lib/python3.6/site-packages/httprunner/api.py&quot;, line 54, in test
+    test_runner.run_test(test_dict)
+httprunner.exceptions.ValidationFailure: validate: content.token equals baNLX1zhFYP11Seb(str)   ==&gt; fail
+tXGuSQgOCVXcltkz(str) equals baNLX1zhFYP11Seb(str)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File &quot;/Users/debugtalk/.pyenv/versions/3.6-dev/lib/python3.6/site-packages/httprunner/api.py&quot;, line 56, in test
+    self.fail(str(ex))
+AssertionError: validate: content.token equals baNLX1zhFYP11Seb(str)    ==&gt; fail
+tXGuSQgOCVXcltkz(str) equals baNLX1zhFYP11Seb(str)
+
+======================================================================
+FAIL: test_0001_000 (httprunner.api.TestSequense)
+/api/users/1000
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;/Users/debugtalk/.pyenv/versions/3.6-dev/lib/python3.6/site-packages/httprunner/api.py&quot;, line 54, in test
+    test_runner.run_test(test_dict)
+httprunner.exceptions.ValidationFailure: validate: status_code equals 201(int)  ==&gt; fail
+403(int) equals 201(int)
+validate: content.success equals True(bool) ==&gt; fail
+False(bool) equals True(bool)
+validate: content.msg equals user created successfully.(str)    ==&gt; fail
+Authorization failed!(str) equals user created successfully.(str)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File &quot;/Users/debugtalk/.pyenv/versions/3.6-dev/lib/python3.6/site-packages/httprunner/api.py&quot;, line 56, in test
+    self.fail(str(ex))
+AssertionError: validate: status_code equals 201(int)   ==&gt; fail
+403(int) equals 201(int)
+validate: content.success equals True(bool) ==&gt; fail
+False(bool) equals True(bool)
+validate: content.msg equals user created successfully.(str)    ==&gt; fail
+Authorization failed!(str) equals user created successfully.(str)
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.026s
+
+FAILED (failures=2)
+INFO     Start to render Html report ...
+INFO     Generated Html report: /Users/debugtalk/MyProjects/HttpRunner-dev/httprunner-docs-v2x/reports/1548513835.html
+</pre></div>
+
+
+<p>非常不幸，两个接口的测试用例均运行失败了。</p>
+<h2 id="_6">优化测试用例<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<p>从两个测试步骤的报错信息和堆栈信息（Traceback）可以看出，第一个步骤失败的原因是获取的 token 与预期值不一致，第二个步骤失败的原因是请求权限校验失败（403）。</p>
+<p>接下来我们将逐步进行进行优化。</p>
+<h3 id="_7">调整校验器<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<p>默认情况下，<a href="https://github.com/HttpRunner/har2case">har2case</a> 生成用例时，若 HTTP 请求的响应内容为 JSON 格式，则会将第一层级中的所有<code>key-value</code>转换为 validator。</p>
+<p>例如上面的第一个测试步骤，生成的 validator 为：</p>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;validate&quot;</span><span class="err">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;status_code&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">]},</span>
+    <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;headers.Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;application/json&quot;</span><span class="p">]},</span>
+    <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;content.success&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">]},</span>
+    <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;content.token&quot;</span><span class="p">,</span> <span class="s2">&quot;baNLX1zhFYP11Seb&quot;</span><span class="p">]}</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>运行测试用例时，就会对上面的各个项进行校验。</p>
+<p>问题在于，请求<code>/api/get-token</code>接口时，每次生成的 token 都会是不同的，因此将生成的 token 作为校验项的话，校验自然就无法通过了。</p>
+<p>正确的做法是，在测试步骤的 validate 中应该去掉这类动态变化的值。</p>
+<p>去除该项后，将用例另存为 <a href="../data/demo-quickstart-1.json">demo-quickstart-1.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-1.yml">demo-quickstart-1.yml</a>）。</p>
+<p>再次运行测试用例，运行结果如下：</p>
+<div class="codehilite"><pre><span></span>$ hrun docs/data/demo-quickstart-1.yml
+INFO     Start to run testcase: testcase description
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 6.61 ms, response_length: 46 bytes
+
+.
+/api/users/1000
+INFO     POST http://127.0.0.1:5000/api/users/1000
+ERROR    403 Client Error: FORBIDDEN for url: http://127.0.0.1:5000/api/users/1000
+ERROR    validate: status_code equals 201(int)  ==&gt; fail
+403(int) equals 201(int)
+ERROR    validate: content.success equals True(bool)    ==&gt; fail
+False(bool) equals True(bool)
+ERROR    validate: content.msg equals user created successfully.(str)   ==&gt; fail
+Authorization failed!(str) equals user created successfully.(str)
+ERROR    ******************************** DETAILED REQUEST &amp; RESPONSE ********************************
+====== request details ======
+url: http://127.0.0.1:5000/api/users/1000
+method: POST
+headers: {&#39;Content-Type&#39;: &#39;application/json&#39;, &#39;User-Agent&#39;: &#39;python-requests/2.18.4&#39;, &#39;device_sn&#39;: &#39;FwgRiO7CNA50DSU&#39;, &#39;token&#39;: &#39;baNLX1zhFYP11Seb&#39;}
+json: {&#39;name&#39;: &#39;user1&#39;, &#39;password&#39;: &#39;123456&#39;}
+verify: True
+
+====== response details ======
+status_code: 403
+headers: {&#39;Content-Type&#39;: &#39;application/json&#39;, &#39;Content-Length&#39;: &#39;50&#39;, &#39;Server&#39;: &#39;Werkzeug/0.14.1 Python/3.7.0&#39;, &#39;Date&#39;: &#39;Sat, 26 Jan 2019 14:45:34 GMT&#39;}
+body: &#39;{&quot;success&quot;: false, &quot;msg&quot;: &quot;Authorization failed!&quot;}&#39;
+
+F
+
+======================================================================
+FAIL: test_0001_000 (httprunner.api.TestSequense)
+/api/users/1000
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;/Users/debugtalk/.pyenv/versions/3.6-dev/lib/python3.6/site-packages/httprunner/api.py&quot;, line 54, in test
+    test_runner.run_test(test_dict)
+httprunner.exceptions.ValidationFailure: validate: status_code equals 201(int)  ==&gt; fail
+403(int) equals 201(int)
+validate: content.success equals True(bool) ==&gt; fail
+False(bool) equals True(bool)
+validate: content.msg equals user created successfully.(str)    ==&gt; fail
+Authorization failed!(str) equals user created successfully.(str)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File &quot;/Users/debugtalk/.pyenv/versions/3.6-dev/lib/python3.6/site-packages/httprunner/api.py&quot;, line 56, in test
+    self.fail(str(ex))
+AssertionError: validate: status_code equals 201(int)   ==&gt; fail
+403(int) equals 201(int)
+validate: content.success equals True(bool) ==&gt; fail
+False(bool) equals True(bool)
+validate: content.msg equals user created successfully.(str)    ==&gt; fail
+Authorization failed!(str) equals user created successfully.(str)
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.018s
+
+FAILED (failures=1)
+INFO     Start to render Html report ...
+INFO     Generated Html report: /Users/debugtalk/MyProjects/HttpRunner-dev/httprunner-docs-v2x/reports/1548513934.html
+</pre></div>
+
+
+<p>经过修改，第一个测试步骤已经运行成功了，第二个步骤仍然运行失败（403），还是因为权限校验的原因。</p>
+<h3 id="_8">参数关联<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>我们继续查看 <a href="../data/demo-quickstart-1.json">demo-quickstart-1.json</a>，会发现第二个测试步骤的请求 headers 中的 token 仍然是硬编码的，即抓包时获取到的值。在我们再次运行测试用例时，这个 token 已经失效了，所以会出现 403 权限校验失败的问题。</p>
+<p>正确的做法是，我们应该在每次运行测试用例的时候，先动态获取到第一个测试步骤中的 token，然后在后续测试步骤的请求中使用前面获取到的 token。</p>
+<p>在 HttpRunner 中，支持参数提取（<code>extract</code>）和参数引用的功能（<code>$var</code>）。</p>
+<p>在测试步骤（test）中，若需要从响应结果中提取参数，则可使用 <code>extract</code> 关键字。extract 的列表中可指定一个或多个需要提取的参数。</p>
+<p>在提取参数时，当 HTTP 的请求响应结果为 JSON 格式，则可以采用<code>.</code>运算符的方式，逐级往下获取到参数值；响应结果的整体内容引用方式为 content 或者 body。</p>
+<p>例如，第一个接口<code>/api/get-token</code>的响应结果为：</p>
+<div class="codehilite"><pre><span></span><span class="p">{</span><span class="nt">&quot;success&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nt">&quot;token&quot;</span><span class="p">:</span> <span class="s2">&quot;ZQkYhbaQ6q8UFFNE&quot;</span><span class="p">}</span>
+</pre></div>
+
+
+<p>那么要获取到 token 参数，就可以使用 content.token 的方式；具体的写法如下：</p>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;extract&quot;</span><span class="err">:</span> <span class="p">[</span>
+  <span class="p">{</span><span class="nt">&quot;token&quot;</span><span class="p">:</span> <span class="s2">&quot;content.token&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>其中，token 作为提取后的参数名称，可以在后续使用 <code>$token</code> 进行引用。</p>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;headers&quot;</span><span class="err">:</span> <span class="p">{</span>
+  <span class="nt">&quot;device_sn&quot;</span><span class="p">:</span> <span class="s2">&quot;FwgRiO7CNA50DSU&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;token&quot;</span><span class="p">:</span> <span class="s2">&quot;$token&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>修改后的测试用例另存为 <a href="../data/demo-quickstart-2.json">demo-quickstart-2.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-2.yml">demo-quickstart-2.yml</a>）。</p>
+<p>再次运行测试用例，运行结果如下：</p>
+<div class="codehilite"><pre><span></span>$ hrun docs/data/demo-quickstart-2.yml
+INFO     Start to run testcase: testcase description
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 8.32 ms, response_length: 46 bytes
+
+.
+/api/users/1000
+INFO     POST http://127.0.0.1:5000/api/users/1000
+INFO     status_code: 201, response_time(ms): 3.02 ms, response_length: 54 bytes
+
+.
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.019s
+
+OK
+INFO     Start to render Html report ...
+INFO     Generated Html report: /Users/debugtalk/MyProjects/HttpRunner-dev/httprunner-docs-v2x/reports/1548514191.html
+</pre></div>
+
+
+<p>经过修改，第二个测试步骤也运行成功了。</p>
+<h3 id="base_url">base_url<a class="headerlink" href="#base_url" title="Permanent link">&para;</a></h3>
+<p>虽然测试步骤运行都成功了，但是仍然有继续优化的地方。</p>
+<p>继续查看 <a href="../data/demo-quickstart-2.json">demo-quickstart-2.json</a>，我们会发现在每个测试步骤的 URL 中，都采用的是完整的描述（host+path），但大多数情况下同一个用例中的 host 都是相同的，区别仅在于 path 部分。</p>
+<p>因此，我们可以将各个测试步骤（test） URL 的 <code>base_url</code> 抽取出来，放到全局配置模块（config）中，在测试步骤中的 URL 只保留 PATH 部分。</p>
+<div class="codehilite"><pre><span></span><span class="p p-Indicator">-</span> <span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">testcase description</span>
+    <span class="nt">base_url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">get token</span>
+    <span class="nt">request</span><span class="p">:</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/api/get-token</span>
+</pre></div>
+
+
+<p>调整后的测试用例另存为 <a href="../data/demo-quickstart-3.json">demo-quickstart-3.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-3.yml">demo-quickstart-3.yml</a>）。</p>
+<p>重启 flask 应用服务后再次运行测试用例，所有的测试步骤仍然运行成功。</p>
+<h3 id="_9">变量的申明和引用<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>继续查看 <a href="../data/demo-quickstart-3.json">demo-quickstart-3.json</a>，我们会发现测试用例中存在较多硬编码的参数，例如 app_version、device_sn、os_platform、user_id 等。</p>
+<p>大多数情况下，我们可以不用修改这些硬编码的参数，测试用例也能正常运行。但是为了更好地维护测试用例，例如同一个参数值在测试步骤中出现多次，那么比较好的做法是，将这些参数定义为变量，然后在需要参数的地方进行引用。</p>
+<p>在 HttpRunner 中，支持变量申明（<code>variables</code>）和引用（<code>$var</code>）的机制。在 config 和 test 中均可以通过 <code>variables</code> 关键字定义变量，然后在测试步骤中可以通过 <code>$ + 变量名称</code> 的方式引用变量。区别在于，在 config 中定义的变量为全局的，整个测试用例（testcase）的所有地方均可以引用；在 test 中定义的变量作用域仅局限于当前测试步骤（teststep）。</p>
+<p>对上述各个测试步骤中硬编码的参数进行变量申明和引用调整后，新的测试用例另存为 <a href="../data/demo-quickstart-4.json">demo-quickstart-4.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-4.yml">demo-quickstart-4.yml</a>）。</p>
+<p>重启 flask 应用服务后再次运行测试用例，所有的测试步骤仍然运行成功。</p>
+<h3 id="_10">抽取公共变量<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
+<p>查看 <a href="../data/demo-quickstart-4.json">demo-quickstart-4.json</a> 可以看出，两个测试步骤中都定义了 device_sn。针对这类公共的参数，我们可以将其统一定义在 config 的 variables 中，在测试步骤中就不用再重复定义。</p>
+<div class="codehilite"><pre><span></span><span class="p p-Indicator">-</span> <span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">testcase description</span>
+    <span class="nt">base_url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000</span>
+    <span class="nt">variables</span><span class="p">:</span>
+        <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">FwgRiO7CNA50DSU</span>
+</pre></div>
+
+
+<p>调整后的测试用例见 <a href="../data/demo-quickstart-5.json">demo-quickstart-5.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-5.yml">demo-quickstart-5.yml</a>）。</p>
+<h3 id="_11">实现动态运算逻辑<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
+<p>在 <a href="../data/demo-quickstart-5.yml">demo-quickstart-5.yml</a> 中，参数 device_sn 代表的是设备的 SN 编码，虽然采用硬编码的方式暂时不影响测试用例的运行，但这与真实的用户场景不大相符。</p>
+<p>假设 device_sn 的格式为 15 长度的字符串，那么我们就可以在每次运行测试用例的时候，针对 device_sn 生成一个 15 位长度的随机字符串。与此同时，sign 字段是根据 headers 中的各个字段拼接后生成得到的 MD5 值，因此在 device_sn 变动后，sign 也应该重新进行计算，否则就会再次出现签名校验失败的问题。</p>
+<p>然而，HttpRunner 的测试用例都是采用 YAML/JSON 格式进行描述的，在文本格式中如何执行代码运算呢？</p>
+<p>HttpRunner 的实现方式为，支持热加载的插件机制（<code>debugtalk.py</code>），可以在 YAML/JSON 中调用 Python 函数。</p>
+<p>具体地做法，我们可以在测试用例文件的同级或其父级目录中创建一个 debugtalk.py 文件，然后在其中定义相关的函数和变量。</p>
+<p>例如，针对 device_sn 的随机字符串生成功能，我们可以定义一个 gen_random_string 函数；针对 sign 的签名算法，我们可以定义一个 get_sign 函数。</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">hmac</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">string</span>
+
+<span class="n">SECRET_KEY</span> <span class="o">=</span> <span class="s2">&quot;DebugTalk&quot;</span>
+
+<span class="k">def</span> <span class="nf">gen_random_string</span><span class="p">(</span><span class="n">str_len</span><span class="p">):</span>
+    <span class="n">random_char_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">str_len</span><span class="p">):</span>
+        <span class="n">random_char</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span>
+        <span class="n">random_char_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random_char</span><span class="p">)</span>
+
+    <span class="n">random_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random_char_list</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">random_string</span>
+
+<span class="k">def</span> <span class="nf">get_sign</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+    <span class="n">sign_key</span> <span class="o">=</span> <span class="n">SECRET_KEY</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">sign_key</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">sign</span>
+</pre></div>
+
+
+<p>然后，我们在 YAML/JSON 测试用例文件中，就可以对定义的函数进行调用，对定义的变量进行引用了。引用变量的方式仍然与前面讲的一样，采用<code>$ + 变量名称</code>的方式；调用函数的方式为<code>${func($var)}</code>。</p>
+<p>例如，生成 15 位长度的随机字符串并赋值给 device_sn 的代码为：</p>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;variables&quot;</span><span class="err">:</span> <span class="p">[</span>
+  <span class="p">{</span><span class="nt">&quot;device_sn&quot;</span><span class="p">:</span> <span class="s2">&quot;${gen_random_string(15)}&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>使用 $user_agent、$device_sn、$os_platform、$app_version 根据签名算法生成 sign 值的代码为：</p>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;json&quot;</span><span class="err">:</span> <span class="p">{</span>
+  <span class="nt">&quot;sign&quot;</span><span class="p">:</span> <span class="s2">&quot;${get_sign($user_agent, $device_sn, $os_platform, $app_version)}&quot;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>对测试用例进行上述调整后，另存为 <a href="../data/demo-quickstart-6.json">demo-quickstart-6.json</a>（对应的 YAML 格式：<a href="../data/demo-quickstart-6.yml">demo-quickstart-6.yml</a>）。</p>
+<p>重启 flask 应用服务后再次运行测试用例，所有的测试步骤仍然运行成功。</p>
+<h3 id="_12">参数化数据驱动<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p>请确保你使用的 HttpRunner 版本号不低于 2.0.0</p>
+</blockquote>
+<p>在 <a href="../data/demo-quickstart-6.yml">demo-quickstart-6.yml</a> 中，user_id 仍然是写死的值，假如我们需要创建 user_id 为 1001～1004 的用户，那我们只能不断地去修改 user_id，然后运行测试用例，重复操作 4 次？或者我们在测试用例文件中将创建用户的 test 复制 4 份，然后在每一份里面分别使用不同的 user_id ？</p>
+<p>很显然，不管是采用上述哪种方式，都会很繁琐，并且也无法应对灵活多变的测试需求。</p>
+<p>针对这类需求，HttpRunner 支持参数化数据驱动的功能。</p>
+<p>在 HttpRunner 中，若要采用数据驱动的方式来运行测试用例，需要创建一个文件，对测试用例进行引用，并使用 <code>parameters</code> 关键字定义参数并指定数据源取值方式。</p>
+<p>例如，我们需要在创建用户的接口中对 user_id 进行参数化，参数化列表为 1001～1004，并且取值方式为顺序取值，那么最简单的描述方式就是直接指定参数列表。具体的编写方式为，新建一个测试场景文件 <a href="../data/demo-quickstart-7.yml">demo-quickstart-7.yml</a>（对应的 JSON 格式：<a href="../data/demo-quickstart-7.json">demo-quickstart-7.json</a>），内容如下所示：</p>
+<div class="codehilite"><pre><span></span><span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">testcase description</span>
+
+<span class="nt">testcases</span><span class="p">:</span>
+    <span class="nt">create user</span><span class="p">:</span>
+        <span class="nt">testcase</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">demo-quickstart-6.yml</span>
+        <span class="nt">parameters</span><span class="p">:</span>
+            <span class="nt">user_id</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">1001</span><span class="p p-Indicator">,</span> <span class="nv">1002</span><span class="p p-Indicator">,</span> <span class="nv">1003</span><span class="p p-Indicator">,</span> <span class="nv">1004</span><span class="p p-Indicator">]</span>
+</pre></div>
+
+
+<p>仅需如上配置，针对 user_id 的参数化数据驱动就完成了。</p>
+<p>重启 flask 应用服务后再次运行测试用例，测试用例运行情况如下所示：</p>
+<details>
+<summary>点击查看运行日志</summary>
+
+<div class="codehilite"><pre><span></span>$ hrun docs/data/demo-quickstart-7.json
+INFO     Start to run testcase: create user 1001
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 8.95 ms, response_length: 46 bytes
+
+.
+/api/users/1001
+INFO     POST http://127.0.0.1:5000/api/users/1001
+INFO     status_code: 201, response_time(ms): 3.02 ms, response_length: 54 bytes
+
+.
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.021s
+
+OK
+INFO     Start to run testcase: create user 1002
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 2.78 ms, response_length: 46 bytes
+
+.
+/api/users/1002
+INFO     POST http://127.0.0.1:5000/api/users/1002
+INFO     status_code: 201, response_time(ms): 2.84 ms, response_length: 54 bytes
+
+.
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.007s
+
+OK
+INFO     Start to run testcase: create user 1003
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 2.92 ms, response_length: 46 bytes
+
+.
+/api/users/1003
+INFO     POST http://127.0.0.1:5000/api/users/1003
+INFO     status_code: 201, response_time(ms): 5.56 ms, response_length: 54 bytes
+
+.
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.011s
+
+OK
+INFO     Start to run testcase: create user 1004
+/api/get-token
+INFO     POST http://127.0.0.1:5000/api/get-token
+INFO     status_code: 200, response_time(ms): 5.25 ms, response_length: 46 bytes
+
+.
+/api/users/1004
+INFO     POST http://127.0.0.1:5000/api/users/1004
+INFO     status_code: 201, response_time(ms): 7.02 ms, response_length: 54 bytes
+
+.
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.016s
+
+OK
+INFO     Start to render Html report ...
+INFO     Generated Html report: /Users/debugtalk/MyProjects/HttpRunner-dev/httprunner-docs-v2x/reports/1548518757.html
+</pre></div>
+
+
+
+</details>
+
+<p>可以看出，测试用例总共运行了 4 次，并且每次运行时都是采用的不同 user_id。</p>
+<p>关于参数化数据驱动，这里只描述了最简单的场景和使用方式，如需了解更多，请进一步阅读<a href="/prepare/parameters/">《数据驱动使用手册》</a>。</p>
+<h2 id="_13">查看测试报告<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<p>在每次使用 hrun 命令运行测试用例后，均会生成一份 HTML 格式的测试报告。报告文件位于 reports 目录下，文件名称为测试用例的开始运行时间。</p>
+<p>例如，在运行完 <a href="../data/demo-quickstart-1.json">demo-quickstart-1.json</a> 后，将生成如下形式的测试报告：</p>
+<p><img alt="" src="../images/report-demo-quickstart-1-overview.jpg" /></p>
+<p><img alt="" src="../images/report-demo-quickstart-1-log2.jpg" /></p>
+<p><img alt="" src="../images/report-demo-quickstart-1-traceback.jpg" /></p>
+<p>关于测试报告的详细内容，请查看<a href="/run-tests/report/">《测试报告》</a>部分。</p>
+<h2 id="_14">总结<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<p>到此为止，HttpRunner 的核心功能就介绍完了，掌握本文中的功能特性，足以帮助你应对日常项目工作中至少 80% 的自动化测试需求。</p>
+<p>当然，HttpRunner 不止于此，如需挖掘 HttpRunner 的更多特性，实现更复杂场景的自动化测试需求，可继续阅读后续文档。</p>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../Installation/" title="安装说明" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  上一页
+                </span>
+                安装说明
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../concept/nominal/" title="名词解释" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  下一页
+                </span>
+                名词解释
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2017 - 2019 debugtalk
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+  <div class="md-footer-social">
+    <link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+    
+      <a href="https://debugtalk.com" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/httprunner" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.ac79c3b0.js"></script>
+      
+        
+        
+          
+          <script src="../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
+      
+        <script src="../js/slardar.js"></script>
+      
+    
+  </body>
+</html>

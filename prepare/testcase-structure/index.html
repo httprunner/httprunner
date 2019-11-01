@@ -1,0 +1,1111 @@
+
+
+
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="HttpRunner V2.x User Documentation">
+      
+      
+      
+        <meta name="author" content="debugtalk">
+      
+      
+        <meta name="lang:clipboard.copy" content="复制">
+      
+        <meta name="lang:clipboard.copied" content="已复制">
+      
+        <meta name="lang:search.language" content="jp">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
+      
+        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
+      
+        <meta name="lang:search.result.other" content="# 个符合条件的结果">
+      
+        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.3">
+    
+    
+      
+        <title>测试用例组织 - HttpRunner V2.x 中文使用文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/application.30686662.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/application-palette.a8b3c06d.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#3f51b5">
+      
+    
+    
+      <script src="../../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../assets/fonts/material-icons.css">
+    
+    
+    
+      
+        
+<script>
+  window.ga = window.ga || function() {
+    (ga.q = ga.q || []).push(arguments)
+  }
+  ga.l = +new Date
+  /* Setup integration and send page view */
+  ga("create", "UA-114587036-2", "auto")
+  ga("set", "anonymizeIp", true)
+  ga("send", "pageview")
+  /* Register handler to log search on blur */
+  document.addEventListener("DOMContentLoaded", () => {
+    if (document.forms.search) {
+      var query = document.forms.search.query
+      query.addEventListener("blur", function() {
+        if (this.value) {
+          var path = document.location.pathname;
+          ga("send", "pageview", path + "?q=" + this.value)
+        }
+      })
+    }
+  })
+</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#yaml-json" tabindex="1" class="md-skip">
+        跳转至
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../.." title="HttpRunner V2.x 中文使用文档" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              HttpRunner V2.x 中文使用文档
+            </span>
+            <span class="md-header-nav__topic">
+              
+                测试用例组织
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            键入以开始搜索
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+<a href="https://github.com/HttpRunner/HttpRunner" title="前往 Github 仓库" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    HttpRunner
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main" role="main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../.." title="HttpRunner V2.x 中文使用文档" class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </a>
+    HttpRunner V2.x 中文使用文档
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+<a href="https://github.com/HttpRunner/HttpRunner" title="前往 Github 仓库" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    HttpRunner
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="介绍" class="md-nav__link">
+      介绍
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../Installation/" title="安装说明" class="md-nav__link">
+      安装说明
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../quickstart/" title="快速上手" class="md-nav__link">
+      快速上手
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      基础概念
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        基础概念
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../concept/nominal/" title="名词解释" class="md-nav__link">
+      名词解释
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" checked>
+    
+    <label class="md-nav__link" for="nav-5">
+      测试准备
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        测试准备
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../record/" title="录制生成用例" class="md-nav__link">
+      录制生成用例
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../project-structure/" title="项目文件组织" class="md-nav__link">
+      项目文件组织
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        测试用例组织
+      </label>
+    
+    <a href="./" title="测试用例组织" class="md-nav__link md-nav__link--active">
+      测试用例组织
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-json" class="md-nav__link">
+    YAML &amp; JSON
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    测试用例结构
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    变量空间（context）作用域
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    config
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test" class="md-nav__link">
+    test
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../request-hook/" title="hook机制" class="md-nav__link">
+      hook机制
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../dot-env/" title="环境变量" class="md-nav__link">
+      环境变量
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../testcase-layer/" title="测试用例分层" class="md-nav__link">
+      测试用例分层
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../parameters/" title="参数化数据驱动" class="md-nav__link">
+      参数化数据驱动
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../validate-pretty/" title="Validate & Prettify" class="md-nav__link">
+      Validate & Prettify
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../security/" title="信息安全" class="md-nav__link">
+      信息安全
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      测试执行
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        测试执行
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../run-tests/cli/" title="运行测试(CLI)" class="md-nav__link">
+      运行测试(CLI)
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../run-tests/report/" title="测试报告" class="md-nav__link">
+      测试报告
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../run-tests/load-test/" title="性能测试" class="md-nav__link">
+      性能测试
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      开发扩展
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        开发扩展
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../development/architecture/" title="Pipline" class="md-nav__link">
+      Pipline
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../development/dev-api/" title="基础库调用" class="md-nav__link">
+      基础库调用
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../FAQ/" title="FAQ" class="md-nav__link">
+      FAQ
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
+    
+    <label class="md-nav__link" for="nav-9">
+      实践案例
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-9">
+        实践案例
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/testerhome-login/" title="TesterHome 登录" class="md-nav__link">
+      TesterHome 登录
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../related-docs/" title="相关资料" class="md-nav__link">
+      相关资料
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-json" class="md-nav__link">
+    YAML &amp; JSON
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    测试用例结构
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    变量空间（context）作用域
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    config
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test" class="md-nav__link">
+    test
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  <h1>测试用例组织</h1>
+                
+                <h2 id="yaml-json">YAML &amp; JSON<a class="headerlink" href="#yaml-json" title="Permanent link">&para;</a></h2>
+<p>HttpRunner 的测试用例支持两种文件格式：YAML 和 JSON。</p>
+<p>JSON 和 YAML 格式的测试用例完全等价，包含的信息内容也完全相同。</p>
+<ul>
+<li>对于新手来说，推荐使用 JSON 格式，虽然描述形式上稍显累赘，但是不容易出错（大多编辑器都具有 JSON 格式的检测功能）；同时，HttpRunner 也内置了 JSON 格式正确性检测和样式美化功能，详情可查看<a href="/testcase//validate-pretty.md">《Validate &amp; Prettify》</a>。</li>
+<li>对于熟悉 YAML 格式的人来说，编写维护 YAML 格式的测试用例会更简洁，但前提是要保证 YAML 格式没有语法错误。</li>
+</ul>
+<p>对于两种格式的展示差异，可以对比查看 <a href="/data/demo-quickstart-6.json">demo-quickstart-6.json</a> 和 <a href="/data/demo-quickstart-6.yml">demo-quickstart-6.yml</a> 获取初步的印象。</p>
+<p>后面为了更清晰的描述，统一采用 JSON 格式作为示例。</p>
+<h2 id="_1">测试用例结构<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p><img alt="testcase-structure" src="../../images/testcase-structure.png" /></p>
+<p>在 HttpRunner 中，测试用例组织主要基于三个概念：</p>
+<ul>
+<li>测试用例集（testsuite）：对应一个文件夹，包含单个或多个测试用例（<code>YAML/JSON</code>）文件</li>
+<li>测试用例（testcase）：对应一个 <code>YAML/JSON</code> 文件，包含单个或多个测试步骤</li>
+<li>测试步骤（teststep）：对应 <code>YAML/JSON</code> 文件中的一个 <code>test</code>，描述单次接口测试的全部内容，包括发起接口请求、解析响应结果、校验结果等</li>
+</ul>
+<p>对于单个 <code>YAML/JSON</code> 文件来说，数据存储结构为 <code>list of dict</code> 的形式，其中可能包含一个全局配置项（config）和若干个测试步骤（test）。</p>
+<p>具体地：</p>
+<ul>
+<li>config：作为整个测试用例的全局配置项</li>
+<li>test：对应单个测试步骤（teststep），测试用例存在顺序关系，运行时将从前往后依次运行各个测试步骤</li>
+</ul>
+<p>对应的 JSON 格式如下所示：</p>
+<div class="codehilite"><pre><span></span><span class="p">[</span>
+  <span class="p">{</span>
+    <span class="nt">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span><span class="err">...</span><span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="nt">&quot;test&quot;</span><span class="p">:</span> <span class="p">{</span><span class="err">...</span><span class="p">}</span>
+  <span class="p">},</span>
+  <span class="p">{</span>
+    <span class="nt">&quot;test&quot;</span><span class="p">:</span> <span class="p">{</span><span class="err">...</span><span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<h2 id="context">变量空间（context）作用域<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>在测试用例内部，HttpRunner 划分了两层变量空间作用域（context）。</p>
+<ul>
+<li>config：作为整个测试用例的全局配置项，作用域为整个测试用例；</li>
+<li>test：测试步骤的变量空间（context）会继承或覆盖 config 中定义的内容；<ul>
+<li>若某变量在 config 中定义了，在某 test 中没有定义，则该 test 会继承该变量</li>
+<li>若某变量在 config 和某 test 中都定义了，则该 test 中使用自己定义的变量值</li>
+</ul>
+</li>
+<li>各个测试步骤（test）的变量空间相互独立，互不影响；</li>
+<li>如需在多个测试步骤（test）中传递参数值，则需要使用 extract 关键字，并且只能从前往后传递</li>
+</ul>
+<h2 id="config">config<a class="headerlink" href="#config" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;config&quot;</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;testcase description&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="nt">&quot;user_agent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;iOS/10.1&quot;</span><span class="p">,</span> <span class="s2">&quot;iOS/10.2&quot;</span><span class="p">,</span> <span class="s2">&quot;iOS/10.3&quot;</span><span class="p">]},</span>
+        <span class="p">{</span><span class="nt">&quot;app_version&quot;</span><span class="p">:</span> <span class="s2">&quot;${P(app_version.csv)}&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="nt">&quot;os_platform&quot;</span><span class="p">:</span> <span class="s2">&quot;${get_os_platform()}&quot;</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;variables&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="nt">&quot;user_agent&quot;</span><span class="p">:</span> <span class="s2">&quot;iOS/10.3&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="nt">&quot;device_sn&quot;</span><span class="p">:</span> <span class="s2">&quot;${gen_random_string(15)}&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="nt">&quot;os_platform&quot;</span><span class="p">:</span> <span class="s2">&quot;ios&quot;</span><span class="p">}</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;request&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;base_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://127.0.0.1:5000&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;device_sn&quot;</span><span class="p">:</span> <span class="s2">&quot;$device_sn&quot;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;output&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;token&quot;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>required?</th>
+<th>format</th>
+<th>descrption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>Yes</td>
+<td>string</td>
+<td>测试用例的名称，在测试报告中将作为标题</td>
+</tr>
+<tr>
+<td>variables</td>
+<td>No</td>
+<td>list of dict</td>
+<td>定义的全局变量，作用域为整个用例</td>
+</tr>
+<tr>
+<td>parameters</td>
+<td>No</td>
+<td>list of dict</td>
+<td>全局参数，用于实现数据化驱动，作用域为整个用例</td>
+</tr>
+<tr>
+<td>request</td>
+<td>No</td>
+<td>dict</td>
+<td>request 的公共参数，作用域为整个用例；常用参数包括 base_url 和 headers</td>
+</tr>
+</tbody>
+</table>
+<p><strong>request</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>required?</th>
+<th>format</th>
+<th>descrption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base_url</td>
+<td>No</td>
+<td>string</td>
+<td>测试用例请求 URL 的公共 host，指定该参数后，test 中的 url 可以只描述 path 部分</td>
+</tr>
+<tr>
+<td>headers</td>
+<td>No</td>
+<td>dict</td>
+<td>request 中 headers 的公共参数，作用域为整个用例</td>
+</tr>
+<tr>
+<td>output</td>
+<td>No</td>
+<td>list</td>
+<td>整个用例输出的参数列表，可输出的参数包括公共的 variable 和 extract 的参数; 在 log-level 为 debug 模式下，会在 terminal 中打印出参数内容</td>
+</tr>
+</tbody>
+</table>
+<h2 id="test">test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><span class="s2">&quot;test&quot;</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;get token with $user_agent, $os_platform, $app_version&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;request&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;/api/get-token&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;app_version&quot;</span><span class="p">:</span> <span class="s2">&quot;$app_version&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;os_platform&quot;</span><span class="p">:</span> <span class="s2">&quot;$os_platform&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;user_agent&quot;</span><span class="p">:</span> <span class="s2">&quot;$user_agent&quot;</span>
+        <span class="p">},</span>
+        <span class="nt">&quot;json&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;sign&quot;</span><span class="p">:</span> <span class="s2">&quot;${get_sign($user_agent, $device_sn, $os_platform, $app_version)}&quot;</span>
+        <span class="p">},</span>
+        <span class="nt">&quot;extract&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="nt">&quot;token&quot;</span><span class="p">:</span> <span class="s2">&quot;content.token&quot;</span><span class="p">}</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;validate&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;status_code&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">]},</span>
+            <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;headers.Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;application/json&quot;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="nt">&quot;eq&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;content.success&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">]}</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;setup_hooks&quot;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="nt">&quot;teardown_hooks&quot;</span><span class="p">:</span> <span class="p">[]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>required?</th>
+<th>format</th>
+<th>descrption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>Yes</td>
+<td>string</td>
+<td>测试步骤的名称，在测试报告中将作为测试步骤的名称</td>
+</tr>
+<tr>
+<td>request</td>
+<td>Yes</td>
+<td>dict</td>
+<td>HTTP 请求的详细内容；可用参数详见 <a href="http://docs.python-requests.org/en/master/api/#main-interface">python-requests</a> 官方文档</td>
+</tr>
+<tr>
+<td>variables</td>
+<td>No</td>
+<td>list of dict</td>
+<td>测试步骤中定义的变量，作用域为当前测试步骤</td>
+</tr>
+<tr>
+<td>extract</td>
+<td>No</td>
+<td>list</td>
+<td>从当前 HTTP 请求的响应结果中提取参数，并保存到参数变量中（例如<code>token</code>），后续测试用例可通过<code>$token</code>的形式进行引用</td>
+</tr>
+<tr>
+<td>validate</td>
+<td>No</td>
+<td>list</td>
+<td>测试用例中定义的结果校验项，作用域为当前测试用例，用于实现对当前测试用例运行结果的校验</td>
+</tr>
+<tr>
+<td>setup_hooks</td>
+<td>No</td>
+<td>list</td>
+<td>在 HTTP 请求发送前执行 hook 函数，主要用于准备工作</td>
+</tr>
+<tr>
+<td>teardown_hooks</td>
+<td>No</td>
+<td>list</td>
+<td>在 HTTP 请求发送后执行 hook 函数，主要用户测试后的清理工作</td>
+</tr>
+</tbody>
+</table>
+<p><strong>extract</strong></p>
+<p>支持多种提取方式：</p>
+<ul>
+<li>响应结果为 JSON 结构，可采用<code>.</code>运算符的方式，例如<code>headers.Content-Type</code>、<code>content.success</code>；</li>
+<li>响应结果为 text/html 结构，可采用正则表达式的方式，例如<code>blog-motto\"&gt;(.*)&lt;/h2&gt;</code></li>
+<li>详情可阅读<a href="http://debugtalk.com/post/apitestengine-not-only-about-json-api/">《ApiTestEngine，不再局限于API的测试》</a></li>
+</ul>
+<p><strong>validate</strong></p>
+<p>支持两种格式：</p>
+<ul>
+<li><code>{"comparator_name": [check_item, expect_value]}</code></li>
+<li><code>{"check": check_item, "comparator": comparator_name, "expect": expect_value}</code></li>
+</ul>
+<p><strong>hooks</strong></p>
+<p>setup_hooks 函数放置于 debugtalk.py 中，并且必须包含三个参数：</p>
+<ul>
+<li>method: 请求方法，e.g. GET, POST, PUT</li>
+<li>url: 请求 URL</li>
+<li>kwargs: request 的参数字典</li>
+</ul>
+<p>teardown_hooks 函数放置于 debugtalk.py 中，并且必须包含一个参数：</p>
+<ul>
+<li>resp_obj: requests.Response 实例</li>
+</ul>
+<p>关于 <code>setup_hooks</code> 和 <code>teardown_hooks</code> 的更多内容，请参考<a href="../../prepare/request-hook/">《hook 机制》</a>。</p>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../project-structure/" title="项目文件组织" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  上一页
+                </span>
+                项目文件组织
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../request-hook/" title="hook机制" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  下一页
+                </span>
+                hook机制
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2017 - 2019 debugtalk
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+  <div class="md-footer-social">
+    <link rel="stylesheet" href="../../assets/fonts/font-awesome.css">
+    
+      <a href="https://debugtalk.com" class="md-footer-social__link fa fa-globe"></a>
+    
+      <a href="https://github.com/httprunner" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/application.ac79c3b0.js"></script>
+      
+        
+        
+          
+          <script src="../../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
+          
+            
+              
+              
+            
+          
+          
+        
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"../.."}})</script>
+      
+        <script src="../../js/slardar.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,34 @@
+- config:
+    name: "user management testcase."
+    parameters:
+        - user_agent: ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
+        - app_version: ${P(app_version.csv)}
+        - os_platform: ${get_os_platform()}
+    variables:
+        - user_agent: 'iOS/10.3'
+        - device_sn: ${gen_random_string(15)}
+        - os_platform: 'ios'
+        - app_version: '2.8.6'
+    request:
+        base_url: http://127.0.0.1:5000
+        headers:
+            Content-Type: application/json
+            device_sn: $device_sn
+
+- test:
+    name: get token with $user_agent, $os_platform, $app_version
+    request:
+        url: /api/get-token
+        method: POST
+        headers:
+            app_version: $app_version
+            os_platform: $os_platform
+            user_agent: $user_agent
+        json:
+            sign: ${get_sign($user_agent, $device_sn, $os_platform, $app_version)}
+    extract:
+        - token: content.token
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, application/json]
+        - eq: [content.success, true]
