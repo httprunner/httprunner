@@ -732,6 +732,18 @@
   </li>
 
     
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../CHANGELOG/" title="CHANGELOG" class="md-nav__link">
+      CHANGELOG
+    </a>
+  </li>
+
+    
   </ul>
 </nav>
                   </div>
@@ -861,7 +873,7 @@
 
 
 <h3 id="_2">可用初始化参数<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
-<p><code>HttpRunner</code> 内部用于驱动测试执行的是<code>unittest.TextTestRunner</code>，在初始化 <code>HttpRunner</code> 时可以使用 TextTestRunner 的所有可用参数（详情可阅读<a href="https://docs.python.org/3.6/library/unittest.html#unittest.TextTestRunner">官方文档</a>）。除此之外，<code>HttpRunner</code>还额外支持一个参数，<code>http_client_session</code>，可用于指定不同的客户端类型。</p>
+<p><code>HttpRunner</code> 内部用于驱动测试执行的是 <code>unittest.TextTestRunner</code>，在初始化 <code>HttpRunner</code> 时可以使用 TextTestRunner 的所有可用参数（详情可阅读<a href="https://docs.python.org/3.6/library/unittest.html#unittest.TextTestRunner">官方文档</a>）。除此之外，<code>HttpRunner</code>还额外支持一个参数，<code>http_client_session</code>，可用于指定不同的客户端类型。</p>
 <p>通常情况下，初始化 <code>HttpRunner</code> 时常用的参数有如下几个：</p>
 <ul>
 <li><code>resultclass</code>: HtmlTestResult/TextTestResult，默认值为 HtmlTestResult</li>
