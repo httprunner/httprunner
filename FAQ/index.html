@@ -571,9 +571,38 @@
       
     
     
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        FAQ
+      </label>
+    
     <a href="./" title="FAQ" class="md-nav__link md-nav__link--active">
       FAQ
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#https-sslerror" class="md-nav__link">
+    HTTPS SSLError
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -655,6 +684,22 @@
     
   
   
+    <label class="md-nav__title" for="__toc">目录</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#https-sslerror" class="md-nav__link">
+    HTTPS SSLError
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -667,6 +712,14 @@
                 
                 
                 <h1 id="_1">常见问题<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<h2 id="https-sslerror">HTTPS SSLError<a class="headerlink" href="#https-sslerror" title="Permanent link">&para;</a></h2>
+<p>请求 HTTPS 接口时，若本地开启了代理软件（Charles/Fiddler），由于 HTTPS 证书的原因，会导致 SSLError 的报错。</p>
+<p>解决的方式是，在 config 中增加 <code>verify: False</code>，原理见 requests 的 <a href="https://requests.kennethreitz.org/en/master/user/advanced/#ssl-cert-verification"><code>SSL Cert Verification</code></a> 部分。</p>
+<div class="codehilite"><pre><span></span><span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">XXX</span>
+    <span class="nt">base_url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">XXX</span>
+    <span class="nt">verify</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+</pre></div>
                 
                   
                 
