@@ -46,6 +46,12 @@ def get_current_date(fmt="%Y-%m-%d"):
     return datetime.datetime.now().strftime(fmt)
 
 
+def sleep(n_secs):
+    """ sleep n seconds
+    """
+    time.sleep(n_secs)
+
+
 ###############################################################################
 ##  upload files with requests-toolbelt
 #   e.g.
@@ -198,12 +204,3 @@ def startswith(check_value, expect_value):
 
 def endswith(check_value, expect_value):
     assert builtin_str(check_value).endswith(builtin_str(expect_value))
-
-
-""" built-in hooks
-"""
-
-def sleep_N_secs(n_secs):
-    """ sleep n seconds
-    """
-    time.sleep(n_secs)
