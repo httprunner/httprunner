@@ -260,6 +260,7 @@ class Runner(object):
         if teardown_hooks:
             self.session_context.update_test_variables("response", resp_obj)
             self.do_hook_actions(teardown_hooks, "teardown")
+            self.http_client_session.update_last_req_resp_record(resp_obj)
 
         # extract
         extractors = test_dict.get("extract", {})
