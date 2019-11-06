@@ -7,7 +7,6 @@ httprunner.compat
 This module handles import compatibility issues between Python 2 and
 Python 3.
 """
-from collections import OrderedDict
 
 try:
     import simplejson as json

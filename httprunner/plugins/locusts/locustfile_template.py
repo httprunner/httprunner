@@ -1,12 +1,12 @@
 import logging
 import random
 
-import zmq
-from httprunner.exceptions import MyBaseError, MyBaseFailure
-from httprunner.api import prepare_locust_tests
-from httprunner.runner import Runner
 from locust import HttpLocust, TaskSet, task
 from locust.events import request_failure
+
+from httprunner.exceptions import MyBaseError, MyBaseFailure
+from httprunner.plugins.locusts.utils import prepare_locust_tests
+from httprunner.runner import Runner
 
 logging.getLogger().setLevel(logging.CRITICAL)
 logging.getLogger('locust.main').setLevel(logging.INFO)
@@ -38,5 +38,6 @@ class WebPageUser(HttpLocust):
     min_wait = 10
     max_wait = 30
 
+    # file_path is generated on locusts startup
     file_path = "$TESTCASE_FILE"
     tests = prepare_locust_tests(file_path)

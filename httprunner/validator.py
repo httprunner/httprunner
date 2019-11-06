@@ -7,10 +7,10 @@ import types
 
 from httprunner import exceptions, logger
 
-
 """ validate data format
 TODO: refactor with JSON schema validate
 """
+
 
 def is_testcase(data_structure):
     """ check if data_structure is a testcase.

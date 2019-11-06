@@ -7,7 +7,6 @@ import itertools
 import json
 import os.path
 import re
-import string
 from datetime import datetime
 
 from httprunner import exceptions, logger

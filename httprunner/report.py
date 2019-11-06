@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import io
 import os
 import platform
@@ -9,10 +7,11 @@ from base64 import b64encode
 from collections import Iterable
 from datetime import datetime
 
-import requests
-from httprunner import __version__, loader, logger
-from httprunner.compat import basestring, bytes, json, numeric_types
 from jinja2 import Template, escape
+from requests.cookies import RequestsCookieJar
+
+from httprunner import __version__, logger
+from httprunner.compat import basestring, bytes, json, numeric_types
 
 
 def get_platform():
@@ -55,11 +54,11 @@ def get_summary(result):
         }
     }
     summary["stat"]["successes"] = summary["stat"]["total"] \
-        - summary["stat"]["failures"] \
-        - summary["stat"]["errors"] \
-        - summary["stat"]["skipped"] \
-        - summary["stat"]["expectedFailures"] \
-        - summary["stat"]["unexpectedSuccesses"]
+                                   - summary["stat"]["failures"] \
+                                   - summary["stat"]["errors"] \
+                                   - summary["stat"]["skipped"] \
+                                   - summary["stat"]["expectedFailures"] \
+                                   - summary["stat"]["unexpectedSuccesses"]
 
     summary["time"] = {
         'start_at': result.start_at,
@@ -83,7 +82,13 @@ def aggregate_stat(origin_stat, new_stat):
             origin_stat[key] = new_stat[key]
         elif key == "start_at":
             # start datetime
-            origin_stat[key] = min(origin_stat[key], new_stat[key])
+            origin_stat["start_at"] = min(origin_stat["start_at"], new_stat["start_at"])
+        elif key == "duration":
+            # duration = max_end_time - min_start_time
+            max_end_time = max(origin_stat["start_at"] + origin_stat["duration"],
+                               new_stat["start_at"] + new_stat["duration"])
+            min_start_time = min(origin_stat["start_at"], new_stat["start_at"])
+            origin_stat["duration"] = max_end_time - min_start_time
         else:
             origin_stat[key] += new_stat[key]
 
@@ -149,7 +154,7 @@ def __stringify_request(request_data):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
-        elif isinstance(value, requests.cookies.RequestsCookieJar):
+        elif isinstance(value, RequestsCookieJar):
             value = value.get_dict()
 
         request_data[key] = value
@@ -208,7 +213,7 @@ def __stringify_response(response_data):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
-        elif isinstance(value, requests.cookies.RequestsCookieJar):
+        elif isinstance(value, RequestsCookieJar):
             value = value.get_dict()
 
         response_data[key] = value
@@ -271,18 +276,20 @@ def __stringify_meta_datas(meta_datas):
             __stringify_response(data["response"])
 
 
-def render_html_report(summary, report_template=None, report_dir=None, report_file=None):
+def gen_html_report(summary, report_template=None, report_dir=None, report_file=None):
     """ render html report with specified report name and template
 
     Args:
-        report_template (str): specify html report template path
+        summary (dict): test result summary data
+        report_template (str): specify html report template path, template should be in Jinja2 format.
         report_dir (str): specify html report save directory
+        report_file (str): specify html report file path, this has higher priority than specifying report dir.
 
     """
     if not report_template:
         report_template = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            "templates",
+            "static",
             "report_template.html"
         )
         logger.log_debug("No html report template specified, use default.")
@@ -291,18 +298,20 @@ def render_html_report(summary, report_template=None, report_dir=None, report_fi
 
     logger.log_info("Start to render Html report ...")
 
-    report_dir = report_dir or os.path.join(os.getcwd(), "reports")
-    if not os.path.isdir(report_dir):
-        os.makedirs(report_dir)
-
     start_at_timestamp = int(summary["time"]["start_at"])
     summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
     if report_file:
-        report_path = os.path.join(report_dir, report_file)
+        report_dir = os.path.dirname(report_file)
+        report_file_name = os.path.basename(report_file)
     else:
-        report_path = os.path.join(report_dir, "{}.html".format(start_at_timestamp))
+        report_dir = report_dir or os.path.join(os.getcwd(), "reports")
+        report_file_name = "{}.html".format(start_at_timestamp)
 
+    if not os.path.isdir(report_dir):
+        os.makedirs(report_dir)
+
+    report_path = os.path.join(report_dir, report_file_name)
     with io.open(report_template, "r", encoding='utf-8') as fp_r:
         template_content = fp_r.read()
         with io.open(report_path, 'w', encoding='utf-8') as fp_w:

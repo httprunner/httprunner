@@ -1,0 +1,41 @@
+- config:
+    name: testcase description
+    variables: {}
+
+- test:
+    name: /api/get-token
+    request:
+        headers:
+            Content-Type: application/json
+            User-Agent: python-requests/2.18.4
+            app_version: 2.8.6
+            device_sn: FwgRiO7CNA50DSU
+            os_platform: ios
+        json:
+            sign: 9c0c7e51c91ae963c833a4ccbab8d683c4a90c98
+        method: POST
+        url: http://127.0.0.1:5000/api/get-token
+    validate:
+        - eq: [status_code, 200]
+        - eq: [headers.Content-Type, application/json]
+        - eq: [content.success, true]
+        - eq: [content.token, baNLX1zhFYP11Seb]
+
+- test:
+    name: /api/users/1000
+    request:
+        headers:
+            Content-Type: application/json
+            User-Agent: python-requests/2.18.4
+            device_sn: FwgRiO7CNA50DSU
+            token: baNLX1zhFYP11Seb
+        json:
+            name: user1
+            password: '123456'
+        method: POST
+        url: http://127.0.0.1:5000/api/users/1000
+    validate:
+        - eq: [status_code, 201]
+        - eq: [headers.Content-Type, application/json]
+        - eq: [content.success, true]
+        - eq: [content.msg, user created successfully.]

@@ -1,5 +1,48 @@
 # Release History
 
+## 2.3.2 (2019-11-01)
+
+**Added**
+
+- docs: add docs content to repo, visit at `https://docs.httprunner.org`
+- docs: update developer interface docs
+
+**Changed**
+
+- rename `render_html_report` to `gen_html_report`
+- make gen_html_report separate with HttpRunner().run_tests()
+- `--report-file`: specify report file path, this has higher priority than specifying report dir.
+- remove `summary` property from HttpRunner
+
+## 2.3.1 (2019-10-28)
+
+**Fixed**
+
+- fix locusts entry configuration
+
+**Changed**
+
+- update PyPi classifiers
+
+## 2.3.0 (2019-10-27)
+
+**Added**
+
+- feat: implement plugin system prototype, make locusts as plugin
+- test: add Python 3.8 to Travis-CI
+- feat: add `__main__.py`, `python -m httprunner` can be used to hrun tests
+
+**Changed**
+
+- update dependency versions in pyproject.toml
+- rename folder, httprunner/templates => httprunner/static
+- log httprunner version before running tests
+- remove unused import & code
+
+**Fixed**
+
+- fix #707: duration stat error in multiple testsuites
+
 ## 2.2.6 (2019-09-18)
 
 **Added**
