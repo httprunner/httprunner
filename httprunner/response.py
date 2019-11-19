@@ -64,7 +64,7 @@ class ResponseObject(object):
             return result
         else:
             raise exceptions.ExtractFailure("\tjsonpath {} get nothing\n".format(field))
-            
+
     def _extract_field_with_regex(self, field):
         """ extract field from response content with regex.
             requests.Response body could be json or html text.
@@ -175,7 +175,16 @@ class ResponseObject(object):
                 raise exceptions.ExtractFailure(err_msg)
 
         # response body
-        elif top_query in ["content", "text", "json"]:
+        elif top_query == "content":
+            if sub_query:
+                err_msg = u"Failed to extract cumstom set attribute from teardown hooks! => {}\n".format(field)
+                err_msg += u"content does not support subquery, please use json or text instead!"
+                logger.log_error(err_msg)
+                raise exceptions.TeardownHooksFailure(err_msg)
+            else:
+                return self.content
+                
+        elif top_query in ["text", "json"]:
             try:
                 body = self.json
             except exceptions.JSONDecodeError:
