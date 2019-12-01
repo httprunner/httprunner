@@ -117,7 +117,6 @@ class TestValidator(unittest.TestCase):
             {"check": "status_code", "comparator": "equals", "expect": 201}
         )
 
-
     def test_extend_validators(self):
         def_validators = [
             {'eq': ['v1', 200]},
