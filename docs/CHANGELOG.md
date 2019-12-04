@@ -1,5 +1,11 @@
 # Release History
 
+## 2.4.0 (2019-12-04)
+
+**Added**
+
+- feat: validate with python script, ref #773
+
 ## 2.3.3 (2019-12-04)
 
 **Fixed**

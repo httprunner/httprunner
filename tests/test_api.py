@@ -289,6 +289,10 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["testcases"]["total"], 2)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 4)
 
+    def test_validate_script(self):
+        summary = self.runner.run("tests/httpbin/validate.yml")
+        self.assertFalse(summary["success"])
+
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/httpbin/hooks.yml')

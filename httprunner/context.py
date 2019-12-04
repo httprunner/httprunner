@@ -13,11 +13,13 @@ class SessionContext(object):
         >>> context.update_session_variables(variables)
 
     """
+
     def __init__(self, variables=None):
         variables_mapping = utils.ensure_mapping_format(variables or {})
         self.session_variables_mapping = parser.parse_variables_mapping(variables_mapping)
+        self.test_variables_mapping = {}
         self.init_test_variables()
-        self.validation_results = []
+        self.validation_results = {}
 
     def init_test_variables(self, variables_mapping=None):
         """ init test variables, called when each test(api) starts.
@@ -77,7 +79,7 @@ class SessionContext(object):
 
         """
         if isinstance(check_item, (dict, list)) \
-            or isinstance(check_item, parser.LazyString):
+                or isinstance(check_item, parser.LazyString):
             # format 1/2/3
             check_value = self.eval_content(check_item)
         else:
@@ -101,7 +103,7 @@ class SessionContext(object):
     def validate(self, validators, resp_obj):
         """ make validation with comparators
         """
-        self.validation_results = []
+        self.validation_results = {}
         if not validators:
             return
 
@@ -111,6 +113,19 @@ class SessionContext(object):
         failures = []
 
         for validator in validators:
+
+            if isinstance(validator, dict) and validator.get("type") == "python_script":
+                validator_dict, ex = self.validate_script(validator["script"], resp_obj)
+                if ex:
+                    validate_pass = False
+                    failures.append(ex)
+
+                self.validation_results["validate_script"] = validator_dict
+                continue
+
+            if "validate_extractor" not in self.validation_results:
+                self.validation_results["validate_extractor"] = []
+
             # validator should be LazyFunction object
             if not isinstance(validator, parser.LazyFunction):
                 raise exceptions.ValidationFailure(
@@ -160,7 +175,7 @@ class SessionContext(object):
                 logger.log_error(validate_msg)
                 failures.append(validate_msg)
 
-            self.validation_results.append(validator_dict)
+            self.validation_results["validate_extractor"].append(validator_dict)
 
             # restore validator args, in case of running multiple times
             validator.update_args(validator_args)
@@ -168,3 +183,55 @@ class SessionContext(object):
         if not validate_pass:
             failures_string = "\n".join([failure for failure in failures])
             raise exceptions.ValidationFailure(failures_string)
+
+    def validate_script(self, script, resp_obj):
+        """ make validation with python script
+        """
+        validator_dict = {
+            "validate_script": "<br/>".join(script),
+            "check_result": "fail",
+            "exception": ""
+        }
+
+        script = "\n    ".join(script)
+        code = f"""
+# encoding: utf-8
+
+try:
+    {script}
+except Exception as ex:
+    import traceback
+    import sys
+    _type, _value, _tb = sys.exc_info()
+    # filename, lineno, name, line
+    _, _lineno, _, line_content = traceback.extract_tb(_tb, 1)[0]
+
+    line_no = _lineno - 4
+
+    c_exception = _type.__name__ + "\\n"
+    c_exception += "\\tError line number: " + str(line_no) + "\\n"
+    c_exception += "\\tError line content: " + str(line_content) + "\\n"
+
+    if _value.args:
+        c_exception += "\\tError description: " + str(_value)
+    else:
+        c_exception += "\\tError description: " + _type.__name__
+
+    raise _type(c_exception)
+"""
+        variables = {
+            "status_code": resp_obj.status_code,
+            "response_json": resp_obj.json,
+            "response": resp_obj
+        }
+        variables.update(self.test_variables_mapping)
+
+        try:
+            code = compile(code, '<string>', 'exec')
+            exec(code, variables)
+            validator_dict["check_result"] = "pass"
+            return validator_dict, ""
+        except Exception as ex:
+            validator_dict["check_result"] = "fail"
+            validator_dict["exception"] = "<br/>".join(str(ex).splitlines())
+            return validator_dict, str(ex)
