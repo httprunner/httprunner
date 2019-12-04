@@ -1,0 +1,10 @@
+name: rpc api
+base_url: http://httpbin.org
+variables:
+    expected_status_code: 200
+request:
+    url: /headers
+    method: GET
+validate:
+    - eq: ["status_code", $expected_status_code]
+    - eq: [content.headers.Host, "httpbin.org"]

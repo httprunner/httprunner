@@ -816,6 +816,18 @@ def load_project_tests(test_path, dot_env_path=None):
     tests_def_mapping["PWD"] = project_working_directory
 
 
+def prepare_path(path):
+    if not os.path.exists(path):
+        err_msg = "path not exist: {}".format(path)
+        logger.log_error(err_msg)
+        raise exceptions.FileNotFound(err_msg)
+
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), path)
+
+    return path
+
+
 def load_tests(path, dot_env_path=None):
     """ load testcases from file path, extend and merge with api/testcase definitions.
 
@@ -869,14 +881,6 @@ def load_tests(path, dot_env_path=None):
             }
 
     """
-    if not os.path.exists(path):
-        err_msg = "path not exist: {}".format(path)
-        logger.log_error(err_msg)
-        raise exceptions.FileNotFound(err_msg)
-
-    if not os.path.isabs(path):
-        path = os.path.join(os.getcwd(), path)
-
     load_project_tests(path, dot_env_path)
     tests_mapping = {
         "project_mapping": project_mapping

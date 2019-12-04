@@ -1,5 +1,11 @@
 # Release History
 
+## 2.3.3 (2019-12-04)
+
+**Fixed**
+
+- fix #768: dump json file path error when folder name contains dot, such as `a.b.c`
+
 ## 2.3.2 (2019-11-01)
 
 **Added**
