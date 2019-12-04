@@ -159,13 +159,13 @@ def get_uniform_comparator(comparator):
         return "length_equals"
     elif comparator in ["len_gt", "count_gt", "length_greater_than", "count_greater_than"]:
         return "length_greater_than"
-    elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals", \
-        "count_greater_than_or_equals"]:
+    elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals",
+                        "count_greater_than_or_equals"]:
         return "length_greater_than_or_equals"
     elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
         return "length_less_than"
-    elif comparator in ["len_le", "count_le", "length_less_than_or_equals", \
-        "count_less_than_or_equals"]:
+    elif comparator in ["len_le", "count_le", "length_less_than_or_equals",
+                        "count_less_than_or_equals"]:
         return "length_less_than_or_equals"
     else:
         return comparator
@@ -237,14 +237,14 @@ def _convert_validators_to_mapping(validators):
 
     Examples:
         >>> validators = [
-                {"check": "v1", "expect": 201, "comparator": "eq"},
-                {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-            ]
-        >>> _convert_validators_to_mapping(validators)
-            {
-                ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
-                ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
-            }
+            {"check": "v1", "expect": 201, "comparator": "eq"},
+            {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+        ]
+        >>> print(_convert_validators_to_mapping(validators))
+        {
+            ("v1", "eq"): {"check": "v1", "expect": 201, "comparator": "eq"},
+            ('{"b": 1}', "eq"): {"check": {"b": 1}, "expect": 200, "comparator": "eq"}
+        }
 
     """
     validators_mapping = {}

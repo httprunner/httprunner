@@ -275,3 +275,37 @@ class TestUtils(ApiServerUnittest):
             "d": [4, 5]
         }
         utils.print_info(info_mapping)
+
+    def test_prepare_dump_json_file_path_for_folder(self):
+        # hrun tests/httpbin/a.b.c/ --save-tests
+        project_working_directory = os.path.join(os.getcwd(), "tests")
+        project_mapping = {
+            "PWD": project_working_directory,
+            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c")
+        }
+        self.assertEqual(
+            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            os.path.join(project_working_directory, "logs", "httpbin/a.b.c/all.loaded.json")
+        )
+
+    def test_prepare_dump_json_file_path_for_file(self):
+        # hrun tests/httpbin/a.b.c/rpc.yml --save-tests
+        project_working_directory = os.path.join(os.getcwd(), "tests")
+        project_mapping = {
+            "PWD": project_working_directory,
+            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c", "rpc.yml")
+        }
+        self.assertEqual(
+            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            os.path.join(project_working_directory, "logs", "httpbin/a.b.c/rpc.loaded.json")
+        )
+
+    def test_prepare_dump_json_file_path_for_passed_testcase(self):
+        project_working_directory = os.path.join(os.getcwd(), "tests")
+        project_mapping = {
+            "PWD": project_working_directory
+        }
+        self.assertEqual(
+            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            os.path.join(project_working_directory, "logs", "tests_mapping.loaded.json")
+        )

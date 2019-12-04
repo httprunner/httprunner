@@ -779,6 +779,19 @@ def load_project_tests(test_path, dot_env_path=None):
             environments and debugtalk.py functions.
 
     """
+
+    def prepare_path(path):
+        if not os.path.exists(path):
+            err_msg = "path not exist: {}".format(path)
+            logger.log_error(err_msg)
+            raise exceptions.FileNotFound(err_msg)
+
+        if not os.path.isabs(path):
+            path = os.path.join(os.getcwd(), path)
+
+        return path
+
+    test_path = prepare_path(test_path)
     # locate debugtalk.py file
     debugtalk_path = locate_debugtalk_py(test_path)
 
@@ -810,6 +823,7 @@ def load_project_tests(test_path, dot_env_path=None):
     project_mapping["PWD"] = project_working_directory
     built_in.PWD = project_working_directory
     project_mapping["functions"] = debugtalk_functions
+    project_mapping["test_path"] = test_path
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
@@ -869,14 +883,6 @@ def load_tests(path, dot_env_path=None):
             }
 
     """
-    if not os.path.exists(path):
-        err_msg = "path not exist: {}".format(path)
-        logger.log_error(err_msg)
-        raise exceptions.FileNotFound(err_msg)
-
-    if not os.path.isabs(path):
-        path = os.path.join(os.getcwd(), path)
-
     load_project_tests(path, dot_env_path)
     tests_mapping = {
         "project_mapping": project_mapping
