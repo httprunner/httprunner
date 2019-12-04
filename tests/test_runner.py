@@ -52,11 +52,11 @@ class TestRunner(ApiServerUnittest):
                     "name": "basic test with httpbin",
                     "base_url": HTTPBIN_SERVER,
                     "setup_hooks": [
-                        "${sleep_N_secs(0.5)}",
+                        "${sleep(0.5)}",
                         "${hook_print(setup)}"
                     ],
                     "teardown_hooks": [
-                        "${sleep_N_secs(1)}",
+                        "${sleep(1)}",
                         "${hook_print(teardown)}"
                     ]
                 },

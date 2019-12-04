@@ -258,7 +258,6 @@ class HttpRunner(object):
         # load tests
         self.exception_stage = "load tests"
         tests_mapping = loader.load_tests(path, dot_env_path)
-        tests_mapping["project_mapping"]["test_path"] = path
 
         if mapping:
             tests_mapping["project_mapping"]["variables"] = mapping
