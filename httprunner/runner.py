@@ -62,7 +62,6 @@ class Runner(object):
         """
         self.verify = config.get("verify", True)
         self.export = config.get("export") or config.get("output", [])
-        self.validation_results = []
         config_variables = config.get("variables", {})
 
         # testcase setup hooks
@@ -86,7 +85,6 @@ class Runner(object):
         if not isinstance(self.http_client_session, HttpSession):
             return
 
-        self.validation_results = []
         self.http_client_session.init_meta_data()
 
     def __get_test_data(self):
@@ -96,7 +94,7 @@ class Runner(object):
             return
 
         meta_data = self.http_client_session.meta_data
-        meta_data["validators"] = self.validation_results
+        meta_data["validators"] = self.session_context.validation_results
         return meta_data
 
     def _handle_skip_feature(self, test_dict):
@@ -244,7 +242,8 @@ class Runner(object):
             raise exceptions.ParamsError(err_msg)
 
         logger.log_info("{method} {url}".format(method=method, url=parsed_url))
-        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
+        logger.log_debug(
+            "request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
 
         # request
         resp = self.http_client_session.request(
@@ -268,10 +267,19 @@ class Runner(object):
         self.session_context.update_session_variables(extracted_variables_mapping)
 
         # validate
+        # TODO: split validate from context
         validators = test_dict.get("validate") or test_dict.get("validators") or []
+        validate_script = test_dict.get("validate_script", [])
+        if validate_script:
+            validators.append({
+                "type": "python_script",
+                "script": validate_script
+            })
+
         try:
             self.session_context.validate(validators, resp_obj)
-        except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
+        except (exceptions.ParamsError,
+                exceptions.ValidationFailure, exceptions.ExtractFailure):
             err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
 
             # log request
@@ -293,9 +301,6 @@ class Runner(object):
             logger.log_error(err_msg)
 
             raise
-
-        finally:
-            self.validation_results = self.session_context.validation_results
 
     def _run_testcase(self, testcase_dict):
         """ run single testcase.
