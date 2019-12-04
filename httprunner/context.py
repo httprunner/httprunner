@@ -194,11 +194,11 @@ class SessionContext(object):
         }
 
         script = "\n    ".join(script)
-        code = f"""
+        code = """
 # encoding: utf-8
 
 try:
-    {script}
+    {}
 except Exception as ex:
     import traceback
     import sys
@@ -218,7 +218,7 @@ except Exception as ex:
         c_exception += "\\tError description: " + _type.__name__
 
     raise _type(c_exception)
-"""
+""".format(script)
         variables = {
             "status_code": resp_obj.status_code,
             "response_json": resp_obj.json,
