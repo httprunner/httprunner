@@ -673,7 +673,7 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
         dump_file_name = "{}.{}.json".format(test_file_name, tag_name)
 
     if not os.path.isdir(file_foder_path):
-        os.makedirs(file_foder_path, exist_ok=True)
+        os.makedirs(file_foder_path)
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path
