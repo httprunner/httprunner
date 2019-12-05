@@ -1,8 +1,6 @@
 # encoding: utf-8
 import collections
-import io
 import json
-import types
 
 from httprunner import exceptions, logger, parser
 
@@ -169,55 +167,6 @@ def extend_validators(raw_validators, override_validators):
 
         def_validators_mapping.update(ref_validators_mapping)
         return list(def_validators_mapping.values())
-
-
-###############################################################################
-##   validate varibles and functions
-###############################################################################
-
-
-def is_function(item):
-    """ Takes item object, returns True if it is a function.
-    """
-    return isinstance(item, types.FunctionType)
-
-
-def is_variable(tup):
-    """ Takes (name, object) tuple, returns True if it is a variable.
-    """
-    name, item = tup
-    if callable(item):
-        # function or class
-        return False
-
-    if isinstance(item, types.ModuleType):
-        # imported module
-        return False
-
-    if name.startswith("_"):
-        # private property
-        return False
-
-    return True
-
-
-def validate_json_file(file_list):
-    """ validate JSON testcase format
-    """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
-            continue
-
-        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
-
-        with io.open(json_file) as stream:
-            try:
-                json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
-
-        print("OK")
 
 
 class Validator(object):
