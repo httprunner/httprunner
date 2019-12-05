@@ -62,7 +62,7 @@ def locate_debugtalk_py(start_path):
 
 def init_project_working_directory(test_path):
     """ this should be called at startup
-        init_project_working_directory <- load_project_tests <- load_tests <- run
+        init_project_working_directory <- load_project_data <- load_cases <- run
 
     Args:
         test_path: specified testfile path
@@ -105,6 +105,6 @@ def init_project_working_directory(test_path):
 def get_project_working_directory():
     global project_working_directory
     if project_working_directory is None:
-        raise exceptions.MyBaseFailure("loader.load_tests() has not been called!")
+        raise exceptions.MyBaseFailure("loader.load_cases() has not been called!")
 
     return project_working_directory

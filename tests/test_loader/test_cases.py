@@ -14,10 +14,10 @@ class TestModuleLoader(unittest.TestCase):
         self.assertNotIn("is_py3", module_functions)
 
     def test_load_debugtalk_module(self):
-        project_mapping = cases.load_project_tests(os.path.join(os.getcwd(), "httprunner"))
+        project_mapping = cases.load_project_data(os.path.join(os.getcwd(), "httprunner"))
         self.assertNotIn("alter_response", project_mapping["functions"])
 
-        project_mapping = cases.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        project_mapping = cases.load_project_data(os.path.join(os.getcwd(), "tests"))
         self.assertIn("alter_response", project_mapping["functions"])
 
         is_status_code_200 = project_mapping["functions"]["is_status_code_200"]
@@ -25,7 +25,7 @@ class TestModuleLoader(unittest.TestCase):
         self.assertFalse(is_status_code_200(500))
 
     def test_load_debugtalk_py(self):
-        project_mapping = cases.load_project_tests("tests/data/demo_testcase.yml")
+        project_mapping = cases.load_project_data("tests/data/demo_testcase.yml")
         project_working_directory = project_mapping["PWD"]
         debugtalk_functions = project_mapping["functions"]
         self.assertEqual(
@@ -34,7 +34,7 @@ class TestModuleLoader(unittest.TestCase):
         )
         self.assertIn("gen_md5", debugtalk_functions)
 
-        project_mapping = cases.load_project_tests("tests/base.py")
+        project_mapping = cases.load_project_data("tests/base.py")
         project_working_directory = project_mapping["PWD"]
         debugtalk_functions = project_mapping["functions"]
         self.assertEqual(
@@ -43,7 +43,7 @@ class TestModuleLoader(unittest.TestCase):
         )
         self.assertIn("gen_md5", debugtalk_functions)
 
-        project_mapping = cases.load_project_tests("httprunner/__init__.py")
+        project_mapping = cases.load_project_data("httprunner/__init__.py")
         project_working_directory = project_mapping["PWD"]
         debugtalk_functions = project_mapping["functions"]
         self.assertEqual(
@@ -57,7 +57,7 @@ class TestSuiteLoader(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.project_mapping = cases.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        cls.project_mapping = cases.load_project_data(os.path.join(os.getcwd(), "tests"))
         cls.tests_def_mapping = cases.tests_def_mapping
 
     def test_load_teststep_api(self):
@@ -162,7 +162,7 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_tests_api_file(self):
         path = os.path.join(
             os.getcwd(), 'tests/api/create_user.yml')
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         project_mapping = tests_mapping["project_mapping"]
         api_list = tests_mapping["apis"]
         self.assertEqual(len(api_list), 1)
@@ -172,7 +172,7 @@ class TestSuiteLoader(unittest.TestCase):
         # absolute file path
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
         self.assertEqual(len(testcases_list), 1)
@@ -181,7 +181,7 @@ class TestSuiteLoader(unittest.TestCase):
 
         # relative file path
         path = 'tests/data/demo_testcase_hardcode.yml'
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
         self.assertEqual(len(testcases_list), 1)
@@ -191,7 +191,7 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_tests_testcase_file_2(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
-        tests_mapping = loader.load_tests(testcase_file_path)
+        tests_mapping = loader.load_cases(testcase_file_path)
         testcases = tests_mapping["testcases"]
         self.assertIsInstance(testcases, list)
         self.assertEqual(testcases[0]["config"]["name"], '123t$var_a')
@@ -211,7 +211,7 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_tests_testcase_file_with_api_ref(self):
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_layer.yml')
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         project_mapping = tests_mapping["project_mapping"]
         testcases_list = tests_mapping["testcases"]
         self.assertIn('device_sn', testcases_list[0]["config"]["variables"])
@@ -231,7 +231,7 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_tests_testsuite_file_with_testcase_ref(self):
         path = os.path.join(
             os.getcwd(), 'tests/testsuites/create_users.yml')
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         project_mapping = tests_mapping["project_mapping"]
         testsuites_list = tests_mapping["testsuites"]
 
@@ -256,13 +256,13 @@ class TestSuiteLoader(unittest.TestCase):
     def test_load_tests_folder_path(self):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data')
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         testcase_list_1 = tests_mapping["testcases"]
         self.assertGreater(len(testcase_list_1), 4)
 
         # relative folder path
         path = 'tests/data/'
-        tests_mapping = loader.load_tests(path)
+        tests_mapping = loader.load_cases(path)
         testcase_list_2 = tests_mapping["testcases"]
         self.assertEqual(len(testcase_list_1), len(testcase_list_2))
 
@@ -270,12 +270,12 @@ class TestSuiteLoader(unittest.TestCase):
         # absolute folder path
         path = os.path.join(os.getcwd(), 'tests/data_not_exist')
         with self.assertRaises(exceptions.FileNotFound):
-            loader.load_tests(path)
+            loader.load_cases(path)
 
         # relative folder path
         path = 'tests/data_not_exist'
         with self.assertRaises(exceptions.FileNotFound):
-            loader.load_tests(path)
+            loader.load_cases(path)
 
     def test_load_api_folder(self):
         path = os.path.join(os.getcwd(), "tests", "api")
@@ -285,7 +285,7 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertIn("request", api_definition_mapping[api_file_path])
 
     def test_load_project_tests(self):
-        cases.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        cases.load_project_data(os.path.join(os.getcwd(), "tests"))
         api_file_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
         self.assertIn(api_file_path, self.tests_def_mapping["api"])
         self.assertEqual(self.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")

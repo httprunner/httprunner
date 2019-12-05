@@ -955,7 +955,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_parameterize(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         parameters = [
             {"app_version": "${parameterize(data/app_version.csv)}"},
             {"username-password": "${parameterize(data/account.csv)}"}
@@ -967,7 +967,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        project_mapping = loader.load_project_data(os.path.join(os.getcwd(), "tests"))
 
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
@@ -984,7 +984,7 @@ class TestParser(unittest.TestCase):
     def test_parse_tests_testcase(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
-        tests_mapping = loader.load_tests(testcase_file_path)
+        tests_mapping = loader.load_cases(testcase_file_path)
         testcases = tests_mapping["testcases"]
         self.assertEqual(
             testcases[0]["config"]["variables"]["var_c"],
@@ -1370,7 +1370,7 @@ class TestParser(unittest.TestCase):
             parser.eval_lazy_data(content)
 
     def test_extend_with_api(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         raw_testinfo = {
             "name": "get token",
             "base_url": "https://github.com",

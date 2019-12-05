@@ -448,7 +448,7 @@ def load_api_folder(api_folder_path):
     return api_definition_mapping
 
 
-def load_project_tests(test_path, dot_env_path=None):
+def load_project_data(test_path, dot_env_path=None):
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
@@ -491,7 +491,7 @@ def load_project_tests(test_path, dot_env_path=None):
     return project_mapping
 
 
-def load_tests(path, dot_env_path=None):
+def load_cases(path, dot_env_path=None):
     """ load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:
@@ -546,7 +546,7 @@ def load_tests(path, dot_env_path=None):
     """
 
     tests_mapping = {
-        "project_mapping": load_project_tests(path, dot_env_path)
+        "project_mapping": load_project_data(path, dot_env_path)
     }
 
     def __load_file_content(path):
