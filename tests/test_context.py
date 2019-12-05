@@ -9,7 +9,6 @@ class TestContext(ApiServerUnittest):
 
     def setUp(self):
         loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
         self.context = context.SessionContext(
             variables={"SECRET_KEY": "DebugTalk"}
         )
