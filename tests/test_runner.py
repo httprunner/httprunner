@@ -2,6 +2,7 @@ import os
 import time
 
 from httprunner import loader, parser, runner
+from httprunner.loader import cases
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
 
@@ -9,8 +10,7 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
+        project_mapping = cases.load_project_tests(os.path.join(os.getcwd(), "tests"))
         self.debugtalk_functions = project_mapping["functions"]
 
         config = {
