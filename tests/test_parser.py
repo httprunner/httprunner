@@ -3,6 +3,7 @@ import time
 import unittest
 
 from httprunner import exceptions, loader, parser
+from httprunner.loader import load
 from tests.debugtalk import gen_random_string, sum_two
 
 
@@ -931,11 +932,11 @@ class TestParser(unittest.TestCase):
         dot_env_path = os.path.join(
             os.getcwd(), "tests", ".env"
         )
-        loader.load_dot_env_file(dot_env_path)
+        load.load_dot_env_file(dot_env_path)
         from tests import debugtalk
         cartesian_product_parameters = parser.parse_parameters(
             parameters,
-            functions_mapping=loader.load_module_functions(debugtalk)
+            functions_mapping=load.load_module_functions(debugtalk)
         )
         self.assertIn(
             {
@@ -966,8 +967,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
+        project_mapping = loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
 
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
@@ -1376,7 +1376,7 @@ class TestParser(unittest.TestCase):
             "base_url": "https://github.com",
             "api": "api/get_token.yml",
         }
-        api_def_dict = loader.load_teststep(raw_testinfo)
+        api_def_dict = loader.cases.load_teststep(raw_testinfo)
         test_block = {
             "name": "override block",
             "times": 3,

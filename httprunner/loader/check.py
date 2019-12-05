@@ -3,7 +3,7 @@ import json
 import os
 import types
 
-from httprunner import logger
+from httprunner import logger, exceptions
 
 
 # TODO: validate data format with JSON schema
@@ -128,6 +128,23 @@ def is_testcase_path(path):
             return False
 
     return True
+
+
+def check_testcase_format(file_path, content):
+    """ check testcase format if valid
+    """
+    # TODO: replace with JSON schema validation
+    if not content:
+        # testcase file content is empty
+        err_msg = u"Testcase file content is empty: {}".format(file_path)
+        logger.log_error(err_msg)
+        raise exceptions.FileFormatError(err_msg)
+
+    elif not isinstance(content, (list, dict)):
+        # testcase file content does not match testcase format
+        err_msg = u"Testcase file content format invalid: {}".format(file_path)
+        logger.log_error(err_msg)
+        raise exceptions.FileFormatError(err_msg)
 
 
 def validate_json_file(file_list):

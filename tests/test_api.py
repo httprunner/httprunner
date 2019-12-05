@@ -331,9 +331,9 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        loader.load_project_tests("tests")
+
         tests_mapping = {
-            "project_mapping": loader.project_mapping,
+            "project_mapping": loader.load_project_tests("tests"),
             "testcases": testcases
         }
         summary = self.runner.run_tests(tests_mapping)
@@ -363,9 +363,8 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        loader.load_project_tests("tests")
         tests_mapping = {
-            "project_mapping": loader.project_mapping,
+            "project_mapping": loader.load_project_tests("tests"),
             "testcases": testcases
         }
         summary = self.runner.run_tests(tests_mapping)
@@ -393,9 +392,8 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        loader.load_project_tests("tests")
         tests_mapping = {
-            "project_mapping": loader.project_mapping,
+            "project_mapping": loader.load_project_tests("tests"),
             "testcases": testcases
         }
         summary = self.runner.run_tests(tests_mapping)

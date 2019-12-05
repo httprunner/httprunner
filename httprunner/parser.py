@@ -6,7 +6,7 @@ import collections
 import json
 import re
 
-from httprunner import exceptions, utils
+from httprunner import exceptions, utils, loader
 from httprunner.compat import basestring, numeric_types, str
 
 # use $$ to escape $ notation
@@ -423,7 +423,6 @@ def get_mapping_function(function_name, functions_mapping):
         return functions_mapping[function_name]
 
     elif function_name in ["parameterize", "P"]:
-        from httprunner import loader
         return loader.load_csv_file
 
     elif function_name in ["environ", "ENV"]:
@@ -431,7 +430,6 @@ def get_mapping_function(function_name, functions_mapping):
 
     try:
         # check if HttpRunner builtin functions
-        from httprunner import loader
         built_in_functions = loader.load_builtin_functions()
         return built_in_functions[function_name]
     except KeyError:
