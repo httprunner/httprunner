@@ -4,6 +4,7 @@ import io
 import json
 import os
 import sys
+import types
 
 import yaml
 
@@ -15,6 +16,149 @@ try:
     yaml.warnings({'YAMLLoadWarning': False})
 except AttributeError:
     pass
+
+
+# TODO: validate data format with JSON schema
+
+def is_testcase(data_structure):
+    """ check if data_structure is a testcase.
+
+    Args:
+        data_structure (dict): testcase should always be in the following data structure:
+
+            {
+                "config": {
+                    "name": "desc1",
+                    "variables": [],    # optional
+                    "request": {}       # optional
+                },
+                "teststeps": [
+                    test_dict1,
+                    {   # test_dict2
+                        'name': 'test step desc2',
+                        'variables': [],    # optional
+                        'extract': [],      # optional
+                        'validate': [],
+                        'request': {},
+                        'function_meta': {}
+                    }
+                ]
+            }
+
+    Returns:
+        bool: True if data_structure is valid testcase, otherwise False.
+
+    """
+    # TODO: replace with JSON schema validation
+    if not isinstance(data_structure, dict):
+        return False
+
+    if "teststeps" not in data_structure:
+        return False
+
+    if not isinstance(data_structure["teststeps"], list):
+        return False
+
+    return True
+
+
+def is_testcases(data_structure):
+    """ check if data_structure is testcase or testcases list.
+
+    Args:
+        data_structure (dict): testcase(s) should always be in the following data structure:
+            {
+                "project_mapping": {
+                    "PWD": "XXXXX",
+                    "functions": {},
+                    "env": {}
+                },
+                "testcases": [
+                    {   # testcase data structure
+                        "config": {
+                            "name": "desc1",
+                            "path": "testcase1_path",
+                            "variables": [],                    # optional
+                        },
+                        "teststeps": [
+                            # test data structure
+                            {
+                                'name': 'test step desc1',
+                                'variables': [],    # optional
+                                'extract': [],      # optional
+                                'validate': [],
+                                'request': {}
+                            },
+                            test_dict_2   # another test dict
+                        ]
+                    },
+                    testcase_dict_2     # another testcase dict
+                ]
+            }
+
+    Returns:
+        bool: True if data_structure is valid testcase(s), otherwise False.
+
+    """
+    if not isinstance(data_structure, dict):
+        return False
+
+    if "testcases" not in data_structure:
+        return False
+
+    testcases = data_structure["testcases"]
+    if not isinstance(testcases, list):
+        return False
+
+    for item in testcases:
+        if not is_testcase(item):
+            return False
+
+    return True
+
+
+def is_testcase_path(path):
+    """ check if path is testcase path or path list.
+
+    Args:
+        path (str/list): file path or file path list.
+
+    Returns:
+        bool: True if path is valid file path or path list, otherwise False.
+
+    """
+    if not isinstance(path, (str, list)):
+        return False
+
+    if isinstance(path, list):
+        for p in path:
+            if not is_testcase_path(p):
+                return False
+
+    if isinstance(path, str):
+        if not os.path.exists(path):
+            return False
+
+    return True
+
+
+def validate_json_file(file_list):
+    """ validate JSON testcase format
+    """
+    for json_file in set(file_list):
+        if not json_file.endswith(".json"):
+            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
+            continue
+
+        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
+
+        with io.open(json_file) as stream:
+            try:
+                json.load(stream)
+            except ValueError as e:
+                raise SystemExit(e)
+
+        print("OK")
 
 
 ###############################################################################
@@ -244,6 +388,31 @@ def locate_file(start_path, file_name):
 ###############################################################################
 
 
+def is_function(item):
+    """ Takes item object, returns True if it is a function.
+    """
+    return isinstance(item, types.FunctionType)
+
+
+def is_variable(tup):
+    """ Takes (name, object) tuple, returns True if it is a variable.
+    """
+    name, item = tup
+    if callable(item):
+        # function or class
+        return False
+
+    if isinstance(item, types.ModuleType):
+        # imported module
+        return False
+
+    if name.startswith("_"):
+        # private property
+        return False
+
+    return True
+
+
 def load_module_functions(module):
     """ load python module functions.
 
@@ -262,7 +431,7 @@ def load_module_functions(module):
     module_functions = {}
 
     for name, item in vars(module).items():
-        if validator.is_function(item):
+        if is_function(item):
             module_functions[name] = item
 
     return module_functions
@@ -724,7 +893,7 @@ def load_api_folder(api_folder_path):
             for api_item in api_items:
                 key, api_dict = api_item.popitem()
                 api_id = api_dict.get("id") or api_dict.get("def") \
-                    or api_dict.get("name")
+                         or api_dict.get("name")
                 if key != "api" or not api_id:
                     raise exceptions.ParamsError(
                         "Invalid API defined in {}".format(api_file_path))
@@ -779,6 +948,19 @@ def load_project_tests(test_path, dot_env_path=None):
             environments and debugtalk.py functions.
 
     """
+
+    def prepare_path(path):
+        if not os.path.exists(path):
+            err_msg = "path not exist: {}".format(path)
+            logger.log_error(err_msg)
+            raise exceptions.FileNotFound(err_msg)
+
+        if not os.path.isabs(path):
+            path = os.path.join(os.getcwd(), path)
+
+        return path
+
+    test_path = prepare_path(test_path)
     # locate debugtalk.py file
     debugtalk_path = locate_debugtalk_py(test_path)
 
@@ -810,6 +992,7 @@ def load_project_tests(test_path, dot_env_path=None):
     project_mapping["PWD"] = project_working_directory
     built_in.PWD = project_working_directory
     project_mapping["functions"] = debugtalk_functions
+    project_mapping["test_path"] = test_path
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
@@ -869,14 +1052,6 @@ def load_tests(path, dot_env_path=None):
             }
 
     """
-    if not os.path.exists(path):
-        err_msg = "path not exist: {}".format(path)
-        logger.log_error(err_msg)
-        raise exceptions.FileNotFound(err_msg)
-
-    if not os.path.isabs(path):
-        path = os.path.join(os.getcwd(), path)
-
     load_project_tests(path, dot_env_path)
     tests_mapping = {
         "project_mapping": project_mapping

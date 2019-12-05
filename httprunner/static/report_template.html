@@ -279,15 +279,17 @@
               {% endfor %}
 
               <h3>Validators:</h3>
-              <div style="overflow: auto">
-                  <table>
+                <div style="overflow: auto">
+                {% set validate_extractors = meta_data.validators.validate_extractor %}
+                {% if validate_extractors %}
+                <table>
                     <tr>
                       <th>check</th>
                       <th>comparator</th>
                       <th>expect value</th>
                       <th>actual value</th>
                     </tr>
-                    {% for validator in meta_data.validators %}
+                    {% for validator in validate_extractors %}
                     <tr>
                       {% if validator.check_result == "pass" %}
                       <td class="passed">
@@ -303,7 +305,27 @@
                       <td>{{validator.check_value | e}}</td>
                     </tr>
                     {% endfor %}
-                  </table>
+                </table>
+                {% endif %}
+
+                {% set validate_script = meta_data.validators.validate_script %}
+                {% if validate_script %}
+                    <table>
+                        <tr>
+                            <th>validate script</th><th>exception</th>
+                        </tr>
+                        <tr>
+                            <td>{{validate_script.validate_script | safe}}</td>
+                            {% if validate_script.check_result == "pass" %}
+                            <td class="passed">
+                            {% elif validate_script.check_result == "fail" %}
+                            <td class="failed">
+                            {% endif %}
+                            {{validate_script.exception}}
+                            </td>
+                        </tr>
+                    </table>
+                {% endif %}
               </div>
 
               <h3>Statistics:</h3>

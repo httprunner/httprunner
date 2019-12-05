@@ -289,6 +289,10 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["testcases"]["total"], 2)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 4)
 
+    def test_validate_script(self):
+        summary = self.runner.run("tests/httpbin/validate.yml")
+        self.assertFalse(summary["success"])
+
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/httpbin/hooks.yml')
@@ -419,6 +423,19 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(req_resp_data[0]["response"]["status_code"], 302)
         self.assertEqual(req_resp_data[1]["response"]["status_code"], 200)
 
+    def test_request_302_logs_teardown_hook(self):
+        path = "tests/httpbin/api/302_redirect_teardown_hook.yml"
+        summary = self.runner.run(path)
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["successes"], 1)
+
+        req_resp_data = summary["details"][0]["records"][0]["meta_datas"]["data"]
+        self.assertEqual(len(req_resp_data), 2)
+        self.assertEqual(req_resp_data[0]["response"]["status_code"], 302)
+        self.assertEqual(req_resp_data[1]["response"]["status_code"], 500)
+
     def test_request_with_params(self):
         path = "tests/httpbin/api/302_redirect.yml"
         summary = self.runner.run(path)
@@ -437,13 +454,17 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_api_folder(self):
         api_folder = "tests/httpbin/api/"
         summary = self.runner.run(api_folder)
+        print(summary["stat"]["testcases"]["total"])
+        print(len(summary["details"]))
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testcases"]["total"], 2)
-        self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
-        self.assertEqual(summary["stat"]["teststeps"]["successes"], 2)
-        self.assertEqual(len(summary["details"]), 2)
+        self.assertEqual(summary["stat"]["testcases"]["total"], 3)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 3)
+        self.assertEqual(summary["stat"]["teststeps"]["successes"], 3)
+        self.assertEqual(len(summary["details"]), 3)
         self.assertEqual(summary["details"][0]["stat"]["total"], 1)
         self.assertEqual(summary["details"][1]["stat"]["total"], 1)
+        self.assertEqual(summary["details"][2]["stat"]["total"], 1)
+
 
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
