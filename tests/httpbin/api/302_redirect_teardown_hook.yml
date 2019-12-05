@@ -1,0 +1,13 @@
+name: 302 redirect
+request:
+    url: https://httpbin.org/redirect-to
+    params:
+      url: https://github.com
+      status_code: 302
+    method: GET
+    verify: False
+teardown_hooks:
+  - ${alter_response_302($response)}
+validate:
+    - eq: ["status_code", 500]
+    - eq: ["text","abcdef"]

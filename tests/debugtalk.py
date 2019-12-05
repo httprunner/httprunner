@@ -127,6 +127,15 @@ def alter_response(response):
         "key": 123
     }
 
+def alter_response_302(response):
+    response.status_code = 500
+    response.headers["Content-Type"] = "html/text"
+    response.text = "abcdef"
+    response.new_attribute = "new_attribute_value"
+    response.new_attribute_dict = {
+        "key": 123
+    }
+
 
 def alter_response_error(response):
     # NameError
