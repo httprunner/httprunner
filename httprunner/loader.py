@@ -8,7 +8,7 @@ import types
 
 import yaml
 
-from httprunner import built_in, exceptions, logger, utils, validator
+from httprunner import built_in, exceptions, logger, utils
 
 try:
     # PyYAML version >= 5.1
