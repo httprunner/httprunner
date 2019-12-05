@@ -607,7 +607,7 @@ def omit_long_data(body, omit_len=512):
     return omitted_body + appendix_str
 
 
-def dump_json_file(json_data, pwd_dir_path, dump_file_name):
+def dump_json_file(json_data, json_file_abs_path):
     """ dump json data to file
     """
     class PythonObjectEncoder(json.JSONEncoder):
@@ -617,14 +617,8 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
             except TypeError:
                 return str(obj)
 
-    logs_dir_path = os.path.join(pwd_dir_path, "logs")
-    if not os.path.isdir(logs_dir_path):
-        os.makedirs(logs_dir_path)
-
-    dump_file_path = os.path.join(logs_dir_path, dump_file_name)
-
     try:
-        with io.open(dump_file_path, 'w', encoding='utf-8') as outfile:
+        with io.open(json_file_abs_path, 'w', encoding='utf-8') as outfile:
             if is_py2:
                 outfile.write(
                     unicode(json.dumps(
@@ -645,23 +639,44 @@ def dump_json_file(json_data, pwd_dir_path, dump_file_name):
                     cls=PythonObjectEncoder
                 )
 
-        msg = "dump file: {}".format(dump_file_path)
+        msg = "dump file: {}".format(json_file_abs_path)
         logger.color_print(msg, "BLUE")
 
     except TypeError as ex:
-        msg = "Failed to dump json file: {}\nReason: {}".format(dump_file_path, ex)
+        msg = "Failed to dump json file: {}\nReason: {}".format(json_file_abs_path, ex)
         logger.color_print(msg, "RED")
 
 
-def _prepare_dump_info(project_mapping, tag_name):
-    """ prepare dump file info.
+def prepare_dump_json_file_abs_path(project_mapping, tag_name):
+    """ prepare dump json file absolute path.
     """
-    test_path = project_mapping.get("test_path") or "tests_mapping"
     pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
-    file_name, file_suffix = os.path.splitext(os.path.basename(test_path.rstrip("/")))
-    dump_file_name = "{}.{}.json".format(file_name, tag_name)
+    test_path = project_mapping.get("test_path")
 
-    return pwd_dir_path, dump_file_name
+    if not test_path:
+        # running passed in testcase/testsuite data structure
+        dump_file_name = "tests_mapping.{}.json".format(tag_name)
+        dumped_json_file_abs_path = os.path.join(pwd_dir_path, "logs", dump_file_name)
+        return dumped_json_file_abs_path
+
+    # both test_path and pwd_dir_path are absolute path
+    logs_dir_path = os.path.join(pwd_dir_path, "logs")
+    test_path_relative_path = test_path[len(pwd_dir_path)+1:]
+
+    if os.path.isdir(test_path):
+        file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)
+        dump_file_name = "all.{}.json".format(tag_name)
+    else:
+        file_relative_folder_path, test_file = os.path.split(test_path_relative_path)
+        file_foder_path = os.path.join(logs_dir_path, file_relative_folder_path)
+        test_file_name, _file_suffix = os.path.splitext(test_file)
+        dump_file_name = "{}.{}.json".format(test_file_name, tag_name)
+
+    if not os.path.isdir(file_foder_path):
+        os.makedirs(file_foder_path)
+
+    dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
+    return dumped_json_file_abs_path
 
 
 def dump_logs(json_data, project_mapping, tag_name):
@@ -674,8 +689,8 @@ def dump_logs(json_data, project_mapping, tag_name):
         tag_name (str): tag name, loaded/parsed/summary
 
     """
-    pwd_dir_path, dump_file_name = _prepare_dump_info(project_mapping, tag_name)
-    dump_json_file(json_data, pwd_dir_path, dump_file_name)
+    json_file_abs_path = prepare_dump_json_file_abs_path(project_mapping, tag_name)
+    dump_json_file(json_data, json_file_abs_path)
 
 
 def get_python2_retire_msg():
