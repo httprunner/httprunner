@@ -2,7 +2,7 @@ import os
 import unittest
 
 from httprunner import (__version__, exceptions, loader, logger, parser,
-                        report, runner, utils, validator)
+                        report, runner, utils)
 
 
 class HttpRunner(object):
