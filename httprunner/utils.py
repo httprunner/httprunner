@@ -119,52 +119,6 @@ def query_json(json_content, query, delimiter='.'):
     return json_content
 
 
-def deep_update_dict(origin_dict, override_dict):
-    """ update origin dict with override dict recursively
-    e.g. origin_dict = {'a': 1, 'b': {'c': 2, 'd': 4}}
-         override_dict = {'b': {'c': 3}}
-    return: {'a': 1, 'b': {'c': 3, 'd': 4}}
-    """
-    if not override_dict:
-        return origin_dict
-
-    for key, val in override_dict.items():
-        if isinstance(val, dict):
-            tmp = deep_update_dict(origin_dict.get(key, {}), val)
-            origin_dict[key] = tmp
-        elif val is None:
-            # fix #64: when headers in test is None, it should inherit from config
-            continue
-        else:
-            origin_dict[key] = override_dict[key]
-
-    return origin_dict
-
-
-def convert_dict_to_params(src_dict):
-    """ convert dict to params string
-
-    Args:
-        src_dict (dict): source mapping data structure
-
-    Returns:
-        str: string params data
-
-    Examples:
-        >>> src_dict = {
-            "a": 1,
-            "b": 2
-        }
-        >>> convert_dict_to_params(src_dict)
-        >>> "a=1&b=2"
-
-    """
-    return "&".join([
-        "{}={}".format(key, value)
-        for key, value in src_dict.items()
-    ])
-
-
 def lower_dict_keys(origin_dict):
     """ convert keys in dict to lower case
 
