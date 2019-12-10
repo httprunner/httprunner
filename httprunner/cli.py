@@ -23,8 +23,8 @@ def main():
         '-V', '--version', dest='version', action='store_true',
         help="show version")
     parser.add_argument(
-        'testcase_paths', nargs='*',
-        help="testcase file path")
+        'testfile_paths', nargs='*',
+        help="Specify api/testcase/testsuite file paths to run.")
     parser.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
@@ -36,19 +36,19 @@ def main():
         help="Specify .env file path, which is useful for keeping sensitive data.")
     parser.add_argument(
         '--report-template',
-        help="specify report template path.")
+        help="Specify report template path.")
     parser.add_argument(
         '--report-dir',
-        help="specify report save directory.")
+        help="Specify report save directory.")
     parser.add_argument(
         '--report-file',
-        help="specify report file path, this has higher priority than specifying report dir.")
+        help="Specify report file path, this has higher priority than specifying report dir.")
+    parser.add_argument(
+        '--save-tests', action='store_true', default=False,
+        help="Save loaded/parsed/summary json data to JSON files.")
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
-    parser.add_argument(
-        '--save-tests', action='store_true', default=False,
-        help="Save loaded tests and parsed tests to JSON file.")
     parser.add_argument(
         '--startproject',
         help="Specify new project name.")
@@ -96,9 +96,9 @@ def main():
             report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
             gen_html_report(
                 summary,
-                args.report_template,
-                report_dir,
-                args.report_file
+                report_template=args.report_template,
+                report_dir=report_dir,
+                report_file=args.report_file
             )
             err_code |= (0 if summary and summary["success"] else 1)
     except Exception:
