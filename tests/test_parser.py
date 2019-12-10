@@ -1376,7 +1376,7 @@ class TestParser(unittest.TestCase):
             "base_url": "https://github.com",
             "api": "api/get_token.yml",
         }
-        api_def_dict = loader.cases.load_teststep(raw_testinfo)
+        api_def_dict = loader.buildup.load_teststep(raw_testinfo)
         test_block = {
             "name": "override block",
             "times": 3,
