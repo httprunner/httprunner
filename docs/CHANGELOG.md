@@ -18,6 +18,7 @@
 **Fixed**
 
 - fix: keep setup/teardown hooks original order when merge & override.
+- fix: length comparator exceptions when running in CSV data-driven mode.
 
 ## 2.3.3 (2019-12-04)
 
