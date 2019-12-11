@@ -977,13 +977,17 @@ def _extend_with_api(test_dict, api_def_dict):
     # merge & override setup_hooks
     def_setup_hooks = api_def_dict.pop("setup_hooks", [])
     ref_setup_hooks = test_dict.get("setup_hooks", [])
-    extended_setup_hooks = list(set(def_setup_hooks + ref_setup_hooks))
+    extended_setup_hooks_tmp = def_setup_hooks + ref_setup_hooks
+    extended_setup_hooks = list(set(extended_setup_hooks_tmp))
+    extended_setup_hooks.sort(key=extended_setup_hooks_tmp.index)
     if extended_setup_hooks:
         test_dict["setup_hooks"] = extended_setup_hooks
     # merge & override teardown_hooks
     def_teardown_hooks = api_def_dict.pop("teardown_hooks", [])
     ref_teardown_hooks = test_dict.get("teardown_hooks", [])
-    extended_teardown_hooks = list(set(def_teardown_hooks + ref_teardown_hooks))
+    extended_teardown_hooks_tmp = def_teardown_hooks + ref_teardown_hooks
+    extended_teardown_hooks = list(set(extended_teardown_hooks_tmp))
+    extended_teardown_hooks.sort(key=extended_teardown_hooks_tmp.index)
     if extended_teardown_hooks:
         test_dict["teardown_hooks"] = extended_teardown_hooks
 
