@@ -1,13 +1,34 @@
 - config:
     name: basic test with httpbin
-    request:
-        base_url: http://httpbin.org/
+    base_url: http://httpbin.org/
 
 - test:
-    name: headers
+    name: validate response with json path
     request:
-        url: /headers
+        url: /get
+        params:
+            a: 1
+            b: 2
         method: GET
     validate:
         - eq: ["status_code", 200]
-        - assert_status_code_is_200: ["status_code"]
+        - eq: ["json.args.a", '1']
+        - eq: ["json.args.b", '2']
+    validate_script:
+        - "assert status_code == 200"
+
+
+- test:
+    name: validate response with python script
+    request:
+        url: /get
+        params:
+            a: 1
+            b: 2
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+    validate_script:
+        - "assert status_code == 201"
+        - "a = response_json.get('args').get('a')"
+        - "assert a == '1'"
