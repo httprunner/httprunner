@@ -5,6 +5,7 @@
 **Added**
 
 - test: pip install package 
+- test: hrun command
 
 **Fixed**
 
