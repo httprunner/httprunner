@@ -1,0 +1,17 @@
+name: get place detail
+request:
+  method: GET
+  url: https://maps.googleapis.com/maps/api/place/details/json
+  params:
+    key: $key
+    placeid: $place_id
+    fields: 'address_component,formatted_address,geometry'
+    language: zh-CN
+variables:
+  key: your_google_map_key
+  place_id: ChIJzyoujG6SAzQRRD3Jr26PFfM
+validate:
+  - eq: [status_code, 200]
+  - eq: [content.status, OK]
+extract:
+  - place_name: content.result.formatted_address
