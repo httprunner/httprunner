@@ -1,0 +1,14 @@
+config:
+  base_url: http://localhost:8085
+  variables:
+    admin_cookie: 'cookies'
+
+teststeps:
+  - name: search area by name
+    api: api/search_area_by_name_api.yml
+    variables:
+      in: 北京
+      out: 中国北京市
+    validate:
+      - eq: [content.success, true]
+      - check_search_area_result: [content.result, $out]

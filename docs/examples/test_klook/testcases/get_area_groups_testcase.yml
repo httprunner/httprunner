@@ -1,0 +1,13 @@
+config:
+  base_url: http://127.0.0.1:8085
+  variables:
+    admin_cookie: 'cookies'
+
+teststeps:
+  - name: get group by parent area id
+    api: api/get_area_groups_api.yml
+    validate:
+      - eq: [status_code, 200]
+      - eq: [headers.Content-Type, application/json]
+      - eq: [content.success, true]
+      - exists_default_group: [content.result, '']

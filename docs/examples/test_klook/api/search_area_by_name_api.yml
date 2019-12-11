@@ -1,0 +1,11 @@
+name: search_area_by_name
+base_url: http://localhost:8085
+request:
+  url: /v1/transferairportadminsrv/area/search_area_by_name
+  method: GET
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+    Accept-language: zh_CN
+    cookie: $admin_cookie
+  params:
+    areaName: $in
