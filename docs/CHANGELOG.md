@@ -1,10 +1,18 @@
 # Release History
 
-## 2.4.0 (2019-12-04)
+## 2.4.0 (2019-12-11)
 
 **Added**
 
 - feat: validate with python script, ref #773
+
+**Changed**
+
+- refactor: make loader as submodule, split to check/locate/load/buildup
+- refactor: make built_in as submodule, split to comparators and functions
+- refactor: adjust code for context and validator
+- docs: update cli argument help
+- adjust format code, remove unused import
 
 ## 2.3.3 (2019-12-04)
 
