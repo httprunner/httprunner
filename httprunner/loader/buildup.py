@@ -1,277 +1,16 @@
-import csv
 import importlib
-import io
-import json
 import os
-import sys
 
-import yaml
-
-from httprunner import built_in, exceptions, logger, utils, validator
-
-try:
-    # PyYAML version >= 5.1
-    # ref: https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
-    yaml.warnings({'YAMLLoadWarning': False})
-except AttributeError:
-    pass
-
-
-###############################################################################
-#   file loader
-###############################################################################
-
-
-def _check_format(file_path, content):
-    """ check testcase format if valid
-    """
-    # TODO: replace with JSON schema validation
-    if not content:
-        # testcase file content is empty
-        err_msg = u"Testcase file content is empty: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exceptions.FileFormatError(err_msg)
-
-    elif not isinstance(content, (list, dict)):
-        # testcase file content does not match testcase format
-        err_msg = u"Testcase file content format invalid: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exceptions.FileFormatError(err_msg)
-
-
-def load_yaml_file(yaml_file):
-    """ load yaml file and check file content format
-    """
-    with io.open(yaml_file, 'r', encoding='utf-8') as stream:
-        yaml_content = yaml.load(stream)
-        _check_format(yaml_file, yaml_content)
-        return yaml_content
-
-
-def load_json_file(json_file):
-    """ load json file and check file content format
-    """
-    with io.open(json_file, encoding='utf-8') as data_file:
-        try:
-            json_content = json.load(data_file)
-        except exceptions.JSONDecodeError:
-            err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
-            logger.log_error(err_msg)
-            raise exceptions.FileFormatError(err_msg)
-
-        _check_format(json_file, json_content)
-        return json_content
-
-
-def load_csv_file(csv_file):
-    """ load csv file and check file content format
-
-    Args:
-        csv_file (str): csv file path, csv file content is like below:
-
-    Returns:
-        list: list of parameters, each parameter is in dict format
-
-    Examples:
-        >>> cat csv_file
-        username,password
-        test1,111111
-        test2,222222
-        test3,333333
-
-        >>> load_csv_file(csv_file)
-        [
-            {'username': 'test1', 'password': '111111'},
-            {'username': 'test2', 'password': '222222'},
-            {'username': 'test3', 'password': '333333'}
-        ]
-
-    """
-    if not os.path.isabs(csv_file):
-        project_working_directory = tests_def_mapping["PWD"] or os.getcwd()
-        # make compatible with Windows/Linux
-        csv_file = os.path.join(project_working_directory, *csv_file.split("/"))
-
-    if not os.path.isfile(csv_file):
-        # file path not exist
-        raise exceptions.CSVNotFound(csv_file)
-
-    csv_content_list = []
-
-    with io.open(csv_file, encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            csv_content_list.append(row)
-
-    return csv_content_list
-
-
-def load_file(file_path):
-    if not os.path.isfile(file_path):
-        raise exceptions.FileNotFound("{} does not exist.".format(file_path))
-
-    file_suffix = os.path.splitext(file_path)[1].lower()
-    if file_suffix == '.json':
-        return load_json_file(file_path)
-    elif file_suffix in ['.yaml', '.yml']:
-        return load_yaml_file(file_path)
-    elif file_suffix == ".csv":
-        return load_csv_file(file_path)
-    else:
-        # '' or other suffix
-        err_msg = u"Unsupported file format: {}".format(file_path)
-        logger.log_warning(err_msg)
-        return []
-
-
-def load_folder_files(folder_path, recursive=True):
-    """ load folder path, return all files endswith yml/yaml/json in list.
-
-    Args:
-        folder_path (str): specified folder path to load
-        recursive (bool): load files recursively if True
-
-    Returns:
-        list: files endswith yml/yaml/json
-    """
-    if isinstance(folder_path, (list, set)):
-        files = []
-        for path in set(folder_path):
-            files.extend(load_folder_files(path, recursive))
-
-        return files
-
-    if not os.path.exists(folder_path):
-        return []
-
-    file_list = []
-
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        filenames_list = []
-
-        for filename in filenames:
-            if not filename.endswith(('.yml', '.yaml', '.json')):
-                continue
-
-            filenames_list.append(filename)
-
-        for filename in filenames_list:
-            file_path = os.path.join(dirpath, filename)
-            file_list.append(file_path)
-
-        if not recursive:
-            break
-
-    return file_list
-
-
-def load_dot_env_file(dot_env_path):
-    """ load .env file.
-
-    Args:
-        dot_env_path (str): .env file path
-
-    Returns:
-        dict: environment variables mapping
-
-            {
-                "UserName": "debugtalk",
-                "Password": "123456",
-                "PROJECT_KEY": "ABCDEFGH"
-            }
-
-    Raises:
-        exceptions.FileFormatError: If .env file format is invalid.
-
-    """
-    if not os.path.isfile(dot_env_path):
-        return {}
-
-    logger.log_info("Loading environment variables from {}".format(dot_env_path))
-    env_variables_mapping = {}
-
-    with io.open(dot_env_path, 'r', encoding='utf-8') as fp:
-        for line in fp:
-            # maxsplit=1
-            if "=" in line:
-                variable, value = line.split("=", 1)
-            elif ":" in line:
-                variable, value = line.split(":", 1)
-            else:
-                raise exceptions.FileFormatError(".env format error")
-
-            env_variables_mapping[variable.strip()] = value.strip()
-
-    utils.set_os_environ(env_variables_mapping)
-    return env_variables_mapping
-
-
-def locate_file(start_path, file_name):
-    """ locate filename and return absolute file path.
-        searching will be recursive upward until current working directory.
-
-    Args:
-        start_path (str): start locating path, maybe file path or directory path
-
-    Returns:
-        str: located file path. None if file not found.
-
-    Raises:
-        exceptions.FileNotFound: If failed to locate file.
-
-    """
-    if os.path.isfile(start_path):
-        start_dir_path = os.path.dirname(start_path)
-    elif os.path.isdir(start_path):
-        start_dir_path = start_path
-    else:
-        raise exceptions.FileNotFound("invalid path: {}".format(start_path))
-
-    file_path = os.path.join(start_dir_path, file_name)
-    if os.path.isfile(file_path):
-        return os.path.abspath(file_path)
-
-    # current working directory
-    if os.path.abspath(start_dir_path) in [os.getcwd(), os.path.abspath(os.sep)]:
-        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
-
-    # locate recursive upward
-    return locate_file(os.path.dirname(start_dir_path), file_name)
-
-
-###############################################################################
-#   debugtalk.py module loader
-###############################################################################
-
-
-def load_module_functions(module):
-    """ load python module functions.
-
-    Args:
-        module: python module
-
-    Returns:
-        dict: functions mapping for specified python module
-
-            {
-                "func1_name": func1,
-                "func2_name": func2
-            }
-
-    """
-    module_functions = {}
-
-    for name, item in vars(module).items():
-        if validator.is_function(item):
-            module_functions[name] = item
-
-    return module_functions
-
-
-def load_builtin_functions():
-    """ load built_in module functions
-    """
-    return load_module_functions(built_in)
+from httprunner import exceptions, logger, utils
+from httprunner.builtin import functions
+from httprunner.loader.load import load_module_functions, load_folder_content, load_file, load_dot_env_file, \
+    load_folder_files
+from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
+
+tests_def_mapping = {
+    "api": {},
+    "testcases": {}
+}
 
 
 def load_debugtalk_functions():
@@ -291,19 +30,6 @@ def load_debugtalk_functions():
     return load_module_functions(imported_module)
 
 
-###############################################################################
-#   testcase loader
-###############################################################################
-
-
-project_mapping = {}
-tests_def_mapping = {
-    "PWD": None,
-    "api": {},
-    "testcases": {}
-}
-
-
 def __extend_with_api_ref(raw_testinfo):
     """ extend with api reference
 
@@ -318,7 +44,8 @@ def __extend_with_api_ref(raw_testinfo):
     # 2, api sets file: one file contains a list of api definitions
     if not os.path.isabs(api_name):
         # make compatible with Windows/Linux
-        api_path = os.path.join(tests_def_mapping["PWD"], *api_name.split("/"))
+        pwd = get_project_working_directory()
+        api_path = os.path.join(pwd, *api_name.split("/"))
         if os.path.isfile(api_path):
             # type 1: api is defined in individual file
             api_name = api_path
@@ -338,8 +65,9 @@ def __extend_with_testcase_ref(raw_testinfo):
 
     if testcase_path not in tests_def_mapping["testcases"]:
         # make compatible with Windows/Linux
+        pwd = get_project_working_directory()
         testcase_path = os.path.join(
-            project_mapping["PWD"],
+            pwd,
             *testcase_path.split("/")
         )
         loaded_testcase = load_file(testcase_path)
@@ -650,31 +378,6 @@ def load_test_file(path):
     return loaded_content
 
 
-def load_folder_content(folder_path):
-    """ load api/testcases/testsuites definitions from folder.
-
-    Args:
-        folder_path (str): api/testcases/testsuites files folder.
-
-    Returns:
-        dict: api definition mapping.
-
-            {
-                "tests/api/basic.yml": [
-                    {"api": {"def": "api_login", "request": {}, "validate": []}},
-                    {"api": {"def": "api_logout", "request": {}, "validate": []}}
-                ]
-            }
-
-    """
-    items_mapping = {}
-
-    for file_path in load_folder_files(folder_path):
-        items_mapping[file_path] = load_file(file_path)
-
-    return items_mapping
-
-
 def load_api_folder(api_folder_path):
     """ load api definitions from api folder.
 
@@ -724,7 +427,7 @@ def load_api_folder(api_folder_path):
             for api_item in api_items:
                 key, api_dict = api_item.popitem()
                 api_id = api_dict.get("id") or api_dict.get("def") \
-                    or api_dict.get("name")
+                         or api_dict.get("name")
                 if key != "api" or not api_id:
                     raise exceptions.ParamsError(
                         "Invalid API defined in {}".format(api_file_path))
@@ -746,27 +449,7 @@ def load_api_folder(api_folder_path):
     return api_definition_mapping
 
 
-def locate_debugtalk_py(start_path):
-    """ locate debugtalk.py file
-
-    Args:
-        start_path (str): start locating path,
-            maybe testcase file path or directory path
-
-    Returns:
-        str: debugtalk.py file path, None if not found
-
-    """
-    try:
-        # locate debugtalk.py file.
-        debugtalk_path = locate_file(start_path, "debugtalk.py")
-    except exceptions.FileNotFound:
-        debugtalk_path = None
-
-    return debugtalk_path
-
-
-def load_project_tests(test_path, dot_env_path=None):
+def load_project_data(test_path, dot_env_path=None):
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
@@ -779,31 +462,9 @@ def load_project_tests(test_path, dot_env_path=None):
             environments and debugtalk.py functions.
 
     """
+    debugtalk_path, project_working_directory = init_project_working_directory(test_path)
 
-    def prepare_path(path):
-        if not os.path.exists(path):
-            err_msg = "path not exist: {}".format(path)
-            logger.log_error(err_msg)
-            raise exceptions.FileNotFound(err_msg)
-
-        if not os.path.isabs(path):
-            path = os.path.join(os.getcwd(), path)
-
-        return path
-
-    test_path = prepare_path(test_path)
-    # locate debugtalk.py file
-    debugtalk_path = locate_debugtalk_py(test_path)
-
-    if debugtalk_path:
-        # The folder contains debugtalk.py will be treated as PWD.
-        project_working_directory = os.path.dirname(debugtalk_path)
-    else:
-        # debugtalk.py not found, use os.getcwd() as PWD.
-        project_working_directory = os.getcwd()
-
-    # add PWD to sys.path
-    sys.path.insert(0, project_working_directory)
+    project_mapping = {}
 
     # load .env file
     # NOTICE:
@@ -821,16 +482,17 @@ def load_project_tests(test_path, dot_env_path=None):
     # locate PWD and load debugtalk.py functions
 
     project_mapping["PWD"] = project_working_directory
-    built_in.PWD = project_working_directory
+    functions.PWD = project_working_directory   # TODO: remove
     project_mapping["functions"] = debugtalk_functions
     project_mapping["test_path"] = test_path
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
-    tests_def_mapping["PWD"] = project_working_directory
+
+    return project_mapping
 
 
-def load_tests(path, dot_env_path=None):
+def load_cases(path, dot_env_path=None):
     """ load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:
@@ -883,9 +545,9 @@ def load_tests(path, dot_env_path=None):
             }
 
     """
-    load_project_tests(path, dot_env_path)
+
     tests_mapping = {
-        "project_mapping": project_mapping
+        "project_mapping": load_project_data(path, dot_env_path)
     }
 
     def __load_file_content(path):
