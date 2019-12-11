@@ -1,0 +1,19 @@
+name: find place from text testcase
+config:
+  base_url: https://maps.googleapis.com
+  # config 这里的variables优先级更高
+  # 如果本testcase被其他testcase引用，variables无法覆盖这里配置的值
+  # variables:
+  #   input: 福田
+  #   formatted_address: 中国广东省深圳市福田区
+teststeps:
+  - name: find place
+    api: api/find_place_api.yml
+    # 如果config上面配置了，这里的同名变量会被覆盖
+    variables:
+      input: 深圳
+      formatted_address: 中国广东省深圳市
+    validate:
+      - eq: [content.candidates.0.formatted_address, $formatted_address]
+    extract:
+      - formatted_address: formatted_address"\s?:\s?"(.*)"
