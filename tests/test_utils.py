@@ -80,6 +80,11 @@ class TestUtils(ApiServerUnittest):
         functions_mapping["not_equals"](123, "123")
 
         functions_mapping["length_equals"]("123", 3)
+        # Because the Numbers in a CSV file are by default treated as strings, 
+        # you need to convert them to Numbers, and we'll test that out here.
+        functions_mapping["length_equals"]("123", '3')
+        with self.assertRaises(AssertionError):
+            functions_mapping["length_equals"]("123", 'abc')
         functions_mapping["length_greater_than"]("123", 2)
         functions_mapping["length_greater_than_or_equals"]("123", 3)
 
