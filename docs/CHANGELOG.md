@@ -1,5 +1,15 @@
 # Release History
 
+## 2.4.1 (2019-12-11)
+
+**Added**
+
+- test: pip install package 
+
+**Fixed**
+
+- fix: typo testfile_paths
+
 ## 2.4.0 (2019-12-11)
 
 **Added**

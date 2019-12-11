@@ -13,7 +13,10 @@ matrix:
 install:
   - pip install poetry
   - poetry install -vvv
+  - poetry build
+  - ls dist/*.whl | xargs pip install # test installation
 script:
+  - hrun -V
   - python -m httprunner.cli hrun -V
   - python -m httprunner.cli hrun -h
   - poetry build
