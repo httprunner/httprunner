@@ -1,0 +1,19 @@
+name: find place from text
+base_url: https://maps.googleapis.com
+request:
+  method: GET
+  url: /maps/api/place/findplacefromtext/json
+  params:
+    key: $key
+    inputtype: textquery
+    input: $input
+    fields: 'formatted_address,geometry,name,permanently_closed,place_id,plus_code,types'
+    language: zh_CN
+variables:
+  input: 宝安
+  key: your_google_map_key
+validate:
+  - eq: [status_code, 200]
+  - eq: [content.status, OK]
+extract:
+  - place_id: content.candidates.0.place_id

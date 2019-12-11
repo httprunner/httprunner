@@ -1,0 +1,22 @@
+name: get place detail testsuites
+config:
+  base_url: https://maps.googleapis.com
+testcases:
+  - name: find place from text
+    testcase: testcases/find_place_testcase.yml
+    parameters:
+      input-formatted_address:
+        - [娄底, 中国湖南省娄底市]
+        - [新化, 中国湖南省娄底市新化县]
+        - ['北京', '中国北京市']
+        - ['广东', '中国广东省']
+        - ['shenzhen', '中国广东省深圳市']
+        - ['서울', '韩国汉城']
+
+  - name: get place detail
+    testcase: testcases/place_detail_testcase.yml
+    parameters:
+      input-formatted_address-address_components_len: ${P(data/place_detail.csv)}
+      # input-formatted_address-address_components_len:
+      #   - [娄底, 中国湖南省娄底市, 3]
+      #   - [新化, 中国湖南省娄底市新化县, 4]
