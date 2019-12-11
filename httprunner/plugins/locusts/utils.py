@@ -16,7 +16,7 @@ def prepare_locust_tests(path):
             ]
 
     """
-    tests_mapping = loader.load_tests(path)
+    tests_mapping = loader.load_cases(path)
     testcases = parser.parse_tests(tests_mapping)
 
     locust_tests = []

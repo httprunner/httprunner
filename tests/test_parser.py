@@ -3,6 +3,7 @@ import time
 import unittest
 
 from httprunner import exceptions, loader, parser
+from httprunner.loader import load
 from tests.debugtalk import gen_random_string, sum_two
 
 
@@ -806,6 +807,104 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parsed_variables["var2"], "abc$123")
         self.assertEqual(parsed_variables["var3"], "abc$$num0")
 
+    def test_get_uniform_comparator(self):
+        self.assertEqual(parser.get_uniform_comparator("eq"), "equals")
+        self.assertEqual(parser.get_uniform_comparator("=="), "equals")
+        self.assertEqual(parser.get_uniform_comparator("lt"), "less_than")
+        self.assertEqual(parser.get_uniform_comparator("le"), "less_than_or_equals")
+        self.assertEqual(parser.get_uniform_comparator("gt"), "greater_than")
+        self.assertEqual(parser.get_uniform_comparator("ge"), "greater_than_or_equals")
+        self.assertEqual(parser.get_uniform_comparator("ne"), "not_equals")
+
+        self.assertEqual(parser.get_uniform_comparator("str_eq"), "string_equals")
+        self.assertEqual(parser.get_uniform_comparator("len_eq"), "length_equals")
+        self.assertEqual(parser.get_uniform_comparator("count_eq"), "length_equals")
+
+        self.assertEqual(parser.get_uniform_comparator("len_gt"), "length_greater_than")
+        self.assertEqual(parser.get_uniform_comparator("count_gt"), "length_greater_than")
+        self.assertEqual(parser.get_uniform_comparator("count_greater_than"), "length_greater_than")
+
+        self.assertEqual(parser.get_uniform_comparator("len_ge"), "length_greater_than_or_equals")
+        self.assertEqual(parser.get_uniform_comparator("count_ge"), "length_greater_than_or_equals")
+        self.assertEqual(parser.get_uniform_comparator("count_greater_than_or_equals"), "length_greater_than_or_equals")
+
+        self.assertEqual(parser.get_uniform_comparator("len_lt"), "length_less_than")
+        self.assertEqual(parser.get_uniform_comparator("count_lt"), "length_less_than")
+        self.assertEqual(parser.get_uniform_comparator("count_less_than"), "length_less_than")
+
+        self.assertEqual(parser.get_uniform_comparator("len_le"), "length_less_than_or_equals")
+        self.assertEqual(parser.get_uniform_comparator("count_le"), "length_less_than_or_equals")
+        self.assertEqual(parser.get_uniform_comparator("count_less_than_or_equals"), "length_less_than_or_equals")
+
+    def test_parse_validator(self):
+        _validator = {"check": "status_code", "comparator": "eq", "expect": 201}
+        self.assertEqual(
+            parser.uniform_validator(_validator),
+            {"check": "status_code", "comparator": "equals", "expect": 201}
+        )
+
+        _validator = {'eq': ['status_code', 201]}
+        self.assertEqual(
+            parser.uniform_validator(_validator),
+            {"check": "status_code", "comparator": "equals", "expect": 201}
+        )
+
+    def test_extend_validators(self):
+        def_validators = [
+            {'eq': ['v1', 200]},
+            {"check": "s2", "expect": 16, "comparator": "len_eq"}
+        ]
+        current_validators = [
+            {"check": "v1", "expect": 201},
+            {'len_eq': ['s3', 12]}
+        ]
+        def_validators = [
+            parser.uniform_validator(_validator)
+            for _validator in def_validators
+        ]
+        ref_validators = [
+            parser.uniform_validator(_validator)
+            for _validator in current_validators
+        ]
+
+        extended_validators = parser.extend_validators(def_validators, ref_validators)
+        self.assertIn(
+            {"check": "v1", "expect": 201, "comparator": "equals"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s2", "expect": 16, "comparator": "length_equals"},
+            extended_validators
+        )
+        self.assertIn(
+            {"check": "s3", "expect": 12, "comparator": "length_equals"},
+            extended_validators
+        )
+
+    def test_extend_validators_with_dict(self):
+        def_validators = [
+            {'eq': ["a", {"v": 1}]},
+            {'eq': [{"b": 1}, 200]}
+        ]
+        current_validators = [
+            {'len_eq': ['s3', 12]},
+            {'eq': [{"b": 1}, 201]}
+        ]
+        def_validators = [
+            parser.uniform_validator(_validator)
+            for _validator in def_validators
+        ]
+        ref_validators = [
+            parser.uniform_validator(_validator)
+            for _validator in current_validators
+        ]
+
+        extended_validators = parser.extend_validators(def_validators, ref_validators)
+        self.assertEqual(len(extended_validators), 3)
+        self.assertIn({'check': {'b': 1}, 'expect': 201, 'comparator': 'equals'}, extended_validators)
+        self.assertNotIn({'check': {'b': 1}, 'expect': 200, 'comparator': 'equals'}, extended_validators)
+
+
 class TestParser(unittest.TestCase):
 
     def test_parse_parameters_raw_list(self):
@@ -833,11 +932,11 @@ class TestParser(unittest.TestCase):
         dot_env_path = os.path.join(
             os.getcwd(), "tests", ".env"
         )
-        loader.load_dot_env_file(dot_env_path)
+        load.load_dot_env_file(dot_env_path)
         from tests import debugtalk
         cartesian_product_parameters = parser.parse_parameters(
             parameters,
-            functions_mapping=loader.load_module_functions(debugtalk)
+            functions_mapping=load.load_module_functions(debugtalk)
         )
         self.assertIn(
             {
@@ -856,7 +955,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_parameterize(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         parameters = [
             {"app_version": "${parameterize(data/app_version.csv)}"},
             {"username-password": "${parameterize(data/account.csv)}"}
@@ -868,8 +967,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
+        project_mapping = loader.load_project_data(os.path.join(os.getcwd(), "tests"))
 
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
@@ -886,7 +984,7 @@ class TestParser(unittest.TestCase):
     def test_parse_tests_testcase(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase.yml')
-        tests_mapping = loader.load_tests(testcase_file_path)
+        tests_mapping = loader.load_cases(testcase_file_path)
         testcases = tests_mapping["testcases"]
         self.assertEqual(
             testcases[0]["config"]["variables"]["var_c"],
@@ -1272,13 +1370,13 @@ class TestParser(unittest.TestCase):
             parser.eval_lazy_data(content)
 
     def test_extend_with_api(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
+        loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         raw_testinfo = {
             "name": "get token",
             "base_url": "https://github.com",
             "api": "api/get_token.yml",
         }
-        api_def_dict = loader.load_teststep(raw_testinfo)
+        api_def_dict = loader.buildup.load_teststep(raw_testinfo)
         test_block = {
             "name": "override block",
             "times": 3,

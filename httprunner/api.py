@@ -2,7 +2,7 @@ import os
 import unittest
 
 from httprunner import (__version__, exceptions, loader, logger, parser,
-                        report, runner, utils, validator)
+                        report, runner, utils)
 
 
 class HttpRunner(object):
@@ -257,7 +257,7 @@ class HttpRunner(object):
         """
         # load tests
         self.exception_stage = "load tests"
-        tests_mapping = loader.load_tests(path, dot_env_path)
+        tests_mapping = loader.load_cases(path, dot_env_path)
 
         if mapping:
             tests_mapping["project_mapping"]["variables"] = mapping
@@ -277,9 +277,9 @@ class HttpRunner(object):
 
         """
         logger.log_info("HttpRunner version: {}".format(__version__))
-        if validator.is_testcase_path(path_or_tests):
+        if loader.is_testcase_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
-        elif validator.is_testcases(path_or_tests):
+        elif loader.is_testcases(path_or_tests):
             return self.run_tests(path_or_tests)
         else:
             raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))

@@ -8,8 +8,7 @@ from tests.base import ApiServerUnittest, gen_random_string
 class TestContext(ApiServerUnittest):
 
     def setUp(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
+        loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         self.context = context.SessionContext(
             variables={"SECRET_KEY": "DebugTalk"}
         )
