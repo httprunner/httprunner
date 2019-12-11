@@ -131,7 +131,10 @@ class HttpRunner(object):
             logger.log_info("Start to run testcase: {}".format(testcase_name))
 
             result = self.unittest_runner.run(testcase)
-            tests_results.append((testcase, result))
+            if result.wasSuccessful():
+                tests_results.append((testcase, result))
+            else:
+                tests_results.insert(0, (testcase, result))
 
         return tests_results
 
