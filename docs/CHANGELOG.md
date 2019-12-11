@@ -5,6 +5,7 @@
 **Added**
 
 - feat: validate with python script, ref #773
+- feat: rearrange html report, failed testcases will be displayed on top.
 
 **Changed**
 
@@ -13,6 +14,11 @@
 - refactor: adjust code for context and validator
 - docs: update cli argument help
 - adjust format code, remove unused import
+
+**Fixed**
+
+- fix: keep setup/teardown hooks original order when merge & override.
+- fix: length comparator exceptions when running in CSV data-driven mode.
 
 ## 2.3.3 (2019-12-04)
 
