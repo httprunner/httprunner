@@ -1,0 +1,19 @@
+name: get place detail
+config:
+  base_url: https://maps.googleapis.com
+  variables:
+    input: 娄底
+    formatted_address: 中国湖南省娄底市
+    address_components_len: 3
+teststeps:
+  # 文档里面说这里可以使用testcase，测试了一下，这种方式还有问题，使用testcase时，api里面的变量无法正常覆盖
+  # 所以：teststep中最好不要使用testcase引用
+  - name: find place
+    api: api/find_place_api.yml
+    validate:
+      - eq: [content.candidates.0.formatted_address, $formatted_address]
+  - name: get place detail
+    api: api/place_detail_api.yml
+    validate:
+      - eq: [content.result.formatted_address, $formatted_address]
+      - klook_len_eq: [content.result.address_components, $address_components_len]
