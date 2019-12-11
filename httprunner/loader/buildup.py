@@ -1,7 +1,8 @@
 import importlib
 import os
 
-from httprunner import built_in, exceptions, logger, utils
+from httprunner import exceptions, logger, utils
+from httprunner.builtin import functions
 from httprunner.loader.load import load_module_functions, load_folder_content, load_file, load_dot_env_file, \
     load_folder_files
 from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
@@ -481,7 +482,7 @@ def load_project_data(test_path, dot_env_path=None):
     # locate PWD and load debugtalk.py functions
 
     project_mapping["PWD"] = project_working_directory
-    built_in.PWD = project_working_directory
+    functions.PWD = project_working_directory   # TODO: remove
     project_mapping["functions"] = debugtalk_functions
     project_mapping["test_path"] = test_path
 

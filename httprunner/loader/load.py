@@ -5,7 +5,7 @@ import os
 
 import yaml
 
-from httprunner import built_in
+from httprunner.builtin import functions
 from httprunner import exceptions, logger, utils
 from httprunner.loader.check import check_testcase_format, is_function
 from httprunner.loader.locate import get_project_working_directory
@@ -235,7 +235,7 @@ def load_module_functions(module):
 
 
 def load_builtin_functions():
-    """ load built_in module functions
+    """ load builtin module functions
     """
-    return load_module_functions(built_in)
+    return load_module_functions(functions)
 

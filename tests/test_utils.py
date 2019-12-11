@@ -62,8 +62,8 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, "L")
 
     def current_validators(self):
-        from httprunner import built_in
-        functions_mapping = loader.load.load_module_functions(built_in)
+        from httprunner.builtin import comparators
+        functions_mapping = loader.load.load_module_functions(comparators)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
