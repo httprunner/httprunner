@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/config.schema.json",
+    "title": "Config for httprunner",
+    "description": "Used in teststep/testcase/testsuite",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "base_url": {
+            "type": "string",
+            "description": "The base_url will be added before a relative URI"
+        },
+        "variables": {
+            "type": "object"
+        },
+        "setup_hooks": {
+            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+        },
+        "teardown_hooks": {
+            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+        }
+    }
+}
