@@ -600,6 +600,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../examples/demo-klook/" title="klook" class="md-nav__link">
+      klook
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -648,6 +660,20 @@
   
     <label class="md-nav__title" for="__toc">目录</label>
     <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#240-2019-12-11" class="md-nav__link">
+    2.4.0 (2019-12-11)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#233-2019-12-04" class="md-nav__link">
+    2.3.3 (2019-12-04)
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#232-2019-11-01" class="md-nav__link">
@@ -828,6 +854,20 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#240-2019-12-11" class="md-nav__link">
+    2.4.0 (2019-12-11)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#233-2019-12-04" class="md-nav__link">
+    2.3.3 (2019-12-04)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#232-2019-11-01" class="md-nav__link">
     2.3.2 (2019-11-01)
   </a>
@@ -992,6 +1032,33 @@
                 
                 
                 <h1 id="release-history">Release History<a class="headerlink" href="#release-history" title="Permanent link">&para;</a></h1>
+<h2 id="240-2019-12-11">2.4.0 (2019-12-11)<a class="headerlink" href="#240-2019-12-11" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: validate with python script, ref #773</li>
+<li>feat: rearrange html report, failed testcases will be displayed on top.</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>refactor: make loader as submodule, split to check/locate/load/buildup</li>
+<li>refactor: make built_in as submodule, split to comparators and functions</li>
+<li>refactor: adjust code for context and validator</li>
+<li>docs: update cli argument help</li>
+<li>adjust format code, remove unused import</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: keep setup/teardown hooks original order when merge &amp; override.</li>
+</ul>
+<h2 id="233-2019-12-04">2.3.3 (2019-12-04)<a class="headerlink" href="#233-2019-12-04" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix #768: dump json file path error when folder name contains dot, such as <code>a.b.c</code></li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: rename builtin function, sleep_N_secs =&gt; sleep</li>
+</ul>
 <h2 id="232-2019-11-01">2.3.2 (2019-11-01)<a class="headerlink" href="#232-2019-11-01" title="Permanent link">&para;</a></h2>
 <p><strong>Added</strong></p>
 <ul>

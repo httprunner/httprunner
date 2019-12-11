@@ -1,0 +1,11 @@
+name: get_groups
+base_url: http://localhost:8085
+request:
+  url: /v1/transferairportadminsrv/area/getGroups
+  method: POST
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+    Accept-language: zh_CN
+    cookie: $admin_cookie
+  data:
+    parentAreaId: 7037 # 广东省
