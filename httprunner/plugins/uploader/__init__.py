@@ -40,8 +40,6 @@ $ pip install requests_toolbelt filetype
 
 from httprunner.exceptions import ParamsError
 
-PWD = os.getcwd()
-
 
 def prepare_upload_test(test_dict):
     """ preprocess for upload test
@@ -78,6 +76,18 @@ def prepare_upload_test(test_dict):
 
     params_list = []
     for key, value in upload_json.items():
+
+        if os.path.isabs(value) and os.path.isfile(value):
+            # value is absolute file path, do nothing
+            pass
+        else:
+            # value is not absolute file path, check if it is relative file path
+            from httprunner.loader import get_pwd
+            _file_path = os.path.join(get_pwd(), value)
+            if os.path.isfile(_file_path):
+                # value is relative file path, convert it to be absolute path
+                value = _file_path
+
         test_dict["variables"][key] = value
         params_list.append("{}=${}".format(key, key))
 
@@ -101,18 +111,12 @@ def multipart_encoder(**kwargs):
     fields_dict = {}
     for key, value in kwargs.items():
 
-        if os.path.isabs(value):
-            _file_path = value
-            is_file = True
-        else:
-            global PWD
-            _file_path = os.path.join(PWD, value)
-            is_file = os.path.isfile(_file_path)
-
-        if is_file:
-            filename = os.path.basename(_file_path)
-            with open(_file_path, 'rb') as f:
-                mime_type = get_filetype(_file_path)
+        if os.path.isfile(value):
+            # value is file path to upload,
+            # it has been ensured to be absolute in prepare_upload_test
+            filename = os.path.basename(value)
+            with open(value, 'rb') as f:
+                mime_type = get_filetype(value)
                 fields_dict[key] = (filename, f.read(), mime_type)
         else:
             fields_dict[key] = value
