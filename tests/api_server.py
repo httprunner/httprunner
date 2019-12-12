@@ -15,8 +15,8 @@ try:
 except ImportError:
     httpbin_app = None
     HTTPBIN_HOST = "httpbin.org"
-    HTTPBIN_PORT = 443
-    HTTPBIN_SERVER = "https://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
+    HTTPBIN_PORT = 80
+    HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
 
 FLASK_APP_PORT = 5000
 SECRET_KEY = "DebugTalk"

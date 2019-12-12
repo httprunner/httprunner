@@ -1,5 +1,19 @@
 # Release History
 
+## 2.4.1 (2019-12-12)
+
+**Added**
+
+- feat: add `upload` keyword for upload test, see [doc](https://docs.httprunner.org/prepare/upload-case/)
+- test: pip install package 
+- test: hrun command
+
+**Fixed**
+
+- fix: typo testfile_paths
+- fix: check if locustio installed
+- fix: dump json file name is empty when running relative testfile
+
 ## 2.4.0 (2019-12-11)
 
 **Added**
