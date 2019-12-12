@@ -91,7 +91,7 @@ def main():
 
     err_code = 0
     try:
-        for path in args.testcase_paths:
+        for path in args.testfile_paths:
             summary = runner.run(path, dot_env_path=args.dot_env_path)
             report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
             gen_html_report(

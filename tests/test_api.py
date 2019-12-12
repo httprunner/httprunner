@@ -222,12 +222,17 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("records", summary["details"][0])
 
     def test_run_yaml_upload(self):
-        summary = self.runner.run("tests/httpbin/upload.yml")
-        self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
-        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
-        self.assertIn("details", summary)
-        self.assertIn("records", summary["details"][0])
+        upload_cases_list = [
+            "tests/httpbin/upload.yml",
+            "tests/httpbin/upload.v2.yml"
+        ]
+        for upload_case in upload_cases_list:
+            summary = self.runner.run(upload_case)
+            self.assertTrue(summary["success"])
+            self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+            self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
+            self.assertIn("details", summary)
+            self.assertIn("records", summary["details"][0])
 
     def test_run_post_data(self):
         testcases = [
@@ -550,12 +555,11 @@ class TestHttpRunner(ApiServerUnittest):
             }
         )
 
-    # def test_validate_response_content(self):
-    #     # TODO: fix compatibility with Python 2.7
-    #     testcase_file_path = os.path.join(
-    #         os.getcwd(), 'tests/httpbin/basic.yml')
-    #     summary = self.runner.run(testcase_file_path)
-    #     self.assertTrue(summary["success"])
+    def test_validate_response_content(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/httpbin/basic.yml')
+        summary = self.runner.run(testcase_file_path)
+        self.assertTrue(summary["success"])
 
     def test_html_report_xss(self):
         testcases = [

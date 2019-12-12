@@ -579,6 +579,7 @@ def dump_json_file(json_data, json_file_abs_path):
                         json_data,
                         indent=4,
                         separators=(',', ':'),
+                        encoding="utf8",
                         ensure_ascii=False,
                         cls=PythonObjectEncoder
                     ))

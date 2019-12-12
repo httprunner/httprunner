@@ -428,6 +428,11 @@ def get_mapping_function(function_name, functions_mapping):
     elif function_name in ["environ", "ENV"]:
         return utils.get_os_environ
 
+    elif function_name in ["multipart_encoder", "multipart_content_type"]:
+        # plugin for upload test
+        from httprunner.plugins import uploader
+        return getattr(uploader, function_name)
+
     try:
         # check if HttpRunner builtin functions
         built_in_functions = loader.load_builtin_functions()
@@ -439,8 +444,9 @@ def get_mapping_function(function_name, functions_mapping):
         # check if Python builtin functions
         return getattr(builtins, function_name)
     except AttributeError:
-        # is not builtin function
-        raise exceptions.FunctionNotFound("{} is not found.".format(function_name))
+        pass
+
+    raise exceptions.FunctionNotFound("{} is not found.".format(function_name))
 
 
 def parse_function_params(params):
@@ -1146,12 +1152,17 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
             api_def_dict = test_dict.pop("api_def")
             _extend_with_api(test_dict, api_def_dict)
 
+        # verify priority: testcase teststep > testcase config
+        if "request" in test_dict:
+            if "verify" not in test_dict["request"]:
+                test_dict["request"]["verify"] = config_verify
+
+            if "upload" in test_dict["request"]:
+                from httprunner.plugins.uploader import prepare_upload_test
+                prepare_upload_test(test_dict)
+
         # current teststep variables
         teststep_variables_set |= set(test_dict.get("variables", {}).keys())
-
-        # verify priority: testcase teststep > testcase config
-        if "request" in test_dict and "verify" not in test_dict["request"]:
-            test_dict["request"]["verify"] = config_verify
 
         # move extracted variable to session variables
         if "extract" in test_dict:
