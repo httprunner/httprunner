@@ -4,7 +4,7 @@
 
 **Added**
 
-- feat: add `upload` keyword for upload test
+- feat: add `upload` keyword for upload test, see [doc](https://docs.httprunner.org/prepare/upload-case/)
 - test: pip install package 
 - test: hrun command
 
