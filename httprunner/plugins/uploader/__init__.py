@@ -21,6 +21,25 @@ Then you can write upload test script as below:
         validate:
             - eq: ["status_code", 200]
 
+For compatibility, you can also write upload test script in old way:
+
+    - test:
+        name: upload file
+        variables:
+            file: "data/file_to_upload"
+            field1: "value1"
+            field2: "value2"
+            m_encoder: ${multipart_encoder(file=$file, field1=$field1, field2=$field2)}
+        request:
+            url: http://httpbin.org/upload
+            method: POST
+            headers:
+                Content-Type: ${multipart_content_type($m_encoder)}
+                Cookie: session=AAA-BBB-CCC
+            data: $m_encoder
+        validate:
+            - eq: ["status_code", 200]
+
 """
 
 import os
