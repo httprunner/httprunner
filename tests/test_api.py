@@ -555,12 +555,11 @@ class TestHttpRunner(ApiServerUnittest):
             }
         )
 
-    # def test_validate_response_content(self):
-    #     # TODO: fix compatibility with Python 2.7
-    #     testcase_file_path = os.path.join(
-    #         os.getcwd(), 'tests/httpbin/basic.yml')
-    #     summary = self.runner.run(testcase_file_path)
-    #     self.assertTrue(summary["success"])
+    def test_validate_response_content(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/httpbin/basic.yml')
+        summary = self.runner.run(testcase_file_path)
+        self.assertTrue(summary["success"])
 
     def test_html_report_xss(self):
         testcases = [
