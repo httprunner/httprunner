@@ -11,6 +11,7 @@
 
 - fix: typo testfile_paths
 - fix: check if locustio installed
+- fix: dump json file name is empty when running relative testfile
 
 ## 2.4.0 (2019-12-11)
 

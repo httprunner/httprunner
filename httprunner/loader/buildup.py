@@ -480,11 +480,10 @@ def load_project_data(test_path, dot_env_path=None):
         debugtalk_functions = {}
 
     # locate PWD and load debugtalk.py functions
-
     project_mapping["PWD"] = project_working_directory
     functions.PWD = project_working_directory   # TODO: remove
     project_mapping["functions"] = debugtalk_functions
-    project_mapping["test_path"] = test_path
+    project_mapping["test_path"] = os.path.abspath(test_path)
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
