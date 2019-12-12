@@ -334,7 +334,6 @@ def load_test_file(path):
 
     """
     raw_content = load_file(path)
-    loaded_content = None
 
     if isinstance(raw_content, dict):
 
