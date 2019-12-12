@@ -803,7 +803,7 @@
                 
                 <h2 id="_1">运行环境<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>HttpRunner 是一个基于 Python 开发的测试框架，可以运行在 macOS、Linux、Windows 系统平台上。</p>
-<p><strong>Python 版本</strong>：HttpRunner 支持 Python 3.4 及以上的所有版本，并使用 Travis-CI 进行了<a href="https://travis-ci.org/HttpRunner/HttpRunner">持续集成测试</a>，测试覆盖的版本包括 2.7/3.4/3.5/3.6/3.7。虽然 HttpRunner 暂时保留了对 Python 2.7 的兼容支持，但强烈建议使用 Python 3.4 及以上版本。</p>
+<p><strong>Python 版本</strong>：HttpRunner 支持 Python 3.5 及以上的所有版本，并使用 Travis-CI 进行了<a href="https://travis-ci.org/HttpRunner/HttpRunner">持续集成测试</a>，测试覆盖的版本包括 2.7/3.5/3.6/3.7/3.8。虽然 HttpRunner 暂时保留了对 Python 2.7 的兼容支持，但强烈建议使用 Python 3.6 及以上版本。</p>
 <p><strong>操作系统</strong>：推荐使用 macOS/Linux。</p>
 <h2 id="_2">安装方式<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>HttpRunner 的稳定版本托管在 PyPI 上，可以使用 <code>pip</code> 进行安装。</p>
@@ -835,18 +835,18 @@ $ pip install -U git+https://github.com/HttpRunner/HttpRunner.git@master
 <p>httprunner、hrun、ate 三个命令完全等价，功能特性完全相同，个人推荐使用<code>hrun</code>命令。</p>
 <p>运行如下命令，若正常显示版本号，则说明 HttpRunner 安装成功。</p>
 <div class="codehilite"><pre><span></span>$ hrun -V
-2.0.2
+2.4.1
 
 $ har2case -V
-0.2.0
+0.3.1
 </pre></div>
 
 
 <h2 id="_5">开发者模式<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>默认情况下，安装 HttpRunner 的时候只会安装运行 HttpRunner 的必要依赖库。</p>
 <p>如果你不仅仅是使用 HttpRunner，还需要对 HttpRunner 进行开发调试（debug），那么就需要进行如下操作。</p>
-<p>HttpRunner 使用 <a href="https://docs.pipenv.org/">pipenv</a> 对依赖包进行管理，若你还没有安装 pipenv，需要先执行如下命令进行按照：</p>
-<div class="codehilite"><pre><span></span>$ pip install pipenv
+<p>HttpRunner 使用 <a href="https://github.com/sdispater/poetry">poetry</a> 对依赖包进行管理，若你还没有安装 poetry，需要先执行如下命令进行按照：</p>
+<div class="codehilite"><pre><span></span>$ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py <span class="p">|</span> python
 </pre></div>
 
 
@@ -856,46 +856,47 @@ $ har2case -V
 
 
 <p>进入仓库目录，安装所有依赖：</p>
-<div class="codehilite"><pre><span></span>$ pipenv install --dev
+<div class="codehilite"><pre><span></span>$ poetry install
 </pre></div>
 
 
 <p>运行单元测试，若测试全部通过，则说明环境正常。</p>
-<div class="codehilite"><pre><span></span>$ pipenv run python -m unittest discover
+<div class="codehilite"><pre><span></span>$ poetry run python -m unittest discover
 </pre></div>
 
 
 <p>查看 HttpRunner 的依赖情况：</p>
-<div class="codehilite"><pre><span></span>$ pipenv graph
-
-HttpRunner==2.0.0
-  - colorama [required: Any, installed: 0.4.0]
-  - colorlog [required: Any, installed: 3.1.4]
-  - har2case [required: Any, installed: 0.2.0]
-    - PyYAML [required: Any, installed: 3.13]
-  - Jinja2 [required: Any, installed: 2.10]
-    - MarkupSafe [required: &gt;=0.23, installed: 1.0]
-  - PyYAML [required: Any, installed: 3.13]
-  - requests [required: Any, installed: 2.20.0]
-    - certifi [required: &gt;=2017.4.17, installed: 2018.10.15]
-    - chardet [required: &gt;=3.0.2,&lt;3.1.0, installed: 3.0.4]
-    - idna [required: &gt;=2.5,&lt;2.8, installed: 2.7]
-    - urllib3 [required: &gt;=1.21.1,&lt;1.25, installed: 1.24]
-  - requests-toolbelt [required: Any, installed: 0.8.0]
-    - requests [required: &gt;=2.0.1,&lt;3.0.0, installed: 2.20.0]
-      - certifi [required: &gt;=2017.4.17, installed: 2018.10.15]
-      - chardet [required: &gt;=3.0.2,&lt;3.1.0, installed: 3.0.4]
-      - idna [required: &gt;=2.5,&lt;2.8, installed: 2.7]
-      - urllib3 [required: &gt;=1.21.1,&lt;1.25, installed: 1.24]
+<div class="codehilite"><pre><span></span>$ poetry show
+certifi           2019.9.11 Python package for providing Mozilla&#39;s CA Bundle.
+chardet           3.0.4     Universal encoding detector for Python 2 and 3
+click             7.0       Composable command line interface toolkit
+colorama          0.4.1     Cross-platform colored terminal text.
+colorlog          4.0.2     Log formatting with colors!
+coverage          4.5.4     Code coverage measurement for Python
+coveralls         1.8.2     Show coverage stats online via coveralls.io
+docopt            0.6.2     Pythonic argument parser, that will make you smile
+filetype          1.0.5     Infer file type and MIME type of any file/buffer. No external dependencies.
+flask             0.12.4    A microframework based on Werkzeug, Jinja2 and good intentions
+har2case          0.3.1     Convert HAR(HTTP Archive) to YAML/JSON testcases for HttpRunner.
+idna              2.8       Internationalized Domain Names in Applications (IDNA)
+itsdangerous      1.1.0     Various helpers to pass data to untrusted environments and back.
+jinja2            2.10.3    A very fast and expressive template engine.
+jsonpath          0.82      An XPath for JSON
+markupsafe        1.1.1     Safely add untrusted strings to HTML/XML markup.
+pyyaml            5.1.2     YAML parser and emitter for Python
+requests          2.22.0    Python HTTP for Humans.
+requests-toolbelt 0.9.1     A utility belt for advanced users of python-requests
+urllib3           1.25.6    HTTP library with thread-safe connection pooling, file post, and more.
+werkzeug          0.16.0    The comprehensive WSGI web application library.
 </pre></div>
 
 
 <p>调试运行方式：</p>
 <div class="codehilite"><pre><span></span><span class="c1"># 调试运行 hrun</span>
-$ pipenv run python main-debug.py hrun -h
+$ poetry run python -m httprunner -h
 
 <span class="c1"># 调试运行 locusts</span>
-$ pipenv run python main-debug.py locusts -h
+$ pipenv run python -m httprunner.plugins.locusts -h
 </pre></div>
 
 
