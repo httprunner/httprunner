@@ -1,8 +1,9 @@
-- config:
+config:
     name: test upload file with httpbin
     base_url: ${get_httpbin_server()}
 
-- test:
+teststeps:
+-
     name: upload file
     variables:
         file_path: "data/test.env"
@@ -16,3 +17,4 @@
     validate:
         - eq: ["status_code", 200]
         - startswith: ["content.form.file", "data/test.env"]
+

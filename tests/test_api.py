@@ -222,12 +222,17 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("records", summary["details"][0])
 
     def test_run_yaml_upload(self):
-        summary = self.runner.run("tests/httpbin/upload.yml")
-        self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
-        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
-        self.assertIn("details", summary)
-        self.assertIn("records", summary["details"][0])
+        upload_cases_list = [
+            "tests/httpbin/upload.yml",
+            "tests/httpbin/upload.v2.yml"
+        ]
+        for upload_case in upload_cases_list:
+            summary = self.runner.run(upload_case)
+            self.assertTrue(summary["success"])
+            self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+            self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+            self.assertIn("details", summary)
+            self.assertIn("records", summary["details"][0])
 
     def test_run_post_data(self):
         testcases = [
