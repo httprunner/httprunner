@@ -4,6 +4,7 @@
 
 **Added**
 
+- feat: add `upload` keyword for upload test
 - test: pip install package 
 - test: hrun command
 
