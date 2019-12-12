@@ -15,5 +15,4 @@
         data: $multipart_encoder
     validate:
         - eq: ["status_code", 200]
-        - startswith: ["content.files.file", "UserName=test"]
-
+        - startswith: ["content.form.file", "data/test.env"]
