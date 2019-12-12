@@ -230,7 +230,7 @@ class TestHttpRunner(ApiServerUnittest):
             summary = self.runner.run(upload_case)
             self.assertTrue(summary["success"])
             self.assertEqual(summary["stat"]["testcases"]["total"], 1)
-            self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+            self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
             self.assertIn("details", summary)
             self.assertIn("records", summary["details"][0])
 
