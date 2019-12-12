@@ -1,6 +1,6 @@
 # Release History
 
-## 2.4.1 (2019-12-11)
+## 2.4.1 (2019-12-12)
 
 **Added**
 
@@ -10,6 +10,7 @@
 **Fixed**
 
 - fix: typo testfile_paths
+- fix: check if locustio installed
 
 ## 2.4.0 (2019-12-11)
 
