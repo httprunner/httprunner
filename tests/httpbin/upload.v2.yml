@@ -16,5 +16,15 @@ teststeps:
         data: $m_encoder
     validate:
         - eq: ["status_code", 200]
-        - startswith: ["content.form.file", "data/test.env"]
+        - startswith: ["content.files.file", "UserName=test"]
 
+-
+    name: upload file with keyword
+    request:
+        url: /post
+        method: POST
+        upload:
+            file: "data/test.env"
+    validate:
+        - eq: ["status_code", 200]
+        - startswith: ["content.files.file", "UserName=test"]
