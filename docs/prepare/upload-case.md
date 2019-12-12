@@ -6,7 +6,7 @@
 - [requests_toolbelt](https://github.com/requests/toolbelt)
 - [filetype](https://github.com/h2non/filetype.py)
 
-使用内置 `upload` 关键字，可轻松实现上传功能。（适用版本：2.4.1+）
+使用内置 `upload` 关键字，可轻松实现上传功能（适用版本：2.4.1+）。
 
 ```yaml
 - test:
@@ -24,7 +24,7 @@
         - eq: ["status_code", 200]
 ```
 
-同时，你也可以继续使用之前描述形式。（使用版本：2.0+）
+同时，你也可以继续使用之前描述形式（适用版本：2.0+）。
 
 ```yaml
 - test:
