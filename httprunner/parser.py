@@ -429,8 +429,8 @@ def get_mapping_function(function_name, functions_mapping):
         return utils.get_os_environ
 
     elif function_name in ["multipart_encoder", "multipart_content_type"]:
-        # plugin for upload test
-        from httprunner.plugins import uploader
+        # extension for upload test
+        from httprunner.ext import uploader
         return getattr(uploader, function_name)
 
     try:
@@ -1158,7 +1158,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
                 test_dict["request"]["verify"] = config_verify
 
             if "upload" in test_dict["request"]:
-                from httprunner.plugins.uploader import prepare_upload_test
+                from httprunner.ext.uploader import prepare_upload_test
                 prepare_upload_test(test_dict)
 
         # current teststep variables

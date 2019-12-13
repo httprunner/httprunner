@@ -1,6 +1,6 @@
-""" upload test plugin.
+""" upload test extension.
 
-If you want to use this plugin, you should install the following dependencies first.
+If you want to use this extension, you should install the following dependencies first.
 
 - requests_toolbelt
 - filetype
@@ -50,7 +50,7 @@ try:
     from requests_toolbelt import MultipartEncoder
 except ImportError:
     msg = """
-uploader plugin dependencies uninstalled, install first and try again.
+uploader extension dependencies uninstalled, install first and try again.
 install with pip:
 $ pip install requests_toolbelt filetype
 """
