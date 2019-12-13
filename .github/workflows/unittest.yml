@@ -37,13 +37,16 @@ jobs:
         python -m httprunner.cli hrun -h
         poetry run coverage run --source=httprunner -m unittest discover
         poetry run coverage report -m
-    - name: Coveralls GitHub Action
-      uses: coverallsapp/github-action@v1.0.1
+    - name: Codecov
+      uses: codecov/codecov-action@v1.0.5
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        # Path to lcov file
-        path-to-lcov: .coverage # default is ./coverage/lcov.info
-        # Set to true if you are running parallel jobs, then use "parallel_finished: true" for the last action.
-        parallel: true # optional
-        # Set to true for the last action when using "parallel: true".
-        parallel-finished: true # optional
+        # User defined upload name. Visible in Codecov UI
+        name: httprunner # optional
+        # Repository upload token - get it from codecov.io
+        token: ${{ secrets.CODECOV_TOKEN }}
+        # Path to coverage file to upload
+        file: .coverage # optional
+        # Flag upload to group coverage metrics (e.g. unittests | integration | ui,chrome)
+        flags: unittests # optional
+        # Specify whether or not CI build should fail if Codecov runs into an error during upload
+        fail_ci_if_error: true # optional
