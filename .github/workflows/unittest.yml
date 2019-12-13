@@ -28,11 +28,24 @@ jobs:
         poetry build
         ls dist/*.whl | xargs pip install # test installation
         hrun -V
-    - name: Smoketest for hrun command
+    - name: Run smoketest for hrun command
       run: |
         cd tests/httpbin && hrun basic.yml --log-level debug --failfast && cd -
-    - name: Smoketest for hrun command
+    - name: Run unittest for httprunner
       run: |
         python -m httprunner.cli hrun -V
         python -m httprunner.cli hrun -h
         poetry run coverage run --source=httprunner -m unittest discover
+        
+        - name: Coveralls GitHub Action
+    - name: Coveralls GitHub Action
+      uses: coverallsapp/github-action@v1.0.1
+      with:
+        # 
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # Path to lcov file
+        # path-to-lcov: # default is ./coverage/lcov.info
+        # Set to true if you are running parallel jobs, then use "parallel_finished: true" for the last action.
+        parallel: true # optional
+        # Set to true for the last action when using "parallel: true".
+        parallel-finished: true # optional
