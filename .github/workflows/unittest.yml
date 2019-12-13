@@ -1,4 +1,4 @@
-name: Python package
+name: unittest
 
 on: [push]
 
@@ -23,14 +23,6 @@ jobs:
         pip install poetry
         poetry --version
         poetry install -vvv
-    - name: Test package installation
-      run: |
-        poetry build
-        ls dist/*.whl | xargs pip install # test installation
-        hrun -V
-    - name: Run smoketest for hrun command
-      run: |
-        cd tests/httpbin && hrun basic.yml --log-level debug --failfast && cd -
     - name: Run unittest for httprunner
       run: |
         python -m httprunner.cli hrun -V
@@ -45,7 +37,7 @@ jobs:
         # Repository upload token - get it from codecov.io
         token: ${{ secrets.CODECOV_TOKEN }}
         # Path to coverage file to upload
-        file: .coverage # optional
+        file: ./.coverage # optional
         # Flag upload to group coverage metrics (e.g. unittests | integration | ui,chrome)
         flags: unittests # optional
         # Specify whether or not CI build should fail if Codecov runs into an error during upload
