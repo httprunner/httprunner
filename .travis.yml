@@ -21,7 +21,6 @@ script:
   - cd tests/httpbin && hrun basic.yml --log-level debug --failfast && cd -
   - python -m httprunner.cli hrun -V
   - python -m httprunner.cli hrun -h
-  - poetry build
   - poetry run coverage run --source=httprunner -m unittest discover
 after_success:
   - poetry run coveralls
