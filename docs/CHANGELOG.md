@@ -1,5 +1,11 @@
 # Release History
 
+## 2.4.3 (2019-12-13)
+
+**Changed**
+
+- refactor: use poetry>=1.0.0
+
 ## 2.4.2 (2019-12-13)
 
 **Changed**
