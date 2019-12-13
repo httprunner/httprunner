@@ -1,5 +1,13 @@
 # Release History
 
+## 2.4.2 (2019-12-13)
+
+**Changed**
+
+- refactor: replace with open file handler, avoid reading files into memory
+- refactor: rename plugin to extension, httprunner/plugins -> httprunner/ext
+- docs: update installation doc for developers
+
 ## 2.4.1 (2019-12-12)
 
 **Added**
