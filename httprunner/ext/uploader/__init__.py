@@ -128,9 +128,10 @@ def multipart_encoder(**kwargs):
         if is_exists_file:
             # value is file path to upload
             filename = os.path.basename(_file_path)
-            with open(_file_path, 'rb') as f:
-                mime_type = get_filetype(_file_path)
-                fields_dict[key] = (filename, f.read(), mime_type)
+            mime_type = get_filetype(_file_path)
+            # TODO: fix ResourceWarning for unclosed file
+            file_handler = open(_file_path, 'rb')
+            fields_dict[key] = (filename, file_handler, mime_type)
         else:
             fields_dict[key] = value
 
