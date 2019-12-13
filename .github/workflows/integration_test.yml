@@ -3,7 +3,7 @@ name: integration_test
 on: [push]
 
 jobs:
-  build:
+  integration_test:
 
     runs-on: ubuntu-latest
     strategy:
@@ -22,7 +22,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry --version
-        poetry install -vvv
+        poetry install -vv
     - name: Test package installation
       run: |
         poetry build

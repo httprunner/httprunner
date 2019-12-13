@@ -3,7 +3,7 @@ name: unittest
 on: [push]
 
 jobs:
-  build:
+  unittest:
 
     runs-on: ubuntu-latest
     strategy:
@@ -22,23 +22,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry --version
-        poetry install -vvv
+        poetry install -vv
     - name: Run unittest for httprunner
       run: |
         poetry run python -m httprunner.cli hrun -V
         poetry run python -m httprunner.cli hrun -h
         poetry run coverage run --source=httprunner -m unittest discover
+        poetry run coverage xml
         poetry run coverage report -m
     - name: Codecov
       uses: codecov/codecov-action@v1.0.5
       with:
         # User defined upload name. Visible in Codecov UI
-        name: httprunner # optional
+        name: httprunner
         # Repository upload token - get it from codecov.io
         token: ${{ secrets.CODECOV_TOKEN }}
         # Path to coverage file to upload
-        file: ./.coverage # optional
+        file: ./coverage.xml
         # Flag upload to group coverage metrics (e.g. unittests | integration | ui,chrome)
-        flags: unittests # optional
+        flags: unittests
         # Specify whether or not CI build should fail if Codecov runs into an error during upload
-        fail_ci_if_error: true # optional
+        fail_ci_if_error: true
