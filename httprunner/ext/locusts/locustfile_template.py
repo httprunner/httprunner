@@ -5,7 +5,7 @@ from locust import HttpLocust, TaskSet, task
 from locust.events import request_failure
 
 from httprunner.exceptions import MyBaseError, MyBaseFailure
-from httprunner.plugins.locusts.utils import prepare_locust_tests
+from httprunner.ext.locusts.utils import prepare_locust_tests
 from httprunner.runner import Runner
 
 logging.getLogger().setLevel(logging.CRITICAL)
