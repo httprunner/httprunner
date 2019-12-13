@@ -7,6 +7,7 @@
 - refactor: use poetry>=1.0.0
 - test: migrate from travis CI to github actions
 - test: migrate from coveralls to codecov
+- test: run matrix tests on linux/macos/windows and Python 2.7/3.5/3.6/3.7/3.8
 
 ## 2.4.2 (2019-12-13)
 
