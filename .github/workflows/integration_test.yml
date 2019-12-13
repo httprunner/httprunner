@@ -3,12 +3,12 @@ name: integration_test
 on: [push]
 
 jobs:
-  integration test:
+  integration_test:
 
-    name: Test on ${{ matrix.os }} and ${{ matrix.python-version }}
+    name: ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 15
+      max-parallel: 5
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
