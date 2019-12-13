@@ -12,6 +12,7 @@ matrix:
       dist: xenial
 install:
   - pip install poetry
+  - poetry --version
   - poetry install -vvv
   - poetry build
   - ls dist/*.whl | xargs pip install # test installation
