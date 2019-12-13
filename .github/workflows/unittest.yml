@@ -1,0 +1,52 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry --version
+        poetry install -vvv
+    - name: Test package installation
+      run: |
+        poetry build
+        ls dist/*.whl | xargs pip install # test installation
+        hrun -V
+    - name: Run smoketest for hrun command
+      run: |
+        cd tests/httpbin && hrun basic.yml --log-level debug --failfast && cd -
+    - name: Run unittest for httprunner
+      run: |
+        python -m httprunner.cli hrun -V
+        python -m httprunner.cli hrun -h
+        poetry run coverage run --source=httprunner -m unittest discover
+        poetry run coverage report -m
+    - name: Codecov
+      uses: codecov/codecov-action@v1.0.5
+      with:
+        # User defined upload name. Visible in Codecov UI
+        name: httprunner # optional
+        # Repository upload token - get it from codecov.io
+        token: ${{ secrets.CODECOV_TOKEN }}
+        # Path to coverage file to upload
+        file: .coverage # optional
+        # Flag upload to group coverage metrics (e.g. unittests | integration | ui,chrome)
+        flags: unittests # optional
+        # Specify whether or not CI build should fail if Codecov runs into an error during upload
+        fail_ci_if_error: true # optional
