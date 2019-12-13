@@ -25,8 +25,8 @@ jobs:
         poetry install -vvv
     - name: Run unittest for httprunner
       run: |
-        python -m httprunner.cli hrun -V
-        python -m httprunner.cli hrun -h
+        poetry run python -m httprunner.cli hrun -V
+        poetry run python -m httprunner.cli hrun -h
         poetry run coverage run --source=httprunner -m unittest discover
         poetry run coverage report -m
     - name: Codecov
