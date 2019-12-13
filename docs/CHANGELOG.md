@@ -5,6 +5,8 @@
 **Changed**
 
 - refactor: use poetry>=1.0.0
+- test: migrate from travis CI to github actions
+- test: migrate from coveralls to codecov
 
 ## 2.4.2 (2019-12-13)
 

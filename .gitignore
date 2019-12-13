@@ -15,3 +15,5 @@ locustfile.py
 site/
 reports
 .venv
+*.xml
+htmlcov/
