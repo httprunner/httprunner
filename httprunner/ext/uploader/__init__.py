@@ -1,6 +1,6 @@
-""" upload test plugin.
+""" upload test extension.
 
-If you want to use this plugin, you should install the following dependencies first.
+If you want to use this extension, you should install the following dependencies first.
 
 - requests_toolbelt
 - filetype
@@ -50,7 +50,7 @@ try:
     from requests_toolbelt import MultipartEncoder
 except ImportError:
     msg = """
-uploader plugin dependencies uninstalled, install first and try again.
+uploader extension dependencies uninstalled, install first and try again.
 install with pip:
 $ pip install requests_toolbelt filetype
 """
@@ -128,9 +128,10 @@ def multipart_encoder(**kwargs):
         if is_exists_file:
             # value is file path to upload
             filename = os.path.basename(_file_path)
-            with open(_file_path, 'rb') as f:
-                mime_type = get_filetype(_file_path)
-                fields_dict[key] = (filename, f.read(), mime_type)
+            mime_type = get_filetype(_file_path)
+            # TODO: fix ResourceWarning for unclosed file
+            file_handler = open(_file_path, 'rb')
+            fields_dict[key] = (filename, file_handler, mime_type)
         else:
             fields_dict[key] = value
 
