@@ -3,13 +3,13 @@ name: unittest
 on: [push]
 
 jobs:
-  unittest on ${{ matrix.os_type }} and ${{ matrix.python-version }}:
-
-    runs-on: ${{ matrix.os_type }}
+  unittest:
+    name: Test on ${{ matrix.os }} and ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 5
+      max-parallel: 15
       matrix:
-        os_type: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
 
     steps:
