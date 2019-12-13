@@ -57,7 +57,7 @@ $ har2case -V
 
 如果你不仅仅是使用 HttpRunner，还需要对 HttpRunner 进行开发调试（debug），那么就需要进行如下操作。
 
-HttpRunner 使用 [poetry][poetry] 对依赖包进行管理，若你还没有安装 poetry，需要先执行如下命令进行按照：
+HttpRunner 使用 [poetry][poetry] 对依赖包进行管理，若你还没有安装 poetry，需要先执行如下命令进行安装：
 
 ```bash
 $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
