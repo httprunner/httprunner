@@ -1,6 +1,10 @@
 # Release History
 
-## 2.4.3 (2019-12-13)
+## 2.4.3 (2019-12-16)
+
+**Added**
+
+- feat: load api content on demand
 
 **Changed**
 
