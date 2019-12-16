@@ -2,7 +2,7 @@ import importlib
 import os
 
 from httprunner import exceptions, logger, utils
-from httprunner.loader.load import load_module_functions, load_folder_content, load_file, load_dot_env_file, \
+from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
     load_folder_files
 from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
 
@@ -49,12 +49,16 @@ def __extend_with_api_ref(raw_testinfo):
             # type 1: api is defined in individual file
             api_name = api_path
 
-    try:
+    if api_name in tests_def_mapping["api"]:
         block = tests_def_mapping["api"][api_name]
-        # NOTICE: avoid project_mapping been changed during iteration.
-        raw_testinfo["api_def"] = utils.deepcopy_dict(block)
-    except KeyError:
+    elif not os.path.isfile(api_name):
         raise exceptions.ApiNotFound("{} not found!".format(api_name))
+    else:
+        block = load_file(api_name)
+
+    # NOTICE: avoid project_mapping been changed during iteration.
+    raw_testinfo["api_def"] = utils.deepcopy_dict(block)
+    tests_def_mapping["api"][api_name] = block
 
 
 def __extend_with_testcase_ref(raw_testinfo):
@@ -376,77 +380,6 @@ def load_test_file(path):
     return loaded_content
 
 
-def load_api_folder(api_folder_path):
-    """ load api definitions from api folder.
-
-    Args:
-        api_folder_path (str): api files folder.
-
-            api file should be in the following format:
-            [
-                {
-                    "api": {
-                        "def": "api_login",
-                        "request": {},
-                        "validate": []
-                    }
-                },
-                {
-                    "api": {
-                        "def": "api_logout",
-                        "request": {},
-                        "validate": []
-                    }
-                }
-            ]
-
-    Returns:
-        dict: api definition mapping.
-
-            {
-                "api_login": {
-                    "function_meta": {"func_name": "api_login", "args": [], "kwargs": {}}
-                    "request": {}
-                },
-                "api_logout": {
-                    "function_meta": {"func_name": "api_logout", "args": [], "kwargs": {}}
-                    "request": {}
-                }
-            }
-
-    """
-    api_definition_mapping = {}
-
-    api_items_mapping = load_folder_content(api_folder_path)
-
-    for api_file_path, api_items in api_items_mapping.items():
-        # TODO: add JSON schema validation
-        if isinstance(api_items, list):
-            for api_item in api_items:
-                key, api_dict = api_item.popitem()
-                api_id = api_dict.get("id") or api_dict.get("def") \
-                         or api_dict.get("name")
-                if key != "api" or not api_id:
-                    raise exceptions.ParamsError(
-                        "Invalid API defined in {}".format(api_file_path))
-
-                if api_id in api_definition_mapping:
-                    raise exceptions.ParamsError(
-                        "Duplicated API ({}) defined in {}".format(
-                            api_id, api_file_path))
-                else:
-                    api_definition_mapping[api_id] = api_dict
-
-        elif isinstance(api_items, dict):
-            if api_file_path in api_definition_mapping:
-                raise exceptions.ParamsError(
-                    "Duplicated API defined: {}".format(api_file_path))
-            else:
-                api_definition_mapping[api_file_path] = api_items
-
-    return api_definition_mapping
-
-
 def load_project_data(test_path, dot_env_path=None):
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
@@ -481,9 +414,6 @@ def load_project_data(test_path, dot_env_path=None):
     project_mapping["PWD"] = project_working_directory
     project_mapping["functions"] = debugtalk_functions
     project_mapping["test_path"] = os.path.abspath(test_path)
-
-    # load api
-    tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
 
     return project_mapping
 
