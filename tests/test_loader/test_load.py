@@ -150,10 +150,3 @@ class TestFileLoader(unittest.TestCase):
         )
         env_variables_mapping = load.load_dot_env_file(dot_env_path)
         self.assertEqual(env_variables_mapping, {})
-
-    def test_load_folder_content(self):
-        path = os.path.join(os.getcwd(), "tests", "api")
-        items_mapping = load.load_folder_content(path)
-        file_path = os.path.join(os.getcwd(), "tests", "api", "reset_all.yml")
-        self.assertIn(file_path, items_mapping)
-        self.assertIsInstance(items_mapping[file_path], dict)
