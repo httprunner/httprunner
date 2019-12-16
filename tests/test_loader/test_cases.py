@@ -277,13 +277,6 @@ class TestSuiteLoader(unittest.TestCase):
         with self.assertRaises(exceptions.FileNotFound):
             loader.load_cases(path)
 
-    def test_load_api_folder(self):
-        path = os.path.join(os.getcwd(), "tests", "api")
-        api_definition_mapping = buildup.load_api_folder(path)
-        api_file_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
-        self.assertIn(api_file_path, api_definition_mapping)
-        self.assertIn("request", api_definition_mapping[api_file_path])
-
     def test_load_project_tests(self):
         buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
         api_file_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")

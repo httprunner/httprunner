@@ -57,7 +57,7 @@ $ har2case -V
 
 如果你不仅仅是使用 HttpRunner，还需要对 HttpRunner 进行开发调试（debug），那么就需要进行如下操作。
 
-HttpRunner 使用 [poetry][poetry] 对依赖包进行管理，若你还没有安装 poetry，需要先执行如下命令进行按照：
+HttpRunner 使用 [poetry][poetry] 对依赖包进行管理，若你还没有安装 poetry，需要先执行如下命令进行安装：
 
 ```bash
 $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
@@ -83,29 +83,46 @@ $ poetry run python -m unittest discover
 
 查看 HttpRunner 的依赖情况：
 
-```text
-$ poetry show
-certifi           2019.9.11 Python package for providing Mozilla's CA Bundle.
-chardet           3.0.4     Universal encoding detector for Python 2 and 3
-click             7.0       Composable command line interface toolkit
-colorama          0.4.1     Cross-platform colored terminal text.
-colorlog          4.0.2     Log formatting with colors!
-coverage          4.5.4     Code coverage measurement for Python
-coveralls         1.8.2     Show coverage stats online via coveralls.io
-docopt            0.6.2     Pythonic argument parser, that will make you smile
-filetype          1.0.5     Infer file type and MIME type of any file/buffer. No external dependencies.
-flask             0.12.4    A microframework based on Werkzeug, Jinja2 and good intentions
-har2case          0.3.1     Convert HAR(HTTP Archive) to YAML/JSON testcases for HttpRunner.
-idna              2.8       Internationalized Domain Names in Applications (IDNA)
-itsdangerous      1.1.0     Various helpers to pass data to untrusted environments and back.
-jinja2            2.10.3    A very fast and expressive template engine.
-jsonpath          0.82      An XPath for JSON
-markupsafe        1.1.1     Safely add untrusted strings to HTML/XML markup.
-pyyaml            5.1.2     YAML parser and emitter for Python
-requests          2.22.0    Python HTTP for Humans.
-requests-toolbelt 0.9.1     A utility belt for advanced users of python-requests
-urllib3           1.25.6    HTTP library with thread-safe connection pooling, file post, and more.
-werkzeug          0.16.0    The comprehensive WSGI web application library.
+```bash
+$  poetry show --tree
+colorama 0.4.1 Cross-platform colored terminal text.
+colorlog 4.0.2 Log formatting with colors!
+└── colorama *
+coverage 4.5.4 Code coverage measurement for Python
+coveralls 1.8.2 Show coverage stats online via coveralls.io
+├── coverage >=3.6,<5.0
+├── docopt >=0.6.1
+├── requests >=1.0.0
+│   ├── certifi >=2017.4.17 
+│   ├── chardet >=3.0.2,<3.1.0 
+│   ├── idna >=2.5,<2.9 
+│   └── urllib3 >=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26 
+└── urllib3 *
+filetype 1.0.5 Infer file type and MIME type of any file/buffer. No external dependencies.
+flask 0.12.4 A microframework based on Werkzeug, Jinja2 and good intentions
+├── click >=2.0
+├── itsdangerous >=0.21
+├── jinja2 >=2.4
+│   └── markupsafe >=0.23 
+└── werkzeug >=0.7
+future 0.18.1 Clean single-source support for Python 3 and 2
+har2case 0.3.1 Convert HAR(HTTP Archive) to YAML/JSON testcases for HttpRunner.
+└── pyyaml *
+jinja2 2.10.3 A very fast and expressive template engine.
+└── markupsafe >=0.23
+jsonpath 0.82 An XPath for JSON
+pyyaml 5.1.2 YAML parser and emitter for Python
+requests 2.22.0 Python HTTP for Humans.
+├── certifi >=2017.4.17
+├── chardet >=3.0.2,<3.1.0
+├── idna >=2.5,<2.9
+└── urllib3 >=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26
+requests-toolbelt 0.9.1 A utility belt for advanced users of python-requests
+└── requests >=2.0.1,<3.0.0
+    ├── certifi >=2017.4.17 
+    ├── chardet >=3.0.2,<3.1.0 
+    ├── idna >=2.5,<2.9 
+    └── urllib3 >=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26 
 ```
 
 调试运行方式：
