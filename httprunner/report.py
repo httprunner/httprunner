@@ -11,7 +11,7 @@ from jinja2 import Template, escape
 from requests.cookies import RequestsCookieJar
 
 from httprunner import __version__, logger
-from httprunner.compat import basestring, bytes, json, numeric_types
+from httprunner.compat import basestring, bytes, json, numeric_types, JSONDecodeError
 
 
 def get_platform():
@@ -163,6 +163,13 @@ def __stringify_request(request_data):
             except UnicodeDecodeError:
                 pass
 
+            if key == "body":
+                try:
+                    # request body is in json format
+                    value = json.loads(value)
+                except JSONDecodeError:
+                    pass
+
         elif not isinstance(value, (basestring, numeric_types, Iterable)):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
@@ -211,7 +218,7 @@ def __stringify_response(response_data):
                 if not encoding or encoding == "None":
                     encoding = "utf-8"
 
-                if key == "content" and "image" in response_data["content_type"]:
+                if key == "body" and "image" in response_data["content_type"]:
                     # display image
                     value = "data:{};base64,{}".format(
                         response_data["content_type"],

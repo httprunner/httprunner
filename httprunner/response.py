@@ -175,7 +175,7 @@ class ResponseObject(object):
                 raise exceptions.ExtractFailure(err_msg)
 
         # response body
-        elif top_query in ["content", "text", "json"]:
+        elif top_query in ["body", "content", "text", "json"]:
             try:
                 body = self.json
             except exceptions.JSONDecodeError:
