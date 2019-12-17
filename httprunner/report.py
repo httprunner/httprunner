@@ -217,7 +217,7 @@ def __stringify_response(response_data):
                 if not encoding or encoding == "None":
                     encoding = "utf-8"
 
-                if key == "content" and "image" in response_data["content_type"]:
+                if key == "body" and "image" in response_data["content_type"]:
                     # display image
                     value = "data:{};base64,{}".format(
                         response_data["content_type"],
