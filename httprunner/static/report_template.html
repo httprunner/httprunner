@@ -250,14 +250,14 @@
                       <tr>
                         <th>{{key}}</th>
                         <td>
-                          {% if key == "content" %}
+                          {% if key  == "headers" %}
+                            <pre>{{ value | e }}</pre>
+                          {% elif key == "body" %}
                             {% if "image" in req_resp.response.content_type %}
                               <img src="{{ req_resp.response.content }}" />
                             {% else %}
-                              {{ value }}
-                            {% endif %}
-                          {% elif key in ["headers", "text", "json"] %}
                               <pre>{{ value | e }}</pre>
+                            {% endif %}
                           {% else %}
                             {{ value }}
                           {% endif %}
