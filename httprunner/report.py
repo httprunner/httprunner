@@ -11,7 +11,7 @@ from jinja2 import Template, escape
 from requests.cookies import RequestsCookieJar
 
 from httprunner import __version__, logger
-from httprunner.compat import basestring, bytes, json, numeric_types
+from httprunner.compat import basestring, bytes, json, numeric_types, JSONDecodeError
 
 
 def get_platform():
@@ -156,7 +156,7 @@ def __stringify_request(request_data):
         if key == "body":
             try:
                 value = json.loads(value)
-            except json.decoder.JSONDecodeError:
+            except JSONDecodeError:
                 pass
 
         if isinstance(value, (list, dict)):
