@@ -153,12 +153,6 @@ def __stringify_request(request_data):
     """
     for key, value in request_data.items():
 
-        if key == "body":
-            try:
-                value = json.loads(value)
-            except JSONDecodeError:
-                pass
-
         if isinstance(value, (list, dict)):
             value = dumps_json(value)
 
@@ -168,6 +162,13 @@ def __stringify_request(request_data):
                 value = escape(value.decode(encoding))
             except UnicodeDecodeError:
                 pass
+
+            if key == "body":
+                try:
+                    # request body is in json format
+                    value = json.loads(value)
+                except JSONDecodeError:
+                    pass
 
         elif not isinstance(value, (basestring, numeric_types, Iterable)):
             # class instance, e.g. MultipartEncoder()
