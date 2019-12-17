@@ -4,7 +4,8 @@
 
 **Changed**
 
-- refactor: dumps request and response headers/body, display indented json in report
+- refactor: dumps request/response headers, display indented json in html report
+- refactor: dumps request/response body if it is in json format, display indented json in html report
 
 ## 2.4.3 (2019-12-16)
 

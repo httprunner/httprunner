@@ -153,6 +153,12 @@ def __stringify_request(request_data):
     """
     for key, value in request_data.items():
 
+        if key == "body":
+            try:
+                value = json.loads(value)
+            except json.decoder.JSONDecodeError:
+                pass
+
         if isinstance(value, (list, dict)):
             value = dumps_json(value)
 
