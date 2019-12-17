@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shutil
@@ -267,8 +268,9 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+        resp_json = json.loads(summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["json"])
         self.assertEqual(
-            summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["json"]["data"],
+            resp_json["data"],
             "abc"
         )
 

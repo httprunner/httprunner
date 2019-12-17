@@ -110,6 +110,19 @@ def stringify_summary(summary):
             record["response_time"] = __get_total_response_time(meta_datas_expanded)
 
 
+def dumps_json(value):
+    """ dumps json value to indented string
+
+    Args:
+        value (dict): raw json data
+
+    Returns:
+        str: indented json dump string
+
+    """
+    return json.dumps(value, indent=2, ensure_ascii=False)
+
+
 def __stringify_request(request_data):
     """ stringfy HTTP request data
 
@@ -140,8 +153,8 @@ def __stringify_request(request_data):
     """
     for key, value in request_data.items():
 
-        if isinstance(value, list):
-            value = json.dumps(value, indent=2, ensure_ascii=False)
+        if isinstance(value, (list, dict)):
+            value = dumps_json(value)
 
         elif isinstance(value, bytes):
             try:
@@ -189,8 +202,8 @@ def __stringify_response(response_data):
     """
     for key, value in response_data.items():
 
-        if isinstance(value, list):
-            value = json.dumps(value, indent=2, ensure_ascii=False)
+        if isinstance(value, (list, dict)):
+            value = dumps_json(value)
 
         elif isinstance(value, bytes):
             try:
