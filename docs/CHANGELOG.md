@@ -2,9 +2,15 @@
 
 ## 2.4.4 (2019-12-17)
 
+**Added**
+
+- feat: add keyword `body` to reference response body
+
 **Changed**
 
-- refactor: dumps request and response headers/body, display indented json in report
+- refactor: dumps request/response headers, display indented json in html report
+- refactor: dumps request/response body if it is in json format, display indented json in html report
+- change: unify response field(content/json/text) to `body` in html report
 
 ## 2.4.3 (2019-12-16)
 
