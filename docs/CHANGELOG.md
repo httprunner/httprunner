@@ -1,5 +1,11 @@
 # Release History
 
+## 2.4.4 (2019-12-17)
+
+**Changed**
+
+- refactor: dumps request and response headers/body, display indented json in report
+
 ## 2.4.3 (2019-12-16)
 
 **Added**
