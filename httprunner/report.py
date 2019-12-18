@@ -144,9 +144,7 @@ def __stringify_request(request_data):
                     "Content-Type": "application/json",
                     "Content-Length": "52"
                 },
-                "json": {
-                    "sign": "cb9d60acd09080ea66c8e63a1c78c6459ea00168"
-                },
+                "body": b'{"sign": "cb9d60acd09080ea66c8e63a1c78c6459ea00168"}',
                 "verify": false
             }
 
@@ -158,17 +156,17 @@ def __stringify_request(request_data):
 
         elif isinstance(value, bytes):
             try:
-                encoding = "utf-8"
-                value = escape(value.decode(encoding))
+                encoding = json.detect_encoding(value)
+                value = value.decode(encoding)
+                if key == "body":
+                    try:
+                        # request body is in json format
+                        value = json.loads(value)
+                    except JSONDecodeError:
+                        pass
+                value = escape(value)
             except UnicodeDecodeError:
                 pass
-
-            if key == "body":
-                try:
-                    # request body is in json format
-                    value = json.loads(value)
-                except JSONDecodeError:
-                    pass
 
         elif not isinstance(value, (basestring, numeric_types, Iterable)):
             # class instance, e.g. MultipartEncoder()
@@ -200,7 +198,7 @@ def __stringify_response(response_data):
                 "url": "http://127.0.0.1:5000/api/users/9001",
                 "reason": "NOT FOUND",
                 "cookies": {},
-                "json": {
+                "body": {
                     "success": false,
                     "data": {}
                 }
@@ -216,7 +214,7 @@ def __stringify_response(response_data):
             try:
                 encoding = response_data.get("encoding")
                 if not encoding or encoding == "None":
-                    encoding = "utf-8"
+                    encoding = json.detect_encoding(value)
 
                 if key == "body" and "image" in response_data["content_type"]:
                     # display image

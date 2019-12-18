@@ -1,5 +1,15 @@
 # Release History
 
+## 2.4.5 (2019-12-18)
+
+**Fixed**
+
+- fix: catch UnicodeDecodeError when json loads request body
+
+**Changed**
+
+- change: detect request/response bytes encoding, instead of assuming utf-8
+
 ## 2.4.4 (2019-12-17)
 
 **Added**
