@@ -123,6 +123,13 @@ def dumps_json(value):
     return json.dumps(value, indent=2, ensure_ascii=False)
 
 
+def detect_encoding(value):
+    try:
+        return json.detect_encoding(value)
+    except AttributeError:
+        return "utf-8"
+
+
 def __stringify_request(request_data):
     """ stringfy HTTP request data
 
@@ -156,7 +163,7 @@ def __stringify_request(request_data):
 
         elif isinstance(value, bytes):
             try:
-                encoding = json.detect_encoding(value)
+                encoding = detect_encoding(value)
                 value = value.decode(encoding)
                 if key == "body":
                     try:
@@ -215,7 +222,7 @@ def __stringify_response(response_data):
             try:
                 encoding = response_data.get("encoding")
                 if not encoding or encoding == "None":
-                    encoding = json.detect_encoding(value)
+                    encoding = detect_encoding(value)
 
                 if key == "body" and "image" in response_data["content_type"]:
                     # display image
