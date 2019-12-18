@@ -5,6 +5,7 @@
 **Fixed**
 
 - fix: catch UnicodeDecodeError when json loads request body
+- fix: display indented json for request json body
 
 **Changed**
 

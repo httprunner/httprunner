@@ -162,6 +162,7 @@ def __stringify_request(request_data):
                     try:
                         # request body is in json format
                         value = json.loads(value)
+                        value = dumps_json(value)
                     except JSONDecodeError:
                         pass
                 value = escape(value)
