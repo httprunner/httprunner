@@ -10,6 +10,7 @@
 **Changed**
 
 - change: detect request/response bytes encoding, instead of assuming utf-8
+- refactor: make report as submodule
 
 ## 2.4.4 (2019-12-17)
 
