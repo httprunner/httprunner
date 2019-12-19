@@ -315,7 +315,7 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
     if not report_template:
         report_template = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            "static",
+            "report",
             "report_template.html"
         )
         logger.log_debug("No html report template specified, use default.")
