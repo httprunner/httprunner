@@ -41,6 +41,7 @@ colorlog = "^4.0.2"
 filetype = "^1.0.5"
 jsonpath = "^0.82"
 future = { version = "^0.18.1", python = "~2.7" }
+sentry-sdk = "^0.13.5"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"

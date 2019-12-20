@@ -1,6 +1,10 @@
 # Release History
 
-## 2.4.5 (2019-12-19)
+## 2.4.5 (2019-12-20)
+
+**Added**
+
+- feat: integrate sentry sdk
 
 **Fixed**
 
