@@ -1,5 +1,21 @@
 # Release History
 
+## 2.4.5 (2019-12-20)
+
+**Added**
+
+- feat: integrate sentry sdk
+
+**Fixed**
+
+- fix: catch UnicodeDecodeError when json loads request body
+- fix: display indented json for request json body
+
+**Changed**
+
+- change: detect request/response bytes encoding, instead of assuming utf-8
+- refactor: make report as submodule
+
 ## 2.4.4 (2019-12-17)
 
 **Added**
