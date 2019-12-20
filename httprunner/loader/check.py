@@ -127,6 +127,8 @@ def is_testcase_path(path):
         if not os.path.exists(path):
             return False
 
+        # TODO: check file format if valid
+
     return True
 
 
