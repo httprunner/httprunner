@@ -111,18 +111,18 @@ class HttpSession(requests.Session):
 
         if "image" in content_type:
             # response is image type, record bytes content only
-            req_resp_dict["response"]["content"] = resp_obj.content
+            req_resp_dict["response"]["body"] = resp_obj.content
         else:
             try:
                 # try to record json data
                 if isinstance(resp_obj, response.ResponseObject):
-                    req_resp_dict["response"]["json"] = resp_obj.json
+                    req_resp_dict["response"]["body"] = resp_obj.json
                 else:
-                    req_resp_dict["response"]["json"] = resp_obj.json()
+                    req_resp_dict["response"]["body"] = resp_obj.json()
             except ValueError:
                 # only record at most 512 text charactors
                 resp_text = resp_obj.text
-                req_resp_dict["response"]["text"] = omit_long_data(resp_text)
+                req_resp_dict["response"]["body"] = omit_long_data(resp_text)
 
         # log response details in debug mode
         log_print(req_resp_dict, "response")

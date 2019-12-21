@@ -9,8 +9,7 @@ from tests.base import ApiServerUnittest
 class TestRunner(ApiServerUnittest):
 
     def setUp(self):
-        loader.load_project_tests(os.path.join(os.getcwd(), "tests"))
-        project_mapping = loader.project_mapping
+        project_mapping = loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         self.debugtalk_functions = project_mapping["functions"]
 
         config = {
@@ -35,7 +34,7 @@ class TestRunner(ApiServerUnittest):
         ]
 
         for testcase_file_path in testcase_file_path_list:
-            tests_mapping = loader.load_tests(testcase_file_path)
+            tests_mapping = loader.load_cases(testcase_file_path)
             parsed_testcases = parser.parse_tests(tests_mapping)
             parsed_testcase = parsed_testcases[0]
             test_runner = runner.Runner(parsed_testcase["config"])
@@ -52,11 +51,11 @@ class TestRunner(ApiServerUnittest):
                     "name": "basic test with httpbin",
                     "base_url": HTTPBIN_SERVER,
                     "setup_hooks": [
-                        "${sleep_N_secs(0.5)}",
+                        "${sleep(0.5)}",
                         "${hook_print(setup)}"
                     ],
                     "teardown_hooks": [
-                        "${sleep_N_secs(1)}",
+                        "${sleep(1)}",
                         "${hook_print(teardown)}"
                     ]
                 },
@@ -289,7 +288,7 @@ class TestRunner(ApiServerUnittest):
     def test_bugfix_type_match(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/bugfix_type_match.yml')
-        tests_mapping = loader.load_tests(testcase_file_path)
+        tests_mapping = loader.load_cases(testcase_file_path)
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
         test_runner = runner.Runner(parsed_testcase["config"])

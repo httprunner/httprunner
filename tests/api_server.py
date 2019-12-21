@@ -5,7 +5,7 @@ from functools import wraps
 
 from flask import Flask, make_response, request
 
-from httprunner.built_in import gen_random_string
+from httprunner.builtin.functions import gen_random_string
 
 try:
     from httpbin import app as httpbin_app
@@ -15,8 +15,8 @@ try:
 except ImportError:
     httpbin_app = None
     HTTPBIN_HOST = "httpbin.org"
-    HTTPBIN_PORT = 443
-    HTTPBIN_SERVER = "https://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
+    HTTPBIN_PORT = 80
+    HTTPBIN_SERVER = "http://{}:{}".format(HTTPBIN_HOST, HTTPBIN_PORT)
 
 FLASK_APP_PORT = 5000
 SECRET_KEY = "DebugTalk"
@@ -93,6 +93,7 @@ def validate_request(func):
 def index():
     return "Hello World!"
 
+
 @app.route('/api/get-token', methods=['POST'])
 def get_token():
     device_sn = request.headers.get('device_sn', "")
@@ -121,6 +122,7 @@ def get_token():
     response.headers["Content-Type"] = "application/json"
     return response
 
+
 @app.route('/api/users')
 @validate_request
 def get_users():
@@ -134,6 +136,7 @@ def get_users():
     response.headers["Content-Type"] = "application/json"
     return response
 
+
 @app.route('/api/reset-all')
 @validate_request
 def clear_users():
@@ -144,6 +147,7 @@ def clear_users():
     response = make_response(json.dumps(result))
     response.headers["Content-Type"] = "application/json"
     return response
+
 
 @app.route('/api/users/<int:uid>', methods=['POST'])
 @validate_request
@@ -167,6 +171,7 @@ def create_user(uid):
     response.headers["Content-Type"] = "application/json"
     return response
 
+
 @app.route('/api/users/<int:uid>')
 @validate_request
 def get_user(uid):
@@ -188,6 +193,7 @@ def get_user(uid):
     response.headers["Content-Type"] = "application/json"
     return response
 
+
 @app.route('/api/users/<int:uid>', methods=['PUT'])
 @validate_request
 def update_user(uid):
@@ -208,6 +214,7 @@ def update_user(uid):
     response = make_response(json.dumps(result), status_code)
     response.headers["Content-Type"] = "application/json"
     return response
+
 
 @app.route('/api/users/<int:uid>', methods=['DELETE'])
 @validate_request

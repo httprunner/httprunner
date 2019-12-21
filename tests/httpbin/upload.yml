@@ -6,14 +6,24 @@
     name: upload file
     variables:
         file_path: "data/test.env"
-        multipart_encoder: ${multipart_encoder(file=$file_path)}
+        m_encoder: ${multipart_encoder(file=$file_path)}
     request:
         url: /post
         method: POST
         headers:
-            Content-Type: ${multipart_content_type($multipart_encoder)}
-        data: $multipart_encoder
+            Content-Type: ${multipart_content_type($m_encoder)}
+        data: $m_encoder
     validate:
         - eq: ["status_code", 200]
         - startswith: ["content.files.file", "UserName=test"]
 
+- test:
+    name: upload file with keyword
+    request:
+        url: /post
+        method: POST
+        upload:
+            file: "data/test.env"
+    validate:
+        - eq: ["status_code", 200]
+        - startswith: ["content.files.file", "UserName=test"]

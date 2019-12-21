@@ -1,5 +1,9 @@
 # require mkdocs-material 3.x
 
+#
+# pip install mkdocs
+# pip install mkdocs-material
+
 # Project information
 site_name: HttpRunner V2.x 中文使用文档
 site_description: HttpRunner V2.x User Documentation
@@ -64,6 +68,7 @@ nav:
         - 参数化数据驱动: prepare/parameters.md
         - Validate & Prettify: prepare/validate-pretty.md
         - 信息安全: prepare/security.md
+        - 文件上传场景: prepare/upload-case.md
     - 测试执行:
         - 运行测试(CLI): run-tests/cli.md
         - 测试报告: run-tests/report.md
@@ -74,6 +79,7 @@ nav:
     - FAQ: FAQ.md
     - 实践案例:
         - TesterHome 登录: examples/testerhome-login.md
+        - klook: examples/demo-klook/README.md
     - 相关资料: related-docs.md
     - CHANGELOG: CHANGELOG.md
 

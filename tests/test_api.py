@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import shutil
@@ -222,12 +223,17 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("records", summary["details"][0])
 
     def test_run_yaml_upload(self):
-        summary = self.runner.run("tests/httpbin/upload.yml")
-        self.assertTrue(summary["success"])
-        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
-        self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
-        self.assertIn("details", summary)
-        self.assertIn("records", summary["details"][0])
+        upload_cases_list = [
+            "tests/httpbin/upload.yml",
+            "tests/httpbin/upload.v2.yml"
+        ]
+        for upload_case in upload_cases_list:
+            summary = self.runner.run(upload_case)
+            self.assertTrue(summary["success"])
+            self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+            self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
+            self.assertIn("details", summary)
+            self.assertIn("records", summary["details"][0])
 
     def test_run_post_data(self):
         testcases = [
@@ -262,8 +268,9 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
+        resp_json = json.loads(summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["body"])
         self.assertEqual(
-            summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["json"]["data"],
+            resp_json["data"],
             "abc"
         )
 
@@ -288,6 +295,10 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 2)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 4)
+
+    def test_validate_script(self):
+        summary = self.runner.run("tests/httpbin/validate.yml")
+        self.assertFalse(summary["success"])
 
     def test_run_httprunner_with_hooks(self):
         testcase_file_path = os.path.join(
@@ -327,9 +338,9 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        loader.load_project_tests("tests")
+
         tests_mapping = {
-            "project_mapping": loader.project_mapping,
+            "project_mapping": loader.load_project_data("tests"),
             "testcases": testcases
         }
         summary = self.runner.run_tests(tests_mapping)
@@ -359,9 +370,8 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        loader.load_project_tests("tests")
         tests_mapping = {
-            "project_mapping": loader.project_mapping,
+            "project_mapping": loader.load_project_data("tests"),
             "testcases": testcases
         }
         summary = self.runner.run_tests(tests_mapping)
@@ -389,9 +399,8 @@ class TestHttpRunner(ApiServerUnittest):
                 ]
             }
         ]
-        loader.load_project_tests("tests")
         tests_mapping = {
-            "project_mapping": loader.project_mapping,
+            "project_mapping": loader.load_project_data("tests"),
             "testcases": testcases
         }
         summary = self.runner.run_tests(tests_mapping)
@@ -548,12 +557,11 @@ class TestHttpRunner(ApiServerUnittest):
             }
         )
 
-    # def test_validate_response_content(self):
-    #     # TODO: fix compatibility with Python 2.7
-    #     testcase_file_path = os.path.join(
-    #         os.getcwd(), 'tests/httpbin/basic.yml')
-    #     summary = self.runner.run(testcase_file_path)
-    #     self.assertTrue(summary["success"])
+    def test_validate_response_content(self):
+        testcase_file_path = os.path.join(
+            os.getcwd(), 'tests/httpbin/basic.yml')
+        summary = self.runner.run(testcase_file_path)
+        self.assertTrue(summary["success"])
 
     def test_html_report_xss(self):
         testcases = [
@@ -600,7 +608,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testcase_loader(self):
         testcase_path = "tests/testcases/setup.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         project_mapping = tests_mapping["project_mapping"]
         self.assertIsInstance(project_mapping, dict)
@@ -625,7 +633,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testcase_parser(self):
         testcase_path = "tests/testcases/setup.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         parsed_testcases = parser.parse_tests(tests_mapping)
 
@@ -646,7 +654,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testcase_add_tests(self):
         testcase_path = "tests/testcases/setup.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
@@ -660,7 +668,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testcase_complex_verify(self):
         testcase_path = "tests/testcases/create_user.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
         testcases = parser.parse_tests(tests_mapping)
         teststeps = testcases[0]["teststeps"]
 
@@ -677,7 +685,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testcase_simple_run_suite(self):
         testcase_path = "tests/testcases/setup.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
         testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
         test_suite = runner._add_tests(testcases)
@@ -691,7 +699,7 @@ class TestApi(ApiServerUnittest):
             "tests/testcases/create_user.json",
             "tests/testcases/create_user.v2.json"
         ]:
-            tests_mapping = loader.load_tests(testcase_path)
+            tests_mapping = loader.load_cases(testcase_path)
             testcases = parser.parse_tests(tests_mapping)
             runner = HttpRunner()
             test_suite = runner._add_tests(testcases)
@@ -710,7 +718,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testsuite_loader(self):
         testcase_path = "tests/testsuites/create_users.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         project_mapping = tests_mapping["project_mapping"]
         self.assertIsInstance(project_mapping, dict)
@@ -742,7 +750,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testsuite_parser(self):
         testcase_path = "tests/testsuites/create_users.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         parsed_testcases = parser.parse_tests(tests_mapping)
         self.assertEqual(len(parsed_testcases), 2)
@@ -760,7 +768,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testsuite_add_tests(self):
         testcase_path = "tests/testsuites/create_users.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         testcases = parser.parse_tests(tests_mapping)
         runner = HttpRunner()
@@ -772,7 +780,7 @@ class TestApi(ApiServerUnittest):
 
     def test_testsuite_run_suite(self):
         testcase_path = "tests/testsuites/create_users.yml"
-        tests_mapping = loader.load_tests(testcase_path)
+        tests_mapping = loader.load_cases(testcase_path)
 
         testcases = parser.parse_tests(tests_mapping)
 

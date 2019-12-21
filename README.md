@@ -2,8 +2,11 @@
 # HttpRunner
 
 [![downloads](https://pepy.tech/badge/httprunner)](https://pepy.tech/project/httprunner)
-[![travis-ci](https://travis-ci.org/httprunner/httprunner.svg?branch=master)](https://travis-ci.org/httprunner/httprunner)
-[![coveralls](https://coveralls.io/repos/github/HttpRunner/HttpRunner/badge.svg?branch=master)](https://coveralls.io/github/HttpRunner/HttpRunner?branch=master)
+[![unittest](https://github.com/httprunner/httprunner/workflows/unittest/badge.svg
+)](https://github.com/httprunner/httprunner/actions)
+[![integration-test](https://github.com/httprunner/httprunner/workflows/integration_test/badge.svg
+)](https://github.com/httprunner/httprunner/actions)
+[![codecov](https://codecov.io/gh/httprunner/httprunner/branch/master/graph/badge.svg)](https://codecov.io/gh/httprunner/httprunner)
 [![pypi version](https://img.shields.io/pypi/v/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![pyversions](https://img.shields.io/pypi/pyversions/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![TesterHome](https://img.shields.io/badge/TTF-TesterHome-2955C5.svg)](https://testerhome.com/github_statistics)

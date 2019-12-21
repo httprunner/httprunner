@@ -62,8 +62,8 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(result, "L")
 
     def current_validators(self):
-        from httprunner import built_in
-        functions_mapping = loader.load_module_functions(built_in)
+        from httprunner.builtin import comparators
+        functions_mapping = loader.load.load_module_functions(comparators)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
@@ -80,6 +80,11 @@ class TestUtils(ApiServerUnittest):
         functions_mapping["not_equals"](123, "123")
 
         functions_mapping["length_equals"]("123", 3)
+        # Because the Numbers in a CSV file are by default treated as strings, 
+        # you need to convert them to Numbers, and we'll test that out here.
+        functions_mapping["length_equals"]("123", '3')
+        with self.assertRaises(AssertionError):
+            functions_mapping["length_equals"]("123", 'abc')
         functions_mapping["length_greater_than"]("123", 2)
         functions_mapping["length_greater_than_or_equals"]("123", 3)
 
@@ -107,15 +112,6 @@ class TestUtils(ApiServerUnittest):
         functions_mapping["type_match"]([1], "list")
         functions_mapping["type_match"]({}, "dict")
         functions_mapping["type_match"]({"a": 1}, "dict")
-
-    def test_deep_update_dict(self):
-        origin_dict = {'a': 1, 'b': {'c': 3, 'd': 4}, 'f': 6, 'h': 123}
-        override_dict = {'a': 2, 'b': {'c': 33, 'e': 5}, 'g': 7, 'h': None}
-        updated_dict = utils.deep_update_dict(origin_dict, override_dict)
-        self.assertEqual(
-            updated_dict,
-            {'a': 2, 'b': {'c': 33, 'd': 4, 'e': 5}, 'f': 6, 'g': 7, 'h': 123}
-        )
 
     def test_handle_config_key_case(self):
         origin_dict = {
@@ -275,3 +271,37 @@ class TestUtils(ApiServerUnittest):
             "d": [4, 5]
         }
         utils.print_info(info_mapping)
+
+    def test_prepare_dump_json_file_path_for_folder(self):
+        # hrun tests/httpbin/a.b.c/ --save-tests
+        project_working_directory = os.path.join(os.getcwd(), "tests")
+        project_mapping = {
+            "PWD": project_working_directory,
+            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c")
+        }
+        self.assertEqual(
+            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            os.path.join(project_working_directory, "logs", "httpbin/a.b.c/all.loaded.json")
+        )
+
+    def test_prepare_dump_json_file_path_for_file(self):
+        # hrun tests/httpbin/a.b.c/rpc.yml --save-tests
+        project_working_directory = os.path.join(os.getcwd(), "tests")
+        project_mapping = {
+            "PWD": project_working_directory,
+            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c", "rpc.yml")
+        }
+        self.assertEqual(
+            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            os.path.join(project_working_directory, "logs", "httpbin/a.b.c/rpc.loaded.json")
+        )
+
+    def test_prepare_dump_json_file_path_for_passed_testcase(self):
+        project_working_directory = os.path.join(os.getcwd(), "tests")
+        project_mapping = {
+            "PWD": project_working_directory
+        }
+        self.assertEqual(
+            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            os.path.join(project_working_directory, "logs", "tests_mapping.loaded.json")
+        )

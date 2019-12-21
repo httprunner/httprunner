@@ -1,0 +1,16 @@
+config:
+  name: area manage testsuite
+  variables:
+    admin_cookie: 'cookies'
+  base_url: http://127.0.0.1:8085
+  verify: False
+
+testcases:
+  - name: search area by name
+    testcase: testcases/search_area_by_name_api_testcase.yml
+    parameters:
+      in-out:
+        - ['北京', '中国, 北京市']
+        - ['广东', '中国, 广东省']
+        - ['shenzhen', '中国, 广东省, 深圳市']
+        - ['서울', '韩国, 首尔']
