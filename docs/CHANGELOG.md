@@ -1,5 +1,13 @@
 # Release History
 
+## 2.4.6 (2019-12-21)
+
+**Fixed**
+
+- fix: ensure initializing sentry_sdk on startup
+
+**Fixed**
+
 ## 2.4.5 (2019-12-20)
 
 **Added**
