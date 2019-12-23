@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-
+from sentry_sdk import capture_exception
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
@@ -101,8 +101,9 @@ def main():
                 report_file=args.report_file
             )
             err_code |= (0 if summary and summary["success"] else 1)
-    except Exception:
+    except Exception as ex:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
+        capture_exception(ex)
         raise
 
     return err_code
