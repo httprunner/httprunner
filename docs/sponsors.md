@@ -18,7 +18,7 @@ HttpRunner is in Sentry Sponsored plan.
 
 ## 成为赞助商
 
-如果你所在的公司或个人也想对 HttpRunner 进行赞助，可参考如下方案，具体可联系[项目作者](mailto:mail@debugtalk.com)。
+如果你所在的公司或个人也想对 HttpRunner 进行赞助，可参考如下方案，具体可联系[项目作者](mailto:debugtalk@gmail.com)。
 
 | 等级 | 金牌赞助商<br/>（Gold Sponsor） | 银牌赞助商<br/>（Silver Sponsor）| 个人赞赏 |
 |:---:|:---:|:---:|:---:|
