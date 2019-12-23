@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "2.4.6"
+version = "2.4.7"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
