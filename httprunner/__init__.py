@@ -4,4 +4,8 @@ __description__ = "One-stop solution for HTTP(S) testing."
 __all__ = ["__version__", "__description__"]
 
 import sentry_sdk
+
 sentry_sdk.init("https://cc6dd86fbe9f4e7fbd95248cfcff114d@sentry.io/1862849")
+
+with sentry_sdk.configure_scope() as scope:
+    scope.set_tag("version", __version__)
