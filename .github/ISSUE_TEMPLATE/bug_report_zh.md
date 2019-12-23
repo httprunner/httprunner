@@ -1,10 +1,9 @@
 ---
 name: Bug 反馈（中文）
 about: 提交 bug 反馈
-title: ''
-labels: ''
-assignees: ''
-
+title: BUG
+labels: Pending
+assignees: debugtalk
 ---
 
 ## 问题描述
