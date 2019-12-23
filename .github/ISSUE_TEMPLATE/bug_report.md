@@ -1,7 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-
+title: BUG
+labels: Pending
+assignees: debugtalk
 ---
 
 ## Describe the bug
@@ -14,7 +16,7 @@ Please complete the following information:
 
  - OS: [e.g. macos, Linux, Windows]
  - Python [e.g. 3.6]
- - HttpRunner [e.g. 1.5.11]
+ - HttpRunner [e.g. 2.1.2]
 
 ## Traceback
 
