@@ -54,7 +54,7 @@ Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](docs/sponsors.md))
 
 ### 开源服务赞助商（Open Source Sponsor）
 
-[<img src="docs/assets/sentry-logo-black.svg" alt="Sentry" width="120">](https://sentry.io/_/open-source/)
+[<img src="docs/assets/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
 
 HttpRunner is in Sentry Sponsored plan.
 
