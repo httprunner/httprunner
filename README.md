@@ -52,6 +52,12 @@ Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](docs/sponsors.md))
 
 霍格沃兹测试学院是 HttpRunner 的首家金牌赞助商。 
 
+### 开源服务赞助商（Open Source Sponsor）
+
+[<img src="docs/assets/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
+
+HttpRunner is in Sentry Sponsored plan.
+
 ## How to Contribute
 
 1. Check for [open issues](https://github.com/httprunner/httprunner/issues) or [open a fresh issue](https://github.com/httprunner/httprunner/issues/new/choose) to start a discussion around a feature idea or a bug.

@@ -1,5 +1,17 @@
 # Release History
 
+## 2.4.6 (2019-12-23)
+
+**Added**
+
+- feat: report tests start event and running exception to sentry
+
+**Fixed**
+
+- fix: ensure initializing sentry_sdk on startup
+
+**Fixed**
+
 ## 2.4.5 (2019-12-20)
 
 **Added**
