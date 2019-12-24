@@ -277,6 +277,8 @@ class HttpRunner(object):
             path_or_tests:
                 str: testcase/testsuite file/foler path
                 dict: valid testcase/testsuite data
+            dot_env_path (str): specified .env file path.
+            mapping (dict): if mapping is specified, it will override variables in config block.
 
         Returns:
             dict: result summary
