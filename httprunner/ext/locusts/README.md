@@ -17,7 +17,7 @@ $ locusts -f xxx.yml --processes
 ```
 
 ```shell script
-$ python3 -m httprunner.plugins.locusts -h
+$ python3 -m httprunner.ext.locusts -h
 
 Usage: locust [options] [LocustClass [LocustClass2 ... ]]
 

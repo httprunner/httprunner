@@ -132,7 +132,7 @@ requests-toolbelt 0.9.1 A utility belt for advanced users of python-requests
 $ poetry run python -m httprunner -h
 
 # 调试运行 locusts
-$ pipenv run python -m httprunner.plugins.locusts -h
+$ pipenv run python -m httprunner.ext.locusts -h
 ```
 
 ## Docker

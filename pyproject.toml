@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "2.4.6"
+version = "2.4.7"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -51,7 +51,7 @@ coverage = "^4.5.4"
 hrun = "httprunner.cli:main"
 ate = "httprunner.cli:main"
 httprunner = "httprunner.cli:main"
-locusts = "httprunner.plugins.locusts.cli:main"
+locusts = "httprunner.ext.locusts.cli:main"
 
 [build-system]
 requires = ["poetry>=1.0.0"]
