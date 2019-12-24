@@ -12,6 +12,10 @@
 - fix: display request & response details in report when extraction failed
 - fix: include CHANGELOG in package
 
+**Changed**
+
+- change: use sys.exit(code) in hrun main
+
 ## 2.4.7 (2019-12-24)
 
 **Added**
