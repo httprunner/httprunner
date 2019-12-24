@@ -51,7 +51,7 @@ coverage = "^4.5.4"
 hrun = "httprunner.cli:main"
 ate = "httprunner.cli:main"
 httprunner = "httprunner.cli:main"
-locusts = "httprunner.plugins.locusts.cli:main"
+locusts = "httprunner.ext.locusts.cli:main"
 
 [build-system]
 requires = ["poetry>=1.0.0"]
