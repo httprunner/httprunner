@@ -5,6 +5,7 @@
 **Added**
 
 - feat: store parse failed api/testcase/testsuite file path in `logs/xxx.parse_failed.json`
+- feat: add exception SummaryEmpty
 
 **Fixed**
 

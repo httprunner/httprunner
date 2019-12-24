@@ -5,6 +5,7 @@ from datetime import datetime
 from jinja2 import Template
 
 from httprunner import logger
+from httprunner.exceptions import SummaryEmpty
 
 
 def gen_html_report(summary, report_template=None, report_dir=None, report_file=None):
@@ -17,6 +18,10 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
         report_file (str): specify html report file path, this has higher priority than specifying report dir.
 
     """
+    if not summary["time"] or summary["stat"]["testcases"]["total"] == 0:
+        logger.log_error("test result summary is empty ! {}".format(summary))
+        raise SummaryEmpty
+
     if not report_template:
         report_template = os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
