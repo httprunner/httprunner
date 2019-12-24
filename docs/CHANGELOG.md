@@ -5,6 +5,7 @@
 **Fixed**
 
 - fix: display request & response details in report when extraction failed
+- fix: include CHANGELOG in package
 
 ## 2.4.7 (2019-12-24)
 
