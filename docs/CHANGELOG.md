@@ -2,6 +2,10 @@
 
 ## 2.4.8 (2019-12-25)
 
+**Added**
+
+- feat: store parse failed api/testcase/testsuite file path in `logs/xxx.parse_failed.json`
+
 **Fixed**
 
 - fix: display request & response details in report when extraction failed
