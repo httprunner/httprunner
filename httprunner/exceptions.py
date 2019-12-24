@@ -74,3 +74,8 @@ class ApiNotFound(NotFoundError):
 
 class TestcaseNotFound(NotFoundError):
     pass
+
+
+class SummaryEmpty(MyBaseError):
+    """ test result summary data is empty
+    """
