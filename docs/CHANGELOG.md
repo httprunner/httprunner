@@ -1,5 +1,11 @@
 # Release History
 
+## 2.4.8 (2019-12-25)
+
+**Fixed**
+
+- fix: display request & response details in report when extraction failed
+
 ## 2.4.7 (2019-12-24)
 
 **Added**
