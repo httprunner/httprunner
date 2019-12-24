@@ -1245,7 +1245,7 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
         }
     except (exceptions.MyBaseFailure, exceptions.MyBaseError):
         testcase_type = testcase["type"]
-        testcase_path = testcase["path"]
+        testcase_path = testcase.get("path")
 
         global parse_failed_testfiles
         if testcase_type not in parse_failed_testfiles:
@@ -1463,6 +1463,7 @@ def parse_tests(tests_mapping):
 
         elif test_type == "testcases":
             for testcase in tests_mapping["testcases"]:
+                testcase["type"] = "testcase"
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
                 if not parsed_testcase:
                     continue
