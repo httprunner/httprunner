@@ -1206,8 +1206,9 @@ class TestParser(unittest.TestCase):
                 }
             ]
         }
-        with self.assertRaises(exceptions.VariableNotFound):
-            parser.parse_tests(tests_mapping)
+        parser.parse_tests(tests_mapping)
+        parse_failed_testfiles = parser.get_parse_failed_testfiles()
+        self.assertIn("testcase", parse_failed_testfiles)
 
     def test_parse_tests_base_url_teststep_empty(self):
         """ base_url & verify: priority test_dict > config
