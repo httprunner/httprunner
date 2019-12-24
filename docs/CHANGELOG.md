@@ -1,5 +1,15 @@
 # Release History
 
+## 2.4.7 (2019-12-24)
+
+**Added**
+
+- feat: report user id to sentry
+
+**Fixed**
+
+- fix #797: locusts command error
+
 ## 2.4.6 (2019-12-23)
 
 **Added**
