@@ -197,7 +197,7 @@ class HttpRunner(object):
         parsed_testcases = parser.parse_tests(tests_mapping)
         parse_failed_testfiles = parser.get_parse_failed_testfiles()
         if parse_failed_testfiles:
-            logger.log_warning("There are some test files that can not be parsed ...")
+            logger.log_warning("parse failures occurred ...")
             utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
 
         if self.save_tests:
