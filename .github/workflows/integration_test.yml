@@ -5,7 +5,7 @@ on: [push]
 jobs:
   integration_test:
 
-    name: ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: integration_test - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       max-parallel: 6
