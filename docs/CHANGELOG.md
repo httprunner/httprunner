@@ -1,5 +1,15 @@
 # Release History
 
+## 2.4.9 (2019-12-25)
+
+**Added**
+
+- test: add unittest for cli
+
+**Fixed**
+
+- fix: display validators in report when validate raised exception
+
 ## 2.4.8 (2019-12-25)
 
 **Added**
