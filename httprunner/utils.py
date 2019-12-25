@@ -571,6 +571,10 @@ def dump_json_file(json_data, json_file_abs_path):
             except TypeError:
                 return str(obj)
 
+    file_foder_path = os.path.dirname(json_file_abs_path)
+    if not os.path.isdir(file_foder_path):
+        os.makedirs(file_foder_path)
+
     try:
         with io.open(json_file_abs_path, 'w', encoding='utf-8') as outfile:
             if is_py2:
@@ -626,9 +630,6 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
         file_foder_path = os.path.join(logs_dir_path, file_relative_folder_path)
         test_file_name, _file_suffix = os.path.splitext(test_file)
         dump_file_name = "{}.{}.json".format(test_file_name, tag_name)
-
-    if not os.path.isdir(file_foder_path):
-        os.makedirs(file_foder_path)
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path

@@ -195,6 +195,10 @@ class HttpRunner(object):
         # parse tests
         self.exception_stage = "parse tests"
         parsed_testcases = parser.parse_tests(tests_mapping)
+        parse_failed_testfiles = parser.get_parse_failed_testfiles()
+        if parse_failed_testfiles:
+            logger.log_warning("parse failures occurred ...")
+            utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
 
         if self.save_tests:
             utils.dump_logs(parsed_testcases, project_mapping, "parsed")
@@ -277,6 +281,8 @@ class HttpRunner(object):
             path_or_tests:
                 str: testcase/testsuite file/foler path
                 dict: valid testcase/testsuite data
+            dot_env_path (str): specified .env file path.
+            mapping (dict): if mapping is specified, it will override variables in config block.
 
         Returns:
             dict: result summary
