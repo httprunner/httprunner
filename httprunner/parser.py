@@ -16,6 +16,14 @@ variable_regex_compile = re.compile(r"\$\{(\w+)\}|\$(\w+)")
 # function notation, e.g. ${func1($var_1, $var_3)}
 function_regex_compile = re.compile(r"\$\{(\w+)\(([\$\w\.\-/\s=,]*)\)\}")
 
+""" Store parse failed api/testcase/testsuite file path
+"""
+parse_failed_testfiles = {}
+
+
+def get_parse_failed_testfiles():
+    return parse_failed_testfiles
+
 
 def parse_string_value(str_value):
     """ parse string to number if possible
@@ -1145,6 +1153,8 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
 
             # 3, testcase_def config => testcase_def test_dict
             test_dict = _parse_testcase(test_dict, project_mapping, session_variables_set)
+            if not test_dict:
+                continue
 
         elif "api_def" in test_dict:
             # test_dict has API reference
@@ -1216,21 +1226,34 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
 
     """
     testcase.setdefault("config", {})
-    prepared_config = __prepare_config(
-        testcase["config"],
-        project_mapping,
-        session_variables_set
-    )
-    prepared_testcase_tests = __prepare_testcase_tests(
-        testcase["teststeps"],
-        prepared_config,
-        project_mapping,
-        session_variables_set
-    )
-    return {
-        "config": prepared_config,
-        "teststeps": prepared_testcase_tests
-    }
+
+    try:
+        prepared_config = __prepare_config(
+            testcase["config"],
+            project_mapping,
+            session_variables_set
+        )
+        prepared_testcase_tests = __prepare_testcase_tests(
+            testcase["teststeps"],
+            prepared_config,
+            project_mapping,
+            session_variables_set
+        )
+        return {
+            "config": prepared_config,
+            "teststeps": prepared_testcase_tests
+        }
+    except (exceptions.MyBaseFailure, exceptions.MyBaseError):
+        testcase_type = testcase["type"]
+        testcase_path = testcase.get("path")
+
+        global parse_failed_testfiles
+        if testcase_type not in parse_failed_testfiles:
+            parse_failed_testfiles[testcase_type] = []
+
+        parse_failed_testfiles[testcase_type].append(testcase_path)
+
+        return None
 
 
 def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mapping):
@@ -1286,6 +1309,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         parsed_testcase = testcase.pop("testcase_def")
         parsed_testcase.setdefault("config", {})
         parsed_testcase["path"] = testcase["testcase"]
+        parsed_testcase["type"] = "testcase"
         parsed_testcase["config"]["name"] = testcase_name
 
         if "weight" in testcase:
@@ -1331,6 +1355,8 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
                     parameter_variables
                 )
                 parsed_testcase_copied = _parse_testcase(testcase_copied, project_mapping)
+                if not parsed_testcase_copied:
+                    continue
                 parsed_testcase_copied["config"]["name"] = parse_lazy_data(
                     parsed_testcase_copied["config"]["name"],
                     testcase_copied["config"]["variables"]
@@ -1339,6 +1365,8 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
 
         else:
             parsed_testcase = _parse_testcase(parsed_testcase, project_mapping)
+            if not parsed_testcase:
+                continue
             parsed_testcase_list.append(parsed_testcase)
 
     return parsed_testcase_list
@@ -1435,7 +1463,10 @@ def parse_tests(tests_mapping):
 
         elif test_type == "testcases":
             for testcase in tests_mapping["testcases"]:
+                testcase["type"] = "testcase"
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
+                if not parsed_testcase:
+                    continue
                 testcases.append(parsed_testcase)
 
         elif test_type == "apis":
@@ -1445,9 +1476,13 @@ def parse_tests(tests_mapping):
                     "config": {
                         "name": api_content.get("name")
                     },
-                    "teststeps": [api_content]
+                    "teststeps": [api_content],
+                    "path": api_content.pop("path", None),
+                    "type": api_content.pop("type", "api")
                 }
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
+                if not parsed_testcase:
+                    continue
                 testcases.append(parsed_testcase)
 
     return testcases
