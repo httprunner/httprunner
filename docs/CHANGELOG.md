@@ -1,5 +1,21 @@
 # Release History
 
+## 2.4.8 (2019-12-25)
+
+**Added**
+
+- feat: store parse failed api/testcase/testsuite file path in `logs/xxx.parse_failed.json`
+- feat: add exception SummaryEmpty
+
+**Fixed**
+
+- fix: display request & response details in report when extraction failed
+- fix: include CHANGELOG in package
+
+**Changed**
+
+- change: use sys.exit(code) in hrun main
+
 ## 2.4.7 (2019-12-24)
 
 **Added**
