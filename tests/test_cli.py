@@ -1,8 +1,8 @@
-import io
 import sys
 import unittest
 
 from httprunner.cli import main
+from httprunner.compat import io
 
 
 class TestCli(unittest.TestCase):
