@@ -11,12 +11,14 @@ class TestCli(unittest.TestCase):
         self.captured_output = io.StringIO()
         sys.stdout = self.captured_output
 
+    def tearDown(self):
+        sys.stdout = sys.__stdout__  # Reset redirect.
+
     def test_show_version(self):
         sys.argv = ["hrun", "-V"]
 
         with self.assertRaises(SystemExit) as cm:
             main()
-            sys.stdout = sys.__stdout__  # Reset redirect.
 
         self.assertEqual(cm.exception.code, 0)
 
@@ -28,7 +30,6 @@ class TestCli(unittest.TestCase):
 
         with self.assertRaises(SystemExit) as cm:
             main()
-            sys.stdout = sys.__stdout__  # Reset redirect.
 
         self.assertEqual(cm.exception.code, 0)
 
