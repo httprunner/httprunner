@@ -14,6 +14,74 @@ from httprunner.utils import lower_dict_keys, omit_long_data
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def get_req_resp_record(resp_obj):
+    """ get request and response info from Response() object.
+    """
+    def log_print(req_resp_dict, r_type):
+        msg = "\n================== {} details ==================\n".format(r_type)
+        for key, value in req_resp_dict[r_type].items():
+            msg += "{:<16} : {}\n".format(key, repr(value))
+        logger.log_debug(msg)
+
+    req_resp_dict = {
+        "request": {},
+        "response": {}
+    }
+
+    # record actual request info
+    req_resp_dict["request"]["url"] = resp_obj.request.url
+    req_resp_dict["request"]["method"] = resp_obj.request.method
+    req_resp_dict["request"]["headers"] = dict(resp_obj.request.headers)
+
+    request_body = resp_obj.request.body
+    if request_body:
+        request_content_type = lower_dict_keys(
+            req_resp_dict["request"]["headers"]
+        ).get("content-type")
+        if request_content_type and "multipart/form-data" in request_content_type:
+            # upload file type
+            req_resp_dict["request"]["body"] = "upload file stream (OMITTED)"
+        else:
+            req_resp_dict["request"]["body"] = request_body
+
+    # log request details in debug mode
+    log_print(req_resp_dict, "request")
+
+    # record response info
+    req_resp_dict["response"]["ok"] = resp_obj.ok
+    req_resp_dict["response"]["url"] = resp_obj.url
+    req_resp_dict["response"]["status_code"] = resp_obj.status_code
+    req_resp_dict["response"]["reason"] = resp_obj.reason
+    req_resp_dict["response"]["cookies"] = resp_obj.cookies or {}
+    req_resp_dict["response"]["encoding"] = resp_obj.encoding
+    resp_headers = dict(resp_obj.headers)
+    req_resp_dict["response"]["headers"] = resp_headers
+
+    lower_resp_headers = lower_dict_keys(resp_headers)
+    content_type = lower_resp_headers.get("content-type", "")
+    req_resp_dict["response"]["content_type"] = content_type
+
+    if "image" in content_type:
+        # response is image type, record bytes content only
+        req_resp_dict["response"]["body"] = resp_obj.content
+    else:
+        try:
+            # try to record json data
+            if isinstance(resp_obj, response.ResponseObject):
+                req_resp_dict["response"]["body"] = resp_obj.json
+            else:
+                req_resp_dict["response"]["body"] = resp_obj.json()
+        except ValueError:
+            # only record at most 512 text charactors
+            resp_text = resp_obj.text
+            req_resp_dict["response"]["body"] = omit_long_data(resp_text)
+
+    # log response details in debug mode
+    log_print(req_resp_dict, "response")
+
+    return req_resp_dict
+
+
 class ApiResponse(Response):
 
     def raise_for_status(self):
@@ -62,79 +130,12 @@ class HttpSession(requests.Session):
             }
         }
 
-    def get_req_resp_record(self, resp_obj):
-        """ get request and response info from Response() object.
-        """
-        def log_print(req_resp_dict, r_type):
-            msg = "\n================== {} details ==================\n".format(r_type)
-            for key, value in req_resp_dict[r_type].items():
-                msg += "{:<16} : {}\n".format(key, repr(value))
-            logger.log_debug(msg)
-
-        req_resp_dict = {
-            "request": {},
-            "response": {}
-        }
-
-        # record actual request info
-        req_resp_dict["request"]["url"] = resp_obj.request.url
-        req_resp_dict["request"]["method"] = resp_obj.request.method
-        req_resp_dict["request"]["headers"] = dict(resp_obj.request.headers)
-
-        request_body = resp_obj.request.body
-        if request_body:
-            request_content_type = lower_dict_keys(
-                req_resp_dict["request"]["headers"]
-            ).get("content-type")
-            if request_content_type and "multipart/form-data" in request_content_type:
-                # upload file type
-                req_resp_dict["request"]["body"] = "upload file stream (OMITTED)"
-            else:
-                req_resp_dict["request"]["body"] = request_body
-
-        # log request details in debug mode
-        log_print(req_resp_dict, "request")
-
-        # record response info
-        req_resp_dict["response"]["ok"] = resp_obj.ok
-        req_resp_dict["response"]["url"] = resp_obj.url
-        req_resp_dict["response"]["status_code"] = resp_obj.status_code
-        req_resp_dict["response"]["reason"] = resp_obj.reason
-        req_resp_dict["response"]["cookies"] = resp_obj.cookies or {}
-        req_resp_dict["response"]["encoding"] = resp_obj.encoding
-        resp_headers = dict(resp_obj.headers)
-        req_resp_dict["response"]["headers"] = resp_headers
-
-        lower_resp_headers = lower_dict_keys(resp_headers)
-        content_type = lower_resp_headers.get("content-type", "")
-        req_resp_dict["response"]["content_type"] = content_type
-
-        if "image" in content_type:
-            # response is image type, record bytes content only
-            req_resp_dict["response"]["content"] = resp_obj.content
-        else:
-            try:
-                # try to record json data
-                if isinstance(resp_obj, response.ResponseObject):
-                    req_resp_dict["response"]["json"] = resp_obj.json
-                else:
-                    req_resp_dict["response"]["json"] = resp_obj.json()
-            except ValueError:
-                # only record at most 512 text charactors
-                resp_text = resp_obj.text
-                req_resp_dict["response"]["text"] = omit_long_data(resp_text)
-
-        # log response details in debug mode
-        log_print(req_resp_dict, "response")
-
-        return req_resp_dict
-
     def update_last_req_resp_record(self, resp_obj):
         """
         update request and response info from Response() object.
         """
         self.meta_data["data"].pop()
-        self.meta_data["data"].append(self.get_req_resp_record(resp_obj))
+        self.meta_data["data"].append(get_req_resp_record(resp_obj))
 
     def request(self, method, url, name=None, **kwargs):
         """
@@ -207,7 +208,7 @@ class HttpSession(requests.Session):
         # record request and response histories, include 30X redirection
         response_list = response.history + [response]
         self.meta_data["data"] = [
-            self.get_req_resp_record(resp_obj)
+            get_req_resp_record(resp_obj)
             for resp_obj in response_list
         ]
 

@@ -1,0 +1,36 @@
+name: integration_test
+
+on: [push]
+
+jobs:
+  integration_test:
+
+    name: integration_test - ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 6
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-latest] # TODO: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry --version
+        poetry install -vv
+    - name: Test package installation
+      run: |
+        poetry build
+        ls dist/*.whl | xargs pip install # test installation
+        hrun -V
+        locusts -V
+    - name: Run smoketest for hrun command
+      run: |
+        cd tests/httpbin && hrun basic.yml --failfast && cd -

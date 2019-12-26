@@ -232,14 +232,10 @@
                     <tr>
                       <th>{{key}}</th>
                       <td>
-                        {% if key == "headers" %}
-                          {% for header_key, header_value in req_resp.request.headers.items() %}
-                          <div>
-                            <strong>{{ header_key }}</strong>: {{ header_value }}
-                          </div>
-                          {% endfor %}
+                        {% if key in ["headers", "body"] %}
+                            <pre>{{ value | e }}</pre>
                         {% else %}
-                          {{value}}
+                            {{value}}
                         {% endif %}
                       </td>
                     </tr>
@@ -254,20 +250,14 @@
                       <tr>
                         <th>{{key}}</th>
                         <td>
-                          {% if key == "headers" %}
-                            {% for header_key, header_value in req_resp.response.headers.items() %}
-                            <div>
-                              <strong>{{ header_key }}</strong>: {{ header_value }}
-                            </div>
-                            {% endfor %}
-                          {% elif key == "content" %}
+                          {% if key  == "headers" %}
+                            <pre>{{ value | e }}</pre>
+                          {% elif key == "body" %}
                             {% if "image" in req_resp.response.content_type %}
                               <img src="{{ req_resp.response.content }}" />
                             {% else %}
-                              {{ value }}
-                            {% endif %}
-                          {% elif key in ["text", "json"] %}
                               <pre>{{ value | e }}</pre>
+                            {% endif %}
                           {% else %}
                             {{ value }}
                           {% endif %}

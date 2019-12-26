@@ -1,5 +1,106 @@
 # Release History
 
+## 2.4.8 (2019-12-25)
+
+**Added**
+
+- feat: store parse failed api/testcase/testsuite file path in `logs/xxx.parse_failed.json`
+- feat: add exception SummaryEmpty
+
+**Fixed**
+
+- fix: display request & response details in report when extraction failed
+- fix: include CHANGELOG in package
+
+**Changed**
+
+- change: use sys.exit(code) in hrun main
+
+## 2.4.7 (2019-12-24)
+
+**Added**
+
+- feat: report user id to sentry
+
+**Fixed**
+
+- fix #797: locusts command error
+
+## 2.4.6 (2019-12-23)
+
+**Added**
+
+- feat: report tests start event and running exception to sentry
+
+**Fixed**
+
+- fix: ensure initializing sentry_sdk on startup
+
+**Fixed**
+
+## 2.4.5 (2019-12-20)
+
+**Added**
+
+- feat: integrate sentry sdk
+
+**Fixed**
+
+- fix: catch UnicodeDecodeError when json loads request body
+- fix: display indented json for request json body
+
+**Changed**
+
+- change: detect request/response bytes encoding, instead of assuming utf-8
+- refactor: make report as submodule
+
+## 2.4.4 (2019-12-17)
+
+**Added**
+
+- feat: add keyword `body` to reference response body
+
+**Changed**
+
+- refactor: dumps request/response headers, display indented json in html report
+- refactor: dumps request/response body if it is in json format, display indented json in html report
+- change: unify response field(content/json/text) to `body` in html report
+
+## 2.4.3 (2019-12-16)
+
+**Added**
+
+- feat: load api content on demand
+
+**Changed**
+
+- refactor: use poetry>=1.0.0
+- test: migrate from travis CI to github actions
+- test: migrate from coveralls to codecov
+- test: run matrix tests on linux/macos/~~windows~~ and Python 2.7/3.5/3.6/3.7/3.8
+
+## 2.4.2 (2019-12-13)
+
+**Changed**
+
+- refactor: replace with open file handler, avoid reading files into memory
+- refactor: rename plugin to extension, httprunner/plugins -> httprunner/ext
+- docs: update installation doc for developers
+
+## 2.4.1 (2019-12-12)
+
+**Added**
+
+- feat: add `upload` keyword for upload test, see [doc](https://docs.httprunner.org/prepare/upload-case/)
+- test: pip install package 
+- test: hrun command
+
+**Fixed**
+
+- fix: typo testfile_paths
+- fix: check if locustio installed
+- fix: dump json file name is empty when running relative testfile
+
 ## 2.4.0 (2019-12-11)
 
 **Added**

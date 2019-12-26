@@ -1,11 +1,17 @@
 # encoding: utf-8
 
+from enum import Enum
 from unittest.case import SkipTest
 
 from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import SessionContext
 from httprunner.validator import Validator
+
+
+class HookTypeEnum(Enum):
+    SETUP = 1
+    TEARDOWN = 2
 
 
 class Runner(object):
@@ -74,11 +80,11 @@ class Runner(object):
         self.session_context = SessionContext(config_variables)
 
         if testcase_setup_hooks:
-            self.do_hook_actions(testcase_setup_hooks, "setup")
+            self.do_hook_actions(testcase_setup_hooks, HookTypeEnum.SETUP)
 
     def __del__(self):
         if self.testcase_teardown_hooks:
-            self.do_hook_actions(self.testcase_teardown_hooks, "teardown")
+            self.do_hook_actions(self.testcase_teardown_hooks, HookTypeEnum.TEARDOWN)
 
     def __clear_test_data(self):
         """ clear request and response data
@@ -131,10 +137,10 @@ class Runner(object):
                 format2 (str): only call hook functions.
                     ${func()}
 
-            hook_type (enum): setup/teardown
+            hook_type (HookTypeEnum): setup/teardown
 
         """
-        logger.log_debug("call {} hook actions.".format(hook_type))
+        logger.log_debug("call {} hook actions.".format(hook_type.name))
         for action in actions:
 
             if isinstance(action, dict) and len(action) == 1:
@@ -215,7 +221,7 @@ class Runner(object):
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
         if setup_hooks:
-            self.do_hook_actions(setup_hooks, "setup")
+            self.do_hook_actions(setup_hooks, HookTypeEnum.SETUP)
 
         try:
             method = parsed_test_request.pop('method')
@@ -245,32 +251,7 @@ class Runner(object):
         )
         resp_obj = response.ResponseObject(resp)
 
-        # teardown hooks
-        teardown_hooks = test_dict.get("teardown_hooks", [])
-        if teardown_hooks:
-            self.session_context.update_test_variables("response", resp_obj)
-            self.do_hook_actions(teardown_hooks, "teardown")
-            self.http_client_session.update_last_req_resp_record(resp_obj)
-
-        # extract
-        extractors = test_dict.get("extract", {})
-        extracted_variables_mapping = resp_obj.extract_response(extractors)
-        self.session_context.update_session_variables(extracted_variables_mapping)
-
-        # validate
-        validators = test_dict.get("validate") or test_dict.get("validators") or []
-        validate_script = test_dict.get("validate_script", [])
-        if validate_script:
-            validators.append({
-                "type": "python_script",
-                "script": validate_script
-            })
-
-        validator = Validator(self.session_context, resp_obj)
-        try:
-            validator.validate(validators)
-        except (exceptions.ParamsError,
-                exceptions.ValidationFailure, exceptions.ExtractFailure):
+        def log_req_resp_details():
             err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
 
             # log request
@@ -291,12 +272,39 @@ class Runner(object):
             err_msg += "body: {}\n".format(repr(resp_obj.text))
             logger.log_error(err_msg)
 
+        # teardown hooks
+        teardown_hooks = test_dict.get("teardown_hooks", [])
+        if teardown_hooks:
+            self.session_context.update_test_variables("response", resp_obj)
+            self.do_hook_actions(teardown_hooks, HookTypeEnum.TEARDOWN)
+            self.http_client_session.update_last_req_resp_record(resp_obj)
+
+        # extract
+        extractors = test_dict.get("extract", {})
+        try:
+            extracted_variables_mapping = resp_obj.extract_response(extractors)
+            self.session_context.update_session_variables(extracted_variables_mapping)
+        except (exceptions.ParamsError, exceptions.ExtractFailure):
+            log_req_resp_details()
             raise
 
-        finally:
-            # get request/response data and validate results
-            self.meta_datas = getattr(self.http_client_session, "meta_data", {})
-            self.meta_datas["validators"] = validator.validation_results
+        # validate
+        validators = test_dict.get("validate") or test_dict.get("validators") or []
+        validate_script = test_dict.get("validate_script", [])
+        if validate_script:
+            validators.append({
+                "type": "python_script",
+                "script": validate_script
+            })
+
+        validator = Validator(self.session_context, resp_obj)
+        try:
+            validator.validate(validators)
+        except exceptions.ValidationFailure:
+            log_req_resp_details()
+            raise
+
+        return validator.validation_results
 
     def _run_testcase(self, testcase_dict):
         """ run single testcase.
@@ -374,13 +382,18 @@ class Runner(object):
             self._run_testcase(test_dict)
         else:
             # api
+            validation_results = {}
             try:
-                self._run_test(test_dict)
+                validation_results = self._run_test(test_dict)
             except Exception:
                 # log exception request_type and name for locust stat
                 self.exception_request_type = test_dict["request"]["method"]
                 self.exception_name = test_dict.get("name")
                 raise
+            finally:
+                # get request/response data and validate results
+                self.meta_datas = getattr(self.http_client_session, "meta_data", {})
+                self.meta_datas["validators"] = validation_results
 
     def export_variables(self, output_variables_list):
         """ export current testcase variables
