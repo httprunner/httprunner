@@ -41,7 +41,7 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
         report_file_name = os.path.basename(report_file)
     else:
         report_dir = report_dir or os.path.join(os.getcwd(), "reports")
-        report_file_name = "{}.html".format(start_at_timestamp)
+        report_file_name = "{}.html".format(int(start_at_timestamp * 1000))
 
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
