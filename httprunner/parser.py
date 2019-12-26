@@ -776,7 +776,6 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
 
         functions_mapping = functions_mapping or {}
         check_variables_set = check_variables_set or set()
-        content = content.strip()
         content = LazyString(content, functions_mapping, check_variables_set, cached)
 
     return content
