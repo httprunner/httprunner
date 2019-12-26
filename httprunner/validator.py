@@ -124,7 +124,8 @@ except Exception as ex:
         for validator in validators:
 
             if isinstance(validator, dict) and validator.get("type") == "python_script":
-                validator_dict, ex = self.validate_script(validator["script"])
+                script = self.session_context.eval_content(validator["script"])
+                validator_dict, ex = self.validate_script(script)
                 if ex:
                     validate_pass = False
                     failures.append(ex)
