@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/api.schema.json",
+    "title": "Api for httprunner",
+    "description": "Api for httprunner",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Name of the api"
+        },
+        "base_url": {
+            "type": "string",
+            "description": "The base_url will be added before a relative URI"
+        },
+        "request": {
+            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/request.schema.json"
+        },
+        "variables": {
+            "type": "object",
+            "description": "Variables for the api"
+        },
+        "extract": {
+            "type": "array",
+            "description": "Extract rules",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/extract.schema.json"
+            }
+        },
+        "validate": {
+            "type": "array",
+            "description": "Validate rules",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/validate.schema.json"
+            }
+        }
+    },
+    "required": [
+        "name",
+        "request"
+    ]
+}
