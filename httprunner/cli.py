@@ -2,6 +2,8 @@ import argparse
 import os
 import sys
 
+from sentry_sdk import capture_exception
+
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
@@ -64,23 +66,23 @@ def main():
     if len(sys.argv) == 1:
         # no argument passed
         parser.print_help()
-        return 0
+        sys.exit(0)
 
     if args.version:
         color_print("{}".format(__version__), "GREEN")
-        return 0
+        sys.exit(0)
 
     if args.validate:
         validate_json_file(args.validate)
-        return 0
+        sys.exit(0)
     if args.prettify:
         prettify_json_file(args.prettify)
-        return 0
+        sys.exit(0)
 
     project_name = args.startproject
     if project_name:
         create_scaffold(project_name)
-        return 0
+        sys.exit(0)
 
     runner = HttpRunner(
         failfast=args.failfast,
@@ -91,7 +93,7 @@ def main():
 
     err_code = 0
     try:
-        for path in args.testcase_paths:
+        for path in args.testfile_paths:
             summary = runner.run(path, dot_env_path=args.dot_env_path)
             report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
             gen_html_report(
@@ -101,12 +103,13 @@ def main():
                 report_file=args.report_file
             )
             err_code |= (0 if summary and summary["success"] else 1)
-    except Exception:
+    except Exception as ex:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
-        raise
+        capture_exception(ex)
+        err_code = 1
 
-    return err_code
+    sys.exit(err_code)
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

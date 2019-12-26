@@ -1,6 +1,8 @@
 import os
 import unittest
 
+from sentry_sdk import capture_message
+
 from httprunner import (__version__, exceptions, loader, logger, parser,
                         report, runner, utils)
 
@@ -183,6 +185,7 @@ class HttpRunner(object):
     def run_tests(self, tests_mapping):
         """ run testcase/testsuite data
         """
+        capture_message("start to run tests")
         project_mapping = tests_mapping.get("project_mapping", {})
         self.project_working_directory = project_mapping.get("PWD", os.getcwd())
 
@@ -192,6 +195,10 @@ class HttpRunner(object):
         # parse tests
         self.exception_stage = "parse tests"
         parsed_testcases = parser.parse_tests(tests_mapping)
+        parse_failed_testfiles = parser.get_parse_failed_testfiles()
+        if parse_failed_testfiles:
+            logger.log_warning("parse failures occurred ...")
+            utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
 
         if self.save_tests:
             utils.dump_logs(parsed_testcases, project_mapping, "parsed")
@@ -274,6 +281,8 @@ class HttpRunner(object):
             path_or_tests:
                 str: testcase/testsuite file/foler path
                 dict: valid testcase/testsuite data
+            dot_env_path (str): specified .env file path.
+            mapping (dict): if mapping is specified, it will override variables in config block.
 
         Returns:
             dict: result summary

@@ -175,7 +175,7 @@ class ResponseObject(object):
                 raise exceptions.ExtractFailure(err_msg)
 
         # response body
-        elif top_query in ["content", "text", "json"]:
+        elif top_query in ["body", "content", "text", "json"]:
             try:
                 body = self.json
             except exceptions.JSONDecodeError:
@@ -222,7 +222,8 @@ class ResponseObject(object):
         # others
         else:
             err_msg = u"Failed to extract attribute from response! => {}\n".format(field)
-            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json, encoding, ok, reason, url.\n\n"
+            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, " \
+                       u"text, json, encoding, ok, reason, url.\n\n"
             err_msg += u"If you want to set attribute in teardown_hooks, take the following example as reference:\n"
             err_msg += u"response.new_attribute = 'new_attribute_value'\n"
             logger.log_error(err_msg)

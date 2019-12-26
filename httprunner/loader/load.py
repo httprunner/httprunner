@@ -185,31 +185,6 @@ def load_dot_env_file(dot_env_path):
     return env_variables_mapping
 
 
-def load_folder_content(folder_path):
-    """ load api/testcases/testsuites definitions from folder.
-
-    Args:
-        folder_path (str): api/testcases/testsuites files folder.
-
-    Returns:
-        dict: api definition mapping.
-
-            {
-                "tests/api/basic.yml": [
-                    {"api": {"def": "api_login", "request": {}, "validate": []}},
-                    {"api": {"def": "api_logout", "request": {}, "validate": []}}
-                ]
-            }
-
-    """
-    items_mapping = {}
-
-    for file_path in load_folder_files(folder_path):
-        items_mapping[file_path] = load_file(file_path)
-
-    return items_mapping
-
-
 def load_module_functions(module):
     """ load python module functions.
 

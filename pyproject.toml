@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "httprunner"
-version = "2.4.0"
+version = "2.4.8"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
 authors = ["debugtalk <debugtalk@gmail.com>"]
 
-homepage = "https://github.com/HttpRunner/HttpRunner"
-repository = "https://github.com/HttpRunner/HttpRunner"
+homepage = "https://github.com/httprunner/httprunner"
+repository = "https://github.com/httprunner/httprunner"
 documentation = "https://docs.httprunner.org"
 
 keywords = ["HTTP", "api", "test", "requests", "locustio"]
@@ -27,7 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8"
 ]
 
-include = ["CHANGELOG.md", "httprunner/static/*"]
+include = ["docs/CHANGELOG.md"]
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.5"
@@ -40,19 +40,20 @@ colorama = "^0.4.1"
 colorlog = "^4.0.2"
 filetype = "^1.0.5"
 jsonpath = "^0.82"
+sentry-sdk = "^0.13.5"
 future = { version = "^0.18.1", python = "~2.7" }
+enum34 = { version = "^1.1.6", python = "~2.7" }
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
 coverage = "^4.5.4"
-coveralls = "^1.8.2"
 
 [tool.poetry.scripts]
 hrun = "httprunner.cli:main"
 ate = "httprunner.cli:main"
 httprunner = "httprunner.cli:main"
-locusts = "httprunner.plugins.locusts.cli:main"
+locusts = "httprunner.ext.locusts.cli:main"
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
