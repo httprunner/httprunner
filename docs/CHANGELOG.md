@@ -10,6 +10,7 @@
 
 - fix: display validators in report when validate raised exception
 - fix: eval validator python script before validating
+- fix: do not strip string content when preparing lazy data
 
 ## 2.4.8 (2019-12-25)
 
