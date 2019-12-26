@@ -1,0 +1,15 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/validate.schema.json",
+    "title": "Validate rule of httprunner",
+    "description": "Validate rule of httprunner",
+    "type": "object",
+    "patternProperties": {
+        ".*": {
+            "type": "array",
+            "description": "validate_function_name: [check_value, expect_value]",
+            "minItems": 2,
+            "maxItems": 2
+        }
+    }
+}

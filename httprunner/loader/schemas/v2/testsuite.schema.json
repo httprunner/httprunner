@@ -1,0 +1,58 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/testsuite.schema.json",
+    "title": "Testsuite for httprunner",
+    "description": "Testsuite for httprunner",
+    "type": "object",
+    "properties": {
+        "config": {
+            "allOf": [
+                {
+                    "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/config.schema.json"
+                }
+            ],
+            "properties": {
+                "verify": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "testcases": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/testcase"
+            }
+        },
+        "setup_hooks": {
+            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+        },
+        "teardown_hooks": {
+            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+        }
+    },
+    "required": [
+        "testcases"
+    ],
+    "definitions": {
+        "testcase": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "Testcase name",
+                    "type": "string"
+                },
+                "parameters": {
+                    "description": "Parameters will generate cartesian product variables, each set of variables is tested once",
+                    "type": "object"
+                },
+                "testcase": {
+                    "description": "Testcase reference, it's usually the relative path of the testcase",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "testcase"
+            ]
+        }
+    }
+}

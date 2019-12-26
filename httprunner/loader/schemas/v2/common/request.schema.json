@@ -1,0 +1,93 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/request.schema.json",
+    "title": "request for httprunner",
+    "description": "Used to define a api or used in a teststep. Same parameters as python's package 'requests'",
+    "type": "object",
+    "properties": {
+        "method": {
+            "type": "string",
+            "description": "Request method",
+            "enum": [
+                "GET",
+                "POST",
+                "OPTIONS",
+                "HEAD",
+                "PUT",
+                "PATCH",
+                "DELETE"
+            ]
+        },
+        "url": {
+            "description": "Request url",
+            "type": "string"
+        },
+        "params": {
+            "type": "object",
+            "description": "Used to define the parameters of a 'GET' request"
+        },
+        "data": {
+            "type": "object",
+            "description": "Used to define the parameters of a 'POST' request in the application/x-www-form-urlencoded format"
+        },
+        "json": {
+            "type": "object",
+            "description": "Used to define the parameters of a 'POST' request in the application/json format"
+        },
+        "headers": {
+            "description": "Request headers",
+            "type": "object"
+        },
+        "cookies": {
+            "description": "Request cookies",
+            "type": "object"
+        },
+        "files": {
+            "type": "object"
+        },
+        "auth": {
+            "type": "array"
+        },
+        "timeout": {
+            "type": "number"
+        },
+        "allow_redirects": {
+            "type": "boolean"
+        },
+        "proxies": {
+            "type": "object"
+        },
+        "verify": {
+            "oneOf": [
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "stream": {
+            "type": "boolean"
+        },
+        "cert": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "array",
+                    "maxItems": 2,
+                    "minItems": 2,
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    },
+    "required": [
+        "method",
+        "url"
+    ]
+}
