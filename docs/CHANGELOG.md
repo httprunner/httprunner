@@ -1,6 +1,6 @@
 # Release History
 
-## 2.4.9 (2019-12-25)
+## 2.4.9 (2019-12-26)
 
 **Added**
 
@@ -9,6 +9,7 @@
 **Fixed**
 
 - fix: display validators in report when validate raised exception
+- fix: eval validator python script before validating
 
 ## 2.4.8 (2019-12-25)
 
