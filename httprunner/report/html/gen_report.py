@@ -33,15 +33,16 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
 
     logger.log_info("Start to render Html report ...")
 
-    start_at_timestamp = int(summary["time"]["start_at"])
-    summary["time"]["start_datetime"] = datetime.fromtimestamp(start_at_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    start_at_timestamp = summary["time"]["start_at"]
+    utc_time_iso_8601_str = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
+    summary["time"]["start_datetime"] = utc_time_iso_8601_str
 
     if report_file:
         report_dir = os.path.dirname(report_file)
         report_file_name = os.path.basename(report_file)
     else:
         report_dir = report_dir or os.path.join(os.getcwd(), "reports")
-        report_file_name = "{}.html".format(int(start_at_timestamp * 1000))
+        report_file_name = "{}.html".format(utc_time_iso_8601_str)
 
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
