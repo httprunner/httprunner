@@ -12,6 +12,7 @@
 - fix: eval validator python script before validating
 - fix: do not strip string content when preparing lazy data
 - fix: catch ApiNotFound exception when loading testcases
+- fix: print exception string with exception stage
 
 ## 2.4.8 (2019-12-25)
 

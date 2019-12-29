@@ -105,6 +105,7 @@ def main():
             err_code |= (0 if summary and summary["success"] else 1)
     except Exception as ex:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
+        color_print(str(ex), "RED")
         capture_exception(ex)
         err_code = 1
 
