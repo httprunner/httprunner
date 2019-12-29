@@ -480,6 +480,8 @@ def load_cases(path, dot_env_path=None):
         loaded_content = None
         try:
             loaded_content = load_test_file(path)
+        except exceptions.ApiNotFound as ex:
+            logger.log_warning("Invalid api reference in {}: {}".format(path, ex))
         except exceptions.FileFormatError:
             logger.log_warning("Invalid test file format: {}".format(path))
 
