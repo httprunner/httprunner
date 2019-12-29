@@ -1,10 +1,14 @@
 # Release History
 
-## 2.4.9 (2019-12-26)
+## 2.4.9 (2019-12-29)
 
 **Added**
 
 - test: add unittest for cli
+
+**Changed**
+
+- change: html report name defaults to be in UTC ISO 8601 format
 
 **Fixed**
 
