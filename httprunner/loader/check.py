@@ -1,5 +1,3 @@
-import io
-import json
 import os
 import types
 
@@ -147,25 +145,6 @@ def check_testcase_format(file_path, content):
         err_msg = u"Testcase file content format invalid: {}".format(file_path)
         logger.log_error(err_msg)
         raise exceptions.FileFormatError(err_msg)
-
-
-def validate_test_file(file_list):
-    """ validate JSON testcase format
-    """
-    for test_file in set(file_list):
-        if not test_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated, skip: {}".format(test_file))
-            continue
-
-        logger.color_print("Start to validate JSON file: {}".format(test_file), "GREEN")
-
-        with io.open(test_file) as stream:
-            try:
-                json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
-
-        print("OK")
 
 
 def is_function(item):

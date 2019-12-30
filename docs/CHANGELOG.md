@@ -1,5 +1,11 @@
 # Release History
 
+## 2.5.0 (2019-12-30)
+
+**Changed**
+
+- refactor: use loader.load_cases to validate test files
+
 ## 2.4.9 (2019-12-29)
 
 **Added**
