@@ -149,17 +149,17 @@ def check_testcase_format(file_path, content):
         raise exceptions.FileFormatError(err_msg)
 
 
-def validate_json_file(file_list):
+def validate_test_file(file_list):
     """ validate JSON testcase format
     """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
+    for test_file in set(file_list):
+        if not test_file.endswith(".json"):
+            logger.log_warning("Only JSON file format can be validated, skip: {}".format(test_file))
             continue
 
-        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
+        logger.color_print("Start to validate JSON file: {}".format(test_file), "GREEN")
 
-        with io.open(json_file) as stream:
+        with io.open(test_file) as stream:
             try:
                 json.load(stream)
             except ValueError as e:
