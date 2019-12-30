@@ -7,7 +7,7 @@ from sentry_sdk import capture_exception
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
-from httprunner.loader import validate_json_file
+from httprunner.loader import validate_test_file
 from httprunner.logger import color_print
 from httprunner.report import gen_html_report
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
@@ -73,7 +73,7 @@ def main():
         sys.exit(0)
 
     if args.validate:
-        validate_json_file(args.validate)
+        validate_test_file(args.validate)
         sys.exit(0)
     if args.prettify:
         prettify_json_file(args.prettify)

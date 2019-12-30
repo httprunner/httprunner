@@ -8,7 +8,7 @@ HttpRunner loader
 
 """
 
-from httprunner.loader.check import is_testcase_path, is_testcases, validate_json_file
+from httprunner.loader.check import is_testcase_path, is_testcases, validate_test_file
 from httprunner.loader.locate import get_project_working_directory as get_pwd
 from httprunner.loader.load import load_csv_file, load_builtin_functions
 from httprunner.loader.buildup import load_cases, load_project_data
@@ -16,7 +16,7 @@ from httprunner.loader.buildup import load_cases, load_project_data
 __all__ = [
     "is_testcase_path",
     "is_testcases",
-    "validate_json_file",
+    "validate_test_file",
     "get_pwd",
     "load_csv_file",
     "load_builtin_functions",
