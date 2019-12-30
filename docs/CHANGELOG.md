@@ -1,5 +1,23 @@
 # Release History
 
+## 2.4.9 (2019-12-29)
+
+**Added**
+
+- test: add unittest for cli
+
+**Changed**
+
+- change: html report name defaults to be in UTC ISO 8601 format
+
+**Fixed**
+
+- fix: display validators in report when validate raised exception
+- fix: eval validator python script before validating
+- fix: do not strip string content when preparing lazy data
+- fix: catch ApiNotFound exception when loading testcases
+- fix: print exception string with exception stage
+
 ## 2.4.8 (2019-12-25)
 
 **Added**
