@@ -303,8 +303,8 @@ class Runner(object):
         except exceptions.ValidationFailure:
             log_req_resp_details()
             raise
-
-        return validator.validation_results
+        finally:
+            self.validation_results = validator.validation_results
 
     def _run_testcase(self, testcase_dict):
         """ run single testcase.
@@ -382,9 +382,9 @@ class Runner(object):
             self._run_testcase(test_dict)
         else:
             # api
-            validation_results = {}
+            self.validation_results = {}
             try:
-                validation_results = self._run_test(test_dict)
+                self._run_test(test_dict)
             except Exception:
                 # log exception request_type and name for locust stat
                 self.exception_request_type = test_dict["request"]["method"]
@@ -393,7 +393,7 @@ class Runner(object):
             finally:
                 # get request/response data and validate results
                 self.meta_datas = getattr(self.http_client_session, "meta_data", {})
-                self.meta_datas["validators"] = validation_results
+                self.meta_datas["validators"] = self.validation_results
 
     def export_variables(self, output_variables_list):
         """ export current testcase variables

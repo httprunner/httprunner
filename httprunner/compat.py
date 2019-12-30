@@ -47,6 +47,7 @@ if is_py2:
     integer_types = (int, long)
 
     FileNotFoundError = IOError
+    import StringIO as io
 
 elif is_py3:
     builtin_str = str
@@ -57,3 +58,4 @@ elif is_py3:
     integer_types = (int,)
 
     FileNotFoundError = FileNotFoundError
+    import io as io
