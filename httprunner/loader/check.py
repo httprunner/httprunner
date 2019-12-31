@@ -1,10 +1,73 @@
+import json
 import os
 import types
 
-from httprunner import logger, exceptions
+import jsonschema
+
+from httprunner import exceptions, logger
+
+schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
+common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
+api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
+testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.json")
+testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
+
+with open(api_schema_path) as f:
+    api_schema = json.load(f)
+
+with open(common_schema_path) as f:
+    common_schema = json.load(f)
+    resolver = jsonschema.RefResolver("file://{}/".format(os.path.abspath(schemas_root_dir)), common_schema)
+
+with open(testcase_schema_v2_path) as f:
+    testcase_schema_v2 = json.load(f)
+
+with open(testsuite_schema_v2_path) as f:
+    testsuite_schema_v2 = json.load(f)
 
 
-# TODO: validate data format with JSON schema
+class JsonSchemaCheck(object):
+
+    @staticmethod
+    def check_api_format(content):
+
+        try:
+            jsonschema.validate(content, api_schema, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
+        return True
+
+
+class JsonSchemaV1Check(JsonSchemaCheck):
+    pass
+
+
+class JsonSchemaV2Check(JsonSchemaCheck):
+
+    @staticmethod
+    def check_testcase_format(content):
+        """ check testcase format v2 if valid
+        """
+        try:
+            jsonschema.validate(content, testcase_schema_v2, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
+        return True
+
+    @staticmethod
+    def check_testsuite_format(content):
+        try:
+            jsonschema.validate(content, testsuite_schema_v2, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
+        return True
+
 
 def is_testcase(data_structure):
     """ check if data_structure is a testcase.
@@ -128,23 +191,6 @@ def is_testcase_path(path):
         # TODO: check file format if valid
 
     return True
-
-
-def check_testcase_format(file_path, content):
-    """ check testcase format if valid
-    """
-    # TODO: replace with JSON schema validation
-    if not content:
-        # testcase file content is empty
-        err_msg = u"Testcase file content is empty: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exceptions.FileFormatError(err_msg)
-
-    elif not isinstance(content, (list, dict)):
-        # testcase file content does not match testcase format
-        err_msg = u"Testcase file content format invalid: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exceptions.FileFormatError(err_msg)
 
 
 def is_function(item):
