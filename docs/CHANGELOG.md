@@ -5,6 +5,7 @@
 **Added**
 
 - feat: add json schema validation for api
+- feat: add json schema validation for testcase v2
 
 **Changed**
 
