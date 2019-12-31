@@ -35,7 +35,7 @@
             "type": "array",
             "minItems": 1,
             "items": {
-                "$ref": "testsuite.schema.json#/definitions/testcase"
+                "$ref": "testsuite.schema.v2.json#/definitions/testcase"
             }
         }
     },
