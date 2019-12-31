@@ -26,7 +26,7 @@ with open(testsuite_schema_path) as f:
     testsuite_schema = json.load(f)
 
 
-class JsonSchemaChecker(object):
+class JsonSchemaCommonChecker(object):
 
     @staticmethod
     def validate_api_format(content):
@@ -50,11 +50,11 @@ class JsonSchemaChecker(object):
         return True
 
 
-class JsonSchemaV1Checker(JsonSchemaChecker):
+class JsonSchemaV1Checker(JsonSchemaCommonChecker):
     pass
 
 
-class JsonSchemaV2Checker(JsonSchemaChecker):
+class JsonSchemaV2Checker(JsonSchemaCommonChecker):
 
     @staticmethod
     def validate_testcase_format(content):
