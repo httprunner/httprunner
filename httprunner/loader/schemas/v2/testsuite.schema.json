@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/testsuite.schema.json",
+    "$id": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/v2/testsuite.schema.json",
     "title": "Testsuite for httprunner",
     "description": "Testsuite for httprunner",
     "type": "object",
@@ -8,7 +8,7 @@
         "config": {
             "allOf": [
                 {
-                    "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/config.schema.json"
+                    "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/config.schema.json"
                 }
             ],
             "properties": {
@@ -24,10 +24,10 @@
             }
         },
         "setup_hooks": {
-            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/hook.schema.json"
         },
         "teardown_hooks": {
-            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/hook.schema.json"
         }
     },
     "required": [

@@ -1,12 +1,12 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/testcase.schema.json",
+    "$id": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/v2/testcase.schema.json",
     "title": "Testcase for httprunner",
     "description": "Testcase for httprunner",
     "type": "object",
     "properties": {
         "config": {
-            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/config.schema.json"
+            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/config.schema.json"
         },
         "teststeps": {
             "description": "Teststep of a testcase",
@@ -40,21 +40,21 @@
                             "description": "Extract rules",
                             "type": "array",
                             "items": {
-                                "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/extract.schema.json"
+                                "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/extract.schema.json"
                             }
                         },
                         "validate": {
                             "description": "Validate rules",
                             "type": "array",
                             "items": {
-                                "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/validate.schema.json"
+                                "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/validate.schema.json"
                             }
                         },
                         "setup_hooks": {
-                            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+                            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/hook.schema.json"
                         },
                         "teardown_hooks": {
-                            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+                            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/hook.schema.json"
                         }
                     },
                     "required": [
@@ -68,7 +68,7 @@
                             "type": "string"
                         },
                         "request": {
-                            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/request.schema.json"
+                            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/request.schema.json"
                         },
                         "variables": {
                             "type": "object"
@@ -77,21 +77,21 @@
                             "description": "Extract rules",
                             "type": "array",
                             "items": {
-                                "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/extract.schema.json"
+                                "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/extract.schema.json"
                             }
                         },
                         "validate": {
                             "description": "Validate rules",
                             "type": "array",
                             "items": {
-                                "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/validate.schema.json"
+                                "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/validate.schema.json"
                             }
                         },
                         "setup_hooks": {
-                            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+                            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/hook.schema.json"
                         },
                         "teardown_hooks": {
-                            "$ref": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/hook.schema.json"
+                            "$ref": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/hook.schema.json"
                         }
                     },
                     "required": [
