@@ -26,10 +26,10 @@ with open(testsuite_schema_v2_path) as f:
     testsuite_schema_v2 = json.load(f)
 
 
-class JsonSchemaCheck(object):
+class JsonSchemaChecker(object):
 
     @staticmethod
-    def check_api_format(content):
+    def validate_api_format(content):
 
         try:
             jsonschema.validate(content, api_schema, resolver=resolver)
@@ -40,14 +40,14 @@ class JsonSchemaCheck(object):
         return True
 
 
-class JsonSchemaV1Check(JsonSchemaCheck):
+class JsonSchemaV1Checker(JsonSchemaChecker):
     pass
 
 
-class JsonSchemaV2Check(JsonSchemaCheck):
+class JsonSchemaV2Checker(JsonSchemaChecker):
 
     @staticmethod
-    def check_testcase_format(content):
+    def validate_testcase_format(content):
         """ check testcase format v2 if valid
         """
         try:
@@ -59,7 +59,7 @@ class JsonSchemaV2Check(JsonSchemaCheck):
         return True
 
     @staticmethod
-    def check_testsuite_format(content):
+    def validate_testsuite_format(content):
         try:
             jsonschema.validate(content, testsuite_schema_v2, resolver=resolver)
         except jsonschema.exceptions.ValidationError as ex:
