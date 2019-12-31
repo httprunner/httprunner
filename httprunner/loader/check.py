@@ -26,7 +26,7 @@ with open(testsuite_schema_path) as f:
     testsuite_schema = json.load(f)
 
 
-class JsonSchemaCommonChecker(object):
+class JsonSchemaChecker(object):
 
     @staticmethod
     def validate_api_format(content):
@@ -48,9 +48,6 @@ class JsonSchemaCommonChecker(object):
             raise exceptions.FileFormatError
 
         return True
-
-
-class JsonSchemaTestcaseChecker(JsonSchemaCommonChecker):
 
     @staticmethod
     def validate_testcase_v1_format(content):
