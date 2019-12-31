@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/extract.schema.json",
+    "$id": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/extract.schema.json",
     "title": "Extract rules for httprunner",
     "description": "Used to extract variables for later requests",
     "type": "object",

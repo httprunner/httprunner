@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/readyou/httprunner/dev/httprunner/loader/schemas/v2/common/validate.schema.json",
+    "$id": "https://raw.githubusercontent.com/httprunner/httprunner/master/httprunner/loader/schemas/common/validate.schema.json",
     "title": "Validate rule of httprunner",
     "description": "Validate rule of httprunner",
     "type": "object",
