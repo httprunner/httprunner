@@ -281,6 +281,7 @@ def load_testsuite(raw_testsuite):
             }
 
     """
+    JsonSchemaChecker.validate_testsuite_format(raw_testsuite)
     raw_testcases = raw_testsuite.pop("testcases")
     raw_testsuite["testcases"] = {}
 
