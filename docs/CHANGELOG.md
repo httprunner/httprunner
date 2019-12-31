@@ -1,6 +1,10 @@
 # Release History
 
-## 2.5.0 (2019-12-30)
+## 2.5.0 (2019-12-31)
+
+**Added**
+
+- feat: add json schema validation for api
 
 **Changed**
 
