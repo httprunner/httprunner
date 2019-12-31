@@ -2,7 +2,7 @@ import importlib
 import os
 
 from httprunner import exceptions, logger, utils
-from httprunner.loader.check import JsonSchemaCommonChecker, JsonSchemaV2Checker
+from httprunner.loader.check import JsonSchemaCommonChecker, JsonSchemaTestcaseChecker
 from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
     load_folder_files
 from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
@@ -225,7 +225,7 @@ def load_testcase_v2(raw_testcase):
             }
 
     """
-    JsonSchemaV2Checker.validate_testcase_format(raw_testcase)
+    JsonSchemaTestcaseChecker.validate_testcase_v2_format(raw_testcase)
     raw_teststeps = raw_testcase.pop("teststeps")
     raw_testcase["teststeps"] = [
         load_teststep(teststep)

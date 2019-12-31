@@ -50,14 +50,16 @@ class JsonSchemaCommonChecker(object):
         return True
 
 
-class JsonSchemaV1Checker(JsonSchemaCommonChecker):
-    pass
-
-
-class JsonSchemaV2Checker(JsonSchemaCommonChecker):
+class JsonSchemaTestcaseChecker(JsonSchemaCommonChecker):
 
     @staticmethod
-    def validate_testcase_format(content):
+    def validate_testcase_v1_format(content):
+        """ check testcase format v1 if valid
+        """
+        return True
+
+    @staticmethod
+    def validate_testcase_v2_format(content):
         """ check testcase format v2 if valid
         """
         try:
