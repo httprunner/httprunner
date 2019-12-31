@@ -281,7 +281,6 @@ def load_testsuite(raw_testsuite):
             }
 
     """
-    JsonSchemaChecker.validate_testsuite_format(raw_testsuite)
     raw_testcases = raw_testsuite.pop("testcases")
     raw_testsuite["testcases"] = {}
 
@@ -293,6 +292,7 @@ def load_testsuite(raw_testsuite):
             raw_testsuite["testcases"][name] = raw_testcase
 
     elif isinstance(raw_testcases, list):
+        JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
         # format version 2, implemented in 2.2.0
         for raw_testcase in raw_testcases:
             __extend_with_testcase_ref(raw_testcase)

@@ -40,16 +40,6 @@ class JsonSchemaChecker(object):
         return True
 
     @staticmethod
-    def validate_testsuite_format(content):
-        try:
-            jsonschema.validate(content, testsuite_schema_v2, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
-
-    @staticmethod
     def validate_testcase_v1_format(content):
         """ check testcase format v1 if valid
         """
@@ -61,6 +51,18 @@ class JsonSchemaChecker(object):
         """
         try:
             jsonschema.validate(content, testcase_schema_v2, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
+        return True
+
+    @staticmethod
+    def validate_testsuite_v2_format(content):
+        """ check testsuite format v2 if valid
+        """
+        try:
+            jsonschema.validate(content, testsuite_schema_v2, resolver=resolver)
         except jsonschema.exceptions.ValidationError as ex:
             logger.log_error(str(ex))
             raise exceptions.FileFormatError
