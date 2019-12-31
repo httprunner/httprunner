@@ -3,6 +3,7 @@ import unittest
 
 from httprunner import exceptions
 from httprunner.loader import load
+from httprunner.loader.buildup import load_test_file
 
 
 class TestFileLoader(unittest.TestCase):
@@ -14,7 +15,7 @@ class TestFileLoader(unittest.TestCase):
             f.write("")
 
         with self.assertRaises(exceptions.FileFormatError):
-            load._load_yaml_file(yaml_tmp_file)
+            load_test_file(yaml_tmp_file)
 
         os.remove(yaml_tmp_file)
 
@@ -23,7 +24,7 @@ class TestFileLoader(unittest.TestCase):
             f.write("abc")
 
         with self.assertRaises(exceptions.FileFormatError):
-            load._load_yaml_file(yaml_tmp_file)
+            load_test_file(yaml_tmp_file)
 
         os.remove(yaml_tmp_file)
 
@@ -34,7 +35,7 @@ class TestFileLoader(unittest.TestCase):
             f.write("")
 
         with self.assertRaises(exceptions.FileFormatError):
-            load._load_json_file(json_tmp_file)
+            load_test_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
@@ -43,7 +44,7 @@ class TestFileLoader(unittest.TestCase):
             f.write("{}")
 
         with self.assertRaises(exceptions.FileFormatError):
-            load._load_json_file(json_tmp_file)
+            load_test_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
@@ -52,7 +53,7 @@ class TestFileLoader(unittest.TestCase):
             f.write("abc")
 
         with self.assertRaises(exceptions.FileFormatError):
-            load._load_json_file(json_tmp_file)
+            load_test_file(json_tmp_file)
 
         os.remove(json_tmp_file)
 
