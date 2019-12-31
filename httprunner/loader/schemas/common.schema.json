@@ -32,6 +32,19 @@
                 },
                 "teardown_hooks": {
                     "$ref": "#/definitions/hook"
+                },
+                "verify": {
+                    "description": "configure verify for current testcase/testsuite",
+                    "oneOf": [
+                        {
+                            "description": "whether we verify the server’s TLS certificate",
+                            "type": "boolean"
+                        },
+                        {
+                            "description": "path to a CA bundle to use",
+                            "type": "string"
+                        }
+                    ]
                 }
             },
             "required": ["name"]
@@ -117,6 +130,7 @@
                     "type": "object"
                 },
                 "verify": {
+                    "description": "configure verify for current api/teststep",
                     "oneOf": [
                         {
                             "description": "whether we verify the server’s TLS certificate",
