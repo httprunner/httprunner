@@ -10,7 +10,7 @@ schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
 common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
 api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
 testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.json")
-testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
+testsuite_schema_path = os.path.join(schemas_root_dir, "testsuite.schema.json")
 
 with open(api_schema_path) as f:
     api_schema = json.load(f)
@@ -22,8 +22,8 @@ with open(common_schema_path) as f:
 with open(testcase_schema_v2_path) as f:
     testcase_schema_v2 = json.load(f)
 
-with open(testsuite_schema_v2_path) as f:
-    testsuite_schema_v2 = json.load(f)
+with open(testsuite_schema_path) as f:
+    testsuite_schema = json.load(f)
 
 
 class JsonSchemaChecker(object):
@@ -33,6 +33,16 @@ class JsonSchemaChecker(object):
 
         try:
             jsonschema.validate(content, api_schema, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
+        return True
+
+    @staticmethod
+    def validate_testsuite_format(content):
+        try:
+            jsonschema.validate(content, testsuite_schema, resolver=resolver)
         except jsonschema.exceptions.ValidationError as ex:
             logger.log_error(str(ex))
             raise exceptions.FileFormatError
@@ -52,16 +62,6 @@ class JsonSchemaV2Checker(JsonSchemaChecker):
         """
         try:
             jsonschema.validate(content, testcase_schema_v2, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
-
-    @staticmethod
-    def validate_testsuite_format(content):
-        try:
-            jsonschema.validate(content, testsuite_schema_v2, resolver=resolver)
         except jsonschema.exceptions.ValidationError as ex:
             logger.log_error(str(ex))
             raise exceptions.FileFormatError
