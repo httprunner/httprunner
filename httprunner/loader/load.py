@@ -7,7 +7,7 @@ import yaml
 
 from httprunner import builtin
 from httprunner import exceptions, logger, utils
-from httprunner.loader.check import check_testcase_format, is_function
+from httprunner.loader.check import is_function
 from httprunner.loader.locate import get_project_working_directory
 
 try:
@@ -28,7 +28,6 @@ def _load_yaml_file(yaml_file):
             logger.log_error(str(ex))
             raise exceptions.FileFormatError
 
-        check_testcase_format(yaml_file, yaml_content)
         return yaml_content
 
 
@@ -43,7 +42,6 @@ def _load_json_file(json_file):
             logger.log_error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
-        check_testcase_format(json_file, json_content)
         return json_content
 
 
