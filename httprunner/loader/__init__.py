@@ -1,7 +1,7 @@
 """
 HttpRunner loader
 
-- check: validate testcase data structure with JSON schema (TODO)
+- check: validate api/testcase/testsuite data structure with JSON schema
 - locate: locate debugtalk.py, make it's dir as project root path
 - load: load testcase files and relevant data, including debugtalk.py, .env, yaml/json api/testcases, csv, etc.
 - buildup: assemble loaded content to httprunner testcase/testsuite data structure
