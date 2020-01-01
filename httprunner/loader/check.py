@@ -1,193 +1,206 @@
-import io
 import json
 import os
-import types
 
-from httprunner import logger, exceptions
+import jsonschema
 
+from httprunner import exceptions, logger
 
-# TODO: validate data format with JSON schema
+schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
+common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
+api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
+testcase_schema_v1_path = os.path.join(schemas_root_dir, "testcase.schema.v1.json")
+testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.json")
+testsuite_schema_v1_path = os.path.join(schemas_root_dir, "testsuite.schema.v1.json")
+testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
 
-def is_testcase(data_structure):
-    """ check if data_structure is a testcase.
+with open(api_schema_path) as f:
+    api_schema = json.load(f)
 
-    Args:
-        data_structure (dict): testcase should always be in the following data structure:
+with open(common_schema_path) as f:
+    common_schema = json.load(f)
+    resolver = jsonschema.RefResolver("file://{}/".format(os.path.abspath(schemas_root_dir)), common_schema)
 
-            {
-                "config": {
-                    "name": "desc1",
-                    "variables": [],    # optional
-                    "request": {}       # optional
-                },
-                "teststeps": [
-                    test_dict1,
-                    {   # test_dict2
-                        'name': 'test step desc2',
-                        'variables': [],    # optional
-                        'extract': [],      # optional
-                        'validate': [],
-                        'request': {},
-                        'function_meta': {}
-                    }
-                ]
-            }
+with open(testcase_schema_v1_path) as f:
+    testcase_schema_v1 = json.load(f)
 
-    Returns:
-        bool: True if data_structure is valid testcase, otherwise False.
+with open(testcase_schema_v2_path) as f:
+    testcase_schema_v2 = json.load(f)
 
-    """
-    # TODO: replace with JSON schema validation
-    if not isinstance(data_structure, dict):
-        return False
+with open(testsuite_schema_v1_path) as f:
+    testsuite_schema_v1 = json.load(f)
 
-    if "teststeps" not in data_structure:
-        return False
-
-    if not isinstance(data_structure["teststeps"], list):
-        return False
-
-    return True
+with open(testsuite_schema_v2_path) as f:
+    testsuite_schema_v2 = json.load(f)
 
 
-def is_testcases(data_structure):
-    """ check if data_structure is testcase or testcases list.
+class JsonSchemaChecker(object):
 
-    Args:
-        data_structure (dict): testcase(s) should always be in the following data structure:
-            {
-                "project_mapping": {
-                    "PWD": "XXXXX",
-                    "functions": {},
-                    "env": {}
-                },
-                "testcases": [
-                    {   # testcase data structure
-                        "config": {
-                            "name": "desc1",
-                            "path": "testcase1_path",
-                            "variables": [],                    # optional
-                        },
-                        "teststeps": [
-                            # test data structure
-                            {
-                                'name': 'test step desc1',
-                                'variables': [],    # optional
-                                'extract': [],      # optional
-                                'validate': [],
-                                'request': {}
-                            },
-                            test_dict_2   # another test dict
-                        ]
-                    },
-                    testcase_dict_2     # another testcase dict
-                ]
-            }
+    @staticmethod
+    def validate_format(content, scheme):
+        """ check api/testcase/testsuite format if valid
+        """
+        try:
+            jsonschema.validate(content, scheme, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
 
-    Returns:
-        bool: True if data_structure is valid testcase(s), otherwise False.
+        return True
 
-    """
-    if not isinstance(data_structure, dict):
-        return False
+    @staticmethod
+    def validate_api_format(content):
+        """ check api format if valid
+        """
+        return JsonSchemaChecker.validate_format(content, api_schema)
 
-    if "testcases" not in data_structure:
-        return False
+    @staticmethod
+    def validate_testcase_v1_format(content):
+        """ check testcase format v1 if valid
+        """
+        return JsonSchemaChecker.validate_format(content, testcase_schema_v1)
 
-    testcases = data_structure["testcases"]
-    if not isinstance(testcases, list):
-        return False
+    @staticmethod
+    def validate_testcase_v2_format(content):
+        """ check testcase format v2 if valid
+        """
+        return JsonSchemaChecker.validate_format(content, testcase_schema_v2)
 
-    for item in testcases:
-        if not is_testcase(item):
-            return False
+    @staticmethod
+    def validate_testsuite_v1_format(content):
+        """ check testsuite format v1 if valid
+        """
+        return JsonSchemaChecker.validate_format(content, testsuite_schema_v1)
 
-    return True
+    @staticmethod
+    def validate_testsuite_v2_format(content):
+        """ check testsuite format v2 if valid
+        """
+        return JsonSchemaChecker.validate_format(content, testsuite_schema_v2)
 
 
-def is_testcase_path(path):
-    """ check if path is testcase path or path list.
+def is_test_path(path):
+    """ check if path is valid json/yaml file path or a existed directory.
 
     Args:
-        path (str/list): file path or file path list.
+        path (str/list/tuple): file path/directory or file path list.
 
     Returns:
         bool: True if path is valid file path or path list, otherwise False.
 
     """
-    if not isinstance(path, (str, list)):
+    if not isinstance(path, (str, list, tuple)):
         return False
 
-    if isinstance(path, list):
+    elif isinstance(path, (list, tuple)):
         for p in path:
-            if not is_testcase_path(p):
+            if not is_test_path(p):
                 return False
 
-    if isinstance(path, str):
+        return True
+
+    else:
+        # path is string
         if not os.path.exists(path):
             return False
 
-        # TODO: check file format if valid
+        # path exists
+        if os.path.isfile(path):
+            # path is a file
+            file_suffix = os.path.splitext(path)[1].lower()
+            if file_suffix not in ['.json', '.yaml', '.yml']:
+                # path is not json/yaml file
+                return False
+            else:
+                return True
+        elif os.path.isdir(path):
+            # path is a directory
+            return True
+        else:
+            # path is neither a folder nor a file, maybe a symbol link or something else
+            return False
 
-    return True
 
+def is_test_content(data_structure):
+    """ check if data_structure is apis/testcases/testsuites.
 
-def check_testcase_format(file_path, content):
-    """ check testcase format if valid
+    Args:
+        data_structure (dict): should include keys, apis or testcases or testsuites
+
+    Returns:
+        bool: True if data_structure is valid apis/testcases/testsuites, otherwise False.
+
     """
-    # TODO: replace with JSON schema validation
-    if not content:
-        # testcase file content is empty
-        err_msg = u"Testcase file content is empty: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exceptions.FileFormatError(err_msg)
+    if not isinstance(data_structure, dict):
+        return False
 
-    elif not isinstance(content, (list, dict)):
-        # testcase file content does not match testcase format
-        err_msg = u"Testcase file content format invalid: {}".format(file_path)
-        logger.log_error(err_msg)
-        raise exceptions.FileFormatError(err_msg)
+    if "apis" in data_structure:
+        # maybe a group of api content
+        apis = data_structure["apis"]
+        if not isinstance(apis, list):
+            return False
 
-
-def validate_json_file(file_list):
-    """ validate JSON testcase format
-    """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be validated, skip: {}".format(json_file))
-            continue
-
-        logger.color_print("Start to validate JSON file: {}".format(json_file), "GREEN")
-
-        with io.open(json_file) as stream:
+        for item in apis:
+            is_testcase = False
             try:
-                json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
+                JsonSchemaChecker.validate_api_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
 
-        print("OK")
+            if not is_testcase:
+                return False
 
+        return True
 
-def is_function(item):
-    """ Takes item object, returns True if it is a function.
-    """
-    return isinstance(item, types.FunctionType)
+    elif "testcases" in data_structure:
+        # maybe a testsuite, containing a group of testcases
+        testcases = data_structure["testcases"]
+        if not isinstance(testcases, list):
+            return False
 
+        for item in testcases:
+            is_testcase = False
+            try:
+                JsonSchemaChecker.validate_testcase_v2_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
 
-def is_variable(tup):
-    """ Takes (name, object) tuple, returns True if it is a variable.
-    """
-    name, item = tup
-    if callable(item):
-        # function or class
+            try:
+                JsonSchemaChecker.validate_testcase_v2_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            if not is_testcase:
+                return False
+
+        return True
+
+    elif "testsuites" in data_structure:
+        # maybe a group of testsuites
+        testsuites = data_structure["testsuites"]
+        if not isinstance(testsuites, list):
+            return False
+
+        for item in testsuites:
+            is_testcase = False
+            try:
+                JsonSchemaChecker.validate_testsuite_v1_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            try:
+                JsonSchemaChecker.validate_testsuite_v2_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            if not is_testcase:
+                return False
+
+        return True
+
+    else:
         return False
-
-    if isinstance(item, types.ModuleType):
-        # imported module
-        return False
-
-    if name.startswith("_"):
-        # private property
-        return False
-
-    return True

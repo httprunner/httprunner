@@ -2,12 +2,12 @@ import csv
 import io
 import json
 import os
+import types
 
 import yaml
 
 from httprunner import builtin
 from httprunner import exceptions, logger, utils
-from httprunner.loader.check import check_testcase_format, is_function
 from httprunner.loader.locate import get_project_working_directory
 
 try:
@@ -22,8 +22,12 @@ def _load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
     with io.open(yaml_file, 'r', encoding='utf-8') as stream:
-        yaml_content = yaml.load(stream)
-        check_testcase_format(yaml_file, yaml_content)
+        try:
+            yaml_content = yaml.load(stream)
+        except yaml.YAMLError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
         return yaml_content
 
 
@@ -38,7 +42,6 @@ def _load_json_file(json_file):
             logger.log_error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
-        check_testcase_format(json_file, json_content)
         return json_content
 
 
@@ -203,7 +206,7 @@ def load_module_functions(module):
     module_functions = {}
 
     for name, item in vars(module).items():
-        if is_function(item):
+        if isinstance(item, types.FunctionType):
             module_functions[name] = item
 
     return module_functions
