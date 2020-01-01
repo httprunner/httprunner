@@ -9,6 +9,7 @@ from httprunner import exceptions, logger
 schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
 common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
 api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
+testcase_schema_v1_path = os.path.join(schemas_root_dir, "testcase.schema.v1.json")
 testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.json")
 testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
 
@@ -18,6 +19,9 @@ with open(api_schema_path) as f:
 with open(common_schema_path) as f:
     common_schema = json.load(f)
     resolver = jsonschema.RefResolver("file://{}/".format(os.path.abspath(schemas_root_dir)), common_schema)
+
+with open(testcase_schema_v1_path) as f:
+    testcase_schema_v1 = json.load(f)
 
 with open(testcase_schema_v2_path) as f:
     testcase_schema_v2 = json.load(f)
@@ -43,6 +47,12 @@ class JsonSchemaChecker(object):
     def validate_testcase_v1_format(content):
         """ check testcase format v1 if valid
         """
+        try:
+            jsonschema.validate(content, testcase_schema_v1, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
         return True
 
     @staticmethod

@@ -1,0 +1,138 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "description": "httprunner testcase schema v1 definition",
+    "type": "array",
+    "definitions": {
+        "test": {
+            "type": "object",
+            "oneOf": [
+                {
+                    "properties": {
+                        "name": {
+                            "$ref": "common.schema.json#/definitions/name"
+                        },
+                        "request": {
+                            "description": "define api request directly",
+                            "$ref": "common.schema.json#/definitions/request"
+                        },
+                        "variables": {
+                            "$ref": "common.schema.json#/definitions/variables"
+                        },
+                        "extract": {
+                            "$ref": "common.schema.json#/definitions/extract"
+                        },
+                        "validate": {
+                            "$ref": "common.schema.json#/definitions/validate"
+                        },
+                        "setup_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        },
+                        "teardown_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "request"
+                    ]
+                },
+                {
+                    "properties": {
+                        "name": {
+                            "$ref": "common.schema.json#/definitions/name"
+                        },
+                        "api": {
+                            "description": "api reference, value is api file relative path",
+                            "type": "string"
+                        },
+                        "variables": {
+                            "$ref": "common.schema.json#/definitions/variables"
+                        },
+                        "extract": {
+                            "oneOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "$ref": "common.schema.json#/definitions/extract"
+                                }
+                            ]
+                        },
+                        "validate": {
+                            "$ref": "common.schema.json#/definitions/validate"
+                        },
+                        "setup_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        },
+                        "teardown_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "api"
+                    ]
+                },
+                {
+                    "properties": {
+                        "name": {
+                            "$ref": "common.schema.json#/definitions/name"
+                        },
+                        "testcase": {
+                            "description": "testcase reference, value is testcase file relative path",
+                            "type": "string"
+                        },
+                        "variables": {
+                            "$ref": "common.schema.json#/definitions/variables"
+                        },
+                        "extract": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "setup_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        },
+                        "teardown_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "testcase"
+                    ]
+                }
+            ]
+        }
+    },
+    "items": {
+        "type": "object",
+        "oneOf": [
+            {
+                "type": "object",
+                "properties": {
+                    "config": {
+                        "$ref": "common.schema.json#/definitions/config"
+                    }
+                },
+                "additionalProperties": false
+            },
+            {
+                "type": "object",
+                "properties": {
+                    "test": {
+                        "$ref": "testcase.schema.v1.json#/definitions/test"
+                    }
+                },
+                "additionalProperties": false
+            }
+        ],
+        "minProperties": 1,
+        "maxProperties": 1
+    },
+    "minItems": 2
+}
