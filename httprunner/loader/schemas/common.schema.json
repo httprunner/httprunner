@@ -12,7 +12,19 @@
         },
         "variables": {
             "description": "define variables for api/teststep/testcase/testsuite",
-            "type": "object"
+            "oneOf": [
+                {
+                    "type": "object"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "maxProperties": 1,
+                        "minProperties": 1
+                    }
+                }
+            ]
         },
         "config": {
             "description": "used in testcase/testsuite to configure common fields",
@@ -207,37 +219,34 @@
             "type": "array",
             "items": {
                 "description": "one validator definition",
-                "type": "object",
-                "propertyNames": {
-                    "enum": [
-                        "eq", "equals", "==", "is",
-                        "lt", "less_than",
-                        "le", "less_than_or_equals",
-                        "gt", "greater_than",
-                        "ge", "greater_than_or_equals",
-                        "ne", "not_equals",
-                        "str_eq", "string_equals",
-                        "len_eq", "length_equals", "count_eq",
-                        "len_gt", "count_gt", "length_greater_than", "count_greater_than",
-                        "len_ge", "count_ge", "length_greater_than_or_equals", "count_greater_than_or_equals",
-                        "len_lt", "count_lt", "length_less_than", "count_less_than",
-                        "len_le", "count_le", "length_less_than_or_equals", "count_less_than_or_equals",
-                        "contains",
-                        "contained_by",
-                        "type_match",
-                        "regex_match",
-                        "startswith",
-                        "endswith"
-                    ]
-                },
-                "patternProperties": {
-                    "^[A-Za-z_][A-Za-z0-9_]*$": {
-                        "description": "validate_func_name: [check_value, expect_value]",
-                        "type": "array",
-                        "minItems": 2,
-                        "maxItems": 2
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "check": {
+                                "type": "string"
+                            },
+                            "comparator": {
+                                "type": "string"
+                            },
+                            "expect": {
+                                "description": "expected value"
+                            }
+                        },
+                        "required": ["check", "expect"]
+                    },
+                    {
+                        "type": "object",
+                        "patternProperties": {
+                            "^[A-Za-z_][A-Za-z0-9_]*$": {
+                                "description": "validate_func_name: [check_value, expect_value]",
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2
+                            }
+                        }
                     }
-                }
+                ]
             }
         }
     }

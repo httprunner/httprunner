@@ -11,6 +11,7 @@ common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
 api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
 testcase_schema_v1_path = os.path.join(schemas_root_dir, "testcase.schema.v1.json")
 testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.json")
+testsuite_schema_v1_path = os.path.join(schemas_root_dir, "testsuite.schema.v1.json")
 testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
 
 with open(api_schema_path) as f:
@@ -25,6 +26,9 @@ with open(testcase_schema_v1_path) as f:
 
 with open(testcase_schema_v2_path) as f:
     testcase_schema_v2 = json.load(f)
+
+with open(testsuite_schema_v1_path) as f:
+    testsuite_schema_v1 = json.load(f)
 
 with open(testsuite_schema_v2_path) as f:
     testsuite_schema_v2 = json.load(f)
@@ -71,6 +75,12 @@ class JsonSchemaChecker(object):
     def validate_testsuite_v1_format(content):
         """ check testsuite format v1 if valid
         """
+        try:
+            jsonschema.validate(content, testsuite_schema_v1, resolver=resolver)
+        except jsonschema.exceptions.ValidationError as ex:
+            logger.log_error(str(ex))
+            raise exceptions.FileFormatError
+
         return True
 
     @staticmethod
