@@ -37,63 +37,46 @@ with open(testsuite_schema_v2_path) as f:
 class JsonSchemaChecker(object):
 
     @staticmethod
-    def validate_api_format(content):
-
+    def validate_format(content, scheme):
+        """ check api/testcase/testsuite format if valid
+        """
         try:
-            jsonschema.validate(content, api_schema, resolver=resolver)
+            jsonschema.validate(content, scheme, resolver=resolver)
         except jsonschema.exceptions.ValidationError as ex:
             logger.log_error(str(ex))
             raise exceptions.FileFormatError
 
         return True
+
+    @staticmethod
+    def validate_api_format(content):
+        """ check api format if valid
+        """
+        return JsonSchemaChecker.validate_format(content, api_schema)
 
     @staticmethod
     def validate_testcase_v1_format(content):
         """ check testcase format v1 if valid
         """
-        try:
-            jsonschema.validate(content, testcase_schema_v1, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
+        return JsonSchemaChecker.validate_format(content, testcase_schema_v1)
 
     @staticmethod
     def validate_testcase_v2_format(content):
         """ check testcase format v2 if valid
         """
-        try:
-            jsonschema.validate(content, testcase_schema_v2, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
+        return JsonSchemaChecker.validate_format(content, testcase_schema_v2)
 
     @staticmethod
     def validate_testsuite_v1_format(content):
         """ check testsuite format v1 if valid
         """
-        try:
-            jsonschema.validate(content, testsuite_schema_v1, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
+        return JsonSchemaChecker.validate_format(content, testsuite_schema_v1)
 
     @staticmethod
     def validate_testsuite_v2_format(content):
         """ check testsuite format v2 if valid
         """
-        try:
-            jsonschema.validate(content, testsuite_schema_v2, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
+        return JsonSchemaChecker.validate_format(content, testsuite_schema_v2)
 
 
 def is_testcase(data_structure):
