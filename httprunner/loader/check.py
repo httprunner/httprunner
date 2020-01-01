@@ -197,4 +197,8 @@ def is_testcase_path(path):
         if not os.path.exists(path):
             return False
 
+        file_suffix = os.path.splitext(path)[1].lower()
+        if file_suffix != ['.json', '.yaml', '.yml']:
+            return False
+
     return True
