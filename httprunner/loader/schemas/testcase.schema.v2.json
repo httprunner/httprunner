@@ -11,37 +11,8 @@
                         "name": {
                             "$ref": "common.schema.json#/definitions/name"
                         },
-                        "api": {
-                            "description": "api reference, value is api file relative path",
-                            "type": "string"
-                        },
-                        "variables": {
-                            "$ref": "common.schema.json#/definitions/variables"
-                        },
-                        "extract": {
-                            "$ref": "common.schema.json#/definitions/extract"
-                        },
-                        "validate": {
-                            "$ref": "common.schema.json#/definitions/validate"
-                        },
-                        "setup_hooks": {
-                            "$ref": "common.schema.json#/definitions/hook"
-                        },
-                        "teardown_hooks": {
-                            "$ref": "common.schema.json#/definitions/hook"
-                        }
-                    },
-                    "required": [
-                        "name",
-                        "api"
-                    ]
-                },
-                {
-                    "properties": {
-                        "name": {
-                            "$ref": "common.schema.json#/definitions/name"
-                        },
                         "request": {
+                            "description": "define api request directly",
                             "$ref": "common.schema.json#/definitions/request"
                         },
                         "variables": {
@@ -63,6 +34,76 @@
                     "required": [
                         "name",
                         "request"
+                    ]
+                },
+                {
+                    "properties": {
+                        "name": {
+                            "$ref": "common.schema.json#/definitions/name"
+                        },
+                        "api": {
+                            "description": "api reference, value is api file relative path",
+                            "type": "string"
+                        },
+                        "variables": {
+                            "$ref": "common.schema.json#/definitions/variables"
+                        },
+                        "extract": {
+                            "oneOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "$ref": "common.schema.json#/definitions/extract"
+                                }
+                            ]
+                        },
+                        "validate": {
+                            "$ref": "common.schema.json#/definitions/validate"
+                        },
+                        "setup_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        },
+                        "teardown_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "api"
+                    ]
+                },
+                {
+                    "properties": {
+                        "name": {
+                            "$ref": "common.schema.json#/definitions/name"
+                        },
+                        "testcase": {
+                            "description": "testcase reference, value is testcase file relative path",
+                            "type": "string"
+                        },
+                        "variables": {
+                            "$ref": "common.schema.json#/definitions/variables"
+                        },
+                        "extract": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "setup_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        },
+                        "teardown_hooks": {
+                            "$ref": "common.schema.json#/definitions/hook"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "testcase"
                     ]
                 }
             ]
