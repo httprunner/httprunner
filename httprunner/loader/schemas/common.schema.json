@@ -221,7 +221,13 @@
                         "len_gt", "count_gt", "length_greater_than", "count_greater_than",
                         "len_ge", "count_ge", "length_greater_than_or_equals", "count_greater_than_or_equals",
                         "len_lt", "count_lt", "length_less_than", "count_less_than",
-                        "len_le", "count_le", "length_less_than_or_equals", "count_less_than_or_equals"
+                        "len_le", "count_le", "length_less_than_or_equals", "count_less_than_or_equals",
+                        "contains",
+                        "contained_by",
+                        "type_match",
+                        "regex_match",
+                        "startswith",
+                        "endswith"
                     ]
                 },
                 "patternProperties": {
