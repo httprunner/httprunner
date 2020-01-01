@@ -175,6 +175,7 @@ def load_testcase(raw_testcase):
             }
 
     """
+    JsonSchemaChecker.validate_testcase_v1_format(raw_testcase)
     config = {}
     tests = []
 
