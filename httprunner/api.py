@@ -289,7 +289,7 @@ class HttpRunner(object):
 
         """
         logger.log_info("HttpRunner version: {}".format(__version__))
-        if loader.is_testcase_path(path_or_tests):
+        if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_testcases(path_or_tests):
             return self.run_tests(path_or_tests)
