@@ -1,5 +1,19 @@
 # Release History
 
+## 2.5.0 (2020-01-01)
+
+**Added**
+
+- feat: add json schema validation for api
+- feat: add json schema validation for testcase v1 & v2
+- feat: add json schema validation for testsuite v1 & v2
+
+**Changed**
+
+- refactor: use loader.load_cases to validate test files
+- refactor: use is_test_path to check if path is valid json/yaml file or a existed directory
+- refactor: use is_test_content to check if data_structure is apis/testcases/testsuites
+
 ## 2.4.9 (2019-12-29)
 
 **Added**

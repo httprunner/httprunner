@@ -4,11 +4,11 @@ import sys
 
 from sentry_sdk import capture_exception
 
-from httprunner import __description__, __version__
+from httprunner import __description__, __version__, exceptions
 from httprunner.api import HttpRunner
 from httprunner.compat import is_py2
-from httprunner.loader import validate_json_file
-from httprunner.logger import color_print
+from httprunner.loader import load_cases
+from httprunner.logger import color_print, log_error
 from httprunner.report import gen_html_report
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
                               prettify_json_file)
@@ -73,8 +73,17 @@ def main():
         sys.exit(0)
 
     if args.validate:
-        validate_json_file(args.validate)
+        for validate_path in args.validate:
+            try:
+                color_print("validate test file: {}".format(validate_path), "GREEN")
+                load_cases(validate_path, args.dot_env_path)
+            except exceptions.MyBaseError as ex:
+                log_error(str(ex))
+                continue
+
+        color_print("done!", "BLUE")
         sys.exit(0)
+
     if args.prettify:
         prettify_json_file(args.prettify)
         sys.exit(0)

@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "description": "httprunner testsuite schema v2 definition",
+    "type": "object",
+    "definitions": {
+        "testcase": {
+            "type": "object",
+            "properties": {
+                "name": {
+                     "$ref": "common.schema.json#/definitions/name"
+                },
+                "variables": {
+                    "$ref": "common.schema.json#/definitions/variables"
+                },
+                "parameters": {
+                    "description": "generate cartesian product variables with parameters, each group of variables will be run once",
+                    "type": "object"
+                },
+                "testcase": {
+                    "description": "testcase reference, value is testcase file relative path",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "testcase"
+            ]
+        }
+    },
+    "properties": {
+        "config": {
+            "$ref": "common.schema.json#/definitions/config"
+        },
+        "testcases": {
+            "description": "testcase of a testsuite",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "testsuite.schema.v2.json#/definitions/testcase"
+            }
+        }
+    },
+    "required": [
+        "config",
+        "testcases"
+    ]
+}

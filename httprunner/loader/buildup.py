@@ -2,6 +2,7 @@ import importlib
 import os
 
 from httprunner import exceptions, logger, utils
+from httprunner.loader.check import JsonSchemaChecker
 from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
     load_folder_files
 from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
@@ -174,6 +175,7 @@ def load_testcase(raw_testcase):
             }
 
     """
+    JsonSchemaChecker.validate_testcase_v1_format(raw_testcase)
     config = {}
     tests = []
 
@@ -224,6 +226,7 @@ def load_testcase_v2(raw_testcase):
             }
 
     """
+    JsonSchemaChecker.validate_testcase_v2_format(raw_testcase)
     raw_teststeps = raw_testcase.pop("teststeps")
     raw_testcase["teststeps"] = [
         load_teststep(teststep)
@@ -279,11 +282,12 @@ def load_testsuite(raw_testsuite):
             }
 
     """
-    raw_testcases = raw_testsuite.pop("testcases")
-    raw_testsuite["testcases"] = {}
+    raw_testcases = raw_testsuite["testcases"]
 
     if isinstance(raw_testcases, dict):
-        # make compatible with version < 2.2.0
+        # format version 1, make compatible with version < 2.2.0
+        JsonSchemaChecker.validate_testsuite_v1_format(raw_testsuite)
+        raw_testsuite["testcases"] = {}
         for name, raw_testcase in raw_testcases.items():
             __extend_with_testcase_ref(raw_testcase)
             raw_testcase.setdefault("name", name)
@@ -291,6 +295,8 @@ def load_testsuite(raw_testsuite):
 
     elif isinstance(raw_testcases, list):
         # format version 2, implemented in 2.2.0
+        JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
+        raw_testsuite["testcases"] = {}
         for raw_testcase in raw_testcases:
             __extend_with_testcase_ref(raw_testcase)
             testcase_name = raw_testcase["name"]
@@ -343,7 +349,6 @@ def load_test_file(path):
 
         if "testcases" in raw_content:
             # file_type: testsuite
-            # TODO: add json schema validation for testsuite
             loaded_content = load_testsuite(raw_content)
             loaded_content["path"] = path
             loaded_content["type"] = "testsuite"
@@ -356,7 +361,7 @@ def load_test_file(path):
 
         elif "request" in raw_content:
             # file_type: api
-            # TODO: add json schema validation for api
+            JsonSchemaChecker.validate_api_format(raw_content)
             loaded_content = raw_content
             loaded_content["path"] = path
             loaded_content["type"] = "api"
@@ -368,7 +373,6 @@ def load_test_file(path):
     elif isinstance(raw_content, list) and len(raw_content) > 0:
         # file_type: testcase
         # make compatible with version < 2.2.0
-        # TODO: add json schema validation for testcase
         loaded_content = load_testcase(raw_content)
         loaded_content["path"] = path
         loaded_content["type"] = "testcase"

@@ -1,0 +1,252 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "description": "common json schema definitions for httprunner api/testcase/testsuite",
+    "definitions": {
+        "name": {
+            "description": "used as api/teststep/testcase/testsuite identification",
+            "type": "string"
+        },
+        "base_url": {
+            "description": "The base_url will be used with relative URI",
+            "type": "string"
+        },
+        "variables": {
+            "description": "define variables for api/teststep/testcase/testsuite",
+            "oneOf": [
+                {
+                    "type": "object"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "maxProperties": 1,
+                        "minProperties": 1
+                    }
+                }
+            ]
+        },
+        "config": {
+            "description": "used in testcase/testsuite to configure common fields",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/name"
+                },
+                "base_url": {
+                    "$ref": "#/definitions/base_url"
+                },
+                "variables": {
+                    "$ref": "#/definitions/variables"
+                },
+                "setup_hooks": {
+                    "$ref": "#/definitions/hook"
+                },
+                "teardown_hooks": {
+                    "$ref": "#/definitions/hook"
+                },
+                "verify": {
+                    "description": "configure verify for current testcase/testsuite",
+                    "oneOf": [
+                        {
+                            "description": "whether we verify the server’s TLS certificate",
+                            "type": "boolean"
+                        },
+                        {
+                            "description": "path to a CA bundle to use",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "required": ["name"]
+        },
+        "hook": {
+            "description": "used to define setup_hooks/teardown_hooks for api/teststep/testcase",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "request": {
+            "description": "used to define a api request. properties is the same as python package `requests.request`",
+            "type": "object",
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "description": "request method",
+                    "enum": [
+                        "GET",
+                        "POST",
+                        "OPTIONS",
+                        "HEAD",
+                        "PUT",
+                        "PATCH",
+                        "DELETE"
+                    ]
+                },
+                "url": {
+                    "description": "request url, may be absolute or relative URI",
+                    "type": "string"
+                },
+                "params": {
+                    "description": "query string for request url",
+                    "type": "object"
+                },
+                "data": {
+                    "anyOf": [
+                        {
+                            "description": "request body in json format",
+                            "type": "object"
+                        },
+                        {
+                            "description": "request body in application/x-www-form-urlencoded format, e.g. a=1&b=2",
+                            "type": "string"
+                        },
+                        {
+                            "description": "request body in string format, e.g. '${prepare_data($a, $b)}'",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "json": {
+                    "description": "request body in json format",
+                    "type": "object"
+                },
+                "headers": {
+                    "description": "request headers",
+                    "type": "object"
+                },
+                "cookies": {
+                    "description": "request cookies",
+                    "type": "object"
+                },
+                "files": {
+                    "description": "request files, used to upload files",
+                    "type": "object"
+                },
+                "auth": {
+                    "description": "Auth tuple to enable Basic/Digest/Custom HTTP Auth.",
+                    "type": "array"
+                },
+                "timeout": {
+                    "description": "How many seconds to wait for the server to send data before giving up",
+                    "type": "number"
+                },
+                "allow_redirects": {
+                    "description": "Enable/disable GET/OPTIONS/POST/PUT/PATCH/DELETE/HEAD redirection. Defaults to True",
+                    "type": "boolean"
+                },
+                "proxies": {
+                    "description": "Dictionary mapping protocol to the URL of the proxy",
+                    "type": "object"
+                },
+                "verify": {
+                    "description": "configure verify for current api/teststep",
+                    "oneOf": [
+                        {
+                            "description": "whether we verify the server’s TLS certificate",
+                            "type": "boolean"
+                        },
+                        {
+                            "description": "path to a CA bundle to use",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "stream": {
+                    "description": "if False, the response content will be immediately downloaded.",
+                    "type": "boolean"
+                },
+                "cert": {
+                    "oneOf": [
+                        {
+                            "description": "path to ssl client cert file (.pem)",
+                            "type": "string"
+                        },
+                        {
+                            "description": "('cert', 'key') pair",
+                            "type": "array",
+                            "maxItems": 2,
+                            "minItems": 2,
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                },
+                "upload": {
+                    "description": "upload files",
+                    "type": "object"
+                }
+            },
+            "required": [
+                "method",
+                "url"
+            ]
+        },
+        "extract": {
+            "description": "used to extract session variables for later requests",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-Za-z_][A-Za-z0-9_]*$": {
+                            "description": "extraction rule for session variable, maybe in jsonpath/regex/jmespath",
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "patternProperties": {
+                            "^[A-Za-z_][A-Za-z0-9_]*$": {
+                                "description": "extraction rule for session variable, maybe in jsonpath/regex/jmespath",
+                                "type": "string"
+                            }
+                        },
+                        "minProperties": 1,
+                        "maxProperties": 1
+                    }
+                }
+            ]
+        },
+        "validate": {
+            "description": "used to validate response fields",
+            "type": "array",
+            "items": {
+                "description": "one validator definition",
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "check": {
+                                "type": "string"
+                            },
+                            "comparator": {
+                                "type": "string"
+                            },
+                            "expect": {
+                                "description": "expected value"
+                            }
+                        },
+                        "required": ["check", "expect"]
+                    },
+                    {
+                        "type": "object",
+                        "patternProperties": {
+                            "^[A-Za-z_][A-Za-z0-9_]*$": {
+                                "description": "validate_func_name: [check_value, expect_value]",
+                                "type": "array",
+                                "minItems": 2,
+                                "maxItems": 2
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
