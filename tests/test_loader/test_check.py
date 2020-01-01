@@ -5,11 +5,6 @@ from httprunner.loader import check
 
 class TestLoaderCheck(unittest.TestCase):
 
-    def test_is_function(self):
-        func = lambda x: x + 1
-        self.assertTrue(check.is_function(func))
-        self.assertTrue(check.is_function(check.is_testcase))
-
     def test_is_testcases(self):
         data_structure = "path/to/file"
         self.assertFalse(check.is_testcases(data_structure))

@@ -2,12 +2,12 @@ import csv
 import io
 import json
 import os
+import types
 
 import yaml
 
 from httprunner import builtin
 from httprunner import exceptions, logger, utils
-from httprunner.loader.check import is_function
 from httprunner.loader.locate import get_project_working_directory
 
 try:
@@ -206,7 +206,7 @@ def load_module_functions(module):
     module_functions = {}
 
     for name, item in vars(module).items():
-        if is_function(item):
+        if isinstance(item, types.FunctionType):
             module_functions[name] = item
 
     return module_functions
