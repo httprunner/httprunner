@@ -1,6 +1,5 @@
 import json
 import os
-import types
 
 import jsonschema
 
@@ -199,9 +198,3 @@ def is_testcase_path(path):
             return False
 
     return True
-
-
-def is_function(item):
-    """ Takes item object, returns True if it is a function.
-    """
-    return isinstance(item, types.FunctionType)
