@@ -175,13 +175,32 @@
         },
         "extract": {
             "description": "used to extract session variables for later requests",
-            "type": "object",
-            "patternProperties": {
-                "^[A-Za-z_][A-Za-z0-9_]*$": {
-                    "description": "extraction rule for session variable, maybe in jsonpath/regex/jmespath",
-                    "type": "string"
+            "oneOf": [
+                {
+                    "type": "object",
+                    "patternProperties": {
+                        "^[A-Za-z_][A-Za-z0-9_]*$": {
+                            "description": "extraction rule for session variable, maybe in jsonpath/regex/jmespath",
+                            "type": "string"
+                        }
+                    },
+                    "minProperties": 1
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "patternProperties": {
+                            "^[A-Za-z_][A-Za-z0-9_]*$": {
+                                "description": "extraction rule for session variable, maybe in jsonpath/regex/jmespath",
+                                "type": "string"
+                            }
+                        },
+                        "minProperties": 1,
+                        "maxProperties": 1
+                    }
                 }
-            }
+            ]
         },
         "validate": {
             "description": "used to validate response fields",

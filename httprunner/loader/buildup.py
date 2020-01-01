@@ -281,19 +281,21 @@ def load_testsuite(raw_testsuite):
             }
 
     """
-    raw_testcases = raw_testsuite.pop("testcases")
-    raw_testsuite["testcases"] = {}
+    raw_testcases = raw_testsuite["testcases"]
 
     if isinstance(raw_testcases, dict):
-        # make compatible with version < 2.2.0
+        # format version 1, make compatible with version < 2.2.0
+        JsonSchemaChecker.validate_testsuite_v1_format(raw_testsuite)
+        raw_testsuite["testcases"] = {}
         for name, raw_testcase in raw_testcases.items():
             __extend_with_testcase_ref(raw_testcase)
             raw_testcase.setdefault("name", name)
             raw_testsuite["testcases"][name] = raw_testcase
 
     elif isinstance(raw_testcases, list):
-        JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
         # format version 2, implemented in 2.2.0
+        JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
+        raw_testsuite["testcases"] = {}
         for raw_testcase in raw_testcases:
             __extend_with_testcase_ref(raw_testcase)
             testcase_name = raw_testcase["name"]

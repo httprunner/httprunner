@@ -58,6 +58,12 @@ class JsonSchemaChecker(object):
         return True
 
     @staticmethod
+    def validate_testsuite_v1_format(content):
+        """ check testsuite format v1 if valid
+        """
+        return True
+
+    @staticmethod
     def validate_testsuite_v2_format(content):
         """ check testsuite format v2 if valid
         """

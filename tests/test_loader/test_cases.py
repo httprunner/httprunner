@@ -279,6 +279,7 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_project_tests(self):
         buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
-        api_file_path = os.path.join(os.getcwd(), "tests", "api", "get_token.yml")
-        self.assertIn(api_file_path, self.tests_def_mapping["api"])
+        self.assertIn("gen_md5", self.project_mapping["functions"])
         self.assertEqual(self.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
+        self.assertEqual(self.project_mapping["PWD"], os.path.dirname(os.path.dirname(__file__)))
+        self.assertEqual(self.project_mapping["test_path"], os.path.dirname(os.path.dirname(__file__)))
