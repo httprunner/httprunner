@@ -349,7 +349,6 @@ def load_test_file(path):
 
         if "testcases" in raw_content:
             # file_type: testsuite
-            # TODO: add json schema validation for testsuite
             loaded_content = load_testsuite(raw_content)
             loaded_content["path"] = path
             loaded_content["type"] = "testsuite"
@@ -374,7 +373,6 @@ def load_test_file(path):
     elif isinstance(raw_content, list) and len(raw_content) > 0:
         # file_type: testcase
         # make compatible with version < 2.2.0
-        # TODO: add json schema validation for testcase
         loaded_content = load_testcase(raw_content)
         loaded_content["path"] = path
         loaded_content["type"] = "testcase"
