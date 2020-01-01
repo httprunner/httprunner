@@ -60,17 +60,3 @@ class TestLoaderCheck(unittest.TestCase):
             }
         ]
         self.assertTrue(data_structure)
-
-    def test_is_variable(self):
-        var1 = 123
-        var2 = "abc"
-        self.assertTrue(check.is_variable(("var1", var1)))
-        self.assertTrue(check.is_variable(("var2", var2)))
-
-        __var = 123
-        self.assertFalse(check.is_variable(("__var", __var)))
-
-        func = lambda x: x + 1
-        self.assertFalse(check.is_variable(("func", func)))
-
-        self.assertFalse(check.is_variable(("unittest", unittest)))

@@ -205,22 +205,3 @@ def is_function(item):
     """ Takes item object, returns True if it is a function.
     """
     return isinstance(item, types.FunctionType)
-
-
-def is_variable(tup):
-    """ Takes (name, object) tuple, returns True if it is a variable.
-    """
-    name, item = tup
-    if callable(item):
-        # function or class
-        return False
-
-    if isinstance(item, types.ModuleType):
-        # imported module
-        return False
-
-    if name.startswith("_"):
-        # private property
-        return False
-
-    return True
