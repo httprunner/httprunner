@@ -78,103 +78,6 @@ class JsonSchemaChecker(object):
         return JsonSchemaChecker.validate_format(content, testsuite_schema_v2)
 
 
-def is_testcase(data_structure):
-    """ check if data_structure is a testcase.
-
-    Args:
-        data_structure (dict): testcase should always be in the following data structure:
-
-            {
-                "config": {
-                    "name": "desc1",
-                    "variables": [],    # optional
-                    "request": {}       # optional
-                },
-                "teststeps": [
-                    test_dict1,
-                    {   # test_dict2
-                        'name': 'test step desc2',
-                        'variables': [],    # optional
-                        'extract': [],      # optional
-                        'validate': [],
-                        'request': {},
-                        'function_meta': {}
-                    }
-                ]
-            }
-
-    Returns:
-        bool: True if data_structure is valid testcase, otherwise False.
-
-    """
-    # TODO: replace with JSON schema validation
-    if not isinstance(data_structure, dict):
-        return False
-
-    if "teststeps" not in data_structure:
-        return False
-
-    if not isinstance(data_structure["teststeps"], list):
-        return False
-
-    return True
-
-
-def is_testcases(data_structure):
-    """ check if data_structure is testcase or testcases list.
-
-    Args:
-        data_structure (dict): testcase(s) should always be in the following data structure:
-            {
-                "project_mapping": {
-                    "PWD": "XXXXX",
-                    "functions": {},
-                    "env": {}
-                },
-                "testcases": [
-                    {   # testcase data structure
-                        "config": {
-                            "name": "desc1",
-                            "path": "testcase1_path",
-                            "variables": [],                    # optional
-                        },
-                        "teststeps": [
-                            # test data structure
-                            {
-                                'name': 'test step desc1',
-                                'variables': [],    # optional
-                                'extract': [],      # optional
-                                'validate': [],
-                                'request': {}
-                            },
-                            test_dict_2   # another test dict
-                        ]
-                    },
-                    testcase_dict_2     # another testcase dict
-                ]
-            }
-
-    Returns:
-        bool: True if data_structure is valid testcase(s), otherwise False.
-
-    """
-    if not isinstance(data_structure, dict):
-        return False
-
-    if "testcases" not in data_structure:
-        return False
-
-    testcases = data_structure["testcases"]
-    if not isinstance(testcases, list):
-        return False
-
-    for item in testcases:
-        if not is_testcase(item):
-            return False
-
-    return True
-
-
 def is_test_path(path):
     """ check if path is valid json/yaml file path or a existed directory.
 
@@ -215,3 +118,89 @@ def is_test_path(path):
         else:
             # path is neither a folder nor a file, maybe a symbol link or something else
             return False
+
+
+def is_test_content(data_structure):
+    """ check if data_structure is apis/testcases/testsuites.
+
+    Args:
+        data_structure (dict): should include keys, apis or testcases or testsuites
+
+    Returns:
+        bool: True if data_structure is valid apis/testcases/testsuites, otherwise False.
+
+    """
+    if not isinstance(data_structure, dict):
+        return False
+
+    if "apis" in data_structure:
+        # maybe a group of api content
+        apis = data_structure["apis"]
+        if not isinstance(apis, list):
+            return False
+
+        for item in apis:
+            is_testcase = False
+            try:
+                JsonSchemaChecker.validate_api_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            if not is_testcase:
+                return False
+
+        return True
+
+    elif "testcases" in data_structure:
+        # maybe a testsuite, containing a group of testcases
+        testcases = data_structure["testcases"]
+        if not isinstance(testcases, list):
+            return False
+
+        for item in testcases:
+            is_testcase = False
+            try:
+                JsonSchemaChecker.validate_testcase_v2_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            try:
+                JsonSchemaChecker.validate_testcase_v2_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            if not is_testcase:
+                return False
+
+        return True
+
+    elif "testsuites" in data_structure:
+        # maybe a group of testsuites
+        testsuites = data_structure["testsuites"]
+        if not isinstance(testsuites, list):
+            return False
+
+        for item in testsuites:
+            is_testcase = False
+            try:
+                JsonSchemaChecker.validate_testsuite_v1_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            try:
+                JsonSchemaChecker.validate_testsuite_v2_format(item)
+                is_testcase = True
+            except exceptions.FileFormatError:
+                pass
+
+            if not is_testcase:
+                return False
+
+        return True
+
+    else:
+        return False
