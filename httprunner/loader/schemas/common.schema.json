@@ -195,8 +195,7 @@
                             "description": "extraction rule for session variable, maybe in jsonpath/regex/jmespath",
                             "type": "string"
                         }
-                    },
-                    "minProperties": 1
+                    }
                 },
                 {
                     "type": "array",
