@@ -56,7 +56,7 @@ def main():
         help="Specify new project name.")
     parser.add_argument(
         '--validate', nargs='*',
-        help="Validate JSON testcase format.")
+        help="Validate YAML/JSON api/testcase/testsuite format.")
     parser.add_argument(
         '--prettify', nargs='*',
         help="Prettify JSON testcase format.")
