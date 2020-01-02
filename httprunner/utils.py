@@ -7,13 +7,26 @@ import itertools
 import json
 import os.path
 import re
+import uuid
 from datetime import datetime
 
-from httprunner import exceptions, logger
+import sentry_sdk
+
+from httprunner import exceptions, logger, __version__
 from httprunner.compat import basestring, bytes, is_py2
 from httprunner.exceptions import ParamsError
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
+
+
+def init_sentry_sdk():
+    sentry_sdk.init(
+        dsn="https://cc6dd86fbe9f4e7fbd95248cfcff114d@sentry.io/1862849",
+        release="httprunner@{}".format(__version__)
+    )
+
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_user({"id": uuid.getnode()})
 
 
 def set_os_environ(variables_mapping):

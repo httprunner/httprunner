@@ -1,5 +1,14 @@
 # Release History
 
+## 2.5.2 (2020-01-02)
+
+**Fixed**
+
+- fix #826: Windows does not support file name include ":"
+- fix #819: maximum recursion error in locusts
+- fix #818: request missed url in setup_hooks
+- fix #808: project_working_directory is not initialized when running passed in data structure
+
 ## 2.5.1 (2020-01-02)
 
 **Fixed**

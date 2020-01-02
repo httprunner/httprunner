@@ -62,7 +62,11 @@ def locate_debugtalk_py(start_path):
 
 def init_project_working_directory(test_path):
     """ this should be called at startup
-        init_project_working_directory <- load_project_data <- load_cases <- run
+
+        run test file:
+            run_path -> load_cases -> load_project_data -> init_project_working_directory
+        or run passed in data structure:
+            run -> init_project_working_directory
 
     Args:
         test_path: specified testfile path
