@@ -213,15 +213,15 @@ class Runner(object):
         parsed_test_request = self.session_context.eval_content(raw_request)
         self.session_context.update_test_variables("request", parsed_test_request)
 
-        # prepend url with base_url unless it's already an absolute URL
-        url = parsed_test_request.pop('url')
-        base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
-        parsed_url = utils.build_url(base_url, url)
-
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
         if setup_hooks:
             self.do_hook_actions(setup_hooks, HookTypeEnum.SETUP)
+
+        # prepend url with base_url unless it's already an absolute URL
+        url = parsed_test_request.pop('url')
+        base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
+        parsed_url = utils.build_url(base_url, url)
 
         try:
             method = parsed_test_request.pop('method')
