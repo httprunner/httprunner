@@ -1,5 +1,11 @@
 # Release History
 
+## 2.5.2 (2020-01-02)
+
+**Fixed**
+
+- fix #826: Windows does not support file name include ":"
+
 ## 2.5.1 (2020-01-02)
 
 **Fixed**
