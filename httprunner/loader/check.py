@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 
 import jsonschema
 
@@ -17,8 +18,14 @@ with open(api_schema_path) as f:
     api_schema = json.load(f)
 
 with open(common_schema_path) as f:
+    if platform.system() == "Windows":
+        absolute_base_path = 'file:///' + os.path.abspath(schemas_root_dir).replace("\\", "/") + '/'
+    else:
+        # Linux, Darwin
+        absolute_base_path = "file://" + os.path.abspath(schemas_root_dir) + "/"
+
     common_schema = json.load(f)
-    resolver = jsonschema.RefResolver("file://{}/".format(os.path.abspath(schemas_root_dir)), common_schema)
+    resolver = jsonschema.RefResolver(absolute_base_path, common_schema)
 
 with open(testcase_schema_v1_path) as f:
     testcase_schema_v1 = json.load(f)
