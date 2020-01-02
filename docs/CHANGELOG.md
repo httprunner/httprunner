@@ -1,5 +1,11 @@
 # Release History
 
+## 2.5.3 (2020-01-03)
+
+**Fixed**
+
+- fix: jsonschema, variables maybe in string type, e.g. '${get_variables()}'
+
 ## 2.5.2 (2020-01-02)
 
 **Fixed**

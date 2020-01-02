@@ -23,6 +23,12 @@
                         "maxProperties": 1,
                         "minProperties": 1
                     }
+                },
+                {
+                    "type": "string",
+                    "examples": [
+                        "${get_variables()}"
+                    ]
                 }
             ]
         },
