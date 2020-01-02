@@ -1,5 +1,11 @@
 # Release History
 
+## 2.5.1 (2020-01-02)
+
+**Fixed**
+
+- fix: RefResolutionError on Windows platform
+
 ## 2.5.0 (2020-01-01)
 
 **Added**
