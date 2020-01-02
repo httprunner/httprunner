@@ -5,6 +5,7 @@
 **Fixed**
 
 - fix #826: Windows does not support file name include ":"
+- fix #819: maximum recursion error in locusts
 
 ## 2.5.1 (2020-01-02)
 

@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-from sentry_sdk import capture_exception
+import sentry_sdk
 
 from httprunner import __description__, __version__, exceptions
 from httprunner.api import HttpRunner
@@ -11,7 +11,9 @@ from httprunner.loader import load_cases
 from httprunner.logger import color_print, log_error
 from httprunner.report import gen_html_report
 from httprunner.utils import (create_scaffold, get_python2_retire_msg,
-                              prettify_json_file)
+                              prettify_json_file, init_sentry_sdk)
+
+init_sentry_sdk()
 
 
 def main():
@@ -115,7 +117,7 @@ def main():
     except Exception as ex:
         color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
         color_print(str(ex), "RED")
-        capture_exception(ex)
+        sentry_sdk.capture_exception(ex)
         err_code = 1
 
     sys.exit(err_code)
