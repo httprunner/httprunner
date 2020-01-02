@@ -292,6 +292,8 @@ class HttpRunner(object):
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_test_content(path_or_tests):
+            project_working_directory = path_or_tests.get("project_mapping", {}).get("PWD", os.getcwd())
+            loader.init_pwd(project_working_directory)
             return self.run_tests(path_or_tests)
         else:
             raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
