@@ -383,7 +383,7 @@ def create_scaffold(project_name):
         logger.color_print(msg, "BLUE")
 
     def create_file(path, file_content=""):
-        with io.open(path, 'w', encoding='utf-8') as f:
+        with open(path, 'w') as f:
             f.write(file_content)
         msg = "created file: {}".format(path)
         logger.color_print(msg, "BLUE")
