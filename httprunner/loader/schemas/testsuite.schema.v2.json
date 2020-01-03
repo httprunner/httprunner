@@ -42,5 +42,47 @@
     "required": [
         "config",
         "testcases"
+    ],
+    "examples": [
+        {
+            "config": {
+                "name": "testsuite name"
+            },
+            "testcases": [
+                {
+                    "name": "testcase 1",
+                    "testcase": "/path/to/testcase1"
+                },
+                {
+                    "name": "testcase 2",
+                    "testcase": "/path/to/testcase2"
+                }
+            ]
+        },
+        {
+            "config": {
+                "name": "demo testsuite",
+                "variables": {
+                    "device_sn": "XYZ"
+                },
+                "base_url": "http://127.0.0.1:5000"
+            },
+            "testcases": [
+                {
+                    "name": "call demo_testcase with data 1",
+                    "testcase": "path/to/demo_testcase.yml",
+                    "variables": {
+                        "device_sn": "$device_sn"
+                    }
+                },
+                {
+                    "name": "call demo_testcase with data 2",
+                    "testcase": "path/to/demo_testcase.yml",
+                    "variables": {
+                        "device_sn": "$device_sn"
+                    }
+                }
+            ]
+        }
     ]
 }
