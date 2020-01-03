@@ -383,17 +383,10 @@ def create_scaffold(project_name):
         logger.color_print(msg, "BLUE")
 
     def create_file(path, file_content=""):
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(file_content)
         msg = "created file: {}".format(path)
         logger.color_print(msg, "BLUE")
-
-    def create_path(path, ptype, file_content=""):
-        if ptype == "folder":
-            os.makedirs(path)
-        elif ptype == "file":
-            with open(path, 'w') as f:
-                f.write(file_content)
 
     demo_api_content = """
 name: demo api
