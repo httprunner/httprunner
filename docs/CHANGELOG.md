@@ -4,7 +4,8 @@
 
 **Fixed**
 
-- fix: jsonschema, variables maybe in string type, e.g. '${get_variables()}'
+- fix json schema: variables maybe in string type, e.g. '${prepare_variables()}'
+- fix json schema: post json maybe in string type, e.g. '${prepare_post_data()}', '$post_data'
 
 ## 2.5.2 (2020-01-02)
 
