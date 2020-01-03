@@ -17,6 +17,16 @@ assignees: debugtalk
  - 操作系统类型: [e.g. macos, Linux, Windows]
  - Python 版本 [e.g. 3.6]
  - HttpRunner 版本 [e.g. 2.1.2]
+ - **设备 ID**: [e.g. 190070690681122]
+
+获取方式：
+
+在 Python 交互式 shell 中输入如下命令进行获取：
+
+```bash
+>>> import uuid; print(uuid.getnode())
+190070690681122
+```
 
 ## 项目文件内容（非必须）
 

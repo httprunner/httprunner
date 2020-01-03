@@ -1,5 +1,12 @@
 # Release History
 
+## 2.5.3 (2020-01-03)
+
+**Fixed**
+
+- fix json schema: variables maybe in string type, e.g. '${prepare_variables()}'
+- fix json schema: post json maybe in string type, e.g. '${prepare_post_data()}', '$post_data'
+
 ## 2.5.2 (2020-01-02)
 
 **Fixed**
