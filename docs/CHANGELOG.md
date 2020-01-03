@@ -1,5 +1,12 @@
 # Release History
 
+## 2.5.4 (2020-01-03)
+
+**Fixed**
+
+- fix #835: UnicodeDecodeError when loading json schema files
+
+
 ## 2.5.3 (2020-01-03)
 
 **Fixed**
