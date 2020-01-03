@@ -8,7 +8,7 @@ project_working_directory = None
 
 def locate_file(start_path, file_name):
     """ locate filename and return absolute file path.
-        searching will be recursive upward until current working directory.
+        searching will be recursive upward until current working directory or system root dir.
 
     Args:
         file_name (str): target locate file name
@@ -33,11 +33,18 @@ def locate_file(start_path, file_name):
         return os.path.abspath(file_path)
 
     # current working directory
-    if os.path.abspath(start_dir_path) in [os.getcwd(), os.path.abspath(os.sep)]:
+    if os.path.abspath(start_dir_path) == os.getcwd():
+        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
+
+    # system root dir
+    # Windows, e.g. 'E:\\'
+    # Linux/Darwin, '/'
+    parent_dir = os.path.dirname(start_dir_path)
+    if parent_dir == start_dir_path:
         raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
 
     # locate recursive upward
-    return locate_file(os.path.dirname(start_dir_path), file_name)
+    return locate_file(parent_dir, file_name)
 
 
 def locate_debugtalk_py(start_path):

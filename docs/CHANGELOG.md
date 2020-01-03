@@ -9,6 +9,7 @@
 **Fixed**
 
 - fix #835: UnicodeDecodeError when loading json schema files
+- fix: RecursionError caused by checking root dir incorrectly on Windows
 
 ## 2.5.3 (2020-01-03)
 
