@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import platform
@@ -14,10 +15,10 @@ testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.jso
 testsuite_schema_v1_path = os.path.join(schemas_root_dir, "testsuite.schema.v1.json")
 testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
 
-with open(api_schema_path) as f:
+with io.open(api_schema_path, encoding='utf-8') as f:
     api_schema = json.load(f)
 
-with open(common_schema_path) as f:
+with io.open(common_schema_path, encoding='utf-8') as f:
     if platform.system() == "Windows":
         absolute_base_path = 'file:///' + os.path.abspath(schemas_root_dir).replace("\\", "/") + '/'
     else:
@@ -27,16 +28,16 @@ with open(common_schema_path) as f:
     common_schema = json.load(f)
     resolver = jsonschema.RefResolver(absolute_base_path, common_schema)
 
-with open(testcase_schema_v1_path) as f:
+with io.open(testcase_schema_v1_path, encoding='utf-8') as f:
     testcase_schema_v1 = json.load(f)
 
-with open(testcase_schema_v2_path) as f:
+with io.open(testcase_schema_v2_path, encoding='utf-8') as f:
     testcase_schema_v2 = json.load(f)
 
-with open(testsuite_schema_v1_path) as f:
+with io.open(testsuite_schema_v1_path, encoding='utf-8') as f:
     testsuite_schema_v1 = json.load(f)
 
-with open(testsuite_schema_v2_path) as f:
+with io.open(testsuite_schema_v2_path, encoding='utf-8') as f:
     testsuite_schema_v2 = json.load(f)
 
 

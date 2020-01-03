@@ -31,5 +31,29 @@
     "required": [
         "name",
         "request"
+    ],
+    "examples": [
+        {
+            "name": "demo api",
+            "variables": {
+                "var1": "value1",
+                "var2": "value2"
+            },
+            "request": {
+                "url": "/api/path/$var1",
+                "method": "POST",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "json": {
+                    "key": "$var2"
+                },
+                "validate": [
+                    {
+                        "eq": ["status_code", 200]
+                    }
+                ]
+            }
+        }
     ]
 }
