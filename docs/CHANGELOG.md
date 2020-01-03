@@ -2,10 +2,13 @@
 
 ## 2.5.4 (2020-01-03)
 
+**Added**
+
+- doc: add examples in json schema
+
 **Fixed**
 
 - fix #835: UnicodeDecodeError when loading json schema files
-
 
 ## 2.5.3 (2020-01-03)
 
