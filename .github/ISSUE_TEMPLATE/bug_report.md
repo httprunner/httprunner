@@ -17,6 +17,16 @@ Please complete the following information:
  - OS: [e.g. macos, Linux, Windows]
  - Python [e.g. 3.6]
  - HttpRunner [e.g. 2.1.2]
+- **Device ID**: [e.g. 190070690681122]
+
+How to get device ID?
+
+In Python interactive shell, execute the following command:
+
+```bash
+>>> import uuid; print(uuid.getnode())
+190070690681122
+```
 
 ## Traceback
 
