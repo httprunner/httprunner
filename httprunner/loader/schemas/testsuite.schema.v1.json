@@ -53,11 +53,11 @@
             },
             "testcases": {
                 "testcase 1": {
-                    "name": "xxx",
+                    "name": "testcase 1",
                     "testcase": "/path/to/testcase1"
                 },
                 "testcase 2": {
-                    "name": "xxx",
+                    "name": "testcase 2",
                     "testcase": "/path/to/testcase2"
                 }
             }

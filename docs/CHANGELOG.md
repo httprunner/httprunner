@@ -1,5 +1,16 @@
 # Release History
 
+## 2.5.4 (2020-01-03)
+
+**Added**
+
+- doc: add examples in json schema
+
+**Fixed**
+
+- fix #835: UnicodeDecodeError when loading json schema files
+- fix: RecursionError caused by checking root dir incorrectly on Windows
+
 ## 2.5.3 (2020-01-03)
 
 **Fixed**
