@@ -6,6 +6,10 @@
 
 - fix: HTTP method missed "CONNECT", "TRACE"
 
+**Changed**
+
+- change: remove method validation from runner.Runner
+
 ## 2.5.4 (2020-01-03)
 
 **Added**
