@@ -1,5 +1,11 @@
 # Release History
 
+## 2.5.5 (2020-01-06)
+
+**Fixed**
+
+- fix: HTTP method missed "CONNECT", "TRACE"
+
 ## 2.5.4 (2020-01-03)
 
 **Added**

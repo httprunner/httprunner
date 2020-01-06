@@ -136,7 +136,9 @@
                         "HEAD",
                         "PUT",
                         "PATCH",
-                        "DELETE"
+                        "DELETE",
+                        "CONNECT",
+                        "TRACE"
                     ]
                 },
                 "url": {
