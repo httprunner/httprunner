@@ -230,14 +230,6 @@ class Runner(object):
         except KeyError:
             raise exceptions.ParamsError("URL or METHOD missed!")
 
-        # TODO: move method validation to json schema
-        valid_methods = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-        if method.upper() not in valid_methods:
-            err_msg = u"Invalid HTTP method! => {}\n".format(method)
-            err_msg += "Available HTTP methods: {}".format("/".join(valid_methods))
-            logger.log_error(err_msg)
-            raise exceptions.ParamsError(err_msg)
-
         logger.log_info("{method} {url}".format(method=method, url=parsed_url))
         logger.log_debug(
             "request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
