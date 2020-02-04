@@ -49,7 +49,7 @@ def main():
         help="Specify report file path, this has higher priority than specifying report dir.")
     parser.add_argument(
         '--save-tests', action='store_true', default=False,
-        help="Save loaded/parsed/summary json data to JSON files.")
+        help="Save loaded/parsed/vars_out/summary json data to JSON files.")
     parser.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
