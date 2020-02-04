@@ -1,5 +1,11 @@
 # Release History
 
+## 2.5.6 (2020-02-05)
+
+**Added**
+
+- feat: save variables and export data to JSON files when specified `--save-tests`
+
 ## 2.5.5 (2020-01-06)
 
 **Fixed**
