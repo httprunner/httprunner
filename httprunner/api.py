@@ -22,7 +22,7 @@ class HttpRunner(object):
 
     """
 
-    def __init__(self, failfast=False, save_tests=False, log_level="INFO", log_file=None):
+    def __init__(self, failfast=False, save_tests=False, log_level="WARNING", log_file=None):
         """ initialize HttpRunner.
 
         Args:
