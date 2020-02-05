@@ -6,6 +6,10 @@
 
 - feat: save variables and export data to JSON files when specified `--save-tests`
 
+**Changed**
+
+- change: alter HttpRunner default log_level to WARNING
+
 ## 2.5.5 (2020-01-06)
 
 **Fixed**
