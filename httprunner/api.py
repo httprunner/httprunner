@@ -223,7 +223,7 @@ class HttpRunner(object):
             utils.dump_logs(self._summary, project_mapping, "summary")
             # save variables and export data
             vars_out = self.get_vars_out()
-            utils.dump_logs(vars_out, project_mapping, "vars_out")
+            utils.dump_logs(vars_out, project_mapping, "io")
 
         return self._summary
 
