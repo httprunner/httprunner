@@ -18,6 +18,7 @@ import multiprocessing
 import os
 import sys
 
+from httprunner import __version__
 from httprunner import logger
 from httprunner.utils import init_sentry_sdk
 
@@ -104,6 +105,7 @@ def run_locusts_with_processes(sys_argv, processes_count):
 def main():
     """ Performance test with locust: parse command line options and run commands.
     """
+    print("HttpRunner version: {}".format(__version__))
     sys.argv[0] = 'locust'
     if len(sys.argv) == 1:
         sys.argv.extend(["-h"])
