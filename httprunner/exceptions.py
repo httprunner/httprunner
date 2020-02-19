@@ -11,6 +11,10 @@ class MyBaseFailure(Exception):
     pass
 
 
+class ParseTestsFailure(MyBaseFailure):
+    pass
+
+
 class ValidationFailure(MyBaseFailure):
     pass
 
