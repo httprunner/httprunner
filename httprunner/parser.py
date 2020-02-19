@@ -7,6 +7,7 @@ import json
 import re
 
 from httprunner import exceptions, utils, loader
+from httprunner import logger
 from httprunner.compat import basestring, numeric_types, str
 
 # use $$ to escape $ notation
@@ -1242,9 +1243,11 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
             "config": prepared_config,
             "teststeps": prepared_testcase_tests
         }
-    except (exceptions.MyBaseFailure, exceptions.MyBaseError):
+    except (exceptions.MyBaseFailure, exceptions.MyBaseError) as ex:
         testcase_type = testcase["type"]
         testcase_path = testcase.get("path")
+
+        logger.log_error("failed to parse testcase: {}, error: {}".format(testcase_path, ex))
 
         global parse_failed_testfiles
         if testcase_type not in parse_failed_testfiles:
