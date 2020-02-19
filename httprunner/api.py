@@ -200,6 +200,10 @@ class HttpRunner(object):
             logger.log_warning("parse failures occurred ...")
             utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
 
+        if len(parsed_testcases) == 0:
+            logger.log_error("failed to parse all cases, abort.")
+            raise exceptions.ParseTestsFailure
+
         if self.save_tests:
             utils.dump_logs(parsed_testcases, project_mapping, "parsed")
 
