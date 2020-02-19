@@ -22,7 +22,7 @@ class HttpRunner(object):
 
     """
 
-    def __init__(self, failfast=False, save_tests=False, log_level="INFO", log_file=None):
+    def __init__(self, failfast=False, save_tests=False, log_level="WARNING", log_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -200,6 +200,10 @@ class HttpRunner(object):
             logger.log_warning("parse failures occurred ...")
             utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
 
+        if len(parsed_testcases) == 0:
+            logger.log_error("failed to parse all cases, abort.")
+            raise exceptions.ParseTestsFailure
+
         if self.save_tests:
             utils.dump_logs(parsed_testcases, project_mapping, "parsed")
 
@@ -223,7 +227,7 @@ class HttpRunner(object):
             utils.dump_logs(self._summary, project_mapping, "summary")
             # save variables and export data
             vars_out = self.get_vars_out()
-            utils.dump_logs(vars_out, project_mapping, "vars_out")
+            utils.dump_logs(vars_out, project_mapping, "io")
 
         return self._summary
 
