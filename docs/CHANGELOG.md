@@ -1,14 +1,19 @@
 # Release History
 
-## 2.5.6 (2020-02-05)
+## 2.5.6 (2020-02-19)
 
 **Added**
 
-- feat: save variables and export data to JSON files when specified `--save-tests`
+- feat: save variables and export data to JSON files (named xx.io.json) when specified `--save-tests`
 
 **Changed**
 
 - change: alter HttpRunner default log_level to WARNING
+
+**Fixed**
+
+- fix: abort test when failed to parse all cases
+- fix: log error when parse failed
 
 ## 2.5.5 (2020-01-06)
 
