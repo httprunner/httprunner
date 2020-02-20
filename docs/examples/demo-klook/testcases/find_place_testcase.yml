@@ -1,5 +1,5 @@
-name: find place from text testcase
 config:
+  name: find place from text testcase
   base_url: https://maps.googleapis.com
   # config 这里的variables优先级更高
   # 如果本testcase被其他testcase引用，variables无法覆盖这里配置的值

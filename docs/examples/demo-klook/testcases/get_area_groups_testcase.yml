@@ -1,4 +1,5 @@
 config:
+  name: get area groups testcases
   base_url: http://127.0.0.1:8085
   variables:
     admin_cookie: 'cookies'

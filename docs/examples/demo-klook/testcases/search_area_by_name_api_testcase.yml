@@ -1,4 +1,5 @@
 config:
+  name: search area by name api testcase
   base_url: http://localhost:8085
   variables:
     admin_cookie: 'cookies'

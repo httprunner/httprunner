@@ -1,5 +1,5 @@
-name: get place detail testsuites
 config:
+  name: get place detail testsuites
   base_url: https://maps.googleapis.com
 testcases:
   - name: find place from text

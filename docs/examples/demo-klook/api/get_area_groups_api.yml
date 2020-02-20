@@ -1,5 +1,7 @@
 name: get_groups
 base_url: http://localhost:8085
+variables:
+  admin_cookie: ""
 request:
   url: /v1/transferairportadminsrv/area/getGroups
   method: POST

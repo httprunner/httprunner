@@ -1,5 +1,5 @@
-name: get place detail
 config:
+  name: get place detail
   base_url: https://maps.googleapis.com
   variables:
     input: 娄底

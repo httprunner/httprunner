@@ -1,5 +1,8 @@
 name: search_area_by_name
 base_url: http://localhost:8085
+variables:
+  admin_cookie: ""
+  in: "北京"
 request:
   url: /v1/transferairportadminsrv/area/search_area_by_name
   method: GET
