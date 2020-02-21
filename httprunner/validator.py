@@ -1,5 +1,8 @@
 # encoding: utf-8
 
+import sys
+import traceback
+
 from httprunner import exceptions, logger, parser
 
 
@@ -60,54 +63,66 @@ class Validator(object):
     def validate_script(self, script):
         """ make validation with python script
         """
-        validator_dict = {
+        result = {
             "validate_script": "<br/>".join(script),
-            "check_result": "fail",
-            "exception": ""
+            "check_result": "pass",
+            "output": ""
         }
 
         script = "\n    ".join(script)
         code = """
 # encoding: utf-8
 
-try:
+def run_validate_script():
     {}
-except Exception as ex:
-    import traceback
-    import sys
-    _type, _value, _tb = sys.exc_info()
-    # filename, lineno, name, line
-    _, _lineno, _, line_content = traceback.extract_tb(_tb, 1)[0]
-
-    line_no = _lineno - 4
-
-    c_exception = _type.__name__ + "\\n"
-    c_exception += "\\tError line number: " + str(line_no) + "\\n"
-    c_exception += "\\tError line content: " + str(line_content) + "\\n"
-
-    if _value.args:
-        c_exception += "\\tError description: " + str(_value)
-    else:
-        c_exception += "\\tError description: " + _type.__name__
-
-    raise _type(c_exception)
 """.format(script)
+
         variables = {
             "status_code": self.resp_obj.status_code,
             "response_json": self.resp_obj.json,
             "response": self.resp_obj
         }
         variables.update(self.session_context.test_variables_mapping)
+        variables.update(globals())
 
         try:
-            code = compile(code, '<string>', 'exec')
             exec(code, variables)
-            validator_dict["check_result"] = "pass"
-            return validator_dict, ""
+        except SyntaxError as ex:
+            logger.log_warning("SyntaxError in python validate script: {}".format(ex))
+            result["check_result"] = "fail"
+            result["output"] = "<br/>".join([
+                "ErrorMessage: {}".format(ex.msg),
+                "ErrorLine: {}".format(ex.lineno),
+                "ErrorText: {}".format(ex.text)
+            ])
+            return result
+
+        try:
+            # run python validate script
+            variables["run_validate_script"]()
         except Exception as ex:
-            validator_dict["check_result"] = "fail"
-            validator_dict["exception"] = "<br/>".join(str(ex).splitlines())
-            return validator_dict, str(ex)
+            logger.log_warning("run python validate script failed: {}".format(ex))
+            result["check_result"] = "fail"
+
+            _type, _value, _tb = sys.exc_info()
+
+            _lineno = -1
+            if _tb.tb_next:
+                _lineno = _tb.tb_next.tb_lineno
+                line_no = _lineno - 4
+            elif len(traceback.extract_tb(_tb)) > 0:
+                # filename, lineno, name, line
+                _, _lineno, _, _ = traceback.extract_tb(_tb)[-1]
+                line_no = _lineno - 4
+            else:
+                line_no = "N/A"
+
+            result["output"] = "<br/>".join([
+                "ErrorType: {}".format(_type.__name__),
+                "ErrorLine: {}".format(line_no)
+            ])
+
+        return result
 
     def validate(self, validators):
         """ make validation with comparators
@@ -125,12 +140,12 @@ except Exception as ex:
 
             if isinstance(validator, dict) and validator.get("type") == "python_script":
                 script = self.session_context.eval_content(validator["script"])
-                validator_dict, ex = self.validate_script(script)
-                if ex:
+                result = self.validate_script(script)
+                if result["check_result"] == "fail":
                     validate_pass = False
-                    failures.append(ex)
+                    failures.append(result["output"])
 
-                self.validation_results["validate_script"] = validator_dict
+                self.validation_results["validate_script"] = result
                 continue
 
             if "validate_extractor" not in self.validation_results:
