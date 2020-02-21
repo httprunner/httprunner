@@ -36,35 +36,56 @@ class ResponseObject(object):
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
-    def _extract_field_with_jsonpath(self, field):
-        """
+    def _extract_field_with_jsonpath(self, field: str) -> list:
+        """ extract field from response content with jsonpath expression.
         JSONPath Docs: https://goessner.net/articles/JsonPath/
-        For example, response body like below:
-        {
-            "code": 200,
-            "data": {
-                "items": [{
-                        "id": 1,
-                        "name": "Bob"
-                    },
-                    {
-                        "id": 2,
-                        "name": "James"
-                    }
-                ]
-            },
-            "message": "success"
-        }
 
-        :param field:  Jsonpath expression, e.g. 1)$.code   2) $..items.*.id
-        :return:       A list that extracted from json repsonse example.    1) [200]   2) [1, 2]
+        Args:
+            field: jsonpath expression, e.g. $.code, $..items.*.id
+
+        Returns:
+            A list that extracted from json response example. 1) [200] 2) [1, 2]
+
+        Raises:
+            exceptions.ExtractFailure: If no content matched with jsonpath expression.
+
+        Examples:
+            For example, response body like below:
+            {
+                "code": 200,
+                "data": {
+                    "items": [{
+                            "id": 1,
+                            "name": "Bob"
+                        },
+                        {
+                            "id": 2,
+                            "name": "James"
+                        }
+                    ]
+                },
+                "message": "success"
+            }
+
+            >>> _extract_field_with_regex("$.code")
+            [200]
+            >>> _extract_field_with_regex("$..items.*.id")
+            [1, 2]
+
         """
-        result = jsonpath.jsonpath(self.parsed_body(), field)
-        if result:
+        try:
+            json_body = self.json
+            assert json_body
+
+            result = jsonpath.jsonpath(json_body, field)
+            assert result
             return result
-        else:
-            raise exceptions.ExtractFailure("\tjsonpath {} get nothing\n".format(field))
-            
+        except (AssertionError, exceptions.JSONDecodeError):
+            err_msg = u"Failed to extract data with jsonpath! => {}\n".format(field)
+            err_msg += u"response body: {}\n".format(self.text)
+            logger.log_error(err_msg)
+            raise exceptions.ExtractFailure(err_msg)
+
     def _extract_field_with_regex(self, field):
         """ extract field from response content with regex.
             requests.Response body could be json or html text.
