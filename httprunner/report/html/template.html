@@ -305,7 +305,7 @@
                             <th>validate script</th><th>exception</th>
                         </tr>
                         <tr>
-                            <td>{{validate_script.validate_script | safe}}</td>
+                            <td><pre>{{validate_script.validate_script | safe}}</pre></td>
                             {% if validate_script.check_result == "pass" %}
                             <td class="passed">
                             {% elif validate_script.check_result == "fail" %}
