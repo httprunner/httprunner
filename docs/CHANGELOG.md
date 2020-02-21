@@ -1,5 +1,16 @@
 # Release History
 
+## 2.5.7 (2020-02-21)
+
+**Changed**
+
+- feat: validate with python script, display print message
+
+**Fixed**
+
+- fix: validate script missing indents in html report
+- fix: validate with python script, display lineno error
+
 ## 2.5.6 (2020-02-19)
 
 **Added**
