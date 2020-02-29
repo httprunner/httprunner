@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from httprunner import __version__
-from .routers import deps, debugtalk, testcase
+from .routers import deps, debugtalk, debug
 
 app = FastAPI()
 
@@ -19,4 +19,4 @@ async def get_hrun_version():
 
 app.include_router(deps.router)
 app.include_router(debugtalk.router)
-app.include_router(testcase.router)
+app.include_router(debug.router)

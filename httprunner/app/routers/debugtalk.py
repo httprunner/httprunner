@@ -19,7 +19,7 @@ def stdout_io(stdout=None):
     sys.stdout = old
 
 
-@router.post("/hrun/debug/debugtalk", tags=["debugtalk"])
+@router.post("/hrun/debug/debugtalk_py", tags=["debugtalk"])
 async def debug_python(request: Request):
     body = await request.body()
 
