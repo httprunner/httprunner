@@ -40,6 +40,7 @@ filetype = "^1.0.5"
 jsonpath = "^0.82"
 sentry-sdk = "^0.13.5"
 jsonschema = "^3.2.0"
+pydantic = "^1.4"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
