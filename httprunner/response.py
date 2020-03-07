@@ -1,3 +1,4 @@
+import json
 import re
 from collections import OrderedDict
 
@@ -199,7 +200,7 @@ class ResponseObject(object):
         elif top_query in ["body", "content", "text", "json"]:
             try:
                 body = self.json
-            except exceptions.JSONDecodeError:
+            except json.JSONDecodeError:
                 body = self.text
 
             if not sub_query:
