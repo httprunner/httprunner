@@ -14,10 +14,24 @@ async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
         "message": "success",
         "result": {}
     }
+
+    project_meta_json = project_meta.dict(by_alias=True)
+    if project_meta.debugtalk_py:
+        origin_local_keys = list(locals().keys()).copy()
+        exec(project_meta.debugtalk_py, {}, locals())
+        new_local_keys = list(locals().keys()).copy()
+        new_added_keys = set(new_local_keys) - set(origin_local_keys)
+        new_added_keys.remove("origin_local_keys")
+        project_meta_json["functions"] = {}
+        for func_name in new_added_keys:
+            project_meta_json["functions"][func_name] = locals()[func_name]
+
+    testcase_json = testcase.dict(by_alias=True)
     tests_mapping = {
-        "project_mapping": project_meta,
-        "testcases": [testcase]
+        "project_mapping": project_meta_json,
+        "testcases": [testcase_json]
     }
+
     summary = runner.run_tests(tests_mapping)
     if not summary["success"]:
         resp["code"] = 1
