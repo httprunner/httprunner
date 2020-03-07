@@ -281,5 +281,11 @@ class TestSuiteLoader(unittest.TestCase):
         buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
         self.assertIn("gen_md5", self.project_mapping["functions"])
         self.assertEqual(self.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
-        self.assertEqual(self.project_mapping["PWD"], os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-        self.assertEqual(self.project_mapping["test_path"], os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+        self.assertEqual(
+            os.path.basename(self.project_mapping["PWD"]),
+            "tests"
+        )
+        self.assertEqual(
+            os.path.basename(self.project_mapping["test_path"]),
+            "tests"
+        )
