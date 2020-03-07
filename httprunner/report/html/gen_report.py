@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 
 from jinja2 import Template
+from loguru import logger
 
-from httprunner import logger
 from httprunner.exceptions import SummaryEmpty
 
 
@@ -19,7 +19,7 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
 
     """
     if not summary["time"] or summary["stat"]["testcases"]["total"] == 0:
-        logger.log_error("test result summary is empty ! {}".format(summary))
+        logger.error(f"test result summary is empty ! {summary}")
         raise SummaryEmpty
 
     if not report_template:
@@ -27,11 +27,11 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
             os.path.abspath(os.path.dirname(__file__)),
             "template.html"
         )
-        logger.log_debug("No html report template specified, use default.")
+        logger.debug("No html report template specified, use default.")
     else:
-        logger.log_info("render with html report template: {}".format(report_template))
+        logger.info(f"render with html report template: {report_template}")
 
-    logger.log_info("Start to render Html report ...")
+    logger.info("Start to render Html report ...")
 
     start_at_timestamp = summary["time"]["start_at"]
     utc_time_iso_8601_str = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
@@ -58,7 +58,7 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
             ).render(summary)
             fp_w.write(rendered_content)
 
-    logger.log_info("Generated Html report: {}".format(report_path))
+    logger.info(f"Generated Html report: {report_path}")
 
     return report_path
 

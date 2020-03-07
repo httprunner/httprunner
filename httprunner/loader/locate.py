@@ -1,7 +1,9 @@
 import os
 import sys
 
-from httprunner import exceptions, logger
+from loguru import logger
+
+from httprunner import exceptions
 
 project_working_directory = None
 
@@ -26,7 +28,7 @@ def locate_file(start_path, file_name):
     elif os.path.isdir(start_path):
         start_dir_path = start_path
     else:
-        raise exceptions.FileNotFound("invalid path: {}".format(start_path))
+        raise exceptions.FileNotFound(f"invalid path: {start_path}")
 
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
@@ -34,14 +36,14 @@ def locate_file(start_path, file_name):
 
     # current working directory
     if os.path.abspath(start_dir_path) == os.getcwd():
-        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
+        raise exceptions.FileNotFound(f"{file_name} not found in {start_path}")
 
     # system root dir
     # Windows, e.g. 'E:\\'
     # Linux/Darwin, '/'
     parent_dir = os.path.dirname(start_dir_path)
     if parent_dir == start_dir_path:
-        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
+        raise exceptions.FileNotFound(f"{file_name} not found in {start_path}")
 
     # locate recursive upward
     return locate_file(parent_dir, file_name)
@@ -85,8 +87,8 @@ def init_project_working_directory(test_path):
 
     def prepare_path(path):
         if not os.path.exists(path):
-            err_msg = "path not exist: {}".format(path)
-            logger.log_error(err_msg)
+            err_msg = f"path not exist: {path}"
+            logger.error(err_msg)
             raise exceptions.FileNotFound(err_msg)
 
         if not os.path.isabs(path):

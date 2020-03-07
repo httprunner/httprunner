@@ -3,11 +3,11 @@ import os
 import sys
 
 import sentry_sdk
+from loguru import logger
 
 from httprunner import __description__, __version__, exceptions
 from httprunner.api import HttpRunner
 from httprunner.loader import load_cases
-from httprunner.logger import color_print, log_error
 from httprunner.report import gen_html_report
 from httprunner.utils import (create_scaffold,
                               prettify_json_file, init_sentry_sdk)
@@ -67,19 +67,19 @@ def main():
         sys.exit(0)
 
     if args.version:
-        color_print("{}".format(__version__), "GREEN")
+        print(f"{__version__}")
         sys.exit(0)
 
     if args.validate:
         for validate_path in args.validate:
             try:
-                color_print("validate test file: {}".format(validate_path), "GREEN")
+                logger.info(f"validate test file: {validate_path}")
                 load_cases(validate_path, args.dot_env_path)
             except exceptions.MyBaseError as ex:
-                log_error(str(ex))
+                logger.error(str(ex))
                 continue
 
-        color_print("done!", "BLUE")
+        logger.info("done!")
         sys.exit(0)
 
     if args.prettify:
@@ -111,8 +111,7 @@ def main():
             )
             err_code |= (0 if summary and summary["success"] else 1)
     except Exception as ex:
-        color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
-        color_print(str(ex), "RED")
+        logger.error(f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}")
         sentry_sdk.capture_exception(ex)
         err_code = 1
 

@@ -6,8 +6,9 @@ import collections
 import json
 import re
 
+from loguru import logger
+
 from httprunner import exceptions, utils, loader
-from httprunner import logger
 from httprunner.compat import basestring, numeric_types, str
 
 # use $$ to escape $ notation
@@ -286,7 +287,7 @@ def uniform_validator(validator):
 
     """
     if not isinstance(validator, dict):
-        raise exceptions.ParamsError("invalid validator: {}".format(validator))
+        raise exceptions.ParamsError(f"invalid validator: {validator}")
 
     if "check" in validator and "expect" in validator:
         # format1
@@ -300,12 +301,12 @@ def uniform_validator(validator):
         compare_values = validator[comparator]
 
         if not isinstance(compare_values, list) or len(compare_values) != 2:
-            raise exceptions.ParamsError("invalid validator: {}".format(validator))
+            raise exceptions.ParamsError(f"invalid validator: {validator}")
 
         check_item, expect_value = compare_values
 
     else:
-        raise exceptions.ParamsError("invalid validator: {}".format(validator))
+        raise exceptions.ParamsError(f"invalid validator: {validator}")
 
     # uniform comparator, e.g. lt => less_than, eq => equals
     comparator = get_uniform_comparator(comparator)
@@ -410,7 +411,7 @@ def get_mapping_variable(variable_name, variables_mapping):
     try:
         return variables_mapping[variable_name]
     except KeyError:
-        raise exceptions.VariableNotFound("{} is not found.".format(variable_name))
+        raise exceptions.VariableNotFound(f"{variable_name} is not found.")
 
 
 def get_mapping_function(function_name, functions_mapping):
@@ -455,7 +456,7 @@ def get_mapping_function(function_name, functions_mapping):
     except AttributeError:
         pass
 
-    raise exceptions.FunctionNotFound("{} is not found.".format(function_name))
+    raise exceptions.FunctionNotFound(f"{function_name} is not found.")
 
 
 def parse_function_params(params):
@@ -578,12 +579,12 @@ class LazyFunction(object):
         if self._kwargs:
             args_string += ", "
             str_kwargs = [
-                "{}={}".format(key, str(value))
+                f"{key}={str(value)}"
                 for key, value in self._kwargs.items()
             ]
             args_string += ", ".join(str_kwargs)
 
-        return "LazyFunction({}({}))".format(self.func_name, args_string)
+        return f"LazyFunction({self.func_name}({args_string}))"
 
     def __prepare_cache_key(self, args, kwargs):
         return self.func_name, repr(args), repr(kwargs)
@@ -698,7 +699,7 @@ class LazyString(object):
             self._string += escape_braces(remain_string)
 
     def __repr__(self):
-        return "LazyString({})".format(self.raw_string)
+        return f"LazyString({self.raw_string})"
 
     def to_value(self, variables_mapping=None):
         """ parse lazy data with evaluated variables mapping.
@@ -1247,7 +1248,7 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
         testcase_type = testcase["type"]
         testcase_path = testcase.get("path")
 
-        logger.log_error("failed to parse testcase: {}, error: {}".format(testcase_path, ex))
+        logger.error(f"failed to parse testcase: {testcase_path}, error: {ex}")
 
         global parse_failed_testfiles
         if testcase_type not in parse_failed_testfiles:

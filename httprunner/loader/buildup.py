@@ -1,7 +1,9 @@
 import importlib
 import os
 
-from httprunner import exceptions, logger, utils
+from loguru import logger
+
+from httprunner import exceptions, utils
 from httprunner.loader.check import JsonSchemaChecker
 from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
     load_folder_files
@@ -53,7 +55,7 @@ def __extend_with_api_ref(raw_testinfo):
     if api_name in tests_def_mapping["api"]:
         block = tests_def_mapping["api"][api_name]
     elif not os.path.isfile(api_name):
-        raise exceptions.ApiNotFound("{} not found!".format(api_name))
+        raise exceptions.ApiNotFound(f"{api_name} not found!")
     else:
         block = load_file(api_name)
 
@@ -84,7 +86,7 @@ def __extend_with_testcase_ref(raw_testinfo):
             testcase_dict = load_testcase_v2(loaded_testcase)
         else:
             raise exceptions.FileFormatError(
-                "Invalid format testcase: {}".format(testcase_path))
+                f"Invalid format testcase: {testcase_path}")
 
         tests_def_mapping["testcases"][testcase_path] = testcase_dict
     else:
@@ -186,8 +188,8 @@ def load_testcase(raw_testcase):
         elif key == "test":
             tests.append(load_teststep(test_block))
         else:
-            logger.log_warning(
-                "unexpected block key: {}. block key should only be 'config' or 'test'.".format(key)
+            logger.warning(
+                f"unexpected block key: {key}. block key should only be 'config' or 'test'."
             )
 
     return {
@@ -485,9 +487,9 @@ def load_cases(path, dot_env_path=None):
         try:
             loaded_content = load_test_file(path)
         except exceptions.ApiNotFound as ex:
-            logger.log_warning("Invalid api reference in {}: {}".format(path, ex))
+            logger.warning(f"Invalid api reference in {path}: {ex}")
         except exceptions.FileFormatError:
-            logger.log_warning("Invalid test file format: {}".format(path))
+            logger.warning(f"Invalid test file format: {path}")
 
         if not loaded_content:
             pass
