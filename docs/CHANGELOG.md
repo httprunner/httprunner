@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.0 (2020-03-07)
+
+**Changed**
+
+- replace logging with [loguru](https://github.com/Delgan/loguru)
+
 ## 2.5.7 (2020-02-21)
 
 **Changed**
