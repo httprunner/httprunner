@@ -12,7 +12,7 @@ Verify = bool
 Hook = List[str]
 Export = List[str]
 Extract = Dict[str, str]
-Validate = List[Dict[str, Tuple[str, Any]]]
+Validate = List[Dict]
 Env = Dict[str, Any]
 
 
