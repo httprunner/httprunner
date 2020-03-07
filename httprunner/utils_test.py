@@ -1,12 +1,12 @@
 import io
 import os
 import shutil
+import unittest
 
 from httprunner import exceptions, loader, utils
-from tests.base import ApiServerUnittest
 
 
-class TestUtils(ApiServerUnittest):
+class TestUtils(unittest.TestCase):
 
     def test_set_os_environ(self):
         self.assertNotIn("abc", os.environ)
@@ -187,14 +187,18 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(extended_variables_mapping["var1"], "val1")
 
     def test_deepcopy_dict(self):
+        license_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            "LICENSE"
+        )
         data = {
             'a': 1,
             'b': [2, 4],
             'c': lambda x: x+1,
-            'd': open('LICENSE'),
+            'd': open(license_path),
             'f': {
                 'f1': {'a1': 2},
-                'f2': io.open('LICENSE', 'rb'),
+                'f2': io.open(license_path, 'rb'),
             }
         }
         new_data = utils.deepcopy_dict(data)
