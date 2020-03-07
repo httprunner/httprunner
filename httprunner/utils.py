@@ -13,7 +13,6 @@ import sentry_sdk
 from loguru import logger
 
 from httprunner import exceptions, __version__
-from httprunner.compat import basestring, bytes, is_py2
 from httprunner.exceptions import ParamsError
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
@@ -112,7 +111,7 @@ def query_json(json_content, query, delimiter='.'):
     response_body = f"response body: {json_content}\n"
     try:
         for key in query.split(delimiter):
-            if isinstance(json_content, (list, basestring)):
+            if isinstance(json_content, (list, str, bytes)):
                 json_content = json_content[int(key)]
             elif isinstance(json_content, dict):
                 json_content = json_content[key]
@@ -355,12 +354,6 @@ def print_info(info_mapping):
         elif value is None:
             value = "None"
 
-        if is_py2:
-            if isinstance(key, unicode):
-                key = key.encode("utf-8")
-            if isinstance(value, unicode):
-                value = value.encode("utf-8")
-
         content += content_format.format(key, value)
 
     content += "-" * 48 + "\n"
@@ -551,7 +544,7 @@ def prettify_json_file(file_list):
 def omit_long_data(body, omit_len=512):
     """ omit too long str/bytes
     """
-    if not isinstance(body, basestring):
+    if not isinstance(body, (str, bytes)):
         return body
 
     body_len = len(body)
@@ -583,26 +576,14 @@ def dump_json_file(json_data, json_file_abs_path):
 
     try:
         with io.open(json_file_abs_path, 'w', encoding='utf-8') as outfile:
-            if is_py2:
-                outfile.write(
-                    unicode(json.dumps(
-                        json_data,
-                        indent=4,
-                        separators=(',', ':'),
-                        encoding="utf8",
-                        ensure_ascii=False,
-                        cls=PythonObjectEncoder
-                    ))
-                )
-            else:
-                json.dump(
-                    json_data,
-                    outfile,
-                    indent=4,
-                    separators=(',', ':'),
-                    ensure_ascii=False,
-                    cls=PythonObjectEncoder
-                )
+            json.dump(
+                json_data,
+                outfile,
+                indent=4,
+                separators=(',', ':'),
+                ensure_ascii=False,
+                cls=PythonObjectEncoder
+            )
 
         msg = f"dump file: {json_file_abs_path}"
         logger.info(msg)

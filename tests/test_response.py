@@ -1,7 +1,6 @@
 import requests
 
 from httprunner import exceptions, response
-from httprunner.compat import basestring, bytes
 from tests.api_server import HTTPBIN_SERVER
 from tests.base import ApiServerUnittest
 
@@ -257,7 +256,7 @@ class TestResponse(ApiServerUnittest):
         ]
         extract_binds_dict = resp_obj.extract_response(extract_binds_list)
 
-        self.assertIsInstance(extract_binds_dict["resp_content"], basestring)
+        self.assertIsInstance(extract_binds_dict["resp_content"], str)
         self.assertIn("httpbin.org", extract_binds_dict["resp_content"])
 
         extract_binds_list = [

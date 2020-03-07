@@ -5,7 +5,6 @@ import jsonpath
 from loguru import logger
 
 from httprunner import exceptions, utils
-from httprunner.compat import basestring, is_py2
 
 text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 
@@ -254,7 +253,7 @@ class ResponseObject(object):
     def extract_field(self, field):
         """ extract value from requests.Response.
         """
-        if not isinstance(field, basestring):
+        if not isinstance(field, str):
             err_msg = f"Invalid extractor! => {field}\n"
             logger.error(err_msg)
             raise exceptions.ParamsError(err_msg)
@@ -267,9 +266,6 @@ class ResponseObject(object):
             value = self._extract_field_with_regex(field)
         else:
             value = self._extract_field_with_delimiter(field)
-
-        if is_py2 and isinstance(value, unicode):
-            value = value.encode("utf-8")
 
         msg += f"\t=> {value}"
         logger.debug(msg)
