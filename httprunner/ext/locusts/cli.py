@@ -127,11 +127,13 @@ def main():
     loglevel_index = get_arg_index("-L", "--loglevel")
     if loglevel_index and loglevel_index < len(sys.argv):
         loglevel = sys.argv[loglevel_index]
+        loglevel = loglevel.upper()
     else:
         # default
         loglevel = "WARNING"
 
-    # logger.setup_logger(loglevel)
+    logger.remove()
+    logger.add(sys.stdout, level=loglevel)
 
     # get testcase file path
     try:
