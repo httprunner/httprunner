@@ -8,7 +8,6 @@ import json
 import os.path
 import re
 import uuid
-from datetime import datetime
 
 import sentry_sdk
 from loguru import logger
@@ -654,16 +653,3 @@ def dump_logs(json_data, project_mapping, tag_name):
     """
     json_file_abs_path = prepare_dump_json_file_abs_path(project_mapping, tag_name)
     dump_json_file(json_data, json_file_abs_path)
-
-
-def get_python2_retire_msg():
-    retire_day = datetime(2020, 1, 1)
-    today = datetime.now()
-    left_days = (retire_day - today).days
-
-    if left_days > 0:
-        retire_msg = "Python 2 will retire in {} days, why not move to Python 3?".format(left_days)
-    else:
-        retire_msg = "Python 2 has been retired, you should move to Python 3."
-
-    return retire_msg
