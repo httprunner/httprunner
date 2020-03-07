@@ -48,4 +48,4 @@ class TestDebug(unittest.TestCase):
         }
         response = client.post("/hrun/debug/testcase", json=json_data)
         assert response.status_code == 200
-        assert response.json()["code"] == 1
+        assert response.json()["code"] == 0
