@@ -38,7 +38,7 @@ def _load_json_file(json_file):
     with io.open(json_file, encoding='utf-8') as data_file:
         try:
             json_content = json.load(data_file)
-        except exceptions.JSONDecodeError:
+        except json.JSONDecodeError:
             err_msg = f"JSONDecodeError: JSON file format error: {json_file}"
             logger.error(err_msg)
             raise exceptions.FileFormatError(err_msg)

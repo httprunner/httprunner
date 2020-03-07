@@ -77,7 +77,7 @@ def type_match(check_value, expect_value):
     def get_type(name):
         if isinstance(name, type):
             return name
-        elif isinstance(name, str, bytes):
+        elif isinstance(name, str):
             try:
                 return __builtins__[name]
             except KeyError:
