@@ -6,6 +6,7 @@
 
 - replace logging with [loguru](https://github.com/Delgan/loguru)
 - remove support for Python 2.7
+- replace string format with f-string
 
 ## 2.5.7 (2020-02-21)
 

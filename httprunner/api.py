@@ -1,9 +1,10 @@
 import os
 import unittest
 
+from loguru import logger
 from sentry_sdk import capture_message
 
-from httprunner import (__version__, exceptions, loader, logger, parser,
+from httprunner import (__version__, exceptions, loader, parser,
                         report, runner, utils)
 
 
@@ -32,8 +33,6 @@ class HttpRunner(object):
             log_file (str): log file path.
 
         """
-        logger.setup_logger(log_level, log_file)
-
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
             "failfast": failfast,
@@ -99,7 +98,7 @@ class HttpRunner(object):
                     times = int(times)
                 except ValueError:
                     raise exceptions.ParamsError(
-                        "times should be digit, given: {}".format(times))
+                        f"times should be digit, given: {times}")
 
                 for times_index in range(times):
                     # suppose one testcase should not have more than 9999 steps,
@@ -130,7 +129,7 @@ class HttpRunner(object):
 
         for testcase in test_suite:
             testcase_name = testcase.config.get("name")
-            logger.log_info("Start to run testcase: {}".format(testcase_name))
+            logger.info(f"Start to run testcase: {testcase_name}")
 
             result = self.unittest_runner.run(testcase)
             if result.wasSuccessful():
@@ -197,11 +196,11 @@ class HttpRunner(object):
         parsed_testcases = parser.parse_tests(tests_mapping)
         parse_failed_testfiles = parser.get_parse_failed_testfiles()
         if parse_failed_testfiles:
-            logger.log_warning("parse failures occurred ...")
+            logger.warning("parse failures occurred ...")
             utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
 
         if len(parsed_testcases) == 0:
-            logger.log_error("failed to parse all cases, abort.")
+            logger.error("failed to parse all cases, abort.")
             raise exceptions.ParseTestsFailure
 
         if self.save_tests:
@@ -295,7 +294,7 @@ class HttpRunner(object):
             dict: result summary
 
         """
-        logger.log_info("HttpRunner version: {}".format(__version__))
+        logger.info(f"HttpRunner version: {__version__}")
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_test_content(path_or_tests):
@@ -303,4 +302,4 @@ class HttpRunner(object):
             loader.init_pwd(project_working_directory)
             return self.run_tests(path_or_tests)
         else:
-            raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
+            raise exceptions.ParamsError(f"Invalid testcase path or testcases: {path_or_tests}")

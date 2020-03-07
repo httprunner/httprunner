@@ -3,7 +3,9 @@
 from enum import Enum
 from unittest.case import SkipTest
 
-from httprunner import exceptions, logger, response, utils
+from loguru import logger
+
+from httprunner import exceptions, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import SessionContext
 from httprunner.validator import Validator
@@ -116,12 +118,12 @@ class Runner(object):
         elif "skipIf" in test_dict:
             skip_if_condition = test_dict["skipIf"]
             if self.session_context.eval_content(skip_if_condition):
-                skip_reason = "{} evaluate to True".format(skip_if_condition)
+                skip_reason = f"{skip_if_condition} evaluate to True"
 
         elif "skipUnless" in test_dict:
             skip_unless_condition = test_dict["skipUnless"]
             if not self.session_context.eval_content(skip_unless_condition):
-                skip_reason = "{} evaluate to False".format(skip_unless_condition)
+                skip_reason = f"{skip_unless_condition} evaluate to False"
 
         if skip_reason:
             raise SkipTest(skip_reason)
@@ -140,7 +142,7 @@ class Runner(object):
             hook_type (HookTypeEnum): setup/teardown
 
         """
-        logger.log_debug("call {} hook actions.".format(hook_type.name))
+        logger.debug(f"call {hook_type.name} hook actions.")
         for action in actions:
 
             if isinstance(action, dict) and len(action) == 1:
@@ -148,17 +150,14 @@ class Runner(object):
                 # {"var": "${func()}"}
                 var_name, hook_content = list(action.items())[0]
                 hook_content_eval = self.session_context.eval_content(hook_content)
-                logger.log_debug(
-                    "assignment with hook: {} = {} => {}".format(
-                        var_name, hook_content, hook_content_eval
-                    )
-                )
+                logger.debug(
+                    f"assignment with hook: {var_name} = {hook_content} => {hook_content_eval}")
                 self.session_context.update_test_variables(
                     var_name, hook_content_eval
                 )
             else:
                 # format 2
-                logger.log_debug("call hook function: {}".format(action))
+                logger.debug(f"call hook function: {action}")
                 # TODO: check hook function if valid
                 self.session_context.eval_content(action)
 
@@ -230,9 +229,8 @@ class Runner(object):
         except KeyError:
             raise exceptions.ParamsError("URL or METHOD missed!")
 
-        logger.log_info("{method} {url}".format(method=method, url=parsed_url))
-        logger.log_debug(
-            "request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
+        logger.info(f"{method} {parsed_url}")
+        logger.debug(f"request kwargs(raw): {parsed_test_request}")
 
         # request
         resp = self.http_client_session.request(
@@ -248,21 +246,22 @@ class Runner(object):
 
             # log request
             err_msg += "====== request details ======\n"
-            err_msg += "url: {}\n".format(parsed_url)
-            err_msg += "method: {}\n".format(method)
-            err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
+            err_msg += f"url: {parsed_url}\n"
+            err_msg += f"method: {method}\n"
+            headers = parsed_test_request.pop("headers", {})
+            err_msg += f"headers: {headers}\n"
             for k, v in parsed_test_request.items():
                 v = utils.omit_long_data(v)
-                err_msg += "{}: {}\n".format(k, repr(v))
+                err_msg += f"{k}: {repr(v)}\n"
 
             err_msg += "\n"
 
             # log response
             err_msg += "====== response details ======\n"
-            err_msg += "status_code: {}\n".format(resp_obj.status_code)
-            err_msg += "headers: {}\n".format(resp_obj.headers)
-            err_msg += "body: {}\n".format(repr(resp_obj.text))
-            logger.log_error(err_msg)
+            err_msg += f"status_code: {resp_obj.status_code}\n"
+            err_msg += f"headers: {resp_obj.headers}\n"
+            err_msg += f"body: {repr(resp_obj.text)}\n"
+            logger.error(err_msg)
 
         # teardown hooks
         teardown_hooks = test_dict.get("teardown_hooks", [])
@@ -395,9 +394,9 @@ class Runner(object):
         output = {}
         for variable in output_variables_list:
             if variable not in variables_mapping:
-                logger.log_warning(
-                    "variable '{}' can not be found in variables mapping, "
-                    "failed to export!".format(variable)
+                logger.warning(
+                    f"variable '{variable}' can not be found in variables mapping, "
+                    "failed to export!"
                 )
                 continue
 

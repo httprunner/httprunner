@@ -1,7 +1,7 @@
 import time
 import unittest
 
-from httprunner import logger
+from loguru import logger
 
 
 class HtmlTestResult(unittest.TextTestResult):
@@ -27,7 +27,7 @@ class HtmlTestResult(unittest.TextTestResult):
     def startTest(self, test):
         """ add start test time """
         super(HtmlTestResult, self).startTest(test)
-        logger.color_print(test.shortDescription(), "yellow")
+        logger.info(test.shortDescription())
 
     def addSuccess(self, test):
         super(HtmlTestResult, self).addSuccess(test)

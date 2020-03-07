@@ -22,7 +22,7 @@ absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 def init_sentry_sdk():
     sentry_sdk.init(
         dsn="https://cc6dd86fbe9f4e7fbd95248cfcff114d@sentry.io/1862849",
-        release="httprunner@{}".format(__version__)
+        release=f"httprunner@{__version__}"
     )
 
     with sentry_sdk.configure_scope() as scope:
@@ -34,7 +34,7 @@ def set_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
-        logger.debug("Set OS environment variable: {}".format(variable))
+        logger.debug(f"Set OS environment variable: {variable}")
 
 
 def unset_os_environ(variables_mapping):
@@ -42,7 +42,7 @@ def unset_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ.pop(variable)
-        logger.debug("Unset OS environment variable: {}".format(variable))
+        logger.debug(f"Unset OS environment variable: {variable}")
 
 
 def get_os_environ(variable_name):
@@ -109,7 +109,7 @@ def query_json(json_content, query, delimiter='.'):
 
     """
     raise_flag = False
-    response_body = u"response body: {}\n".format(json_content)
+    response_body = f"response body: {json_content}\n"
     try:
         for key in query.split(delimiter):
             if isinstance(json_content, (list, basestring)):
@@ -118,13 +118,13 @@ def query_json(json_content, query, delimiter='.'):
                 json_content = json_content[key]
             else:
                 logger.error(
-                    "invalid type value: {}({})".format(json_content, type(json_content)))
+                    f"invalid type value: {json_content}({type(json_content)})")
                 raise_flag = True
     except (KeyError, ValueError, IndexError):
         raise_flag = True
 
     if raise_flag:
-        err_msg = u"Failed to extract! => {}\n".format(query)
+        err_msg = f"Failed to extract! => {query}\n"
         err_msg += response_body
         logger.error(err_msg)
         raise exceptions.ExtractFailure(err_msg)
@@ -371,21 +371,21 @@ def create_scaffold(project_name):
     """ create scaffold with specified project name.
     """
     if os.path.isdir(project_name):
-        logger.warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
+        logger.warning(f"Folder {project_name} exists, please specify a new folder name.")
         return
 
-    logger.info("Start to create new project: {}".format(project_name))
-    logger.info("CWD: {}".format(os.getcwd()))
+    logger.info(f"Start to create new project: {project_name}")
+    logger.info(f"CWD: {os.getcwd()}")
 
     def create_folder(path):
         os.makedirs(path)
-        msg = "created folder: {}".format(path)
+        msg = f"created folder: {path}"
         logger.info(msg)
 
     def create_file(path, file_content=""):
         with open(path, 'w') as f:
             f.write(file_content)
-        msg = "created file: {}".format(path)
+        msg = f"created file: {path}"
         logger.info(msg)
 
     demo_api_content = """
@@ -526,14 +526,14 @@ def prettify_json_file(file_list):
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
-            logger.warning("Only JSON file format can be prettified, skip: {}".format(json_file))
+            logger.warning(f"Only JSON file format can be prettified, skip: {json_file}")
             continue
 
-        logger.info("Start to prettify JSON file: {}".format(json_file))
+        logger.info(f"Start to prettify JSON file: {json_file}")
 
         dir_path = os.path.dirname(json_file)
         file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
-        outfile = os.path.join(dir_path, "{}.pretty.json".format(file_name))
+        outfile = os.path.join(dir_path, f"{file_name}.pretty.json")
 
         with io.open(json_file, 'r', encoding='utf-8') as stream:
             try:
@@ -545,7 +545,7 @@ def prettify_json_file(file_list):
             json.dump(obj, out, indent=4, separators=(',', ': '))
             out.write('\n')
 
-        print("success: {}".format(outfile))
+        print(f"success: {outfile}")
 
 
 def omit_long_data(body, omit_len=512):
@@ -560,7 +560,7 @@ def omit_long_data(body, omit_len=512):
 
     omitted_body = body[0:omit_len]
 
-    appendix_str = " ... OMITTED {} CHARACTORS ...".format(body_len - omit_len)
+    appendix_str = f" ... OMITTED {body_len - omit_len} CHARACTORS ..."
     if isinstance(body, bytes):
         appendix_str = appendix_str.encode("utf-8")
 
@@ -604,11 +604,11 @@ def dump_json_file(json_data, json_file_abs_path):
                     cls=PythonObjectEncoder
                 )
 
-        msg = "dump file: {}".format(json_file_abs_path)
+        msg = f"dump file: {json_file_abs_path}"
         logger.info(msg)
 
     except TypeError as ex:
-        msg = "Failed to dump json file: {}\nReason: {}".format(json_file_abs_path, ex)
+        msg = f"Failed to dump json file: {json_file_abs_path}\nReason: {ex}"
         logger.error(msg)
 
 
@@ -620,7 +620,7 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
 
     if not test_path:
         # running passed in testcase/testsuite data structure
-        dump_file_name = "tests_mapping.{}.json".format(tag_name)
+        dump_file_name = f"tests_mapping.{tag_name}.json"
         dumped_json_file_abs_path = os.path.join(pwd_dir_path, "logs", dump_file_name)
         return dumped_json_file_abs_path
 
@@ -630,12 +630,12 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
 
     if os.path.isdir(test_path):
         file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)
-        dump_file_name = "all.{}.json".format(tag_name)
+        dump_file_name = f"all.{tag_name}.json"
     else:
         file_relative_folder_path, test_file = os.path.split(test_path_relative_path)
         file_foder_path = os.path.join(logs_dir_path, file_relative_folder_path)
         test_file_name, _file_suffix = os.path.splitext(test_file)
-        dump_file_name = "{}.{}.json".format(test_file_name, tag_name)
+        dump_file_name = f"{test_file_name}.{tag_name}.json"
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path
