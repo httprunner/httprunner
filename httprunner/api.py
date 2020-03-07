@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 
 from loguru import logger
@@ -38,6 +39,13 @@ class HttpRunner(object):
             "failfast": failfast,
             "resultclass": report.HtmlTestResult
         }
+
+        logger.remove()
+        log_level = log_level.upper()
+        logger.add(sys.stdout, level=log_level)
+        if log_file:
+            logger.add(log_file, level=log_level)
+
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
         self.save_tests = save_tests
