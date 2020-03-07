@@ -11,8 +11,9 @@ import uuid
 from datetime import datetime
 
 import sentry_sdk
+from loguru import logger
 
-from httprunner import exceptions, logger, __version__
+from httprunner import exceptions, __version__
 from httprunner.compat import basestring, bytes, is_py2
 from httprunner.exceptions import ParamsError
 
@@ -34,7 +35,7 @@ def set_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
-        logger.log_debug("Set OS environment variable: {}".format(variable))
+        logger.debug("Set OS environment variable: {}".format(variable))
 
 
 def unset_os_environ(variables_mapping):
@@ -42,7 +43,7 @@ def unset_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ.pop(variable)
-        logger.log_debug("Unset OS environment variable: {}".format(variable))
+        logger.debug("Unset OS environment variable: {}".format(variable))
 
 
 def get_os_environ(variable_name):
@@ -117,7 +118,7 @@ def query_json(json_content, query, delimiter='.'):
             elif isinstance(json_content, dict):
                 json_content = json_content[key]
             else:
-                logger.log_error(
+                logger.error(
                     "invalid type value: {}({})".format(json_content, type(json_content)))
                 raise_flag = True
     except (KeyError, ValueError, IndexError):
@@ -126,7 +127,7 @@ def query_json(json_content, query, delimiter='.'):
     if raise_flag:
         err_msg = u"Failed to extract! => {}\n".format(query)
         err_msg += response_body
-        logger.log_error(err_msg)
+        logger.error(err_msg)
         raise exceptions.ExtractFailure(err_msg)
 
     return json_content
@@ -364,29 +365,29 @@ def print_info(info_mapping):
         content += content_format.format(key, value)
 
     content += "-" * 48 + "\n"
-    logger.log_info(content)
+    logger.info(content)
 
 
 def create_scaffold(project_name):
     """ create scaffold with specified project name.
     """
     if os.path.isdir(project_name):
-        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
+        logger.warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
         return
 
-    logger.color_print("Start to create new project: {}".format(project_name), "GREEN")
-    logger.color_print("CWD: {}\n".format(os.getcwd()), "BLUE")
+    logger.info("Start to create new project: {}".format(project_name))
+    logger.info("CWD: {}".format(os.getcwd()))
 
     def create_folder(path):
         os.makedirs(path)
         msg = "created folder: {}".format(path)
-        logger.color_print(msg, "BLUE")
+        logger.info(msg)
 
     def create_file(path, file_content=""):
         with open(path, 'w') as f:
             f.write(file_content)
         msg = "created file: {}".format(path)
-        logger.color_print(msg, "BLUE")
+        logger.info(msg)
 
     demo_api_content = """
 name: demo api
@@ -526,10 +527,10 @@ def prettify_json_file(file_list):
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be prettified, skip: {}".format(json_file))
+            logger.warning("Only JSON file format can be prettified, skip: {}".format(json_file))
             continue
 
-        logger.color_print("Start to prettify JSON file: {}".format(json_file), "GREEN")
+        logger.info("Start to prettify JSON file: {}".format(json_file))
 
         dir_path = os.path.dirname(json_file)
         file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
@@ -605,11 +606,11 @@ def dump_json_file(json_data, json_file_abs_path):
                 )
 
         msg = "dump file: {}".format(json_file_abs_path)
-        logger.color_print(msg, "BLUE")
+        logger.info(msg)
 
     except TypeError as ex:
         msg = "Failed to dump json file: {}\nReason: {}".format(json_file_abs_path, ex)
-        logger.color_print(msg, "RED")
+        logger.error(msg)
 
 
 def prepare_dump_json_file_abs_path(project_mapping, tag_name):

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "2.5.7"
+version = "3.0.0-alpha"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -41,6 +41,7 @@ jsonpath = "^0.82"
 sentry-sdk = "^0.13.5"
 jsonschema = "^3.2.0"
 pydantic = "^1.4"
+loguru = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
