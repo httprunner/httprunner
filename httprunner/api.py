@@ -179,7 +179,7 @@ class HttpRunner(object):
             "details": []
         }
 
-        for tests_result in tests_results:
+        for index, tests_result in enumerate(tests_results):
             testcase, result = tests_result
             testcase_summary = report.get_summary(result)
 
@@ -194,6 +194,12 @@ class HttpRunner(object):
 
             report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
             report.aggregate_stat(summary["time"], testcase_summary["time"])
+
+            if self.save_tests:
+                logs_file_abs_path = utils.prepare_log_file_abs_path(
+                    self.project_mapping, f"testcase_{index + 1}.log"
+                )
+                testcase_summary["log"] = logs_file_abs_path
 
             summary["details"].append(testcase_summary)
 
