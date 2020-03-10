@@ -10,7 +10,7 @@ jobs:
     strategy:
       max-parallel: 12
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7] # TODO: 3.8
         os: [ubuntu-latest, macos-latest] # TODO: windows-latest
 
     steps:
