@@ -8,6 +8,7 @@ import json
 import os.path
 import re
 import uuid
+from typing import Union
 
 import sentry_sdk
 from loguru import logger
@@ -533,7 +534,7 @@ def omit_long_data(body, omit_len=512):
     return omitted_body + appendix_str
 
 
-def dump_json_file(json_data, json_file_abs_path):
+def dump_json_file(json_data: Union[dict, list], json_file_abs_path: str) -> None:
     """ dump json data to file
     """
     class PythonObjectEncoder(json.JSONEncoder):
@@ -566,11 +567,10 @@ def dump_json_file(json_data, json_file_abs_path):
         logger.error(msg)
 
 
-def prepare_log_file_abs_path(project_mapping, file_name):
+def prepare_log_file_abs_path(test_path: str, file_name: str) -> str:
     """ prepare dump json file absolute path.
     """
     current_working_dir = os.getcwd()
-    test_path = project_mapping.get("test_path")
 
     if not test_path:
         # running passed in testcase/testsuite data structure
@@ -592,17 +592,3 @@ def prepare_log_file_abs_path(project_mapping, file_name):
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path
-
-
-def dump_logs(json_data, project_mapping, tag_name):
-    """ dump tests data to json file.
-        the dumped file is located in PWD/logs folder.
-
-    Args:
-        json_data (list/dict): json data to dump
-        project_mapping (dict): project info
-        tag_name (str): tag name, loaded/parsed/summary
-
-    """
-    json_file_abs_path = prepare_log_file_abs_path(project_mapping, f"{tag_name}.json")
-    dump_json_file(json_data, json_file_abs_path)
