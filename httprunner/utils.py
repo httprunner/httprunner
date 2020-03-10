@@ -514,33 +514,6 @@ def gen_cartesian_product(*args):
     return product_list
 
 
-def prettify_json_file(file_list):
-    """ prettify JSON testcase format
-    """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.warning(f"Only JSON file format can be prettified, skip: {json_file}")
-            continue
-
-        logger.info(f"Start to prettify JSON file: {json_file}")
-
-        dir_path = os.path.dirname(json_file)
-        file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
-        outfile = os.path.join(dir_path, f"{file_name}.pretty.json")
-
-        with io.open(json_file, 'r', encoding='utf-8') as stream:
-            try:
-                obj = json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
-
-        with io.open(outfile, 'w', encoding='utf-8') as out:
-            json.dump(obj, out, indent=4, separators=(',', ': '))
-            out.write('\n')
-
-        print(f"success: {outfile}")
-
-
 def omit_long_data(body, omit_len=512):
     """ omit too long str/bytes
     """
