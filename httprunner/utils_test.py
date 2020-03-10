@@ -282,7 +282,7 @@ class TestUtils(unittest.TestCase):
             "test_path": os.path.join("tests", "httpbin", "a.b.c")
         }
         self.assertEqual(
-            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            utils.prepare_log_file_abs_path(project_mapping, "loaded"),
             os.path.join(os.getcwd(), "logs", "tests/httpbin/a.b.c/all.loaded.json")
         )
 
@@ -292,7 +292,7 @@ class TestUtils(unittest.TestCase):
             "test_path": os.path.join("tests", "httpbin", "a.b.c", "rpc.yml")
         }
         self.assertEqual(
-            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            utils.prepare_log_file_abs_path(project_mapping, "loaded"),
             os.path.join(os.getcwd(), "logs", "tests/httpbin/a.b.c/rpc.loaded.json")
         )
 
@@ -302,6 +302,6 @@ class TestUtils(unittest.TestCase):
             "PWD": project_working_directory
         }
         self.assertEqual(
-            utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
+            utils.prepare_log_file_abs_path(project_mapping, "loaded"),
             os.path.join(os.getcwd(), "logs", "tests_mapping.loaded.json")
         )

@@ -593,7 +593,7 @@ def dump_json_file(json_data, json_file_abs_path):
         logger.error(msg)
 
 
-def prepare_dump_json_file_abs_path(project_mapping, tag_name):
+def prepare_log_file_abs_path(project_mapping, file_name):
     """ prepare dump json file absolute path.
     """
     current_working_dir = os.getcwd()
@@ -601,7 +601,7 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
 
     if not test_path:
         # running passed in testcase/testsuite data structure
-        dump_file_name = f"tests_mapping.{tag_name}.json"
+        dump_file_name = f"tests_mapping.{file_name}"
         dumped_json_file_abs_path = os.path.join(current_working_dir, "logs", dump_file_name)
         return dumped_json_file_abs_path
 
@@ -610,12 +610,12 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
 
     if os.path.isdir(test_path):
         file_foder_path = os.path.join(logs_dir_path, test_path)
-        dump_file_name = f"all.{tag_name}.json"
+        dump_file_name = f"all.{file_name}"
     else:
         file_relative_folder_path, test_file = os.path.split(test_path)
         file_foder_path = os.path.join(logs_dir_path, file_relative_folder_path)
         test_file_name, _file_suffix = os.path.splitext(test_file)
-        dump_file_name = f"{test_file_name}.{tag_name}.json"
+        dump_file_name = f"{test_file_name}.{file_name}"
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path
@@ -631,5 +631,5 @@ def dump_logs(json_data, project_mapping, tag_name):
         tag_name (str): tag name, loaded/parsed/summary
 
     """
-    json_file_abs_path = prepare_dump_json_file_abs_path(project_mapping, tag_name)
+    json_file_abs_path = prepare_log_file_abs_path(project_mapping, f"{tag_name}.json")
     dump_json_file(json_data, json_file_abs_path)
