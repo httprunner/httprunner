@@ -4,11 +4,12 @@ import time
 
 import requests
 import urllib3
+from loguru import logger
 from requests import Request, Response
 from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
                                  RequestException)
 
-from httprunner import logger, response
+from httprunner import response
 from httprunner.utils import lower_dict_keys, omit_long_data
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -18,10 +19,10 @@ def get_req_resp_record(resp_obj):
     """ get request and response info from Response() object.
     """
     def log_print(req_resp_dict, r_type):
-        msg = "\n================== {} details ==================\n".format(r_type)
+        msg = f"\n================== {r_type} details ==================\n"
         for key, value in req_resp_dict[r_type].items():
             msg += "{:<16} : {}\n".format(key, repr(value))
-        logger.log_debug(msg)
+        logger.debug(msg)
 
     req_resp_dict = {
         "request": {},
@@ -214,15 +215,13 @@ class HttpSession(requests.Session):
 
         try:
             response.raise_for_status()
-        except RequestException as e:
-            logger.log_error(u"{exception}".format(exception=str(e)))
+        except RequestException as ex:
+            logger.error(f"{str(ex)}")
         else:
-            logger.log_info(
-                """status_code: {}, response_time(ms): {} ms, response_length: {} bytes\n""".format(
-                    response.status_code,
-                    response_time_ms,
-                    content_size
-                )
+            logger.info(
+                f"status_code: {response.status_code}, "
+                f"response_time(ms): {response_time_ms} ms, "
+                f"response_length: {content_size} bytes\n"
             )
 
         return response
@@ -234,9 +233,9 @@ class HttpSession(requests.Session):
         """
         try:
             msg = "processed request:\n"
-            msg += "> {method} {url}\n".format(method=method, url=url)
-            msg += "> kwargs: {kwargs}".format(kwargs=kwargs)
-            logger.log_debug(msg)
+            msg += f"> {method} {url}\n"
+            msg += f"> kwargs: {kwargs}"
+            logger.debug(msg)
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise

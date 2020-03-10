@@ -470,7 +470,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["details"][1]["stat"]["total"], 1)
         self.assertEqual(summary["details"][2]["stat"]["total"], 1)
 
-
     def test_run_testcase_hardcode(self):
         for testcase_file_path in self.testcase_file_path_list:
             summary = self.runner.run(testcase_file_path)
@@ -478,7 +477,6 @@ class TestHttpRunner(ApiServerUnittest):
             self.assertEqual(summary["stat"]["testcases"]["total"], 1)
             self.assertEqual(summary["stat"]["teststeps"]["total"], 3)
             self.assertEqual(summary["stat"]["teststeps"]["successes"], 3)
-
 
     def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(

@@ -1,9 +1,11 @@
 import os
+import sys
 import unittest
 
+from loguru import logger
 from sentry_sdk import capture_message
 
-from httprunner import (__version__, exceptions, loader, logger, parser,
+from httprunner import (__version__, exceptions, loader, parser,
                         report, runner, utils)
 
 
@@ -32,18 +34,23 @@ class HttpRunner(object):
             log_file (str): log file path.
 
         """
-        logger.setup_logger(log_level, log_file)
-
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
             "failfast": failfast,
             "resultclass": report.HtmlTestResult
         }
+
+        logger.remove()
+        log_level = log_level.upper()
+        logger.add(sys.stdout, level=log_level)
+        if log_file:
+            logger.add(log_file, level=log_level)
+
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
         self.save_tests = save_tests
         self._summary = None
-        self.project_working_directory = None
+        self.project_mapping = None
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
@@ -99,7 +106,7 @@ class HttpRunner(object):
                     times = int(times)
                 except ValueError:
                     raise exceptions.ParamsError(
-                        "times should be digit, given: {}".format(times))
+                        f"times should be digit, given: {times}")
 
                 for times_index in range(times):
                     # suppose one testcase should not have more than 9999 steps,
@@ -128,15 +135,25 @@ class HttpRunner(object):
         """
         tests_results = []
 
-        for testcase in test_suite:
+        for index, testcase in enumerate(test_suite):
+            log_handler = None
+            if self.save_tests:
+                logs_file_abs_path = utils.prepare_log_file_abs_path(
+                    self.project_mapping, f"testcase_{index+1}.log"
+                )
+                log_handler = logger.add(logs_file_abs_path, level="DEBUG")
+
             testcase_name = testcase.config.get("name")
-            logger.log_info("Start to run testcase: {}".format(testcase_name))
+            logger.info(f"Start to run testcase: {testcase_name}")
 
             result = self.unittest_runner.run(testcase)
             if result.wasSuccessful():
                 tests_results.append((testcase, result))
             else:
                 tests_results.insert(0, (testcase, result))
+
+            if self.save_tests and log_handler:
+                logger.remove(log_handler)
 
         return tests_results
 
@@ -162,7 +179,7 @@ class HttpRunner(object):
             "details": []
         }
 
-        for tests_result in tests_results:
+        for index, tests_result in enumerate(tests_results):
             testcase, result = tests_result
             testcase_summary = report.get_summary(result)
 
@@ -178,6 +195,12 @@ class HttpRunner(object):
             report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
             report.aggregate_stat(summary["time"], testcase_summary["time"])
 
+            if self.save_tests:
+                logs_file_abs_path = utils.prepare_log_file_abs_path(
+                    self.project_mapping, f"testcase_{index + 1}.log"
+                )
+                testcase_summary["log"] = logs_file_abs_path
+
             summary["details"].append(testcase_summary)
 
         return summary
@@ -186,26 +209,25 @@ class HttpRunner(object):
         """ run testcase/testsuite data
         """
         capture_message("start to run tests")
-        project_mapping = tests_mapping.get("project_mapping", {})
-        self.project_working_directory = project_mapping.get("PWD", os.getcwd())
+        self.project_mapping = tests_mapping.get("project_mapping", {})
 
         if self.save_tests:
-            utils.dump_logs(tests_mapping, project_mapping, "loaded")
+            utils.dump_logs(tests_mapping, self.project_mapping, "loaded")
 
         # parse tests
         self.exception_stage = "parse tests"
         parsed_testcases = parser.parse_tests(tests_mapping)
         parse_failed_testfiles = parser.get_parse_failed_testfiles()
         if parse_failed_testfiles:
-            logger.log_warning("parse failures occurred ...")
-            utils.dump_logs(parse_failed_testfiles, project_mapping, "parse_failed")
+            logger.warning("parse failures occurred ...")
+            utils.dump_logs(parse_failed_testfiles, self.project_mapping, "parse_failed")
 
         if len(parsed_testcases) == 0:
-            logger.log_error("failed to parse all cases, abort.")
+            logger.error("failed to parse all cases, abort.")
             raise exceptions.ParseTestsFailure
 
         if self.save_tests:
-            utils.dump_logs(parsed_testcases, project_mapping, "parsed")
+            utils.dump_logs(parsed_testcases, self.project_mapping, "parsed")
 
         # add tests to test suite
         self.exception_stage = "add tests to test suite"
@@ -224,10 +246,10 @@ class HttpRunner(object):
         report.stringify_summary(self._summary)
 
         if self.save_tests:
-            utils.dump_logs(self._summary, project_mapping, "summary")
+            utils.dump_logs(self._summary, self.project_mapping, "summary")
             # save variables and export data
             vars_out = self.get_vars_out()
-            utils.dump_logs(vars_out, project_mapping, "io")
+            utils.dump_logs(vars_out, self.project_mapping, "io")
 
         return self._summary
 
@@ -295,7 +317,7 @@ class HttpRunner(object):
             dict: result summary
 
         """
-        logger.log_info("HttpRunner version: {}".format(__version__))
+        logger.info(f"HttpRunner version: {__version__}")
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_test_content(path_or_tests):
@@ -303,4 +325,4 @@ class HttpRunner(object):
             loader.init_pwd(project_working_directory)
             return self.run_tests(path_or_tests)
         else:
-            raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
+            raise exceptions.ParamsError(f"Invalid testcase path or testcases: {path_or_tests}")

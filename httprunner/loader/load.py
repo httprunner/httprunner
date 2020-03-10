@@ -5,9 +5,10 @@ import os
 import types
 
 import yaml
+from loguru import logger
 
 from httprunner import builtin
-from httprunner import exceptions, logger, utils
+from httprunner import exceptions, utils
 from httprunner.loader.locate import get_project_working_directory
 
 try:
@@ -25,7 +26,7 @@ def _load_yaml_file(yaml_file):
         try:
             yaml_content = yaml.load(stream)
         except yaml.YAMLError as ex:
-            logger.log_error(str(ex))
+            logger.error(str(ex))
             raise exceptions.FileFormatError
 
         return yaml_content
@@ -37,9 +38,9 @@ def _load_json_file(json_file):
     with io.open(json_file, encoding='utf-8') as data_file:
         try:
             json_content = json.load(data_file)
-        except exceptions.JSONDecodeError:
-            err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
-            logger.log_error(err_msg)
+        except json.JSONDecodeError:
+            err_msg = f"JSONDecodeError: JSON file format error: {json_file}"
+            logger.error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
         return json_content
@@ -90,7 +91,7 @@ def load_csv_file(csv_file):
 
 def load_file(file_path):
     if not os.path.isfile(file_path):
-        raise exceptions.FileNotFound("{} does not exist.".format(file_path))
+        raise exceptions.FileNotFound(f"{file_path} does not exist.")
 
     file_suffix = os.path.splitext(file_path)[1].lower()
     if file_suffix == '.json':
@@ -101,8 +102,7 @@ def load_file(file_path):
         return load_csv_file(file_path)
     else:
         # '' or other suffix
-        err_msg = u"Unsupported file format: {}".format(file_path)
-        logger.log_warning(err_msg)
+        logger.warning(f"Unsupported file format: {file_path}")
         return []
 
 
@@ -169,7 +169,7 @@ def load_dot_env_file(dot_env_path):
     if not os.path.isfile(dot_env_path):
         return {}
 
-    logger.log_info("Loading environment variables from {}".format(dot_env_path))
+    logger.info(f"Loading environment variables from {dot_env_path}")
     env_variables_mapping = {}
 
     with io.open(dot_env_path, 'r', encoding='utf-8') as fp:

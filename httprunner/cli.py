@@ -3,14 +3,13 @@ import os
 import sys
 
 import sentry_sdk
+from loguru import logger
 
 from httprunner import __description__, __version__, exceptions
 from httprunner.api import HttpRunner
-from httprunner.compat import is_py2
 from httprunner.loader import load_cases
-from httprunner.logger import color_print, log_error
 from httprunner.report import gen_html_report
-from httprunner.utils import (create_scaffold, get_python2_retire_msg,
+from httprunner.utils import (create_scaffold,
                               prettify_json_file, init_sentry_sdk)
 
 init_sentry_sdk()
@@ -19,9 +18,6 @@ init_sentry_sdk()
 def main():
     """ API test: parse command line options and run commands.
     """
-    if is_py2:
-        color_print(get_python2_retire_msg(), "YELLOW")
-
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         '-V', '--version', dest='version', action='store_true',
@@ -71,19 +67,19 @@ def main():
         sys.exit(0)
 
     if args.version:
-        color_print("{}".format(__version__), "GREEN")
+        print(f"{__version__}")
         sys.exit(0)
 
     if args.validate:
         for validate_path in args.validate:
             try:
-                color_print("validate test file: {}".format(validate_path), "GREEN")
+                logger.info(f"validate test file: {validate_path}")
                 load_cases(validate_path, args.dot_env_path)
             except exceptions.MyBaseError as ex:
-                log_error(str(ex))
+                logger.error(str(ex))
                 continue
 
-        color_print("done!", "BLUE")
+        logger.info("done!")
         sys.exit(0)
 
     if args.prettify:
@@ -106,7 +102,7 @@ def main():
     try:
         for path in args.testfile_paths:
             summary = runner.run(path, dot_env_path=args.dot_env_path)
-            report_dir = args.report_dir or os.path.join(runner.project_working_directory, "reports")
+            report_dir = args.report_dir or os.path.join(os.getcwd(), "reports")
             gen_html_report(
                 summary,
                 report_template=args.report_template,
@@ -115,8 +111,7 @@ def main():
             )
             err_code |= (0 if summary and summary["success"] else 1)
     except Exception as ex:
-        color_print("!!!!!!!!!! exception stage: {} !!!!!!!!!!".format(runner.exception_stage), "YELLOW")
-        color_print(str(ex), "RED")
+        logger.error(f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}")
         sentry_sdk.capture_exception(ex)
         err_code = 1
 

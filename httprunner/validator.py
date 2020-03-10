@@ -3,7 +3,9 @@
 import sys
 import traceback
 
-from httprunner import exceptions, logger, parser
+from loguru import logger
+
+from httprunner import exceptions, parser
 
 
 class Validator(object):
@@ -70,12 +72,12 @@ class Validator(object):
         }
 
         script = "\n    ".join(script)
-        code = """
+        code = f"""
 # encoding: utf-8
 
 def run_validate_script():
-    {}
-""".format(script)
+    {script}
+"""
 
         variables = {
             "status_code": self.resp_obj.status_code,
@@ -88,12 +90,12 @@ def run_validate_script():
         try:
             exec(code, variables)
         except SyntaxError as ex:
-            logger.log_warning("SyntaxError in python validate script: {}".format(ex))
+            logger.warning(f"SyntaxError in python validate script: {ex}")
             result["check_result"] = "fail"
             result["output"] = "<br/>".join([
-                "ErrorMessage: {}".format(ex.msg),
-                "ErrorLine: {}".format(ex.lineno),
-                "ErrorText: {}".format(ex.text)
+                f"ErrorMessage: {ex.msg}",
+                f"ErrorLine: {ex.lineno}",
+                f"ErrorText: {ex.text}"
             ])
             return result
 
@@ -101,7 +103,7 @@ def run_validate_script():
             # run python validate script
             variables["run_validate_script"]()
         except Exception as ex:
-            logger.log_warning("run python validate script failed: {}".format(ex))
+            logger.warning(f"run python validate script failed: {ex}")
             result["check_result"] = "fail"
 
             _type, _value, _tb = sys.exc_info()
@@ -118,8 +120,8 @@ def run_validate_script():
                 line_no = "N/A"
 
             result["output"] = "<br/>".join([
-                "ErrorType: {}".format(_type.__name__),
-                "ErrorLine: {}".format(line_no)
+                f"ErrorType: {_type.__name__}",
+                f"ErrorLine: {line_no}"
             ])
 
         return result
@@ -131,7 +133,7 @@ def run_validate_script():
         if not validators:
             return
 
-        logger.log_debug("start to validate.")
+        logger.debug("start to validate.")
 
         validate_pass = True
         failures = []
@@ -154,7 +156,7 @@ def run_validate_script():
             # validator should be LazyFunction object
             if not isinstance(validator, parser.LazyFunction):
                 raise exceptions.ValidationFailure(
-                    "validator should be parsed first: {}".format(validators))
+                    f"validator should be parsed first: {validators}")
 
             # evaluate validator args with context variable mapping.
             validator_args = validator.get_args()
@@ -171,18 +173,13 @@ def run_validate_script():
                 "expect": expect_item,
                 "expect_value": expect_value
             }
-            validate_msg = "\nvalidate: {} {} {}({})".format(
-                check_item,
-                comparator,
-                expect_value,
-                type(expect_value).__name__
-            )
+            validate_msg = f"\nvalidate: {check_item} {comparator} {expect_value}({type(expect_value).__name__})"
 
             try:
                 validator.to_value(self.session_context.test_variables_mapping)
                 validator_dict["check_result"] = "pass"
                 validate_msg += "\t==> pass"
-                logger.log_debug(validate_msg)
+                logger.debug(validate_msg)
             except (AssertionError, TypeError):
                 validate_pass = False
                 validator_dict["check_result"] = "fail"
@@ -194,7 +191,7 @@ def run_validate_script():
                     expect_value,
                     type(expect_value).__name__
                 )
-                logger.log_error(validate_msg)
+                logger.error(validate_msg)
                 failures.append(validate_msg)
 
             self.validation_results["validate_extractor"].append(validator_dict)

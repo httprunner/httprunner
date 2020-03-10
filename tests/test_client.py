@@ -56,10 +56,6 @@ class TestHttpClient(ApiServerUnittest):
 
     def test_request_with_cookies(self):
         url = "{}/api/users/1000".format(self.host)
-        data = {
-            'name': 'user1',
-            'password': '123456'
-        }
         cookies = {
             "a": "1",
             "b": "2"
@@ -70,7 +66,6 @@ class TestHttpClient(ApiServerUnittest):
 
     def test_request_redirect(self):
         url = "{}/redirect-to?url=https%3A%2F%2Fgithub.com&status_code=302".format(HTTPBIN_SERVER)
-        headers = {"accept: text/html"}
         cookies = {
             "a": "1",
             "b": "2"
