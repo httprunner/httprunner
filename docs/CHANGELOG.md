@@ -14,6 +14,7 @@
 - remove dependency colorama and colorlog
 - generate reports/logs folder in current working directory
 - remove cli `--validate`
+- remove cli `--pretty`
 
 ## 2.5.7 (2020-02-21)
 

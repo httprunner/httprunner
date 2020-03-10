@@ -66,7 +66,6 @@ nav:
         - 环境变量: prepare/dot-env.md
         - 测试用例分层: prepare/testcase-layer.md
         - 参数化数据驱动: prepare/parameters.md
-        - Validate & Prettify: prepare/validate-pretty.md
         - 信息安全: prepare/security.md
         - 文件上传场景: prepare/upload-case.md
     - 测试执行:
