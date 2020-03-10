@@ -1,10 +1,9 @@
+import json
 from base64 import b64encode
 from collections import Iterable
 
 from jinja2 import escape
 from requests.cookies import RequestsCookieJar
-
-from httprunner.compat import basestring, bytes, json, numeric_types, JSONDecodeError
 
 
 def dumps_json(value):
@@ -67,13 +66,13 @@ def __stringify_request(request_data):
                         # request body is in json format
                         value = json.loads(value)
                         value = dumps_json(value)
-                    except JSONDecodeError:
+                    except json.JSONDecodeError:
                         pass
                 value = escape(value)
             except UnicodeDecodeError:
                 pass
 
-        elif not isinstance(value, (basestring, numeric_types, Iterable)):
+        elif not isinstance(value, (str, bytes, int, float, Iterable)):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
@@ -132,7 +131,7 @@ def __stringify_response(response_data):
             except UnicodeDecodeError:
                 pass
 
-        elif not isinstance(value, (basestring, numeric_types, Iterable)):
+        elif not isinstance(value, (str, bytes, int, float, Iterable)):
             # class instance, e.g. MultipartEncoder()
             value = repr(value)
 
@@ -205,7 +204,7 @@ def stringify_summary(summary):
     for index, suite_summary in enumerate(summary["details"]):
 
         if not suite_summary.get("name"):
-            suite_summary["name"] = "testcase {}".format(index)
+            suite_summary["name"] = f"testcase {index}"
 
         for record in suite_summary.get("records"):
             meta_datas = record['meta_datas']

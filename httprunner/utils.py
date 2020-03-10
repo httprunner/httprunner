@@ -8,12 +8,11 @@ import json
 import os.path
 import re
 import uuid
-from datetime import datetime
 
 import sentry_sdk
+from loguru import logger
 
-from httprunner import exceptions, logger, __version__
-from httprunner.compat import basestring, bytes, is_py2
+from httprunner import exceptions, __version__
 from httprunner.exceptions import ParamsError
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
@@ -22,7 +21,7 @@ absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 def init_sentry_sdk():
     sentry_sdk.init(
         dsn="https://cc6dd86fbe9f4e7fbd95248cfcff114d@sentry.io/1862849",
-        release="httprunner@{}".format(__version__)
+        release=f"httprunner@{__version__}"
     )
 
     with sentry_sdk.configure_scope() as scope:
@@ -34,7 +33,7 @@ def set_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
-        logger.log_debug("Set OS environment variable: {}".format(variable))
+        logger.debug(f"Set OS environment variable: {variable}")
 
 
 def unset_os_environ(variables_mapping):
@@ -42,7 +41,7 @@ def unset_os_environ(variables_mapping):
     """
     for variable in variables_mapping:
         os.environ.pop(variable)
-        logger.log_debug("Unset OS environment variable: {}".format(variable))
+        logger.debug(f"Unset OS environment variable: {variable}")
 
 
 def get_os_environ(variable_name):
@@ -109,24 +108,24 @@ def query_json(json_content, query, delimiter='.'):
 
     """
     raise_flag = False
-    response_body = u"response body: {}\n".format(json_content)
+    response_body = f"response body: {json_content}\n"
     try:
         for key in query.split(delimiter):
-            if isinstance(json_content, (list, basestring)):
+            if isinstance(json_content, (list, str, bytes)):
                 json_content = json_content[int(key)]
             elif isinstance(json_content, dict):
                 json_content = json_content[key]
             else:
-                logger.log_error(
-                    "invalid type value: {}({})".format(json_content, type(json_content)))
+                logger.error(
+                    f"invalid type value: {json_content}({type(json_content)})")
                 raise_flag = True
     except (KeyError, ValueError, IndexError):
         raise_flag = True
 
     if raise_flag:
-        err_msg = u"Failed to extract! => {}\n".format(query)
+        err_msg = f"Failed to extract! => {query}\n"
         err_msg += response_body
-        logger.log_error(err_msg)
+        logger.error(err_msg)
         raise exceptions.ExtractFailure(err_msg)
 
     return json_content
@@ -355,38 +354,32 @@ def print_info(info_mapping):
         elif value is None:
             value = "None"
 
-        if is_py2:
-            if isinstance(key, unicode):
-                key = key.encode("utf-8")
-            if isinstance(value, unicode):
-                value = value.encode("utf-8")
-
         content += content_format.format(key, value)
 
     content += "-" * 48 + "\n"
-    logger.log_info(content)
+    logger.info(content)
 
 
 def create_scaffold(project_name):
     """ create scaffold with specified project name.
     """
     if os.path.isdir(project_name):
-        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
+        logger.warning(f"Folder {project_name} exists, please specify a new folder name.")
         return
 
-    logger.color_print("Start to create new project: {}".format(project_name), "GREEN")
-    logger.color_print("CWD: {}\n".format(os.getcwd()), "BLUE")
+    logger.info(f"Start to create new project: {project_name}")
+    logger.info(f"CWD: {os.getcwd()}")
 
     def create_folder(path):
         os.makedirs(path)
-        msg = "created folder: {}".format(path)
-        logger.color_print(msg, "BLUE")
+        msg = f"created folder: {path}"
+        logger.info(msg)
 
     def create_file(path, file_content=""):
         with open(path, 'w') as f:
             f.write(file_content)
-        msg = "created file: {}".format(path)
-        logger.color_print(msg, "BLUE")
+        msg = f"created file: {path}"
+        logger.info(msg)
 
     demo_api_content = """
 name: demo api
@@ -526,14 +519,14 @@ def prettify_json_file(file_list):
     """
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be prettified, skip: {}".format(json_file))
+            logger.warning(f"Only JSON file format can be prettified, skip: {json_file}")
             continue
 
-        logger.color_print("Start to prettify JSON file: {}".format(json_file), "GREEN")
+        logger.info(f"Start to prettify JSON file: {json_file}")
 
         dir_path = os.path.dirname(json_file)
         file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
-        outfile = os.path.join(dir_path, "{}.pretty.json".format(file_name))
+        outfile = os.path.join(dir_path, f"{file_name}.pretty.json")
 
         with io.open(json_file, 'r', encoding='utf-8') as stream:
             try:
@@ -545,13 +538,13 @@ def prettify_json_file(file_list):
             json.dump(obj, out, indent=4, separators=(',', ': '))
             out.write('\n')
 
-        print("success: {}".format(outfile))
+        print(f"success: {outfile}")
 
 
 def omit_long_data(body, omit_len=512):
     """ omit too long str/bytes
     """
-    if not isinstance(body, basestring):
+    if not isinstance(body, (str, bytes)):
         return body
 
     body_len = len(body)
@@ -560,7 +553,7 @@ def omit_long_data(body, omit_len=512):
 
     omitted_body = body[0:omit_len]
 
-    appendix_str = " ... OMITTED {} CHARACTORS ...".format(body_len - omit_len)
+    appendix_str = f" ... OMITTED {body_len - omit_len} CHARACTORS ..."
     if isinstance(body, bytes):
         appendix_str = appendix_str.encode("utf-8")
 
@@ -583,59 +576,46 @@ def dump_json_file(json_data, json_file_abs_path):
 
     try:
         with io.open(json_file_abs_path, 'w', encoding='utf-8') as outfile:
-            if is_py2:
-                outfile.write(
-                    unicode(json.dumps(
-                        json_data,
-                        indent=4,
-                        separators=(',', ':'),
-                        encoding="utf8",
-                        ensure_ascii=False,
-                        cls=PythonObjectEncoder
-                    ))
-                )
-            else:
-                json.dump(
-                    json_data,
-                    outfile,
-                    indent=4,
-                    separators=(',', ':'),
-                    ensure_ascii=False,
-                    cls=PythonObjectEncoder
-                )
+            json.dump(
+                json_data,
+                outfile,
+                indent=4,
+                separators=(',', ':'),
+                ensure_ascii=False,
+                cls=PythonObjectEncoder
+            )
 
-        msg = "dump file: {}".format(json_file_abs_path)
-        logger.color_print(msg, "BLUE")
+        msg = f"dump file: {json_file_abs_path}"
+        logger.info(msg)
 
     except TypeError as ex:
-        msg = "Failed to dump json file: {}\nReason: {}".format(json_file_abs_path, ex)
-        logger.color_print(msg, "RED")
+        msg = f"Failed to dump json file: {json_file_abs_path}\nReason: {ex}"
+        logger.error(msg)
 
 
-def prepare_dump_json_file_abs_path(project_mapping, tag_name):
+def prepare_log_file_abs_path(project_mapping, file_name):
     """ prepare dump json file absolute path.
     """
-    pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
+    current_working_dir = os.getcwd()
     test_path = project_mapping.get("test_path")
 
     if not test_path:
         # running passed in testcase/testsuite data structure
-        dump_file_name = "tests_mapping.{}.json".format(tag_name)
-        dumped_json_file_abs_path = os.path.join(pwd_dir_path, "logs", dump_file_name)
+        dump_file_name = f"tests_mapping.{file_name}"
+        dumped_json_file_abs_path = os.path.join(current_working_dir, "logs", dump_file_name)
         return dumped_json_file_abs_path
 
     # both test_path and pwd_dir_path are absolute path
-    logs_dir_path = os.path.join(pwd_dir_path, "logs")
-    test_path_relative_path = test_path[len(pwd_dir_path)+1:]
+    logs_dir_path = os.path.join(current_working_dir, "logs")
 
     if os.path.isdir(test_path):
-        file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)
-        dump_file_name = "all.{}.json".format(tag_name)
+        file_foder_path = os.path.join(logs_dir_path, test_path)
+        dump_file_name = f"all.{file_name}"
     else:
-        file_relative_folder_path, test_file = os.path.split(test_path_relative_path)
+        file_relative_folder_path, test_file = os.path.split(test_path)
         file_foder_path = os.path.join(logs_dir_path, file_relative_folder_path)
         test_file_name, _file_suffix = os.path.splitext(test_file)
-        dump_file_name = "{}.{}.json".format(test_file_name, tag_name)
+        dump_file_name = f"{test_file_name}.{file_name}"
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path
@@ -651,18 +631,5 @@ def dump_logs(json_data, project_mapping, tag_name):
         tag_name (str): tag name, loaded/parsed/summary
 
     """
-    json_file_abs_path = prepare_dump_json_file_abs_path(project_mapping, tag_name)
+    json_file_abs_path = prepare_log_file_abs_path(project_mapping, f"{tag_name}.json")
     dump_json_file(json_data, json_file_abs_path)
-
-
-def get_python2_retire_msg():
-    retire_day = datetime(2020, 1, 1)
-    today = datetime.now()
-    left_days = (retire_day - today).days
-
-    if left_days > 0:
-        retire_msg = "Python 2 will retire in {} days, why not move to Python 3?".format(left_days)
-    else:
-        retire_msg = "Python 2 has been retired, you should move to Python 3."
-
-    return retire_msg

@@ -85,12 +85,12 @@ def prepare_upload_test(test_dict):
     """
     upload_json = test_dict["request"].pop("upload", {})
     if not upload_json:
-        raise ParamsError("invalid upload info: {}".format(upload_json))
+        raise ParamsError(f"invalid upload info: {upload_json}")
 
     params_list = []
     for key, value in upload_json.items():
         test_dict["variables"][key] = value
-        params_list.append("{}=${}".format(key, key))
+        params_list.append(f"{key}=${key}")
 
     params_str = ", ".join(params_list)
     test_dict["variables"]["m_encoder"] = "${multipart_encoder(" + params_str + ")}"

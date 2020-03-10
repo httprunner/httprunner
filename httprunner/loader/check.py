@@ -4,8 +4,9 @@ import os
 import platform
 
 import jsonschema
+from loguru import logger
 
-from httprunner import exceptions, logger
+from httprunner import exceptions
 
 schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
 common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
@@ -50,7 +51,7 @@ class JsonSchemaChecker(object):
         try:
             jsonschema.validate(content, scheme, resolver=resolver)
         except jsonschema.exceptions.ValidationError as ex:
-            logger.log_error(str(ex))
+            logger.error(str(ex))
             raise exceptions.FileFormatError
 
         return True

@@ -1,5 +1,19 @@
 # Release History
 
+## 3.0.0 (2020-03-10)
+
+**Added**
+
+- feat: dump log for each testcase
+
+**Changed**
+
+- replace logging with [loguru](https://github.com/Delgan/loguru)
+- remove support for Python 2.7
+- replace string format with f-string
+- remove dependency colorama and colorlog
+- generate reports/logs folder in current working directory
+
 ## 2.5.7 (2020-02-21)
 
 **Changed**

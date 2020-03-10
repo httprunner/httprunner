@@ -18,8 +18,9 @@ import multiprocessing
 import os
 import sys
 
+from loguru import logger
+
 from httprunner import __version__
-from httprunner import logger
 from httprunner.utils import init_sentry_sdk
 
 init_sentry_sdk()
@@ -31,7 +32,7 @@ def parse_locustfile(file_path):
         if file_path is a YAML/JSON file, convert it to locustfile
     """
     if not os.path.isfile(file_path):
-        logger.color_print("file path invalid, exit.", "RED")
+        logger.error("file path invalid, exit.")
         sys.exit(1)
 
     file_suffix = os.path.splitext(file_path)[1]
@@ -41,7 +42,7 @@ def parse_locustfile(file_path):
         locustfile_path = gen_locustfile(file_path)
     else:
         # '' or other suffix
-        logger.color_print("file type should be YAML/JSON/Python, exit.", "RED")
+        logger.error("file type should be YAML/JSON/Python, exit.")
         sys.exit(1)
 
     return locustfile_path
@@ -105,7 +106,7 @@ def run_locusts_with_processes(sys_argv, processes_count):
 def main():
     """ Performance test with locust: parse command line options and run commands.
     """
-    print("HttpRunner version: {}".format(__version__))
+    print(f"HttpRunner version: {__version__}")
     sys.argv[0] = 'locust'
     if len(sys.argv) == 1:
         sys.argv.extend(["-h"])
@@ -126,11 +127,13 @@ def main():
     loglevel_index = get_arg_index("-L", "--loglevel")
     if loglevel_index and loglevel_index < len(sys.argv):
         loglevel = sys.argv[loglevel_index]
+        loglevel = loglevel.upper()
     else:
         # default
         loglevel = "WARNING"
 
-    logger.setup_logger(loglevel)
+    logger.remove()
+    logger.add(sys.stdout, level=loglevel)
 
     # get testcase file path
     try:
@@ -147,7 +150,7 @@ def main():
         """ locusts -f locustfile.py --processes 4
         """
         if "--no-web" in sys.argv:
-            logger.log_error("conflict parameter args: --processes & --no-web. \nexit.")
+            logger.error("conflict parameter args: --processes & --no-web. \nexit.")
             sys.exit(1)
 
         processes_index = sys.argv.index('--processes')
@@ -157,7 +160,7 @@ def main():
                 locusts -f locustfile.py --processes
             """
             processes_count = multiprocessing.cpu_count()
-            logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
+            logger.warning(f"processes count not specified, use {processes_count} by default.")
         else:
             try:
                 """ locusts -f locustfile.py --processes 4 """
@@ -166,7 +169,7 @@ def main():
             except ValueError:
                 """ locusts -f locustfile.py --processes -P 8888 """
                 processes_count = multiprocessing.cpu_count()
-                logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
+                logger.warning(f"processes count not specified, use {processes_count} by default.")
 
         sys.argv.pop(processes_index)
         run_locusts_with_processes(sys.argv, processes_count)
