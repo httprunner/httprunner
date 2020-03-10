@@ -596,24 +596,23 @@ def dump_json_file(json_data, json_file_abs_path):
 def prepare_dump_json_file_abs_path(project_mapping, tag_name):
     """ prepare dump json file absolute path.
     """
-    pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
+    current_working_dir = os.getcwd()
     test_path = project_mapping.get("test_path")
 
     if not test_path:
         # running passed in testcase/testsuite data structure
         dump_file_name = f"tests_mapping.{tag_name}.json"
-        dumped_json_file_abs_path = os.path.join(pwd_dir_path, "logs", dump_file_name)
+        dumped_json_file_abs_path = os.path.join(current_working_dir, "logs", dump_file_name)
         return dumped_json_file_abs_path
 
     # both test_path and pwd_dir_path are absolute path
-    logs_dir_path = os.path.join(pwd_dir_path, "logs")
-    test_path_relative_path = test_path[len(pwd_dir_path)+1:]
+    logs_dir_path = os.path.join(current_working_dir, "logs")
 
     if os.path.isdir(test_path):
-        file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)
+        file_foder_path = os.path.join(logs_dir_path, test_path)
         dump_file_name = f"all.{tag_name}.json"
     else:
-        file_relative_folder_path, test_file = os.path.split(test_path_relative_path)
+        file_relative_folder_path, test_file = os.path.split(test_path)
         file_foder_path = os.path.join(logs_dir_path, file_relative_folder_path)
         test_file_name, _file_suffix = os.path.splitext(test_file)
         dump_file_name = f"{test_file_name}.{tag_name}.json"
