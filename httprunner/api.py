@@ -50,7 +50,6 @@ class HttpRunner(object):
         self.test_loader = unittest.TestLoader()
         self.save_tests = save_tests
         self._summary = None
-        self.project_working_directory = None
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
@@ -194,7 +193,6 @@ class HttpRunner(object):
         """
         capture_message("start to run tests")
         project_mapping = tests_mapping.get("project_mapping", {})
-        self.project_working_directory = project_mapping.get("PWD", os.getcwd())
 
         if self.save_tests:
             utils.dump_logs(tests_mapping, project_mapping, "loaded")
