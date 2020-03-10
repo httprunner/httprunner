@@ -8,6 +8,7 @@
 - remove support for Python 2.7
 - replace string format with f-string
 - remove dependency colorama and colorlog
+- generate reports folder in current working directory
 
 ## 2.5.7 (2020-02-21)
 
