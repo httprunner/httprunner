@@ -53,9 +53,6 @@ def main():
         '--startproject',
         help="Specify new project name.")
     parser.add_argument(
-        '--validate', nargs='*',
-        help="Validate YAML/JSON api/testcase/testsuite format.")
-    parser.add_argument(
         '--prettify', nargs='*',
         help="Prettify JSON testcase format.")
 
@@ -68,18 +65,6 @@ def main():
 
     if args.version:
         print(f"{__version__}")
-        sys.exit(0)
-
-    if args.validate:
-        for validate_path in args.validate:
-            try:
-                logger.info(f"validate test file: {validate_path}")
-                load_cases(validate_path, args.dot_env_path)
-            except exceptions.MyBaseError as ex:
-                logger.error(str(ex))
-                continue
-
-        logger.info("done!")
         sys.exit(0)
 
     if args.prettify:

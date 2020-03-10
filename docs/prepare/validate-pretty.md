@@ -1,40 +1,5 @@
 
-HttpRunner 从 `1.3.1` 版本开始，支持对 JSON 格式测试用例的内容进行格式正确性检测和样式美化功能。
-
-## JSON 格式正确性检测
-
-若需对 JSON 格式用例文件的内容进行正确性检测，可使用 `--validate` 参数。
-
-可指定单个 JSON 用例文件路径。
-
-```bash
-$ hrun --validate docs/data/demo-quickstart.json
-Start to validate JSON file: docs/data/demo-quickstart.json
-OK
-```
-
-也可指定多个 JSON 用例文件路径。
-
-```bash
-$ hrun --validate docs/data/demo-quickstart.json docs/data/demo-quickstart.yml docs/data/demo-quickstart-0.json
-Start to validate JSON file: docs/data/demo-quickstart.json
-OK
-WARNING  Only JSON file format can be validated, skip docs/data/demo-quickstart.yml
-Start to validate JSON file: docs/data/demo-quickstart-0.json
-OK
-```
-
-如上所示，当传入的文件后缀不是`.json`，HttpRunner 会打印 WARNING 信息，并跳过检测。
-
-若 JSON 文件格式正确，则打印 OK。
-
-若 JSON 文件格式存在异常，则打印详细的报错信息，精确到错误在文件中出现的行和列。
-
-```bash
-$ hrun --validate docs/data/demo-quickstart.json
-Start to validate JSON file: docs/data/demo-quickstart.json
-Expecting ',' delimiter: line 5 column 13 (char 82)
-```
+HttpRunner 从 `1.3.1` 版本开始，支持对 JSON 格式测试用例的内容进行样式美化功能。
 
 ## JSON 格式美化
 
