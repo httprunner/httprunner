@@ -2,6 +2,10 @@
 
 ## 3.0.0 (2020-03-10)
 
+**Added**
+
+- feat: dump log for each testcase
+
 **Changed**
 
 - replace logging with [loguru](https://github.com/Delgan/loguru)
