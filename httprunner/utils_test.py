@@ -278,30 +278,23 @@ class TestUtils(unittest.TestCase):
 
     def test_prepare_dump_json_file_path_for_folder(self):
         # hrun tests/httpbin/a.b.c/ --save-tests
-        project_mapping = {
-            "test_path": os.path.join("tests", "httpbin", "a.b.c")
-        }
+        test_path = os.path.join("tests", "httpbin", "a.b.c")
         self.assertEqual(
-            utils.prepare_log_file_abs_path(project_mapping, "loaded"),
+            utils.prepare_log_file_abs_path(test_path, "loaded.json"),
             os.path.join(os.getcwd(), "logs", "tests/httpbin/a.b.c/all.loaded.json")
         )
 
     def test_prepare_dump_json_file_path_for_file(self):
         # hrun tests/httpbin/a.b.c/rpc.yml --save-tests
-        project_mapping = {
-            "test_path": os.path.join("tests", "httpbin", "a.b.c", "rpc.yml")
-        }
+        test_path = os.path.join("tests", "httpbin", "a.b.c", "rpc.yml")
         self.assertEqual(
-            utils.prepare_log_file_abs_path(project_mapping, "loaded"),
+            utils.prepare_log_file_abs_path(test_path, "loaded.json"),
             os.path.join(os.getcwd(), "logs", "tests/httpbin/a.b.c/rpc.loaded.json")
         )
 
     def test_prepare_dump_json_file_path_for_passed_testcase(self):
-        project_working_directory = os.path.join(os.getcwd(), "tests")
-        project_mapping = {
-            "PWD": project_working_directory
-        }
+        test_path = ""
         self.assertEqual(
-            utils.prepare_log_file_abs_path(project_mapping, "loaded"),
+            utils.prepare_log_file_abs_path(test_path, "loaded.json"),
             os.path.join(os.getcwd(), "logs", "tests_mapping.loaded.json")
         )
