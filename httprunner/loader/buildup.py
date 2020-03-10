@@ -419,7 +419,7 @@ def load_project_data(test_path, dot_env_path=None):
     # locate PWD and load debugtalk.py functions
     project_mapping["PWD"] = project_working_directory
     project_mapping["functions"] = debugtalk_functions
-    project_mapping["test_path"] = os.path.abspath(test_path)
+    project_mapping["test_path"] = os.path.abspath(test_path)[len(project_working_directory)+1:]
 
     return project_mapping
 
