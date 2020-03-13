@@ -5,14 +5,17 @@
 **Added**
 
 - feat: dump log for each testcase
+- feat: add default header `HRUN-Request-ID` for each testcase #721
 
 **Changed**
 
-- replace logging with [loguru](https://github.com/Delgan/loguru)
 - remove support for Python 2.7
+- replace logging with [loguru](https://github.com/Delgan/loguru)
 - replace string format with f-string
 - remove dependency colorama and colorlog
 - generate reports/logs folder in current working directory
+- remove cli `--validate`
+- remove cli `--pretty`
 
 ## 2.5.7 (2020-02-21)
 

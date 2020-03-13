@@ -1,5 +1,4 @@
-# encoding: utf-8
-
+import uuid
 from enum import Enum
 from unittest.case import SkipTest
 
@@ -72,6 +71,12 @@ class Runner(object):
         self.verify = config.get("verify", True)
         self.export = config.get("export") or config.get("output", [])
         config_variables = config.get("variables", {})
+
+        self.hrun_request_id = str(uuid.uuid4())
+        if "HRUN-Request-ID" not in config_variables:
+            config_variables["HRUN-Request-ID"] = self.hrun_request_id
+        else:
+            self.hrun_request_id = config_variables["HRUN-Request-ID"]
 
         # testcase setup hooks
         testcase_setup_hooks = config.get("setup_hooks", [])
@@ -221,6 +226,11 @@ class Runner(object):
         url = parsed_test_request.pop('url')
         base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
         parsed_url = utils.build_url(base_url, url)
+
+        request_headers = parsed_test_request.setdefault("headers", {})
+        if "HRUN-Request-ID" not in request_headers:
+            parsed_test_request["headers"]["HRUN-Request-ID"] = \
+                self.session_context.session_variables_mapping["HRUN-Request-ID"]
 
         try:
             method = parsed_test_request.pop('method')

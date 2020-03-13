@@ -50,7 +50,7 @@ class HttpRunner(object):
         self.test_loader = unittest.TestLoader()
         self.save_tests = save_tests
         self._summary = None
-        self.project_mapping = None
+        self.test_path = None
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
@@ -139,7 +139,7 @@ class HttpRunner(object):
             log_handler = None
             if self.save_tests:
                 logs_file_abs_path = utils.prepare_log_file_abs_path(
-                    self.project_mapping, f"testcase_{index+1}.log"
+                    self.test_path, f"testcase_{index+1}.log"
                 )
                 log_handler = logger.add(logs_file_abs_path, level="DEBUG")
 
@@ -197,10 +197,11 @@ class HttpRunner(object):
 
             if self.save_tests:
                 logs_file_abs_path = utils.prepare_log_file_abs_path(
-                    self.project_mapping, f"testcase_{index + 1}.log"
+                    self.test_path, f"testcase_{index+1}.log"
                 )
                 testcase_summary["log"] = logs_file_abs_path
 
+            testcase_summary["HRUN-Request-ID"] = testcase.runner.hrun_request_id
             summary["details"].append(testcase_summary)
 
         return summary
@@ -209,10 +210,13 @@ class HttpRunner(object):
         """ run testcase/testsuite data
         """
         capture_message("start to run tests")
-        self.project_mapping = tests_mapping.get("project_mapping", {})
+        self.test_path = tests_mapping.get("project_mapping", {}).get("test_path", "")
 
         if self.save_tests:
-            utils.dump_logs(tests_mapping, self.project_mapping, "loaded")
+            utils.dump_json_file(
+                tests_mapping,
+                utils.prepare_log_file_abs_path(self.test_path, "loaded.json")
+            )
 
         # parse tests
         self.exception_stage = "parse tests"
@@ -220,14 +224,20 @@ class HttpRunner(object):
         parse_failed_testfiles = parser.get_parse_failed_testfiles()
         if parse_failed_testfiles:
             logger.warning("parse failures occurred ...")
-            utils.dump_logs(parse_failed_testfiles, self.project_mapping, "parse_failed")
+            utils.dump_json_file(
+                parse_failed_testfiles,
+                utils.prepare_log_file_abs_path(self.test_path, "parse_failed.json")
+            )
 
         if len(parsed_testcases) == 0:
             logger.error("failed to parse all cases, abort.")
             raise exceptions.ParseTestsFailure
 
         if self.save_tests:
-            utils.dump_logs(parsed_testcases, self.project_mapping, "parsed")
+            utils.dump_json_file(
+                parsed_testcases,
+                utils.prepare_log_file_abs_path(self.test_path, "parsed.json")
+            )
 
         # add tests to test suite
         self.exception_stage = "add tests to test suite"
@@ -246,10 +256,16 @@ class HttpRunner(object):
         report.stringify_summary(self._summary)
 
         if self.save_tests:
-            utils.dump_logs(self._summary, self.project_mapping, "summary")
+            utils.dump_json_file(
+                self._summary,
+                utils.prepare_log_file_abs_path(self.test_path, "summary.json")
+            )
             # save variables and export data
             vars_out = self.get_vars_out()
-            utils.dump_logs(vars_out, self.project_mapping, "io")
+            utils.dump_json_file(
+                vars_out,
+                utils.prepare_log_file_abs_path(self.test_path, "io.json")
+            )
 
         return self._summary
 

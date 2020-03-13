@@ -5,12 +5,10 @@ import sys
 import sentry_sdk
 from loguru import logger
 
-from httprunner import __description__, __version__, exceptions
+from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
-from httprunner.loader import load_cases
 from httprunner.report import gen_html_report
-from httprunner.utils import (create_scaffold,
-                              prettify_json_file, init_sentry_sdk)
+from httprunner.utils import create_scaffold, init_sentry_sdk
 
 init_sentry_sdk()
 
@@ -52,12 +50,6 @@ def main():
     parser.add_argument(
         '--startproject',
         help="Specify new project name.")
-    parser.add_argument(
-        '--validate', nargs='*',
-        help="Validate YAML/JSON api/testcase/testsuite format.")
-    parser.add_argument(
-        '--prettify', nargs='*',
-        help="Prettify JSON testcase format.")
 
     args = parser.parse_args()
 
@@ -68,22 +60,6 @@ def main():
 
     if args.version:
         print(f"{__version__}")
-        sys.exit(0)
-
-    if args.validate:
-        for validate_path in args.validate:
-            try:
-                logger.info(f"validate test file: {validate_path}")
-                load_cases(validate_path, args.dot_env_path)
-            except exceptions.MyBaseError as ex:
-                logger.error(str(ex))
-                continue
-
-        logger.info("done!")
-        sys.exit(0)
-
-    if args.prettify:
-        prettify_json_file(args.prettify)
         sys.exit(0)
 
     project_name = args.startproject
