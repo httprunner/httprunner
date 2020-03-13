@@ -8,6 +8,7 @@ import json
 import os.path
 import re
 import uuid
+from typing import Union
 
 import sentry_sdk
 from loguru import logger
@@ -514,33 +515,6 @@ def gen_cartesian_product(*args):
     return product_list
 
 
-def prettify_json_file(file_list):
-    """ prettify JSON testcase format
-    """
-    for json_file in set(file_list):
-        if not json_file.endswith(".json"):
-            logger.warning(f"Only JSON file format can be prettified, skip: {json_file}")
-            continue
-
-        logger.info(f"Start to prettify JSON file: {json_file}")
-
-        dir_path = os.path.dirname(json_file)
-        file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
-        outfile = os.path.join(dir_path, f"{file_name}.pretty.json")
-
-        with io.open(json_file, 'r', encoding='utf-8') as stream:
-            try:
-                obj = json.load(stream)
-            except ValueError as e:
-                raise SystemExit(e)
-
-        with io.open(outfile, 'w', encoding='utf-8') as out:
-            json.dump(obj, out, indent=4, separators=(',', ': '))
-            out.write('\n')
-
-        print(f"success: {outfile}")
-
-
 def omit_long_data(body, omit_len=512):
     """ omit too long str/bytes
     """
@@ -560,7 +534,7 @@ def omit_long_data(body, omit_len=512):
     return omitted_body + appendix_str
 
 
-def dump_json_file(json_data, json_file_abs_path):
+def dump_json_file(json_data: Union[dict, list], json_file_abs_path: str) -> None:
     """ dump json data to file
     """
     class PythonObjectEncoder(json.JSONEncoder):
@@ -593,11 +567,10 @@ def dump_json_file(json_data, json_file_abs_path):
         logger.error(msg)
 
 
-def prepare_log_file_abs_path(project_mapping, file_name):
+def prepare_log_file_abs_path(test_path: str, file_name: str) -> str:
     """ prepare dump json file absolute path.
     """
     current_working_dir = os.getcwd()
-    test_path = project_mapping.get("test_path")
 
     if not test_path:
         # running passed in testcase/testsuite data structure
@@ -619,17 +592,3 @@ def prepare_log_file_abs_path(project_mapping, file_name):
 
     dumped_json_file_abs_path = os.path.join(file_foder_path, dump_file_name)
     return dumped_json_file_abs_path
-
-
-def dump_logs(json_data, project_mapping, tag_name):
-    """ dump tests data to json file.
-        the dumped file is located in PWD/logs folder.
-
-    Args:
-        json_data (list/dict): json data to dump
-        project_mapping (dict): project info
-        tag_name (str): tag name, loaded/parsed/summary
-
-    """
-    json_file_abs_path = prepare_log_file_abs_path(project_mapping, f"{tag_name}.json")
-    dump_json_file(json_data, json_file_abs_path)
