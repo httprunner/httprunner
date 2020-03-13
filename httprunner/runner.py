@@ -75,6 +75,8 @@ class Runner(object):
         self.hrun_request_id = str(uuid.uuid4())
         if "HRUN-Request-ID" not in config_variables:
             config_variables["HRUN-Request-ID"] = self.hrun_request_id
+        else:
+            self.hrun_request_id = config_variables["HRUN-Request-ID"]
 
         # testcase setup hooks
         testcase_setup_hooks = config.get("setup_hooks", [])
