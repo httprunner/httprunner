@@ -5,6 +5,7 @@
 **Added**
 
 - feat: dump log for each testcase
+- feat: add default header `HRUN-Request-ID` for each testcase #721
 
 **Changed**
 
