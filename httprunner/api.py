@@ -3,7 +3,6 @@ import sys
 import unittest
 
 from loguru import logger
-from sentry_sdk import capture_message
 
 from httprunner import (__version__, exceptions, loader, parser,
                         report, runner, utils)
@@ -209,7 +208,6 @@ class HttpRunner(object):
     def run_tests(self, tests_mapping):
         """ run testcase/testsuite data
         """
-        capture_message("start to run tests")
         self.test_path = tests_mapping.get("project_mapping", {}).get("test_path", "")
 
         if self.save_tests:
