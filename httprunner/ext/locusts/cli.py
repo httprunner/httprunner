@@ -21,9 +21,6 @@ import sys
 from loguru import logger
 
 from httprunner import __version__
-from httprunner.utils import init_sentry_sdk
-
-init_sentry_sdk()
 
 
 def parse_locustfile(file_path):

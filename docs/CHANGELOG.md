@@ -16,6 +16,7 @@
 - generate reports/logs folder in current working directory
 - remove cli `--validate`
 - remove cli `--pretty`
+- remove sentry sdk
 
 ## 2.5.7 (2020-02-21)
 
