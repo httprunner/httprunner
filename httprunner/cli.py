@@ -2,15 +2,12 @@ import argparse
 import os
 import sys
 
-import sentry_sdk
 from loguru import logger
 
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.report import gen_html_report
-from httprunner.utils import create_scaffold, init_sentry_sdk
-
-init_sentry_sdk()
+from httprunner.utils import create_scaffold
 
 
 def main():
@@ -88,7 +85,6 @@ def main():
             err_code |= (0 if summary and summary["success"] else 1)
     except Exception as ex:
         logger.error(f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}")
-        sentry_sdk.capture_exception(ex)
         err_code = 1
 
     sys.exit(err_code)
