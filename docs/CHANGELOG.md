@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.1 (2020-03-24)
+
+**Changed**
+
+- remove sentry sdk
+
 ## 3.0.0 (2020-03-10)
 
 **Added**
@@ -16,7 +22,6 @@
 - generate reports/logs folder in current working directory
 - remove cli `--validate`
 - remove cli `--pretty`
-- remove sentry sdk
 
 ## 2.5.7 (2020-02-21)
 
