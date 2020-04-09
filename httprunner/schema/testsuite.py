@@ -1,8 +1,15 @@
-from typing import List
+from typing import List, Text
 
 from pydantic import BaseModel
 
-from httprunner.schema import common, TestCase
+from httprunner.schema import common
+
+
+class TestCase(BaseModel):
+    name: common.Name
+    testcase: Text
+    weight: int = 1
+    variables: common.Variables = {}
 
 
 class TestSuite(BaseModel):
