@@ -24,9 +24,9 @@
                 "os_platform": "ios",
                 "user_agent": "iOS/10.3"
             },
-            "extract": [
-                {"session_token": "content.token"}
-            ],
+            "extract": {
+                "session_token": "content.token"
+            },
             "validate": [
                 {"eq": ["status_code", 200]},
                 {"len_eq": ["content.token", 16]}

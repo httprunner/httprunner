@@ -1,70 +1,43 @@
-import io
-import json
 import os
-import platform
 
-import jsonschema
 from loguru import logger
+from pydantic import ValidationError
 
 from httprunner import exceptions
-
-schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
-common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
-api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
-testcase_schema_path = os.path.join(schemas_root_dir, "testcase.schema.json")
-testsuite_schema_path = os.path.join(schemas_root_dir, "testsuite.schema.json")
-
-with io.open(api_schema_path, encoding='utf-8') as f:
-    api_schema = json.load(f)
-
-with io.open(common_schema_path, encoding='utf-8') as f:
-    if platform.system() == "Windows":
-        absolute_base_path = 'file:///' + os.path.abspath(schemas_root_dir).replace("\\", "/") + '/'
-    else:
-        # Linux, Darwin
-        absolute_base_path = "file://" + os.path.abspath(schemas_root_dir) + "/"
-
-    common_schema = json.load(f)
-    resolver = jsonschema.RefResolver(absolute_base_path, common_schema)
-
-with io.open(testcase_schema_path, encoding='utf-8') as f:
-    testcase_schema = json.load(f)
-
-with io.open(testsuite_schema_path, encoding='utf-8') as f:
-    testsuite_schema = json.load(f)
+from httprunner.schema import Api, TestCase, TestSuite
 
 
 class JsonSchemaChecker(object):
 
     @staticmethod
-    def validate_format(content, scheme):
-        """ check api/testcase/testsuite format if valid
-        """
-        try:
-            jsonschema.validate(content, scheme, resolver=resolver)
-        except jsonschema.exceptions.ValidationError as ex:
-            logger.error(str(ex))
-            raise exceptions.FileFormatError
-
-        return True
-
-    @staticmethod
     def validate_api_format(content):
         """ check api format if valid
         """
-        return JsonSchemaChecker.validate_format(content, api_schema)
+        try:
+            Api.parse_obj(content)
+        except ValidationError as ex:
+            logger.error(ex)
+            raise exceptions.FileFormatError
 
     @staticmethod
     def validate_testcase_format(content):
         """ check testcase format if valid
         """
-        return JsonSchemaChecker.validate_format(content, testcase_schema)
+        try:
+            TestCase.parse_obj(content)
+        except ValidationError as ex:
+            logger.error(ex)
+            raise exceptions.FileFormatError
 
     @staticmethod
     def validate_testsuite_format(content):
         """ check testsuite format if valid
         """
-        return JsonSchemaChecker.validate_format(content, testsuite_schema)
+        try:
+            TestSuite.parse_obj(content)
+        except ValidationError as ex:
+            logger.error(ex)
+            raise exceptions.FileFormatError
 
 
 def is_test_path(path):

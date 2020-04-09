@@ -277,7 +277,7 @@ def load_test_file(path: str) -> dict:
         loaded_content["type"] = "testsuite"
 
     elif "teststeps" in raw_content:
-        # file_type: testcase (format version 2)
+        # file_type: testcase
         loaded_content = load_testcase(raw_content)
         loaded_content["path"] = path
         loaded_content["type"] = "testcase"
@@ -329,12 +329,12 @@ def load_project_data(test_path, dot_env_path=None):
     # locate PWD and load debugtalk.py functions
     project_mapping["PWD"] = project_working_directory
     project_mapping["functions"] = debugtalk_functions
-    project_mapping["test_path"] = os.path.abspath(test_path)[len(project_working_directory)+1:]
+    project_mapping["test_path"] = os.path.abspath(test_path)[len(project_working_directory) + 1:]
 
     return project_mapping
 
 
-def load_cases(path, dot_env_path=None):
+def load_cases(path: str, dot_env_path: str = None):
     """ load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:

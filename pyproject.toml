@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "3.0.1"
+version = "3.0.2"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -36,7 +36,6 @@ jinja2 = "^2.10.3"
 har2case = "^0.3.1"
 filetype = "^1.0.5"
 jsonpath = "^0.82"
-jsonschema = "^3.2.0"
 pydantic = "^1.4"
 loguru = "^0.4.1"
 
