@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.2 (2020-04-09)
+
+**Changed**
+
+- remove compatibility with testcase format v1
+
 ## 3.0.1 (2020-03-24)
 
 **Changed**

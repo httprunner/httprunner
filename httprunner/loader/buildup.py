@@ -78,11 +78,8 @@ def __extend_with_testcase_ref(raw_testinfo):
         )
         loaded_testcase = load_file(testcase_path)
 
-        if isinstance(loaded_testcase, list):
-            # make compatible with version < 2.2.0
-            testcase_dict = load_testcase(loaded_testcase)
-        elif isinstance(loaded_testcase, dict) and "teststeps" in loaded_testcase:
-            # format version 2, implemented in 2.2.0
+        # TODO: validate with pydantic
+        if isinstance(loaded_testcase, dict) and "teststeps" in loaded_testcase:
             testcase_dict = load_testcase_v2(loaded_testcase)
         else:
             raise exceptions.FileFormatError(
@@ -145,57 +142,6 @@ def load_teststep(raw_testinfo):
         pass
 
     return raw_testinfo
-
-
-def load_testcase(raw_testcase):
-    """ load testcase with api/testcase references.
-
-    Args:
-        raw_testcase (list): raw testcase content loaded from JSON/YAML file:
-            [
-                # config part
-                {
-                    "config": {
-                        "name": "XXXX",
-                        "base_url": "https://debugtalk.com"
-                    }
-                },
-                # teststeps part
-                {
-                    "test": {...}
-                },
-                {
-                    "test": {...}
-                }
-            ]
-
-    Returns:
-        dict: loaded testcase content
-            {
-                "config": {},
-                "teststeps": [test11, test12]
-            }
-
-    """
-    JsonSchemaChecker.validate_testcase_v1_format(raw_testcase)
-    config = {}
-    tests = []
-
-    for item in raw_testcase:
-        key, test_block = item.popitem()
-        if key == "config":
-            config.update(test_block)
-        elif key == "test":
-            tests.append(load_teststep(test_block))
-        else:
-            logger.warning(
-                f"unexpected block key: {key}. block key should only be 'config' or 'test'."
-            )
-
-    return {
-        "config": config,
-        "teststeps": tests
-    }
 
 
 def load_testcase_v2(raw_testcase):
@@ -311,7 +257,7 @@ def load_testsuite(raw_testsuite):
     return raw_testsuite
 
 
-def load_test_file(path):
+def load_test_file(path: str) -> dict:
     """ load test file, file maybe testcase/testsuite/api
 
     Args:
@@ -347,37 +293,28 @@ def load_test_file(path):
     """
     raw_content = load_file(path)
 
-    if isinstance(raw_content, dict):
+    if not isinstance(raw_content, dict):
+        # invalid format
+        raise exceptions.FileFormatError("Invalid test file format!")
 
-        if "testcases" in raw_content:
-            # file_type: testsuite
-            loaded_content = load_testsuite(raw_content)
-            loaded_content["path"] = path
-            loaded_content["type"] = "testsuite"
+    if "testcases" in raw_content:
+        # file_type: testsuite
+        loaded_content = load_testsuite(raw_content)
+        loaded_content["path"] = path
+        loaded_content["type"] = "testsuite"
 
-        elif "teststeps" in raw_content:
-            # file_type: testcase (format version 2)
-            loaded_content = load_testcase_v2(raw_content)
-            loaded_content["path"] = path
-            loaded_content["type"] = "testcase"
-
-        elif "request" in raw_content:
-            # file_type: api
-            JsonSchemaChecker.validate_api_format(raw_content)
-            loaded_content = raw_content
-            loaded_content["path"] = path
-            loaded_content["type"] = "api"
-
-        else:
-            # invalid format
-            raise exceptions.FileFormatError("Invalid test file format!")
-
-    elif isinstance(raw_content, list) and len(raw_content) > 0:
-        # file_type: testcase
-        # make compatible with version < 2.2.0
-        loaded_content = load_testcase(raw_content)
+    elif "teststeps" in raw_content:
+        # file_type: testcase (format version 2)
+        loaded_content = load_testcase_v2(raw_content)
         loaded_content["path"] = path
         loaded_content["type"] = "testcase"
+
+    elif "request" in raw_content:
+        # file_type: api
+        JsonSchemaChecker.validate_api_format(raw_content)
+        loaded_content = raw_content
+        loaded_content["path"] = path
+        loaded_content["type"] = "api"
 
     else:
         # invalid format
