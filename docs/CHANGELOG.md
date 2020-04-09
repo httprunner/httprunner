@@ -4,7 +4,7 @@
 
 **Changed**
 
-- remove compatibility with testcase format v1
+- remove compatibility with testcase/testsuite format v1
 
 ## 3.0.1 (2020-03-24)
 
