@@ -80,7 +80,7 @@ def __extend_with_testcase_ref(raw_testinfo):
 
         # TODO: validate with pydantic
         if isinstance(loaded_testcase, dict) and "teststeps" in loaded_testcase:
-            testcase_dict = load_testcase_v2(loaded_testcase)
+            testcase_dict = load_testcase(loaded_testcase)
         else:
             raise exceptions.FileFormatError(
                 f"Invalid format testcase: {testcase_path}")
@@ -144,8 +144,8 @@ def load_teststep(raw_testinfo):
     return raw_testinfo
 
 
-def load_testcase_v2(raw_testcase):
-    """ load testcase in format version 2.
+def load_testcase(raw_testcase):
+    """ load testcase.
 
     Args:
         raw_testcase (dict): raw testcase content loaded from JSON/YAML file:
@@ -174,7 +174,7 @@ def load_testcase_v2(raw_testcase):
             }
 
     """
-    JsonSchemaChecker.validate_testcase_v2_format(raw_testcase)
+    JsonSchemaChecker.validate_testcase_format(raw_testcase)
     raw_teststeps = raw_testcase.pop("teststeps")
     raw_testcase["teststeps"] = [
         load_teststep(teststep)
@@ -220,7 +220,7 @@ def load_testsuite(raw_testsuite):
         # invalid format
         raise exceptions.FileFormatError("Invalid testsuite format!")
 
-    JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
+    JsonSchemaChecker.validate_testsuite_format(raw_testsuite)
     raw_testsuite["testcases"] = {}
     for raw_testcase in raw_testcases:
         __extend_with_testcase_ref(raw_testcase)
@@ -278,7 +278,7 @@ def load_test_file(path: str) -> dict:
 
     elif "teststeps" in raw_content:
         # file_type: testcase (format version 2)
-        loaded_content = load_testcase_v2(raw_content)
+        loaded_content = load_testcase(raw_content)
         loaded_content["path"] = path
         loaded_content["type"] = "testcase"
 
