@@ -13,7 +13,8 @@ class ProjectMeta(BaseModel):
 
 class TestStep(BaseModel):
     name: common.Name
-    request: common.Request
+    api: str = None     # TODO: replace with FilePath
+    request: common.Request = None
     extract: Dict[str, str] = {}
     validation: common.Validate = Field([], alias="validate")
 

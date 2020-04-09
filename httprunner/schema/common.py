@@ -1,11 +1,11 @@
 from enum import Enum
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any
 
 from pydantic import BaseModel, HttpUrl, Field
 
 Name = str
-Url = HttpUrl
-BaseUrl = str
+Url = str
+BaseUrl = HttpUrl
 Variables = Dict[str, Any]
 Headers = Dict[str, str]
 Verify = bool
