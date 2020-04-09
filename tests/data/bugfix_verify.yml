@@ -1,9 +1,10 @@
-- config:
+config:
     name: basic test with httpbin
     base_url: https://httpbin.org/
     verify: False
 
-- test:
+teststeps:
+-
     name: headers
     request:
         url: /headers

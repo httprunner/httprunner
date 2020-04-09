@@ -45,7 +45,7 @@
         - eq: ["status_code", 200]
 ```
 
-参考案例：[httprunner/tests/httpbin/upload.v2.yml][2]
+参考案例：[httprunner/tests/httpbin/upload.yml][2]
 
 [1]: https://toolbelt.readthedocs.io/en/latest/uploading-data.html
-[2]: https://github.com/httprunner/httprunner/blob/master/tests/httpbin/upload.v2.yml
+[2]: https://github.com/httprunner/httprunner/blob/master/tests/httpbin/upload.yml

@@ -1,8 +1,9 @@
-- config:
+config:
     name: basic test with httpbin
     base_url: http://httpbin.org/
 
-- test:
+teststeps:
+-
     name: validate response with json path
     request:
         url: /get
@@ -18,7 +19,7 @@
         - "assert status_code == 200"
 
 
-- test:
+-
     name: validate response with python script
     request:
         url: /get

@@ -1,8 +1,9 @@
-- config:
+config:
     name: "bugfix testcases."
     base_url: http://127.0.0.1:5000
 
-- test:
+teststeps:
+-
     name: bugfix type_match #84
     request:
         url: http://127.0.0.1:5000/api/users/1000

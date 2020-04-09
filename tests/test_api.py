@@ -14,12 +14,6 @@ class TestHttpRunner(ApiServerUnittest):
 
     def setUp(self):
         self.testcase_cli_path = "tests/data/demo_testcase_cli.yml"
-        self.testcase_file_path_list = [
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.yml'),
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
-        ]
         testcases = [{
             'config': {
                 'name': 'testcase description',
@@ -223,17 +217,12 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("records", summary["details"][0])
 
     def test_run_yaml_upload(self):
-        upload_cases_list = [
-            "tests/httpbin/upload.yml",
-            "tests/httpbin/upload.v2.yml"
-        ]
-        for upload_case in upload_cases_list:
-            summary = self.runner.run(upload_case)
-            self.assertTrue(summary["success"])
-            self.assertEqual(summary["stat"]["testcases"]["total"], 1)
-            self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
-            self.assertIn("details", summary)
-            self.assertIn("records", summary["details"][0])
+        summary = self.runner.run("tests/httpbin/upload.yml")
+        self.assertTrue(summary["success"])
+        self.assertEqual(summary["stat"]["testcases"]["total"], 1)
+        self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
+        self.assertIn("details", summary)
+        self.assertIn("records", summary["details"][0])
 
     def test_run_post_data(self):
         testcases = [
@@ -470,14 +459,6 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["details"][1]["stat"]["total"], 1)
         self.assertEqual(summary["details"][2]["stat"]["total"], 1)
 
-    def test_run_testcase_hardcode(self):
-        for testcase_file_path in self.testcase_file_path_list:
-            summary = self.runner.run(testcase_file_path)
-            self.assertTrue(summary["success"])
-            self.assertEqual(summary["stat"]["testcases"]["total"], 1)
-            self.assertEqual(summary["stat"]["teststeps"]["total"], 3)
-            self.assertEqual(summary["stat"]["teststeps"]["successes"], 3)
-
     def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_variables.yml')
@@ -693,9 +674,7 @@ class TestApi(ApiServerUnittest):
     def test_testcase_complex_run_suite(self):
         for testcase_path in [
             "tests/testcases/create_user.yml",
-            "tests/testcases/create_user.v2.yml",
-            "tests/testcases/create_user.json",
-            "tests/testcases/create_user.v2.json"
+            "tests/testcases/create_user.json"
         ]:
             tests_mapping = loader.load_cases(testcase_path)
             testcases = parser.parse_tests(tests_mapping)

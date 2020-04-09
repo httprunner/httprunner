@@ -1,4 +1,4 @@
-- config:
+config:
     name: basic test with httpbin
     base_url: ${get_httpbin_server()}
     setup_hooks:
@@ -6,7 +6,8 @@
     teardown_hooks:
         - ${hook_print(teardown)}
 
-- test:
+teststeps:
+-
     name: headers
     request:
         url: /headers
@@ -20,7 +21,7 @@
         - eq: ["status_code", 200]
         - contained_by: [content.headers.Host, "${get_httpbin_server()}"]
 
-- test:
+-
     name: alter response
     request:
         url: /headers

@@ -1,4 +1,8 @@
-- test:
+config:
+    name: xxx
+
+teststeps:
+-
     name: get token
     request:
         url: http://127.0.0.1:5000/api/get-token
@@ -25,7 +29,7 @@
         - {"check": "status_code", "comparator": "sum_status_code", "expect": 2}
         - sum_status_code: ["status_code", 2]
 
-- test:
+-
     name: create user which does not exist
     request:
         url: http://127.0.0.1:5000/api/users/1000
@@ -47,7 +51,7 @@
         - {"check": "status_code", "comparator": "eq", "expect": 201}
         - {"check": "content.success", "comparator": "eq", "expect": true}
 
-- test:
+-
     name: create user which existed
     times: 2
     request:
@@ -67,7 +71,7 @@
         - {"check": "status_code", "comparator": "eq", "expect": 500}
         - {"check": "content.success", "comparator": "eq", "expect": false}
 
-- test:
+-
     name: create user which existed (skip unconditionally)
     skip: skip this test unconditionally
     times: 2
@@ -88,7 +92,7 @@
         - {"check": "status_code", "comparator": "eq", "expect": 500}
         - {"check": "content.success", "comparator": "eq", "expect": false}
 
-- test:
+-
     name: create user which existed (skip if condition)
     skipIf: ${skip_test_in_production_env()}
     times: 2
@@ -109,7 +113,7 @@
         - {"check": "status_code", "comparator": "eq", "expect": 500}
         - {"check": "content.success", "comparator": "eq", "expect": false}
 
-- test:
+-
     name: create user which existed (skip unless condition)
     skipUnless: ${skip_test_in_production_env()}
     times: 2

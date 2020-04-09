@@ -1,4 +1,4 @@
-- config:
+config:
     name: "setup and reset all."
     id: setup_and_reset
     variables:
@@ -11,7 +11,8 @@
     export:
         - session_token
 
-- test:
+teststeps:
+-
     name: get token (setup)
     api: api/get_token.yml
     variables:
@@ -24,8 +25,7 @@
     validate:
         - eq: ["status_code", 200]
         - len_eq: ["content.token", 16]
-
-- test:
+-
     name: reset all users
     api: api/reset_all.yml
     variables:

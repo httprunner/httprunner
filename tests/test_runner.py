@@ -25,23 +25,6 @@ class TestRunner(ApiServerUnittest):
         headers = self.get_authenticated_headers()
         return self.api_client.get(url, headers=headers)
 
-    def test_run_single_testcase(self):
-        testcase_file_path_list = [
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.yml'),
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
-        ]
-
-        for testcase_file_path in testcase_file_path_list:
-            tests_mapping = loader.load_cases(testcase_file_path)
-            parsed_testcases = parser.parse_tests(tests_mapping)
-            parsed_testcase = parsed_testcases[0]
-            test_runner = runner.Runner(parsed_testcase["config"])
-            test_runner.run_test(parsed_testcase["teststeps"][0])
-            test_runner.run_test(parsed_testcase["teststeps"][1])
-            test_runner.run_test(parsed_testcase["teststeps"][2])
-
     def test_run_testcase_with_hooks(self):
         start_time = time.time()
 
