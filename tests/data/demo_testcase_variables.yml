@@ -24,7 +24,7 @@ teststeps:
         json:
             sign: $sign
     extract:
-        - token: content.token
+        token: content.token
     validate:
         - {"check": "status_code", "comparator": "eq", "expect": 200}
         - {"check": "content.token", "comparator": "len_eq", "expect": 16}

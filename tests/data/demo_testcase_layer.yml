@@ -14,7 +14,7 @@ teststeps:
     name: get token with $user_agent, $app_version
     api: api/get_token.yml
     extract:
-        - token: content.token
+        token: content.token
     validate:
         - "eq": ["status_code", 200]
         - "len_eq": ["content.token", 16]
