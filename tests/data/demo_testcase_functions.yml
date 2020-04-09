@@ -21,7 +21,7 @@ teststeps:
         json:
             sign: ${get_sign($device_sn, $os_platform, $app_version)}
     extract:
-        - token: content.token
+        token: content.token
     validate:
         - {"check": "status_code", "comparator": "eq", "expect": 200}
         - {"check": "content.token", "comparator": "len_eq", "expect": 16}

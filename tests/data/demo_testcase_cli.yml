@@ -19,7 +19,7 @@ teststeps:
         expect_status_code: 200
         token_len: 16
     extract:
-        - token: content.token
+        token: content.token
     validate:
         - {"check": "status_code", "comparator": "eq", "expect": 200}
         - eq: ["status_code", $expect_status_code]
@@ -42,7 +42,7 @@ teststeps:
             name: "user1"
             password: "123456"
     extract:
-        - success: content.success
+        success: content.success
     validate:
         - eq: ["status_code", 201]
         - sum_status_code: ["status_code", 3]
