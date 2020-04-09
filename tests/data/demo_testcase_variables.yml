@@ -1,10 +1,11 @@
-- config:
+config:
     name: "create user testcases."
     variables:
         device_sn: 'HZfFBh6tU59EdXJ'
     base_url: ${get_base_url()}
 
-- test:
+teststeps:
+-
     name: get token
     variables:
         user_agent: 'iOS/10.3'
@@ -28,7 +29,7 @@
         - {"check": "status_code", "comparator": "eq", "expect": 200}
         - {"check": "content.token", "comparator": "len_eq", "expect": 16}
 
-- test:
+-
     name: create user which does not exist
     variables:
         user_name: "user1"
@@ -47,7 +48,7 @@
         - {"check": "status_code", "comparator": "eq", "expect": 201}
         - {"check": "content.success", "comparator": "eq", "expect": true}
 
-- test:
+-
     name: create user which does not exist
     request:
         url: /api/users/1000

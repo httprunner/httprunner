@@ -62,28 +62,6 @@ class TestFileLoader(unittest.TestCase):
         with self.assertRaises(exceptions.FileNotFound):
             load.load_file(testcase_file_path)
 
-    def test_load_json_testcases(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
-        testcases = load.load_file(testcase_file_path)
-        self.assertEqual(len(testcases), 3)
-        test = testcases[0]["test"]
-        self.assertIn('name', test)
-        self.assertIn('request', test)
-        self.assertIn('url', test['request'])
-        self.assertIn('method', test['request'])
-
-    def test_load_yaml_testcases(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_hardcode.yml')
-        testcases = load.load_file(testcase_file_path)
-        self.assertEqual(len(testcases), 3)
-        test = testcases[0]["test"]
-        self.assertIn('name', test)
-        self.assertIn('request', test)
-        self.assertIn('url', test['request'])
-        self.assertIn('method', test['request'])
-
     def test_load_csv_file_one_parameter(self):
         csv_file_path = os.path.join(
             os.getcwd(), 'tests/data/user_agent.csv')

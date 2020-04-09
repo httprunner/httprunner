@@ -5,11 +5,12 @@ config:
     base_url: "http://127.0.0.1:5000"
 
 testcases:
-    create user $uid and check result for $device_sn.:
-        testcase: testcases/create_user.yml
-        variables:
-            uid: 1000
-            device_sn: TESTSUITE_XXX
-        parameters:
-            uid: [101, 102, 103]
-            device_sn: [TESTSUITE_X1, TESTSUITE_X2]
+-
+    name: create user $uid and check result for $device_sn.
+    testcase: testcases/create_user.yml
+    variables:
+        uid: 1000
+        device_sn: TESTSUITE_XXX
+    parameters:
+        uid: [101, 102, 103]
+        device_sn: [TESTSUITE_X1, TESTSUITE_X2]
