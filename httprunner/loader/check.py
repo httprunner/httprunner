@@ -11,8 +11,8 @@ from httprunner import exceptions
 schemas_root_dir = os.path.join(os.path.dirname(__file__), "schemas")
 common_schema_path = os.path.join(schemas_root_dir, "common.schema.json")
 api_schema_path = os.path.join(schemas_root_dir, "api.schema.json")
-testcase_schema_v2_path = os.path.join(schemas_root_dir, "testcase.schema.v2.json")
-testsuite_schema_v2_path = os.path.join(schemas_root_dir, "testsuite.schema.v2.json")
+testcase_schema_path = os.path.join(schemas_root_dir, "testcase.schema.json")
+testsuite_schema_path = os.path.join(schemas_root_dir, "testsuite.schema.json")
 
 with io.open(api_schema_path, encoding='utf-8') as f:
     api_schema = json.load(f)
@@ -27,11 +27,11 @@ with io.open(common_schema_path, encoding='utf-8') as f:
     common_schema = json.load(f)
     resolver = jsonschema.RefResolver(absolute_base_path, common_schema)
 
-with io.open(testcase_schema_v2_path, encoding='utf-8') as f:
-    testcase_schema_v2 = json.load(f)
+with io.open(testcase_schema_path, encoding='utf-8') as f:
+    testcase_schema = json.load(f)
 
-with io.open(testsuite_schema_v2_path, encoding='utf-8') as f:
-    testsuite_schema_v2 = json.load(f)
+with io.open(testsuite_schema_path, encoding='utf-8') as f:
+    testsuite_schema = json.load(f)
 
 
 class JsonSchemaChecker(object):
@@ -55,16 +55,16 @@ class JsonSchemaChecker(object):
         return JsonSchemaChecker.validate_format(content, api_schema)
 
     @staticmethod
-    def validate_testcase_v2_format(content):
-        """ check testcase format v2 if valid
+    def validate_testcase_format(content):
+        """ check testcase format if valid
         """
-        return JsonSchemaChecker.validate_format(content, testcase_schema_v2)
+        return JsonSchemaChecker.validate_format(content, testcase_schema)
 
     @staticmethod
-    def validate_testsuite_v2_format(content):
-        """ check testsuite format v2 if valid
+    def validate_testsuite_format(content):
+        """ check testsuite format if valid
         """
-        return JsonSchemaChecker.validate_format(content, testsuite_schema_v2)
+        return JsonSchemaChecker.validate_format(content, testsuite_schema)
 
 
 def is_test_path(path):
@@ -150,7 +150,7 @@ def is_test_content(data_structure):
         for item in testcases:
             is_testcase = False
             try:
-                JsonSchemaChecker.validate_testcase_v2_format(item)
+                JsonSchemaChecker.validate_testcase_format(item)
                 is_testcase = True
             except exceptions.FileFormatError:
                 pass
@@ -169,7 +169,7 @@ def is_test_content(data_structure):
         for item in testsuites:
             is_testcase = False
             try:
-                JsonSchemaChecker.validate_testsuite_v2_format(item)
+                JsonSchemaChecker.validate_testsuite_format(item)
                 is_testcase = True
             except exceptions.FileFormatError:
                 pass
