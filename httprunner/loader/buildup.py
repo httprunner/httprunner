@@ -189,23 +189,6 @@ def load_testsuite(raw_testsuite):
 
     Args:
         raw_testsuite (dict): raw testsuite content loaded from JSON/YAML file:
-            # version 1, compatible with version < 2.2.0
-            {
-                "config": {
-                    "name": "xxx",
-                    "variables": {}
-                }
-                "testcases": {
-                    "testcase1": {
-                        "testcase": "/path/to/testcase",
-                        "variables": {...},
-                        "parameters": {...}
-                    },
-                    "testcase2": {}
-                }
-            }
-
-            # version 2, implemented in 2.2.0
             {
                 "config": {
                     "name": "xxx",
@@ -232,27 +215,17 @@ def load_testsuite(raw_testsuite):
     """
     raw_testcases = raw_testsuite["testcases"]
 
-    if isinstance(raw_testcases, dict):
-        # format version 1, make compatible with version < 2.2.0
-        JsonSchemaChecker.validate_testsuite_v1_format(raw_testsuite)
-        raw_testsuite["testcases"] = {}
-        for name, raw_testcase in raw_testcases.items():
-            __extend_with_testcase_ref(raw_testcase)
-            raw_testcase.setdefault("name", name)
-            raw_testsuite["testcases"][name] = raw_testcase
-
-    elif isinstance(raw_testcases, list):
-        # format version 2, implemented in 2.2.0
-        JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
-        raw_testsuite["testcases"] = {}
-        for raw_testcase in raw_testcases:
-            __extend_with_testcase_ref(raw_testcase)
-            testcase_name = raw_testcase["name"]
-            raw_testsuite["testcases"][testcase_name] = raw_testcase
-
-    else:
+    # TODO: validate with pydantic
+    if not isinstance(raw_testcases, list):
         # invalid format
         raise exceptions.FileFormatError("Invalid testsuite format!")
+
+    JsonSchemaChecker.validate_testsuite_v2_format(raw_testsuite)
+    raw_testsuite["testcases"] = {}
+    for raw_testcase in raw_testcases:
+        __extend_with_testcase_ref(raw_testcase)
+        testcase_name = raw_testcase["name"]
+        raw_testsuite["testcases"][testcase_name] = raw_testcase
 
     return raw_testsuite
 
