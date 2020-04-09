@@ -1,22 +1,21 @@
 from enum import Enum
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Text
 
 from pydantic import BaseModel, HttpUrl, Field
 
-Name = str
-Url = str
+Name = Text
+Url = Text
 BaseUrl = HttpUrl
-Variables = Dict[str, Any]
-Headers = Dict[str, str]
+Variables = Dict[Text, Any]
+Headers = Dict[Text, Text]
 Verify = bool
-Hook = List[str]
-Export = List[str]
-Extract = Dict[str, str]
+Hook = List[Text]
+Export = List[Text]
 Validate = List[Dict]
-Env = Dict[str, Any]
+Env = Dict[Text, Any]
 
 
-class MethodEnum(str, Enum):
+class MethodEnum(Text, Enum):
     GET = 'GET'
     POST = 'POST'
     PUT = "PUT"
@@ -52,10 +51,10 @@ class TestsConfig(BaseModel):
 class Request(BaseModel):
     method: MethodEnum = MethodEnum.GET
     url: Url
-    params: Dict[str, str] = {}
+    params: Dict[Text, Text] = {}
     headers: Headers = {}
     req_json: Dict = Field({}, alias="json")
-    cookies: Dict[str, str] = {}
+    cookies: Dict[Text, Text] = {}
     timeout: int = 120
     allow_redirects: bool = True
     verify: Verify = False

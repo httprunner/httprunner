@@ -1,3 +1,5 @@
+from typing import Dict, Text
+
 from pydantic import BaseModel, Field
 
 from httprunner.schema import common
@@ -10,5 +12,5 @@ class Api(BaseModel):
     base_url: common.BaseUrl = ""
     setup_hooks: common.Hook = []
     teardown_hooks: common.Hook = []
-    extract: common.Extract = {}
+    extract: Dict[Text, Text] = {}
     validation: common.Validate = Field([], alias="validate")

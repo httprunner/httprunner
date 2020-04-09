@@ -1,4 +1,4 @@
-from typing import Dict, List, Text
+from typing import Dict, List, Text, Union
 
 from pydantic import BaseModel, Field
 
@@ -13,9 +13,10 @@ class ProjectMeta(BaseModel):
 
 class TestStep(BaseModel):
     name: common.Name
-    api: str = None     # TODO: replace with FilePath
+    api: Text = None     # TODO: replace with FilePath
+    testcase: Text = None
     request: common.Request = None
-    extract: Dict[str, str] = {}
+    extract: Union[Dict[Text, Text], List[Text]] = {}
     validation: common.Validate = Field([], alias="validate")
 
 
@@ -81,6 +82,3 @@ class TestCase(BaseModel):
                 }
             ]
         }
-
-
-TestCases = List[TestCase]

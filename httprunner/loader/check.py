@@ -17,7 +17,7 @@ class JsonSchemaChecker(object):
             Api.parse_obj(content)
         except ValidationError as ex:
             logger.error(ex)
-            raise exceptions.FileFormatError
+            raise exceptions.FileFormatError(ex)
 
     @staticmethod
     def validate_testcase_format(content):
@@ -27,7 +27,7 @@ class JsonSchemaChecker(object):
             TestCase.parse_obj(content)
         except ValidationError as ex:
             logger.error(ex)
-            raise exceptions.FileFormatError
+            raise exceptions.FileFormatError(ex)
 
     @staticmethod
     def validate_testsuite_format(content):
@@ -37,7 +37,7 @@ class JsonSchemaChecker(object):
             TestSuite.parse_obj(content)
         except ValidationError as ex:
             logger.error(ex)
-            raise exceptions.FileFormatError
+            raise exceptions.FileFormatError(ex)
 
 
 def is_test_path(path):
