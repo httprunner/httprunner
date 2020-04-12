@@ -1,6 +1,5 @@
 import io
 import os
-import shutil
 import unittest
 
 from httprunner import exceptions, loader, utils
@@ -209,17 +208,6 @@ class TestUtils(unittest.TestCase):
         self.assertNotEqual(id(new_data["b"]), id(data["b"]))
         self.assertEqual(id(new_data["c"]), id(data["c"]))
         # self.assertEqual(id(new_data["d"]), id(data["d"]))
-
-    def test_create_scaffold(self):
-        project_name = "projectABC"
-        utils.create_scaffold(project_name)
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "api")))
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "testcases")))
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "testsuites")))
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "reports")))
-        self.assertTrue(os.path.isfile(os.path.join(project_name, "debugtalk.py")))
-        self.assertTrue(os.path.isfile(os.path.join(project_name, ".env")))
-        shutil.rmtree(project_name)
 
     def test_cartesian_product_one(self):
         parameters_content_list = [

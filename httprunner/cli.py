@@ -6,64 +6,46 @@ from loguru import logger
 
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
+from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.report import gen_html_report
-from httprunner.utils import create_scaffold
 
 
-def main():
-    """ API test: parse command line options and run commands.
-    """
-    parser = argparse.ArgumentParser(description=__description__)
-    parser.add_argument(
-        '-V', '--version', dest='version', action='store_true',
-        help="show version")
-    parser.add_argument(
+def init_parser_run(subparsers):
+    sub_parser_run = subparsers.add_parser(
+        "run", help="Run HttpRunner testcases.")
+
+    sub_parser_run.add_argument(
         'testfile_paths', nargs='*',
         help="Specify api/testcase/testsuite file paths to run.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--log-level', default='INFO',
         help="Specify logging level, default is INFO.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--log-file',
         help="Write logs to specified file path.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--dot-env-path',
         help="Specify .env file path, which is useful for keeping sensitive data.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--report-template',
         help="Specify report template path.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--report-dir',
         help="Specify report save directory.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--report-file',
         help="Specify report file path, this has higher priority than specifying report dir.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--save-tests', action='store_true', default=False,
         help="Save loaded/parsed/vars_out/summary json data to JSON files.")
-    parser.add_argument(
+    sub_parser_run.add_argument(
         '--failfast', action='store_true', default=False,
         help="Stop the test run on the first error or failure.")
-    parser.add_argument(
-        '--startproject',
-        help="Specify new project name.")
 
-    args = parser.parse_args()
+    return sub_parser_run
 
-    if len(sys.argv) == 1:
-        # no argument passed
-        parser.print_help()
-        sys.exit(0)
 
-    if args.version:
-        print(f"{__version__}")
-        sys.exit(0)
-
-    project_name = args.startproject
-    if project_name:
-        create_scaffold(project_name)
-        sys.exit(0)
-
+def main_run(args):
     runner = HttpRunner(
         failfast=args.failfast,
         save_tests=args.save_tests,
@@ -88,6 +70,46 @@ def main():
         err_code = 1
 
     sys.exit(err_code)
+
+
+def main():
+    """ API test: parse command line options and run commands.
+    """
+    parser = argparse.ArgumentParser(description=__description__)
+    parser.add_argument(
+        '-V', '--version', dest='version', action='store_true',
+        help="show version")
+
+    subparsers = parser.add_subparsers(help='sub-command help')
+    sub_parser_run = init_parser_run(subparsers)
+    sub_parser_scaffold = init_parser_scaffold(subparsers)
+
+    args = parser.parse_args()
+
+    if args.version:
+        print(f"{__version__}")
+        sys.exit(0)
+
+    if len(sys.argv) == 1:
+        # hrun
+        parser.print_help()
+        sys.exit(0)
+
+    elif sys.argv[1] == "run":
+        # hrun run
+        if len(sys.argv) == 2:
+            sub_parser_run.print_help()
+            sys.exit(0)
+
+        main_run(args)
+
+    elif sys.argv[1] == "startproject":
+        # hrun startproject
+        if len(sys.argv) == 2:
+            sub_parser_scaffold.print_help()
+            sys.exit(0)
+
+        main_scaffold(args)
 
 
 if __name__ == '__main__':

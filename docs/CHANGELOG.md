@@ -1,11 +1,12 @@
 # Release History
 
-## 3.0.2 (2020-04-09)
+## 3.0.2 (2020-04-12)
 
 **Changed**
 
 - replace jsonschema validation with pydantic
 - remove compatibility with testcase/testsuite format v1
+- make `startproject` as hrun sub-command, usage: `hrun startproject <project_name>`
 
 ## 3.0.1 (2020-03-24)
 
