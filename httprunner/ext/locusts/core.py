@@ -5,17 +5,6 @@ import sys
 
 from loguru import logger
 
-try:
-    from locust import main as locust_main
-except ImportError:
-    msg = """
-Locust is not installed, install first and try again.
-install with pip:
-$ pip install locustio
-"""
-    logger.error(msg)
-    sys.exit(0)
-
 
 def parse_locustfile(file_path):
     """ parse testcase file and return locustfile path.
@@ -59,7 +48,8 @@ def gen_locustfile(testcase_file_path):
 
 def start_locust_main():
     logger.info(f"run command: {sys.argv}")
-    locust_main.main()
+    from locust.main import main
+    main()
 
 
 def start_master(sys_argv):
