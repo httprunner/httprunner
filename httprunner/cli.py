@@ -6,6 +6,7 @@ from loguru import logger
 
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
+from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.report import gen_html_report
 
@@ -83,6 +84,7 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help')
     sub_parser_run = init_parser_run(subparsers)
     sub_parser_scaffold = init_parser_scaffold(subparsers)
+    sub_parser_har2case = init_har2case_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -110,6 +112,14 @@ def main():
             sys.exit(0)
 
         main_scaffold(args)
+
+    elif sys.argv[1] == "har2case":
+        # hrun har2case
+        if len(sys.argv) == 2:
+            sub_parser_har2case.print_help()
+            sys.exit(0)
+
+        main_har2case(args)
 
 
 if __name__ == '__main__':
