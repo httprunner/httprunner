@@ -30,7 +30,10 @@ jobs:
         poetry build
         ls dist/*.whl | xargs pip install # test installation
         hrun -V
-        locusts -V
+        hrun run -h
+        hrun startproject -h
+        hrun har2case -h
+        hrun locusts -h
     - name: Run smoketest for hrun command
       run: |
         cd tests/httpbin && hrun run basic.yml --failfast && cd -

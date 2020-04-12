@@ -83,7 +83,7 @@ class TestRunner(ApiServerUnittest):
         test_runner.run_test(parsed_testcase["teststeps"][0])
         end_time = time.time()
         # testcase teardown hook has not been executed now
-        self.assertLess(end_time - start_time, 1)
+        self.assertLess(end_time - start_time, 2)
 
     def test_run_testcase_with_hooks_assignment(self):
         testcases = [
