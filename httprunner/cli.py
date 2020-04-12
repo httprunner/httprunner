@@ -2,12 +2,12 @@ import argparse
 import os
 import sys
 
-from loguru import logger
-
 if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
     # monkey patch ssl at beginning to avoid RecursionError when running locust.
     from gevent import monkey
     monkey.patch_ssl()
+
+from loguru import logger
 
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
