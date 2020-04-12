@@ -13,9 +13,10 @@ class ProjectMeta(BaseModel):
 
 class TestStep(BaseModel):
     name: common.Name
-    api: Text = None     # TODO: replace with FilePath
+    api: Text = None
     testcase: Text = None
     request: common.Request = None
+    variables: common.Variables = {}
     extract: Union[Dict[Text, Text], List[Text]] = {}
     validation: common.Validate = Field([], alias="validate")
 
@@ -60,11 +61,9 @@ class TestCase(BaseModel):
                                 "user_agent": "iOS/10.3",
                                 "device_sn": "$device_sn"
                             },
-                            "extract": [
-                                {
-                                    "token": "content.token"
-                                }
-                            ],
+                            "extract": {
+                                "token": "content.token"
+                            },
                             "validate": [
                                 {
                                     "eq": ["status_code", 200]
