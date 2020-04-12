@@ -4,8 +4,18 @@ import sys
 
 if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
     # monkey patch ssl at beginning to avoid RecursionError when running locust.
-    from gevent import monkey
-    monkey.patch_ssl()
+    try:
+        from gevent import monkey
+        monkey.patch_ssl()
+        from locust.main import main
+    except ImportError:
+        msg = """
+Locust is not installed, install first and try again.
+install with pip:
+$ pip install locustio
+"""
+        print(msg)
+        sys.exit(1)
 
 from loguru import logger
 
