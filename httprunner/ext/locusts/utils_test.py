@@ -8,7 +8,7 @@ class TestLocust(unittest.TestCase):
 
     def test_prepare_locust_tests(self):
         path = os.path.join(
-            os.getcwd(), 'tests/locust_tests/demo_locusts.yml')
+            os.path.dirname(__file__), "data", "demo_locusts.yml")
         locust_tests = prepare_locust_tests(path)
         self.assertEqual(len(locust_tests), 2 + 3)
         name_list = [

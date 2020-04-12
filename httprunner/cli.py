@@ -4,10 +4,16 @@ import sys
 
 from loguru import logger
 
+if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
+    # monkey patch ssl at beginning to avoid RecursionError when running locust.
+    from gevent import monkey
+    monkey.patch_ssl()
+
 from httprunner import __description__, __version__
 from httprunner.api import HttpRunner
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
+from httprunner.ext.locusts import init_parser_locusts, main_locusts
 from httprunner.report import gen_html_report
 
 
@@ -85,8 +91,13 @@ def main():
     sub_parser_run = init_parser_run(subparsers)
     sub_parser_scaffold = init_parser_scaffold(subparsers)
     sub_parser_har2case = init_har2case_parser(subparsers)
+    sub_parser_locusts = init_parser_locusts(subparsers)
 
-    args = parser.parse_args()
+    extra_args = []
+    if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
+        args, extra_args = parser.parse_known_args()
+    else:
+        args = parser.parse_args()
 
     if args.version:
         print(f"{__version__}")
@@ -120,6 +131,14 @@ def main():
             sys.exit(0)
 
         main_har2case(args)
+
+    elif sys.argv[1] == "locusts":
+        # hrun locusts
+        if len(sys.argv) == 2:
+            sub_parser_locusts.print_help()
+            sys.exit(0)
+
+        main_locusts(args, extra_args)
 
 
 if __name__ == '__main__':

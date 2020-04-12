@@ -8,6 +8,7 @@
 - remove compatibility with testcase/testsuite format v1
 - make `startproject` as hrun sub-command, usage: `hrun startproject <project_name>`
 - make `har2case` as hrun sub-command, usage: `hrun har2case -h`
+- make `locusts` as hrun sub-command, usage: `hrun locusts -h`
 
 ## 3.0.1 (2020-03-24)
 
