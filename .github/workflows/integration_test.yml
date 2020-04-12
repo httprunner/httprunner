@@ -33,4 +33,4 @@ jobs:
         locusts -V
     - name: Run smoketest for hrun command
       run: |
-        cd tests/httpbin && hrun basic.yml --failfast && cd -
+        cd tests/httpbin && hrun run basic.yml --failfast && cd -
