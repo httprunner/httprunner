@@ -16,6 +16,8 @@ def init_parser_locusts(subparsers):
     sub_parser_locusts.add_argument(
         '--locust-help', action='store_true', default=False,
         help="Show locust help.")
+    sub_parser_locusts.add_argument('test_file', nargs='?',
+                                    help="Specify YAML/JSON testcase file.")
     sub_parser_locusts.add_argument(
         "--master", action='store_true', default=False, help="Start locust master.")
     sub_parser_locusts.add_argument(
@@ -57,15 +59,13 @@ def main_locusts(args, extra_args):
     logger.remove()
     logger.add(sys.stdout, level=loglevel)
 
-    # convert httprunner yaml/json case to locustfile.py
-    try:
-        testcase_index = get_arg_index("-f", "--locustfile")
-        assert testcase_index and testcase_index < len(sys.argv)
-        testcase_file_path = sys.argv[testcase_index]
-        sys.argv[testcase_index] = parse_locustfile(testcase_file_path)
-    except AssertionError:
-        print("Testcase file is not specified, exit.")
+    if not args.test_file:
+        logger.error("Testcase file is not specified, exit.")
         sys.exit(1)
+
+    # convert httprunner yaml/json case to locustfile.py
+    locustfile_path = parse_locustfile(args.test_file)
+    sys.argv.extend(["-f", locustfile_path])
 
     manager = multiprocessing.Manager()
     try:
