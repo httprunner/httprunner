@@ -33,6 +33,7 @@ jobs:
         hrun run -h
         hrun startproject -h
         hrun har2case -h
+        pip install locustio
         hrun locusts -h
     - name: Run smoketest for hrun command
       run: |
