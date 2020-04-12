@@ -29,6 +29,17 @@ def init_parser_locusts(subparsers):
 def main_locusts(args, extra_args):
     """ Performance test with locust: parse command line options and run commands.
     """
+    try:
+        from locust.main import main
+    except ImportError:
+        msg = """
+    Locust is not installed, install first and try again.
+    install with pip:
+    $ pip install locustio
+    """
+        logger.error(msg)
+        sys.exit(1)
+
     logger.info(f"HttpRunner version: {__version__}")
     sys.argv = ["locust", *extra_args]
 
