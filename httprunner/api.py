@@ -200,7 +200,6 @@ class HttpRunner(object):
                 )
                 testcase_summary["log"] = logs_file_abs_path
 
-            testcase_summary["HRUN-Request-ID"] = testcase.runner.hrun_request_id
             summary["details"].append(testcase_summary)
 
         return summary

@@ -2,6 +2,9 @@ import os
 import random
 import string
 import time
+import uuid
+
+from loguru import logger
 
 from tests.api_server import HTTPBIN_SERVER, gen_md5, get_sign
 
@@ -23,6 +26,26 @@ def get_default_request():
             "content-type": "application/json"
         }
     }
+
+
+def setup_testcase(variables):
+    logger.info(f"setup_testcase, variables: {variables}")
+    variables["request_id_prefix"] = str(int(time.time()))
+
+
+def teardown_testcase():
+    logger.info(f"teardown_testcase.")
+
+
+def setup_teststep(request, variables):
+    logger.info(f"setup_teststep, request: {request}, variables: {variables}")
+    request.setdefault("headers", {})
+    request_id_prefix = variables["request_id_prefix"]
+    request["headers"]["HRUN-Request-ID"] = request_id_prefix + "-" + str(uuid.uuid4())
+
+
+def teardown_teststep(response):
+    logger.info(f"teardown_teststep, response status code: {response.status_code}")
 
 
 def sum_two(m, n):

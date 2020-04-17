@@ -1,3 +1,5 @@
+import copy
+
 from httprunner import parser, utils
 
 
@@ -34,7 +36,7 @@ class SessionContext(object):
                 }
 
         """
-        variables_mapping = variables_mapping or {}
+        variables_mapping = copy.deepcopy(variables_mapping or {})
         variables_mapping = utils.ensure_mapping_format(variables_mapping)
         variables_mapping.update(self.session_variables_mapping)
         parsed_variables_mapping = parser.parse_variables_mapping(variables_mapping)

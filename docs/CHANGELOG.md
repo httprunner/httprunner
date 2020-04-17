@@ -1,6 +1,11 @@
 # Release History
 
-## 3.0.2 (2020-04-12)
+## 3.0.2 (2020-04-17)
+
+**Added**
+
+- feat: implement global hooks `setup_testcase/teardown_testcase`, called before/after each testcase 
+- feat: implement global hooks  `setup_teststep/teardown_teststep`, called before/after each teststep
 
 **Changed**
 
@@ -9,6 +14,7 @@
 - make `startproject` as hrun sub-command, usage: `hrun startproject <project_name>`
 - make `har2case` as hrun sub-command, usage: `hrun har2case -h`
 - make `locusts` as hrun sub-command, usage: `hrun locusts -h`
+- remove default header `HRUN-Request-ID`, implement the same function with global hooks
 
 ## 3.0.1 (2020-03-24)
 
