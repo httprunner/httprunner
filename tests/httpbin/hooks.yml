@@ -9,6 +9,8 @@ config:
 teststeps:
 -
     name: headers
+    variables:
+        a: 123
     request:
         url: /headers
         method: GET

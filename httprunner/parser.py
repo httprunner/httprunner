@@ -1076,8 +1076,17 @@ def __prepare_config(config, project_mapping, session_variables_set=None):
     if raw_config_variables_mapping:
         config["variables"] = raw_config_variables_mapping
 
+    if "setup_testcase" in functions:
+        config.setdefault("setup_hooks", [])
+        config["setup_hooks"].insert(0, "${setup_testcase($variables)}")
+
+    if "teardown_testcase" in functions:
+        config.setdefault("teardown_hooks", [])
+        config["teardown_hooks"].append("${teardown_testcase()}")
+
     check_variables_set = set(raw_config_variables_mapping.keys())
     check_variables_set |= (session_variables_set or set())
+    check_variables_set.add("variables")
     prepared_config = prepare_lazy_data(config, functions, check_variables_set, cached=True)
     return prepared_config
 
@@ -1110,7 +1119,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
     session_variables_set = set(config_variables.keys()) | (session_variables_set or set())
     for test_dict in tests:
 
-        teststep_variables_set = {"request", "response"}
+        teststep_variables_set = {"request", "response", "variables"}
 
         # 1, testcase config => testcase tests
         # override test_dict variables
@@ -1119,6 +1128,14 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
             config_variables
         )
         test_dict["variables"] = test_dict_variables
+
+        if "setup_teststep" in functions:
+            test_dict.setdefault("setup_hooks", [])
+            test_dict["setup_hooks"].insert(0, "${setup_teststep($request, $variables)}")
+
+        if "teardown_teststep" in functions:
+            test_dict.setdefault("teardown_hooks", [])
+            test_dict["teardown_hooks"].append("${teardown_teststep($response)}")
 
         # base_url & verify: priority test_dict > config
         if (not test_dict.get("base_url")) and config_base_url:

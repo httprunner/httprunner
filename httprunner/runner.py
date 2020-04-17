@@ -1,4 +1,3 @@
-import uuid
 from enum import Enum
 from unittest.case import SkipTest
 
@@ -72,12 +71,6 @@ class Runner(object):
         self.export = config.get("export") or config.get("output", [])
         config_variables = config.get("variables", {})
 
-        self.hrun_request_id = str(uuid.uuid4())
-        if "HRUN-Request-ID" not in config_variables:
-            config_variables["HRUN-Request-ID"] = self.hrun_request_id
-        else:
-            self.hrun_request_id = config_variables["HRUN-Request-ID"]
-
         # testcase setup hooks
         testcase_setup_hooks = config.get("setup_hooks", [])
         # testcase teardown hooks
@@ -85,6 +78,10 @@ class Runner(object):
 
         self.http_client_session = http_client_session or HttpSession()
         self.session_context = SessionContext(config_variables)
+
+        self.session_context.update_session_variables({
+            "variables": config_variables
+        })
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks, HookTypeEnum.SETUP)
@@ -217,6 +214,9 @@ class Runner(object):
         parsed_test_request = self.session_context.eval_content(raw_request)
         self.session_context.update_test_variables("request", parsed_test_request)
 
+        test_variables.update(self.session_context.session_variables_mapping["variables"])
+        self.session_context.update_test_variables("variables", test_variables)
+
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
         if setup_hooks:
@@ -226,11 +226,6 @@ class Runner(object):
         url = parsed_test_request.pop('url')
         base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
         parsed_url = utils.build_url(base_url, url)
-
-        request_headers = parsed_test_request.setdefault("headers", {})
-        if "HRUN-Request-ID" not in request_headers:
-            parsed_test_request["headers"]["HRUN-Request-ID"] = \
-                self.session_context.session_variables_mapping["HRUN-Request-ID"]
 
         try:
             method = parsed_test_request.pop('method')
