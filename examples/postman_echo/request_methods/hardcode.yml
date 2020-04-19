@@ -1,0 +1,51 @@
+config:
+    name: "request methods testcase in hardcode"
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: get with params
+    request:
+        method: GET
+        url: /get
+        params:
+            foo1: bar1
+            foo2: bar2
+        headers:
+            User-Agent: HttpRunner/3.0
+    validate:
+        - eq: ["status_code", 200]
+-
+    name: post raw text
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/3.0
+            Content-Type: "text/plain"
+        data: "This is expected to be sent back as part of response body."
+    validate:
+        - eq: ["status_code", 200]
+-
+    name: post form data
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/3.0
+            Content-Type: "application/x-www-form-urlencoded"
+        data: "foo1=bar1&foo2=bar2"
+    validate:
+        - eq: ["status_code", 200]
+-
+    name: put request
+    request:
+        method: PUT
+        url: /put
+        headers:
+            User-Agent: HttpRunner/3.0
+            Content-Type: "text/plain"
+        data: "This is expected to be sent back as part of response body."
+    validate:
+        - eq: ["status_code", 200]
