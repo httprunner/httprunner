@@ -37,6 +37,7 @@ filetype = "^1.0.5"
 jsonpath = "^0.82"
 pydantic = "^1.4"
 loguru = "^0.4.1"
+jmespath = "^0.9.5"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
