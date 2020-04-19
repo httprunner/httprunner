@@ -1,8 +1,8 @@
 import re
-from typing import Any, Set
+from typing import Any, Set, Text
 from typing import Dict
 
-from httprunner.v3.exceptions import ParamsError
+from httprunner.v3 import exceptions
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
@@ -21,7 +21,7 @@ def build_url(base_url, path):
     elif base_url:
         return "{}/{}".format(base_url.rstrip("/"), path.lstrip("/"))
     else:
-        raise ParamsError("base url missed!")
+        raise exceptions.ParamsError("base url missed!")
 
 
 def regex_findall_variables(content):
@@ -56,7 +56,6 @@ def regex_findall_variables(content):
         return vars_list
     except TypeError:
         return []
-
 
 
 def extract_variables(content: Any) -> Set:

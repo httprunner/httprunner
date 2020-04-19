@@ -24,7 +24,8 @@ class TestCaseRequestMethodsHardcode(TestCaseRunner):
                 }
             },
             "validate": [
-                {"eq": ["status_code", 200]}
+                {"eq": ["status_code", 200]},
+                {"eq": ["headers.Server", "nginx"]}
             ]
         }),
         TestStep(**{
