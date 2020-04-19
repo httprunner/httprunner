@@ -56,5 +56,5 @@ class TestStep(BaseModel):
     name: Name
     request: Request
     variables: Variables = {}
-    extract: Union[Dict[Text, Text], List[Text]] = {}
+    extract: Dict[Text, Text] = {}
     validation: Validate = Field([], alias="validate")
