@@ -1,13 +1,11 @@
 from typing import List
 
 import requests
-
 from loguru import logger
 
 from httprunner.v3.parser import build_url
-from httprunner.v3.schema import TestsConfig, TestStep
-from httprunner.v3.validator import Validator
 from httprunner.v3.response import ResponseObject
+from httprunner.v3.schema import TestsConfig, TestStep
 
 
 class TestCaseRunner(object):
@@ -41,18 +39,25 @@ class TestCaseRunner(object):
         # request
         session = self.session or requests.Session()
         resp = session.request(method, url, **request_dict)
+        resp_obj = ResponseObject(resp)
 
         # validate
-        resp_obj = ResponseObject(resp)
-        validator = Validator(resp_obj)
         validators = step.validation
-        validator.validate(validators)
+        resp_obj.validate(validators)
+
+        # extract
+        extractors = step.extract
+        extract_mapping = resp_obj.extract(extractors)
+        return extract_mapping
 
     def test_start(self):
         """main entrance"""
+        session_variables = {}
         for step in self.teststeps:
             step.variables.update(self.config.variables)
-            self.run_step(step)
+            step.variables.update(session_variables)
+            extract_mapping = self.run_step(step)
+            session_variables.update(extract_mapping)
 
     def run(self):
         """main entrance alias for test_start"""
