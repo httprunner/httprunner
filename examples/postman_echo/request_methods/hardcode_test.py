@@ -23,6 +23,9 @@ class TestCaseRequestMethodsHardcode(TestCaseRunner):
                     "User-Agent": "HttpRunner/3.0"
                 }
             },
+            "extract": {
+                "server": "headers.Server"
+            },
             "validate": [
                 {"eq": ["status_code", 200]},
                 {"eq": ["headers.Server", "nginx"]}

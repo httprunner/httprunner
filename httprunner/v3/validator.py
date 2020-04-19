@@ -1,10 +1,6 @@
 from typing import Text
 
-import jmespath
-from loguru import logger
-
-from httprunner.v3.exceptions import ParamsError, ValidationFailure
-from httprunner.v3.response import ResponseObject
+from httprunner.v3.exceptions import ParamsError
 
 
 def get_uniform_comparator(comparator: Text):
@@ -108,38 +104,3 @@ class AssertMethods(object):
     @staticmethod
     def greater_than(actual_value, expect_value):
         assert actual_value > expect_value
-
-
-class Validator(object):
-
-    def __init__(self, resp_obj: ResponseObject):
-        self.resp_meta = {
-            "status_code": resp_obj.obj.status_code,
-            "headers": resp_obj.obj.headers,
-            "body": resp_obj.obj.json()
-        }
-
-    def validate(self, validators):
-
-        for v in validators:
-            u_validator = uniform_validator(v)
-            field = u_validator["check"]
-            assert_method = u_validator["assert"]
-            expect_value = u_validator["expect"]
-            actual_value = jmespath.search(field, self.resp_meta)
-
-            msg = f"assert {field} {assert_method} {expect_value}"
-
-            try:
-                assert_func = getattr(AssertMethods, assert_method)
-            except AttributeError:
-                raise ParamsError(f"Assert Method not supported: {assert_method}")
-
-            try:
-                assert_func(actual_value, expect_value)
-                msg += " - success"
-                logger.info(msg)
-            except AssertionError:
-                msg += " - fail"
-                logger.error(msg)
-                raise ValidationFailure(f"assert {field}: {actual_value} {assert_method} {expect_value}")
