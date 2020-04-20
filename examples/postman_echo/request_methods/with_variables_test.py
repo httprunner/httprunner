@@ -5,6 +5,9 @@ from httprunner.v3.schema import TestsConfig, TestStep
 class TestCaseRequestMethodsWithVariables(TestCaseRunner):
     config = TestsConfig(**{
         "name": "request methods testcase with variables",
+        "variables": {
+            "foo1": "session_bar1"
+        },
         "base_url": "https://postman-echo.com",
         "verify": False
     })
@@ -29,7 +32,7 @@ class TestCaseRequestMethodsWithVariables(TestCaseRunner):
             },
             "validate": [
                 {"eq": ["status_code", 200]},
-                {"eq": ["body.args.foo1", "bar1"]},
+                {"eq": ["body.args.foo1", "session_bar1"]},
                 {"eq": ["body.args.foo2", "bar2"]}
             ]
         }),
@@ -49,13 +52,13 @@ class TestCaseRequestMethodsWithVariables(TestCaseRunner):
             },
             "validate": [
                 {"eq": ["status_code", 200]},
-                {"eq": ["body.data", "This is expected to be sent back as part of response body: hello world."]},
+                {"eq": ["body.data", "This is expected to be sent back as part of response body: session_bar1."]},
             ]
         }),
         TestStep(**{
             "name": "post form data",
             "variables": {
-                "foo1": "bar1",
+                "foo1": "session_bar1",
                 "foo2": "bar2"
             },
             "request": {
@@ -69,7 +72,7 @@ class TestCaseRequestMethodsWithVariables(TestCaseRunner):
             },
             "validate": [
                 {"eq": ["status_code", 200]},
-                {"eq": ["body.form.foo1", "bar1"]},
+                {"eq": ["body.form.foo1", "session_bar1"]},
                 {"eq": ["body.form.foo2", "bar2"]}
             ]
         })
