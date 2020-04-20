@@ -3,7 +3,7 @@ from typing import List
 import requests
 from loguru import logger
 
-from httprunner.v3.parser import build_url, parse_content
+from httprunner.v3.parser import build_url, parse_content, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
 from httprunner.v3.schema import TestsConfig, TestStep
 
@@ -57,9 +57,15 @@ class TestCaseRunner(object):
         """main entrance"""
         session_variables = {}
         for step in self.teststeps:
+            # update with config variables
             step.variables.update(self.config.variables)
+            # update with session variables extracted from former step
             step.variables.update(session_variables)
+            # parse variables
+            step.variables = parse_variables_mapping(step.variables)
+            # run step
             extract_mapping = self.run_step(step)
+            # save extracted variables to session variables
             session_variables.update(extract_mapping)
 
     def run(self):

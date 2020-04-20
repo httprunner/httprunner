@@ -17,7 +17,7 @@ class TestCaseRequestMethodsWithVariables(TestCaseRunner):
             "name": "get with params",
             "variables": {
                 "foo1": "bar1",
-                "foo2": "bar2"
+                "foo2": "session_bar2"
             },
             "request": {
                 "method": "GET",
@@ -30,21 +30,25 @@ class TestCaseRequestMethodsWithVariables(TestCaseRunner):
                     "User-Agent": "HttpRunner/3.0"
                 }
             },
+            "extract": {
+                "session_foo2": "body.args.foo2"
+            },
             "validate": [
                 {"eq": ["status_code", 200]},
                 {"eq": ["body.args.foo1", "session_bar1"]},
-                {"eq": ["body.args.foo2", "bar2"]}
+                {"eq": ["body.args.foo2", "session_bar2"]}
             ]
         }),
         TestStep(**{
             "name": "post raw text",
             "variables": {
-                "foo1": "hello world"
+                "foo1": "hello world",
+                "foo3": "$session_foo2"
             },
             "request": {
                 "method": "POST",
                 "url": "/post",
-                "data": "This is expected to be sent back as part of response body: $foo1.",
+                "data": "This is expected to be sent back as part of response body: $foo1-$foo3.",
                 "headers": {
                     "User-Agent": "HttpRunner/3.0",
                     "Content-Type": "text/plain"
@@ -52,7 +56,10 @@ class TestCaseRequestMethodsWithVariables(TestCaseRunner):
             },
             "validate": [
                 {"eq": ["status_code", 200]},
-                {"eq": ["body.data", "This is expected to be sent back as part of response body: session_bar1."]},
+                {"eq": [
+                    "body.data",
+                    "This is expected to be sent back as part of response body: session_bar1-session_bar2."
+                ]},
             ]
         }),
         TestStep(**{
