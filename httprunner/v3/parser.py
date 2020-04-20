@@ -3,6 +3,7 @@ from typing import Any, Set, Text
 from typing import Dict
 
 from httprunner.v3 import exceptions
+from httprunner.v3.exceptions import VariableNotFound
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
@@ -98,7 +99,10 @@ def parse_string_variables(content, variables_mapping):
     """
     variables_list = extract_variables(content)
     for variable_name in variables_list:
-        variable_value = variables_mapping[variable_name]
+        try:
+            variable_value = variables_mapping[variable_name]
+        except KeyError:
+            raise VariableNotFound(f"{variable_name} not in {variables_mapping}")
 
         # TODO: replace variable label from $var to {{var}}
         if f"${variable_name}" == content:
@@ -158,20 +162,24 @@ def parse_content(content: Any, variables_mapping: Dict[str, Any] = None, functi
     return content
 
 
-def parse_variables_mapping(variables_mapping: Dict[str, Any]):
+def parse_variables_mapping(variables_mapping: Dict[Text, Any]) -> Dict[Text, Any]:
 
-    parsed_variables: Dict[str, Any] = {}
+    parsed_variables: Dict[Text, Any] = {}
 
     while len(parsed_variables) != len(variables_mapping):
         for var_name in variables_mapping:
 
-            var_value = variables_mapping[var_name]
-            # variables = extract_variables(var_value)
-
             if var_name in parsed_variables:
                 continue
 
-            parsed_value = parse_content(var_value, parsed_variables)
+            var_value = variables_mapping[var_name]
+            # variables = extract_variables(var_value)
+
+            try:
+                parsed_value = parse_content(var_value, parsed_variables)
+            except VariableNotFound:
+                continue
+
             parsed_variables[var_name] = parsed_value
 
     return parsed_variables
