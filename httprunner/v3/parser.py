@@ -173,7 +173,25 @@ def parse_variables_mapping(variables_mapping: Dict[Text, Any]) -> Dict[Text, An
                 continue
 
             var_value = variables_mapping[var_name]
-            # variables = extract_variables(var_value)
+            variables = extract_variables(var_value)
+
+            # check if reference variable itself
+            if var_name in variables:
+                # e.g.
+                # variables_mapping = {"token": "abc$token"}
+                # variables_mapping = {"key": ["$key", 2]}
+                raise exceptions.VariableNotFound(var_name)
+
+            # check if reference variable not in variables_mapping
+            not_defined_variables = [
+                v_name
+                for v_name in variables
+                if v_name not in variables_mapping
+            ]
+            if not_defined_variables:
+                # e.g. {"varA": "123$varB", "varB": "456$varC"}
+                # e.g. {"varC": "${sum_two($a, $b)}"}
+                raise VariableNotFound(not_defined_variables)
 
             try:
                 parsed_value = parse_content(var_value, parsed_variables)
