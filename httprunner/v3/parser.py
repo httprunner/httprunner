@@ -101,7 +101,7 @@ def parse_string_variables(content, variables_mapping):
         variable_value = variables_mapping[variable_name]
 
         # TODO: replace variable label from $var to {{var}}
-        if "${}".format(variable_name) == content:
+        if f"${variable_name}" == content:
             # content is a variable
             content = variable_value
         else:
@@ -110,7 +110,7 @@ def parse_string_variables(content, variables_mapping):
                 variable_value = str(variable_value)
 
             content = content.replace(
-                "${}".format(variable_name),
+                f"${variable_name}",
                 variable_value, 1
             )
 

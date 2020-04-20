@@ -3,7 +3,7 @@ from typing import List
 import requests
 from loguru import logger
 
-from httprunner.v3.parser import build_url
+from httprunner.v3.parser import build_url, parse_content
 from httprunner.v3.response import ResponseObject
 from httprunner.v3.schema import TestsConfig, TestStep
 
@@ -25,20 +25,23 @@ class TestCaseRunner(object):
     def run_step(self, step):
         logger.info(f"run step: {step.name}")
 
-        # prepare arguments
+        # parse
         request_dict = step.request.dict()
-        method = request_dict.pop("method")
-        url_path = request_dict.pop("url")
+        parsed_request_dict = parse_content(request_dict, step.variables)
+
+        # prepare arguments
+        method = parsed_request_dict.pop("method")
+        url_path = parsed_request_dict.pop("url")
         url = build_url(self.config.base_url, url_path)
 
-        request_dict["json"] = request_dict.pop("req_json", {})
+        parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
 
         logger.info(f"{method} {url}")
-        logger.debug(f"request kwargs(raw): {request_dict}")
+        logger.debug(f"request kwargs(raw): {parsed_request_dict}")
 
         # request
         session = self.session or requests.Session()
-        resp = session.request(method, url, **request_dict)
+        resp = session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
 
         # validate
