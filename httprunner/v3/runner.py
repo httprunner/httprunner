@@ -27,7 +27,7 @@ class TestCaseRunner(object):
 
         # parse
         request_dict = step.request.dict()
-        parsed_request_dict = parse_content(request_dict, step.variables)
+        parsed_request_dict = parse_content(request_dict, step.variables, self.config.functions)
 
         # prepare arguments
         method = parsed_request_dict.pop("method")
@@ -62,7 +62,7 @@ class TestCaseRunner(object):
             # update with session variables extracted from former step
             step.variables.update(session_variables)
             # parse variables
-            step.variables = parse_variables_mapping(step.variables)
+            step.variables = parse_variables_mapping(step.variables, self.config.functions)
             # run step
             extract_mapping = self.run_step(step)
             # save extracted variables to session variables
