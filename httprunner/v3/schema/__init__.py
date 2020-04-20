@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Any
-from typing import Dict, List, Text, Union
+from typing import Dict, List, Text, Union, Callable
 
 from pydantic import BaseModel, Field
 from pydantic import HttpUrl
@@ -34,6 +34,7 @@ class TestsConfig(BaseModel):
     verify: Verify = False
     base_url: BaseUrl = ""
     variables: Variables = {}
+    functions: Dict[Text, Callable]
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     export: Export = []
