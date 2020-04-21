@@ -2,7 +2,7 @@ import time
 import unittest
 
 from httprunner.v3 import parser
-from httprunner.v3.exceptions import VariableNotFound, FunctionNotFound
+from httprunner.exceptions import VariableNotFound, FunctionNotFound
 
 
 class TestParserBasic(unittest.TestCase):
