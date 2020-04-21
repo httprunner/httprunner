@@ -44,7 +44,7 @@ class TestCaseRequestMethodsWithFunctions(TestCaseRunner):
                 {"eq": ["status_code", 200]},
                 {"eq": ["body.args.foo1", "session_bar1"]},
                 {"eq": ["body.args.foo2", "session_bar2"]},
-                {"eq": ["body.args.sum_v", "3"]}
+                {"eq": ["body.args.sum_v", 3]}
             ]
         }),
         TestStep(**{
