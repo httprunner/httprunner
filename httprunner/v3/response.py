@@ -5,8 +5,8 @@ import requests
 from loguru import logger
 
 from httprunner.v3.exceptions import ParamsError, ValidationFailure
-from httprunner.v3.parser import parse_data
-from httprunner.v3.schema import VariablesMapping, Validators
+from httprunner.v3.parser import parse_data, parse_string_value
+from httprunner.v3.schema import VariablesMapping, Validators, FunctionsMapping
 from httprunner.v3.validator import uniform_validator, AssertMethods
 
 
@@ -25,7 +25,10 @@ class ResponseObject(object):
             "body": resp_obj.json()
         }
 
-    def validate(self, validators: Validators, variables_mapping: VariablesMapping = None) -> NoReturn:
+    def validate(self,
+                 validators: Validators,
+                 variables_mapping: VariablesMapping = None,
+                 functions_mapping: FunctionsMapping = None) -> NoReturn:
 
         for v in validators:
             u_validator = uniform_validator(v)
@@ -41,8 +44,9 @@ class ResponseObject(object):
             except AttributeError:
                 raise ParamsError(f"Assert Method not supported: {assert_method}")
 
+            actual_value = parse_string_value(actual_value)
             # parse expected value with config/teststep/extracted variables
-            expect_value = parse_data(expect_value, variables_mapping)
+            expect_value = parse_data(expect_value, variables_mapping, functions_mapping)
 
             try:
                 assert_func(actual_value, expect_value)
