@@ -182,6 +182,27 @@ def parse_function_params(params):
     return function_meta
 
 
+def get_mapping_variable(variable_name: Text, variables_mapping: Dict[Text, Any]) -> Any:
+    """ get variable from variables_mapping.
+
+    Args:
+        variable_name (str): variable name
+        variables_mapping (dict): variables mapping
+
+    Returns:
+        mapping variable value.
+
+    Raises:
+        exceptions.VariableNotFound: variable is not found.
+
+    """
+    # TODO: get variable from debugtalk module and environ
+    try:
+        return variables_mapping[variable_name]
+    except KeyError:
+        raise exceptions.VariableNotFound(f"{variable_name} not found in {variables_mapping}")
+
+
 def get_mapping_function(function_name: Text, functions_mapping: Dict[Text, Callable]) -> Callable:
     """ get function from functions_mapping,
         if not found, then try to check if builtin function.
@@ -230,7 +251,7 @@ def get_mapping_function(function_name: Text, functions_mapping: Dict[Text, Call
 def parse_string(
         raw_string: Text,
         variables_mapping: Dict[Text, Any],
-        functions_mapping: Dict[Text, Callable]) -> Text:
+        functions_mapping: Dict[Text, Callable]) -> Any:
     """ parse string content with variables and functions mapping.
 
     Args:
@@ -297,11 +318,7 @@ def parse_string(
         var_match = variable_regex_compile.match(raw_string, match_start_position)
         if var_match:
             var_name = var_match.group(1) or var_match.group(2)
-            # check if any variable undefined in variables_mapping
-            try:
-                var_value = variables_mapping[var_name]
-            except KeyError:
-                raise VariableNotFound(f"{var_name} not found in {variables_mapping}")
+            var_value = get_mapping_variable(var_name, variables_mapping)
 
             if f"${var_name}" == raw_string or "${" + var_name + "}" == raw_string:
                 # raw_string is a variable, $var or ${var}, return its value directly
