@@ -44,13 +44,17 @@ class TestCaseRunner(object):
         resp = session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
 
-        # validate
-        validators = step.validation
-        resp_obj.validate(validators)
-
         # extract
         extractors = step.extract
         extract_mapping = resp_obj.extract(extractors)
+
+        variables_mapping = step.variables
+        variables_mapping.update(extract_mapping)
+
+        # validate
+        validators = step.validation
+        resp_obj.validate(validators, variables_mapping)
+
         return extract_mapping
 
     def test_start(self):

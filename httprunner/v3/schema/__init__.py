@@ -14,7 +14,7 @@ Headers = Dict[Text, Text]
 Verify = bool
 Hook = List[Text]
 Export = List[Text]
-Validate = List[Dict]
+Validators = List[Dict]
 Env = Dict[Text, Any]
 
 
@@ -59,4 +59,4 @@ class TestStep(BaseModel):
     request: Request
     variables: VariablesMapping = {}
     extract: Dict[Text, Text] = {}
-    validation: Validate = Field([], alias="validate")
+    validation: Validators = Field([], alias="validate")

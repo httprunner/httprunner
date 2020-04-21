@@ -1,10 +1,12 @@
-from typing import Dict, Text, Any
+from typing import Dict, Text, Any, NoReturn
 
 import jmespath
 import requests
 from loguru import logger
 
 from httprunner.v3.exceptions import ParamsError, ValidationFailure
+from httprunner.v3.parser import parse_data
+from httprunner.v3.schema import VariablesMapping, Validators
 from httprunner.v3.validator import uniform_validator, AssertMethods
 
 
@@ -23,7 +25,7 @@ class ResponseObject(object):
             "body": resp_obj.json()
         }
 
-    def validate(self, validators):
+    def validate(self, validators: Validators, variables_mapping: VariablesMapping = None) -> NoReturn:
 
         for v in validators:
             u_validator = uniform_validator(v)
@@ -38,6 +40,9 @@ class ResponseObject(object):
                 assert_func = getattr(AssertMethods, assert_method)
             except AttributeError:
                 raise ParamsError(f"Assert Method not supported: {assert_method}")
+
+            # parse expected value with config/teststep/extracted variables
+            expect_value = parse_data(expect_value, variables_mapping)
 
             try:
                 assert_func(actual_value, expect_value)
