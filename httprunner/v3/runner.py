@@ -3,6 +3,7 @@ from typing import List
 from loguru import logger
 
 from httprunner.client import HttpSession
+from httprunner.v3.exceptions import ValidationFailure
 from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
 from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping, TestCase
@@ -14,6 +15,7 @@ class TestCaseRunner(object):
     teststeps: List[TestStep] = []
     session: HttpSession = None
     meta_datas: List = []
+    validation_results: List = []
 
     def init(self, testcase: TestCase) -> "TestCaseRunner":
         self.config = testcase.config
@@ -59,7 +61,12 @@ class TestCaseRunner(object):
 
         # validate
         validators = step.validators
-        resp_obj.validate(validators, variables_mapping, self.config.functions)
+        try:
+            resp_obj.validate(validators, variables_mapping, self.config.functions)
+        except ValidationFailure:
+            raise
+        finally:
+            self.validation_results = resp_obj.validation_results
 
         return extract_mapping
 
@@ -79,6 +86,7 @@ class TestCaseRunner(object):
             # save extracted variables to session variables
             session_variables.update(extract_mapping)
             # save request & response meta data
+            self.session.meta_data["validators"] = self.validation_results
             self.session.meta_data["name"] = step.name
             self.meta_datas.append(self.session.meta_data)
 
