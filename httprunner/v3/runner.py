@@ -1,20 +1,26 @@
 from typing import List
 
-import requests
 from loguru import logger
 
+from httprunner.client import HttpSession
 from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
-from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping
+from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping, TestCase
 
 
 class TestCaseRunner(object):
 
     config: TestsConfig = {}
     teststeps: List[TestStep] = []
-    session: requests.Session = None
+    session: HttpSession = None
+    meta_datas: List = []
 
-    def with_session(self, s: requests.Session) -> "TestCaseRunner":
+    def init(self, testcase: TestCase) -> "TestCaseRunner":
+        self.config = testcase.config
+        self.teststeps = testcase.teststeps
+        return self
+
+    def with_session(self, s: HttpSession) -> "TestCaseRunner":
         self.session = s
         return self
 
@@ -40,8 +46,8 @@ class TestCaseRunner(object):
         logger.debug(f"request kwargs(raw): {parsed_request_dict}")
 
         # request
-        session = self.session or requests.Session()
-        resp = session.request(method, url, **parsed_request_dict)
+        self.session = self.session or HttpSession()
+        resp = self.session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
 
         # extract
@@ -59,6 +65,7 @@ class TestCaseRunner(object):
 
     def test_start(self):
         """main entrance"""
+        self.meta_datas.clear()
         session_variables = {}
         for step in self.teststeps:
             # update with config variables
@@ -71,6 +78,10 @@ class TestCaseRunner(object):
             extract_mapping = self.run_step(step)
             # save extracted variables to session variables
             session_variables.update(extract_mapping)
+            # save request & response meta data
+            self.meta_datas.append(self.session.meta_data)
+
+        return self
 
     def run(self):
         """main entrance alias for test_start"""
