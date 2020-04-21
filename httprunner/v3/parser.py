@@ -1,11 +1,11 @@
 import ast
 import builtins
 import re
-from typing import Any, Set, Text, Callable, Tuple, List, Dict, Union
+from typing import Any, Set, Text, Callable, List, Dict
 
 from httprunner import loader, utils
 from httprunner.v3 import exceptions
-from httprunner.v3.exceptions import VariableNotFound, FunctionNotFound
+from httprunner.v3.schema import VariablesMapping, FunctionsMapping
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
@@ -130,7 +130,7 @@ def extract_variables(content: Any) -> Set:
     return set()
 
 
-def parse_function_params(params):
+def parse_function_params(params: Text) -> Dict:
     """ parse function params to args and kwargs.
 
     Args:
@@ -182,7 +182,7 @@ def parse_function_params(params):
     return function_meta
 
 
-def get_mapping_variable(variable_name: Text, variables_mapping: Dict[Text, Any]) -> Any:
+def get_mapping_variable(variable_name: Text, variables_mapping: VariablesMapping) -> Any:
     """ get variable from variables_mapping.
 
     Args:
@@ -203,7 +203,7 @@ def get_mapping_variable(variable_name: Text, variables_mapping: Dict[Text, Any]
         raise exceptions.VariableNotFound(f"{variable_name} not found in {variables_mapping}")
 
 
-def get_mapping_function(function_name: Text, functions_mapping: Dict[Text, Callable]) -> Callable:
+def get_mapping_function(function_name: Text, functions_mapping: FunctionsMapping) -> Callable:
     """ get function from functions_mapping,
         if not found, then try to check if builtin function.
 
@@ -250,8 +250,8 @@ def get_mapping_function(function_name: Text, functions_mapping: Dict[Text, Call
 
 def parse_string(
         raw_string: Text,
-        variables_mapping: Dict[Text, Any],
-        functions_mapping: Dict[Text, Callable]) -> Any:
+        variables_mapping: VariablesMapping,
+        functions_mapping: FunctionsMapping) -> Any:
     """ parse string content with variables and functions mapping.
 
     Args:
@@ -346,8 +346,8 @@ def parse_string(
 
 def parse_data(
         raw_data: Any,
-        variables_mapping: Dict[Text, Any] = None,
-        functions_mapping: Dict[Text, Callable] = None) -> Any:
+        variables_mapping: VariablesMapping = None,
+        functions_mapping: FunctionsMapping = None) -> Any:
     """ parse raw data with evaluated variables mapping.
         Notice: variables_mapping should not contain any variable or function.
     """
@@ -379,10 +379,10 @@ def parse_data(
 
 
 def parse_variables_mapping(
-        variables_mapping: Dict[Text, Any],
-        functions_mapping: Dict[Text, Callable] = None) -> Dict[Text, Any]:
+        variables_mapping: VariablesMapping,
+        functions_mapping: FunctionsMapping = None) -> VariablesMapping:
 
-    parsed_variables: Dict[Text, Any] = {}
+    parsed_variables: VariablesMapping = {}
 
     while len(parsed_variables) != len(variables_mapping):
         for var_name in variables_mapping:
@@ -409,12 +409,12 @@ def parse_variables_mapping(
             if not_defined_variables:
                 # e.g. {"varA": "123$varB", "varB": "456$varC"}
                 # e.g. {"varC": "${sum_two($a, $b)}"}
-                raise VariableNotFound(not_defined_variables)
+                raise exceptions.VariableNotFound(not_defined_variables)
 
             try:
                 parsed_value = parse_data(
                     var_value, parsed_variables, functions_mapping)
-            except VariableNotFound:
+            except exceptions.VariableNotFound:
                 continue
 
             parsed_variables[var_name] = parsed_value
