@@ -52,7 +52,7 @@ class TestCaseRunner(object):
         variables_mapping.update(extract_mapping)
 
         # validate
-        validators = step.validation
+        validators = step.validators
         resp_obj.validate(validators, variables_mapping)
 
         return extract_mapping

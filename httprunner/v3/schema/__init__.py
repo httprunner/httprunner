@@ -59,4 +59,4 @@ class TestStep(BaseModel):
     request: Request
     variables: VariablesMapping = {}
     extract: Dict[Text, Text] = {}
-    validation: Validators = Field([], alias="validate")
+    validators: Validators = Field([], alias="validate")
