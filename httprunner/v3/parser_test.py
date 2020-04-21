@@ -83,46 +83,46 @@ class TestParserBasic(unittest.TestCase):
             {"TOKEN", "data", "random"}
         )
 
-    def test_parse_function(self):
+    def test_parse_function_params(self):
         self.assertEqual(
-            parser.parse_args_str(""),
-            ([], {})
+            parser.parse_function_params(""),
+            {'args': [], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_args_str("5"),
-            ([5], {})
+            parser.parse_function_params("5"),
+            {'args': [5], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_args_str("1, 2"),
-            ([1, 2], {})
+            parser.parse_function_params("1, 2"),
+            {'args': [1, 2], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_args_str("a=1, b=2"),
-            ([], {'a': 1, 'b': 2})
+            parser.parse_function_params("a=1, b=2"),
+            {'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
         self.assertEqual(
-            parser.parse_args_str("a= 1, b =2"),
-            ([], {'a': 1, 'b': 2})
+            parser.parse_function_params("a= 1, b =2"),
+            {'args': [], 'kwargs': {'a': 1, 'b': 2}}
         )
         self.assertEqual(
-            parser.parse_args_str("1, 2, a=3, b=4"),
-            ([1, 2], {'a': 3, 'b': 4})
+            parser.parse_function_params("1, 2, a=3, b=4"),
+            {'args': [1, 2], 'kwargs': {'a': 3, 'b': 4}}
         )
         self.assertEqual(
-            parser.parse_args_str("$request, 123"),
-            (["$request", 123], {})
+            parser.parse_function_params("$request, 123"),
+            {'args': ["$request", 123], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_args_str("  "),
-            ([], {})
+            parser.parse_function_params("  "),
+            {'args': [], 'kwargs': {}}
         )
         self.assertEqual(
-            parser.parse_args_str("hello world, a=3, b=4"),
-            (["hello world"], {'a': 3, 'b': 4})
+            parser.parse_function_params("hello world, a=3, b=4"),
+            {'args': ["hello world"], 'kwargs': {'a': 3, 'b': 4}}
         )
         self.assertEqual(
-            parser.parse_args_str("$request, 12 3"),
-            (["$request", '12 3'], {})
+            parser.parse_function_params("$request, 12 3"),
+            {'args': ["$request", '12 3'], 'kwargs': {}}
         )
 
     def test_extract_functions(self):
@@ -192,7 +192,7 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual("", result["request"]["data"]["empty_str"])
         self.assertEqual("abc4def", result["request"]["data"]["value"])
 
-    def test_parse_data_variables(self):
+    def test_parse_content_with_variables(self):
         variables_mapping = {
             "var_1": "abc",
             "var_2": "def",
@@ -206,6 +206,10 @@ class TestParserBasic(unittest.TestCase):
             "abc"
         )
         self.assertEqual(
+            parser.parse_content("${var_1}", variables_mapping),
+            "abc"
+        )
+        self.assertEqual(
             parser.parse_content("var_1", variables_mapping),
             "var_1"
         )
@@ -214,12 +218,12 @@ class TestParserBasic(unittest.TestCase):
             "abc#XYZ"
         )
         self.assertEqual(
-            parser.parse_content("/$var_1/$var_2/var3", variables_mapping),
-            "/abc/def/var3"
+            parser.parse_content("${var_1}#XYZ", variables_mapping),
+            "abc#XYZ"
         )
         self.assertEqual(
-            parser.parse_string_variables("${func($var_1, $var_2, xyz)}", variables_mapping),
-            "${func(abc, def, xyz)}"
+            parser.parse_content("/$var_1/$var_2/var3", variables_mapping),
+            "/abc/def/var3"
         )
         self.assertEqual(
             parser.parse_content("$var_3", variables_mapping),
@@ -256,6 +260,37 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(
             parser.parse_content({"$var_1": "$var_2"}, variables_mapping),
             {"abc": "def"}
+        )
+
+    def test_parse_data_multiple_identical_variables(self):
+        variables_mapping = {
+            "var_1": "abc",
+            "var_2": "def",
+        }
+        self.assertEqual(
+            parser.parse_content("/$var_1/$var_2/$var_1", variables_mapping),
+            "/abc/def/abc"
+        )
+
+        variables_mapping = {
+            "userid": 100,
+            "data": 1498
+        }
+        content = "/users/$userid/training/$data?userId=$userid&data=$data"
+        self.assertEqual(
+            parser.parse_content(content, variables_mapping),
+            "/users/100/training/1498?userId=100&data=1498"
+        )
+
+        variables_mapping = {
+            "user": 100,
+            "userid": 1000,
+            "data": 1498
+        }
+        content = "/users/$user/$userid/$data?userId=$userid&data=$data"
+        self.assertEqual(
+            parser.parse_content(content, variables_mapping),
+            "/users/100/1000/1498?userId=1000&data=1498"
         )
 
     def test_parse_data_functions(self):
