@@ -5,7 +5,7 @@ from loguru import logger
 
 from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
-from httprunner.v3.schema import TestsConfig, TestStep
+from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping
 
 
 class TestCaseRunner(object):
@@ -18,11 +18,11 @@ class TestCaseRunner(object):
         self.session = s
         return self
 
-    def with_variables(self, **variables) -> "TestCaseRunner":
+    def with_variables(self, **variables: VariablesMapping) -> "TestCaseRunner":
         self.config.variables.update(variables)
         return self
 
-    def run_step(self, step):
+    def run_step(self, step: TestStep):
         logger.info(f"run step: {step.name}")
 
         # parse
