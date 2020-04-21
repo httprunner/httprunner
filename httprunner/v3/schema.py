@@ -57,7 +57,6 @@ class Request(BaseModel):
 
 class TestStep(BaseModel):
     name: Name
-    times: int = 1
     request: Request
     variables: VariablesMapping = {}
     extract: Dict[Text, Text] = {}
