@@ -234,7 +234,10 @@ def parse_string(
             function_meta = parse_function_params(func_params_str)
             args = function_meta["args"]
             kwargs = function_meta["kwargs"]
-            func_eval_value = func(*args, **kwargs)
+
+            parsed_args = parse_data(args, variables_mapping, functions_mapping)
+            parsed_kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
+            func_eval_value = func(*parsed_args, **parsed_kwargs)
 
             func_raw_str = "${" + func_name + f"({func_params_str})" + "}"
             if func_raw_str == raw_string:
