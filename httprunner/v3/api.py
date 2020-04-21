@@ -223,6 +223,7 @@ class HttpRunner(object):
 
         """
         # load tests
+        logger.info(f"HttpRunner version: {__version__}")
         self.exception_stage = "load tests"
         tests_mapping = loader.load_cases(path, dot_env_path)
 
@@ -245,7 +246,6 @@ class HttpRunner(object):
             dict: result summary
 
         """
-        logger.info(f"HttpRunner version: {__version__}")
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_test_content(path_or_tests):

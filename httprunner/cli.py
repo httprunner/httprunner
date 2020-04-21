@@ -73,7 +73,7 @@ def main_run(args):
     err_code = 0
     try:
         for path in args.testfile_paths:
-            summary = runner.run(path, dot_env_path=args.dot_env_path)
+            summary = runner.run_path(path, dot_env_path=args.dot_env_path)
             report_dir = args.report_dir or os.path.join(os.getcwd(), "reports")
             gen_html_report(
                 summary,
