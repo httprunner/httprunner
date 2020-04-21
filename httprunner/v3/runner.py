@@ -53,7 +53,7 @@ class TestCaseRunner(object):
 
         # validate
         validators = step.validators
-        resp_obj.validate(validators, variables_mapping)
+        resp_obj.validate(validators, variables_mapping, self.config.functions)
 
         return extract_mapping
 
