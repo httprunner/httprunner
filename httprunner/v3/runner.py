@@ -79,6 +79,7 @@ class TestCaseRunner(object):
             # save extracted variables to session variables
             session_variables.update(extract_mapping)
             # save request & response meta data
+            self.session.meta_data["name"] = step.name
             self.meta_datas.append(self.session.meta_data)
 
         return self
