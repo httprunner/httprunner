@@ -91,6 +91,10 @@ class TestCaseRunner(object):
             raise
         finally:
             self.validation_results = resp_obj.validation_results
+            # save request & response meta data
+            self.session.meta_data["validators"] = self.validation_results
+            self.session.meta_data["name"] = step.name
+            self.meta_datas.append(self.session.meta_data)
 
         return extract_mapping
 
@@ -109,10 +113,6 @@ class TestCaseRunner(object):
             extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
             session_variables.update(extract_mapping)
-            # save request & response meta data
-            self.session.meta_data["validators"] = self.validation_results
-            self.session.meta_data["name"] = step.name
-            self.meta_datas.append(self.session.meta_data)
 
         return self
 
