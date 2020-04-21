@@ -2,6 +2,7 @@ from typing import List
 
 from loguru import logger
 
+from httprunner import utils
 from httprunner.client import HttpSession
 from httprunner.v3.exceptions import ValidationFailure
 from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
@@ -52,6 +53,28 @@ class TestCaseRunner(object):
         resp = self.session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
 
+        def log_req_resp_details():
+            err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
+
+            # log request
+            err_msg += "====== request details ======\n"
+            err_msg += f"url: {url}\n"
+            err_msg += f"method: {method}\n"
+            headers = parsed_request_dict.pop("headers", {})
+            err_msg += f"headers: {headers}\n"
+            for k, v in parsed_request_dict.items():
+                v = utils.omit_long_data(v)
+                err_msg += f"{k}: {repr(v)}\n"
+
+            err_msg += "\n"
+
+            # log response
+            err_msg += "====== response details ======\n"
+            err_msg += f"status_code: {resp_obj.status_code}\n"
+            err_msg += f"headers: {resp_obj.headers}\n"
+            err_msg += f"body: {repr(resp_obj.text)}\n"
+            logger.error(err_msg)
+
         # extract
         extractors = step.extract
         extract_mapping = resp_obj.extract(extractors)
@@ -64,6 +87,7 @@ class TestCaseRunner(object):
         try:
             resp_obj.validate(validators, variables_mapping, self.config.functions)
         except ValidationFailure:
+            log_req_resp_details()
             raise
         finally:
             self.validation_results = resp_obj.validation_results
