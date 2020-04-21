@@ -1,7 +1,9 @@
 import ast
+import builtins
 import re
 from typing import Any, Set, Text, Callable, Tuple, List, Dict, Union
 
+from httprunner import loader, utils
 from httprunner.v3 import exceptions
 from httprunner.v3.exceptions import VariableNotFound, FunctionNotFound
 
@@ -180,6 +182,51 @@ def parse_function_params(params):
     return function_meta
 
 
+def get_mapping_function(function_name: Text, functions_mapping: Dict[Text, Callable]) -> Callable:
+    """ get function from functions_mapping,
+        if not found, then try to check if builtin function.
+
+    Args:
+        function_name (str): function name
+        functions_mapping (dict): functions mapping
+
+    Returns:
+        mapping function object.
+
+    Raises:
+        exceptions.FunctionNotFound: function is neither defined in debugtalk.py nor builtin.
+
+    """
+    if function_name in functions_mapping:
+        return functions_mapping[function_name]
+
+    elif function_name in ["parameterize", "P"]:
+        return loader.load_csv_file
+
+    elif function_name in ["environ", "ENV"]:
+        return utils.get_os_environ
+
+    elif function_name in ["multipart_encoder", "multipart_content_type"]:
+        # extension for upload test
+        from httprunner.ext import uploader
+        return getattr(uploader, function_name)
+
+    try:
+        # check if HttpRunner builtin functions
+        built_in_functions = loader.load_builtin_functions()
+        return built_in_functions[function_name]
+    except KeyError:
+        pass
+
+    try:
+        # check if Python builtin functions
+        return getattr(builtins, function_name)
+    except AttributeError:
+        pass
+
+    raise exceptions.FunctionNotFound(f"{function_name} is not found.")
+
+
 def parse_string(
         raw_string: Text,
         variables_mapping: Dict[Text, Any],
@@ -225,10 +272,7 @@ def parse_string(
         func_match = function_regex_compile.match(raw_string, match_start_position)
         if func_match:
             func_name = func_match.group(1)
-            try:
-                func = functions_mapping[func_name]
-            except KeyError:
-                raise FunctionNotFound(f"{func_name} not found in {functions_mapping}")
+            func = get_mapping_function(func_name, functions_mapping)
 
             func_params_str = func_match.group(2)
             function_meta = parse_function_params(func_params_str)
