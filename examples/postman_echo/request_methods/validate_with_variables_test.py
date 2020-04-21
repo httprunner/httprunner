@@ -95,4 +95,5 @@ class TestCaseRequestMethodsValidateWithVariables(TestCaseRunner):
 
 
 if __name__ == '__main__':
-    TestCaseRequestMethodsValidateWithVariables().run()
+    runner = TestCaseRequestMethodsValidateWithVariables().run()
+    print(runner.meta_datas)

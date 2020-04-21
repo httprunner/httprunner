@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any
-from typing import Dict, List, Text, Union, Callable
+from typing import Dict, Text, Union, Callable
+from typing import List
 
 from pydantic import BaseModel, Field
 from pydantic import HttpUrl
@@ -56,7 +57,27 @@ class Request(BaseModel):
 
 class TestStep(BaseModel):
     name: Name
+    times: int = 1
     request: Request
     variables: VariablesMapping = {}
     extract: Dict[Text, Text] = {}
     validators: Validators = Field([], alias="validate")
+
+
+class TestCase(BaseModel):
+    config: TestsConfig
+    teststeps: List[TestStep]
+
+
+class ProjectMeta(BaseModel):
+    debugtalk_py: Text = ""
+    variables: VariablesMapping = {}
+    functions: FunctionsMapping = {}
+    env: Env = {}
+    PWD: Text
+    test_path: Text
+
+
+class TestsMapping(BaseModel):
+    project_mapping: ProjectMeta    # TODO: rename to project_meta
+    testcases: List[TestCase]
