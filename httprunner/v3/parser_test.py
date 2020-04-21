@@ -159,40 +159,7 @@ class TestParserBasic(unittest.TestCase):
             [('func', '1, 2, a=3, b=4')]
         )
 
-    def test_parse_content(self):
-        content = {
-            'request': {
-                'url': '/api/users/$uid',
-                'method': "$method",
-                'headers': {'token': '$token'},
-                'data': {
-                    "null": None,
-                    "true": True,
-                    "false": False,
-                    "empty_str": "",
-                    "value": "abc${add_one(3)}def"
-                }
-            }
-        }
-        variables_mapping = {
-            "uid": 1000,
-            "method": "POST",
-            "token": "abc123"
-        }
-        functions_mapping = {
-            "add_one": lambda x: x + 1
-        }
-        result = parser.parse_data(content, variables_mapping, functions_mapping)
-        self.assertEqual("/api/users/1000", result["request"]["url"])
-        self.assertEqual("abc123", result["request"]["headers"]["token"])
-        self.assertEqual("POST", result["request"]["method"])
-        self.assertIsNone(result["request"]["data"]["null"])
-        self.assertTrue(result["request"]["data"]["true"])
-        self.assertFalse(result["request"]["data"]["false"])
-        self.assertEqual("", result["request"]["data"]["empty_str"])
-        self.assertEqual("abc4def", result["request"]["data"]["value"])
-
-    def test_parse_content_with_variables(self):
+    def test_parse_data_string_with_variables(self):
         variables_mapping = {
             "var_1": "abc",
             "var_2": "def",
@@ -262,6 +229,56 @@ class TestParserBasic(unittest.TestCase):
             {"abc": "def"}
         )
 
+        # format: $var
+        value = parser.parse_data("ABC$var_1", variables_mapping)
+        self.assertEqual(value, "ABCabc")
+
+        value = parser.parse_data("ABC$var_1$var_3", variables_mapping)
+        self.assertEqual(value, "ABCabc123")
+
+        value = parser.parse_data("ABC$var_1/$var_3", variables_mapping)
+        self.assertEqual(value, "ABCabc/123")
+
+        value = parser.parse_data("ABC$var_1/", variables_mapping)
+        self.assertEqual(value, "ABCabc/")
+
+        value = parser.parse_data("ABC$var_1$", variables_mapping)
+        self.assertEqual(value, "ABCabc$")
+
+        value = parser.parse_data("ABC$var_1/123$var_1/456", variables_mapping)
+        self.assertEqual(value, "ABCabc/123abc/456")
+
+        value = parser.parse_data("ABC$var_1/$var_2/$var_1", variables_mapping)
+        self.assertEqual(value, "ABCabc/def/abc")
+
+        value = parser.parse_data("func1($var_1, $var_3)", variables_mapping)
+        self.assertEqual(value, "func1(abc, 123)")
+
+        # format: ${var}
+        value = parser.parse_data("ABC${var_1}", variables_mapping)
+        self.assertEqual(value, "ABCabc")
+
+        value = parser.parse_data("ABC${var_1}${var_3}", variables_mapping)
+        self.assertEqual(value, "ABCabc123")
+
+        value = parser.parse_data("ABC${var_1}/${var_3}", variables_mapping)
+        self.assertEqual(value, "ABCabc/123")
+
+        value = parser.parse_data("ABC${var_1}/", variables_mapping)
+        self.assertEqual(value, "ABCabc/")
+
+        value = parser.parse_data("ABC${var_1}123", variables_mapping)
+        self.assertEqual(value, "ABCabc123")
+
+        value = parser.parse_data("ABC${var_1}/123${var_1}/456", variables_mapping)
+        self.assertEqual(value, "ABCabc/123abc/456")
+
+        value = parser.parse_data("ABC${var_1}/${var_2}/${var_1}", variables_mapping)
+        self.assertEqual(value, "ABCabc/def/abc")
+
+        value = parser.parse_data("func1(${var_1}, ${var_3})", variables_mapping)
+        self.assertEqual(value, "func1(abc, 123)")
+
     def test_parse_data_multiple_identical_variables(self):
         variables_mapping = {
             "var_1": "abc",
@@ -293,11 +310,11 @@ class TestParserBasic(unittest.TestCase):
             "/users/100/1000/1498?userId=1000&data=1498"
         )
 
-    def test_parse_data_functions(self):
+    def test_parse_data_string_with_functions(self):
         import random, string
         functions_mapping = {
             "gen_random_string": lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
-                for _ in range(str_len))
+                                                         for _ in range(str_len))
         }
         result = parser.parse_data("${gen_random_string(5)}", functions_mapping=functions_mapping)
         self.assertEqual(len(result), 5)
@@ -319,6 +336,153 @@ class TestParserBasic(unittest.TestCase):
 
         with self.assertRaises(FunctionNotFound):
             parser.parse_data("/api/${gen_md5(abc)}")
+
+        variables_mapping = {
+            "var_1": "abc",
+            "var_2": "def",
+            "var_3": 123,
+            "var_4": {"a": 1},
+            "var_5": True,
+            "var_6": None
+        }
+        functions_mapping = {
+            "func1": lambda x, y: str(x) + str(y)
+        }
+
+        value = parser.parse_data("${func1($var_1, $var_3)}", variables_mapping, functions_mapping)
+        self.assertEqual(value, "abc123")
+
+        value = parser.parse_data("ABC${func1($var_1, $var_3)}DE", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc123DE")
+
+        value = parser.parse_data("ABC${func1($var_1, $var_3)}$var_5", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc123True")
+
+        value = parser.parse_data("ABC${func1($var_1, $var_3)}DE$var_4", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc123DE{'a': 1}")
+
+        value = parser.parse_data("ABC$var_5${func1($var_1, $var_3)}", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCTrueabc123")
+
+        # TODO: Python builtin functions
+        # value = parser.parse_data("ABC${ord(a)}DEF${len(abcd)}", variables_mapping, functions_mapping)
+        # self.assertEqual(value, "ABC97DEF4")
+
+    def test_parse_data_func_var_duplicate(self):
+        variables_mapping = {
+            "var_1": "abc",
+            "var_2": "def",
+            "var_3": 123,
+            "var_4": {"a": 1},
+            "var_5": True,
+            "var_6": None
+        }
+        functions_mapping = {
+            "func1": lambda x, y: str(x) + str(y)
+        }
+        value = parser.parse_data(
+            "ABC${func1($var_1, $var_3)}--${func1($var_1, $var_3)}",
+            variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc123--abc123")
+
+        value = parser.parse_data("ABC${func1($var_1, $var_3)}$var_1", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc123abc")
+
+        value = parser.parse_data(
+            "ABC${func1($var_1, $var_3)}$var_1--${func1($var_1, $var_3)}$var_1",
+            variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc123abc--abc123abc")
+
+    def test_parse_data_func_abnormal(self):
+        variables_mapping = {
+            "var_1": "abc",
+            "var_2": "def",
+            "var_3": 123,
+            "var_4": {"a": 1},
+            "var_5": True,
+            "var_6": None
+        }
+        functions_mapping = {
+            "func1": lambda x, y: str(x) + str(y)
+        }
+
+        # {
+        value = parser.parse_data("ABC$var_1{", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc{")
+
+        value = parser.parse_data("{ABC$var_1{}a}", variables_mapping, functions_mapping)
+        self.assertEqual(value, "{ABCabc{}a}")
+
+        value = parser.parse_data("AB{C$var_1{}a}", variables_mapping, functions_mapping)
+        self.assertEqual(value, "AB{Cabc{}a}")
+
+        # }
+        value = parser.parse_data("ABC$var_1}", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc}")
+
+        # $$
+        value = parser.parse_data("ABC$$var_1{", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABC$var_1{")
+
+        # $$$
+        value = parser.parse_data("ABC$$$var_1{", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABC$abc{")
+
+        # $$$$
+        value = parser.parse_data("ABC$$$$var_1{", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABC$$var_1{")
+
+        # ${
+        value = parser.parse_data("ABC$var_1${", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc${")
+
+        value = parser.parse_data("ABC$var_1${a", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc${a")
+
+        # $}
+        value = parser.parse_data("ABC$var_1$}a", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc$}a")
+
+        # }{
+        value = parser.parse_data("ABC$var_1}{a", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc}{a")
+
+        # {}
+        value = parser.parse_data("ABC$var_1{}a", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABCabc{}a")
+
+    def test_parse_data_request(self):
+        content = {
+            'request': {
+                'url': '/api/users/$uid',
+                'method': "$method",
+                'headers': {'token': '$token'},
+                'data': {
+                    "null": None,
+                    "true": True,
+                    "false": False,
+                    "empty_str": "",
+                    "value": "abc${add_one(3)}def"
+                }
+            }
+        }
+        variables_mapping = {
+            "uid": 1000,
+            "method": "POST",
+            "token": "abc123"
+        }
+        functions_mapping = {
+            "add_one": lambda x: x + 1
+        }
+        result = parser.parse_data(content, variables_mapping, functions_mapping)
+        self.assertEqual("/api/users/1000", result["request"]["url"])
+        self.assertEqual("abc123", result["request"]["headers"]["token"])
+        self.assertEqual("POST", result["request"]["method"])
+        self.assertIsNone(result["request"]["data"]["null"])
+        self.assertTrue(result["request"]["data"]["true"])
+        self.assertFalse(result["request"]["data"]["false"])
+        self.assertEqual("", result["request"]["data"]["empty_str"])
+        self.assertEqual("abc4def", result["request"]["data"]["value"])
 
     def test_parse_data_testcase(self):
         variables = {
