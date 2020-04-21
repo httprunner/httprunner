@@ -28,7 +28,7 @@ class TestCaseRunner(object):
         self.config.variables.update(variables)
         return self
 
-    def run_step(self, step: TestStep):
+    def __run_step(self, step: TestStep):
         logger.info(f"run step: {step.name}")
 
         # parse
@@ -75,7 +75,7 @@ class TestCaseRunner(object):
             # parse variables
             step.variables = parse_variables_mapping(step.variables, self.config.functions)
             # run step
-            extract_mapping = self.run_step(step)
+            extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
             session_variables.update(extract_mapping)
             # save request & response meta data
