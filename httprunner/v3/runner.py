@@ -4,7 +4,7 @@ from loguru import logger
 
 from httprunner import utils
 from httprunner.client import HttpSession
-from httprunner.v3.exceptions import ValidationFailure
+from httprunner.exceptions import ValidationFailure
 from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
 from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping, TestCase

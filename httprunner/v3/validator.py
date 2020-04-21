@@ -1,6 +1,6 @@
 from typing import Text
 
-from httprunner.v3.exceptions import ParamsError
+from httprunner.exceptions import ParamsError
 
 
 def get_uniform_comparator(comparator: Text):
