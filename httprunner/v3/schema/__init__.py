@@ -8,7 +8,8 @@ from pydantic import HttpUrl
 Name = Text
 Url = Text
 BaseUrl = Union[HttpUrl, Text]
-Variables = Dict[Text, Any]
+VariablesMapping = Dict[Text, Any]
+FunctionsMapping = Dict[Text, Callable]
 Headers = Dict[Text, Text]
 Verify = bool
 Hook = List[Text]
@@ -33,8 +34,8 @@ class TestsConfig(BaseModel):
     name: Name
     verify: Verify = False
     base_url: BaseUrl = ""
-    variables: Variables = {}
-    functions: Dict[Text, Callable]
+    variables: VariablesMapping = {}
+    functions: FunctionsMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     export: Export = []
@@ -56,6 +57,6 @@ class Request(BaseModel):
 class TestStep(BaseModel):
     name: Name
     request: Request
-    variables: Variables = {}
+    variables: VariablesMapping = {}
     extract: Dict[Text, Text] = {}
     validation: Validate = Field([], alias="validate")
