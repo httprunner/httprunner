@@ -4,7 +4,7 @@ import jmespath
 import requests
 from loguru import logger
 
-from httprunner.v3.exceptions import ValidationFailure, ParamsError
+from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.v3.parser import parse_data, parse_string_value, get_mapping_function
 from httprunner.v3.schema import VariablesMapping, Validators, FunctionsMapping
 from httprunner.v3.validator import uniform_validator
