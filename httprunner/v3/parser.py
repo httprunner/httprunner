@@ -280,46 +280,38 @@ def parse_string(
     return parsed_string
 
 
-def parse_content(
-        content: Any,
+def parse_data(
+        raw_data: Any,
         variables_mapping: Dict[Text, Any] = None,
         functions_mapping: Dict[Text, Callable] = None) -> Any:
-    """ parse content with evaluated variables mapping.
+    """ parse raw data with evaluated variables mapping.
         Notice: variables_mapping should not contain any variable or function.
     """
-    if isinstance(content, str):
+    if isinstance(raw_data, str):
         # content in string format may contains variables and functions
         variables_mapping = variables_mapping or {}
         functions_mapping = functions_mapping or {}
-        content = content.strip()
+        raw_data = raw_data.strip()
+        return parse_string(raw_data, variables_mapping, functions_mapping)
 
-        # replace functions with evaluated value
-        # Notice: parse_string_functions must be called before parse_string_variables
-        # content = parse_string_functions(content, variables_mapping, functions_mapping)
-
-        # replace variables with binding value
-        # content = parse_string_variables(content, variables_mapping)
-
-        return parse_string(content, variables_mapping, functions_mapping)
-
-    elif isinstance(content, (list, set, tuple)):
+    elif isinstance(raw_data, (list, set, tuple)):
         return [
-            parse_content(item, variables_mapping, functions_mapping)
-            for item in content
+            parse_data(item, variables_mapping, functions_mapping)
+            for item in raw_data
         ]
 
-    elif isinstance(content, dict):
-        parsed_content = {}
-        for key, value in content.items():
-            parsed_key = parse_content(key, variables_mapping, functions_mapping)
-            parsed_value = parse_content(value, variables_mapping, functions_mapping)
-            parsed_content[parsed_key] = parsed_value
+    elif isinstance(raw_data, dict):
+        parsed_data = {}
+        for key, value in raw_data.items():
+            parsed_key = parse_data(key, variables_mapping, functions_mapping)
+            parsed_value = parse_data(value, variables_mapping, functions_mapping)
+            parsed_data[parsed_key] = parsed_value
 
-        return parsed_content
+        return parsed_data
 
     else:
         # other types, e.g. None, int, float, bool
-        return content
+        return raw_data
 
 
 def parse_variables_mapping(
@@ -356,7 +348,7 @@ def parse_variables_mapping(
                 raise VariableNotFound(not_defined_variables)
 
             try:
-                parsed_value = parse_content(
+                parsed_value = parse_data(
                     var_value, parsed_variables, functions_mapping)
             except VariableNotFound:
                 continue
