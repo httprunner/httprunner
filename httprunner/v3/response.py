@@ -51,7 +51,9 @@ class ResponseObject(object):
             except AssertionError:
                 msg += " - fail"
                 logger.error(msg)
-                raise ValidationFailure(f"assert {field}: {actual_value} {assert_method} {expect_value}")
+                actual_type = type(actual_value).__name__
+                expect_type = type(expect_value).__name__
+                raise ValidationFailure(f"assert {field}: {actual_value}({actual_type}) {assert_method} {expect_value}({expect_type})")
 
     def extract(self, extractors: Dict[Text, Text]) -> Dict[Text, Any]:
         if not extractors:
