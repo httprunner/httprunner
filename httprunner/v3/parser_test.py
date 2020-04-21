@@ -182,7 +182,7 @@ class TestParserBasic(unittest.TestCase):
         functions_mapping = {
             "add_one": lambda x: x + 1
         }
-        result = parser.parse_content(content, variables_mapping, functions_mapping)
+        result = parser.parse_data(content, variables_mapping, functions_mapping)
         self.assertEqual("/api/users/1000", result["request"]["url"])
         self.assertEqual("abc123", result["request"]["headers"]["token"])
         self.assertEqual("POST", result["request"]["method"])
@@ -202,63 +202,63 @@ class TestParserBasic(unittest.TestCase):
             "var_6": None
         }
         self.assertEqual(
-            parser.parse_content("$var_1", variables_mapping),
+            parser.parse_data("$var_1", variables_mapping),
             "abc"
         )
         self.assertEqual(
-            parser.parse_content("${var_1}", variables_mapping),
+            parser.parse_data("${var_1}", variables_mapping),
             "abc"
         )
         self.assertEqual(
-            parser.parse_content("var_1", variables_mapping),
+            parser.parse_data("var_1", variables_mapping),
             "var_1"
         )
         self.assertEqual(
-            parser.parse_content("$var_1#XYZ", variables_mapping),
+            parser.parse_data("$var_1#XYZ", variables_mapping),
             "abc#XYZ"
         )
         self.assertEqual(
-            parser.parse_content("${var_1}#XYZ", variables_mapping),
+            parser.parse_data("${var_1}#XYZ", variables_mapping),
             "abc#XYZ"
         )
         self.assertEqual(
-            parser.parse_content("/$var_1/$var_2/var3", variables_mapping),
+            parser.parse_data("/$var_1/$var_2/var3", variables_mapping),
             "/abc/def/var3"
         )
         self.assertEqual(
-            parser.parse_content("$var_3", variables_mapping),
+            parser.parse_data("$var_3", variables_mapping),
             123
         )
         self.assertEqual(
-            parser.parse_content("$var_4", variables_mapping),
+            parser.parse_data("$var_4", variables_mapping),
             {"a": 1}
         )
         self.assertEqual(
-            parser.parse_content("$var_5", variables_mapping),
+            parser.parse_data("$var_5", variables_mapping),
             True
         )
         self.assertEqual(
-            parser.parse_content("abc$var_5", variables_mapping),
+            parser.parse_data("abc$var_5", variables_mapping),
             "abcTrue"
         )
         self.assertEqual(
-            parser.parse_content("abc$var_4", variables_mapping),
+            parser.parse_data("abc$var_4", variables_mapping),
             "abc{'a': 1}"
         )
         self.assertEqual(
-            parser.parse_content("$var_6", variables_mapping),
+            parser.parse_data("$var_6", variables_mapping),
             None
         )
 
         with self.assertRaises(VariableNotFound):
-            parser.parse_content("/api/$SECRET_KEY", variables_mapping)
+            parser.parse_data("/api/$SECRET_KEY", variables_mapping)
 
         self.assertEqual(
-            parser.parse_content(["$var_1", "$var_2"], variables_mapping),
+            parser.parse_data(["$var_1", "$var_2"], variables_mapping),
             ["abc", "def"]
         )
         self.assertEqual(
-            parser.parse_content({"$var_1": "$var_2"}, variables_mapping),
+            parser.parse_data({"$var_1": "$var_2"}, variables_mapping),
             {"abc": "def"}
         )
 
@@ -268,7 +268,7 @@ class TestParserBasic(unittest.TestCase):
             "var_2": "def",
         }
         self.assertEqual(
-            parser.parse_content("/$var_1/$var_2/$var_1", variables_mapping),
+            parser.parse_data("/$var_1/$var_2/$var_1", variables_mapping),
             "/abc/def/abc"
         )
 
@@ -278,7 +278,7 @@ class TestParserBasic(unittest.TestCase):
         }
         content = "/users/$userid/training/$data?userId=$userid&data=$data"
         self.assertEqual(
-            parser.parse_content(content, variables_mapping),
+            parser.parse_data(content, variables_mapping),
             "/users/100/training/1498?userId=100&data=1498"
         )
 
@@ -289,7 +289,7 @@ class TestParserBasic(unittest.TestCase):
         }
         content = "/users/$user/$userid/$data?userId=$userid&data=$data"
         self.assertEqual(
-            parser.parse_content(content, variables_mapping),
+            parser.parse_data(content, variables_mapping),
             "/users/100/1000/1498?userId=1000&data=1498"
         )
 
@@ -299,26 +299,26 @@ class TestParserBasic(unittest.TestCase):
             "gen_random_string": lambda str_len: ''.join(random.choice(string.ascii_letters + string.digits) \
                 for _ in range(str_len))
         }
-        result = parser.parse_content("${gen_random_string(5)}", functions_mapping=functions_mapping)
+        result = parser.parse_data("${gen_random_string(5)}", functions_mapping=functions_mapping)
         self.assertEqual(len(result), 5)
 
         add_two_nums = lambda a, b=1: a + b
         functions_mapping["add_two_nums"] = add_two_nums
         self.assertEqual(
-            parser.parse_content("${add_two_nums(1)}", functions_mapping=functions_mapping),
+            parser.parse_data("${add_two_nums(1)}", functions_mapping=functions_mapping),
             2
         )
         self.assertEqual(
-            parser.parse_content("${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
+            parser.parse_data("${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
             3
         )
         self.assertEqual(
-            parser.parse_content("/api/${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
+            parser.parse_data("/api/${add_two_nums(1, 2)}", functions_mapping=functions_mapping),
             "/api/3"
         )
 
         with self.assertRaises(FunctionNotFound):
-            parser.parse_content("/api/${gen_md5(abc)}")
+            parser.parse_data("/api/${gen_md5(abc)}")
 
     def test_parse_data_testcase(self):
         variables = {
@@ -342,7 +342,7 @@ class TestParserBasic(unittest.TestCase):
             },
             "body": "$data"
         }
-        parsed_testcase = parser.parse_content(testcase_template, variables, functions)
+        parsed_testcase = parser.parse_data(testcase_template, variables, functions)
         self.assertEqual(
             parsed_testcase["url"],
             "http://127.0.0.1:5000/api/users/1000/3"

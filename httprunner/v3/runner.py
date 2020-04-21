@@ -3,7 +3,7 @@ from typing import List
 import requests
 from loguru import logger
 
-from httprunner.v3.parser import build_url, parse_content, parse_variables_mapping
+from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
 from httprunner.v3.schema import TestsConfig, TestStep
 
@@ -27,7 +27,7 @@ class TestCaseRunner(object):
 
         # parse
         request_dict = step.request.dict()
-        parsed_request_dict = parse_content(request_dict, step.variables, self.config.functions)
+        parsed_request_dict = parse_data(request_dict, step.variables, self.config.functions)
 
         # prepare arguments
         method = parsed_request_dict.pop("method")
