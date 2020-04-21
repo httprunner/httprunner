@@ -4,10 +4,10 @@ import jmespath
 import requests
 from loguru import logger
 
-from httprunner.v3.exceptions import ParamsError, ValidationFailure
-from httprunner.v3.parser import parse_data, parse_string_value
+from httprunner.v3.exceptions import ValidationFailure
+from httprunner.v3.parser import parse_data, parse_string_value, get_mapping_function
 from httprunner.v3.schema import VariablesMapping, Validators, FunctionsMapping
-from httprunner.v3.validator import uniform_validator, AssertMethods
+from httprunner.v3.validator import uniform_validator
 
 
 class ResponseObject(object):
@@ -39,11 +39,7 @@ class ResponseObject(object):
 
             msg = f"assert {field} {assert_method} {expect_value}"
 
-            try:
-                assert_func = getattr(AssertMethods, assert_method)
-            except AttributeError:
-                raise ParamsError(f"Assert Method not supported: {assert_method}")
-
+            assert_func = get_mapping_function(assert_method, functions_mapping)
             actual_value = parse_string_value(actual_value)
             # parse expected value with config/teststep/extracted variables
             expect_value = parse_data(expect_value, variables_mapping, functions_mapping)

@@ -89,18 +89,3 @@ def uniform_validator(validator):
         "expect": expect_value,
         "assert": assert_method
     }
-
-
-class AssertMethods(object):
-
-    @staticmethod
-    def equals(actual_value, expect_value):
-        assert actual_value == expect_value
-
-    @staticmethod
-    def less_than(actual_value, expect_value):
-        assert actual_value < expect_value
-
-    @staticmethod
-    def greater_than(actual_value, expect_value):
-        assert actual_value > expect_value
