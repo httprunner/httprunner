@@ -4,7 +4,7 @@ import jmespath
 import requests
 from loguru import logger
 
-from httprunner.v3.exceptions import ValidationFailure
+from httprunner.v3.exceptions import ValidationFailure, ParamsError
 from httprunner.v3.parser import parse_data, parse_string_value, get_mapping_function
 from httprunner.v3.schema import VariablesMapping, Validators, FunctionsMapping
 from httprunner.v3.validator import uniform_validator
@@ -19,12 +19,29 @@ class ResponseObject(object):
             resp_obj (instance): requests.Response instance
 
         """
+        self.resp_obj = resp_obj
         self.resp_obj_meta = {
             "status_code": resp_obj.status_code,
             "headers": resp_obj.headers,
             "body": resp_obj.json()
         }
         self.validation_results = {}
+
+    def __getattr__(self, key):
+        try:
+            if key == "json":
+                value = self.resp_obj.json()
+            elif key == "cookies":
+                value = self.resp_obj.cookies.get_dict()
+            else:
+                value = getattr(self.resp_obj, key)
+
+            self.__dict__[key] = value
+            return value
+        except AttributeError:
+            err_msg = f"ResponseObject does not have attribute: {key}"
+            logger.error(err_msg)
+            raise ParamsError(err_msg)
 
     def extract(self, extractors: Dict[Text, Text]) -> Dict[Text, Any]:
         if not extractors:
@@ -90,13 +107,11 @@ class ResponseObject(object):
                 validate_pass = False
                 validator_dict["check_result"] = "fail"
                 validate_msg += "\t==> fail"
-                validate_msg += "\n{}({}) {} {}({})".format(
-                    check_value,
-                    type(check_value).__name__,
-                    assert_method,
-                    expect_value,
-                    type(expect_value).__name__
-                )
+                validate_msg += f"\n" \
+                                f"check_item: {check_item}\n" \
+                                f"check_value: {check_value}({type(check_value).__name__})\n" \
+                                f"assert_method: {assert_method}\n" \
+                                f"expect_value: {expect_value}({type(expect_value).__name__})"
                 logger.error(validate_msg)
                 failures.append(validate_msg)
 
