@@ -364,9 +364,8 @@ class TestParserBasic(unittest.TestCase):
         value = parser.parse_data("ABC$var_5${func1($var_1, $var_3)}", variables_mapping, functions_mapping)
         self.assertEqual(value, "ABCTrueabc123")
 
-        # TODO: Python builtin functions
-        # value = parser.parse_data("ABC${ord(a)}DEF${len(abcd)}", variables_mapping, functions_mapping)
-        # self.assertEqual(value, "ABC97DEF4")
+        value = parser.parse_data("ABC${ord(a)}DEF${len(abcd)}", variables_mapping, functions_mapping)
+        self.assertEqual(value, "ABC97DEF4")
 
     def test_parse_data_func_var_duplicate(self):
         variables_mapping = {
