@@ -25,7 +25,7 @@ class ResponseObject(object):
             "headers": resp_obj.headers,
             "body": resp_obj.json()
         }
-        self.validation_results = {}
+        self.validation_results: Dict = {}
 
     def __getattr__(self, key):
         try:
