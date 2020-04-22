@@ -73,15 +73,15 @@ def main_run(args):
     err_code = 0
     try:
         for path in args.testfile_paths:
-            summary = runner.run_path(path, dot_env_path=args.dot_env_path)
+            testsuite_summary = runner.run_path(path, dot_env_path=args.dot_env_path)
             report_dir = args.report_dir or os.path.join(os.getcwd(), "reports")
             gen_html_report(
-                summary,
+                testsuite_summary,
                 report_template=args.report_template,
                 report_dir=report_dir,
                 report_file=args.report_file
             )
-            err_code |= (0 if summary and summary["success"] else 1)
+            err_code |= (0 if testsuite_summary and testsuite_summary.success else 1)
     except Exception as ex:
         logger.error(f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}")
         err_code = 1

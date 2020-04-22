@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from loguru import logger
 
@@ -7,7 +7,7 @@ from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure
 from httprunner.v3.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.v3.response import ResponseObject
-from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping, TestCase
+from httprunner.v3.schema import TestsConfig, TestStep, VariablesMapping, TestCase, MetaData
 
 
 class TestCaseRunner(object):
@@ -15,8 +15,8 @@ class TestCaseRunner(object):
     config: TestsConfig = {}
     teststeps: List[TestStep] = []
     session: HttpSession = None
-    meta_datas: List = []
-    validation_results: List = []
+    meta_datas: List[MetaData] = []
+    validation_results: Dict = {}
 
     def init(self, testcase: TestCase) -> "TestCaseRunner":
         self.config = testcase.config
@@ -92,8 +92,8 @@ class TestCaseRunner(object):
         finally:
             self.validation_results = resp_obj.validation_results
             # save request & response meta data
-            self.session.meta_data["validators"] = self.validation_results
-            self.session.meta_data["name"] = step.name
+            self.session.meta_data.validators = self.validation_results
+            self.session.meta_data.name = step.name
             self.meta_datas.append(self.session.meta_data)
 
         return extract_mapping
