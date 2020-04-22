@@ -1,6 +1,8 @@
 import platform
 
 from httprunner import __version__
+from httprunner.report.html.result import HtmlTestResult
+from httprunner.v3.schema import TestCaseSummary, TestCaseStat, TestCaseTime, TestCaseInOut
 
 
 def get_platform():
@@ -38,7 +40,7 @@ def aggregate_stat(origin_stat, new_stat):
             origin_stat[key] += new_stat[key]
 
 
-def get_summary(result):
+def get_summary(result: HtmlTestResult) -> TestCaseSummary:
     """ get summary from test result
 
     Args:
@@ -55,28 +57,20 @@ def get_summary(result):
             }
 
     """
-    summary = {
-        "success": result.wasSuccessful(),
-        "stat": {
-            'total': result.testsRun,
-            'failures': len(result.failures),
-            'errors': len(result.errors),
-            'skipped': len(result.skipped),
-            'expectedFailures': len(result.expectedFailures),
-            'unexpectedSuccesses': len(result.unexpectedSuccesses)
-        }
-    }
-    summary["stat"]["successes"] = summary["stat"]["total"] \
-                                   - summary["stat"]["failures"] \
-                                   - summary["stat"]["errors"] \
-                                   - summary["stat"]["skipped"] \
-                                   - summary["stat"]["expectedFailures"] \
-                                   - summary["stat"]["unexpectedSuccesses"]
-
-    summary["time"] = {
-        'start_at': result.start_at,
-        'duration': result.duration
-    }
-    summary["records"] = result.records
-
-    return summary
+    return TestCaseSummary(
+        success=result.wasSuccessful(),
+        stat=TestCaseStat(
+            total=result.testsRun,
+            failures=len(result.failures),
+            errors=len(result.errors),
+            skipped=len(result.skipped),
+            expectedFailures=len(result.expectedFailures),
+            unexpectedSuccesses=len(result.unexpectedSuccesses)
+        ),
+        time=TestCaseTime(
+            start_at=result.start_at,
+            duration=result.duration
+        ),
+        records=result.records,
+        in_out=TestCaseInOut()
+    )

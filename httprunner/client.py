@@ -11,6 +11,7 @@ from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
 
 from httprunner import response
 from httprunner.utils import lower_dict_keys, omit_long_data
+from httprunner.v3.schema import MetaData, RequestStat
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -107,9 +108,8 @@ class HttpSession(requests.Session):
     def init_meta_data(self):
         """ initialize meta_data, it will store detail data of request and response
         """
-        self.meta_data = {
-            "name": "",
-            "data": [
+        self.meta_data = MetaData(
+            data=[
                 {
                     "request": {
                         "url": "N/A",
@@ -124,19 +124,15 @@ class HttpSession(requests.Session):
                     }
                 }
             ],
-            "stat": {
-                "content_size": "N/A",
-                "response_time_ms": "N/A",
-                "elapsed_ms": "N/A",
-            }
-        }
+            stat=RequestStat()
+        )
 
     def update_last_req_resp_record(self, resp_obj):
         """
         update request and response info from Response() object.
         """
-        self.meta_data["data"].pop()
-        self.meta_data["data"].append(get_req_resp_record(resp_obj))
+        self.meta_data.data.pop()
+        self.meta_data.data.append(get_req_resp_record(resp_obj))
 
     def request(self, method, url, name=None, **kwargs):
         """
@@ -180,13 +176,13 @@ class HttpSession(requests.Session):
         self.init_meta_data()
 
         # record test name
-        self.meta_data["name"] = name
+        self.meta_data.name = name
 
         # record original request info
-        self.meta_data["data"][0]["request"]["method"] = method
-        self.meta_data["data"][0]["request"]["url"] = url
+        self.meta_data.data[0]["request"]["method"] = method
+        self.meta_data.data[0]["request"]["url"] = url
         kwargs.setdefault("timeout", 120)
-        self.meta_data["data"][0]["request"].update(kwargs)
+        self.meta_data.data[0]["request"].update(kwargs)
 
         start_timestamp = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
@@ -200,15 +196,13 @@ class HttpSession(requests.Session):
             content_size = len(response.content or "")
 
         # record the consumed time
-        self.meta_data["stat"] = {
-            "response_time_ms": response_time_ms,
-            "elapsed_ms": response.elapsed.microseconds / 1000.0,
-            "content_size": content_size
-        }
+        self.meta_data.stat.response_time_ms = response_time_ms
+        self.meta_data.stat.elapsed_ms = response.elapsed.microseconds / 1000.0
+        self.meta_data.stat.content_size = content_size
 
         # record request and response histories, include 30X redirection
         response_list = response.history + [response]
-        self.meta_data["data"] = [
+        self.meta_data.data = [
             get_req_resp_record(resp_obj)
             for resp_obj in response_list
         ]

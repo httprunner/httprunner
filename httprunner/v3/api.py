@@ -7,7 +7,7 @@ from loguru import logger
 
 from httprunner import report, loader, utils, exceptions, __version__
 from httprunner.v3.runner import TestCaseRunner
-from httprunner.v3.schema import TestsMapping
+from httprunner.v3.schema import TestsMapping, TestCaseSummary, TestSuiteSummary
 
 
 class HttpRunner(object):
@@ -91,10 +91,10 @@ class HttpRunner(object):
 
         return prepared_testcases
 
-    def _run_suite(self, prepared_testcases: List[unittest.TestSuite]) -> List[Dict]:
+    def _run_suite(self, prepared_testcases: List[unittest.TestSuite]) -> List[TestCaseSummary]:
         """ run prepared testcases
         """
-        tests_results: List[Dict] = []
+        tests_results: List[TestCaseSummary] = []
 
         for index, testcase in enumerate(prepared_testcases):
             log_handler = None
@@ -108,18 +108,16 @@ class HttpRunner(object):
 
             result = self.unittest_runner.run(testcase)
             testcase_summary = report.get_summary(result)
-            testcase_summary["name"] = testcase.config.name
-            testcase_summary["in_out"] = {
-                "in": testcase.config.variables,
-                "out": testcase.config.export
-            }
+            testcase_summary.name = testcase.config.name
+            testcase_summary.in_out.vars = testcase.config.variables
+            testcase_summary.in_out.out = testcase.config.export
 
             if self.save_tests and log_handler:
                 logger.remove(log_handler)
                 logs_file_abs_path = utils.prepare_log_file_abs_path(
                     self.test_path, f"testcase_{index+1}.log"
                 )
-                testcase_summary["log"] = logs_file_abs_path
+                testcase_summary.log = logs_file_abs_path
 
             if result.wasSuccessful():
                 tests_results.append(testcase_summary)
@@ -128,14 +126,14 @@ class HttpRunner(object):
 
         return tests_results
 
-    def _aggregate(self, tests_results: List[Dict]):
+    def _aggregate(self, tests_results: List[TestCaseSummary]) -> TestSuiteSummary:
         """ aggregate multiple testcase results
 
         Args:
             tests_results (list): list of testcase summary
 
         """
-        summary = {
+        testsuite_summary = {
             "success": True,
             "stat": {
                 "testcases": {
@@ -151,21 +149,21 @@ class HttpRunner(object):
         }
 
         for testcase_summary in tests_results:
-            if testcase_summary["success"]:
-                summary["stat"]["testcases"]["success"] += 1
+            if testcase_summary.success:
+                testsuite_summary["stat"]["testcases"]["success"] += 1
             else:
-                summary["stat"]["testcases"]["fail"] += 1
+                testsuite_summary["stat"]["testcases"]["fail"] += 1
 
-            summary["success"] &= testcase_summary["success"]
+            testsuite_summary["success"] &= testcase_summary.success
 
-            report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
-            report.aggregate_stat(summary["time"], testcase_summary["time"])
+            report.aggregate_stat(testsuite_summary["stat"]["teststeps"], testcase_summary.stat.dict())
+            report.aggregate_stat(testsuite_summary["time"], testcase_summary.time.dict())
 
-            summary["details"].append(testcase_summary)
+            testsuite_summary["details"].append(testcase_summary)
 
-        return summary
+        return TestSuiteSummary.parse_obj(testsuite_summary)
 
-    def run_tests(self, tests_mapping):
+    def run_tests(self, tests_mapping) -> TestSuiteSummary:
         """ run testcase/testsuite data
         """
         tests = TestsMapping.parse_obj(tests_mapping)
@@ -195,7 +193,7 @@ class HttpRunner(object):
 
         if self.save_tests:
             utils.dump_json_file(
-                self._summary,
+                self._summary.dict(),
                 utils.prepare_log_file_abs_path(self.test_path, "summary.json")
             )
             # save variables and export data
@@ -207,7 +205,7 @@ class HttpRunner(object):
 
         return self._summary
 
-    def run_path(self, path, dot_env_path=None, mapping=None):
+    def run_path(self, path, dot_env_path=None, mapping=None) -> TestSuiteSummary:
         """ run testcase/testsuite file or folder.
 
         Args:
