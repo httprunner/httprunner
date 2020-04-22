@@ -82,25 +82,10 @@ class TestsMapping(BaseModel):
     testcases: List[TestCase]
 
 
-class Stat(BaseModel):
-    testcases: Dict
-    teststeps: Dict
-
-
 class TestCaseTime(BaseModel):
     start_at: float
     duration: float
     start_datetime: Text = ""
-
-
-class TestCaseStat(BaseModel):
-    total: int = 0
-    successes: int = 0
-    failures: int = 0
-    errors: int = 0
-    skipped: int = 0
-    expectedFailures: int = 0
-    unexpectedSuccesses: int = 0
 
 
 class TestCaseInOut(BaseModel):
@@ -121,28 +106,28 @@ class MetaData(BaseModel):
     validators: Dict = {}
 
 
-class Record(BaseModel):
-    name: Text = ""
-    status: Text = ""
-    attachment: Text = ""
-    meta_datas: List[MetaData] = []
-    response_time: Text = "N/A"
-
-
 class TestCaseSummary(BaseModel):
     name: Text = ""
     success: bool
-    stat: TestCaseStat
+    status: Text = ""
+    attachment: Text = ""
     time: TestCaseTime
-    record: Record = {}
     in_out: TestCaseInOut = {}
     log: Text = ""
+    meta_datas: List[MetaData] = []
+    total_response_time: Text = "N/A"
 
 
 class PlatformInfo(BaseModel):
     httprunner_version: Text
     python_version: Text
     platform: Text
+
+
+class Stat(BaseModel):
+    total: int = 0
+    success: int = 0
+    fail: int = 0
 
 
 class TestSuiteSummary(BaseModel):

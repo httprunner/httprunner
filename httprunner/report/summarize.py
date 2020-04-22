@@ -2,7 +2,7 @@ import platform
 
 from httprunner import __version__
 from httprunner.report.html.result import HtmlTestResult
-from httprunner.v3.schema import TestCaseSummary, TestCaseStat, TestCaseTime, TestCaseInOut
+from httprunner.v3.schema import TestCaseSummary, TestCaseTime, TestCaseInOut
 
 
 def get_platform():
@@ -59,18 +59,13 @@ def get_summary(result: HtmlTestResult) -> TestCaseSummary:
     """
     return TestCaseSummary(
         success=result.wasSuccessful(),
-        stat=TestCaseStat(
-            total=result.testsRun,
-            failures=len(result.failures),
-            errors=len(result.errors),
-            skipped=len(result.skipped),
-            expectedFailures=len(result.expectedFailures),
-            unexpectedSuccesses=len(result.unexpectedSuccesses)
-        ),
         time=TestCaseTime(
             start_at=result.start_at,
             duration=result.duration
         ),
-        record=result.record,
-        in_out=TestCaseInOut()
+        name=result.name,
+        status=result.status,
+        attachment=result.attachment,
+        in_out=TestCaseInOut(),
+        meta_datas=result.meta_datas
     )
