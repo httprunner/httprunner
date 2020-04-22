@@ -7,21 +7,18 @@ from httprunner.v3.schema import Record
 
 
 class HtmlTestResult(unittest.TextTestResult):
-    """ A html result class that can generate formatted html results.
-        Used by TextTestRunner.
+    """ A html result class that can generate formatted html results, used by TextTestRunner.
+        Each testcase is corresponding to one HtmlTestResult instance
     """
     def __init__(self, stream, descriptions, verbosity):
         super(HtmlTestResult, self).__init__(stream, descriptions, verbosity)
-        self.records = []
+        self.record = Record()
 
     def _record_test(self, test, status, attachment=''):
-        record = Record(
-            name=test.shortDescription(),
-            status=status,
-            attachment=attachment,
-            meta_datas=test.meta_datas
-        )
-        self.records.append(record)
+        self.record.name = test.shortDescription()
+        self.record.status = status
+        self.record.attachment = attachment
+        self.record.meta_datas = test.meta_datas
 
     def startTestRun(self):
         self.start_at = time.time()
