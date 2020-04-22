@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from typing import List, Tuple
+from typing import List, Dict
 
 from loguru import logger
 
@@ -91,10 +91,10 @@ class HttpRunner(object):
 
         return prepared_testcases
 
-    def _run_suite(self, prepared_testcases: List[unittest.TestSuite]) -> List[Tuple]:
+    def _run_suite(self, prepared_testcases: List[unittest.TestSuite]) -> List[Dict]:
         """ run prepared testcases
         """
-        tests_results: List[Tuple] = []
+        tests_results: List[Dict] = []
 
         for index, testcase in enumerate(prepared_testcases):
             log_handler = None
@@ -107,21 +107,32 @@ class HttpRunner(object):
             logger.info(f"Start to run testcase: {testcase.config.name}")
 
             result = self.unittest_runner.run(testcase)
-            if result.wasSuccessful():
-                tests_results.append((testcase, result))
-            else:
-                tests_results.insert(0, (testcase, result))
+            testcase_summary = report.get_summary(result)
+            testcase_summary["name"] = testcase.config.name
+            testcase_summary["in_out"] = {
+                "in": testcase.config.variables,
+                "out": testcase.config.export
+            }
 
             if self.save_tests and log_handler:
                 logger.remove(log_handler)
+                logs_file_abs_path = utils.prepare_log_file_abs_path(
+                    self.test_path, f"testcase_{index+1}.log"
+                )
+                testcase_summary["log"] = logs_file_abs_path
+
+            if result.wasSuccessful():
+                tests_results.append(testcase_summary)
+            else:
+                tests_results.insert(0, testcase_summary)
 
         return tests_results
 
-    def _aggregate(self, tests_results: List[Tuple]):
-        """ aggregate results
+    def _aggregate(self, tests_results: List[Dict]):
+        """ aggregate multiple testcase results
 
         Args:
-            tests_results (list): list of (testcase, result)
+            tests_results (list): list of testcase summary
 
         """
         summary = {
@@ -139,30 +150,16 @@ class HttpRunner(object):
             "details": []
         }
 
-        for index, tests_result in enumerate(tests_results):
-            testcase, result = tests_result
-            testcase_summary = report.get_summary(result)
-
+        for testcase_summary in tests_results:
             if testcase_summary["success"]:
                 summary["stat"]["testcases"]["success"] += 1
             else:
                 summary["stat"]["testcases"]["fail"] += 1
 
             summary["success"] &= testcase_summary["success"]
-            testcase_summary["name"] = testcase.config.name
-            testcase_summary["in_out"] = {
-                "in": testcase.config.variables,
-                "out": testcase.config.export
-            }
 
             report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
             report.aggregate_stat(summary["time"], testcase_summary["time"])
-
-            if self.save_tests:
-                logs_file_abs_path = utils.prepare_log_file_abs_path(
-                    self.test_path, f"testcase_{index+1}.log"
-                )
-                testcase_summary["log"] = logs_file_abs_path
 
             summary["details"].append(testcase_summary)
 
