@@ -3,8 +3,7 @@ import builtins
 import re
 from typing import Any, Set, Text, Callable, List, Dict
 
-from httprunner import loader, utils
-from httprunner import exceptions
+from httprunner import loader, utils, exceptions
 from httprunner.v3.schema import VariablesMapping, FunctionsMapping
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
