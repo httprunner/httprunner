@@ -53,7 +53,7 @@ def get_summary(result: HtmlTestResult) -> TestCaseSummary:
                 "success": True,
                 "stat": {},
                 "time": {},
-                "records": []
+                "record": {}
             }
 
     """
@@ -71,6 +71,6 @@ def get_summary(result: HtmlTestResult) -> TestCaseSummary:
             start_at=result.start_at,
             duration=result.duration
         ),
-        records=result.records,
+        record=result.record,
         in_out=TestCaseInOut()
     )

@@ -181,17 +181,10 @@
 
   <h2>Details</h2>
 
-  {% for test_suite_summary in details %}
-  {% set suite_index = loop.index %}
-  <h3>{{test_suite_summary.name}}</h3>
-  <table id="suite_{{suite_index}}" class="details">
-    <tr>
-      <td>TOTAL: {{test_suite_summary.stat.total}}</td>
-      <td>SUCCESS: {{test_suite_summary.stat.successes}}</td>
-      <td>FAILED: {{test_suite_summary.stat.failures}}</td>
-      <td>ERROR: {{test_suite_summary.stat.errors}}</td>
-      <td>SKIPPED: {{test_suite_summary.stat.skipped}}</td>
-    </tr>
+  {% for testcase_summary in details %}
+  {% set testcase_index = loop.index %}
+  <h3>{{testcase_summary.name}}</h3>
+  <table id="testcase_{{testcase_index}}" class="details">
     <tr>
       <th>Status</th>
       <th colspan="2">Name</th>
@@ -199,22 +192,22 @@
       <th>Detail</th>
     </tr>
 
-    {% for record in test_suite_summary.records %}
-    {% set record_index = "{}_{}".format(suite_index, loop.index) %}
-    {% set record_meta_datas = record.meta_datas %}
-    <tr id="record_{{record_index}}">
+    {% set record_meta_datas = testcase_summary.record.meta_datas %}
+    {% for meta_data in record_meta_datas %}
+    {% set step_index = "{}_{}".format(testcase_index, loop.index) %}
+    <tr id="step_{{step_index}}">
       <th class="{{record.status}}" style="width:5em;">{{record.status}}</th>
       <td colspan="2">{{record.name}}</td>
       <td style="text-align:center;width:6em;">{{ record.response_time }} ms</td>
       <td class="detail">
 
-        {% for meta_data in record_meta_datas %}
-        {% set meta_data_index = "{}_{}".format(record_index, loop.index) %}
-        <a class="button" href="#popup_log_{{meta_data_index}}">log-{{loop.index}}</a>
-        <div id="popup_log_{{meta_data_index}}" class="overlay">
+
+      {% set step_index = "{}_{}".format(testcase_index, loop.index) %}
+        <a class="button" href="#popup_log_{{step_index}}">log-{{loop.index}}</a>
+        <div id="popup_log_{{step_index}}" class="overlay">
           <div class="popup">
             <h2>Request and Response data</h2>
-            <a class="close" href="#record_{{meta_data_index}}">&times;</a>
+            <a class="close" href="#step_{{step_index}}">&times;</a>
 
             <div class="content">
               <h3>Name: {{ meta_data.name }}</h3>
@@ -342,11 +335,11 @@
         {% endfor %}
 
         {% if record.attachment %}
-          <a class="button" href="#popup_attachment_{{record_index}}">traceback</a>
-          <div id="popup_attachment_{{record_index}}" class="overlay">
+          <a class="button" href="#popup_attachment_{{step_index}}">traceback</a>
+          <div id="popup_attachment_{{step_index}}" class="overlay">
             <div class="popup">
               <h2>Traceback Message</h2>
-              <a class="close" href="#record_{{record_index}}">&times;</a>
+              <a class="close" href="#step_{{step_index}}">&times;</a>
               <div class="content"><pre>{{ record.attachment | e }}</pre></div>
             </div>
           </div>
