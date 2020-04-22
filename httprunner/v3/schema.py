@@ -134,7 +134,7 @@ class TestCaseSummary(BaseModel):
     success: bool
     stat: TestCaseStat
     time: TestCaseTime
-    records: List = [Record]
+    record: Record = {}
     in_out: TestCaseInOut = {}
     log: Text = ""
 
