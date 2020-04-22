@@ -6,20 +6,21 @@ from jinja2 import Template
 from loguru import logger
 
 from httprunner.exceptions import SummaryEmpty
+from httprunner.v3.schema import TestSuiteSummary
 
 
-def gen_html_report(summary, report_template=None, report_dir=None, report_file=None):
+def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, report_dir=None, report_file=None):
     """ render html report with specified report name and template
 
     Args:
-        summary (dict): test result summary data
+        testsuite_summary (dict): testsuite result summary data
         report_template (str): specify html report template path, template should be in Jinja2 format.
         report_dir (str): specify html report save directory
         report_file (str): specify html report file path, this has higher priority than specifying report dir.
 
     """
-    if not summary["time"] or summary["stat"]["testcases"]["total"] == 0:
-        logger.error(f"test result summary is empty ! {summary}")
+    if not testsuite_summary.time or testsuite_summary.stat.testcases["total"] == 0:
+        logger.error(f"test result testsuite_summary is empty ! {testsuite_summary}")
         raise SummaryEmpty
 
     if not report_template:
@@ -33,9 +34,9 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
 
     logger.info("Start to render Html report ...")
 
-    start_at_timestamp = summary["time"]["start_at"]
+    start_at_timestamp = testsuite_summary.time.start_at
     utc_time_iso_8601_str = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
-    summary["time"]["start_datetime"] = utc_time_iso_8601_str
+    testsuite_summary.time.start_datetime = utc_time_iso_8601_str
 
     if report_file:
         report_dir = os.path.dirname(report_file)
@@ -55,7 +56,7 @@ def gen_html_report(summary, report_template=None, report_dir=None, report_file=
             rendered_content = Template(
                 template_content,
                 extensions=["jinja2.ext.loopcontrols"]
-            ).render(summary)
+            ).render(testsuite_summary.dict())
             fp_w.write(rendered_content)
 
     logger.info(f"Generated Html report: {report_path}")

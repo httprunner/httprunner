@@ -3,6 +3,8 @@ import unittest
 
 from loguru import logger
 
+from httprunner.v3.schema import Record
+
 
 class HtmlTestResult(unittest.TextTestResult):
     """ A html result class that can generate formatted html results.
@@ -13,13 +15,13 @@ class HtmlTestResult(unittest.TextTestResult):
         self.records = []
 
     def _record_test(self, test, status, attachment=''):
-        data = {
-            'name': test.shortDescription(),
-            'status': status,
-            'attachment': attachment,
-            "meta_datas": test.meta_datas
-        }
-        self.records.append(data)
+        record = Record(
+            name=test.shortDescription(),
+            status=status,
+            attachment=attachment,
+            meta_datas=test.meta_datas
+        )
+        self.records.append(record)
 
     def startTestRun(self):
         self.start_at = time.time()

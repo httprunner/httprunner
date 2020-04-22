@@ -1,9 +1,12 @@
 import json
 from base64 import b64encode
 from collections import Iterable
+from typing import List
 
 from jinja2 import escape
 from requests.cookies import RequestsCookieJar
+
+from httprunner.v3.schema import TestSuiteSummary, MetaData
 
 
 def dumps_json(value):
@@ -164,20 +167,20 @@ def __expand_meta_datas(meta_datas, meta_datas_expanded):
             [dict1, dict2, dict3]
 
     """
-    if isinstance(meta_datas, dict):
+    if isinstance(meta_datas, MetaData):
         meta_datas_expanded.append(meta_datas)
     elif isinstance(meta_datas, list):
         for meta_data in meta_datas:
             __expand_meta_datas(meta_data, meta_datas_expanded)
 
 
-def __get_total_response_time(meta_datas_expanded):
+def __get_total_response_time(meta_datas: List[MetaData]):
     """ caculate total response time of all meta_datas
     """
     try:
         response_time = 0
-        for meta_data in meta_datas_expanded:
-            response_time += meta_data["stat"]["response_time_ms"]
+        for meta_data in meta_datas:
+            response_time += meta_data.stat.response_time_ms
 
         return "{:.2f}".format(response_time)
 
@@ -186,30 +189,24 @@ def __get_total_response_time(meta_datas_expanded):
         return "N/A"
 
 
-def __stringify_meta_datas(meta_datas):
+def __stringify_meta_datas(meta_datas: List[MetaData]):
 
-    if isinstance(meta_datas, list):
-        for _meta_data in meta_datas:
-            __stringify_meta_datas(_meta_data)
-    elif isinstance(meta_datas, dict):
-        data_list = meta_datas["data"]
+    for meta_data in meta_datas:
+        data_list = meta_data.data
         for data in data_list:
             __stringify_request(data["request"])
             __stringify_response(data["response"])
 
 
-def stringify_summary(summary):
+def stringify_summary(testsuite_summary: TestSuiteSummary):
     """ stringify summary, in order to dump json file and generate html report.
     """
-    for index, suite_summary in enumerate(summary["details"]):
+    for index, testcase_summary in enumerate(testsuite_summary.details):
 
-        if not suite_summary.get("name"):
-            suite_summary["name"] = f"testcase {index}"
+        if not testcase_summary.name:
+            testcase_summary.name = f"testcase {index}"
 
-        for record in suite_summary.get("records"):
-            meta_datas = record['meta_datas']
+        for record in testcase_summary.records:
+            meta_datas = record.meta_datas
             __stringify_meta_datas(meta_datas)
-            meta_datas_expanded = []
-            __expand_meta_datas(meta_datas, meta_datas_expanded)
-            record["meta_datas_expanded"] = meta_datas_expanded
-            record["response_time"] = __get_total_response_time(meta_datas_expanded)
+            record.response_time = __get_total_response_time(meta_datas)

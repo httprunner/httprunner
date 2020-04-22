@@ -80,3 +80,74 @@ class ProjectMeta(BaseModel):
 class TestsMapping(BaseModel):
     project_mapping: ProjectMeta    # TODO: rename to project_meta
     testcases: List[TestCase]
+
+
+class Stat(BaseModel):
+    testcases: Dict
+    teststeps: Dict
+
+
+class TestCaseTime(BaseModel):
+    start_at: float
+    duration: float
+    start_datetime: Text = ""
+
+
+class TestCaseStat(BaseModel):
+    total: int = 0
+    successes: int = 0
+    failures: int = 0
+    errors: int = 0
+    skipped: int = 0
+    expectedFailures: int = 0
+    unexpectedSuccesses: int = 0
+
+
+class TestCaseInOut(BaseModel):
+    vars: VariablesMapping = {}
+    out: Export = []
+
+
+class RequestStat(BaseModel):
+    content_size: Text = "N/A"
+    response_time_ms: Text = "N/A"
+    elapsed_ms: Text = "N/A"
+
+
+class MetaData(BaseModel):
+    name: Text = ""
+    data: List[Dict]
+    stat: RequestStat
+    validators: Dict = {}
+
+
+class Record(BaseModel):
+    name: Text = ""
+    status: Text = ""
+    attachment: Text = ""
+    meta_datas: List[MetaData] = []
+    response_time: Text = "N/A"
+
+
+class TestCaseSummary(BaseModel):
+    name: Text = ""
+    success: bool
+    stat: TestCaseStat
+    time: TestCaseTime
+    records: List = [Record]
+    in_out: TestCaseInOut = {}
+    log: Text = ""
+
+
+class PlatformInfo(BaseModel):
+    httprunner_version: Text
+    python_version: Text
+    platform: Text
+
+
+class TestSuiteSummary(BaseModel):
+    success: bool
+    stat: Stat
+    time: TestCaseTime
+    platform: PlatformInfo
+    details: List[TestCaseSummary]
