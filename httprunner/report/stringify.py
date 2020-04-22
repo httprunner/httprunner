@@ -206,7 +206,6 @@ def stringify_summary(testsuite_summary: TestSuiteSummary):
         if not testcase_summary.name:
             testcase_summary.name = f"testcase {index}"
 
-        record = testcase_summary.record
-        meta_datas = record.meta_datas
+        meta_datas = testcase_summary.meta_datas
         __stringify_meta_datas(meta_datas)
-        record.response_time = __get_total_response_time(meta_datas)
+        testcase_summary.total_response_time = __get_total_response_time(meta_datas)
