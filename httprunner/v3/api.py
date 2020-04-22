@@ -108,7 +108,6 @@ class HttpRunner(object):
 
             result = self.unittest_runner.run(testcase)
             testcase_summary = report.get_summary(result)
-            testcase_summary.name = testcase.config.name
             testcase_summary.in_out.vars = testcase.config.variables
             testcase_summary.in_out.out = testcase.config.export
 
@@ -136,12 +135,9 @@ class HttpRunner(object):
         testsuite_summary = {
             "success": True,
             "stat": {
-                "testcases": {
-                    "total": len(tests_results),
-                    "success": 0,
-                    "fail": 0
-                },
-                "teststeps": {}
+                "total": len(tests_results),
+                "success": 0,
+                "fail": 0
             },
             "time": {},
             "platform": report.get_platform(),
@@ -150,13 +146,11 @@ class HttpRunner(object):
 
         for testcase_summary in tests_results:
             if testcase_summary.success:
-                testsuite_summary["stat"]["testcases"]["success"] += 1
+                testsuite_summary["stat"]["success"] += 1
             else:
-                testsuite_summary["stat"]["testcases"]["fail"] += 1
+                testsuite_summary["stat"]["fail"] += 1
 
             testsuite_summary["success"] &= testcase_summary.success
-
-            report.aggregate_stat(testsuite_summary["stat"]["teststeps"], testcase_summary.stat.dict())
             report.aggregate_stat(testsuite_summary["time"], testcase_summary.time.dict())
 
             testsuite_summary["details"].append(testcase_summary)
@@ -197,13 +191,42 @@ class HttpRunner(object):
                 utils.prepare_log_file_abs_path(self.test_path, "summary.json")
             )
             # save variables and export data
-            vars_out = self.get_vars_out()  # TODO
+            vars_out = self.get_vars_out()
             utils.dump_json_file(
                 vars_out,
                 utils.prepare_log_file_abs_path(self.test_path, "io.json")
             )
 
         return self._summary
+
+    def get_vars_out(self):
+        """ get variables and output
+        Returns:
+            list: list of variables and output.
+                if tests are parameterized, list items are corresponded to parameters.
+
+                [
+                    {
+                        "in": {
+                            "user1": "leo"
+                        },
+                        "out": {
+                            "out1": "out_value_1"
+                        }
+                    },
+                    {...}
+                ]
+
+            None: returns None if tests not started or finished or corrupted.
+
+        """
+        if not self._summary:
+            return None
+
+        return [
+            testcase_summary.in_out.dict()
+            for testcase_summary in self._summary.details
+        ]
 
     def run_path(self, path, dot_env_path=None, mapping=None) -> TestSuiteSummary:
         """ run testcase/testsuite file or folder.
