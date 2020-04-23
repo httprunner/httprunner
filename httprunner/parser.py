@@ -1047,14 +1047,14 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
     test_dict.update(testcase_def_dict)
 
 
-def __prepare_config(config, project_mapping, session_variables_set=None):
+def __prepare_config(config, project_meta, session_variables_set=None):
     """ parse testcase/testsuite config.
     """
     # get config variables
     raw_config_variables = config.pop("variables", {})
 
-    override_variables = utils.deepcopy_dict(project_mapping.get("variables", {}))
-    functions = project_mapping.get("functions", {})
+    override_variables = utils.deepcopy_dict(project_meta.get("variables", {}))
+    functions = project_meta.get("functions", {})
 
     if isinstance(raw_config_variables, str) and function_regex_compile.match(
             raw_config_variables):
@@ -1091,7 +1091,7 @@ def __prepare_config(config, project_mapping, session_variables_set=None):
     return prepared_config
 
 
-def __prepare_testcase_tests(tests, config, project_mapping, session_variables_set=None):
+def __prepare_testcase_tests(tests, config, project_meta, session_variables_set=None):
     """ override tests with testcase config variables, base_url and verify.
         test maybe nested testcase.
 
@@ -1107,13 +1107,13 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
     Args:
         tests (list):
         config (dict):
-        project_mapping (dict):
+        project_meta (dict):
 
     """
     config_variables = config.get("variables", {})
     config_base_url = config.get("base_url", "")
     config_verify = config.get("verify", True)
-    functions = project_mapping.get("functions", {})
+    functions = project_meta.get("functions", {})
 
     prepared_testcase_tests = []
     session_variables_set = set(config_variables.keys()) | (session_variables_set or set())
@@ -1169,7 +1169,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
             test_dict["config"].setdefault("verify", config_verify)
 
             # 3, testcase_def config => testcase_def test_dict
-            test_dict = _parse_testcase(test_dict, project_mapping, session_variables_set)
+            test_dict = _parse_testcase(test_dict, project_meta, session_variables_set)
             if not test_dict:
                 continue
 
@@ -1231,7 +1231,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
     return prepared_testcase_tests
 
 
-def _parse_testcase(testcase, project_mapping, session_variables_set=None):
+def _parse_testcase(testcase, project_meta, session_variables_set=None):
     """ parse testcase
 
     Args:
@@ -1247,13 +1247,13 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
     try:
         prepared_config = __prepare_config(
             testcase["config"],
-            project_mapping,
+            project_meta,
             session_variables_set
         )
         prepared_testcase_tests = __prepare_testcase_tests(
             testcase["teststeps"],
             prepared_config,
-            project_mapping,
+            project_meta,
             session_variables_set
         )
         return {
@@ -1275,7 +1275,7 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
         return None
 
 
-def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mapping):
+def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_meta):
     """ override testscases with testsuite config variables, base_url and verify.
 
         variables priority:
@@ -1311,7 +1311,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
                 },
                 "base_url": "http://127.0.0.1:5000"
             }
-        project_mapping (dict):
+        project_meta (dict):
             {
                 "env": {},
                 "functions": {}
@@ -1320,7 +1320,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
     """
     testsuite_base_url = testsuite_config.get("base_url")
     testsuite_config_variables = testsuite_config.get("variables", {})
-    functions = project_mapping.get("functions", {})
+    functions = project_meta.get("functions", {})
     parsed_testcase_list = []
 
     for testcase_name, testcase in testcases.items():
@@ -1373,7 +1373,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
                     parsed_config_variables_copied,
                     parameter_variables
                 )
-                parsed_testcase_copied = _parse_testcase(testcase_copied, project_mapping)
+                parsed_testcase_copied = _parse_testcase(testcase_copied, project_meta)
                 if not parsed_testcase_copied:
                     continue
                 parsed_testcase_copied["config"]["name"] = parse_lazy_data(
@@ -1383,7 +1383,7 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
                 parsed_testcase_list.append(parsed_testcase_copied)
 
         else:
-            parsed_testcase = _parse_testcase(parsed_testcase, project_mapping)
+            parsed_testcase = _parse_testcase(parsed_testcase, project_meta)
             if not parsed_testcase:
                 continue
             parsed_testcase_list.append(parsed_testcase)
@@ -1391,13 +1391,13 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
     return parsed_testcase_list
 
 
-def _parse_testsuite(testsuite, project_mapping):
+def _parse_testsuite(testsuite, project_meta):
     testsuite.setdefault("config", {})
-    prepared_config = __prepare_config(testsuite["config"], project_mapping)
+    prepared_config = __prepare_config(testsuite["config"], project_meta)
     parsed_testcase_list = __get_parsed_testsuite_testcases(
         testsuite["testcases"],
         prepared_config,
-        project_mapping
+        project_meta
     )
     return parsed_testcase_list
 
@@ -1410,7 +1410,7 @@ def parse_tests(tests_mapping):
         tests_mapping (dict): project info and testcases list.
 
             {
-                "project_mapping": {
+                "project_meta": {
                     "PWD": "XXXXX",
                     "functions": {},
                     "variables": {},                        # optional, priority 1
@@ -1467,7 +1467,7 @@ def parse_tests(tests_mapping):
             }
 
     """
-    project_mapping = tests_mapping.get("project_mapping", {})
+    project_meta = tests_mapping.get("project_meta", {})
     testcases = []
 
     for test_type in tests_mapping:
@@ -1476,14 +1476,14 @@ def parse_tests(tests_mapping):
             # load testcases of testsuite
             testsuites = tests_mapping["testsuites"]
             for testsuite in testsuites:
-                parsed_testcases = _parse_testsuite(testsuite, project_mapping)
+                parsed_testcases = _parse_testsuite(testsuite, project_meta)
                 for parsed_testcase in parsed_testcases:
                     testcases.append(parsed_testcase)
 
         elif test_type == "testcases":
             for testcase in tests_mapping["testcases"]:
                 testcase["type"] = "testcase"
-                parsed_testcase = _parse_testcase(testcase, project_mapping)
+                parsed_testcase = _parse_testcase(testcase, project_meta)
                 if not parsed_testcase:
                     continue
                 testcases.append(parsed_testcase)
@@ -1499,7 +1499,7 @@ def parse_tests(tests_mapping):
                     "path": api_content.pop("path", None),
                     "type": api_content.pop("type", "api")
                 }
-                parsed_testcase = _parse_testcase(testcase, project_mapping)
+                parsed_testcase = _parse_testcase(testcase, project_meta)
                 if not parsed_testcase:
                     continue
                 testcases.append(parsed_testcase)

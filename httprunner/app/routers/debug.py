@@ -28,7 +28,7 @@ async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
 
     testcase_json = testcase.dict(by_alias=True)
     tests_mapping = {
-        "project_mapping": project_meta_json,
+        "project_meta": project_meta_json,
         "testcases": [testcase_json]
     }
 
@@ -59,6 +59,6 @@ async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
 # @router.post("/hrun/debug/testcases", tags=["debug"])
 # async def debug_multiple_testcases(project_meta: ProjectMeta, testcases: TestCases):
 #     tests_mapping = {
-#         "project_mapping": project_meta,
+#         "project_meta": project_meta,
 #         "testcases": testcases
 #     }
