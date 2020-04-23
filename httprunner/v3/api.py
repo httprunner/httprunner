@@ -63,7 +63,7 @@ class HttpRunner(object):
                 except exceptions.MyBaseFailure as ex:
                     self.fail(str(ex))
                 finally:
-                    self.meta_datas = test_runner.meta_datas
+                    self.step_datas = test_runner.step_datas
 
             test.__doc__ = test_runner.config.name
             return test

@@ -67,5 +67,5 @@ def get_summary(result: HtmlTestResult) -> TestCaseSummary:
         status=result.status,
         attachment=result.attachment,
         in_out=TestCaseInOut(),
-        meta_datas=result.meta_datas
+        step_datas=result.step_datas
     )

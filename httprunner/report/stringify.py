@@ -144,43 +144,13 @@ def __stringify_response(response_data):
         response_data[key] = value
 
 
-def __expand_meta_datas(meta_datas, meta_datas_expanded):
-    """ expand meta_datas to one level
-
-    Args:
-        meta_datas (dict/list): maybe in nested format
-
-    Returns:
-        list: expanded list in one level
-
-    Examples:
-        >>> meta_datas = [
-                [
-                    dict1,
-                    dict2
-                ],
-                dict3
-            ]
-        >>> meta_datas_expanded = []
-        >>> __expand_meta_datas(meta_datas, meta_datas_expanded)
-        >>> print(meta_datas_expanded)
-            [dict1, dict2, dict3]
-
-    """
-    if isinstance(meta_datas, MetaData):
-        meta_datas_expanded.append(meta_datas)
-    elif isinstance(meta_datas, list):
-        for meta_data in meta_datas:
-            __expand_meta_datas(meta_data, meta_datas_expanded)
-
-
-def __get_total_response_time(meta_datas: List[MetaData]):
-    """ caculate total response time of all meta_datas
+def __get_total_response_time(step_datas: List[MetaData]):
+    """ caculate total response time of all step_datas
     """
     try:
         response_time = 0
-        for meta_data in meta_datas:
-            response_time += meta_data.stat.response_time_ms
+        for step_data in step_datas:
+            response_time += step_data.stat.response_time_ms
 
         return "{:.2f}".format(response_time)
 
@@ -189,10 +159,10 @@ def __get_total_response_time(meta_datas: List[MetaData]):
         return "N/A"
 
 
-def __stringify_meta_datas(meta_datas: List[MetaData]):
+def __stringify_meta_datas(step_datas: List[MetaData]):
 
-    for meta_data in meta_datas:
-        data_list = meta_data.data
+    for step_data in step_datas:
+        data_list = step_data.data
         for data in data_list:
             __stringify_request(data["request"])
             __stringify_response(data["response"])
@@ -206,6 +176,6 @@ def stringify_summary(testsuite_summary: TestSuiteSummary):
         if not testcase_summary.name:
             testcase_summary.name = f"testcase {index}"
 
-        meta_datas = testcase_summary.meta_datas
-        __stringify_meta_datas(meta_datas)
-        testcase_summary.total_response_time = __get_total_response_time(meta_datas)
+        step_datas = testcase_summary.step_datas
+        __stringify_meta_datas(step_datas)
+        testcase_summary.total_response_time = __get_total_response_time(step_datas)
