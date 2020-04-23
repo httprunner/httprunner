@@ -2,7 +2,7 @@ import io
 import os
 import unittest
 
-from httprunner import exceptions, loader, utils
+from httprunner import loader, utils
 
 
 class TestUtils(unittest.TestCase):
@@ -15,50 +15,6 @@ class TestUtils(unittest.TestCase):
         utils.set_os_environ(variables_mapping)
         self.assertIn("abc", os.environ)
         self.assertEqual(os.environ["abc"], "123")
-
-    def test_query_json(self):
-        json_content = {
-            "ids": [1, 2, 3, 4],
-            "person": {
-                "name": {
-                    "first_name": "Leo",
-                    "last_name": "Lee",
-                },
-                "age": 29,
-                "cities": ["Guangzhou", "Shenzhen"]
-            }
-        }
-        query = "ids.2"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, 3)
-
-        query = "ids.str_key"
-        with self.assertRaises(exceptions.ExtractFailure):
-            utils.query_json(json_content, query)
-
-        query = "ids.5"
-        with self.assertRaises(exceptions.ExtractFailure):
-            utils.query_json(json_content, query)
-
-        query = "person.age"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, 29)
-
-        query = "person.not_exist_key"
-        with self.assertRaises(exceptions.ExtractFailure):
-            utils.query_json(json_content, query)
-
-        query = "person.cities.0"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, "Guangzhou")
-
-        query = "person.name.first_name"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, "Leo")
-
-        query = "person.name.first_name.0"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, "L")
 
     def current_validators(self):
         from httprunner.builtin import comparators
@@ -112,33 +68,6 @@ class TestUtils(unittest.TestCase):
         functions_mapping["type_match"]({}, "dict")
         functions_mapping["type_match"]({"a": 1}, "dict")
 
-    def test_handle_config_key_case(self):
-        origin_dict = {
-            "Name": "test",
-            "Request": {
-                "url": "http://127.0.0.1:5000",
-                "METHOD": "POST",
-                "Headers": {
-                    "Accept": "application/json",
-                    "User-Agent": "ios/9.3"
-                }
-            }
-        }
-        new_dict = utils.lower_test_dict_keys(origin_dict)
-        self.assertIn("name", new_dict)
-        self.assertIn("request", new_dict)
-        self.assertIn("method", new_dict["request"])
-        self.assertIn("headers", new_dict["request"])
-        self.assertIn("Accept", new_dict["request"]["headers"])
-        self.assertIn("User-Agent", new_dict["request"]["headers"])
-
-        origin_dict = {
-            "Name": "test",
-            "Request": "$default_request"
-        }
-        new_dict = utils.lower_test_dict_keys(origin_dict)
-        self.assertIn("$default_request", new_dict["request"])
-
     def test_lower_dict_keys(self):
         request_dict = {
             "url": "http://127.0.0.1:5000",
@@ -161,29 +90,6 @@ class TestUtils(unittest.TestCase):
         request_dict = None
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertEqual(None, request_dict)
-
-    def test_ensure_mapping_format(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
-        ordered_dict = utils.ensure_mapping_format(map_list)
-        self.assertIsInstance(ordered_dict, dict)
-        self.assertIn("a", ordered_dict)
-
-    def test_extend_variables(self):
-        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
-        override_variables = [{"var1": "val111"}, {"var3": "val3"}]
-        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
-        self.assertEqual(extended_variables_mapping["var1"], "val111")
-        self.assertEqual(extended_variables_mapping["var2"], "val2")
-        self.assertEqual(extended_variables_mapping["var3"], "val3")
-
-    def test_extend_variables_fix(self):
-        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
-        override_variables = {}
-        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
-        self.assertEqual(extended_variables_mapping["var1"], "val1")
 
     def test_deepcopy_dict(self):
         license_path = os.path.join(

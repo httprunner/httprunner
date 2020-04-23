@@ -3,7 +3,7 @@ from datetime import datetime
 
 from httprunner import __version__
 from httprunner.report.html.result import HtmlTestResult
-from httprunner.v3.schema import TestCaseSummary, TestCaseTime, TestCaseInOut
+from httprunner.schema import TestCaseSummary, TestCaseTime, TestCaseInOut
 
 
 def get_platform():

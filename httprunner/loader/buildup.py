@@ -4,7 +4,6 @@ import os
 from loguru import logger
 
 from httprunner import exceptions, utils
-from httprunner.loader.check import JsonSchemaChecker
 from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
     load_folder_files
 from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
@@ -174,7 +173,6 @@ def load_testcase(raw_testcase):
             }
 
     """
-    JsonSchemaChecker.validate_testcase_format(raw_testcase)
     raw_teststeps = raw_testcase.pop("teststeps")
     raw_testcase["teststeps"] = [
         load_teststep(teststep)
@@ -220,7 +218,6 @@ def load_testsuite(raw_testsuite):
         # invalid format
         raise exceptions.FileFormatError("Invalid testsuite format!")
 
-    JsonSchemaChecker.validate_testsuite_format(raw_testsuite)
     raw_testsuite["testcases"] = {}
     for raw_testcase in raw_testcases:
         __extend_with_testcase_ref(raw_testcase)
@@ -284,7 +281,6 @@ def load_test_file(path: str) -> dict:
 
     elif "request" in raw_content:
         # file_type: api
-        JsonSchemaChecker.validate_api_format(raw_content)
         loaded_content = raw_content
         loaded_content["path"] = path
         loaded_content["type"] = "api"

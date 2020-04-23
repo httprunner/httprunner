@@ -1,6 +1,6 @@
 import unittest
 
-from httprunner.v3.api import HttpRunner
+from httprunner.api import HttpRunner
 
 
 class TestHttpRunner(unittest.TestCase):

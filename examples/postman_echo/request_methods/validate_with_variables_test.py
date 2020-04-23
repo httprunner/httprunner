@@ -1,5 +1,5 @@
-from httprunner.v3.runner import TestCaseRunner
-from httprunner.v3.schema import TestsConfig, TestStep
+from httprunner.runner import TestCaseRunner
+from httprunner.schema import TestsConfig, TestStep
 
 
 class TestCaseRequestMethodsValidateWithVariables(TestCaseRunner):

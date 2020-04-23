@@ -1,11 +1,14 @@
 import os
 import sys
 import unittest
+from typing import List
 
 from loguru import logger
 
-from httprunner import (__version__, exceptions, loader, parser,
-                        report, runner, utils)
+from httprunner import report, loader, utils, exceptions, __version__
+from httprunner.report import gen_html_report
+from httprunner.runner import TestCaseRunner
+from httprunner.schema import TestsMapping, TestCaseSummary, TestSuiteSummary
 
 
 class HttpRunner(object):
@@ -23,11 +26,10 @@ class HttpRunner(object):
 
     """
 
-    def __init__(self, failfast=False, save_tests=False, log_level="WARNING", log_file=None):
+    def __init__(self, save_tests=False, log_level="WARNING", log_file=None):
         """ initialize HttpRunner.
 
         Args:
-            failfast (bool): stop the test run on the first error or failure.
             save_tests (bool): save loaded/parsed tests to JSON file.
             log_level (str): logging level.
             log_file (str): log file path.
@@ -35,7 +37,7 @@ class HttpRunner(object):
         """
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
-            "failfast": failfast,
+            "failfast": True,
             "resultclass": report.HtmlTestResult
         }
 
@@ -51,90 +53,48 @@ class HttpRunner(object):
         self._summary = None
         self.test_path = None
 
-    def _add_tests(self, testcases):
-        """ initialize testcase with Runner() and add to test suite.
-
-        Args:
-            testcases (list): testcases list.
-
-        Returns:
-            unittest.TestSuite()
-
-        """
-        def _add_test(test_runner, test_dict):
+    def _prepare_tests(self, tests: TestsMapping) -> List[unittest.TestSuite]:
+        def _add_test(test_runner: TestCaseRunner):
             """ add test to testcase.
             """
             def test(self):
                 try:
-                    test_runner.run_test(test_dict)
+                    test_runner.run()
                 except exceptions.MyBaseFailure as ex:
                     self.fail(str(ex))
                 finally:
                     self.step_datas = test_runner.step_datas
 
-            if "config" in test_dict:
-                # run nested testcase
-                test.__doc__ = test_dict["config"].get("name")
-                variables = test_dict["config"].get("variables", {})
-            else:
-                # run api test
-                test.__doc__ = test_dict.get("name")
-                variables = test_dict.get("variables", {})
-
-            if isinstance(test.__doc__, parser.LazyString):
-                try:
-                    parsed_variables = parser.parse_variables_mapping(variables)
-                    test.__doc__ = parser.parse_lazy_data(
-                        test.__doc__, parsed_variables
-                    )
-                except exceptions.VariableNotFound:
-                    test.__doc__ = str(test.__doc__)
-
+            test.__doc__ = test_runner.config.name
             return test
 
-        test_suite = unittest.TestSuite()
+        project_meta = tests.project_meta
+        testcases = tests.testcases
+
+        prepared_testcases: List[unittest.TestSuite] = []
+
         for testcase in testcases:
-            config = testcase.get("config", {})
-            test_runner = runner.Runner(config)
+            testcase.config.variables.update(project_meta.variables)
+            testcase.config.functions.update(project_meta.functions)
+
+            test_runner = TestCaseRunner().init(testcase)
+
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
-
-            tests = testcase.get("teststeps", [])
-            for index, test_dict in enumerate(tests):
-                times = test_dict.get("times", 1)
-                try:
-                    times = int(times)
-                except ValueError:
-                    raise exceptions.ParamsError(
-                        f"times should be digit, given: {times}")
-
-                for times_index in range(times):
-                    # suppose one testcase should not have more than 9999 steps,
-                    # and one step should not run more than 999 times.
-                    test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_method = _add_test(test_runner, test_dict)
-                    setattr(TestSequense, test_method_name, test_method)
+            test_method = _add_test(test_runner)
+            setattr(TestSequense, "test_method_name", test_method)
 
             loaded_testcase = self.test_loader.loadTestsFromTestCase(TestSequense)
-            setattr(loaded_testcase, "config", config)
-            setattr(loaded_testcase, "teststeps", tests)
-            setattr(loaded_testcase, "runner", test_runner)
-            test_suite.addTest(loaded_testcase)
+            setattr(loaded_testcase, "config", testcase.config)
+            prepared_testcases.append(loaded_testcase)
 
-        return test_suite
+        return prepared_testcases
 
-    def _run_suite(self, test_suite):
-        """ run tests in test_suite
-
-        Args:
-            test_suite: unittest.TestSuite()
-
-        Returns:
-            list: tests_results
-
+    def _run_suite(self, prepared_testcases: List[unittest.TestSuite]) -> List[TestCaseSummary]:
+        """ run prepared testcases
         """
-        tests_results = []
+        tests_results: List[TestCaseSummary] = []
 
-        for index, testcase in enumerate(test_suite):
+        for index, testcase in enumerate(prepared_testcases):
             log_handler = None
             if self.save_tests:
                 logs_file_abs_path = utils.prepare_log_file_abs_path(
@@ -142,72 +102,71 @@ class HttpRunner(object):
                 )
                 log_handler = logger.add(logs_file_abs_path, level="DEBUG")
 
-            testcase_name = testcase.config.get("name")
-            logger.info(f"Start to run testcase: {testcase_name}")
+            logger.info(f"Start to run testcase: {testcase.config.name}")
 
             result = self.unittest_runner.run(testcase)
-            if result.wasSuccessful():
-                tests_results.append((testcase, result))
-            else:
-                tests_results.insert(0, (testcase, result))
+            testcase_summary = report.get_summary(result)
+            testcase_summary.in_out.vars = testcase.config.variables
+            testcase_summary.in_out.out = testcase.config.export
 
             if self.save_tests and log_handler:
                 logger.remove(log_handler)
-
-        return tests_results
-
-    def _aggregate(self, tests_results):
-        """ aggregate results
-
-        Args:
-            tests_results (list): list of (testcase, result)
-
-        """
-        summary = {
-            "success": True,
-            "stat": {
-                "testcases": {
-                    "total": len(tests_results),
-                    "success": 0,
-                    "fail": 0
-                },
-                "teststeps": {}
-            },
-            "time": {},
-            "platform": report.get_platform(),
-            "details": []
-        }
-
-        for index, tests_result in enumerate(tests_results):
-            testcase, result = tests_result
-            testcase_summary = report.get_summary(result)
-
-            if testcase_summary["success"]:
-                summary["stat"]["testcases"]["success"] += 1
-            else:
-                summary["stat"]["testcases"]["fail"] += 1
-
-            summary["success"] &= testcase_summary["success"]
-            testcase_summary["name"] = testcase.config.get("name")
-            testcase_summary["in_out"] = utils.get_testcase_io(testcase)
-
-            report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
-            report.aggregate_stat(summary["time"], testcase_summary["time"])
-
-            if self.save_tests:
                 logs_file_abs_path = utils.prepare_log_file_abs_path(
                     self.test_path, f"testcase_{index+1}.log"
                 )
-                testcase_summary["log"] = logs_file_abs_path
+                testcase_summary.log = logs_file_abs_path
 
-            summary["details"].append(testcase_summary)
+            if result.wasSuccessful():
+                tests_results.append(testcase_summary)
+            else:
+                tests_results.insert(0, testcase_summary)
 
-        return summary
+        return tests_results
 
-    def run_tests(self, tests_mapping):
+    def _aggregate(self, tests_results: List[TestCaseSummary]) -> TestSuiteSummary:
+        """ aggregate multiple testcase results
+
+        Args:
+            tests_results (list): list of testcase summary
+
+        """
+        testsuite_summary = {
+            "success": True,
+            "stat": {
+                "total": len(tests_results),
+                "success": 0,
+                "fail": 0
+            },
+            "time": {},
+            "platform": report.get_platform(),
+            "testcases": []
+        }
+
+        for testcase_summary in tests_results:
+            if testcase_summary.success:
+                testsuite_summary["stat"]["success"] += 1
+            else:
+                testsuite_summary["stat"]["fail"] += 1
+
+            testsuite_summary["success"] &= testcase_summary.success
+
+            testsuite_summary["testcases"].append(testcase_summary)
+
+        total_duration = tests_results[-1].time.start_at + tests_results[-1].time.duration \
+                         - tests_results[0].time.start_at
+        testsuite_summary["time"] = {
+            "start_at": tests_results[0].time.start_at,
+            "start_at_iso_format": tests_results[0].time.start_at_iso_format,
+            "duration": total_duration
+        }
+
+        return TestSuiteSummary.parse_obj(testsuite_summary)
+
+    def run_tests(self, tests_mapping) -> TestSuiteSummary:
         """ run testcase/testsuite data
         """
-        self.test_path = tests_mapping.get("project_meta", {}).get("test_path", "")
+        tests = TestsMapping.parse_obj(tests_mapping)
+        self.test_path = tests.project_meta.test_path
 
         if self.save_tests:
             utils.dump_json_file(
@@ -215,34 +174,13 @@ class HttpRunner(object):
                 utils.prepare_log_file_abs_path(self.test_path, "loaded.json")
             )
 
-        # parse tests
-        self.exception_stage = "parse tests"
-        parsed_testcases = parser.parse_tests(tests_mapping)
-        parse_failed_testfiles = parser.get_parse_failed_testfiles()
-        if parse_failed_testfiles:
-            logger.warning("parse failures occurred ...")
-            utils.dump_json_file(
-                parse_failed_testfiles,
-                utils.prepare_log_file_abs_path(self.test_path, "parse_failed.json")
-            )
+        # prepare testcases
+        self.exception_stage = "prepare testcases"
+        prepared_testcases = self._prepare_tests(tests)
 
-        if len(parsed_testcases) == 0:
-            logger.error("failed to parse all cases, abort.")
-            raise exceptions.ParseTestsFailure
-
-        if self.save_tests:
-            utils.dump_json_file(
-                parsed_testcases,
-                utils.prepare_log_file_abs_path(self.test_path, "parsed.json")
-            )
-
-        # add tests to test suite
-        self.exception_stage = "add tests to test suite"
-        test_suite = self._add_tests(parsed_testcases)
-
-        # run test suite
-        self.exception_stage = "run test suite"
-        results = self._run_suite(test_suite)
+        # run prepared testcases
+        self.exception_stage = "run prepared testcases"
+        results = self._run_suite(prepared_testcases)
 
         # aggregate results
         self.exception_stage = "aggregate results"
@@ -254,7 +192,7 @@ class HttpRunner(object):
 
         if self.save_tests:
             utils.dump_json_file(
-                self._summary,
+                self._summary.dict(),
                 utils.prepare_log_file_abs_path(self.test_path, "summary.json")
             )
             # save variables and export data
@@ -291,11 +229,11 @@ class HttpRunner(object):
             return None
 
         return [
-            summary["in_out"]
-            for summary in self._summary["details"]
+            testcase_summary.in_out.dict()
+            for testcase_summary in self._summary.testcases
         ]
 
-    def run_path(self, path, dot_env_path=None, mapping=None):
+    def run_path(self, path, dot_env_path=None, mapping=None) -> TestSuiteSummary:
         """ run testcase/testsuite file or folder.
 
         Args:
@@ -308,6 +246,7 @@ class HttpRunner(object):
 
         """
         # load tests
+        logger.info(f"HttpRunner version: {__version__}")
         self.exception_stage = "load tests"
         tests_mapping = loader.load_cases(path, dot_env_path)
 
@@ -330,12 +269,15 @@ class HttpRunner(object):
             dict: result summary
 
         """
-        logger.info(f"HttpRunner version: {__version__}")
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
-        elif loader.is_test_content(path_or_tests):
-            project_working_directory = path_or_tests.get("project_meta", {}).get("PWD", os.getcwd())
-            loader.init_pwd(project_working_directory)
-            return self.run_tests(path_or_tests)
-        else:
-            raise exceptions.ParamsError(f"Invalid testcase path or testcases: {path_or_tests}")
+
+        project_working_directory = path_or_tests.get("project_meta", {}).get("PWD", os.getcwd())
+        loader.init_pwd(project_working_directory)
+        return self.run_tests(path_or_tests)
+
+    def gen_html_report(self, report_template=None, report_dir=None, report_file=None):
+        if not self._summary:
+            return None
+
+        return gen_html_report(self._summary, report_template, report_dir, report_file)

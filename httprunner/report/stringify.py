@@ -1,12 +1,11 @@
 import json
 from base64 import b64encode
 from collections import Iterable
-from typing import List
 
 from jinja2 import escape
 from requests.cookies import RequestsCookieJar
 
-from httprunner.v3.schema import TestSuiteSummary, SessionData
+from httprunner.schema import TestSuiteSummary
 
 
 def dumps_json(value):
