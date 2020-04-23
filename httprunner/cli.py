@@ -151,5 +151,13 @@ def main():
         main_locusts(args, extra_args)
 
 
+def main_hrun_alias():
+    """ command alias
+        hrun = httprunner run
+    """
+    sys.argv.insert(1, "run")
+    main()
+
+
 if __name__ == '__main__':
     main()
