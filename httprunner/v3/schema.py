@@ -84,8 +84,8 @@ class TestsMapping(BaseModel):
 
 class TestCaseTime(BaseModel):
     start_at: float
+    start_at_iso_format: Text
     duration: float
-    start_datetime: Text = ""
 
 
 class TestCaseInOut(BaseModel):

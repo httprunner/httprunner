@@ -1,4 +1,5 @@
 import platform
+from datetime import datetime
 
 from httprunner import __version__
 from httprunner.report.html.result import HtmlTestResult
@@ -57,10 +58,13 @@ def get_summary(result: HtmlTestResult) -> TestCaseSummary:
             }
 
     """
+    start_at_timestamp = result.start_at
+    start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
     return TestCaseSummary(
         success=result.wasSuccessful(),
         time=TestCaseTime(
             start_at=result.start_at,
+            start_at_iso_format=start_at_iso_format,
             duration=result.duration
         ),
         name=result.name,
