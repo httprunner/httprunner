@@ -115,7 +115,6 @@ class TestCaseSummary(BaseModel):
     in_out: TestCaseInOut = {}
     log: Text = ""
     step_datas: List[SessionData] = []
-    total_response_time: Text = "N/A"
 
 
 class PlatformInfo(BaseModel):
