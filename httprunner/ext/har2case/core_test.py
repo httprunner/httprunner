@@ -8,6 +8,7 @@ from httprunner.ext.har2case.utils_test import TestUtils
 class TestHar(TestUtils):
 
     def setUp(self):
+        self.har_path = os.path.join(os.path.dirname(__file__), "data", "demo.har")
         self.har_parser = HarParser(self.har_path)
 
     def test_prepare_teststep(self):
