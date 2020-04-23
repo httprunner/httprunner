@@ -6,15 +6,11 @@ import io
 import itertools
 import json
 import os.path
-import re
 from typing import Union
 
 from loguru import logger
 
 from httprunner import exceptions
-from httprunner.exceptions import ParamsError
-
-absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
 
 def set_os_environ(variables_mapping):
@@ -50,74 +46,6 @@ def get_os_environ(variable_name):
         return os.environ[variable_name]
     except KeyError:
         raise exceptions.EnvNotFound(variable_name)
-
-
-def build_url(base_url, path):
-    """ prepend url with base_url unless it's already an absolute URL """
-    if absolute_http_url_regexp.match(path):
-        return path
-    elif base_url:
-        return "{}/{}".format(base_url.rstrip("/"), path.lstrip("/"))
-    else:
-        raise ParamsError("base url missed!")
-
-
-def query_json(json_content, query, delimiter='.'):
-    """ Do an xpath-like query with json_content.
-
-    Args:
-        json_content (dict/list/string): content to be queried.
-        query (str): query string.
-        delimiter (str): delimiter symbol.
-
-    Returns:
-        str: queried result.
-
-    Examples:
-        >>> json_content = {
-            "ids": [1, 2, 3, 4],
-            "person": {
-                "name": {
-                    "first_name": "Leo",
-                    "last_name": "Lee",
-                },
-                "age": 29,
-                "cities": ["Guangzhou", "Shenzhen"]
-            }
-        }
-        >>>
-        >>> query_json(json_content, "person.name.first_name")
-        >>> Leo
-        >>>
-        >>> query_json(json_content, "person.name.first_name.0")
-        >>> L
-        >>>
-        >>> query_json(json_content, "person.cities.0")
-        >>> Guangzhou
-
-    """
-    raise_flag = False
-    response_body = f"response body: {json_content}\n"
-    try:
-        for key in query.split(delimiter):
-            if isinstance(json_content, (list, str, bytes)):
-                json_content = json_content[int(key)]
-            elif isinstance(json_content, dict):
-                json_content = json_content[key]
-            else:
-                logger.error(
-                    f"invalid type value: {json_content}({type(json_content)})")
-                raise_flag = True
-    except (KeyError, ValueError, IndexError):
-        raise_flag = True
-
-    if raise_flag:
-        err_msg = f"Failed to extract! => {query}\n"
-        err_msg += response_body
-        logger.error(err_msg)
-        raise exceptions.ExtractFailure(err_msg)
-
-    return json_content
 
 
 def lower_dict_keys(origin_dict):
@@ -158,21 +86,6 @@ def lower_dict_keys(origin_dict):
     }
 
 
-def lower_test_dict_keys(test_dict):
-    """ convert keys in test_dict to lower case, convertion will occur in two places:
-        1, all keys in test_dict;
-        2, all keys in test_dict["request"]
-    """
-    # convert keys in test_dict
-    test_dict = lower_dict_keys(test_dict)
-
-    if "request" in test_dict:
-        # convert keys in test_dict["request"]
-        test_dict["request"] = lower_dict_keys(test_dict["request"])
-
-    return test_dict
-
-
 def deepcopy_dict(data):
     """ deepcopy dict data, ignore file object (_io.BufferedReader)
 
@@ -207,101 +120,6 @@ def deepcopy_dict(data):
                     copied_data[key] = value
 
         return copied_data
-
-
-def ensure_mapping_format(variables):
-    """ ensure variables are in mapping format.
-
-    Args:
-        variables (list/dict): original variables
-
-    Returns:
-        dict: ensured variables in dict format
-
-    Examples:
-        >>> variables = [
-                {"a": 1},
-                {"b": 2}
-            ]
-        >>> print(ensure_mapping_format(variables))
-            {
-                "a": 1,
-                "b": 2
-            }
-
-    """
-    if isinstance(variables, list):
-        variables_dict = {}
-        for map_dict in variables:
-            variables_dict.update(map_dict)
-
-        return variables_dict
-
-    elif isinstance(variables, dict):
-        return variables
-
-    else:
-        raise exceptions.ParamsError("variables format error!")
-
-
-def extend_variables(raw_variables, override_variables):
-    """ extend raw_variables with override_variables.
-        override_variables will merge and override raw_variables.
-
-    Args:
-        raw_variables (list):
-        override_variables (list):
-
-    Returns:
-        dict: extended variables mapping
-
-    Examples:
-        >>> raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
-        >>> override_variables = [{"var1": "val111"}, {"var3": "val3"}]
-        >>> extend_variables(raw_variables, override_variables)
-            {
-                'var1', 'val111',
-                'var2', 'val2',
-                'var3', 'val3'
-            }
-
-    """
-    if not raw_variables:
-        override_variables_mapping = ensure_mapping_format(override_variables)
-        return override_variables_mapping
-
-    elif not override_variables:
-        raw_variables_mapping = ensure_mapping_format(raw_variables)
-        return raw_variables_mapping
-
-    else:
-        raw_variables_mapping = ensure_mapping_format(raw_variables)
-        override_variables_mapping = ensure_mapping_format(override_variables)
-        raw_variables_mapping.update(override_variables_mapping)
-        return raw_variables_mapping
-
-
-def get_testcase_io(testcase):
-    """ get and print testcase input(variables) and output(export).
-
-    Args:
-        testcase (unittest.suite.TestSuite): corresponding to one YAML/JSON file, it has been set two attributes:
-            config: parsed config block
-            runner: initialized runner.Runner() with config
-    Returns:
-        dict: input(variables) and output mapping.
-
-    """
-    test_runner = testcase.runner
-    variables = testcase.config.get("variables", {})
-    output_list = testcase.config.get("export") \
-        or testcase.config.get("output", [])
-    export_mapping = test_runner.export_variables(output_list)
-
-    return {
-        "in": variables,
-        "out": export_mapping
-    }
 
 
 def print_info(info_mapping):

@@ -9,7 +9,7 @@ from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
 
 from httprunner import response
 from httprunner.utils import lower_dict_keys, omit_long_data
-from httprunner.v3.schema import SessionData
+from httprunner.schema import SessionData
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

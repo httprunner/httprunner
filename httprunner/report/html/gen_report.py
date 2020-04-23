@@ -5,7 +5,7 @@ from jinja2 import Template
 from loguru import logger
 
 from httprunner.exceptions import SummaryEmpty
-from httprunner.v3.schema import TestSuiteSummary
+from httprunner.schema import TestSuiteSummary
 
 
 def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, report_dir=None, report_file=None):

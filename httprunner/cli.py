@@ -20,7 +20,7 @@ $ pip install locustio
 from loguru import logger
 
 from httprunner import __description__, __version__
-from httprunner.v3.api import HttpRunner
+from httprunner.api import HttpRunner
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.ext.locusts import init_parser_locusts, main_locusts
