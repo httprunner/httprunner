@@ -13,13 +13,13 @@ class HtmlTestResult(unittest.TextTestResult):
         self.name = ""
         self.status = ""
         self.attachment = ""
-        self.meta_datas = None
+        self.step_datas = None
 
     def _record_test(self, test, status, attachment=''):
         self.name = test.shortDescription()
         self.status = status
         self.attachment = attachment
-        self.meta_datas = test.meta_datas
+        self.step_datas = test.step_datas
 
     def startTestRun(self):
         self.start_at = time.time()

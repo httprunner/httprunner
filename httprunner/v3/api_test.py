@@ -13,4 +13,3 @@ class TestHttpRunner(unittest.TestCase):
         self.assertTrue(summary.success)
         self.assertEqual(summary.details[0].name, "request methods testcase with variables")
         self.assertGreater(summary.stat.total, 1)
-        # self.assertEqual(summary.stat.teststeps["total"], 2)

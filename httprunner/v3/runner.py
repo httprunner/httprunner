@@ -15,7 +15,7 @@ class TestCaseRunner(object):
     config: TestsConfig = {}
     teststeps: List[TestStep] = []
     session: HttpSession = None
-    meta_datas: List[MetaData] = []
+    step_datas: List[MetaData] = []
     validation_results: Dict = {}
 
     def init(self, testcase: TestCase) -> "TestCaseRunner":
@@ -94,13 +94,13 @@ class TestCaseRunner(object):
             # save request & response meta data
             self.session.meta_data.validators = self.validation_results
             self.session.meta_data.name = step.name
-            self.meta_datas.append(self.session.meta_data)
+            self.step_datas.append(self.session.meta_data)
 
         return extract_mapping
 
     def test_start(self):
         """main entrance"""
-        self.meta_datas.clear()
+        self.step_datas.clear()
         session_variables = {}
         for step in self.teststeps:
             # update with config variables
