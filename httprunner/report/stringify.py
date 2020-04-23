@@ -144,21 +144,6 @@ def __stringify_response(response_data):
         response_data[key] = value
 
 
-def __get_total_response_time(step_datas: List[SessionData]):
-    """ caculate total response time of all step_datas
-    """
-    try:
-        response_time = 0
-        for step_data in step_datas:
-            response_time += step_data.stat.response_time_ms
-
-        return "{:.2f}".format(response_time)
-
-    except TypeError:
-        # failure exists
-        return "N/A"
-
-
 def stringify_summary(testsuite_summary: TestSuiteSummary):
     """ stringify summary, in order to dump json file and generate html report.
     """
@@ -173,5 +158,3 @@ def stringify_summary(testsuite_summary: TestSuiteSummary):
             for req_resp in req_resp_list:
                 __stringify_request(req_resp["request"])
                 __stringify_response(req_resp["response"])
-
-        testcase_summary.total_response_time = __get_total_response_time(step_datas)
