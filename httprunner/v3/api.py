@@ -151,9 +151,16 @@ class HttpRunner(object):
                 testsuite_summary["stat"]["fail"] += 1
 
             testsuite_summary["success"] &= testcase_summary.success
-            report.aggregate_stat(testsuite_summary["time"], testcase_summary.time.dict())
 
             testsuite_summary["details"].append(testcase_summary)
+
+        total_duration = tests_results[-1].time.start_at + tests_results[-1].time.duration \
+                         - tests_results[0].time.start_at
+        testsuite_summary["time"] = {
+            "start_at": tests_results[0].time.start_at,
+            "start_at_iso_format": tests_results[0].time.start_at_iso_format,
+            "duration": total_duration
+        }
 
         return TestSuiteSummary.parse_obj(testsuite_summary)
 
