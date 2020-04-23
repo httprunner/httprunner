@@ -96,7 +96,7 @@ class Runner(object):
         if not isinstance(self.http_client_session, HttpSession):
             return
 
-        self.http_client_session.init_meta_data()
+        self.http_client_session.init_session_data()
 
     def _handle_skip_feature(self, test_dict):
         """ handle skip feature for test
@@ -388,7 +388,7 @@ class Runner(object):
                 raise
             finally:
                 # get request/response data and validate results
-                self.meta_datas = getattr(self.http_client_session, "meta_data", {})
+                self.meta_datas = getattr(self.http_client_session, "data", {})
                 self.meta_datas["validators"] = self.validation_results
 
     def export_variables(self, output_variables_list):

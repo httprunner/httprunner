@@ -6,7 +6,7 @@ from typing import List
 from jinja2 import escape
 from requests.cookies import RequestsCookieJar
 
-from httprunner.v3.schema import TestSuiteSummary, MetaData
+from httprunner.v3.schema import TestSuiteSummary, SessionData
 
 
 def dumps_json(value):
@@ -144,7 +144,7 @@ def __stringify_response(response_data):
         response_data[key] = value
 
 
-def __get_total_response_time(step_datas: List[MetaData]):
+def __get_total_response_time(step_datas: List[SessionData]):
     """ caculate total response time of all step_datas
     """
     try:
@@ -159,15 +159,6 @@ def __get_total_response_time(step_datas: List[MetaData]):
         return "N/A"
 
 
-def __stringify_meta_datas(step_datas: List[MetaData]):
-
-    for step_data in step_datas:
-        data_list = step_data.data
-        for data in data_list:
-            __stringify_request(data["request"])
-            __stringify_response(data["response"])
-
-
 def stringify_summary(testsuite_summary: TestSuiteSummary):
     """ stringify summary, in order to dump json file and generate html report.
     """
@@ -177,5 +168,10 @@ def stringify_summary(testsuite_summary: TestSuiteSummary):
             testcase_summary.name = f"testcase {index}"
 
         step_datas = testcase_summary.step_datas
-        __stringify_meta_datas(step_datas)
+        for session_data in step_datas:
+            req_resp_list = session_data.req_resp
+            for req_resp in req_resp_list:
+                __stringify_request(req_resp["request"])
+                __stringify_response(req_resp["response"])
+
         testcase_summary.total_response_time = __get_total_response_time(step_datas)

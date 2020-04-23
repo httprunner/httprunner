@@ -94,15 +94,15 @@ class TestCaseInOut(BaseModel):
 
 
 class RequestStat(BaseModel):
-    content_size: Text = "N/A"
-    response_time_ms: Text = "N/A"
-    elapsed_ms: Text = "N/A"
+    content_size: float = 0
+    response_time_ms: float = 0
+    elapsed_ms: float = 0
 
 
-class MetaData(BaseModel):
+class SessionData(BaseModel):
     name: Text = ""
-    data: List[Dict]
-    stat: RequestStat
+    req_resp: List[Dict] = []
+    stat: RequestStat = RequestStat()
     validators: Dict = {}
 
 
@@ -114,7 +114,7 @@ class TestCaseSummary(BaseModel):
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
-    step_datas: List[MetaData] = []
+    step_datas: List[SessionData] = []
     total_response_time: Text = "N/A"
 
 
