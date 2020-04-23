@@ -45,8 +45,7 @@ uvicorn = "^0.11.3"
 fastapi = "^0.49.0"
 
 [tool.poetry.scripts]
-hrun = "httprunner.cli:main"
-ate = "httprunner.cli:main"
+hrun = "httprunner.cli:main_hrun_alias"
 httprunner = "httprunner.cli:main"
 
 [build-system]
