@@ -24,7 +24,6 @@ from httprunner.v3.api import HttpRunner
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.ext.locusts import init_parser_locusts, main_locusts
-from httprunner.report import gen_html_report
 
 
 def init_parser_run(subparsers):
@@ -75,8 +74,7 @@ def main_run(args):
         for path in args.testfile_paths:
             testsuite_summary = runner.run_path(path, dot_env_path=args.dot_env_path)
             report_dir = args.report_dir or os.path.join(os.getcwd(), "reports")
-            gen_html_report(
-                testsuite_summary,
+            runner.gen_html_report(
                 report_template=args.report_template,
                 report_dir=report_dir,
                 report_file=args.report_file
