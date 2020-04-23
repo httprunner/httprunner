@@ -142,7 +142,7 @@ class HttpRunner(object):
             },
             "time": {},
             "platform": report.get_platform(),
-            "details": []
+            "testcases": []
         }
 
         for testcase_summary in tests_results:
@@ -153,7 +153,7 @@ class HttpRunner(object):
 
             testsuite_summary["success"] &= testcase_summary.success
 
-            testsuite_summary["details"].append(testcase_summary)
+            testsuite_summary["testcases"].append(testcase_summary)
 
         total_duration = tests_results[-1].time.start_at + tests_results[-1].time.duration \
                          - tests_results[0].time.start_at
@@ -233,7 +233,7 @@ class HttpRunner(object):
 
         return [
             testcase_summary.in_out.dict()
-            for testcase_summary in self._summary.details
+            for testcase_summary in self._summary.testcases
         ]
 
     def run_path(self, path, dot_env_path=None, mapping=None) -> TestSuiteSummary:
