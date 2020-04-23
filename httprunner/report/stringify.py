@@ -147,7 +147,7 @@ def __stringify_response(response_data):
 def stringify_summary(testsuite_summary: TestSuiteSummary):
     """ stringify summary, in order to dump json file and generate html report.
     """
-    for index, testcase_summary in enumerate(testsuite_summary.details):
+    for index, testcase_summary in enumerate(testsuite_summary.testcases):
 
         if not testcase_summary.name:
             testcase_summary.name = f"testcase {index}"
