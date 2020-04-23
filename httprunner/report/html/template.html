@@ -197,7 +197,7 @@
     {% for session_data in step_datas %}
     {% set step_index = "{}_{}".format(testcase_index, loop.index) %}
     <tr id="step_{{step_index}}">
-      <th class="{{testcase.status}}" style="width:5em;">{{testcase.status}}</th>
+      <th class="{{session_data.status}}" style="width:5em;">{{session_data.status}}</th>
       <td colspan="2">{{session_data.name}}</td>
       <td style="text-align:center;width:6em;">{{ session_data.stat.response_time_ms }} ms</td>
       <td class="detail">
@@ -331,7 +331,7 @@
           </div>
         </div>
 
-        {% if testcase.attachment %}
+        {% if session_data.status == "failed" %}
           <a class="button" href="#popup_attachment_{{step_index}}">traceback</a>
           <div id="popup_attachment_{{step_index}}" class="overlay">
             <div class="popup">
