@@ -114,7 +114,7 @@ class TestCaseSummary(BaseModel):
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
-    meta_datas: List[MetaData] = []
+    step_datas: List[MetaData] = []
     total_response_time: Text = "N/A"
 
 
