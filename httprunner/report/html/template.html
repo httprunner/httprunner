@@ -155,7 +155,7 @@
   <table id="summary">
     <tr>
       <th>START AT</th>
-      <td colspan="4">{{time.start_datetime}}</td>
+      <td colspan="4">{{time.start_at_iso_format}}</td>
     </tr>
     <tr>
       <th>DURATION</th>
@@ -169,19 +169,19 @@
     </tr>
     <tr>
       <th>STAT</th>
-      <th colspan="2">TESTCASES (success/fail)</th>
-      <th colspan="2">TESTSTEPS (success/fail/error/skip)</th>
+      <th colspan="2">SUCCESS</th>
+      <th colspan="2">FAIL</th>
     </tr>
     <tr>
       <td>total (details) =></td>
-      <td colspan="2">{{stat.testcases.total}} ({{stat.testcases.success}}/{{stat.testcases.fail}})</td>
-      <td colspan="2">{{stat.teststeps.total}} ({{stat.teststeps.successes}}/{{stat.teststeps.failures}}/{{stat.teststeps.errors}}/{{stat.teststeps.skipped}})</td>
+      <td colspan="2">{{stat.success}}</td>
+      <td colspan="2">{{stat.fail}}</td>
     </tr>
   </table>
 
   <h2>Details</h2>
 
-  {% for testcase_summary in details %}
+  {% for testcase_summary in testcases %}
   {% set testcase_index = loop.index %}
   <h3>{{testcase_summary.name}}</h3>
   <table id="testcase_{{testcase_index}}" class="details">
@@ -192,17 +192,15 @@
       <th>Detail</th>
     </tr>
 
-    {% set record_meta_datas = testcase_summary.record.meta_datas %}
-    {% for meta_data in record_meta_datas %}
+    {% set testcase = testcase_summary %}
+    {% set step_datas = testcase_summary.step_datas %}
+    {% for session_data in step_datas %}
     {% set step_index = "{}_{}".format(testcase_index, loop.index) %}
     <tr id="step_{{step_index}}">
-      <th class="{{record.status}}" style="width:5em;">{{record.status}}</th>
-      <td colspan="2">{{record.name}}</td>
-      <td style="text-align:center;width:6em;">{{ record.response_time }} ms</td>
+      <th class="{{testcase.status}}" style="width:5em;">{{testcase.status}}</th>
+      <td colspan="2">{{session_data.name}}</td>
+      <td style="text-align:center;width:6em;">{{ session_data.stat.response_time_ms }} ms</td>
       <td class="detail">
-
-
-      {% set step_index = "{}_{}".format(testcase_index, loop.index) %}
         <a class="button" href="#popup_log_{{step_index}}">log-{{loop.index}}</a>
         <div id="popup_log_{{step_index}}" class="overlay">
           <div class="popup">
@@ -210,9 +208,9 @@
             <a class="close" href="#step_{{step_index}}">&times;</a>
 
             <div class="content">
-              <h3>Name: {{ meta_data.name }}</h3>
+              <h3>Name: {{ session_data.name }}</h3>
 
-              {% for req_resp in meta_data.data %}
+              {% for req_resp in session_data.req_resp %}
 
               {% if loop.index > 1 %}
               <div class="separator">==================================== redirect to ====================================</div>
@@ -263,7 +261,7 @@
 
               <h3>Validators:</h3>
                 <div style="overflow: auto">
-                {% set validate_extractors = meta_data.validators.validate_extractor %}
+                {% set validate_extractors = session_data.validators.validate_extractor %}
                 {% if validate_extractors %}
                 <table>
                     <tr>
@@ -291,7 +289,7 @@
                 </table>
                 {% endif %}
 
-                {% set validate_script = meta_data.validators.validate_script %}
+                {% set validate_script = session_data.validators.validate_script %}
                 {% if validate_script %}
                     <table>
                         <tr>
@@ -316,15 +314,15 @@
                 <table>
                   <tr>
                       <th>content_size(bytes)</th>
-                      <td>{{ meta_data.stat.content_size }}</td>
+                      <td>{{ session_data.stat.content_size }}</td>
                     </tr>
                   <tr>
                     <th>response_time(ms)</th>
-                    <td>{{ meta_data.stat.response_time_ms }}</td>
+                    <td>{{ session_data.stat.response_time_ms }}</td>
                   </tr>
                   <tr>
                     <th>elapsed(ms)</th>
-                    <td>{{ meta_data.stat.elapsed_ms }}</td>
+                    <td>{{ session_data.stat.elapsed_ms }}</td>
                   </tr>
                 </table>
               </div>
@@ -332,15 +330,14 @@
             </div>
           </div>
         </div>
-        {% endfor %}
 
-        {% if record.attachment %}
+        {% if testcase.attachment %}
           <a class="button" href="#popup_attachment_{{step_index}}">traceback</a>
           <div id="popup_attachment_{{step_index}}" class="overlay">
             <div class="popup">
               <h2>Traceback Message</h2>
               <a class="close" href="#step_{{step_index}}">&times;</a>
-              <div class="content"><pre>{{ record.attachment | e }}</pre></div>
+              <div class="content"><pre>{{ testcase.attachment | e }}</pre></div>
             </div>
           </div>
         {% endif %}
