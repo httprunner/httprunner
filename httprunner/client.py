@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 import time
 
 import requests
@@ -11,7 +9,7 @@ from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
 
 from httprunner import response
 from httprunner.utils import lower_dict_keys, omit_long_data
-from httprunner.v3.schema import SessionData, RequestStat
+from httprunner.v3.schema import SessionData
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -103,29 +101,28 @@ class HttpSession(requests.Session):
     """
     def __init__(self):
         super(HttpSession, self).__init__()
-        self.data = SessionData()
+        self.data = None
 
     def init_session_data(self):
         """ initialize session data, it will store detail data of request and response
         """
-        self.data.name = ""
-        self.data.req_resp = [
-            {
-                "request": {
-                    "url": "N/A",
-                    "method": "N/A",
-                    "headers": {}
-                },
-                "response": {
-                    "status_code": "N/A",
-                    "headers": {},
-                    "encoding": None,
-                    "content_type": ""
+        self.data = SessionData(
+            req_resp=[
+                {
+                    "request": {
+                        "url": "N/A",
+                        "method": "N/A",
+                        "headers": {}
+                    },
+                    "response": {
+                        "status_code": "N/A",
+                        "headers": {},
+                        "encoding": None,
+                        "content_type": ""
+                    }
                 }
-            }
-        ]
-        self.data.validators = {}
-        self.data.stat = RequestStat()
+            ]
+        )
 
     def update_last_req_resp_record(self, resp_obj):
         """
