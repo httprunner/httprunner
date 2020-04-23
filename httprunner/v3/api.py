@@ -6,6 +6,7 @@ from typing import List, Dict
 from loguru import logger
 
 from httprunner import report, loader, utils, exceptions, __version__
+from httprunner.report import gen_html_report
 from httprunner.v3.runner import TestCaseRunner
 from httprunner.v3.schema import TestsMapping, TestCaseSummary, TestSuiteSummary
 
@@ -279,3 +280,9 @@ class HttpRunner(object):
             return self.run_tests(path_or_tests)
         else:
             raise exceptions.ParamsError(f"Invalid testcase path or testcases: {path_or_tests}")
+
+    def gen_html_report(self, report_template=None, report_dir=None, report_file=None):
+        if not self._summary:
+            return None
+
+        return gen_html_report(self._summary, report_template, report_dir, report_file)
