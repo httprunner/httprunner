@@ -1,6 +1,5 @@
 import io
 import os
-from datetime import datetime
 
 from jinja2 import Template
 from loguru import logger
@@ -19,7 +18,7 @@ def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, r
         report_file (str): specify html report file path, this has higher priority than specifying report dir.
 
     """
-    if not testsuite_summary.time or testsuite_summary.stat.testcases["total"] == 0:
+    if testsuite_summary.stat.total == 0:
         logger.error(f"test result testsuite_summary is empty ! {testsuite_summary}")
         raise SummaryEmpty
 
@@ -34,17 +33,13 @@ def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, r
 
     logger.info("Start to render Html report ...")
 
-    start_at_timestamp = testsuite_summary.time.start_at
-    utc_time_iso_8601_str = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
-    testsuite_summary.time.start_datetime = utc_time_iso_8601_str
-
     if report_file:
         report_dir = os.path.dirname(report_file)
         report_file_name = os.path.basename(report_file)
     else:
         report_dir = report_dir or os.path.join(os.getcwd(), "reports")
         # fix #826: Windows does not support file name include ":"
-        report_file_name = "{}.html".format(utc_time_iso_8601_str.replace(":", "").replace("-", ""))
+        report_file_name = "{}.html".format(testsuite_summary.time.start_at_iso_format.replace(":", "").replace("-", ""))
 
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
