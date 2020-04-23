@@ -78,7 +78,7 @@ class ProjectMeta(BaseModel):
 
 
 class TestsMapping(BaseModel):
-    project_mapping: ProjectMeta    # TODO: rename to project_meta
+    project_meta: ProjectMeta
     testcases: List[TestCase]
 
 

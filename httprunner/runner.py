@@ -19,7 +19,7 @@ class Runner(object):
 
     Examples:
         >>> tests_mapping = {
-                "project_mapping": {
+                "project_meta": {
                     "functions": {}
                 },
                 "testcases": [

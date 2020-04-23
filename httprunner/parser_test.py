@@ -967,7 +967,7 @@ class TestParser(unittest.TestCase):
         )
 
     def test_parse_parameters_mix(self):
-        project_mapping = loader.load_project_data(os.path.join(os.getcwd(), "tests"))
+        project_meta = loader.load_project_data(os.path.join(os.getcwd(), "tests"))
 
         parameters = [
             {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
@@ -975,7 +975,7 @@ class TestParser(unittest.TestCase):
             {"username-password": "${parameterize(data/account.csv)}"}
         ]
         cartesian_product_parameters = parser.parse_parameters(
-            parameters, functions_mapping=project_mapping["functions"])
+            parameters, functions_mapping=project_meta["functions"])
         self.assertEqual(
             len(cartesian_product_parameters),
             3 * 2 * 3
@@ -1119,7 +1119,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_tests_variable_with_function(self):
         tests_mapping = {
-            "project_mapping": {
+            "project_meta": {
                 "functions": {
                     "sum_two": sum_two,
                     "gen_random_string": gen_random_string
@@ -1172,7 +1172,7 @@ class TestParser(unittest.TestCase):
 
     def test_parse_tests_variable_not_found(self):
         tests_mapping = {
-            "project_mapping": {
+            "project_meta": {
                 "functions": {
                     "sum_two": sum_two
                 }

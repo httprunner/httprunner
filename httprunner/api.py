@@ -207,7 +207,7 @@ class HttpRunner(object):
     def run_tests(self, tests_mapping):
         """ run testcase/testsuite data
         """
-        self.test_path = tests_mapping.get("project_mapping", {}).get("test_path", "")
+        self.test_path = tests_mapping.get("project_meta", {}).get("test_path", "")
 
         if self.save_tests:
             utils.dump_json_file(
@@ -312,7 +312,7 @@ class HttpRunner(object):
         tests_mapping = loader.load_cases(path, dot_env_path)
 
         if mapping:
-            tests_mapping["project_mapping"]["variables"] = mapping
+            tests_mapping["project_meta"]["variables"] = mapping
 
         return self.run_tests(tests_mapping)
 
@@ -334,7 +334,7 @@ class HttpRunner(object):
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_test_content(path_or_tests):
-            project_working_directory = path_or_tests.get("project_mapping", {}).get("PWD", os.getcwd())
+            project_working_directory = path_or_tests.get("project_meta", {}).get("PWD", os.getcwd())
             loader.init_pwd(project_working_directory)
             return self.run_tests(path_or_tests)
         else:
