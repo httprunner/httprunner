@@ -14,38 +14,38 @@ class TestModuleLoader(unittest.TestCase):
         self.assertNotIn("is_py3", module_functions)
 
     def test_load_debugtalk_module(self):
-        project_mapping = buildup.load_project_data(os.path.join(os.getcwd(), "httprunner"))
-        self.assertNotIn("alter_response", project_mapping["functions"])
+        project_meta = buildup.load_project_data(os.path.join(os.getcwd(), "httprunner"))
+        self.assertNotIn("alter_response", project_meta["functions"])
 
-        project_mapping = buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
-        self.assertIn("alter_response", project_mapping["functions"])
+        project_meta = buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
+        self.assertIn("alter_response", project_meta["functions"])
 
-        is_status_code_200 = project_mapping["functions"]["is_status_code_200"]
+        is_status_code_200 = project_meta["functions"]["is_status_code_200"]
         self.assertTrue(is_status_code_200(200))
         self.assertFalse(is_status_code_200(500))
 
     def test_load_debugtalk_py(self):
-        project_mapping = buildup.load_project_data("tests/data/demo_testcase.yml")
-        project_working_directory = project_mapping["PWD"]
-        debugtalk_functions = project_mapping["functions"]
+        project_meta = buildup.load_project_data("tests/data/demo_testcase.yml")
+        project_working_directory = project_meta["PWD"]
+        debugtalk_functions = project_meta["functions"]
         self.assertEqual(
             project_working_directory,
             os.path.join(os.getcwd(), "tests")
         )
         self.assertIn("gen_md5", debugtalk_functions)
 
-        project_mapping = buildup.load_project_data("tests/base.py")
-        project_working_directory = project_mapping["PWD"]
-        debugtalk_functions = project_mapping["functions"]
+        project_meta = buildup.load_project_data("tests/base.py")
+        project_working_directory = project_meta["PWD"]
+        debugtalk_functions = project_meta["functions"]
         self.assertEqual(
             project_working_directory,
             os.path.join(os.getcwd(), "tests")
         )
         self.assertIn("gen_md5", debugtalk_functions)
 
-        project_mapping = buildup.load_project_data("httprunner/__init__.py")
-        project_working_directory = project_mapping["PWD"]
-        debugtalk_functions = project_mapping["functions"]
+        project_meta = buildup.load_project_data("httprunner/__init__.py")
+        project_working_directory = project_meta["PWD"]
+        debugtalk_functions = project_meta["functions"]
         self.assertEqual(
             project_working_directory,
             os.getcwd()
@@ -57,7 +57,7 @@ class TestSuiteLoader(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.project_mapping = buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
+        cls.project_meta = buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
         cls.tests_def_mapping = buildup.tests_def_mapping
 
     def test_load_teststep_api(self):
@@ -135,7 +135,7 @@ class TestSuiteLoader(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/api/create_user.yml')
         tests_mapping = loader.load_cases(path)
-        project_mapping = tests_mapping["project_mapping"]
+        project_meta = tests_mapping["project_meta"]
         api_list = tests_mapping["apis"]
         self.assertEqual(len(api_list), 1)
         self.assertEqual(api_list[0]["request"]["url"], "/api/users/$uid")
@@ -149,7 +149,7 @@ class TestSuiteLoader(unittest.TestCase):
         self.assertEqual(testcases[0]["config"]["name"], '123t$var_a')
         self.assertIn(
             "sum_two",
-            tests_mapping["project_mapping"]["functions"]
+            tests_mapping["project_meta"]["functions"]
         )
         self.assertEqual(
             testcases[0]["config"]["variables"]["var_c"],
@@ -164,10 +164,10 @@ class TestSuiteLoader(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/data/demo_testcase_layer.yml')
         tests_mapping = loader.load_cases(path)
-        project_mapping = tests_mapping["project_mapping"]
+        project_meta = tests_mapping["project_meta"]
         testcases_list = tests_mapping["testcases"]
         self.assertIn('device_sn', testcases_list[0]["config"]["variables"])
-        self.assertIn("gen_md5", project_mapping["functions"])
+        self.assertIn("gen_md5", project_meta["functions"])
         self.assertIn("base_url", testcases_list[0]["config"])
         test_dict0 = testcases_list[0]["teststeps"][0]
         self.assertEqual(
@@ -184,7 +184,7 @@ class TestSuiteLoader(unittest.TestCase):
         path = os.path.join(
             os.getcwd(), 'tests/testsuites/create_users.yml')
         tests_mapping = loader.load_cases(path)
-        project_mapping = tests_mapping["project_mapping"]
+        project_meta = tests_mapping["project_meta"]
         testsuites_list = tests_mapping["testsuites"]
 
         self.assertEqual(
@@ -231,13 +231,13 @@ class TestSuiteLoader(unittest.TestCase):
 
     def test_load_project_tests(self):
         buildup.load_project_data(os.path.join(os.getcwd(), "tests"))
-        self.assertIn("gen_md5", self.project_mapping["functions"])
-        self.assertEqual(self.project_mapping["env"]["PROJECT_KEY"], "ABCDEFGH")
+        self.assertIn("gen_md5", self.project_meta["functions"])
+        self.assertEqual(self.project_meta["env"]["PROJECT_KEY"], "ABCDEFGH")
         self.assertEqual(
-            os.path.basename(self.project_mapping["PWD"]),
+            os.path.basename(self.project_meta["PWD"]),
             "tests"
         )
         self.assertEqual(
-            os.path.basename(self.project_mapping["test_path"]),
+            os.path.basename(self.project_meta["test_path"]),
             "tests"
         )

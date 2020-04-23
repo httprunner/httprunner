@@ -12,7 +12,7 @@ class TestLoaderCheck(unittest.TestCase):
         self.assertFalse(check.is_test_content(data_structure))
 
         data_structure = {
-            "project_mapping": {
+            "project_meta": {
                 "PWD": "XXXXX",
                 "functions": {},
                 "env": {}

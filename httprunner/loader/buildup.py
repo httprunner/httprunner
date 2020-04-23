@@ -59,7 +59,7 @@ def __extend_with_api_ref(raw_testinfo):
     else:
         block = load_file(api_name)
 
-    # NOTICE: avoid project_mapping been changed during iteration.
+    # NOTICE: avoid project_meta been changed during iteration.
     raw_testinfo["api_def"] = utils.deepcopy_dict(block)
     tests_def_mapping["api"][api_name] = block
 
@@ -311,14 +311,14 @@ def load_project_data(test_path, dot_env_path=None):
     """
     debugtalk_path, project_working_directory = init_project_working_directory(test_path)
 
-    project_mapping = {}
+    project_meta = {}
 
     # load .env file
     # NOTICE:
     # environment variable maybe loaded in debugtalk.py
     # thus .env file should be loaded before loading debugtalk.py
     dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
-    project_mapping["env"] = load_dot_env_file(dot_env_path)
+    project_meta["env"] = load_dot_env_file(dot_env_path)
 
     if debugtalk_path:
         # load debugtalk.py functions
@@ -327,11 +327,11 @@ def load_project_data(test_path, dot_env_path=None):
         debugtalk_functions = {}
 
     # locate PWD and load debugtalk.py functions
-    project_mapping["PWD"] = project_working_directory
-    project_mapping["functions"] = debugtalk_functions
-    project_mapping["test_path"] = os.path.abspath(test_path)[len(project_working_directory) + 1:]
+    project_meta["PWD"] = project_working_directory
+    project_meta["functions"] = debugtalk_functions
+    project_meta["test_path"] = os.path.abspath(test_path)[len(project_working_directory) + 1:]
 
-    return project_mapping
+    return project_meta
 
 
 def load_cases(path: str, dot_env_path: str = None):
@@ -345,10 +345,10 @@ def load_cases(path: str, dot_env_path: str = None):
         dot_env_path (str): specified .env file path
 
     Returns:
-        dict: tests mapping, include project_mapping and testcases.
+        dict: tests mapping, include project_meta and testcases.
               each testcase is corresponding to a file.
             {
-                "project_mapping": {
+                "project_meta": {
                     "PWD": "XXXXX",
                     "functions": {},
                     "env": {}
@@ -389,7 +389,7 @@ def load_cases(path: str, dot_env_path: str = None):
     """
 
     tests_mapping = {
-        "project_mapping": load_project_data(path, dot_env_path)
+        "project_meta": load_project_data(path, dot_env_path)
     }
 
     def __load_file_content(path):
