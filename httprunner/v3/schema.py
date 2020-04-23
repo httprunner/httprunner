@@ -100,6 +100,7 @@ class RequestStat(BaseModel):
 
 
 class SessionData(BaseModel):
+    status: Text = ""
     name: Text = ""
     req_resp: List[Dict] = []
     stat: RequestStat = RequestStat()
