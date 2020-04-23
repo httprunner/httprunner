@@ -134,4 +134,4 @@ class TestSuiteSummary(BaseModel):
     stat: Stat
     time: TestCaseTime
     platform: PlatformInfo
-    details: List[TestCaseSummary]
+    testcases: List[TestCaseSummary]
