@@ -86,7 +86,9 @@ class TestCaseRunner(object):
         validators = step.validators
         try:
             resp_obj.validate(validators, variables_mapping, self.config.functions)
+            self.session.data.status = "passed"
         except ValidationFailure:
+            self.session.data.status = "failed"
             log_req_resp_details()
             raise
         finally:
