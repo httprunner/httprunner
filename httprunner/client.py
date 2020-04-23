@@ -11,7 +11,7 @@ from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
 
 from httprunner import response
 from httprunner.utils import lower_dict_keys, omit_long_data
-from httprunner.v3.schema import MetaData, RequestStat
+from httprunner.v3.schema import SessionData, RequestStat
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -103,36 +103,36 @@ class HttpSession(requests.Session):
     """
     def __init__(self):
         super(HttpSession, self).__init__()
-        self.init_meta_data()
+        self.data = SessionData()
 
-    def init_meta_data(self):
-        """ initialize meta_data, it will store detail data of request and response
+    def init_session_data(self):
+        """ initialize session data, it will store detail data of request and response
         """
-        self.meta_data = MetaData(
-            data=[
-                {
-                    "request": {
-                        "url": "N/A",
-                        "method": "N/A",
-                        "headers": {}
-                    },
-                    "response": {
-                        "status_code": "N/A",
-                        "headers": {},
-                        "encoding": None,
-                        "content_type": ""
-                    }
+        self.data.name = ""
+        self.data.req_resp = [
+            {
+                "request": {
+                    "url": "N/A",
+                    "method": "N/A",
+                    "headers": {}
+                },
+                "response": {
+                    "status_code": "N/A",
+                    "headers": {},
+                    "encoding": None,
+                    "content_type": ""
                 }
-            ],
-            stat=RequestStat()
-        )
+            }
+        ]
+        self.data.validators = {}
+        self.data.stat = RequestStat()
 
     def update_last_req_resp_record(self, resp_obj):
         """
         update request and response info from Response() object.
         """
-        self.meta_data.data.pop()
-        self.meta_data.data.append(get_req_resp_record(resp_obj))
+        self.data.req_resp.pop()
+        self.data.req_resp.append(get_req_resp_record(resp_obj))
 
     def request(self, method, url, name=None, **kwargs):
         """
@@ -173,16 +173,15 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
-        self.init_meta_data()
-
+        self.init_session_data()
         # record test name
-        self.meta_data.name = name
+        self.data.name = name
 
         # record original request info
-        self.meta_data.data[0]["request"]["method"] = method
-        self.meta_data.data[0]["request"]["url"] = url
+        self.data.req_resp[0]["request"]["method"] = method
+        self.data.req_resp[0]["request"]["url"] = url
         kwargs.setdefault("timeout", 120)
-        self.meta_data.data[0]["request"].update(kwargs)
+        self.data.req_resp[0]["request"].update(kwargs)
 
         start_timestamp = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
@@ -196,13 +195,13 @@ class HttpSession(requests.Session):
             content_size = len(response.content or "")
 
         # record the consumed time
-        self.meta_data.stat.response_time_ms = response_time_ms
-        self.meta_data.stat.elapsed_ms = response.elapsed.microseconds / 1000.0
-        self.meta_data.stat.content_size = content_size
+        self.data.stat.response_time_ms = response_time_ms
+        self.data.stat.elapsed_ms = response.elapsed.microseconds / 1000.0
+        self.data.stat.content_size = content_size
 
         # record request and response histories, include 30X redirection
         response_list = response.history + [response]
-        self.meta_data.data = [
+        self.data.req_resp = [
             get_req_resp_record(resp_obj)
             for resp_obj in response_list
         ]
