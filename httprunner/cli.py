@@ -54,16 +54,12 @@ def init_parser_run(subparsers):
     sub_parser_run.add_argument(
         '--save-tests', action='store_true', default=False,
         help="Save loaded/parsed/vars_out/summary json data to JSON files.")
-    sub_parser_run.add_argument(
-        '--failfast', action='store_true', default=False,
-        help="Stop the test run on the first error or failure.")
 
     return sub_parser_run
 
 
 def main_run(args):
     runner = HttpRunner(
-        failfast=args.failfast,
         save_tests=args.save_tests,
         log_level=args.log_level,
         log_file=args.log_file

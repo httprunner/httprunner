@@ -15,6 +15,7 @@
 - make `har2case` as hrun sub-command, usage: `hrun har2case -h`
 - make `locusts` as hrun sub-command, usage: `hrun locusts -h`
 - remove default header `HRUN-Request-ID`, implement the same function with global hooks
+- remove `--failfast` argument, stop test run on the first error or failure by default
 
 ## 3.0.1 (2020-03-24)
 

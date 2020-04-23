@@ -26,11 +26,10 @@ class HttpRunner(object):
 
     """
 
-    def __init__(self, failfast=False, save_tests=False, log_level="WARNING", log_file=None):
+    def __init__(self, save_tests=False, log_level="WARNING", log_file=None):
         """ initialize HttpRunner.
 
         Args:
-            failfast (bool): stop the test run on the first error or failure.
             save_tests (bool): save loaded/parsed tests to JSON file.
             log_level (str): logging level.
             log_file (str): log file path.
@@ -38,7 +37,7 @@ class HttpRunner(object):
         """
         self.exception_stage = "initialize HttpRunner()"
         kwargs = {
-            "failfast": failfast,
+            "failfast": True,
             "resultclass": report.HtmlTestResult
         }
 
