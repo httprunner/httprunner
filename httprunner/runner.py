@@ -4,7 +4,7 @@ from loguru import logger
 
 from httprunner import utils
 from httprunner.client import HttpSession
-from httprunner.exceptions import ValidationFailure
+from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.schema import TestsConfig, TestStep, VariablesMapping, TestCase, SessionData
@@ -17,6 +17,7 @@ class TestCaseRunner(object):
     session: HttpSession = None
     step_datas: List[SessionData] = []
     validation_results: Dict = {}
+    session_variables: Dict = {}
 
     def init(self, testcase: TestCase) -> "TestCaseRunner":
         self.config = testcase.config
@@ -31,9 +32,8 @@ class TestCaseRunner(object):
         self.config.variables.update(variables)
         return self
 
-    def __run_step(self, step: TestStep):
-        logger.info(f"run step: {step.name}")
-
+    def __run_step_request(self, step: TestStep):
+        """run teststep: request"""
         # parse
         request_dict = step.request.dict()
         parsed_request_dict = parse_data(request_dict, step.variables, self.config.functions)
@@ -100,24 +100,49 @@ class TestCaseRunner(object):
 
         return extract_mapping
 
+    def __run_step_testcase(self, step):
+        """run teststep: referenced testcase"""
+        step_variables = step.variables
+        testcase: TestCaseRunner = step.testcase
+        res = testcase.with_variables(**step_variables).run()
+        return res.get_export_variables()
+
+    def __run_step(self, step: TestStep):
+        logger.info(f"run step: {step.name}")
+        if step.request:
+            return self.__run_step_request(step)
+        elif step.testcase:
+            return self.__run_step_testcase(step)
+
     def test_start(self):
         """main entrance"""
         self.step_datas.clear()
-        session_variables = {}
+        self.session_variables.clear()
         for step in self.teststeps:
             # update with config variables
             step.variables.update(self.config.variables)
             # update with session variables extracted from former step
-            step.variables.update(session_variables)
+            step.variables.update(self.session_variables)
             # parse variables
             step.variables = parse_variables_mapping(step.variables, self.config.functions)
             # run step
             extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
-            session_variables.update(extract_mapping)
+            self.session_variables.update(extract_mapping)
 
         return self
 
     def run(self):
         """main entrance alias for test_start"""
         return self.test_start()
+
+    def get_export_variables(self):
+        export_vars_mapping = {}
+        for var_name in self.config.export:
+            if var_name not in self.session_variables:
+                raise ParamsError(
+                    f"failed to export variable {var_name} from session variables {self.session_variables}")
+
+            export_vars_mapping[var_name] = self.session_variables[var_name]
+
+        return export_vars_mapping
