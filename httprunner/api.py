@@ -130,37 +130,32 @@ class HttpRunner(object):
             tests_results (list): list of testcase summary
 
         """
-        testsuite_summary = {
-            "success": True,
-            "stat": {
-                "total": len(tests_results),
-                "success": 0,
-                "fail": 0
-            },
-            "time": {},
-            "platform": report.get_platform(),
-            "testcases": []
-        }
+        testsuite_summary = TestSuiteSummary(
+            success=True,
+            platform=report.get_platform(),
+            testcases=[]
+        )
+        testsuite_summary.stat.total = len(tests_results)
+        testsuite_summary.stat.success = 0
+        testsuite_summary.stat.fail = 0
 
         for testcase_summary in tests_results:
             if testcase_summary.success:
-                testsuite_summary["stat"]["success"] += 1
+                testsuite_summary.stat.success += 1
             else:
-                testsuite_summary["stat"]["fail"] += 1
+                testsuite_summary.stat.fail += 1
 
-            testsuite_summary["success"] &= testcase_summary.success
-
-            testsuite_summary["testcases"].append(testcase_summary)
+            testsuite_summary.success &= testcase_summary.success
+            testsuite_summary.testcases.append(testcase_summary)
 
         total_duration = tests_results[-1].time.start_at + tests_results[-1].time.duration \
                          - tests_results[0].time.start_at
-        testsuite_summary["time"] = {
-            "start_at": tests_results[0].time.start_at,
-            "start_at_iso_format": tests_results[0].time.start_at_iso_format,
-            "duration": total_duration
-        }
 
-        return TestSuiteSummary.parse_obj(testsuite_summary)
+        testsuite_summary.time.start_at = tests_results[0].time.start_at
+        testsuite_summary.time.start_at_iso_format = tests_results[0].time.start_at_iso_format
+        testsuite_summary.time.duration = total_duration
+
+        return testsuite_summary
 
     def run_tests(self, tests_mapping) -> TestSuiteSummary:
         """ run testcase/testsuite data
@@ -188,7 +183,6 @@ class HttpRunner(object):
 
         # generate html report
         self.exception_stage = "generate html report"
-        report.stringify_summary(self._summary)
 
         if self.save_tests:
             utils.dump_json_file(

@@ -114,22 +114,6 @@ class ResponseObject(object):
         }
         self.validation_results: Dict = {}
 
-    def __getattr__(self, key):
-        try:
-            if key == "json":
-                value = self.resp_obj.json()
-            elif key == "cookies":
-                value = self.resp_obj.cookies.get_dict()
-            else:
-                value = getattr(self.resp_obj, key)
-
-            self.__dict__[key] = value
-            return value
-        except AttributeError:
-            err_msg = f"ResponseObject does not have attribute: {key}"
-            logger.error(err_msg)
-            raise ParamsError(err_msg)
-
     def extract(self, extractors: Dict[Text, Text]) -> Dict[Text, Any]:
         if not extractors:
             return {}
