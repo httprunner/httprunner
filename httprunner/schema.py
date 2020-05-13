@@ -43,6 +43,7 @@ class TestsConfig(BaseModel):
 
 
 class Request(BaseModel):
+    """requests.Request model"""
     method: MethodEnum = MethodEnum.GET
     url: Url
     params: Dict[Text, Text] = {}
@@ -84,9 +85,9 @@ class TestsMapping(BaseModel):
 
 
 class TestCaseTime(BaseModel):
-    start_at: float
-    start_at_iso_format: Text
-    duration: float
+    start_at: float = 0
+    start_at_iso_format: Text = ""
+    duration: float = 0
 
 
 class TestCaseInOut(BaseModel):
@@ -100,12 +101,44 @@ class RequestStat(BaseModel):
     elapsed_ms: float = 0
 
 
+class RequestData(BaseModel):
+    method: MethodEnum = MethodEnum.GET
+    url: Url
+    headers: Headers = {}
+    # TODO: add cookies
+    body: Union[Text, Dict] = {}
+
+
+class ResponseData(BaseModel):
+    status_code: int
+    cookies: Dict
+    encoding: Text
+    headers: Dict
+    content_type: Text
+    body: Union[Text, bytes, Dict]
+
+
+class ReqRespData(BaseModel):
+    request: RequestData
+    response: ResponseData
+
+
 class SessionData(BaseModel):
-    status: Text = ""
-    name: Text = ""
-    req_resp: List[Dict] = []
+    """request session data, including request, response, validators and stat data"""
+    success: bool = False
+    # in most cases, req_resps only contains one request & response
+    # while when 30X redirect occurs, req_resps will contain multiple request & response
+    req_resps: List[ReqRespData] = []
     stat: RequestStat = RequestStat()
     validators: Dict = {}
+
+
+class StepData(BaseModel):
+    """teststep data, each step maybe corresponding to one request or one testcase"""
+    success: bool = False
+    name: Text = ""     # teststep name
+    data: Union[SessionData, List[SessionData]] = None
+    export: Dict = {}
 
 
 class TestCaseSummary(BaseModel):
@@ -116,7 +149,7 @@ class TestCaseSummary(BaseModel):
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
-    step_datas: List[SessionData] = []
+    step_datas: List[StepData] = []
 
 
 class PlatformInfo(BaseModel):
@@ -132,8 +165,8 @@ class Stat(BaseModel):
 
 
 class TestSuiteSummary(BaseModel):
-    success: bool
-    stat: Stat
-    time: TestCaseTime
+    success: bool = False
+    stat: Stat = Stat()
+    time: TestCaseTime = TestCaseTime()
     platform: PlatformInfo
     testcases: List[TestCaseSummary]

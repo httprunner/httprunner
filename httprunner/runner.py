@@ -7,7 +7,7 @@ from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
-from httprunner.schema import TestsConfig, TestStep, VariablesMapping, TestCase, SessionData
+from httprunner.schema import TestsConfig, TestStep, VariablesMapping, TestCase, StepData
 
 
 class TestCaseRunner(object):
@@ -15,9 +15,10 @@ class TestCaseRunner(object):
     config: TestsConfig = {}
     teststeps: List[TestStep] = []
     session: HttpSession = None
-    step_datas: List[SessionData] = []
+    step_datas: List[StepData] = []
     validation_results: Dict = {}
     session_variables: Dict = {}
+    success: bool = True   # indicate testcase execution result
 
     def init(self, testcase: TestCase) -> "TestCaseRunner":
         self.config = testcase.config
@@ -34,6 +35,10 @@ class TestCaseRunner(object):
 
     def __run_step_request(self, step: TestStep):
         """run teststep: request"""
+        step_data = StepData(
+            name=step.name
+        )
+
         # parse
         request_dict = step.request.dict()
         parsed_request_dict = parse_data(request_dict, step.variables, self.config.functions)
@@ -70,14 +75,15 @@ class TestCaseRunner(object):
 
             # log response
             err_msg += "====== response details ======\n"
-            err_msg += f"status_code: {resp_obj.status_code}\n"
-            err_msg += f"headers: {resp_obj.headers}\n"
-            err_msg += f"body: {repr(resp_obj.text)}\n"
+            err_msg += f"status_code: {resp.status_code}\n"
+            err_msg += f"headers: {resp.headers}\n"
+            err_msg += f"body: {repr(resp.text)}\n"
             logger.error(err_msg)
 
         # extract
         extractors = step.extract
         extract_mapping = resp_obj.extract(extractors)
+        step_data.export = extract_mapping
 
         variables_mapping = step.variables
         variables_mapping.update(extract_mapping)
@@ -86,33 +92,49 @@ class TestCaseRunner(object):
         validators = step.validators
         try:
             resp_obj.validate(validators, variables_mapping, self.config.functions)
-            self.session.data.status = "passed"
+            self.session.data.success = True
         except ValidationFailure:
-            self.session.data.status = "failed"
+            self.session.data.success = False
             log_req_resp_details()
             raise
         finally:
             self.validation_results = resp_obj.validation_results
             # save request & response meta data
             self.session.data.validators = self.validation_results
-            self.session.data.name = step.name
-            self.step_datas.append(self.session.data)
+            self.success &= self.session.data.success
 
-        return extract_mapping
+        step_data.success = self.session.data.success
+        step_data.data = self.session.data
+        return step_data
 
     def __run_step_testcase(self, step):
         """run teststep: referenced testcase"""
+        step_data = StepData(
+            name=step.name
+        )
         step_variables = step.variables
-        testcase: TestCaseRunner = step.testcase
-        res = testcase.with_variables(**step_variables).run()
-        return res.get_export_variables()
+        testcase: TestCaseRunner = step.testcase()      # TODO: fix
+        case_result = testcase.with_variables(**step_variables).run()
+        step_data.data = case_result.step_datas     # list of step data
+        step_data.export = case_result.get_export_variables()
+        step_data.success = case_result.success
+        self.success &= case_result.success
+
+        return step_data
 
     def __run_step(self, step: TestStep):
+        """run teststep, teststep maybe a request or referenced testcase"""
         logger.info(f"run step: {step.name}")
+
         if step.request:
-            return self.__run_step_request(step)
+            step_data = self.__run_step_request(step)
         elif step.testcase:
-            return self.__run_step_testcase(step)
+            step_data = self.__run_step_testcase(step)
+        else:
+            raise ParamsError(f"teststep is neither a request nor a referenced testcase: {step.dict()}")
+
+        self.step_datas.append(step_data)
+        return step_data.export
 
     def test_start(self):
         """main entrance"""
