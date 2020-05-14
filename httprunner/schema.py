@@ -31,7 +31,7 @@ class MethodEnum(Text, Enum):
     TRACE = "TRACE"
 
 
-class TestsConfig(BaseModel):
+class TConfig(BaseModel):
     name: Name
     verify: Verify = False
     base_url: BaseUrl = ""
@@ -58,7 +58,7 @@ class Request(BaseModel):
     verify: Verify = False
 
 
-class TestStep(BaseModel):
+class TStep(BaseModel):
     name: Name
     request: Request = None
     testcase: Text = ""
@@ -68,8 +68,8 @@ class TestStep(BaseModel):
 
 
 class TestCase(BaseModel):
-    config: TestsConfig
-    teststeps: List[TestStep]
+    config: TConfig
+    teststeps: List[TStep]
 
 
 class ProjectMeta(BaseModel):

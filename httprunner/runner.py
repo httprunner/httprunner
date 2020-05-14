@@ -10,18 +10,18 @@ from httprunner.new_loader import load_project_data, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.schema import (
-    TestsConfig,
-    TestStep,
+    TConfig,
+    TStep,
     VariablesMapping,
     StepData,
 )
 
 
-class TestCaseRunner(object):
+class HttpRunner(object):
     def __init__(
         self,
-        config: TestsConfig,
-        teststeps: List[TestStep],
+        config: TConfig,
+        teststeps: List[TStep],
         session: HttpSession = None,
     ):
         if not config.path:
@@ -38,11 +38,11 @@ class TestCaseRunner(object):
         self.project_data = load_project_data(self.config.path)
         self.config.functions = self.project_data.functions
 
-    def with_variables(self, **variables: VariablesMapping) -> "TestCaseRunner":
+    def with_variables(self, **variables: VariablesMapping) -> "HttpRunner":
         self.config.variables.update(variables)
         return self
 
-    def __run_step_request(self, step: TestStep):
+    def __run_step_request(self, step: TStep):
         """run teststep: request"""
         step_data = StepData(name=step.name)
 
@@ -125,7 +125,7 @@ class TestCaseRunner(object):
         _, testcase_obj = load_testcase_file(ref_testcase_path)
 
         case_result = (
-            TestCaseRunner(testcase_obj.config, testcase_obj.teststeps, self.session)
+            HttpRunner(testcase_obj.config, testcase_obj.teststeps, self.session)
             .with_variables(**step_variables)
             .run()
         )
@@ -136,7 +136,7 @@ class TestCaseRunner(object):
 
         return step_data
 
-    def __run_step(self, step: TestStep):
+    def __run_step(self, step: TStep):
         """run teststep, teststep maybe a request or referenced testcase"""
         logger.info(f"run step: {step.name}")
 
