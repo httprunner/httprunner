@@ -40,6 +40,7 @@ class TestsConfig(BaseModel):
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     export: Export = []
+    path: Text = None
 
 
 class Request(BaseModel):
