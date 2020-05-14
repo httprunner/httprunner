@@ -2,38 +2,30 @@ from typing import List, Dict
 
 from loguru import logger
 
-from httprunner import utils
+from httprunner import utils, exceptions
 from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
+from httprunner.new_loader import load_project_data
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.schema import (
     TestsConfig,
     TestStep,
     VariablesMapping,
-    TestCase,
     StepData,
 )
 
 
 class TestCaseRunner(object):
 
-    config: TestsConfig = {}
-    teststeps: List[TestStep] = []
-    session: HttpSession = None
-    step_datas: List[StepData] = []
-    validation_results: Dict = {}
-    session_variables: Dict = {}
-    success: bool = True  # indicate testcase execution result
-
-    def init(self, testcase: TestCase) -> "TestCaseRunner":
-        self.config = testcase.config
-        self.teststeps = testcase.teststeps
-        return self
-
-    def with_session(self, s: HttpSession) -> "TestCaseRunner":
-        self.session = s
-        return self
+    def __init__(self, config: TestsConfig, teststeps: List[TestStep], session: HttpSession = None):
+        self.config = config
+        self.teststeps = teststeps
+        self.session = session
+        self.step_datas: List[StepData] = []
+        self.validation_results: Dict = {}
+        self.session_variables: Dict = {}
+        self.success: bool = True  # indicate testcase execution result
 
     def with_variables(self, **variables: VariablesMapping) -> "TestCaseRunner":
         self.config.variables.update(variables)
@@ -142,8 +134,14 @@ class TestCaseRunner(object):
         self.step_datas.append(step_data)
         return step_data.export
 
-    def test_start(self):
+    def run(self):
         """main entrance"""
+        if not self.config.path:
+            raise exceptions.ParamsError("config path missed!")
+
+        project_data = load_project_data(self.config.path)
+        self.config.functions = project_data["functions"]
+
         self.step_datas.clear()
         self.session_variables.clear()
         for step in self.teststeps:
@@ -161,10 +159,6 @@ class TestCaseRunner(object):
             self.session_variables.update(extract_mapping)
 
         return self
-
-    def run(self):
-        """main entrance alias for test_start"""
-        return self.test_start()
 
     def get_export_variables(self):
         export_vars_mapping = {}

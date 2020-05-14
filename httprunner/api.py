@@ -75,7 +75,7 @@ class HttpRunner(object):
             testcase.config.variables.update(project_meta.variables)
             testcase.config.functions.update(project_meta.functions)
 
-            test_runner = TestCaseRunner().init(testcase)
+            test_runner = TestCaseRunner(testcase.config, testcase.teststeps)
 
             TestSequense = type("TestSequense", (unittest.TestCase,), {})
             test_method = _add_test(test_runner)
