@@ -80,10 +80,7 @@ def lower_dict_keys(origin_dict):
     if not origin_dict or not isinstance(origin_dict, dict):
         return origin_dict
 
-    return {
-        key.lower(): value
-        for key, value in origin_dict.items()
-    }
+    return {key.lower(): value for key, value in origin_dict.items()}
 
 
 def deepcopy_dict(data):
@@ -230,6 +227,7 @@ def omit_long_data(body, omit_len=512):
 def dump_json_file(json_data: Union[dict, list], json_file_abs_path: str) -> None:
     """ dump json data to file
     """
+
     class PythonObjectEncoder(json.JSONEncoder):
         def default(self, obj):
             try:
@@ -242,14 +240,14 @@ def dump_json_file(json_data: Union[dict, list], json_file_abs_path: str) -> Non
         os.makedirs(file_foder_path)
 
     try:
-        with io.open(json_file_abs_path, 'w', encoding='utf-8') as outfile:
+        with io.open(json_file_abs_path, "w", encoding="utf-8") as outfile:
             json.dump(
                 json_data,
                 outfile,
                 indent=4,
-                separators=(',', ':'),
+                separators=(",", ":"),
                 ensure_ascii=False,
-                cls=PythonObjectEncoder
+                cls=PythonObjectEncoder,
             )
 
         msg = f"dump file: {json_file_abs_path}"
@@ -268,7 +266,9 @@ def prepare_log_file_abs_path(test_path: str, file_name: str) -> str:
     if not test_path:
         # running passed in testcase/testsuite data structure
         dump_file_name = f"tests_mapping.{file_name}"
-        dumped_json_file_abs_path = os.path.join(current_working_dir, "logs", dump_file_name)
+        dumped_json_file_abs_path = os.path.join(
+            current_working_dir, "logs", dump_file_name
+        )
         return dumped_json_file_abs_path
 
     # both test_path and pwd_dir_path are absolute path

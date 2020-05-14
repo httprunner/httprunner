@@ -4,14 +4,18 @@ import os
 from loguru import logger
 
 from httprunner import exceptions, utils
-from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
-    load_folder_files
-from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
+from httprunner.loader.load import (
+    load_module_functions,
+    load_file,
+    load_dot_env_file,
+    load_folder_files,
+)
+from httprunner.loader.locate import (
+    init_project_working_directory,
+    get_project_working_directory,
+)
 
-tests_def_mapping = {
-    "api": {},
-    "testcases": {}
-}
+tests_def_mapping = {"api": {}, "testcases": {}}
 
 
 def load_debugtalk_functions():
@@ -71,10 +75,7 @@ def __extend_with_testcase_ref(raw_testinfo):
     if testcase_path not in tests_def_mapping["testcases"]:
         # make compatible with Windows/Linux
         pwd = get_project_working_directory()
-        testcase_path = os.path.join(
-            pwd,
-            *testcase_path.split("/")
-        )
+        testcase_path = os.path.join(pwd, *testcase_path.split("/"))
         loaded_testcase = load_file(testcase_path)
 
         # TODO: validate with pydantic
@@ -82,7 +83,8 @@ def __extend_with_testcase_ref(raw_testinfo):
             testcase_dict = load_testcase(loaded_testcase)
         else:
             raise exceptions.FileFormatError(
-                f"Invalid format testcase: {testcase_path}")
+                f"Invalid format testcase: {testcase_path}"
+            )
 
         tests_def_mapping["testcases"][testcase_path] = testcase_dict
     else:
@@ -174,10 +176,7 @@ def load_testcase(raw_testcase):
 
     """
     raw_teststeps = raw_testcase.pop("teststeps")
-    raw_testcase["teststeps"] = [
-        load_teststep(teststep)
-        for teststep in raw_teststeps
-    ]
+    raw_testcase["teststeps"] = [load_teststep(teststep) for teststep in raw_teststeps]
     return raw_testcase
 
 
@@ -305,7 +304,9 @@ def load_project_data(test_path, dot_env_path=None):
             environments and debugtalk.py functions.
 
     """
-    debugtalk_path, project_working_directory = init_project_working_directory(test_path)
+    debugtalk_path, project_working_directory = init_project_working_directory(
+        test_path
+    )
 
     project_meta = {}
 
@@ -325,7 +326,9 @@ def load_project_data(test_path, dot_env_path=None):
     # locate PWD and load debugtalk.py functions
     project_meta["PWD"] = project_working_directory
     project_meta["functions"] = debugtalk_functions
-    project_meta["test_path"] = os.path.abspath(test_path)[len(project_working_directory) + 1:]
+    project_meta["test_path"] = os.path.abspath(test_path)[
+        len(project_working_directory) + 1 :
+    ]
 
     return project_meta
 
@@ -384,9 +387,7 @@ def load_cases(path: str, dot_env_path: str = None):
 
     """
 
-    tests_mapping = {
-        "project_meta": load_project_data(path, dot_env_path)
-    }
+    tests_mapping = {"project_meta": load_project_data(path, dot_env_path)}
 
     def __load_file_content(path):
         loaded_content = None

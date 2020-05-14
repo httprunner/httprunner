@@ -6,6 +6,7 @@ if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
     # monkey patch ssl at beginning to avoid RecursionError when running locust.
     try:
         from gevent import monkey
+
         monkey.patch_ssl()
         from locust.main import main as _
     except ImportError:
@@ -27,42 +28,42 @@ from httprunner.ext.locusts import init_parser_locusts, main_locusts
 
 
 def init_parser_run(subparsers):
-    sub_parser_run = subparsers.add_parser(
-        "run", help="Run HttpRunner testcases.")
+    sub_parser_run = subparsers.add_parser("run", help="Run HttpRunner testcases.")
 
     sub_parser_run.add_argument(
-        'testfile_paths', nargs='*',
-        help="Specify api/testcase/testsuite file paths to run.")
+        "testfile_paths",
+        nargs="*",
+        help="Specify api/testcase/testsuite file paths to run.",
+    )
     sub_parser_run.add_argument(
-        '--log-level', default='INFO',
-        help="Specify logging level, default is INFO.")
+        "--log-level", default="INFO", help="Specify logging level, default is INFO."
+    )
+    sub_parser_run.add_argument("--log-file", help="Write logs to specified file path.")
     sub_parser_run.add_argument(
-        '--log-file',
-        help="Write logs to specified file path.")
+        "--dot-env-path",
+        help="Specify .env file path, which is useful for keeping sensitive data.",
+    )
     sub_parser_run.add_argument(
-        '--dot-env-path',
-        help="Specify .env file path, which is useful for keeping sensitive data.")
+        "--report-template", help="Specify report template path."
+    )
+    sub_parser_run.add_argument("--report-dir", help="Specify report save directory.")
     sub_parser_run.add_argument(
-        '--report-template',
-        help="Specify report template path.")
+        "--report-file",
+        help="Specify report file path, this has higher priority than specifying report dir.",
+    )
     sub_parser_run.add_argument(
-        '--report-dir',
-        help="Specify report save directory.")
-    sub_parser_run.add_argument(
-        '--report-file',
-        help="Specify report file path, this has higher priority than specifying report dir.")
-    sub_parser_run.add_argument(
-        '--save-tests', action='store_true', default=False,
-        help="Save loaded/parsed/vars_out/summary json data to JSON files.")
+        "--save-tests",
+        action="store_true",
+        default=False,
+        help="Save loaded/parsed/vars_out/summary json data to JSON files.",
+    )
 
     return sub_parser_run
 
 
 def main_run(args):
     runner = HttpRunner(
-        save_tests=args.save_tests,
-        log_level=args.log_level,
-        log_file=args.log_file
+        save_tests=args.save_tests, log_level=args.log_level, log_file=args.log_file
     )
 
     err_code = 0
@@ -73,11 +74,13 @@ def main_run(args):
             runner.gen_html_report(
                 report_template=args.report_template,
                 report_dir=report_dir,
-                report_file=args.report_file
+                report_file=args.report_file,
             )
-            err_code |= (0 if testsuite_summary and testsuite_summary.success else 1)
+            err_code |= 0 if testsuite_summary and testsuite_summary.success else 1
     except Exception as ex:
-        logger.error(f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}")
+        logger.error(
+            f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}"
+        )
         err_code = 1
 
     sys.exit(err_code)
@@ -88,10 +91,10 @@ def main():
     """
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
-        '-V', '--version', dest='version', action='store_true',
-        help="show version")
+        "-V", "--version", dest="version", action="store_true", help="show version"
+    )
 
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(help="sub-command help")
     sub_parser_run = init_parser_run(subparsers)
     sub_parser_scaffold = init_parser_scaffold(subparsers)
     sub_parser_har2case = init_har2case_parser(subparsers)
@@ -153,5 +156,5 @@ def main_hrun_alias():
     main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

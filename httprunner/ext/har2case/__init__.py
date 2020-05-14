@@ -20,19 +20,27 @@ def init_har2case_parser(subparsers):
     """ HAR converter: parse command line options and run commands.
     """
     parser = subparsers.add_parser(
-        "har2case", help="Convert HAR(HTTP Archive) to YAML/JSON testcases for HttpRunner.")
-    parser.add_argument('har_source_file', nargs='?',
-                        help="Specify HAR source file")
+        "har2case",
+        help="Convert HAR(HTTP Archive) to YAML/JSON testcases for HttpRunner.",
+    )
+    parser.add_argument("har_source_file", nargs="?", help="Specify HAR source file")
     parser.add_argument(
-        '-2y', '--to-yml', '--to-yaml',
-        dest='to_yaml', action='store_true',
-        help="Convert to YAML format, if not specified, convert to JSON format by default.")
+        "-2y",
+        "--to-yml",
+        "--to-yaml",
+        dest="to_yaml",
+        action="store_true",
+        help="Convert to YAML format, if not specified, convert to JSON format by default.",
+    )
     parser.add_argument(
-        '--filter', help="Specify filter keyword, only url include filter string will be converted.")
+        "--filter",
+        help="Specify filter keyword, only url include filter string will be converted.",
+    )
     parser.add_argument(
-        '--exclude',
+        "--exclude",
         help="Specify exclude keyword, url that includes exclude string will be ignored, "
-             "multiple keywords can be joined with '|'")
+        "multiple keywords can be joined with '|'",
+    )
 
     return parser
 
@@ -48,8 +56,6 @@ def main_har2case(args):
         sys.exit(1)
 
     output_file_type = "YML" if args.to_yaml else "JSON"
-    HarParser(
-        har_source_file, args.filter, args.exclude
-    ).gen_testcase(output_file_type)
+    HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type)
 
     return 0

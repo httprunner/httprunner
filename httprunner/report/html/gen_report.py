@@ -8,7 +8,12 @@ from httprunner.exceptions import SummaryEmpty
 from httprunner.schema import TestSuiteSummary
 
 
-def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, report_dir=None, report_file=None):
+def gen_html_report(
+    testsuite_summary: TestSuiteSummary,
+    report_template=None,
+    report_dir=None,
+    report_file=None,
+):
     """ render html report with specified report name and template
 
     Args:
@@ -24,8 +29,7 @@ def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, r
 
     if not report_template:
         report_template = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
-            "template.html"
+            os.path.abspath(os.path.dirname(__file__)), "template.html"
         )
         logger.debug("No html report template specified, use default.")
     else:
@@ -39,22 +43,22 @@ def gen_html_report(testsuite_summary: TestSuiteSummary, report_template=None, r
     else:
         report_dir = report_dir or os.path.join(os.getcwd(), "reports")
         # fix #826: Windows does not support file name include ":"
-        report_file_name = "{}.html".format(testsuite_summary.time.start_at_iso_format.replace(":", "").replace("-", ""))
+        report_file_name = "{}.html".format(
+            testsuite_summary.time.start_at_iso_format.replace(":", "").replace("-", "")
+        )
 
     if not os.path.isdir(report_dir):
         os.makedirs(report_dir)
 
     report_path = os.path.join(report_dir, report_file_name)
-    with io.open(report_template, "r", encoding='utf-8') as fp_r:
+    with io.open(report_template, "r", encoding="utf-8") as fp_r:
         template_content = fp_r.read()
-        with io.open(report_path, 'w', encoding='utf-8') as fp_w:
+        with io.open(report_path, "w", encoding="utf-8") as fp_w:
             rendered_content = Template(
-                template_content,
-                extensions=["jinja2.ext.loopcontrols"]
+                template_content, extensions=["jinja2.ext.loopcontrols"]
             ).render(testsuite_summary.dict())
             fp_w.write(rendered_content)
 
     logger.info(f"Generated Html report: {report_path}")
 
     return report_path
-

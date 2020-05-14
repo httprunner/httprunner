@@ -16,5 +16,5 @@ __all__ = [
     "get_summary",
     "stringify_summary",
     "HtmlTestResult",
-    "gen_html_report"
+    "gen_html_report",
 ]

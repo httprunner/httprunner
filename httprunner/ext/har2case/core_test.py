@@ -6,7 +6,6 @@ from httprunner.ext.har2case.utils_test import TestUtils
 
 
 class TestHar(TestUtils):
-
     def setUp(self):
         self.har_path = os.path.join(os.path.dirname(__file__), "data", "demo.har")
         self.har_parser = HarParser(self.har_path)
@@ -22,18 +21,10 @@ class TestHar(TestUtils):
             validator["eq"][0]: validator["eq"][1]
             for validator in teststep_dict["validate"]
         }
-        self.assertEqual(
-            validators_mapping["status_code"], 200
-        )
-        self.assertEqual(
-            validators_mapping["content.IsSuccess"], True
-        )
-        self.assertEqual(
-            validators_mapping["content.Code"], 200
-        )
-        self.assertEqual(
-            validators_mapping["content.Message"], None
-        )
+        self.assertEqual(validators_mapping["status_code"], 200)
+        self.assertEqual(validators_mapping["content.IsSuccess"], True)
+        self.assertEqual(validators_mapping["content.Code"], 200)
+        self.assertEqual(validators_mapping["content.Message"], None)
 
     def test_prepare_teststeps(self):
         teststeps = self.har_parser._prepare_teststeps()
@@ -43,16 +34,14 @@ class TestHar(TestUtils):
         self.assertIn("validate", teststeps[0])
 
     def test_gen_testcase_yaml(self):
-        yaml_file = os.path.join(
-            os.path.dirname(__file__), "data", "demo.yaml")
+        yaml_file = os.path.join(os.path.dirname(__file__), "data", "demo.yaml")
 
         self.har_parser.gen_testcase(file_type="YAML")
         self.assertTrue(os.path.isfile(yaml_file))
         os.remove(yaml_file)
 
     def test_gen_testcase_json(self):
-        json_file = os.path.join(
-            os.path.dirname(__file__), "data", "demo.json")
+        json_file = os.path.join(os.path.dirname(__file__), "data", "demo.json")
 
         self.har_parser.gen_testcase(file_type="JSON")
         self.assertTrue(os.path.isfile(json_file))
@@ -64,7 +53,7 @@ class TestHar(TestUtils):
         teststeps = har_parser._prepare_teststeps()
         self.assertEqual(
             teststeps[0]["request"]["url"],
-            "https://httprunner.top/api/v1/Account/Login"
+            "https://httprunner.top/api/v1/Account/Login",
         )
 
         filter_str = "debugtalk"
@@ -78,7 +67,7 @@ class TestHar(TestUtils):
         teststeps = har_parser._prepare_teststeps()
         self.assertEqual(
             teststeps[0]["request"]["url"],
-            "https://httprunner.top/api/v1/Account/Login"
+            "https://httprunner.top/api/v1/Account/Login",
         )
 
         exclude_str = "httprunner"
@@ -98,20 +87,13 @@ class TestHar(TestUtils):
         self.assertEqual(teststeps, [])
 
     def test_make_request_data_params(self):
-        testcase_dict = {
-            "name": "",
-            "request": {},
-            "validate": []
-        }
+        testcase_dict = {"name": "", "request": {}, "validate": []}
         entry_json = {
             "request": {
                 "method": "POST",
                 "postData": {
                     "mimeType": "application/x-www-form-urlencoded; charset=utf-8",
-                    "params": [
-                        {"name": "a", "value": 1},
-                        {"name": "b", "value": "2"}
-                    ]
+                    "params": [{"name": "a", "value": 1}, {"name": "b", "value": "2"}],
                 },
             }
         }
@@ -120,53 +102,32 @@ class TestHar(TestUtils):
         self.assertEqual(testcase_dict["request"]["data"]["b"], "2")
 
     def test_make_request_data_json(self):
-        testcase_dict = {
-            "name": "",
-            "request": {},
-            "validate": []
-        }
+        testcase_dict = {"name": "", "request": {}, "validate": []}
         entry_json = {
             "request": {
                 "method": "POST",
                 "postData": {
                     "mimeType": "application/json; charset=utf-8",
-                    "text": "{\"a\":\"1\",\"b\":\"2\"}"
+                    "text": '{"a":"1","b":"2"}',
                 },
             }
         }
         self.har_parser._make_request_data(testcase_dict, entry_json)
-        self.assertEqual(
-            testcase_dict["request"]["json"],
-            {'a': '1', 'b': '2'}
-        )
+        self.assertEqual(testcase_dict["request"]["json"], {"a": "1", "b": "2"})
 
     def test_make_request_data_text_empty(self):
-        testcase_dict = {
-            "name": "",
-            "request": {},
-            "validate": []
-        }
+        testcase_dict = {"name": "", "request": {}, "validate": []}
         entry_json = {
             "request": {
                 "method": "POST",
-                "postData": {
-                    "mimeType": "application/json; charset=utf-8",
-                    "text": ""
-                },
+                "postData": {"mimeType": "application/json; charset=utf-8", "text": ""},
             }
         }
         self.har_parser._make_request_data(testcase_dict, entry_json)
-        self.assertEqual(
-            testcase_dict["request"]["data"],
-            ""
-        )
+        self.assertEqual(testcase_dict["request"]["data"], "")
 
     def test_make_validate(self):
-        testcase_dict = {
-            "name": "",
-            "request": {},
-            "validate": []
-        }
+        testcase_dict = {"name": "", "request": {}, "validate": []}
         entry_json = {
             "request": {},
             "response": {
@@ -174,7 +135,7 @@ class TestHar(TestUtils):
                 "headers": [
                     {
                         "name": "Content-Type",
-                        "value": "application/json; charset=utf-8"
+                        "value": "application/json; charset=utf-8",
                     },
                 ],
                 "content": {
@@ -182,23 +143,21 @@ class TestHar(TestUtils):
                     "mimeType": "application/json; charset=utf-8",
                     # raw response content text is application/jose type
                     "text": "ZXlKaGJHY2lPaUpTVTBFeFh6VWlMQ0psYm1NaU9pSkJNVEk0UTBKRExV",
-                    "encoding": "base64"
-                }
-            }
+                    "encoding": "base64",
+                },
+            },
         }
         self.har_parser._make_validate(testcase_dict, entry_json)
-        self.assertEqual(
-            testcase_dict["validate"][0],
-            {"eq": ["status_code", 200]}
-        )
+        self.assertEqual(testcase_dict["validate"][0], {"eq": ["status_code", 200]})
         self.assertEqual(
             testcase_dict["validate"][1],
-            {"eq": ["headers.Content-Type", "application/json; charset=utf-8"]}
+            {"eq": ["headers.Content-Type", "application/json; charset=utf-8"]},
         )
 
     def test_make_testcase(self):
         har_path = os.path.join(
-            os.path.dirname(__file__), "data", "demo-quickstart.har")
+            os.path.dirname(__file__), "data", "demo-quickstart.har"
+        )
         har_parser = HarParser(har_path)
         testcase = har_parser._make_testcase()
         self.assertIsInstance(testcase, dict)

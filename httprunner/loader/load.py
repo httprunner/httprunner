@@ -14,7 +14,7 @@ from httprunner.loader.locate import get_project_working_directory
 try:
     # PyYAML version >= 5.1
     # ref: https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
-    yaml.warnings({'YAMLLoadWarning': False})
+    yaml.warnings({"YAMLLoadWarning": False})
 except AttributeError:
     pass
 
@@ -22,7 +22,7 @@ except AttributeError:
 def _load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
-    with io.open(yaml_file, 'r', encoding='utf-8') as stream:
+    with io.open(yaml_file, "r", encoding="utf-8") as stream:
         try:
             yaml_content = yaml.load(stream)
         except yaml.YAMLError as ex:
@@ -35,7 +35,7 @@ def _load_yaml_file(yaml_file):
 def _load_json_file(json_file):
     """ load json file and check file content format
     """
-    with io.open(json_file, encoding='utf-8') as data_file:
+    with io.open(json_file, encoding="utf-8") as data_file:
         try:
             json_content = json.load(data_file)
         except json.JSONDecodeError:
@@ -81,7 +81,7 @@ def load_csv_file(csv_file):
 
     csv_content_list = []
 
-    with io.open(csv_file, encoding='utf-8') as csvfile:
+    with io.open(csv_file, encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             csv_content_list.append(row)
@@ -94,9 +94,9 @@ def load_file(file_path):
         raise exceptions.FileNotFound(f"{file_path} does not exist.")
 
     file_suffix = os.path.splitext(file_path)[1].lower()
-    if file_suffix == '.json':
+    if file_suffix == ".json":
         return _load_json_file(file_path)
-    elif file_suffix in ['.yaml', '.yml']:
+    elif file_suffix in [".yaml", ".yml"]:
         return _load_yaml_file(file_path)
     elif file_suffix == ".csv":
         return load_csv_file(file_path)
@@ -132,7 +132,7 @@ def load_folder_files(folder_path, recursive=True):
         filenames_list = []
 
         for filename in filenames:
-            if not filename.endswith(('.yml', '.yaml', '.json')):
+            if not filename.endswith((".yml", ".yaml", ".json")):
                 continue
 
             filenames_list.append(filename)
@@ -172,7 +172,7 @@ def load_dot_env_file(dot_env_path):
     logger.info(f"Loading environment variables from {dot_env_path}")
     env_variables_mapping = {}
 
-    with io.open(dot_env_path, 'r', encoding='utf-8') as fp:
+    with io.open(dot_env_path, "r", encoding="utf-8") as fp:
         for line in fp:
             # maxsplit=1
             if "=" in line:
@@ -216,4 +216,3 @@ def load_builtin_functions():
     """ load builtin module functions
     """
     return load_module_functions(builtin)
-

@@ -4,27 +4,39 @@ import sys
 from loguru import logger
 
 from httprunner import __version__
-from httprunner.ext.locusts.core import start_locust_main, parse_locustfile, quick_run_locusts, start_master, \
-    start_slaves
+from httprunner.ext.locusts.core import (
+    start_locust_main,
+    parse_locustfile,
+    quick_run_locusts,
+    start_master,
+    start_slaves,
+)
 
 CPU_COUNT = multiprocessing.cpu_count()
 
 
 def init_parser_locusts(subparsers):
     sub_parser_locusts = subparsers.add_parser(
-        "locusts", help="Run load test with locust.")
+        "locusts", help="Run load test with locust."
+    )
     sub_parser_locusts.add_argument(
-        '--locust-help', action='store_true', default=False,
-        help="Show locust help.")
-    sub_parser_locusts.add_argument('test_file', nargs='?',
-                                    help="Specify YAML/JSON testcase file.")
+        "--locust-help", action="store_true", default=False, help="Show locust help."
+    )
     sub_parser_locusts.add_argument(
-        "--master", action='store_true', default=False, help="Start locust master.")
+        "test_file", nargs="?", help="Specify YAML/JSON testcase file."
+    )
     sub_parser_locusts.add_argument(
-        "--slaves", type=int, help="Specify locust slave number.")
+        "--master", action="store_true", default=False, help="Start locust master."
+    )
     sub_parser_locusts.add_argument(
-        "--quickstart", action='store_true', default=False,
-        help=f"Start locust master with {CPU_COUNT} slaves.")
+        "--slaves", type=int, help="Specify locust slave number."
+    )
+    sub_parser_locusts.add_argument(
+        "--quickstart",
+        action="store_true",
+        default=False,
+        help=f"Start locust master with {CPU_COUNT} slaves.",
+    )
     return sub_parser_locusts
 
 

@@ -1,11 +1,12 @@
 import json
 from base64 import b64encode
 from collections import Iterable
+from typing import List
 
 from jinja2 import escape
 from requests.cookies import RequestsCookieJar
 
-from httprunner.schema import TestSuiteSummary
+from httprunner.schema import TestSuiteSummary, SessionData
 
 
 def dumps_json(value):
@@ -125,8 +126,7 @@ def __stringify_response(response_data):
                 if key == "body" and "image" in response_data["content_type"]:
                     # display image
                     value = "data:{};base64,{}".format(
-                        response_data["content_type"],
-                        b64encode(value).decode(encoding)
+                        response_data["content_type"], b64encode(value).decode(encoding)
                     )
                 else:
                     value = escape(value.decode(encoding))
@@ -152,8 +152,19 @@ def stringify_summary(testsuite_summary: TestSuiteSummary):
             testcase_summary.name = f"testcase {index}"
 
         step_datas = testcase_summary.step_datas
-        for session_data in step_datas:
-            req_resp_list = session_data.req_resp
-            for req_resp in req_resp_list:
-                __stringify_request(req_resp["request"])
-                __stringify_response(req_resp["response"])
+        for step_data in step_datas:
+            if isinstance(step_data.data, list):
+                # List[SessionData]
+                session_data_list: List[SessionData] = step_data.data
+                for session_data in session_data_list:
+                    req_resp_list = session_data.req_resps
+                    for req_resp in req_resp_list:
+                        __stringify_request(req_resp.request)
+                        __stringify_response(req_resp.response)
+            else:
+                # SessionData
+                session_data: SessionData = step_data.data
+                req_resp_list = session_data.req_resps
+                for req_resp in req_resp_list:
+                    __stringify_request(req_resp.request)
+                    __stringify_response(req_resp.response)

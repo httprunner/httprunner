@@ -18,7 +18,7 @@ def parse_locustfile(file_path):
     file_suffix = os.path.splitext(file_path)[1]
     if file_suffix == ".py":
         locustfile_path = file_path
-    elif file_suffix in ['.yaml', '.yml', '.json']:
+    elif file_suffix in [".yaml", ".yml", ".json"]:
         locustfile_path = gen_locustfile(file_path)
     else:
         # '' or other suffix
@@ -31,16 +31,17 @@ def parse_locustfile(file_path):
 def gen_locustfile(testcase_file_path):
     """ generate locustfile from template.
     """
-    locustfile_path = 'locustfile.py'
+    locustfile_path = "locustfile.py"
     template_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "locustfile_template.py"
+        os.path.dirname(os.path.realpath(__file__)), "locustfile_template.py"
     )
 
-    with io.open(template_path, encoding='utf-8') as template:
-        with io.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
+    with io.open(template_path, encoding="utf-8") as template:
+        with io.open(locustfile_path, "w", encoding="utf-8") as locustfile:
             template_content = template.read()
-            template_content = template_content.replace("$TESTCASE_FILE", testcase_file_path)
+            template_content = template_content.replace(
+                "$TESTCASE_FILE", testcase_file_path
+            )
             locustfile.write(template_content)
 
     return locustfile_path
@@ -49,6 +50,7 @@ def gen_locustfile(testcase_file_path):
 def start_locust_main():
     logger.info(f"run command: {sys.argv}")
     from locust.main import main
+
     main()
 
 
@@ -94,7 +96,5 @@ def quick_run_locusts(slave_num):
     logger.info(f"Start locust master with {slave_num} slaves ...")
 
     processes = init_slave_processes(slave_num)
-    processes.append(
-        multiprocessing.Process(target=start_master, args=(sys.argv,))
-    )
+    processes.append(multiprocessing.Process(target=start_master, args=(sys.argv,)))
     [process.join() for process in processes]

@@ -68,9 +68,7 @@ def regex_findall_variables(content: Text) -> List[Text]:
     try:
         vars_list = []
         for var_tuple in variable_regex_compile.findall(content):
-            vars_list.append(
-                var_tuple[0] or var_tuple[1]
-            )
+            vars_list.append(var_tuple[0] or var_tuple[1])
         return vars_list
     except TypeError:
         return []
@@ -160,20 +158,17 @@ def parse_function_params(params: Text) -> Dict:
         {'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
 
     """
-    function_meta = {
-        "args": [],
-        "kwargs": {}
-    }
+    function_meta = {"args": [], "kwargs": {}}
 
     params_str = params.strip()
     if params_str == "":
         return function_meta
 
-    args_list = params_str.split(',')
+    args_list = params_str.split(",")
     for arg in args_list:
         arg = arg.strip()
-        if '=' in arg:
-            key, value = arg.split('=')
+        if "=" in arg:
+            key, value = arg.split("=")
             function_meta["kwargs"][key.strip()] = parse_string_value(value.strip())
         else:
             function_meta["args"].append(parse_string_value(arg))
@@ -181,7 +176,9 @@ def parse_function_params(params: Text) -> Dict:
     return function_meta
 
 
-def get_mapping_variable(variable_name: Text, variables_mapping: VariablesMapping) -> Any:
+def get_mapping_variable(
+    variable_name: Text, variables_mapping: VariablesMapping
+) -> Any:
     """ get variable from variables_mapping.
 
     Args:
@@ -199,10 +196,14 @@ def get_mapping_variable(variable_name: Text, variables_mapping: VariablesMappin
     try:
         return variables_mapping[variable_name]
     except KeyError:
-        raise exceptions.VariableNotFound(f"{variable_name} not found in {variables_mapping}")
+        raise exceptions.VariableNotFound(
+            f"{variable_name} not found in {variables_mapping}"
+        )
 
 
-def get_mapping_function(function_name: Text, functions_mapping: FunctionsMapping) -> Callable:
+def get_mapping_function(
+    function_name: Text, functions_mapping: FunctionsMapping
+) -> Callable:
     """ get function from functions_mapping,
         if not found, then try to check if builtin function.
 
@@ -229,6 +230,7 @@ def get_mapping_function(function_name: Text, functions_mapping: FunctionsMappin
     elif function_name in ["multipart_encoder", "multipart_content_type"]:
         # extension for upload test
         from httprunner.ext import uploader
+
         return getattr(uploader, function_name)
 
     try:
@@ -248,9 +250,10 @@ def get_mapping_function(function_name: Text, functions_mapping: FunctionsMappin
 
 
 def parse_string(
-        raw_string: Text,
-        variables_mapping: VariablesMapping,
-        functions_mapping: FunctionsMapping) -> Any:
+    raw_string: Text,
+    variables_mapping: VariablesMapping,
+    functions_mapping: FunctionsMapping,
+) -> Any:
     """ parse string content with variables and functions mapping.
 
     Args:
@@ -344,9 +347,10 @@ def parse_string(
 
 
 def parse_data(
-        raw_data: Any,
-        variables_mapping: VariablesMapping = None,
-        functions_mapping: FunctionsMapping = None) -> Any:
+    raw_data: Any,
+    variables_mapping: VariablesMapping = None,
+    functions_mapping: FunctionsMapping = None,
+) -> Any:
     """ parse raw data with evaluated variables mapping.
         Notice: variables_mapping should not contain any variable or function.
     """
@@ -359,8 +363,7 @@ def parse_data(
 
     elif isinstance(raw_data, (list, set, tuple)):
         return [
-            parse_data(item, variables_mapping, functions_mapping)
-            for item in raw_data
+            parse_data(item, variables_mapping, functions_mapping) for item in raw_data
         ]
 
     elif isinstance(raw_data, dict):
@@ -378,8 +381,8 @@ def parse_data(
 
 
 def parse_variables_mapping(
-        variables_mapping: VariablesMapping,
-        functions_mapping: FunctionsMapping = None) -> VariablesMapping:
+    variables_mapping: VariablesMapping, functions_mapping: FunctionsMapping = None
+) -> VariablesMapping:
 
     parsed_variables: VariablesMapping = {}
 
@@ -401,9 +404,7 @@ def parse_variables_mapping(
 
             # check if reference variable not in variables_mapping
             not_defined_variables = [
-                v_name
-                for v_name in variables
-                if v_name not in variables_mapping
+                v_name for v_name in variables if v_name not in variables_mapping
             ]
             if not_defined_variables:
                 # e.g. {"varA": "123$varB", "varB": "456$varC"}
@@ -412,7 +413,8 @@ def parse_variables_mapping(
 
             try:
                 parsed_value = parse_data(
-                    var_value, parsed_variables, functions_mapping)
+                    var_value, parsed_variables, functions_mapping
+                )
             except exceptions.VariableNotFound:
                 continue
 
