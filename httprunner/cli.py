@@ -25,6 +25,7 @@ from httprunner.api import HttpRunner
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.ext.locusts import init_parser_locusts, main_locusts
+from httprunner.ext.make import init_make_parser, main_make
 
 
 def init_parser_run(subparsers):
@@ -99,6 +100,7 @@ def main():
     sub_parser_scaffold = init_parser_scaffold(subparsers)
     sub_parser_har2case = init_har2case_parser(subparsers)
     sub_parser_locusts = init_parser_locusts(subparsers)
+    sub_parser_make = init_make_parser(subparsers)
 
     extra_args = []
     if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
@@ -111,12 +113,12 @@ def main():
         sys.exit(0)
 
     if len(sys.argv) == 1:
-        # hrun
+        # httprunner
         parser.print_help()
         sys.exit(0)
 
     elif sys.argv[1] == "run":
-        # hrun run
+        # httprunner run
         if len(sys.argv) == 2:
             sub_parser_run.print_help()
             sys.exit(0)
@@ -124,7 +126,7 @@ def main():
         main_run(args)
 
     elif sys.argv[1] == "startproject":
-        # hrun startproject
+        # httprunner startproject
         if len(sys.argv) == 2:
             sub_parser_scaffold.print_help()
             sys.exit(0)
@@ -132,7 +134,7 @@ def main():
         main_scaffold(args)
 
     elif sys.argv[1] == "har2case":
-        # hrun har2case
+        # httprunner har2case
         if len(sys.argv) == 2:
             sub_parser_har2case.print_help()
             sys.exit(0)
@@ -140,12 +142,20 @@ def main():
         main_har2case(args)
 
     elif sys.argv[1] == "locusts":
-        # hrun locusts
+        # httprunner locusts
         if len(sys.argv) == 2:
             sub_parser_locusts.print_help()
             sys.exit(0)
 
         main_locusts(args, extra_args)
+
+    elif sys.argv[1] == "make":
+        # httprunner make
+        if len(sys.argv) == 2:
+            sub_parser_make.print_help()
+            sys.exit(0)
+
+        main_make(args.testcase_path)
 
 
 def main_hrun_alias():

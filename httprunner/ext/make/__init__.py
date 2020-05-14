@@ -55,7 +55,7 @@ def make_testcase(testcase_path: str) -> str:
     return testcase_python_path
 
 
-def make(tests_path: str) -> list:
+def main_make(tests_path: str) -> list:
     testcases = []
     if os.path.isdir(tests_path):
         files_list = load_folder_files(tests_path)
@@ -69,3 +69,15 @@ def make(tests_path: str) -> list:
         make_testcase(testcase_path)
         for testcase_path in testcases
     ]
+
+
+def init_make_parser(subparsers):
+    """ make testcases: parse command line options and run commands.
+    """
+    parser = subparsers.add_parser(
+        "make",
+        help="Convert YAML/JSON testcases to Python unittests.",
+    )
+    parser.add_argument("testcase_path", nargs="?", help="Specify YAML/JSON testcase path")
+
+    return parser

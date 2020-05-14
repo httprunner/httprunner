@@ -1,5 +1,5 @@
 import unittest
-from httprunner.make import make_testcase, make
+from httprunner.ext.make import make_testcase, main_make
 
 
 class TestLoader(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestLoader(unittest.TestCase):
 
     def test_make_testcase_folder(self):
         path = "examples/postman_echo/request_methods/"
-        testcase_python_list = make(path)
+        testcase_python_list = main_make(path)
         self.assertIn(
             "examples/postman_echo/request_methods/request_with_functions_test.py",
             testcase_python_list
