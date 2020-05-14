@@ -7,7 +7,7 @@ from loguru import logger
 
 from httprunner import report, loader, utils, exceptions, __version__
 from httprunner.report import gen_html_report
-from httprunner.runner import TestCaseRunner
+from httprunner.runner import HttpRunner as TestCaseRunner
 from httprunner.schema import TestsMapping, TestCaseSummary, TestSuiteSummary
 
 
