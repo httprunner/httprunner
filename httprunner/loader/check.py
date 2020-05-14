@@ -30,7 +30,7 @@ def is_test_path(path):
         if os.path.isfile(path):
             # path is a file
             file_suffix = os.path.splitext(path)[1].lower()
-            if file_suffix not in ['.json', '.yaml', '.yml']:
+            if file_suffix not in [".json", ".yaml", ".yml"]:
                 # path is not json/yaml file
                 return False
             else:

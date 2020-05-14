@@ -6,7 +6,6 @@ from httprunner.cli import main
 
 
 class TestCli(unittest.TestCase):
-
     def setUp(self):
         self.captured_output = io.StringIO()
         sys.stdout = self.captured_output
@@ -23,6 +22,7 @@ class TestCli(unittest.TestCase):
         self.assertEqual(cm.exception.code, 0)
 
         from httprunner import __version__
+
         self.assertIn(__version__, self.captured_output.getvalue().strip())
 
     def test_show_help(self):
@@ -34,4 +34,5 @@ class TestCli(unittest.TestCase):
         self.assertEqual(cm.exception.code, 0)
 
         from httprunner import __description__
+
         self.assertIn(__description__, self.captured_output.getvalue().strip())

@@ -20,8 +20,8 @@ Env = Dict[Text, Any]
 
 
 class MethodEnum(Text, Enum):
-    GET = 'GET'
-    POST = 'POST'
+    GET = "GET"
+    POST = "POST"
     PUT = "PUT"
     DELETE = "DELETE"
     HEAD = "HEAD"
@@ -44,6 +44,7 @@ class TestsConfig(BaseModel):
 
 class Request(BaseModel):
     """requests.Request model"""
+
     method: MethodEnum = MethodEnum.GET
     url: Url
     params: Dict[Text, Text] = {}
@@ -125,6 +126,7 @@ class ReqRespData(BaseModel):
 
 class SessionData(BaseModel):
     """request session data, including request, response, validators and stat data"""
+
     success: bool = False
     # in most cases, req_resps only contains one request & response
     # while when 30X redirect occurs, req_resps will contain multiple request & response
@@ -135,8 +137,9 @@ class SessionData(BaseModel):
 
 class StepData(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
+
     success: bool = False
-    name: Text = ""     # teststep name
+    name: Text = ""  # teststep name
     data: Union[SessionData, List[SessionData]] = None
     export: Dict = {}
 

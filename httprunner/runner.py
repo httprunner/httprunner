@@ -7,7 +7,13 @@ from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
-from httprunner.schema import TestsConfig, TestStep, VariablesMapping, TestCase, StepData
+from httprunner.schema import (
+    TestsConfig,
+    TestStep,
+    VariablesMapping,
+    TestCase,
+    StepData,
+)
 
 
 class TestCaseRunner(object):
@@ -18,7 +24,7 @@ class TestCaseRunner(object):
     step_datas: List[StepData] = []
     validation_results: Dict = {}
     session_variables: Dict = {}
-    success: bool = True   # indicate testcase execution result
+    success: bool = True  # indicate testcase execution result
 
     def init(self, testcase: TestCase) -> "TestCaseRunner":
         self.config = testcase.config
@@ -35,13 +41,13 @@ class TestCaseRunner(object):
 
     def __run_step_request(self, step: TestStep):
         """run teststep: request"""
-        step_data = StepData(
-            name=step.name
-        )
+        step_data = StepData(name=step.name)
 
         # parse
         request_dict = step.request.dict()
-        parsed_request_dict = parse_data(request_dict, step.variables, self.config.functions)
+        parsed_request_dict = parse_data(
+            request_dict, step.variables, self.config.functions
+        )
 
         # prepare arguments
         method = parsed_request_dict.pop("method")
@@ -109,13 +115,11 @@ class TestCaseRunner(object):
 
     def __run_step_testcase(self, step):
         """run teststep: referenced testcase"""
-        step_data = StepData(
-            name=step.name
-        )
+        step_data = StepData(name=step.name)
         step_variables = step.variables
-        testcase: TestCaseRunner = step.testcase()      # TODO: fix
+        testcase: TestCaseRunner = step.testcase()  # TODO: fix
         case_result = testcase.with_variables(**step_variables).run()
-        step_data.data = case_result.step_datas     # list of step data
+        step_data.data = case_result.step_datas  # list of step data
         step_data.export = case_result.get_export_variables()
         step_data.success = case_result.success
         self.success &= case_result.success
@@ -131,7 +135,9 @@ class TestCaseRunner(object):
         elif step.testcase:
             step_data = self.__run_step_testcase(step)
         else:
-            raise ParamsError(f"teststep is neither a request nor a referenced testcase: {step.dict()}")
+            raise ParamsError(
+                f"teststep is neither a request nor a referenced testcase: {step.dict()}"
+            )
 
         self.step_datas.append(step_data)
         return step_data.export
@@ -146,7 +152,9 @@ class TestCaseRunner(object):
             # update with session variables extracted from former step
             step.variables.update(self.session_variables)
             # parse variables
-            step.variables = parse_variables_mapping(step.variables, self.config.functions)
+            step.variables = parse_variables_mapping(
+                step.variables, self.config.functions
+            )
             # run step
             extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
@@ -163,7 +171,8 @@ class TestCaseRunner(object):
         for var_name in self.config.export:
             if var_name not in self.session_variables:
                 raise ParamsError(
-                    f"failed to export variable {var_name} from session variables {self.session_variables}")
+                    f"failed to export variable {var_name} from session variables {self.session_variables}"
+                )
 
             export_vars_mapping[var_name] = self.session_variables[var_name]
 

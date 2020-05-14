@@ -50,10 +50,9 @@ def x_www_form_urlencoded(post_data):
 
     """
     if isinstance(post_data, dict):
-        return "&".join([
-            u"{}={}".format(key, value)
-            for key, value in post_data.items()
-        ])
+        return "&".join(
+            [u"{}={}".format(key, value) for key, value in post_data.items()]
+        )
     else:
         return post_data
 
@@ -98,10 +97,7 @@ def convert_list_to_dict(origin_list):
             {"v": "1", "w": "2"}
 
     """
-    return {
-        item["name"]: item.get("value")
-        for item in origin_list
-    }
+    return {item["name"]: item.get("value") for item in origin_list}
 
 
 def dump_yaml(testcase, yaml_file):
@@ -109,8 +105,10 @@ def dump_yaml(testcase, yaml_file):
     """
     logging.info("dump testcase to YAML format.")
 
-    with io.open(yaml_file, 'w', encoding="utf-8") as outfile:
-        yaml.dump(testcase, outfile, allow_unicode=True, default_flow_style=False, indent=4)
+    with io.open(yaml_file, "w", encoding="utf-8") as outfile:
+        yaml.dump(
+            testcase, outfile, allow_unicode=True, default_flow_style=False, indent=4
+        )
 
     logging.info("Generate YAML testcase successfully: {}".format(yaml_file))
 
@@ -120,7 +118,7 @@ def dump_json(testcase, json_file):
     """
     logging.info("dump testcase to JSON format.")
 
-    with io.open(json_file, 'w', encoding="utf-8") as outfile:
+    with io.open(json_file, "w", encoding="utf-8") as outfile:
         my_json_str = json.dumps(testcase, ensure_ascii=False, indent=4)
         if isinstance(my_json_str, bytes):
             my_json_str = my_json_str.decode("utf-8")

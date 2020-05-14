@@ -9,11 +9,7 @@ runner = HttpRunner()
 
 @router.post("/hrun/debug/testcase", tags=["debug"])
 async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
-    resp = {
-        "code": 0,
-        "message": "success",
-        "result": {}
-    }
+    resp = {"code": 0, "message": "success", "result": {}}
 
     project_meta_json = project_meta.dict(by_alias=True)
     if project_meta.debugtalk_py:
@@ -27,10 +23,7 @@ async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
             project_meta_json["functions"][func_name] = locals()[func_name]
 
     testcase_json = testcase.dict(by_alias=True)
-    tests_mapping = {
-        "project_meta": project_meta_json,
-        "testcases": [testcase_json]
-    }
+    tests_mapping = {"project_meta": project_meta_json, "testcases": [testcase_json]}
 
     summary = runner.run_tests(tests_mapping)
     if not summary["success"]:

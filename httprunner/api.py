@@ -36,10 +36,7 @@ class HttpRunner(object):
 
         """
         self.exception_stage = "initialize HttpRunner()"
-        kwargs = {
-            "failfast": True,
-            "resultclass": report.HtmlTestResult
-        }
+        kwargs = {"failfast": True, "resultclass": report.HtmlTestResult}
 
         logger.remove()
         log_level = log_level.upper()
@@ -57,6 +54,7 @@ class HttpRunner(object):
         def _add_test(test_runner: TestCaseRunner):
             """ add test to testcase.
             """
+
             def test(self):
                 try:
                     test_runner.run()
@@ -79,7 +77,7 @@ class HttpRunner(object):
 
             test_runner = TestCaseRunner().init(testcase)
 
-            TestSequense = type('TestSequense', (unittest.TestCase,), {})
+            TestSequense = type("TestSequense", (unittest.TestCase,), {})
             test_method = _add_test(test_runner)
             setattr(TestSequense, "test_method_name", test_method)
 
@@ -89,7 +87,9 @@ class HttpRunner(object):
 
         return prepared_testcases
 
-    def _run_suite(self, prepared_testcases: List[unittest.TestSuite]) -> List[TestCaseSummary]:
+    def _run_suite(
+        self, prepared_testcases: List[unittest.TestSuite]
+    ) -> List[TestCaseSummary]:
         """ run prepared testcases
         """
         tests_results: List[TestCaseSummary] = []
@@ -131,9 +131,7 @@ class HttpRunner(object):
 
         """
         testsuite_summary = TestSuiteSummary(
-            success=True,
-            platform=report.get_platform(),
-            testcases=[]
+            success=True, platform=report.get_platform(), testcases=[]
         )
         testsuite_summary.stat.total = len(tests_results)
         testsuite_summary.stat.success = 0
@@ -148,11 +146,16 @@ class HttpRunner(object):
             testsuite_summary.success &= testcase_summary.success
             testsuite_summary.testcases.append(testcase_summary)
 
-        total_duration = tests_results[-1].time.start_at + tests_results[-1].time.duration \
-                         - tests_results[0].time.start_at
+        total_duration = (
+            tests_results[-1].time.start_at
+            + tests_results[-1].time.duration
+            - tests_results[0].time.start_at
+        )
 
         testsuite_summary.time.start_at = tests_results[0].time.start_at
-        testsuite_summary.time.start_at_iso_format = tests_results[0].time.start_at_iso_format
+        testsuite_summary.time.start_at_iso_format = tests_results[
+            0
+        ].time.start_at_iso_format
         testsuite_summary.time.duration = total_duration
 
         return testsuite_summary
@@ -166,7 +169,7 @@ class HttpRunner(object):
         if self.save_tests:
             utils.dump_json_file(
                 tests_mapping,
-                utils.prepare_log_file_abs_path(self.test_path, "loaded.json")
+                utils.prepare_log_file_abs_path(self.test_path, "loaded.json"),
             )
 
         # prepare testcases
@@ -187,13 +190,12 @@ class HttpRunner(object):
         if self.save_tests:
             utils.dump_json_file(
                 self._summary.dict(),
-                utils.prepare_log_file_abs_path(self.test_path, "summary.json")
+                utils.prepare_log_file_abs_path(self.test_path, "summary.json"),
             )
             # save variables and export data
             vars_out = self.get_vars_out()
             utils.dump_json_file(
-                vars_out,
-                utils.prepare_log_file_abs_path(self.test_path, "io.json")
+                vars_out, utils.prepare_log_file_abs_path(self.test_path, "io.json")
             )
 
         return self._summary
@@ -266,7 +268,9 @@ class HttpRunner(object):
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
 
-        project_working_directory = path_or_tests.get("project_meta", {}).get("PWD", os.getcwd())
+        project_working_directory = path_or_tests.get("project_meta", {}).get(
+            "PWD", os.getcwd()
+        )
         loader.init_pwd(project_working_directory)
         return self.run_tests(path_or_tests)
 

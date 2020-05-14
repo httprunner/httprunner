@@ -28,15 +28,28 @@ def get_uniform_comparator(comparator: Text):
         return "string_equals"
     elif comparator in ["len_eq", "length_equals", "count_eq"]:
         return "length_equals"
-    elif comparator in ["len_gt", "count_gt", "length_greater_than", "count_greater_than"]:
+    elif comparator in [
+        "len_gt",
+        "count_gt",
+        "length_greater_than",
+        "count_greater_than",
+    ]:
         return "length_greater_than"
-    elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals",
-                        "count_greater_than_or_equals"]:
+    elif comparator in [
+        "len_ge",
+        "count_ge",
+        "length_greater_than_or_equals",
+        "count_greater_than_or_equals",
+    ]:
         return "length_greater_than_or_equals"
     elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
         return "length_less_than"
-    elif comparator in ["len_le", "count_le", "length_less_than_or_equals",
-                        "count_less_than_or_equals"]:
+    elif comparator in [
+        "len_le",
+        "count_le",
+        "length_less_than_or_equals",
+        "count_less_than_or_equals",
+    ]:
         return "length_less_than_or_equals"
     else:
         return comparator
@@ -90,15 +103,10 @@ def uniform_validator(validator):
     # uniform comparator, e.g. lt => less_than, eq => equals
     assert_method = get_uniform_comparator(comparator)
 
-    return {
-        "check": check_item,
-        "expect": expect_value,
-        "assert": assert_method
-    }
+    return {"check": check_item, "expect": expect_value, "assert": assert_method}
 
 
 class ResponseObject(object):
-
     def __init__(self, resp_obj: requests.Response):
         """ initialize with a requests.Response object
 
@@ -110,7 +118,7 @@ class ResponseObject(object):
         self.resp_obj_meta = {
             "status_code": resp_obj.status_code,
             "headers": resp_obj.headers,
-            "body": resp_obj.json()
+            "body": resp_obj.json(),
         }
         self.validation_results: Dict = {}
 
@@ -126,10 +134,12 @@ class ResponseObject(object):
         logger.info(f"extract mapping: {extract_mapping}")
         return extract_mapping
 
-    def validate(self,
-                 validators: Validators,
-                 variables_mapping: VariablesMapping = None,
-                 functions_mapping: FunctionsMapping = None) -> NoReturn:
+    def validate(
+        self,
+        validators: Validators,
+        variables_mapping: VariablesMapping = None,
+        functions_mapping: FunctionsMapping = None,
+    ) -> NoReturn:
 
         self.validation_results = {}
         if not validators:
@@ -166,7 +176,7 @@ class ResponseObject(object):
                 "check": check_item,
                 "check_value": check_value,
                 "expect": expect_item,
-                "expect_value": expect_value
+                "expect_value": expect_value,
             }
 
             try:
@@ -178,11 +188,13 @@ class ResponseObject(object):
                 validate_pass = False
                 validator_dict["check_result"] = "fail"
                 validate_msg += "\t==> fail"
-                validate_msg += f"\n" \
-                                f"check_item: {check_item}\n" \
-                                f"check_value: {check_value}({type(check_value).__name__})\n" \
-                                f"assert_method: {assert_method}\n" \
-                                f"expect_value: {expect_value}({type(expect_value).__name__})"
+                validate_msg += (
+                    f"\n"
+                    f"check_item: {check_item}\n"
+                    f"check_value: {check_value}({type(check_value).__name__})\n"
+                    f"assert_method: {assert_method}\n"
+                    f"expect_value: {expect_value}({type(expect_value).__name__})"
+                )
                 logger.error(validate_msg)
                 failures.append(validate_msg)
 

@@ -10,10 +10,9 @@ def get_platform():
     return {
         "httprunner_version": __version__,
         "python_version": "{} {}".format(
-            platform.python_implementation(),
-            platform.python_version()
+            platform.python_implementation(), platform.python_version()
         ),
-        "platform": platform.platform()
+        "platform": platform.platform(),
     }
 
 
@@ -33,8 +32,10 @@ def aggregate_stat(origin_stat, new_stat):
             origin_stat["start_at"] = min(origin_stat["start_at"], new_stat["start_at"])
         elif key == "duration":
             # duration = max_end_time - min_start_time
-            max_end_time = max(origin_stat["start_at"] + origin_stat["duration"],
-                               new_stat["start_at"] + new_stat["duration"])
+            max_end_time = max(
+                origin_stat["start_at"] + origin_stat["duration"],
+                new_stat["start_at"] + new_stat["duration"],
+            )
             min_start_time = min(origin_stat["start_at"], new_stat["start_at"])
             origin_stat["duration"] = max_end_time - min_start_time
         else:
@@ -65,11 +66,11 @@ def get_summary(result: HtmlTestResult) -> TestCaseSummary:
         time=TestCaseTime(
             start_at=result.start_at,
             start_at_iso_format=start_at_iso_format,
-            duration=result.duration
+            duration=result.duration,
         ),
         name=result.name,
         status=result.status,
         attachment=result.attachment,
         in_out=TestCaseInOut(),
-        step_datas=result.step_datas
+        step_datas=result.step_datas,
     )

@@ -4,8 +4,12 @@ import requests
 import urllib3
 from loguru import logger
 from requests import Request, Response
-from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
-                                 RequestException)
+from requests.exceptions import (
+    InvalidSchema,
+    InvalidURL,
+    MissingSchema,
+    RequestException,
+)
 
 from httprunner.schema import RequestData, ResponseData
 from httprunner.schema import SessionData, ReqRespData
@@ -15,9 +19,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class ApiResponse(Response):
-
     def raise_for_status(self):
-        if hasattr(self, 'error') and self.error:
+        if hasattr(self, "error") and self.error:
             raise self.error
         Response.raise_for_status(self)
 
@@ -25,6 +28,7 @@ class ApiResponse(Response):
 def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     """ get request and response info from Response() object.
     """
+
     def log_print(req_or_resp, r_type):
         msg = f"\n================== {r_type} details ==================\n"
         for key, value in req_or_resp.dict().items():
@@ -36,14 +40,12 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         method=resp_obj.request.method,
         url=resp_obj.request.url,
         headers=dict(resp_obj.request.headers),
-        body=resp_obj.request.body
+        body=resp_obj.request.body,
     )
 
     request_body = resp_obj.request.body
     if request_body:
-        request_content_type = lower_dict_keys(
-            request_data.headers
-        ).get("content-type")
+        request_content_type = lower_dict_keys(request_data.headers).get("content-type")
         if request_content_type and "multipart/form-data" in request_content_type:
             # upload file type
             request_data.body = "upload file stream (OMITTED)"
@@ -76,16 +78,13 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         encoding=resp_obj.encoding,
         headers=resp_headers,
         content_type=content_type,
-        body=response_body
+        body=response_body,
     )
 
     # log response details in debug mode
     log_print(response_data, "response")
 
-    req_resp_data = ReqRespData(
-        request=request_data,
-        response=response_data
-    )
+    req_resp_data = ReqRespData(request=request_data, response=response_data)
     return req_resp_data
 
 
@@ -98,6 +97,7 @@ class HttpSession(requests.Session):
     This is a slightly extended version of `python-request <http://python-requests.org>`_'s
     :py:class:`requests.Session` class and mostly this class works exactly the same.
     """
+
     def __init__(self):
         super(HttpSession, self).__init__()
         self.data = SessionData()
@@ -173,8 +173,7 @@ class HttpSession(requests.Session):
         # record request and response histories, include 30X redirection
         response_list = response.history + [response]
         self.data.req_resps = [
-            get_req_resp_record(resp_obj)
-            for resp_obj in response_list
+            get_req_resp_record(resp_obj) for resp_obj in response_list
         ]
 
         try:

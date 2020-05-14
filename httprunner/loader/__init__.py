@@ -11,8 +11,10 @@ HttpRunner loader
 from httprunner.loader.buildup import load_cases, load_project_data
 from httprunner.loader.check import is_test_path
 from httprunner.loader.load import load_csv_file, load_builtin_functions
-from httprunner.loader.locate import get_project_working_directory as get_pwd, \
-    init_project_working_directory as init_pwd
+from httprunner.loader.locate import (
+    get_project_working_directory as get_pwd,
+    init_project_working_directory as init_pwd,
+)
 
 __all__ = [
     "is_test_path",
@@ -21,5 +23,5 @@ __all__ = [
     "load_csv_file",
     "load_builtin_functions",
     "load_project_data",
-    "load_cases"
+    "load_cases",
 ]

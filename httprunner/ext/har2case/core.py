@@ -28,12 +28,11 @@ IGNORE_REQUEST_HEADERS = [
     ":authority",
     ":method",
     ":scheme",
-    ":path"
+    ":path",
 ]
 
 
 class HarParser(object):
-
     def __init__(self, har_file_path, filter_str=None, exclude_str=None):
         self.har_file_path = har_file_path
         self.filter_str = filter_str
@@ -76,7 +75,7 @@ class HarParser(object):
 
         parsed_object = urlparse.urlparse(url)
         if request_params:
-            parsed_object = parsed_object._replace(query='')
+            parsed_object = parsed_object._replace(query="")
             teststep_dict["request"]["url"] = parsed_object.geturl()
             teststep_dict["request"]["params"] = request_params
         else:
@@ -241,7 +240,7 @@ class HarParser(object):
 
             encoding = resp_content_dict.get("encoding")
             if encoding and encoding == "base64":
-                content = base64.b64decode(text).decode('utf-8')
+                content = base64.b64decode(text).decode("utf-8")
             else:
                 content = text
 
@@ -249,7 +248,9 @@ class HarParser(object):
                 resp_content_json = json.loads(content)
             except JSONDecodeError:
                 logger.warning(
-                    "response content can not be loaded as json: {}".format(content.encode("utf-8"))
+                    "response content can not be loaded as json: {}".format(
+                        content.encode("utf-8")
+                    )
                 )
                 return
 
@@ -285,11 +286,7 @@ class HarParser(object):
                 }
 
         """
-        teststep_dict = {
-            "name": "",
-            "request": {},
-            "validate": []
-        }
+        teststep_dict = {"name": "", "request": {}, "validate": []}
 
         self.__make_request_url(teststep_dict, entry_json)
         self.__make_request_method(teststep_dict, entry_json)
@@ -302,16 +299,14 @@ class HarParser(object):
     def _prepare_config(self):
         """ prepare config block.
         """
-        return {
-            "name": "testcase description",
-            "variables": {}
-        }
+        return {"name": "testcase description", "variables": {}}
 
     def _prepare_teststeps(self):
         """ make teststep list.
             teststeps list are parsed from HAR log entries list.
 
         """
+
         def is_exclude(url, exclude_str):
             exclude_str_list = exclude_str.split("|")
             for exclude_str in exclude_str_list:
@@ -330,9 +325,7 @@ class HarParser(object):
             if is_exclude(url, self.exclude_str):
                 continue
 
-            teststeps.append(
-                self._prepare_teststep(entry_json)
-            )
+            teststeps.append(self._prepare_teststep(entry_json))
 
         return teststeps
 
@@ -344,10 +337,7 @@ class HarParser(object):
         config = self._prepare_config()
         teststeps = self._prepare_teststeps()
 
-        testcase = {
-            "config": config,
-            "teststeps": teststeps
-        }
+        testcase = {"config": config, "teststeps": teststeps}
         return testcase
 
     def gen_testcase(self, file_type="JSON"):
