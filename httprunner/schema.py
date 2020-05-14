@@ -61,7 +61,7 @@ class Request(BaseModel):
 class TestStep(BaseModel):
     name: Name
     request: Request = None
-    testcase: Union[Text, Callable] = None
+    testcase: Text = ""
     variables: VariablesMapping = {}
     extract: Dict[Text, Text] = {}
     validators: Validators = Field([], alias="validate")

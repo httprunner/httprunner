@@ -29,7 +29,7 @@ class {{ class_name }}(unittest.TestCase):
 
 
 def make_testcase(testcase_path: str) -> str:
-    testcase = load_testcase_file(testcase_path)
+    testcase, _ = load_testcase_file(testcase_path)
     template = jinja2.Template(__TMPL__)
 
     raw_file_name, _ = os.path.splitext(os.path.basename(testcase_path))

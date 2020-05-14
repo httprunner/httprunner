@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict
 
 from loguru import logger
@@ -5,7 +6,7 @@ from loguru import logger
 from httprunner import utils, exceptions
 from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
-from httprunner.new_loader import load_project_data
+from httprunner.new_loader import load_project_data, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.schema import (
@@ -17,8 +18,15 @@ from httprunner.schema import (
 
 
 class TestCaseRunner(object):
+    def __init__(
+        self,
+        config: TestsConfig,
+        teststeps: List[TestStep],
+        session: HttpSession = None,
+    ):
+        if not config.path:
+            raise exceptions.ParamsError("config path missed!")
 
-    def __init__(self, config: TestsConfig, teststeps: List[TestStep], session: HttpSession = None):
         self.config = config
         self.teststeps = teststeps
         self.session = session
@@ -26,6 +34,9 @@ class TestCaseRunner(object):
         self.validation_results: Dict = {}
         self.session_variables: Dict = {}
         self.success: bool = True  # indicate testcase execution result
+
+        self.project_data = load_project_data(self.config.path)
+        self.config.functions = self.project_data.functions
 
     def with_variables(self, **variables: VariablesMapping) -> "TestCaseRunner":
         self.config.variables.update(variables)
@@ -109,8 +120,15 @@ class TestCaseRunner(object):
         """run teststep: referenced testcase"""
         step_data = StepData(name=step.name)
         step_variables = step.variables
-        testcase: TestCaseRunner = step.testcase()  # TODO: fix
-        case_result = testcase.with_variables(**step_variables).run()
+
+        ref_testcase_path = os.path.join(self.project_data.PWD, step.testcase)
+        _, testcase_obj = load_testcase_file(ref_testcase_path)
+
+        case_result = (
+            TestCaseRunner(testcase_obj.config, testcase_obj.teststeps, self.session)
+            .with_variables(**step_variables)
+            .run()
+        )
         step_data.data = case_result.step_datas  # list of step data
         step_data.export = case_result.get_export_variables()
         step_data.success = case_result.success
@@ -136,12 +154,6 @@ class TestCaseRunner(object):
 
     def run(self):
         """main entrance"""
-        if not self.config.path:
-            raise exceptions.ParamsError("config path missed!")
-
-        project_data = load_project_data(self.config.path)
-        self.config.functions = project_data["functions"]
-
         self.step_datas.clear()
         self.session_variables.clear()
         for step in self.teststeps:
