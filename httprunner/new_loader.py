@@ -4,13 +4,14 @@ import json
 import os
 import sys
 import types
+from typing import Tuple, Dict
 
 import yaml
 from loguru import logger
 
 from httprunner import builtin, utils
 from httprunner import exceptions
-from httprunner.schema import TestCase
+from httprunner.schema import TestCase, ProjectMeta
 
 try:
     # PyYAML version >= 5.1
@@ -47,7 +48,7 @@ def _load_json_file(json_file):
         return json_content
 
 
-def load_testcase_file(testcase_file):
+def load_testcase_file(testcase_file) -> Tuple[Dict, TestCase]:
     """load testcase file and validate with pydantic model"""
     file_suffix = os.path.splitext(testcase_file)[1].lower()
     if file_suffix == ".json":
@@ -61,9 +62,10 @@ def load_testcase_file(testcase_file):
         )
 
     # validate with pydantic TestCase model
-    TestCase.parse_obj(testcase_content)
+    testcase_obj = TestCase.parse_obj(testcase_content)
+    testcase_obj.config.path = testcase_file
 
-    return testcase_content
+    return testcase_content, testcase_obj
 
 
 def load_dot_env_file(dot_env_path):
@@ -302,7 +304,7 @@ def load_debugtalk_functions():
     return load_module_functions(imported_module)
 
 
-def load_project_data(test_path: str, dot_env_path: str = None):
+def load_project_data(test_path: str, dot_env_path: str = None) -> ProjectMeta:
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
@@ -311,7 +313,7 @@ def load_project_data(test_path: str, dot_env_path: str = None):
         dot_env_path (str): specified .env file path
 
     Returns:
-        dict: project loaded api/testcases definitions,
+        project loaded api/testcases definitions,
             environments and debugtalk.py functions.
 
     """
@@ -341,4 +343,4 @@ def load_project_data(test_path: str, dot_env_path: str = None):
         len(project_working_directory) + 1 :
     ]
 
-    return project_meta
+    return ProjectMeta.parse_obj(project_meta)
