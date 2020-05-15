@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 from typing import Any
 from typing import Dict, Text, Union, Callable
@@ -75,7 +76,7 @@ class ProjectMeta(BaseModel):
     debugtalk_py: Text = ""
     functions: FunctionsMapping = {}
     env: Env = {}
-    PWD: Text = None
+    PWD: Text = os.getcwd()
     test_path: Text = None    # run with specified test path
 
 

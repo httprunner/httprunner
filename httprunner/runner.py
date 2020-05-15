@@ -1,4 +1,6 @@
 import os
+import time
+from datetime import datetime
 from typing import List, Dict
 
 from loguru import logger
@@ -14,15 +16,15 @@ from httprunner.schema import (
     TStep,
     VariablesMapping,
     StepData,
+    TestCaseSummary,
+    TestCaseTime,
+    TestCaseInOut,
 )
 
 
 class HttpRunner(object):
     def __init__(
-        self,
-        config: TConfig,
-        teststeps: List[TStep],
-        session: HttpSession = None,
+        self, config: TConfig, teststeps: List[TStep], session: HttpSession = None,
     ):
         if not config.path:
             raise exceptions.ParamsError("config path missed!")
@@ -36,6 +38,8 @@ class HttpRunner(object):
         self.success: bool = True  # indicate testcase execution result
 
         self.project_data = load_project_meta(self.config.path)
+        self.start_at = 0
+        self.duration = 0
 
     def with_variables(self, **variables: VariablesMapping) -> "HttpRunner":
         self.config.variables.update(variables)
@@ -99,7 +103,9 @@ class HttpRunner(object):
         # validate
         validators = step.validators
         try:
-            resp_obj.validate(validators, variables_mapping, self.project_data.functions)
+            resp_obj.validate(
+                validators, variables_mapping, self.project_data.functions
+            )
             self.session.data.success = True
         except ValidationFailure:
             self.session.data.success = False
@@ -153,6 +159,7 @@ class HttpRunner(object):
 
     def run(self):
         """main entrance"""
+        self.start_at = time.time()
         self.step_datas.clear()
         self.session_variables.clear()
         for step in self.teststeps:
@@ -169,6 +176,7 @@ class HttpRunner(object):
             # save extracted variables to session variables
             self.session_variables.update(extract_mapping)
 
+        self.duration = time.time() - self.start_at
         return self
 
     def get_export_variables(self):
@@ -182,3 +190,21 @@ class HttpRunner(object):
             export_vars_mapping[var_name] = self.session_variables[var_name]
 
         return export_vars_mapping
+
+    def get_summary(self) -> TestCaseSummary:
+        """get testcase result summary"""
+        start_at_timestamp = self.start_at
+        start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
+        return TestCaseSummary(
+            success=self.success,
+            time=TestCaseTime(
+                start_at=self.start_at,
+                start_at_iso_format=start_at_iso_format,
+                duration=self.duration,
+            ),
+            name=self.config.name,
+            # status=result.status,
+            # attachment=result.attachment,
+            in_out=TestCaseInOut(vars=self.config.variables, out=self.config.export),
+            step_datas=self.step_datas,
+        )
