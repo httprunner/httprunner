@@ -104,7 +104,7 @@ class HttpRunner(object):
             result = self.unittest_runner.run(testcase)
             testcase_summary = report.get_summary(result)
             testcase_summary.in_out.vars = testcase.config.variables
-            testcase_summary.in_out.out = testcase.config.export
+            testcase_summary.in_out.export = testcase.config.export
 
             if self.save_tests and log_handler:
                 logger.remove(log_handler)

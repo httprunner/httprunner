@@ -93,7 +93,7 @@ class TestCaseTime(BaseModel):
 
 class TestCaseInOut(BaseModel):
     vars: VariablesMapping = {}
-    out: Export = []
+    export: Dict = {}
 
 
 class RequestStat(BaseModel):
