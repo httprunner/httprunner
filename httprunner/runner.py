@@ -174,7 +174,7 @@ class HttpRunner(object):
 
         self.start_at = time.time()
         self.step_datas: List[StepData] = []
-        self.session_variables.clear()
+        self.session_variables = {}
         for step in self.teststeps:
             # update with config variables
             step.variables.update(self.config.variables)
