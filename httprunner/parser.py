@@ -3,7 +3,7 @@ import builtins
 import re
 from typing import Any, Set, Text, Callable, List, Dict
 
-from httprunner import new_loader, utils, exceptions
+from httprunner import loader, utils, exceptions
 from httprunner.schema import VariablesMapping, FunctionsMapping
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
@@ -222,7 +222,7 @@ def get_mapping_function(
         return functions_mapping[function_name]
 
     elif function_name in ["parameterize", "P"]:
-        return new_loader.load_csv_file
+        return loader.load_csv_file
 
     elif function_name in ["environ", "ENV"]:
         return utils.get_os_environ
@@ -235,7 +235,7 @@ def get_mapping_function(
 
     try:
         # check if HttpRunner builtin functions
-        built_in_functions = new_loader.load_builtin_functions()
+        built_in_functions = loader.load_builtin_functions()
         return built_in_functions[function_name]
     except KeyError:
         pass
