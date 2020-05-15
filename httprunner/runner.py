@@ -19,6 +19,7 @@ from httprunner.schema import (
     TestCaseSummary,
     TestCaseTime,
     TestCaseInOut,
+    ProjectMeta,
 )
 
 
@@ -37,9 +38,17 @@ class HttpRunner(object):
         self.session_variables: Dict = {}
         self.success: bool = True  # indicate testcase execution result
 
-        self.project_data = load_project_meta(self.config.path)
+        if self.config.path:
+            self.project_meta = load_project_meta(self.config.path)
+        else:
+            self.project_meta = ProjectMeta()
+
         self.start_at = 0
         self.duration = 0
+
+    def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
+        self.project_meta = project_meta
+        return self
 
     def with_variables(self, **variables: VariablesMapping) -> "HttpRunner":
         self.config.variables.update(variables)
@@ -52,7 +61,7 @@ class HttpRunner(object):
         # parse
         request_dict = step.request.dict()
         parsed_request_dict = parse_data(
-            request_dict, step.variables, self.project_data.functions
+            request_dict, step.variables, self.project_meta.functions
         )
 
         # prepare arguments
@@ -104,7 +113,7 @@ class HttpRunner(object):
         validators = step.validators
         try:
             resp_obj.validate(
-                validators, variables_mapping, self.project_data.functions
+                validators, variables_mapping, self.project_meta.functions
             )
             self.session.data.success = True
         except ValidationFailure:
@@ -126,7 +135,7 @@ class HttpRunner(object):
         step_data = StepData(name=step.name)
         step_variables = step.variables
 
-        ref_testcase_path = os.path.join(self.project_data.PWD, step.testcase)
+        ref_testcase_path = os.path.join(self.project_meta.PWD, step.testcase)
         _, testcase_obj = load_testcase_file(ref_testcase_path)
 
         case_result = (
@@ -169,7 +178,7 @@ class HttpRunner(object):
             step.variables.update(self.session_variables)
             # parse variables
             step.variables = parse_variables_mapping(
-                step.variables, self.project_data.functions
+                step.variables, self.project_meta.functions
             )
             # run step
             extract_mapping = self.__run_step(step)
