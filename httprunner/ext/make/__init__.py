@@ -60,8 +60,26 @@ def make_testcase(testcase_path: str) -> Union[str, None]:
     return testcase_python_path
 
 
+def convert_testcase_path(testcase_path: Text) -> Text:
+    """convert single YAML/JSON testcase path to python file"""
+    if os.path.isdir(testcase_path):
+        # folder does not need to convert
+        return testcase_path
+
+    file_suffix = os.path.splitext(testcase_path)[1].lower()
+    if file_suffix == ".json":
+        return testcase_path.replace(".json", "_test.py")
+    elif file_suffix == ".yaml":
+        return testcase_path.replace(".yaml", "_test.py")
+    elif file_suffix == ".yml":
+        return testcase_path.replace(".yml", "_test.py")
+    else:
+        raise exceptions.ParamsError("")
+
+
 def format_with_black(tests_path: Text):
     logger.info("format testcases with black ...")
+    tests_path = convert_testcase_path(tests_path)
     try:
         subprocess.run(["black", tests_path])
     except subprocess.CalledProcessError as ex:
