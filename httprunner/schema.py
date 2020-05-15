@@ -113,7 +113,7 @@ class RequestData(BaseModel):
 class ResponseData(BaseModel):
     status_code: int
     cookies: Dict
-    encoding: Text
+    encoding: Union[Text, None] = None
     headers: Dict
     content_type: Text
     body: Union[Text, bytes, Dict]
