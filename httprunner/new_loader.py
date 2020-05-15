@@ -8,6 +8,7 @@ from typing import Tuple, Dict
 
 import yaml
 from loguru import logger
+from pydantic import ValidationError
 
 from httprunner import builtin, utils
 from httprunner import exceptions
@@ -61,8 +62,15 @@ def load_testcase_file(testcase_file) -> Tuple[Dict, TestCase]:
             f"testcase file should be YAML/JSON format, invalid testcase file: {testcase_file}"
         )
 
-    # validate with pydantic TestCase model
-    testcase_obj = TestCase.parse_obj(testcase_content)
+    try:
+        # validate with pydantic TestCase model
+        testcase_obj = TestCase.parse_obj(testcase_content)
+    except ValidationError as ex:
+        err_msg = f"Invalid testcase format: {testcase_file}"
+        logger.error(f"{err_msg}\n{ex}")
+        raise exceptions.TestCaseFormatError(err_msg)
+
+    testcase_content["config"]["path"] = testcase_file
     testcase_obj.config.path = testcase_file
 
     return testcase_content, testcase_obj
