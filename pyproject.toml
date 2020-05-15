@@ -49,6 +49,7 @@ fastapi = "^0.49.0"
 httprunner = "httprunner.cli:main"
 hrun = "httprunner.cli:main_hrun_alias"
 hmake = "httprunner.cli:main_make_alias"
+har2case = "httprunner.cli:main_har2case_alias"
 
 [build-system]
 requires = ["poetry>=1.0.0"]
