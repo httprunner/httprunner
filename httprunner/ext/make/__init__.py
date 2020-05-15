@@ -71,7 +71,7 @@ def format_with_black(tests_path: Text):
         logger.error(ex)
 
 
-def main_make(tests_path: Text) -> List:
+def make(tests_path: Text) -> List:
     testcases = []
     if os.path.isdir(tests_path):
         files_list = load_folder_files(tests_path)
@@ -92,6 +92,14 @@ def main_make(tests_path: Text) -> List:
     return testcase_path_list
 
 
+def main_make(tests_paths: List[Text]) -> List:
+    testcase_path_list = []
+    for tests_path in tests_paths:
+        testcase_path_list.extend(make(tests_path))
+
+    return testcase_path_list
+
+
 def init_make_parser(subparsers):
     """ make testcases: parse command line options and run commands.
     """
@@ -99,7 +107,7 @@ def init_make_parser(subparsers):
         "make", help="Convert YAML/JSON testcases to Python unittests.",
     )
     parser.add_argument(
-        "testcase_path", nargs="?", help="Specify YAML/JSON testcase path"
+        "testcase_path", nargs="*", help="Specify YAML/JSON testcase file/folder path"
     )
 
     return parser
