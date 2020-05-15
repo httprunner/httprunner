@@ -4,6 +4,7 @@ from httprunner.runner import HttpRunner
 from httprunner.schema import ProjectMeta, TestCase
 
 router = APIRouter()
+runner = HttpRunner()
 
 
 @router.post("/hrun/debug/testcase", tags=["debug"])
@@ -19,9 +20,7 @@ async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
         for func_name in new_added_keys:
             project_meta.functions[func_name] = locals()[func_name]
 
-    config = testcase.config
-    teststeps = testcase.teststeps
-    runner = HttpRunner(config, teststeps).with_project_meta(project_meta).run()
+    runner.with_project_meta(project_meta).run(testcase)
     summary = runner.get_summary()
 
     if not summary.success:

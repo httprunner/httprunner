@@ -1,11 +1,11 @@
 import os
 import time
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Text
 
 from loguru import logger
 
-from httprunner import utils
+from httprunner import utils, exceptions
 from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.loader import load_project_meta, load_testcase_file
@@ -28,9 +28,9 @@ class HttpRunner(object):
     config: TConfig
     teststeps: List[TStep]
 
-    session: HttpSession
+    session: HttpSession = None
     variables: VariablesMapping = {}
-    step_datas: List[StepData] = []
+    step_datas: List[StepData] = None
     validation_results: Dict = {}
     session_variables: Dict = {}
     success: bool = True  # indicate testcase execution result
@@ -132,13 +132,11 @@ class HttpRunner(object):
         step_variables = step.variables
 
         ref_testcase_path = os.path.join(self.project_meta.PWD, step.testcase)
-        _, testcase_obj = load_testcase_file(ref_testcase_path)
-
         case_result = (
             HttpRunner()
             .with_session(self.session)
             .with_variables(step_variables)
-            .run(testcase_obj)
+            .run_path(ref_testcase_path)
         )
         step_data.data = case_result.step_datas  # list of step data
         step_data.export = case_result.get_export_variables()
@@ -175,7 +173,7 @@ class HttpRunner(object):
             self.project_meta = ProjectMeta()
 
         self.start_at = time.time()
-        self.step_datas.clear()
+        self.step_datas: List[StepData] = []
         self.session_variables.clear()
         for step in self.teststeps:
             # update with config variables
@@ -193,6 +191,13 @@ class HttpRunner(object):
 
         self.duration = time.time() - self.start_at
         return self
+
+    def run_path(self, path: Text) -> "HttpRunner":
+        if not os.path.isfile(path):
+            raise exceptions.ParamsError(f"Invalid testcase path: {path}")
+
+        _, testcase_obj = load_testcase_file(path)
+        return self.run(testcase_obj)
 
     def get_export_variables(self) -> Dict:
         export_vars_mapping = {}
