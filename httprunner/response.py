@@ -115,10 +115,16 @@ class ResponseObject(object):
 
         """
         self.resp_obj = resp_obj
+
+        try:
+            body = resp_obj.json()
+        except ValueError:
+            body = resp_obj.content
+
         self.resp_obj_meta = {
             "status_code": resp_obj.status_code,
             "headers": resp_obj.headers,
-            "body": resp_obj.json(),
+            "body": body,
         }
         self.validation_results: Dict = {}
 

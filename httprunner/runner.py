@@ -169,7 +169,7 @@ class HttpRunner(object):
 
         if self.config.path:
             self.project_meta = load_project_meta(self.config.path)
-        else:
+        elif not self.project_meta:
             self.project_meta = ProjectMeta()
 
         self.start_at = time.time()
