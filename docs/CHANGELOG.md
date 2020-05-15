@@ -1,9 +1,11 @@
 # Release History
 
-## 3.0.2 (2020-04-17)
+## 3.0.2 (2020-05-15)
 
 **Added**
 
+- feat: add `make` sub-command to generate python testcases from YAML/JSON  
+- feat: format generated python testcases with [`black`](https://github.com/psf/black)
 - feat: implement global hooks `setup_testcase/teardown_testcase`, called before/after each testcase 
 - feat: implement global hooks  `setup_teststep/teardown_teststep`, called before/after each teststep
 

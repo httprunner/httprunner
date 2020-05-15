@@ -1,5 +1,6 @@
 import os
-from typing import Union
+import subprocess
+from typing import Union, Text, List
 
 import jinja2
 from loguru import logger
@@ -62,7 +63,15 @@ def make_testcase(testcase_path: str) -> Union[str, None]:
     return testcase_python_path
 
 
-def main_make(tests_path: str) -> list:
+def format_with_black(tests_path: Text):
+    logger.info("format testcases with black ...")
+    try:
+        subprocess.run(["black", tests_path])
+    except subprocess.CalledProcessError as ex:
+        logger.error(ex)
+
+
+def main_make(tests_path: Text) -> List:
     testcases = []
     if os.path.isdir(tests_path):
         files_list = load_folder_files(tests_path)
@@ -79,6 +88,7 @@ def main_make(tests_path: str) -> list:
             continue
         testcase_path_list.append(testcase_path)
 
+    format_with_black(tests_path)
     return testcase_path_list
 
 
