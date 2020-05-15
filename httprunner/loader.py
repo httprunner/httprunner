@@ -56,6 +56,9 @@ def _load_json_file(json_file: Text) -> Dict:
 
 def load_testcase_file(testcase_file: Text) -> Tuple[Dict, TestCase]:
     """load testcase file and validate with pydantic model"""
+    if not os.path.isfile(testcase_file):
+        raise exceptions.FileNotFound(f"testcase file not exists: {testcase_file}")
+
     file_suffix = os.path.splitext(testcase_file)[1].lower()
     if file_suffix == ".json":
         testcase_content = _load_json_file(testcase_file)
