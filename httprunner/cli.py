@@ -78,7 +78,13 @@ def main():
         sys.exit(0)
     elif len(sys.argv) == 2:
         # print help for sub-commands
-        if sys.argv[1] == "startproject":
+        if sys.argv[1] in ["-V", "--version"]:
+            # httprunner -V
+            print(f"{__version__}")
+        elif sys.argv[1] in ["-h", "--help"]:
+            # httprunner -h
+            parser.print_help()
+        elif sys.argv[1] == "startproject":
             # httprunner startproject
             sub_parser_scaffold.print_help()
         elif sys.argv[1] == "har2case":
