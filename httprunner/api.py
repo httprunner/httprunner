@@ -72,7 +72,6 @@ class HttpRunner(object):
         prepared_testcases: List[unittest.TestSuite] = []
 
         for testcase in testcases:
-            testcase.config.variables.update(project_meta.variables)
             test_runner = TestCaseRunner(testcase.config, testcase.teststeps)
 
             TestSequense = type("TestSequense", (unittest.TestCase,), {})

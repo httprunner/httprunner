@@ -73,7 +73,6 @@ class TestCase(BaseModel):
 
 class ProjectMeta(BaseModel):
     debugtalk_py: Text = ""
-    variables: VariablesMapping = {}
     functions: FunctionsMapping = {}
     env: Env = {}
     PWD: Text = None
