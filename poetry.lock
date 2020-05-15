@@ -225,14 +225,6 @@ version = "0.9.5"
 
 [[package]]
 category = "main"
-description = "An XPath for JSON"
-name = "jsonpath"
-optional = false
-python-versions = "*"
-version = "0.82"
-
-[[package]]
-category = "main"
 description = "Python logging made (stupidly) simple"
 name = "loguru"
 optional = false
@@ -427,7 +419,7 @@ version = "1.0.1"
 dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
 
 [metadata]
-content-hash = "11161515fa901e0a2df3bb26ebb8297c985a49e2b029491a64cdea97ec5bbf85"
+content-hash = "326939a3d6944742cff4c4a14e14e9cf3e6fc032b0fd5ee9d44604e9aee45ecd"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -567,9 +559,6 @@ jinja2 = [
 jmespath = [
     {file = "jmespath-0.9.5-py2.py3-none-any.whl", hash = "sha256:695cb76fa78a10663425d5b73ddc5714eb711157e52704d69be03b1a02ba4fec"},
     {file = "jmespath-0.9.5.tar.gz", hash = "sha256:cca55c8d153173e21baa59983015ad0daf603f9cb799904ff057bfb8ff8dc2d9"},
-]
-jsonpath = [
-    {file = "jsonpath-0.82.tar.gz", hash = "sha256:46d3fd2016cd5b842283d547877a02c418a0fe9aa7a6b0ae344115a2c990fef4"},
 ]
 loguru = [
     {file = "loguru-0.4.1-py3-none-any.whl", hash = "sha256:074b3caa6748452c1e4f2b302093c94b65d5a4c5a4d7743636b4121e06437b0e"},
