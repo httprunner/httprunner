@@ -172,6 +172,18 @@ class HttpRunner(object):
         elif not self.project_meta:
             self.project_meta = ProjectMeta()
 
+        def parse_config(config: TConfig):
+            config.variables = parse_variables_mapping(
+                config.variables, self.project_meta.functions
+            )
+            config.name = parse_data(
+                config.name, config.variables, self.project_meta.functions
+            )
+            config.base_url = parse_data(
+                config.base_url, config.variables, self.project_meta.functions
+            )
+
+        parse_config(self.config)
         self.start_at = time.time()
         self.step_datas: List[StepData] = []
         self.session_variables = {}
