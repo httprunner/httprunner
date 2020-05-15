@@ -2,29 +2,12 @@ import argparse
 import os
 import sys
 
-if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
-    # monkey patch ssl at beginning to avoid RecursionError when running locust.
-    try:
-        from gevent import monkey
-
-        monkey.patch_ssl()
-        from locust.main import main as _
-    except ImportError:
-        msg = """
-Locust is not installed, install first and try again.
-install with pip:
-$ pip install locustio
-"""
-        print(msg)
-        sys.exit(1)
-
 import pytest
 
 from httprunner import __description__, __version__, exceptions
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
-from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
-from httprunner.ext.locusts import init_parser_locusts, main_locusts
 from httprunner.ext.make import init_make_parser, main_make, convert_testcase_path
+from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 
 
 def init_parser_run(subparsers):
@@ -69,7 +52,6 @@ def main():
     sub_parser_run = init_parser_run(subparsers)
     sub_parser_scaffold = init_parser_scaffold(subparsers)
     sub_parser_har2case = init_har2case_parser(subparsers)
-    sub_parser_locusts = init_parser_locusts(subparsers)
     sub_parser_make = init_make_parser(subparsers)
 
     if len(sys.argv) == 1:
@@ -90,9 +72,6 @@ def main():
         elif sys.argv[1] == "har2case":
             # httprunner har2case
             sub_parser_har2case.print_help()
-        elif sys.argv[1] == "locusts":
-            # httprunner locusts
-            sub_parser_locusts.print_help()
         elif sys.argv[1] == "run":
             # httprunner run
             pytest.main(["-h"])
@@ -100,7 +79,9 @@ def main():
             # httprunner make
             sub_parser_make.print_help()
         sys.exit(0)
-    elif len(sys.argv) == 3 and sys.argv[1] == "run" and sys.argv[2] in ["-h", "--help"]:
+    elif (
+        len(sys.argv) == 3 and sys.argv[1] == "run" and sys.argv[2] in ["-h", "--help"]
+    ):
         # httprunner run -h
         pytest.main(["-h"])
         sys.exit(0)
@@ -121,8 +102,6 @@ def main():
         main_scaffold(args)
     elif sys.argv[1] == "har2case":
         main_har2case(args)
-    elif sys.argv[1] == "locusts":
-        main_locusts(args, extra_args)
     elif sys.argv[1] == "make":
         main_make(args.testcase_path)
 
