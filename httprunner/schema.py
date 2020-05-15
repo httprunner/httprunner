@@ -36,7 +36,6 @@ class TConfig(BaseModel):
     verify: Verify = False
     base_url: BaseUrl = ""
     variables: VariablesMapping = {}
-    functions: FunctionsMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     export: Export = []

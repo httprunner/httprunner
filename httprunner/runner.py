@@ -36,7 +36,6 @@ class HttpRunner(object):
         self.success: bool = True  # indicate testcase execution result
 
         self.project_data = load_project_meta(self.config.path)
-        self.config.functions = self.project_data.functions
 
     def with_variables(self, **variables: VariablesMapping) -> "HttpRunner":
         self.config.variables.update(variables)
@@ -49,7 +48,7 @@ class HttpRunner(object):
         # parse
         request_dict = step.request.dict()
         parsed_request_dict = parse_data(
-            request_dict, step.variables, self.config.functions
+            request_dict, step.variables, self.project_data.functions
         )
 
         # prepare arguments
@@ -100,7 +99,7 @@ class HttpRunner(object):
         # validate
         validators = step.validators
         try:
-            resp_obj.validate(validators, variables_mapping, self.config.functions)
+            resp_obj.validate(validators, variables_mapping, self.project_data.functions)
             self.session.data.success = True
         except ValidationFailure:
             self.session.data.success = False
@@ -163,7 +162,7 @@ class HttpRunner(object):
             step.variables.update(self.session_variables)
             # parse variables
             step.variables = parse_variables_mapping(
-                step.variables, self.config.functions
+                step.variables, self.project_data.functions
             )
             # run step
             extract_mapping = self.__run_step(step)
