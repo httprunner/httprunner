@@ -2,7 +2,7 @@ import io
 import os
 import unittest
 
-from httprunner import new_loader, utils
+from httprunner import loader, utils
 
 
 class TestUtils(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestUtils(unittest.TestCase):
     def current_validators(self):
         from httprunner.builtin import comparators
 
-        functions_mapping = new_loader.load_module_functions(comparators)
+        functions_mapping = loader.load_module_functions(comparators)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
