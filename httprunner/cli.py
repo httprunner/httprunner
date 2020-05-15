@@ -162,7 +162,12 @@ def main_hrun_alias():
     """ command alias
         hrun = httprunner run
     """
-    sys.argv.insert(1, "run")
+    if len(sys.argv) == 2 and sys.argv[1] in ["-V", "--version"]:
+        # hrun -V
+        sys.argv = ["httprunner", "-V"]
+    else:
+        sys.argv.insert(1, "run")
+
     main()
 
 
