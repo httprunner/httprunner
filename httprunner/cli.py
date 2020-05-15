@@ -18,73 +18,43 @@ $ pip install locustio
         print(msg)
         sys.exit(1)
 
-from loguru import logger
+import pytest
 
-from httprunner import __description__, __version__
-from httprunner.api import HttpRunner
+from httprunner import __description__, __version__, exceptions
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.ext.locusts import init_parser_locusts, main_locusts
-from httprunner.ext.make import init_make_parser, main_make
+from httprunner.ext.make import init_make_parser, main_make, convert_testcase_path
 
 
 def init_parser_run(subparsers):
-    sub_parser_run = subparsers.add_parser("run", help="Run HttpRunner testcases.")
-
-    sub_parser_run.add_argument(
-        "testfile_paths",
-        nargs="*",
-        help="Specify api/testcase/testsuite file paths to run.",
+    sub_parser_run = subparsers.add_parser(
+        "run", help="Make HttpRunner testcases and run with pytest."
     )
-    sub_parser_run.add_argument(
-        "--log-level", default="INFO", help="Specify logging level, default is INFO."
-    )
-    sub_parser_run.add_argument("--log-file", help="Write logs to specified file path.")
-    sub_parser_run.add_argument(
-        "--dot-env-path",
-        help="Specify .env file path, which is useful for keeping sensitive data.",
-    )
-    sub_parser_run.add_argument(
-        "--report-template", help="Specify report template path."
-    )
-    sub_parser_run.add_argument("--report-dir", help="Specify report save directory.")
-    sub_parser_run.add_argument(
-        "--report-file",
-        help="Specify report file path, this has higher priority than specifying report dir.",
-    )
-    sub_parser_run.add_argument(
-        "--save-tests",
-        action="store_true",
-        default=False,
-        help="Save loaded/parsed/vars_out/summary json data to JSON files.",
-    )
-
     return sub_parser_run
 
 
-def main_run(args):
-    runner = HttpRunner(
-        save_tests=args.save_tests, log_level=args.log_level, log_file=args.log_file
-    )
+def main_run(extra_args):
+    tests_path_list = []
+    for index, item in enumerate(extra_args):
+        if not os.path.exists(item):
+            # item is not file/folder path
+            continue
+        elif os.path.isfile(item):
+            # replace YAML/JSON file path with generated python file
+            extra_args[index] = convert_testcase_path(item)
 
-    err_code = 0
-    try:
-        for path in args.testfile_paths:
-            testsuite_summary = runner.run_path(path, dot_env_path=args.dot_env_path)
-            report_dir = args.report_dir or os.path.join(os.getcwd(), "reports")
-            runner.gen_html_report(
-                report_template=args.report_template,
-                report_dir=report_dir,
-                report_file=args.report_file,
-            )
-            err_code |= 0 if testsuite_summary and testsuite_summary.success else 1
-    except Exception as ex:
-        logger.error(
-            f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}"
-        )
-        err_code = 1
+        tests_path_list.append(item)
 
-    sys.exit(err_code)
+    if len(tests_path_list) == 0:
+        # has not specified any testcase path
+        raise exceptions.ParamsError("Missed testcase path")
+
+    main_make(tests_path_list)
+
+    if "-s" not in extra_args:
+        extra_args.insert(0, "-s")
+    pytest.main(extra_args)
 
 
 def main():
@@ -102,8 +72,35 @@ def main():
     sub_parser_locusts = init_parser_locusts(subparsers)
     sub_parser_make = init_make_parser(subparsers)
 
+    if len(sys.argv) == 1:
+        # httprunner
+        parser.print_help()
+        sys.exit(0)
+    elif len(sys.argv) == 2:
+        # print help for sub-commands
+        if sys.argv[1] == "startproject":
+            # httprunner startproject
+            sub_parser_scaffold.print_help()
+        elif sys.argv[1] == "har2case":
+            # httprunner har2case
+            sub_parser_har2case.print_help()
+        elif sys.argv[1] == "locusts":
+            # httprunner locusts
+            sub_parser_locusts.print_help()
+        elif sys.argv[1] == "run":
+            # httprunner run
+            pytest.main(["-h"])
+        elif sys.argv[1] == "make":
+            # httprunner make
+            sub_parser_make.print_help()
+        sys.exit(0)
+    elif len(sys.argv) == 3 and sys.argv[1] == "run" and sys.argv[2] in ["-h", "--help"]:
+        # httprunner run -h
+        pytest.main(["-h"])
+        sys.exit(0)
+
     extra_args = []
-    if len(sys.argv) >= 2 and sys.argv[1] == "locusts":
+    if len(sys.argv) >= 2 and sys.argv[1] in ["run", "locusts"]:
         args, extra_args = parser.parse_known_args()
     else:
         args = parser.parse_args()
@@ -112,49 +109,15 @@ def main():
         print(f"{__version__}")
         sys.exit(0)
 
-    if len(sys.argv) == 1:
-        # httprunner
-        parser.print_help()
-        sys.exit(0)
-
-    elif sys.argv[1] == "run":
-        # httprunner run
-        if len(sys.argv) == 2:
-            sub_parser_run.print_help()
-            sys.exit(0)
-
-        main_run(args)
-
+    if sys.argv[1] == "run":
+        main_run(extra_args)
     elif sys.argv[1] == "startproject":
-        # httprunner startproject
-        if len(sys.argv) == 2:
-            sub_parser_scaffold.print_help()
-            sys.exit(0)
-
         main_scaffold(args)
-
     elif sys.argv[1] == "har2case":
-        # httprunner har2case
-        if len(sys.argv) == 2:
-            sub_parser_har2case.print_help()
-            sys.exit(0)
-
         main_har2case(args)
-
     elif sys.argv[1] == "locusts":
-        # httprunner locusts
-        if len(sys.argv) == 2:
-            sub_parser_locusts.print_help()
-            sys.exit(0)
-
         main_locusts(args, extra_args)
-
     elif sys.argv[1] == "make":
-        # httprunner make
-        if len(sys.argv) == 2:
-            sub_parser_make.print_help()
-            sys.exit(0)
-
         main_make(args.testcase_path)
 
 
@@ -162,9 +125,16 @@ def main_hrun_alias():
     """ command alias
         hrun = httprunner run
     """
-    if len(sys.argv) == 2 and sys.argv[1] in ["-V", "--version"]:
-        # hrun -V
-        sys.argv = ["httprunner", "-V"]
+    if len(sys.argv) == 2:
+        if sys.argv[1] in ["-V", "--version"]:
+            # hrun -V
+            sys.argv = ["httprunner", "-V"]
+        elif sys.argv[1] in ["-h", "--help"]:
+            pytest.main(["-h"])
+            sys.exit(0)
+        else:
+            # hrun /path/to/testcase
+            sys.argv.insert(1, "run")
     else:
         sys.argv.insert(1, "run")
 

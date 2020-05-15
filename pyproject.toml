@@ -38,6 +38,7 @@ pydantic = "^1.4"
 loguru = "^0.4.1"
 jmespath = "^0.9.5"
 black = "^19.10b0"
+pytest = "^5.4.2"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
