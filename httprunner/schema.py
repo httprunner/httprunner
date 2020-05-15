@@ -73,11 +73,11 @@ class TestCase(BaseModel):
 
 
 class ProjectMeta(BaseModel):
-    debugtalk_py: Text = ""
+    debugtalk_py: Text = ""  # debugtalk.py file content
     functions: FunctionsMapping = {}
     env: Env = {}
     PWD: Text = os.getcwd()
-    test_path: Text = None    # run with specified test path
+    test_path: Text = None  # run with specified test path
 
 
 class TestsMapping(BaseModel):
