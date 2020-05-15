@@ -174,5 +174,13 @@ def main_make_alias():
     main()
 
 
+def main_har2case_alias():
+    """ command alias
+        har2case = httprunner har2case
+    """
+    sys.argv.insert(1, "har2case")
+    main()
+
+
 if __name__ == "__main__":
     main()
