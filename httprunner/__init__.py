@@ -1,7 +1,6 @@
 __version__ = "3.0.2"
 __description__ = "One-stop solution for HTTP(S) testing."
 
-from unittest import TestCase
 from httprunner.runner import HttpRunner
 from httprunner.schema import TConfig, TStep
 
@@ -11,5 +10,4 @@ __all__ = [
     "HttpRunner",
     "TConfig",
     "TStep",
-    "TestCase",
 ]

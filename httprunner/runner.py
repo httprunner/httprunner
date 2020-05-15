@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from loguru import logger
 
-from httprunner import utils, exceptions
+from httprunner import utils
 from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.loader import load_project_meta, load_testcase_file
@@ -20,38 +20,34 @@ from httprunner.schema import (
     TestCaseTime,
     TestCaseInOut,
     ProjectMeta,
+    TestCase,
 )
 
 
 class HttpRunner(object):
-    def __init__(
-        self, config: TConfig, teststeps: List[TStep], session: HttpSession = None,
-    ):
-        if not config.path:
-            raise exceptions.ParamsError("config path missed!")
+    config: TConfig
+    teststeps: List[TStep]
 
-        self.config = config
-        self.teststeps = teststeps
-        self.session = session
-        self.step_datas: List[StepData] = []
-        self.validation_results: Dict = {}
-        self.session_variables: Dict = {}
-        self.success: bool = True  # indicate testcase execution result
-
-        if self.config.path:
-            self.project_meta = load_project_meta(self.config.path)
-        else:
-            self.project_meta = ProjectMeta()
-
-        self.start_at = 0
-        self.duration = 0
+    session: HttpSession
+    variables: VariablesMapping = {}
+    step_datas: List[StepData] = []
+    validation_results: Dict = {}
+    session_variables: Dict = {}
+    success: bool = True  # indicate testcase execution result
+    project_meta: ProjectMeta = None
+    start_at = 0
+    duration = 0
 
     def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
         self.project_meta = project_meta
         return self
 
-    def with_variables(self, **variables: VariablesMapping) -> "HttpRunner":
-        self.config.variables.update(variables)
+    def with_session(self, session: HttpSession) -> "HttpRunner":
+        self.session = session
+        return self
+
+    def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
+        self.variables = variables
         return self
 
     def __run_step_request(self, step: TStep):
@@ -139,9 +135,10 @@ class HttpRunner(object):
         _, testcase_obj = load_testcase_file(ref_testcase_path)
 
         case_result = (
-            HttpRunner(testcase_obj.config, testcase_obj.teststeps, self.session)
-            .with_variables(**step_variables)
-            .run()
+            HttpRunner()
+            .with_session(self.session)
+            .with_variables(step_variables)
+            .run(testcase_obj)
         )
         step_data.data = case_result.step_datas  # list of step data
         step_data.export = case_result.get_export_variables()
@@ -166,8 +163,17 @@ class HttpRunner(object):
         self.step_datas.append(step_data)
         return step_data.export
 
-    def run(self):
+    def run(self, testcase: TestCase):
         """main entrance"""
+        self.config = testcase.config
+        self.teststeps = testcase.teststeps
+        self.config.variables.update(self.variables)
+
+        if self.config.path:
+            self.project_meta = load_project_meta(self.config.path)
+        else:
+            self.project_meta = ProjectMeta()
+
         self.start_at = time.time()
         self.step_datas.clear()
         self.session_variables.clear()
@@ -219,3 +225,7 @@ class HttpRunner(object):
             ),
             step_datas=self.step_datas,
         )
+
+    def test_start(self):
+        """discovered by pytest"""
+        self.run(TestCase(config=self.config, teststeps=self.teststeps))
