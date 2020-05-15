@@ -166,5 +166,13 @@ def main_hrun_alias():
     main()
 
 
+def main_make_alias():
+    """ command alias
+        hmake = httprunner make
+    """
+    sys.argv.insert(1, "make")
+    main()
+
+
 if __name__ == "__main__":
     main()
