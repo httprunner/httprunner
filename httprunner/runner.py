@@ -179,7 +179,7 @@ class HttpRunner(object):
         self.duration = time.time() - self.start_at
         return self
 
-    def get_export_variables(self):
+    def get_export_variables(self) -> Dict:
         export_vars_mapping = {}
         for var_name in self.config.export:
             if var_name not in self.session_variables:
@@ -196,15 +196,17 @@ class HttpRunner(object):
         start_at_timestamp = self.start_at
         start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
         return TestCaseSummary(
+            name=self.config.name,
             success=self.success,
             time=TestCaseTime(
                 start_at=self.start_at,
                 start_at_iso_format=start_at_iso_format,
                 duration=self.duration,
             ),
-            name=self.config.name,
             # status=result.status,
             # attachment=result.attachment,
-            in_out=TestCaseInOut(vars=self.config.variables, out=self.config.export),
+            in_out=TestCaseInOut(
+                vars=self.config.variables, export=self.get_export_variables()
+            ),
             step_datas=self.step_datas,
         )
