@@ -5,7 +5,7 @@ import json
 import os
 import sys
 import types
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union, Text, List, Callable
 
 import yaml
 from loguru import logger
@@ -23,11 +23,11 @@ except AttributeError:
     pass
 
 
-project_meta_cached_mapping: Dict[str, ProjectMeta] = {}
-project_working_directory: str = None
+project_meta_cached_mapping: Dict[Text, ProjectMeta] = {}
+project_working_directory: Union[Text, None] = None
 
 
-def _load_yaml_file(yaml_file):
+def _load_yaml_file(yaml_file: Text) -> Dict:
     """ load yaml file and check file content format
     """
     with io.open(yaml_file, "r", encoding="utf-8") as stream:
@@ -40,7 +40,7 @@ def _load_yaml_file(yaml_file):
         return yaml_content
 
 
-def _load_json_file(json_file):
+def _load_json_file(json_file: Text) -> Dict:
     """ load json file and check file content format
     """
     with io.open(json_file, encoding="utf-8") as data_file:
@@ -54,7 +54,7 @@ def _load_json_file(json_file):
         return json_content
 
 
-def load_testcase_file(testcase_file) -> Tuple[Dict, TestCase]:
+def load_testcase_file(testcase_file: Text) -> Tuple[Dict, TestCase]:
     """load testcase file and validate with pydantic model"""
     file_suffix = os.path.splitext(testcase_file)[1].lower()
     if file_suffix == ".json":
@@ -81,7 +81,7 @@ def load_testcase_file(testcase_file) -> Tuple[Dict, TestCase]:
     return testcase_content, testcase_obj
 
 
-def load_dot_env_file(dot_env_path):
+def load_dot_env_file(dot_env_path: Text) -> Dict:
     """ load .env file.
 
     Args:
@@ -122,7 +122,7 @@ def load_dot_env_file(dot_env_path):
     return env_variables_mapping
 
 
-def load_csv_file(csv_file):
+def load_csv_file(csv_file: Text) -> List[Dict]:
     """ load csv file and check file content format
 
     Args:
@@ -168,7 +168,7 @@ def load_csv_file(csv_file):
     return csv_content_list
 
 
-def load_folder_files(folder_path, recursive=True):
+def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
     """ load folder path, return all files endswith yml/yaml/json in list.
 
     Args:
@@ -209,7 +209,7 @@ def load_folder_files(folder_path, recursive=True):
     return file_list
 
 
-def load_module_functions(module):
+def load_module_functions(module) -> Dict[Text, Callable]:
     """ load python module functions.
 
     Args:
@@ -233,13 +233,13 @@ def load_module_functions(module):
     return module_functions
 
 
-def load_builtin_functions():
+def load_builtin_functions() -> Dict[Text, Callable]:
     """ load builtin module functions
     """
     return load_module_functions(builtin)
 
 
-def locate_file(start_path, file_name):
+def locate_file(start_path: Text, file_name: Text) -> Text:
     """ locate filename and return absolute file path.
         searching will be recursive upward until current working directory or system root dir.
 
@@ -280,7 +280,7 @@ def locate_file(start_path, file_name):
     return locate_file(parent_dir, file_name)
 
 
-def locate_debugtalk_py(start_path):
+def locate_debugtalk_py(start_path: Text) -> Text:
     """ locate debugtalk.py file
 
     Args:
@@ -300,7 +300,7 @@ def locate_debugtalk_py(start_path):
     return debugtalk_path
 
 
-def init_project_working_directory(test_path):
+def init_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
     """ this should be called at startup
 
         run test file:
@@ -346,7 +346,7 @@ def init_project_working_directory(test_path):
     return debugtalk_path, project_working_directory
 
 
-def load_debugtalk_functions():
+def load_debugtalk_functions() -> Dict[Text, Callable]:
     """ load project debugtalk.py module functions
         debugtalk.py should be located in project working directory.
 
@@ -363,7 +363,7 @@ def load_debugtalk_functions():
     return load_module_functions(imported_module)
 
 
-def load_project_meta(test_path: str) -> ProjectMeta:
+def load_project_meta(test_path: Text) -> ProjectMeta:
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
