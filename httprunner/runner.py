@@ -29,10 +29,9 @@ class HttpRunner(object):
     teststeps: List[TStep]
 
     session: HttpSession = None
-    variables: VariablesMapping = {}
     step_datas: List[StepData] = None
     validation_results: Dict = {}
-    session_variables: Dict = {}
+    session_variables: VariablesMapping = {}
     success: bool = True  # indicate testcase execution result
     project_meta: ProjectMeta = None
     start_at = 0
@@ -47,7 +46,7 @@ class HttpRunner(object):
         return self
 
     def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
-        self.variables = variables
+        self.session_variables = variables
         return self
 
     def __run_step_request(self, step: TStep):
@@ -165,7 +164,7 @@ class HttpRunner(object):
         """main entrance"""
         self.config = testcase.config
         self.teststeps = testcase.teststeps
-        self.config.variables.update(self.variables)
+        self.config.variables.update(self.session_variables)
 
         if self.config.path:
             self.project_meta = load_project_meta(self.config.path)
@@ -190,7 +189,7 @@ class HttpRunner(object):
         for step in self.teststeps:
             # update with config variables
             step.variables.update(self.config.variables)
-            # update with session variables extracted from former step
+            # update with session variables extracted from pre step
             step.variables.update(self.session_variables)
             # parse variables
             step.variables = parse_variables_mapping(
