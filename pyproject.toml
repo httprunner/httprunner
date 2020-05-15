@@ -38,6 +38,7 @@ jsonpath = "^0.82"
 pydantic = "^1.4"
 loguru = "^0.4.1"
 jmespath = "^0.9.5"
+black = "^19.10b0"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
