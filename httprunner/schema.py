@@ -77,8 +77,8 @@ class ProjectMeta(BaseModel):
     variables: VariablesMapping = {}
     functions: FunctionsMapping = {}
     env: Env = {}
-    PWD: Text
-    test_path: Text
+    PWD: Text = None
+    test_path: Text = None    # run with specified test path
 
 
 class TestsMapping(BaseModel):

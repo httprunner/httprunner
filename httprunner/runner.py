@@ -6,7 +6,7 @@ from loguru import logger
 from httprunner import utils, exceptions
 from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
-from httprunner.new_loader import load_project_data, load_testcase_file
+from httprunner.new_loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.schema import (
@@ -35,7 +35,7 @@ class HttpRunner(object):
         self.session_variables: Dict = {}
         self.success: bool = True  # indicate testcase execution result
 
-        self.project_data = load_project_data(self.config.path)
+        self.project_data = load_project_meta(self.config.path)
         self.config.functions = self.project_data.functions
 
     def with_variables(self, **variables: VariablesMapping) -> "HttpRunner":

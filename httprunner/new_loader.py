@@ -22,6 +22,9 @@ except AttributeError:
     pass
 
 
+project_meta_cached_mapping: Dict[str, ProjectMeta] = {}
+
+
 def _load_yaml_file(yaml_file):
     """ load yaml file and check file content format
     """
@@ -281,7 +284,6 @@ def init_project_working_directory(test_path):
     # locate debugtalk.py file
     debugtalk_path = locate_debugtalk_py(test_path)
 
-    global project_working_directory
     if debugtalk_path:
         # The folder contains debugtalk.py will be treated as PWD.
         project_working_directory = os.path.dirname(debugtalk_path)
@@ -312,31 +314,33 @@ def load_debugtalk_functions():
     return load_module_functions(imported_module)
 
 
-def load_project_data(test_path: str, dot_env_path: str = None) -> ProjectMeta:
+def load_project_meta(test_path: str) -> ProjectMeta:
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
     Args:
         test_path (str): test file/folder path, locate pwd from this path.
-        dot_env_path (str): specified .env file path
 
     Returns:
         project loaded api/testcases definitions,
             environments and debugtalk.py functions.
 
     """
+    if test_path in project_meta_cached_mapping:
+        return project_meta_cached_mapping[test_path]
+
     debugtalk_path, project_working_directory = init_project_working_directory(
         test_path
     )
 
-    project_meta = {}
+    project_meta = ProjectMeta()
 
     # load .env file
     # NOTICE:
     # environment variable maybe loaded in debugtalk.py
     # thus .env file should be loaded before loading debugtalk.py
-    dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
-    project_meta["env"] = load_dot_env_file(dot_env_path)
+    dot_env_path = os.path.join(project_working_directory, ".env")
+    project_meta.env = load_dot_env_file(dot_env_path)
 
     if debugtalk_path:
         # load debugtalk.py functions
@@ -345,10 +349,11 @@ def load_project_data(test_path: str, dot_env_path: str = None) -> ProjectMeta:
         debugtalk_functions = {}
 
     # locate PWD and load debugtalk.py functions
-    project_meta["PWD"] = project_working_directory
-    project_meta["functions"] = debugtalk_functions
-    project_meta["test_path"] = os.path.abspath(test_path)[
+    project_meta.PWD = project_working_directory
+    project_meta.functions = debugtalk_functions
+    project_meta.test_path = os.path.abspath(test_path)[
         len(project_working_directory) + 1 :
     ]
 
-    return ProjectMeta.parse_obj(project_meta)
+    project_meta_cached_mapping[test_path] = project_meta
+    return project_meta
