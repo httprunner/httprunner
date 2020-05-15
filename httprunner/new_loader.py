@@ -1,3 +1,4 @@
+import csv
 import importlib
 import io
 import json
@@ -23,6 +24,7 @@ except AttributeError:
 
 
 project_meta_cached_mapping: Dict[str, ProjectMeta] = {}
+project_working_directory: str = None
 
 
 def _load_yaml_file(yaml_file):
@@ -118,6 +120,52 @@ def load_dot_env_file(dot_env_path):
 
     utils.set_os_environ(env_variables_mapping)
     return env_variables_mapping
+
+
+def load_csv_file(csv_file):
+    """ load csv file and check file content format
+
+    Args:
+        csv_file (str): csv file path, csv file content is like below:
+
+    Returns:
+        list: list of parameters, each parameter is in dict format
+
+    Examples:
+        >>> cat csv_file
+        username,password
+        test1,111111
+        test2,222222
+        test3,333333
+
+        >>> load_csv_file(csv_file)
+        [
+            {'username': 'test1', 'password': '111111'},
+            {'username': 'test2', 'password': '222222'},
+            {'username': 'test3', 'password': '333333'}
+        ]
+
+    """
+    if not os.path.isabs(csv_file):
+        global project_working_directory
+        if project_working_directory is None:
+            raise exceptions.MyBaseFailure("load_project_meta() has not been called!")
+
+        # make compatible with Windows/Linux
+        csv_file = os.path.join(project_working_directory, *csv_file.split("/"))
+
+    if not os.path.isfile(csv_file):
+        # file path not exist
+        raise exceptions.CSVNotFound(csv_file)
+
+    csv_content_list = []
+
+    with io.open(csv_file, encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            csv_content_list.append(row)
+
+    return csv_content_list
 
 
 def load_folder_files(folder_path, recursive=True):
@@ -284,6 +332,7 @@ def init_project_working_directory(test_path):
     # locate debugtalk.py file
     debugtalk_path = locate_debugtalk_py(test_path)
 
+    global project_working_directory
     if debugtalk_path:
         # The folder contains debugtalk.py will be treated as PWD.
         project_working_directory = os.path.dirname(debugtalk_path)
