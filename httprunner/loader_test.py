@@ -18,7 +18,7 @@ class TestLoader(unittest.TestCase):
         self.assertEqual(len(testcase_obj.teststeps), 3)
 
     def test_load_json_file_file_format_error(self):
-        json_tmp_file = "tests/data/tmp.json"
+        json_tmp_file = "/tmp/tmp.json"
         # create empty file
         with open(json_tmp_file, "w") as f:
             f.write("")
@@ -50,7 +50,7 @@ class TestLoader(unittest.TestCase):
             loader.load_testcase_file(testcase_file_path)
 
     def test_load_csv_file_one_parameter(self):
-        csv_file_path = os.path.join(os.getcwd(), "tests/data/user_agent.csv")
+        csv_file_path = os.path.join(os.getcwd(), "examples/httpbin/user_agent.csv")
         csv_content = loader.load_csv_file(csv_file_path)
         self.assertEqual(
             csv_content,
@@ -62,7 +62,7 @@ class TestLoader(unittest.TestCase):
         )
 
     def test_load_csv_file_multiple_parameters(self):
-        csv_file_path = os.path.join(os.getcwd(), "tests/data/account.csv")
+        csv_file_path = os.path.join(os.getcwd(), "examples/httpbin/account.csv")
         csv_content = loader.load_csv_file(csv_file_path)
         self.assertEqual(
             csv_content,
@@ -74,9 +74,9 @@ class TestLoader(unittest.TestCase):
         )
 
     def test_load_folder_files(self):
-        folder = os.path.join(os.getcwd(), "tests")
-        file1 = os.path.join(os.getcwd(), "tests", "test_utils.py")
-        file2 = os.path.join(os.getcwd(), "tests", "api", "reset_all.yml")
+        folder = os.path.join(os.getcwd(), "examples")
+        file1 = os.path.join(os.getcwd(), "examples", "test_utils.py")
+        file2 = os.path.join(os.getcwd(), "examples", "httpbin", "basic.yml")
 
         files = loader.load_folder_files(folder, recursive=False)
         self.assertEqual(files, [])
@@ -91,14 +91,8 @@ class TestLoader(unittest.TestCase):
         files = loader.load_folder_files(file2, recursive=False)
         self.assertEqual([], files)
 
-    def test_load_dot_env_file(self):
-        dot_env_path = os.path.join(os.getcwd(), "tests", ".env")
-        env_variables_mapping = loader.load_dot_env_file(dot_env_path)
-        self.assertIn("PROJECT_KEY", env_variables_mapping)
-        self.assertEqual(env_variables_mapping["UserName"], "debugtalk")
-
     def test_load_custom_dot_env_file(self):
-        dot_env_path = os.path.join(os.getcwd(), "tests", "data", "test.env")
+        dot_env_path = os.path.join(os.getcwd(), "examples", "httpbin", "test.env")
         env_variables_mapping = loader.load_dot_env_file(dot_env_path)
         self.assertIn("PROJECT_KEY", env_variables_mapping)
         self.assertEqual(env_variables_mapping["UserName"], "test")
@@ -118,24 +112,17 @@ class TestLoader(unittest.TestCase):
         with self.assertRaises(exceptions.FileNotFound):
             loader.locate_file("", "debugtalk.py")
 
-        start_path = os.path.join(os.getcwd(), "tests")
+        start_path = os.path.join(os.getcwd(), "examples", "httpbin")
         self.assertEqual(
             loader.locate_file(start_path, "debugtalk.py"),
-            os.path.join(os.getcwd(), "tests/debugtalk.py"),
+            os.path.join(os.getcwd(), "examples/httpbin/debugtalk.py"),
         )
         self.assertEqual(
-            loader.locate_file("tests/", "debugtalk.py"),
-            os.path.join(os.getcwd(), "tests", "debugtalk.py"),
+            loader.locate_file("examples/httpbin/", "debugtalk.py"),
+            os.path.join(os.getcwd(), "examples", "httpbin", "debugtalk.py"),
         )
         self.assertEqual(
-            loader.locate_file("tests", "debugtalk.py"),
-            os.path.join(os.getcwd(), "tests", "debugtalk.py"),
+            loader.locate_file("examples/httpbin/", "debugtalk.py"),
+            os.path.join(os.getcwd(), "examples/httpbin/debugtalk.py"),
         )
-        self.assertEqual(
-            loader.locate_file("tests/base.py", "debugtalk.py"),
-            os.path.join(os.getcwd(), "tests", "debugtalk.py"),
-        )
-        self.assertEqual(
-            loader.locate_file("tests/data/demo_testcase.yml", "debugtalk.py"),
-            os.path.join(os.getcwd(), "tests", "debugtalk.py"),
-        )
+
