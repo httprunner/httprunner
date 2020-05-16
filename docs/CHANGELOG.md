@@ -1,23 +1,22 @@
 # Release History
 
-## 3.0.2 (2020-05-15)
+## 3.0.2 (2020-05-16)
 
 **Added**
 
 - feat: add `make` sub-command to generate python testcases from YAML/JSON  
 - feat: format generated python testcases with [`black`](https://github.com/psf/black)
-- feat: implement global hooks `setup_testcase/teardown_testcase`, called before/after each testcase 
-- feat: implement global hooks  `setup_teststep/teardown_teststep`, called before/after each teststep
+- test: add postman echo & httpbin as testcase examples
 
 **Changed**
 
+- refactor all
 - replace jsonschema validation with pydantic
 - remove compatibility with testcase/testsuite format v1
-- make `startproject` as hrun sub-command, usage: `hrun startproject <project_name>`
-- make `har2case` as hrun sub-command, usage: `hrun har2case -h`
-- make `locusts` as hrun sub-command, usage: `hrun locusts -h`
-- remove default header `HRUN-Request-ID`, implement the same function with global hooks
-- remove `--failfast` argument, stop test run on the first error or failure by default
+- replace unittest with pytest
+- remove builtin html report, allure will be used with pytest later
+- remove locust support temporarily
+- update command line interface
 
 ## 3.0.1 (2020-03-24)
 
