@@ -2,12 +2,42 @@ import argparse
 import os
 import sys
 
-from loguru import logger
+import pytest
 
-from httprunner import __description__, __version__
-from httprunner.api import HttpRunner
-from httprunner.report import gen_html_report
-from httprunner.utils import create_scaffold
+from httprunner import __description__, __version__, exceptions
+from httprunner.ext.har2case import init_har2case_parser, main_har2case
+from httprunner.ext.make import init_make_parser, main_make, convert_testcase_path
+from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
+
+
+def init_parser_run(subparsers):
+    sub_parser_run = subparsers.add_parser(
+        "run", help="Make HttpRunner testcases and run with pytest."
+    )
+    return sub_parser_run
+
+
+def main_run(extra_args):
+    tests_path_list = []
+    for index, item in enumerate(extra_args):
+        if not os.path.exists(item):
+            # item is not file/folder path
+            continue
+        elif os.path.isfile(item):
+            # replace YAML/JSON file path with generated python file
+            extra_args[index] = convert_testcase_path(item)
+
+        tests_path_list.append(item)
+
+    if len(tests_path_list) == 0:
+        # has not specified any testcase path
+        raise exceptions.ParamsError("Missed testcase path")
+
+    main_make(tests_path_list)
+
+    if "-s" not in extra_args:
+        extra_args.insert(0, "-s")
+    pytest.main(extra_args)
 
 
 def main():
@@ -15,80 +45,102 @@ def main():
     """
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
-        '-V', '--version', dest='version', action='store_true',
-        help="show version")
-    parser.add_argument(
-        'testfile_paths', nargs='*',
-        help="Specify api/testcase/testsuite file paths to run.")
-    parser.add_argument(
-        '--log-level', default='INFO',
-        help="Specify logging level, default is INFO.")
-    parser.add_argument(
-        '--log-file',
-        help="Write logs to specified file path.")
-    parser.add_argument(
-        '--dot-env-path',
-        help="Specify .env file path, which is useful for keeping sensitive data.")
-    parser.add_argument(
-        '--report-template',
-        help="Specify report template path.")
-    parser.add_argument(
-        '--report-dir',
-        help="Specify report save directory.")
-    parser.add_argument(
-        '--report-file',
-        help="Specify report file path, this has higher priority than specifying report dir.")
-    parser.add_argument(
-        '--save-tests', action='store_true', default=False,
-        help="Save loaded/parsed/vars_out/summary json data to JSON files.")
-    parser.add_argument(
-        '--failfast', action='store_true', default=False,
-        help="Stop the test run on the first error or failure.")
-    parser.add_argument(
-        '--startproject',
-        help="Specify new project name.")
+        "-V", "--version", dest="version", action="store_true", help="show version"
+    )
 
-    args = parser.parse_args()
+    subparsers = parser.add_subparsers(help="sub-command help")
+    sub_parser_run = init_parser_run(subparsers)
+    sub_parser_scaffold = init_parser_scaffold(subparsers)
+    sub_parser_har2case = init_har2case_parser(subparsers)
+    sub_parser_make = init_make_parser(subparsers)
 
     if len(sys.argv) == 1:
-        # no argument passed
+        # httprunner
         parser.print_help()
         sys.exit(0)
+    elif len(sys.argv) == 2:
+        # print help for sub-commands
+        if sys.argv[1] in ["-V", "--version"]:
+            # httprunner -V
+            print(f"{__version__}")
+        elif sys.argv[1] in ["-h", "--help"]:
+            # httprunner -h
+            parser.print_help()
+        elif sys.argv[1] == "startproject":
+            # httprunner startproject
+            sub_parser_scaffold.print_help()
+        elif sys.argv[1] == "har2case":
+            # httprunner har2case
+            sub_parser_har2case.print_help()
+        elif sys.argv[1] == "run":
+            # httprunner run
+            pytest.main(["-h"])
+        elif sys.argv[1] == "make":
+            # httprunner make
+            sub_parser_make.print_help()
+        sys.exit(0)
+    elif (
+        len(sys.argv) == 3 and sys.argv[1] == "run" and sys.argv[2] in ["-h", "--help"]
+    ):
+        # httprunner run -h
+        pytest.main(["-h"])
+        sys.exit(0)
+
+    extra_args = []
+    if len(sys.argv) >= 2 and sys.argv[1] in ["run", "locusts"]:
+        args, extra_args = parser.parse_known_args()
+    else:
+        args = parser.parse_args()
 
     if args.version:
         print(f"{__version__}")
         sys.exit(0)
 
-    project_name = args.startproject
-    if project_name:
-        create_scaffold(project_name)
-        sys.exit(0)
-
-    runner = HttpRunner(
-        failfast=args.failfast,
-        save_tests=args.save_tests,
-        log_level=args.log_level,
-        log_file=args.log_file
-    )
-
-    err_code = 0
-    try:
-        for path in args.testfile_paths:
-            summary = runner.run(path, dot_env_path=args.dot_env_path)
-            report_dir = args.report_dir or os.path.join(os.getcwd(), "reports")
-            gen_html_report(
-                summary,
-                report_template=args.report_template,
-                report_dir=report_dir,
-                report_file=args.report_file
-            )
-            err_code |= (0 if summary and summary["success"] else 1)
-    except Exception as ex:
-        logger.error(f"!!!!!!!!!! exception stage: {runner.exception_stage} !!!!!!!!!!\n{str(ex)}")
-        err_code = 1
-
-    sys.exit(err_code)
+    if sys.argv[1] == "run":
+        main_run(extra_args)
+    elif sys.argv[1] == "startproject":
+        main_scaffold(args)
+    elif sys.argv[1] == "har2case":
+        main_har2case(args)
+    elif sys.argv[1] == "make":
+        main_make(args.testcase_path)
 
 
-if __name__ == '__main__':
+def main_hrun_alias():
+    """ command alias
+        hrun = httprunner run
+    """
+    if len(sys.argv) == 2:
+        if sys.argv[1] in ["-V", "--version"]:
+            # hrun -V
+            sys.argv = ["httprunner", "-V"]
+        elif sys.argv[1] in ["-h", "--help"]:
+            pytest.main(["-h"])
+            sys.exit(0)
+        else:
+            # hrun /path/to/testcase
+            sys.argv.insert(1, "run")
+    else:
+        sys.argv.insert(1, "run")
+
+    main()
+
+
+def main_make_alias():
+    """ command alias
+        hmake = httprunner make
+    """
+    sys.argv.insert(1, "make")
+    main()
+
+
+def main_har2case_alias():
+    """ command alias
+        har2case = httprunner har2case
+    """
+    sys.argv.insert(1, "har2case")
+    main()
+
+
+if __name__ == "__main__":
     main()

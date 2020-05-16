@@ -8,13 +8,12 @@ client = TestClient(app)
 
 
 class TestDebug(unittest.TestCase):
-
     def test_debug_single_testcase(self):
         json_data = {
             "project_meta": {
                 "debugtalk_py": "\ndef hello(name):\n    print(f'hello, {name}')\n",
                 "variables": {},
-                "env": {}
+                "env": {},
             },
             "testcase": {
                 "config": {
@@ -24,7 +23,7 @@ class TestDebug(unittest.TestCase):
                     "variables": {},
                     "setup_hooks": [],
                     "teardown_hooks": [],
-                    "export": []
+                    "export": [],
                 },
                 "teststeps": [
                     {
@@ -38,13 +37,13 @@ class TestDebug(unittest.TestCase):
                             "cookies": {},
                             "timeout": 30,
                             "allow_redirects": True,
-                            "verify": False
+                            "verify": False,
                         },
                         "extract": {},
-                        "validate": []
+                        "validate": [],
                     }
-                ]
-            }
+                ],
+            },
         }
         response = client.post("/hrun/debug/testcase", json=json_data)
         assert response.status_code == 200

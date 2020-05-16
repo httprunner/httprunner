@@ -1,0 +1,37 @@
+config:
+    name: load images
+    base_url: ${get_httpbin_server()}
+
+teststeps:
+-
+    name: get png image
+    request:
+        url: /image/png
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+
+-
+    name: get jpeg image
+    request:
+        url: /image/jpeg
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+
+-
+    name: get webp image
+    request:
+        url: /image/webp
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+
+-
+    name: get svg image
+    request:
+        url: /image/svg
+        method: GET
+    validate:
+        - eq: ["status_code", 200]
+

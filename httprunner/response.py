@@ -1,18 +1,113 @@
-import json
-import re
-from collections import OrderedDict
+from typing import Dict, Text, Any, NoReturn
 
-import jsonpath
+import jmespath
+import requests
 from loguru import logger
 
-from httprunner import exceptions, utils
+from httprunner.exceptions import ValidationFailure, ParamsError
+from httprunner.parser import parse_data, parse_string_value, get_mapping_function
+from httprunner.schema import VariablesMapping, Validators, FunctionsMapping
 
-text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
+
+def get_uniform_comparator(comparator: Text):
+    """ convert comparator alias to uniform name
+    """
+    if comparator in ["eq", "equals", "==", "is"]:
+        return "equals"
+    elif comparator in ["lt", "less_than"]:
+        return "less_than"
+    elif comparator in ["le", "less_than_or_equals"]:
+        return "less_than_or_equals"
+    elif comparator in ["gt", "greater_than"]:
+        return "greater_than"
+    elif comparator in ["ge", "greater_than_or_equals"]:
+        return "greater_than_or_equals"
+    elif comparator in ["ne", "not_equals"]:
+        return "not_equals"
+    elif comparator in ["str_eq", "string_equals"]:
+        return "string_equals"
+    elif comparator in ["len_eq", "length_equals", "count_eq"]:
+        return "length_equals"
+    elif comparator in [
+        "len_gt",
+        "count_gt",
+        "length_greater_than",
+        "count_greater_than",
+    ]:
+        return "length_greater_than"
+    elif comparator in [
+        "len_ge",
+        "count_ge",
+        "length_greater_than_or_equals",
+        "count_greater_than_or_equals",
+    ]:
+        return "length_greater_than_or_equals"
+    elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
+        return "length_less_than"
+    elif comparator in [
+        "len_le",
+        "count_le",
+        "length_less_than_or_equals",
+        "count_less_than_or_equals",
+    ]:
+        return "length_less_than_or_equals"
+    else:
+        return comparator
+
+
+def uniform_validator(validator):
+    """ unify validator
+
+    Args:
+        validator (dict): validator maybe in two formats:
+
+            format1: this is kept for compatiblity with the previous versions.
+                {"check": "status_code", "assert": "eq", "expect": 201}
+                {"check": "$resp_body_success", "assert": "eq", "expect": True}
+            format2: recommended new version, {assert: [check_item, expected_value]}
+                {'eq': ['status_code', 201]}
+                {'eq': ['$resp_body_success', True]}
+
+    Returns
+        dict: validator info
+
+            {
+                "check": "status_code",
+                "expect": 201,
+                "assert": "equals"
+            }
+
+    """
+    if not isinstance(validator, dict):
+        raise ParamsError(f"invalid validator: {validator}")
+
+    if "check" in validator and "expect" in validator:
+        # format1
+        check_item = validator["check"]
+        expect_value = validator["expect"]
+        comparator = validator.get("comparator", "eq")
+
+    elif len(validator) == 1:
+        # format2
+        comparator = list(validator.keys())[0]
+        compare_values = validator[comparator]
+
+        if not isinstance(compare_values, list) or len(compare_values) != 2:
+            raise ParamsError(f"invalid validator: {validator}")
+
+        check_item, expect_value = compare_values
+
+    else:
+        raise ParamsError(f"invalid validator: {validator}")
+
+    # uniform comparator, e.g. lt => less_than, eq => equals
+    assert_method = get_uniform_comparator(comparator)
+
+    return {"check": check_item, "expect": expect_value, "assert": assert_method}
 
 
 class ResponseObject(object):
-
-    def __init__(self, resp_obj):
+    def __init__(self, resp_obj: requests.Response):
         """ initialize with a requests.Response object
 
         Args:
@@ -21,283 +116,96 @@ class ResponseObject(object):
         """
         self.resp_obj = resp_obj
 
-    def __getattr__(self, key):
         try:
-            if key == "json":
-                value = self.resp_obj.json()
-            elif key == "cookies":
-                value = self.resp_obj.cookies.get_dict()
-            else:
-                value = getattr(self.resp_obj, key)
-
-            self.__dict__[key] = value
-            return value
-        except AttributeError:
-            err_msg = f"ResponseObject does not have attribute: {key}"
-            logger.error(err_msg)
-            raise exceptions.ParamsError(err_msg)
-
-    def _extract_field_with_jsonpath(self, field: str) -> list:
-        """ extract field from response content with jsonpath expression.
-        JSONPath Docs: https://goessner.net/articles/JsonPath/
-
-        Args:
-            field: jsonpath expression, e.g. $.code, $..items.*.id
-
-        Returns:
-            A list that extracted from json response example. 1) [200] 2) [1, 2]
-
-        Raises:
-            exceptions.ExtractFailure: If no content matched with jsonpath expression.
-
-        Examples:
-            For example, response body like below:
-            {
-                "code": 200,
-                "data": {
-                    "items": [{
-                            "id": 1,
-                            "name": "Bob"
-                        },
-                        {
-                            "id": 2,
-                            "name": "James"
-                        }
-                    ]
-                },
-                "message": "success"
-            }
-
-            >>> _extract_field_with_regex("$.code")
-            [200]
-            >>> _extract_field_with_regex("$..items.*.id")
-            [1, 2]
-
-        """
-        try:
-            json_body = self.json
-            assert json_body
-
-            result = jsonpath.jsonpath(json_body, field)
-            assert result
-            return result
-        except (AssertionError, exceptions.JSONDecodeError):
-            err_msg = f"Failed to extract data with jsonpath! => {field}\n"
-            err_msg += f"response body: {self.text}\n"
-            logger.error(err_msg)
-            raise exceptions.ExtractFailure(err_msg)
-
-    def _extract_field_with_regex(self, field):
-        """ extract field from response content with regex.
-            requests.Response body could be json or html text.
-
-        Args:
-            field (str): regex string that matched r".*\(.*\).*"
-
-        Returns:
-            str: matched content.
-
-        Raises:
-            exceptions.ExtractFailure: If no content matched with regex.
-
-        Examples:
-            >>> # self.text: "LB123abcRB789"
-            >>> filed = "LB[\d]*(.*)RB[\d]*"
-            >>> _extract_field_with_regex(field)
-            abc
-
-        """
-        matched = re.search(field, self.text)
-        if not matched:
-            err_msg = f"Failed to extract data with regex! => {field}\n"
-            err_msg += f"response body: {self.text}\n"
-            logger.error(err_msg)
-            raise exceptions.ExtractFailure(err_msg)
-
-        return matched.group(1)
-
-    def _extract_field_with_delimiter(self, field):
-        """ response content could be json or html text.
-
-        Args:
-            field (str): string joined by delimiter.
-            e.g.
-                "status_code"
-                "headers"
-                "cookies"
-                "content"
-                "headers.content-type"
-                "content.person.name.first_name"
-
-        """
-        # string.split(sep=None, maxsplit=1) -> list of strings
-        # e.g. "content.person.name" => ["content", "person.name"]
-        try:
-            top_query, sub_query = field.split('.', 1)
+            body = resp_obj.json()
         except ValueError:
-            top_query = field
-            sub_query = None
+            body = resp_obj.content
 
-        # status_code
-        if top_query in ["status_code", "encoding", "ok", "reason", "url"]:
-            if sub_query:
-                # status_code.XX
-                err_msg = f"Failed to extract: {field}\n"
-                logger.error(err_msg)
-                raise exceptions.ParamsError(err_msg)
+        self.resp_obj_meta = {
+            "status_code": resp_obj.status_code,
+            "headers": resp_obj.headers,
+            "body": body,
+        }
+        self.validation_results: Dict = {}
 
-            return getattr(self, top_query)
-
-        # cookies
-        elif top_query == "cookies":
-            cookies = self.cookies
-            if not sub_query:
-                # extract cookies
-                return cookies
-
-            try:
-                return cookies[sub_query]
-            except KeyError:
-                err_msg = f"Failed to extract cookie! => {field}\n"
-                err_msg += f"response cookies: {cookies}\n"
-                logger.error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
-
-        # elapsed
-        elif top_query == "elapsed":
-            available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
-            if not sub_query:
-                err_msg = "elapsed is datetime.timedelta instance, attribute should also be specified!\n"
-                err_msg += available_attributes
-                logger.error(err_msg)
-                raise exceptions.ParamsError(err_msg)
-            elif sub_query in ["days", "seconds", "microseconds"]:
-                return getattr(self.elapsed, sub_query)
-            elif sub_query == "total_seconds":
-                return self.elapsed.total_seconds()
-            else:
-                err_msg = f"{sub_query} is not valid datetime.timedelta attribute.\n"
-                err_msg += available_attributes
-                logger.error(err_msg)
-                raise exceptions.ParamsError(err_msg)
-
-        # headers
-        elif top_query == "headers":
-            headers = self.headers
-            if not sub_query:
-                # extract headers
-                return headers
-
-            try:
-                return headers[sub_query]
-            except KeyError:
-                err_msg = f"Failed to extract header! => {field}\n"
-                err_msg += f"response headers: {headers}\n"
-                logger.error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
-
-        # response body
-        elif top_query in ["body", "content", "text", "json"]:
-            try:
-                body = self.json
-            except json.JSONDecodeError:
-                body = self.text
-
-            if not sub_query:
-                # extract response body
-                return body
-
-            if isinstance(body, (dict, list)):
-                # content = {"xxx": 123}, content.xxx
-                return utils.query_json(body, sub_query)
-            elif sub_query.isdigit():
-                # content = "abcdefg", content.3 => d
-                return utils.query_json(body, sub_query)
-            else:
-                # content = "<html>abcdefg</html>", content.xxx
-                err_msg = f"Failed to extract attribute from response body! => {field}\n"
-                err_msg += f"response body: {body}\n"
-                logger.error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
-
-        # new set response attributes in teardown_hooks
-        elif top_query in self.__dict__:
-            attributes = self.__dict__[top_query]
-
-            if not sub_query:
-                # extract response attributes
-                return attributes
-
-            if isinstance(attributes, (dict, list)):
-                # attributes = {"xxx": 123}, content.xxx
-                return utils.query_json(attributes, sub_query)
-            elif sub_query.isdigit():
-                # attributes = "abcdefg", attributes.3 => d
-                return utils.query_json(attributes, sub_query)
-            else:
-                # content = "attributes.new_attribute_not_exist"
-                err_msg = f"Failed to extract cumstom set attribute from teardown hooks! => {field}\n"
-                err_msg += f"response set attributes: {attributes}\n"
-                logger.error(err_msg)
-                raise exceptions.TeardownHooksFailure(err_msg)
-
-        # others
-        else:
-            err_msg = f"Failed to extract attribute from response! => {field}\n"
-            err_msg += "available response attributes: status_code, cookies, elapsed, headers, content, " \
-                       "text, json, encoding, ok, reason, url.\n\n"
-            err_msg += "If you want to set attribute in teardown_hooks, take the following example as reference:\n"
-            err_msg += "response.new_attribute = 'new_attribute_value'\n"
-            logger.error(err_msg)
-            raise exceptions.ParamsError(err_msg)
-
-    def extract_field(self, field):
-        """ extract value from requests.Response.
-        """
-        if not isinstance(field, str):
-            err_msg = f"Invalid extractor! => {field}\n"
-            logger.error(err_msg)
-            raise exceptions.ParamsError(err_msg)
-
-        msg = f"extract: {field}"
-
-        if field.startswith("$"):
-            value = self._extract_field_with_jsonpath(field)
-        elif text_extractor_regexp_compile.match(field):
-            value = self._extract_field_with_regex(field)
-        else:
-            value = self._extract_field_with_delimiter(field)
-
-        msg += f"\t=> {value}"
-        logger.debug(msg)
-
-        return value
-
-    def extract_response(self, extractors):
-        """ extract value from requests.Response and store in OrderedDict.
-
-        Args:
-            extractors (list):
-
-                [
-                    {"resp_status_code": "status_code"},
-                    {"resp_headers_content_type": "headers.content-type"},
-                    {"resp_content": "content"},
-                    {"resp_content_person_first_name": "content.person.name.first_name"}
-                ]
-
-        Returns:
-            OrderDict: variable binds ordered dict
-
-        """
+    def extract(self, extractors: Dict[Text, Text]) -> Dict[Text, Any]:
         if not extractors:
             return {}
 
-        logger.debug("start to extract from response object.")
-        extracted_variables_mapping = OrderedDict()
-        extract_binds_order_dict = utils.ensure_mapping_format(extractors)
+        extract_mapping = {}
+        for key, field in extractors.items():
+            field_value = jmespath.search(field, self.resp_obj_meta)
+            extract_mapping[key] = field_value
 
-        for key, field in extract_binds_order_dict.items():
-            extracted_variables_mapping[key] = self.extract_field(field)
+        logger.info(f"extract mapping: {extract_mapping}")
+        return extract_mapping
 
-        return extracted_variables_mapping
+    def validate(
+        self,
+        validators: Validators,
+        variables_mapping: VariablesMapping = None,
+        functions_mapping: FunctionsMapping = None,
+    ) -> NoReturn:
+
+        self.validation_results = {}
+        if not validators:
+            return
+
+        validate_pass = True
+        failures = []
+
+        for v in validators:
+
+            if "validate_extractor" not in self.validation_results:
+                self.validation_results["validate_extractor"] = []
+
+            u_validator = uniform_validator(v)
+
+            # check item
+            check_item = u_validator["check"]
+            check_value = jmespath.search(check_item, self.resp_obj_meta)
+            check_value = parse_string_value(check_value)
+
+            # comparator
+            assert_method = u_validator["assert"]
+            assert_func = get_mapping_function(assert_method, functions_mapping)
+
+            # expect item
+            expect_item = u_validator["expect"]
+            # parse expected value with config/teststep/extracted variables
+            expect_value = parse_data(expect_item, variables_mapping, functions_mapping)
+
+            validate_msg = f"assert {check_item} {assert_method} {expect_value}({type(expect_value).__name__})"
+
+            validator_dict = {
+                "comparator": assert_method,
+                "check": check_item,
+                "check_value": check_value,
+                "expect": expect_item,
+                "expect_value": expect_value,
+            }
+
+            try:
+                assert_func(check_value, expect_value)
+                validate_msg += "\t==> pass"
+                logger.info(validate_msg)
+                validator_dict["check_result"] = "pass"
+            except AssertionError:
+                validate_pass = False
+                validator_dict["check_result"] = "fail"
+                validate_msg += "\t==> fail"
+                validate_msg += (
+                    f"\n"
+                    f"check_item: {check_item}\n"
+                    f"check_value: {check_value}({type(check_value).__name__})\n"
+                    f"assert_method: {assert_method}\n"
+                    f"expect_value: {expect_value}({type(expect_value).__name__})"
+                )
+                logger.error(validate_msg)
+                failures.append(validate_msg)
+
+            self.validation_results["validate_extractor"].append(validator_dict)
+
+        if not validate_pass:
+            failures_string = "\n".join([failure for failure in failures])
+            raise ValidationFailure(failures_string)

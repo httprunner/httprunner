@@ -1,5 +1,29 @@
 # Release History
 
+## 3.0.2 (2020-05-16)
+
+**Added**
+
+- feat: add `make` sub-command to generate python testcases from YAML/JSON  
+- feat: format generated python testcases with [`black`](https://github.com/psf/black)
+- test: add postman echo & httpbin as testcase examples
+
+**Changed**
+
+- refactor all
+- replace jsonschema validation with pydantic
+- remove compatibility with testcase/testsuite format v1
+- replace unittest with pytest
+- remove builtin html report, allure will be used with pytest later
+- remove locust support temporarily
+- update command line interface
+
+## 3.0.1 (2020-03-24)
+
+**Changed**
+
+- remove sentry sdk
+
 ## 3.0.0 (2020-03-10)
 
 **Added**
@@ -16,7 +40,6 @@
 - generate reports/logs folder in current working directory
 - remove cli `--validate`
 - remove cli `--pretty`
-- remove sentry sdk
 
 ## 2.5.7 (2020-02-21)
 

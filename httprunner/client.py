@@ -1,94 +1,91 @@
-# encoding: utf-8
-
 import time
 
 import requests
 import urllib3
 from loguru import logger
 from requests import Request, Response
-from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
-                                 RequestException)
+from requests.exceptions import (
+    InvalidSchema,
+    InvalidURL,
+    MissingSchema,
+    RequestException,
+)
 
-from httprunner import response
+from httprunner.schema import RequestData, ResponseData
+from httprunner.schema import SessionData, ReqRespData
 from httprunner.utils import lower_dict_keys, omit_long_data
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def get_req_resp_record(resp_obj):
+class ApiResponse(Response):
+    def raise_for_status(self):
+        if hasattr(self, "error") and self.error:
+            raise self.error
+        Response.raise_for_status(self)
+
+
+def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     """ get request and response info from Response() object.
     """
-    def log_print(req_resp_dict, r_type):
+
+    def log_print(req_or_resp, r_type):
         msg = f"\n================== {r_type} details ==================\n"
-        for key, value in req_resp_dict[r_type].items():
+        for key, value in req_or_resp.dict().items():
             msg += "{:<16} : {}\n".format(key, repr(value))
         logger.debug(msg)
 
-    req_resp_dict = {
-        "request": {},
-        "response": {}
-    }
-
     # record actual request info
-    req_resp_dict["request"]["url"] = resp_obj.request.url
-    req_resp_dict["request"]["method"] = resp_obj.request.method
-    req_resp_dict["request"]["headers"] = dict(resp_obj.request.headers)
-
+    request_headers = dict(resp_obj.request.headers)
     request_body = resp_obj.request.body
+
     if request_body:
-        request_content_type = lower_dict_keys(
-            req_resp_dict["request"]["headers"]
-        ).get("content-type")
+        request_content_type = lower_dict_keys(request_headers).get("content-type")
         if request_content_type and "multipart/form-data" in request_content_type:
             # upload file type
-            req_resp_dict["request"]["body"] = "upload file stream (OMITTED)"
-        else:
-            req_resp_dict["request"]["body"] = request_body
+            request_body = "upload file stream (OMITTED)"
+
+    request_data = RequestData(
+        method=resp_obj.request.method,
+        url=resp_obj.request.url,
+        headers=request_headers,
+        body=request_body,
+    )
 
     # log request details in debug mode
-    log_print(req_resp_dict, "request")
+    log_print(request_data, "request")
 
     # record response info
-    req_resp_dict["response"]["ok"] = resp_obj.ok
-    req_resp_dict["response"]["url"] = resp_obj.url
-    req_resp_dict["response"]["status_code"] = resp_obj.status_code
-    req_resp_dict["response"]["reason"] = resp_obj.reason
-    req_resp_dict["response"]["cookies"] = resp_obj.cookies or {}
-    req_resp_dict["response"]["encoding"] = resp_obj.encoding
     resp_headers = dict(resp_obj.headers)
-    req_resp_dict["response"]["headers"] = resp_headers
-
     lower_resp_headers = lower_dict_keys(resp_headers)
     content_type = lower_resp_headers.get("content-type", "")
-    req_resp_dict["response"]["content_type"] = content_type
 
     if "image" in content_type:
         # response is image type, record bytes content only
-        req_resp_dict["response"]["body"] = resp_obj.content
+        response_body = resp_obj.content
     else:
         try:
             # try to record json data
-            if isinstance(resp_obj, response.ResponseObject):
-                req_resp_dict["response"]["body"] = resp_obj.json
-            else:
-                req_resp_dict["response"]["body"] = resp_obj.json()
+            response_body = resp_obj.json()
         except ValueError:
             # only record at most 512 text charactors
             resp_text = resp_obj.text
-            req_resp_dict["response"]["body"] = omit_long_data(resp_text)
+            response_body = omit_long_data(resp_text)
+
+    response_data = ResponseData(
+        status_code=resp_obj.status_code,
+        cookies=resp_obj.cookies or {},
+        encoding=resp_obj.encoding,
+        headers=resp_headers,
+        content_type=content_type,
+        body=response_body,
+    )
 
     # log response details in debug mode
-    log_print(req_resp_dict, "response")
+    log_print(response_data, "response")
 
-    return req_resp_dict
-
-
-class ApiResponse(Response):
-
-    def raise_for_status(self):
-        if hasattr(self, 'error') and self.error:
-            raise self.error
-        Response.raise_for_status(self)
+    req_resp_data = ReqRespData(request=request_data, response=response_data)
+    return req_resp_data
 
 
 class HttpSession(requests.Session):
@@ -100,43 +97,18 @@ class HttpSession(requests.Session):
     This is a slightly extended version of `python-request <http://python-requests.org>`_'s
     :py:class:`requests.Session` class and mostly this class works exactly the same.
     """
+
     def __init__(self):
         super(HttpSession, self).__init__()
-        self.init_meta_data()
-
-    def init_meta_data(self):
-        """ initialize meta_data, it will store detail data of request and response
-        """
-        self.meta_data = {
-            "name": "",
-            "data": [
-                {
-                    "request": {
-                        "url": "N/A",
-                        "method": "N/A",
-                        "headers": {}
-                    },
-                    "response": {
-                        "status_code": "N/A",
-                        "headers": {},
-                        "encoding": None,
-                        "content_type": ""
-                    }
-                }
-            ],
-            "stat": {
-                "content_size": "N/A",
-                "response_time_ms": "N/A",
-                "elapsed_ms": "N/A",
-            }
-        }
+        self.data = SessionData()
 
     def update_last_req_resp_record(self, resp_obj):
         """
         update request and response info from Response() object.
         """
-        self.meta_data["data"].pop()
-        self.meta_data["data"].append(get_req_resp_record(resp_obj))
+        # TODO: fix
+        self.data.req_resps.pop()
+        self.data.req_resps.append(get_req_resp_record(resp_obj))
 
     def request(self, method, url, name=None, **kwargs):
         """
@@ -177,16 +149,10 @@ class HttpSession(requests.Session):
         :param cert: (optional)
             if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
-        self.init_meta_data()
+        self.data = SessionData()
 
-        # record test name
-        self.meta_data["name"] = name
-
-        # record original request info
-        self.meta_data["data"][0]["request"]["method"] = method
-        self.meta_data["data"][0]["request"]["url"] = url
+        # timeout default to 120 seconds
         kwargs.setdefault("timeout", 120)
-        self.meta_data["data"][0]["request"].update(kwargs)
 
         start_timestamp = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
@@ -200,17 +166,14 @@ class HttpSession(requests.Session):
             content_size = len(response.content or "")
 
         # record the consumed time
-        self.meta_data["stat"] = {
-            "response_time_ms": response_time_ms,
-            "elapsed_ms": response.elapsed.microseconds / 1000.0,
-            "content_size": content_size
-        }
+        self.data.stat.response_time_ms = response_time_ms
+        self.data.stat.elapsed_ms = response.elapsed.microseconds / 1000.0
+        self.data.stat.content_size = content_size
 
         # record request and response histories, include 30X redirection
         response_list = response.history + [response]
-        self.meta_data["data"] = [
-            get_req_resp_record(resp_obj)
-            for resp_obj in response_list
+        self.data.req_resps = [
+            get_req_resp_record(resp_obj) for resp_obj in response_list
         ]
 
         try:
