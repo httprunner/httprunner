@@ -123,9 +123,9 @@ def multipart_encoder(**kwargs):
             is_exists_file = os.path.isfile(value)
         else:
             # value is not absolute file path, check if it is relative file path
-            from httprunner.loader import get_pwd
+            from httprunner.loader import project_working_directory
 
-            _file_path = os.path.join(get_pwd(), value)
+            _file_path = os.path.join(project_working_directory, value)
             is_exists_file = os.path.isfile(_file_path)
 
         if is_exists_file:
