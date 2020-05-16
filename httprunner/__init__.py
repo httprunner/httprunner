@@ -1,4 +1,13 @@
-__version__ = "3.0.0"
+__version__ = "3.0.2"
 __description__ = "One-stop solution for HTTP(S) testing."
 
-__all__ = ["__version__", "__description__"]
+from httprunner.runner import HttpRunner
+from httprunner.schema import TConfig, TStep
+
+__all__ = [
+    "__version__",
+    "__description__",
+    "HttpRunner",
+    "TConfig",
+    "TStep",
+]

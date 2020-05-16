@@ -8,13 +8,7 @@ app = FastAPI()
 
 @app.get("/hrun/version")
 async def get_hrun_version():
-    return {
-        "code": 0,
-        "message": "success",
-        "result": {
-            "HttpRunner": __version__
-        }
-    }
+    return {"code": 0, "message": "success", "result": {"HttpRunner": __version__}}
 
 
 app.include_router(deps.router)

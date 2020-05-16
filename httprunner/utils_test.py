@@ -1,69 +1,22 @@
 import io
 import os
-import shutil
 import unittest
 
-from httprunner import exceptions, loader, utils
+from httprunner import loader, utils
 
 
 class TestUtils(unittest.TestCase):
-
     def test_set_os_environ(self):
         self.assertNotIn("abc", os.environ)
-        variables_mapping = {
-            "abc": "123"
-        }
+        variables_mapping = {"abc": "123"}
         utils.set_os_environ(variables_mapping)
         self.assertIn("abc", os.environ)
         self.assertEqual(os.environ["abc"], "123")
 
-    def test_query_json(self):
-        json_content = {
-            "ids": [1, 2, 3, 4],
-            "person": {
-                "name": {
-                    "first_name": "Leo",
-                    "last_name": "Lee",
-                },
-                "age": 29,
-                "cities": ["Guangzhou", "Shenzhen"]
-            }
-        }
-        query = "ids.2"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, 3)
-
-        query = "ids.str_key"
-        with self.assertRaises(exceptions.ExtractFailure):
-            utils.query_json(json_content, query)
-
-        query = "ids.5"
-        with self.assertRaises(exceptions.ExtractFailure):
-            utils.query_json(json_content, query)
-
-        query = "person.age"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, 29)
-
-        query = "person.not_exist_key"
-        with self.assertRaises(exceptions.ExtractFailure):
-            utils.query_json(json_content, query)
-
-        query = "person.cities.0"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, "Guangzhou")
-
-        query = "person.name.first_name"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, "Leo")
-
-        query = "person.name.first_name.0"
-        result = utils.query_json(json_content, query)
-        self.assertEqual(result, "L")
-
     def current_validators(self):
         from httprunner.builtin import comparators
-        functions_mapping = loader.load.load_module_functions(comparators)
+
+        functions_mapping = loader.load_module_functions(comparators)
 
         functions_mapping["equals"](None, None)
         functions_mapping["equals"](1, 1)
@@ -80,17 +33,17 @@ class TestUtils(unittest.TestCase):
         functions_mapping["not_equals"](123, "123")
 
         functions_mapping["length_equals"]("123", 3)
-        # Because the Numbers in a CSV file are by default treated as strings, 
+        # Because the Numbers in a CSV file are by default treated as strings,
         # you need to convert them to Numbers, and we'll test that out here.
-        functions_mapping["length_equals"]("123", '3')
+        functions_mapping["length_equals"]("123", "3")
         with self.assertRaises(AssertionError):
-            functions_mapping["length_equals"]("123", 'abc')
+            functions_mapping["length_equals"]("123", "abc")
         functions_mapping["length_greater_than"]("123", 2)
         functions_mapping["length_greater_than_or_equals"]("123", 3)
 
         functions_mapping["contains"]("123abc456", "3ab")
-        functions_mapping["contains"](['1', '2'], "1")
-        functions_mapping["contains"]({'a':1, 'b':2}, "a")
+        functions_mapping["contains"](["1", "2"], "1")
+        functions_mapping["contains"]({"a": 1, "b": 2}, "a")
         functions_mapping["contained_by"]("3ab", "123abc456")
 
         functions_mapping["regex_match"]("123abc456", "^123\w+456$")
@@ -113,41 +66,11 @@ class TestUtils(unittest.TestCase):
         functions_mapping["type_match"]({}, "dict")
         functions_mapping["type_match"]({"a": 1}, "dict")
 
-    def test_handle_config_key_case(self):
-        origin_dict = {
-            "Name": "test",
-            "Request": {
-                "url": "http://127.0.0.1:5000",
-                "METHOD": "POST",
-                "Headers": {
-                    "Accept": "application/json",
-                    "User-Agent": "ios/9.3"
-                }
-            }
-        }
-        new_dict = utils.lower_test_dict_keys(origin_dict)
-        self.assertIn("name", new_dict)
-        self.assertIn("request", new_dict)
-        self.assertIn("method", new_dict["request"])
-        self.assertIn("headers", new_dict["request"])
-        self.assertIn("Accept", new_dict["request"]["headers"])
-        self.assertIn("User-Agent", new_dict["request"]["headers"])
-
-        origin_dict = {
-            "Name": "test",
-            "Request": "$default_request"
-        }
-        new_dict = utils.lower_test_dict_keys(origin_dict)
-        self.assertIn("$default_request", new_dict["request"])
-
     def test_lower_dict_keys(self):
         request_dict = {
             "url": "http://127.0.0.1:5000",
             "METHOD": "POST",
-            "Headers": {
-                "Accept": "application/json",
-                "User-Agent": "ios/9.3"
-            }
+            "Headers": {"Accept": "application/json", "User-Agent": "ios/9.3"},
         }
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertIn("method", new_request_dict)
@@ -163,138 +86,6 @@ class TestUtils(unittest.TestCase):
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertEqual(None, request_dict)
 
-    def test_ensure_mapping_format(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
-        ordered_dict = utils.ensure_mapping_format(map_list)
-        self.assertIsInstance(ordered_dict, dict)
-        self.assertIn("a", ordered_dict)
-
-    def test_extend_variables(self):
-        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
-        override_variables = [{"var1": "val111"}, {"var3": "val3"}]
-        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
-        self.assertEqual(extended_variables_mapping["var1"], "val111")
-        self.assertEqual(extended_variables_mapping["var2"], "val2")
-        self.assertEqual(extended_variables_mapping["var3"], "val3")
-
-    def test_extend_variables_fix(self):
-        raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
-        override_variables = {}
-        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
-        self.assertEqual(extended_variables_mapping["var1"], "val1")
-
-    def test_deepcopy_dict(self):
-        license_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "LICENSE"
-        )
-        data = {
-            'a': 1,
-            'b': [2, 4],
-            'c': lambda x: x+1,
-            'd': open(license_path),
-            'f': {
-                'f1': {'a1': 2},
-                'f2': io.open(license_path, 'rb'),
-            }
-        }
-        new_data = utils.deepcopy_dict(data)
-        data["a"] = 0
-        self.assertEqual(new_data["a"], 1)
-        data["f"]["f1"] = 123
-        self.assertEqual(new_data["f"]["f1"], {'a1': 2})
-        self.assertNotEqual(id(new_data["b"]), id(data["b"]))
-        self.assertEqual(id(new_data["c"]), id(data["c"]))
-        # self.assertEqual(id(new_data["d"]), id(data["d"]))
-
-    def test_create_scaffold(self):
-        project_name = "projectABC"
-        utils.create_scaffold(project_name)
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "api")))
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "testcases")))
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "testsuites")))
-        self.assertTrue(os.path.isdir(os.path.join(project_name, "reports")))
-        self.assertTrue(os.path.isfile(os.path.join(project_name, "debugtalk.py")))
-        self.assertTrue(os.path.isfile(os.path.join(project_name, ".env")))
-        shutil.rmtree(project_name)
-
-    def test_cartesian_product_one(self):
-        parameters_content_list = [
-            [
-                {"a": 1},
-                {"a": 2}
-            ]
-        ]
-        product_list = utils.gen_cartesian_product(*parameters_content_list)
-        self.assertEqual(
-            product_list,
-            [
-                {"a": 1},
-                {"a": 2}
-            ]
-        )
-
-    def test_cartesian_product_multiple(self):
-        parameters_content_list = [
-            [
-                {"a": 1},
-                {"a": 2}
-            ],
-            [
-                {"x": 111, "y": 112},
-                {"x": 121, "y": 122}
-            ]
-        ]
-        product_list = utils.gen_cartesian_product(*parameters_content_list)
-        self.assertEqual(
-            product_list,
-            [
-                {'a': 1, 'x': 111, 'y': 112},
-                {'a': 1, 'x': 121, 'y': 122},
-                {'a': 2, 'x': 111, 'y': 112},
-                {'a': 2, 'x': 121, 'y': 122}
-            ]
-        )
-
-    def test_cartesian_product_empty(self):
-        parameters_content_list = []
-        product_list = utils.gen_cartesian_product(*parameters_content_list)
-        self.assertEqual(product_list, [])
-
     def test_print_info(self):
-        info_mapping = {
-            "a": 1,
-            "t": (1, 2),
-            "b": {
-                "b1": 123
-            },
-            "c": None,
-            "d": [4, 5]
-        }
+        info_mapping = {"a": 1, "t": (1, 2), "b": {"b1": 123}, "c": None, "d": [4, 5]}
         utils.print_info(info_mapping)
-
-    def test_prepare_dump_json_file_path_for_folder(self):
-        # hrun tests/httpbin/a.b.c/ --save-tests
-        test_path = os.path.join("tests", "httpbin", "a.b.c")
-        self.assertEqual(
-            utils.prepare_log_file_abs_path(test_path, "loaded.json"),
-            os.path.join(os.getcwd(), "logs", "tests/httpbin/a.b.c/all.loaded.json")
-        )
-
-    def test_prepare_dump_json_file_path_for_file(self):
-        # hrun tests/httpbin/a.b.c/rpc.yml --save-tests
-        test_path = os.path.join("tests", "httpbin", "a.b.c", "rpc.yml")
-        self.assertEqual(
-            utils.prepare_log_file_abs_path(test_path, "loaded.json"),
-            os.path.join(os.getcwd(), "logs", "tests/httpbin/a.b.c/rpc.loaded.json")
-        )
-
-    def test_prepare_dump_json_file_path_for_passed_testcase(self):
-        test_path = ""
-        self.assertEqual(
-            utils.prepare_log_file_abs_path(test_path, "loaded.json"),
-            os.path.join(os.getcwd(), "logs", "tests_mapping.loaded.json")
-        )

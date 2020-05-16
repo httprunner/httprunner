@@ -10,8 +10,8 @@ jobs:
     strategy:
       max-parallel: 12
       matrix:
-        python-version: [3.6, 3.7] # TODO: 3.8
-        os: [ubuntu-latest, macos-latest] # TODO: windows-latest
+        python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
@@ -27,9 +27,11 @@ jobs:
         poetry install -vv
     - name: Run unittest for httprunner
       run: |
-        poetry run python -m httprunner.cli hrun -V
-        poetry run python -m httprunner.cli hrun -h
-        poetry run coverage run --source=httprunner -m unittest discover
+        poetry run httprunner
+        poetry run hmake
+        poetry run hrun
+        poetry run har2case
+        poetry run coverage run --source=httprunner -m pytest httprunner
         poetry run coverage xml
         poetry run coverage report -m
     - name: Codecov

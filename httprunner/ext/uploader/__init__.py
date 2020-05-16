@@ -44,6 +44,10 @@ For compatibility, you can also write upload test script in old way:
 
 import os
 import sys
+from typing import Text, NoReturn
+
+from httprunner.parser import parse_variables_mapping
+from httprunner.schema import TStep, FunctionsMapping
 
 try:
     import filetype
@@ -57,16 +61,13 @@ $ pip install requests_toolbelt filetype
     print(msg)
     sys.exit(0)
 
-from httprunner.exceptions import ParamsError
 
-
-def prepare_upload_test(test_dict):
+def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
     """ preprocess for upload test
         replace `upload` info with MultipartEncoder
 
     Args:
-        test_dict (dict):
-
+        step: teststep
             {
                 "variables": {},
                 "request": {
@@ -81,27 +82,29 @@ def prepare_upload_test(test_dict):
                     }
                 }
             }
+        functions: functions mapping
 
     """
-    upload_json = test_dict["request"].pop("upload", {})
-    if not upload_json:
-        raise ParamsError(f"invalid upload info: {upload_json}")
+    if not step.request.upload:
+        return
 
     params_list = []
-    for key, value in upload_json.items():
-        test_dict["variables"][key] = value
+    for key, value in step.request.upload.items():
+        step.variables[key] = value
         params_list.append(f"{key}=${key}")
 
     params_str = ", ".join(params_list)
-    test_dict["variables"]["m_encoder"] = "${multipart_encoder(" + params_str + ")}"
+    step.variables["m_encoder"] = "${multipart_encoder(" + params_str + ")}"
 
-    test_dict["request"].setdefault("headers", {})
-    test_dict["request"]["headers"]["Content-Type"] = "${multipart_content_type($m_encoder)}"
+    # parse variables
+    step.variables = parse_variables_mapping(step.variables, functions)
 
-    test_dict["request"]["data"] = "$m_encoder"
+    step.request.headers["Content-Type"] = "${multipart_content_type($m_encoder)}"
+
+    step.request.data = "$m_encoder"
 
 
-def multipart_encoder(**kwargs):
+def multipart_encoder(**kwargs) -> MultipartEncoder:
     """ initialize MultipartEncoder with uploading fields.
     """
 
@@ -121,8 +124,9 @@ def multipart_encoder(**kwargs):
             is_exists_file = os.path.isfile(value)
         else:
             # value is not absolute file path, check if it is relative file path
-            from httprunner.loader import get_pwd
-            _file_path = os.path.join(get_pwd(), value)
+            from httprunner.loader import project_working_directory
+
+            _file_path = os.path.join(project_working_directory, value)
             is_exists_file = os.path.isfile(_file_path)
 
         if is_exists_file:
@@ -130,7 +134,7 @@ def multipart_encoder(**kwargs):
             filename = os.path.basename(_file_path)
             mime_type = get_filetype(_file_path)
             # TODO: fix ResourceWarning for unclosed file
-            file_handler = open(_file_path, 'rb')
+            file_handler = open(_file_path, "rb")
             fields_dict[key] = (filename, file_handler, mime_type)
         else:
             fields_dict[key] = value
@@ -138,7 +142,7 @@ def multipart_encoder(**kwargs):
     return MultipartEncoder(fields=fields_dict)
 
 
-def multipart_content_type(m_encoder):
+def multipart_content_type(m_encoder: MultipartEncoder) -> Text:
     """ prepare Content-Type for request headers
     """
     return m_encoder.content_type

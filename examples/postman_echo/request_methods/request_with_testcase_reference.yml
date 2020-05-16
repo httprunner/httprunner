@@ -1,0 +1,13 @@
+config:
+    name: "request methods testcase: reference testcase"
+    variables:
+        foo1: session_bar1
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: request with variables
+    variables:
+        foo1: override_bar1
+    testcase: request_methods/request_with_variables.yml
