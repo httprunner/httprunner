@@ -125,4 +125,3 @@ class TestLoader(unittest.TestCase):
             loader.locate_file("examples/httpbin/", "debugtalk.py"),
             os.path.join(os.getcwd(), "examples/httpbin/debugtalk.py"),
         )
-

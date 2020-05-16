@@ -45,6 +45,9 @@ For compatibility, you can also write upload test script in old way:
 import os
 import sys
 
+from httprunner.parser import parse_variables_mapping
+from httprunner.schema import TStep, FunctionsMapping
+
 try:
     import filetype
     from requests_toolbelt import MultipartEncoder
@@ -57,16 +60,13 @@ $ pip install requests_toolbelt filetype
     print(msg)
     sys.exit(0)
 
-from httprunner.exceptions import ParamsError
 
-
-def prepare_upload_test(test_dict):
+def prepare_upload_step(step: TStep, functions: FunctionsMapping):
     """ preprocess for upload test
         replace `upload` info with MultipartEncoder
 
     Args:
-        test_dict (dict):
-
+        step: teststep
             {
                 "variables": {},
                 "request": {
@@ -81,26 +81,26 @@ def prepare_upload_test(test_dict):
                     }
                 }
             }
+        functions: functions mapping
 
     """
-    upload_json = test_dict["request"].pop("upload", {})
-    if not upload_json:
-        raise ParamsError(f"invalid upload info: {upload_json}")
+    if not step.request.upload:
+        return
 
     params_list = []
-    for key, value in upload_json.items():
-        test_dict["variables"][key] = value
+    for key, value in step.request.upload.items():
+        step.variables[key] = value
         params_list.append(f"{key}=${key}")
 
     params_str = ", ".join(params_list)
-    test_dict["variables"]["m_encoder"] = "${multipart_encoder(" + params_str + ")}"
+    step.variables["m_encoder"] = "${multipart_encoder(" + params_str + ")}"
 
-    test_dict["request"].setdefault("headers", {})
-    test_dict["request"]["headers"][
-        "Content-Type"
-    ] = "${multipart_content_type($m_encoder)}"
+    # parse variables
+    step.variables = parse_variables_mapping(step.variables, functions)
 
-    test_dict["request"]["data"] = "$m_encoder"
+    step.request.headers["Content-Type"] = "${multipart_content_type($m_encoder)}"
+
+    step.request.data = "$m_encoder"
 
 
 def multipart_encoder(**kwargs):
