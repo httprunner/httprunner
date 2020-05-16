@@ -118,9 +118,10 @@ class HttpRunner(object):
             # save request & response meta data
             self.__session.data.validators = resp_obj.validation_results
             self.success &= self.__session.data.success
+            # save step data
+            step_data.success = self.__session.data.success
+            step_data.data = self.__session.data
 
-        step_data.success = self.__session.data.success
-        step_data.data = self.__session.data
         return step_data
 
     def __run_step_testcase(self, step):
