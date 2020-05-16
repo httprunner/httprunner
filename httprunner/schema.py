@@ -56,6 +56,7 @@ class Request(BaseModel):
     timeout: int = 120
     allow_redirects: bool = True
     verify: Verify = False
+    upload: Dict = {}  # used for upload files
 
 
 class TStep(BaseModel):
@@ -107,7 +108,7 @@ class RequestData(BaseModel):
     url: Url
     headers: Headers = {}
     # TODO: add cookies
-    body: Union[Text, Dict] = {}
+    body: Union[Text, bytes, Dict, None] = {}
 
 
 class ResponseData(BaseModel):
@@ -137,6 +138,7 @@ class SessionData(BaseModel):
 
 class StepData(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
+
     success: bool = False
     name: Text = ""  # teststep name
     data: Union[SessionData, List[SessionData]] = None

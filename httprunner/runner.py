@@ -8,6 +8,7 @@ from loguru import logger
 from httprunner import utils, exceptions
 from httprunner.client import HttpSession
 from httprunner.exceptions import ValidationFailure, ParamsError
+from httprunner.ext.uploader import prepare_upload_step
 from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
@@ -53,7 +54,9 @@ class HttpRunner(object):
         step_data = StepData(name=step.name)
 
         # parse
+        prepare_upload_step(step, self.__project_meta.functions)
         request_dict = step.request.dict()
+        request_dict.pop("upload", None)
         parsed_request_dict = parse_data(
             request_dict, step.variables, self.__project_meta.functions
         )

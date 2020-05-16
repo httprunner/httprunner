@@ -36,21 +36,21 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         logger.debug(msg)
 
     # record actual request info
+    request_headers = dict(resp_obj.request.headers)
+    request_body = resp_obj.request.body
+
+    if request_body:
+        request_content_type = lower_dict_keys(request_headers).get("content-type")
+        if request_content_type and "multipart/form-data" in request_content_type:
+            # upload file type
+            request_body = "upload file stream (OMITTED)"
+
     request_data = RequestData(
         method=resp_obj.request.method,
         url=resp_obj.request.url,
-        headers=dict(resp_obj.request.headers),
-        body=resp_obj.request.body,
+        headers=request_headers,
+        body=request_body,
     )
-
-    request_body = resp_obj.request.body
-    if request_body:
-        request_content_type = lower_dict_keys(request_data.headers).get("content-type")
-        if request_content_type and "multipart/form-data" in request_content_type:
-            # upload file type
-            request_data.body = "upload file stream (OMITTED)"
-        else:
-            request_data.body = request_body
 
     # log request details in debug mode
     log_print(request_data, "request")
