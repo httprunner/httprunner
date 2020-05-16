@@ -135,7 +135,7 @@ class HttpRunner(object):
             .with_variables(step_variables)
             .run_path(ref_testcase_path)
         )
-        step_data.data = case_result.get_summary()  # list of step data
+        step_data.data = case_result.get_step_datas()  # list of step data
         step_data.export = case_result.get_export_variables()
         step_data.success = case_result.success
         self.success &= case_result.success
@@ -235,8 +235,6 @@ class HttpRunner(object):
                 start_at_iso_format=start_at_iso_format,
                 duration=self.__duration,
             ),
-            # status=result.status,
-            # attachment=result.attachment,
             in_out=TestCaseInOut(
                 vars=self.config.variables, export=self.get_export_variables()
             ),
@@ -245,4 +243,4 @@ class HttpRunner(object):
 
     def test_start(self):
         """discovered by pytest"""
-        self.run(TestCase(config=self.config, teststeps=self.teststeps))
+        return self.run(TestCase(config=self.config, teststeps=self.teststeps))

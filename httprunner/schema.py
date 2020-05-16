@@ -137,7 +137,6 @@ class SessionData(BaseModel):
 
 class StepData(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
-
     success: bool = False
     name: Text = ""  # teststep name
     data: Union[SessionData, List[SessionData]] = None
@@ -146,9 +145,7 @@ class StepData(BaseModel):
 
 class TestCaseSummary(BaseModel):
     name: Text = ""
-    success: bool
-    status: Text = ""
-    attachment: Text = ""
+    success: bool = False
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
