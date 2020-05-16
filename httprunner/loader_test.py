@@ -76,7 +76,7 @@ class TestLoader(unittest.TestCase):
     def test_load_folder_files(self):
         folder = os.path.join(os.getcwd(), "examples")
         file1 = os.path.join(os.getcwd(), "examples", "test_utils.py")
-        file2 = os.path.join(os.getcwd(), "examples", "httpbin", "basic.yml")
+        file2 = os.path.join(os.getcwd(), "examples", "httpbin", "hooks.yml")
 
         files = loader.load_folder_files(folder, recursive=False)
         self.assertEqual(files, [])
