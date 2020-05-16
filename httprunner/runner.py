@@ -28,25 +28,24 @@ class HttpRunner(object):
     config: TConfig
     teststeps: List[TStep]
 
-    session: HttpSession = None
-    step_datas: List[StepData] = None
-    validation_results: Dict = {}
-    session_variables: VariablesMapping = {}
     success: bool = True  # indicate testcase execution result
-    project_meta: ProjectMeta = None
-    start_at = 0
-    duration = 0
+    __project_meta: ProjectMeta = None
+    __step_datas: List[StepData] = None
+    __session: HttpSession = None
+    __session_variables: VariablesMapping = {}
+    __start_at = 0
+    __duration = 0
 
     def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
-        self.project_meta = project_meta
+        self.__project_meta = project_meta
         return self
 
     def with_session(self, session: HttpSession) -> "HttpRunner":
-        self.session = session
+        self.__session = session
         return self
 
     def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
-        self.session_variables = variables
+        self.__session_variables = variables
         return self
 
     def __run_step_request(self, step: TStep):
@@ -56,7 +55,7 @@ class HttpRunner(object):
         # parse
         request_dict = step.request.dict()
         parsed_request_dict = parse_data(
-            request_dict, step.variables, self.project_meta.functions
+            request_dict, step.variables, self.__project_meta.functions
         )
 
         # prepare arguments
@@ -70,8 +69,8 @@ class HttpRunner(object):
         logger.debug(f"request kwargs(raw): {parsed_request_dict}")
 
         # request
-        self.session = self.session or HttpSession()
-        resp = self.session.request(method, url, **parsed_request_dict)
+        self.__session = self.__session or HttpSession()
+        resp = self.__session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
 
         def log_req_resp_details():
@@ -108,21 +107,20 @@ class HttpRunner(object):
         validators = step.validators
         try:
             resp_obj.validate(
-                validators, variables_mapping, self.project_meta.functions
+                validators, variables_mapping, self.__project_meta.functions
             )
-            self.session.data.success = True
+            self.__session.data.success = True
         except ValidationFailure:
-            self.session.data.success = False
+            self.__session.data.success = False
             log_req_resp_details()
             raise
         finally:
-            self.validation_results = resp_obj.validation_results
             # save request & response meta data
-            self.session.data.validators = self.validation_results
-            self.success &= self.session.data.success
+            self.__session.data.validators = resp_obj.validation_results
+            self.success &= self.__session.data.success
 
-        step_data.success = self.session.data.success
-        step_data.data = self.session.data
+        step_data.success = self.__session.data.success
+        step_data.data = self.__session.data
         return step_data
 
     def __run_step_testcase(self, step):
@@ -130,14 +128,14 @@ class HttpRunner(object):
         step_data = StepData(name=step.name)
         step_variables = step.variables
 
-        ref_testcase_path = os.path.join(self.project_meta.PWD, step.testcase)
+        ref_testcase_path = os.path.join(self.__project_meta.PWD, step.testcase)
         case_result = (
             HttpRunner()
-            .with_session(self.session)
+            .with_session(self.__session)
             .with_variables(step_variables)
             .run_path(ref_testcase_path)
         )
-        step_data.data = case_result.step_datas  # list of step data
+        step_data.data = case_result.get_summary()  # list of step data
         step_data.export = case_result.get_export_variables()
         step_data.success = case_result.success
         self.success &= case_result.success
@@ -157,50 +155,50 @@ class HttpRunner(object):
                 f"teststep is neither a request nor a referenced testcase: {step.dict()}"
             )
 
-        self.step_datas.append(step_data)
+        self.__step_datas.append(step_data)
         return step_data.export
 
     def run(self, testcase: TestCase):
         """main entrance"""
         self.config = testcase.config
         self.teststeps = testcase.teststeps
-        self.config.variables.update(self.session_variables)
+        self.config.variables.update(self.__session_variables)
 
         if self.config.path:
-            self.project_meta = load_project_meta(self.config.path)
-        elif not self.project_meta:
-            self.project_meta = ProjectMeta()
+            self.__project_meta = load_project_meta(self.config.path)
+        elif not self.__project_meta:
+            self.__project_meta = ProjectMeta()
 
         def parse_config(config: TConfig):
             config.variables = parse_variables_mapping(
-                config.variables, self.project_meta.functions
+                config.variables, self.__project_meta.functions
             )
             config.name = parse_data(
-                config.name, config.variables, self.project_meta.functions
+                config.name, config.variables, self.__project_meta.functions
             )
             config.base_url = parse_data(
-                config.base_url, config.variables, self.project_meta.functions
+                config.base_url, config.variables, self.__project_meta.functions
             )
 
         parse_config(self.config)
-        self.start_at = time.time()
-        self.step_datas: List[StepData] = []
-        self.session_variables = {}
+        self.__start_at = time.time()
+        self.__step_datas: List[StepData] = []
+        self.__session_variables = {}
         for step in self.teststeps:
             # update with config variables
             step.variables.update(self.config.variables)
             # update with session variables extracted from pre step
-            step.variables.update(self.session_variables)
+            step.variables.update(self.__session_variables)
             # parse variables
             step.variables = parse_variables_mapping(
-                step.variables, self.project_meta.functions
+                step.variables, self.__project_meta.functions
             )
             # run step
             extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
-            self.session_variables.update(extract_mapping)
+            self.__session_variables.update(extract_mapping)
 
-        self.duration = time.time() - self.start_at
+        self.__duration = time.time() - self.__start_at
         return self
 
     def run_path(self, path: Text) -> "HttpRunner":
@@ -210,36 +208,39 @@ class HttpRunner(object):
         _, testcase_obj = load_testcase_file(path)
         return self.run(testcase_obj)
 
+    def get_step_datas(self) -> List[StepData]:
+        return self.__step_datas
+
     def get_export_variables(self) -> Dict:
         export_vars_mapping = {}
         for var_name in self.config.export:
-            if var_name not in self.session_variables:
+            if var_name not in self.__session_variables:
                 raise ParamsError(
-                    f"failed to export variable {var_name} from session variables {self.session_variables}"
+                    f"failed to export variable {var_name} from session variables {self.__session_variables}"
                 )
 
-            export_vars_mapping[var_name] = self.session_variables[var_name]
+            export_vars_mapping[var_name] = self.__session_variables[var_name]
 
         return export_vars_mapping
 
     def get_summary(self) -> TestCaseSummary:
         """get testcase result summary"""
-        start_at_timestamp = self.start_at
+        start_at_timestamp = self.__start_at
         start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
         return TestCaseSummary(
             name=self.config.name,
             success=self.success,
             time=TestCaseTime(
-                start_at=self.start_at,
+                start_at=self.__start_at,
                 start_at_iso_format=start_at_iso_format,
-                duration=self.duration,
+                duration=self.__duration,
             ),
             # status=result.status,
             # attachment=result.attachment,
             in_out=TestCaseInOut(
                 vars=self.config.variables, export=self.get_export_variables()
             ),
-            step_datas=self.step_datas,
+            step_datas=self.__step_datas,
         )
 
     def test_start(self):
