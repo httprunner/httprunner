@@ -44,6 +44,7 @@ For compatibility, you can also write upload test script in old way:
 
 import os
 import sys
+from typing import Text, NoReturn
 
 from httprunner.parser import parse_variables_mapping
 from httprunner.schema import TStep, FunctionsMapping
@@ -61,7 +62,7 @@ $ pip install requests_toolbelt filetype
     sys.exit(0)
 
 
-def prepare_upload_step(step: TStep, functions: FunctionsMapping):
+def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
     """ preprocess for upload test
         replace `upload` info with MultipartEncoder
 
@@ -103,7 +104,7 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping):
     step.request.data = "$m_encoder"
 
 
-def multipart_encoder(**kwargs):
+def multipart_encoder(**kwargs) -> MultipartEncoder:
     """ initialize MultipartEncoder with uploading fields.
     """
 
@@ -141,7 +142,7 @@ def multipart_encoder(**kwargs):
     return MultipartEncoder(fields=fields_dict)
 
 
-def multipart_content_type(m_encoder):
+def multipart_content_type(m_encoder: MultipartEncoder) -> Text:
     """ prepare Content-Type for request headers
     """
     return m_encoder.content_type
