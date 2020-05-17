@@ -124,6 +124,7 @@ class ResponseObject(object):
         self.resp_obj_meta = {
             "status_code": resp_obj.status_code,
             "headers": resp_obj.headers,
+            "cookies": dict(resp_obj.cookies),
             "body": body,
         }
         self.validation_results: Dict = {}
