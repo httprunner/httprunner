@@ -25,10 +25,6 @@ class TestLoader(unittest.TestCase):
             "mubu_login_test.py"
         )
         self.assertEqual(
-            convert_testcase_path("mubu login.yml")[0],
-            "mubu_login_test.py"
-        )
-        self.assertEqual(
             convert_testcase_path("/path/to/mubu.login.yml")[0],
             "/path/to/mubu_login_test.py"
         )
@@ -41,6 +37,26 @@ class TestLoader(unittest.TestCase):
             "MubuLogin"
         )
         self.assertEqual(
+            convert_testcase_path("mubu login.yml")[0],
+            "mubu_login_test.py"
+        )
+        self.assertEqual(
             convert_testcase_path("/path/to 2/mubu login.yml")[1],
             "MubuLogin"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to 2/mubu-login.yml")[0],
+            "/path/to 2/mubu_login_test.py"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to 2/mubu-login.yml")[1],
+            "MubuLogin"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to 2/幕布login.yml")[0],
+            "/path/to 2/幕布login_test.py"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to/幕布login.yml")[1],
+            "幕布Login"
         )
