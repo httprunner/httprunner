@@ -39,7 +39,7 @@ def make_testcase(testcase_path: str) -> Union[str, None]:
 
     raw_file_name, _ = os.path.splitext(os.path.basename(testcase_path))
     # convert title case, e.g. request_with_variables => RequestWithVariables
-    name_in_title_case = raw_file_name.title().replace("_", "")
+    name_in_title_case = raw_file_name.replace(".", " ").title().replace("_", "").replace(" ", "")
 
     testcase_dir = os.path.dirname(testcase_path)
     testcase_python_path = os.path.join(testcase_dir, f"{raw_file_name}_test.py")
