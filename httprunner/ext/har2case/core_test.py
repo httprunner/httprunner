@@ -22,9 +22,9 @@ class TestHar(TestUtils):
             for validator in teststep_dict["validate"]
         }
         self.assertEqual(validators_mapping["status_code"], 200)
-        self.assertEqual(validators_mapping["content.IsSuccess"], True)
-        self.assertEqual(validators_mapping["content.Code"], 200)
-        self.assertEqual(validators_mapping["content.Message"], None)
+        self.assertEqual(validators_mapping["body.IsSuccess"], True)
+        self.assertEqual(validators_mapping["body.Code"], 200)
+        self.assertEqual(validators_mapping["body.Message"], None)
 
     def test_prepare_teststeps(self):
         teststeps = self.har_parser._prepare_teststeps()

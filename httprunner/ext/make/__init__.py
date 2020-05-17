@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import Union, Text, List
+from typing import Union, Text, List, Tuple
 
 import jinja2
 from loguru import logger
@@ -28,6 +28,28 @@ if __name__ == "__main__":
 """
 
 
+def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
+    """convert single YAML/JSON testcase path to python file"""
+    if os.path.isdir(testcase_path):
+        # folder does not need to convert
+        return testcase_path, ""
+
+    raw_file_name, file_suffix = os.path.splitext(os.path.basename(testcase_path))
+
+    file_suffix = file_suffix.lower()
+    if file_suffix not in [".json", ".yml", ".yaml"]:
+        raise exceptions.ParamsError("")
+
+    file_name = raw_file_name.replace(" ", "_").replace(".", "_")
+    testcase_dir = os.path.dirname(testcase_path)
+    testcase_python_path = os.path.join(testcase_dir, f"{file_name}_test.py")
+
+    # convert title case, e.g. request_with_variables => RequestWithVariables
+    name_in_title_case = file_name.title().replace("_", "")
+
+    return testcase_python_path, name_in_title_case
+
+
 def make_testcase(testcase_path: str) -> Union[str, None]:
     logger.info(f"start to make testcase: {testcase_path}")
     try:
@@ -37,12 +59,7 @@ def make_testcase(testcase_path: str) -> Union[str, None]:
 
     template = jinja2.Template(__TMPL__)
 
-    raw_file_name, _ = os.path.splitext(os.path.basename(testcase_path))
-    # convert title case, e.g. request_with_variables => RequestWithVariables
-    name_in_title_case = raw_file_name.replace(".", " ").title().replace("_", "").replace(" ", "")
-
-    testcase_dir = os.path.dirname(testcase_path)
-    testcase_python_path = os.path.join(testcase_dir, f"{raw_file_name}_test.py")
+    testcase_python_path, name_in_title_case = convert_testcase_path(testcase_path)
 
     config = testcase["config"]
     config["path"] = testcase_python_path
@@ -60,26 +77,10 @@ def make_testcase(testcase_path: str) -> Union[str, None]:
     return testcase_python_path
 
 
-def convert_testcase_path(testcase_path: Text) -> Text:
-    """convert single YAML/JSON testcase path to python file"""
-    if os.path.isdir(testcase_path):
-        # folder does not need to convert
-        return testcase_path
-
-    file_suffix = os.path.splitext(testcase_path)[1].lower()
-    if file_suffix == ".json":
-        return testcase_path.replace(".json", "_test.py")
-    elif file_suffix == ".yaml":
-        return testcase_path.replace(".yaml", "_test.py")
-    elif file_suffix == ".yml":
-        return testcase_path.replace(".yml", "_test.py")
-    else:
-        raise exceptions.ParamsError("")
-
-
 def format_with_black(tests_path: Text):
     logger.info("format testcases with black ...")
-    tests_path = convert_testcase_path(tests_path)
+    tests_path, _ = convert_testcase_path(tests_path)
+
     try:
         subprocess.run(["black", tests_path])
     except subprocess.CalledProcessError as ex:
