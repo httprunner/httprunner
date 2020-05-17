@@ -261,9 +261,7 @@ class HarParser(object):
                 if isinstance(value, (dict, list)):
                     continue
 
-                teststep_dict["validate"].append(
-                    {"eq": ["content.{}".format(key), value]}
-                )
+                teststep_dict["validate"].append({"eq": ["body.{}".format(key), value]})
 
     def _prepare_teststep(self, entry_json):
         """ extract info from entry dict and make teststep
