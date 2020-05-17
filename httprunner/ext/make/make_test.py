@@ -1,5 +1,5 @@
 import unittest
-from httprunner.ext.make import make_testcase, main_make
+from httprunner.ext.make import make_testcase, main_make, convert_testcase_path
 
 
 class TestLoader(unittest.TestCase):
@@ -17,4 +17,30 @@ class TestLoader(unittest.TestCase):
         self.assertIn(
             "examples/postman_echo/request_methods/request_with_functions_test.py",
             testcase_python_list,
+        )
+
+    def test_convert_testcase_path(self):
+        self.assertEqual(
+            convert_testcase_path("mubu.login.yml")[0],
+            "mubu_login_test.py"
+        )
+        self.assertEqual(
+            convert_testcase_path("mubu login.yml")[0],
+            "mubu_login_test.py"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to/mubu.login.yml")[0],
+            "/path/to/mubu_login_test.py"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to 2/mubu.login.yml")[0],
+            "/path/to 2/mubu_login_test.py"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to 2/mubu.login.yml")[1],
+            "MubuLogin"
+        )
+        self.assertEqual(
+            convert_testcase_path("/path/to 2/mubu login.yml")[1],
+            "MubuLogin"
         )
