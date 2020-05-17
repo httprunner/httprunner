@@ -4,7 +4,7 @@
 
 **Fixed**
 
-- fix: compatibility with testcase file path includes dots and space
+- fix: compatibility with testcase file path includes dots, space and minus sign
 - fix: testcase generator, validate content.xxx => body.xxx
 - fix: scaffold for v3
 

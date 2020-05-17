@@ -41,7 +41,7 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     if file_suffix not in [".json", ".yml", ".yaml"]:
         raise exceptions.ParamsError("")
 
-    file_name = raw_file_name.replace(" ", "_").replace(".", "_")
+    file_name = raw_file_name.replace(" ", "_").replace(".", "_").replace("-", "_")
     testcase_dir = os.path.dirname(testcase_path)
     testcase_python_path = os.path.join(testcase_dir, f"{file_name}_test.py")
 
