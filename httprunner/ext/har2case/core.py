@@ -297,7 +297,7 @@ class HarParser(object):
     def _prepare_config(self):
         """ prepare config block.
         """
-        return {"name": "testcase description", "variables": {}}
+        return {"name": "testcase description", "variables": {}, "verify": False}
 
     def _prepare_teststeps(self):
         """ make teststep list.
