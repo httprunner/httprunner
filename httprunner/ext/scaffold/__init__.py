@@ -97,6 +97,7 @@ teststeps:
     name: request with referenced testcase
     variables:
         foo1: override_bar1
+    # NOTICE: relative testcase path based on debugtalk.py
     testcase: testcases/demo_testcase_request.yml
 """
     ignore_content = "\n".join(

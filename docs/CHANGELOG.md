@@ -6,6 +6,7 @@
 
 - fix: compatibility with testcase file path includes dots and space
 - fix: testcase generator, validate content.xxx => body.xxx
+- fix: scaffold for v3
 
 ## 3.0.2 (2020-05-16)
 
