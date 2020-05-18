@@ -37,71 +37,84 @@ def create_scaffold(project_name):
         msg = f"created file: {path}"
         logger.info(msg)
 
-    demo_api_content = """
-name: demo api
-variables:
-    var1: value1
-    var2: value2
-request:
-    url: /api/path/$var1
-    method: POST
-    headers:
-        Content-Type: "application/json"
-    json:
-        key: $var2
-validate:
-    - eq: ["status_code", 200]
-"""
-    demo_testcase_content = """
+    demo_testcase_request_content = """
 config:
-    name: "demo testcase"
+    name: "request methods testcase with functions"
     variables:
-        device_sn: "ABC"
-        username: ${ENV(USERNAME)}
-        password: ${ENV(PASSWORD)}
-    base_url: "http://127.0.0.1:5000"
+        foo1: session_bar1
+    base_url: "https://postman-echo.com"
+    verify: False
 
 teststeps:
 -
-    name: demo step 1
-    api: path/to/api1.yml
+    name: get with params
     variables:
-        user_agent: 'iOS/10.3'
-        device_sn: $device_sn
+        foo1: bar1
+        foo2: session_bar2
+        sum_v: "${sum_two(1, 2)}"
+    request:
+        method: GET
+        url: /get
+        params:
+            foo1: $foo1
+            foo2: $foo2
+            sum_v: $sum_v
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
     extract:
-        token: content.token
+        session_foo2: "body.args.foo2"
     validate:
         - eq: ["status_code", 200]
+        - eq: ["body.args.foo1", "session_bar1"]
+        - eq: ["body.args.sum_v", 3]
+        - eq: ["body.args.foo2", "session_bar2"]
 -
-    name: demo step 2
-    api: path/to/api2.yml
+    name: post raw text
     variables:
-        token: $token
+        foo1: "hello world"
+        foo3: "$session_foo2"
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+            Content-Type: "text/plain"
+        data: "This is expected to be sent back as part of response body: $foo1-$foo3."
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.data", "This is expected to be sent back as part of response body: session_bar1-session_bar2."]
 """
-    demo_testsuite_content = """
+    demo_testcase_with_ref_content = """
 config:
-    name: "demo testsuite"
+    name: "request methods testcase: reference testcase"
     variables:
-        device_sn: "XYZ"
-    base_url: "http://127.0.0.1:5000"
+        foo1: session_bar1
+    base_url: "https://postman-echo.com"
+    verify: False
 
-testcases:
+teststeps:
 -
-    name: call demo_testcase with data 1
-    testcase: path/to/demo_testcase.yml
+    name: request with referenced testcase
     variables:
-        device_sn: $device_sn
--
-    name: call demo_testcase with data 2
-    testcase: path/to/demo_testcase.yml
-    variables:
-        device_sn: $device_sn
+        foo1: override_bar1
+    # NOTICE: relative testcase path based on debugtalk.py
+    testcase: testcases/demo_testcase_request.yml
 """
     ignore_content = "\n".join(
         [".env", "reports/*", "__pycache__/*", "*.pyc", ".python-version", "logs/*"]
     )
-    demo_debugtalk_content = """
-import time
+    demo_debugtalk_content = """import time
+
+from httprunner import __version__
+
+
+def get_httprunner_version():
+    return __version__
+
+
+def sum_two(m, n):
+    return m + n
+
 
 def sleep(n_secs):
     time.sleep(n_secs)
@@ -109,18 +122,17 @@ def sleep(n_secs):
     demo_env_content = "\n".join(["USERNAME=leolee", "PASSWORD=123456"])
 
     create_folder(project_name)
-    create_folder(os.path.join(project_name, "api"))
+    create_folder(os.path.join(project_name, "har"))
     create_folder(os.path.join(project_name, "testcases"))
-    create_folder(os.path.join(project_name, "testsuites"))
     create_folder(os.path.join(project_name, "reports"))
-    create_file(os.path.join(project_name, "api", "demo_api.yml"), demo_api_content)
+
     create_file(
-        os.path.join(project_name, "testcases", "demo_testcase.yml"),
-        demo_testcase_content,
+        os.path.join(project_name, "testcases", "demo_testcase_request.yml"),
+        demo_testcase_request_content,
     )
     create_file(
-        os.path.join(project_name, "testsuites", "demo_testsuite.yml"),
-        demo_testsuite_content,
+        os.path.join(project_name, "testcases", "demo_testcase_ref.yml"),
+        demo_testcase_with_ref_content,
     )
     create_file(os.path.join(project_name, "debugtalk.py"), demo_debugtalk_content)
     create_file(os.path.join(project_name, ".env"), demo_env_content)

@@ -25,7 +25,7 @@ def main_run(extra_args):
             continue
         elif os.path.isfile(item):
             # replace YAML/JSON file path with generated python file
-            extra_args[index] = convert_testcase_path(item)
+            extra_args[index], _ = convert_testcase_path(item)
 
         tests_path_list.append(item)
 

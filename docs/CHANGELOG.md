@@ -1,5 +1,13 @@
 # Release History
 
+## 3.0.3 (2020-05-17)
+
+**Fixed**
+
+- fix: compatibility with testcase file path includes dots, space and minus sign
+- fix: testcase generator, validate content.xxx => body.xxx
+- fix: scaffold for v3
+
 ## 3.0.2 (2020-05-16)
 
 **Added**
