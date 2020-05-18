@@ -209,7 +209,7 @@ class HttpRunner(object):
         if not os.path.isfile(path):
             raise exceptions.ParamsError(f"Invalid testcase path: {path}")
 
-        _, testcase_obj = load_testcase_file(path)
+        testcase_obj = load_testcase_file(path)
         return self.run(testcase_obj)
 
     def get_step_datas(self) -> List[StepData]:
