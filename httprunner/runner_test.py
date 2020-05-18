@@ -9,11 +9,11 @@ class TestHttpRunner(unittest.TestCase):
 
     def test_run_testcase_by_path_request_only(self):
         self.runner.run_path(
-            "examples/postman_echo/request_methods/request_with_variables.yml"
+            "examples/postman_echo/request_methods/request_with_functions.yml"
         )
         result = self.runner.get_summary()
         self.assertTrue(result.success)
-        self.assertEqual(result.name, "request methods testcase with variables")
+        self.assertEqual(result.name, "request methods testcase with functions")
         self.assertEqual(result.step_datas[0].name, "get with params")
         self.assertEqual(len(result.step_datas), 3)
 
@@ -24,5 +24,5 @@ class TestHttpRunner(unittest.TestCase):
         result = self.runner.get_summary()
         self.assertTrue(result.success)
         self.assertEqual(result.name, "request methods testcase: reference testcase")
-        self.assertEqual(result.step_datas[0].name, "request with variables")
+        self.assertEqual(result.step_datas[0].name, "request with functions")
         self.assertEqual(len(result.step_datas), 1)

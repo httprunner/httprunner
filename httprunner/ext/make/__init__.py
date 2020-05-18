@@ -102,7 +102,6 @@ def make_testcase(testcase: Dict) -> Union[str, None]:
     }
     content = template.render(data)
 
-    os.makedirs(os.path.dirname(testcase_python_path), exist_ok=True)
     with open(testcase_python_path, "w") as f:
         f.write(content)
 
@@ -134,6 +133,9 @@ def make_testsuite(testsuite: Dict) -> List[Text]:
 
     logger.info(f"start to make testsuite: {testsuite_path}")
 
+    # create directory with testsuite file name, put its testcases under this directory
+    os.makedirs(os.path.dirname(os.path.splitext(testsuite_path)[0]), exist_ok=True)
+
     testcase_files = []
 
     for testcase in testsuite["testcases"]:
@@ -142,6 +144,9 @@ def make_testsuite(testsuite: Dict) -> List[Text]:
         testcase_path = os.path.join(project_working_directory, testcase_file)
         testcase_dict = load_test_file(testcase_path)
         testcase_dict.setdefault("config", {})
+        testcase_dict["config"]["path"] = os.path.join(
+            os.path.splitext(testsuite_path)[0], os.path.basename(testcase_path)
+        )
 
         # override testcase name
         testcase_dict["config"]["name"] = testcase["name"]
@@ -153,11 +158,6 @@ def make_testsuite(testsuite: Dict) -> List[Text]:
         testcase_dict["config"].setdefault("variables", {})
         testcase_dict["config"]["variables"].update(testcase.get("variables", {}))
         testcase_dict["config"]["variables"].update(testsuite_variables)
-
-        # create directory with testsuite file name, put its testcases under this directory
-        testcase_dict["config"]["path"] = os.path.join(
-            os.path.splitext(testsuite_path)[0], os.path.basename(testcase_path)
-        )
 
         # make testcase
         testcase_path = make_testcase(testcase_dict)
