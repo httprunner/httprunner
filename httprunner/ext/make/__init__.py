@@ -89,7 +89,7 @@ def format_with_black(tests_path: Text):
         logger.error(ex)
 
 
-def make(tests_path: Text) -> List:
+def __make(tests_path: Text) -> List:
     testcases = []
     if os.path.isdir(tests_path):
         files_list = load_folder_files(tests_path)
@@ -106,6 +106,10 @@ def make(tests_path: Text) -> List:
             continue
         testcase_path_list.append(testcase_path)
 
+    if not testcase_path_list:
+        logger.warning(f"No valid testcase generated on {tests_path}")
+        return []
+
     format_with_black(tests_path)
     return testcase_path_list
 
@@ -113,7 +117,7 @@ def make(tests_path: Text) -> List:
 def main_make(tests_paths: List[Text]) -> List:
     testcase_path_list = []
     for tests_path in tests_paths:
-        testcase_path_list.extend(make(tests_path))
+        testcase_path_list.extend(__make(tests_path))
 
     return testcase_path_list
 
