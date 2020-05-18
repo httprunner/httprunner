@@ -34,7 +34,8 @@ def _load_yaml_file(yaml_file: Text) -> Dict:
         try:
             yaml_content = yaml.load(stream)
         except yaml.YAMLError as ex:
-            logger.error(str(ex))
+            err_msg = f"YAMLError:\nfile: {yaml_file}\nerror: {ex}"
+            logger.error(err_msg)
             raise exceptions.FileFormatError
 
         return yaml_content
@@ -46,8 +47,8 @@ def _load_json_file(json_file: Text) -> Dict:
     with io.open(json_file, encoding="utf-8") as data_file:
         try:
             json_content = json.load(data_file)
-        except json.JSONDecodeError:
-            err_msg = f"JSONDecodeError: JSON file format error: {json_file}"
+        except json.JSONDecodeError as ex:
+            err_msg = f"JSONDecodeError:\nfile: {json_file}\nerror: {ex}"
             logger.error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
