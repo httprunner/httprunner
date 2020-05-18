@@ -84,6 +84,15 @@ def make_testcase(testcase: Dict) -> Union[str, None]:
     testcase_python_path, name_in_title_case = convert_testcase_path(testcase_path)
 
     config = testcase["config"]
+
+    config.setdefault("variables", {})
+    if isinstance(config["variables"], Text):
+        # get variables by function, e.g. ${get_variables()}
+        project_meta = load_project_meta(testcase_path)
+        config["variables"] = parse_data(
+            config["variables"], {}, project_meta.functions
+        )
+
     config["path"] = testcase_python_path
     data = {
         "testcase_path": testcase_path,
