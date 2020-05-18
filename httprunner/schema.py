@@ -160,6 +160,18 @@ class PlatformInfo(BaseModel):
     platform: Text
 
 
+class TestCaseRef(BaseModel):
+    name: Text
+    base_url: Text = ""
+    testcase: Text
+    variables: VariablesMapping = {}
+
+
+class TestSuite(BaseModel):
+    config: TConfig
+    testcases: List[TestCaseRef]
+
+
 class Stat(BaseModel):
     total: int = 0
     success: int = 0

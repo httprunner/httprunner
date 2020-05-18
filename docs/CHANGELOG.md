@@ -2,6 +2,10 @@
 
 ## 3.0.4 (2020-05-18)
 
+**Added**
+
+- feat: make testsuite and run testsuite
+
 **Fixed**
 
 - fix: extract response cookies
