@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.4 (2020-05-18)
+
+**Fixed**
+
+- fix: extract response cookies
+
 ## 3.0.3 (2020-05-17)
 
 **Fixed**
