@@ -75,8 +75,8 @@ def load_testcase_file(testcase_file: Text) -> Tuple[Dict, TestCase]:
         # validate with pydantic TestCase model
         testcase_obj = TestCase.parse_obj(testcase_content)
     except ValidationError as ex:
-        err_msg = f"Invalid testcase format: {testcase_file}"
-        logger.error(f"{err_msg}\n{ex}")
+        err_msg = f"TestCase ValidationError:\nfile: {testcase_file}\nerror: {ex}"
+        logger.error(err_msg)
         raise exceptions.TestCaseFormatError(err_msg)
 
     testcase_content["config"]["path"] = testcase_file
