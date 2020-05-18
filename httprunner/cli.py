@@ -20,15 +20,14 @@ def init_parser_run(subparsers):
 
 def main_run(extra_args):
     tests_path_list = []
-    for index, item in enumerate(extra_args):
+    extra_args_new = []
+    for item in extra_args:
         if not os.path.exists(item):
             # item is not file/folder path
-            continue
-        elif os.path.isfile(item):
-            # replace YAML/JSON file path with generated python file
-            extra_args[index], _ = convert_testcase_path(item)
-
-        tests_path_list.append(item)
+            extra_args_new.append(item)
+        else:
+            # item is file/folder path
+            tests_path_list.append(item)
 
     if len(tests_path_list) == 0:
         # has not specified any testcase path
@@ -39,9 +38,11 @@ def main_run(extra_args):
         logger.error("No valid testcases found, exit 1.")
         sys.exit(1)
 
-    if "-s" not in extra_args:
-        extra_args.insert(0, "-s")
-    pytest.main(extra_args)
+    extra_args_new.extend(testcase_path_list)
+    if "-s" not in extra_args_new:
+        extra_args_new.insert(0, "-s")
+
+    pytest.main(extra_args_new)
 
 
 def main():

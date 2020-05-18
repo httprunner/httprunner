@@ -1,5 +1,6 @@
 import unittest
-from httprunner.ext.make import make_testcase, main_make, convert_testcase_path
+
+from httprunner.ext.make import main_make, convert_testcase_path
 
 
 class TestLoader(unittest.TestCase):
@@ -52,3 +53,16 @@ class TestLoader(unittest.TestCase):
             "/path/to 2/幕布login_test.py",
         )
         self.assertEqual(convert_testcase_path("/path/to/幕布login.yml")[1], "幕布Login")
+
+    def test_make_testsuite(self):
+        path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
+        testcase_python_list = main_make(path)
+        self.assertEqual(len(testcase_python_list), 2)
+        self.assertIn(
+            "examples/postman_echo/request_methods/demo_testsuite/request_with_functions_test.py",
+            testcase_python_list,
+        )
+        self.assertIn(
+            "examples/postman_echo/request_methods/demo_testsuite/request_with_testcase_reference_test.py",
+            testcase_python_list,
+        )

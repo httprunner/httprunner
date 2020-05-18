@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from httprunner import builtin, utils
 from httprunner import exceptions
-from httprunner.schema import TestCase, ProjectMeta
+from httprunner.schema import TestCase, ProjectMeta, TestSuite
 
 try:
     # PyYAML version >= 5.1
@@ -93,6 +93,19 @@ def load_testcase_file(testcase_file: Text) -> TestCase:
     testcase_content.setdefault("config", {})["path"] = testcase_file
     testcase_obj = load_testcase(testcase_content)
     return testcase_obj
+
+
+def load_testsuite(testsuite: Dict) -> TestSuite:
+    path = testsuite["config"]["path"]
+    try:
+        # validate with pydantic TestCase model
+        testsuite_obj = TestSuite.parse_obj(testsuite)
+    except ValidationError as ex:
+        err_msg = f"TestSuite ValidationError:\nfile: {path}\nerror: {ex}"
+        logger.error(err_msg)
+        raise exceptions.TestSuiteFormatError(err_msg)
+
+    return testsuite_obj
 
 
 def load_dot_env_file(dot_env_path: Text) -> Dict:
@@ -358,6 +371,14 @@ def init_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
     sys.path.insert(0, project_working_directory)
 
     return debugtalk_path, project_working_directory
+
+
+def get_project_working_directory(test_path: Text) -> Text:
+    global project_working_directory
+    if not project_working_directory:
+        init_project_working_directory(test_path)
+
+    return project_working_directory
 
 
 def load_debugtalk_functions() -> Dict[Text, Callable]:
