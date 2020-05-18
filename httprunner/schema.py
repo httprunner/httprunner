@@ -36,7 +36,8 @@ class TConfig(BaseModel):
     name: Name
     verify: Verify = False
     base_url: BaseUrl = ""
-    variables: VariablesMapping = {}
+    # Text: prepare variables in debugtalk.py, ${get_variable()}
+    variables: Union[VariablesMapping, Text] = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     export: Export = []

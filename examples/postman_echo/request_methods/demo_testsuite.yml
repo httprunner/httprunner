@@ -1,6 +1,6 @@
 config:
     name: "demo testsuite"
-#    variables: ${get_variable()}
+    variables: ${get_variables()}
 
 testcases:
 -
