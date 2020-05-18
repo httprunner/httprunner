@@ -5,6 +5,7 @@
 **Fixed**
 
 - fix: extract response cookies
+- fix: handle errors when no valid testcases generated
 
 ## 3.0.3 (2020-05-17)
 

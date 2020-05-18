@@ -3,6 +3,7 @@ import os
 import sys
 
 import pytest
+from loguru import logger
 
 from httprunner import __description__, __version__, exceptions
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
@@ -33,7 +34,10 @@ def main_run(extra_args):
         # has not specified any testcase path
         raise exceptions.ParamsError("Missed testcase path")
 
-    main_make(tests_path_list)
+    testcase_path_list = main_make(tests_path_list)
+    if not testcase_path_list:
+        logger.error("No valid testcases found, exit 1.")
+        sys.exit(1)
 
     if "-s" not in extra_args:
         extra_args.insert(0, "-s")
