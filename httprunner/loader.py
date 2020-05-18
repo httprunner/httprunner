@@ -55,21 +55,28 @@ def _load_json_file(json_file: Text) -> Dict:
         return json_content
 
 
-def load_testcase_file(testcase_file: Text) -> Tuple[Dict, TestCase]:
-    """load testcase file and validate with pydantic model"""
-    if not os.path.isfile(testcase_file):
-        raise exceptions.FileNotFound(f"testcase file not exists: {testcase_file}")
+def load_test_file(test_file: Text) -> Dict:
+    """load testcase/testsuite file content"""
+    if not os.path.isfile(test_file):
+        raise exceptions.FileNotFound(f"test file not exists: {test_file}")
 
-    file_suffix = os.path.splitext(testcase_file)[1].lower()
+    file_suffix = os.path.splitext(test_file)[1].lower()
     if file_suffix == ".json":
-        testcase_content = _load_json_file(testcase_file)
+        test_file_content = _load_json_file(test_file)
     elif file_suffix in [".yaml", ".yml"]:
-        testcase_content = _load_yaml_file(testcase_file)
+        test_file_content = _load_yaml_file(test_file)
     else:
         # '' or other suffix
         raise exceptions.FileFormatError(
-            f"testcase file should be YAML/JSON format, invalid testcase file: {testcase_file}"
+            f"testcase/testsuite file should be YAML/JSON format, invalid format file: {test_file}"
         )
+
+    return test_file_content
+
+
+def load_testcase_file(testcase_file: Text) -> Tuple[Dict, TestCase]:
+    """load testcase file and validate with pydantic model"""
+    testcase_content = load_test_file(testcase_file)
 
     try:
         # validate with pydantic TestCase model
