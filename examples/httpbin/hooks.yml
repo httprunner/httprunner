@@ -32,5 +32,6 @@ teststeps:
         - ${alter_response($response)}
     validate:
         - eq: ["status_code", 200]
-#        - eq: ["headers.content-type", "html/text"]
+        # TODO: implement hooks
+#        - eq: [body.headers."Content-Type", "html/text"]
         - eq: [body.headers.Host, "httpbin.org"]

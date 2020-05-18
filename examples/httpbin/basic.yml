@@ -19,7 +19,7 @@ teststeps:
         method: GET
     validate:
         - eq: ["status_code", 200]
-#        - startswith: [body.user-agent, "python-requests"]
+        - startswith: [body."user-agent", "python-requests"]
 
 -
     name: get without params
@@ -58,7 +58,7 @@ teststeps:
         method: GET
     validate:
         - eq: ["status_code", 200]
-        # - eq: [cookies.name, "value"]
+        - eq: [body.cookies.name, "value"]
 
 -
     name: extract cookie
@@ -67,7 +67,7 @@ teststeps:
         method: GET
     validate:
         - eq: ["status_code", 200]
-        # - eq: [cookies.name, "value"]
+        - eq: [body.cookies.name, "value"]
 
 -
     name: post data

@@ -27,7 +27,10 @@ class TestCaseBasic(HttpRunner):
             **{
                 "name": "user-agent",
                 "request": {"url": "/user-agent", "method": "GET"},
-                "validate": [{"eq": ["status_code", 200]}],
+                "validate": [
+                    {"eq": ["status_code", 200]},
+                    {"startswith": ['body."user-agent"', "python-requests"]},
+                ],
             }
         ),
         TStep(
@@ -61,14 +64,20 @@ class TestCaseBasic(HttpRunner):
             **{
                 "name": "set cookie",
                 "request": {"url": "/cookies/set?name=value", "method": "GET"},
-                "validate": [{"eq": ["status_code", 200]}],
+                "validate": [
+                    {"eq": ["status_code", 200]},
+                    {"eq": ["body.cookies.name", "value"]},
+                ],
             }
         ),
         TStep(
             **{
                 "name": "extract cookie",
                 "request": {"url": "/cookies", "method": "GET"},
-                "validate": [{"eq": ["status_code", 200]}],
+                "validate": [
+                    {"eq": ["status_code", 200]},
+                    {"eq": ["body.cookies.name", "value"]},
+                ],
             }
         ),
         TStep(
