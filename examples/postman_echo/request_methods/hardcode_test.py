@@ -10,6 +10,7 @@ class TestCaseHardcode(HttpRunner):
             "base_url": "https://postman-echo.com",
             "verify": False,
             "path": "examples/postman_echo/request_methods/hardcode_test.py",
+            "variables": {},
         }
     )
 

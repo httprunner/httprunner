@@ -17,9 +17,9 @@ class TestCaseRequestWithTestcaseReference(HttpRunner):
     teststeps = [
         TStep(
             **{
-                "name": "request with variables",
+                "name": "request with functions",
                 "variables": {"foo1": "override_bar1"},
-                "testcase": "request_methods/request_with_variables.yml",
+                "testcase": "request_methods/request_with_functions.yml",
             }
         ),
     ]
