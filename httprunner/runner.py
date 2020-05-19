@@ -65,11 +65,7 @@ class HttpRunner(object):
         method = parsed_request_dict.pop("method")
         url_path = parsed_request_dict.pop("url")
         url = build_url(self.config.base_url, url_path)
-
         parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
-
-        logger.info(f"{method} {url}")
-        logger.debug(f"request kwargs(raw): {parsed_request_dict}")
 
         # request
         self.__session = self.__session or HttpSession()
@@ -148,7 +144,7 @@ class HttpRunner(object):
 
     def __run_step(self, step: TStep):
         """run teststep, teststep maybe a request or referenced testcase"""
-        logger.info(f"run step: {step.name}")
+        logger.info(f"run step begin: {step.name} >>>>>>")
 
         if step.request:
             step_data = self.__run_step_request(step)
@@ -160,6 +156,7 @@ class HttpRunner(object):
             )
 
         self.__step_datas.append(step_data)
+        logger.info(f"run step end: {step.name} <<<<<<\n")
         return step_data.export
 
     def run(self, testcase: TestCase):

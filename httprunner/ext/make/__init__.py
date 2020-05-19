@@ -60,7 +60,7 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
 
 
 def format_pytest_with_black(python_paths: List[Text]):
-    logger.info("format pytest case with black ...")
+    logger.info("format pytest cases with black ...")
     try:
         subprocess.run(["black", *python_paths])
     except subprocess.CalledProcessError as ex:
