@@ -59,10 +59,10 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     return testcase_python_path, name_in_title_case
 
 
-def format_pytest_with_black(python_path: Text):
-    logger.info(f"format pytest case with black: {python_path}")
+def format_pytest_with_black(python_paths: List[Text]):
+    logger.info("format pytest case with black ...")
     try:
-        subprocess.run(["black", python_path])
+        subprocess.run(["black", *python_paths])
     except subprocess.CalledProcessError as ex:
         logger.error(ex)
 
@@ -106,7 +106,6 @@ def make_testcase(testcase: Dict) -> Union[str, None]:
         f.write(content)
 
     logger.info(f"generated testcase: {testcase_python_path}")
-    format_pytest_with_black(testcase_python_path)
     return testcase_python_path
 
 
@@ -222,6 +221,7 @@ def main_make(tests_paths: List[Text]) -> List:
     for tests_path in tests_paths:
         testcase_path_list.extend(__make(tests_path))
 
+    format_pytest_with_black(testcase_path_list)
     return testcase_path_list
 
 

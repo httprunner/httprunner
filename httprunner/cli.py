@@ -31,7 +31,8 @@ def main_run(extra_args):
 
     if len(tests_path_list) == 0:
         # has not specified any testcase path
-        raise exceptions.ParamsError("Missed testcase path")
+        logger.error(f"No valid testcase path in cli arguments: {extra_args}")
+        sys.exit(1)
 
     testcase_path_list = main_make(tests_path_list)
     if not testcase_path_list:
