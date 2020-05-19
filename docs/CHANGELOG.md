@@ -1,10 +1,11 @@
 # Release History
 
-## 3.0.4 (2020-05-18)
+## 3.0.4 (2020-05-19)
 
 **Added**
 
 - feat: make testsuite and run testsuite
+- feat: testcase/testsuite config support getting variables by function
 
 **Fixed**
 
