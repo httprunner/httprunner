@@ -1,0 +1,15 @@
+config:
+    name: "demo testsuite"
+    variables: ${get_variables()}
+
+testcases:
+-
+    name: request with functions
+    testcase: request_methods/request_with_functions.yml
+    variables:
+        var1: testsuite_val1
+-
+    name: request with referenced testcase
+    testcase: request_methods/request_with_testcase_reference.yml
+    variables:
+        var2: testsuite_val2

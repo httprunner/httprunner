@@ -44,6 +44,10 @@ class TestCaseFormatError(MyBaseError):
     pass
 
 
+class TestSuiteFormatError(MyBaseError):
+    pass
+
+
 class ParamsError(MyBaseError):
     pass
 
