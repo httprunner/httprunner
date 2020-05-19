@@ -109,7 +109,7 @@ class HarParser(object):
         """
         teststep_headers = {}
         for header in entry_json["request"].get("headers", []):
-            if header["name"] == "cookie":
+            if header["name"] == "cookie" or header["name"].startswith(":"):
                 continue
 
             teststep_headers[header["name"]] = header["value"]

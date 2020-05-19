@@ -13,6 +13,10 @@
 - fix: extract response cookies
 - fix: handle errors when no valid testcases generated
 
+**Changed**
+
+- change: har2case do not ignore request headers, except for header startswith :
+
 ## 3.0.3 (2020-05-17)
 
 **Fixed**
