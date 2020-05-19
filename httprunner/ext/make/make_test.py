@@ -59,10 +59,10 @@ class TestLoader(unittest.TestCase):
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 2)
         self.assertIn(
-            "examples/postman_echo/request_methods/demo_testsuite/request_with_functions_test.py",
+            "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_functions_test.py",
             testcase_python_list,
         )
         self.assertIn(
-            "examples/postman_echo/request_methods/demo_testsuite/request_with_testcase_reference_test.py",
+            "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_testcase_reference_test.py",
             testcase_python_list,
         )

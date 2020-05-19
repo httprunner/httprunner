@@ -134,7 +134,8 @@ def make_testsuite(testsuite: Dict) -> List[Text]:
     logger.info(f"start to make testsuite: {testsuite_path}")
 
     # create directory with testsuite file name, put its testcases under this directory
-    os.makedirs(os.path.dirname(os.path.splitext(testsuite_path)[0]), exist_ok=True)
+    testsuite_dir = testsuite_path.replace(".", "_")
+    os.makedirs(testsuite_dir, exist_ok=True)
 
     testcase_files = []
 
@@ -145,7 +146,7 @@ def make_testsuite(testsuite: Dict) -> List[Text]:
         testcase_dict = load_test_file(testcase_path)
         testcase_dict.setdefault("config", {})
         testcase_dict["config"]["path"] = os.path.join(
-            os.path.splitext(testsuite_path)[0], os.path.basename(testcase_path)
+            testsuite_dir, os.path.basename(testcase_path)
         )
 
         # override testcase name
