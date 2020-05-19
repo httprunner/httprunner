@@ -6,6 +6,7 @@
 
 - feat: make testsuite and run testsuite
 - feat: testcase/testsuite config support getting variables by function
+- feat: har2case with request cookies
 
 **Fixed**
 

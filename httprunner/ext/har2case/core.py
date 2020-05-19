@@ -93,6 +93,14 @@ class HarParser(object):
 
         teststep_dict["request"]["method"] = method
 
+    def __make_request_cookies(self, teststep_dict, entry_json):
+        cookies = {}
+        for cookie in entry_json["request"].get("cookies", []):
+            cookies[cookie["name"]] = cookie["value"]
+
+        if cookies:
+            teststep_dict["request"]["cookies"] = cookies
+
     def __make_request_headers(self, teststep_dict, entry_json):
         """ parse HAR entry request headers, and make teststep headers.
             header in IGNORE_REQUEST_HEADERS will be ignored.
@@ -288,6 +296,7 @@ class HarParser(object):
 
         self.__make_request_url(teststep_dict, entry_json)
         self.__make_request_method(teststep_dict, entry_json)
+        self.__make_request_cookies(teststep_dict, entry_json)
         self.__make_request_headers(teststep_dict, entry_json)
         self._make_request_data(teststep_dict, entry_json)
         self._make_validate(teststep_dict, entry_json)
