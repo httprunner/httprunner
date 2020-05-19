@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from httprunner import builtin, utils
 from httprunner import exceptions
-from httprunner.schema import TestCase, ProjectMeta
+from httprunner.schema import TestCase, ProjectMeta, TestSuite
 
 try:
     # PyYAML version >= 5.1
@@ -34,7 +34,8 @@ def _load_yaml_file(yaml_file: Text) -> Dict:
         try:
             yaml_content = yaml.load(stream)
         except yaml.YAMLError as ex:
-            logger.error(str(ex))
+            err_msg = f"YAMLError:\nfile: {yaml_file}\nerror: {ex}"
+            logger.error(err_msg)
             raise exceptions.FileFormatError
 
         return yaml_content
@@ -46,42 +47,65 @@ def _load_json_file(json_file: Text) -> Dict:
     with io.open(json_file, encoding="utf-8") as data_file:
         try:
             json_content = json.load(data_file)
-        except json.JSONDecodeError:
-            err_msg = f"JSONDecodeError: JSON file format error: {json_file}"
+        except json.JSONDecodeError as ex:
+            err_msg = f"JSONDecodeError:\nfile: {json_file}\nerror: {ex}"
             logger.error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
         return json_content
 
 
-def load_testcase_file(testcase_file: Text) -> Tuple[Dict, TestCase]:
-    """load testcase file and validate with pydantic model"""
-    if not os.path.isfile(testcase_file):
-        raise exceptions.FileNotFound(f"testcase file not exists: {testcase_file}")
+def load_test_file(test_file: Text) -> Dict:
+    """load testcase/testsuite file content"""
+    if not os.path.isfile(test_file):
+        raise exceptions.FileNotFound(f"test file not exists: {test_file}")
 
-    file_suffix = os.path.splitext(testcase_file)[1].lower()
+    file_suffix = os.path.splitext(test_file)[1].lower()
     if file_suffix == ".json":
-        testcase_content = _load_json_file(testcase_file)
+        test_file_content = _load_json_file(test_file)
     elif file_suffix in [".yaml", ".yml"]:
-        testcase_content = _load_yaml_file(testcase_file)
+        test_file_content = _load_yaml_file(test_file)
     else:
         # '' or other suffix
         raise exceptions.FileFormatError(
-            f"testcase file should be YAML/JSON format, invalid testcase file: {testcase_file}"
+            f"testcase/testsuite file should be YAML/JSON format, invalid format file: {test_file}"
         )
 
+    return test_file_content
+
+
+def load_testcase(testcase: Dict) -> TestCase:
+    path = testcase["config"]["path"]
     try:
         # validate with pydantic TestCase model
-        testcase_obj = TestCase.parse_obj(testcase_content)
+        testcase_obj = TestCase.parse_obj(testcase)
     except ValidationError as ex:
-        err_msg = f"Invalid testcase format: {testcase_file}"
-        logger.error(f"{err_msg}\n{ex}")
+        err_msg = f"TestCase ValidationError:\nfile: {path}\nerror: {ex}"
+        logger.error(err_msg)
         raise exceptions.TestCaseFormatError(err_msg)
 
-    testcase_content["config"]["path"] = testcase_file
-    testcase_obj.config.path = testcase_file
+    return testcase_obj
 
-    return testcase_content, testcase_obj
+
+def load_testcase_file(testcase_file: Text) -> TestCase:
+    """load testcase file and validate with pydantic model"""
+    testcase_content = load_test_file(testcase_file)
+    testcase_content.setdefault("config", {})["path"] = testcase_file
+    testcase_obj = load_testcase(testcase_content)
+    return testcase_obj
+
+
+def load_testsuite(testsuite: Dict) -> TestSuite:
+    path = testsuite["config"]["path"]
+    try:
+        # validate with pydantic TestCase model
+        testsuite_obj = TestSuite.parse_obj(testsuite)
+    except ValidationError as ex:
+        err_msg = f"TestSuite ValidationError:\nfile: {path}\nerror: {ex}"
+        logger.error(err_msg)
+        raise exceptions.TestSuiteFormatError(err_msg)
+
+    return testsuite_obj
 
 
 def load_dot_env_file(dot_env_path: Text) -> Dict:
@@ -347,6 +371,14 @@ def init_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
     sys.path.insert(0, project_working_directory)
 
     return debugtalk_path, project_working_directory
+
+
+def get_project_working_directory(test_path: Text) -> Text:
+    global project_working_directory
+    if not project_working_directory:
+        init_project_working_directory(test_path)
+
+    return project_working_directory
 
 
 def load_debugtalk_functions() -> Dict[Text, Callable]:

@@ -1,5 +1,23 @@
 # Release History
 
+## 3.0.4 (2020-05-19)
+
+**Added**
+
+- feat: make testsuite and run testsuite
+- feat: testcase/testsuite config support getting variables by function
+- feat: har2case with request cookies
+- feat: log request/response headers and body with indent
+
+**Fixed**
+
+- fix: extract response cookies
+- fix: handle errors when no valid testcases generated
+
+**Changed**
+
+- change: har2case do not ignore request headers, except for header startswith :
+
 ## 3.0.3 (2020-05-17)
 
 **Fixed**

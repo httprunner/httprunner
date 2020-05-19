@@ -7,3 +7,9 @@ def get_httprunner_version():
 
 def sum_two(m, n):
     return m + n
+
+
+def get_variables():
+    return {
+        "foo1": "session_bar1"
+    }

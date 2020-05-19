@@ -1,3 +1,4 @@
+import json
 import time
 
 import requests
@@ -32,12 +33,19 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     def log_print(req_or_resp, r_type):
         msg = f"\n================== {r_type} details ==================\n"
         for key, value in req_or_resp.dict().items():
-            msg += "{:<16} : {}\n".format(key, repr(value))
+            if isinstance(value, dict):
+                value = json.dumps(value, indent=4)
+
+            msg += "{:<8} : {}\n".format(key, value)
         logger.debug(msg)
 
     # record actual request info
     request_headers = dict(resp_obj.request.headers)
     request_body = resp_obj.request.body
+    try:
+        request_body = json.loads(request_body)
+    except json.JSONDecodeError:
+        pass
 
     if request_body:
         request_content_type = lower_dict_keys(request_headers).get("content-type")
@@ -195,10 +203,6 @@ class HttpSession(requests.Session):
         Safe mode has been removed from requests 1.x.
         """
         try:
-            msg = "processed request:\n"
-            msg += f"> {method} {url}\n"
-            msg += f"> kwargs: {kwargs}"
-            logger.debug(msg)
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise

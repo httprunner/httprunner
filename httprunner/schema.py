@@ -36,7 +36,8 @@ class TConfig(BaseModel):
     name: Name
     verify: Verify = False
     base_url: BaseUrl = ""
-    variables: VariablesMapping = {}
+    # Text: prepare variables in debugtalk.py, ${get_variable()}
+    variables: Union[VariablesMapping, Text] = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     export: Export = []
@@ -158,6 +159,18 @@ class PlatformInfo(BaseModel):
     httprunner_version: Text
     python_version: Text
     platform: Text
+
+
+class TestCaseRef(BaseModel):
+    name: Text
+    base_url: Text = ""
+    testcase: Text
+    variables: VariablesMapping = {}
+
+
+class TestSuite(BaseModel):
+    config: TConfig
+    testcases: List[TestCaseRef]
 
 
 class Stat(BaseModel):

@@ -1,7 +1,6 @@
 config:
     name: "request methods testcase with variables"
-    variables:
-        foo1: session_bar1
+    variables: ${get_variables()}
     base_url: "https://postman-echo.com"
     verify: False
 
