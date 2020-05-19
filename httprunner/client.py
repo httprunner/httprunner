@@ -195,10 +195,6 @@ class HttpSession(requests.Session):
         Safe mode has been removed from requests 1.x.
         """
         try:
-            msg = "processed request:\n"
-            msg += f"> {method} {url}\n"
-            msg += f"> kwargs: {kwargs}"
-            logger.debug(msg)
             return requests.Session.request(self, method, url, **kwargs)
         except (MissingSchema, InvalidSchema, InvalidURL):
             raise
