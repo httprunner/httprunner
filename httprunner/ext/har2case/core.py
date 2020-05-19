@@ -14,24 +14,6 @@ except ImportError:
     JSONDecodeError = ValueError
 
 
-IGNORE_REQUEST_HEADERS = [
-    "host",
-    "accept",
-    "content-length",
-    "connection",
-    "accept-encoding",
-    "accept-language",
-    "origin",
-    "cache-control",
-    "pragma",
-    "upgrade-insecure-requests",
-    ":authority",
-    ":method",
-    ":scheme",
-    ":path",
-]
-
-
 class HarParser(object):
     def __init__(self, har_file_path, filter_str=None, exclude_str=None):
         self.har_file_path = har_file_path
@@ -127,9 +109,6 @@ class HarParser(object):
         """
         teststep_headers = {}
         for header in entry_json["request"].get("headers", []):
-            if header["name"].lower() in IGNORE_REQUEST_HEADERS:
-                continue
-
             teststep_headers[header["name"]] = header["value"]
 
         if teststep_headers:
