@@ -1,5 +1,6 @@
 import os
 import time
+import uuid
 from datetime import datetime
 from typing import List, Dict, Text
 
@@ -31,6 +32,7 @@ class HttpRunner(object):
 
     success: bool = True  # indicate testcase execution result
     __project_meta: ProjectMeta = None
+    __hrun_request_id: Text = None
     __step_datas: List[StepData] = None
     __session: HttpSession = None
     __session_variables: VariablesMapping = {}
@@ -43,6 +45,10 @@ class HttpRunner(object):
 
     def with_session(self, session: HttpSession) -> "HttpRunner":
         self.__session = session
+        return self
+
+    def with_request_id(self, hrun_request_id: Text) -> "HttpRunner":
+        self.__hrun_request_id = hrun_request_id
         return self
 
     def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
@@ -59,6 +65,10 @@ class HttpRunner(object):
         request_dict.pop("upload", None)
         parsed_request_dict = parse_data(
             request_dict, step.variables, self.__project_meta.functions
+        )
+        parsed_request_dict["headers"].setdefault(
+            "HRUN-Request-ID",
+            f"{self.__hrun_request_id}-{str(int(time.time() * 1000))[-6:]}",
         )
 
         # prepare arguments
@@ -131,6 +141,7 @@ class HttpRunner(object):
         case_result = (
             HttpRunner()
             .with_session(self.__session)
+            .with_request_id(self.__hrun_request_id)
             .with_variables(step_variables)
             .run_path(ref_testcase_path)
         )
@@ -183,6 +194,7 @@ class HttpRunner(object):
         parse_config(self.config)
         self.__start_at = time.time()
         self.__step_datas: List[StepData] = []
+        self.__hrun_request_id = self.__hrun_request_id or f"HRUN-{uuid.uuid4()}"
         self.__session = self.__session or HttpSession()
         self.__session_variables = {}
         for step in self.teststeps:
