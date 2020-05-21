@@ -198,6 +198,11 @@ class HttpRunner(object):
         self.__hrun_request_id = self.__hrun_request_id or f"HRUN-{uuid.uuid4()}"
         self.__session = self.__session or HttpSession()
         self.__session_variables = {}
+
+        # update allure report meta
+        allure.dynamic.title(self.config.name)
+        allure.dynamic.description(f"Request ID Prefix: {self.__hrun_request_id}")
+
         for step in self.teststeps:
             # update with config variables
             step.variables.update(self.config.variables)
