@@ -68,7 +68,6 @@ class HttpRunner(object):
         parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
 
         # request
-        self.__session = self.__session or HttpSession()
         resp = self.__session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
 
@@ -184,6 +183,7 @@ class HttpRunner(object):
         parse_config(self.config)
         self.__start_at = time.time()
         self.__step_datas: List[StepData] = []
+        self.__session = self.__session or HttpSession()
         self.__session_variables = {}
         for step in self.teststeps:
             # update with config variables

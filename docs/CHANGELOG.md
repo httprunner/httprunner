@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.5 (2020-05-21)
+
+**Fixed**
+
+- fix: ensure referenced testcase share the same session
+
 ## 3.0.4 (2020-05-19)
 
 **Added**
