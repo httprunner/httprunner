@@ -33,7 +33,7 @@ class HttpRunner(object):
 
     success: bool = True  # indicate testcase execution result
     __project_meta: ProjectMeta = None
-    __hrun_request_id: Text = None
+    __case_id: Text = None
     __step_datas: List[StepData] = None
     __session: HttpSession = None
     __session_variables: VariablesMapping = {}
@@ -48,8 +48,8 @@ class HttpRunner(object):
         self.__session = session
         return self
 
-    def with_request_id(self, hrun_request_id: Text) -> "HttpRunner":
-        self.__hrun_request_id = hrun_request_id
+    def with_case_id(self, case_id: Text) -> "HttpRunner":
+        self.__case_id = case_id
         return self
 
     def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
@@ -69,7 +69,7 @@ class HttpRunner(object):
         )
         parsed_request_dict["headers"].setdefault(
             "HRUN-Request-ID",
-            f"{self.__hrun_request_id}-{str(int(time.time() * 1000))[-6:]}",
+            f"HRUN-{self.__case_id}-{str(int(time.time() * 1000))[-6:]}",
         )
 
         # prepare arguments
@@ -142,7 +142,7 @@ class HttpRunner(object):
         case_result = (
             HttpRunner()
             .with_session(self.__session)
-            .with_request_id(self.__hrun_request_id)
+            .with_case_id(self.__case_id)
             .with_variables(step_variables)
             .run_path(ref_testcase_path)
         )
@@ -174,7 +174,9 @@ class HttpRunner(object):
         """main entrance"""
         self.config = testcase.config
         self.teststeps = testcase.teststeps
-        self.config.variables.update(self.__session_variables)
+
+        self.__case_id = self.__case_id or str(uuid.uuid4())
+        logger.info(f"Start to run testcase: {self.config.name}, TestCase ID: {self.__case_id}")
 
         if self.config.path:
             self.__project_meta = load_project_meta(self.config.path)
@@ -192,16 +194,16 @@ class HttpRunner(object):
                 config.base_url, config.variables, self.__project_meta.functions
             )
 
+        self.config.variables.update(self.__session_variables)
         parse_config(self.config)
         self.__start_at = time.time()
         self.__step_datas: List[StepData] = []
-        self.__hrun_request_id = self.__hrun_request_id or f"HRUN-{uuid.uuid4()}"
         self.__session = self.__session or HttpSession()
         self.__session_variables = {}
 
         # update allure report meta
         allure.dynamic.title(self.config.name)
-        allure.dynamic.description(f"Request ID Prefix: {self.__hrun_request_id}")
+        allure.dynamic.description(f"TestCase ID: {self.__case_id}")
 
         for step in self.teststeps:
             # update with config variables
