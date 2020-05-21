@@ -2,6 +2,10 @@
 
 ## 3.0.5 (2020-05-21)
 
+**Added**
+
+- feat: add default header `HRUN-Request-ID` for each testcase #721
+
 **Fixed**
 
 - fix: ensure referenced testcase share the same session
