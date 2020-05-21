@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import allure
 from datetime import datetime
 from typing import List, Dict, Text
 
@@ -207,7 +208,8 @@ class HttpRunner(object):
                 step.variables, self.__project_meta.functions
             )
             # run step
-            extract_mapping = self.__run_step(step)
+            with allure.step(f"step: {step.name}"):
+                extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
             self.__session_variables.update(extract_mapping)
 
