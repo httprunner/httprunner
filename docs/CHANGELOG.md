@@ -4,6 +4,7 @@
 
 **Added**
 
+- feat: each testcase has an unique id in uuid4 format
 - feat: add default header `HRUN-Request-ID` for each testcase #721
 - feat: builtin allure report
 
