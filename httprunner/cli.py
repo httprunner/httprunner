@@ -40,9 +40,6 @@ def main_run(extra_args):
         sys.exit(1)
 
     extra_args_new.extend(testcase_path_list)
-    if "-s" not in extra_args_new:
-        extra_args_new.insert(0, "-s")
-
     pytest.main(extra_args_new)
 
 

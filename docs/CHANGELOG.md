@@ -11,6 +11,10 @@
 
 - fix: ensure referenced testcase share the same session
 
+**Changed**
+
+- change: remove default added `-s` option for hrun
+
 ## 3.0.4 (2020-05-19)
 
 **Added**
