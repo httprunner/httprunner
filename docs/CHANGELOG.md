@@ -1,12 +1,13 @@
 # Release History
 
-## 3.0.5 (2020-05-21)
+## 3.0.5 (2020-05-22)
 
 **Added**
 
 - feat: each testcase has an unique id in uuid4 format
 - feat: add default header `HRUN-Request-ID` for each testcase #721
 - feat: builtin allure report
+- feat: dump log for each testcase
 
 **Fixed**
 

@@ -192,7 +192,7 @@ class HttpSession(requests.Session):
             logger.info(
                 f"status_code: {response.status_code}, "
                 f"response_time(ms): {response_time_ms} ms, "
-                f"response_length: {content_size} bytes\n"
+                f"response_length: {content_size} bytes"
             )
 
         return response
