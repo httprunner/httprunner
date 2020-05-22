@@ -40,4 +40,9 @@ class TestCli(unittest.TestCase):
         self.assertIn(__description__, self.captured_output.getvalue().strip())
 
     def test_debug_pytest(self):
-        pytest.main(["-s", "examples/postman_echo/request_methods/request_with_variables_test.py"])
+        pytest.main(
+            [
+                "-s",
+                "examples/postman_echo/request_methods/request_with_variables_test.py",
+            ]
+        )
