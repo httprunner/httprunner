@@ -13,6 +13,7 @@ BaseUrl = Union[HttpUrl, Text]
 VariablesMapping = Dict[Text, Any]
 FunctionsMapping = Dict[Text, Callable]
 Headers = Dict[Text, Text]
+Cookies = Dict[Text, Text]
 Verify = bool
 Hook = List[Text]
 Export = List[Text]
@@ -53,7 +54,7 @@ class Request(BaseModel):
     headers: Headers = {}
     req_json: Dict = Field({}, alias="json")
     data: Union[Text, Dict[Text, Any]] = ""
-    cookies: Dict[Text, Text] = {}
+    cookies: Cookies = {}
     timeout: int = 120
     allow_redirects: bool = True
     verify: Verify = False
@@ -108,13 +109,13 @@ class RequestData(BaseModel):
     method: MethodEnum = MethodEnum.GET
     url: Url
     headers: Headers = {}
-    # TODO: add cookies
+    cookies: Cookies = {}
     body: Union[Text, bytes, Dict, None] = {}
 
 
 class ResponseData(BaseModel):
     status_code: int
-    cookies: Dict
+    cookies: Cookies
     encoding: Union[Text, None] = None
     headers: Dict
     content_type: Text

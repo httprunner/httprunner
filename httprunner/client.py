@@ -41,6 +41,7 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
 
     # record actual request info
     request_headers = dict(resp_obj.request.headers)
+    request_cookies = dict(resp_obj.request._cookies)
     request_body = resp_obj.request.body
     try:
         request_body = json.loads(request_body)
@@ -57,6 +58,7 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         method=resp_obj.request.method,
         url=resp_obj.request.url,
         headers=request_headers,
+        cookies=request_cookies,
         body=request_body,
     )
 
