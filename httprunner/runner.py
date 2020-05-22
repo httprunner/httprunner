@@ -174,11 +174,6 @@ class HttpRunner(object):
         return step_data.export
 
     def __parse_config(self, config: TConfig):
-        if config.path:
-            self.__project_meta = load_project_meta(config.path)
-        elif not self.__project_meta:
-            self.__project_meta = ProjectMeta()
-
         config.variables.update(self.__session_variables)
         config.variables = parse_variables_mapping(
             config.variables, self.__project_meta.functions
@@ -196,6 +191,7 @@ class HttpRunner(object):
         self.teststeps = testcase.teststeps
 
         # prepare
+        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
         self.__parse_config(self.config)
         self.__start_at = time.time()
         self.__step_datas: List[StepData] = []
@@ -271,8 +267,15 @@ class HttpRunner(object):
         )
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
+        # parse config name
+        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
+        variables = self.config.variables
+        variables.update(self.__session_variables)
+        self.config.name = parse_data(
+            self.config.name, variables, self.__project_meta.functions
+        )
+
         # update allure report meta
-        # TODO: parse config name
         allure.dynamic.title(self.config.name)
         allure.dynamic.description(f"TestCase ID: {self.__case_id}")
 
