@@ -30,14 +30,13 @@ jobs:
         poetry build
         ls dist/*.whl | xargs pip install # test installation
         hrun -V
-        hrun run -h
-        hrun startproject -h
-        hrun har2case -h
-        pip install locustio
-        hrun locusts -h
+        har2case -h
+        httprunner run -h
+        httprunner startproject -h
+        httprunner har2case -h
     - name: Run smoketest - postman echo
       run: |
-        hrun examples/postman_echo/request_methods
+        hrun -s examples/postman_echo/request_methods
     - name: Run smoketest - httpbin
       run: |
-        hrun examples/httpbin/
+        hrun -s examples/httpbin/
