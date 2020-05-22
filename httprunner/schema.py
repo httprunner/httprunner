@@ -147,8 +147,9 @@ class StepData(BaseModel):
 
 
 class TestCaseSummary(BaseModel):
-    name: Text = ""
-    success: bool = False
+    name: Text
+    success: bool
+    case_id: Text
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
