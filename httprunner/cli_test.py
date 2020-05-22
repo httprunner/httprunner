@@ -2,6 +2,8 @@ import io
 import sys
 import unittest
 
+import pytest
+
 from httprunner.cli import main
 
 
@@ -36,3 +38,6 @@ class TestCli(unittest.TestCase):
         from httprunner import __description__
 
         self.assertIn(__description__, self.captured_output.getvalue().strip())
+
+    def test_debug_pytest(self):
+        pytest.main(["-s", "examples/postman_echo/request_methods/request_with_variables_test.py"])
