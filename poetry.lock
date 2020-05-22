@@ -14,6 +14,32 @@ version = "2.4"
 
 [[package]]
 category = "main"
+description = "Allure pytest integration"
+name = "allure-pytest"
+optional = false
+python-versions = "*"
+version = "2.8.15"
+
+[package.dependencies]
+allure-python-commons = "2.8.15"
+pytest = ">=4.5.0"
+six = ">=1.9.0"
+
+[[package]]
+category = "main"
+description = "Common module for integrate allure with python-based frameworks"
+name = "allure-python-commons"
+optional = false
+python-versions = "*"
+version = "2.8.15"
+
+[package.dependencies]
+attrs = ">=16.0.0"
+pluggy = ">=0.4.0"
+six = ">=1.9.0"
+
+[[package]]
+category = "main"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 name = "appdirs"
 optional = false
@@ -516,13 +542,21 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "be53fb0cd423bac9dda129a958a58026009a99a455081333d7af51c22a4df8cf"
+content-hash = "67027f8f78c61b981f3c01613ded1da2a0256a28fb92f95dd2d642b3fd1b43a5"
 python-versions = "^3.6"
 
 [metadata.files]
 aiocontextvars = [
     {file = "aiocontextvars-0.2.2-py2.py3-none-any.whl", hash = "sha256:885daf8261818767d8f7cbd79f9d4482d118f024b6586ef6e67980236a27bfa3"},
     {file = "aiocontextvars-0.2.2.tar.gz", hash = "sha256:f027372dc48641f683c559f247bd84962becaacdc9ba711d583c3871fb5652aa"},
+]
+allure-pytest = [
+    {file = "allure-pytest-2.8.15.tar.gz", hash = "sha256:27f9c75194e95ba069ee2d6d2a2615ed6c7e96617ff9a492ab3a74f3f4e64be2"},
+    {file = "allure_pytest-2.8.15-py3-none-any.whl", hash = "sha256:62512bbce3d39b27a8e7ffbfb24e08e99c43df29b4f345168dfc9692bfddef71"},
+]
+allure-python-commons = [
+    {file = "allure-python-commons-2.8.15.tar.gz", hash = "sha256:c4768e5e1350fe2eb6e1c9dac6158dcb82e23de80c83c4fc6d71765c207c1408"},
+    {file = "allure_python_commons-2.8.15-py3-none-any.whl", hash = "sha256:88ad53109b6fa57e6b721f4eab59116db6037e219bf54e1f196a222ba5e2dcfe"},
 ]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},

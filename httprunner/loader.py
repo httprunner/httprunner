@@ -410,14 +410,17 @@ def load_project_meta(test_path: Text) -> ProjectMeta:
             environments and debugtalk.py functions.
 
     """
+    project_meta = ProjectMeta()
+
+    if not test_path:
+        return project_meta
+
     if test_path in project_meta_cached_mapping:
         return project_meta_cached_mapping[test_path]
 
     debugtalk_path, project_working_directory = init_project_working_directory(
         test_path
     )
-
-    project_meta = ProjectMeta()
 
     # load .env file
     # NOTICE:
