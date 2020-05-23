@@ -102,7 +102,7 @@ def make_testcase(testcase: Dict) -> Union[str, None]:
     }
     content = template.render(data)
 
-    with open(testcase_python_path, "w") as f:
+    with open(testcase_python_path, "w", encoding="utf-8") as f:
         f.write(content)
 
     logger.info(f"generated testcase: {testcase_python_path}")

@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.6 (2020-05-23)
+
+**Fixed**
+
+- fix: ensure converted python file in utf-8 encoding
+
 ## 3.0.5 (2020-05-22)
 
 **Added**
