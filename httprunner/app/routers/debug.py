@@ -20,7 +20,7 @@ async def debug_single_testcase(project_meta: ProjectMeta, testcase: TestCase):
         for func_name in new_added_keys:
             project_meta.functions[func_name] = locals()[func_name]
 
-    runner.with_project_meta(project_meta).run(testcase)
+    runner.with_project_meta(project_meta).run_testcase(testcase)
     summary = runner.get_summary()
 
     if not summary.success:
