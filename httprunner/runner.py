@@ -185,7 +185,7 @@ class HttpRunner(object):
             config.base_url, config.variables, self.__project_meta.functions
         )
 
-    def run(self, testcase: TestCase):
+    def run_testcase(self, testcase: TestCase):
         """run testcase"""
         self.config = testcase.config
         self.teststeps = testcase.teststeps
@@ -222,7 +222,7 @@ class HttpRunner(object):
             raise exceptions.ParamsError(f"Invalid testcase path: {path}")
 
         testcase_obj = load_testcase_file(path)
-        return self.run(testcase_obj)
+        return self.run_testcase(testcase_obj)
 
     def get_step_datas(self) -> List[StepData]:
         return self.__step_datas
@@ -284,7 +284,7 @@ class HttpRunner(object):
         )
 
         try:
-            return self.run(TestCase(config=self.config, teststeps=self.teststeps))
+            return self.run_testcase(TestCase(config=self.config, teststeps=self.teststeps))
         finally:
             logger.remove(log_handler)
             logger.info(f"generate testcase log: {self.__log_path}")
