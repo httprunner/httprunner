@@ -1,10 +1,10 @@
 import os
 import time
 import uuid
-import allure
 from datetime import datetime
 from typing import List, Dict, Text
 
+import allure
 from loguru import logger
 
 from httprunner import utils, exceptions
