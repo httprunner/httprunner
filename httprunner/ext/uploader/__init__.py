@@ -125,6 +125,7 @@ def multipart_encoder(**kwargs) -> MultipartEncoder:
         else:
             # value is not absolute file path, check if it is relative file path
             from httprunner.loader import load_project_meta
+
             project_meta = load_project_meta(os.getcwd())
 
             _file_path = os.path.join(project_meta.PWD, value)

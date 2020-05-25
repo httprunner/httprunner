@@ -2,6 +2,10 @@
 
 ## 3.0.6 (2020-05-23)
 
+**Added**
+
+- feat: make referenced testcase as pytest class
+
 **Fixed**
 
 - fix: ensure converted python file in utf-8 encoding

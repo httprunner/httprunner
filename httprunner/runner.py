@@ -141,14 +141,35 @@ class HttpRunner(object):
         step_data = StepData(name=step.name)
         step_variables = step.variables
 
-        ref_testcase_path = os.path.join(self.__project_meta.PWD, step.testcase)
-        case_result = (
-            HttpRunner()
-            .with_session(self.__session)
-            .with_case_id(self.__case_id)
-            .with_variables(step_variables)
-            .run_path(ref_testcase_path)
-        )
+        if hasattr(step.testcase, "config") and hasattr(step.testcase, "teststeps"):
+            testcase_cls = step.testcase
+            case_result = (
+                testcase_cls()
+                .with_session(self.__session)
+                .with_case_id(self.__case_id)
+                .with_variables(step_variables)
+                .run()
+            )
+
+        elif isinstance(step.testcase, Text):
+            if os.path.isabs(step.testcase):
+                ref_testcase_path = step.testcase
+            else:
+                ref_testcase_path = os.path.join(self.__project_meta.PWD, step.testcase)
+
+            case_result = (
+                HttpRunner()
+                .with_session(self.__session)
+                .with_case_id(self.__case_id)
+                .with_variables(step_variables)
+                .run_path(ref_testcase_path)
+            )
+
+        else:
+            raise exceptions.ParamsError(
+                f"Invalid teststep referenced testcase: {step}"
+            )
+
         step_data.data = case_result.get_step_datas()  # list of step data
         step_data.export = case_result.get_export_variables()
         step_data.success = case_result.success
@@ -186,7 +207,13 @@ class HttpRunner(object):
         )
 
     def run_testcase(self, testcase: TestCase):
-        """run testcase"""
+        """run specified testcase
+
+        Examples:
+            >>> testcase_obj = TestCase(config=TConfig(...), teststeps=[TStep(...)])
+            >>> HttpRunner().with_project_meta(project_meta).run_testcase(testcase_obj)
+
+        """
         self.config = testcase.config
         self.teststeps = testcase.teststeps
 
@@ -222,6 +249,16 @@ class HttpRunner(object):
             raise exceptions.ParamsError(f"Invalid testcase path: {path}")
 
         testcase_obj = load_testcase_file(path)
+        return self.run_testcase(testcase_obj)
+
+    def run(self) -> "HttpRunner":
+        """ run current testcase
+
+        Examples:
+            >>> TestCaseRequestWithFunctions().run()
+
+        """
+        testcase_obj = TestCase(config=self.config, teststeps=self.teststeps)
         return self.run_testcase(testcase_obj)
 
     def get_step_datas(self) -> List[StepData]:
@@ -284,7 +321,9 @@ class HttpRunner(object):
         )
 
         try:
-            return self.run_testcase(TestCase(config=self.config, teststeps=self.teststeps))
+            return self.run_testcase(
+                TestCase(config=self.config, teststeps=self.teststeps)
+            )
         finally:
             logger.remove(log_handler)
             logger.info(f"generate testcase log: {self.__log_path}")

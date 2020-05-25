@@ -12,6 +12,25 @@ class TestLoader(unittest.TestCase):
             "examples/postman_echo/request_methods/request_with_variables_test.py",
         )
 
+    def test_make_testcase_with_ref(self):
+        path = [
+            "examples/postman_echo/request_methods/request_with_testcase_reference.yml"
+        ]
+        testcase_python_list = main_make(path)
+        with open(testcase_python_list[0]) as f:
+            content = f.read()
+            self.assertIn(
+                """
+from examples.postman_echo.request_methods.request_with_functions_test import (
+    TestCaseRequestWithFunctions,
+)
+""",
+                content,
+            )
+            self.assertIn(
+                '"testcase": TestCaseRequestWithFunctions,', content,
+            )
+
     def test_make_testcase_folder(self):
         path = ["examples/postman_echo/request_methods/"]
         testcase_python_list = main_make(path)
@@ -33,26 +52,28 @@ class TestLoader(unittest.TestCase):
             "/path/to 2/mubu_login_test.py",
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu.login.yml")[1], "MubuLogin"
+            convert_testcase_path("/path/to 2/mubu.login.yml")[1], "TestCaseMubuLogin"
         )
         self.assertEqual(
             convert_testcase_path("mubu login.yml")[0], "mubu_login_test.py"
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu login.yml")[1], "MubuLogin"
+            convert_testcase_path("/path/to 2/mubu login.yml")[1], "TestCaseMubuLogin"
         )
         self.assertEqual(
             convert_testcase_path("/path/to 2/mubu-login.yml")[0],
             "/path/to 2/mubu_login_test.py",
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu-login.yml")[1], "MubuLogin"
+            convert_testcase_path("/path/to 2/mubu-login.yml")[1], "TestCaseMubuLogin"
         )
         self.assertEqual(
             convert_testcase_path("/path/to 2/幕布login.yml")[0],
             "/path/to 2/幕布login_test.py",
         )
-        self.assertEqual(convert_testcase_path("/path/to/幕布login.yml")[1], "幕布Login")
+        self.assertEqual(
+            convert_testcase_path("/path/to/幕布login.yml")[1], "TestCase幕布Login"
+        )
 
     def test_make_testsuite(self):
         path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]

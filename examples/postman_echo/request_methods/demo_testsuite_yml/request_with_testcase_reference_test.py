@@ -2,6 +2,10 @@
 # FROM: examples/postman_echo/request_methods/demo_testsuite_yml/request_with_testcase_reference.yml
 from httprunner import HttpRunner, TConfig, TStep
 
+from examples.postman_echo.request_methods.request_with_functions_test import (
+    TestCaseRequestWithFunctions,
+)
+
 
 class TestCaseRequestWithTestcaseReference(HttpRunner):
     config = TConfig(
@@ -19,7 +23,7 @@ class TestCaseRequestWithTestcaseReference(HttpRunner):
             **{
                 "name": "request with functions",
                 "variables": {"foo1": "override_bar1"},
-                "testcase": "request_methods/request_with_functions.yml",
+                "testcase": TestCaseRequestWithFunctions,
             }
         ),
     ]
