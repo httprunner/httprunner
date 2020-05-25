@@ -167,7 +167,7 @@ class HttpRunner(object):
 
         else:
             raise exceptions.ParamsError(
-                f"Invalid teststep referenced testcase: {step}"
+                f"Invalid teststep referenced testcase: {step.dict()}"
             )
 
         step_data.data = case_result.get_step_datas()  # list of step data
