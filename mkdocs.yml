@@ -43,12 +43,13 @@ markdown_extensions:
 extra:
     search:
         language: 'jp'
-#    social:
-#        - icon: 'globe'
-#          link: 'https://debugtalk.com'
-#        - icon: 'github'
-#          link: 'https://github.com/httprunner'
+    social:
+        -   icon: material/library
+            link: https://debugtalk.com
+        -   icon: fontawesome/brands/github-alt
+            link: 'https://github.com/httprunner'
 
 # index pages
 nav:
-    - Intro: index.md
+    - Introduction: index.md
+    - Installation: installation.md

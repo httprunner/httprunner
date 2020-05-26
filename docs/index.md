@@ -36,7 +36,7 @@
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
-![](/docs/assets/qrcode.jpg)
+![](/assets/qrcode.jpg)
 
 [requests]: http://docs.python-requests.org/en/master/
 [pytest]: https://docs.pytest.org/
