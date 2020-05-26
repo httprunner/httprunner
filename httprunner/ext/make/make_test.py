@@ -89,12 +89,16 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
         make_files_cache_set.clear()
         testcase_python_list = main_make(path)
-        # FIXME: self.assertEqual(len(testcase_python_list), 2)
+        self.assertEqual(len(testcase_python_list), 3)
         self.assertIn(
             "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_functions_test.py",
             testcase_python_list,
         )
         self.assertIn(
             "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_testcase_reference_test.py",
+            testcase_python_list,
+        )
+        self.assertIn(
+            "examples/postman_echo/request_methods/request_with_functions_test.py",
             testcase_python_list,
         )
