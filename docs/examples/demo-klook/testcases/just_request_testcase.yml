@@ -1,9 +1,0 @@
-teststeps:
-  - name: extract title
-    request:
-      method: GET
-      url: http://www.baidu.com
-    extract:
-      - title: <title>(.*)</title>
-    teardown_hooks:
-      - ${teardown_hook_set_encoding($response, utf-8)}
