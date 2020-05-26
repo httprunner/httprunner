@@ -1,4 +1,3 @@
-import os
 import unittest
 
 from httprunner.ext.make import main_make, convert_testcase_path, make_files_cache_set
