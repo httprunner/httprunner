@@ -13,6 +13,8 @@
 
 *HttpRunner* is a simple & elegant, yet powerful HTTP(S) testing framework. Enjoy! ✨ 🚀 ✨
 
+> This docs site is corresponding to the latest version `3.x`, for `2.x` you can reference [`archive link`](https://v2.httprunner.org/).
+
 ## Design Philosophy
 
 - Convention over configuration

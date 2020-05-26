@@ -53,3 +53,5 @@ extra:
 nav:
     - Introduction: index.md
     - Installation: installation.md
+    - Sponsors: sponsors.md
+    - CHANGELOG: CHANGELOG.md
