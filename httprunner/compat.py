@@ -71,12 +71,23 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
     v3_content = {"config": test_content["config"], "teststeps": []}
 
     for step in test_content["teststeps"]:
-        teststep = {}
-        if "api" in step:
-            teststep["testcase"] = step.pop("api")
+        teststep = {"name": step.pop("name", "")}
+        if "variables" in step:
+            teststep["variables"] = step.pop("variables")
 
-        teststep["extract"] = convert_extractors(step.pop("extract", {}))
-        teststep["validate"] = convert_validators(step.pop("validate", []))
+        if "request" in step:
+            teststep["request"] = step.pop("request")
+        elif "api" in step:
+            teststep["testcase"] = step.pop("api")
+        elif "testcase" in step:
+            teststep["testcase"] = step.pop("testcase")
+
+        if "extract" in step:
+            teststep["extract"] = convert_extractors(step.pop("extract"))
+
+        if "validate" in step:
+            teststep["validate"] = convert_validators(step.pop("validate"))
+
         teststep.update(step)
         v3_content["teststeps"].append(teststep)
 
