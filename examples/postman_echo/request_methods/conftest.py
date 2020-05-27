@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 
 import pytest
@@ -37,14 +38,23 @@ def testcase_fixture(request):
 
     logger.debug(f"setup testcase fixture: {config.name} - {request.module.__name__}")
 
-    # prefix = f"HRUN-{uuid.uuid4()}"
-    # for index, teststep in enumerate(teststeps):
-    #     # you can update testcase teststep here
-    #     teststep.request.headers["HRUN-Request-ID"] = f"{prefix}-{index}"
+    def update_request_headers(steps, index):
+        for teststep in steps:
+            if teststep.request:
+                index += 1
+                teststep.request.headers["X-Request-ID"] = f"{prefix}-{index}"
+            elif teststep.testcase and hasattr(teststep.testcase, "teststeps"):
+                update_request_headers(teststep.testcase.teststeps, index)
+
+    # you can update testcase teststep like this
+    prefix = f"HRUN-{uuid.uuid4()}"
+    update_request_headers(teststeps, 0)
 
     yield
 
-    logger.debug(f"teardown testcase fixture: {config.name} - {request.module.__name__}")
+    logger.debug(
+        f"teardown testcase fixture: {config.name} - {request.module.__name__}"
+    )
 
     summary = request.instance.get_summary()
     logger.debug(f"testcase result summary: {summary}")
