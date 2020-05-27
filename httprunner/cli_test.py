@@ -43,6 +43,6 @@ class TestCli(unittest.TestCase):
         pytest.main(
             [
                 "-s",
-                "examples/postman_echo/request_methods/request_with_variables_test.py",
+                "examples/postman_echo/request_methods/request_with_testcase_reference_test.py",
             ]
         )
