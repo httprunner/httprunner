@@ -164,9 +164,12 @@ class ResponseObject(object):
 
             # check item
             check_item = u_validator["check"]
-            # TODO: validate variable or function
-            # check_item = parse_data(check_item, variables_mapping, functions_mapping)
-            check_value = jmespath.search(check_item, self.resp_obj_meta)
+            if "$" in check_item:
+                # check_item is variable or function
+                check_value = parse_data(check_item, variables_mapping, functions_mapping)
+            else:
+                check_value = jmespath.search(check_item, self.resp_obj_meta)
+
             check_value = parse_string_value(check_value)
 
             # comparator

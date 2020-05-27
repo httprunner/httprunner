@@ -184,12 +184,8 @@ def __make_testcase(testcase: Dict, dir_path: Text = None) -> NoReturn:
 
 def __make_testsuite(testsuite: Dict) -> NoReturn:
     """convert valid testsuite dict to pytest folder with testcases"""
-    try:
-        # validate testcase format
-        load_testsuite(testsuite)
-    except exceptions.TestSuiteFormatError as ex:
-        logger.error(f"TestSuiteFormatError: {ex}")
-        raise
+    # validate testsuite format
+    load_testsuite(testsuite)
 
     config = testsuite["config"]
     testsuite_path = config["path"]
