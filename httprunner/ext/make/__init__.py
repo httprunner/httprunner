@@ -1,4 +1,5 @@
 import os
+import string
 import subprocess
 from typing import Text, List, Tuple, Dict, Set, NoReturn
 
@@ -49,6 +50,20 @@ if __name__ == "__main__":
 )
 
 
+def __ensure_file_name(path: Text) -> Text:
+    """ ensure file name not startswith digit
+        testcases/19.json => testcases/T19.json
+    """
+    filename = os.path.basename(path)
+    if filename[0] in string.digits:
+        path = os.path.join(
+            os.path.dirname(path),
+            f"T{filename}"
+        )
+
+    return path
+
+
 def __ensure_absolute(path: Text) -> Text:
     project_meta = load_project_meta(path)
 
@@ -81,6 +96,7 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
         # folder does not need to convert
         return testcase_path, ""
 
+    testcase_path = __ensure_file_name(testcase_path)
     raw_file_name, file_suffix = os.path.splitext(os.path.basename(testcase_path))
 
     file_suffix = file_suffix.lower()
