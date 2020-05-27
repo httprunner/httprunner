@@ -6,12 +6,21 @@ from typing import List, Dict, Text
 
 
 def convert_jmespath(raw: Text) -> Text:
+    # content.xx/json.xx => body.xx
     if raw.startswith("content"):
         return f"body{raw[len('content'):]}"
     elif raw.startswith("json"):
         return f"body{raw[len('json'):]}"
 
-    return raw
+    # add quotes for field with separator, e.g. headers.Content-Type
+    raw_list = []
+    for item in raw.split("."):
+        if "-" in item:
+            raw_list.append(f'"{item}"')
+        else:
+            raw_list.append(item)
+
+    return ".".join(raw_list)
 
 
 def convert_extractors(extractors: List) -> Dict:
