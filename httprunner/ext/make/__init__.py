@@ -3,9 +3,8 @@ import subprocess
 from typing import Text, List, Tuple, Dict, Set, NoReturn
 
 import jinja2
-from loguru import logger
-
 from httprunner import exceptions
+from httprunner.compat import ensure_testcase_v3_api, ensure_testcase_v3
 from httprunner.loader import (
     load_folder_files,
     load_test_file,
@@ -14,6 +13,7 @@ from httprunner.loader import (
     load_project_meta,
 )
 from httprunner.parser import parse_data
+from loguru import logger
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -109,12 +109,11 @@ def __format_pytest_with_black(python_paths: List[Text]) -> NoReturn:
 
 def __make_testcase(testcase: Dict, dir_path: Text = None) -> NoReturn:
     """convert valid testcase dict to pytest file path"""
-    try:
-        # validate testcase format
-        load_testcase(testcase)
-    except exceptions.TestCaseFormatError as ex:
-        logger.error(f"TestCaseFormatError: {ex}")
-        raise
+    # ensure compatibility with testcase format v2
+    testcase = ensure_testcase_v3(testcase)
+
+    # validate testcase format
+    load_testcase(testcase)
 
     testcase_path = __ensure_absolute(testcase["config"]["path"])
     logger.info(f"start to make testcase: {testcase_path}")
@@ -255,10 +254,15 @@ def __make(tests_path: Text) -> NoReturn:
     for test_file in test_files:
         try:
             test_content = load_test_file(test_file)
-            test_content.setdefault("config", {})["path"] = test_file
         except (exceptions.FileNotFound, exceptions.FileFormatError) as ex:
             logger.warning(ex)
             continue
+
+        # api in v2 format, convert to v3 testcase
+        if "request" in test_content:
+            test_content = ensure_testcase_v3_api(test_content)
+
+        test_content.setdefault("config", {})["path"] = test_file
 
         # testcase
         if "teststeps" in test_content:
