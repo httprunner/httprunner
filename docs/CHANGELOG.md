@@ -1,6 +1,6 @@
 # Release History
 
-## 3.0.6 (2020-05-25)
+## 3.0.6 (2020-05-27)
 
 **Added**
 
@@ -9,6 +9,7 @@
 **Fixed**
 
 - fix: ensure converted python file in utf-8 encoding
+- fix: duplicate running referenced testcase
 
 ## 3.0.5 (2020-05-22)
 
