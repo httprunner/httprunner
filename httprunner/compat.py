@@ -4,23 +4,29 @@ This module handles compatibility issues between testcase format v2 and v3.
 
 from typing import List, Dict, Text
 
+from httprunner import exceptions
+
 
 def convert_jmespath(raw: Text) -> Text:
     # content.xx/json.xx => body.xx
     if raw.startswith("content"):
-        return f"body{raw[len('content'):]}"
+        raw = f"body{raw[len('content'):]}"
     elif raw.startswith("json"):
-        return f"body{raw[len('json'):]}"
+        raw = f"body{raw[len('json'):]}"
 
-    # add quotes for field with separator, e.g. headers.Content-Type
     raw_list = []
     for item in raw.split("."):
         if "-" in item:
+            # add quotes for field with separator, e.g. headers.Content-Type
             raw_list.append(f'"{item}"')
+        elif item.isdigit():
+            # convert lst.0.name to lst[0].name
+            raw_list.append(f"[{item}]")
         else:
             raw_list.append(item)
 
-    return ".".join(raw_list)
+    # lst.[0].name => lst[0].name
+    return ".".join(raw_list).replace(".[", "[")
 
 
 def convert_extractors(extractors: List) -> Dict:
@@ -33,13 +39,19 @@ def convert_extractors(extractors: List) -> Dict:
         {"varA": "body.varA", "varB": "body.varB"}
 
     """
-    if isinstance(extractors, Dict):
-        return extractors
+    v3_extractors: Dict = {}
 
-    v3_extractors = {}
-    for extractor in extractors:
-        for k, v in extractor.items():
-            v3_extractors[k] = convert_jmespath(v)
+    if isinstance(extractors, List):
+        for extractor in extractors:
+            for k, v in extractor.items():
+                v3_extractors[k] = v
+    elif isinstance(extractors, Dict):
+        v3_extractors = extractors
+    else:
+        raise exceptions.FileFormatError(f"Invalid extractor: {extractors}")
+
+    for k, v in v3_extractors.items():
+        v3_extractors[k] = convert_jmespath(v)
 
     return v3_extractors
 
