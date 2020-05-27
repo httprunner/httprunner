@@ -9,7 +9,7 @@ sys.path.insert(0, os.getcwd())
 from httprunner import HttpRunner, TConfig, TStep
 
 from examples.postman_echo.request_methods.request_with_functions_test import (
-    TestCaseRequestWithFunctions,
+    TestCaseRequestWithFunctions as RequestWithFunctions,
 )
 
 
@@ -29,7 +29,7 @@ class TestCaseRequestWithTestcaseReference(HttpRunner):
             **{
                 "name": "request with functions",
                 "variables": {"foo1": "override_bar1"},
-                "testcase": TestCaseRequestWithFunctions,
+                "testcase": RequestWithFunctions,
             }
         ),
     ]

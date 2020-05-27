@@ -95,9 +95,8 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
 
     # convert title case, e.g. request_with_variables => RequestWithVariables
     name_in_title_case = file_name.title().replace("_", "")
-    testcase_cls_name = f"TestCase{name_in_title_case}"
 
-    return testcase_python_path, testcase_cls_name
+    return testcase_python_path, name_in_title_case
 
 
 def __format_pytest_with_black(python_paths: List[Text]) -> NoReturn:
@@ -163,11 +162,13 @@ def __make_testcase(testcase: Dict, dir_path: Text = None) -> NoReturn:
         ref_testcase_python_path = ref_testcase_python_path[len(os.getcwd()) + 1 :]
         ref_module_name, _ = os.path.splitext(ref_testcase_python_path)
         ref_module_name = ref_module_name.replace(os.sep, ".")
-        imports_list.append(f"from {ref_module_name} import {ref_testcase_cls_name}")
+        imports_list.append(
+            f"from {ref_module_name} import TestCase{ref_testcase_cls_name} as {ref_testcase_cls_name}"
+        )
 
     data = {
         "testcase_path": __ensure_cwd_relative(testcase_path),
-        "class_name": testcase_cls_name,
+        "class_name": f"TestCase{testcase_cls_name}",
         "config": config,
         "teststeps": teststeps,
         "imports_list": imports_list,
