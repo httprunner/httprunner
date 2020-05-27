@@ -61,7 +61,7 @@ def uniform_validator(validator):
     Args:
         validator (dict): validator maybe in two formats:
 
-            format1: this is kept for compatiblity with the previous versions.
+            format1: this is kept for compatibility with the previous versions.
                 {"check": "status_code", "assert": "eq", "expect": 201}
                 {"check": "$resp_body_success", "assert": "eq", "expect": True}
             format2: recommended new version, {assert: [check_item, expected_value]}
