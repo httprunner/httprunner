@@ -4,7 +4,13 @@ import uuid
 from datetime import datetime
 from typing import List, Dict, Text
 
-import allure
+try:
+    import allure
+
+    USE_ALLURE = True
+except ModuleNotFoundError:
+    USE_ALLURE = False
+
 from loguru import logger
 
 from httprunner import utils, exceptions
@@ -236,7 +242,10 @@ class HttpRunner(object):
                 step.variables, self.__project_meta.functions
             )
             # run step
-            with allure.step(f"step: {step.name}"):
+            if USE_ALLURE:
+                with allure.step(f"step: {step.name}"):
+                    extract_mapping = self.__run_step(step)
+            else:
                 extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
             self.__session_variables.update(extract_mapping)
@@ -312,9 +321,10 @@ class HttpRunner(object):
             self.config.name, variables, self.__project_meta.functions
         )
 
-        # update allure report meta
-        allure.dynamic.title(self.config.name)
-        allure.dynamic.description(f"TestCase ID: {self.__case_id}")
+        if USE_ALLURE:
+            # update allure report meta
+            allure.dynamic.title(self.config.name)
+            allure.dynamic.description(f"TestCase ID: {self.__case_id}")
 
         logger.info(
             f"Start to run testcase: {self.config.name}, TestCase ID: {self.__case_id}"
