@@ -1,4 +1,3 @@
-import io
 import os
 import unittest
 
@@ -89,3 +88,13 @@ class TestUtils(unittest.TestCase):
     def test_print_info(self):
         info_mapping = {"a": 1, "t": (1, 2), "b": {"b1": 123}, "c": None, "d": [4, 5]}
         utils.print_info(info_mapping)
+
+    def test_sort_dict_by_custom_order(self):
+        self.assertEqual(
+            list(
+                utils.sort_dict_by_custom_order(
+                    {"C": 3, "D": 2, "A": 1, "B": 8}, ["A", "D"]
+                ).keys()
+            ),
+            ["A", "D", "C", "B"],
+        )
