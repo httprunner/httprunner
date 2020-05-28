@@ -5,6 +5,7 @@ This module handles compatibility issues between testcase format v2 and v3.
 from typing import List, Dict, Text, Union
 
 from httprunner import exceptions
+from httprunner.utils import sort_dict_by_custom_order
 
 
 def convert_jmespath(raw: Text) -> Text:
@@ -57,7 +58,6 @@ def convert_extractors(extractors: Union[List, Dict]) -> Dict:
 
 
 def convert_validators(validators: List) -> List:
-
     for v in validators:
         if "check" in v and "expect" in v:
             # format1: {"check": "content.abc", "assert": "eq", "expect": 201}
@@ -71,8 +71,33 @@ def convert_validators(validators: List) -> List:
     return validators
 
 
-def ensure_step_attachment(step: Dict) -> Dict:
+def sort_request_by_custom_order(request: Dict) -> Dict:
+    custom_order = [
+        "method",
+        "url",
+        "params",
+        "headers",
+        "cookies",
+        "data",
+        "json",
+        "files",
+        "timeout",
+        "allow_redirects",
+        "proxies",
+        "verify",
+        "stream",
+        "auth",
+        "cert",
+    ]
+    return sort_dict_by_custom_order(request, custom_order)
 
+
+def sort_step_by_custom_order(step: Dict) -> Dict:
+    custom_order = ["name", "variables", "request", "testcase", "extract", "validate"]
+    return sort_dict_by_custom_order(step, custom_order)
+
+
+def ensure_step_attachment(step: Dict) -> Dict:
     test_dict = {
         "name": step["name"],
     }
@@ -90,11 +115,12 @@ def ensure_step_attachment(step: Dict) -> Dict:
 
 
 def ensure_testcase_v3_api(api_content: Dict) -> Dict:
-
     teststep = {
         "request": api_content["request"],
     }
     teststep.update(ensure_step_attachment(api_content))
+
+    teststep = sort_step_by_custom_order(teststep)
 
     return {
         "config": {"name": api_content["name"]},
@@ -103,7 +129,6 @@ def ensure_testcase_v3_api(api_content: Dict) -> Dict:
 
 
 def ensure_testcase_v3(test_content: Dict) -> Dict:
-
     v3_content = {"config": test_content["config"], "teststeps": []}
 
     for step in test_content["teststeps"]:
@@ -117,6 +142,7 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
             teststep["testcase"] = step.pop("testcase")
 
         teststep.update(ensure_step_attachment(step))
+        teststep = sort_step_by_custom_order(teststep)
         v3_content["teststeps"].append(teststep)
 
     return v3_content

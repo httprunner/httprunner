@@ -5,7 +5,7 @@ import unittest
 from httprunner.ext.har2case import utils
 
 
-class TestUtils(unittest.TestCase):
+class TestHar2CaseUtils(unittest.TestCase):
     @staticmethod
     def create_har_file(file_name, content):
         file_path = os.path.join(
@@ -24,7 +24,7 @@ class TestUtils(unittest.TestCase):
         self.assertIn("response", log_entries[0])
 
     def test_load_har_log_key_error(self):
-        empty_json_file_path = TestUtils.create_har_file(
+        empty_json_file_path = TestHar2CaseUtils.create_har_file(
             file_name="empty_json", content={}
         )
         with self.assertRaises(SystemExit):
@@ -32,7 +32,9 @@ class TestUtils(unittest.TestCase):
         os.remove(empty_json_file_path)
 
     def test_load_har_log_empty_error(self):
-        empty_file_path = TestUtils.create_har_file(file_name="empty", content="")
+        empty_file_path = TestHar2CaseUtils.create_har_file(
+            file_name="empty", content=""
+        )
         with self.assertRaises(SystemExit):
             utils.load_har_log_entries(empty_file_path)
         os.remove(empty_file_path)

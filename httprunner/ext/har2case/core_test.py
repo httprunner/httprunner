@@ -2,10 +2,10 @@ import os
 
 from httprunner.ext.har2case.core import HarParser
 from httprunner.ext.har2case.utils import load_har_log_entries
-from httprunner.ext.har2case.utils_test import TestUtils
+from httprunner.ext.har2case.utils_test import TestHar2CaseUtils
 
 
-class TestHar(TestUtils):
+class TestHar(TestHar2CaseUtils):
     def setUp(self):
         self.har_path = os.path.join(os.path.dirname(__file__), "data", "demo.har")
         self.har_parser = HarParser(self.har_path)

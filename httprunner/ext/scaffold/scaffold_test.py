@@ -6,7 +6,7 @@ import unittest
 from httprunner.ext.scaffold import create_scaffold
 
 
-class TestUtils(unittest.TestCase):
+class TestScaffold(unittest.TestCase):
     def test_create_scaffold(self):
         project_name = "projectABC"
         create_scaffold(project_name)

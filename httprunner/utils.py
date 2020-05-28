@@ -2,6 +2,7 @@ import collections
 import json
 import os.path
 import platform
+from typing import Dict, List, Any
 
 from loguru import logger
 
@@ -151,3 +152,16 @@ def get_platform():
         ),
         "platform": platform.platform(),
     }
+
+
+def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):
+    def get_index_from_list(lst: List, item: Any):
+        try:
+            return lst.index(item)
+        except ValueError:
+            # item is not in lst
+            return len(lst) + 1
+
+    return dict(
+        sorted(raw_dict.items(), key=lambda i: get_index_from_list(custom_order, i[0]))
+    )
