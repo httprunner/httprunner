@@ -4,6 +4,8 @@ import subprocess
 from typing import Text, List, Tuple, Dict, Set, NoReturn
 
 import jinja2
+from loguru import logger
+
 from httprunner import exceptions
 from httprunner.compat import ensure_testcase_v3_api, ensure_testcase_v3
 from httprunner.loader import (
@@ -14,7 +16,6 @@ from httprunner.loader import (
     load_project_meta,
 )
 from httprunner.parser import parse_data
-from loguru import logger
 
 """ cache converted pytest files, avoid duplicate making
 """
