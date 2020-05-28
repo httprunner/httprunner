@@ -1,6 +1,6 @@
 import unittest
 
-from httprunner.ext.make import main_make, convert_testcase_path, make_files_cache_set
+from httprunner.make import main_make, convert_testcase_path, make_files_cache_set
 
 
 class TestLoader(unittest.TestCase):
