@@ -173,7 +173,7 @@ test = ["pytest (>=4.0.0)", "pytest-cov", "mypy", "black", "isort", "requests", 
 category = "main"
 description = "Infer file type and MIME type of any file/buffer. No external dependencies."
 name = "filetype"
-optional = false
+optional = true
 python-versions = "*"
 version = "1.0.7"
 
@@ -444,7 +444,7 @@ socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
 category = "main"
 description = "A utility belt for advanced users of python-requests"
 name = "requests-toolbelt"
-optional = false
+optional = true
 python-versions = "*"
 version = "0.9.1"
 
@@ -567,8 +567,12 @@ version = "3.1.0"
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
+[extras]
+allure = ["allure-pytest"]
+upload = ["requests-toolbelt", "filetype"]
+
 [metadata]
-content-hash = "28adf69bdbc4dff08967e2a901450791c90acb93bdc83443084dbeaa5406b116"
+content-hash = "3b5147c8c95480574c9eaa8f035c536cf18535766f60f768d2e714b257511dae"
 python-versions = "^3.6"
 
 [metadata.files]

@@ -14,6 +14,10 @@
 - fix: ensure compatibility with deprecated cli args in v2
 - fix: UnicodeDecodeError when request body in protobuf
 
+**Changed**
+
+- change: make `allure-pytest`, `requests-toolbelt`, `filetype` as optional dependencies
+
 ## 3.0.5 (2020-05-22)
 
 **Added**
