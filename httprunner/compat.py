@@ -146,3 +146,23 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         v3_content["teststeps"].append(teststep)
 
     return v3_content
+
+
+def ensure_cli_args(args: List) -> List:
+    """ ensure compatibility with deprecated cli args in v2
+    """
+    # remove deprecated --failfast
+    if "--failfast" in args:
+        args.pop(args.index("--failfast"))
+
+    # convert --report-file to --html
+    if "--report-file" in args:
+        index = args.index("--report-file")
+        args[index] = "--html"
+        args.append("--self-contained-html")
+
+    # remove deprecated --save-tests
+    if "--save-tests" in args:
+        args.pop(args.index("--save-tests"))
+
+    return args

@@ -134,3 +134,28 @@ class TestCompat(unittest.TestCase):
                 ],
             },
         )
+
+    def test_ensure_cli_args(self):
+        args1 = ["/path/to/testcase.yml", "--failfast"]
+        self.assertEqual(compat.ensure_cli_args(args1), ["/path/to/testcase.yml"])
+
+        args2 = ["/path/to/testcase.yml", "--save-tests"]
+        self.assertEqual(compat.ensure_cli_args(args2), ["/path/to/testcase.yml"])
+
+        args3 = ["/path/to/testcase.yml", "--report-file", "report.html"]
+        self.assertEqual(
+            compat.ensure_cli_args(args3),
+            ["/path/to/testcase.yml", "--html", "report.html", "--self-contained-html"],
+        )
+
+        args4 = [
+            "/path/to/testcase.yml",
+            "--failfast",
+            "--save-tests",
+            "--report-file",
+            "report.html"
+        ]
+        self.assertEqual(
+            compat.ensure_cli_args(args4),
+            ["/path/to/testcase.yml", "--html", "report.html", "--self-contained-html"],
+        )
