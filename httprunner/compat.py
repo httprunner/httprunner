@@ -2,7 +2,7 @@
 This module handles compatibility issues between testcase format v2 and v3.
 """
 
-from typing import List, Dict, Text
+from typing import List, Dict, Text, Union
 
 from httprunner import exceptions
 
@@ -29,7 +29,7 @@ def convert_jmespath(raw: Text) -> Text:
     return ".".join(raw_list).replace(".[", "[")
 
 
-def convert_extractors(extractors: List) -> Dict:
+def convert_extractors(extractors: Union[List, Dict]) -> Dict:
     """ convert extract list(v2) to dict(v3)
 
     Args:
@@ -71,19 +71,34 @@ def convert_validators(validators: List) -> List:
     return validators
 
 
+def ensure_step_attachment(step: Dict) -> Dict:
+
+    test_dict = {
+        "name": step["name"],
+    }
+
+    if "variables" in step:
+        test_dict["variables"] = step["variables"]
+
+    if "extract" in step:
+        test_dict["extract"] = convert_extractors(step["extract"])
+
+    if "validate" in step:
+        test_dict["validate"] = convert_validators(step["validate"])
+
+    return test_dict
+
+
 def ensure_testcase_v3_api(api_content: Dict) -> Dict:
+
+    teststep = {
+        "request": api_content["request"],
+    }
+    teststep.update(ensure_step_attachment(api_content))
 
     return {
         "config": {"name": api_content["name"]},
-        "teststeps": [
-            {
-                "name": api_content["name"],
-                "variables": api_content.get("variables", {}),
-                "request": api_content["request"],
-                "validate": convert_validators(api_content.get("validate", [])),
-                "extract": convert_extractors(api_content.get("extract", {})),
-            }
-        ],
+        "teststeps": [teststep],
     }
 
 
@@ -92,9 +107,7 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
     v3_content = {"config": test_content["config"], "teststeps": []}
 
     for step in test_content["teststeps"]:
-        teststep = {"name": step.pop("name", "")}
-        if "variables" in step:
-            teststep["variables"] = step.pop("variables")
+        teststep = {}
 
         if "request" in step:
             teststep["request"] = step.pop("request")
@@ -103,13 +116,7 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         elif "testcase" in step:
             teststep["testcase"] = step.pop("testcase")
 
-        if "extract" in step:
-            teststep["extract"] = convert_extractors(step.pop("extract"))
-
-        if "validate" in step:
-            teststep["validate"] = convert_validators(step.pop("validate"))
-
-        teststep.update(step)
+        teststep.update(ensure_step_attachment(step))
         v3_content["teststeps"].append(teststep)
 
     return v3_content
