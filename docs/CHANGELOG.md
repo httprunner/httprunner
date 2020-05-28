@@ -11,6 +11,7 @@
 - fix: ensure converted python file in utf-8 encoding
 - fix: duplicate running referenced testcase
 - fix: ensure compatibility issues between testcase format v2 and v3
+- fix: UnicodeDecodeError when request body in protobuf
 
 ## 3.0.5 (2020-05-22)
 
