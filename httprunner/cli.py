@@ -8,8 +8,8 @@ from loguru import logger
 from httprunner import __description__, __version__
 from httprunner.compat import ensure_cli_args
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
-from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
 from httprunner.make import init_make_parser, main_make
+from httprunner.scaffold import init_parser_scaffold, main_scaffold
 
 
 def init_parser_run(subparsers):
