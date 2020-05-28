@@ -30,10 +30,8 @@ include = ["docs/CHANGELOG.md"]
 [tool.poetry.dependencies]
 python = "^3.6"
 requests = "^2.22.0"
-requests-toolbelt = "^0.9.1"
 pyyaml = "^5.1.2"
 jinja2 = "^2.10.3"
-filetype = "^1.0.5"
 pydantic = "^1.4"
 loguru = "^0.4.1"
 jmespath = "^0.9.5"
@@ -41,6 +39,12 @@ black = "^19.10b0"
 pytest = "^5.4.2"
 pytest-html = "^2.1.1"
 allure-pytest = {version = "^2.8.16", optional = true}
+requests-toolbelt = {version = "^0.9.1", optional = true}
+filetype = {version = "^1.0.7", optional = true}
+
+[tool.poetry.extras]
+allure = ["allure-pytest"]                  # poetry install -E allure
+upload = ["requests-toolbelt", "filetype"]  # poetry install -E upload
 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5.4"
