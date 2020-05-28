@@ -9,6 +9,7 @@ from httprunner import __description__, __version__
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
 from httprunner.ext.make import init_make_parser, main_make
 from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
+from httprunner.compat import ensure_cli_args
 
 
 def init_parser_run(subparsers):
@@ -40,6 +41,7 @@ def main_run(extra_args):
         sys.exit(1)
 
     extra_args_new.extend(testcase_path_list)
+    extra_args_new = ensure_cli_args(extra_args_new)
     pytest.main(extra_args_new)
 
 
