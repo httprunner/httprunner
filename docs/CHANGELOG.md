@@ -17,6 +17,7 @@
 **Changed**
 
 - change: make `allure-pytest`, `requests-toolbelt`, `filetype` as optional dependencies
+- change: move all unittests to tests folder
 
 ## 3.0.5 (2020-05-22)
 

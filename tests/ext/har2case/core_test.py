@@ -2,7 +2,7 @@ import os
 
 from httprunner.ext.har2case.core import HarParser
 from httprunner.ext.har2case.utils import load_har_log_entries
-from httprunner.ext.har2case.utils_test import TestHar2CaseUtils
+from tests.ext.har2case.utils_test import TestHar2CaseUtils
 
 
 class TestHar(TestHar2CaseUtils):

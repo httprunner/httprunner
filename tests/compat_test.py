@@ -153,7 +153,7 @@ class TestCompat(unittest.TestCase):
             "--failfast",
             "--save-tests",
             "--report-file",
-            "report.html"
+            "report.html",
         ]
         self.assertEqual(
             compat.ensure_cli_args(args4),
