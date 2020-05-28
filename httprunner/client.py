@@ -45,7 +45,7 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     request_body = resp_obj.request.body
     try:
         request_body = json.loads(request_body)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         pass
 
     if request_body:
