@@ -20,6 +20,9 @@ def init_parser_run(subparsers):
 
 
 def main_run(extra_args):
+    # keep compatibility with v2
+    extra_args = ensure_cli_args(extra_args)
+
     tests_path_list = []
     extra_args_new = []
     for item in extra_args:
@@ -41,7 +44,6 @@ def main_run(extra_args):
         sys.exit(1)
 
     extra_args_new.extend(testcase_path_list)
-    extra_args_new = ensure_cli_args(extra_args_new)
     pytest.main(extra_args_new)
 
 
