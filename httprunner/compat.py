@@ -113,6 +113,7 @@ def sort_step_by_custom_order(step: Dict) -> Dict:
         "teardown_hooks",
         "extract",
         "validate",
+        "validate_script",
     ]
     return sort_dict_by_custom_order(step, custom_order)
 
@@ -136,6 +137,9 @@ def ensure_step_attachment(step: Dict) -> Dict:
 
     if "validate" in step:
         test_dict["validate"] = convert_validators(step["validate"])
+
+    if "validate_script" in step:
+        test_dict["validate_script"] = step["validate_script"]
 
     return test_dict
 
