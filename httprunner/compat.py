@@ -24,12 +24,18 @@ def convert_jmespath(raw: Text) -> Text:
             raw_list.append(f'"{item}"')
         elif item.isdigit():
             # convert lst.0.name to lst[0].name
-            raw_list.append(f"[{item}]")
+            if len(raw_list) == 0:
+                raise exceptions.FileFormatError(
+                    f"Invalid jmespath: {raw}, jmespath should startswith headers/body/status_code/cookies"
+                )
+
+            last_item = raw_list.pop()
+            item = f"{last_item}[{item}]"
+            raw_list.append(item)
         else:
             raw_list.append(item)
 
-    # lst.[0].name => lst[0].name
-    return ".".join(raw_list).replace(".[", "[")
+    return ".".join(raw_list)
 
 
 def convert_extractors(extractors: Union[List, Dict]) -> Dict:
