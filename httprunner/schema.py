@@ -70,6 +70,7 @@ class TStep(BaseModel):
     teardown_hooks: Hook = []
     extract: Dict[Text, Text] = {}
     validators: Validators = Field([], alias="validate")
+    validate_script: List[Text] = []
 
 
 class TestCase(BaseModel):
