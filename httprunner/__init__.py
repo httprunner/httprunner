@@ -1,4 +1,4 @@
-__version__ = "3.0.5"
+__version__ = "3.0.6"
 __description__ = "One-stop solution for HTTP(S) testing."
 
 from httprunner.runner import HttpRunner

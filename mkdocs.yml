@@ -1,21 +1,19 @@
-# require mkdocs-material 3.x
-
-#
-# pip install mkdocs
-# pip install mkdocs-material
+# install mkdocs
+# $ pip install mkdocs            # 1.1.2
+# $ pip install mkdocs-material   # 5.2.2
 
 # Project information
-site_name: HttpRunner V2.x 中文使用文档
-site_description: HttpRunner V2.x User Documentation
+site_name: HttpRunner V3.x 中文使用文档
+site_description: HttpRunner V3.x User Documentation
 site_author: 'debugtalk'
 
 # Repository
 repo_name: HttpRunner
-repo_url: https://github.com/HttpRunner/HttpRunner
+repo_url: https://github.com/httprunner/httprunner
 edit_uri: ""
 
 # Copyright
-copyright: 'Copyright &copy; 2017 - 2019 debugtalk'
+copyright: 'Copyright &copy; 2017 - 2020 debugtalk'
 
 # Configuration
 theme:
@@ -46,41 +44,14 @@ extra:
     search:
         language: 'jp'
     social:
-        - type: globe
-          link: https://debugtalk.com
-        - type: 'github'
-          link: 'https://github.com/httprunner'
+        -   icon: material/library
+            link: https://debugtalk.com
+        -   icon: fontawesome/brands/github-alt
+            link: 'https://github.com/httprunner'
 
 # index pages
 nav:
-    - 介绍: index.md
-    - 安装说明: Installation.md
-    - 快速上手: quickstart.md
-    - 基础概念:
-        - 名词解释: concept/nominal.md
-    - 测试准备:
-        - 录制生成用例: prepare/record.md
-        - 项目文件组织: prepare/project-structure.md
-        - 测试用例组织: prepare/testcase-structure.md
-        - hook机制: prepare/request-hook.md
-        - 环境变量: prepare/dot-env.md
-        - 测试用例分层: prepare/testcase-layer.md
-        - 参数化数据驱动: prepare/parameters.md
-        - 信息安全: prepare/security.md
-        - 文件上传场景: prepare/upload-case.md
-    - 测试执行:
-        - 运行测试(CLI): run-tests/cli.md
-        - 测试报告: run-tests/report.md
-        - 性能测试: run-tests/load-test.md
-    - 开发扩展:
-        - Pipline: development/architecture.md
-        - 基础库调用: development/dev-api.md
-    - FAQ: FAQ.md
-    - 实践案例:
-        - TesterHome 登录: examples/testerhome-login.md
-        - klook: examples/demo-klook/README.md
-    - 相关资料: related-docs.md
+    - Introduction: index.md
+    - Installation: installation.md
+    - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md
-
-extra_javascript:
-  - 'js/slardar.js'

@@ -40,11 +40,11 @@ class FileFormatError(MyBaseError):
     pass
 
 
-class TestCaseFormatError(MyBaseError):
+class TestCaseFormatError(FileFormatError):
     pass
 
 
-class TestSuiteFormatError(MyBaseError):
+class TestSuiteFormatError(FileFormatError):
     pass
 
 
