@@ -23,8 +23,7 @@ except AttributeError:
     pass
 
 
-project_meta_cached_mapping: Dict[Text, ProjectMeta] = {}
-project_working_directory: Union[Text, None] = None
+project_meta: Union[ProjectMeta, None] = None
 
 
 def _load_yaml_file(yaml_file: Text) -> Dict:
@@ -174,12 +173,12 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
     """
     if not os.path.isabs(csv_file):
-        global project_working_directory
-        if project_working_directory is None:
+        global project_meta
+        if project_meta is None:
             raise exceptions.MyBaseFailure("load_project_meta() has not been called!")
 
         # make compatible with Windows/Linux
-        csv_file = os.path.join(project_working_directory, *csv_file.split("/"))
+        csv_file = os.path.join(project_meta.PWD, *csv_file.split("/"))
 
     if not os.path.isfile(csv_file):
         # file path not exist
@@ -327,13 +326,8 @@ def locate_debugtalk_py(start_path: Text) -> Text:
     return debugtalk_path
 
 
-def init_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
-    """ this should be called at startup
-
-        run test file:
-            run_path -> load_cases -> load_project_data -> init_project_working_directory
-        or run passed in data structure:
-            run -> init_project_working_directory
+def locate_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
+    """ locate debugtalk.py path as project working directory
 
     Args:
         test_path: specified testfile path
@@ -359,7 +353,6 @@ def init_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
     # locate debugtalk.py file
     debugtalk_path = locate_debugtalk_py(test_path)
 
-    global project_working_directory
     if debugtalk_path:
         # The folder contains debugtalk.py will be treated as PWD.
         project_working_directory = os.path.dirname(debugtalk_path)
@@ -367,18 +360,7 @@ def init_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
         # debugtalk.py not found, use os.getcwd() as PWD.
         project_working_directory = os.getcwd()
 
-    # add PWD to sys.path
-    sys.path.insert(0, project_working_directory)
-
     return debugtalk_path, project_working_directory
-
-
-def get_project_working_directory(test_path: Text) -> Text:
-    global project_working_directory
-    if not project_working_directory:
-        init_project_working_directory(test_path)
-
-    return project_working_directory
 
 
 def load_debugtalk_functions() -> Dict[Text, Callable]:
@@ -398,29 +380,35 @@ def load_debugtalk_functions() -> Dict[Text, Callable]:
     return load_module_functions(imported_module)
 
 
-def load_project_meta(test_path: Text) -> ProjectMeta:
+def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
     """ load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
+        by default, project_meta will be loaded only once, unless set reload to true.
 
     Args:
         test_path (str): test file/folder path, locate pwd from this path.
+        reload: reload project meta if set true, default to false
 
     Returns:
         project loaded api/testcases definitions,
             environments and debugtalk.py functions.
 
     """
+    global project_meta
+    if project_meta and (not reload):
+        return project_meta
+
     project_meta = ProjectMeta()
 
     if not test_path:
         return project_meta
 
-    if test_path in project_meta_cached_mapping:
-        return project_meta_cached_mapping[test_path]
-
-    debugtalk_path, project_working_directory = init_project_working_directory(
+    debugtalk_path, project_working_directory = locate_project_working_directory(
         test_path
     )
+
+    # add PWD to sys.path
+    sys.path.insert(0, project_working_directory)
 
     # load .env file
     # NOTICE:
@@ -442,5 +430,4 @@ def load_project_meta(test_path: Text) -> ProjectMeta:
         len(project_working_directory) + 1 :
     ]
 
-    project_meta_cached_mapping[test_path] = project_meta
     return project_meta

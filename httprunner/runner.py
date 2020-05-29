@@ -1,9 +1,15 @@
 import os
 import time
 import uuid
-import allure
 from datetime import datetime
 from typing import List, Dict, Text
+
+try:
+    import allure
+
+    USE_ALLURE = True
+except ModuleNotFoundError:
+    USE_ALLURE = False
 
 from loguru import logger
 
@@ -141,14 +147,35 @@ class HttpRunner(object):
         step_data = StepData(name=step.name)
         step_variables = step.variables
 
-        ref_testcase_path = os.path.join(self.__project_meta.PWD, step.testcase)
-        case_result = (
-            HttpRunner()
-            .with_session(self.__session)
-            .with_case_id(self.__case_id)
-            .with_variables(step_variables)
-            .run_path(ref_testcase_path)
-        )
+        if hasattr(step.testcase, "config") and hasattr(step.testcase, "teststeps"):
+            testcase_cls = step.testcase
+            case_result = (
+                testcase_cls()
+                .with_session(self.__session)
+                .with_case_id(self.__case_id)
+                .with_variables(step_variables)
+                .run()
+            )
+
+        elif isinstance(step.testcase, Text):
+            if os.path.isabs(step.testcase):
+                ref_testcase_path = step.testcase
+            else:
+                ref_testcase_path = os.path.join(self.__project_meta.PWD, step.testcase)
+
+            case_result = (
+                HttpRunner()
+                .with_session(self.__session)
+                .with_case_id(self.__case_id)
+                .with_variables(step_variables)
+                .run_path(ref_testcase_path)
+            )
+
+        else:
+            raise exceptions.ParamsError(
+                f"Invalid teststep referenced testcase: {step.dict()}"
+            )
+
         step_data.data = case_result.get_step_datas()  # list of step data
         step_data.export = case_result.get_export_variables()
         step_data.success = case_result.success
@@ -185,8 +212,14 @@ class HttpRunner(object):
             config.base_url, config.variables, self.__project_meta.functions
         )
 
-    def run(self, testcase: TestCase):
-        """run testcase"""
+    def run_testcase(self, testcase: TestCase):
+        """run specified testcase
+
+        Examples:
+            >>> testcase_obj = TestCase(config=TConfig(...), teststeps=[TStep(...)])
+            >>> HttpRunner().with_project_meta(project_meta).run_testcase(testcase_obj)
+
+        """
         self.config = testcase.config
         self.teststeps = testcase.teststeps
 
@@ -209,7 +242,10 @@ class HttpRunner(object):
                 step.variables, self.__project_meta.functions
             )
             # run step
-            with allure.step(f"step: {step.name}"):
+            if USE_ALLURE:
+                with allure.step(f"step: {step.name}"):
+                    extract_mapping = self.__run_step(step)
+            else:
                 extract_mapping = self.__run_step(step)
             # save extracted variables to session variables
             self.__session_variables.update(extract_mapping)
@@ -222,7 +258,17 @@ class HttpRunner(object):
             raise exceptions.ParamsError(f"Invalid testcase path: {path}")
 
         testcase_obj = load_testcase_file(path)
-        return self.run(testcase_obj)
+        return self.run_testcase(testcase_obj)
+
+    def run(self) -> "HttpRunner":
+        """ run current testcase
+
+        Examples:
+            >>> TestCaseRequestWithFunctions().run()
+
+        """
+        testcase_obj = TestCase(config=self.config, teststeps=self.teststeps)
+        return self.run_testcase(testcase_obj)
 
     def get_step_datas(self) -> List[StepData]:
         return self.__step_datas
@@ -261,30 +307,33 @@ class HttpRunner(object):
 
     def test_start(self):
         """main entrance, discovered by pytest"""
+        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
         self.__case_id = self.__case_id or str(uuid.uuid4())
         self.__log_path = self.__log_path or os.path.join(
-            "logs", f"{self.__case_id}.run.log"
+            self.__project_meta.PWD, "logs", f"{self.__case_id}.run.log"
         )
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
         # parse config name
-        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
         variables = self.config.variables
         variables.update(self.__session_variables)
         self.config.name = parse_data(
             self.config.name, variables, self.__project_meta.functions
         )
 
-        # update allure report meta
-        allure.dynamic.title(self.config.name)
-        allure.dynamic.description(f"TestCase ID: {self.__case_id}")
+        if USE_ALLURE:
+            # update allure report meta
+            allure.dynamic.title(self.config.name)
+            allure.dynamic.description(f"TestCase ID: {self.__case_id}")
 
         logger.info(
             f"Start to run testcase: {self.config.name}, TestCase ID: {self.__case_id}"
         )
 
         try:
-            return self.run(TestCase(config=self.config, teststeps=self.teststeps))
+            return self.run_testcase(
+                TestCase(config=self.config, teststeps=self.teststeps)
+            )
         finally:
             logger.remove(log_handler)
             logger.info(f"generate testcase log: {self.__log_path}")

@@ -61,7 +61,7 @@ def uniform_validator(validator):
     Args:
         validator (dict): validator maybe in two formats:
 
-            format1: this is kept for compatiblity with the previous versions.
+            format1: this is kept for compatibility with the previous versions.
                 {"check": "status_code", "assert": "eq", "expect": 201}
                 {"check": "$resp_body_success", "assert": "eq", "expect": True}
             format2: recommended new version, {assert: [check_item, expected_value]}
@@ -164,9 +164,14 @@ class ResponseObject(object):
 
             # check item
             check_item = u_validator["check"]
-            # TODO: validate variable or function
-            # check_item = parse_data(check_item, variables_mapping, functions_mapping)
-            check_value = jmespath.search(check_item, self.resp_obj_meta)
+            if "$" in check_item:
+                # check_item is variable or function
+                check_value = parse_data(
+                    check_item, variables_mapping, functions_mapping
+                )
+            else:
+                check_value = jmespath.search(check_item, self.resp_obj_meta)
+
             check_value = parse_string_value(check_value)
 
             # comparator

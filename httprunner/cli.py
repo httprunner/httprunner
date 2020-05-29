@@ -6,9 +6,10 @@ import pytest
 from loguru import logger
 
 from httprunner import __description__, __version__
+from httprunner.compat import ensure_cli_args
 from httprunner.ext.har2case import init_har2case_parser, main_har2case
-from httprunner.ext.make import init_make_parser, main_make
-from httprunner.ext.scaffold import init_parser_scaffold, main_scaffold
+from httprunner.make import init_make_parser, main_make
+from httprunner.scaffold import init_parser_scaffold, main_scaffold
 
 
 def init_parser_run(subparsers):
@@ -19,6 +20,9 @@ def init_parser_run(subparsers):
 
 
 def main_run(extra_args):
+    # keep compatibility with v2
+    extra_args = ensure_cli_args(extra_args)
+
     tests_path_list = []
     extra_args_new = []
     for item in extra_args:

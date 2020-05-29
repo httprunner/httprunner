@@ -46,20 +46,18 @@ import os
 import sys
 from typing import Text, NoReturn
 
+from loguru import logger
+
 from httprunner.parser import parse_variables_mapping
 from httprunner.schema import TStep, FunctionsMapping
 
 try:
     import filetype
     from requests_toolbelt import MultipartEncoder
-except ImportError:
-    msg = """
-uploader extension dependencies uninstalled, install first and try again.
-install with pip:
-$ pip install requests_toolbelt filetype
-"""
-    print(msg)
-    sys.exit(0)
+
+    UPLOAD_READY = True
+except ModuleNotFoundError:
+    UPLOAD_READY = False
 
 
 def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
@@ -88,6 +86,15 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
     if not step.request.upload:
         return
 
+    if not UPLOAD_READY:
+        msg = """
+uploader extension dependencies uninstalled, install first and try again.
+install with pip:
+$ pip install requests_toolbelt filetype
+"""
+        logger.error(msg)
+        sys.exit(1)
+
     params_list = []
     for key, value in step.request.upload.items():
         step.variables[key] = value
@@ -104,8 +111,12 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
     step.request.data = "$m_encoder"
 
 
-def multipart_encoder(**kwargs) -> MultipartEncoder:
+def multipart_encoder(**kwargs):
     """ initialize MultipartEncoder with uploading fields.
+
+    Returns:
+        MultipartEncoder: initialized MultipartEncoder object
+
     """
 
     def get_filetype(file_path):
@@ -124,9 +135,11 @@ def multipart_encoder(**kwargs) -> MultipartEncoder:
             is_exists_file = os.path.isfile(value)
         else:
             # value is not absolute file path, check if it is relative file path
-            from httprunner.loader import project_working_directory
+            from httprunner.loader import load_project_meta
 
-            _file_path = os.path.join(project_working_directory, value)
+            project_meta = load_project_meta(os.getcwd())
+
+            _file_path = os.path.join(project_meta.PWD, value)
             is_exists_file = os.path.isfile(_file_path)
 
         if is_exists_file:
@@ -142,7 +155,14 @@ def multipart_encoder(**kwargs) -> MultipartEncoder:
     return MultipartEncoder(fields=fields_dict)
 
 
-def multipart_content_type(m_encoder: MultipartEncoder) -> Text:
+def multipart_content_type(m_encoder) -> Text:
     """ prepare Content-Type for request headers
+
+    Args:
+        m_encoder: MultipartEncoder object
+
+    Returns:
+        content type
+
     """
     return m_encoder.content_type

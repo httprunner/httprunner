@@ -10,6 +10,4 @@ def sum_two(m, n):
 
 
 def get_variables():
-    return {
-        "foo1": "session_bar1"
-    }
+    return {"foo1": "session_bar1"}
