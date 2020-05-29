@@ -18,7 +18,9 @@ def convert_jmespath(raw: Text) -> Text:
     raw_list = []
     for item in raw.split("."):
         if "-" in item:
-            # add quotes for field with separator, e.g. headers.Content-Type
+            # add quotes for field with separator
+            # e.g. headers.Content-Type => headers."Content-Type"
+            item = item.strip('"')
             raw_list.append(f'"{item}"')
         elif item.isdigit():
             # convert lst.0.name to lst[0].name

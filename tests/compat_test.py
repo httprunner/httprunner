@@ -12,6 +12,9 @@ class TestCompat(unittest.TestCase):
             compat.convert_jmespath("headers.Content-Type"), 'headers."Content-Type"'
         )
         self.assertEqual(
+            compat.convert_jmespath('headers."Content-Type"'), 'headers."Content-Type"'
+        )
+        self.assertEqual(
             compat.convert_jmespath("body.data.buildings.0.building_id"),
             "body.data.buildings[0].building_id",
         )
