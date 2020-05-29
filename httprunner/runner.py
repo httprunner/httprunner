@@ -307,14 +307,14 @@ class HttpRunner(object):
 
     def test_start(self):
         """main entrance, discovered by pytest"""
+        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
         self.__case_id = self.__case_id or str(uuid.uuid4())
         self.__log_path = self.__log_path or os.path.join(
-            "logs", f"{self.__case_id}.run.log"
+            self.__project_meta.PWD, "logs", f"{self.__case_id}.run.log"
         )
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
         # parse config name
-        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
         variables = self.config.variables
         variables.update(self.__session_variables)
         self.config.name = parse_data(
