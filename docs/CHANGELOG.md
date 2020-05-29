@@ -1,6 +1,6 @@
 # Release History
 
-## 3.0.6 (2020-05-27)
+## 3.0.6 (2020-05-29)
 
 **Added**
 
@@ -11,13 +11,14 @@
 - fix: ensure converted python file in utf-8 encoding
 - fix: duplicate running referenced testcase
 - fix: ensure compatibility issues between testcase format v2 and v3
-- fix: ensure compatibility with deprecated cli args in v2
+- fix: ensure compatibility with deprecated cli args in v2, include --failfast/--report-file/--save-tests
 - fix: UnicodeDecodeError when request body in protobuf
 
 **Changed**
 
 - change: make `allure-pytest`, `requests-toolbelt`, `filetype` as optional dependencies
 - change: move all unittests to tests folder
+- change: save testcase log in PWD/logs/ directory
 
 ## 3.0.5 (2020-05-22)
 
