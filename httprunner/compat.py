@@ -104,7 +104,16 @@ def sort_request_by_custom_order(request: Dict) -> Dict:
 
 
 def sort_step_by_custom_order(step: Dict) -> Dict:
-    custom_order = ["name", "variables", "request", "testcase", "extract", "validate"]
+    custom_order = [
+        "name",
+        "variables",
+        "request",
+        "testcase",
+        "setup_hooks",
+        "teardown_hooks",
+        "extract",
+        "validate",
+    ]
     return sort_dict_by_custom_order(step, custom_order)
 
 
@@ -115,6 +124,12 @@ def ensure_step_attachment(step: Dict) -> Dict:
 
     if "variables" in step:
         test_dict["variables"] = step["variables"]
+
+    if "setup_hooks" in step:
+        test_dict["setup_hooks"] = step["setup_hooks"]
+
+    if "teardown_hooks" in step:
+        test_dict["teardown_hooks"] = step["teardown_hooks"]
 
     if "extract" in step:
         test_dict["extract"] = convert_extractors(step["extract"])

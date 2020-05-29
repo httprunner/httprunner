@@ -37,7 +37,7 @@ class TConfig(BaseModel):
     name: Name
     verify: Verify = False
     base_url: BaseUrl = ""
-    # Text: prepare variables in debugtalk.py, ${get_variable()}
+    # Text: prepare variables in debugtalk.py, ${gen_variables()}
     variables: Union[VariablesMapping, Text] = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
@@ -66,6 +66,8 @@ class TStep(BaseModel):
     request: Request = None
     testcase: Union[Text, Callable] = ""
     variables: VariablesMapping = {}
+    setup_hooks: Hook = []
+    teardown_hooks: Hook = []
     extract: Dict[Text, Text] = {}
     validators: Validators = Field([], alias="validate")
 
