@@ -132,7 +132,9 @@ def __format_pytest_with_black(python_paths: List[Text]) -> NoReturn:
         logger.error(ex)
 
 
-def __make_testcase(testcase: Dict, dir_path: Text = None) -> NoReturn:
+def __make_testcase(
+    testcase: Dict, dir_path: Text = None, ref_flag: bool = False
+) -> NoReturn:
     """convert valid testcase dict to pytest file path"""
     # ensure compatibility with testcase format v2
     testcase = ensure_testcase_v3(testcase)
@@ -174,7 +176,7 @@ def __make_testcase(testcase: Dict, dir_path: Text = None) -> NoReturn:
 
         # make ref testcase pytest file
         ref_testcase_path = __ensure_absolute(teststep["testcase"])
-        __make(ref_testcase_path)
+        __make(ref_testcase_path, ref_flag=True)
 
         # prepare ref testcase class name
         ref_testcase_python_path, ref_testcase_cls_name = convert_testcase_path(
@@ -206,7 +208,9 @@ def __make_testcase(testcase: Dict, dir_path: Text = None) -> NoReturn:
     __ensure_testcase_module(testcase_python_path)
 
     logger.info(f"generated testcase: {testcase_python_path}")
-    make_files_cache_set.add(__ensure_cwd_relative(testcase_python_path))
+
+    if not ref_flag:
+        make_files_cache_set.add(__ensure_cwd_relative(testcase_python_path))
 
 
 def __make_testsuite(testsuite: Dict) -> NoReturn:
@@ -257,12 +261,13 @@ def __make_testsuite(testsuite: Dict) -> NoReturn:
         __make_testcase(testcase_dict, testsuite_dir)
 
 
-def __make(tests_path: Text) -> NoReturn:
+def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
     """ make testcase(s) with testcase/testsuite/folder absolute path
         generated pytest file path will be cached in make_files_cache_set
 
     Args:
         tests_path: should be in absolute path
+        ref_flag: flag if referenced test path
 
     """
     test_files = []
@@ -290,7 +295,7 @@ def __make(tests_path: Text) -> NoReturn:
         # testcase
         if "teststeps" in test_content:
             try:
-                __make_testcase(test_content)
+                __make_testcase(test_content, ref_flag=ref_flag)
             except exceptions.TestCaseFormatError:
                 continue
 
