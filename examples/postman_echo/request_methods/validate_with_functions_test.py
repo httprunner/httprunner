@@ -33,8 +33,7 @@ class TestCaseValidateWithFunctions(HttpRunner):
                 "extract": {"session_foo2": "body.args.foo2"},
                 "validate": [
                     {"eq": ["status_code", 200]},
-                    {"eq": ["body.args.sum_v", 3]},
-                    {"less_than": ["body.args.sum_v", "${sum_two(2, 2)}"]},
+                    {"eq": ["body.args.sum_v", "3"]},
                 ],
             }
         ),

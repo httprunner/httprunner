@@ -169,10 +169,9 @@ class ResponseObject(object):
                 check_value = parse_data(
                     check_item, variables_mapping, functions_mapping
                 )
+                check_value = parse_string_value(check_value)
             else:
                 check_value = jmespath.search(check_item, self.resp_obj_meta)
-
-            check_value = parse_string_value(check_value)
 
             # comparator
             assert_method = u_validator["assert"]
