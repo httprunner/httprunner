@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.7 (2020-05-31)
+
+**Fixed**
+
+- fix: convert jmespath.search result to int/float
+
 ## 3.0.6 (2020-05-29)
 
 **Added**
