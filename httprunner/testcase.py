@@ -1,11 +1,12 @@
 import inspect
-from typing import Text, Any, Dict
+from typing import Text, Any, Dict, Callable
 
 from httprunner.schema import (
     TConfig,
     TStep,
     TRequest,
     MethodEnum,
+    TestCase,
 )
 
 
@@ -128,17 +129,27 @@ class Request(object):
 
 class StepValidation(object):
     def __init__(
-        self, name: Text, variables: Dict, extractors: Dict, request: TRequest
+        self,
+        name: Text,
+        variables: Dict,
+        extractors: Dict,
+        request: TRequest = None,
+        testcase: Callable = None,
     ):
         self.__name = name
         self.__variables = variables
         self.__extractors = extractors
-        self.__request = request
+        self.__request: TRequest = request
+        self.__testcase: Callable = testcase
         self.__validators = []
 
     @property
     def request(self) -> TRequest:
         return self.__request
+
+    @property
+    def testcase(self) -> TestCase:
+        return self.__testcase
 
     def assert_equal(self, jmes_path: Text, expected_value: Any) -> "StepValidation":
         self.__validators.append({"eq": [jmes_path, expected_value]})
@@ -161,6 +172,7 @@ class StepValidation(object):
             name=self.__name,
             variables=self.__variables,
             request=self.__request,
+            testcase=self.__testcase,
             extract=self.__extractors,
             validate=self.__validators,
         )
@@ -171,7 +183,6 @@ class Step(object):
         self.__name = name
         self.__variables = {}
         self.__extractors = {}
-        self.__request = None
 
     def with_variables(self, **variables) -> "Step":
         self.__variables.update(variables)
@@ -182,7 +193,11 @@ class Step(object):
         return self
 
     def run_request(self, req_obj: RequestWithOptionalArgs) -> "StepValidation":
-        self.__request = req_obj.perform()
         return StepValidation(
-            self.__name, self.__variables, self.__extractors, self.__request
+            self.__name, self.__variables, self.__extractors, request=req_obj.perform()
+        )
+
+    def run_testcase(self, testcase: Callable) -> "StepValidation":
+        return StepValidation(
+            self.__name, self.__variables, self.__extractors, testcase=testcase
         )
