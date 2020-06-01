@@ -46,14 +46,14 @@ class TConfig(BaseModel):
 class TRequest(BaseModel):
     """requests.Request model"""
 
-    method: MethodEnum = MethodEnum.GET
+    method: MethodEnum
     url: Url
     params: Dict[Text, Text] = {}
     headers: Headers = {}
     req_json: Dict = Field({}, alias="json")
     data: Union[Text, Dict[Text, Any]] = ""
     cookies: Cookies = {}
-    timeout: int = 120
+    timeout: float = 120
     allow_redirects: bool = True
     verify: Verify = False
     upload: Dict = {}  # used for upload files

@@ -7,10 +7,10 @@ from httprunner import HttpRunner, Config, Step, Request
 class TestCaseRequestWithFunctions(HttpRunner):
     config = (
         Config("request methods testcase with functions")
-        .set_variables(foo1="session_bar1")
-        .set_base_url("https://postman-echo.com")
-        .set_verify(False)
-        .set_path(
+        .variables(foo1="session_bar1")
+        .base_url("https://postman-echo.com")
+        .verify(False)
+        .path(
             "examples/postman_echo/request_methods/request_with_functions_test.py"
         )
         .init()
@@ -18,12 +18,12 @@ class TestCaseRequestWithFunctions(HttpRunner):
 
     teststeps = [
         Step("get with params")
-        .set_variables(foo1="bar1", foo2="session_bar2", sum_v="${sum_two(1, 2)}")
+        .with_variables(foo1="bar1", foo2="session_bar2", sum_v="${sum_two(1, 2)}")
         .run_request(
             Request()
             .get("/get")
-            .set_params(foo1="$foo1", foo2="$foo2", sum_v="$sum_v")
-            .set_headers(**{"User-Agent": "HttpRunner/${get_httprunner_version()}"})
+            .with_params(foo1="$foo1", foo2="$foo2", sum_v="$sum_v")
+            .with_headers(**{"User-Agent": "HttpRunner/${get_httprunner_version()}"})
         )
         .extract("session_foo2", "body.args.foo2")
         .assert_equal("status_code", 200)
@@ -32,17 +32,17 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .assert_equal("body.args.foo2", "session_bar2")
         .init(),
         Step("post raw text")
-        .set_variables(foo1="hello world", foo3="$session_foo2")
+        .with_variables(foo1="hello world", foo3="$session_foo2")
         .run_request(
             Request()
             .post("/post")
-            .set_headers(
+            .with_headers(
                 **{
                     "User-Agent": "HttpRunner/${get_httprunner_version()}",
                     "Content-Type": "text/plain",
                 }
             )
-            .set_data(
+            .with_data(
                 "This is expected to be sent back as part of response body: $foo1-$foo3."
             )
         )
@@ -53,17 +53,17 @@ class TestCaseRequestWithFunctions(HttpRunner):
         )
         .init(),
         Step("post form data")
-        .set_variables(**{"foo1": "bar1", "foo2": "bar2"})
+        .with_variables(**{"foo1": "bar1", "foo2": "bar2"})
         .run_request(
             Request()
             .post("/post")
-            .set_headers(
+            .with_headers(
                 **{
                     "User-Agent": "HttpRunner/${get_httprunner_version()}",
                     "Content-Type": "application/x-www-form-urlencoded",
                 }
             )
-            .set_data("foo1=$foo1&foo2=$foo2")
+            .with_data("foo1=$foo1&foo2=$foo2")
         )
         .assert_equal("status_code", 200)
         .assert_equal("body.form.foo1", "session_bar1")
