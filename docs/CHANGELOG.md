@@ -1,10 +1,12 @@
 # Release History
 
-## 3.0.7 (2020-05-31)
+## 3.0.7 (2020-06-01)
 
 **Fixed**
 
-- fix: convert jmespath.search result to int/float
+- fix: convert jmespath.search result to int/float unintentionally
+- fix: referenced testcase should not be run duplicately
+- fix: requests.cookies.CookieConflictError, multiple cookies with name
 
 ## 3.0.6 (2020-05-29)
 
