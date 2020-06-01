@@ -1,4 +1,5 @@
-from typing import Text, Any, Dict
+import inspect
+from typing import Text, Any
 
 from httprunner.schema import (
     TConfig,
@@ -14,7 +15,9 @@ class Config(object):
         self.__variables = {}
         self.__base_url = ""
         self.__verify = False
-        self.__path = ""
+
+        caller_frame = inspect.stack()[1]
+        self.__path = caller_frame.filename
 
     @property
     def name(self):
@@ -34,10 +37,6 @@ class Config(object):
 
     def verify(self, verify: bool) -> "Config":
         self.__verify = verify
-        return self
-
-    def set_path(self, path: Text) -> "Config":
-        self.__path = path
         return self
 
     def perform(self) -> TConfig:
@@ -171,4 +170,3 @@ class Step(object):
             extract=self.__extract,
             validate=self.__validators,
         )
-

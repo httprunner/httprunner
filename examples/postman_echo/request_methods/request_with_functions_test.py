@@ -10,9 +10,6 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .variables(foo1="session_bar1")
         .base_url("https://postman-echo.com")
         .verify(False)
-        .set_path(
-            "examples/postman_echo/request_methods/request_with_functions_test.py"
-        )
     )
 
     teststeps = [
