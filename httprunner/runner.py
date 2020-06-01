@@ -31,6 +31,7 @@ from httprunner.schema import (
     ProjectMeta,
     TestCase,
     TRequest,
+    MethodEnum,
 )
 
 
@@ -69,20 +70,35 @@ class Config(object):
 
 
 class Request(object):
-    def __init__(self):
-        self.__method = "GET"
-        self.__url = ""
+    def get(self, url):
+        return RequestOptionalArgs(MethodEnum.GET, url)
+
+    def post(self, url):
+        return RequestOptionalArgs(MethodEnum.POST, url)
+
+    def put(self, url):
+        return RequestOptionalArgs(MethodEnum.PUT, url)
+
+    def head(self, url):
+        return RequestOptionalArgs(MethodEnum.HEAD, url)
+
+    def delete(self, url):
+        return RequestOptionalArgs(MethodEnum.DELETE, url)
+
+    def options(self, url):
+        return RequestOptionalArgs(MethodEnum.OPTIONS, url)
+
+    def patch(self, url):
+        return RequestOptionalArgs(MethodEnum.PATCH, url)
+
+
+class RequestOptionalArgs(object):
+    def __init__(self, method: MethodEnum, url: Text):
+        self.__method = method
+        self.__url = url
         self.__params = {}
         self.__headers = {}
         self.__data = ""
-
-    def set_method(self, method):
-        self.__method = method
-        return self
-
-    def set_url(self, url):
-        self.__url = url
-        return self
 
     def set_params(self, **params):
         self.__params.update(params)
