@@ -15,13 +15,13 @@ class TestCaseRequestWithFunctions(HttpRunner):
     teststeps = [
         Step("get with params")
         .with_variables(foo1="bar1", foo2="session_bar2", sum_v="${sum_two(1, 2)}")
+        .set_extractor("session_foo2", "body.args.foo2")
         .run_request(
             Request()
             .get("/get")
             .with_params(foo1="$foo1", foo2="$foo2", sum_v="$sum_v")
             .with_headers(**{"User-Agent": "HttpRunner/${get_httprunner_version()}"})
         )
-        .extract("session_foo2", "body.args.foo2")
         .assert_equal("status_code", 200)
         .assert_equal("body.args.foo1", "session_bar1")
         .assert_equal("body.args.sum_v", "3")
