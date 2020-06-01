@@ -1,5 +1,5 @@
 import inspect
-from typing import Text, Any
+from typing import Text, Any, Dict
 
 from httprunner.schema import (
     TConfig,
@@ -126,39 +126,33 @@ class Request(object):
         return RequestWithOptionalArgs(MethodEnum.PATCH, url)
 
 
-class Step(object):
-    def __init__(self, name: Text):
+class StepValidation(object):
+    def __init__(
+        self, name: Text, variables: Dict, extractors: Dict, request: TRequest
+    ):
         self.__name = name
-        self.__variables = {}
-        self.__request = None
-        self.__extract = {}
+        self.__variables = variables
+        self.__extractors = extractors
+        self.__request = request
         self.__validators = []
-
-    def with_variables(self, **variables) -> "Step":
-        self.__variables.update(variables)
-        return self
 
     @property
     def request(self) -> TRequest:
         return self.__request
 
-    def run_request(self, req_obj: RequestWithOptionalArgs) -> "Step":
-        self.__request = req_obj.perform()
-        return self
-
-    def extract(self, var_name: Text, jmes_path: Text) -> "Step":
-        self.__extract[var_name] = jmes_path
-        return self
-
-    def assert_equal(self, jmes_path: Text, expected_value: Any) -> "Step":
+    def assert_equal(self, jmes_path: Text, expected_value: Any) -> "StepValidation":
         self.__validators.append({"eq": [jmes_path, expected_value]})
         return self
 
-    def assert_greater_than(self, jmes_path: Text, expected_value: Any) -> "Step":
+    def assert_greater_than(
+        self, jmes_path: Text, expected_value: Any
+    ) -> "StepValidation":
         self.__validators.append({"gt": [jmes_path, expected_value]})
         return self
 
-    def assert_less_than(self, jmes_path: Text, expected_value: Any) -> "Step":
+    def assert_less_than(
+        self, jmes_path: Text, expected_value: Any
+    ) -> "StepValidation":
         self.__validators.append({"lt": [jmes_path, expected_value]})
         return self
 
@@ -167,6 +161,28 @@ class Step(object):
             name=self.__name,
             variables=self.__variables,
             request=self.__request,
-            extract=self.__extract,
+            extract=self.__extractors,
             validate=self.__validators,
+        )
+
+
+class Step(object):
+    def __init__(self, name: Text):
+        self.__name = name
+        self.__variables = {}
+        self.__extractors = {}
+        self.__request = None
+
+    def with_variables(self, **variables) -> "Step":
+        self.__variables.update(variables)
+        return self
+
+    def set_extractor(self, var_name: Text, jmes_path: Text) -> "Step":
+        self.__extractors[var_name] = jmes_path
+        return self
+
+    def run_request(self, req_obj: RequestWithOptionalArgs) -> "StepValidation":
+        self.__request = req_obj.perform()
+        return StepValidation(
+            self.__name, self.__variables, self.__extractors, self.__request
         )
