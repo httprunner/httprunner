@@ -1,4 +1,4 @@
-from typing import Text, Any
+from typing import Text, Any, Dict
 
 from httprunner.schema import (
     TConfig,
@@ -16,6 +16,14 @@ class Config(object):
         self.__verify = False
         self.__path = ""
 
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def path(self):
+        return self.__path
+
     def variables(self, **variables) -> "Config":
         self.__variables.update(variables)
         return self
@@ -28,11 +36,11 @@ class Config(object):
         self.__verify = verify
         return self
 
-    def path(self, path: Text) -> "Config":
+    def set_path(self, path: Text) -> "Config":
         self.__path = path
         return self
 
-    def init(self) -> TConfig:
+    def perform(self) -> TConfig:
         return TConfig(
             name=self.__name,
             base_url=self.__base_url,
@@ -42,7 +50,7 @@ class Config(object):
         )
 
 
-class RequestOptionalArgs(object):
+class RequestWithOptionalArgs(object):
     def __init__(self, method: MethodEnum, url: Text):
         self.__method = method
         self.__url = url
@@ -54,31 +62,31 @@ class RequestOptionalArgs(object):
         self.__allow_redirects = True
         self.__verify = False
 
-    def with_params(self, **params) -> "RequestOptionalArgs":
+    def with_params(self, **params) -> "RequestWithOptionalArgs":
         self.__params.update(params)
         return self
 
-    def with_headers(self, **headers) -> "RequestOptionalArgs":
+    def with_headers(self, **headers) -> "RequestWithOptionalArgs":
         self.__headers.update(headers)
         return self
 
-    def with_cookies(self, **cookies) -> "RequestOptionalArgs":
+    def with_cookies(self, **cookies) -> "RequestWithOptionalArgs":
         self.__cookies.update(cookies)
         return self
 
-    def with_data(self, data) -> "RequestOptionalArgs":
+    def with_data(self, data) -> "RequestWithOptionalArgs":
         self.__data = data
         return self
 
-    def set_timeout(self, timeout: float) -> "RequestOptionalArgs":
+    def set_timeout(self, timeout: float) -> "RequestWithOptionalArgs":
         self.__timeout = timeout
         return self
 
-    def set_verify(self, verify: bool) -> "RequestOptionalArgs":
+    def set_verify(self, verify: bool) -> "RequestWithOptionalArgs":
         self.__verify = verify
         return self
 
-    def set_allow_redirects(self, allow_redirects: bool) -> "RequestOptionalArgs":
+    def set_allow_redirects(self, allow_redirects: bool) -> "RequestWithOptionalArgs":
         self.__allow_redirects = allow_redirects
         return self
 
@@ -97,30 +105,30 @@ class RequestOptionalArgs(object):
 
 
 class Request(object):
-    def get(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.GET, url)
+    def get(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.GET, url)
 
-    def post(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.POST, url)
+    def post(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.POST, url)
 
-    def put(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.PUT, url)
+    def put(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.PUT, url)
 
-    def head(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.HEAD, url)
+    def head(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.HEAD, url)
 
-    def delete(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.DELETE, url)
+    def delete(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.DELETE, url)
 
-    def options(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.OPTIONS, url)
+    def options(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.OPTIONS, url)
 
-    def patch(self, url: Text) -> RequestOptionalArgs:
-        return RequestOptionalArgs(MethodEnum.PATCH, url)
+    def patch(self, url: Text) -> RequestWithOptionalArgs:
+        return RequestWithOptionalArgs(MethodEnum.PATCH, url)
 
 
 class Step(object):
-    def __init__(self, name):
+    def __init__(self, name: Text):
         self.__name = name
         self.__variables = {}
         self.__request = None
@@ -131,7 +139,11 @@ class Step(object):
         self.__variables.update(variables)
         return self
 
-    def run_request(self, req_obj: RequestOptionalArgs) -> "Step":
+    @property
+    def request(self) -> TRequest:
+        return self.__request
+
+    def run_request(self, req_obj: RequestWithOptionalArgs) -> "Step":
         self.__request = req_obj.perform()
         return self
 
@@ -151,7 +163,7 @@ class Step(object):
         self.__validators.append({"lt": [jmes_path, expected_value]})
         return self
 
-    def init(self) -> TStep:
+    def perform(self) -> TStep:
         return TStep(
             name=self.__name,
             variables=self.__variables,

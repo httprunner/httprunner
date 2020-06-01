@@ -10,10 +10,9 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .variables(foo1="session_bar1")
         .base_url("https://postman-echo.com")
         .verify(False)
-        .path(
+        .set_path(
             "examples/postman_echo/request_methods/request_with_functions_test.py"
         )
-        .init()
     )
 
     teststeps = [
@@ -29,8 +28,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .assert_equal("status_code", 200)
         .assert_equal("body.args.foo1", "session_bar1")
         .assert_equal("body.args.sum_v", "3")
-        .assert_equal("body.args.foo2", "session_bar2")
-        .init(),
+        .assert_equal("body.args.foo2", "session_bar2"),
         Step("post raw text")
         .with_variables(foo1="hello world", foo3="$session_foo2")
         .run_request(
@@ -50,8 +48,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .assert_equal(
             "body.data",
             "This is expected to be sent back as part of response body: session_bar1-session_bar2.",
-        )
-        .init(),
+        ),
         Step("post form data")
         .with_variables(**{"foo1": "bar1", "foo2": "bar2"})
         .run_request(
@@ -67,8 +64,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         )
         .assert_equal("status_code", 200)
         .assert_equal("body.form.foo1", "session_bar1")
-        .assert_equal("body.form.foo2", "bar2")
-        .init(),
+        .assert_equal("body.form.foo2", "bar2"),
     ]
 
 

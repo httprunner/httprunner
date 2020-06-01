@@ -20,6 +20,7 @@ from httprunner.ext.uploader import prepare_upload_step
 from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
+from httprunner.testcase import Config, Step
 from httprunner.schema import (
     TConfig,
     TStep,
@@ -34,10 +35,12 @@ from httprunner.schema import (
 
 
 class HttpRunner(object):
-    config: TConfig
-    teststeps: List[TStep]
+    config: Config
+    teststeps: List[Step]
 
     success: bool = True  # indicate testcase execution result
+    __config: TConfig
+    __teststeps: List[TStep]
     __project_meta: ProjectMeta = None
     __case_id: Text = ""
     __step_datas: List[StepData] = None
@@ -84,7 +87,7 @@ class HttpRunner(object):
         # prepare arguments
         method = parsed_request_dict.pop("method")
         url_path = parsed_request_dict.pop("url")
-        url = build_url(self.config.base_url, url_path)
+        url = build_url(self.__config.base_url, url_path)
         parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
 
         # request
@@ -220,21 +223,23 @@ class HttpRunner(object):
             >>> HttpRunner().with_project_meta(project_meta).run_testcase(testcase_obj)
 
         """
-        self.config = testcase.config
-        self.teststeps = testcase.teststeps
+        self.__config = testcase.config
+        self.__teststeps = testcase.teststeps
 
         # prepare
-        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
-        self.__parse_config(self.config)
+        self.__project_meta = self.__project_meta or load_project_meta(
+            self.__config.path
+        )
+        self.__parse_config(self.__config)
         self.__start_at = time.time()
         self.__step_datas: List[StepData] = []
         self.__session = self.__session or HttpSession()
         self.__session_variables = {}
 
         # run teststeps
-        for step in self.teststeps:
+        for step in self.__teststeps:
             # update with config variables
-            step.variables.update(self.config.variables)
+            step.variables.update(self.__config.variables)
             # update with session variables extracted from pre step
             step.variables.update(self.__session_variables)
             # parse variables
@@ -267,7 +272,9 @@ class HttpRunner(object):
             >>> TestCaseRequestWithFunctions().run()
 
         """
-        testcase_obj = TestCase(config=self.config, teststeps=self.teststeps)
+        self.__config = self.config.perform()
+        self.__teststeps = [step.perform() for step in self.teststeps]
+        testcase_obj = TestCase(config=self.__config, teststeps=self.__teststeps)
         return self.run_testcase(testcase_obj)
 
     def get_step_datas(self) -> List[StepData]:
@@ -275,7 +282,7 @@ class HttpRunner(object):
 
     def get_export_variables(self) -> Dict:
         export_vars_mapping = {}
-        for var_name in self.config.export:
+        for var_name in self.__config.export:
             if var_name not in self.__session_variables:
                 raise ParamsError(
                     f"failed to export variable {var_name} from session variables {self.__session_variables}"
@@ -290,7 +297,7 @@ class HttpRunner(object):
         start_at_timestamp = self.__start_at
         start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
         return TestCaseSummary(
-            name=self.config.name,
+            name=self.__config.name,
             success=self.success,
             case_id=self.__case_id,
             time=TestCaseTime(
@@ -299,7 +306,7 @@ class HttpRunner(object):
                 duration=self.__duration,
             ),
             in_out=TestCaseInOut(
-                vars=self.config.variables, export=self.get_export_variables()
+                vars=self.__config.variables, export=self.get_export_variables()
             ),
             log=self.__log_path,
             step_datas=self.__step_datas,
@@ -307,7 +314,11 @@ class HttpRunner(object):
 
     def test_start(self) -> "HttpRunner":
         """main entrance, discovered by pytest"""
-        self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
+        self.__config = self.config.perform()
+        self.__teststeps = [step.perform() for step in self.teststeps]
+        self.__project_meta = self.__project_meta or load_project_meta(
+            self.__config.path
+        )
         self.__case_id = self.__case_id or str(uuid.uuid4())
         self.__log_path = self.__log_path or os.path.join(
             self.__project_meta.PWD, "logs", f"{self.__case_id}.run.log"
@@ -315,24 +326,24 @@ class HttpRunner(object):
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
         # parse config name
-        variables = self.config.variables
+        variables = self.__config.variables
         variables.update(self.__session_variables)
-        self.config.name = parse_data(
-            self.config.name, variables, self.__project_meta.functions
+        self.__config.name = parse_data(
+            self.__config.name, variables, self.__project_meta.functions
         )
 
         if USE_ALLURE:
             # update allure report meta
-            allure.dynamic.title(self.config.name)
+            allure.dynamic.title(self.__config.name)
             allure.dynamic.description(f"TestCase ID: {self.__case_id}")
 
         logger.info(
-            f"Start to run testcase: {self.config.name}, TestCase ID: {self.__case_id}"
+            f"Start to run testcase: {self.__config.name}, TestCase ID: {self.__case_id}"
         )
 
         try:
             return self.run_testcase(
-                TestCase(config=self.config, teststeps=self.teststeps)
+                TestCase(config=self.__config, teststeps=self.__teststeps)
             )
         finally:
             logger.remove(log_handler)
