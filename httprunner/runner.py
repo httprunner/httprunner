@@ -30,7 +30,123 @@ from httprunner.schema import (
     TestCaseInOut,
     ProjectMeta,
     TestCase,
+    TRequest,
 )
+
+
+class Config(object):
+    def __init__(self, name):
+        self.__name = name
+        self.__variables = {}
+        self.__base_url = ""
+        self.__verify = False
+        self.__path = ""
+
+    def set_variables(self, **variables):
+        self.__variables.update(variables)
+        return self
+
+    def set_base_url(self, base_url):
+        self.__base_url = base_url
+        return self
+
+    def set_verify(self, verify):
+        self.__verify = verify
+        return self
+
+    def set_path(self, path):
+        self.__path = path
+        return self
+
+    def init(self):
+        return TConfig(
+            name=self.__name,
+            base_url=self.__base_url,
+            verify=self.__verify,
+            variables=self.__variables,
+            path=self.__path,
+        )
+
+
+class Request(object):
+    def __init__(self):
+        self.__method = "GET"
+        self.__url = ""
+        self.__params = {}
+        self.__headers = {}
+        self.__data = ""
+
+    def set_method(self, method):
+        self.__method = method
+        return self
+
+    def set_url(self, url):
+        self.__url = url
+        return self
+
+    def set_params(self, **params):
+        self.__params.update(params)
+        return self
+
+    def set_headers(self, **headers):
+        self.__headers.update(headers)
+        return self
+
+    def set_data(self, data):
+        self.__data = data
+        return self
+
+    def perform(self):
+        """build TRequest object with configs"""
+        return TRequest(
+            method=self.__method,
+            url=self.__url,
+            params=self.__params,
+            headers=self.__headers,
+            data=self.__data,
+        )
+
+
+class Step(object):
+    def __init__(self, name):
+        self.__name = name
+        self.__variables = {}
+        self.__request = None
+        self.__extract = {}
+        self.__validators = []
+
+    def set_variables(self, **variables):
+        self.__variables.update(variables)
+        return self
+
+    def extract(self, var_name, jmes_path):
+        self.__extract[var_name] = jmes_path
+        return self
+
+    def assert_equal(self, jmes_path, expected_value):
+        self.__validators.append({"eq": [jmes_path, expected_value]})
+        return self
+
+    def assert_greater_than(self, jmes_path, expected_value):
+        self.__validators.append({"gt": [jmes_path, expected_value]})
+        return self
+
+    def assert_less_than(self, jmes_path, expected_value):
+        self.__validators.append({"lt": [jmes_path, expected_value]})
+        return self
+
+    def run_request(self, req_obj: Request) -> "Step":
+        self.__request = req_obj.perform()
+        return self
+
+    def init(self):
+        return TStep(
+            name=self.__name,
+            variables=self.__variables,
+            request=self.__request,
+            extract=self.__extract,
+            validate=self.__validators,
+        )
 
 
 class HttpRunner(object):

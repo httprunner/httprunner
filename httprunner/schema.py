@@ -45,7 +45,7 @@ class TConfig(BaseModel):
     path: Text = None
 
 
-class Request(BaseModel):
+class TRequest(BaseModel):
     """requests.Request model"""
 
     method: MethodEnum = MethodEnum.GET
@@ -63,7 +63,7 @@ class Request(BaseModel):
 
 class TStep(BaseModel):
     name: Name
-    request: Request = None
+    request: TRequest = None
     testcase: Union[Text, Callable] = ""
     variables: VariablesMapping = {}
     setup_hooks: Hook = []
