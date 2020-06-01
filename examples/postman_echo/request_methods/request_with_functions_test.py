@@ -21,8 +21,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .set_variables(foo1="bar1", foo2="session_bar2", sum_v="${sum_two(1, 2)}")
         .run_request(
             Request()
-            .set_method("GET")
-            .set_url("/get")
+            .get("/get")
             .set_params(foo1="$foo1", foo2="$foo2", sum_v="$sum_v")
             .set_headers(**{"User-Agent": "HttpRunner/${get_httprunner_version()}"})
         )
@@ -36,8 +35,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .set_variables(foo1="hello world", foo3="$session_foo2")
         .run_request(
             Request()
-            .set_method("POST")
-            .set_url("/post")
+            .post("/post")
             .set_headers(
                 **{
                     "User-Agent": "HttpRunner/${get_httprunner_version()}",
@@ -58,8 +56,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .set_variables(**{"foo1": "bar1", "foo2": "bar2"})
         .run_request(
             Request()
-            .set_method("POST")
-            .set_url("/post")
+            .post("/post")
             .set_headers(
                 **{
                     "User-Agent": "HttpRunner/${get_httprunner_version()}",

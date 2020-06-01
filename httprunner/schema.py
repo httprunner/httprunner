@@ -29,8 +29,6 @@ class MethodEnum(Text, Enum):
     HEAD = "HEAD"
     OPTIONS = "OPTIONS"
     PATCH = "PATCH"
-    CONNECT = "CONNECT"
-    TRACE = "TRACE"
 
 
 class TConfig(BaseModel):
