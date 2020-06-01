@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text
+from typing import List, Dict, Text, Any, NoReturn
 
 try:
     import allure
@@ -36,30 +36,30 @@ from httprunner.schema import (
 
 
 class Config(object):
-    def __init__(self, name):
+    def __init__(self, name: Text):
         self.__name = name
         self.__variables = {}
         self.__base_url = ""
         self.__verify = False
         self.__path = ""
 
-    def set_variables(self, **variables):
+    def variables(self, **variables) -> "Config":
         self.__variables.update(variables)
         return self
 
-    def set_base_url(self, base_url):
+    def base_url(self, base_url: Text) -> "Config":
         self.__base_url = base_url
         return self
 
-    def set_verify(self, verify):
+    def verify(self, verify: bool) -> "Config":
         self.__verify = verify
         return self
 
-    def set_path(self, path):
+    def path(self, path: Text) -> "Config":
         self.__path = path
         return self
 
-    def init(self):
+    def init(self) -> TConfig:
         return TConfig(
             name=self.__name,
             base_url=self.__base_url,
@@ -69,50 +69,47 @@ class Config(object):
         )
 
 
-class Request(object):
-    def get(self, url):
-        return RequestOptionalArgs(MethodEnum.GET, url)
-
-    def post(self, url):
-        return RequestOptionalArgs(MethodEnum.POST, url)
-
-    def put(self, url):
-        return RequestOptionalArgs(MethodEnum.PUT, url)
-
-    def head(self, url):
-        return RequestOptionalArgs(MethodEnum.HEAD, url)
-
-    def delete(self, url):
-        return RequestOptionalArgs(MethodEnum.DELETE, url)
-
-    def options(self, url):
-        return RequestOptionalArgs(MethodEnum.OPTIONS, url)
-
-    def patch(self, url):
-        return RequestOptionalArgs(MethodEnum.PATCH, url)
-
-
 class RequestOptionalArgs(object):
     def __init__(self, method: MethodEnum, url: Text):
         self.__method = method
         self.__url = url
         self.__params = {}
         self.__headers = {}
+        self.__cookies = {}
         self.__data = ""
+        self.__timeout = 120
+        self.__allow_redirects = True
+        self.__verify = False
 
-    def set_params(self, **params):
+    def with_params(self, **params) -> "RequestOptionalArgs":
         self.__params.update(params)
         return self
 
-    def set_headers(self, **headers):
+    def with_headers(self, **headers) -> "RequestOptionalArgs":
         self.__headers.update(headers)
         return self
 
-    def set_data(self, data):
+    def with_cookies(self, **cookies) -> "RequestOptionalArgs":
+        self.__cookies.update(cookies)
+        return self
+
+    def with_data(self, data) -> "RequestOptionalArgs":
         self.__data = data
         return self
 
-    def perform(self):
+    def set_timeout(self, timeout: float) -> "RequestOptionalArgs":
+        self.__timeout = timeout
+        return self
+
+    def set_verify(self, verify: bool) -> "RequestOptionalArgs":
+        self.__verify = verify
+        return self
+
+    def set_allow_redirects(self, allow_redirects: bool) -> "RequestOptionalArgs":
+        self.__allow_redirects = allow_redirects
+        return self
+
+    def perform(self) -> TRequest:
         """build TRequest object with configs"""
         return TRequest(
             method=self.__method,
@@ -120,7 +117,33 @@ class RequestOptionalArgs(object):
             params=self.__params,
             headers=self.__headers,
             data=self.__data,
+            timeout=self.__timeout,
+            verify=self.__verify,
+            allow_redirects=self.__allow_redirects,
         )
+
+
+class Request(object):
+    def get(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.GET, url)
+
+    def post(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.POST, url)
+
+    def put(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.PUT, url)
+
+    def head(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.HEAD, url)
+
+    def delete(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.DELETE, url)
+
+    def options(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.OPTIONS, url)
+
+    def patch(self, url: Text) -> RequestOptionalArgs:
+        return RequestOptionalArgs(MethodEnum.PATCH, url)
 
 
 class Step(object):
@@ -131,31 +154,31 @@ class Step(object):
         self.__extract = {}
         self.__validators = []
 
-    def set_variables(self, **variables):
+    def with_variables(self, **variables) -> "Step":
         self.__variables.update(variables)
         return self
 
-    def extract(self, var_name, jmes_path):
-        self.__extract[var_name] = jmes_path
-        return self
-
-    def assert_equal(self, jmes_path, expected_value):
-        self.__validators.append({"eq": [jmes_path, expected_value]})
-        return self
-
-    def assert_greater_than(self, jmes_path, expected_value):
-        self.__validators.append({"gt": [jmes_path, expected_value]})
-        return self
-
-    def assert_less_than(self, jmes_path, expected_value):
-        self.__validators.append({"lt": [jmes_path, expected_value]})
-        return self
-
-    def run_request(self, req_obj: Request) -> "Step":
+    def run_request(self, req_obj: RequestOptionalArgs) -> "Step":
         self.__request = req_obj.perform()
         return self
 
-    def init(self):
+    def extract(self, var_name: Text, jmes_path: Text) -> "Step":
+        self.__extract[var_name] = jmes_path
+        return self
+
+    def assert_equal(self, jmes_path: Text, expected_value: Any) -> "Step":
+        self.__validators.append({"eq": [jmes_path, expected_value]})
+        return self
+
+    def assert_greater_than(self, jmes_path: Text, expected_value: Any) -> "Step":
+        self.__validators.append({"gt": [jmes_path, expected_value]})
+        return self
+
+    def assert_less_than(self, jmes_path: Text, expected_value: Any) -> "Step":
+        self.__validators.append({"lt": [jmes_path, expected_value]})
+        return self
+
+    def init(self) -> TStep:
         return TStep(
             name=self.__name,
             variables=self.__variables,
@@ -197,7 +220,7 @@ class HttpRunner(object):
         self.__session_variables = variables
         return self
 
-    def __run_step_request(self, step: TStep):
+    def __run_step_request(self, step: TStep) -> StepData:
         """run teststep: request"""
         step_data = StepData(name=step.name)
 
@@ -274,7 +297,7 @@ class HttpRunner(object):
 
         return step_data
 
-    def __run_step_testcase(self, step):
+    def __run_step_testcase(self, step: TStep) -> StepData:
         """run teststep: referenced testcase"""
         step_data = StepData(name=step.name)
         step_variables = step.variables
@@ -315,7 +338,7 @@ class HttpRunner(object):
 
         return step_data
 
-    def __run_step(self, step: TStep):
+    def __run_step(self, step: TStep) -> Dict:
         """run teststep, teststep maybe a request or referenced testcase"""
         logger.info(f"run step begin: {step.name} >>>>>>")
 
@@ -332,7 +355,7 @@ class HttpRunner(object):
         logger.info(f"run step end: {step.name} <<<<<<\n")
         return step_data.export
 
-    def __parse_config(self, config: TConfig):
+    def __parse_config(self, config: TConfig) -> NoReturn:
         config.variables.update(self.__session_variables)
         config.variables = parse_variables_mapping(
             config.variables, self.__project_meta.functions
@@ -344,7 +367,7 @@ class HttpRunner(object):
             config.base_url, config.variables, self.__project_meta.functions
         )
 
-    def run_testcase(self, testcase: TestCase):
+    def run_testcase(self, testcase: TestCase) -> "HttpRunner":
         """run specified testcase
 
         Examples:
@@ -437,7 +460,7 @@ class HttpRunner(object):
             step_datas=self.__step_datas,
         )
 
-    def test_start(self):
+    def test_start(self) -> "HttpRunner":
         """main entrance, discovered by pytest"""
         self.__project_meta = self.__project_meta or load_project_meta(self.config.path)
         self.__case_id = self.__case_id or str(uuid.uuid4())
