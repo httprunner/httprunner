@@ -61,8 +61,8 @@ class TRequest(BaseModel):
 
 class TStep(BaseModel):
     name: Name
-    request: TRequest = None
-    testcase: Union[Text, Callable] = ""
+    request: Union[TRequest, None] = None
+    testcase: Union[Text, Callable, None] = None
     variables: VariablesMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
