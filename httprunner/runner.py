@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn
+from typing import List, Dict, Text, NoReturn, Union
 
 try:
     import allure
@@ -20,7 +20,7 @@ from httprunner.ext.uploader import prepare_upload_step
 from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
-from httprunner.testcase import Config, Step
+from httprunner.testcase import Config, StepValidation
 from httprunner.schema import (
     TConfig,
     TStep,
@@ -35,8 +35,8 @@ from httprunner.schema import (
 
 
 class HttpRunner(object):
-    config: Config
-    teststeps: List[Step]
+    config: Union[TConfig, Config]
+    teststeps: List[Union[TStep, StepValidation]]
 
     success: bool = True  # indicate testcase execution result
     __config: TConfig
@@ -51,6 +51,23 @@ class HttpRunner(object):
     __duration: float = 0
     # log
     __log_path: Text = ""
+
+    def __init_tests__(self) -> NoReturn:
+        if isinstance(self.config, TConfig):
+            self.__config = self.config
+        elif isinstance(self.config, Config):
+            self.__config = self.config.perform()
+        else:
+            raise exceptions.TestCaseFormatError(f"config type error: {self.config}")
+
+        self.__teststeps = []
+        for step in self.teststeps:
+            if isinstance(step, TStep):
+                self.__teststeps.append(step)
+            elif isinstance(step, StepValidation):
+                self.__teststeps.append(step.perform())
+            else:
+                raise exceptions.TestCaseFormatError(f"step type error: {step}")
 
     def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
         self.__project_meta = project_meta
@@ -272,8 +289,7 @@ class HttpRunner(object):
             >>> TestCaseRequestWithFunctions().run()
 
         """
-        self.__config = self.config.perform()
-        self.__teststeps = [step.perform() for step in self.teststeps]
+        self.__init_tests__()
         testcase_obj = TestCase(config=self.__config, teststeps=self.__teststeps)
         return self.run_testcase(testcase_obj)
 
@@ -314,8 +330,7 @@ class HttpRunner(object):
 
     def test_start(self) -> "HttpRunner":
         """main entrance, discovered by pytest"""
-        self.__config = self.config.perform()
-        self.__teststeps = [step.perform() for step in self.teststeps]
+        self.__init_tests__()
         self.__project_meta = self.__project_meta or load_project_meta(
             self.__config.path
         )
