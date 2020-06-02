@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.getcwd())
 
-from httprunner import HttpRunner, Config, Step
+from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 
 from examples.postman_echo.request_methods.request_with_functions_test import (
     TestCaseRequestWithFunctions as RequestWithFunctions,
@@ -16,15 +16,17 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
 class TestCaseRequestWithTestcaseReference(HttpRunner):
     config = (
         Config("request methods testcase: reference testcase")
-        .variables(foo1="session_bar1")
+        .variables(**{"foo1": "session_bar1"})
         .base_url("https://postman-echo.com")
         .verify(False)
     )
 
     teststeps = [
-        Step("request with functions")
-        .with_variables(foo1="override_bar1")
-        .run_testcase(RequestWithFunctions),
+        Step(
+            RunTestCase("request with functions")
+            .with_variables(**{"foo1": "override_bar1"})
+            .call(RequestWithFunctions)
+        ),
     ]
 
 

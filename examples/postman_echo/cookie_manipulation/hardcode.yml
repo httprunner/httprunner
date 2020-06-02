@@ -1,0 +1,34 @@
+config:
+    name: "set & delete cookies."
+    base_url: "https://postman-echo.com"
+    verify: False
+    export: ["cookie_foo1", "cookie_foo3"]
+
+teststeps:
+-
+    name: set cookie foo1 & foo2 & foo3
+    request:
+        method: GET
+        url: /cookies/set
+        params:
+            foo1: bar1
+            foo2: bar2
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+    extract:
+        cookie_foo1: $.cookies.foo1
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["cookies.foo1", "bar1"]
+-
+    name: delete cookie foo2
+    request:
+        method: GET
+        url: /cookies/delete?foo2
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+    validate:
+        - eq: ["status_code", 200]
+        - ne: ["$.cookies.foo1", "$foo1"]
+        - eq: ["$.cookies.foo1", "$cookie_foo1"]
+        - eq: ["$.cookies.foo3", "$cookie_foo3"]
