@@ -12,8 +12,8 @@ from httprunner.schema import VariablesMapping, Validators, FunctionsMapping
 def get_uniform_comparator(comparator: Text):
     """ convert comparator alias to uniform name
     """
-    if comparator in ["eq", "equals", "==", "is"]:
-        return "equals"
+    if comparator in ["eq", "equals", "equal"]:
+        return "equal"
     elif comparator in ["lt", "less_than"]:
         return "less_than"
     elif comparator in ["le", "less_than_or_equals"]:
@@ -62,8 +62,8 @@ def uniform_validator(validator):
         validator (dict): validator maybe in two formats:
 
             format1: this is kept for compatibility with the previous versions.
-                {"check": "status_code", "assert": "eq", "expect": 201}
-                {"check": "$resp_body_success", "assert": "eq", "expect": True}
+                {"check": "status_code", "comparator": "eq", "expect": 201}
+                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
             format2: recommended new version, {assert: [check_item, expected_value]}
                 {'eq': ['status_code', 201]}
                 {'eq': ['$resp_body_success', True]}
