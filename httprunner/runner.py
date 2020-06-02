@@ -20,7 +20,7 @@ from httprunner.ext.uploader import prepare_upload_step
 from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
-from httprunner.testcase import Config, StepValidation
+from httprunner.testcase import Config, Step
 from httprunner.schema import (
     TConfig,
     TStep,
@@ -36,7 +36,7 @@ from httprunner.schema import (
 
 class HttpRunner(object):
     config: Union[TConfig, Config]
-    teststeps: List[Union[TStep, StepValidation]]
+    teststeps: List[Union[TStep, Step]]
 
     success: bool = True  # indicate testcase execution result
     __config: TConfig
@@ -64,7 +64,7 @@ class HttpRunner(object):
         for step in self.teststeps:
             if isinstance(step, TStep):
                 self.__teststeps.append(step)
-            elif isinstance(step, StepValidation):
+            elif isinstance(step, Step):
                 self.__teststeps.append(step.perform())
             else:
                 raise exceptions.TestCaseFormatError(f"step type error: {step}")

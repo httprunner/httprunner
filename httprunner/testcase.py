@@ -1,5 +1,5 @@
 import inspect
-from typing import Text, Any, Dict, Callable
+from typing import Text, Any, Union, Callable
 
 from httprunner.schema import (
     TConfig,
@@ -50,154 +50,166 @@ class Config(object):
         )
 
 
-class RequestWithOptionalArgs(object):
-    def __init__(self, method: MethodEnum, url: Text):
-        self.__method = method
-        self.__url = url
-        self.__params = {}
-        self.__headers = {}
-        self.__cookies = {}
-        self.__data = ""
-        self.__timeout = 120
-        self.__allow_redirects = True
-        self.__verify = False
-
-    def with_params(self, **params) -> "RequestWithOptionalArgs":
-        self.__params.update(params)
-        return self
-
-    def with_headers(self, **headers) -> "RequestWithOptionalArgs":
-        self.__headers.update(headers)
-        return self
-
-    def with_cookies(self, **cookies) -> "RequestWithOptionalArgs":
-        self.__cookies.update(cookies)
-        return self
-
-    def with_data(self, data) -> "RequestWithOptionalArgs":
-        self.__data = data
-        return self
-
-    def set_timeout(self, timeout: float) -> "RequestWithOptionalArgs":
-        self.__timeout = timeout
-        return self
-
-    def set_verify(self, verify: bool) -> "RequestWithOptionalArgs":
-        self.__verify = verify
-        return self
-
-    def set_allow_redirects(self, allow_redirects: bool) -> "RequestWithOptionalArgs":
-        self.__allow_redirects = allow_redirects
-        return self
-
-    def perform(self) -> TRequest:
-        """build TRequest object with configs"""
-        return TRequest(
-            method=self.__method,
-            url=self.__url,
-            params=self.__params,
-            headers=self.__headers,
-            data=self.__data,
-            timeout=self.__timeout,
-            verify=self.__verify,
-            allow_redirects=self.__allow_redirects,
-        )
-
-
-class Request(object):
-    def get(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.GET, url)
-
-    def post(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.POST, url)
-
-    def put(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.PUT, url)
-
-    def head(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.HEAD, url)
-
-    def delete(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.DELETE, url)
-
-    def options(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.OPTIONS, url)
-
-    def patch(self, url: Text) -> RequestWithOptionalArgs:
-        return RequestWithOptionalArgs(MethodEnum.PATCH, url)
-
-
 class StepValidation(object):
-    def __init__(
-        self,
-        name: Text,
-        variables: Dict,
-        extractors: Dict,
-        request: TRequest = None,
-        testcase: Callable = None,
-    ):
-        self.__name = name
-        self.__variables = variables
-        self.__extractors = extractors
-        self.__request: TRequest = request
-        self.__testcase: Callable = testcase
-        self.__validators = []
-
-    @property
-    def request(self) -> TRequest:
-        return self.__request
-
-    @property
-    def testcase(self) -> TestCase:
-        return self.__testcase
+    def __init__(self, step: TStep):
+        self.__t_step = step
 
     def assert_equal(self, jmes_path: Text, expected_value: Any) -> "StepValidation":
-        self.__validators.append({"eq": [jmes_path, expected_value]})
+        self.__t_step.validators.append({"eq": [jmes_path, expected_value]})
         return self
 
     def assert_greater_than(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepValidation":
-        self.__validators.append({"gt": [jmes_path, expected_value]})
+        self.__t_step.validators.append({"gt": [jmes_path, expected_value]})
         return self
 
     def assert_less_than(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepValidation":
-        self.__validators.append({"lt": [jmes_path, expected_value]})
+        self.__t_step.validators.append({"lt": [jmes_path, expected_value]})
         return self
 
     def perform(self) -> TStep:
-        return TStep(
-            name=self.__name,
-            variables=self.__variables,
-            request=self.__request,
-            testcase=self.__testcase,
-            extract=self.__extractors,
-            validate=self.__validators,
-        )
+        return self.__t_step
+
+
+class StepExtraction(object):
+    def __init__(self, step: TStep):
+        self.__t_step = step
+
+    def with_jmespath(self, jmes_path: Text, var_name: Text) -> "StepExtraction":
+        self.__t_step.extract[var_name] = jmes_path
+        return self
+
+    # def with_regex(self):
+    #     # TODO: extract response html with regex
+    #     pass
+    #
+    # def with_jsonpath(self):
+    #     # TODO: extract response json with jsonpath
+    #     pass
+
+    def validate(self) -> StepValidation:
+        return StepValidation(self.__t_step)
+
+    def perform(self) -> TStep:
+        return self.__t_step
+
+
+class RequestWithOptionalArgs(object):
+    def __init__(self, step: TStep):
+        self.__t_step = step
+
+    def with_params(self, **params) -> "RequestWithOptionalArgs":
+        self.__t_step.request.params.update(params)
+        return self
+
+    def with_headers(self, **headers) -> "RequestWithOptionalArgs":
+        self.__t_step.request.headers.update(headers)
+        return self
+
+    def with_cookies(self, **cookies) -> "RequestWithOptionalArgs":
+        self.__t_step.request.cookies.update(cookies)
+        return self
+
+    def with_data(self, data) -> "RequestWithOptionalArgs":
+        self.__t_step.request.data = data
+        return self
+
+    def set_timeout(self, timeout: float) -> "RequestWithOptionalArgs":
+        self.__t_step.request.timeout = timeout
+        return self
+
+    def set_verify(self, verify: bool) -> "RequestWithOptionalArgs":
+        self.__t_step.request.verify = verify
+        return self
+
+    def set_allow_redirects(self, allow_redirects: bool) -> "RequestWithOptionalArgs":
+        self.__t_step.request.allow_redirects = allow_redirects
+        return self
+
+    # def hooks(self):
+    #     pass
+
+    def extract(self) -> StepExtraction:
+        return StepExtraction(self.__t_step)
+
+    def validate(self) -> StepValidation:
+        return StepValidation(self.__t_step)
+
+    def perform(self) -> TStep:
+        return self.__t_step
+
+
+class RunRequest(object):
+    def __init__(self, name: Text):
+        self.__t_step = TStep(name=name)
+
+    def with_variables(self, **variables) -> "RunRequest":
+        self.__t_step.variables.update(variables)
+        return self
+
+    def get(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.GET, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+    def post(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.POST, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+    def put(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.PUT, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+    def head(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.HEAD, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+    def delete(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.DELETE, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+    def options(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.OPTIONS, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+    def patch(self, url: Text) -> RequestWithOptionalArgs:
+        self.__t_step.request = TRequest(method=MethodEnum.PATCH, url=url)
+        return RequestWithOptionalArgs(self.__t_step)
+
+
+class RunTestCase(object):
+    def __init__(self, name: Text):
+        self.__t_step = TStep(name=name)
+
+    def with_variables(self, **variables) -> "RunTestCase":
+        self.__t_step.variables.update(variables)
+        return self
+
+    def call(self, testcase: Callable):
+        self.__t_step.testcase = testcase
+
+    def perform(self) -> TStep:
+        return self.__t_step
 
 
 class Step(object):
-    def __init__(self, name: Text):
-        self.__name = name
-        self.__variables = {}
-        self.__extractors = {}
+    def __init__(
+        self,
+        step: Union[
+            StepValidation, StepExtraction, RequestWithOptionalArgs, RunTestCase
+        ],
+    ):
+        self.__t_step = step.perform()
 
-    def with_variables(self, **variables) -> "Step":
-        self.__variables.update(variables)
-        return self
+    @property
+    def request(self) -> TRequest:
+        return self.__t_step.request
 
-    def set_extractor(self, var_name: Text, jmes_path: Text) -> "Step":
-        self.__extractors[var_name] = jmes_path
-        return self
+    @property
+    def testcase(self) -> TestCase:
+        return self.__t_step.testcase
 
-    def run_request(self, req_obj: RequestWithOptionalArgs) -> "StepValidation":
-        return StepValidation(
-            self.__name, self.__variables, self.__extractors, request=req_obj.perform()
-        )
-
-    def run_testcase(self, testcase: Callable) -> "StepValidation":
-        return StepValidation(
-            self.__name, self.__variables, self.__extractors, testcase=testcase
-        )
+    def perform(self) -> TStep:
+        return self.__t_step

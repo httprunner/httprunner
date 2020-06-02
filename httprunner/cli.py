@@ -23,9 +23,14 @@ def main_run(extra_args):
     # keep compatibility with v2
     extra_args = ensure_cli_args(extra_args)
 
+    chain_style = False
     tests_path_list = []
     extra_args_new = []
     for item in extra_args:
+        if item == "--chain-style":
+            chain_style = True
+            continue
+
         if not os.path.exists(item):
             # item is not file/folder path
             extra_args_new.append(item)
@@ -38,7 +43,7 @@ def main_run(extra_args):
         logger.error(f"No valid testcase path in cli arguments: {extra_args}")
         sys.exit(1)
 
-    testcase_path_list = main_make(tests_path_list)
+    testcase_path_list = main_make(tests_path_list, chain_style=chain_style)
     if not testcase_path_list:
         logger.error("No valid testcases found, exit 1.")
         sys.exit(1)
@@ -110,7 +115,7 @@ def main():
     elif sys.argv[1] == "har2case":
         main_har2case(args)
     elif sys.argv[1] == "make":
-        main_make(args.testcase_path)
+        main_make(args.testcase_path, chain_style=args.chain_style)
 
 
 def main_hrun_alias():
