@@ -44,7 +44,7 @@ def main_run(extra_args):
         sys.exit(1)
 
     extra_args_new.extend(testcase_path_list)
-    pytest.main(extra_args_new)
+    sys.exit(pytest.main(extra_args_new))
 
 
 def main():
