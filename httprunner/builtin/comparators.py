@@ -5,7 +5,7 @@ Built-in validate comparators.
 import re
 
 
-def equals(check_value, expect_value):
+def equal(check_value, expect_value):
     assert check_value == expect_value
 
 
