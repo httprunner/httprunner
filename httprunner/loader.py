@@ -194,7 +194,7 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
 
 def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
-    """ load folder path, return all files endswith yml/yaml/json in list.
+    """ load folder path, return all files endswith .yml/.yaml/.json/_test.py in list.
 
     Args:
         folder_path (str): specified folder path to load
@@ -219,7 +219,7 @@ def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
         filenames_list = []
 
         for filename in filenames:
-            if not filename.endswith((".yml", ".yaml", ".json")):
+            if not filename.lower().endswith((".yml", ".yaml", ".json", "_test.py")):
                 continue
 
             filenames_list.append(filename)

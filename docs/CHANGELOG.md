@@ -5,6 +5,7 @@
 **Added**
 
 - feat: make pytest files in chain style
+- feat: `hrun` supports run pytest files
 
 **Fixed**
 

@@ -6,10 +6,11 @@ from httprunner.make import (
     make_files_cache_set,
     make_config_chain_style,
     make_teststep_chain_style,
+    pytest_files_set,
 )
 
 
-class TestLoader(unittest.TestCase):
+class TestMake(unittest.TestCase):
     def test_make_testcase(self):
         path = ["examples/postman_echo/request_methods/request_with_variables.yml"]
         testcase_python_list = main_make(path)
@@ -23,6 +24,7 @@ class TestLoader(unittest.TestCase):
             "examples/postman_echo/request_methods/request_with_testcase_reference.yml"
         ]
         make_files_cache_set.clear()
+        pytest_files_set.clear()
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 1)
         self.assertIn(
@@ -91,6 +93,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
     def test_make_testsuite(self):
         path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
         make_files_cache_set.clear()
+        pytest_files_set.clear()
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 2)
         self.assertIn(
