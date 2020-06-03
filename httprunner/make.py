@@ -110,7 +110,7 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     raw_file_name, file_suffix = os.path.splitext(os.path.basename(testcase_path))
 
     file_suffix = file_suffix.lower()
-    if file_suffix not in [".json", ".yml", ".yaml"]:
+    if file_suffix not in [".json", ".yml", ".yaml", ".har"]:
         raise exceptions.ParamsError(
             "testcase file should have .yaml/.yml/.json suffix"
         )
@@ -125,7 +125,7 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     return testcase_python_path, name_in_title_case
 
 
-def format_pytest_with_black(python_paths: List[Text]) -> NoReturn:
+def format_pytest_with_black(*python_paths: Text) -> NoReturn:
     logger.info("format pytest cases with black ...")
     try:
         subprocess.run(["black", *python_paths])
@@ -231,14 +231,14 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
             expect = validator["expect"]
             if isinstance(expect, Text):
                 expect = f'"{expect}"'
-            step_info += f'.assert_{assert_method}({check}, {expect})'
+            step_info += f".assert_{assert_method}({check}, {expect})"
 
     return f"Step({step_info})"
 
 
 def make_testcase(
     testcase: Dict, dir_path: Text = None, ref_flag: bool = False,
-) -> NoReturn:
+) -> Text:
     """convert valid testcase dict to pytest file path"""
     # ensure compatibility with testcase format v2
     testcase = ensure_testcase_v3(testcase)
@@ -257,7 +257,7 @@ def make_testcase(
 
     global make_files_cache_set
     if testcase_python_path in make_files_cache_set:
-        return
+        return testcase_python_path
 
     config = testcase["config"]
     config["path"] = __ensure_cwd_relative(testcase_python_path)
@@ -316,6 +316,8 @@ def make_testcase(
 
     if not ref_flag:
         make_files_cache_set.add(__ensure_cwd_relative(testcase_python_path))
+
+    return testcase_python_path
 
 
 def make_testsuite(testsuite: Dict) -> NoReturn:
@@ -424,7 +426,7 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
         __make(tests_path)
 
     testcase_path_list = list(make_files_cache_set)
-    format_pytest_with_black(testcase_path_list)
+    format_pytest_with_black(*testcase_path_list)
     return testcase_path_list
 
 
