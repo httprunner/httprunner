@@ -184,6 +184,10 @@ def make_request_chain_style(request: Dict) -> Text:
         allow_redirects = request["allow_redirects"]
         request_chain_style += f".set_allow_redirects({allow_redirects})"
 
+    if "upload" in request:
+        upload = request["upload"]
+        request_chain_style += f".upload(**{upload})"
+
     return request_chain_style
 
 

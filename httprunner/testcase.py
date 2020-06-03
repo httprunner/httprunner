@@ -227,6 +227,10 @@ class RequestWithOptionalArgs(object):
         self.__t_step.request.allow_redirects = allow_redirects
         return self
 
+    def upload(self, **file_info) -> "RequestWithOptionalArgs":
+        self.__t_step.request.upload.update(file_info)
+        return self
+
     # def hooks(self):
     #     pass
 
