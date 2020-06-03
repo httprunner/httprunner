@@ -413,9 +413,7 @@ def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
 
         # invalid format
         else:
-            raise exceptions.FileFormatError(
-                f"test file is neither testcase nor testsuite: {test_file}"
-            )
+            logger.warning(f"skip invalid testcase/testsuite file: {test_file}")
 
 
 def main_make(tests_paths: List[Text]) -> List[Text]:
