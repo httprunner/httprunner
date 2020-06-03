@@ -6,6 +6,7 @@
 
 - feat: make pytest files in chain style
 - feat: `hrun` supports run pytest files
+- feat: get raw testcase model from pytest file
 
 **Fixed**
 
@@ -17,7 +18,7 @@
 
 **Changed**
 
-- change: har2case generate pytest file by default
+- change: `har2case` generate pytest file by default
 - docs: update sponsor info
 
 ## 3.0.6 (2020-05-29)
