@@ -265,7 +265,9 @@ def session_fixture(request):
             )
             summary["stat"]["teststeps"]["failures"] += 1
 
-        summary["details"].append(testcase_summary.dict())
+        testcase_summary_json = testcase_summary.dict()
+        testcase_summary_json["records"] = testcase_summary_json.pop("step_datas")
+        summary["details"].append(testcase_summary_json)
 
     summary_path = "{{SUMMARY_PATH_PLACEHOLDER}}"
     summary_dir = os.path.dirname(summary_path)

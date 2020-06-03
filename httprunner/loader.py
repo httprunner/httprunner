@@ -48,7 +48,6 @@ def _load_json_file(json_file: Text) -> Dict:
             json_content = json.load(data_file)
         except json.JSONDecodeError as ex:
             err_msg = f"JSONDecodeError:\nfile: {json_file}\nerror: {ex}"
-            logger.error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
         return json_content
@@ -74,12 +73,11 @@ def load_test_file(test_file: Text) -> Dict:
 
 
 def load_testcase(testcase: Dict) -> TestCase:
-    path = testcase["config"]["path"]
     try:
         # validate with pydantic TestCase model
         testcase_obj = TestCase.parse_obj(testcase)
     except ValidationError as ex:
-        err_msg = f"TestCase ValidationError:\nfile: {path}\nerror: {ex}"
+        err_msg = f"TestCase ValidationError:\nerror: {ex}\ncontent: {testcase}"
         logger.error(err_msg)
         raise exceptions.TestCaseFormatError(err_msg)
 
@@ -89,8 +87,8 @@ def load_testcase(testcase: Dict) -> TestCase:
 def load_testcase_file(testcase_file: Text) -> TestCase:
     """load testcase file and validate with pydantic model"""
     testcase_content = load_test_file(testcase_file)
-    testcase_content.setdefault("config", {})["path"] = testcase_file
     testcase_obj = load_testcase(testcase_content)
+    testcase_obj.config.path = testcase_file
     return testcase_obj
 
 
@@ -195,7 +193,7 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
 
 def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
-    """ load folder path, return all files endswith yml/yaml/json in list.
+    """ load folder path, return all files endswith .yml/.yaml/.json/_test.py in list.
 
     Args:
         folder_path (str): specified folder path to load
@@ -220,7 +218,7 @@ def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
         filenames_list = []
 
         for filename in filenames:
-            if not filename.endswith((".yml", ".yaml", ".json")):
+            if not filename.lower().endswith((".yml", ".yaml", ".json", "_test.py")):
                 continue
 
             filenames_list.append(filename)

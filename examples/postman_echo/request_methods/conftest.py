@@ -2,9 +2,8 @@ import uuid
 from typing import List
 
 import pytest
+from httprunner import Config, Step
 from loguru import logger
-
-from httprunner.schema import TConfig, TStep
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -33,8 +32,8 @@ def session_fixture(request):
 @pytest.fixture(scope="function", autouse=True)
 def testcase_fixture(request):
     """setup and teardown each testcase"""
-    config: TConfig = request.cls.config
-    teststeps: List[TStep] = request.cls.teststeps
+    config: Config = request.cls.config
+    teststeps: List[Step] = request.cls.teststeps
 
     logger.debug(f"setup testcase fixture: {config.name} - {request.module.__name__}")
 
