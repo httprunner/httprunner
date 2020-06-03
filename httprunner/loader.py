@@ -48,7 +48,6 @@ def _load_json_file(json_file: Text) -> Dict:
             json_content = json.load(data_file)
         except json.JSONDecodeError as ex:
             err_msg = f"JSONDecodeError:\nfile: {json_file}\nerror: {ex}"
-            logger.error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
         return json_content
