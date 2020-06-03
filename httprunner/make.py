@@ -125,7 +125,7 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     return testcase_python_path, name_in_title_case
 
 
-def __format_pytest_with_black(python_paths: List[Text]) -> NoReturn:
+def format_pytest_with_black(python_paths: List[Text]) -> NoReturn:
     logger.info("format pytest cases with black ...")
     try:
         subprocess.run(["black", *python_paths])
@@ -236,7 +236,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
     return f"Step({step_info})"
 
 
-def __make_testcase(
+def make_testcase(
     testcase: Dict, dir_path: Text = None, ref_flag: bool = False,
 ) -> NoReturn:
     """convert valid testcase dict to pytest file path"""
@@ -318,7 +318,7 @@ def __make_testcase(
         make_files_cache_set.add(__ensure_cwd_relative(testcase_python_path))
 
 
-def __make_testsuite(testsuite: Dict) -> NoReturn:
+def make_testsuite(testsuite: Dict) -> NoReturn:
     """convert valid testsuite dict to pytest folder with testcases"""
     # validate testsuite format
     load_testsuite(testsuite)
@@ -363,7 +363,7 @@ def __make_testsuite(testsuite: Dict) -> NoReturn:
         testcase_dict["config"]["variables"].update(testsuite_variables)
 
         # make testcase
-        __make_testcase(testcase_dict, testsuite_dir)
+        make_testcase(testcase_dict, testsuite_dir)
 
 
 def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
@@ -400,14 +400,14 @@ def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
         # testcase
         if "teststeps" in test_content:
             try:
-                __make_testcase(test_content, ref_flag=ref_flag)
+                make_testcase(test_content, ref_flag=ref_flag)
             except exceptions.TestCaseFormatError:
                 continue
 
         # testsuite
         elif "testcases" in test_content:
             try:
-                __make_testsuite(test_content)
+                make_testsuite(test_content)
             except exceptions.TestSuiteFormatError:
                 continue
 
@@ -424,7 +424,7 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
         __make(tests_path)
 
     testcase_path_list = list(make_files_cache_set)
-    __format_pytest_with_black(testcase_path_list)
+    format_pytest_with_black(testcase_path_list)
     return testcase_path_list
 
 
