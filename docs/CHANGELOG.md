@@ -1,12 +1,23 @@
 # Release History
 
-## 3.0.7 (2020-06-01)
+## 3.0.7 (2020-06-03)
+
+**Added**
+
+- feat: make pytest files in chain style
 
 **Fixed**
 
 - fix: convert jmespath.search result to int/float unintentionally
 - fix: referenced testcase should not be run duplicately
 - fix: requests.cookies.CookieConflictError, multiple cookies with name
+- fix: missing exit code from pytest
+- fix: skip invalid testcase/testsuite yaml/json file
+
+**Changed**
+
+- change: generate pytest in chain style by default
+- docs: update sponsor info
 
 ## 3.0.6 (2020-05-29)
 
