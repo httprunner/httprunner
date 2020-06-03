@@ -30,7 +30,14 @@ def init_har2case_parser(subparsers):
         "--to-yaml",
         dest="to_yaml",
         action="store_true",
-        help="Convert to YAML format, if not specified, convert to JSON format by default.",
+        help="Convert to YAML format, if not specified, convert to pytest format by default.",
+    )
+    parser.add_argument(
+        "-2j",
+        "--to-json",
+        dest="to_json",
+        action="store_true",
+        help="Convert to JSON format, if not specified, convert to pytest format by default.",
     )
     parser.add_argument(
         "--filter",
@@ -55,7 +62,13 @@ def main_har2case(args):
         logger.error(f"HAR file not exists: {har_source_file}")
         sys.exit(1)
 
-    output_file_type = "YML" if args.to_yaml else "JSON"
+    if args.to_yaml:
+        output_file_type = "YAML"
+    elif args.to_yaml:
+        output_file_type = "JSON"
+    else:
+        output_file_type = "pytest"
+
     HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type)
 
     return 0

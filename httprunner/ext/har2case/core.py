@@ -7,6 +7,7 @@ import urllib.parse as urlparse
 from loguru import logger
 
 from httprunner.ext.har2case import utils
+from httprunner.make import make_testcase, format_pytest_with_black
 
 try:
     from json.decoder import JSONDecodeError
@@ -329,17 +330,23 @@ class HarParser(object):
         testcase = {"config": config, "teststeps": teststeps}
         return testcase
 
-    def gen_testcase(self, file_type="JSON"):
+    def gen_testcase(self, file_type="pytest"):
         logger.info(f"Start to generate testcase from {self.har_file_path}")
         harfile = os.path.splitext(self.har_file_path)[0]
-        output_testcase_file = "{}.{}".format(harfile, file_type.lower())
 
         testcase = self._make_testcase()
         logger.debug("prepared testcase: {}".format(testcase))
 
         if file_type == "JSON":
+            output_testcase_file = f"{harfile}.json"
             utils.dump_json(testcase, output_testcase_file)
-        else:
+        elif file_type == "YAML":
+            output_testcase_file = f"{harfile}.yml"
             utils.dump_yaml(testcase, output_testcase_file)
+        else:
+            # default to generate pytest file
+            testcase["config"]["path"] = self.har_file_path
+            output_testcase_file = make_testcase(testcase)
+            format_pytest_with_black(output_testcase_file)
 
         logger.info(f"generated testcase: {output_testcase_file}")
