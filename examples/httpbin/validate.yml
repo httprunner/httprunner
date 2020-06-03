@@ -13,8 +13,8 @@ teststeps:
         method: GET
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.a", 1]
-        - eq: ["body.args.b", 2]
+        - eq: ["body.args.a", "1"]
+        - eq: ["body.args.b", "2"]
     validate_script:
         - "assert status_code == 200"
 
