@@ -36,7 +36,7 @@ jobs:
         httprunner har2case -h
     - name: Run smoketest - postman echo
       run: |
-        hrun examples/postman_echo/request_methods
+        poetry run hrun examples/postman_echo/request_methods
     - name: Run smoketest - httpbin
       run: |
-        hrun examples/httpbin/
+        poetry run hrun examples/httpbin/
