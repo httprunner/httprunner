@@ -73,12 +73,11 @@ def load_test_file(test_file: Text) -> Dict:
 
 
 def load_testcase(testcase: Dict) -> TestCase:
-    path = testcase["config"]["path"]
     try:
         # validate with pydantic TestCase model
         testcase_obj = TestCase.parse_obj(testcase)
     except ValidationError as ex:
-        err_msg = f"TestCase ValidationError:\nfile: {path}\nerror: {ex}"
+        err_msg = f"TestCase ValidationError:\nerror: {ex}\ncontent: {testcase}"
         logger.error(err_msg)
         raise exceptions.TestCaseFormatError(err_msg)
 
