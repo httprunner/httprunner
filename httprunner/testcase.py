@@ -189,6 +189,7 @@ class RunTestCase(object):
 
     def call(self, testcase: Callable):
         self.__t_step.testcase = testcase
+        return self
 
     def perform(self) -> TStep:
         return self.__t_step
