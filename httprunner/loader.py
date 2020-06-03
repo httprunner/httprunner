@@ -88,8 +88,8 @@ def load_testcase(testcase: Dict) -> TestCase:
 def load_testcase_file(testcase_file: Text) -> TestCase:
     """load testcase file and validate with pydantic model"""
     testcase_content = load_test_file(testcase_file)
-    testcase_content.setdefault("config", {})["path"] = testcase_file
     testcase_obj = load_testcase(testcase_content)
+    testcase_obj.config.path = testcase_file
     return testcase_obj
 
 
