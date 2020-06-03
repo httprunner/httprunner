@@ -9,23 +9,23 @@ def equal(check_value, expect_value):
     assert check_value == expect_value
 
 
-def less_than(check_value, expect_value):
-    assert check_value < expect_value
-
-
-def less_than_or_equals(check_value, expect_value):
-    assert check_value <= expect_value
-
-
 def greater_than(check_value, expect_value):
     assert check_value > expect_value
 
 
-def greater_than_or_equals(check_value, expect_value):
+def less_than(check_value, expect_value):
+    assert check_value < expect_value
+
+
+def greater_or_equals(check_value, expect_value):
     assert check_value >= expect_value
 
 
-def not_equals(check_value, expect_value):
+def less_or_equals(check_value, expect_value):
+    assert check_value <= expect_value
+
+
+def not_equal(check_value, expect_value):
     assert check_value != expect_value
 
 
@@ -33,34 +33,29 @@ def string_equals(check_value, expect_value):
     assert str(check_value) == str(expect_value)
 
 
-def length_equals(check_value, expect_value):
+def length_equal(check_value, expect_value):
     assert isinstance(expect_value, int)
-    expect_len = _cast_to_int(expect_value)
-    assert len(check_value) == expect_len
+    assert len(check_value) == expect_value
 
 
 def length_greater_than(check_value, expect_value):
-    assert isinstance(expect_value, int)
-    expect_len = _cast_to_int(expect_value)
-    assert len(check_value) > expect_len
+    assert isinstance(expect_value, (int, float))
+    assert len(check_value) > expect_value
 
 
-def length_greater_than_or_equals(check_value, expect_value):
-    assert isinstance(expect_value, int)
-    expect_len = _cast_to_int(expect_value)
-    assert len(check_value) >= expect_len
+def length_greater_or_equals(check_value, expect_value):
+    assert isinstance(expect_value, (int, float))
+    assert len(check_value) >= expect_value
 
 
 def length_less_than(check_value, expect_value):
-    assert isinstance(expect_value, int)
-    expect_len = _cast_to_int(expect_value)
-    assert len(check_value) < expect_len
+    assert isinstance(expect_value, (int, float))
+    assert len(check_value) < expect_value
 
 
-def length_less_than_or_equals(check_value, expect_value):
-    assert isinstance(expect_value, int)
-    expect_len = _cast_to_int(expect_value)
-    assert len(check_value) <= expect_len
+def length_less_or_equals(check_value, expect_value):
+    assert isinstance(expect_value, (int, float))
+    assert len(check_value) <= expect_value
 
 
 def contains(check_value, expect_value):
@@ -100,10 +95,3 @@ def startswith(check_value, expect_value):
 
 def endswith(check_value, expect_value):
     assert str(check_value).endswith(str(expect_value))
-
-
-def _cast_to_int(expect_value):
-    try:
-        return int(expect_value)
-    except Exception:
-        raise AssertionError("%r can't cast to int" % str(expect_value))

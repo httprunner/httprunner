@@ -55,19 +55,117 @@ class StepValidation(object):
         self.__t_step = step
 
     def assert_equal(self, jmes_path: Text, expected_value: Any) -> "StepValidation":
-        self.__t_step.validators.append({"eq": [jmes_path, expected_value]})
+        self.__t_step.validators.append({"equal": [jmes_path, expected_value]})
+        return self
+
+    def assert_not_equal(
+        self, jmes_path: Text, expected_value: Any
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"not_equal": [jmes_path, expected_value]})
         return self
 
     def assert_greater_than(
-        self, jmes_path: Text, expected_value: Any
+        self, jmes_path: Text, expected_value: Union[int, float]
     ) -> "StepValidation":
-        self.__t_step.validators.append({"gt": [jmes_path, expected_value]})
+        self.__t_step.validators.append({"greater_than": [jmes_path, expected_value]})
         return self
 
     def assert_less_than(
+        self, jmes_path: Text, expected_value: Union[int, float]
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"less_than": [jmes_path, expected_value]})
+        return self
+
+    def assert_greater_or_equals(
+        self, jmes_path: Text, expected_value: Union[int, float]
+    ) -> "StepValidation":
+        self.__t_step.validators.append(
+            {"greater_or_equals": [jmes_path, expected_value]}
+        )
+        return self
+
+    def assert_less_or_equals(
+        self, jmes_path: Text, expected_value: Union[int, float]
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"less_or_equals": [jmes_path, expected_value]})
+        return self
+
+    def assert_length_equal(
+        self, jmes_path: Text, expected_value: int
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"length_equal": [jmes_path, expected_value]})
+        return self
+
+    def assert_length_greater_than(
+        self, jmes_path: Text, expected_value: int
+    ) -> "StepValidation":
+        self.__t_step.validators.append(
+            {"length_greater_than": [jmes_path, expected_value]}
+        )
+        return self
+
+    def assert_length_less_than(
+        self, jmes_path: Text, expected_value: int
+    ) -> "StepValidation":
+        self.__t_step.validators.append(
+            {"length_less_than": [jmes_path, expected_value]}
+        )
+        return self
+
+    def assert_length_greater_or_equals(
+        self, jmes_path: Text, expected_value: int
+    ) -> "StepValidation":
+        self.__t_step.validators.append(
+            {"length_greater_or_equals": [jmes_path, expected_value]}
+        )
+        return self
+
+    def assert_length_less_or_equals(
+        self, jmes_path: Text, expected_value: int
+    ) -> "StepValidation":
+        self.__t_step.validators.append(
+            {"length_less_or_equals": [jmes_path, expected_value]}
+        )
+        return self
+
+    def assert_string_equals(
+        self, jmes_path: Text, expected_value: int
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"string_equals": [jmes_path, expected_value]})
+        return self
+
+    def assert_startswith(
+        self, jmes_path: Text, expected_value: Text
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"startswith": [jmes_path, expected_value]})
+        return self
+
+    def assert_endswith(
+        self, jmes_path: Text, expected_value: Text
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"endswith": [jmes_path, expected_value]})
+        return self
+
+    def assert_regex_match(
+        self, jmes_path: Text, expected_value: Text
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"regex_match": [jmes_path, expected_value]})
+        return self
+
+    def assert_contains(self, jmes_path: Text, expected_value: Any) -> "StepValidation":
+        self.__t_step.validators.append({"contains": [jmes_path, expected_value]})
+        return self
+
+    def assert_contained_by(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepValidation":
-        self.__t_step.validators.append({"lt": [jmes_path, expected_value]})
+        self.__t_step.validators.append({"contained_by": [jmes_path, expected_value]})
+        return self
+
+    def assert_type_match(
+        self, jmes_path: Text, expected_value: Text
+    ) -> "StepValidation":
+        self.__t_step.validators.append({"type_match": [jmes_path, expected_value]})
         return self
 
     def perform(self) -> TStep:
