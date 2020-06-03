@@ -43,7 +43,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
                 content,
             )
             self.assertIn(
-                '"testcase": RequestWithFunctions,', content,
+                '.call(RequestWithFunctions)', content,
             )
 
     def test_make_testcase_folder(self):

@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn, Union
+from typing import List, Dict, Text, NoReturn
 
 try:
     import allure
@@ -35,8 +35,8 @@ from httprunner.schema import (
 
 
 class HttpRunner(object):
-    config: Union[TConfig, Config]
-    teststeps: List[Union[TStep, Step]]
+    config: Config
+    teststeps: List[Step]
 
     success: bool = True  # indicate testcase execution result
     __config: TConfig
@@ -53,21 +53,10 @@ class HttpRunner(object):
     __log_path: Text = ""
 
     def __init_tests__(self) -> NoReturn:
-        if isinstance(self.config, TConfig):
-            self.__config = self.config
-        elif isinstance(self.config, Config):
-            self.__config = self.config.perform()
-        else:
-            raise exceptions.TestCaseFormatError(f"config type error: {self.config}")
-
+        self.__config = self.config.perform()
         self.__teststeps = []
         for step in self.teststeps:
-            if isinstance(step, TStep):
-                self.__teststeps.append(step)
-            elif isinstance(step, Step):
-                self.__teststeps.append(step.perform())
-            else:
-                raise exceptions.TestCaseFormatError(f"step type error: {step}")
+            self.__teststeps.append(step.perform())
 
     def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
         self.__project_meta = project_meta
