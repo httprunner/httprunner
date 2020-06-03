@@ -50,7 +50,7 @@ class TRequest(BaseModel):
     url: Url
     params: Dict[Text, Text] = {}
     headers: Headers = {}
-    req_json: Dict = Field({}, alias="json")
+    req_json: Union[Dict, List] = Field({}, alias="json")
     data: Union[Text, Dict[Text, Any]] = ""
     cookies: Cookies = {}
     timeout: float = 120
