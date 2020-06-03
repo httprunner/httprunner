@@ -58,6 +58,13 @@ class HttpRunner(object):
         for step in self.teststeps:
             self.__teststeps.append(step.perform())
 
+    @property
+    def raw_testcase(self) -> TestCase:
+        if not hasattr(self, "__config"):
+            self.__init_tests__()
+
+        return TestCase(config=self.__config, teststeps=self.__teststeps)
+
     def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
         self.__project_meta = project_meta
         return self
