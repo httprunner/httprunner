@@ -34,7 +34,7 @@ class TestHar(TestHar2CaseUtils):
         self.assertIn("validate", teststeps[0])
 
     def test_gen_testcase_yaml(self):
-        yaml_file = os.path.join(os.path.dirname(__file__), "data", "demo.yaml")
+        yaml_file = os.path.join(os.path.dirname(__file__), "data", "demo.yml")
 
         self.har_parser.gen_testcase(file_type="YAML")
         self.assertTrue(os.path.isfile(yaml_file))

@@ -12,33 +12,32 @@ class TestUtils(unittest.TestCase):
         self.assertIn("abc", os.environ)
         self.assertEqual(os.environ["abc"], "123")
 
-    def current_validators(self):
+    def test_validators(self):
         from httprunner.builtin import comparators
 
         functions_mapping = loader.load_module_functions(comparators)
 
-        functions_mapping["equals"](None, None)
-        functions_mapping["equals"](1, 1)
-        functions_mapping["equals"]("abc", "abc")
+        functions_mapping["equal"](None, None)
+        functions_mapping["equal"](1, 1)
+        functions_mapping["equal"]("abc", "abc")
         with self.assertRaises(AssertionError):
-            functions_mapping["equals"]("123", 123)
+            functions_mapping["equal"]("123", 123)
 
         functions_mapping["less_than"](1, 2)
-        functions_mapping["less_than_or_equals"](2, 2)
+        functions_mapping["less_or_equals"](2, 2)
 
         functions_mapping["greater_than"](2, 1)
-        functions_mapping["greater_than_or_equals"](2, 2)
+        functions_mapping["greater_or_equals"](2, 2)
 
-        functions_mapping["not_equals"](123, "123")
+        functions_mapping["not_equal"](123, "123")
 
-        functions_mapping["length_equals"]("123", 3)
-        # Because the Numbers in a CSV file are by default treated as strings,
-        # you need to convert them to Numbers, and we'll test that out here.
-        functions_mapping["length_equals"]("123", "3")
+        functions_mapping["length_equal"]("123", 3)
         with self.assertRaises(AssertionError):
-            functions_mapping["length_equals"]("123", "abc")
+            functions_mapping["length_equal"]("123", "3")
+        with self.assertRaises(AssertionError):
+            functions_mapping["length_equal"]("123", "abc")
         functions_mapping["length_greater_than"]("123", 2)
-        functions_mapping["length_greater_than_or_equals"]("123", 3)
+        functions_mapping["length_greater_or_equals"]("123", 3)
 
         functions_mapping["contains"]("123abc456", "3ab")
         functions_mapping["contains"](["1", "2"], "1")

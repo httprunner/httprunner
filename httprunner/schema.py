@@ -29,8 +29,6 @@ class MethodEnum(Text, Enum):
     HEAD = "HEAD"
     OPTIONS = "OPTIONS"
     PATCH = "PATCH"
-    CONNECT = "CONNECT"
-    TRACE = "TRACE"
 
 
 class TConfig(BaseModel):
@@ -45,17 +43,17 @@ class TConfig(BaseModel):
     path: Text = None
 
 
-class Request(BaseModel):
+class TRequest(BaseModel):
     """requests.Request model"""
 
-    method: MethodEnum = MethodEnum.GET
+    method: MethodEnum
     url: Url
     params: Dict[Text, Text] = {}
     headers: Headers = {}
-    req_json: Dict = Field({}, alias="json")
+    req_json: Union[Dict, List] = Field({}, alias="json")
     data: Union[Text, Dict[Text, Any]] = ""
     cookies: Cookies = {}
-    timeout: int = 120
+    timeout: float = 120
     allow_redirects: bool = True
     verify: Verify = False
     upload: Dict = {}  # used for upload files
@@ -63,8 +61,8 @@ class Request(BaseModel):
 
 class TStep(BaseModel):
     name: Name
-    request: Request = None
-    testcase: Union[Text, Callable] = ""
+    request: Union[TRequest, None] = None
+    testcase: Union[Text, Callable, None] = None
     variables: VariablesMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
