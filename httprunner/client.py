@@ -11,6 +11,7 @@ from requests.exceptions import (
     MissingSchema,
     RequestException,
 )
+from sentry_sdk import capture_exception
 
 from httprunner.schema import RequestData, ResponseData
 from httprunner.schema import SessionData, ReqRespData
@@ -45,15 +46,15 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     request_body = resp_obj.request.body
     try:
         request_body = json.loads(request_body)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as ex:
         # str: Unexpected UTF-8 BOM (decode using utf-8-sig)
-        pass
-    except UnicodeDecodeError:
+        capture_exception(ex)
+    except UnicodeDecodeError as ex:
         # bytes/bytearray: request body in protobuf
-        pass
-    except TypeError:
+        capture_exception(ex)
+    except TypeError as ex:
         # neither str nor bytes/bytearray, e.g. None
-        pass
+        capture_exception(ex)
 
     if request_body:
         request_content_type = lower_dict_keys(request_headers).get("content-type")
