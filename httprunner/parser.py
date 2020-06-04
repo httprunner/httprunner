@@ -362,7 +362,8 @@ def parse_data(
         # content in string format may contains variables and functions
         variables_mapping = variables_mapping or {}
         functions_mapping = functions_mapping or {}
-        raw_data = raw_data.strip()
+        # only strip whitespaces and tabs, \n\r is left because they maybe used in changeset
+        raw_data = raw_data.strip(" \t")
         return parse_string(raw_data, variables_mapping, functions_mapping)
 
     elif isinstance(raw_data, (list, set, tuple)):
