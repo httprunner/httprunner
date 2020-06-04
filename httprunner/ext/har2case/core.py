@@ -167,8 +167,8 @@ class HarParser(object):
                 try:
                     post_data = json.loads(post_data)
                     request_data_key = "json"
-                except JSONDecodeError as ex:
-                    capture_exception(ex)
+                except JSONDecodeError:
+                    pass
             elif mimeType.startswith("application/x-www-form-urlencoded"):
                 post_data = utils.convert_x_www_form_urlencoded_to_dict(post_data)
             else:
@@ -238,16 +238,12 @@ class HarParser(object):
 
             try:
                 resp_content_json = json.loads(content)
-            except JSONDecodeError as ex:
-                capture_exception(ex)
-                logger.warning(
-                    "response content can not be loaded as json: {}".format(
-                        content.encode("utf-8")
-                    )
-                )
+            except JSONDecodeError:
+                logger.warning(f"response content can not be loaded as json: {content}")
                 return
 
             if not isinstance(resp_content_json, dict):
+                # e.g. ['a', 'b']
                 return
 
             for key, value in resp_content_json.items():
