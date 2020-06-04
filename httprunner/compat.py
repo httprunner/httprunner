@@ -2,11 +2,11 @@
 This module handles compatibility issues between testcase format v2 and v3.
 """
 import os
+import sys
 from typing import List, Dict, Text, Union
 
 from loguru import logger
 
-from httprunner import exceptions
 from httprunner.loader import load_project_meta
 from httprunner.utils import sort_dict_by_custom_order
 
@@ -28,9 +28,8 @@ def convert_jmespath(raw: Text) -> Text:
         elif item.isdigit():
             # convert lst.0.name to lst[0].name
             if len(raw_list) == 0:
-                raise exceptions.FileFormatError(
-                    f"Invalid jmespath: {raw}, jmespath should startswith headers/body/status_code/cookies"
-                )
+                logger.error(f"Invalid jmespath: {raw}")
+                sys.exit(1)
 
             last_item = raw_list.pop()
             item = f"{last_item}[{item}]"
@@ -60,7 +59,8 @@ def convert_extractors(extractors: Union[List, Dict]) -> Dict:
     elif isinstance(extractors, Dict):
         v3_extractors = extractors
     else:
-        raise exceptions.FileFormatError(f"Invalid extractor: {extractors}")
+        logger.error(f"Invalid extractor: {extractors}")
+        sys.exit(1)
 
     for k, v in v3_extractors.items():
         v3_extractors[k] = convert_jmespath(v)
@@ -207,7 +207,8 @@ def generate_conftest_for_summary(args: List):
             # FIXME: several test paths maybe specified
             break
     else:
-        raise exceptions.FileNotFound(f"No test path specified!")
+        logger.error(f"No valid test path specified! \nargs: {args}")
+        sys.exit(1)
 
     project_meta = load_project_meta(test_path)
     conftest_path = os.path.join(project_meta.PWD, "conftest.py")
