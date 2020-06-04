@@ -1,9 +1,9 @@
 import contextlib
-import logging
 import sys
 from io import StringIO
 
 from fastapi import APIRouter
+from loguru import logger
 from starlette.requests import Request
 
 router = APIRouter()
@@ -37,6 +37,6 @@ async def debug_python(request: Request):
         resp["code"] = 1
         resp["message"] = "fail"
         resp["result"] = str(ex)
-        logging.error(resp)
+        logger.error(resp)
 
     return resp

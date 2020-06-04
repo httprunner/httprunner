@@ -1,9 +1,9 @@
-import logging
 import subprocess
 from typing import List
 
 import pkg_resources
 from fastapi import APIRouter
+from loguru import logger
 
 router = APIRouter()
 
@@ -29,6 +29,6 @@ async def install_dependenies(deps: List[str]):
             resp["result"][dep] = False
             resp["code"] = 1
             resp["message"] = "fail"
-            logging.error(f"failed to install dependency: {dep}")
+            logger.error(f"failed to install dependency: {dep}")
 
     return resp

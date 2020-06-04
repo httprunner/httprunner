@@ -5,6 +5,7 @@ import sys
 import urllib.parse as urlparse
 
 from loguru import logger
+from sentry_sdk import capture_exception
 
 from httprunner.ext.har2case import utils
 from httprunner.make import make_testcase, format_pytest_with_black
@@ -238,14 +239,11 @@ class HarParser(object):
             try:
                 resp_content_json = json.loads(content)
             except JSONDecodeError:
-                logger.warning(
-                    "response content can not be loaded as json: {}".format(
-                        content.encode("utf-8")
-                    )
-                )
+                logger.warning(f"response content can not be loaded as json: {content}")
                 return
 
             if not isinstance(resp_content_json, dict):
+                # e.g. ['a', 'b']
                 return
 
             for key, value in resp_content_json.items():
@@ -334,7 +332,12 @@ class HarParser(object):
         logger.info(f"Start to generate testcase from {self.har_file_path}")
         harfile = os.path.splitext(self.har_file_path)[0]
 
-        testcase = self._make_testcase()
+        try:
+            testcase = self._make_testcase()
+        except Exception as ex:
+            capture_exception(ex)
+            raise
+
         logger.debug("prepared testcase: {}".format(testcase))
 
         if file_type == "JSON":

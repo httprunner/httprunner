@@ -1,5 +1,23 @@
 # Release History
 
+## 3.0.8 (2020-06-04)
+
+**Added**
+
+- feat: add sentry sdk
+- feat: extract session variable from referenced testcase step
+
+**Fixed**
+
+- fix: missing request json
+- fix: override testsuite/testcase config verify
+- fix: only strip whitespaces and tabs, \n\r are left because they maybe used in changeset
+- fix: log testcase duration before raise ValidationFailure
+
+**Changed**
+
+- change: add httprunner version in generated pytest file
+
 ## 3.0.7 (2020-06-03)
 
 **Added**
