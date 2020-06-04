@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from httprunner import compat, exceptions
+from httprunner import compat
 
 
 class TestCompat(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestCompat(unittest.TestCase):
             compat.convert_jmespath("body.data.buildings.0.building_id"),
             "body.data.buildings[0].building_id",
         )
-        with self.assertRaises(exceptions.FileFormatError):
+        with self.assertRaises(SystemExit):
             compat.convert_jmespath("2.buildings.0.building_id")
 
     def test_convert_extractors(self):

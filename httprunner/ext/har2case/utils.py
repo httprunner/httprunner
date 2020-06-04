@@ -1,11 +1,12 @@
 import io
 import json
-import logging
 import sys
 from json.decoder import JSONDecodeError
 from urllib.parse import unquote
 
 import yaml
+from loguru import logger
+from sentry_sdk import capture_exception
 
 
 def load_har_log_entries(file_path):
@@ -32,8 +33,9 @@ def load_har_log_entries(file_path):
         try:
             content_json = json.loads(f.read())
             return content_json["log"]["entries"]
-        except (KeyError, TypeError, JSONDecodeError):
-            logging.error("HAR file content error: {}".format(file_path))
+        except (KeyError, TypeError, JSONDecodeError) as ex:
+            capture_exception(ex)
+            logger.error("HAR file content error: {}".format(file_path))
             sys.exit(1)
 
 
@@ -103,20 +105,20 @@ def convert_list_to_dict(origin_list):
 def dump_yaml(testcase, yaml_file):
     """ dump HAR entries to yaml testcase
     """
-    logging.info("dump testcase to YAML format.")
+    logger.info("dump testcase to YAML format.")
 
     with io.open(yaml_file, "w", encoding="utf-8") as outfile:
         yaml.dump(
             testcase, outfile, allow_unicode=True, default_flow_style=False, indent=4
         )
 
-    logging.info("Generate YAML testcase successfully: {}".format(yaml_file))
+    logger.info("Generate YAML testcase successfully: {}".format(yaml_file))
 
 
 def dump_json(testcase, json_file):
     """ dump HAR entries to json testcase
     """
-    logging.info("dump testcase to JSON format.")
+    logger.info("dump testcase to JSON format.")
 
     with io.open(json_file, "w", encoding="utf-8") as outfile:
         my_json_str = json.dumps(testcase, ensure_ascii=False, indent=4)
@@ -125,4 +127,4 @@ def dump_json(testcase, json_file):
 
         outfile.write(my_json_str)
 
-    logging.info("Generate JSON testcase successfully: {}".format(json_file))
+    logger.info("Generate JSON testcase successfully: {}".format(json_file))

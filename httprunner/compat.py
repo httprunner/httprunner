@@ -2,11 +2,11 @@
 This module handles compatibility issues between testcase format v2 and v3.
 """
 import os
+import sys
 from typing import List, Dict, Text, Union
 
 from loguru import logger
 
-from httprunner import exceptions
 from httprunner.loader import load_project_meta
 from httprunner.utils import sort_dict_by_custom_order
 
@@ -28,9 +28,8 @@ def convert_jmespath(raw: Text) -> Text:
         elif item.isdigit():
             # convert lst.0.name to lst[0].name
             if len(raw_list) == 0:
-                raise exceptions.FileFormatError(
-                    f"Invalid jmespath: {raw}, jmespath should startswith headers/body/status_code/cookies"
-                )
+                logger.error(f"Invalid jmespath: {raw}")
+                sys.exit(1)
 
             last_item = raw_list.pop()
             item = f"{last_item}[{item}]"
@@ -60,7 +59,8 @@ def convert_extractors(extractors: Union[List, Dict]) -> Dict:
     elif isinstance(extractors, Dict):
         v3_extractors = extractors
     else:
-        raise exceptions.FileFormatError(f"Invalid extractor: {extractors}")
+        logger.error(f"Invalid extractor: {extractors}")
+        sys.exit(1)
 
     for k, v in v3_extractors.items():
         v3_extractors[k] = convert_jmespath(v)
@@ -133,7 +133,10 @@ def ensure_step_attachment(step: Dict) -> Dict:
         test_dict["teardown_hooks"] = step["teardown_hooks"]
 
     if "extract" in step:
-        test_dict["extract"] = convert_extractors(step["extract"])
+        if step.get("request"):
+            test_dict["extract"] = convert_extractors(step["extract"])
+        elif step.get("testcase"):
+            test_dict["extract"] = step["extract"]
 
     if "validate" in step:
         test_dict["validate"] = convert_validators(step["validate"])
@@ -164,6 +167,8 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
     for step in test_content["teststeps"]:
         teststep = {}
 
+        teststep.update(ensure_step_attachment(step))
+
         if "request" in step:
             teststep["request"] = step.pop("request")
         elif "api" in step:
@@ -171,7 +176,6 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         elif "testcase" in step:
             teststep["testcase"] = step.pop("testcase")
 
-        teststep.update(ensure_step_attachment(step))
         teststep = sort_step_by_custom_order(teststep)
         v3_content["teststeps"].append(teststep)
 
@@ -207,7 +211,8 @@ def generate_conftest_for_summary(args: List):
             # FIXME: several test paths maybe specified
             break
     else:
-        raise exceptions.FileNotFound(f"No test path specified!")
+        logger.error(f"No valid test path specified! \nargs: {args}")
+        sys.exit(1)
 
     project_meta = load_project_meta(test_path)
     conftest_path = os.path.join(project_meta.PWD, "conftest.py")

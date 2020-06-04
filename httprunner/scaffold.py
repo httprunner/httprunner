@@ -2,6 +2,7 @@ import os.path
 import sys
 
 from loguru import logger
+from sentry_sdk import capture_message
 
 
 def init_parser_scaffold(subparsers):
@@ -140,5 +141,6 @@ def sleep(n_secs):
 
 
 def main_scaffold(args):
+    capture_message("startproject with scaffold")
     create_scaffold(args.project_name)
     sys.exit(0)
