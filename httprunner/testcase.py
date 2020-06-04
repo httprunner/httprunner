@@ -172,11 +172,11 @@ class StepValidation(object):
         return self.__t_step
 
 
-class StepExtraction(object):
+class StepRequestExtraction(object):
     def __init__(self, step: TStep):
         self.__t_step = step
 
-    def with_jmespath(self, jmes_path: Text, var_name: Text) -> "StepExtraction":
+    def with_jmespath(self, jmes_path: Text, var_name: Text) -> "StepRequestExtraction":
         self.__t_step.extract[var_name] = jmes_path
         return self
 
@@ -238,8 +238,8 @@ class RequestWithOptionalArgs(object):
     # def hooks(self):
     #     pass
 
-    def extract(self) -> StepExtraction:
-        return StepExtraction(self.__t_step)
+    def extract(self) -> StepRequestExtraction:
+        return StepRequestExtraction(self.__t_step)
 
     def validate(self) -> StepValidation:
         return StepValidation(self.__t_step)
@@ -305,7 +305,7 @@ class Step(object):
     def __init__(
         self,
         step: Union[
-            StepValidation, StepExtraction, RequestWithOptionalArgs, RunTestCase
+            StepValidation, StepRequestExtraction, RequestWithOptionalArgs, RunTestCase
         ],
     ):
         self.__t_step = step.perform()
