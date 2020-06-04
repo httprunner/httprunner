@@ -48,14 +48,14 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     if request_body is not None:
         try:
             request_body = json.loads(request_body)
-        except json.JSONDecodeError as ex:
+        except json.JSONDecodeError:
             # str: a=1&b=2
             pass
         except UnicodeDecodeError as ex:
             # bytes/bytearray: request body in protobuf
             capture_exception(ex)
         except TypeError as ex:
-            # neither str nor bytes/bytearray
+            # neither str nor bytes/bytearray, e.g. <MultipartEncoder>
             capture_exception(ex)
 
         request_content_type = lower_dict_keys(request_headers).get("content-type")
