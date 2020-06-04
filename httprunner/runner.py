@@ -101,6 +101,7 @@ class HttpRunner(object):
         method = parsed_request_dict.pop("method")
         url_path = parsed_request_dict.pop("url")
         url = build_url(self.__config.base_url, url_path)
+        parsed_request_dict["verify"] = self.__config.verify
         parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
 
         # request
