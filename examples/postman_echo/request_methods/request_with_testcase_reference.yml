@@ -11,3 +11,20 @@ teststeps:
     variables:
         foo1: override_bar1
     testcase: request_methods/request_with_functions.yml
+    extract:
+        - session_foo2
+-
+    name: post form data
+    variables:
+        foo1: bar1
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+            Content-Type: "application/x-www-form-urlencoded"
+        data: "foo1=$foo1&foo2=$session_foo2"
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.form.foo1", "session_bar1"]
+        - eq: ["body.form.foo2", "session_bar2"]

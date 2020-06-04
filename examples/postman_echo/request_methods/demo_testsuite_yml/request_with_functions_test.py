@@ -10,6 +10,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .variables(**{"foo1": "session_bar1", "var1": "testsuite_val1"})
         .base_url("https://postman-echo.com")
         .verify(False)
+        .export(*["session_foo2"])
     )
 
     teststeps = [

@@ -5,6 +5,7 @@
 **Added**
 
 - feat: add sentry sdk
+- feat: extract session variable from referenced testcase step
 
 **Fixed**
 
