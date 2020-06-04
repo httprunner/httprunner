@@ -1,5 +1,15 @@
 # Release History
 
+## 3.0.7 (2020-06-04)
+
+**Added**
+
+- feat: add sentry sdk
+
+**Changed**
+
+- change: add httprunner version in generated pytest file
+
 ## 3.0.7 (2020-06-03)
 
 **Added**

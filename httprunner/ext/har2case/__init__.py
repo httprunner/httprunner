@@ -12,6 +12,7 @@ import os
 import sys
 
 from loguru import logger
+from sentry_sdk import capture_message
 
 from httprunner.ext.har2case.core import HarParser
 
@@ -69,6 +70,7 @@ def main_har2case(args):
     else:
         output_file_type = "pytest"
 
+    capture_message(f"har2case {output_file_type}")
     HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type)
 
     return 0
