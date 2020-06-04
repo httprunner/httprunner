@@ -6,6 +6,11 @@
 
 - feat: add sentry sdk
 
+**Fixed**
+
+- fix: missing request json
+- fix: override testsuite/testcase config verify
+
 **Changed**
 
 - change: add httprunner version in generated pytest file

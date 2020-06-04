@@ -175,6 +175,10 @@ def make_request_chain_style(request: Dict) -> Text:
             data = f'"{data}"'
         request_chain_style += f".with_data({data})"
 
+    if "json" in request:
+        req_json = request["json"]
+        request_chain_style += f".with_json({req_json})"
+
     if "timeout" in request:
         timeout = request["timeout"]
         request_chain_style += f".set_timeout({timeout})"
