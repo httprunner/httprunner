@@ -5,6 +5,7 @@ from typing import Text, List, Tuple, Dict, Set, NoReturn
 
 import jinja2
 from loguru import logger
+from sentry_sdk import capture_exception
 
 from httprunner import exceptions, __version__
 from httprunner.compat import ensure_testcase_v3_api, ensure_testcase_v3
@@ -131,6 +132,7 @@ def format_pytest_with_black(*python_paths: Text) -> NoReturn:
     try:
         subprocess.run(["black", *python_paths])
     except subprocess.CalledProcessError as ex:
+        capture_exception(ex)
         logger.error(ex)
 
 

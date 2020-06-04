@@ -6,6 +6,7 @@ from urllib.parse import unquote
 
 import yaml
 from loguru import logger
+from sentry_sdk import capture_exception
 
 
 def load_har_log_entries(file_path):
@@ -32,7 +33,8 @@ def load_har_log_entries(file_path):
         try:
             content_json = json.loads(f.read())
             return content_json["log"]["entries"]
-        except (KeyError, TypeError, JSONDecodeError):
+        except (KeyError, TypeError, JSONDecodeError) as ex:
+            capture_exception(ex)
             logger.error("HAR file content error: {}".format(file_path))
             sys.exit(1)
 

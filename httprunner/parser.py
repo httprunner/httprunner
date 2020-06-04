@@ -3,6 +3,8 @@ import builtins
 import re
 from typing import Any, Set, Text, Callable, List, Dict
 
+from sentry_sdk import capture_exception
+
 from httprunner import loader, utils, exceptions
 from httprunner.schema import VariablesMapping, FunctionsMapping
 
@@ -70,7 +72,8 @@ def regex_findall_variables(content: Text) -> List[Text]:
         for var_tuple in variable_regex_compile.findall(content):
             vars_list.append(var_tuple[0] or var_tuple[1])
         return vars_list
-    except TypeError:
+    except TypeError as ex:
+        capture_exception(ex)
         return []
 
 
@@ -102,7 +105,8 @@ def regex_findall_functions(content: Text) -> List[Text]:
     """
     try:
         return function_regex_compile.findall(content)
-    except TypeError:
+    except TypeError as ex:
+        capture_exception(ex)
         return []
 
 
