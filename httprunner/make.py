@@ -329,10 +329,10 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
     # validate testsuite format
     load_testsuite(testsuite)
 
-    config = testsuite["config"]
-    testsuite_path = config["path"]
+    testsuite_config = testsuite["config"]
+    testsuite_path = testsuite_config["path"]
 
-    testsuite_variables = config.get("variables", {})
+    testsuite_variables = testsuite_config.get("variables", {})
     if isinstance(testsuite_variables, Text):
         # get variables by function, e.g. ${get_variables()}
         project_meta = load_project_meta(testsuite_path)
@@ -360,9 +360,12 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         # override testcase name
         testcase_dict["config"]["name"] = testcase["name"]
         # override base_url
-        base_url = testsuite["config"].get("base_url") or testcase.get("base_url")
+        base_url = testsuite_config.get("base_url") or testcase.get("base_url")
         if base_url:
             testcase_dict["config"]["base_url"] = base_url
+        # override verify
+        if "verify" in testsuite_config:
+            testcase_dict["config"]["verify"] = testsuite_config["verify"]
         # override variables
         testcase_dict["config"].setdefault("variables", {})
         testcase_dict["config"]["variables"].update(testcase.get("variables", {}))
