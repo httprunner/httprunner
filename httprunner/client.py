@@ -49,8 +49,8 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         try:
             request_body = json.loads(request_body)
         except json.JSONDecodeError as ex:
-            # str: Unexpected UTF-8 BOM (decode using utf-8-sig)
-            capture_exception(ex)
+            # str: a=1&b=2
+            pass
         except UnicodeDecodeError as ex:
             # bytes/bytearray: request body in protobuf
             capture_exception(ex)
