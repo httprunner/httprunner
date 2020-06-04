@@ -46,6 +46,7 @@ class HttpRunner(object):
     __step_datas: List[StepData] = None
     __session: HttpSession = None
     __session_variables: VariablesMapping = {}
+    __export_variables: VariablesMapping = {}
     # time
     __start_at: float = 0
     __duration: float = 0
@@ -249,6 +250,7 @@ class HttpRunner(object):
         self.__step_datas: List[StepData] = []
         self.__session = self.__session or HttpSession()
         self.__session_variables = {}
+        self.__export_variables = {}
 
         # run teststeps
         for step in self.__teststeps:
@@ -270,6 +272,11 @@ class HttpRunner(object):
             self.__session_variables.update(extract_mapping)
 
         self.__duration = time.time() - self.__start_at
+
+        self.__export_variables = self.get_export_variables()
+        if self.__export_variables:
+            logger.info(f"export variables: {self.__export_variables}")
+
         return self
 
     def run_path(self, path: Text) -> "HttpRunner":
@@ -294,6 +301,9 @@ class HttpRunner(object):
         return self.__step_datas
 
     def get_export_variables(self) -> Dict:
+        if self.__export_variables:
+            return self.__export_variables
+
         export_vars_mapping = {}
         for var_name in self.__config.export:
             if var_name not in self.__session_variables:
