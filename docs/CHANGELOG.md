@@ -12,6 +12,7 @@
 - fix: missing request json
 - fix: override testsuite/testcase config verify
 - fix: only strip whitespaces and tabs, \n\r are left because they maybe used in changeset
+- fix: log testcase duration before raise ValidationFailure
 
 **Changed**
 
