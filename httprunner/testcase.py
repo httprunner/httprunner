@@ -215,6 +215,10 @@ class RequestWithOptionalArgs(object):
         self.__t_step.request.data = data
         return self
 
+    def with_json(self, req_json) -> "RequestWithOptionalArgs":
+        self.__t_step.request.req_json = req_json
+        return self
+
     def set_timeout(self, timeout: float) -> "RequestWithOptionalArgs":
         self.__t_step.request.timeout = timeout
         return self
