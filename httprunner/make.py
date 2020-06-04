@@ -149,6 +149,9 @@ def make_config_chain_style(config: Dict) -> Text:
     if "verify" in config:
         config_chain_style += f'.verify({config["verify"]})'
 
+    if "export" in config:
+        config_chain_style += f'.export(*{config["export"]})'
+
     return config_chain_style
 
 
@@ -204,7 +207,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
     elif teststep.get("testcase"):
         step_info = f'RunTestCase("{teststep["name"]}")'
     else:
-        raise exceptions.TestCaseFormatError
+        raise exceptions.TestCaseFormatError(f"Invalid teststep: {teststep}")
 
     if "variables" in teststep:
         variables = teststep["variables"]
@@ -217,11 +220,18 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         call_ref_testcase = f".call({testcase})"
         step_info += call_ref_testcase
 
-    if "extract" in teststep:
-        step_info += ".extract()"
-
-        for extract_name, extract_path in teststep["extract"].items():
-            step_info += f'.with_jmespath("{extract_path}", "{extract_name}")'
+    extract_info = teststep.get("extract")
+    if extract_info:
+        if isinstance(extract_info, Dict):
+            # request step
+            step_info += ".extract()"
+            for extract_name, extract_path in extract_info.items():
+                step_info += f'.with_jmespath("{extract_path}", "{extract_name}")'
+        elif isinstance(extract_info, List):
+            # reference testcase step
+            step_info += f".extract(*{extract_info})"
+        else:
+            raise exceptions.TestCaseFormatError(f"Invalid extract: {extract_info}")
 
     if "validate" in teststep:
         step_info += ".validate()"

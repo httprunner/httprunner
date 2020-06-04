@@ -25,4 +25,4 @@ class TestHttpRunner(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.name, "request methods testcase: reference testcase")
         self.assertEqual(result.step_datas[0].name, "request with functions")
-        self.assertEqual(len(result.step_datas), 1)
+        self.assertEqual(len(result.step_datas), 2)

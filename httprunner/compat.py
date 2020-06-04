@@ -133,7 +133,10 @@ def ensure_step_attachment(step: Dict) -> Dict:
         test_dict["teardown_hooks"] = step["teardown_hooks"]
 
     if "extract" in step:
-        test_dict["extract"] = convert_extractors(step["extract"])
+        if step.get("request"):
+            test_dict["extract"] = convert_extractors(step["extract"])
+        elif step.get("testcase"):
+            test_dict["extract"] = step["extract"]
 
     if "validate" in step:
         test_dict["validate"] = convert_validators(step["validate"])
@@ -164,6 +167,8 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
     for step in test_content["teststeps"]:
         teststep = {}
 
+        teststep.update(ensure_step_attachment(step))
+
         if "request" in step:
             teststep["request"] = step.pop("request")
         elif "api" in step:
@@ -171,7 +176,6 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         elif "testcase" in step:
             teststep["testcase"] = step.pop("testcase")
 
-        teststep.update(ensure_step_attachment(step))
         teststep = sort_step_by_custom_order(teststep)
         v3_content["teststeps"].append(teststep)
 

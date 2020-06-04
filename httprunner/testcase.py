@@ -16,6 +16,7 @@ class Config(object):
         self.__variables = {}
         self.__base_url = ""
         self.__verify = False
+        self.__export = []
 
         caller_frame = inspect.stack()[1]
         self.__path = caller_frame.filename
@@ -40,12 +41,17 @@ class Config(object):
         self.__verify = verify
         return self
 
+    def export(self, *export_var_name: Text) -> "Config":
+        self.__export.extend(export_var_name)
+        return self
+
     def perform(self) -> TConfig:
         return TConfig(
             name=self.__name,
             base_url=self.__base_url,
             verify=self.__verify,
             variables=self.__variables,
+            export=list(set(self.__export)),
             path=self.__path,
         )
 
@@ -54,7 +60,9 @@ class StepRequestValidation(object):
     def __init__(self, step: TStep):
         self.__t_step = step
 
-    def assert_equal(self, jmes_path: Text, expected_value: Any) -> "StepRequestValidation":
+    def assert_equal(
+        self, jmes_path: Text, expected_value: Any
+    ) -> "StepRequestValidation":
         self.__t_step.validators.append({"equal": [jmes_path, expected_value]})
         return self
 
@@ -152,7 +160,9 @@ class StepRequestValidation(object):
         self.__t_step.validators.append({"regex_match": [jmes_path, expected_value]})
         return self
 
-    def assert_contains(self, jmes_path: Text, expected_value: Any) -> "StepRequestValidation":
+    def assert_contains(
+        self, jmes_path: Text, expected_value: Any
+    ) -> "StepRequestValidation":
         self.__t_step.validators.append({"contains": [jmes_path, expected_value]})
         return self
 
@@ -285,6 +295,19 @@ class RunRequest(object):
         return RequestWithOptionalArgs(self.__t_step)
 
 
+class StepRefCase(object):
+    def __init__(self, step: TStep):
+        self.__t_step = step
+        self.__t_step.extract = []
+
+    def extract(self, *var_name: Text) -> "StepRefCase":
+        self.__t_step.extract.extend(var_name)
+        return self
+
+    def perform(self) -> TStep:
+        return self.__t_step
+
+
 class RunTestCase(object):
     def __init__(self, name: Text):
         self.__t_step = TStep(name=name)
@@ -293,9 +316,9 @@ class RunTestCase(object):
         self.__t_step.variables.update(variables)
         return self
 
-    def call(self, testcase: Callable):
+    def call(self, testcase: Callable) -> StepRefCase:
         self.__t_step.testcase = testcase
-        return self
+        return StepRefCase(self.__t_step)
 
     def perform(self) -> TStep:
         return self.__t_step
@@ -305,7 +328,11 @@ class Step(object):
     def __init__(
         self,
         step: Union[
-            StepRequestValidation, StepRequestExtraction, RequestWithOptionalArgs, RunTestCase
+            StepRequestValidation,
+            StepRequestExtraction,
+            RequestWithOptionalArgs,
+            RunTestCase,
+            StepRefCase,
         ],
     ):
         self.__t_step = step.perform()

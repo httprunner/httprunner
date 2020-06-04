@@ -66,7 +66,7 @@ class TStep(BaseModel):
     variables: VariablesMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
-    extract: Dict[Text, Text] = {}
+    extract: Union[Dict[Text, Text], List[Text]] = {}
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
 
