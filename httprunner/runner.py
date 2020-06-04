@@ -149,6 +149,8 @@ class HttpRunner(object):
         except ValidationFailure:
             self.__session.data.success = False
             log_req_resp_details()
+            # log testcase duration before raise ValidationFailure
+            self.__duration = time.time() - self.__start_at
             raise
         finally:
             # save request & response meta data
