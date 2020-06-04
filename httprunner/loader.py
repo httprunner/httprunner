@@ -290,8 +290,11 @@ def locate_file(start_path: Text, file_name: Text) -> Text:
         return os.path.abspath(file_path)
 
     # current working directory
-    if os.path.abspath(start_dir_path) == os.getcwd():
-        raise exceptions.FileNotFound(f"{file_name} not found in {start_path}")
+    cwd = os.getcwd()
+    if os.path.abspath(start_dir_path) == cwd:
+        raise exceptions.FileNotFound(
+            f"{file_name} not found for {start_path}\ncurrent working directory: {cwd}"
+        )
 
     # system root dir
     # Windows, e.g. 'E:\\'
