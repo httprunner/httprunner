@@ -43,20 +43,21 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     # record actual request info
     request_headers = dict(resp_obj.request.headers)
     request_cookies = resp_obj.request._cookies.get_dict()
-    request_body = resp_obj.request.body
-    try:
-        request_body = json.loads(request_body)
-    except json.JSONDecodeError as ex:
-        # str: Unexpected UTF-8 BOM (decode using utf-8-sig)
-        capture_exception(ex)
-    except UnicodeDecodeError as ex:
-        # bytes/bytearray: request body in protobuf
-        capture_exception(ex)
-    except TypeError as ex:
-        # neither str nor bytes/bytearray, e.g. None
-        capture_exception(ex)
 
-    if request_body:
+    request_body = resp_obj.request.body
+    if request_body is not None:
+        try:
+            request_body = json.loads(request_body)
+        except json.JSONDecodeError as ex:
+            # str: Unexpected UTF-8 BOM (decode using utf-8-sig)
+            capture_exception(ex)
+        except UnicodeDecodeError as ex:
+            # bytes/bytearray: request body in protobuf
+            capture_exception(ex)
+        except TypeError as ex:
+            # neither str nor bytes/bytearray
+            capture_exception(ex)
+
         request_content_type = lower_dict_keys(request_headers).get("content-type")
         if request_content_type and "multipart/form-data" in request_content_type:
             # upload file type
