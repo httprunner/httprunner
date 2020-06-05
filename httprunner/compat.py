@@ -7,6 +7,7 @@ from typing import List, Dict, Text, Union
 
 from loguru import logger
 
+from httprunner import exceptions
 from httprunner.loader import load_project_meta
 from httprunner.utils import sort_dict_by_custom_order
 
@@ -173,6 +174,8 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
             teststep["testcase"] = step.pop("api")
         elif "testcase" in step:
             teststep["testcase"] = step.pop("testcase")
+        else:
+            raise exceptions.TestCaseFormatError(f"Invalid teststep: {step}")
 
         teststep.update(ensure_step_attachment(step))
 
