@@ -5,6 +5,7 @@
 **Fixed**
 
 - fix: miss formatting referenced testcase
+- fix: handle cases when parent directory name includes dot/hyphen/space
 
 **Changed**
 
