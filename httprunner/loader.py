@@ -427,8 +427,6 @@ def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
     # locate PWD and load debugtalk.py functions
     project_meta.PWD = project_working_directory
     project_meta.functions = debugtalk_functions
-    project_meta.test_path = os.path.abspath(test_path)[
-        len(project_working_directory) + 1 :
-    ]
+    project_meta.debugtalk_path = debugtalk_path
 
     return project_meta
