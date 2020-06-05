@@ -334,7 +334,7 @@ class HttpRunner(object):
                 duration=self.__duration,
             ),
             in_out=TestCaseInOut(
-                vars=self.__config.variables, export=self.get_export_variables()
+                config_vars=self.__config.variables, export_vars=self.get_export_variables()
             ),
             log=self.__log_path,
             step_datas=self.__step_datas,
