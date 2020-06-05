@@ -11,7 +11,6 @@ from requests.exceptions import (
     MissingSchema,
     RequestException,
 )
-from sentry_sdk import capture_exception
 
 from httprunner.models import RequestData, ResponseData
 from httprunner.models import SessionData, ReqRespData
@@ -51,12 +50,12 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         except json.JSONDecodeError:
             # str: a=1&b=2
             pass
-        except UnicodeDecodeError as ex:
+        except UnicodeDecodeError:
             # bytes/bytearray: request body in protobuf
-            capture_exception(ex)
-        except TypeError as ex:
+            pass
+        except TypeError:
             # neither str nor bytes/bytearray, e.g. <MultipartEncoder>
-            capture_exception(ex)
+            pass
 
         request_content_type = lower_dict_keys(request_headers).get("content-type")
         if request_content_type and "multipart/form-data" in request_content_type:
