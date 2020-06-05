@@ -67,9 +67,9 @@ class TStep(BaseModel):
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
     # used to extract request's response field
-    extract: Dict[Text, Text] = {}
+    extract: VariablesMapping = {}
     # used to export session variables from referenced testcase
-    export: List[Text] = []
+    export: Export = []
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
 
