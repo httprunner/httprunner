@@ -54,10 +54,12 @@ def convert_extractors(extractors: Union[List, Dict]) -> Dict:
     v3_extractors: Dict = {}
 
     if isinstance(extractors, List):
+        # [{"varA": "content.varA"}, {"varB": "json.varB"}]
         for extractor in extractors:
             for k, v in extractor.items():
                 v3_extractors[k] = v
     elif isinstance(extractors, Dict):
+        # {"varA": "body.varA", "varB": "body.varB"}
         v3_extractors = extractors
     else:
         logger.error(f"Invalid extractor: {extractors}")
