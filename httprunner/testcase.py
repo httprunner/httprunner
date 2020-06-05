@@ -1,7 +1,7 @@
 import inspect
 from typing import Text, Any, Union, Callable
 
-from httprunner.schema import (
+from httprunner.models import (
     TConfig,
     TStep,
     TRequest,

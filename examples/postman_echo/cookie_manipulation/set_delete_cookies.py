@@ -2,7 +2,7 @@ import unittest
 import requests
 
 from httprunner.runner import HttpRunner
-from httprunner.schema import TConfig, TStep
+from httprunner.models import TConfig, TStep
 
 
 class TestCaseSetDeleteCookies(unittest.TestCase):

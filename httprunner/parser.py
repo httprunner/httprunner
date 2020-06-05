@@ -6,7 +6,7 @@ from typing import Any, Set, Text, Callable, List, Dict
 from sentry_sdk import capture_exception
 
 from httprunner import loader, utils, exceptions
-from httprunner.schema import VariablesMapping, FunctionsMapping
+from httprunner.models import VariablesMapping, FunctionsMapping
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 

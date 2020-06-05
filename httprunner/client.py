@@ -13,8 +13,8 @@ from requests.exceptions import (
 )
 from sentry_sdk import capture_exception
 
-from httprunner.schema import RequestData, ResponseData
-from httprunner.schema import SessionData, ReqRespData
+from httprunner.models import RequestData, ResponseData
+from httprunner.models import SessionData, ReqRespData
 from httprunner.utils import lower_dict_keys, omit_long_data
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

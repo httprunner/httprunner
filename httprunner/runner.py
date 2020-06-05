@@ -21,7 +21,7 @@ from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.testcase import Config, Step
-from httprunner.schema import (
+from httprunner.models import (
     TConfig,
     TStep,
     VariablesMapping,
