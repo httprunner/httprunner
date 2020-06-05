@@ -66,7 +66,10 @@ class TStep(BaseModel):
     variables: VariablesMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
-    extract: Union[Dict[Text, Text], List[Text]] = {}
+    # used to extract request's response field
+    extract: Dict[Text, Text] = {}
+    # used to export session variables from referenced testcase
+    export: List[Text] = []
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
 

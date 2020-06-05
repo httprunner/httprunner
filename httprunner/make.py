@@ -220,18 +220,16 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         call_ref_testcase = f".call({testcase})"
         step_info += call_ref_testcase
 
-    extract_info = teststep.get("extract")
-    if extract_info:
-        if isinstance(extract_info, Dict):
-            # request step
-            step_info += ".extract()"
-            for extract_name, extract_path in extract_info.items():
-                step_info += f'.with_jmespath("{extract_path}", "{extract_name}")'
-        elif isinstance(extract_info, List):
-            # reference testcase step
-            step_info += f".extract(*{extract_info})"
-        else:
-            raise exceptions.TestCaseFormatError(f"Invalid extract: {extract_info}")
+    if "extract" in teststep:
+        # request step
+        step_info += ".extract()"
+        for extract_name, extract_path in teststep["extract"].items():
+            step_info += f'.with_jmespath("{extract_path}", "{extract_name}")'
+
+    if "export" in teststep:
+        # reference testcase step
+        export: List[Text] = teststep["export"]
+        step_info += f".export(*{export})"
 
     if "validate" in teststep:
         step_info += ".validate()"
@@ -455,6 +453,7 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
 
     pytest_files_set.update(make_files_cache_set)
     pytest_files_list = list(pytest_files_set)
+    # TODO: format referenced testcase
     format_pytest_with_black(*pytest_files_list)
     return pytest_files_list
 
