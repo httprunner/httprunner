@@ -301,7 +301,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         ref_testcase_python_path = make_testcase(test_content)
 
         # prepare ref testcase class name
-        ref_testcase_cls_name = pytest_files_made_cache_mapping[ref_testcase_python_path]
+        ref_testcase_cls_name = pytest_files_made_cache_mapping[
+            ref_testcase_python_path
+        ]
         teststep["testcase"] = ref_testcase_cls_name
 
         # prepare import ref testcase
