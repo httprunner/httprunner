@@ -22,6 +22,8 @@ from httprunner.response import uniform_validator
 """ cache converted pytest files, avoid duplicate making
 """
 make_files_cache_set: Set = set()
+""" save generated pytest files to run, except referenced testcase
+"""
 pytest_files_set: Set = set()
 
 __TEMPLATE__ = jinja2.Template(
@@ -251,9 +253,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
     return f"Step({step_info})"
 
 
-def make_testcase(
-    testcase: Dict, dir_path: Text = None, ref_flag: bool = False,
-) -> Text:
+def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     """convert valid testcase dict to pytest file path"""
     # ensure compatibility with testcase format v2
     testcase = ensure_testcase_v3(testcase)
@@ -295,7 +295,9 @@ def make_testcase(
 
         # make ref testcase pytest file
         ref_testcase_path = __ensure_absolute(teststep["testcase"])
-        __make(ref_testcase_path, ref_flag=True)
+        test_content = load_test_file(ref_testcase_path)
+        test_content.setdefault("config", {})["path"] = ref_testcase_path
+        make_testcase(test_content)
 
         # prepare ref testcase class name
         ref_testcase_python_path, ref_testcase_cls_name = convert_testcase_path(
@@ -330,8 +332,7 @@ def make_testcase(
 
     logger.info(f"generated testcase: {testcase_python_path}")
 
-    if not ref_flag:
-        make_files_cache_set.add(__ensure_cwd_relative(testcase_python_path))
+    make_files_cache_set.add(__ensure_cwd_relative(testcase_python_path))
 
     return testcase_python_path
 
@@ -384,16 +385,16 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         testcase_dict["config"]["variables"].update(testsuite_variables)
 
         # make testcase
-        make_testcase(testcase_dict, testsuite_dir)
+        testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
+        pytest_files_set.add(testcase_pytest_path)
 
 
-def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
+def __make(tests_path: Text) -> NoReturn:
     """ make testcase(s) with testcase/testsuite/folder absolute path
         generated pytest file path will be cached in make_files_cache_set
 
     Args:
         tests_path: should be in absolute path
-        ref_flag: flag if referenced test path
 
     """
     test_files = []
@@ -408,6 +409,7 @@ def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
     for test_file in test_files:
         if test_file.lower().endswith("_test.py"):
             pytest_files_set.add(test_file)
+            make_files_cache_set.add(test_file)
             continue
 
         try:
@@ -425,7 +427,8 @@ def __make(tests_path: Text, ref_flag: bool = False) -> NoReturn:
         # testcase
         if "teststeps" in test_content:
             try:
-                make_testcase(test_content, ref_flag=ref_flag)
+                testcase_pytest_path = make_testcase(test_content)
+                pytest_files_set.add(testcase_pytest_path)
             except exceptions.TestCaseFormatError:
                 continue
 
@@ -451,11 +454,11 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
 
         __make(tests_path)
 
-    pytest_files_set.update(make_files_cache_set)
-    pytest_files_list = list(pytest_files_set)
-    # TODO: format referenced testcase
-    format_pytest_with_black(*pytest_files_list)
-    return pytest_files_list
+    # format pytest files
+    make_files_list = list(make_files_cache_set)
+    format_pytest_with_black(*make_files_list)
+
+    return list(pytest_files_set)
 
 
 def init_make_parser(subparsers):
