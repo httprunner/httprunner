@@ -148,7 +148,7 @@ class StepData(BaseModel):
     success: bool = False
     name: Text = ""  # teststep name
     data: Union[SessionData, List[SessionData]] = None
-    export: Dict = {}
+    export_vars: VariablesMapping = {}
 
 
 class TestCaseSummary(BaseModel):

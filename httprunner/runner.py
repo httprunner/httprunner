@@ -138,7 +138,7 @@ class HttpRunner(object):
         # extract
         extractors = step.extract
         extract_mapping = resp_obj.extract(extractors)
-        step_data.export = extract_mapping
+        step_data.export_vars = extract_mapping
 
         variables_mapping = step.variables
         variables_mapping.update(extract_mapping)
@@ -204,12 +204,12 @@ class HttpRunner(object):
             )
 
         step_data.data = case_result.get_step_datas()  # list of step data
-        step_data.export = case_result.get_export_variables()
+        step_data.export_vars = case_result.get_export_variables()
         step_data.success = case_result.success
         self.success &= case_result.success
 
-        if step_data.export:
-            logger.info(f"export variables: {step_data.export}")
+        if step_data.export_vars:
+            logger.info(f"export variables: {step_data.export_vars}")
 
         return step_data
 
@@ -228,7 +228,7 @@ class HttpRunner(object):
 
         self.__step_datas.append(step_data)
         logger.info(f"run step end: {step.name} <<<<<<\n")
-        return step_data.export
+        return step_data.export_vars
 
     def __parse_config(self, config: TConfig) -> NoReturn:
         config.variables.update(self.__session_variables)
