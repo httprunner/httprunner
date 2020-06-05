@@ -325,6 +325,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     }
     content = __TEMPLATE__.render(data)
 
+    testcase_python_dir = os.path.dirname(testcase_python_path)
+    if not os.path.exists(testcase_python_dir):
+        os.makedirs(testcase_python_dir)
     with open(testcase_python_path, "w", encoding="utf-8") as f:
         f.write(content)
 
