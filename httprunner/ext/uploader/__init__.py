@@ -49,7 +49,7 @@ from typing import Text, NoReturn
 from loguru import logger
 
 from httprunner.parser import parse_variables_mapping
-from httprunner.schema import TStep, FunctionsMapping
+from httprunner.models import TStep, FunctionsMapping
 
 try:
     import filetype
