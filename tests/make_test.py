@@ -8,12 +8,13 @@ from httprunner.make import (
     make_config_chain_style,
     make_teststep_chain_style,
     pytest_files_run_set,
+    ensure_file_path_valid,
 )
 
 
 class TestMake(unittest.TestCase):
     def test_make_testcase(self):
-        path = ["examples/postman_echo/request_methods/request_with_variables.yml"]
+        path = ["examples/postman-echo/request.methods/request_with_variables.yml"]
         testcase_python_list = main_make(path)
         self.assertEqual(
             testcase_python_list[0],
@@ -25,7 +26,7 @@ class TestMake(unittest.TestCase):
 
     def test_make_testcase_with_ref(self):
         path = [
-            "examples/postman_echo/request_methods/request_with_testcase_reference.yml"
+            "examples/postman-echo/request.methods/request_with_testcase_reference.yml"
         ]
         pytest_files_made_cache_mapping.clear()
         pytest_files_run_set.clear()
@@ -56,7 +57,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             )
 
     def test_make_testcase_folder(self):
-        path = ["examples/postman_echo/request_methods/"]
+        path = ["examples/postman-echo/request.methods/"]
         testcase_python_list = main_make(path)
         self.assertIn(
             os.path.join(
@@ -66,42 +67,58 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             testcase_python_list,
         )
 
+    def test_ensure_file_path_valid(self):
+        self.assertEqual(
+            ensure_file_path_valid(
+                "examples/postman-echo/request.methods/hardcode.yml"
+            ),
+            os.path.join(
+                os.getcwd(), "examples/postman_echo/request_methods/hardcode.yml"
+            ),
+        )
+        self.assertEqual(
+            ensure_file_path_valid(
+                os.path.join(os.getcwd(), "postman-echo/request.methods/hardcode.yml")
+            ),
+            os.path.join(os.getcwd(), "postman_echo/request_methods/hardcode.yml"),
+        )
+        self.assertEqual(
+            ensure_file_path_valid(
+                "examples/postman echo/request methods/hardcode.yml"
+            ),
+            os.path.join(
+                os.getcwd(), "examples/postman_echo/request_methods/hardcode.yml"
+            ),
+        )
+        self.assertEqual(
+            ensure_file_path_valid("1/2B/3.yml"),
+            os.path.join(os.getcwd(), "T1/T2B/T3.yml"),
+        )
+
     def test_convert_testcase_path(self):
         self.assertEqual(
-            convert_testcase_path("mubu.login.yml")[0], "mubu_login_test.py"
+            convert_testcase_path("mubu.login.yml"),
+            (os.path.join(os.getcwd(), "mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("/path/to/mubu.login.yml")[0],
-            "/path/to/mubu_login_test.py",
+            convert_testcase_path(os.path.join(os.getcwd(), "path/to/mubu.login.yml")),
+            (os.path.join(os.getcwd(), "path/to/mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu.login.yml")[0],
-            "/path/to 2/mubu_login_test.py",
+            convert_testcase_path("path/to 2/mubu.login.yml"),
+            (os.path.join(os.getcwd(), "path/to_2/mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu.login.yml")[1], "MubuLogin"
+            convert_testcase_path("path/to-2/mubu login.yml"),
+            (os.path.join(os.getcwd(), "path/to_2/mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("mubu login.yml")[0], "mubu_login_test.py"
+            convert_testcase_path("path/to.2/幕布login.yml"),
+            (os.path.join(os.getcwd(), "path/to_2/幕布login_test.py"), "幕布Login"),
         )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu login.yml")[1], "MubuLogin"
-        )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu-login.yml")[0],
-            "/path/to 2/mubu_login_test.py",
-        )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu-login.yml")[1], "MubuLogin"
-        )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/幕布login.yml")[0],
-            "/path/to 2/幕布login_test.py",
-        )
-        self.assertEqual(convert_testcase_path("/path/to/幕布login.yml")[1], "幕布Login")
 
     def test_make_testsuite(self):
-        path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
+        path = ["examples/postman-echo/request.methods/demo_testsuite.yml"]
         pytest_files_made_cache_mapping.clear()
         pytest_files_run_set.clear()
         testcase_python_list = main_make(path)

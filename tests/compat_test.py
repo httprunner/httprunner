@@ -142,30 +142,30 @@ class TestCompat(unittest.TestCase):
         )
 
     def test_ensure_cli_args(self):
-        args1 = ["examples/postman_echo/request_methods/hardcode.yml", "--failfast"]
+        args1 = ["examples/postman-echo/request.methods/hardcode.yml", "--failfast"]
         self.assertEqual(
             compat.ensure_cli_args(args1),
-            ["examples/postman_echo/request_methods/hardcode.yml"],
+            ["examples/postman-echo/request.methods/hardcode.yml"],
         )
 
-        args2 = ["examples/postman_echo/request_methods/hardcode.yml", "--save-tests"]
+        args2 = ["examples/postman-echo/request.methods/hardcode.yml", "--save-tests"]
         self.assertEqual(
             compat.ensure_cli_args(args2),
-            ["examples/postman_echo/request_methods/hardcode.yml"],
+            ["examples/postman-echo/request.methods/hardcode.yml"],
         )
         self.assertTrue(
             os.path.isfile("examples/postman_echo/request_methods/conftest.py")
         )
 
         args3 = [
-            "examples/postman_echo/request_methods/hardcode.yml",
+            "examples/postman-echo/request.methods/hardcode.yml",
             "--report-file",
             "report.html",
         ]
         self.assertEqual(
             compat.ensure_cli_args(args3),
             [
-                "examples/postman_echo/request_methods/hardcode.yml",
+                "examples/postman-echo/request.methods/hardcode.yml",
                 "--html",
                 "report.html",
                 "--self-contained-html",
@@ -173,7 +173,7 @@ class TestCompat(unittest.TestCase):
         )
 
         args4 = [
-            "examples/postman_echo/request_methods/hardcode.yml",
+            "examples/postman-echo/request.methods/hardcode.yml",
             "--failfast",
             "--save-tests",
             "--report-file",
@@ -182,7 +182,7 @@ class TestCompat(unittest.TestCase):
         self.assertEqual(
             compat.ensure_cli_args(args4),
             [
-                "examples/postman_echo/request_methods/hardcode.yml",
+                "examples/postman-echo/request.methods/hardcode.yml",
                 "--html",
                 "report.html",
                 "--self-contained-html",
