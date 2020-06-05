@@ -48,6 +48,9 @@ def main_run(extra_args):
         logger.error("No valid testcases found, exit 1.")
         sys.exit(1)
 
+    if "--tb=short" not in extra_args_new:
+        extra_args_new.append("--tb=short")
+
     extra_args_new.extend(testcase_path_list)
     sys.exit(pytest.main(extra_args_new))
 
