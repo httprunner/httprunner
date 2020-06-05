@@ -26,7 +26,7 @@ class TestCaseRequestWithTestcaseReference(HttpRunner):
             RunTestCase("request with functions")
             .with_variables(**{"foo1": "override_bar1"})
             .call(RequestWithFunctions)
-            .extract(*["session_foo2"])
+            .export(*["session_foo2"])
         ),
         Step(
             RunRequest("post form data")

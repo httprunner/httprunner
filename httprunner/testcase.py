@@ -298,10 +298,9 @@ class RunRequest(object):
 class StepRefCase(object):
     def __init__(self, step: TStep):
         self.__t_step = step
-        self.__t_step.extract = []
 
-    def extract(self, *var_name: Text) -> "StepRefCase":
-        self.__t_step.extract.extend(var_name)
+    def export(self, *var_name: Text) -> "StepRefCase":
+        self.__t_step.export.extend(var_name)
         return self
 
     def perform(self) -> TStep:
