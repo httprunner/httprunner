@@ -107,9 +107,8 @@ def __ensure_testcase_module(path: Text) -> NoReturn:
 
 def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     """convert single YAML/JSON testcase path to python file"""
-    if os.path.isdir(testcase_path):
-        # folder does not need to convert
-        return testcase_path, ""
+    if not os.path.isfile(testcase_path):
+        raise exceptions.ParamsError(f"Invalid testcase file path: {testcase_path}")
 
     testcase_path = __ensure_file_name(testcase_path)
     raw_file_name, file_suffix = os.path.splitext(os.path.basename(testcase_path))
