@@ -421,6 +421,9 @@ def __make(tests_path: Text) -> NoReturn:
         if "request" in test_content:
             test_content = ensure_testcase_v3_api(test_content)
 
+        if not (isinstance(test_content, Dict) and "config" in test_content):
+            raise exceptions.FileFormatError("Invalid testcase/testsuite v2/v3 format!")
+
         test_content.setdefault("config", {})["path"] = test_file
 
         # testcase
