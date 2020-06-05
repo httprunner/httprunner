@@ -1,5 +1,17 @@
 # Release History
 
+## 3.0.9 (2020-06-05)
+
+**Fixed**
+
+- fix: miss formatting referenced testcase
+
+**Changed**
+
+- change: add `export` keyword in TStep to export session variables from referenced testcase
+- change: rename TestCaseInOut field, config_vars and export_vars
+- change: rename StepData field, export_vars
+
 ## 3.0.8 (2020-06-04)
 
 **Added**
