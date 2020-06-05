@@ -99,8 +99,8 @@ class TestCaseTime(BaseModel):
 
 
 class TestCaseInOut(BaseModel):
-    vars: VariablesMapping = {}
-    export: Dict = {}
+    config_vars: VariablesMapping = {}
+    export_vars: Dict = {}
 
 
 class RequestStat(BaseModel):
