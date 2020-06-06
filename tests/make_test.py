@@ -8,7 +8,6 @@ from httprunner.make import (
     make_config_chain_style,
     make_teststep_chain_style,
     pytest_files_run_set,
-    ensure_file_path_valid,
 )
 
 
@@ -65,34 +64,6 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
                 "examples/postman_echo/request_methods/request_with_functions_test.py",
             ),
             testcase_python_list,
-        )
-
-    def test_ensure_file_path_valid(self):
-        self.assertEqual(
-            ensure_file_path_valid(
-                "examples/postman-echo/request.methods/hardcode.yml"
-            ),
-            os.path.join(
-                os.getcwd(), "examples/postman_echo/request_methods/hardcode.yml"
-            ),
-        )
-        self.assertEqual(
-            ensure_file_path_valid(
-                os.path.join(os.getcwd(), "postman-echo/request.methods/hardcode.yml")
-            ),
-            os.path.join(os.getcwd(), "postman_echo/request_methods/hardcode.yml"),
-        )
-        self.assertEqual(
-            ensure_file_path_valid(
-                "examples/postman echo/request methods/hardcode.yml"
-            ),
-            os.path.join(
-                os.getcwd(), "examples/postman_echo/request_methods/hardcode.yml"
-            ),
-        )
-        self.assertEqual(
-            ensure_file_path_valid("1/2B/3.yml"),
-            os.path.join(os.getcwd(), "T1/T2B/T3.yml"),
         )
 
     def test_convert_testcase_path(self):

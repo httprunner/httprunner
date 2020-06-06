@@ -9,7 +9,7 @@ from loguru import logger
 
 from httprunner import exceptions
 from httprunner.loader import load_project_meta
-from httprunner.utils import sort_dict_by_custom_order
+from httprunner.utils import sort_dict_by_custom_order, ensure_file_path_valid
 
 
 def convert_jmespath(raw: Text) -> Text:
@@ -221,6 +221,7 @@ def generate_conftest_for_summary(args: List):
 
     project_meta = load_project_meta(test_path)
     conftest_path = os.path.join(project_meta.RootDir, "conftest.py")
+    conftest_path = ensure_file_path_valid(conftest_path)
     if os.path.isfile(conftest_path):
         return
 
@@ -307,6 +308,10 @@ def session_fixture(request):
     conftest_content = conftest_content.replace(
         "{{SUMMARY_PATH_PLACEHOLDER}}", summary_path
     )
+
+    dir_path = os.path.dirname(conftest_path)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
     with open(conftest_path, "w", encoding="utf-8") as f:
         f.write(conftest_content)

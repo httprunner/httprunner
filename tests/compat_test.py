@@ -153,9 +153,7 @@ class TestCompat(unittest.TestCase):
             compat.ensure_cli_args(args2),
             ["examples/postman-echo/request.methods/hardcode.yml"],
         )
-        self.assertTrue(
-            os.path.isfile("examples/postman_echo/request_methods/conftest.py")
-        )
+        self.assertTrue(os.path.isfile("examples/postman_echo/conftest.py"))
 
         args3 = [
             "examples/postman-echo/request.methods/hardcode.yml",

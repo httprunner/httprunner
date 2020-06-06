@@ -1,5 +1,4 @@
 import os
-import string
 import subprocess
 from shutil import copyfile
 from typing import Text, List, Tuple, Dict, Set, NoReturn
@@ -19,6 +18,7 @@ from httprunner.loader import (
 )
 from httprunner.parser import parse_data
 from httprunner.response import uniform_validator
+from httprunner.utils import ensure_file_path_valid
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -121,41 +121,6 @@ def __ensure_project_meta_files(tests_path: Text) -> NoReturn:
         if dot_csv_new_path != dot_csv_path:
             logger.info(f"copy .env to {dot_csv_new_path}")
             copyfile(dot_csv_path, dot_csv_new_path)
-
-
-def ensure_file_path_valid(file_path: Text) -> Text:
-    """ ensure file path valid for pytest
-
-    Args:
-        file_path: absolute or relative file path
-
-    Returns:
-        ensured valid absolute file path
-
-    """
-    raw_file_name, file_suffix = os.path.splitext(file_path)
-    file_suffix = file_suffix.lower()
-
-    if os.path.isabs(file_path):
-        raw_file_relative_name = raw_file_name[len(os.getcwd()) + 1 :]
-    else:
-        raw_file_relative_name = raw_file_name
-
-    path_names = []
-    for name in raw_file_relative_name.split(os.sep):
-
-        if name[0] in string.digits:
-            # ensure file name not startswith digit
-            # 19 => T19, 2C => T2C
-            name = f"T{name}"
-
-        # handle cases when directory name includes dot/hyphen/space
-        name = name.replace(" ", "_").replace(".", "_").replace("-", "_")
-
-        path_names.append(name)
-
-    new_file_path = os.path.join(os.getcwd(), f"{os.sep.join(path_names)}{file_suffix}")
-    return new_file_path
 
 
 def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
