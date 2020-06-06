@@ -126,3 +126,7 @@ class TestUtils(unittest.TestCase):
             ensure_file_path_valid("1/2B/3.yml"),
             os.path.join(os.getcwd(), "T1/T2B/T3.yml"),
         )
+        self.assertEqual(
+            ensure_file_path_valid("examples/postman-echo/request.methods/"),
+            os.path.join(os.getcwd(), "examples/postman_echo/request_methods"),
+        )

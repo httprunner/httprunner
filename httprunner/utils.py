@@ -198,7 +198,7 @@ def ensure_file_path_valid(file_path: Text) -> Text:
         raw_file_relative_name = raw_file_name
 
     path_names = []
-    for name in raw_file_relative_name.split(os.sep):
+    for name in raw_file_relative_name.rstrip(os.sep).split(os.sep):
 
         if name[0] in string.digits:
             # ensure file name not startswith digit
