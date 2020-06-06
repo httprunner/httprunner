@@ -187,7 +187,9 @@ class HttpRunner(object):
             if os.path.isabs(step.testcase):
                 ref_testcase_path = step.testcase
             else:
-                ref_testcase_path = os.path.join(self.__project_meta.PWD, step.testcase)
+                ref_testcase_path = os.path.join(
+                    self.__project_meta.RootDir, step.testcase
+                )
 
             case_result = (
                 HttpRunner()
@@ -349,7 +351,7 @@ class HttpRunner(object):
         )
         self.__case_id = self.__case_id or str(uuid.uuid4())
         self.__log_path = self.__log_path or os.path.join(
-            self.__project_meta.PWD, "logs", f"{self.__case_id}.run.log"
+            self.__project_meta.RootDir, "logs", f"{self.__case_id}.run.log"
         )
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
