@@ -2,6 +2,7 @@ import os
 import unittest
 
 from httprunner import loader, utils
+from httprunner.utils import ensure_file_path_valid
 
 
 class TestUtils(unittest.TestCase):
@@ -96,4 +97,32 @@ class TestUtils(unittest.TestCase):
                 ).keys()
             ),
             ["A", "D", "C", "B"],
+        )
+
+    def test_ensure_file_path_valid(self):
+        self.assertEqual(
+            ensure_file_path_valid(
+                "examples/postman-echo/request.methods/hardcode.yml"
+            ),
+            os.path.join(
+                os.getcwd(), "examples/postman_echo/request_methods/hardcode.yml"
+            ),
+        )
+        self.assertEqual(
+            ensure_file_path_valid(
+                os.path.join(os.getcwd(), "postman-echo/request.methods/hardcode.yml")
+            ),
+            os.path.join(os.getcwd(), "postman_echo/request_methods/hardcode.yml"),
+        )
+        self.assertEqual(
+            ensure_file_path_valid(
+                "examples/postman echo/request methods/hardcode.yml"
+            ),
+            os.path.join(
+                os.getcwd(), "examples/postman_echo/request_methods/hardcode.yml"
+            ),
+        )
+        self.assertEqual(
+            ensure_file_path_valid("1/2B/3.yml"),
+            os.path.join(os.getcwd(), "T1/T2B/T3.yml"),
         )
