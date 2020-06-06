@@ -112,6 +112,9 @@ def __ensure_project_meta_files(tests_path: Text) -> NoReturn:
             logger.info(f"copy debugtalk.py to {debugtalk_new_path}")
             copyfile(debugtalk_path, debugtalk_new_path)
 
+        global pytest_files_made_cache_mapping
+        pytest_files_made_cache_mapping[debugtalk_new_path] = ""
+
     dot_csv_path = project_meta.dot_env_path
     if dot_csv_path:
         dot_csv_new_path = ensure_file_path_valid(dot_csv_path)
