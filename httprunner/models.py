@@ -85,7 +85,7 @@ class ProjectMeta(BaseModel):
     dot_env_path: Text = ""  # .env file path
     functions: FunctionsMapping = {}  # functions defined in debugtalk.py
     env: Env = {}
-    PWD: Text = os.getcwd()  # project working directory, the path debugtalk.py located
+    RootDir: Text = os.getcwd()  # project root directory, the path debugtalk.py located
 
 
 class TestsMapping(BaseModel):

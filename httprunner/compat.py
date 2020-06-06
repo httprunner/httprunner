@@ -220,7 +220,7 @@ def generate_conftest_for_summary(args: List):
         sys.exit(1)
 
     project_meta = load_project_meta(test_path)
-    conftest_path = os.path.join(project_meta.PWD, "conftest.py")
+    conftest_path = os.path.join(project_meta.RootDir, "conftest.py")
     if os.path.isfile(conftest_path):
         return
 
@@ -291,8 +291,8 @@ def session_fixture(request):
 '''
 
     test_path = os.path.abspath(test_path)
-    logs_dir_path = os.path.join(project_meta.PWD, "logs")
-    test_path_relative_path = test_path[len(project_meta.PWD) + 1 :]
+    logs_dir_path = os.path.join(project_meta.RootDir, "logs")
+    test_path_relative_path = test_path[len(project_meta.RootDir) + 1 :]
 
     if os.path.isdir(test_path):
         file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)

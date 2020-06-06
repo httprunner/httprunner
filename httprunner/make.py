@@ -64,7 +64,7 @@ def __ensure_absolute(path: Text) -> Text:
     if os.path.isabs(path):
         absolute_path = path
     else:
-        absolute_path = os.path.join(project_meta.PWD, path)
+        absolute_path = os.path.join(project_meta.RootDir, path)
 
     if not os.path.isfile(absolute_path):
         raise exceptions.ParamsError(f"Invalid testcase file path: {absolute_path}")

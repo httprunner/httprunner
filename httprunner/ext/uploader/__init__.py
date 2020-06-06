@@ -139,7 +139,7 @@ def multipart_encoder(**kwargs):
 
             project_meta = load_project_meta(os.getcwd())
 
-            _file_path = os.path.join(project_meta.PWD, value)
+            _file_path = os.path.join(project_meta.RootDir, value)
             is_exists_file = os.path.isfile(_file_path)
 
         if is_exists_file:
