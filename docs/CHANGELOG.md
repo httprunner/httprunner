@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.10 (2020-06-07)
+
+**Added**
+
+- feat: implement step setup/teardown hooks
+
 ## 3.0.9 (2020-06-07)
 
 **Fixed**
