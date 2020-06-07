@@ -228,6 +228,17 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         variables = teststep["variables"]
         step_info += f".with_variables(**{variables})"
 
+    if "setup_hooks" in teststep:
+        setup_hooks = teststep["setup_hooks"]
+        for hook in setup_hooks:
+            if isinstance(hook, Text):
+                step_info += f'.setup_hook("{hook}")'
+            elif isinstance(hook, Dict) and len(hook) == 1:
+                assign_var_name, hook_content = list(hook.items())[0]
+                step_info += f'.setup_hook("{hook}", "{assign_var_name}")'
+            else:
+                raise exceptions.TestCaseFormatError(f"Invalid setup hook: {hook}")
+
     if teststep.get("request"):
         step_info += make_request_chain_style(teststep["request"])
     elif teststep.get("testcase"):
