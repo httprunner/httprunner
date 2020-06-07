@@ -1,10 +1,12 @@
 import unittest
 
+from httprunner import loader
 from httprunner.runner import HttpRunner
 
 
 class TestHttpRunner(unittest.TestCase):
     def setUp(self):
+        loader.project_meta = None
         self.runner = HttpRunner()
 
     def test_run_testcase_by_path_request_only(self):

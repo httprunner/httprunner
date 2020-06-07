@@ -9,9 +9,15 @@ from httprunner.make import (
     make_teststep_chain_style,
     pytest_files_run_set,
 )
+from httprunner import loader
 
 
 class TestMake(unittest.TestCase):
+    def setUp(self) -> None:
+        pytest_files_made_cache_mapping.clear()
+        pytest_files_run_set.clear()
+        loader.project_meta = None
+
     def test_make_testcase(self):
         path = ["examples/postman-echo/request.methods/request_with_variables.yml"]
         testcase_python_list = main_make(path)
@@ -27,8 +33,6 @@ class TestMake(unittest.TestCase):
         path = [
             "examples/postman-echo/request.methods/request_with_testcase_reference.yml"
         ]
-        pytest_files_made_cache_mapping.clear()
-        pytest_files_run_set.clear()
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 1)
         self.assertIn(
@@ -90,8 +94,6 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
 
     def test_make_testsuite(self):
         path = ["examples/postman-echo/request.methods/demo_testsuite.yml"]
-        pytest_files_made_cache_mapping.clear()
-        pytest_files_run_set.clear()
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 2)
         self.assertIn(

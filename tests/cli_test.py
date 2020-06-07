@@ -40,9 +40,10 @@ class TestCli(unittest.TestCase):
         self.assertIn(__description__, self.captured_output.getvalue().strip())
 
     def test_debug_pytest(self):
-        pytest.main(
+        exit_code = pytest.main(
             [
                 "-s",
                 "examples/postman_echo/request_methods/request_with_testcase_reference_test.py",
             ]
         )
+        self.assertEqual(exit_code, 0)
