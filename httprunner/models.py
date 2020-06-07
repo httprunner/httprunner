@@ -15,7 +15,7 @@ FunctionsMapping = Dict[Text, Callable]
 Headers = Dict[Text, Text]
 Cookies = Dict[Text, Text]
 Verify = bool
-Hook = List[Text]
+Hooks = Union[List[Text], Dict[Text, Text]]
 Export = List[Text]
 Validators = List[Dict]
 Env = Dict[Text, Any]
@@ -37,8 +37,8 @@ class TConfig(BaseModel):
     base_url: BaseUrl = ""
     # Text: prepare variables in debugtalk.py, ${gen_variables()}
     variables: Union[VariablesMapping, Text] = {}
-    setup_hooks: Hook = []
-    teardown_hooks: Hook = []
+    # setup_hooks: Hooks = []
+    # teardown_hooks: Hooks = []
     export: Export = []
     path: Text = None
 
@@ -64,8 +64,8 @@ class TStep(BaseModel):
     request: Union[TRequest, None] = None
     testcase: Union[Text, Callable, None] = None
     variables: VariablesMapping = {}
-    setup_hooks: Hook = []
-    teardown_hooks: Hook = []
+    setup_hooks: Hooks = []
+    teardown_hooks: Hooks = []
     # used to extract request's response field
     extract: VariablesMapping = {}
     # used to export session variables from referenced testcase
