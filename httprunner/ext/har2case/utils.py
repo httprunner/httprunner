@@ -31,12 +31,10 @@ def load_har_log_entries(file_path):
     with io.open(file_path, "r+", encoding="utf-8-sig") as f:
         try:
             content_json = json.loads(f.read())
+            return content_json["log"]["entries"]
         except (TypeError, JSONDecodeError) as ex:
             logger.error(f"failed to load HAR file {file_path}: {ex}")
             sys.exit(1)
-
-        try:
-            return content_json["log"]["entries"]
         except KeyError:
             logger.error(f"log entries not found in HAR file: {content_json}")
             sys.exit(1)

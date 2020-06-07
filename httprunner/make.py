@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from shutil import copyfile
 from typing import Text, List, Tuple, Dict, Set, NoReturn
 
@@ -428,12 +429,19 @@ def __make(tests_path: Text) -> NoReturn:
             logger.warning(ex)
             continue
 
+        if not isinstance(test_content, Dict):
+            raise exceptions.FileFormatError(
+                f"test content not in dict format: {test_content}"
+            )
+
         # api in v2 format, convert to v3 testcase
-        if "request" in test_content:
+        if "request" in test_content and "name" in test_content:
             test_content = ensure_testcase_v3_api(test_content)
 
-        if not (isinstance(test_content, Dict) and "config" in test_content):
-            raise exceptions.FileFormatError("Invalid testcase/testsuite v2/v3 format!")
+        if "config" not in test_content:
+            raise exceptions.FileFormatError(
+                f"miss config part in testcase/testsuite: {test_content}"
+            )
 
         test_content.setdefault("config", {})["path"] = test_file
 
@@ -465,7 +473,12 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
         if not os.path.isabs(tests_path):
             tests_path = os.path.join(os.getcwd(), tests_path)
 
-        __make(tests_path)
+        try:
+            __make(tests_path)
+        except exceptions.MyBaseError as ex:
+            logger.error(ex)
+            sys.exit(1)
+
         __ensure_project_meta_files(tests_path)
 
     # format pytest files
