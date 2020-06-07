@@ -5,6 +5,7 @@
 **Added**
 
 - feat: implement step setup/teardown hooks
+- feat: support alter response in teardown hooks
 
 **Fixed**
 
