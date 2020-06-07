@@ -1,10 +1,34 @@
 import os
 import unittest
 
-from httprunner import compat
+from httprunner import compat, exceptions
+from httprunner.compat import convert_variables
 
 
 class TestCompat(unittest.TestCase):
+    def test_convert_variables(self):
+        raw_variables = [{"var1": 1}, {"var2": "val2"}]
+        self.assertEqual(
+            convert_variables(raw_variables, "tests/data/a-b.c/1.yml"),
+            {"var1": 1, "var2": "val2"},
+        )
+        raw_variables = {"var1": 1, "var2": "val2"}
+        self.assertEqual(
+            convert_variables(raw_variables, "tests/data/a-b.c/1.yml"),
+            {"var1": 1, "var2": "val2"},
+        )
+        raw_variables = "${get_variables()}"
+        self.assertEqual(
+            convert_variables(raw_variables, "tests/data/a-b.c/1.yml"),
+            {"foo1": "session_bar1"},
+        )
+
+        with self.assertRaises(exceptions.TestCaseFormatError):
+            raw_variables = [{"var1": 1}, {"var2": "val2", "var3": 3}]
+            convert_variables(raw_variables, "tests/data/a-b.c/1.yml")
+        with self.assertRaises(exceptions.TestCaseFormatError):
+            convert_variables(None, "tests/data/a-b.c/1.yml")
+
     def test_convert_jmespath(self):
 
         self.assertEqual(compat.convert_jmespath("content.abc"), "body.abc")
