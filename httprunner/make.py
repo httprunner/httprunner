@@ -246,6 +246,17 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         call_ref_testcase = f".call({testcase})"
         step_info += call_ref_testcase
 
+    if "teardown_hooks" in teststep:
+        teardown_hooks = teststep["teardown_hooks"]
+        for hook in teardown_hooks:
+            if isinstance(hook, Text):
+                step_info += f'.teardown_hook("{hook}")'
+            elif isinstance(hook, Dict) and len(hook) == 1:
+                assign_var_name, hook_content = list(hook.items())[0]
+                step_info += f'.teardown_hook("{hook}", "{assign_var_name}")'
+            else:
+                raise exceptions.TestCaseFormatError(f"Invalid teardown hook: {hook}")
+
     if "extract" in teststep:
         # request step
         step_info += ".extract()"
