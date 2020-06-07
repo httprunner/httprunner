@@ -1,7 +1,7 @@
 import inspect
 from typing import Text, Any, Union, Callable
 
-from httprunner.schema import (
+from httprunner.models import (
     TConfig,
     TStep,
     TRequest,
@@ -57,37 +57,43 @@ class Config(object):
 
 
 class StepRequestValidation(object):
-    def __init__(self, step: TStep):
-        self.__t_step = step
+    def __init__(self, step_context: TStep):
+        self.__step_context = step_context
 
     def assert_equal(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"equal": [jmes_path, expected_value]})
+        self.__step_context.validators.append({"equal": [jmes_path, expected_value]})
         return self
 
     def assert_not_equal(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"not_equal": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"not_equal": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_greater_than(
         self, jmes_path: Text, expected_value: Union[int, float]
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"greater_than": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"greater_than": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_less_than(
         self, jmes_path: Text, expected_value: Union[int, float]
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"less_than": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"less_than": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_greater_or_equals(
         self, jmes_path: Text, expected_value: Union[int, float]
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append(
+        self.__step_context.validators.append(
             {"greater_or_equals": [jmes_path, expected_value]}
         )
         return self
@@ -95,19 +101,23 @@ class StepRequestValidation(object):
     def assert_less_or_equals(
         self, jmes_path: Text, expected_value: Union[int, float]
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"less_or_equals": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"less_or_equals": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_length_equal(
         self, jmes_path: Text, expected_value: int
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"length_equal": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"length_equal": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_length_greater_than(
         self, jmes_path: Text, expected_value: int
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append(
+        self.__step_context.validators.append(
             {"length_greater_than": [jmes_path, expected_value]}
         )
         return self
@@ -115,7 +125,7 @@ class StepRequestValidation(object):
     def assert_length_less_than(
         self, jmes_path: Text, expected_value: int
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append(
+        self.__step_context.validators.append(
             {"length_less_than": [jmes_path, expected_value]}
         )
         return self
@@ -123,7 +133,7 @@ class StepRequestValidation(object):
     def assert_length_greater_or_equals(
         self, jmes_path: Text, expected_value: int
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append(
+        self.__step_context.validators.append(
             {"length_greater_or_equals": [jmes_path, expected_value]}
         )
         return self
@@ -131,7 +141,7 @@ class StepRequestValidation(object):
     def assert_length_less_or_equals(
         self, jmes_path: Text, expected_value: int
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append(
+        self.__step_context.validators.append(
             {"length_less_or_equals": [jmes_path, expected_value]}
         )
         return self
@@ -139,55 +149,65 @@ class StepRequestValidation(object):
     def assert_string_equals(
         self, jmes_path: Text, expected_value: int
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"string_equals": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"string_equals": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_startswith(
         self, jmes_path: Text, expected_value: Text
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"startswith": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"startswith": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_endswith(
         self, jmes_path: Text, expected_value: Text
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"endswith": [jmes_path, expected_value]})
+        self.__step_context.validators.append({"endswith": [jmes_path, expected_value]})
         return self
 
     def assert_regex_match(
         self, jmes_path: Text, expected_value: Text
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"regex_match": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"regex_match": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_contains(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"contains": [jmes_path, expected_value]})
+        self.__step_context.validators.append({"contains": [jmes_path, expected_value]})
         return self
 
     def assert_contained_by(
         self, jmes_path: Text, expected_value: Any
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"contained_by": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"contained_by": [jmes_path, expected_value]}
+        )
         return self
 
     def assert_type_match(
         self, jmes_path: Text, expected_value: Text
     ) -> "StepRequestValidation":
-        self.__t_step.validators.append({"type_match": [jmes_path, expected_value]})
+        self.__step_context.validators.append(
+            {"type_match": [jmes_path, expected_value]}
+        )
         return self
 
     def perform(self) -> TStep:
-        return self.__t_step
+        return self.__step_context
 
 
 class StepRequestExtraction(object):
-    def __init__(self, step: TStep):
-        self.__t_step = step
+    def __init__(self, step_context: TStep):
+        self.__step_context = step_context
 
     def with_jmespath(self, jmes_path: Text, var_name: Text) -> "StepRequestExtraction":
-        self.__t_step.extract[var_name] = jmes_path
+        self.__step_context.extract[var_name] = jmes_path
         return self
 
     # def with_regex(self):
@@ -199,135 +219,134 @@ class StepRequestExtraction(object):
     #     pass
 
     def validate(self) -> StepRequestValidation:
-        return StepRequestValidation(self.__t_step)
+        return StepRequestValidation(self.__step_context)
 
     def perform(self) -> TStep:
-        return self.__t_step
+        return self.__step_context
 
 
 class RequestWithOptionalArgs(object):
-    def __init__(self, step: TStep):
-        self.__t_step = step
+    def __init__(self, step_context: TStep):
+        self.__step_context = step_context
 
     def with_params(self, **params) -> "RequestWithOptionalArgs":
-        self.__t_step.request.params.update(params)
+        self.__step_context.request.params.update(params)
         return self
 
     def with_headers(self, **headers) -> "RequestWithOptionalArgs":
-        self.__t_step.request.headers.update(headers)
+        self.__step_context.request.headers.update(headers)
         return self
 
     def with_cookies(self, **cookies) -> "RequestWithOptionalArgs":
-        self.__t_step.request.cookies.update(cookies)
+        self.__step_context.request.cookies.update(cookies)
         return self
 
     def with_data(self, data) -> "RequestWithOptionalArgs":
-        self.__t_step.request.data = data
+        self.__step_context.request.data = data
         return self
 
     def with_json(self, req_json) -> "RequestWithOptionalArgs":
-        self.__t_step.request.req_json = req_json
+        self.__step_context.request.req_json = req_json
         return self
 
     def set_timeout(self, timeout: float) -> "RequestWithOptionalArgs":
-        self.__t_step.request.timeout = timeout
+        self.__step_context.request.timeout = timeout
         return self
 
     def set_verify(self, verify: bool) -> "RequestWithOptionalArgs":
-        self.__t_step.request.verify = verify
+        self.__step_context.request.verify = verify
         return self
 
     def set_allow_redirects(self, allow_redirects: bool) -> "RequestWithOptionalArgs":
-        self.__t_step.request.allow_redirects = allow_redirects
+        self.__step_context.request.allow_redirects = allow_redirects
         return self
 
     def upload(self, **file_info) -> "RequestWithOptionalArgs":
-        self.__t_step.request.upload.update(file_info)
+        self.__step_context.request.upload.update(file_info)
         return self
 
     # def hooks(self):
     #     pass
 
     def extract(self) -> StepRequestExtraction:
-        return StepRequestExtraction(self.__t_step)
+        return StepRequestExtraction(self.__step_context)
 
     def validate(self) -> StepRequestValidation:
-        return StepRequestValidation(self.__t_step)
+        return StepRequestValidation(self.__step_context)
 
     def perform(self) -> TStep:
-        return self.__t_step
+        return self.__step_context
 
 
 class RunRequest(object):
     def __init__(self, name: Text):
-        self.__t_step = TStep(name=name)
+        self.__step_context = TStep(name=name)
 
     def with_variables(self, **variables) -> "RunRequest":
-        self.__t_step.variables.update(variables)
+        self.__step_context.variables.update(variables)
         return self
 
     def get(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.GET, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.GET, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
     def post(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.POST, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.POST, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
     def put(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.PUT, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.PUT, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
     def head(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.HEAD, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.HEAD, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
     def delete(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.DELETE, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.DELETE, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
     def options(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.OPTIONS, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.OPTIONS, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
     def patch(self, url: Text) -> RequestWithOptionalArgs:
-        self.__t_step.request = TRequest(method=MethodEnum.PATCH, url=url)
-        return RequestWithOptionalArgs(self.__t_step)
+        self.__step_context.request = TRequest(method=MethodEnum.PATCH, url=url)
+        return RequestWithOptionalArgs(self.__step_context)
 
 
 class StepRefCase(object):
-    def __init__(self, step: TStep):
-        self.__t_step = step
-        self.__t_step.extract = []
+    def __init__(self, step_context: TStep):
+        self.__step_context = step_context
 
-    def extract(self, *var_name: Text) -> "StepRefCase":
-        self.__t_step.extract.extend(var_name)
+    def export(self, *var_name: Text) -> "StepRefCase":
+        self.__step_context.export.extend(var_name)
         return self
 
     def perform(self) -> TStep:
-        return self.__t_step
+        return self.__step_context
 
 
 class RunTestCase(object):
     def __init__(self, name: Text):
-        self.__t_step = TStep(name=name)
+        self.__step_context = TStep(name=name)
 
     def with_variables(self, **variables) -> "RunTestCase":
-        self.__t_step.variables.update(variables)
+        self.__step_context.variables.update(variables)
         return self
 
     def call(self, testcase: Callable) -> StepRefCase:
-        self.__t_step.testcase = testcase
-        return StepRefCase(self.__t_step)
+        self.__step_context.testcase = testcase
+        return StepRefCase(self.__step_context)
 
     def perform(self) -> TStep:
-        return self.__t_step
+        return self.__step_context
 
 
 class Step(object):
     def __init__(
         self,
-        step: Union[
+        step_context: Union[
             StepRequestValidation,
             StepRequestExtraction,
             RequestWithOptionalArgs,
@@ -335,15 +354,15 @@ class Step(object):
             StepRefCase,
         ],
     ):
-        self.__t_step = step.perform()
+        self.__step_context = step_context.perform()
 
     @property
     def request(self) -> TRequest:
-        return self.__t_step.request
+        return self.__step_context.request
 
     @property
     def testcase(self) -> TestCase:
-        return self.__t_step.testcase
+        return self.__step_context.testcase
 
     def perform(self) -> TStep:
-        return self.__t_step
+        return self.__step_context

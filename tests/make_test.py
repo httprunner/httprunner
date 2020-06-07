@@ -1,34 +1,45 @@
+import os
 import unittest
 
 from httprunner.make import (
     main_make,
     convert_testcase_path,
-    make_files_cache_set,
+    pytest_files_made_cache_mapping,
     make_config_chain_style,
     make_teststep_chain_style,
-    pytest_files_set,
+    pytest_files_run_set,
 )
+from httprunner import loader
 
 
 class TestMake(unittest.TestCase):
+    def setUp(self) -> None:
+        pytest_files_made_cache_mapping.clear()
+        pytest_files_run_set.clear()
+        loader.project_meta = None
+
     def test_make_testcase(self):
         path = ["examples/postman_echo/request_methods/request_with_variables.yml"]
         testcase_python_list = main_make(path)
         self.assertEqual(
             testcase_python_list[0],
-            "examples/postman_echo/request_methods/request_with_variables_test.py",
+            os.path.join(
+                os.getcwd(),
+                "examples/postman_echo/request_methods/request_with_variables_test.py",
+            ),
         )
 
     def test_make_testcase_with_ref(self):
         path = [
             "examples/postman_echo/request_methods/request_with_testcase_reference.yml"
         ]
-        make_files_cache_set.clear()
-        pytest_files_set.clear()
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 1)
         self.assertIn(
-            "examples/postman_echo/request_methods/request_with_testcase_reference_test.py",
+            os.path.join(
+                os.getcwd(),
+                "examples/postman_echo/request_methods/request_with_testcase_reference_test.py",
+            ),
             testcase_python_list,
         )
 
@@ -52,56 +63,51 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         path = ["examples/postman_echo/request_methods/"]
         testcase_python_list = main_make(path)
         self.assertIn(
-            "examples/postman_echo/request_methods/request_with_functions_test.py",
+            os.path.join(
+                os.getcwd(),
+                "examples/postman_echo/request_methods/request_with_functions_test.py",
+            ),
             testcase_python_list,
         )
 
     def test_convert_testcase_path(self):
         self.assertEqual(
-            convert_testcase_path("mubu.login.yml")[0], "mubu_login_test.py"
+            convert_testcase_path("mubu.login.yml"),
+            (os.path.join(os.getcwd(), "mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("/path/to/mubu.login.yml")[0],
-            "/path/to/mubu_login_test.py",
+            convert_testcase_path(os.path.join(os.getcwd(), "path/to/mubu.login.yml")),
+            (os.path.join(os.getcwd(), "path/to/mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu.login.yml")[0],
-            "/path/to 2/mubu_login_test.py",
+            convert_testcase_path("path/to 2/mubu.login.yml"),
+            (os.path.join(os.getcwd(), "path/to_2/mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu.login.yml")[1], "MubuLogin"
+            convert_testcase_path("path/to-2/mubu login.yml"),
+            (os.path.join(os.getcwd(), "path/to_2/mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path("mubu login.yml")[0], "mubu_login_test.py"
+            convert_testcase_path("path/to.2/幕布login.yml"),
+            (os.path.join(os.getcwd(), "path/to_2/幕布login_test.py"), "幕布Login"),
         )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu login.yml")[1], "MubuLogin"
-        )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu-login.yml")[0],
-            "/path/to 2/mubu_login_test.py",
-        )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/mubu-login.yml")[1], "MubuLogin"
-        )
-        self.assertEqual(
-            convert_testcase_path("/path/to 2/幕布login.yml")[0],
-            "/path/to 2/幕布login_test.py",
-        )
-        self.assertEqual(convert_testcase_path("/path/to/幕布login.yml")[1], "幕布Login")
 
     def test_make_testsuite(self):
         path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
-        make_files_cache_set.clear()
-        pytest_files_set.clear()
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 2)
         self.assertIn(
-            "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_functions_test.py",
+            os.path.join(
+                os.getcwd(),
+                "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_functions_test.py",
+            ),
             testcase_python_list,
         )
         self.assertIn(
-            "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_testcase_reference_test.py",
+            os.path.join(
+                os.getcwd(),
+                "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_testcase_reference_test.py",
+            ),
             testcase_python_list,
         )
 
@@ -109,13 +115,13 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         config = {
             "name": "request methods testcase: validate with functions",
             "variables": {"foo1": "bar1", "foo2": 22},
-            "base_url": "https://postman-echo.com",
+            "base_url": "https://postman_echo.com",
             "verify": False,
             "path": "examples/postman_echo/request_methods/validate_with_functions_test.py",
         }
         self.assertEqual(
             make_config_chain_style(config),
-            """Config("request methods testcase: validate with functions").variables(**{'foo1': 'bar1', 'foo2': 22}).base_url("https://postman-echo.com").verify(False)""",
+            """Config("request methods testcase: validate with functions").variables(**{'foo1': 'bar1', 'foo2': 22}).base_url("https://postman_echo.com").verify(False)""",
         )
 
     def test_make_teststep_chain_style(self):

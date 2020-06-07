@@ -1,5 +1,20 @@
 # Release History
 
+## 3.0.9 (2020-06-07)
+
+**Fixed**
+
+- fix: miss formatting referenced testcase
+- fix: handle cases when parent directory name includes dot/hyphen/space
+
+**Changed**
+
+- change: add `export` keyword in TStep to export session variables from referenced testcase
+- change: rename TestCaseInOut field, config_vars and export_vars
+- change: rename StepData field, export_vars
+- change: add `--tb=short` for `hrun` command to use shorter traceback format by default
+- change: search debugtalk.py upward recursively until system root dir
+
 ## 3.0.8 (2020-06-04)
 
 **Added**

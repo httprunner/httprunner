@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from httprunner import builtin, utils
 from httprunner import exceptions
-from httprunner.schema import TestCase, ProjectMeta, TestSuite
+from httprunner.models import TestCase, ProjectMeta, TestSuite
 
 try:
     # PyYAML version >= 5.1
@@ -176,7 +176,7 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
             raise exceptions.MyBaseFailure("load_project_meta() has not been called!")
 
         # make compatible with Windows/Linux
-        csv_file = os.path.join(project_meta.PWD, *csv_file.split("/"))
+        csv_file = os.path.join(project_meta.RootDir, *csv_file.split("/"))
 
     if not os.path.isfile(csv_file):
         # file path not exist
@@ -265,7 +265,7 @@ def load_builtin_functions() -> Dict[Text, Callable]:
 
 def locate_file(start_path: Text, file_name: Text) -> Text:
     """ locate filename and return absolute file path.
-        searching will be recursive upward until current working directory or system root dir.
+        searching will be recursive upward until system root dir.
 
     Args:
         file_name (str): target locate file name
@@ -288,13 +288,6 @@ def locate_file(start_path: Text, file_name: Text) -> Text:
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
         return os.path.abspath(file_path)
-
-    # current working directory
-    cwd = os.getcwd()
-    if os.path.abspath(start_dir_path) == cwd:
-        raise exceptions.FileNotFound(
-            f"{file_name} not found for {start_path}\ncurrent working directory: {cwd}"
-        )
 
     # system root dir
     # Windows, e.g. 'E:\\'
@@ -327,14 +320,14 @@ def locate_debugtalk_py(start_path: Text) -> Text:
     return debugtalk_path
 
 
-def locate_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
-    """ locate debugtalk.py path as project working directory
+def locate_project_root_directory(test_path: Text) -> Tuple[Text, Text]:
+    """ locate debugtalk.py path as project root directory
 
     Args:
         test_path: specified testfile path
 
     Returns:
-        (str, str): debugtalk.py path, project_working_directory
+        (str, str): debugtalk.py path, project_root_directory
 
     """
 
@@ -355,18 +348,18 @@ def locate_project_working_directory(test_path: Text) -> Tuple[Text, Text]:
     debugtalk_path = locate_debugtalk_py(test_path)
 
     if debugtalk_path:
-        # The folder contains debugtalk.py will be treated as PWD.
-        project_working_directory = os.path.dirname(debugtalk_path)
+        # The folder contains debugtalk.py will be treated as project RootDir.
+        project_root_directory = os.path.dirname(debugtalk_path)
     else:
-        # debugtalk.py not found, use os.getcwd() as PWD.
-        project_working_directory = os.getcwd()
+        # debugtalk.py not found, use os.getcwd() as project RootDir.
+        project_root_directory = os.getcwd()
 
-    return debugtalk_path, project_working_directory
+    return debugtalk_path, project_root_directory
 
 
 def load_debugtalk_functions() -> Dict[Text, Callable]:
     """ load project debugtalk.py module functions
-        debugtalk.py should be located in project working directory.
+        debugtalk.py should be located in project root directory.
 
     Returns:
         dict: debugtalk module functions mapping
@@ -382,12 +375,12 @@ def load_debugtalk_functions() -> Dict[Text, Callable]:
 
 
 def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
-    """ load api, testcases, .env, debugtalk.py functions.
-        api/testcases folder is relative to project_working_directory
+    """ load testcases, .env, debugtalk.py functions.
+        testcases folder is relative to project_root_directory
         by default, project_meta will be loaded only once, unless set reload to true.
 
     Args:
-        test_path (str): test file/folder path, locate pwd from this path.
+        test_path (str): test file/folder path, locate project RootDir from this path.
         reload: reload project meta if set true, default to false
 
     Returns:
@@ -404,19 +397,20 @@ def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
     if not test_path:
         return project_meta
 
-    debugtalk_path, project_working_directory = locate_project_working_directory(
-        test_path
-    )
+    debugtalk_path, project_root_directory = locate_project_root_directory(test_path)
 
-    # add PWD to sys.path
-    sys.path.insert(0, project_working_directory)
+    # add project RootDir to sys.path
+    sys.path.insert(0, project_root_directory)
 
     # load .env file
     # NOTICE:
     # environment variable maybe loaded in debugtalk.py
     # thus .env file should be loaded before loading debugtalk.py
-    dot_env_path = os.path.join(project_working_directory, ".env")
-    project_meta.env = load_dot_env_file(dot_env_path)
+    dot_env_path = os.path.join(project_root_directory, ".env")
+    dot_env = load_dot_env_file(dot_env_path)
+    if dot_env:
+        project_meta.env = dot_env
+        project_meta.dot_env_path = dot_env_path
 
     if debugtalk_path:
         # load debugtalk.py functions
@@ -424,11 +418,9 @@ def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
     else:
         debugtalk_functions = {}
 
-    # locate PWD and load debugtalk.py functions
-    project_meta.PWD = project_working_directory
+    # locate project RootDir and load debugtalk.py functions
+    project_meta.RootDir = project_root_directory
     project_meta.functions = debugtalk_functions
-    project_meta.test_path = os.path.abspath(test_path)[
-        len(project_working_directory) + 1 :
-    ]
+    project_meta.debugtalk_path = debugtalk_path
 
     return project_meta

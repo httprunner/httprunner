@@ -66,7 +66,10 @@ class TStep(BaseModel):
     variables: VariablesMapping = {}
     setup_hooks: Hook = []
     teardown_hooks: Hook = []
-    extract: Union[Dict[Text, Text], List[Text]] = {}
+    # used to extract request's response field
+    extract: VariablesMapping = {}
+    # used to export session variables from referenced testcase
+    export: Export = []
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
 
@@ -78,10 +81,11 @@ class TestCase(BaseModel):
 
 class ProjectMeta(BaseModel):
     debugtalk_py: Text = ""  # debugtalk.py file content
-    functions: FunctionsMapping = {}
+    debugtalk_path: Text = ""  # debugtalk.py file path
+    dot_env_path: Text = ""  # .env file path
+    functions: FunctionsMapping = {}  # functions defined in debugtalk.py
     env: Env = {}
-    PWD: Text = os.getcwd()
-    test_path: Text = None  # run with specified test path
+    RootDir: Text = os.getcwd()  # project root directory, the path debugtalk.py located
 
 
 class TestsMapping(BaseModel):
@@ -96,8 +100,8 @@ class TestCaseTime(BaseModel):
 
 
 class TestCaseInOut(BaseModel):
-    vars: VariablesMapping = {}
-    export: Dict = {}
+    config_vars: VariablesMapping = {}
+    export_vars: Dict = {}
 
 
 class RequestStat(BaseModel):
@@ -145,7 +149,7 @@ class StepData(BaseModel):
     success: bool = False
     name: Text = ""  # teststep name
     data: Union[SessionData, List[SessionData]] = None
-    export: Dict = {}
+    export_vars: VariablesMapping = {}
 
 
 class TestCaseSummary(BaseModel):
