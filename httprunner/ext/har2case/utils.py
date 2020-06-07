@@ -6,7 +6,6 @@ from urllib.parse import unquote
 
 import yaml
 from loguru import logger
-from sentry_sdk import capture_exception
 
 
 def load_har_log_entries(file_path):
@@ -32,10 +31,14 @@ def load_har_log_entries(file_path):
     with io.open(file_path, "r+", encoding="utf-8-sig") as f:
         try:
             content_json = json.loads(f.read())
+        except (TypeError, JSONDecodeError) as ex:
+            logger.error(f"failed to load HAR file {file_path}: {ex}")
+            sys.exit(1)
+
+        try:
             return content_json["log"]["entries"]
-        except (KeyError, TypeError, JSONDecodeError) as ex:
-            capture_exception(ex)
-            logger.error("HAR file content error: {}".format(file_path))
+        except KeyError:
+            logger.error(f"log entries not found in HAR file: {content_json}")
             sys.exit(1)
 
 
@@ -53,7 +56,7 @@ def x_www_form_urlencoded(post_data):
     """
     if isinstance(post_data, dict):
         return "&".join(
-            [u"{}={}".format(key, value) for key, value in post_data.items()]
+            ["{}={}".format(key, value) for key, value in post_data.items()]
         )
     else:
         return post_data
