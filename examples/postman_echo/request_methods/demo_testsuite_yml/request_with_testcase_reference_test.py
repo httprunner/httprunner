@@ -16,7 +16,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
 class TestCaseRequestWithTestcaseReference(HttpRunner):
     config = (
         Config("request with referenced testcase")
-        .variables(**{"foo1": "session_bar1", "var2": "testsuite_val2"})
+        .variables(**{"var2": "testsuite_val2", "foo1": "session_bar1"})
         .base_url("https://postman-echo.com")
         .verify(False)
     )
