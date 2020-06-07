@@ -264,7 +264,7 @@ import time
 import pytest
 from loguru import logger
 
-from httprunner.utils import get_platform
+from httprunner.utils import get_platform, ExtendJSONEncoder
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -316,7 +316,7 @@ def session_fixture(request):
     os.makedirs(summary_dir, exist_ok=True)
 
     with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=4)
+        json.dump(summary, f, indent=4, ensure_ascii=False, cls=ExtendJSONEncoder)
 
     logger.info(f"generated task summary: {summary_path}")
 
