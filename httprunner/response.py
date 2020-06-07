@@ -6,7 +6,7 @@ from loguru import logger
 
 from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.parser import parse_data, parse_string_value, get_mapping_function
-from httprunner.schema import VariablesMapping, Validators, FunctionsMapping
+from httprunner.models import VariablesMapping, Validators, FunctionsMapping
 
 
 def get_uniform_comparator(comparator: Text):

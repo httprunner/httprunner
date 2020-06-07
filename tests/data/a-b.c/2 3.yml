@@ -1,5 +1,5 @@
 config:
-    name: "request methods testcase: reference testcase"
+    name: "reference testcase unittest for abnormal folder path"
     variables:
         foo1: session_bar1
     base_url: "https://postman-echo.com"
@@ -10,7 +10,7 @@ teststeps:
     name: request with functions
     variables:
         foo1: override_bar1
-    testcase: request_methods/request_with_functions.yml
+    testcase: 1.yml
     export:
         - session_foo2
 -
