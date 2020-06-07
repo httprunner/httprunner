@@ -6,6 +6,10 @@
 
 - feat: implement step setup/teardown hooks
 
+**Fixed**
+
+- fix: ensure upload ready
+
 ## 3.0.9 (2020-06-07)
 
 **Fixed**
