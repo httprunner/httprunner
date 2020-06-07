@@ -286,6 +286,14 @@ class RunRequest(object):
         self.__step_context.variables.update(variables)
         return self
 
+    def setup_hook(self, hook: Text, assign_var_name: Text = None) -> "RunRequest":
+        if assign_var_name:
+            self.__step_context.setup_hooks.append({assign_var_name: hook})
+        else:
+            self.__step_context.setup_hooks.append(hook)
+
+        return self
+
     def get(self, url: Text) -> RequestWithOptionalArgs:
         self.__step_context.request = TRequest(method=MethodEnum.GET, url=url)
         return RequestWithOptionalArgs(self.__step_context)

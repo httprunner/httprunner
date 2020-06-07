@@ -93,12 +93,12 @@ class HttpRunner(object):
         """ call hook actions.
 
         Args:
-            hooks: each action in actions list maybe in two format.
+            hooks (list): each hook in hooks list maybe in two format.
 
-                format1 (dict): assignment, the value returned by hook function will be assigned to variable.
-                    {"var": "${func()}"}
-                format2 (str): only call hook functions.
+                format1 (str): only call hook functions.
                     ${func()}
+                format2 (dict): assignment, the value returned by hook function will be assigned to variable.
+                    {"var": "${func()}"}
 
             step_variables: current step variables to call hook, include two special variables
 
@@ -110,9 +110,18 @@ class HttpRunner(object):
         """
         logger.debug(f"call {hook_type} hook actions.")
 
-        if isinstance(hooks, Dict):
-            # format 1: {"var": "${func()}"}
-            for var_name, hook_content in hooks.items():
+        if not isinstance(hooks, List):
+            logger.error(f"Invalid hooks format: {hooks}")
+            return
+
+        for hook in hooks:
+            if isinstance(hook, Text):
+                # format 1: ["${func()}"]
+                logger.debug(f"call hook function: {hook}")
+                parse_data(hook, step_variables, self.__project_meta.functions)
+            elif isinstance(hook, Dict) and len(hook) == 1:
+                # format 2: {"var": "${func()}"}
+                var_name, hook_content = list(hook.items())[0]
                 hook_content_eval = parse_data(
                     hook_content, step_variables, self.__project_meta.functions
                 )
@@ -121,15 +130,8 @@ class HttpRunner(object):
                 )
                 logger.debug(f"assign variable: {var_name} = {hook_content_eval}")
                 step_variables[var_name] = hook_content_eval
-
-        elif isinstance(hooks, List):
-            # format 2: ["${func()}"]
-            for hook in hooks:
-                logger.debug(f"call hook function: {hook}")
-                parse_data(hook, step_variables, self.__project_meta.functions)
-
-        else:
-            logger.warning(f"Invalid hooks format: {hooks}")
+            else:
+                logger.error(f"Invalid hook format: {hook}")
 
     def __run_step_request(self, step: TStep) -> StepData:
         """run teststep: request"""
