@@ -45,7 +45,7 @@ class HttpRunner(object):
     __project_meta: ProjectMeta = None
     __case_id: Text = ""
     __export: List[Text] = []
-    __step_datas: List[StepData] = None
+    __step_datas: List[StepData] = []
     __session: HttpSession = None
     __session_variables: VariablesMapping = {}
     # time
