@@ -14,6 +14,7 @@ class TestCaseHooks(HttpRunner):
             .setup_hook("${setup_hook_add_kwargs($request)}")
             .setup_hook("${setup_hook_remove_kwargs($request)}")
             .get("/headers")
+            .teardown_hook("${teardown_hook_sleep_N_secs($response, 1)}")
             .validate()
             .assert_equal("status_code", 200)
             .assert_contained_by("body.headers.Host", "${get_httpbin_server()}")
@@ -21,6 +22,7 @@ class TestCaseHooks(HttpRunner):
         Step(
             RunRequest("alter response")
             .get("/headers")
+            .teardown_hook("${alter_response($response)}")
             .validate()
             .assert_equal("status_code", 200)
             .assert_equal("body.headers.Host", "httpbin.org")
