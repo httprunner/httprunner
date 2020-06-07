@@ -265,7 +265,7 @@ def load_builtin_functions() -> Dict[Text, Callable]:
 
 def locate_file(start_path: Text, file_name: Text) -> Text:
     """ locate filename and return absolute file path.
-        searching will be recursive upward until current working directory or system root dir.
+        searching will be recursive upward until system root dir.
 
     Args:
         file_name (str): target locate file name
@@ -288,13 +288,6 @@ def locate_file(start_path: Text, file_name: Text) -> Text:
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
         return os.path.abspath(file_path)
-
-    # current working directory
-    cwd = os.getcwd()
-    if os.path.abspath(start_dir_path) == cwd:
-        raise exceptions.FileNotFound(
-            f"{file_name} not found for {start_path}\ncurrent working directory: {cwd}"
-        )
 
     # system root dir
     # Windows, e.g. 'E:\\'
