@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from shutil import copyfile
 from typing import Text, List, Tuple, Dict, Set, NoReturn
 
@@ -8,7 +9,11 @@ from loguru import logger
 from sentry_sdk import capture_exception
 
 from httprunner import exceptions, __version__
-from httprunner.compat import ensure_testcase_v3_api, ensure_testcase_v3
+from httprunner.compat import (
+    ensure_testcase_v3_api,
+    ensure_testcase_v3,
+    convert_variables,
+)
 from httprunner.loader import (
     load_folder_files,
     load_test_file,
@@ -284,15 +289,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
 
     config = testcase["config"]
     config["path"] = __ensure_cwd_relative(testcase_python_path)
-
-    # parse config variables
-    config.setdefault("variables", {})
-    if isinstance(config["variables"], Text):
-        # get variables by function, e.g. ${get_variables()}
-        project_meta = load_project_meta(testcase_abs_path)
-        config["variables"] = parse_data(
-            config["variables"], {}, project_meta.functions
-        )
+    config["variables"] = convert_variables(
+        config.get("variables", {}), testcase_abs_path
+    )
 
     # prepare reference testcase
     imports_list = []
@@ -356,14 +355,9 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
 
     testsuite_config = testsuite["config"]
     testsuite_path = testsuite_config["path"]
-
-    testsuite_variables = testsuite_config.get("variables", {})
-    if isinstance(testsuite_variables, Text):
-        # get variables by function, e.g. ${get_variables()}
-        project_meta = load_project_meta(testsuite_path)
-        testsuite_variables = parse_data(
-            testsuite_variables, {}, project_meta.functions
-        )
+    testsuite_variables = convert_variables(
+        testsuite_config.get("variables", {}), testsuite_path
+    )
 
     logger.info(f"start to make testsuite: {testsuite_path}")
 
@@ -391,9 +385,11 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         if "verify" in testsuite_config:
             testcase_dict["config"]["verify"] = testsuite_config["verify"]
         # override variables
-        testcase_dict["config"].setdefault("variables", {})
-        testcase_dict["config"]["variables"].update(testcase.get("variables", {}))
-        testcase_dict["config"]["variables"].update(testsuite_variables)
+        testcase_variables = convert_variables(
+            testcase.get("variables", {}), testcase_path
+        )
+        testcase_variables.update(testsuite_variables)
+        testcase_dict["config"]["variables"] = testcase_variables
 
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
@@ -428,12 +424,19 @@ def __make(tests_path: Text) -> NoReturn:
             logger.warning(ex)
             continue
 
+        if not isinstance(test_content, Dict):
+            raise exceptions.FileFormatError(
+                f"test content not in dict format: {test_content}"
+            )
+
         # api in v2 format, convert to v3 testcase
-        if "request" in test_content:
+        if "request" in test_content and "name" in test_content:
             test_content = ensure_testcase_v3_api(test_content)
 
-        if not (isinstance(test_content, Dict) and "config" in test_content):
-            raise exceptions.FileFormatError("Invalid testcase/testsuite v2/v3 format!")
+        if "config" not in test_content:
+            raise exceptions.FileFormatError(
+                f"miss config part in testcase/testsuite: {test_content}"
+            )
 
         test_content.setdefault("config", {})["path"] = test_file
 
@@ -465,7 +468,12 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
         if not os.path.isabs(tests_path):
             tests_path = os.path.join(os.getcwd(), tests_path)
 
-        __make(tests_path)
+        try:
+            __make(tests_path)
+        except exceptions.MyBaseError as ex:
+            logger.error(ex)
+            sys.exit(1)
+
         __ensure_project_meta_files(tests_path)
 
     # format pytest files
