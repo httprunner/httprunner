@@ -212,3 +212,14 @@ def ensure_file_path_valid(file_path: Text) -> Text:
 
     new_file_path = os.path.join(os.getcwd(), f"{os.sep.join(path_names)}{file_suffix}")
     return new_file_path
+
+
+class ExtendJSONEncoder(json.JSONEncoder):
+    """ especially used to safely dump json data with python object, such as MultipartEncoder
+    """
+
+    def default(self, obj):
+        try:
+            return super(ExtendJSONEncoder, self).default(obj)
+        except (UnicodeDecodeError, TypeError):
+            return repr(obj)

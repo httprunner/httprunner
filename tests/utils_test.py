@@ -1,8 +1,10 @@
+import decimal
+import json
 import os
 import unittest
 
 from httprunner import loader, utils
-from httprunner.utils import ensure_file_path_valid
+from httprunner.utils import ensure_file_path_valid, ExtendJSONEncoder
 
 
 class TestUtils(unittest.TestCase):
@@ -116,3 +118,14 @@ class TestUtils(unittest.TestCase):
             ensure_file_path_valid("examples/postman_echo/request_methods/"),
             os.path.join(os.getcwd(), "examples/postman_echo/request_methods"),
         )
+
+    def test_safe_dump_json(self):
+        class A(object):
+            pass
+
+        data = {"a": A(), "b": decimal.Decimal("1.45")}
+
+        with self.assertRaises(TypeError):
+            json.dumps(data)
+
+        json.dumps(data, cls=ExtendJSONEncoder)

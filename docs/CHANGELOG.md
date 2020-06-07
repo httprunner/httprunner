@@ -10,6 +10,7 @@
 **Fixed**
 
 - fix: ensure upload ready
+- fix: add ExtendJSONEncoder to safely dump json data with python object, such as MultipartEncoder
 
 ## 3.0.9 (2020-06-07)
 
