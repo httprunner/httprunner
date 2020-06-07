@@ -10,7 +10,7 @@ teststeps:
     name: request with functions
     variables:
         foo1: override_bar1
-    testcase: request.methods/request_with_functions.yml
+    testcase: request_methods/request_with_functions.yml
     export:
         - session_foo2
 -

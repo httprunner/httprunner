@@ -19,7 +19,7 @@ class TestMake(unittest.TestCase):
         loader.project_meta = None
 
     def test_make_testcase(self):
-        path = ["examples/postman-echo/request.methods/request_with_variables.yml"]
+        path = ["examples/postman_echo/request_methods/request_with_variables.yml"]
         testcase_python_list = main_make(path)
         self.assertEqual(
             testcase_python_list[0],
@@ -31,7 +31,7 @@ class TestMake(unittest.TestCase):
 
     def test_make_testcase_with_ref(self):
         path = [
-            "examples/postman-echo/request.methods/request_with_testcase_reference.yml"
+            "examples/postman_echo/request_methods/request_with_testcase_reference.yml"
         ]
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 1)
@@ -60,7 +60,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             )
 
     def test_make_testcase_folder(self):
-        path = ["examples/postman-echo/request.methods/"]
+        path = ["examples/postman_echo/request_methods/"]
         testcase_python_list = main_make(path)
         self.assertIn(
             os.path.join(
@@ -93,7 +93,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         )
 
     def test_make_testsuite(self):
-        path = ["examples/postman-echo/request.methods/demo_testsuite.yml"]
+        path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
         testcase_python_list = main_make(path)
         self.assertEqual(len(testcase_python_list), 2)
         self.assertIn(
@@ -115,13 +115,13 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         config = {
             "name": "request methods testcase: validate with functions",
             "variables": {"foo1": "bar1", "foo2": 22},
-            "base_url": "https://postman-echo.com",
+            "base_url": "https://postman_echo.com",
             "verify": False,
             "path": "examples/postman_echo/request_methods/validate_with_functions_test.py",
         }
         self.assertEqual(
             make_config_chain_style(config),
-            """Config("request methods testcase: validate with functions").variables(**{'foo1': 'bar1', 'foo2': 22}).base_url("https://postman-echo.com").verify(False)""",
+            """Config("request methods testcase: validate with functions").variables(**{'foo1': 'bar1', 'foo2': 22}).base_url("https://postman_echo.com").verify(False)""",
         )
 
     def test_make_teststep_chain_style(self):
