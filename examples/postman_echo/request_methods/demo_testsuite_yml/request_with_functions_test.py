@@ -7,7 +7,7 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 class TestCaseRequestWithFunctions(HttpRunner):
     config = (
         Config("request with functions")
-        .variables(**{"foo1": "session_bar1", "var1": "testsuite_val1"})
+        .variables(**{"var1": "testsuite_val1", "foo1": "session_bar1"})
         .base_url("https://postman-echo.com")
         .verify(False)
         .export(*["session_foo2"])

@@ -3,13 +3,47 @@ This module handles compatibility issues between testcase format v2 and v3.
 """
 import os
 import sys
-from typing import List, Dict, Text, Union
+from typing import List, Dict, Text, Union, Any
 
 from loguru import logger
 
 from httprunner import exceptions
 from httprunner.loader import load_project_meta
+from httprunner.parser import parse_data
 from httprunner.utils import sort_dict_by_custom_order, ensure_file_path_valid
+
+
+def convert_variables(
+    raw_variables: Union[Dict, List, Text], test_path: Text
+) -> Dict[Text, Any]:
+
+    if isinstance(raw_variables, Dict):
+        return raw_variables
+
+    if isinstance(raw_variables, List):
+        # [{"var1": 1}, {"var2": 2}]
+        variables: Dict[Text, Any] = {}
+        for var_item in raw_variables:
+            if not isinstance(var_item, Dict) or len(var_item) != 1:
+                raise exceptions.TestCaseFormatError(
+                    f"Invalid variables format: {raw_variables}"
+                )
+
+            variables.update(var_item)
+
+        return variables
+
+    elif isinstance(raw_variables, Text):
+        # get variables by function, e.g. ${get_variables()}
+        project_meta = load_project_meta(test_path)
+        variables = parse_data(raw_variables, {}, project_meta.functions)
+
+        return variables
+
+    else:
+        raise exceptions.TestCaseFormatError(
+            f"Invalid variables format: {raw_variables}"
+        )
 
 
 def convert_jmespath(raw: Text) -> Text:
