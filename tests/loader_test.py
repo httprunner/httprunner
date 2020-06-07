@@ -6,7 +6,7 @@ from httprunner import exceptions, loader
 
 class TestLoader(unittest.TestCase):
     def test_load_testcase_file(self):
-        path = "examples/postman-echo/request.methods/request_with_variables.yml"
+        path = "examples/postman_echo/request_methods/request_with_variables.yml"
         testcase_obj = loader.load_testcase_file(path)
         self.assertEqual(
             testcase_obj.config.name, "request methods testcase with variables"
