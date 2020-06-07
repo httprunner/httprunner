@@ -1,6 +1,8 @@
+import os
 import unittest
 
 from httprunner import loader
+from httprunner.cli import main_run
 from httprunner.runner import HttpRunner
 
 
@@ -28,3 +30,11 @@ class TestHttpRunner(unittest.TestCase):
         self.assertEqual(result.name, "request methods testcase: reference testcase")
         self.assertEqual(result.step_datas[0].name, "request with functions")
         self.assertEqual(len(result.step_datas), 2)
+
+    def test_run_testcase_with_abnormal_path(self):
+        exit_code = main_run(["tests/data/a-b.c/2 3.yml"])
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(os.path.exists("tests/data/a_b_c/__init__.py"))
+        self.assertTrue(os.path.exists("tests/data/a_b_c/debugtalk.py"))
+        self.assertTrue(os.path.exists("tests/data/a_b_c/T1_test.py"))
+        self.assertTrue(os.path.exists("tests/data/a_b_c/T2_3_test.py"))

@@ -1,4 +1,5 @@
 import argparse
+import enum
 import os
 import sys
 
@@ -23,7 +24,7 @@ def init_parser_run(subparsers):
     return sub_parser_run
 
 
-def main_run(extra_args):
+def main_run(extra_args) -> enum.IntEnum:
     capture_message("start to run")
     # keep compatibility with v2
     extra_args = ensure_cli_args(extra_args)
@@ -52,7 +53,7 @@ def main_run(extra_args):
         extra_args_new.append("--tb=short")
 
     extra_args_new.extend(testcase_path_list)
-    sys.exit(pytest.main(extra_args_new))
+    return pytest.main(extra_args_new)
 
 
 def main():
@@ -112,7 +113,7 @@ def main():
         sys.exit(0)
 
     if sys.argv[1] == "run":
-        main_run(extra_args)
+        sys.exit(main_run(extra_args))
     elif sys.argv[1] == "startproject":
         main_scaffold(args)
     elif sys.argv[1] == "har2case":
