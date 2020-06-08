@@ -4,7 +4,11 @@ import os
 import unittest
 
 from httprunner import loader, utils
-from httprunner.utils import ensure_file_path_valid, ExtendJSONEncoder
+from httprunner.utils import (
+    ensure_file_path_valid,
+    ExtendJSONEncoder,
+    override_config_variables,
+)
 
 
 class TestUtils(unittest.TestCase):
@@ -129,3 +133,11 @@ class TestUtils(unittest.TestCase):
             json.dumps(data)
 
         json.dumps(data, cls=ExtendJSONEncoder)
+
+    def test_override_config_variables(self):
+        step_variables = {"base_url": "$base_url", "foo1": "bar1"}
+        config_variables = {"base_url": "https://httpbin.org", "foo1": "bar111"}
+        self.assertEqual(
+            override_config_variables(step_variables, config_variables),
+            {"base_url": "https://httpbin.org", "foo1": "bar111"},
+        )

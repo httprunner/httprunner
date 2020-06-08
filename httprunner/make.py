@@ -21,9 +21,8 @@ from httprunner.loader import (
     load_testsuite,
     load_project_meta,
 )
-from httprunner.parser import parse_data
 from httprunner.response import uniform_validator
-from httprunner.utils import ensure_file_path_valid
+from httprunner.utils import ensure_file_path_valid, override_config_variables
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -407,11 +406,13 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         if "verify" in testsuite_config:
             testcase_dict["config"]["verify"] = testsuite_config["verify"]
         # override variables
-        # testsuite config variables > testsuite testcase variables
+        # testsuite testcase variables > testsuite config variables
         testcase_variables = convert_variables(
             testcase.get("variables", {}), testcase_path
         )
-        testcase_variables.update(testsuite_variables)
+        testcase_variables = override_config_variables(
+            testcase_variables, testsuite_variables
+        )
         # testsuite testcase variables > testcase config variables
         testcase_dict["config"]["variables"] = convert_variables(
             testcase_dict["config"].get("variables", {}), testcase_path
