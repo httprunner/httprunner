@@ -139,5 +139,5 @@ class TestUtils(unittest.TestCase):
         config_variables = {"base_url": "https://httpbin.org", "foo1": "bar111"}
         self.assertEqual(
             override_config_variables(step_variables, config_variables),
-            {"base_url": "https://httpbin.org", "foo1": "bar111"},
+            {"base_url": "https://httpbin.org", "foo1": "bar1"},
         )

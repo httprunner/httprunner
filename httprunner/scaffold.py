@@ -42,16 +42,20 @@ def create_scaffold(project_name):
 config:
     name: "request methods testcase with functions"
     variables:
-        foo1: session_bar1
+        foo1: config_bar1
+        foo2: config_bar2
+        expect_foo1: config_bar1
+        expect_foo2: config_bar2
     base_url: "https://postman-echo.com"
     verify: False
+    export: ["foo3"]
 
 teststeps:
 -
     name: get with params
     variables:
-        foo1: bar1
-        foo2: session_bar2
+        foo1: bar11
+        foo2: bar21
         sum_v: "${sum_two(1, 2)}"
     request:
         method: GET
@@ -63,43 +67,78 @@ teststeps:
         headers:
             User-Agent: HttpRunner/${get_httprunner_version()}
     extract:
-        session_foo2: "body.args.foo2"
+        foo3: "body.args.foo2"
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.foo1", "session_bar1"]
+        - eq: ["body.args.foo1", "bar11"]
         - eq: ["body.args.sum_v", "3"]
-        - eq: ["body.args.foo2", "session_bar2"]
+        - eq: ["body.args.foo2", "bar21"]
 -
     name: post raw text
     variables:
-        foo1: "hello world"
-        foo3: "$session_foo2"
+        foo1: "bar12"
+        foo3: "bar32"
     request:
         method: POST
         url: /post
         headers:
             User-Agent: HttpRunner/${get_httprunner_version()}
             Content-Type: "text/plain"
-        data: "This is expected to be sent back as part of response body: $foo1-$foo3."
+        data: "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.data", "This is expected to be sent back as part of response body: session_bar1-session_bar2."]
+        - eq: ["body.data", "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar21."]
+-
+    name: post form data
+    variables:
+        foo2: bar23
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+            Content-Type: "application/x-www-form-urlencoded"
+        data: "foo1=$foo1&foo2=$foo2&foo3=$foo3"
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.form.foo1", "$expect_foo1"]
+        - eq: ["body.form.foo2", "bar23"]
+        - eq: ["body.form.foo3", "bar21"]
 """
     demo_testcase_with_ref_content = """
 config:
     name: "request methods testcase: reference testcase"
     variables:
-        foo1: session_bar1
+        foo1: testsuite_config_bar1
+        expect_foo1: testsuite_config_bar1
+        expect_foo2: config_bar2
     base_url: "https://postman-echo.com"
     verify: False
 
 teststeps:
 -
-    name: request with referenced testcase
+    name: request with functions
     variables:
-        foo1: override_bar1
-    # NOTICE: relative testcase path based on debugtalk.py
+        foo1: testcase_ref_bar1
+        expect_foo1: testcase_ref_bar1
     testcase: testcases/demo_testcase_request.yml
+    export:
+        - foo3
+-
+    name: post form data
+    variables:
+        foo1: bar1
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+            Content-Type: "application/x-www-form-urlencoded"
+        data: "foo1=$foo1&foo2=$foo3"
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.form.foo1", "bar1"]
+        - eq: ["body.form.foo2", "bar21"]
 """
     ignore_content = "\n".join(
         [".env", "reports/*", "__pycache__/*", "*.pyc", ".python-version", "logs/*"]
