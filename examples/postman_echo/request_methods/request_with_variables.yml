@@ -1,6 +1,6 @@
 config:
     name: "request methods testcase with variables"
-    variables: ${get_variables()}
+    variables: ${get_testcase_config_variables()}
     base_url: "https://postman-echo.com"
     verify: False
 
@@ -8,8 +8,8 @@ teststeps:
 -
     name: get with params
     variables:
-        foo1: bar1
-        foo2: session_bar2
+        foo1: bar11
+        foo2: bar21
     request:
         method: GET
         url: /get
@@ -19,39 +19,39 @@ teststeps:
         headers:
             User-Agent: HttpRunner/3.0
     extract:
-        session_foo2: "body.args.foo2"
+        foo3: "body.args.foo2"
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.foo1", "session_bar1"]
-        - eq: ["body.args.foo2", "session_bar2"]
+        - eq: ["body.args.foo1", "bar11"]
+        - eq: ["body.args.foo2", "bar21"]
 -
     name: post raw text
     variables:
-        foo1: "hello world"
-        foo3: "$session_foo2"
+        foo1: "bar12"
+        foo3: "bar32"
     request:
         method: POST
         url: /post
         headers:
             User-Agent: HttpRunner/3.0
             Content-Type: "text/plain"
-        data: "This is expected to be sent back as part of response body: $foo1-$foo3."
+        data: "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.data", "This is expected to be sent back as part of response body: session_bar1-session_bar2."]
+        - eq: ["body.data", "This is expected to be sent back as part of response body: bar12-testcase_config_bar2-bar21."]
 -
     name: post form data
     variables:
-        foo1: bar1
-        foo2: bar2
+        foo2: bar23
     request:
         method: POST
         url: /post
         headers:
             User-Agent: HttpRunner/3.0
             Content-Type: "application/x-www-form-urlencoded"
-        data: "foo1=$foo1&foo2=$foo2"
+        data: "foo1=$foo1&foo2=$foo2&foo3=$foo3"
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.form.foo1", "session_bar1"]
-        - eq: ["body.form.foo2", "bar2"]
+        - eq: ["body.form.foo1", "testcase_config_bar1"]
+        - eq: ["body.form.foo2", "bar23"]
+        - eq: ["body.form.foo3", "bar21"]

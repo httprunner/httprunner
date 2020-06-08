@@ -1,4 +1,5 @@
 import collections
+import copy
 import json
 import os.path
 import platform
@@ -11,6 +12,7 @@ from loguru import logger
 
 from httprunner import __version__
 from httprunner import exceptions
+from httprunner.models import VariablesMapping
 
 
 def init_sentry_sdk():
@@ -223,3 +225,23 @@ class ExtendJSONEncoder(json.JSONEncoder):
             return super(ExtendJSONEncoder, self).default(obj)
         except (UnicodeDecodeError, TypeError):
             return repr(obj)
+
+
+def override_config_variables(
+    step_variables: VariablesMapping, config_variables: VariablesMapping
+) -> VariablesMapping:
+    """ override variables:
+            testcase step variables > testcase config variables
+            testsuite testcase variables > testsuite config variables
+    """
+    step_new_variables = {}
+    for key, value in step_variables.items():
+        if f"${key}" == value:
+            # e.g. {"base_url": "$base_url"}
+            continue
+
+        step_new_variables[key] = value
+
+    variables = copy.deepcopy(config_variables)
+    variables.update(step_new_variables)
+    return variables

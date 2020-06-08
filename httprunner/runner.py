@@ -21,6 +21,7 @@ from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.testcase import Config, Step
+from httprunner.utils import override_config_variables
 from httprunner.models import (
     TConfig,
     TStep,
@@ -324,20 +325,26 @@ class HttpRunner(object):
 
         # run teststeps
         for step in self.__teststeps:
-            # update with config variables
-            step.variables.update(self.__config.variables)
-            # update with session variables extracted from pre step
+            # override variables
+            # session variables (extracted from pre step) > step variables
             step.variables.update(self.__session_variables)
+            # step variables > testcase config variables
+            step.variables = override_config_variables(
+                step.variables, self.__config.variables
+            )
+
             # parse variables
             step.variables = parse_variables_mapping(
                 step.variables, self.__project_meta.functions
             )
+
             # run step
             if USE_ALLURE:
                 with allure.step(f"step: {step.name}"):
                     extract_mapping = self.__run_step(step)
             else:
                 extract_mapping = self.__run_step(step)
+
             # save extracted variables to session variables
             self.__session_variables.update(extract_mapping)
 
@@ -413,10 +420,10 @@ class HttpRunner(object):
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
         # parse config name
-        variables = self.__config.variables
-        variables.update(self.__session_variables)
+        config_variables = self.__config.variables
+        config_variables.update(self.__session_variables)
         self.__config.name = parse_data(
-            self.__config.name, variables, self.__project_meta.functions
+            self.__config.name, config_variables, self.__project_meta.functions
         )
 
         if USE_ALLURE:
