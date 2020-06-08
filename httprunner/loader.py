@@ -371,6 +371,8 @@ def load_debugtalk_functions() -> Dict[Text, Callable]:
     """
     # load debugtalk.py module
     imported_module = importlib.import_module("debugtalk")
+    # reload to refresh previously loaded module
+    imported_module = importlib.reload(imported_module)
     return load_module_functions(imported_module)
 
 

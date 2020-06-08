@@ -12,6 +12,7 @@
 **Fixed**
 
 - fix: incorrect summary success when testcase failed
+- fix: reload to refresh previously loaded debugtalk module
 
 ## 3.0.10 (2020-06-07)
 
