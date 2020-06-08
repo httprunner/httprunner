@@ -407,11 +407,16 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         if "verify" in testsuite_config:
             testcase_dict["config"]["verify"] = testsuite_config["verify"]
         # override variables
+        # testsuite config variables > testsuite testcase variables
         testcase_variables = convert_variables(
             testcase.get("variables", {}), testcase_path
         )
         testcase_variables.update(testsuite_variables)
-        testcase_dict["config"]["variables"] = testcase_variables
+        # testsuite testcase variables > testcase config variables
+        testcase_dict["config"]["variables"] = convert_variables(
+            testcase_dict["config"].get("variables", {}), testcase_path
+        )
+        testcase_dict["config"]["variables"].update(testcase_variables)
 
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
