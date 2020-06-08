@@ -126,7 +126,7 @@ def setup_hook_httpntlmauth(request):
 def alter_response(response):
     response.status_code = 500
     response.headers["Content-Type"] = "html/text"
-    response.json["headers"]["Host"] = "127.0.0.1:8888"
+    response.body["headers"]["Host"] = "127.0.0.1:8888"
     response.new_attribute = "new_attribute_value"
     response.new_attribute_dict = {"key": 123}
 

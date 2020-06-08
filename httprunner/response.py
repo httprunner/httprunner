@@ -4,6 +4,7 @@ import jmespath
 import requests
 from loguru import logger
 
+from httprunner import exceptions
 from httprunner.exceptions import ValidationFailure, ParamsError
 from httprunner.parser import parse_data, parse_string_value, get_mapping_function
 from httprunner.models import VariablesMapping, Validators, FunctionsMapping
@@ -109,19 +110,35 @@ class ResponseObject(object):
 
         """
         self.resp_obj = resp_obj
-
-        try:
-            body = resp_obj.json()
-        except ValueError:
-            body = resp_obj.content
-
-        self.resp_obj_meta = {
-            "status_code": resp_obj.status_code,
-            "headers": resp_obj.headers,
-            "cookies": dict(resp_obj.cookies),
-            "body": body,
-        }
         self.validation_results: Dict = {}
+
+    def __getattr__(self, key):
+        if key in ["json", "content", "body"]:
+            try:
+                value = self.resp_obj.json()
+            except ValueError:
+                value = self.resp_obj.content
+        elif key == "cookies":
+            value = self.resp_obj.cookies.get_dict()
+        else:
+            try:
+                value = getattr(self.resp_obj, key)
+            except AttributeError:
+                err_msg = "ResponseObject does not have attribute: {}".format(key)
+                logger.error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+
+        self.__dict__[key] = value
+        return value
+
+    @property
+    def resp_obj_meta(self):
+        return {
+            "status_code": self.status_code,
+            "headers": self.headers,
+            "cookies": self.cookies,
+            "body": self.body,
+        }
 
     def extract(self, extractors: Dict[Text, Text]) -> Dict[Text, Any]:
         if not extractors:

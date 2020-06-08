@@ -265,8 +265,15 @@ class RequestWithOptionalArgs(object):
         self.__step_context.request.upload.update(file_info)
         return self
 
-    # def hooks(self):
-    #     pass
+    def teardown_hook(
+        self, hook: Text, assign_var_name: Text = None
+    ) -> "RequestWithOptionalArgs":
+        if assign_var_name:
+            self.__step_context.teardown_hooks.append({assign_var_name: hook})
+        else:
+            self.__step_context.teardown_hooks.append(hook)
+
+        return self
 
     def extract(self) -> StepRequestExtraction:
         return StepRequestExtraction(self.__step_context)
@@ -284,6 +291,14 @@ class RunRequest(object):
 
     def with_variables(self, **variables) -> "RunRequest":
         self.__step_context.variables.update(variables)
+        return self
+
+    def setup_hook(self, hook: Text, assign_var_name: Text = None) -> "RunRequest":
+        if assign_var_name:
+            self.__step_context.setup_hooks.append({assign_var_name: hook})
+        else:
+            self.__step_context.setup_hooks.append(hook)
+
         return self
 
     def get(self, url: Text) -> RequestWithOptionalArgs:
