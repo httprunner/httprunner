@@ -453,18 +453,18 @@ def __make(tests_path: Text) -> NoReturn:
             continue
 
         if not isinstance(test_content, Dict):
-            raise exceptions.FileFormatError(
-                f"test content not in dict format: {test_content}"
-            )
+            logger.warning(f"test content not in dict format. \npath: {test_file}")
+            continue
 
         # api in v2 format, convert to v3 testcase
         if "request" in test_content and "name" in test_content:
             test_content = ensure_testcase_v3_api(test_content)
 
         if "config" not in test_content:
-            raise exceptions.FileFormatError(
-                f"miss config part in testcase/testsuite: {test_content}"
+            logger.warning(
+                f"Invalid testcase/testsuite: missing config part in testcase/testsuite.\npath: {test_file}"
             )
+            continue
 
         test_content.setdefault("config", {})["path"] = test_file
 

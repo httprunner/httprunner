@@ -2,6 +2,13 @@
 
 ## 3.0.11 (2020-06-08)
 
+**Changed**
+
+- change: override variables
+    (1) testcase: session variables > step variables > config variables
+    (2) testsuite: testcase variables > config variables
+    (3) testsuite testcase variables > testcase config variables
+
 **Fixed**
 
 - fix: incorrect summary success when testcase failed
