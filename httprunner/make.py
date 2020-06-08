@@ -324,6 +324,11 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         # make ref testcase pytest file
         ref_testcase_path = __ensure_absolute(teststep["testcase"])
         test_content = load_test_file(ref_testcase_path)
+
+        # api in v2 format, convert to v3 testcase
+        if "request" in test_content and "name" in test_content:
+            test_content = ensure_testcase_v3_api(test_content)
+
         test_content.setdefault("config", {})["path"] = ref_testcase_path
         ref_testcase_python_path = make_testcase(test_content)
 
