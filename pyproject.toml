@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "3.0.9"
+version = "3.0.10"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -44,8 +44,8 @@ requests-toolbelt = {version = "^0.9.1", optional = true}
 filetype = {version = "^1.0.7", optional = true}
 
 [tool.poetry.extras]
-allure = ["allure-pytest"]                  # poetry install -E allure
-upload = ["requests-toolbelt", "filetype"]  # poetry install -E upload
+allure = ["allure-pytest"]                  # pip install "httprunner[allure]", poetry install -E allure
+upload = ["requests-toolbelt", "filetype"]  # pip install "httprunner[upload]", poetry install -E upload
 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5.4"

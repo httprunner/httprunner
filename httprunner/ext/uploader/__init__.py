@@ -60,6 +60,22 @@ except ModuleNotFoundError:
     UPLOAD_READY = False
 
 
+def ensure_upload_ready():
+    if UPLOAD_READY:
+        return
+
+    msg = """
+    uploader extension dependencies uninstalled, install first and try again.
+    install with pip:
+    $ pip install requests_toolbelt filetype
+
+    or you can install httprunner with optional upload dependencies:
+    $ pip install "httprunner[upload]"
+    """
+    logger.error(msg)
+    sys.exit(1)
+
+
 def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
     """ preprocess for upload test
         replace `upload` info with MultipartEncoder
@@ -86,15 +102,7 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
     if not step.request.upload:
         return
 
-    if not UPLOAD_READY:
-        msg = """
-uploader extension dependencies uninstalled, install first and try again.
-install with pip:
-$ pip install requests_toolbelt filetype
-"""
-        logger.error(msg)
-        sys.exit(1)
-
+    ensure_upload_ready()
     params_list = []
     for key, value in step.request.upload.items():
         step.variables[key] = value
@@ -126,6 +134,7 @@ def multipart_encoder(**kwargs):
         else:
             return "text/html"
 
+    ensure_upload_ready()
     fields_dict = {}
     for key, value in kwargs.items():
 
@@ -165,4 +174,5 @@ def multipart_content_type(m_encoder) -> Text:
         content type
 
     """
+    ensure_upload_ready()
     return m_encoder.content_type

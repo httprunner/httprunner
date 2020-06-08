@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn
+from typing import List, Dict, Text, NoReturn, Union
 
 try:
     import allure
@@ -31,6 +31,7 @@ from httprunner.models import (
     TestCaseInOut,
     ProjectMeta,
     TestCase,
+    Hooks,
 )
 
 
@@ -44,7 +45,7 @@ class HttpRunner(object):
     __project_meta: ProjectMeta = None
     __case_id: Text = ""
     __export: List[Text] = []
-    __step_datas: List[StepData] = None
+    __step_datas: List[StepData] = []
     __session: HttpSession = None
     __session_variables: VariablesMapping = {}
     # time
@@ -86,6 +87,52 @@ class HttpRunner(object):
         self.__export = export
         return self
 
+    def __call_hooks(
+        self, hooks: Hooks, step_variables: VariablesMapping, hook_type: Text,
+    ) -> NoReturn:
+        """ call hook actions.
+
+        Args:
+            hooks (list): each hook in hooks list maybe in two format.
+
+                format1 (str): only call hook functions.
+                    ${func()}
+                format2 (dict): assignment, the value returned by hook function will be assigned to variable.
+                    {"var": "${func()}"}
+
+            step_variables: current step variables to call hook, include two special variables
+
+                request: parsed request dict
+                response: ResponseObject for current response
+
+            hook_type: setup/teardown
+
+        """
+        logger.debug(f"call {hook_type} hook actions.")
+
+        if not isinstance(hooks, List):
+            logger.error(f"Invalid hooks format: {hooks}")
+            return
+
+        for hook in hooks:
+            if isinstance(hook, Text):
+                # format 1: ["${func()}"]
+                logger.debug(f"call hook function: {hook}")
+                parse_data(hook, step_variables, self.__project_meta.functions)
+            elif isinstance(hook, Dict) and len(hook) == 1:
+                # format 2: {"var": "${func()}"}
+                var_name, hook_content = list(hook.items())[0]
+                hook_content_eval = parse_data(
+                    hook_content, step_variables, self.__project_meta.functions
+                )
+                logger.debug(
+                    f"call hook function: {hook_content}, got value: {hook_content_eval}"
+                )
+                logger.debug(f"assign variable: {var_name} = {hook_content_eval}")
+                step_variables[var_name] = hook_content_eval
+            else:
+                logger.error(f"Invalid hook format: {hook}")
+
     def __run_step_request(self, step: TStep) -> StepData:
         """run teststep: request"""
         step_data = StepData(name=step.name)
@@ -101,6 +148,11 @@ class HttpRunner(object):
             "HRUN-Request-ID",
             f"HRUN-{self.__case_id}-{str(int(time.time() * 1000))[-6:]}",
         )
+        step.variables["request"] = parsed_request_dict
+
+        # setup hooks
+        if step.setup_hooks:
+            self.__call_hooks(step.setup_hooks, step.variables, "setup")
 
         # prepare arguments
         method = parsed_request_dict.pop("method")
@@ -112,6 +164,11 @@ class HttpRunner(object):
         # request
         resp = self.__session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
+        step.variables["response"] = resp_obj
+
+        # teardown hooks
+        if step.teardown_hooks:
+            self.__call_hooks(step.teardown_hooks, step.variables, "teardown")
 
         def log_req_resp_details():
             err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
