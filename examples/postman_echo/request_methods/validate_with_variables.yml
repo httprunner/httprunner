@@ -39,7 +39,7 @@ teststeps:
         data: "This is expected to be sent back as part of response body: $foo1-$foo3."
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.data", "This is expected to be sent back as part of response body: session_bar1-$foo3."]
+        - eq: ["body.data", "This is expected to be sent back as part of response body: hello world-$foo3."]
 -
     name: post form data
     variables:

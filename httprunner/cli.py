@@ -53,6 +53,7 @@ def main_run(extra_args) -> enum.IntEnum:
         extra_args_new.append("--tb=short")
 
     extra_args_new.extend(testcase_path_list)
+    logger.info(f"start to run tests with pytest. HttpRunner version: {__version__}")
     return pytest.main(extra_args_new)
 
 

@@ -9,5 +9,9 @@ def sum_two(m, n):
     return m + n
 
 
-def get_variables():
-    return {"foo1": "session_bar1"}
+def get_testcase_config_variables():
+    return {"foo1": "testcase_config_bar1", "foo2": "testcase_config_bar2"}
+
+
+def get_testsuite_config_variables():
+    return {"foo1": "testsuite_config_bar1", "foo2": "testsuite_config_bar2"}

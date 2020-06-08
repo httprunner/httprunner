@@ -1,7 +1,8 @@
 config:
     name: "request methods testcase with functions"
     variables:
-        foo1: session_bar1
+        foo1: config_bar1
+        foo2: config_bar2
     base_url: "https://postman-echo.com"
     verify: False
 
@@ -10,7 +11,6 @@ teststeps:
     name: get with params
     variables:
         foo1: bar1
-        foo2: session_bar2
         sum_v: "${sum_two(1, 2)}"
     request:
         method: GET
@@ -25,6 +25,6 @@ teststeps:
         session_foo2: "body.args.foo2"
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.foo1", "session_bar1"]
+        - eq: ["body.args.foo1", "bar1"]
         - eq: ["body.args.sum_v", "3"]
-        - eq: ["body.args.foo2", "session_bar2"]
+        - eq: ["body.args.foo2", "config_bar2"]
