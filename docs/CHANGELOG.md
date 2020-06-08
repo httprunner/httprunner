@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.11 (2020-06-08)
+
+**Fixed**
+
+- fix: incorrect summary success when testcase failed
+
 ## 3.0.10 (2020-06-07)
 
 **Added**

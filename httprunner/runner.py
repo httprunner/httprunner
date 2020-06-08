@@ -40,7 +40,7 @@ class HttpRunner(object):
     config: Config
     teststeps: List[Step]
 
-    success: bool = True  # indicate testcase execution result
+    success: bool = False  # indicate testcase execution result
     __config: TConfig
     __teststeps: List[TStep]
     __project_meta: ProjectMeta = None
@@ -217,7 +217,7 @@ class HttpRunner(object):
         finally:
             # save request & response meta data
             self.__session.data.validators = resp_obj.validation_results
-            self.success &= self.__session.data.success
+            self.success = self.__session.data.success
             # save step data
             step_data.success = self.__session.data.success
             step_data.data = self.__session.data
@@ -266,7 +266,7 @@ class HttpRunner(object):
         step_data.data = case_result.get_step_datas()  # list of step data
         step_data.export_vars = case_result.get_export_variables()
         step_data.success = case_result.success
-        self.success &= case_result.success
+        self.success = case_result.success
 
         if step_data.export_vars:
             logger.info(f"export variables: {step_data.export_vars}")
