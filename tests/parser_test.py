@@ -3,6 +3,7 @@ import unittest
 
 from httprunner import parser
 from httprunner.exceptions import VariableNotFound, FunctionNotFound
+from httprunner.parser import regex_findall_variables
 
 
 class TestParserBasic(unittest.TestCase):
@@ -25,6 +26,19 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parser.parse_string_value("$var"), "$var")
         self.assertEqual(parser.parse_string_value("${func}"), "${func}")
 
+    def test_regex_findall_variables(self):
+        self.assertEqual(regex_findall_variables("$variable"), ["variable"])
+        self.assertEqual(regex_findall_variables("${variable}123"), ["variable"])
+        self.assertEqual(regex_findall_variables("/blog/$postid"), ["postid"])
+        self.assertEqual(regex_findall_variables("/$var1/$var2"), ["var1", "var2"])
+        self.assertEqual(regex_findall_variables("abc"), [])
+        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$a"), ["a"])
+        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$a"), [])
+        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$$a"), ["a"])
+        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$$$a"), [])
+        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$a$b"), ["b"])
+        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$a$$b"), [])
+
     def test_extract_variables(self):
         self.assertEqual(parser.extract_variables("$var"), {"var"})
         self.assertEqual(parser.extract_variables("$var123"), {"var123"})
@@ -40,6 +54,7 @@ class TestParserBasic(unittest.TestCase):
             parser.extract_variables("${gen_md5($TOKEN, $data, $random)}"),
             {"TOKEN", "data", "random"},
         )
+        self.assertEqual(parser.extract_variables("Z:2>1*0*1+1$$1"), set())
 
     def test_parse_function_params(self):
         self.assertEqual(parser.parse_function_params(""), {"args": [], "kwargs": {}})
