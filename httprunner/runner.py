@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn, Union
+from typing import List, Dict, Text, NoReturn
 
 try:
     import allure
