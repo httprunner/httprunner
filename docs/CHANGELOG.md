@@ -13,6 +13,7 @@
 
 - fix: incorrect summary success when testcase failed
 - fix: reload to refresh previously loaded debugtalk module
+- fix: escape $$ in variable value
 
 ## 3.0.10 (2020-06-07)
 

@@ -44,11 +44,11 @@ def build_url(base_url, path):
         raise exceptions.ParamsError("base url missed!")
 
 
-def regex_findall_variables(content: Text) -> List[Text]:
+def regex_findall_variables(raw_string: Text) -> List[Text]:
     """ extract all variable names from content, which is in format $variable
 
     Args:
-        content (str): string content
+        raw_string (str): string content
 
     Returns:
         list: variables list extracted from string content
@@ -68,13 +68,39 @@ def regex_findall_variables(content: Text) -> List[Text]:
 
     """
     try:
-        vars_list = []
-        for var_tuple in variable_regex_compile.findall(content):
-            vars_list.append(var_tuple[0] or var_tuple[1])
-        return vars_list
-    except TypeError as ex:
-        capture_exception(ex)
+        match_start_position = raw_string.index("$", 0)
+    except ValueError:
         return []
+
+    vars_list = []
+    while match_start_position < len(raw_string):
+
+        # Notice: notation priority
+        # $$ > $var
+
+        # search $$
+        dollar_match = dolloar_regex_compile.match(raw_string, match_start_position)
+        if dollar_match:
+            match_start_position = dollar_match.end()
+            continue
+
+        # search variable like ${var} or $var
+        var_match = variable_regex_compile.match(raw_string, match_start_position)
+        if var_match:
+            var_name = var_match.group(1) or var_match.group(2)
+            vars_list.append(var_name)
+            match_start_position = var_match.end()
+            continue
+
+        curr_position = match_start_position
+        try:
+            # find next $ location
+            match_start_position = raw_string.index("$", curr_position + 1)
+        except ValueError:
+            # break while loop
+            break
+
+    return vars_list
 
 
 def regex_findall_functions(content: Text) -> List[Text]:
