@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn, Union
+from typing import List, Dict, Text, NoReturn
 
 try:
     import allure
@@ -21,6 +21,7 @@ from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.testcase import Config, Step
+from httprunner.utils import override_config_variables
 from httprunner.models import (
     TConfig,
     TStep,
@@ -39,7 +40,7 @@ class HttpRunner(object):
     config: Config
     teststeps: List[Step]
 
-    success: bool = True  # indicate testcase execution result
+    success: bool = False  # indicate testcase execution result
     __config: TConfig
     __teststeps: List[TStep]
     __project_meta: ProjectMeta = None
@@ -216,7 +217,7 @@ class HttpRunner(object):
         finally:
             # save request & response meta data
             self.__session.data.validators = resp_obj.validation_results
-            self.success &= self.__session.data.success
+            self.success = self.__session.data.success
             # save step data
             step_data.success = self.__session.data.success
             step_data.data = self.__session.data
@@ -265,7 +266,7 @@ class HttpRunner(object):
         step_data.data = case_result.get_step_datas()  # list of step data
         step_data.export_vars = case_result.get_export_variables()
         step_data.success = case_result.success
-        self.success &= case_result.success
+        self.success = case_result.success
 
         if step_data.export_vars:
             logger.info(f"export variables: {step_data.export_vars}")
@@ -324,20 +325,26 @@ class HttpRunner(object):
 
         # run teststeps
         for step in self.__teststeps:
-            # update with config variables
-            step.variables.update(self.__config.variables)
-            # update with session variables extracted from pre step
+            # override variables
+            # session variables (extracted from pre step) > step variables
             step.variables.update(self.__session_variables)
+            # step variables > testcase config variables
+            step.variables = override_config_variables(
+                step.variables, self.__config.variables
+            )
+
             # parse variables
             step.variables = parse_variables_mapping(
                 step.variables, self.__project_meta.functions
             )
+
             # run step
             if USE_ALLURE:
                 with allure.step(f"step: {step.name}"):
                     extract_mapping = self.__run_step(step)
             else:
                 extract_mapping = self.__run_step(step)
+
             # save extracted variables to session variables
             self.__session_variables.update(extract_mapping)
 
@@ -413,10 +420,10 @@ class HttpRunner(object):
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
         # parse config name
-        variables = self.__config.variables
-        variables.update(self.__session_variables)
+        config_variables = self.__config.variables
+        config_variables.update(self.__session_variables)
         self.__config.name = parse_data(
-            self.__config.name, variables, self.__project_meta.functions
+            self.__config.name, config_variables, self.__project_meta.functions
         )
 
         if USE_ALLURE:

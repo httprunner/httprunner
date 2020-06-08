@@ -3,7 +3,7 @@
 # $ pip install mkdocs-material   # 5.2.2
 
 # Project information
-site_name: HttpRunner V3.x 中文使用文档
+site_name: HttpRunner V3.x Docs
 site_description: HttpRunner V3.x User Documentation
 site_author: 'debugtalk'
 
@@ -28,7 +28,7 @@ theme:
 
 # Google Analytics
 google_analytics:
-    - 'UA-114587036-2'
+    - 'UA-114587036-3'
     - 'auto'
 
 # Extensions

@@ -1,11 +1,14 @@
 import os
 import unittest
 
-from httprunner import compat, exceptions
+from httprunner import compat, exceptions, loader
 from httprunner.compat import convert_variables
 
 
 class TestCompat(unittest.TestCase):
+    def setUp(self):
+        loader.project_meta = None
+
     def test_convert_variables(self):
         raw_variables = [{"var1": 1}, {"var2": "val2"}]
         self.assertEqual(

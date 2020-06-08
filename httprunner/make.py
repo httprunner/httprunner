@@ -21,9 +21,8 @@ from httprunner.loader import (
     load_testsuite,
     load_project_meta,
 )
-from httprunner.parser import parse_data
 from httprunner.response import uniform_validator
-from httprunner.utils import ensure_file_path_valid
+from httprunner.utils import ensure_file_path_valid, override_config_variables
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -407,11 +406,18 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         if "verify" in testsuite_config:
             testcase_dict["config"]["verify"] = testsuite_config["verify"]
         # override variables
+        # testsuite testcase variables > testsuite config variables
         testcase_variables = convert_variables(
             testcase.get("variables", {}), testcase_path
         )
-        testcase_variables.update(testsuite_variables)
-        testcase_dict["config"]["variables"] = testcase_variables
+        testcase_variables = override_config_variables(
+            testcase_variables, testsuite_variables
+        )
+        # testsuite testcase variables > testcase config variables
+        testcase_dict["config"]["variables"] = convert_variables(
+            testcase_dict["config"].get("variables", {}), testcase_path
+        )
+        testcase_dict["config"]["variables"].update(testcase_variables)
 
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
@@ -447,18 +453,18 @@ def __make(tests_path: Text) -> NoReturn:
             continue
 
         if not isinstance(test_content, Dict):
-            raise exceptions.FileFormatError(
-                f"test content not in dict format: {test_content}"
-            )
+            logger.warning(f"test content not in dict format. \npath: {test_file}")
+            continue
 
         # api in v2 format, convert to v3 testcase
         if "request" in test_content and "name" in test_content:
             test_content = ensure_testcase_v3_api(test_content)
 
         if "config" not in test_content:
-            raise exceptions.FileFormatError(
-                f"miss config part in testcase/testsuite: {test_content}"
+            logger.warning(
+                f"Invalid testcase/testsuite: missing config part in testcase/testsuite.\npath: {test_file}"
             )
+            continue
 
         test_content.setdefault("config", {})["path"] = test_file
 
