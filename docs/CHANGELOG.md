@@ -9,6 +9,10 @@
 - fix: ensure step referenced api, convert to v3 testcase
 - fix: several other compatibility issues
 
+**Changed**
+
+- change: skip reporting sentry for errors occurred in debugtalk.py
+
 ## 3.0.11 (2020-06-08)
 
 **Changed**
