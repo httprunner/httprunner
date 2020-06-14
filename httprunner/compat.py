@@ -348,3 +348,15 @@ def session_fixture(request):
         f.write(conftest_content)
 
     logger.info("generated conftest.py to generate summary.json")
+
+
+def ensure_path_sep(path: Text) -> Text:
+    """ ensure compatibility with different path separators of Linux and Windows
+    """
+    if "/" in path:
+        path = os.sep.join(path.split("/"))
+
+    if "\\" in path:
+        path = os.sep.join(path.split("\\"))
+
+    return path

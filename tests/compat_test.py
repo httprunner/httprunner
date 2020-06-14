@@ -2,7 +2,7 @@ import os
 import unittest
 
 from httprunner import compat, exceptions, loader
-from httprunner.compat import convert_variables
+from httprunner.compat import convert_variables, ensure_path_sep
 
 
 class TestCompat(unittest.TestCase):
@@ -212,4 +212,20 @@ class TestCompat(unittest.TestCase):
                 "report.html",
                 "--self-contained-html",
             ],
+        )
+
+    def test_ensure_file_path(self):
+        self.assertEqual(
+            ensure_path_sep("demo\\test.yml"), os.sep.join(["demo", "test.yml"])
+        )
+        self.assertEqual(
+            ensure_path_sep(os.path.join(os.getcwd(), "demo\\test.yml")),
+            os.path.join(os.getcwd(), os.sep.join(["demo", "test.yml"])),
+        )
+        self.assertEqual(
+            ensure_path_sep("demo/test.yml"), os.sep.join(["demo", "test.yml"])
+        )
+        self.assertEqual(
+            ensure_path_sep(os.path.join(os.getcwd(), "demo/test.yml")),
+            os.path.join(os.getcwd(), os.sep.join(["demo", "test.yml"])),
         )

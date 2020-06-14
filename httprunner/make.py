@@ -13,6 +13,7 @@ from httprunner.compat import (
     ensure_testcase_v3_api,
     ensure_testcase_v3,
     convert_variables,
+    ensure_path_sep,
 )
 from httprunner.loader import (
     load_folder_files,
@@ -498,6 +499,7 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
         return []
 
     for tests_path in tests_paths:
+        tests_path = ensure_path_sep(tests_path)
         if not os.path.isabs(tests_path):
             tests_path = os.path.join(os.getcwd(), tests_path)
 
