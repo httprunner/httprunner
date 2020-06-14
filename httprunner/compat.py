@@ -47,6 +47,9 @@ def convert_variables(
 
 
 def convert_jmespath(raw: Text) -> Text:
+    if not isinstance(raw, Text):
+        raise exceptions.TestCaseFormatError(f"Invalid jmespath extractor: {raw}")
+
     # content.xx/json.xx => body.xx
     if raw.startswith("content"):
         raw = f"body{raw[len('content'):]}"
@@ -90,6 +93,9 @@ def convert_extractors(extractors: Union[List, Dict]) -> Dict:
     if isinstance(extractors, List):
         # [{"varA": "content.varA"}, {"varB": "json.varB"}]
         for extractor in extractors:
+            if not isinstance(extractor, Dict):
+                logger.error(f"Invalid extractor: {extractors}")
+                sys.exit(1)
             for k, v in extractor.items():
                 v3_extractors[k] = v
     elif isinstance(extractors, Dict):
@@ -348,3 +354,15 @@ def session_fixture(request):
         f.write(conftest_content)
 
     logger.info("generated conftest.py to generate summary.json")
+
+
+def ensure_path_sep(path: Text) -> Text:
+    """ ensure compatibility with different path separators of Linux and Windows
+    """
+    if "/" in path:
+        path = os.sep.join(path.split("/"))
+
+    if "\\" in path:
+        path = os.sep.join(path.split("\\"))
+
+    return path

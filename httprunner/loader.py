@@ -370,7 +370,12 @@ def load_debugtalk_functions() -> Dict[Text, Callable]:
 
     """
     # load debugtalk.py module
-    imported_module = importlib.import_module("debugtalk")
+    try:
+        imported_module = importlib.import_module("debugtalk")
+    except Exception as ex:
+        logger.error(f"error occurred in debugtalk.py: {ex}")
+        sys.exit(1)
+
     # reload to refresh previously loaded module
     imported_module = importlib.reload(imported_module)
     return load_module_functions(imported_module)
