@@ -47,6 +47,9 @@ def convert_variables(
 
 
 def convert_jmespath(raw: Text) -> Text:
+    if not isinstance(raw, Text):
+        raise exceptions.TestCaseFormatError(f"Invalid jmespath extractor: {raw}")
+
     # content.xx/json.xx => body.xx
     if raw.startswith("content"):
         raw = f"body{raw[len('content'):]}"
