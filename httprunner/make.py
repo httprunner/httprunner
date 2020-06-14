@@ -149,6 +149,15 @@ def format_pytest_with_black(*python_paths: Text) -> NoReturn:
     except subprocess.CalledProcessError as ex:
         capture_exception(ex)
         logger.error(ex)
+        sys.exit(1)
+    except FileNotFoundError:
+        err_msg = """
+missing dependency tool: black
+install black manually and try again:
+$ pip install black
+"""
+        logger.error(err_msg)
+        sys.exit(1)
 
 
 def make_config_chain_style(config: Dict) -> Text:
