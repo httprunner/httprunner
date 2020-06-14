@@ -64,6 +64,7 @@ if __name__ == "__main__":
 
 
 def __ensure_absolute(path: Text) -> Text:
+    path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
 
     if os.path.isabs(path):
