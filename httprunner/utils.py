@@ -199,6 +199,9 @@ def ensure_file_path_valid(file_path: Text) -> Text:
     else:
         raw_file_relative_name = raw_file_name
 
+    if raw_file_relative_name == "":
+        return file_path
+
     path_names = []
     for name in raw_file_relative_name.rstrip(os.sep).split(os.sep):
 

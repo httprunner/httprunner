@@ -13,6 +13,7 @@ from httprunner.compat import (
     ensure_testcase_v3_api,
     ensure_testcase_v3,
     convert_variables,
+    ensure_path_sep,
 )
 from httprunner.loader import (
     load_folder_files,
@@ -63,6 +64,7 @@ if __name__ == "__main__":
 
 
 def __ensure_absolute(path: Text) -> Text:
+    path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
 
     if os.path.isabs(path):
@@ -148,6 +150,15 @@ def format_pytest_with_black(*python_paths: Text) -> NoReturn:
     except subprocess.CalledProcessError as ex:
         capture_exception(ex)
         logger.error(ex)
+        sys.exit(1)
+    except FileNotFoundError:
+        err_msg = """
+missing dependency tool: black
+install black manually and try again:
+$ pip install black
+"""
+        logger.error(err_msg)
+        sys.exit(1)
 
 
 def make_config_chain_style(config: Dict) -> Text:
@@ -324,6 +335,11 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         # make ref testcase pytest file
         ref_testcase_path = __ensure_absolute(teststep["testcase"])
         test_content = load_test_file(ref_testcase_path)
+
+        # api in v2 format, convert to v3 testcase
+        if "request" in test_content and "name" in test_content:
+            test_content = ensure_testcase_v3_api(test_content)
+
         test_content.setdefault("config", {})["path"] = ref_testcase_path
         ref_testcase_python_path = make_testcase(test_content)
 
@@ -493,6 +509,7 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
         return []
 
     for tests_path in tests_paths:
+        tests_path = ensure_path_sep(tests_path)
         if not os.path.isabs(tests_path):
             tests_path = os.path.join(os.getcwd(), tests_path)
 

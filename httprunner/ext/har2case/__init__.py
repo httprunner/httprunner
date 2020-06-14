@@ -14,6 +14,7 @@ import sys
 from loguru import logger
 from sentry_sdk import capture_message
 
+from httprunner.compat import ensure_path_sep
 from httprunner.ext.har2case.core import HarParser
 
 
@@ -59,6 +60,7 @@ def main_har2case(args):
         logger.error("HAR file not specified.")
         sys.exit(1)
 
+    har_source_file = ensure_path_sep(har_source_file)
     if not os.path.isfile(har_source_file):
         logger.error(f"HAR file not exists: {har_source_file}")
         sys.exit(1)

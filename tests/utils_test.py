@@ -122,6 +122,16 @@ class TestUtils(unittest.TestCase):
             ensure_file_path_valid("examples/postman_echo/request_methods/"),
             os.path.join(os.getcwd(), "examples/postman_echo/request_methods"),
         )
+        self.assertEqual(
+            ensure_file_path_valid(os.path.join(os.getcwd(), "test.yml")),
+            os.path.join(os.getcwd(), "test.yml"),
+        )
+        self.assertEqual(
+            ensure_file_path_valid(os.getcwd()), os.getcwd(),
+        )
+        self.assertEqual(
+            ensure_file_path_valid(os.getcwd() + ".csv"), os.getcwd() + ".csv",
+        )
 
     def test_safe_dump_json(self):
         class A(object):

@@ -1,5 +1,18 @@
 # Release History
 
+## 3.0.12 (2020-06-14)
+
+**Fixed**
+
+- fix: compatibility with different path separators of Linux and Windows
+- fix: IndexError in ensure_file_path_valid when file_path=os.getcwd()
+- fix: ensure step referenced api, convert to v3 testcase
+- fix: several other compatibility issues
+
+**Changed**
+
+- change: skip reporting sentry for errors occurred in debugtalk.py
+
 ## 3.0.11 (2020-06-08)
 
 **Changed**
