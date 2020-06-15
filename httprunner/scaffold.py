@@ -19,6 +19,7 @@ def init_parser_scaffold(subparsers):
 def create_scaffold(project_name):
     """ create scaffold with specified project name.
     """
+
     def show_tree(prj_name):
         try:
             print(f"\n$ tree {prj_name} -a")
@@ -29,9 +30,14 @@ def create_scaffold(project_name):
 
     if os.path.isdir(project_name):
         logger.warning(
-            f"Project {project_name} exists, please specify a new project name."
+            f"Project folder {project_name} exists, please specify a new project name."
         )
         show_tree(project_name)
+        return 1
+    elif os.path.isfile(project_name):
+        logger.warning(
+            f"Project name {project_name} conflicts with existed file, please specify a new one."
+        )
         return 1
 
     logger.info(f"Create new project: {project_name}")
