@@ -67,7 +67,7 @@ def main_har2case(args):
 
     if args.to_yaml:
         output_file_type = "YAML"
-    elif args.to_yaml:
+    elif args.to_json:
         output_file_type = "JSON"
     else:
         output_file_type = "pytest"
