@@ -338,8 +338,6 @@ class HarParser(object):
             capture_exception(ex)
             raise
 
-        logger.debug("prepared testcase: {}".format(testcase))
-
         if file_type == "JSON":
             output_testcase_file = f"{harfile}.json"
             utils.dump_json(testcase, output_testcase_file)
