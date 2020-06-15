@@ -243,8 +243,9 @@ def override_config_variables(
     """
     step_new_variables = {}
     for key, value in step_variables.items():
-        if f"${key}" == value:
+        if f"${key}" == value or "${" + key + "}" == value:
             # e.g. {"base_url": "$base_url"}
+            # or {"base_url": "${base_url}"}
             continue
 
         step_new_variables[key] = value
