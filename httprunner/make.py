@@ -271,7 +271,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         # request step
         step_info += ".extract()"
         for extract_name, extract_path in teststep["extract"].items():
-            step_info += f'.with_jmespath("{extract_path}", "{extract_name}")'
+            step_info += f""".with_jmespath('{extract_path}', '{extract_name}')"""
 
     if "export" in teststep:
         # reference testcase step
