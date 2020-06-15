@@ -53,5 +53,7 @@ extra:
 nav:
     - Introduction: index.md
     - Installation: installation.md
+    - User Guide:
+        - Scaffold: user/scaffold.md
     - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md
