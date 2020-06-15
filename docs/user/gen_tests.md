@@ -47,7 +47,7 @@ optional arguments:
 
 ### generate testcase (pytest)
 
-Since HttpRunner `3.0.7`, `har2case` will convert HAR file to pytest by default, and it is strongly recommended to write and maintain testcases in pytest format instead of former `YAML/JSON` format.
+Since HttpRunner `3.0.7`, `har2case` will convert HAR file to pytest by default, and it is extremely recommended to write and maintain testcases in pytest format instead of former `YAML/JSON` format.
 
 ```text
 $ har2case har/postman-echo-post-form.har
