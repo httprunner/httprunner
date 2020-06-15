@@ -6,6 +6,7 @@
 
 - fix: avoid '.csv' been converted to '_csv'
 - fix: convert har to JSON format testcase
+- fix: missing ${var} handling in overriding config variables
 
 ## 3.0.12 (2020-06-14)
 
