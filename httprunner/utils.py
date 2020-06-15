@@ -210,8 +210,12 @@ def ensure_file_path_valid(file_path: Text) -> Text:
             # 19 => T19, 2C => T2C
             name = f"T{name}"
 
-        # handle cases when directory name includes dot/hyphen/space
-        name = name.replace(" ", "_").replace(".", "_").replace("-", "_")
+        if name.startswith("."):
+            # avoid ".csv" been converted to "_csv"
+            pass
+        else:
+            # handle cases when directory name includes dot/hyphen/space
+            name = name.replace(" ", "_").replace(".", "_").replace("-", "_")
 
         path_names.append(name)
 

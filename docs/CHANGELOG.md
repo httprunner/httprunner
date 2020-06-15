@@ -1,5 +1,11 @@
 # Release History
 
+## 3.0.13 (2020-06-15)
+
+**Fixed**
+
+- fix: avoid '.csv' been converted to '_csv'
+
 ## 3.0.12 (2020-06-14)
 
 **Fixed**
