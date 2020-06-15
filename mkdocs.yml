@@ -55,5 +55,6 @@ nav:
     - Installation: installation.md
     - User Guide:
         - Scaffold: user/scaffold.md
+        - Record & Generate testcase: user/gen_tests.md
     - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md
