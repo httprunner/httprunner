@@ -64,6 +64,13 @@ if __name__ == "__main__":
 
 
 def __ensure_absolute(path: Text) -> Text:
+    if path.startswith("./"):
+        # Linux/Darwin, hrun ./test.yml
+        path = path[len("./"):]
+    elif path.startswith(".\\"):
+        # Windows, hrun .\\test.yml
+        path = path[len(".\\"):]
+
     path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
 
