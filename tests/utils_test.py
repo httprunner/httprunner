@@ -130,7 +130,8 @@ class TestUtils(unittest.TestCase):
             ensure_file_path_valid(os.getcwd()), os.getcwd(),
         )
         self.assertEqual(
-            ensure_file_path_valid(os.getcwd() + ".csv"), os.getcwd() + ".csv",
+            ensure_file_path_valid(os.path.join(os.getcwd(), "demo", ".csv")),
+            os.path.join(os.getcwd(), "demo", ".csv"),
         )
 
     def test_safe_dump_json(self):
