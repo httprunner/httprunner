@@ -1,52 +1,31 @@
 
 
 
-
 <!doctype html>
 <html lang="zh" class="no-js">
   <head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
-      <meta http-equiv="x-ua-compatible" content="ie=edge">
       
-        <meta name="description" content="HttpRunner V2.x User Documentation">
+        <meta name="description" content="HttpRunner V3.x User Documentation">
       
       
       
         <meta name="author" content="debugtalk">
       
-      
-        <meta name="lang:clipboard.copy" content="复制">
-      
-        <meta name="lang:clipboard.copied" content="已复制">
-      
-        <meta name="lang:search.language" content="jp">
-      
-        <meta name="lang:search.pipeline.stopwords" content="True">
-      
-        <meta name="lang:search.pipeline.trimmer" content="True">
-      
-        <meta name="lang:search.result.none" content="没有找到符合条件的结果">
-      
-        <meta name="lang:search.result.one" content="找到 1 个符合条件的结果">
-      
-        <meta name="lang:search.result.other" content="# 个符合条件的结果">
-      
-        <meta name="lang:search.tokenizer" content="[\uff0c\u3002]+">
-      
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.6.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.2">
     
     
       
-        <title>CHANGELOG - HttpRunner V2.x 中文使用文档</title>
+        <title>CHANGELOG - HttpRunner V3.x Docs</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.1b62728e.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.a2408e81.min.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/application-palette.a8b3c06d.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a46bcfb3.min.css">
       
       
         
@@ -55,116 +34,95 @@
       
     
     
-      <script src="../assets/javascripts/modernizr.268332fc.js"></script>
-    
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
       
     
-    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
     
     
     
       
         
-<script>
-  window.ga = window.ga || function() {
-    (ga.q = ga.q || []).push(arguments)
-  }
-  ga.l = +new Date
-  /* Setup integration and send page view */
-  ga("create", "UA-114587036-2", "auto")
-  ga("set", "anonymizeIp", true)
-  ga("send", "pageview")
-  /* Register handler to log search on blur */
-  document.addEventListener("DOMContentLoaded", () => {
-    if (document.forms.search) {
-      var query = document.forms.search.query
-      query.addEventListener("blur", function() {
-        if (this.value) {
-          var path = document.location.pathname;
-          ga("send", "pageview", path + "?q=" + this.value)
-        }
-      })
-    }
-  })
-</script>
+<link rel="preconnect dns-prefetch" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-114587036-3","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview")})</script>
 <script async src="https://www.google-analytics.com/analytics.js"></script>
       
     
     
   </head>
   
-    
-    
-    <body dir="ltr" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
-    <svg class="md-svg">
-      <defs>
-        
-        
-          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
-        
-      </defs>
-    </svg>
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
-    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
-    
-      <a href="#release-history" tabindex="1" class="md-skip">
-        跳转至
-      </a>
-    
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#release-history" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
     
       <header class="md-header" data-md-component="header">
-  <nav class="md-header-nav md-grid">
-    <div class="md-flex">
-      <div class="md-flex__cell md-flex__cell--shrink">
-        <a href=".." title="HttpRunner V2.x 中文使用文档" class="md-header-nav__button md-logo">
-          
-            <i class="md-icon"></i>
-          
-        </a>
-      </div>
-      <div class="md-flex__cell md-flex__cell--shrink">
-        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
-      </div>
-      <div class="md-flex__cell md-flex__cell--stretch">
-        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
-          
-            <span class="md-header-nav__topic">
-              HttpRunner V2.x 中文使用文档
-            </span>
-            <span class="md-header-nav__topic">
-              
-                CHANGELOG
-              
-            </span>
-          
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href=".." title="HttpRunner V3.x Docs" class="md-header-nav__button md-logo" aria-label="HttpRunner V3.x Docs">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            HttpRunner V3.x Docs
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              CHANGELOG
+            
+          </span>
         </div>
-      </div>
-      <div class="md-flex__cell md-flex__cell--shrink">
-        
-          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
-          
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
 <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
-      <label class="md-icon md-search__icon" for="__search"></label>
-      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
-        &#xE5CD;
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
       </button>
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" data-md-scrollfix>
-        <div class="md-search-result" data-md-component="result">
+        <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            键入以开始搜索
+            Initializing search
           </div>
           <ol class="md-search-result__list"></ol>
         </div>
@@ -172,71 +130,56 @@
     </div>
   </div>
 </div>
+    
+    
+      <div class="md-header-nav__source">
         
-      </div>
-      
-        <div class="md-flex__cell md-flex__cell--shrink">
-          <div class="md-header-nav__source">
-            
-
-
-  
-
-<a href="https://github.com/HttpRunner/HttpRunner" title="前往 Github 仓库" class="md-source" data-md-source="github">
-  
-    <div class="md-source__icon">
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <use xlink:href="#__github" width="24" height="24"></use>
-      </svg>
-    </div>
-  
+<a href="https://github.com/httprunner/httprunner" title="前往 GitHub 仓库" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
   <div class="md-source__repository">
     HttpRunner
   </div>
 </a>
-          </div>
-        </div>
-      
-    </div>
+      </div>
+    
   </nav>
 </header>
     
-    <div class="md-container">
+    <div class="md-container" data-md-component="container">
       
         
       
       
-      <main class="md-main" role="main">
-        <div class="md-main__inner md-grid" data-md-component="container">
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
           
             
               <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
-                    <nav class="md-nav md-nav--primary" data-md-level="0">
-  <label class="md-nav__title md-nav__title--site" for="__drawer">
-    <a href=".." title="HttpRunner V2.x 中文使用文档" class="md-nav__button md-logo">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="HttpRunner V3.x Docs" class="md-nav__button md-logo" aria-label="HttpRunner V3.x Docs">
       
-        <i class="md-icon"></i>
-      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
     </a>
-    HttpRunner V2.x 中文使用文档
+    HttpRunner V3.x Docs
   </label>
   
     <div class="md-nav__source">
       
-
-
-  
-
-<a href="https://github.com/HttpRunner/HttpRunner" title="前往 Github 仓库" class="md-source" data-md-source="github">
-  
-    <div class="md-source__icon">
-      <svg viewBox="0 0 24 24" width="24" height="24">
-        <use xlink:href="#__github" width="24" height="24"></use>
-      </svg>
-    </div>
-  
+<a href="https://github.com/httprunner/httprunner" title="前往 GitHub 仓库" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
   <div class="md-source__repository">
     HttpRunner
   </div>
@@ -251,8 +194,8 @@
 
 
   <li class="md-nav__item">
-    <a href=".." title="介绍" class="md-nav__link">
-      介绍
+    <a href=".." title="Introduction" class="md-nav__link">
+      Introduction
     </a>
   </li>
 
@@ -263,20 +206,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../Installation/" title="安装说明" class="md-nav__link">
-      安装说明
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
-    <a href="../quickstart/" title="快速上手" class="md-nav__link">
-      快速上手
+    <a href="../installation/" title="Installation" class="md-nav__link">
+      Installation
     </a>
   </li>
 
@@ -288,14 +219,20 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
-    <label class="md-nav__link" for="nav-4">
-      基础概念
+    <label class="md-nav__link" for="nav-3">
+      User Guide
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
     </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-4">
-        基础概念
+    <nav class="md-nav" aria-label="User Guide" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        User Guide
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -306,44 +243,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../concept/nominal/" title="名词解释" class="md-nav__link">
-      名词解释
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
-    
-    <label class="md-nav__link" for="nav-5">
-      测试准备
-    </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-5">
-        测试准备
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/record/" title="录制生成用例" class="md-nav__link">
-      录制生成用例
+    <a href="../user/scaffold/" title="Scaffold" class="md-nav__link">
+      Scaffold
     </a>
   </li>
 
@@ -354,212 +255,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../prepare/project-structure/" title="项目文件组织" class="md-nav__link">
-      项目文件组织
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/testcase-structure/" title="测试用例组织" class="md-nav__link">
-      测试用例组织
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/request-hook/" title="hook机制" class="md-nav__link">
-      hook机制
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/dot-env/" title="环境变量" class="md-nav__link">
-      环境变量
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/testcase-layer/" title="测试用例分层" class="md-nav__link">
-      测试用例分层
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/parameters/" title="参数化数据驱动" class="md-nav__link">
-      参数化数据驱动
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/validate-pretty/" title="Validate & Prettify" class="md-nav__link">
-      Validate & Prettify
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/security/" title="信息安全" class="md-nav__link">
-      信息安全
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../prepare/upload-case/" title="文件上传场景" class="md-nav__link">
-      文件上传场景
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
-    
-    <label class="md-nav__link" for="nav-6">
-      测试执行
-    </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-6">
-        测试执行
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../run-tests/cli/" title="运行测试(CLI)" class="md-nav__link">
-      运行测试(CLI)
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../run-tests/report/" title="测试报告" class="md-nav__link">
-      测试报告
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../run-tests/load-test/" title="性能测试" class="md-nav__link">
-      性能测试
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
-    
-    <label class="md-nav__link" for="nav-7">
-      开发扩展
-    </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-7">
-        开发扩展
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../development/architecture/" title="Pipline" class="md-nav__link">
-      Pipline
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../development/dev-api/" title="基础库调用" class="md-nav__link">
-      基础库调用
+    <a href="../user/gen_tests/" title="Record & Generate testcase" class="md-nav__link">
+      Record & Generate testcase
     </a>
   </li>
 
@@ -575,68 +272,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../FAQ/" title="FAQ" class="md-nav__link">
-      FAQ
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-9" type="checkbox" id="nav-9">
-    
-    <label class="md-nav__link" for="nav-9">
-      实践案例
-    </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-9">
-        实践案例
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../examples/testerhome-login/" title="TesterHome 登录" class="md-nav__link">
-      TesterHome 登录
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../examples/demo-klook/" title="klook" class="md-nav__link">
-      klook
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
-    <a href="../related-docs/" title="相关资料" class="md-nav__link">
-      相关资料
+    <a href="../sponsors/" title="Sponsors" class="md-nav__link">
+      Sponsors
     </a>
   </li>
 
@@ -650,13 +287,16 @@
 
   <li class="md-nav__item md-nav__item--active">
     
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
     
       
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
         CHANGELOG
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
       </label>
     
     <a href="./" title="CHANGELOG" class="md-nav__link md-nav__link--active">
@@ -664,186 +304,117 @@
     </a>
     
       
-<nav class="md-nav md-nav--secondary">
+<nav class="md-nav md-nav--secondary" aria-label="目录">
   
   
     
   
   
-    <label class="md-nav__title" for="__toc">目录</label>
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      目录
+    </label>
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#241-2019-12-12" class="md-nav__link">
-    2.4.1 (2019-12-12)
+  <a href="#3013-2020-06-15" class="md-nav__link">
+    3.0.13 (2020-06-15)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#240-2019-12-11" class="md-nav__link">
-    2.4.0 (2019-12-11)
+  <a href="#3012-2020-06-14" class="md-nav__link">
+    3.0.12 (2020-06-14)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#233-2019-12-04" class="md-nav__link">
-    2.3.3 (2019-12-04)
+  <a href="#3011-2020-06-08" class="md-nav__link">
+    3.0.11 (2020-06-08)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#232-2019-11-01" class="md-nav__link">
-    2.3.2 (2019-11-01)
+  <a href="#3010-2020-06-07" class="md-nav__link">
+    3.0.10 (2020-06-07)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#231-2019-10-28" class="md-nav__link">
-    2.3.1 (2019-10-28)
+  <a href="#309-2020-06-07" class="md-nav__link">
+    3.0.9 (2020-06-07)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#230-2019-10-27" class="md-nav__link">
-    2.3.0 (2019-10-27)
+  <a href="#308-2020-06-04" class="md-nav__link">
+    3.0.8 (2020-06-04)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#226-2019-09-18" class="md-nav__link">
-    2.2.6 (2019-09-18)
+  <a href="#307-2020-06-03" class="md-nav__link">
+    3.0.7 (2020-06-03)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#225-2019-07-28" class="md-nav__link">
-    2.2.5 (2019-07-28)
+  <a href="#306-2020-05-29" class="md-nav__link">
+    3.0.6 (2020-05-29)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#224-2019-07-18" class="md-nav__link">
-    2.2.4 (2019-07-18)
+  <a href="#305-2020-05-22" class="md-nav__link">
+    3.0.5 (2020-05-22)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#223-2019-06-30" class="md-nav__link">
-    2.2.3 (2019-06-30)
+  <a href="#304-2020-05-19" class="md-nav__link">
+    3.0.4 (2020-05-19)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#222-2019-06-26" class="md-nav__link">
-    2.2.2 (2019-06-26)
+  <a href="#303-2020-05-17" class="md-nav__link">
+    3.0.3 (2020-05-17)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#221-2019-06-25" class="md-nav__link">
-    2.2.1 (2019-06-25)
+  <a href="#302-2020-05-16" class="md-nav__link">
+    3.0.2 (2020-05-16)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#220-2019-06-24" class="md-nav__link">
-    2.2.0 (2019-06-24)
+  <a href="#301-2020-03-24" class="md-nav__link">
+    3.0.1 (2020-03-24)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#213-2019-04-24" class="md-nav__link">
-    2.1.3 (2019-04-24)
+  <a href="#300-2020-03-10" class="md-nav__link">
+    3.0.0 (2020-03-10)
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#212-2019-04-17" class="md-nav__link">
-    2.1.2 (2019-04-17)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#211-2019-04-11" class="md-nav__link">
-    2.1.1 (2019-04-11)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#210-2019-04-10" class="md-nav__link">
-    2.1.0 (2019-04-10)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#206-2019-03-18" class="md-nav__link">
-    2.0.6 (2019-03-18)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#205-2019-03-04" class="md-nav__link">
-    2.0.5 (2019-03-04)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#204-2019-02-28" class="md-nav__link">
-    2.0.4 (2019-02-28)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#203-2019-02-24" class="md-nav__link">
-    2.0.3 (2019-02-24)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#202-2019-01-21" class="md-nav__link">
-    2.0.2 (2019-01-21)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#201-2019-01-18" class="md-nav__link">
-    2.0.1 (2019-01-18)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#200-2019-01-01" class="md-nav__link">
-    2.0.0 (2019-01-01)
-  </a>
-  
-</li>
-      
-      
-      
-      
       
     </ul>
   
@@ -863,186 +434,117 @@
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
-<nav class="md-nav md-nav--secondary">
+<nav class="md-nav md-nav--secondary" aria-label="目录">
   
   
     
   
   
-    <label class="md-nav__title" for="__toc">目录</label>
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      目录
+    </label>
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#241-2019-12-12" class="md-nav__link">
-    2.4.1 (2019-12-12)
+  <a href="#3013-2020-06-15" class="md-nav__link">
+    3.0.13 (2020-06-15)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#240-2019-12-11" class="md-nav__link">
-    2.4.0 (2019-12-11)
+  <a href="#3012-2020-06-14" class="md-nav__link">
+    3.0.12 (2020-06-14)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#233-2019-12-04" class="md-nav__link">
-    2.3.3 (2019-12-04)
+  <a href="#3011-2020-06-08" class="md-nav__link">
+    3.0.11 (2020-06-08)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#232-2019-11-01" class="md-nav__link">
-    2.3.2 (2019-11-01)
+  <a href="#3010-2020-06-07" class="md-nav__link">
+    3.0.10 (2020-06-07)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#231-2019-10-28" class="md-nav__link">
-    2.3.1 (2019-10-28)
+  <a href="#309-2020-06-07" class="md-nav__link">
+    3.0.9 (2020-06-07)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#230-2019-10-27" class="md-nav__link">
-    2.3.0 (2019-10-27)
+  <a href="#308-2020-06-04" class="md-nav__link">
+    3.0.8 (2020-06-04)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#226-2019-09-18" class="md-nav__link">
-    2.2.6 (2019-09-18)
+  <a href="#307-2020-06-03" class="md-nav__link">
+    3.0.7 (2020-06-03)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#225-2019-07-28" class="md-nav__link">
-    2.2.5 (2019-07-28)
+  <a href="#306-2020-05-29" class="md-nav__link">
+    3.0.6 (2020-05-29)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#224-2019-07-18" class="md-nav__link">
-    2.2.4 (2019-07-18)
+  <a href="#305-2020-05-22" class="md-nav__link">
+    3.0.5 (2020-05-22)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#223-2019-06-30" class="md-nav__link">
-    2.2.3 (2019-06-30)
+  <a href="#304-2020-05-19" class="md-nav__link">
+    3.0.4 (2020-05-19)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#222-2019-06-26" class="md-nav__link">
-    2.2.2 (2019-06-26)
+  <a href="#303-2020-05-17" class="md-nav__link">
+    3.0.3 (2020-05-17)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#221-2019-06-25" class="md-nav__link">
-    2.2.1 (2019-06-25)
+  <a href="#302-2020-05-16" class="md-nav__link">
+    3.0.2 (2020-05-16)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#220-2019-06-24" class="md-nav__link">
-    2.2.0 (2019-06-24)
+  <a href="#301-2020-03-24" class="md-nav__link">
+    3.0.1 (2020-03-24)
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#213-2019-04-24" class="md-nav__link">
-    2.1.3 (2019-04-24)
+  <a href="#300-2020-03-10" class="md-nav__link">
+    3.0.0 (2020-03-10)
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#212-2019-04-17" class="md-nav__link">
-    2.1.2 (2019-04-17)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#211-2019-04-11" class="md-nav__link">
-    2.1.1 (2019-04-11)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#210-2019-04-10" class="md-nav__link">
-    2.1.0 (2019-04-10)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#206-2019-03-18" class="md-nav__link">
-    2.0.6 (2019-03-18)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#205-2019-03-04" class="md-nav__link">
-    2.0.5 (2019-03-04)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#204-2019-02-28" class="md-nav__link">
-    2.0.4 (2019-02-28)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#203-2019-02-24" class="md-nav__link">
-    2.0.3 (2019-02-24)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#202-2019-01-21" class="md-nav__link">
-    2.0.2 (2019-01-21)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#201-2019-01-18" class="md-nav__link">
-    2.0.1 (2019-01-18)
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#200-2019-01-01" class="md-nav__link">
-    2.0.0 (2019-01-01)
-  </a>
-  
-</li>
-      
-      
-      
-      
       
     </ul>
   
@@ -1057,270 +559,202 @@
               
                 
                 
-                <h1 id="release-history">Release History<a class="headerlink" href="#release-history" title="Permanent link">&para;</a></h1>
-<h2 id="241-2019-12-12">2.4.1 (2019-12-12)<a class="headerlink" href="#241-2019-12-12" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>feat: add <code>upload</code> keyword for upload test, see <a href="https://docs.httprunner.org/prepare/upload-case/">doc</a></li>
-<li>test: pip install package </li>
-<li>test: hrun command</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix: typo testfile_paths</li>
-<li>fix: check if locustio installed</li>
-<li>fix: dump json file name is empty when running relative testfile</li>
-</ul>
-<h2 id="240-2019-12-11">2.4.0 (2019-12-11)<a class="headerlink" href="#240-2019-12-11" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>feat: validate with python script, ref #773</li>
-<li>feat: rearrange html report, failed testcases will be displayed on top.</li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>refactor: make loader as submodule, split to check/locate/load/buildup</li>
-<li>refactor: make built_in as submodule, split to comparators and functions</li>
-<li>refactor: adjust code for context and validator</li>
-<li>docs: update cli argument help</li>
-<li>adjust format code, remove unused import</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix: keep setup/teardown hooks original order when merge &amp; override.</li>
-<li>fix: length comparator exceptions when running in CSV data-driven mode.</li>
-</ul>
-<h2 id="233-2019-12-04">2.3.3 (2019-12-04)<a class="headerlink" href="#233-2019-12-04" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix #768: dump json file path error when folder name contains dot, such as <code>a.b.c</code></li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>change: rename builtin function, sleep_N_secs =&gt; sleep</li>
-</ul>
-<h2 id="232-2019-11-01">2.3.2 (2019-11-01)<a class="headerlink" href="#232-2019-11-01" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>docs: add docs content to repo, visit at <code>https://docs.httprunner.org</code></li>
-<li>docs: update developer interface docs</li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>rename <code>render_html_report</code> to <code>gen_html_report</code></li>
-<li>make gen_html_report separate with HttpRunner().run_tests()</li>
-<li><code>--report-file</code>: specify report file path, this has higher priority than specifying report dir.</li>
-<li>remove <code>summary</code> property from HttpRunner</li>
-</ul>
-<h2 id="231-2019-10-28">2.3.1 (2019-10-28)<a class="headerlink" href="#231-2019-10-28" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix locusts entry configuration</li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>update PyPi classifiers</li>
-</ul>
-<h2 id="230-2019-10-27">2.3.0 (2019-10-27)<a class="headerlink" href="#230-2019-10-27" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>feat: implement plugin system prototype, make locusts as plugin</li>
-<li>test: add Python 3.8 to Travis-CI</li>
-<li>feat: add <code>__main__.py</code>, <code>python -m httprunner</code> can be used to hrun tests</li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>update dependency versions in pyproject.toml</li>
-<li>rename folder, httprunner/templates =&gt; httprunner/static</li>
-<li>log httprunner version before running tests</li>
-<li>remove unused import &amp; code</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix #707: duration stat error in multiple testsuites</li>
-</ul>
-<h2 id="226-2019-09-18">2.2.6 (2019-09-18)<a class="headerlink" href="#226-2019-09-18" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>feat: config variables support parsing from function</li>
-<li>feat: support <a href="https://goessner.net/articles/JsonPath/">jsonpath</a> to parse json response <a href="https://github.com/httprunner/httprunner/pull/679">#679</a></li>
-<li>feat: generate html report with specified report file <a href="https://github.com/httprunner/httprunner/pull/704">#704</a></li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>remove unused import</li>
-<li>adjust code format</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix: dev-rules link 404</li>
-</ul>
-<h2 id="225-2019-07-28">2.2.5 (2019-07-28)<a class="headerlink" href="#225-2019-07-28" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>log HttpRunner version when initializing</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix #658: sys.exit 1 if any testcase failed</li>
-<li>fix ModuleNotFoundError in debugging mode if httprunner uninstalled</li>
-</ul>
-<h2 id="224-2019-07-18">2.2.4 (2019-07-18)<a class="headerlink" href="#224-2019-07-18" title="Permanent link">&para;</a></h2>
-<p><strong>Changed</strong></p>
-<ul>
-<li>replace pipenv &amp; setup.py with poetry</li>
-<li>drop support for Python 3.4 as it was EOL on 2019-03-16</li>
-<li>relocate debugging scripts, move from main-debug.py to httprunner.cli</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix #574: delete unnecessary code</li>
-<li>fix #551: raise if times is not digit</li>
-<li>fix #572: tests_def_mapping["testcases"] typo error</li>
-</ul>
-<h2 id="223-2019-06-30">2.2.3 (2019-06-30)<a class="headerlink" href="#223-2019-06-30" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix yaml FullLoader AttributeError when PyYAML version &lt; 5.1</li>
-</ul>
-<h2 id="222-2019-06-26">2.2.2 (2019-06-26)<a class="headerlink" href="#222-2019-06-26" title="Permanent link">&para;</a></h2>
-<p><strong>Changed</strong></p>
-<ul>
-<li><code>extract</code> is used to replace <code>output</code> when passing former teststep's (as a testcase) export value to next teststep</li>
-<li><code>export</code> is used to replace <code>output</code> in testcase config</li>
-</ul>
-<h2 id="221-2019-06-25">2.2.1 (2019-06-25)<a class="headerlink" href="#221-2019-06-25" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>add demo api/testcase/testsuite to new created scaffold project</li>
-<li>update default <code>.gitignore</code> of new created scaffold project</li>
-<li>add demo content to <code>debugtalk.py</code>/<code>.env</code> of new created scaffold project</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix extend with testcase reference in format version 2</li>
-<li>fix ImportError when locustio is not installed</li>
-<li>fix YAMLLoadWarning by specify yaml loader</li>
-</ul>
-<h2 id="220-2019-06-24">2.2.0 (2019-06-24)<a class="headerlink" href="#220-2019-06-24" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>support testcase/testsuite in format version 2</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>add wheel in dev packages</li>
-<li>fix exception when teststep name reference former extracted variable</li>
-</ul>
-<h2 id="213-2019-04-24">2.1.3 (2019-04-24)<a class="headerlink" href="#213-2019-04-24" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>replace eval mechanism with builtins to prevent security vulnerabilities</li>
-<li>ImportError for builtins in Python2.7</li>
-</ul>
-<h2 id="212-2019-04-17">2.1.2 (2019-04-17)<a class="headerlink" href="#212-2019-04-17" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>support new variable notation ${var}</li>
-<li>use \$\$ to escape \$ notation</li>
-<li>add Python 3.7 for travis CI</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>match duplicate variable/function in single raw string</li>
-<li>escape '{' and '}' notation in raw string</li>
-<li>print_info: TypeError when value is None</li>
-<li>display api name when running api as testcase</li>
-</ul>
-<h2 id="211-2019-04-11">2.1.1 (2019-04-11)<a class="headerlink" href="#211-2019-04-11" title="Permanent link">&para;</a></h2>
-<p><strong>Changed</strong></p>
-<p>refactor upload files mechanism with <a href="https://toolbelt.readthedocs.io/en/latest/user.html#multipart-form-data-encoder">requests-toolbelt</a>:</p>
-<ul>
-<li>simplify usage syntax, detect mimetype with <a href="https://github.com/h2non/filetype.py">filetype</a>.</li>
-<li>support upload multiple fields.</li>
-</ul>
-<h2 id="210-2019-04-10">2.1.0 (2019-04-10)<a class="headerlink" href="#210-2019-04-10" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>implement json dump Python objects when save tests</li>
-<li>implement lazy parser</li>
-<li>remove project_mapping from parse_tests result</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>reference output variables</li>
-<li>pass output variables between testcases</li>
-</ul>
-<h2 id="206-2019-03-18">2.0.6 (2019-03-18)<a class="headerlink" href="#206-2019-03-18" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>create .gitignore file when initializing new project</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix CSV relative path detection</li>
-<li>fix current validators displaying the former one when they are empty</li>
-</ul>
-<h2 id="205-2019-03-04">2.0.5 (2019-03-04)<a class="headerlink" href="#205-2019-03-04" title="Permanent link">&para;</a></h2>
-<p><strong>Added</strong></p>
-<ul>
-<li>implement method to get variables and output</li>
-</ul>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix xss in response json</li>
-</ul>
-<h2 id="204-2019-02-28">2.0.4 (2019-02-28)<a class="headerlink" href="#204-2019-02-28" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix verify priority with nested testcase</li>
-<li>fix function in config variables called multiple times</li>
-<li>dump loaded tests when running tests_mapping directly</li>
-</ul>
-<h2 id="203-2019-02-24">2.0.3 (2019-02-24)<a class="headerlink" href="#203-2019-02-24" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>fix verify priority: teststep &gt; config</li>
-<li>fix Chinese charactor in log_file encoding error in Windows</li>
-<li>fix dump file with Chinese charactor in Python 3</li>
-</ul>
-<h2 id="202-2019-01-21">2.0.2 (2019-01-21)<a class="headerlink" href="#202-2019-01-21" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>each teststeps in one testcase share the same session</li>
-<li>fix duplicate API definition output</li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>display result from hook functions in DEBUG level log</li>
-<li>change log level of "Variables &amp; Output" to INFO</li>
-<li>print Invalid testcase path or testcases</li>
-<li>print testcase output in INFO level log</li>
-</ul>
-<h2 id="201-2019-01-18">2.0.1 (2019-01-18)<a class="headerlink" href="#201-2019-01-18" title="Permanent link">&para;</a></h2>
-<p><strong>Fixed</strong></p>
-<ul>
-<li>override current teststep variables with former testcase output variables</li>
-<li>Fixed compatibility when testcase name is empty</li>
-<li>skip undefined variable when parsing string content</li>
-</ul>
-<p><strong>Changed</strong></p>
-<ul>
-<li>add back request method in report</li>
-</ul>
-<h2 id="200-2019-01-01">2.0.0 (2019-01-01)<a class="headerlink" href="#200-2019-01-01" title="Permanent link">&para;</a></h2>
-<p><strong>Changed</strong></p>
-<ul>
-<li>Massive Refactor and Simplification</li>
-<li>Redesign testcase structure</li>
-<li>Module pipline</li>
-<li>Start Semantic Versioning</li>
-<li>Switch to Apache 2.0 license</li>
-<li>Change logo</li>
-</ul>
-                
                   
                 
+                
+                <h1 id="release-history">Release History<a class="headerlink" href="#release-history" title="Permanent link">&para;</a></h1>
+<h2 id="3013-2020-06-15">3.0.13 (2020-06-15)<a class="headerlink" href="#3013-2020-06-15" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: avoid '.csv' been converted to '_csv'</li>
+<li>fix: convert har to JSON format testcase</li>
+<li>fix: missing ${var} handling in overriding config variables</li>
+</ul>
+<h2 id="3012-2020-06-14">3.0.12 (2020-06-14)<a class="headerlink" href="#3012-2020-06-14" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: compatibility with different path separators of Linux and Windows</li>
+<li>fix: IndexError in ensure_file_path_valid when file_path=os.getcwd()</li>
+<li>fix: ensure step referenced api, convert to v3 testcase</li>
+<li>fix: several other compatibility issues</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: skip reporting sentry for errors occurred in debugtalk.py</li>
+</ul>
+<h2 id="3011-2020-06-08">3.0.11 (2020-06-08)<a class="headerlink" href="#3011-2020-06-08" title="Permanent link">&para;</a></h2>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: override variables
+    (1) testcase: session variables &gt; step variables &gt; config variables
+    (2) testsuite: testcase variables &gt; config variables
+    (3) testsuite testcase variables &gt; testcase config variables</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: incorrect summary success when testcase failed</li>
+<li>fix: reload to refresh previously loaded debugtalk module</li>
+<li>fix: escape $$ in variable value</li>
+</ul>
+<h2 id="3010-2020-06-07">3.0.10 (2020-06-07)<a class="headerlink" href="#3010-2020-06-07" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: implement step setup/teardown hooks</li>
+<li>feat: support alter response in teardown hooks</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: ensure upload ready</li>
+<li>fix: add ExtendJSONEncoder to safely dump json data with python object, such as MultipartEncoder</li>
+</ul>
+<h2 id="309-2020-06-07">3.0.9 (2020-06-07)<a class="headerlink" href="#309-2020-06-07" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: miss formatting referenced testcase</li>
+<li>fix: handle cases when parent directory name includes dot/hyphen/space</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: add <code>export</code> keyword in TStep to export session variables from referenced testcase</li>
+<li>change: rename TestCaseInOut field, config_vars and export_vars</li>
+<li>change: rename StepData field, export_vars</li>
+<li>change: add <code>--tb=short</code> for <code>hrun</code> command to use shorter traceback format by default</li>
+<li>change: search debugtalk.py upward recursively until system root dir</li>
+</ul>
+<h2 id="308-2020-06-04">3.0.8 (2020-06-04)<a class="headerlink" href="#308-2020-06-04" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: add sentry sdk</li>
+<li>feat: extract session variable from referenced testcase step</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: missing request json</li>
+<li>fix: override testsuite/testcase config verify</li>
+<li>fix: only strip whitespaces and tabs, \n\r are left because they maybe used in changeset</li>
+<li>fix: log testcase duration before raise ValidationFailure</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: add httprunner version in generated pytest file</li>
+</ul>
+<h2 id="307-2020-06-03">3.0.7 (2020-06-03)<a class="headerlink" href="#307-2020-06-03" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: make pytest files in chain style</li>
+<li>feat: <code>hrun</code> supports run pytest files</li>
+<li>feat: get raw testcase model from pytest file</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: convert jmespath.search result to int/float unintentionally</li>
+<li>fix: referenced testcase should not be run duplicately</li>
+<li>fix: requests.cookies.CookieConflictError, multiple cookies with name</li>
+<li>fix: missing exit code from pytest</li>
+<li>fix: skip invalid testcase/testsuite yaml/json file</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: <code>har2case</code> generate pytest file by default</li>
+<li>docs: update sponsor info</li>
+</ul>
+<h2 id="306-2020-05-29">3.0.6 (2020-05-29)<a class="headerlink" href="#306-2020-05-29" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: make referenced testcase as pytest class</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: ensure converted python file in utf-8 encoding</li>
+<li>fix: duplicate running referenced testcase</li>
+<li>fix: ensure compatibility issues between testcase format v2 and v3</li>
+<li>fix: ensure compatibility with deprecated cli args in v2, include --failfast/--report-file/--save-tests</li>
+<li>fix: UnicodeDecodeError when request body in protobuf</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: make <code>allure-pytest</code>, <code>requests-toolbelt</code>, <code>filetype</code> as optional dependencies</li>
+<li>change: move all unittests to tests folder</li>
+<li>change: save testcase log in PWD/logs/ directory</li>
+</ul>
+<h2 id="305-2020-05-22">3.0.5 (2020-05-22)<a class="headerlink" href="#305-2020-05-22" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: each testcase has an unique id in uuid4 format</li>
+<li>feat: add default header <code>HRUN-Request-ID</code> for each testcase #721</li>
+<li>feat: builtin allure report</li>
+<li>feat: dump log for each testcase</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: ensure referenced testcase share the same session</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: remove default added <code>-s</code> option for hrun</li>
+</ul>
+<h2 id="304-2020-05-19">3.0.4 (2020-05-19)<a class="headerlink" href="#304-2020-05-19" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: make testsuite and run testsuite</li>
+<li>feat: testcase/testsuite config support getting variables by function</li>
+<li>feat: har2case with request cookies</li>
+<li>feat: log request/response headers and body with indent</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: extract response cookies</li>
+<li>fix: handle errors when no valid testcases generated</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: har2case do not ignore request headers, except for header startswith :</li>
+</ul>
+<h2 id="303-2020-05-17">3.0.3 (2020-05-17)<a class="headerlink" href="#303-2020-05-17" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: compatibility with testcase file path includes dots, space and minus sign</li>
+<li>fix: testcase generator, validate content.xxx =&gt; body.xxx</li>
+<li>fix: scaffold for v3</li>
+</ul>
+<h2 id="302-2020-05-16">3.0.2 (2020-05-16)<a class="headerlink" href="#302-2020-05-16" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: add <code>make</code> sub-command to generate python testcases from YAML/JSON  </li>
+<li>feat: format generated python testcases with <a href="https://github.com/psf/black"><code>black</code></a></li>
+<li>test: add postman echo &amp; httpbin as testcase examples</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>refactor all</li>
+<li>replace jsonschema validation with pydantic</li>
+<li>remove compatibility with testcase/testsuite format v1</li>
+<li>replace unittest with pytest</li>
+<li>remove builtin html report, allure will be used with pytest later</li>
+<li>remove locust support temporarily</li>
+<li>update command line interface</li>
+</ul>
+<h2 id="301-2020-03-24">3.0.1 (2020-03-24)<a class="headerlink" href="#301-2020-03-24" title="Permanent link">&para;</a></h2>
+<p><strong>Changed</strong></p>
+<ul>
+<li>remove sentry sdk</li>
+</ul>
+<h2 id="300-2020-03-10">3.0.0 (2020-03-10)<a class="headerlink" href="#300-2020-03-10" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: dump log for each testcase</li>
+<li>feat: add default header <code>HRUN-Request-ID</code> for each testcase #721</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>remove support for Python 2.7</li>
+<li>replace logging with <a href="https://github.com/Delgan/loguru">loguru</a></li>
+<li>replace string format with f-string</li>
+<li>remove dependency colorama and colorlog</li>
+<li>generate reports/logs folder in current working directory</li>
+<li>remove cli <code>--validate</code></li>
+<li>remove cli <code>--pretty</code></li>
+</ul>
                 
               
               
@@ -1337,19 +771,19 @@
 <footer class="md-footer">
   
     <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../related-docs/" title="相关资料" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+          <a href="../sponsors/" title="Sponsors" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   上一页
                 </span>
-                相关资料
-              </span>
+                Sponsors
+              </div>
             </div>
           </a>
         
@@ -1362,22 +796,34 @@
       <div class="md-footer-copyright">
         
           <div class="md-footer-copyright__highlight">
-            Copyright &copy; 2017 - 2019 debugtalk
+            Copyright &copy; 2017 - 2020 debugtalk
           </div>
         
-        powered by
-        <a href="https://www.mkdocs.org">MkDocs</a>
-        and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
-          Material for MkDocs</a>
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
       </div>
       
   <div class="md-footer-social">
-    <link rel="stylesheet" href="../assets/fonts/font-awesome.css">
     
-      <a href="https://debugtalk.com" class="md-footer-social__link fa fa-globe"></a>
+      
+      
+        
+        
+      
+      <a href="https://debugtalk.com" target="_blank" rel="noopener" title="debugtalk.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+      </a>
     
-      <a href="https://github.com/httprunner" class="md-footer-social__link fa fa-github"></a>
+      
+      
+        
+        
+      
+      <a href="https://github.com/httprunner" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      </a>
     
   </div>
 
@@ -1387,24 +833,18 @@
       
     </div>
     
-      <script src="../assets/javascripts/application.808e90bb.js"></script>
+      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\uff0c\\u3002]+", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c"}</script>
       
-        
-        
-          
-          <script src="../assets/javascripts/lunr/lunr.stemmer.support.js"></script>
-          
-            
-              
-              
-            
-          
-          
-        
-      
-      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
-      
-        <script src="../js/slardar.js"></script>
+      <script>
+        app = initialize({
+          base: "..",
+          features: [],
+          search: Object.assign({
+            worker: "../assets/javascripts/worker/search.27c6a5e6.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
       
     
   </body>
