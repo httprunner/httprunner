@@ -462,6 +462,19 @@
     validate
   </a>
   
+    <nav class="md-nav" aria-label="validate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assert_xxx" class="md-nav__link">
+    .assert_XXX
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -714,6 +727,19 @@
     validate
   </a>
   
+    <nav class="md-nav" aria-label="validate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#assert_xxx" class="md-nav__link">
+    .assert_XXX
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -764,6 +790,8 @@
                 
                 <h1 id="write-testcase">Write Testcase<a class="headerlink" href="#write-testcase" title="Permanent link">&para;</a></h1>
 <p>HttpRunner v3.x supports three testcase formats, <code>pytest</code>, <code>YAML</code> and <code>JSON</code>. It is extremely recommended to write and maintain testcases in <code>pytest</code> format instead of former <code>YAML/JSON</code> format.</p>
+<p>The format relations are illustrated as below:</p>
+<p><img alt="" src="/images/httprunner-formats.png" /></p>
 <h2 id="record-generate-testcase">record &amp; generate testcase<a class="headerlink" href="#record-generate-testcase" title="Permanent link">&para;</a></h2>
 <p>If the SUT (system under test) is ready, the most efficient way is to capture HTTP traffic first and then generate testcases with HAR file. Refer to <a href="/user/gen_tests/"><code>Record &amp; Generate testcase</code></a> for more details.</p>
 <p>Based on the generated pytest testcase, you can then do some adjustment as needed, thus you need to know the details of testcase format.</p>
@@ -884,13 +912,26 @@
 <p>with_jmespath(jmes_path: Text, var_name: Text)</p>
 </blockquote>
 <ul>
-<li>jmes_path: jmespath expression</li>
-<li>var_name: the variable name that stores extracted value</li>
+<li>jmes_path: jmespath expression, refer to <a href="https://jmespath.org/tutorial.html">JMESPath Tutorial</a> for more details</li>
+<li>var_name: the variable name that stores extracted value, it can be referenced by subsequent test steps</li>
 </ul>
 <h4 id="validate">validate<a class="headerlink" href="#validate" title="Permanent link">&para;</a></h4>
+<h5 id="assert_xxx">.assert_XXX<a class="headerlink" href="#assert_xxx" title="Permanent link">&para;</a></h5>
+<p>Extract JSON response body with <a href="https://jmespath.org/">jmespath</a> and validate with expected value.</p>
+<blockquote>
+<p>assert_XXX(jmes_path: Text, expected_value: Any)</p>
+</blockquote>
+<ul>
+<li>jmes_path: jmespath expression, refer to <a href="https://jmespath.org/tutorial.html">JMESPath Tutorial</a> for more details</li>
+<li>expected_value: the specified expected value, variable or function reference can also be used here</li>
+</ul>
+<p>The image below shows HttpRunner builtin validators.</p>
+<p><img alt="" src="/images/httprunner-step-request-validate.png" /></p>
 <h3 id="runtestcasename">RunTestCase(name)<a class="headerlink" href="#runtestcasename" title="Permanent link">&para;</a></h3>
+<p><code>RunTestCase</code> is used in a step to reference another testcase call.</p>
+<p>The argument <code>name</code> of RunTestCase is used to specify teststep name, which will be displayed in execution log and test report.</p>
 <h4 id="with_variables_1">.with_variables<a class="headerlink" href="#with_variables_1" title="Permanent link">&para;</a></h4>
-<p>Besides, <code>variables</code>/<code>extract</code>/<code>validate</code>/<code>hooks</code> mechanisms are supported to create extremely complex test scenarios.</p>
+<p>Same with RunRequest's <code>.with_variables</code>.</p>
                 
               
               
