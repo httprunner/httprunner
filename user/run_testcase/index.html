@@ -1,0 +1,1003 @@
+
+
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="HttpRunner V3.x User Documentation">
+      
+      
+      
+        <meta name="author" content="debugtalk">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.2">
+    
+    
+      
+        <title>Run Testcase - HttpRunner V3.x Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a2408e81.min.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.a46bcfb3.min.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#3f51b5">
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+    
+      
+        
+<link rel="preconnect dns-prefetch" href="https://www.google-analytics.com">
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-114587036-3","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview")})</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#run-testcase" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="../.." title="HttpRunner V3.x Docs" class="md-header-nav__button md-logo" aria-label="HttpRunner V3.x Docs">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            HttpRunner V3.x Docs
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              Run Testcase
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/httprunner/httprunner" title="前往 GitHub 仓库" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    HttpRunner
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="HttpRunner V3.x Docs" class="md-nav__button md-logo" aria-label="HttpRunner V3.x Docs">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    HttpRunner V3.x Docs
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/httprunner/httprunner" title="前往 GitHub 仓库" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    HttpRunner
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../installation/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+    
+    <label class="md-nav__link" for="nav-3">
+      User Guide
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="User Guide" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        User Guide
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../scaffold/" title="Scaffold" class="md-nav__link">
+      Scaffold
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../gen_tests/" title="Record & Generate testcase" class="md-nav__link">
+      Record & Generate testcase
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../write_testcase/" title="Write Testcase" class="md-nav__link">
+      Write Testcase
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Run Testcase
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Run Testcase" class="md-nav__link md-nav__link--active">
+      Run Testcase
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-testcases-in-diverse-ways" class="md-nav__link">
+    run testcases in diverse ways
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-yamljson-testcases" class="md-nav__link">
+    run YAML/JSON testcases
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-pytest-testcases" class="md-nav__link">
+    run pytest testcases
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-logs" class="md-nav__link">
+    execution logs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testcase-id-request-id" class="md-nav__link">
+    TestCase ID &amp; Request ID
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments-for-v2x-compatibility" class="md-nav__link">
+    arguments for v2.x compatibility
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../testing_report/" title="Testing Report" class="md-nav__link">
+      Testing Report
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../sponsors/" title="Sponsors" class="md-nav__link">
+      Sponsors
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../CHANGELOG/" title="CHANGELOG" class="md-nav__link">
+      CHANGELOG
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-testcases-in-diverse-ways" class="md-nav__link">
+    run testcases in diverse ways
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-yamljson-testcases" class="md-nav__link">
+    run YAML/JSON testcases
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-pytest-testcases" class="md-nav__link">
+    run pytest testcases
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-logs" class="md-nav__link">
+    execution logs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testcase-id-request-id" class="md-nav__link">
+    TestCase ID &amp; Request ID
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arguments-for-v2x-compatibility" class="md-nav__link">
+    arguments for v2.x compatibility
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  
+                
+                
+                <h1 id="run-testcase">Run Testcase<a class="headerlink" href="#run-testcase" title="Permanent link">&para;</a></h1>
+<p>Once testcase is ready, you can run testcase with <code>hrun</code> command.</p>
+<p>Notice, <code>hrun</code> is an command alias of <code>httprunner run</code>, they have the same effect.</p>
+<div class="codehilite"><pre><span></span><code>hrun = httprunner run
+</code></pre></div>
+
+
+<h2 id="run-testcases-in-diverse-ways">run testcases in diverse ways<a class="headerlink" href="#run-testcases-in-diverse-ways" title="Permanent link">&para;</a></h2>
+<p><code>HttpRunner</code> can run testcases in diverse ways.</p>
+<p>You can run single testcase by specifying testcase file path.</p>
+<div class="codehilite"><pre><span></span><code>$ hrun path/to/testcase1
+</code></pre></div>
+
+
+<p>You can also run several testcases by specifying multiple testcase file paths.</p>
+<div class="codehilite"><pre><span></span><code>$ hrun path/to/testcase1 path/to/testcase2
+</code></pre></div>
+
+
+<p>If you want to run testcases of a whole project, you can achieve this goal by specifying the project folder path.</p>
+<div class="codehilite"><pre><span></span><code>$ hrun path/to/testcase_folder/
+</code></pre></div>
+
+
+<h2 id="run-yamljson-testcases">run YAML/JSON testcases<a class="headerlink" href="#run-yamljson-testcases" title="Permanent link">&para;</a></h2>
+<p>If your testcases are written in YAML/JSON format, <code>hrun</code> will firstly convert YAML/JSON testcases to pytest(python) files, and run with <code>pytest</code> command.</p>
+<p>That is to say,</p>
+<div class="codehilite"><pre><span></span><code>hrun = make + pytest
+</code></pre></div>
+
+
+<p>In most cases, the generated pytest files are in the same folder next to origin YAML/JSON files, with the same file name except adding <code>_test</code> suffix and replace extension <code>.yml/yaml/.json</code> with <code>.py</code>.</p>
+<div class="codehilite"><pre><span></span><code>/path/to/example.yml =&gt; /path/to/example_test.py
+</code></pre></div>
+
+
+<p>However, if the testcase folder name or file name contains symbols like dot, hyphen or space, these symbols will be replaced with underscore in order to avoid syntax error in python class importing (testcase reference). Also, folder/file name starts with digit will be adding a prefix <code>T</code> because python module and class name can not be started with digit.</p>
+<div class="codehilite"><pre><span></span><code>path 1/a.b-2/3.yml =&gt; path_1/a_b_2/T3_test.py
+</code></pre></div>
+
+
+<h2 id="run-pytest-testcases">run pytest testcases<a class="headerlink" href="#run-pytest-testcases" title="Permanent link">&para;</a></h2>
+<p>If your testcases are written in pytest format, or you want to run pytest files converted from YAML/JSON testcases, <code>hrun</code> and <code>pytest</code> commands are both okay. What you need to remember is that <code>hrun</code> only wraps <code>pytest</code>, thus all the arguments of <code>pytest</code> can be used with <code>hrun</code>.</p>
+<div class="codehilite"><pre><span></span><code>$ hrun -h
+usage: hrun [options] [file_or_dir] [file_or_dir] [...]
+
+positional arguments:
+  file_or_dir
+
+general:
+  -k EXPRESSION         only run tests which match the given substring expression. An expression is a python evaluatable expression where all names are
+                        substring-matched against test names and their parent classes. Example: -k &#39;test_method or test_other&#39; matches all test functions and
+                        classes whose name contains &#39;test_method&#39; or &#39;test_other&#39;, while -k &#39;not test_method&#39; matches those that don&#39;t contain &#39;test_method&#39; in
+                        their names. -k &#39;not test_method and not test_other&#39; will eliminate the matches. Additionally keywords are matched to classes and
+                        functions containing extra names in their &#39;extra_keyword_matches&#39; set, as well as functions which have names assigned directly to them.
+                        The matching is case-insensitive.
+  -m MARKEXPR           only run tests matching given mark expression. example: -m &#39;mark1 and not mark2&#39;.
+  --markers             show markers (builtin, plugin and per-project ones).
+  -x, --exitfirst       exit instantly on first error or failed test.
+  --maxfail=num         exit after first num failures or errors.
+  --strict-markers, --strict
+                        markers not registered in the `markers` section of the configuration file raise errors.
+  -c file               load configuration from `file` instead of trying to locate one of the implicit configuration files.
+  --continue-on-collection-errors
+                        Force test execution even if collection errors occur.
+  --rootdir=ROOTDIR     Define root directory for tests. Can be relative path: &#39;root_dir&#39;, &#39;./root_dir&#39;, &#39;root_dir/another_dir/&#39;; absolute path:
+                        &#39;/home/user/root_dir&#39;; path with variables: &#39;$HOME/root_dir&#39;.
+  --fixtures, --funcargs
+                        show available fixtures, sorted by plugin appearance (fixtures with leading &#39;_&#39; are only shown with &#39;-v&#39;)
+  --fixtures-per-test   show fixtures per test
+  --import-mode={prepend,append}
+                        prepend/append to sys.path when importing test modules, default is to prepend.
+  --pdb                 start the interactive Python debugger on errors or KeyboardInterrupt.
+  --pdbcls=modulename:classname
+                        start a custom interactive Python debugger on errors. For example: --pdbcls=IPython.terminal.debugger:TerminalPdb
+  --trace               Immediately break when running each test.
+  --capture=method      per-test capturing method: one of fd|sys|no|tee-sys.
+  -s                    shortcut for --capture=no.
+  --runxfail            report the results of xfail tests as if they were not marked
+  --lf, --last-failed   rerun only the tests that failed at the last run (or all if none failed)
+  --ff, --failed-first  run all tests but run the last failures first. This may re-order tests and thus lead to repeated fixture setup/teardown
+  --nf, --new-first     run tests from new files first, then the rest of the tests sorted by file mtime
+  --cache-show=[CACHESHOW]
+                        show cache contents, don&#39;t perform collection or tests. Optional argument: glob (default: &#39;*&#39;).
+  --cache-clear         remove all cache contents at start of test run.
+  --lfnf={all,none}, --last-failed-no-failures={all,none}
+                        which tests to run with no previously (known) failures.
+  --sw, --stepwise      exit on test failure and continue from last failing test next time
+  --stepwise-skip       ignore the first failing test but stop on the next failing test
+  --allure-severities=SEVERITIES_SET
+                        Comma-separated list of severity names. Tests only with these severities will be run. Possible values are: blocker, critical, normal,
+                        minor, trivial.
+  --allure-epics=EPICS_SET
+                        Comma-separated list of epic names. Run tests that have at least one of the specified feature labels.
+  --allure-features=FEATURES_SET
+                        Comma-separated list of feature names. Run tests that have at least one of the specified feature labels.
+  --allure-stories=STORIES_SET
+                        Comma-separated list of story names. Run tests that have at least one of the specified story labels.
+  --allure-link-pattern=LINK_TYPE:LINK_PATTERN
+                        Url pattern for link type. Allows short links in test, like &#39;issue-1&#39;. Text will be formatted to full url with python str.format().
+
+reporting:
+  --durations=N         show N slowest setup/test durations (N=0 for all).
+  -v, --verbose         increase verbosity.
+  -q, --quiet           decrease verbosity.
+  --verbosity=VERBOSE   set verbosity. Default is 0.
+  -r chars              show extra test summary info as specified by chars: (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed, (p)assed, (P)assed with output,
+                        (a)ll except passed (p/P), or (A)ll. (w)arnings are enabled by default (see --disable-warnings), &#39;N&#39; can be used to reset the list.
+                        (default: &#39;fE&#39;).
+  --disable-warnings, --disable-pytest-warnings
+                        disable warnings summary
+  -l, --showlocals      show locals in tracebacks (disabled by default).
+  --tb=style            traceback print mode (auto/long/short/line/native/no).
+  --show-capture={no,stdout,stderr,log,all}
+                        Controls how captured stdout/stderr/log is shown on failed tests. Default is &#39;all&#39;.
+  --full-trace          don&#39;t cut any tracebacks (default is to cut).
+  --color=color         color terminal output (yes/no/auto).
+  --pastebin=mode       send failed|all info to bpaste.net pastebin service.
+  --junit-xml=path      create junit-xml style report file at given path.
+  --junit-prefix=str    prepend prefix to classnames in junit-xml output
+  --result-log=path     DEPRECATED path for machine-readable result log.
+  --html=path           create html report file at given path.
+  --self-contained-html
+                        create a self-contained html file containing all necessary styles, scripts, and images - this means that the report may not render or
+                        function where CSP restrictions are in place (see https://developer.mozilla.org/docs/Web/Security/CSP)
+  --css=path            append given css file content to report style file.
+
+collection:
+  --collect-only, --co  only collect tests, don&#39;t execute them.
+  --pyargs              try to interpret all arguments as python packages.
+  --ignore=path         ignore path during collection (multi-allowed).
+  --ignore-glob=path    ignore path pattern during collection (multi-allowed).
+  --deselect=nodeid_prefix
+                        deselect item (via node id prefix) during collection (multi-allowed).
+  --confcutdir=dir      only load conftest.py&#39;s relative to specified dir.
+  --noconftest          Don&#39;t load any conftest.py files.
+  --keep-duplicates     Keep duplicate tests.
+  --collect-in-virtualenv
+                        Don&#39;t ignore tests in a local virtualenv directory
+  --doctest-modules     run doctests in all .py modules
+  --doctest-report={none,cdiff,ndiff,udiff,only_first_failure}
+                        choose another output format for diffs on doctest failure
+  --doctest-glob=pat    doctests file matching pattern, default: test*.txt
+  --doctest-ignore-import-errors
+                        ignore doctest ImportErrors
+  --doctest-continue-on-failure
+                        for a given doctest, continue to run after the first failure
+
+test session debugging and configuration:
+  --basetemp=dir        base temporary directory for this test run.(warning: this directory is removed if it exists)
+  -V, --version         display pytest version and information about plugins.
+  -h, --help            show help message and configuration info
+  -p name               early-load given plugin module name or entry point (multi-allowed). To avoid loading of plugins, use the `no:` prefix, e.g. `no:doctest`.
+  --trace-config        trace considerations of conftest.py files.
+  --debug               store internal tracing debug information in &#39;pytestdebug.log&#39;.
+  -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
+                        override ini option with &quot;option=value&quot; style, e.g. `-o xfail_strict=True -o cache_dir=cache`.
+  --assert=MODE         Control assertion debugging tools. &#39;plain&#39; performs no assertion debugging. &#39;rewrite&#39; (the default) rewrites assert statements in test
+                        modules on import to provide assert expression information.
+  --setup-only          only setup fixtures, do not execute tests.
+  --setup-show          show setup of fixtures while executing tests.
+  --setup-plan          show what fixtures and tests would be executed but don&#39;t execute anything.
+
+pytest-warnings:
+  -W PYTHONWARNINGS, --pythonwarnings=PYTHONWARNINGS
+                        set which warnings to report, see -W option of python itself.
+
+logging:
+  --no-print-logs       disable printing caught logs on failed tests.
+  --log-level=LEVEL     level of messages to catch/display. Not set by default, so it depends on the root/parent log handler&#39;s effective level, where it is
+                        &quot;WARNING&quot; by default.
+  --log-format=LOG_FORMAT
+                        log format as used by the logging module.
+  --log-date-format=LOG_DATE_FORMAT
+                        log date format as used by the logging module.
+  --log-cli-level=LOG_CLI_LEVEL
+                        cli logging level.
+  --log-cli-format=LOG_CLI_FORMAT
+                        log format as used by the logging module.
+  --log-cli-date-format=LOG_CLI_DATE_FORMAT
+                        log date format as used by the logging module.
+  --log-file=LOG_FILE   path to a file when logging will be written to.
+  --log-file-level=LOG_FILE_LEVEL
+                        log file logging level.
+  --log-file-format=LOG_FILE_FORMAT
+                        log format as used by the logging module.
+  --log-file-date-format=LOG_FILE_DATE_FORMAT
+                        log date format as used by the logging module.
+  --log-auto-indent=LOG_AUTO_INDENT
+                        Auto-indent multiline messages passed to the logging module. Accepts true|on, false|off or an integer.
+
+reporting:
+  --alluredir=DIR       Generate Allure report in the specified directory (may not exist)
+  --clean-alluredir     Clean alluredir folder if it exists
+  --allure-no-capture   Do not attach pytest captured logging/stdout/stderr to report
+
+custom options:
+  --metadata=key value  additional metadata.
+  --metadata-from-json=METADATA_FROM_JSON
+                        additional metadata from a json string.
+
+[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:
+
+  markers (linelist):   markers for test functions
+  empty_parameter_set_mark (string):
+                        default marker for empty parametersets
+  norecursedirs (args): directory patterns to avoid for recursion
+  testpaths (args):     directories to search for tests when no files or directories are given in the command line.
+  usefixtures (args):   list of default fixtures to be used with this project
+  python_files (args):  glob-style file patterns for Python test module discovery
+  python_classes (args):
+                        prefixes or glob names for Python test class discovery
+  python_functions (args):
+                        prefixes or glob names for Python test function and method discovery
+  disable_test_id_escaping_and_forfeit_all_rights_to_community_support (bool):
+                        disable string escape non-ascii characters, might cause unwanted side effects(use at your own risk)
+  console_output_style (string):
+                        console output: &quot;classic&quot;, or with additional progress information (&quot;progress&quot; (percentage) | &quot;count&quot;).
+  xfail_strict (bool):  default for the strict parameter of xfail markers when not given explicitly (default: False)
+  enable_assertion_pass_hook (bool):
+                        Enables the pytest_assertion_pass hook.Make sure to delete any previously generated pyc cache files.
+  junit_suite_name (string):
+                        Test suite name for JUnit report
+  junit_logging (string):
+                        Write captured log messages to JUnit report: one of no|log|system-out|system-err|out-err|all
+  junit_log_passing_tests (bool):
+                        Capture log information for passing tests to JUnit report:
+  junit_duration_report (string):
+                        Duration time to report: one of total|call
+  junit_family (string):
+                        Emit XML for schema: one of legacy|xunit1|xunit2
+  doctest_optionflags (args):
+                        option flags for doctests
+  doctest_encoding (string):
+                        encoding used for doctest files
+  cache_dir (string):   cache directory path.
+  filterwarnings (linelist):
+                        Each line specifies a pattern for warnings.filterwarnings. Processed after -W/--pythonwarnings.
+  log_print (bool):     default value for --no-print-logs
+  log_level (string):   default value for --log-level
+  log_format (string):  default value for --log-format
+  log_date_format (string):
+                        default value for --log-date-format
+  log_cli (bool):       enable log display during test run (also known as &quot;live logging&quot;).
+  log_cli_level (string):
+                        default value for --log-cli-level
+  log_cli_format (string):
+                        default value for --log-cli-format
+  log_cli_date_format (string):
+                        default value for --log-cli-date-format
+  log_file (string):    default value for --log-file
+  log_file_level (string):
+                        default value for --log-file-level
+  log_file_format (string):
+                        default value for --log-file-format
+  log_file_date_format (string):
+                        default value for --log-file-date-format
+  log_auto_indent (string):
+                        default value for --log-auto-indent
+  faulthandler_timeout (string):
+                        Dump the traceback of all threads if a test takes more than TIMEOUT seconds to finish. Not available on Windows.
+  addopts (args):       extra command line options
+  minversion (string):  minimally required pytest version
+  render_collapsed (bool):
+                        Open the report with all rows collapsed. Useful for very large reports
+
+environment variables:
+  PYTEST_ADDOPTS           extra command line options
+  PYTEST_PLUGINS           comma-separated plugins to load during startup
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD set to disable plugin auto-loading
+  PYTEST_DEBUG             set to enable debug tracing of pytest&#39;s internals
+
+
+to see available markers type: pytest --markers
+to see available fixtures type: pytest --fixtures
+(shown according to specified file_or_dir or current dir if not specified; fixtures with leading &#39;_&#39; are only shown with the &#39;-v&#39; option
+</code></pre></div>
+
+
+<h2 id="execution-logs">execution logs<a class="headerlink" href="#execution-logs" title="Permanent link">&para;</a></h2>
+<p>By default, <code>hrun</code> will not print details of request and response data.</p>
+<div class="codehilite"><pre><span></span><code>$ hrun examples/postman_echo/request_methods/request_with_functions.yml 
+2020-06-17 15:39:41.041 | INFO     | httprunner.make:make_testcase:317 - start to make testcase: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/request_methods/request_with_functions.yml
+2020-06-17 15:39:41.042 | INFO     | httprunner.make:make_testcase:390 - generated testcase: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/request_methods/request_with_functions_test.py
+2020-06-17 15:39:41.042 | INFO     | httprunner.make:format_pytest_with_black:154 - format pytest cases with black ...
+reformatted /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/request_methods/request_with_functions_test.py
+All done! ✨ 🍰 ✨
+1 file reformatted, 1 file left unchanged.
+2020-06-17 15:39:41.315 | INFO     | httprunner.cli:main_run:56 - start to run tests with pytest. HttpRunner version: 3.0.13
+====================================================================== test session starts ======================================================================
+platform darwin -- Python 3.7.5, pytest-5.4.2, py-1.8.1, pluggy-0.13.1
+rootdir: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner
+plugins: metadata-1.9.0, allure-pytest-2.8.16, html-2.1.1
+collected 1 item                                                                                                                                                
+
+examples/postman_echo/request_methods/request_with_functions_test.py .                                                                                    [100%]
+
+======================================================================= 1 passed in 2.98s =======================================================================
+</code></pre></div>
+
+
+<p>If you want to view details of request &amp; response data, extraction and validation, you can add an argument <code>-s</code> (shortcut for <code>--capture=no</code>). </p>
+<div class="codehilite"><pre><span></span><code>$ hrun -s examples/postman_echo/request_methods/request_with_functions.yml
+2020-06-17 15:42:54.369 | INFO     | httprunner.make:make_testcase:317 - start to make testcase: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/request_methods/request_with_functions.yml
+2020-06-17 15:42:54.369 | INFO     | httprunner.make:make_testcase:390 - generated testcase: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/request_methods/request_with_functions_test.py
+2020-06-17 15:42:54.370 | INFO     | httprunner.make:format_pytest_with_black:154 - format pytest cases with black ...
+reformatted /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/request_methods/request_with_functions_test.py
+All done! ✨ 🍰 ✨
+1 file reformatted, 1 file left unchanged.
+2020-06-17 15:42:54.699 | INFO     | httprunner.cli:main_run:56 - start to run tests with pytest. HttpRunner version: 3.0.13
+====================================================================== test session starts ======================================================================
+platform darwin -- Python 3.7.5, pytest-5.4.2, py-1.8.1, pluggy-0.13.1
+rootdir: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner
+plugins: metadata-1.9.0, allure-pytest-2.8.16, html-2.1.1
+collected 1 item                                                                                                                                                
+
+examples/postman_echo/request_methods/request_with_functions_test.py 2020-06-17 15:42:55.017 | INFO     | httprunner.runner:test_start:435 - Start to run testcase: request methods testcase with functions, TestCase ID: cc404c49-000f-485c-b4c1-ac3367a053fe
+2020-06-17 15:42:55.018 | INFO     | httprunner.runner:__run_step:278 - run step begin: get with params &gt;&gt;&gt;&gt;&gt;&gt;
+2020-06-17 15:42:56.326 | DEBUG    | httprunner.client:log_print:40 - 
+================== request details ==================
+method   : GET
+url      : https://postman-echo.com/get?foo1=bar11&amp;foo2=bar21&amp;sum_v=3
+headers  : {
+    &quot;User-Agent&quot;: &quot;HttpRunner/3.0.13&quot;,
+    &quot;Accept-Encoding&quot;: &quot;gzip, deflate&quot;,
+    &quot;Accept&quot;: &quot;*/*&quot;,
+    &quot;Connection&quot;: &quot;keep-alive&quot;,
+    &quot;HRUN-Request-ID&quot;: &quot;HRUN-cc404c49-000f-485c-b4c1-ac3367a053fe-775018&quot;,
+    &quot;Content-Length&quot;: &quot;2&quot;,
+    &quot;Content-Type&quot;: &quot;application/json&quot;
+}
+cookies  : {}
+body     : {}
+
+2020-06-17 15:42:56.327 | DEBUG    | httprunner.client:log_print:40 - 
+================== response details ==================
+status_code : 200
+headers  : {
+    &quot;Date&quot;: &quot;Wed, 17 Jun 2020 07:42:56 GMT&quot;,
+    &quot;Content-Type&quot;: &quot;application/json; charset=utf-8&quot;,
+    &quot;Content-Length&quot;: &quot;477&quot;,
+    &quot;Connection&quot;: &quot;keep-alive&quot;,
+    &quot;ETag&quot;: &quot;W/\&quot;1dd-2JtBYPcnh8D6fqLz8KFn16Oq1R0\&quot;&quot;,
+    &quot;Vary&quot;: &quot;Accept-Encoding&quot;,
+    &quot;set-cookie&quot;: &quot;sails.sid=s%3A6J_EtUk3nkL_C2xtx-NtAXrlA5wPxEgk.gIO2yBbtvGWIIgQ%2F2mZhMkU669G3F60cvLAPWbwyoGM; Path=/; HttpOnly&quot;
+}
+cookies  : {
+    &quot;sails.sid&quot;: &quot;s%3A6J_EtUk3nkL_C2xtx-NtAXrlA5wPxEgk.gIO2yBbtvGWIIgQ%2F2mZhMkU669G3F60cvLAPWbwyoGM&quot;
+}
+encoding : utf-8
+content_type : application/json; charset=utf-8
+body     : {
+    &quot;args&quot;: {
+        &quot;foo1&quot;: &quot;bar11&quot;,
+        &quot;foo2&quot;: &quot;bar21&quot;,
+        &quot;sum_v&quot;: &quot;3&quot;
+    },
+    &quot;headers&quot;: {
+        &quot;x-forwarded-proto&quot;: &quot;https&quot;,
+        &quot;x-forwarded-port&quot;: &quot;443&quot;,
+        &quot;host&quot;: &quot;postman-echo.com&quot;,
+        &quot;x-amzn-trace-id&quot;: &quot;Root=1-5ee9c980-d8e98cc72a26ef24f5819ce3&quot;,
+        &quot;content-length&quot;: &quot;2&quot;,
+        &quot;user-agent&quot;: &quot;HttpRunner/3.0.13&quot;,
+        &quot;accept-encoding&quot;: &quot;gzip, deflate&quot;,
+        &quot;accept&quot;: &quot;*/*&quot;,
+        &quot;hrun-request-id&quot;: &quot;HRUN-cc404c49-000f-485c-b4c1-ac3367a053fe-775018&quot;,
+        &quot;content-type&quot;: &quot;application/json&quot;
+    },
+    &quot;url&quot;: &quot;https://postman-echo.com/get?foo1=bar11&amp;foo2=bar21&amp;sum_v=3&quot;
+}
+
+2020-06-17 15:42:56.328 | INFO     | httprunner.client:request:203 - status_code: 200, response_time(ms): 1307.33 ms, response_length: 477 bytes
+2020-06-17 15:42:56.328 | INFO     | httprunner.response:extract:152 - extract mapping: {&#39;foo3&#39;: &#39;bar21&#39;}
+2020-06-17 15:42:56.328 | INFO     | httprunner.response:validate:209 - assert status_code equal 200(int)       ==&gt; pass
+2020-06-17 15:42:56.329 | INFO     | httprunner.response:validate:209 - assert body.args.foo1 equal bar11(str)  ==&gt; pass
+2020-06-17 15:42:56.329 | INFO     | httprunner.response:validate:209 - assert body.args.sum_v equal 3(str)     ==&gt; pass
+2020-06-17 15:42:56.329 | INFO     | httprunner.response:validate:209 - assert body.args.foo2 equal bar21(str)  ==&gt; pass
+2020-06-17 15:42:56.330 | INFO     | httprunner.runner:__run_step:290 - run step end: get with params &lt;&lt;&lt;&lt;&lt;&lt;
+
+&lt;Omit&gt;
+
+2020-06-17 15:42:57.019 | INFO     | httprunner.runner:test_start:444 - generate testcase log: /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/logs/cc404c49-000f-485c-b4c1-ac3367a053fe.run.log
+.
+
+======================================================================= 1 passed in 2.13s =======================================================================
+</code></pre></div>
+
+
+<p>Also, an execution log file will be generated for each testcase, located in <code>&lt;ProjectRootDir&gt;/logs/TestCaseID.run.log</code>.</p>
+<h2 id="testcase-id-request-id">TestCase ID &amp; Request ID<a class="headerlink" href="#testcase-id-request-id" title="Permanent link">&para;</a></h2>
+<p>For the sake of troubleshooting, each testcase will generate a unique ID (uuid4), and each request headers will be added a <code>HRUN-Request-ID</code> field with testcase ID automatically.</p>
+<div class="codehilite"><pre><span></span><code>HRUN-Request-ID = &quot;HRUN-&lt;TestCase ID&gt;-&lt;timestamp_six_digits&gt;&quot;
+timestamp_six_digits = str(int(time.time() * 1000))[-6:])
+</code></pre></div>
+
+
+<p>In other words, all requests in one testcase will have the same <code>HRUN-Request-ID</code> prefix, and each request will have a unique <code>HRUN-Request-ID</code> suffix.</p>
+<h2 id="arguments-for-v2x-compatibility">arguments for v2.x compatibility<a class="headerlink" href="#arguments-for-v2x-compatibility" title="Permanent link">&para;</a></h2>
+<p>Besides all the arguments of <code>pytest</code>, <code>hrun</code> also has several other arguments to keep compatibility with HttpRunner v2.x.</p>
+<ul>
+<li><code>--failfast</code>: has no effect, this argument will be removed automatically</li>
+<li><code>--report-file</code>: specify html report file path, this argument will be replaced with <code>--html --self-contained-html</code> and generate html report with <code>pytest-html</code> plugin</li>
+<li><code>--save-tests</code>: if set, HttpRunner v3.x will create a pytest conftest.py file containing session fixture to aggregate each testcase's summary and dumps to summary.json</li>
+</ul>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../write_testcase/" title="Write Testcase" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  上一页
+                </span>
+                Write Testcase
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../testing_report/" title="Testing Report" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  下一页
+                </span>
+                Testing Report
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2017 - 2020 debugtalk
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+        
+        
+      
+      <a href="https://debugtalk.com" target="_blank" rel="noopener" title="debugtalk.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/httprunner" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../../assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "\u590d\u5236", "clipboard.copied": "\u5df2\u590d\u5236", "search.config.lang": "ja", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\uff0c\\u3002]+", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: [],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.27c6a5e6.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

@@ -497,6 +497,20 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#call" class="md-nav__link">
+    .call
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export" class="md-nav__link">
+    .export
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -511,6 +525,30 @@
   
 </nav>
     
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../run_testcase/" title="Run Testcase" class="md-nav__link">
+      Run Testcase
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../testing_report/" title="Testing Report" class="md-nav__link">
+      Testing Report
+    </a>
   </li>
 
         
@@ -762,6 +800,20 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#call" class="md-nav__link">
+    .call
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export" class="md-nav__link">
+    .export
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -932,6 +984,67 @@
 <p>The argument <code>name</code> of RunTestCase is used to specify teststep name, which will be displayed in execution log and test report.</p>
 <h4 id="with_variables_1">.with_variables<a class="headerlink" href="#with_variables_1" title="Permanent link">&para;</a></h4>
 <p>Same with RunRequest's <code>.with_variables</code>.</p>
+<h4 id="call">.call<a class="headerlink" href="#call" title="Permanent link">&para;</a></h4>
+<p>Specify referenced testcase class.</p>
+<h4 id="export">.export<a class="headerlink" href="#export" title="Permanent link">&para;</a></h4>
+<p>Specify session variable names to export from referenced testcase. The exported variables can be referenced by subsequent test steps.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+
+<span class="kn">from</span> <span class="nn">httprunner</span> <span class="kn">import</span> <span class="n">HttpRunner</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">Step</span><span class="p">,</span> <span class="n">RunRequest</span><span class="p">,</span> <span class="n">RunTestCase</span>
+
+<span class="kn">from</span> <span class="nn">examples.postman_echo.request_methods.request_with_functions_test</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TestCaseRequestWithFunctions</span> <span class="k">as</span> <span class="n">RequestWithFunctions</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TestCaseRequestWithTestcaseReference</span><span class="p">(</span><span class="n">HttpRunner</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Config</span><span class="p">(</span><span class="s2">&quot;request methods testcase: reference testcase&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">variables</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="s2">&quot;foo1&quot;</span><span class="p">:</span> <span class="s2">&quot;testsuite_config_bar1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;expect_foo1&quot;</span><span class="p">:</span> <span class="s2">&quot;testsuite_config_bar1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;expect_foo2&quot;</span><span class="p">:</span> <span class="s2">&quot;config_bar2&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">base_url</span><span class="p">(</span><span class="s2">&quot;https://postman-echo.com&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">teststeps</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">RunTestCase</span><span class="p">(</span><span class="s2">&quot;request with functions&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_variables</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span><span class="s2">&quot;foo1&quot;</span><span class="p">:</span> <span class="s2">&quot;testcase_ref_bar1&quot;</span><span class="p">,</span> <span class="s2">&quot;expect_foo1&quot;</span><span class="p">:</span> <span class="s2">&quot;testcase_ref_bar1&quot;</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">RequestWithFunctions</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="s2">&quot;foo3&quot;</span><span class="p">])</span>
+        <span class="p">),</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">RunRequest</span><span class="p">(</span><span class="s2">&quot;post form data&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_variables</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;foo1&quot;</span><span class="p">:</span> <span class="s2">&quot;bar1&quot;</span><span class="p">})</span>
+            <span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/post&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">with_headers</span><span class="p">(</span>
+                <span class="o">**</span><span class="p">{</span>
+                    <span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="s2">&quot;HttpRunner/${get_httprunner_version()}&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">with_data</span><span class="p">(</span><span class="s2">&quot;foo1=$foo1&amp;foo2=$foo3&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">assert_equal</span><span class="p">(</span><span class="s2">&quot;status_code&quot;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">assert_equal</span><span class="p">(</span><span class="s2">&quot;body.form.foo1&quot;</span><span class="p">,</span> <span class="s2">&quot;bar1&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">assert_equal</span><span class="p">(</span><span class="s2">&quot;body.form.foo2&quot;</span><span class="p">,</span> <span class="s2">&quot;bar21&quot;</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">TestCaseRequestWithTestcaseReference</span><span class="p">()</span><span class="o">.</span><span class="n">test_start</span><span class="p">()</span>
+</code></pre></div>
                 
               
               
@@ -965,13 +1078,13 @@
           </a>
         
         
-          <a href="../../sponsors/" title="Sponsors" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../run_testcase/" title="Run Testcase" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   下一页
                 </span>
-                Sponsors
+                Run Testcase
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

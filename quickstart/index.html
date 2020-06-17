@@ -273,6 +273,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user/run_testcase/" title="Run Testcase" class="md-nav__link">
+      Run Testcase
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user/testing_report/" title="Testing Report" class="md-nav__link">
+      Testing Report
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -319,65 +343,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
-      目录
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#write-the-first-test-case" class="md-nav__link">
-    Write the first test case
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-test-cases" class="md-nav__link">
-    Run test cases
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-test-case-correlation" class="md-nav__link">
-    Optimize test case: correlation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-test-case-parameterization" class="md-nav__link">
-    Optimize test case: parameterization
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optimize-test-case-overall-config-block" class="md-nav__link">
-    Optimize test case: overall config block
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-test-cases-and-generate-report" class="md-nav__link">
-    Run test cases and generate report
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#further-more" class="md-nav__link">
-    Further more
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -394,260 +359,6 @@
                 
                 <h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
 <p>First of all, remember HttpRunner is a simple yet powerful HTTP(S) testing framework. This document will help you to learn HttpRunner in 10 minutes.</p>
-<h2 id="write-the-first-test-case">Write the first test case<a class="headerlink" href="#write-the-first-test-case" title="Permanent link">&para;</a></h2>
-<p>Open your favorite text editor and you can write test cases like this.</p>
-<div class="codehilite"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">get token</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/get-token</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">user_agent</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">iOS/10.3</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9TN6O2Bn1vzfybF</span>
-            <span class="nt">os_platform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ios</span>
-            <span class="nt">app_version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.8.6</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">sign</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">19067cf712265eb5426db8d3664026c1ccea02b9</span>
-
-<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create user which does not exist</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/users/1000</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9TN6O2Bn1vzfybF</span>
-            <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">F8prvGryC5beBr4g</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;user1&quot;</span>
-            <span class="nt">password</span><span class="p">:</span> <span class="s">&quot;123456&quot;</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">201</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.success&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">true</span><span class="p p-Indicator">}</span>
-</code></pre></div>
-
-
-<p>As you see, each API request is described in a <code>test</code> block. And in the <code>request</code> field, it describes the detail of HTTP request, includes url, method, headers and data, which are in line with the captured traffic.</p>
-<p>You may wonder why we use the <code>json</code> field other than <code>data</code>. That's because the post data is in <code>JSON</code> format, when we use <code>json</code> to indicate the post data, we do not have to specify <code>Content-Type</code> to be <code>application/json</code> in request headers or dump data before request.</p>
-<p>Have you recalled some familiar scenes?</p>
-<p>Yes! That's what we did in <a href="requests.request"><code>requests.request</code></a>! Since <code>HttpRunner</code> takes full reuse of <a href="http://docs.python-requests.org/en/master/"><code>Requests</code></a>, it inherits all powerful features of <a href="http://docs.python-requests.org/en/master/"><code>Requests</code></a>, and we can handle HTTP request as the way we do before.</p>
-<h2 id="run-test-cases">Run test cases<a class="headerlink" href="#run-test-cases" title="Permanent link">&para;</a></h2>
-<p>Suppose the test case file is named as <a href="../examples/quickstart-demo-rev-0.yml"><code>quickstart-demo-rev-0.yml</code></a> and is located in <code>examples</code> folder, then we can run it in this way.</p>
-<div class="codehilite"><pre><span></span><code>ate examples/demo-rev-0.yml
-Running tests...
-----------------------------------------------------------------------
- get token ... INFO:root: Start to POST http://127.0.0.1:5000/api/get-token
-INFO:root: status_code: 200, response_time: 48 ms, response_length: 46 bytes
-OK (0.049669)s
- create user which does not exist ... INFO:root: Start to POST http://127.0.0.1:5000/api/users/1000
-ERROR:root: Failed to POST http://127.0.0.1:5000/api/users/1000! exception msg: 403 Client Error: FORBIDDEN for url: http://127.0.0.1:5000/api/users/1000
-ERROR (0.006471)s
-----------------------------------------------------------------------
-Ran 2 tests in 0.056s
-
-FAILED
- (Errors=1)
-</code></pre></div>
-
-
-<p>Oops! The second test case failed with 403 status code.</p>
-<p>That is because we request with the same data as we captured in <code>Charles Proxy</code>, while the <code>token</code> is generated dynamically, thus the recorded data can not be be used twice directly.</p>
-<h2 id="optimize-test-case-correlation">Optimize test case: correlation<a class="headerlink" href="#optimize-test-case-correlation" title="Permanent link">&para;</a></h2>
-<p>To fix this problem, we should correlate <code>token</code> field in the second API test case, which is also called <code>correlation</code>.</p>
-<div class="codehilite"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">get token</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/get-token</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">user_agent</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">iOS/10.3</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9TN6O2Bn1vzfybF</span>
-            <span class="nt">os_platform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ios</span>
-            <span class="nt">app_version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2.8.6</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">sign</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">19067cf712265eb5426db8d3664026c1ccea02b9</span>
-    <span class="nt">extract</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">content.token</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">200</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.token&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;len_eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">16</span><span class="p p-Indicator">}</span>
-
-<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create user which does not exist</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/users/1000</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9TN6O2Bn1vzfybF</span>
-            <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$token</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;user1&quot;</span>
-            <span class="nt">password</span><span class="p">:</span> <span class="s">&quot;123456&quot;</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">201</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.success&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">true</span><span class="p p-Indicator">}</span>
-</code></pre></div>
-
-
-<p>As you see, the <code>token</code> field is no longer hardcoded, instead it is extracted from the first API request with <code>extract</code> mechanism. In the meanwhile, it is assigned to <code>token</code> variable, which can be referenced by the subsequent API requests.</p>
-<p>Now we save the test cases to <a href="../examples/quickstart-demo-rev-1.yml"><code>quickstart-demo-rev-1.yml</code></a> and rerun it, and we will find that both API requests to be successful.</p>
-<h2 id="optimize-test-case-parameterization">Optimize test case: parameterization<a class="headerlink" href="#optimize-test-case-parameterization" title="Permanent link">&para;</a></h2>
-<p>Let's look back to our test set <code>quickstart-demo-rev-1.yml</code>, and we can see the <code>device_sn</code> field is still hardcoded. This may be quite different from the actual scenarios.</p>
-<p>In actual scenarios, each user's <code>device_sn</code> is different, so we should parameterize the request parameters, which is also called <code>parameterization</code>. In the meanwhile, the <code>sign</code> field is calculated with other header fields, thus it may change significantly if any header field changes slightly.</p>
-<p>However, the test cases are only <code>YAML</code> documents, it is impossible to generate parameters dynamically in such text. Fortunately, we can combine <code>Python</code> scripts with <code>YAML/JSON</code> test cases in <code>HttpRunner</code>.</p>
-<p>To achieve this goal, we can utilize <code>debugtalk.py</code> plugin and <code>variables</code> mechanisms.</p>
-<p>To be specific, we can create a Python file (<code>examples/debugtalk.py</code>) and implement the related algorithm in it. The <code>debugtalk.py</code> file can not only be located beside <code>YAML/JSON</code> testcase file, but also can be in any upward recursive folder. Since we want <code>debugtalk.py</code> to be importable, we should put a <code>__init__.py</code> in its folder to make it as a Python module.</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">hashlib</span>
-<span class="kn">import</span> <span class="nn">hmac</span>
-<span class="kn">import</span> <span class="nn">random</span>
-<span class="kn">import</span> <span class="nn">string</span>
-
-<span class="n">SECRET_KEY</span> <span class="o">=</span> <span class="s2">&quot;DebugTalk&quot;</span>
-
-<span class="k">def</span> <span class="nf">get_sign</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="n">content</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
-    <span class="n">sign_key</span> <span class="o">=</span> <span class="n">SECRET_KEY</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
-    <span class="n">sign</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">sign_key</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">sign</span>
-
-<span class="k">def</span> <span class="nf">gen_random_string</span><span class="p">(</span><span class="n">str_len</span><span class="p">):</span>
-    <span class="n">random_char_list</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">str_len</span><span class="p">):</span>
-        <span class="n">random_char</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span>
-        <span class="n">random_char_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random_char</span><span class="p">)</span>
-
-    <span class="n">random_string</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random_char_list</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">random_string</span>
-</code></pre></div>
-
-
-<p>And then, we can revise our demo test case and reference the functions. Suppose the revised file named <a href="../examples/quickstart-demo-rev-2.yml"><code>quickstart-demo-rev-2.yml</code></a>.</p>
-<div class="codehilite"><pre><span></span><code><span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">get token</span>
-    <span class="nt">variables</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">user_agent</span><span class="p">:</span> <span class="s">&#39;iOS/10.3&#39;</span>
-        <span class="p p-Indicator">-</span> <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${gen_random_string(15)}</span>
-        <span class="p p-Indicator">-</span> <span class="nt">os_platform</span><span class="p">:</span> <span class="s">&#39;ios&#39;</span>
-        <span class="p p-Indicator">-</span> <span class="nt">app_version</span><span class="p">:</span> <span class="s">&#39;2.8.6&#39;</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/get-token</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">user_agent</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$user_agent</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$device_sn</span>
-            <span class="nt">os_platform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$os_platform</span>
-            <span class="nt">app_version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$app_version</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">sign</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${get_sign($user_agent, $device_sn, $os_platform, $app_version)}</span>
-    <span class="nt">extract</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">content.token</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">200</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.token&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;len_eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">16</span><span class="p p-Indicator">}</span>
-
-<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create user which does not exist</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000/api/users/1000</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$device_sn</span>
-            <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$token</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;user1&quot;</span>
-            <span class="nt">password</span><span class="p">:</span> <span class="s">&quot;123456&quot;</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">201</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.success&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">true</span><span class="p p-Indicator">}</span>
-</code></pre></div>
-
-
-<p>In this revised test case, <code>variable reference</code> and <code>function invoke</code> mechanisms are both used.</p>
-<p>To make fields like <code>device_sn</code> can be used more than once, we bind values to variables in <code>variables</code> block. When we bind variables, we can not only bind exact value to a variable name, but also can call a function and bind the evaluated value to it.</p>
-<p>When we want to reference a variable in the test case, we can do this with a escape character <code>$</code>. For example, <code>$user_agent</code> will not be taken as a normal string, and <code>HttpRunner</code> will consider it as a variable named <code>user_agent</code>, search and return its binding value.</p>
-<p>When we want to reference a function, we shall use another escape character <code>${}</code>. Any content in <code>${}</code> will be considered as function calling, so we should guarantee that we call functions in the right way. At the same time, variables can also be referenced as parameters of function.</p>
-<h2 id="optimize-test-case-overall-config-block">Optimize test case: overall config block<a class="headerlink" href="#optimize-test-case-overall-config-block" title="Permanent link">&para;</a></h2>
-<p>There is still one issue unsolved.</p>
-<p>The <code>device_sn</code> field is defined in the first API test case, thus it may be impossible to reference it in other test cases. Context separation is a well-designed mechanism, and we should obey this good practice.</p>
-<p>To handle this case, overall <code>config</code> block is supported in <code>HttpRunner</code>. If we define variables or import functions in <code>config</code> block, these variables and functions will become global and can be referenced in the whole test set.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># examples/quickstart-demo-rev-3.yml</span>
-<span class="p p-Indicator">-</span> <span class="nt">config</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;smoketest</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">CRUD</span><span class="nv"> </span><span class="s">users.&quot;</span>
-    <span class="nt">variables</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${gen_random_string(15)}</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">base_url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:5000</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">device_sn</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$device_sn</span>
-
-<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">get token</span>
-    <span class="nt">variables</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">user_agent</span><span class="p">:</span> <span class="s">&#39;iOS/10.3&#39;</span>
-        <span class="p p-Indicator">-</span> <span class="nt">os_platform</span><span class="p">:</span> <span class="s">&#39;ios&#39;</span>
-        <span class="p p-Indicator">-</span> <span class="nt">app_version</span><span class="p">:</span> <span class="s">&#39;2.8.6&#39;</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/api/get-token</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">user_agent</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$user_agent</span>
-            <span class="nt">os_platform</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$os_platform</span>
-            <span class="nt">app_version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$app_version</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">sign</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${get_sign($user_agent, $device_sn, $os_platform, $app_version)}</span>
-    <span class="nt">extract</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">content.token</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">200</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.token&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;len_eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">16</span><span class="p p-Indicator">}</span>
-
-<span class="p p-Indicator">-</span> <span class="nt">test</span><span class="p">:</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">create user which does not exist</span>
-    <span class="nt">request</span><span class="p">:</span>
-        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/api/users/1000</span>
-        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">POST</span>
-        <span class="nt">headers</span><span class="p">:</span>
-            <span class="nt">token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">$token</span>
-        <span class="nt">json</span><span class="p">:</span>
-            <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;user1&quot;</span>
-            <span class="nt">password</span><span class="p">:</span> <span class="s">&quot;123456&quot;</span>
-    <span class="nt">validate</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;status_code&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">201</span><span class="p p-Indicator">}</span>
-        <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="s">&quot;check&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;content.success&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;comparator&quot;</span><span class="p p-Indicator">:</span> <span class="s">&quot;eq&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;expect&quot;</span><span class="p p-Indicator">:</span> <span class="nv">true</span><span class="p p-Indicator">}</span>
-</code></pre></div>
-
-
-<p>As you see, we define variables in <code>config</code> block. Also, we can set <code>base_url</code> in <code>config</code> block, thereby we can specify relative path in each API request url. Besides, we can also set common fields in <code>config</code> <code>request</code>, such as <code>device_sn</code> in headers.</p>
-<p>Until now, the test cases are finished and each detail is handled properly.</p>
-<h2 id="run-test-cases-and-generate-report">Run test cases and generate report<a class="headerlink" href="#run-test-cases-and-generate-report" title="Permanent link">&para;</a></h2>
-<p>Finally, let's run test set <a href="../examples/quickstart-demo-rev-3.yml"><code>quickstart-demo-rev-3.yml</code></a> once more.</p>
-<div class="codehilite"><pre><span></span><code>$ ate examples/quickstart-demo-rev-4.yml
-Running tests...
-----------------------------------------------------------------------
- get token ... INFO:root: Start to POST http://127.0.0.1:5000/api/get-token
-INFO:root: status_code: 200, response_time: 33 ms, response_length: 46 bytes
-OK (0.037027)s
- create user which does not exist ... INFO:root: Start to POST http://127.0.0.1:5000/api/users/1000
-INFO:root: status_code: 201, response_time: 15 ms, response_length: 54 bytes
-OK (0.016414)s
-----------------------------------------------------------------------
-Ran 2 tests in 0.054s
-OK
-
-Generating HTML reports...
-Template is not specified, load default template instead.
-Reports generated: /Users/Leo/MyProjects/HttpRunner/reports/quickstart-demo-rev-0/2017-08-01-16-51-51.html
-</code></pre></div>
-
-
-<p>Great! The test case runs successfully and generates a <code>HTML</code> test report.</p>
-<p><img alt="" src="images/ate-quickstart-demo-report.jpg" /></p>
-<h2 id="further-more">Further more<a class="headerlink" href="#further-more" title="Permanent link">&para;</a></h2>
-<p>This is just a starting point, see the <code>advanced guide</code> for the advanced features.</p>
-<ul>
-<li>templating</li>
-<li><a href="write-testcases.md#extraction-and-validation"><code>data extraction and validation</code></a></li>
-<li><a href="write-testcases.md#comparator"><code>comparator</code></a></li>
-</ul>
                 
               
               
