@@ -110,6 +110,13 @@ class RequestStat(BaseModel):
     elapsed_ms: float = 0
 
 
+class AddressData(BaseModel):
+    client_ip: Text = "N/A"
+    client_port: int = 0
+    server_ip: Text = "N/A"
+    server_port: int = 0
+
+
 class RequestData(BaseModel):
     method: MethodEnum = MethodEnum.GET
     url: Url
@@ -140,6 +147,7 @@ class SessionData(BaseModel):
     # while when 30X redirect occurs, req_resps will contain multiple request & response
     req_resps: List[ReqRespData] = []
     stat: RequestStat = RequestStat()
+    address: AddressData = AddressData()
     validators: Dict = {}
 
 
