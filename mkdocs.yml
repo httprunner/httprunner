@@ -57,5 +57,6 @@ nav:
         - Scaffold: user/scaffold.md
         - Record & Generate testcase: user/gen_tests.md
         - Write Testcase: user/write_testcase.md
+        - Run Testcase: user/run_testcase.md
     - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md
