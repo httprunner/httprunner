@@ -2,6 +2,10 @@
 
 ## 3.0.13 (2020-06-15)
 
+**Added**
+
+- feat: log client/server IP and port
+
 **Fixed**
 
 - fix: avoid '.csv' been converted to '_csv'
