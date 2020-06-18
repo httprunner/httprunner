@@ -32,6 +32,8 @@ jobs:
         poetry run hrun
         poetry run har2case
         poetry run coverage run --source=httprunner -m pytest tests
+    - name: coverage report
+      run: |
         poetry run coverage xml
         poetry run coverage report -m
     - name: Codecov

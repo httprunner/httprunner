@@ -53,5 +53,11 @@ extra:
 nav:
     - Introduction: index.md
     - Installation: installation.md
+    - User Guide:
+        - Scaffold: user/scaffold.md
+        - Record & Generate testcase: user/gen_tests.md
+        - Write Testcase: user/write_testcase.md
+        - Run Testcase: user/run_testcase.md
+        - Testing Report: user/testing_report.md
     - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md

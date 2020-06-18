@@ -27,6 +27,10 @@ class TeardownHooksFailure(MyBaseFailure):
     pass
 
 
+class NetworkFailure(MyBaseFailure):
+    pass
+
+
 """ error type exceptions
     these exceptions will mark test as error
 """

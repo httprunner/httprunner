@@ -14,7 +14,7 @@ class TestLoader(unittest.TestCase):
         self.assertEqual(len(testcase_obj.teststeps), 3)
 
     def test_load_json_file_file_format_error(self):
-        json_tmp_file = "/tmp/tmp.json"
+        json_tmp_file = "tmp.json"
         # create empty file
         with open(json_tmp_file, "w") as f:
             f.write("")
@@ -111,7 +111,7 @@ class TestLoader(unittest.TestCase):
         start_path = os.path.join(os.getcwd(), "examples", "httpbin")
         self.assertEqual(
             loader.locate_file(start_path, "debugtalk.py"),
-            os.path.join(os.getcwd(), "examples/httpbin/debugtalk.py"),
+            os.path.join(os.getcwd(), "examples", "httpbin", "debugtalk.py"),
         )
         self.assertEqual(
             loader.locate_file("examples/httpbin/", "debugtalk.py"),
@@ -119,5 +119,5 @@ class TestLoader(unittest.TestCase):
         )
         self.assertEqual(
             loader.locate_file("examples/httpbin/", "debugtalk.py"),
-            os.path.join(os.getcwd(), "examples/httpbin/debugtalk.py"),
+            os.path.join(os.getcwd(), "examples", "httpbin", "debugtalk.py"),
         )

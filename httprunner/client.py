@@ -12,6 +12,7 @@ from requests.exceptions import (
     RequestException,
 )
 
+from httprunner.exceptions import NetworkFailure
 from httprunner.models import RequestData, ResponseData
 from httprunner.models import SessionData, ReqRespData
 from httprunner.utils import lower_dict_keys, omit_long_data
@@ -172,16 +173,31 @@ class HttpSession(requests.Session):
         # timeout default to 120 seconds
         kwargs.setdefault("timeout", 120)
 
+        # set stream to True, in order to get client/server IP/Port
+        kwargs["stream"] = True
+
         start_timestamp = time.time()
         response = self._send_request_safe_mode(method, url, **kwargs)
         response_time_ms = round((time.time() - start_timestamp) * 1000, 2)
 
-        # get the length of the content, but if the argument stream is set to True, we take
-        # the size from the content-length header, in order to not trigger fetching of the body
-        if kwargs.get("stream", False):
-            content_size = int(dict(response.headers).get("content-length") or 0)
-        else:
-            content_size = len(response.content or "")
+        try:
+            client_ip, client_port = response.raw.connection.sock.getsockname()
+            self.data.address.client_ip = client_ip
+            self.data.address.client_port = client_port
+            logger.debug(f"client IP: {client_ip}, Port: {client_port}")
+        except AttributeError as ex:
+            raise NetworkFailure(f"failed to get client address info: {ex}")
+
+        try:
+            server_ip, server_port = response.raw.connection.sock.getpeername()
+            self.data.address.server_ip = server_ip
+            self.data.address.server_port = server_port
+            logger.debug(f"server IP: {server_ip}, Port: {server_port}")
+        except AttributeError as ex:
+            raise NetworkFailure(f"failed to get server address info: {ex}")
+
+        # get length of the response content
+        content_size = int(dict(response.headers).get("content-length") or 0)
 
         # record the consumed time
         self.data.stat.response_time_ms = response_time_ms
