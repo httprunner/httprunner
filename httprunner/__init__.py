@@ -1,6 +1,7 @@
 __version__ = "3.1.0"
 __description__ = "One-stop solution for HTTP(S) testing."
 
+from httprunner.ext.locust import main_locusts  # import firstly for monkey patch if needed
 from httprunner.runner import HttpRunner
 from httprunner.testcase import Config, Step, RunRequest, RunTestCase
 

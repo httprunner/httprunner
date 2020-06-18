@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.0 (2020-06-18)
+
+**Added**
+
+- feat: integrate [locust](https://locust.io/) v1.0
+
 ## 3.0.13 (2020-06-17)
 
 **Added**
