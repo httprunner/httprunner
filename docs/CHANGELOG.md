@@ -6,6 +6,10 @@
 
 - feat: integrate [locust](https://locust.io/) v1.0
 
+**Fixed**
+
+- change: do not raise error if failed to get client/server address info
+
 ## 3.0.13 (2020-06-17)
 
 **Added**

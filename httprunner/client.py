@@ -12,7 +12,6 @@ from requests.exceptions import (
     RequestException,
 )
 
-from httprunner.exceptions import NetworkFailure
 from httprunner.models import RequestData, ResponseData
 from httprunner.models import SessionData, ReqRespData
 from httprunner.utils import lower_dict_keys, omit_long_data
@@ -186,7 +185,7 @@ class HttpSession(requests.Session):
             self.data.address.client_port = client_port
             logger.debug(f"client IP: {client_ip}, Port: {client_port}")
         except AttributeError as ex:
-            raise NetworkFailure(f"failed to get client address info: {ex}")
+            logger.warning(f"failed to get client address info: {ex}")
 
         try:
             server_ip, server_port = response.raw.connection.sock.getpeername()
@@ -194,7 +193,7 @@ class HttpSession(requests.Session):
             self.data.address.server_port = server_port
             logger.debug(f"server IP: {server_ip}, Port: {server_port}")
         except AttributeError as ex:
-            raise NetworkFailure(f"failed to get server address info: {ex}")
+            logger.warning(f"failed to get server address info: {ex}")
 
         # get length of the response content
         content_size = int(dict(response.headers).get("content-length") or 0)
