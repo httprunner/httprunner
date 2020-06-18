@@ -418,6 +418,29 @@ timestamp_six_digits = str(int(time.time() * 1000))[-6:])
 
 In other words, all requests in one testcase will have the same `HRUN-Request-ID` prefix, and each request will have a unique `HRUN-Request-ID` suffix.
 
+## Client & Server IP:PORT
+
+Sometimes, logging remote server IP and port can be great helpful for trouble shooting, especially when there are multiple servers and we want to checkout which one returns error.
+
+Since version `3.0.13`, HttpRunner will log client & server IP:Port in debug level. 
+
+```text
+2020-06-18 11:32:38.366 | INFO     | httprunner.runner:__run_step:278 - run step begin: post raw text >>>>>>
+2020-06-18 11:32:38.687 | DEBUG    | httprunner.client:request:187 - client IP: 10.90.205.63, Port: 62802
+2020-06-18 11:32:38.687 | DEBUG    | httprunner.client:request:195 - server IP: 34.233.204.163, Port: 443
+```
+
+as well as testcase summary.
+
+```text
+"address": {
+    "client_ip": "10.90.205.63",
+    "client_port": 62802,
+    "server_ip": "34.233.204.163",
+    "server_port": 443
+},
+```
+
 ## arguments for v2.x compatibility
 
 Besides all the arguments of `pytest`, `hrun` also has several other arguments to keep compatibility with HttpRunner v2.x.
