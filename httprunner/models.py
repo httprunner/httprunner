@@ -41,6 +41,7 @@ class TConfig(BaseModel):
     # teardown_hooks: Hooks = []
     export: Export = []
     path: Text = None
+    weight: int = 1
 
 
 class TRequest(BaseModel):
