@@ -67,6 +67,11 @@ def prepare_locust_tests() -> List:
 def main_locusts():
     """ locusts entrance
     """
+    from httprunner.utils import init_sentry_sdk
+    from sentry_sdk import capture_message
+    init_sentry_sdk()
+    capture_message("start to run locusts")
+
     sys.argv[0] = "locust"
     if len(sys.argv) == 1:
         sys.argv.extend(["-h"])
