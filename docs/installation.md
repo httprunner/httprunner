@@ -24,18 +24,19 @@ $ pip3 install -U git+https://github.com/httprunner/httprunner.git@master
 
 ## Check Installation
 
-When HttpRunner is installed, 4 commands will be added in your system.
+When HttpRunner is installed, 5 commands will be added in your system.
 
 - `httprunner`: main command, used for all functions
 - `hrun`: alias for `httprunner run`, used to run YAML/JSON/pytest testcases
 - `hmake`: alias for `httprunner make`, used to convert YAML/JSON testcases to pytest files
 - `har2case`: alias for `httprunner har2case`, used to convert HAR to YAML/JSON testcases
+- `locusts`: used to run load test with [locust][locust]
 
 To see `HttpRunner` version:
 
 ```text
 $ httprunner -V  # hrun -V
-3.0.10
+3.1.0
 ```
 
 To see available options, run:
@@ -60,5 +61,8 @@ optional arguments:
   -V, --version         show version
 ```
 
+> Notice: `locusts` is an individual command, for the reason to monkey patch ssl at beginning to avoid RecursionError when running locust.
+
 [PyPI]: https://pypi.python.org/pypi
 [github-actions]: https://github.com/httprunner/httprunner/actions
+[locust]: http://locust.io/
