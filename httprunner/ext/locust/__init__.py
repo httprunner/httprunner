@@ -30,6 +30,7 @@ def is_httprunner_testcase(item):
     """ check if a variable is a HttpRunner testcase class
     """
     from httprunner import HttpRunner
+
     # TODO: skip referenced testcase
     return bool(
         inspect.isclass(item)
@@ -89,6 +90,7 @@ def main_locusts():
         sys.exit(1)
 
     from httprunner.make import main_make
+
     global pytest_files
     testcase_file_path = sys.argv[testcase_index]
     pytest_files = main_make([testcase_file_path])
