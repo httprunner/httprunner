@@ -12,8 +12,7 @@ class HttpRunnerUser(HttpUser):
     def on_start(self):
         locust_tests = prepare_locust_tests()
         self.testcase_runners = [
-            testcase().with_session(self.client)
-            for testcase in locust_tests
+            testcase().with_session(self.client) for testcase in locust_tests
         ]
 
     @task

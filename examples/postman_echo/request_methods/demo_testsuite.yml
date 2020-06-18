@@ -6,6 +6,7 @@ testcases:
 -
     name: request with functions
     testcase: request_methods/request_with_functions.yml
+    weight: 2
     variables:
         foo1: testcase_ref_bar11
         expect_foo1: testcase_ref_bar11
@@ -13,6 +14,7 @@ testcases:
 -
     name: request with referenced testcase
     testcase: request_methods/request_with_testcase_reference.yml
+    weight: 3
     variables:
         foo1: testcase_ref_bar12
         expect_foo1: testcase_ref_bar12
