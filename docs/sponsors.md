@@ -4,11 +4,11 @@
 
 ## 金牌赞助商（Gold Sponsor）
 
-[<img src="/assets/hogwarts.png" alt="霍格沃兹测试学院" width="400">](https://testing-studio.com)
+[<img src="/assets/hogwarts.png" alt="霍格沃兹测试学院" width="400">](https://ceshiren.com/)
 
-> [霍格沃兹测试学院](https://testing-studio.com) 是由测吧（北京）科技有限公司与知名软件测试社区 [TesterHome](https://testerhome.com/) 合作的高端教育品牌。由 BAT 一线**测试大咖执教**，提供**实战驱动**的接口自动化测试、移动自动化测试、性能测试、持续集成与 DevOps 等技术培训，以及测试开发优秀人才内推服务。[点击学习!](https://ke.qq.com/course/254956?flowToken=1014690)
+> [霍格沃兹测试学院](https://ceshiren.com/) 是业界领先的测试开发技术高端教育品牌，隶属于测吧（北京）科技有限公司。学院课程均由 BAT 一线测试大咖执教，提供实战驱动的接口自动化测试、移动自动化测试、性能测试、持续集成与 DevOps 等技术培训，以及测试开发优秀人才内推服务。[点击学习!](https://ke.qq.com/course/254956?flowToken=1014690)
 
-霍格沃兹测试学院是 HttpRunner 的首家金牌赞助商。 
+[霍格沃兹测试学院](https://ceshiren.com/) 是 HttpRunner 的首家金牌赞助商。
 
 ### 开源服务赞助商（Open Source Sponsor）
 

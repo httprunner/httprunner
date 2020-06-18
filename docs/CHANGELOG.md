@@ -1,5 +1,20 @@
 # Release History
 
+## 3.0.13 (2020-06-17)
+
+**Added**
+
+- feat: log client/server IP and port
+
+**Fixed**
+
+- fix: avoid '.csv' been converted to '_csv'
+- fix: convert har to JSON format testcase
+- fix: missing ${var} handling in overriding config variables
+- fix: SyntaxError caused by quote in case of headers."Set-Cookie"
+- fix: FileExistsError when specified project name conflicts with existed file
+- fix: testcase path handling error when path startswith "./" or ".\\"
+
 ## 3.0.12 (2020-06-14)
 
 **Fixed**

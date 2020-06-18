@@ -1,4 +1,5 @@
 import os.path
+import subprocess
 import sys
 
 from loguru import logger
@@ -18,25 +19,40 @@ def init_parser_scaffold(subparsers):
 def create_scaffold(project_name):
     """ create scaffold with specified project name.
     """
+
+    def show_tree(prj_name):
+        try:
+            print(f"\n$ tree {prj_name} -a")
+            subprocess.run(["tree", prj_name, "-a"])
+            print("")
+        except FileNotFoundError:
+            logger.warning("tree command not exists, ignore.")
+
     if os.path.isdir(project_name):
         logger.warning(
-            f"Folder {project_name} exists, please specify a new folder name."
+            f"Project folder {project_name} exists, please specify a new project name."
         )
-        return
+        show_tree(project_name)
+        return 1
+    elif os.path.isfile(project_name):
+        logger.warning(
+            f"Project name {project_name} conflicts with existed file, please specify a new one."
+        )
+        return 1
 
-    logger.info(f"Start to create new project: {project_name}")
-    logger.info(f"CWD: {os.getcwd()}")
+    logger.info(f"Create new project: {project_name}")
+    print(f"Project Root Dir: {os.path.join(os.getcwd(), project_name)}\n")
 
     def create_folder(path):
         os.makedirs(path)
         msg = f"created folder: {path}"
-        logger.info(msg)
+        print(msg)
 
     def create_file(path, file_content=""):
         with open(path, "w") as f:
             f.write(file_content)
         msg = f"created file: {path}"
-        logger.info(msg)
+        print(msg)
 
     demo_testcase_request_content = """
 config:
@@ -178,8 +194,10 @@ def sleep(n_secs):
     create_file(os.path.join(project_name, ".env"), demo_env_content)
     create_file(os.path.join(project_name, ".gitignore"), ignore_content)
 
+    show_tree(project_name)
+    return 0
+
 
 def main_scaffold(args):
     capture_message("startproject with scaffold")
-    create_scaffold(args.project_name)
-    sys.exit(0)
+    sys.exit(create_scaffold(args.project_name))

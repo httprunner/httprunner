@@ -25,7 +25,12 @@ class TestMake(unittest.TestCase):
             testcase_python_list[0],
             os.path.join(
                 os.getcwd(),
-                "examples/postman_echo/request_methods/request_with_variables_test.py",
+                os.path.join(
+                    "examples",
+                    "postman_echo",
+                    "request_methods",
+                    "request_with_variables_test.py",
+                ),
             ),
         )
 
@@ -38,13 +43,23 @@ class TestMake(unittest.TestCase):
         self.assertIn(
             os.path.join(
                 os.getcwd(),
-                "examples/postman_echo/request_methods/request_with_testcase_reference_test.py",
+                os.path.join(
+                    "examples",
+                    "postman_echo",
+                    "request_methods",
+                    "request_with_testcase_reference_test.py",
+                ),
             ),
             testcase_python_list,
         )
 
         with open(
-            "examples/postman_echo/request_methods/request_with_testcase_reference_test.py"
+            os.path.join(
+                "examples",
+                "postman_echo",
+                "request_methods",
+                "request_with_testcase_reference_test.py",
+            )
         ) as f:
             content = f.read()
             self.assertIn(
@@ -65,7 +80,12 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         self.assertIn(
             os.path.join(
                 os.getcwd(),
-                "examples/postman_echo/request_methods/request_with_functions_test.py",
+                os.path.join(
+                    "examples",
+                    "postman_echo",
+                    "request_methods",
+                    "request_with_functions_test.py",
+                ),
             ),
             testcase_python_list,
         )
@@ -76,20 +96,42 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             (os.path.join(os.getcwd(), "mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
-            convert_testcase_path(os.path.join(os.getcwd(), "path/to/mubu.login.yml")),
-            (os.path.join(os.getcwd(), "path/to/mubu_login_test.py"), "MubuLogin"),
+            convert_testcase_path(
+                os.path.join(os.getcwd(), os.path.join("path", "to", "mubu.login.yml"))
+            ),
+            (
+                os.path.join(
+                    os.getcwd(), os.path.join("path", "to", "mubu_login_test.py")
+                ),
+                "MubuLogin",
+            ),
         )
         self.assertEqual(
-            convert_testcase_path("path/to 2/mubu.login.yml"),
-            (os.path.join(os.getcwd(), "path/to_2/mubu_login_test.py"), "MubuLogin"),
+            convert_testcase_path(os.path.join("path", "to 2", "mubu.login.yml")),
+            (
+                os.path.join(
+                    os.getcwd(), os.path.join("path", "to_2", "mubu_login_test.py")
+                ),
+                "MubuLogin",
+            ),
         )
         self.assertEqual(
-            convert_testcase_path("path/to-2/mubu login.yml"),
-            (os.path.join(os.getcwd(), "path/to_2/mubu_login_test.py"), "MubuLogin"),
+            convert_testcase_path(os.path.join("path", "to-2", "mubu login.yml")),
+            (
+                os.path.join(
+                    os.getcwd(), os.path.join("path", "to_2", "mubu_login_test.py")
+                ),
+                "MubuLogin",
+            ),
         )
         self.assertEqual(
-            convert_testcase_path("path/to.2/幕布login.yml"),
-            (os.path.join(os.getcwd(), "path/to_2/幕布login_test.py"), "幕布Login"),
+            convert_testcase_path(os.path.join("path", "to.2", "幕布login.yml")),
+            (
+                os.path.join(
+                    os.getcwd(), os.path.join("path", "to_2", "幕布login_test.py")
+                ),
+                "幕布Login",
+            ),
         )
 
     def test_make_testsuite(self):
@@ -99,14 +141,26 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         self.assertIn(
             os.path.join(
                 os.getcwd(),
-                "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_functions_test.py",
+                os.path.join(
+                    "examples",
+                    "postman_echo",
+                    "request_methods",
+                    "demo_testsuite_yml",
+                    "request_with_functions_test.py",
+                ),
             ),
             testcase_python_list,
         )
         self.assertIn(
             os.path.join(
                 os.getcwd(),
-                "examples/postman_echo/request_methods/demo_testsuite_yml/request_with_testcase_reference_test.py",
+                os.path.join(
+                    "examples",
+                    "postman_echo",
+                    "request_methods",
+                    "demo_testsuite_yml",
+                    "request_with_testcase_reference_test.py",
+                ),
             ),
             testcase_python_list,
         )
@@ -147,5 +201,5 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
         teststep_chain_style = make_teststep_chain_style(step)
         self.assertEqual(
             teststep_chain_style,
-            """Step(RunRequest("get with params").with_variables(**{'foo1': 'bar1', 'foo2': 123, 'sum_v': '${sum_two(1, 2)}'}).get("/get").with_params(**{'foo1': '$foo1', 'foo2': '$foo2', 'sum_v': '$sum_v'}).with_headers(**{'User-Agent': 'HttpRunner/${get_httprunner_version()}'}).extract().with_jmespath("body.args.foo1", "session_foo1").with_jmespath("body.args.foo2", "session_foo2").validate().assert_equal("status_code", 200).assert_equal("body.args.sum_v", "3"))""",
+            """Step(RunRequest("get with params").with_variables(**{'foo1': 'bar1', 'foo2': 123, 'sum_v': '${sum_two(1, 2)}'}).get("/get").with_params(**{'foo1': '$foo1', 'foo2': '$foo2', 'sum_v': '$sum_v'}).with_headers(**{'User-Agent': 'HttpRunner/${get_httprunner_version()}'}).extract().with_jmespath('body.args.foo1', 'session_foo1').with_jmespath('body.args.foo2', 'session_foo2').validate().assert_equal("status_code", 200).assert_equal("body.args.sum_v", "3"))""",
         )
