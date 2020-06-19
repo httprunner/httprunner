@@ -181,26 +181,23 @@ def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):
     )
 
 
-def ensure_file_path_valid(file_path: Text) -> Text:
+def ensure_file_abs_path_valid(file_abs_path: Text) -> Text:
     """ ensure file path valid for pytest, handle cases when directory name includes dot/hyphen/space
 
     Args:
-        file_path: absolute or relative file path
+        file_abs_path: absolute file path
 
     Returns:
         ensured valid absolute file path
 
     """
-    raw_file_name, file_suffix = os.path.splitext(file_path)
+    raw_abs_file_name, file_suffix = os.path.splitext(file_abs_path)
     file_suffix = file_suffix.lower()
 
-    if os.path.isabs(file_path):
-        raw_file_relative_name = raw_file_name[len(os.getcwd()) + 1 :]
-    else:
-        raw_file_relative_name = raw_file_name
+    raw_file_relative_name = raw_abs_file_name[len(os.getcwd()) + 1 :]
 
     if raw_file_relative_name == "":
-        return file_path
+        return file_abs_path
 
     path_names = []
     for name in raw_file_relative_name.rstrip(os.sep).split(os.sep):
