@@ -21,6 +21,8 @@ $ pip install locust
         sys.exit(1)
 
 
+from loguru import logger
+
 """ converted pytest files from YAML/JSON testcases
 """
 pytest_files: List = []
@@ -69,8 +71,13 @@ def main_locusts():
     """
     from httprunner.utils import init_sentry_sdk
     from sentry_sdk import capture_message
+
     init_sentry_sdk()
     capture_message("start to run locusts")
+
+    # avoid print too much log details in console
+    logger.remove()
+    logger.add(sys.stderr, level="WARNING")
 
     sys.argv[0] = "locust"
     if len(sys.argv) == 1:
