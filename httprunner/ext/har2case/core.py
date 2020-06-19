@@ -3,7 +3,9 @@ import json
 import os
 import sys
 import urllib.parse as urlparse
+from typing import Text
 
+from httprunner.compat import ensure_path_sep
 from loguru import logger
 from sentry_sdk import capture_exception
 
@@ -16,9 +18,26 @@ except ImportError:
     JSONDecodeError = ValueError
 
 
+def ensure_file_path(path: Text) -> Text:
+
+    if not path or not path.endswith(".har"):
+        logger.error("HAR file not specified.")
+        sys.exit(1)
+
+    path = ensure_path_sep(path)
+    if not os.path.isfile(path):
+        logger.error(f"HAR file not exists: {path}")
+        sys.exit(1)
+
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), path)
+
+    return path
+
+
 class HarParser(object):
     def __init__(self, har_file_path, filter_str=None, exclude_str=None):
-        self.har_file_path = har_file_path
+        self.har_file_path = ensure_file_path(har_file_path)
         self.filter_str = filter_str
         self.exclude_str = exclude_str or ""
 
@@ -346,7 +365,7 @@ class HarParser(object):
             utils.dump_yaml(testcase, output_testcase_file)
         else:
             # default to generate pytest file
-            testcase["config"]["path"] = self.har_file_path
+            testcase["config"]["path"] = os.path.join(os.getcwd(), self.har_file_path)
             output_testcase_file = make_testcase(testcase)
             format_pytest_with_black(output_testcase_file)
 

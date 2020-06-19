@@ -80,7 +80,8 @@ def __ensure_absolute(path: Text) -> Text:
         absolute_path = os.path.join(project_meta.RootDir, path)
 
     if not os.path.isfile(absolute_path):
-        raise exceptions.ParamsError(f"Invalid testcase file path: {absolute_path}")
+        logger.error(f"Invalid testcase file path: {absolute_path}")
+        sys.exit(1)
 
     return absolute_path
 
