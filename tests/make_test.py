@@ -92,7 +92,7 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
 
     def test_convert_testcase_path(self):
         self.assertEqual(
-            convert_testcase_path("mubu.login.yml"),
+            convert_testcase_path(os.path.join(os.getcwd(), "mubu.login.yml")),
             (os.path.join(os.getcwd(), "mubu_login_test.py"), "MubuLogin"),
         )
         self.assertEqual(
@@ -107,7 +107,9 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             ),
         )
         self.assertEqual(
-            convert_testcase_path(os.path.join("path", "to 2", "mubu.login.yml")),
+            convert_testcase_path(
+                os.path.join(os.getcwd(), "path", "to 2", "mubu.login.yml")
+            ),
             (
                 os.path.join(
                     os.getcwd(), os.path.join("path", "to_2", "mubu_login_test.py")
@@ -116,7 +118,9 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             ),
         )
         self.assertEqual(
-            convert_testcase_path(os.path.join("path", "to-2", "mubu login.yml")),
+            convert_testcase_path(
+                os.path.join(os.getcwd(), "path", "to-2", "mubu login.yml")
+            ),
             (
                 os.path.join(
                     os.getcwd(), os.path.join("path", "to_2", "mubu_login_test.py")
@@ -125,7 +129,9 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             ),
         )
         self.assertEqual(
-            convert_testcase_path(os.path.join("path", "to.2", "幕布login.yml")),
+            convert_testcase_path(
+                os.path.join(os.getcwd(), "path", "to.2", "幕布login.yml")
+            ),
             (
                 os.path.join(
                     os.getcwd(), os.path.join("path", "to_2", "幕布login_test.py")
