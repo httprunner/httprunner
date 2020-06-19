@@ -86,19 +86,24 @@ def __ensure_absolute(path: Text) -> Text:
     return absolute_path
 
 
-def __ensure_cwd_relative(path: Text) -> Text:
+def __convert_relative_current_working_dir(abs_path: Text) -> Text:
     """ convert absolute path to relative path, based on os.getcwd()
 
     Args:
-        path: absolute path
+        abs_path: absolute path
 
     Returns: relative path based on os.getcwd()
 
     """
-    if os.path.isabs(path):
-        return path[len(os.getcwd()) + 1 :]
-    else:
-        return path
+    cwd = os.getcwd()
+    if not abs_path.startswith(cwd):
+        raise exceptions.ParamsError(
+            f"failed to convert absolute path to relative path based on os.getcwd()\n"
+            f"abs_path: {abs_path}\n"
+            f"os.getcwd(): {cwd}"
+        )
+
+    return abs_path[len(cwd) + 1 :]
 
 
 def __convert_relative_project_root_dir(abs_path: Text) -> Text:
@@ -340,7 +345,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     testcase_abs_path = __ensure_absolute(testcase["config"]["path"])
     logger.info(f"start to make testcase: {testcase_abs_path}")
 
-    testcase_python_abs_path, testcase_cls_name = convert_testcase_path(testcase_abs_path)
+    testcase_python_abs_path, testcase_cls_name = convert_testcase_path(
+        testcase_abs_path
+    )
     if dir_path:
         testcase_python_abs_path = os.path.join(
             dir_path, os.path.basename(testcase_python_abs_path)
@@ -372,17 +379,19 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
             test_content = ensure_testcase_v3_api(test_content)
 
         test_content.setdefault("config", {})["path"] = ref_testcase_path
-        ref_testcase_python_path = make_testcase(test_content)
+        ref_testcase_python_abs_path = make_testcase(test_content)
 
         # prepare ref testcase class name
         ref_testcase_cls_name = pytest_files_made_cache_mapping[
-            ref_testcase_python_path
+            ref_testcase_python_abs_path
         ]
         teststep["testcase"] = ref_testcase_cls_name
 
         # prepare import ref testcase
-        ref_testcase_python_path = __ensure_cwd_relative(ref_testcase_python_path)
-        ref_module_name, _ = os.path.splitext(ref_testcase_python_path)
+        ref_testcase_python_relative_path = __convert_relative_current_working_dir(
+            ref_testcase_python_abs_path
+        )
+        ref_module_name, _ = os.path.splitext(ref_testcase_python_relative_path)
         ref_module_name = ref_module_name.replace(os.sep, ".")
         imports_list.append(
             f"from {ref_module_name} import TestCase{ref_testcase_cls_name} as {ref_testcase_cls_name}"
