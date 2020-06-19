@@ -162,9 +162,9 @@ def __ensure_project_meta_files(tests_path: Text) -> NoReturn:
             copyfile(dot_csv_path, dot_csv_new_path)
 
 
-def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
+def convert_testcase_path(testcase_abs_path: Text) -> Tuple[Text, Text]:
     """convert single YAML/JSON testcase path to python file"""
-    testcase_new_path = ensure_file_abs_path_valid(testcase_path)
+    testcase_new_path = ensure_file_abs_path_valid(testcase_abs_path)
 
     dir_path = os.path.dirname(testcase_new_path)
     file_name, _ = os.path.splitext(os.path.basename(testcase_new_path))
