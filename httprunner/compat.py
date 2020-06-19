@@ -206,6 +206,16 @@ def ensure_testcase_v3_api(api_content: Dict) -> Dict:
 def ensure_testcase_v3(test_content: Dict) -> Dict:
     v3_content = {"config": test_content["config"], "teststeps": []}
 
+    if "teststeps" not in test_content:
+        logger.error(f"Miss teststeps: {test_content}")
+        sys.exit(1)
+
+    if not isinstance(test_content["teststeps"], list):
+        logger.error(
+            f'teststeps should be list type, got {type(test_content["teststeps"])}: {test_content["teststeps"]}'
+        )
+        sys.exit(1)
+
     for step in test_content["teststeps"]:
         teststep = {}
 
