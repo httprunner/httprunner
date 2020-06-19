@@ -365,7 +365,7 @@ class HarParser(object):
             utils.dump_yaml(testcase, output_testcase_file)
         else:
             # default to generate pytest file
-            testcase["config"]["path"] = os.path.join(os.getcwd(), self.har_file_path)
+            testcase["config"]["path"] = self.har_file_path
             output_testcase_file = make_testcase(testcase)
             format_pytest_with_black(output_testcase_file)
 

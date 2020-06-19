@@ -46,10 +46,9 @@ import os
 import sys
 from typing import Text, NoReturn
 
-from loguru import logger
-
-from httprunner.parser import parse_variables_mapping
 from httprunner.models import TStep, FunctionsMapping
+from httprunner.parser import parse_variables_mapping
+from loguru import logger
 
 try:
     import filetype
@@ -146,7 +145,7 @@ def multipart_encoder(**kwargs):
             # value is not absolute file path, check if it is relative file path
             from httprunner.loader import load_project_meta
 
-            project_meta = load_project_meta(os.getcwd())
+            project_meta = load_project_meta("")
 
             _file_path = os.path.join(project_meta.RootDir, value)
             is_exists_file = os.path.isfile(_file_path)

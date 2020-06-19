@@ -361,7 +361,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         teststep["testcase"] = ref_testcase_cls_name
 
         # prepare import ref testcase
-        ref_testcase_python_path = ref_testcase_python_path[len(os.getcwd()) + 1 :]
+        ref_testcase_python_path = __ensure_cwd_relative(ref_testcase_python_path)
         ref_module_name, _ = os.path.splitext(ref_testcase_python_path)
         ref_module_name = ref_module_name.replace(os.sep, ".")
         imports_list.append(
