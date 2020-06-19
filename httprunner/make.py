@@ -163,12 +163,12 @@ def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
 
     dir_path = os.path.dirname(testcase_new_path)
     file_name, _ = os.path.splitext(os.path.basename(testcase_new_path))
-    testcase_python_path = os.path.join(dir_path, f"{file_name}_test.py")
+    testcase_python_abs_path = os.path.join(dir_path, f"{file_name}_test.py")
 
     # convert title case, e.g. request_with_variables => RequestWithVariables
     name_in_title_case = file_name.title().replace("_", "")
 
-    return testcase_python_path, name_in_title_case
+    return testcase_python_abs_path, name_in_title_case
 
 
 def format_pytest_with_black(*python_paths: Text) -> NoReturn:
@@ -340,18 +340,18 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     testcase_abs_path = __ensure_absolute(testcase["config"]["path"])
     logger.info(f"start to make testcase: {testcase_abs_path}")
 
-    testcase_python_path, testcase_cls_name = convert_testcase_path(testcase_abs_path)
+    testcase_python_abs_path, testcase_cls_name = convert_testcase_path(testcase_abs_path)
     if dir_path:
-        testcase_python_path = os.path.join(
-            dir_path, os.path.basename(testcase_python_path)
+        testcase_python_abs_path = os.path.join(
+            dir_path, os.path.basename(testcase_python_abs_path)
         )
 
     global pytest_files_made_cache_mapping
-    if testcase_python_path in pytest_files_made_cache_mapping:
-        return testcase_python_path
+    if testcase_python_abs_path in pytest_files_made_cache_mapping:
+        return testcase_python_abs_path
 
     config = testcase["config"]
-    config["path"] = __convert_relative_project_root_dir(testcase_python_path)
+    config["path"] = __convert_relative_project_root_dir(testcase_python_abs_path)
     config["variables"] = convert_variables(
         config.get("variables", {}), testcase_abs_path
     )
@@ -401,19 +401,19 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     content = __TEMPLATE__.render(data)
 
     # ensure new file's directory exists
-    dir_path = os.path.dirname(testcase_python_path)
+    dir_path = os.path.dirname(testcase_python_abs_path)
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-    with open(testcase_python_path, "w", encoding="utf-8") as f:
+    with open(testcase_python_abs_path, "w", encoding="utf-8") as f:
         f.write(content)
 
-    pytest_files_made_cache_mapping[testcase_python_path] = testcase_cls_name
-    __ensure_testcase_module(testcase_python_path)
+    pytest_files_made_cache_mapping[testcase_python_abs_path] = testcase_cls_name
+    __ensure_testcase_module(testcase_python_abs_path)
 
-    logger.info(f"generated testcase: {testcase_python_path}")
+    logger.info(f"generated testcase: {testcase_python_abs_path}")
 
-    return testcase_python_path
+    return testcase_python_abs_path
 
 
 def make_testsuite(testsuite: Dict) -> NoReturn:
