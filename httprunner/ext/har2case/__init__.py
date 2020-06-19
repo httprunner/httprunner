@@ -8,14 +8,9 @@ Usage:
     $ hrun har2case demo.har -2y
 
 """
-import os
-import sys
 
-from loguru import logger
-from sentry_sdk import capture_message
-
-from httprunner.compat import ensure_path_sep
 from httprunner.ext.har2case.core import HarParser
+from sentry_sdk import capture_message
 
 
 def init_har2case_parser(subparsers):
@@ -56,14 +51,6 @@ def init_har2case_parser(subparsers):
 
 def main_har2case(args):
     har_source_file = args.har_source_file
-    if not har_source_file or not har_source_file.endswith(".har"):
-        logger.error("HAR file not specified.")
-        sys.exit(1)
-
-    har_source_file = ensure_path_sep(har_source_file)
-    if not os.path.isfile(har_source_file):
-        logger.error(f"HAR file not exists: {har_source_file}")
-        sys.exit(1)
 
     if args.to_yaml:
         output_file_type = "YAML"

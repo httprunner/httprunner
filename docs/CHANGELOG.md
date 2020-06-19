@@ -9,6 +9,7 @@
 **Fixed**
 
 - change: do not raise error if failed to get client/server address info
+- fix: path handling error when har2case har file and cwd != ProjectRootDir
 
 ## 3.0.13 (2020-06-17)
 
