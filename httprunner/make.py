@@ -101,6 +101,26 @@ def __ensure_cwd_relative(path: Text) -> Text:
         return path
 
 
+def __convert_relative_project_root_dir(abs_path: Text) -> Text:
+    """ convert absolute path to relative path, based on project_meta.RootDir
+
+    Args:
+        abs_path: absolute path
+
+    Returns: relative path based on project_meta.RootDir
+
+    """
+    project_meta = load_project_meta(abs_path)
+    if not abs_path.startswith(project_meta.RootDir):
+        raise exceptions.ParamsError(
+            f"failed to convert absolute path to relative path based on project_meta.RootDir\n"
+            f"abs_path: {abs_path}\n"
+            f"project_meta.RootDir: {project_meta.RootDir}"
+        )
+
+    return abs_path[len(project_meta.RootDir) + 1 :]
+
+
 def __ensure_testcase_module(path: Text) -> NoReturn:
     """ ensure pytest files are in python module, generate __init__.py on demand
     """
@@ -331,7 +351,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         return testcase_python_path
 
     config = testcase["config"]
-    config["path"] = __ensure_cwd_relative(testcase_python_path)
+    config["path"] = __convert_relative_project_root_dir(testcase_python_path)
     config["variables"] = convert_variables(
         config.get("variables", {}), testcase_abs_path
     )
@@ -370,7 +390,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
 
     data = {
         "version": __version__,
-        "testcase_path": __ensure_cwd_relative(testcase_abs_path),
+        "testcase_path": __convert_relative_project_root_dir(testcase_abs_path),
         "class_name": f"TestCase{testcase_cls_name}",
         "imports_list": imports_list,
         "config_chain_style": make_config_chain_style(config),
