@@ -287,6 +287,7 @@ def locate_file(start_path: Text, file_name: Text) -> Text:
 
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
+        # ensure absolute
         return os.path.abspath(file_path)
 
     # system root dir

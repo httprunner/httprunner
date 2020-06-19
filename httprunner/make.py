@@ -23,7 +23,7 @@ from httprunner.loader import (
     load_project_meta,
 )
 from httprunner.response import uniform_validator
-from httprunner.utils import ensure_file_path_valid, override_config_variables
+from httprunner.utils import ensure_file_abs_path_valid, override_config_variables
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -121,7 +121,7 @@ def __ensure_project_meta_files(tests_path: Text) -> NoReturn:
     # handle cases when generated pytest directory are different from original yaml/json testcases
     debugtalk_path = project_meta.debugtalk_path
     if debugtalk_path:
-        debugtalk_new_path = ensure_file_path_valid(debugtalk_path)
+        debugtalk_new_path = ensure_file_abs_path_valid(debugtalk_path)
         if debugtalk_new_path != debugtalk_path:
             logger.info(f"copy debugtalk.py to {debugtalk_new_path}")
             copyfile(debugtalk_path, debugtalk_new_path)
@@ -131,7 +131,7 @@ def __ensure_project_meta_files(tests_path: Text) -> NoReturn:
 
     dot_csv_path = project_meta.dot_env_path
     if dot_csv_path:
-        dot_csv_new_path = ensure_file_path_valid(dot_csv_path)
+        dot_csv_new_path = ensure_file_abs_path_valid(dot_csv_path)
         if dot_csv_new_path != dot_csv_path:
             logger.info(f"copy .env to {dot_csv_new_path}")
             copyfile(dot_csv_path, dot_csv_new_path)
@@ -139,7 +139,7 @@ def __ensure_project_meta_files(tests_path: Text) -> NoReturn:
 
 def convert_testcase_path(testcase_path: Text) -> Tuple[Text, Text]:
     """convert single YAML/JSON testcase path to python file"""
-    testcase_new_path = ensure_file_path_valid(testcase_path)
+    testcase_new_path = ensure_file_abs_path_valid(testcase_path)
 
     dir_path = os.path.dirname(testcase_new_path)
     file_name, _ = os.path.splitext(os.path.basename(testcase_new_path))
@@ -410,7 +410,7 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
     logger.info(f"start to make testsuite: {testsuite_path}")
 
     # create directory with testsuite file name, put its testcases under this directory
-    testsuite_path = ensure_file_path_valid(testsuite_path)
+    testsuite_path = ensure_file_abs_path_valid(testsuite_path)
     testsuite_dir, file_suffix = os.path.splitext(testsuite_path)
     # demo_testsuite.yml => demo_testsuite_yml
     testsuite_dir = f"{testsuite_dir}_{file_suffix.lstrip('.')}"
@@ -497,6 +497,7 @@ def __make(tests_path: Text) -> NoReturn:
             )
             continue
 
+        # ensure path absolute
         test_content.setdefault("config", {})["path"] = test_file
 
         # testcase

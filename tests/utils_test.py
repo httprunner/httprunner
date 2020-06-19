@@ -5,7 +5,7 @@ import unittest
 
 from httprunner import loader, utils
 from httprunner.utils import (
-    ensure_file_path_valid,
+    ensure_file_abs_path_valid,
     ExtendJSONEncoder,
     override_config_variables,
 )
@@ -107,36 +107,36 @@ class TestUtils(unittest.TestCase):
 
     def test_ensure_file_path_valid(self):
         self.assertEqual(
-            ensure_file_path_valid(
-                os.path.join("examples", "a-b.c", "d f", "hardcode.yml")
+            ensure_file_abs_path_valid(
+                os.path.join(os.getcwd(), "examples", "a-b.c", "d f", "hardcode.yml")
             ),
             os.path.join(os.getcwd(), "examples", "a_b_c", "d_f", "hardcode.yml"),
         )
         self.assertEqual(
-            ensure_file_path_valid(os.path.join("1", "2B", "3.yml")),
+            ensure_file_abs_path_valid(os.path.join(os.getcwd(), "1", "2B", "3.yml")),
             os.path.join(os.getcwd(), "T1", "T2B", "T3.yml"),
         )
         self.assertEqual(
-            ensure_file_path_valid(
-                os.path.join("examples", "a-b.c", "2B", "hardcode.yml")
+            ensure_file_abs_path_valid(
+                os.path.join(os.getcwd(), "examples", "a-b.c", "2B", "hardcode.yml")
             ),
             os.path.join(os.getcwd(), "examples", "a_b_c", "T2B", "hardcode.yml"),
         )
         self.assertEqual(
-            ensure_file_path_valid(
-                os.path.join("examples", "postman_echo", "request_methods")
+            ensure_file_abs_path_valid(
+                os.path.join(os.getcwd(), "examples", "postman_echo", "request_methods")
             ),
             os.path.join(os.getcwd(), "examples", "postman_echo", "request_methods"),
         )
         self.assertEqual(
-            ensure_file_path_valid(os.path.join(os.getcwd(), "test.yml")),
+            ensure_file_abs_path_valid(os.path.join(os.getcwd(), "test.yml")),
             os.path.join(os.getcwd(), "test.yml"),
         )
         self.assertEqual(
-            ensure_file_path_valid(os.getcwd()), os.getcwd(),
+            ensure_file_abs_path_valid(os.getcwd()), os.getcwd(),
         )
         self.assertEqual(
-            ensure_file_path_valid(os.path.join(os.getcwd(), "demo", ".csv")),
+            ensure_file_abs_path_valid(os.path.join(os.getcwd(), "demo", ".csv")),
             os.path.join(os.getcwd(), "demo", ".csv"),
         )
 
