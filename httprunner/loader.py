@@ -432,3 +432,23 @@ def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
     project_meta.debugtalk_path = debugtalk_path
 
     return project_meta
+
+
+def convert_relative_project_root_dir(abs_path: Text) -> Text:
+    """ convert absolute path to relative path, based on project_meta.RootDir
+
+    Args:
+        abs_path: absolute path
+
+    Returns: relative path based on project_meta.RootDir
+
+    """
+    _project_meta = load_project_meta(abs_path)
+    if not abs_path.startswith(_project_meta.RootDir):
+        raise exceptions.ParamsError(
+            f"failed to convert absolute path to relative path based on project_meta.RootDir\n"
+            f"abs_path: {abs_path}\n"
+            f"project_meta.RootDir: {_project_meta.RootDir}"
+        )
+
+    return abs_path[len(_project_meta.RootDir) + 1 :]

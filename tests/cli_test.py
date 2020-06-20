@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 import unittest
 
@@ -40,10 +41,12 @@ class TestCli(unittest.TestCase):
         self.assertIn(__description__, self.captured_output.getvalue().strip())
 
     def test_debug_pytest(self):
-        exit_code = pytest.main(
-            [
-                "-s",
-                "examples/postman_echo/request_methods/request_with_testcase_reference_test.py",
-            ]
-        )
-        self.assertEqual(exit_code, 0)
+        cwd = os.getcwd()
+        try:
+            os.chdir(os.path.join(cwd, "examples", "postman_echo"))
+            exit_code = pytest.main(
+                ["-s", "request_methods/request_with_testcase_reference_test.py",]
+            )
+            self.assertEqual(exit_code, 0)
+        finally:
+            os.chdir(cwd)

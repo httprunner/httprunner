@@ -6,7 +6,7 @@ config:
 teststeps:
 -
     name: request with functions
-    testcase: 1.yml
+    testcase: a-b.c/1.yml
     export:
         - session_foo2
 -

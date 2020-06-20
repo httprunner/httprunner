@@ -6,6 +6,10 @@
 
 - feat: integrate [locust](https://locust.io/) v1.0
 
+**Changed**
+
+- change: make converted referenced pytest files always relative to ProjectRootDir
+
 **Fixed**
 
 - change: do not raise error if failed to get client/server address info
