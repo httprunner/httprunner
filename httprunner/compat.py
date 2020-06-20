@@ -6,7 +6,7 @@ import sys
 from typing import List, Dict, Text, Union, Any
 
 from httprunner import exceptions
-from httprunner.loader import load_project_meta
+from httprunner.loader import load_project_meta, convert_relative_project_root_dir
 from httprunner.parser import parse_data
 from httprunner.utils import sort_dict_by_custom_order
 from loguru import logger
@@ -340,7 +340,7 @@ def session_fixture(request):
 
     test_path = os.path.abspath(test_path)
     logs_dir_path = os.path.join(project_root_dir, "logs")
-    test_path_relative_path = test_path[len(project_root_dir) + 1 :]
+    test_path_relative_path = convert_relative_project_root_dir(test_path)
 
     if os.path.isdir(test_path):
         file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)
