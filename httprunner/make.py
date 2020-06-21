@@ -511,6 +511,11 @@ def __make(tests_path: Text) -> NoReturn:
                 f"Invalid testcase/testsuite: missing config part in testcase/testsuite.\npath: {test_file}"
             )
             continue
+        elif not isinstance(test_content["config"], Dict):
+            logger.warning(
+                f"Invalid testcase/testsuite: config should be dict type, got {test_content['config']}"
+            )
+            continue
 
         # ensure path absolute
         test_content.setdefault("config", {})["path"] = test_file
