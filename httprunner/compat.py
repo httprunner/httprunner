@@ -5,11 +5,12 @@ import os
 import sys
 from typing import List, Dict, Text, Union, Any
 
+from loguru import logger
+
 from httprunner import exceptions
 from httprunner.loader import load_project_meta, convert_relative_project_root_dir
 from httprunner.parser import parse_data
 from httprunner.utils import sort_dict_by_custom_order
-from loguru import logger
 
 
 def convert_variables(
@@ -45,7 +46,7 @@ def convert_variables(
         )
 
 
-def convert_jmespath(raw: Text) -> Text:
+def _convert_jmespath(raw: Text) -> Text:
     if not isinstance(raw, Text):
         raise exceptions.TestCaseFormatError(f"Invalid jmespath extractor: {raw}")
 
@@ -77,7 +78,7 @@ def convert_jmespath(raw: Text) -> Text:
     return ".".join(raw_list)
 
 
-def convert_extractors(extractors: Union[List, Dict]) -> Dict:
+def _convert_extractors(extractors: Union[List, Dict]) -> Dict:
     """ convert extract list(v2) to dict(v3)
 
     Args:
@@ -105,26 +106,26 @@ def convert_extractors(extractors: Union[List, Dict]) -> Dict:
         sys.exit(1)
 
     for k, v in v3_extractors.items():
-        v3_extractors[k] = convert_jmespath(v)
+        v3_extractors[k] = _convert_jmespath(v)
 
     return v3_extractors
 
 
-def convert_validators(validators: List) -> List:
+def _convert_validators(validators: List) -> List:
     for v in validators:
         if "check" in v and "expect" in v:
             # format1: {"check": "content.abc", "assert": "eq", "expect": 201}
-            v["check"] = convert_jmespath(v["check"])
+            v["check"] = _convert_jmespath(v["check"])
 
         elif len(v) == 1:
             # format2: {'eq': ['status_code', 201]}
             comparator = list(v.keys())[0]
-            v[comparator][0] = convert_jmespath(v[comparator][0])
+            v[comparator][0] = _convert_jmespath(v[comparator][0])
 
     return validators
 
 
-def sort_request_by_custom_order(request: Dict) -> Dict:
+def _sort_request_by_custom_order(request: Dict) -> Dict:
     custom_order = [
         "method",
         "url",
@@ -145,7 +146,7 @@ def sort_request_by_custom_order(request: Dict) -> Dict:
     return sort_dict_by_custom_order(request, custom_order)
 
 
-def sort_step_by_custom_order(step: Dict) -> Dict:
+def _sort_step_by_custom_order(step: Dict) -> Dict:
     custom_order = [
         "name",
         "variables",
@@ -160,7 +161,7 @@ def sort_step_by_custom_order(step: Dict) -> Dict:
     return sort_dict_by_custom_order(step, custom_order)
 
 
-def ensure_step_attachment(step: Dict) -> Dict:
+def _ensure_step_attachment(step: Dict) -> Dict:
     test_dict = {
         "name": step["name"],
     }
@@ -175,13 +176,13 @@ def ensure_step_attachment(step: Dict) -> Dict:
         test_dict["teardown_hooks"] = step["teardown_hooks"]
 
     if "extract" in step:
-        test_dict["extract"] = convert_extractors(step["extract"])
+        test_dict["extract"] = _convert_extractors(step["extract"])
 
     if "export" in step:
         test_dict["export"] = step["export"]
 
     if "validate" in step:
-        test_dict["validate"] = convert_validators(step["validate"])
+        test_dict["validate"] = _convert_validators(step["validate"])
 
     if "validate_script" in step:
         test_dict["validate_script"] = step["validate_script"]
@@ -190,12 +191,14 @@ def ensure_step_attachment(step: Dict) -> Dict:
 
 
 def ensure_testcase_v3_api(api_content: Dict) -> Dict:
-    teststep = {
-        "request": api_content["request"],
-    }
-    teststep.update(ensure_step_attachment(api_content))
+    logger.info("convert api in v2 to testcase format v3")
 
-    teststep = sort_step_by_custom_order(teststep)
+    teststep = {
+        "request": _sort_request_by_custom_order(api_content["request"]),
+    }
+    teststep.update(_ensure_step_attachment(api_content))
+
+    teststep = _sort_step_by_custom_order(teststep)
 
     return {
         "config": {"name": api_content["name"]},
@@ -204,6 +207,8 @@ def ensure_testcase_v3_api(api_content: Dict) -> Dict:
 
 
 def ensure_testcase_v3(test_content: Dict) -> Dict:
+    logger.info("ensure compatibility with testcase format v2")
+
     v3_content = {"config": test_content["config"], "teststeps": []}
 
     if "teststeps" not in test_content:
@@ -220,7 +225,7 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         teststep = {}
 
         if "request" in step:
-            teststep["request"] = step.pop("request")
+            teststep["request"] = _sort_request_by_custom_order(step.pop("request"))
         elif "api" in step:
             teststep["testcase"] = step.pop("api")
         elif "testcase" in step:
@@ -228,9 +233,9 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         else:
             raise exceptions.TestCaseFormatError(f"Invalid teststep: {step}")
 
-        teststep.update(ensure_step_attachment(step))
+        teststep.update(_ensure_step_attachment(step))
 
-        teststep = sort_step_by_custom_order(teststep)
+        teststep = _sort_step_by_custom_order(teststep)
         v3_content["teststeps"].append(teststep)
 
     return v3_content
@@ -241,23 +246,28 @@ def ensure_cli_args(args: List) -> List:
     """
     # remove deprecated --failfast
     if "--failfast" in args:
+        logger.warning(f"remove deprecated argument: --failfast")
         args.pop(args.index("--failfast"))
 
     # convert --report-file to --html
     if "--report-file" in args:
+        logger.warning(f"replace deprecated argument --report-file with --html")
         index = args.index("--report-file")
         args[index] = "--html"
         args.append("--self-contained-html")
 
     # keep compatibility with --save-tests in v2
     if "--save-tests" in args:
+        logger.warning(
+            f"generate conftest.py keep compatibility with --save-tests in v2"
+        )
         args.pop(args.index("--save-tests"))
-        generate_conftest_for_summary(args)
+        _generate_conftest_for_summary(args)
 
     return args
 
 
-def generate_conftest_for_summary(args: List):
+def _generate_conftest_for_summary(args: List):
 
     for arg in args:
         if os.path.exists(arg):
