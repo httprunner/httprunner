@@ -1,5 +1,22 @@
 # Release History
 
+## 3.1.0 (2020-06-21)
+
+**Added**
+
+- feat: integrate [locust](https://locust.io/) v1.0
+
+**Changed**
+
+- change: make converted referenced pytest files always relative to ProjectRootDir
+- change: log function details when call function failed
+- change: do not raise error if failed to get client/server address info
+
+**Fixed**
+
+- fix: path handling error when har2case har file and cwd != ProjectRootDir
+- fix: missing list type for request body
+
 ## 3.0.13 (2020-06-17)
 
 **Added**

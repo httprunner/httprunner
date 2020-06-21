@@ -203,24 +203,30 @@ class HttpRunner(object):
 
         # validate
         validators = step.validators
+        session_success = False
         try:
             resp_obj.validate(
                 validators, variables_mapping, self.__project_meta.functions
             )
-            self.__session.data.success = True
+            session_success = True
         except ValidationFailure:
-            self.__session.data.success = False
+            session_success = False
             log_req_resp_details()
             # log testcase duration before raise ValidationFailure
             self.__duration = time.time() - self.__start_at
             raise
         finally:
-            # save request & response meta data
-            self.__session.data.validators = resp_obj.validation_results
-            self.success = self.__session.data.success
-            # save step data
-            step_data.success = self.__session.data.success
-            step_data.data = self.__session.data
+            self.success = session_success
+            step_data.success = session_success
+
+            if hasattr(self.__session, "data"):
+                # httprunner.client.HttpSession, not locust.clients.HttpSession
+                # save request & response meta data
+                self.__session.data.success = session_success
+                self.__session.data.validators = resp_obj.validation_results
+
+                # save step data
+                step_data.data = self.__session.data
 
         return step_data
 

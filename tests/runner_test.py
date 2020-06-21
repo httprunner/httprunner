@@ -35,6 +35,6 @@ class TestHttpRunner(unittest.TestCase):
         exit_code = main_run(["tests/data/a-b.c/2 3.yml"])
         self.assertEqual(exit_code, 0)
         self.assertTrue(os.path.exists("tests/data/a_b_c/__init__.py"))
-        self.assertTrue(os.path.exists("tests/data/a_b_c/debugtalk.py"))
+        self.assertTrue(os.path.exists("tests/data/debugtalk.py"))
         self.assertTrue(os.path.exists("tests/data/a_b_c/T1_test.py"))
         self.assertTrue(os.path.exists("tests/data/a_b_c/T2_3_test.py"))
