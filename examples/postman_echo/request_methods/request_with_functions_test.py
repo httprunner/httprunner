@@ -57,6 +57,9 @@ class TestCaseRequestWithFunctions(HttpRunner):
                 "body.data",
                 "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar21.",
             )
+            .assert_type_match("body.json", "None")
+            .assert_type_match("body.json", "NoneType")
+            .assert_type_match("body.json", None)
         ),
         Step(
             RunRequest("post form data")
