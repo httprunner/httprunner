@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.1 (2020-06-21)
+
+**Fixed**
+
+- fix #942: type_match None
+
 ## 3.1.0 (2020-06-21)
 
 **Added**

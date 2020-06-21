@@ -80,7 +80,10 @@ def type_match(check_value, expect_value):
         else:
             raise ValueError(name)
 
-    assert isinstance(check_value, get_type(expect_value))
+    if expect_value in ["None", "NoneType", None]:
+        assert check_value is None
+    else:
+        assert type(check_value) == get_type(expect_value)
 
 
 def regex_match(check_value, expect_value):
