@@ -17,17 +17,22 @@ class Config(object):
         self.__base_url = ""
         self.__verify = False
         self.__export = []
+        self.__weight = 1
 
         caller_frame = inspect.stack()[1]
         self.__path = caller_frame.filename
 
     @property
-    def name(self):
+    def name(self) -> Text:
         return self.__name
 
     @property
-    def path(self):
+    def path(self) -> Text:
         return self.__path
+
+    @property
+    def weight(self) -> int:
+        return self.__weight
 
     def variables(self, **variables) -> "Config":
         self.__variables.update(variables)
@@ -45,6 +50,10 @@ class Config(object):
         self.__export.extend(export_var_name)
         return self
 
+    def locust_weight(self, weight: int) -> "Config":
+        self.__weight = weight
+        return self
+
     def perform(self) -> TConfig:
         return TConfig(
             name=self.__name,
@@ -53,6 +62,7 @@ class Config(object):
             variables=self.__variables,
             export=list(set(self.__export)),
             path=self.__path,
+            weight=self.__weight,
         )
 
 

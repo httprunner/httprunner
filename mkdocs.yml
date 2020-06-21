@@ -59,5 +59,6 @@ nav:
         - Write Testcase: user/write_testcase.md
         - Run Testcase: user/run_testcase.md
         - Testing Report: user/testing_report.md
+        - Run load test: user/run_loadtest.md
     - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md

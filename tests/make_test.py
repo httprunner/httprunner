@@ -8,6 +8,7 @@ from httprunner.make import (
     make_config_chain_style,
     make_teststep_chain_style,
     pytest_files_run_set,
+    ensure_file_abs_path_valid,
 )
 from httprunner import loader
 
@@ -64,7 +65,7 @@ class TestMake(unittest.TestCase):
             content = f.read()
             self.assertIn(
                 """
-from examples.postman_echo.request_methods.request_with_functions_test import (
+from request_methods.request_with_functions_test import (
     TestCaseRequestWithFunctions as RequestWithFunctions,
 )
 """,
@@ -90,47 +91,57 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
             testcase_python_list,
         )
 
+    def test_ensure_file_path_valid(self):
+        self.assertEqual(
+            ensure_file_abs_path_valid(
+                os.path.join(os.getcwd(), "tests", "data", "a-b.c", "2 3.yml")
+            ),
+            os.path.join(os.getcwd(), "tests", "data", "a_b_c", "T2_3.yml"),
+        )
+        loader.project_meta = None
+        self.assertEqual(
+            ensure_file_abs_path_valid(
+                os.path.join(os.getcwd(), "examples", "postman_echo", "request_methods")
+            ),
+            os.path.join(os.getcwd(), "examples", "postman_echo", "request_methods"),
+        )
+        loader.project_meta = None
+        self.assertEqual(
+            ensure_file_abs_path_valid(os.path.join(os.getcwd(), "README.md")),
+            os.path.join(os.getcwd(), "README.md"),
+        )
+        loader.project_meta = None
+        self.assertEqual(
+            ensure_file_abs_path_valid(os.getcwd()), os.getcwd(),
+        )
+        loader.project_meta = None
+        self.assertEqual(
+            ensure_file_abs_path_valid(
+                os.path.join(os.getcwd(), "tests", "data", ".csv")
+            ),
+            os.path.join(os.getcwd(), "tests", "data", ".csv"),
+        )
+
     def test_convert_testcase_path(self):
         self.assertEqual(
-            convert_testcase_path("mubu.login.yml"),
-            (os.path.join(os.getcwd(), "mubu_login_test.py"), "MubuLogin"),
+            convert_testcase_path(
+                os.path.join(os.getcwd(), "tests", "data", "a-b.c", "2 3.yml")
+            ),
+            (
+                os.path.join(os.getcwd(), "tests", "data", "a_b_c", "T2_3_test.py"),
+                "T23",
+            ),
         )
         self.assertEqual(
             convert_testcase_path(
-                os.path.join(os.getcwd(), os.path.join("path", "to", "mubu.login.yml"))
+                os.path.join(os.getcwd(), "tests", "data", "a-b.c", "中文case.yml")
             ),
             (
                 os.path.join(
-                    os.getcwd(), os.path.join("path", "to", "mubu_login_test.py")
+                    os.getcwd(),
+                    os.path.join("tests", "data", "a_b_c", "中文case_test.py"),
                 ),
-                "MubuLogin",
-            ),
-        )
-        self.assertEqual(
-            convert_testcase_path(os.path.join("path", "to 2", "mubu.login.yml")),
-            (
-                os.path.join(
-                    os.getcwd(), os.path.join("path", "to_2", "mubu_login_test.py")
-                ),
-                "MubuLogin",
-            ),
-        )
-        self.assertEqual(
-            convert_testcase_path(os.path.join("path", "to-2", "mubu login.yml")),
-            (
-                os.path.join(
-                    os.getcwd(), os.path.join("path", "to_2", "mubu_login_test.py")
-                ),
-                "MubuLogin",
-            ),
-        )
-        self.assertEqual(
-            convert_testcase_path(os.path.join("path", "to.2", "幕布login.yml")),
-            (
-                os.path.join(
-                    os.getcwd(), os.path.join("path", "to_2", "幕布login_test.py")
-                ),
-                "幕布Login",
+                "中文Case",
             ),
         )
 

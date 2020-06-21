@@ -78,7 +78,6 @@ def load_testcase(testcase: Dict) -> TestCase:
         testcase_obj = TestCase.parse_obj(testcase)
     except ValidationError as ex:
         err_msg = f"TestCase ValidationError:\nerror: {ex}\ncontent: {testcase}"
-        logger.error(err_msg)
         raise exceptions.TestCaseFormatError(err_msg)
 
     return testcase_obj
@@ -99,7 +98,6 @@ def load_testsuite(testsuite: Dict) -> TestSuite:
         testsuite_obj = TestSuite.parse_obj(testsuite)
     except ValidationError as ex:
         err_msg = f"TestSuite ValidationError:\nfile: {path}\nerror: {ex}"
-        logger.error(err_msg)
         raise exceptions.TestSuiteFormatError(err_msg)
 
     return testsuite_obj
@@ -287,6 +285,7 @@ def locate_file(start_path: Text, file_name: Text) -> Text:
 
     file_path = os.path.join(start_dir_path, file_name)
     if os.path.isfile(file_path):
+        # ensure absolute
         return os.path.abspath(file_path)
 
     # system root dir
@@ -431,3 +430,23 @@ def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
     project_meta.debugtalk_path = debugtalk_path
 
     return project_meta
+
+
+def convert_relative_project_root_dir(abs_path: Text) -> Text:
+    """ convert absolute path to relative path, based on project_meta.RootDir
+
+    Args:
+        abs_path: absolute path
+
+    Returns: relative path based on project_meta.RootDir
+
+    """
+    _project_meta = load_project_meta(abs_path)
+    if not abs_path.startswith(_project_meta.RootDir):
+        raise exceptions.ParamsError(
+            f"failed to convert absolute path to relative path based on project_meta.RootDir\n"
+            f"abs_path: {abs_path}\n"
+            f"project_meta.RootDir: {_project_meta.RootDir}"
+        )
+
+    return abs_path[len(_project_meta.RootDir) + 1 :]

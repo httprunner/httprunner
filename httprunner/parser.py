@@ -3,6 +3,7 @@ import builtins
 import re
 from typing import Any, Set, Text, Callable, List, Dict
 
+from loguru import logger
 from sentry_sdk import capture_exception
 
 from httprunner import loader, utils, exceptions
@@ -331,10 +332,20 @@ def parse_string(
             function_meta = parse_function_params(func_params_str)
             args = function_meta["args"]
             kwargs = function_meta["kwargs"]
-
             parsed_args = parse_data(args, variables_mapping, functions_mapping)
             parsed_kwargs = parse_data(kwargs, variables_mapping, functions_mapping)
-            func_eval_value = func(*parsed_args, **parsed_kwargs)
+
+            try:
+                func_eval_value = func(*parsed_args, **parsed_kwargs)
+            except Exception as ex:
+                logger.error(
+                    f"call function error:\n"
+                    f"func_name: {func_name}\n"
+                    f"args: {parsed_args}\n"
+                    f"kwargs: {parsed_kwargs}\n"
+                    f"{type(ex).__name__}: {ex}"
+                )
+                raise
 
             func_raw_str = "${" + func_name + f"({func_params_str})" + "}"
             if func_raw_str == raw_string:

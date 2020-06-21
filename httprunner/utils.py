@@ -3,16 +3,14 @@ import copy
 import json
 import os.path
 import platform
-import string
 import uuid
-from typing import Dict, List, Any, Text
+from typing import Dict, List, Any
 
 import sentry_sdk
-from loguru import logger
-
 from httprunner import __version__
 from httprunner import exceptions
 from httprunner.models import VariablesMapping
+from loguru import logger
 
 
 def init_sentry_sdk():
@@ -179,48 +177,6 @@ def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):
     return dict(
         sorted(raw_dict.items(), key=lambda i: get_index_from_list(custom_order, i[0]))
     )
-
-
-def ensure_file_path_valid(file_path: Text) -> Text:
-    """ ensure file path valid for pytest, handle cases when directory name includes dot/hyphen/space
-
-    Args:
-        file_path: absolute or relative file path
-
-    Returns:
-        ensured valid absolute file path
-
-    """
-    raw_file_name, file_suffix = os.path.splitext(file_path)
-    file_suffix = file_suffix.lower()
-
-    if os.path.isabs(file_path):
-        raw_file_relative_name = raw_file_name[len(os.getcwd()) + 1 :]
-    else:
-        raw_file_relative_name = raw_file_name
-
-    if raw_file_relative_name == "":
-        return file_path
-
-    path_names = []
-    for name in raw_file_relative_name.rstrip(os.sep).split(os.sep):
-
-        if name[0] in string.digits:
-            # ensure file name not startswith digit
-            # 19 => T19, 2C => T2C
-            name = f"T{name}"
-
-        if name.startswith("."):
-            # avoid ".csv" been converted to "_csv"
-            pass
-        else:
-            # handle cases when directory name includes dot/hyphen/space
-            name = name.replace(" ", "_").replace(".", "_").replace("-", "_")
-
-        path_names.append(name)
-
-    new_file_path = os.path.join(os.getcwd(), f"{os.sep.join(path_names)}{file_suffix}")
-    return new_file_path
 
 
 class ExtendJSONEncoder(json.JSONEncoder):

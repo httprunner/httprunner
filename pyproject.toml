@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "3.0.13"
+version = "3.1.0"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -42,10 +42,12 @@ sentry-sdk = "^0.14.4"
 allure-pytest = {version = "^2.8.16", optional = true}
 requests-toolbelt = {version = "^0.9.1", optional = true}
 filetype = {version = "^1.0.7", optional = true}
+locust = {version = "^1.0.3", optional = true}
 
 [tool.poetry.extras]
 allure = ["allure-pytest"]                  # pip install "httprunner[allure]", poetry install -E allure
 upload = ["requests-toolbelt", "filetype"]  # pip install "httprunner[upload]", poetry install -E upload
+locust = ["locust"]                         # pip install "httprunner[locust]", poetry install -E locust
 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5.4"
@@ -57,6 +59,7 @@ httprunner = "httprunner.cli:main"
 hrun = "httprunner.cli:main_hrun_alias"
 hmake = "httprunner.cli:main_make_alias"
 har2case = "httprunner.cli:main_har2case_alias"
+locusts = "httprunner.ext.locust:main_locusts"
 
 [build-system]
 requires = ["poetry>=1.0.0"]

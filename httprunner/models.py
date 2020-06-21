@@ -41,6 +41,7 @@ class TConfig(BaseModel):
     # teardown_hooks: Hooks = []
     export: Export = []
     path: Text = None
+    weight: int = 1
 
 
 class TRequest(BaseModel):
@@ -85,7 +86,7 @@ class ProjectMeta(BaseModel):
     dot_env_path: Text = ""  # .env file path
     functions: FunctionsMapping = {}  # functions defined in debugtalk.py
     env: Env = {}
-    RootDir: Text = os.getcwd()  # project root directory, the path debugtalk.py located
+    RootDir: Text = os.getcwd()  # project root directory (ensure absolute), the path debugtalk.py located
 
 
 class TestsMapping(BaseModel):
@@ -122,7 +123,7 @@ class RequestData(BaseModel):
     url: Url
     headers: Headers = {}
     cookies: Cookies = {}
-    body: Union[Text, bytes, Dict, None] = {}
+    body: Union[Text, bytes, Dict, List, None] = {}
 
 
 class ResponseData(BaseModel):
