@@ -78,7 +78,6 @@ def load_testcase(testcase: Dict) -> TestCase:
         testcase_obj = TestCase.parse_obj(testcase)
     except ValidationError as ex:
         err_msg = f"TestCase ValidationError:\nerror: {ex}\ncontent: {testcase}"
-        logger.error(err_msg)
         raise exceptions.TestCaseFormatError(err_msg)
 
     return testcase_obj
@@ -99,7 +98,6 @@ def load_testsuite(testsuite: Dict) -> TestSuite:
         testsuite_obj = TestSuite.parse_obj(testsuite)
     except ValidationError as ex:
         err_msg = f"TestSuite ValidationError:\nfile: {path}\nerror: {ex}"
-        logger.error(err_msg)
         raise exceptions.TestSuiteFormatError(err_msg)
 
     return testsuite_obj

@@ -478,6 +478,7 @@ def __make(tests_path: Text) -> NoReturn:
         tests_path: should be in absolute path
 
     """
+    logger.info(f"make path: {tests_path}")
     test_files = []
     if os.path.isdir(tests_path):
         files_list = load_folder_files(tests_path)
@@ -495,11 +496,14 @@ def __make(tests_path: Text) -> NoReturn:
         try:
             test_content = load_test_file(test_file)
         except (exceptions.FileNotFound, exceptions.FileFormatError) as ex:
-            logger.warning(ex)
+            logger.warning(f"Invalid test file: {test_file}\n{type(ex).__name__}: {ex}")
             continue
 
         if not isinstance(test_content, Dict):
-            logger.warning(f"test content not in dict format. \npath: {test_file}")
+            logger.warning(
+                f"Invalid test file: {test_file}\n"
+                f"reason: test content not in dict format."
+            )
             continue
 
         # api in v2 format, convert to v3 testcase
@@ -508,12 +512,14 @@ def __make(tests_path: Text) -> NoReturn:
 
         if "config" not in test_content:
             logger.warning(
-                f"Invalid testcase/testsuite: missing config part in testcase/testsuite.\npath: {test_file}"
+                f"Invalid testcase/testsuite file: {test_file}\n"
+                f"reason: missing config part."
             )
             continue
         elif not isinstance(test_content["config"], Dict):
             logger.warning(
-                f"Invalid testcase/testsuite: config should be dict type, got {test_content['config']}"
+                f"Invalid testcase/testsuite file: {test_file}\n"
+                f"reason: config should be dict type, got {test_content['config']}"
             )
             continue
 
@@ -525,19 +531,28 @@ def __make(tests_path: Text) -> NoReturn:
             try:
                 testcase_pytest_path = make_testcase(test_content)
                 pytest_files_run_set.add(testcase_pytest_path)
-            except exceptions.TestCaseFormatError:
+            except exceptions.TestCaseFormatError as ex:
+                logger.warning(
+                    f"Invalid testcase file: {test_file}\n{type(ex).__name__}: {ex}"
+                )
                 continue
 
         # testsuite
         elif "testcases" in test_content:
             try:
                 make_testsuite(test_content)
-            except exceptions.TestSuiteFormatError:
+            except exceptions.TestSuiteFormatError as ex:
+                logger.warning(
+                    f"Invalid testsuite file: {test_file}\n{type(ex).__name__}: {ex}"
+                )
                 continue
 
         # invalid format
         else:
-            logger.warning(f"skip invalid testcase/testsuite file: {test_file}")
+            logger.warning(
+                f"Invalid test file: {test_file}\n"
+                f"reason: file content is neither testcase nor testsuite"
+            )
 
 
 def main_make(tests_paths: List[Text]) -> List[Text]:
