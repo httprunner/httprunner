@@ -1,6 +1,6 @@
 # Release History
 
-## 3.1.0 (2020-06-19)
+## 3.1.0 (2020-06-21)
 
 **Added**
 
@@ -9,10 +9,11 @@
 **Changed**
 
 - change: make converted referenced pytest files always relative to ProjectRootDir
+- change: log function details when call function failed
+- change: do not raise error if failed to get client/server address info
 
 **Fixed**
 
-- change: do not raise error if failed to get client/server address info
 - fix: path handling error when har2case har file and cwd != ProjectRootDir
 - fix: missing list type for request body
 
