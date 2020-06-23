@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.2 (2020-06-23)
+
+**Fixed**
+
+- fix: missing setup/teardown hooks for referenced testcase
+
 ## 3.1.1 (2020-06-23)
 
 **Added**
@@ -8,7 +14,7 @@
 
 **Fixed**
 
-- fix #942: type_match None
+- fix: ValueError when type_match None
 - fix: override referenced testcase export in teststep
 - fix: avoid duplicate import
 - fix: override locust weight
