@@ -200,8 +200,13 @@ def ensure_testcase_v3_api(api_content: Dict) -> Dict:
 
     teststep = _sort_step_by_custom_order(teststep)
 
+    config = {"name": api_content["name"]}
+    extract_variable_names: List = list(teststep.get("extract", {}).keys())
+    if extract_variable_names:
+        config["export"] = extract_variable_names
+
     return {
-        "config": {"name": api_content["name"]},
+        "config": config,
         "teststeps": [teststep],
     }
 
