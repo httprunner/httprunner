@@ -472,8 +472,8 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         testcase_dict["config"]["variables"].update(testcase_variables)
 
         # override weight
-        weight = testcase.get("weight", 1)
-        testcase_dict["config"]["weight"] = weight
+        if "weight" in testcase:
+            testcase_dict["config"]["weight"] = testcase["weight"]
 
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
