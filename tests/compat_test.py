@@ -95,7 +95,10 @@ class TestCompat(unittest.TestCase):
         self.assertEqual(
             compat.ensure_testcase_v3_api(api_content),
             {
-                "config": {"name": "get with params"},
+                "config": {
+                    "name": "get with params",
+                    "export": ["varA", "user_agent"],
+                },
                 "teststeps": [
                     {
                         "name": "get with params",
