@@ -1,5 +1,18 @@
 # Release History
 
+## 3.1.1 (2020-06-23)
+
+**Added**
+
+- feat: add optional message for assertion
+
+**Fixed**
+
+- fix #942: type_match None
+- fix: override referenced testcase export in teststep
+- fix: avoid duplicate import
+- fix: override locust weight
+
 ## 3.1.0 (2020-06-21)
 
 **Added**
