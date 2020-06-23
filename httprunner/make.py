@@ -367,6 +367,11 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         test_content.setdefault("config", {})["path"] = ref_testcase_path
         ref_testcase_python_abs_path = make_testcase(test_content)
 
+        # override testcase export
+        ref_testcase_export: List = test_content["config"].get("export", [])
+        if ref_testcase_export:
+            teststep.setdefault("export", []).extend(ref_testcase_export)
+
         # prepare ref testcase class name
         ref_testcase_cls_name = pytest_files_made_cache_mapping[
             ref_testcase_python_abs_path
