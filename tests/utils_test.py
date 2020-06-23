@@ -69,6 +69,9 @@ class TestUtils(unittest.TestCase):
         functions_mapping["type_match"]([1], "list")
         functions_mapping["type_match"]({}, "dict")
         functions_mapping["type_match"]({"a": 1}, "dict")
+        functions_mapping["type_match"](None, "None")
+        functions_mapping["type_match"](None, "NoneType")
+        functions_mapping["type_match"](None, None)
 
     def test_lower_dict_keys(self):
         request_dict = {

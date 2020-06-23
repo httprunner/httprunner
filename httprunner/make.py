@@ -310,7 +310,12 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
             expect = validator["expect"]
             if isinstance(expect, Text):
                 expect = f'"{expect}"'
-            step_info += f".assert_{assert_method}({check}, {expect})"
+
+            message = validator["message"]
+            if message:
+                step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+            else:
+                step_info += f".assert_{assert_method}({check}, {expect})"
 
     return f"Step({step_info})"
 
@@ -362,6 +367,13 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         test_content.setdefault("config", {})["path"] = ref_testcase_path
         ref_testcase_python_abs_path = make_testcase(test_content)
 
+        # override testcase export
+        ref_testcase_export: List = test_content["config"].get("export", [])
+        if ref_testcase_export:
+            step_export: List = teststep.setdefault("export", [])
+            step_export.extend(ref_testcase_export)
+            teststep["export"] = list(set(step_export))
+
         # prepare ref testcase class name
         ref_testcase_cls_name = pytest_files_made_cache_mapping[
             ref_testcase_python_abs_path
@@ -374,9 +386,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         )
         ref_module_name, _ = os.path.splitext(ref_testcase_python_relative_path)
         ref_module_name = ref_module_name.replace(os.sep, ".")
-        imports_list.append(
-            f"from {ref_module_name} import TestCase{ref_testcase_cls_name} as {ref_testcase_cls_name}"
-        )
+        import_expr = f"from {ref_module_name} import TestCase{ref_testcase_cls_name} as {ref_testcase_cls_name}"
+        if import_expr not in imports_list:
+            imports_list.append(import_expr)
 
     testcase_path = convert_relative_project_root_dir(testcase_abs_path)
     # current file compared to ProjectRootDir
@@ -462,8 +474,8 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         testcase_dict["config"]["variables"].update(testcase_variables)
 
         # override weight
-        weight = testcase.get("weight", 1)
-        testcase_dict["config"]["weight"] = weight
+        if "weight" in testcase:
+            testcase_dict["config"]["weight"] = testcase["weight"]
 
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)

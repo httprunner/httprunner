@@ -175,10 +175,11 @@ Extract JSON response body with [jmespath][jmespath].
 
 Extract JSON response body with [jmespath][jmespath] and validate with expected value.
 
-> assert_XXX(jmes_path: Text, expected_value: Any)
+> assert_XXX(jmes_path: Text, expected_value: Any, message: Text = "")
 
 - jmes_path: jmespath expression, refer to [JMESPath Tutorial][jmespath_tutorial] for more details
 - expected_value: the specified expected value, variable or function reference can also be used here
+- message (optional): used to indicate assertion error reason
 
 The image below shows HttpRunner builtin validators.
 
