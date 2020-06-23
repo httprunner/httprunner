@@ -370,7 +370,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         # override testcase export
         ref_testcase_export: List = test_content["config"].get("export", [])
         if ref_testcase_export:
-            teststep.setdefault("export", []).extend(ref_testcase_export)
+            step_export: List = teststep.setdefault("export", [])
+            step_export.extend(ref_testcase_export)
+            teststep["export"] = list(set(step_export))
 
         # prepare ref testcase class name
         ref_testcase_cls_name = pytest_files_made_cache_mapping[
