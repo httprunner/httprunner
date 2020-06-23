@@ -350,6 +350,14 @@ class StepRefCase(object):
     def __init__(self, step_context: TStep):
         self.__step_context = step_context
 
+    def teardown_hook(self, hook: Text, assign_var_name: Text = None) -> "StepRefCase":
+        if assign_var_name:
+            self.__step_context.teardown_hooks.append({assign_var_name: hook})
+        else:
+            self.__step_context.teardown_hooks.append(hook)
+
+        return self
+
     def export(self, *var_name: Text) -> "StepRefCase":
         self.__step_context.export.extend(var_name)
         return self
@@ -364,6 +372,14 @@ class RunTestCase(object):
 
     def with_variables(self, **variables) -> "RunTestCase":
         self.__step_context.variables.update(variables)
+        return self
+
+    def setup_hook(self, hook: Text, assign_var_name: Text = None) -> "RunTestCase":
+        if assign_var_name:
+            self.__step_context.setup_hooks.append({assign_var_name: hook})
+        else:
+            self.__step_context.setup_hooks.append(hook)
+
         return self
 
     def call(self, testcase: Callable) -> StepRefCase:
