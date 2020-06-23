@@ -2,6 +2,10 @@
 
 ## 3.1.1 (2020-06-21)
 
+**Added**
+
+- feat: add optional message for assertion
+
 **Fixed**
 
 - fix #942: type_match None

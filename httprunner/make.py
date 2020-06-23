@@ -310,7 +310,12 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
             expect = validator["expect"]
             if isinstance(expect, Text):
                 expect = f'"{expect}"'
-            step_info += f".assert_{assert_method}({check}, {expect})"
+
+            message = validator["message"]
+            if message:
+                step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+            else:
+                step_info += f".assert_{assert_method}({check}, {expect})"
 
     return f"Step({step_info})"
 
