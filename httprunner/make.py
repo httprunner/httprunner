@@ -379,9 +379,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         )
         ref_module_name, _ = os.path.splitext(ref_testcase_python_relative_path)
         ref_module_name = ref_module_name.replace(os.sep, ".")
-        imports_list.append(
-            f"from {ref_module_name} import TestCase{ref_testcase_cls_name} as {ref_testcase_cls_name}"
-        )
+        import_expr = f"from {ref_module_name} import TestCase{ref_testcase_cls_name} as {ref_testcase_cls_name}"
+        if import_expr not in imports_list:
+            imports_list.append(import_expr)
 
     testcase_path = convert_relative_project_root_dir(testcase_abs_path)
     # current file compared to ProjectRootDir
