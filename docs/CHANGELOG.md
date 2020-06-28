@@ -1,10 +1,11 @@
 # Release History
 
-## 3.1.2 (2020-06-23)
+## 3.1.2 (2020-06-28)
 
 **Fixed**
 
 - fix: missing setup/teardown hooks for referenced testcase
+- fix: compatibility for `black` on Android termux that does not support multiprocessing well
 
 ## 3.1.1 (2020-06-23)
 
