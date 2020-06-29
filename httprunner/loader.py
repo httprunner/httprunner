@@ -137,7 +137,9 @@ def load_dot_env_file(dot_env_path: Text) -> Dict:
             else:
                 raise exceptions.FileFormatError(".env format error")
 
-            env_variables_mapping[variable.strip().decode("utf-8")] = value.strip().decode("utf-8")
+            env_variables_mapping[
+                variable.strip().decode("utf-8")
+            ] = value.strip().decode("utf-8")
 
     utils.set_os_environ(env_variables_mapping)
     return env_variables_mapping
