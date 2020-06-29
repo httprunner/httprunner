@@ -7,6 +7,7 @@
 - fix: missing setup/teardown hooks for referenced testcase
 - fix: compatibility for `black` on Android termux that does not support multiprocessing well
 - fix: mishandling of request header `Content-Length` for GET method
+- fix: validate with jmespath containing variable or function, e.g. `body.locations[$index].name`
 
 **Changed**
 

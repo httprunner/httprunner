@@ -171,6 +171,9 @@ class ResponseObject(object):
         functions_mapping: FunctionsMapping = None,
     ) -> NoReturn:
 
+        variables_mapping = variables_mapping or {}
+        functions_mapping = functions_mapping or {}
+
         self.validation_results = {}
         if not validators:
             return
