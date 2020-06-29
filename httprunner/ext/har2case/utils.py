@@ -27,9 +27,9 @@ def load_har_log_entries(file_path):
             ]
 
     """
-    with open(file_path, encoding="utf-8") as f:
+    with open(file_path, mode="rb") as f:
         try:
-            content_json = json.loads(f.read())
+            content_json = json.load(f)
             return content_json["log"]["entries"]
         except (TypeError, JSONDecodeError) as ex:
             logger.error(f"failed to load HAR file {file_path}: {ex}")
