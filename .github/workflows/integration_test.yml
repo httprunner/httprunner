@@ -1,6 +1,12 @@
 name: integration_test
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
 
 jobs:
   integration_test:
