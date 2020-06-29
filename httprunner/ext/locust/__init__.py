@@ -1,16 +1,12 @@
-import importlib.util
-import inspect
-import os
 import sys
-from typing import List
 
-if sys.argv[0].endswith("locusts"):
+if "locust" in sys.argv[0]:
     try:
-        # monkey patch ssl at beginning to avoid RecursionError when running locust.
-        from gevent import monkey
-
-        monkey.patch_ssl()
+        # monkey patch all at beginning to avoid RecursionError when running locust.
+        # `from gevent import monkey; monkey.patch_all()` will be triggered when importing locust
         from locust import main as locust_main
+
+        print("NOTICE: gevent monkey patches have been applied !!!")
     except ImportError:
         msg = """
 Locust is not installed, install first and try again.
@@ -20,8 +16,13 @@ $ pip install locust
         print(msg)
         sys.exit(1)
 
+import importlib.util
+import inspect
+import os
+from typing import List
 
 from loguru import logger
+
 
 """ converted pytest files from YAML/JSON testcases
 """

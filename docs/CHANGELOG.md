@@ -1,11 +1,15 @@
 # Release History
 
-## 3.1.2 (2020-06-28)
+## 3.1.2 (2020-06-29)
 
 **Fixed**
 
 - fix: missing setup/teardown hooks for referenced testcase
 - fix: compatibility for `black` on Android termux that does not support multiprocessing well
+
+**Changed**
+
+- change: import locust at beginning to monkey patch all modules
 
 ## 3.1.1 (2020-06-23)
 
