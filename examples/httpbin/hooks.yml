@@ -33,5 +33,4 @@ teststeps:
     validate:
         - eq: ["status_code", 500]
         - eq: [headers."Content-Type", "html/text"]
-        - eq: [body.headers."Content-Type", "application/json"]
         - eq: [body.headers.Host, "127.0.0.1:8888"]
