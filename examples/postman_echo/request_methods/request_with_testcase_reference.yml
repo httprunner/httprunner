@@ -13,7 +13,11 @@ teststeps:
     variables:
         foo1: testcase_ref_bar1
         expect_foo1: testcase_ref_bar1
+    setup_hooks:
+        - ${sleep(0.1)}
     testcase: request_methods/request_with_functions.yml
+    teardown_hooks:
+        - ${sleep(0.2)}
     export:
         - foo3
 -

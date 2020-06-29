@@ -1,5 +1,19 @@
 # Release History
 
+## 3.1.2 (2020-06-29)
+
+**Fixed**
+
+- fix: missing setup/teardown hooks for referenced testcase
+- fix: compatibility for `black` on Android termux that does not support multiprocessing well
+- fix: mishandling of request header `Content-Length` for GET method
+- fix: validate with jmespath containing variable or function, e.g. `body.locations[$index].name`
+
+**Changed**
+
+- change: import locust at beginning to monkey patch all modules
+- change: open file in binary mode
+
 ## 3.1.1 (2020-06-23)
 
 **Added**
@@ -8,7 +22,7 @@
 
 **Fixed**
 
-- fix #942: type_match None
+- fix: ValueError when type_match None
 - fix: override referenced testcase export in teststep
 - fix: avoid duplicate import
 - fix: override locust weight

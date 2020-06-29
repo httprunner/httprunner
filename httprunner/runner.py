@@ -89,7 +89,7 @@ class HttpRunner(object):
         return self
 
     def __call_hooks(
-        self, hooks: Hooks, step_variables: VariablesMapping, hook_type: Text,
+        self, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text,
     ) -> NoReturn:
         """ call hook actions.
 
@@ -106,10 +106,10 @@ class HttpRunner(object):
                 request: parsed request dict
                 response: ResponseObject for current response
 
-            hook_type: setup/teardown
+            hook_msg: setup/teardown request/testcase
 
         """
-        logger.debug(f"call {hook_type} hook actions.")
+        logger.info(f"call hook actions: {hook_msg}")
 
         if not isinstance(hooks, List):
             logger.error(f"Invalid hooks format: {hooks}")
@@ -153,7 +153,7 @@ class HttpRunner(object):
 
         # setup hooks
         if step.setup_hooks:
-            self.__call_hooks(step.setup_hooks, step.variables, "setup")
+            self.__call_hooks(step.setup_hooks, step.variables, "setup request")
 
         # prepare arguments
         method = parsed_request_dict.pop("method")
@@ -169,7 +169,7 @@ class HttpRunner(object):
 
         # teardown hooks
         if step.teardown_hooks:
-            self.__call_hooks(step.teardown_hooks, step.variables, "teardown")
+            self.__call_hooks(step.teardown_hooks, step.variables, "teardown request")
 
         def log_req_resp_details():
             err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
@@ -236,6 +236,10 @@ class HttpRunner(object):
         step_variables = step.variables
         step_export = step.export
 
+        # setup hooks
+        if step.setup_hooks:
+            self.__call_hooks(step.setup_hooks, step_variables, "setup testcase")
+
         if hasattr(step.testcase, "config") and hasattr(step.testcase, "teststeps"):
             testcase_cls = step.testcase
             case_result = (
@@ -268,6 +272,10 @@ class HttpRunner(object):
             raise exceptions.ParamsError(
                 f"Invalid teststep referenced testcase: {step.dict()}"
             )
+
+        # teardown hooks
+        if step.teardown_hooks:
+            self.__call_hooks(step.teardown_hooks, step.variables, "teardown testcase")
 
         step_data.data = case_result.get_step_datas()  # list of step data
         step_data.export_vars = case_result.get_export_variables()

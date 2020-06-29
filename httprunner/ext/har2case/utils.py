@@ -1,4 +1,3 @@
-import io
 import json
 import sys
 from json.decoder import JSONDecodeError
@@ -28,9 +27,9 @@ def load_har_log_entries(file_path):
             ]
 
     """
-    with io.open(file_path, "r+", encoding="utf-8-sig") as f:
+    with open(file_path, mode="rb") as f:
         try:
-            content_json = json.loads(f.read())
+            content_json = json.load(f)
             return content_json["log"]["entries"]
         except (TypeError, JSONDecodeError) as ex:
             logger.error(f"failed to load HAR file {file_path}: {ex}")
@@ -108,7 +107,7 @@ def dump_yaml(testcase, yaml_file):
     """
     logger.info("dump testcase to YAML format.")
 
-    with io.open(yaml_file, "w", encoding="utf-8") as outfile:
+    with open(yaml_file, "w", encoding="utf-8") as outfile:
         yaml.dump(
             testcase, outfile, allow_unicode=True, default_flow_style=False, indent=4
         )
@@ -121,7 +120,7 @@ def dump_json(testcase, json_file):
     """
     logger.info("dump testcase to JSON format.")
 
-    with io.open(json_file, "w", encoding="utf-8") as outfile:
+    with open(json_file, "w", encoding="utf-8") as outfile:
         my_json_str = json.dumps(testcase, ensure_ascii=False, indent=4)
         if isinstance(my_json_str, bytes):
             my_json_str = my_json_str.decode("utf-8")

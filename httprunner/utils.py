@@ -4,13 +4,15 @@ import json
 import os.path
 import platform
 import uuid
+from multiprocessing import Queue
 from typing import Dict, List, Any
 
 import sentry_sdk
+from loguru import logger
+
 from httprunner import __version__
 from httprunner import exceptions
 from httprunner.models import VariablesMapping
-from loguru import logger
 
 
 def init_sentry_sdk():
@@ -209,3 +211,12 @@ def override_config_variables(
     variables = copy.deepcopy(config_variables)
     variables.update(step_new_variables)
     return variables
+
+
+def is_support_multiprocessing() -> bool:
+    try:
+        Queue()
+        return True
+    except (ImportError, OSError):
+        # system that does not support semaphores(dependency of multiprocessing), like Android termux
+        return False
