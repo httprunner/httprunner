@@ -1,6 +1,5 @@
 import csv
 import importlib
-import io
 import json
 import os
 import sys
@@ -29,7 +28,7 @@ project_meta: Union[ProjectMeta, None] = None
 def _load_yaml_file(yaml_file: Text) -> Dict:
     """ load yaml file and check file content format
     """
-    with io.open(yaml_file, "r", encoding="utf-8") as stream:
+    with open(yaml_file, encoding="utf-8") as stream:
         try:
             yaml_content = yaml.load(stream)
         except yaml.YAMLError as ex:
@@ -43,7 +42,7 @@ def _load_yaml_file(yaml_file: Text) -> Dict:
 def _load_json_file(json_file: Text) -> Dict:
     """ load json file and check file content format
     """
-    with io.open(json_file, encoding="utf-8") as data_file:
+    with open(json_file, encoding="utf-8") as data_file:
         try:
             json_content = json.load(data_file)
         except json.JSONDecodeError as ex:
@@ -128,7 +127,7 @@ def load_dot_env_file(dot_env_path: Text) -> Dict:
     logger.info(f"Loading environment variables from {dot_env_path}")
     env_variables_mapping = {}
 
-    with io.open(dot_env_path, "r", encoding="utf-8") as fp:
+    with open(dot_env_path, encoding="utf-8") as fp:
         for line in fp:
             # maxsplit=1
             if "=" in line:
@@ -182,7 +181,7 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
     csv_content_list = []
 
-    with io.open(csv_file, encoding="utf-8") as csvfile:
+    with open(csv_file, encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             csv_content_list.append(row)
