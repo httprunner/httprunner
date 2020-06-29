@@ -26,7 +26,6 @@ class TestCaseHooks(HttpRunner):
             .validate()
             .assert_equal("status_code", 500)
             .assert_equal('headers."Content-Type"', "html/text")
-            .assert_equal('body.headers."Content-Type"', "application/json")
             .assert_equal("body.headers.Host", "127.0.0.1:8888")
         ),
     ]
