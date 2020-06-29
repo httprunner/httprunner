@@ -49,7 +49,7 @@ def create_scaffold(project_name):
         print(msg)
 
     def create_file(path, file_content=""):
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(file_content)
         msg = f"created file: {path}"
         print(msg)

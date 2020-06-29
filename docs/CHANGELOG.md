@@ -10,6 +10,7 @@
 **Changed**
 
 - change: import locust at beginning to monkey patch all modules
+- change: open file in binary mode
 
 ## 3.1.1 (2020-06-23)
 
