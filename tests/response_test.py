@@ -28,12 +28,28 @@ class TestResponse(unittest.TestCase):
         self.assertEqual(extract_mapping["var_2"], "Olympia")
 
     def test_validate(self):
-        variables_mapping = {"index": 1}
         self.resp_obj.validate(
             [
                 {"eq": ["body.json.locations[0].name", "Seattle"]},
                 {"eq": ["body.json.locations[0]", {"name": "Seattle", "state": "WA"}]},
+            ],
+        )
+
+    def test_validate_variables(self):
+        variables_mapping = {"index": 1, "var_empty": ""}
+        self.resp_obj.validate(
+            [
                 {"eq": ["body.json.locations[$index].name", "New York"]},
+                {"eq": ["$var_empty", ""]},
             ],
             variables_mapping=variables_mapping,
+        )
+
+    def test_validate_functions(self):
+        variables_mapping = {"index": 1}
+        functions_mapping = {"get_num": lambda x: x}
+        self.resp_obj.validate(
+            [{"eq": ["${get_num(0)}", 0]}, {"eq": ["${get_num($index)}", 1]},],
+            variables_mapping=variables_mapping,
+            functions_mapping=functions_mapping,
         )
