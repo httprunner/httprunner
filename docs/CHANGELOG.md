@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.3 (2020-06-30)
+
+**Fixed**
+
+- fix: validate with variable or function whose evaluation result is "" or not text
+
 ## 3.1.2 (2020-06-29)
 
 **Fixed**
