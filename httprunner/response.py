@@ -2,12 +2,13 @@ from typing import Dict, Text, Any, NoReturn
 
 import jmespath
 import requests
+from jmespath.exceptions import JMESPathError
 from loguru import logger
 
 from httprunner import exceptions
 from httprunner.exceptions import ValidationFailure, ParamsError
-from httprunner.parser import parse_data, parse_string_value, get_mapping_function
 from httprunner.models import VariablesMapping, Validators, FunctionsMapping
+from httprunner.parser import parse_data, parse_string_value, get_mapping_function
 
 
 def get_uniform_comparator(comparator: Text):
@@ -143,14 +144,25 @@ class ResponseObject(object):
         self.__dict__[key] = value
         return value
 
-    @property
-    def resp_obj_meta(self):
-        return {
+    def _search_jmespath(self, expr: Text) -> Any:
+        resp_obj_meta = {
             "status_code": self.status_code,
             "headers": self.headers,
             "cookies": self.cookies,
             "body": self.body,
         }
+        try:
+            check_value = jmespath.search(expr, resp_obj_meta)
+        except JMESPathError as ex:
+            logger.error(
+                f"failed to search with jmespath\n"
+                f"expression: {expr}\n"
+                f"data: {resp_obj_meta}\n"
+                f"exception: {ex}"
+            )
+            raise
+
+        return check_value
 
     def extract(self, extractors: Dict[Text, Text]) -> Dict[Text, Any]:
         if not extractors:
@@ -158,7 +170,7 @@ class ResponseObject(object):
 
         extract_mapping = {}
         for key, field in extractors.items():
-            field_value = jmespath.search(field, self.resp_obj_meta)
+            field_value = self._search_jmespath(field)
             extract_mapping[key] = field_value
 
         logger.info(f"extract mapping: {extract_mapping}")
@@ -198,7 +210,7 @@ class ResponseObject(object):
                 check_item = parse_string_value(check_item)
 
             if check_item and isinstance(check_item, Text):
-                check_value = jmespath.search(check_item, self.resp_obj_meta)
+                check_value = self._search_jmespath(check_item)
             else:
                 # variable or function evaluation result is "" or not text
                 check_value = check_item
