@@ -351,6 +351,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#client-server-ipport" class="md-nav__link">
+    Client &amp; Server IP:PORT
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#arguments-for-v2x-compatibility" class="md-nav__link">
     arguments for v2.x compatibility
   </a>
@@ -372,6 +379,18 @@
   <li class="md-nav__item">
     <a href="../testing_report/" title="Testing Report" class="md-nav__link">
       Testing Report
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../run_loadtest/" title="Run load test" class="md-nav__link">
+      Run load test
     </a>
   </li>
 
@@ -461,6 +480,13 @@
         <li class="md-nav__item">
   <a href="#testcase-id-request-id" class="md-nav__link">
     TestCase ID &amp; Request ID
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#client-server-ipport" class="md-nav__link">
+    Client &amp; Server IP:PORT
   </a>
   
 </li>
@@ -886,6 +912,25 @@ timestamp_six_digits = str(int(time.time() * 1000))[-6:])
 
 
 <p>In other words, all requests in one testcase will have the same <code>HRUN-Request-ID</code> prefix, and each request will have a unique <code>HRUN-Request-ID</code> suffix.</p>
+<h2 id="client-server-ipport">Client &amp; Server IP:PORT<a class="headerlink" href="#client-server-ipport" title="Permanent link">&para;</a></h2>
+<p>Sometimes, logging remote server IP and port can be great helpful for trouble shooting, especially when there are multiple servers and we want to checkout which one returns error.</p>
+<p>Since version <code>3.0.13</code>, HttpRunner will log client &amp; server IP:Port in debug level. </p>
+<div class="codehilite"><pre><span></span><code>2020-06-18 11:32:38.366 | INFO     | httprunner.runner:__run_step:278 - run step begin: post raw text &gt;&gt;&gt;&gt;&gt;&gt;
+2020-06-18 11:32:38.687 | DEBUG    | httprunner.client:request:187 - client IP: 10.90.205.63, Port: 62802
+2020-06-18 11:32:38.687 | DEBUG    | httprunner.client:request:195 - server IP: 34.233.204.163, Port: 443
+</code></pre></div>
+
+
+<p>as well as testcase summary.</p>
+<div class="codehilite"><pre><span></span><code>&quot;address&quot;: {
+    &quot;client_ip&quot;: &quot;10.90.205.63&quot;,
+    &quot;client_port&quot;: 62802,
+    &quot;server_ip&quot;: &quot;34.233.204.163&quot;,
+    &quot;server_port&quot;: 443
+},
+</code></pre></div>
+
+
 <h2 id="arguments-for-v2x-compatibility">arguments for v2.x compatibility<a class="headerlink" href="#arguments-for-v2x-compatibility" title="Permanent link">&para;</a></h2>
 <p>Besides all the arguments of <code>pytest</code>, <code>hrun</code> also has several other arguments to keep compatibility with HttpRunner v2.x.</p>
 <ul>

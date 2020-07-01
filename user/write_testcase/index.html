@@ -552,6 +552,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../run_loadtest/" title="Run load test" class="md-nav__link">
+      Run load test
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -971,11 +983,12 @@
 <h5 id="assert_xxx">.assert_XXX<a class="headerlink" href="#assert_xxx" title="Permanent link">&para;</a></h5>
 <p>Extract JSON response body with <a href="https://jmespath.org/">jmespath</a> and validate with expected value.</p>
 <blockquote>
-<p>assert_XXX(jmes_path: Text, expected_value: Any)</p>
+<p>assert_XXX(jmes_path: Text, expected_value: Any, message: Text = "")</p>
 </blockquote>
 <ul>
 <li>jmes_path: jmespath expression, refer to <a href="https://jmespath.org/tutorial.html">JMESPath Tutorial</a> for more details</li>
 <li>expected_value: the specified expected value, variable or function reference can also be used here</li>
+<li>message (optional): used to indicate assertion error reason</li>
 </ul>
 <p>The image below shows HttpRunner builtin validators.</p>
 <p><img alt="" src="/images/httprunner-step-request-validate.png" /></p>

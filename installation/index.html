@@ -342,6 +342,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user/run_loadtest/" title="Run load test" class="md-nav__link">
+      Run load test
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -445,16 +457,17 @@ $ pip3 install -U git+https://github.com/httprunner/httprunner.git@master
 
 
 <h2 id="check-installation">Check Installation<a class="headerlink" href="#check-installation" title="Permanent link">&para;</a></h2>
-<p>When HttpRunner is installed, 4 commands will be added in your system.</p>
+<p>When HttpRunner is installed, 5 commands will be added in your system.</p>
 <ul>
 <li><code>httprunner</code>: main command, used for all functions</li>
 <li><code>hrun</code>: alias for <code>httprunner run</code>, used to run YAML/JSON/pytest testcases</li>
 <li><code>hmake</code>: alias for <code>httprunner make</code>, used to convert YAML/JSON testcases to pytest files</li>
 <li><code>har2case</code>: alias for <code>httprunner har2case</code>, used to convert HAR to YAML/JSON testcases</li>
+<li><code>locusts</code>: used to run load test with <a href="http://locust.io/">locust</a></li>
 </ul>
 <p>To see <code>HttpRunner</code> version:</p>
 <div class="codehilite"><pre><span></span><code>$ httprunner -V  # hrun -V
-3.0.10
+3.1.0
 </code></pre></div>
 
 
@@ -477,6 +490,11 @@ optional arguments:
   -h, --help            show this help message and exit
   -V, --version         show version
 </code></pre></div>
+
+
+<blockquote>
+<p>Notice: <code>locusts</code> is an individual command, for the reason to monkey patch ssl at beginning to avoid RecursionError when running locust.</p>
+</blockquote>
                 
               
               

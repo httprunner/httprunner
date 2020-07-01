@@ -297,6 +297,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../user/run_loadtest/" title="Run load test" class="md-nav__link">
+      Run load test
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -355,8 +367,36 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#3013-2020-06-15" class="md-nav__link">
-    3.0.13 (2020-06-15)
+  <a href="#313-2020-06-30" class="md-nav__link">
+    3.1.3 (2020-06-30)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#312-2020-06-29" class="md-nav__link">
+    3.1.2 (2020-06-29)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#311-2020-06-23" class="md-nav__link">
+    3.1.1 (2020-06-23)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#310-2020-06-21" class="md-nav__link">
+    3.1.0 (2020-06-21)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3013-2020-06-17" class="md-nav__link">
+    3.0.13 (2020-06-17)
   </a>
   
 </li>
@@ -485,8 +525,36 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#3013-2020-06-15" class="md-nav__link">
-    3.0.13 (2020-06-15)
+  <a href="#313-2020-06-30" class="md-nav__link">
+    3.1.3 (2020-06-30)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#312-2020-06-29" class="md-nav__link">
+    3.1.2 (2020-06-29)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#311-2020-06-23" class="md-nav__link">
+    3.1.1 (2020-06-23)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#310-2020-06-21" class="md-nav__link">
+    3.1.0 (2020-06-21)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3013-2020-06-17" class="md-nav__link">
+    3.0.13 (2020-06-17)
   </a>
   
 </li>
@@ -599,7 +667,57 @@
                 
                 
                 <h1 id="release-history">Release History<a class="headerlink" href="#release-history" title="Permanent link">&para;</a></h1>
-<h2 id="3013-2020-06-15">3.0.13 (2020-06-15)<a class="headerlink" href="#3013-2020-06-15" title="Permanent link">&para;</a></h2>
+<h2 id="313-2020-06-30">3.1.3 (2020-06-30)<a class="headerlink" href="#313-2020-06-30" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: validate with variable or function whose evaluation result is "" or not text</li>
+</ul>
+<h2 id="312-2020-06-29">3.1.2 (2020-06-29)<a class="headerlink" href="#312-2020-06-29" title="Permanent link">&para;</a></h2>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: missing setup/teardown hooks for referenced testcase</li>
+<li>fix: compatibility for <code>black</code> on Android termux that does not support multiprocessing well</li>
+<li>fix: mishandling of request header <code>Content-Length</code> for GET method</li>
+<li>fix: validate with jmespath containing variable or function, e.g. <code>body.locations[$index].name</code></li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: import locust at beginning to monkey patch all modules</li>
+<li>change: open file in binary mode</li>
+</ul>
+<h2 id="311-2020-06-23">3.1.1 (2020-06-23)<a class="headerlink" href="#311-2020-06-23" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: add optional message for assertion</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: ValueError when type_match None</li>
+<li>fix: override referenced testcase export in teststep</li>
+<li>fix: avoid duplicate import</li>
+<li>fix: override locust weight</li>
+</ul>
+<h2 id="310-2020-06-21">3.1.0 (2020-06-21)<a class="headerlink" href="#310-2020-06-21" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: integrate <a href="https://locust.io/">locust</a> v1.0</li>
+</ul>
+<p><strong>Changed</strong></p>
+<ul>
+<li>change: make converted referenced pytest files always relative to ProjectRootDir</li>
+<li>change: log function details when call function failed</li>
+<li>change: do not raise error if failed to get client/server address info</li>
+</ul>
+<p><strong>Fixed</strong></p>
+<ul>
+<li>fix: path handling error when har2case har file and cwd != ProjectRootDir</li>
+<li>fix: missing list type for request body</li>
+</ul>
+<h2 id="3013-2020-06-17">3.0.13 (2020-06-17)<a class="headerlink" href="#3013-2020-06-17" title="Permanent link">&para;</a></h2>
+<p><strong>Added</strong></p>
+<ul>
+<li>feat: log client/server IP and port</li>
+</ul>
 <p><strong>Fixed</strong></p>
 <ul>
 <li>fix: avoid '.csv' been converted to '_csv'</li>
