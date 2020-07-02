@@ -452,3 +452,30 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parsed_testcase["headers"]["random"], variables["random"])
         self.assertEqual(parsed_testcase["body"], variables["data"])
         self.assertEqual(parsed_testcase["headers"]["sum"], 3)
+
+    def test_parse_parameters_testcase(self):
+        variables = {
+            "user_agent": "chrome",
+            "sum": 5,
+        }
+        param = [
+            {
+                "user_agent": ["iOS/10.1", "iOS/10.2"],
+                "username-password": "${parameterize(account.csv)}",
+                "sum": "${add_two_nums(1, 2)}",
+            }
+        ]
+
+        functions = {
+            "add_two_nums": lambda a, b=1: [a + b, b-a],
+        }
+
+        parsed_params = parser.parse_parameters(param, variables, functions)
+        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.1', 'sum': 3}, parsed_params)
+        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.1', 'sum': 1}, parsed_params)
+        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.2', 'sum': 3}, parsed_params)
+        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.2', 'sum': 1}, parsed_params)
+        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.1', 'sum': 3}, parsed_params)
+        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.1', 'sum': 1}, parsed_params)
+        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.2', 'sum': 3}, parsed_params)
+        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.2', 'sum': 1}, parsed_params)

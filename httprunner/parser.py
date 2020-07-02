@@ -490,13 +490,14 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
         >>> parse_parameters(parameters)
 
     """
-    from httprunner.loader import load_project_meta
     variables_mapping = variables_mapping or {}
     functions_mapping = functions_mapping or {}
     parsed_parameters_list = []
-    # project_meta = load_project_meta("")
-    # functions_mapping.update(project_meta.functions)
-    # logger.warning(f"functions_mapping: {functions_mapping}")
+
+    # load project_meta functions
+    from httprunner.loader import load_project_meta
+    project_meta = load_project_meta("")
+    functions_mapping.update(project_meta.functions)
 
     parameters = utils.ensure_mapping_format(parameters)
     for parameter_name, parameter_content in parameters.items():
@@ -520,13 +521,12 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
 
                 parameter_content_list.append(parameter_content_dict)
         else:
-            pass
             # (2) & (3)
             parsed_variables_mapping = parse_variables_mapping(
                 variables_mapping,
                 functions_mapping
             )
-            parsed_parameter_content = parse_string(
+            parsed_parameter_content = parse_data(
                 parameter_content,
                 parsed_variables_mapping,
                 functions_mapping
