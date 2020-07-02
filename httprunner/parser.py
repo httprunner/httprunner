@@ -463,3 +463,102 @@ def parse_variables_mapping(
             parsed_variables[var_name] = parsed_value
 
     return parsed_variables
+
+
+def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
+    """ parse parameters and generate cartesian product.
+
+    Args:
+        parameters (list) parameters: parameter name and value in list
+            parameter value may be in three types:
+                (1) data list, e.g. ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
+                (2) call built-in parameterize function, "${parameterize(account.csv)}"
+                (3) call custom function in debugtalk.py, "${gen_app_version()}"
+
+        variables_mapping (dict): variables mapping loaded from testcase config
+        functions_mapping (dict): functions mapping loaded from debugtalk.py
+
+    Returns:
+        list: cartesian product list
+
+    Examples:
+        >>> parameters = [
+            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
+            {"username-password": "${parameterize(account.csv)}"},
+            {"app_version": "${gen_app_version()}"}
+        ]
+        >>> parse_parameters(parameters)
+
+    """
+    from httprunner.loader import load_project_meta
+    variables_mapping = variables_mapping or {}
+    functions_mapping = functions_mapping or {}
+    parsed_parameters_list = []
+    # project_meta = load_project_meta("")
+    # functions_mapping.update(project_meta.functions)
+    # logger.warning(f"functions_mapping: {functions_mapping}")
+
+    parameters = utils.ensure_mapping_format(parameters)
+    for parameter_name, parameter_content in parameters.items():
+        parameter_name_list = parameter_name.split("-")
+
+        if isinstance(parameter_content, list):
+            # (1) data list
+            # e.g. {"app_version": ["2.8.5", "2.8.6"]}
+            #       => [{"app_version": "2.8.5", "app_version": "2.8.6"}]
+            # e.g. {"username-password": [["user1", "111111"], ["test2", "222222"]}
+            #       => [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
+            parameter_content_list = []
+            for parameter_item in parameter_content:
+                if not isinstance(parameter_item, (list, tuple)):
+                    # "2.8.5" => ["2.8.5"]
+                    parameter_item = [parameter_item]
+
+                # ["app_version"], ["2.8.5"] => {"app_version": "2.8.5"}
+                # ["username", "password"], ["user1", "111111"] => {"username": "user1", "password": "111111"}
+                parameter_content_dict = dict(zip(parameter_name_list, parameter_item))
+
+                parameter_content_list.append(parameter_content_dict)
+        else:
+            pass
+            # (2) & (3)
+            parsed_variables_mapping = parse_variables_mapping(
+                variables_mapping,
+                functions_mapping
+            )
+            parsed_parameter_content = parse_string(
+                parameter_content,
+                parsed_variables_mapping,
+                functions_mapping
+            )
+            if not isinstance(parsed_parameter_content, list):
+                raise exceptions.ParamsError(f"{parsed_parameter_content} parameters syntax error!")
+
+            parameter_content_list = []
+            for parameter_item in parsed_parameter_content:
+                if isinstance(parameter_item, dict):
+                    # get subset by parameter name
+                    # {"app_version": "${gen_app_version()}"}
+                    # gen_app_version() => [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
+                    # {"username-password": "${get_account()}"}
+                    # get_account() => [
+                    #       {"username": "user1", "password": "111111"},
+                    #       {"username": "user2", "password": "222222"}
+                    # ]
+                    parameter_dict = {key: parameter_item[key] for key in parameter_name_list}
+    #             elif isinstance(parameter_item, (list, tuple)):
+    #                 # {"username-password": "${get_account()}"}
+    #                 # get_account() => [("user1", "111111"), ("user2", "222222")]
+    #                 parameter_dict = dict(zip(parameter_name_list, parameter_item))
+                elif len(parameter_name_list) == 1:
+                    # {"user_agent": "${get_user_agent()}"}
+                    # get_user_agent() => ["iOS/10.1", "iOS/10.2"]
+                    parameter_dict = {
+                        parameter_name_list[0]: parameter_item
+                    }
+
+                parameter_content_list.append(parameter_dict)
+
+        parsed_parameters_list.append(parameter_content_list)
+
+    return utils.gen_cartesian_product(*parsed_parameters_list)
