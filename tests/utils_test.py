@@ -125,3 +125,55 @@ class TestUtils(unittest.TestCase):
             override_config_variables(step_variables, config_variables),
             {"base_url": "https://httpbin.org", "foo1": "bar1"},
         )
+
+    def test_ensure_mapping_format(self):
+        map_list = [
+            {"a": 1},
+            {"b": 2}
+        ]
+        ordered_dict = utils.ensure_mapping_format(map_list)
+        self.assertIsInstance(ordered_dict, dict)
+        self.assertIn("a", ordered_dict)
+
+    def test_cartesian_product_one(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        ]
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {"a": 1},
+                {"a": 2}
+            ]
+        )
+
+    def test_cartesian_product_multiple(self):
+        parameters_content_list = [
+            [
+                {"a": 1},
+                {"a": 2}
+            ],
+            [
+                {"x": 111, "y": 112},
+                {"x": 121, "y": 122}
+            ]
+        ]
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(
+            product_list,
+            [
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
+            ]
+        )
+
+    def test_cartesian_product_empty(self):
+        parameters_content_list = []
+        product_list = utils.gen_cartesian_product(*parameters_content_list)
+        self.assertEqual(product_list, [])

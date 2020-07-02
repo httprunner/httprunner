@@ -9,6 +9,7 @@ from httprunner.make import (
     make_teststep_chain_style,
     pytest_files_run_set,
     ensure_file_abs_path_valid,
+    make_test_start_style
 )
 from httprunner import loader
 
@@ -213,4 +214,27 @@ from request_methods.request_with_functions_test import (
         self.assertEqual(
             teststep_chain_style,
             """Step(RunRequest("get with params").with_variables(**{'foo1': 'bar1', 'foo2': 123, 'sum_v': '${sum_two(1, 2)}'}).get("/get").with_params(**{'foo1': '$foo1', 'foo2': '$foo2', 'sum_v': '$sum_v'}).with_headers(**{'User-Agent': 'HttpRunner/${get_httprunner_version()}'}).extract().with_jmespath('body.args.foo1', 'session_foo1').with_jmespath('body.args.foo2', 'session_foo2').validate().assert_equal("status_code", 200).assert_equal("body.args.sum_v", "3"))""",
+        )
+
+    def test_make_test_start_style(self):
+        params = {
+            "user_agent": ["iOS/10.1", "iOS/10.2"],
+            "username-password": "${parameterize(request_methods/account.csv)}",
+            "app_version": "${get_app_version()}",
+        }
+        config = {
+            "parameters": params
+        }
+        self.assertEqual(
+            make_test_start_style(config),
+            f"""
+    import pytest
+    from httprunner.parser import parse_parameters
+    
+    param = [{params}]
+
+    @pytest.mark.parametrize('parametrize', parse_parameters(param))
+    def test_start(self, parametrize):
+        super().test_start(parametrize)
+        """
         )
