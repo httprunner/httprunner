@@ -53,6 +53,7 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 {% endfor %}
 
 class {{ class_name }}(HttpRunner):
+    {{ customization_test_start }}
     config = {{ config_chain_style }}
 
     teststeps = [
@@ -407,6 +408,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         "class_name": f"TestCase{testcase_cls_name}",
         "imports_list": imports_list,
         "config_chain_style": make_config_chain_style(config),
+        "customization_test_start": make_test_start(config),
         "teststeps_chain_style": [
             make_teststep_chain_style(step) for step in teststeps
         ],
@@ -606,3 +608,22 @@ def init_make_parser(subparsers):
     )
 
     return parser
+
+
+def make_test_start(config: Dict) -> Text:
+    test_start_style = ""
+    if config["parameters"]:
+        params = config["parameters"]
+        test_start_style = f"""
+    import pytest
+    from httprunner.parser import parse_parameters
+    
+    param = [{params}]
+
+    @pytest.mark.parametrize('parametrize', parse_parameters(param))
+    def test_start(self, parametrize):
+        super().test_start(parametrize)
+        """
+    else:
+        pass
+    return test_start_style
