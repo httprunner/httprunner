@@ -461,7 +461,7 @@ class TestParserBasic(unittest.TestCase):
         param = [
             {
                 "user_agent": ["iOS/10.1", "iOS/10.2"],
-                "username-password": "${parameterize(account.csv)}",
+                "username-password": "${parameterize(request_methods/account.csv)}",
                 "sum": "${add_two_nums(1, 2)}",
             }
         ]

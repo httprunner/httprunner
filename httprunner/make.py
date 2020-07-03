@@ -612,7 +612,7 @@ def init_make_parser(subparsers):
 
 def make_test_start_style(config: Dict) -> Text:
     test_start_style = ""
-    if config["parameters"]:
+    if "parameters" in config.keys():
         params = config["parameters"]
         test_start_style = f"""
     import pytest
