@@ -435,7 +435,8 @@ class HttpRunner(object):
 
         # parse config name
         config_variables = self.__config.variables
-        config_variables.update(parametrize)
+        if parametrize:
+            config_variables.update(parametrize)
         config_variables.update(self.__session_variables)
         self.__config.name = parse_data(
             self.__config.name, config_variables, self.__project_meta.functions

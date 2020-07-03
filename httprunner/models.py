@@ -37,6 +37,7 @@ class TConfig(BaseModel):
     base_url: BaseUrl = ""
     # Text: prepare variables in debugtalk.py, ${gen_variables()}
     variables: Union[VariablesMapping, Text] = {}
+    parameters: Union[VariablesMapping, Text] = {}
     # setup_hooks: Hooks = []
     # teardown_hooks: Hooks = []
     export: Export = []
