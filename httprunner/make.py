@@ -367,6 +367,9 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         ref_testcase_path = __ensure_absolute(teststep["testcase"])
         test_content = load_test_file(ref_testcase_path)
 
+        if not isinstance(test_content, Dict):
+            raise exceptions.TestCaseFormatError(f"Invalid teststep: {teststep}")
+
         # api in v2 format, convert to v3 testcase
         if "request" in test_content and "name" in test_content:
             test_content = ensure_testcase_v3_api(test_content)
