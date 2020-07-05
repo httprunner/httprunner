@@ -5,6 +5,7 @@ import os.path
 import platform
 import uuid
 from multiprocessing import Queue
+import itertools
 from typing import Dict, List, Any
 
 import sentry_sdk
@@ -220,3 +221,79 @@ def is_support_multiprocessing() -> bool:
     except (ImportError, OSError):
         # system that does not support semaphores(dependency of multiprocessing), like Android termux
         return False
+
+
+def ensure_mapping_format(variables):
+    """ ensure variables are in mapping format.
+
+    Args:
+        variables (list/dict): original variables
+
+    Returns:
+        dict: ensured variables in dict format
+
+    Examples:
+        >>> variables = [
+                {"a": 1},
+                {"b": 2}
+            ]
+        >>> print(ensure_mapping_format(variables))
+            {
+                "a": 1,
+                "b": 2
+            }
+
+    """
+    if isinstance(variables, list):
+        variables_dict = {}
+        for map_dict in variables:
+            variables_dict.update(map_dict)
+
+        return variables_dict
+
+    elif isinstance(variables, dict):
+        return variables
+
+    else:
+        raise exceptions.ParamsError("variables format error!")
+
+
+def gen_cartesian_product(*args):
+    """ generate cartesian product for lists
+
+    Args:
+        args (list of list): lists to be generated with cartesian product
+
+    Returns:
+        list: cartesian product in list
+
+    Examples:
+
+        >>> arg1 = [{"a": 1}, {"a": 2}]
+        >>> arg2 = [{"x": 111, "y": 112}, {"x": 121, "y": 122}]
+        >>> args = [arg1, arg2]
+        >>> gen_cartesian_product(*args)
+        >>> # same as below
+        >>> gen_cartesian_product(arg1, arg2)
+            [
+                {'a': 1, 'x': 111, 'y': 112},
+                {'a': 1, 'x': 121, 'y': 122},
+                {'a': 2, 'x': 111, 'y': 112},
+                {'a': 2, 'x': 121, 'y': 122}
+            ]
+
+    """
+    if not args:
+        return []
+    elif len(args) == 1:
+        return args[0]
+
+    product_list = []
+    for product_item_tuple in itertools.product(*args):
+        product_item_dict = {}
+        for item in product_item_tuple:
+            product_item_dict.update(item)
+
+        product_list.append(product_item_dict)
+
+    return product_list
