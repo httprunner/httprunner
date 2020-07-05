@@ -1,0 +1,33 @@
+config:
+    name: "request methods testcase: validate with parameters"
+    parameters:
+        user_agent: ["iOS/10.1", "iOS/10.2"]
+        username-password: ${parameterize(request_methods/account.csv)}
+        app_version: ${get_app_version()}
+    variables:
+        app_version: f1
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: get with params
+    variables:
+        foo1: $username
+        foo2: $password
+        sum_v: "${sum_two(1, $app_version)}"
+    request:
+        method: GET
+        url: /get
+        params:
+            foo1: $foo1
+            foo2: $foo2
+            sum_v: $sum_v
+        headers:
+            User-Agent: $user_agent,$app_version
+    extract:
+        session_foo2: "body.args.foo2"
+    validate:
+        - eq: ["status_code", 200]
+        - str_eq: ["body.args.sum_v", "${sum_two(1, $app_version)}"]
+#        - less_than: ["body.args.sum_v", "${sum_two(2, 2)}"]   FIXME: TypeError: '<' not supported between instances of 'str' and 'int'
