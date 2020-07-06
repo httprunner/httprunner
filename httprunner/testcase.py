@@ -159,7 +159,7 @@ class StepRequestValidation(object):
         return self
 
     def assert_string_equals(
-        self, jmes_path: Text, expected_value: int, message: Text = ""
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
     ) -> "StepRequestValidation":
         self.__step_context.validators.append(
             {"string_equals": [jmes_path, expected_value, message]}
