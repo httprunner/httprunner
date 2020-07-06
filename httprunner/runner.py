@@ -421,7 +421,7 @@ class HttpRunner(object):
             step_datas=self.__step_datas,
         )
 
-    def test_start(self, parametrize=None) -> "HttpRunner":
+    def test_start(self, parameters: Dict = None) -> "HttpRunner":
         """main entrance, discovered by pytest"""
         self.__init_tests__()
         self.__project_meta = self.__project_meta or load_project_meta(
@@ -435,8 +435,8 @@ class HttpRunner(object):
 
         # parse config name
         config_variables = self.__config.variables
-        if parametrize:
-            config_variables.update(parametrize)
+        if parameters:
+            config_variables.update(parameters)
         config_variables.update(self.__session_variables)
         self.__config.name = parse_data(
             self.__config.name, config_variables, self.__project_meta.functions
