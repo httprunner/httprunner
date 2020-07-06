@@ -6,7 +6,7 @@ import platform
 import uuid
 from multiprocessing import Queue
 import itertools
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union, Text
 
 import sentry_sdk
 from loguru import logger
@@ -223,42 +223,7 @@ def is_support_multiprocessing() -> bool:
         return False
 
 
-def ensure_mapping_format(variables):
-    """ ensure variables are in mapping format.
-
-    Args:
-        variables (list/dict): original variables
-
-    Returns:
-        dict: ensured variables in dict format
-
-    Examples:
-        >>> variables = [
-                {"a": 1},
-                {"b": 2}
-            ]
-        >>> print(ensure_mapping_format(variables))
-            {
-                "a": 1,
-                "b": 2
-            }
-
-    """
-    if isinstance(variables, list):
-        variables_dict = {}
-        for map_dict in variables:
-            variables_dict.update(map_dict)
-
-        return variables_dict
-
-    elif isinstance(variables, dict):
-        return variables
-
-    else:
-        raise exceptions.ParamsError("variables format error!")
-
-
-def gen_cartesian_product(*args):
+def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
     """ generate cartesian product for lists
 
     Args:
