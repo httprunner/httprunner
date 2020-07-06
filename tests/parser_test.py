@@ -467,15 +467,79 @@ class TestParserBasic(unittest.TestCase):
         ]
 
         functions = {
-            "add_two_nums": lambda a, b=1: [a + b, b-a],
+            "add_two_nums": lambda a, b=1: [a + b, b - a],
         }
 
         parsed_params = parser.parse_parameters(param, variables, functions)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.1', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.1', 'sum': 1}, parsed_params)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.2', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.2', 'sum': 1}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.1', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.1', 'sum': 1}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.2', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.2', 'sum': 1}, parsed_params)
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.1",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.1",
+                "sum": 1,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.2",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.2",
+                "sum": 1,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.1",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.1",
+                "sum": 1,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.2",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.2",
+                "sum": 1,
+            },
+            parsed_params,
+        )

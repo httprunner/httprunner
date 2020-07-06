@@ -9,7 +9,7 @@ from httprunner.make import (
     make_teststep_chain_style,
     pytest_files_run_set,
     ensure_file_abs_path_valid,
-    make_test_start_style
+    make_test_start_style,
 )
 from httprunner import loader
 
@@ -222,9 +222,7 @@ from request_methods.request_with_functions_test import (
             "username-password": "${parameterize(request_methods/account.csv)}",
             "app_version": "${get_app_version()}",
         }
-        config = {
-            "parameters": params
-        }
+        config = {"parameters": params}
         self.assertEqual(
             make_test_start_style(config),
             f"""
@@ -236,5 +234,5 @@ from request_methods.request_with_functions_test import (
     @pytest.mark.parametrize('parametrize', parse_parameters(param))
     def test_start(self, parametrize):
         super().test_start(parametrize)
-        """
+        """,
         )
