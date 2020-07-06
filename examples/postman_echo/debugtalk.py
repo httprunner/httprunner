@@ -4,6 +4,7 @@ from httprunner import __version__
 def get_httprunner_version():
     return __version__
 
+
 def sum_two(m, n):
     return m + n
 
@@ -18,3 +19,7 @@ def get_testsuite_config_variables():
 
 def get_app_version():
     return [3.1, 3.0]
+
+
+def calculate_two_nums(a, b=1):
+    return [a + b, b - a]
