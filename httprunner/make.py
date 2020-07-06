@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__){% for _ in range(diff_levels) %}.parent{% 
 
 {% if parameters %}
 import pytest
-from httprunner import parse_parameters
+from httprunner import Parameters
 {% endif %}
 
 from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
@@ -57,9 +57,9 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 class {{ class_name }}(HttpRunner):
 
     {% if parameters %}
-    @pytest.mark.parametrize('parameters', parse_parameters({{parameters}}))
-    def test_start(self, parameters):
-        super().test_start(parameters)
+    @pytest.mark.parametrize("param", Parameters({{parameters}}))
+    def test_start(self, param):
+        super().test_start(param)
     {% endif %}
 
     config = {{ config_chain_style }}

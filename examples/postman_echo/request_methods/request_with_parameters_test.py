@@ -3,7 +3,7 @@
 
 
 import pytest
-from httprunner import parse_parameters
+from httprunner import Parameters
 
 
 from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
@@ -11,8 +11,8 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 
 class TestCaseRequestWithParameters(HttpRunner):
     @pytest.mark.parametrize(
-        "parameters",
-        parse_parameters(
+        "param",
+        Parameters(
             {
                 "user_agent": ["iOS/10.1", "iOS/10.2"],
                 "username-password": "${parameterize(request_methods/account.csv)}",
@@ -20,8 +20,8 @@ class TestCaseRequestWithParameters(HttpRunner):
             }
         ),
     )
-    def test_start(self, parameters):
-        super().test_start(parameters)
+    def test_start(self, param):
+        super().test_start(param)
 
     config = (
         Config("request methods testcase: validate with parameters")
