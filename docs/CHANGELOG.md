@@ -1,10 +1,16 @@
 # Release History
 
-## 3.1.3 (2020-06-30)
+## 3.1.3 (2020-07-06)
+
+**Added**
+
+- feat: implement `parameters` feature
 
 **Fixed**
 
 - fix: validate with variable or function whose evaluation result is "" or not text
+- fix: raise TestCaseFormatError if teststep validate invalid
+- fix: raise TestCaseFormatError if ref testcase is invalid
 
 ## 3.1.2 (2020-06-29)
 

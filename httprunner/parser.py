@@ -496,6 +496,7 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
 
     # load project_meta functions
     from httprunner.loader import load_project_meta
+
     project_meta = load_project_meta("")
     functions_mapping.update(project_meta.functions)
 
@@ -523,16 +524,15 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
         else:
             # (2) & (3)
             parsed_variables_mapping = parse_variables_mapping(
-                variables_mapping,
-                functions_mapping
+                variables_mapping, functions_mapping
             )
             parsed_parameter_content = parse_data(
-                parameter_content,
-                parsed_variables_mapping,
-                functions_mapping
+                parameter_content, parsed_variables_mapping, functions_mapping
             )
             if not isinstance(parsed_parameter_content, list):
-                raise exceptions.ParamsError(f"{parsed_parameter_content} parameters syntax error!")
+                raise exceptions.ParamsError(
+                    f"{parsed_parameter_content} parameters syntax error!"
+                )
 
             parameter_content_list = []
             for parameter_item in parsed_parameter_content:
@@ -545,17 +545,17 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
                     #       {"username": "user1", "password": "111111"},
                     #       {"username": "user2", "password": "222222"}
                     # ]
-                    parameter_dict = {key: parameter_item[key] for key in parameter_name_list}
-    #             elif isinstance(parameter_item, (list, tuple)):
-    #                 # {"username-password": "${get_account()}"}
-    #                 # get_account() => [("user1", "111111"), ("user2", "222222")]
-    #                 parameter_dict = dict(zip(parameter_name_list, parameter_item))
+                    parameter_dict = {
+                        key: parameter_item[key] for key in parameter_name_list
+                    }
+                #             elif isinstance(parameter_item, (list, tuple)):
+                #                 # {"username-password": "${get_account()}"}
+                #                 # get_account() => [("user1", "111111"), ("user2", "222222")]
+                #                 parameter_dict = dict(zip(parameter_name_list, parameter_item))
                 elif len(parameter_name_list) == 1:
                     # {"user_agent": "${get_user_agent()}"}
                     # get_user_agent() => ["iOS/10.1", "iOS/10.2"]
-                    parameter_dict = {
-                        parameter_name_list[0]: parameter_item
-                    }
+                    parameter_dict = {parameter_name_list[0]: parameter_item}
 
                 parameter_content_list.append(parameter_dict)
 
