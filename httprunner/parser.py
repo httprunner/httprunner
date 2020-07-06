@@ -1,7 +1,7 @@
 import ast
 import builtins
 import re
-from typing import Any, Set, Text, Callable, List, Dict
+from typing import Any, Set, Text, Callable, List, Dict, Union
 
 from loguru import logger
 from sentry_sdk import capture_exception
@@ -465,52 +465,44 @@ def parse_variables_mapping(
     return parsed_variables
 
 
-def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
+def parse_parameters(parameters: Dict,) -> List[Dict]:
     """ parse parameters and generate cartesian product.
 
     Args:
-        parameters (list) parameters: parameter name and value in list
+        parameters (Dict) parameters: parameter name and value mapping
             parameter value may be in three types:
                 (1) data list, e.g. ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
                 (2) call built-in parameterize function, "${parameterize(account.csv)}"
                 (3) call custom function in debugtalk.py, "${gen_app_version()}"
 
-        variables_mapping (dict): variables mapping loaded from testcase config
-        functions_mapping (dict): functions mapping loaded from debugtalk.py
-
     Returns:
         list: cartesian product list
 
     Examples:
-        >>> parameters = [
-            {"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"]},
-            {"username-password": "${parameterize(account.csv)}"},
-            {"app_version": "${gen_app_version()}"}
-        ]
+        >>> parameters = {
+            "user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"],
+            "username-password": "${parameterize(account.csv)}",
+            "app_version": "${gen_app_version()}",
+        }
         >>> parse_parameters(parameters)
 
     """
-    variables_mapping = variables_mapping or {}
-    functions_mapping = functions_mapping or {}
-    parsed_parameters_list = []
+    parsed_parameters_list: List[List[Dict]] = []
 
     # load project_meta functions
-    from httprunner.loader import load_project_meta
+    project_meta = loader.load_project_meta("")
+    functions_mapping = project_meta.functions
 
-    project_meta = load_project_meta("")
-    functions_mapping.update(project_meta.functions)
-
-    parameters = utils.ensure_mapping_format(parameters)
     for parameter_name, parameter_content in parameters.items():
         parameter_name_list = parameter_name.split("-")
 
-        if isinstance(parameter_content, list):
+        if isinstance(parameter_content, List):
             # (1) data list
             # e.g. {"app_version": ["2.8.5", "2.8.6"]}
             #       => [{"app_version": "2.8.5", "app_version": "2.8.6"}]
             # e.g. {"username-password": [["user1", "111111"], ["test2", "222222"]}
             #       => [{"username": "user1", "password": "111111"}, {"username": "user2", "password": "222222"}]
-            parameter_content_list = []
+            parameter_content_list: List[Dict] = []
             for parameter_item in parameter_content:
                 if not isinstance(parameter_item, (list, tuple)):
                     # "2.8.5" => ["2.8.5"]
@@ -519,24 +511,21 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
                 # ["app_version"], ["2.8.5"] => {"app_version": "2.8.5"}
                 # ["username", "password"], ["user1", "111111"] => {"username": "user1", "password": "111111"}
                 parameter_content_dict = dict(zip(parameter_name_list, parameter_item))
-
                 parameter_content_list.append(parameter_content_dict)
-        else:
+
+        elif isinstance(parameter_content, Text):
             # (2) & (3)
-            parsed_variables_mapping = parse_variables_mapping(
-                variables_mapping, functions_mapping
+            parsed_parameter_content: List = parse_data(
+                parameter_content, {}, functions_mapping
             )
-            parsed_parameter_content = parse_data(
-                parameter_content, parsed_variables_mapping, functions_mapping
-            )
-            if not isinstance(parsed_parameter_content, list):
+            if not isinstance(parsed_parameter_content, List):
                 raise exceptions.ParamsError(
-                    f"{parsed_parameter_content} parameters syntax error!"
+                    f"parameters content should be in List type, got {parsed_parameter_content} for {parameter_content}"
                 )
 
-            parameter_content_list = []
+            parameter_content_list: List[Dict] = []
             for parameter_item in parsed_parameter_content:
-                if isinstance(parameter_item, dict):
+                if isinstance(parameter_item, Dict):
                     # get subset by parameter name
                     # {"app_version": "${gen_app_version()}"}
                     # gen_app_version() => [{'app_version': '2.8.5'}, {'app_version': '2.8.6'}]
@@ -545,19 +534,38 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
                     #       {"username": "user1", "password": "111111"},
                     #       {"username": "user2", "password": "222222"}
                     # ]
-                    parameter_dict = {
+                    parameter_dict: Dict = {
                         key: parameter_item[key] for key in parameter_name_list
                     }
-                #             elif isinstance(parameter_item, (list, tuple)):
-                #                 # {"username-password": "${get_account()}"}
-                #                 # get_account() => [("user1", "111111"), ("user2", "222222")]
-                #                 parameter_dict = dict(zip(parameter_name_list, parameter_item))
+                elif isinstance(parameter_item, (List, tuple)):
+                    if len(parameter_name_list) == len(parameter_item):
+                        # {"username-password": "${get_account()}"}
+                        # get_account() => [("user1", "111111"), ("user2", "222222")]
+                        parameter_dict = dict(zip(parameter_name_list, parameter_item))
+                    else:
+                        raise exceptions.ParamsError(
+                            f"parameter names length are not equal to value length.\n"
+                            f"parameter names: {parameter_name_list}\n"
+                            f"parameter values: {parameter_item}"
+                        )
                 elif len(parameter_name_list) == 1:
                     # {"user_agent": "${get_user_agent()}"}
                     # get_user_agent() => ["iOS/10.1", "iOS/10.2"]
+                    # parameter_dict will get: {"user_agent": "iOS/10.1", "user_agent": "iOS/10.2"}
                     parameter_dict = {parameter_name_list[0]: parameter_item}
+                else:
+                    raise exceptions.ParamsError(
+                        f"Invalid parameter names and values:\n"
+                        f"parameter names: {parameter_name_list}\n"
+                        f"parameter values: {parameter_item}"
+                    )
 
                 parameter_content_list.append(parameter_dict)
+
+        else:
+            raise exceptions.ParamsError(
+                f"parameter content should be List or Text(variables or functions call), got {parameter_content}"
+            )
 
         parsed_parameters_list.append(parameter_content_list)
 

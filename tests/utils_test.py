@@ -126,12 +126,6 @@ class TestUtils(unittest.TestCase):
             {"base_url": "https://httpbin.org", "foo1": "bar1"},
         )
 
-    def test_ensure_mapping_format(self):
-        map_list = [{"a": 1}, {"b": 2}]
-        ordered_dict = utils.ensure_mapping_format(map_list)
-        self.assertIsInstance(ordered_dict, dict)
-        self.assertIn("a", ordered_dict)
-
     def test_cartesian_product_one(self):
         parameters_content_list = [[{"a": 1}, {"a": 2}]]
         product_list = utils.gen_cartesian_product(*parameters_content_list)
