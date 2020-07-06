@@ -182,6 +182,10 @@ def _ensure_step_attachment(step: Dict) -> Dict:
         test_dict["export"] = step["export"]
 
     if "validate" in step:
+        if not isinstance(step["validate"], List):
+            raise exceptions.TestCaseFormatError(
+                f'Invalid teststep validate: {step["validate"]}'
+            )
         test_dict["validate"] = _convert_validators(step["validate"])
 
     if "validate_script" in step:

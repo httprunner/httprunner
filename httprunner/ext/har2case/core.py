@@ -251,7 +251,12 @@ class HarParser(object):
 
             encoding = resp_content_dict.get("encoding")
             if encoding and encoding == "base64":
-                content = base64.b64decode(text).decode("utf-8")
+                content = base64.b64decode(text)
+                try:
+                    content = content.decode("utf-8")
+                except UnicodeDecodeError:
+                    logger.warning(f"failed to decode base64 content with utf-8 !")
+                    return
             else:
                 content = text
 

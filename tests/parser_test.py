@@ -1,9 +1,10 @@
+import os
 import time
 import unittest
 
 from httprunner import parser
 from httprunner.exceptions import VariableNotFound, FunctionNotFound
-from httprunner.parser import regex_findall_variables
+from httprunner.loader import load_project_meta
 
 
 class TestParserBasic(unittest.TestCase):
@@ -27,17 +28,19 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parser.parse_string_value("${func}"), "${func}")
 
     def test_regex_findall_variables(self):
-        self.assertEqual(regex_findall_variables("$variable"), ["variable"])
-        self.assertEqual(regex_findall_variables("${variable}123"), ["variable"])
-        self.assertEqual(regex_findall_variables("/blog/$postid"), ["postid"])
-        self.assertEqual(regex_findall_variables("/$var1/$var2"), ["var1", "var2"])
-        self.assertEqual(regex_findall_variables("abc"), [])
-        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$a"), ["a"])
-        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$a"), [])
-        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$$a"), ["a"])
-        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$$$a"), [])
-        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$a$b"), ["b"])
-        self.assertEqual(regex_findall_variables("Z:2>1*0*1+1$$a$$b"), [])
+        self.assertEqual(parser.regex_findall_variables("$variable"), ["variable"])
+        self.assertEqual(parser.regex_findall_variables("${variable}123"), ["variable"])
+        self.assertEqual(parser.regex_findall_variables("/blog/$postid"), ["postid"])
+        self.assertEqual(
+            parser.regex_findall_variables("/$var1/$var2"), ["var1", "var2"]
+        )
+        self.assertEqual(parser.regex_findall_variables("abc"), [])
+        self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$a"), ["a"])
+        self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$a"), [])
+        self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$$a"), ["a"])
+        self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$$$a"), [])
+        self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$a$b"), ["b"])
+        self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$a$$b"), [])
 
     def test_extract_variables(self):
         self.assertEqual(parser.extract_variables("$var"), {"var"})
@@ -454,28 +457,91 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parsed_testcase["headers"]["sum"], 3)
 
     def test_parse_parameters_testcase(self):
-        variables = {
-            "user_agent": "chrome",
-            "sum": 5,
+        parameters = {
+            "user_agent": ["iOS/10.1", "iOS/10.2"],
+            "username-password": "${parameterize(request_methods/account.csv)}",
+            "sum": "${calculate_two_nums(1, 2)}",
         }
-        param = [
+        load_project_meta(
+            os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                "examples",
+                "postman_echo",
+                "request_methods",
+            ),
+        )
+        parsed_params = parser.parse_parameters(parameters)
+        self.assertEqual(len(parsed_params), 2 * 3 * 2)
+
+        self.assertIn(
             {
-                "user_agent": ["iOS/10.1", "iOS/10.2"],
-                "username-password": "${parameterize(request_methods/account.csv)}",
-                "sum": "${add_two_nums(1, 2)}",
-            }
-        ]
-
-        functions = {
-            "add_two_nums": lambda a, b=1: [a + b, b-a],
-        }
-
-        parsed_params = parser.parse_parameters(param, variables, functions)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.1', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.1', 'sum': 1}, parsed_params)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.2', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test1', 'password': '111111', 'user_agent': 'iOS/10.2', 'sum': 1}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.1', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.1', 'sum': 1}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.2', 'sum': 3}, parsed_params)
-        self.assertIn({'username': 'test2', 'password': '222222', 'user_agent': 'iOS/10.2', 'sum': 1}, parsed_params)
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.1",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.1",
+                "sum": 1,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.2",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test1",
+                "password": "111111",
+                "user_agent": "iOS/10.2",
+                "sum": 1,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.1",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.1",
+                "sum": 1,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.2",
+                "sum": 3,
+            },
+            parsed_params,
+        )
+        self.assertIn(
+            {
+                "username": "test2",
+                "password": "222222",
+                "user_agent": "iOS/10.2",
+                "sum": 1,
+            },
+            parsed_params,
+        )
