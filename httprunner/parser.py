@@ -1,6 +1,7 @@
 import ast
 import builtins
 import re
+import os
 from typing import Any, Set, Text, Callable, List, Dict, Union
 
 from loguru import logger
@@ -490,7 +491,7 @@ def parse_parameters(parameters: Dict,) -> List[Dict]:
     parsed_parameters_list: List[List[Dict]] = []
 
     # load project_meta functions
-    project_meta = loader.load_project_meta("")
+    project_meta = loader.load_project_meta(os.getcwd())
     functions_mapping = project_meta.functions
 
     for parameter_name, parameter_content in parameters.items():
