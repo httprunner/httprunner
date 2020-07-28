@@ -237,6 +237,8 @@ def make_request_chain_style(request: Dict) -> Text:
 
     if "json" in request:
         req_json = request["json"]
+        if isinstance(req_json, Text):
+            req_json = f'"{req_json}"'
         request_chain_style += f".with_json({req_json})"
 
     if "timeout" in request:

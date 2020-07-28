@@ -11,7 +11,7 @@ class TestLoader(unittest.TestCase):
         self.assertEqual(
             testcase_obj.config.name, "request methods testcase with variables"
         )
-        self.assertEqual(len(testcase_obj.teststeps), 3)
+        self.assertEqual(len(testcase_obj.teststeps), 4)
 
     def test_load_json_file_file_format_error(self):
         json_tmp_file = "tmp.json"
