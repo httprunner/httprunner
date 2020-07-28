@@ -237,9 +237,7 @@ def make_request_chain_style(request: Dict) -> Text:
 
     if "json" in request:
         req_json = request["json"]
-        if not isinstance(req_json, Text):
-            pass
-        else:
+        if isinstance(req_json, Text):
             req_json = f'"{req_json}"'
         request_chain_style += f".with_json({req_json})"
 
