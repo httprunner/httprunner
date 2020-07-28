@@ -214,3 +214,30 @@ from request_methods.request_with_functions_test import (
             teststep_chain_style,
             """Step(RunRequest("get with params").with_variables(**{'foo1': 'bar1', 'foo2': 123, 'sum_v': '${sum_two(1, 2)}'}).get("/get").with_params(**{'foo1': '$foo1', 'foo2': '$foo2', 'sum_v': '$sum_v'}).with_headers(**{'User-Agent': 'HttpRunner/${get_httprunner_version()}'}).extract().with_jmespath('body.args.foo1', 'session_foo1').with_jmespath('body.args.foo2', 'session_foo2').validate().assert_equal("status_code", 200).assert_equal("body.args.sum_v", "3"))""",
         )
+
+    def test_make_requests_with_json_chain_style(self):
+        step = {
+            "name": "get with params",
+            "variables": {"foo1": "bar1", "foo2": 123, "sum_v": "${sum_two(1, 2)}","myjson":{"name": "user", "password": "123456"}},
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "params": {"foo1": "$foo1", "foo2": "$foo2", "sum_v": "$sum_v"},
+                "headers": {"User-Agent": "HttpRunner/${get_httprunner_version()}"},
+                "json": "$myjson",
+            },
+            "testcase": "CLS_LB(TestCaseDemo)CLS_RB",
+            "extract": {
+                "session_foo1": "body.args.foo1",
+                "session_foo2": "body.args.foo2",
+            },
+            "validate": [
+                {"eq": ["status_code", 200]},
+                {"eq": ["body.args.sum_v", "3"]},
+            ],
+        }
+        teststep_chain_style = make_teststep_chain_style(step)
+        self.assertEqual(
+            teststep_chain_style,
+            """Step(RunRequest("get with params").with_variables(**{'foo1': 'bar1', 'foo2': 123, 'sum_v': '${sum_two(1, 2)}', 'myjson': {'name': 'user', 'password': '123456'}}).get("/get").with_params(**{'foo1': '$foo1', 'foo2': '$foo2', 'sum_v': '$sum_v'}).with_headers(**{'User-Agent': 'HttpRunner/${get_httprunner_version()}'}).with_json("$myjson").extract().with_jmespath('body.args.foo1', 'session_foo1').with_jmespath('body.args.foo2', 'session_foo2').validate().assert_equal("status_code", 200).assert_equal("body.args.sum_v", "3"))""",
+        )

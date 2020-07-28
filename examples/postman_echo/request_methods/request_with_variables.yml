@@ -55,3 +55,24 @@ teststeps:
         - eq: ["body.form.foo1", "testcase_config_bar1"]
         - eq: ["body.form.foo2", "bar23"]
         - eq: ["body.form.foo3", "bar21"]
+
+-
+    name: post form data using json
+    variables:
+        foo2: bar23
+        jsondata:
+            foo1: $foo1
+            foo2: $foo2
+            foo3: $foo3
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/3.0
+            Content-Type: "application/json"
+        json: $jsondata
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.data.foo1", "testcase_config_bar1"]
+        - eq: ["body.data.foo2", "bar23"]
+        - eq: ["body.data.foo3", "bar21"]
