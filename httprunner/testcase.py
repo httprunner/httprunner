@@ -214,9 +214,29 @@ class StepRequestValidation(object):
         )
         return self
 
+    def retry_thens(self) -> "RetryWhensValidation":
+        return RetryWhensValidation(self.__step_context)
+
     def perform(self) -> TStep:
         return self.__step_context
 
+
+class RetryWhensValidation(StepRequestValidation):
+    def __init__(self, step_context: TStep):
+        self.__step_context  = TStep(name='')
+        self.__base_step = step_context
+
+    def assert_equal(
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.validators.append(
+            {"equal": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def perform(self) -> TStep:
+        self.__base_step.retry_whens = self.__step_context.validators
+        return self.__base_step
 
 class StepRequestExtraction(object):
     def __init__(self, step_context: TStep):
@@ -385,6 +405,9 @@ class RunTestCase(object):
     def call(self, testcase: Callable) -> StepRefCase:
         self.__step_context.testcase = testcase
         return StepRefCase(self.__step_context)
+
+    def retry_thens(self):
+        pass
 
     def perform(self) -> TStep:
         return self.__step_context

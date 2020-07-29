@@ -352,12 +352,27 @@ class HttpRunner(object):
                 step.variables, self.__project_meta.functions
             )
 
-            # run step
-            if USE_ALLURE:
-                with allure.step(f"step: {step.name}"):
+
+            while True:
+                # run step
+                if USE_ALLURE:
+                    with allure.step(f"step: {step.name}"):
+                        extract_mapping = self.__run_step(step)
+                else:
                     extract_mapping = self.__run_step(step)
-            else:
-                extract_mapping = self.__run_step(step)
+
+                if step.retry_whens:
+                    variables_mapping = step.variables
+                    variables_mapping.update(extract_mapping)
+            
+                    try:
+                        step.variables['response'].validate(
+                            step.retry_whens, variables_mapping, self.__project_meta.functions
+                        )
+                        break
+                    except ValidationFailure:
+                        # log testcase duration before raise ValidationFailure
+                        pass
 
             # save extracted variables to session variables
             self.__session_variables.update(extract_mapping)
