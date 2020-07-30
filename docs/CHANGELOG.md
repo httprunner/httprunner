@@ -1,5 +1,17 @@
 # Release History
 
+## 3.1.4 (2020-07-30)
+
+**Changed**
+
+- change: override variables strategy, step variables > extracted variables from previous steps
+
+**Fixed**
+
+- fix: parameters feature with custom functions
+- fix: request json field with variable reference
+- fix: pickle BufferedReader TypeError in upload feature
+
 ## 3.1.3 (2020-07-06)
 
 **Added**
