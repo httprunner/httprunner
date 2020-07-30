@@ -218,7 +218,12 @@ from request_methods.request_with_functions_test import (
     def test_make_requests_with_json_chain_style(self):
         step = {
             "name": "get with params",
-            "variables": {"foo1": "bar1", "foo2": 123, "sum_v": "${sum_two(1, 2)}","myjson":{"name": "user", "password": "123456"}},
+            "variables": {
+                "foo1": "bar1",
+                "foo2": 123,
+                "sum_v": "${sum_two(1, 2)}",
+                "myjson": {"name": "user", "password": "123456"},
+            },
             "request": {
                 "method": "GET",
                 "url": "/get",
