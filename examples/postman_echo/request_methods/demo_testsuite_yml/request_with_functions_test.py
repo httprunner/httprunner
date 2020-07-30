@@ -57,7 +57,7 @@ class TestCaseRequestWithFunctions(HttpRunner):
             .assert_equal("status_code", 200)
             .assert_equal(
                 "body.data",
-                "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar21.",
+                "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar32.",
             )
             .assert_type_match("body.json", "None")
             .assert_type_match("body.json", "NoneType")
