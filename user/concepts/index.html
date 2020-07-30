@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#variables-priority" class="md-skip">
+        <a href="#debugtalkpy" class="md-skip">
           跳转至
         </a>
       
@@ -276,6 +276,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#debugtalkpy" class="md-nav__link">
+    debugtalk.py
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#variables-priority" class="md-nav__link">
     variables priority
   </a>
@@ -434,6 +441,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#debugtalkpy" class="md-nav__link">
+    debugtalk.py
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#variables-priority" class="md-nav__link">
     variables priority
   </a>
@@ -478,7 +492,13 @@
                 
                   <h1>Concepts</h1>
                 
-                <h2 id="variables-priority">variables priority<a class="headerlink" href="#variables-priority" title="Permanent link">&para;</a></h2>
+                <h2 id="debugtalkpy">debugtalk.py<a class="headerlink" href="#debugtalkpy" title="Permanent link">&para;</a></h2>
+<p>Each project should and could only have one <code>debugtalk.py</code> file. This file has multiple functions.</p>
+<ul>
+<li>As the root path anchor of the project, the relative paths in testcase, such as referencing testcases or CSV files, are all based on this root path</li>
+<li>Store custom python functions, the functions called in the testcase are all defined in this file</li>
+</ul>
+<h2 id="variables-priority">variables priority<a class="headerlink" href="#variables-priority" title="Permanent link">&para;</a></h2>
 <p>There are several different types of <code>variables</code>, and the priory can be confusing. The best way to avoid confusion is to use different variable names. However, if you must use the same variable names, you should understand the priority strategy.</p>
 <h3 id="testcase">testcase<a class="headerlink" href="#testcase" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><code><span class="nt">config</span><span class="p">:</span>
