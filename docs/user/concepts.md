@@ -1,4 +1,11 @@
 
+## debugtalk.py
+
+Based on the philosophy of `Convention over configuration`, each project should and could only have one `debugtalk.py` file. This file has multiple functions.
+
+- As the root path anchor of the project, the relative paths in testcase, such as referencing testcases or CSV files, are all based on this root path
+- Store custom python functions, the functions called in the testcase are all defined in this file
+
 ## variables priority
 
 There are several different types of `variables`, and the priory can be confusing. The best way to avoid confusion is to use different variable names. However, if you must use the same variable names, you should understand the priority strategy.
