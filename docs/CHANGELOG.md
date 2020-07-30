@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.4 (2020-07-30)
+
+**Changed**
+
+- change: override variables strategy, step variables > extracted variables from previous steps
+
 ## 3.1.3 (2020-07-06)
 
 **Added**
