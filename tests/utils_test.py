@@ -6,7 +6,7 @@ import unittest
 from httprunner import loader, utils
 from httprunner.utils import (
     ExtendJSONEncoder,
-    override_config_variables,
+    merge_variables,
 )
 
 
@@ -122,7 +122,7 @@ class TestUtils(unittest.TestCase):
         step_variables = {"base_url": "$base_url", "foo1": "bar1"}
         config_variables = {"base_url": "https://httpbin.org", "foo1": "bar111"}
         self.assertEqual(
-            override_config_variables(step_variables, config_variables),
+            merge_variables(step_variables, config_variables),
             {"base_url": "https://httpbin.org", "foo1": "bar1"},
         )
 

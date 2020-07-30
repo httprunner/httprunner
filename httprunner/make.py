@@ -24,7 +24,7 @@ from httprunner.loader import (
     convert_relative_project_root_dir,
 )
 from httprunner.response import uniform_validator
-from httprunner.utils import override_config_variables, is_support_multiprocessing
+from httprunner.utils import merge_variables, is_support_multiprocessing
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -485,9 +485,7 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         testcase_variables = convert_variables(
             testcase.get("variables", {}), testcase_path
         )
-        testcase_variables = override_config_variables(
-            testcase_variables, testsuite_variables
-        )
+        testcase_variables = merge_variables(testcase_variables, testsuite_variables)
         # testsuite testcase variables > testcase config variables
         testcase_dict["config"]["variables"] = convert_variables(
             testcase_dict["config"].get("variables", {}), testcase_path
