@@ -361,7 +361,7 @@ class HttpRunner(object):
             # save extracted variables to session variables
             extracted_variables.update(extract_mapping)
 
-        self.__session_variables.update(extract_mapping)
+        self.__session_variables.update(extracted_variables)
         self.__duration = time.time() - self.__start_at
         return self
 
