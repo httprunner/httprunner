@@ -10,6 +10,7 @@
 
 - fix: parameters feature with custom functions
 - fix: request json field with variable reference
+- fix: pickle BufferedReader TypeError in upload feature
 
 ## 3.1.3 (2020-07-06)
 

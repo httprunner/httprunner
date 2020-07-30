@@ -207,7 +207,7 @@ def merge_variables(
 
         step_new_variables[key] = value
 
-    merged_variables = copy.deepcopy(variables_to_be_overridden)
+    merged_variables = copy.copy(variables_to_be_overridden)
     merged_variables.update(step_new_variables)
     return merged_variables
 
