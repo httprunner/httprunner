@@ -6,6 +6,11 @@
 
 - change: override variables strategy, step variables > extracted variables from previous steps
 
+**Fixed**
+
+- fix: parameters feature with custom functions
+- fix: request json field with variable reference
+
 ## 3.1.3 (2020-07-06)
 
 **Added**
