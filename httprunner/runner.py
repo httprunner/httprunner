@@ -21,7 +21,7 @@ from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.testcase import Config, Step
-from httprunner.utils import override_config_variables
+from httprunner.utils import merge_variables
 from httprunner.models import (
     TConfig,
     TStep,
@@ -335,17 +335,16 @@ class HttpRunner(object):
         self.__start_at = time.time()
         self.__step_datas: List[StepData] = []
         self.__session = self.__session or HttpSession()
-        self.__session_variables = {}
+        # save extracted variables of teststeps
+        extracted_variables: VariablesMapping = {}
 
         # run teststeps
         for step in self.__teststeps:
             # override variables
-            # session variables (extracted from pre step) > step variables
-            step.variables.update(self.__session_variables)
+            # step variables > extracted variables from previous steps
+            step.variables = merge_variables(step.variables, extracted_variables)
             # step variables > testcase config variables
-            step.variables = override_config_variables(
-                step.variables, self.__config.variables
-            )
+            step.variables = merge_variables(step.variables, self.__config.variables)
 
             # parse variables
             step.variables = parse_variables_mapping(
@@ -360,8 +359,9 @@ class HttpRunner(object):
                 extract_mapping = self.__run_step(step)
 
             # save extracted variables to session variables
-            self.__session_variables.update(extract_mapping)
+            extracted_variables.update(extract_mapping)
 
+        self.__session_variables.update(extract_mapping)
         self.__duration = time.time() - self.__start_at
         return self
 
