@@ -193,15 +193,13 @@ class ExtendJSONEncoder(json.JSONEncoder):
             return repr(obj)
 
 
-def override_config_variables(
-    step_variables: VariablesMapping, config_variables: VariablesMapping
+def merge_variables(
+    variables: VariablesMapping, variables_to_be_overridden: VariablesMapping
 ) -> VariablesMapping:
-    """ override variables:
-            testcase step variables > testcase config variables
-            testsuite testcase variables > testsuite config variables
+    """ merge two variables mapping, the first variables have higher priority
     """
     step_new_variables = {}
-    for key, value in step_variables.items():
+    for key, value in variables.items():
         if f"${key}" == value or "${" + key + "}" == value:
             # e.g. {"base_url": "$base_url"}
             # or {"base_url": "${base_url}"}
@@ -209,9 +207,9 @@ def override_config_variables(
 
         step_new_variables[key] = value
 
-    variables = copy.deepcopy(config_variables)
-    variables.update(step_new_variables)
-    return variables
+    merged_variables = copy.copy(variables_to_be_overridden)
+    merged_variables.update(step_new_variables)
+    return merged_variables
 
 
 def is_support_multiprocessing() -> bool:
