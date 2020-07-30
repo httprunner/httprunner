@@ -19,7 +19,7 @@
     
     
       
-        <title>Models - HttpRunner V3.x Docs</title>
+        <title>Concepts - HttpRunner V3.x Docs</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#models" class="md-skip">
+        <a href="#variables-priority" class="md-skip">
           跳转至
         </a>
       
@@ -94,7 +94,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Models
+              Concepts
             
           </span>
         </div>
@@ -216,10 +216,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       User Guide
@@ -241,11 +243,69 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../user/concepts/" title="Concepts" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Concepts
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Concepts" class="md-nav__link md-nav__link--active">
       Concepts
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variables-priority" class="md-nav__link">
+    variables priority
+  </a>
+  
+    <nav class="md-nav" aria-label="variables priority">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testcase" class="md-nav__link">
+    testcase
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testsuite" class="md-nav__link">
+    testsuite
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -255,7 +315,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user/scaffold/" title="Scaffold" class="md-nav__link">
+    <a href="../scaffold/" title="Scaffold" class="md-nav__link">
       Scaffold
     </a>
   </li>
@@ -267,7 +327,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user/gen_tests/" title="Record & Generate testcase" class="md-nav__link">
+    <a href="../gen_tests/" title="Record & Generate testcase" class="md-nav__link">
       Record & Generate testcase
     </a>
   </li>
@@ -279,7 +339,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user/write_testcase/" title="Write Testcase" class="md-nav__link">
+    <a href="../write_testcase/" title="Write Testcase" class="md-nav__link">
       Write Testcase
     </a>
   </li>
@@ -291,7 +351,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user/run_testcase/" title="Run Testcase" class="md-nav__link">
+    <a href="../run_testcase/" title="Run Testcase" class="md-nav__link">
       Run Testcase
     </a>
   </li>
@@ -303,7 +363,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user/testing_report/" title="Testing Report" class="md-nav__link">
+    <a href="../testing_report/" title="Testing Report" class="md-nav__link">
       Testing Report
     </a>
   </li>
@@ -315,7 +375,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../user/run_loadtest/" title="Run load test" class="md-nav__link">
+    <a href="../run_loadtest/" title="Run load test" class="md-nav__link">
       Run load test
     </a>
   </li>
@@ -364,8 +424,43 @@
 <nav class="md-nav md-nav--secondary" aria-label="目录">
   
   
-    
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variables-priority" class="md-nav__link">
+    variables priority
+  </a>
+  
+    <nav class="md-nav" aria-label="variables priority">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testcase" class="md-nav__link">
+    testcase
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testsuite" class="md-nav__link">
+    testsuite
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -381,8 +476,76 @@
                   
                 
                 
-                <h1 id="models">Models<a class="headerlink" href="#models" title="Permanent link">&para;</a></h1>
-<p>HttpRunner v3.x uses <a href="https://pydantic-docs.helpmanual.io/"><code>pydantic</code></a> to define models of testcase.</p>
+                  <h1>Concepts</h1>
+                
+                <h2 id="variables-priority">variables priority<a class="headerlink" href="#variables-priority" title="Permanent link">&para;</a></h2>
+<p>There are several different types of <code>variables</code>, and the priory can be confusing. The best way to avoid confusion is to use different variable names. However, if you must use the same variable names, you should understand the priority strategy.</p>
+<h3 id="testcase">testcase<a class="headerlink" href="#testcase" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">xxx</span>
+    <span class="nt">variables</span><span class="p">:</span>              <span class="c1"># config variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="s">&quot;configA&quot;</span>
+        <span class="nt">varB</span><span class="p">:</span> <span class="s">&quot;configB&quot;</span>
+        <span class="nt">varC</span><span class="p">:</span> <span class="s">&quot;configC&quot;</span>
+    <span class="nt">parameters</span><span class="p">:</span>             <span class="c1"># parameter variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&quot;paramA1&quot;</span><span class="p p-Indicator">]</span>
+        <span class="nt">varB</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&quot;paramB1&quot;</span><span class="p p-Indicator">]</span>
+
+<span class="nt">teststeps</span><span class="p">:</span>
+<span class="p p-Indicator">-</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">step 1</span>
+    <span class="nt">variables</span><span class="p">:</span>              <span class="c1"># step variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="s">&quot;step1A&quot;</span>
+    <span class="nt">request</span><span class="p">:</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/$varA/$varB/$varC</span> <span class="c1"># varA=&quot;step1A&quot;, varB=&quot;paramB1&quot;, varC=&quot;configC&quot;</span>
+        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">GET</span>
+    <span class="nt">extract</span><span class="p">:</span>                <span class="c1"># extracted variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">body.data.A</span>   <span class="c1"># suppose varA=&quot;extractVarA&quot;</span>
+        <span class="nt">varB</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">body.data.B</span>   <span class="c1"># suppose varB=&quot;extractVarB&quot;</span>
+<span class="p p-Indicator">-</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">step 2</span>
+    <span class="nt">varialbes</span><span class="p">:</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="s">&quot;step2A&quot;</span>
+    <span class="nt">request</span><span class="p">:</span>
+        <span class="nt">url</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/$varA/$varB/$varC</span> <span class="c1"># varA=&quot;step2A&quot;, varB=&quot;extractVarB&quot;, varC=&quot;configC&quot;</span>
+        <span class="nt">method</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">GET</span>
+</code></pre></div>
+
+
+<p>In a testcase, variables priority are in the following order:</p>
+<ul>
+<li>step variables &gt; extracted variables, e.g. step 2, varA="step2A"</li>
+<li>parameter variables &gt; config variables, e.g. step 1, varB="paramB1"</li>
+<li>extracted variables &gt; parameter variables &gt; config variables, e.g. step 2, varB="extractVarB"</li>
+<li>config variables are in the lowest priority, e.g. step 1/2, varC="configC"</li>
+</ul>
+<h3 id="testsuite">testsuite<a class="headerlink" href="#testsuite" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="nt">config</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">xxx</span>
+    <span class="nt">variables</span><span class="p">:</span>                  <span class="c1"># testsuite config variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="s">&quot;configA&quot;</span>
+        <span class="nt">varB</span><span class="p">:</span> <span class="s">&quot;configB&quot;</span>
+        <span class="nt">varC</span><span class="p">:</span> <span class="s">&quot;configC&quot;</span>
+
+<span class="nt">testcases</span><span class="p">:</span>
+<span class="p p-Indicator">-</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">case 1</span>
+    <span class="nt">variables</span><span class="p">:</span>                  <span class="c1"># testcase variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="s">&quot;case1A&quot;</span>
+    <span class="nt">testcase</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/testcase1</span>
+    <span class="nt">export</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&quot;varA&quot;</span><span class="p p-Indicator">,</span> <span class="s">&quot;varB&quot;</span><span class="p p-Indicator">]</span>    <span class="c1"># export variables</span>
+<span class="p p-Indicator">-</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">case 2</span>
+    <span class="nt">varialbes</span><span class="p">:</span>                  <span class="c1"># testcase variables</span>
+        <span class="nt">varA</span><span class="p">:</span> <span class="s">&quot;case2A&quot;</span>
+    <span class="nt">testcase</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/path/to/testcase2</span>
+</code></pre></div>
+
+
+<p>In a testsuite, variables priority are in the following order:</p>
+<ul>
+<li>testcase variables &gt; export variables &gt; testsuite config variables &gt; referenced testcase config variables</li>
+</ul>
                 
               
               
@@ -397,6 +560,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../../installation/" title="Installation" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  上一页
+                </span>
+                Installation
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../scaffold/" title="Scaffold" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  下一页
+                </span>
+                Scaffold
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
