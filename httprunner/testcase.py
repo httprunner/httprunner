@@ -214,29 +214,166 @@ class StepRequestValidation(object):
         )
         return self
 
-    def retry_thens(self) -> "RetryWhensValidation":
+    def retry_whens(self) -> "RetryWhensValidation":
         return RetryWhensValidation(self.__step_context)
 
     def perform(self) -> TStep:
         return self.__step_context
 
 
-class RetryWhensValidation(StepRequestValidation):
+class RetryWhensValidation(object):
     def __init__(self, step_context: TStep):
-        self.__step_context  = TStep(name='')
-        self.__base_step = step_context
+        self.__step_context = step_context
 
     def assert_equal(
         self, jmes_path: Text, expected_value: Any, message: Text = ""
     ) -> "RetryWhensValidation":
-        self.__step_context.validators.append(
+        self.__step_context.retry_whens.append(
             {"equal": [jmes_path, expected_value, message]}
         )
         return self
 
+    def assert_not_equal(
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"not_equal": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_greater_than(
+        self, jmes_path: Text, expected_value: Union[int, float], message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"greater_than": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_less_than(
+        self, jmes_path: Text, expected_value: Union[int, float], message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"less_than": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_greater_or_equals(
+        self, jmes_path: Text, expected_value: Union[int, float], message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"greater_or_equals": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_less_or_equals(
+        self, jmes_path: Text, expected_value: Union[int, float], message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"less_or_equals": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_length_equal(
+        self, jmes_path: Text, expected_value: int, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"length_equal": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_length_greater_than(
+        self, jmes_path: Text, expected_value: int, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"length_greater_than": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_length_less_than(
+        self, jmes_path: Text, expected_value: int, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"length_less_than": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_length_greater_or_equals(
+        self, jmes_path: Text, expected_value: int, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"length_greater_or_equals": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_length_less_or_equals(
+        self, jmes_path: Text, expected_value: int, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"length_less_or_equals": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_string_equals(
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"string_equals": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_startswith(
+        self, jmes_path: Text, expected_value: Text, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"startswith": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_endswith(
+        self, jmes_path: Text, expected_value: Text, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"endswith": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_regex_match(
+        self, jmes_path: Text, expected_value: Text, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"regex_match": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_contains(
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"contains": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_contained_by(
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"contained_by": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def assert_type_match(
+        self, jmes_path: Text, expected_value: Any, message: Text = ""
+    ) -> "RetryWhensValidation":
+        self.__step_context.retry_whens.append(
+            {"type_match": [jmes_path, expected_value, message]}
+        )
+        return self
+
+    def retry_whens(self) -> "RetryWhensValidation":
+        return RetryWhensValidation(self.__step_context)
+
     def perform(self) -> TStep:
-        self.__base_step.retry_whens = self.__step_context.validators
-        return self.__base_step
+        return self.__step_context
 
 class StepRequestExtraction(object):
     def __init__(self, step_context: TStep):
@@ -382,6 +519,9 @@ class StepRefCase(object):
         self.__step_context.export.extend(var_name)
         return self
 
+    def retry_whens(self) -> RetryWhensValidation:
+        return RetryWhensValidation(self.__step_context)
+
     def perform(self) -> TStep:
         return self.__step_context
 
@@ -405,9 +545,6 @@ class RunTestCase(object):
     def call(self, testcase: Callable) -> StepRefCase:
         self.__step_context.testcase = testcase
         return StepRefCase(self.__step_context)
-
-    def retry_thens(self):
-        pass
 
     def perform(self) -> TStep:
         return self.__step_context
