@@ -3,6 +3,7 @@ import time
 import uuid
 from datetime import datetime
 from typing import List, Dict, Text, NoReturn
+import requests
 
 try:
     import allure
@@ -365,13 +366,17 @@ class HttpRunner(object):
                     variables_mapping.update(extract_mapping)
             
                     try:
-                        step.variables['response'].validate(
-                            step.retry_whens, variables_mapping, self.__project_meta.functions
-                        )
-                        break
+                        response = step.variables.get('response') or ResponseObject(requests.Response())
+                        if isinstance(response, ResponseObject):
+                            response.validate(
+                                step.retry_whens, variables_mapping, self.__project_meta.functions
+                            )
+                        else:
+                            break
                     except ValidationFailure:
-                        # log testcase duration before raise ValidationFailure
-                        pass
+                        break
+                else:
+                    break
 
             # save extracted variables to session variables
             extracted_variables.update(extract_mapping)
