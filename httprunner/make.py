@@ -312,27 +312,30 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         export: List[Text] = teststep["export"]
         step_info += f".export(*{export})"
 
-    if "validate" in teststep:
-        step_info += ".validate()"
+    for _step in ('validate', 'retry_whens'):
 
-        for v in teststep["validate"]:
-            validator = uniform_validator(v)
-            assert_method = validator["assert"]
-            check = validator["check"]
-            if '"' in check:
-                # e.g. body."user-agent" => 'body."user-agent"'
-                check = f"'{check}'"
-            else:
-                check = f'"{check}"'
-            expect = validator["expect"]
-            if isinstance(expect, Text):
-                expect = f'"{expect}"'
+        if _step in teststep:
+            step_info += f".{_step}()"
 
-            message = validator["message"]
-            if message:
-                step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
-            else:
-                step_info += f".assert_{assert_method}({check}, {expect})"
+            for v in teststep[_step]:
+                validator = uniform_validator(v)
+                assert_method = validator["assert"]
+                check = validator["check"]
+                if '"' in check:
+                    # e.g. body."user-agent" => 'body."user-agent"'
+                    check = f"'{check}'"
+                else:
+                    check = f'"{check}"'
+                expect = validator["expect"]
+                if isinstance(expect, Text):
+                    expect = f'"{expect}"'
+
+                message = validator["message"]
+                if message:
+                    step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+                else:
+                    step_info += f".assert_{assert_method}({check}, {expect})"
+
 
     return f"Step({step_info})"
 
