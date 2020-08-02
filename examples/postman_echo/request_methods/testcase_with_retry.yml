@@ -1,0 +1,15 @@
+config:
+    name: "request methods testcase: retry_whens"
+    variables:
+        app_version: f1
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: request with retry
+    testcase: testcases/request_with_retry.yml
+    export:
+        - foo1
+    retry_whens:
+        - ne: ["$foo1", 3]
