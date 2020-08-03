@@ -1,3 +1,4 @@
+import time
 from httprunner import __version__
 
 
@@ -32,3 +33,7 @@ def get_num() ->int:
     global num
     num += 1
     return num
+
+
+def teardown_hook_sleep(n):
+    time.sleep(n)

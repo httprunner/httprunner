@@ -8,8 +8,21 @@ config:
 teststeps:
 -
     name: request with retry
-    testcase: testcases/request_with_retry.yml
+    testcase: request_methods/request_with_retry.yml
     export:
-        - foo1
+        - foo4
     retry_whens:
-        - ne: ["$foo1", 3]
+        - ne: ["$foo4", 3]
+-
+    name: get with params
+    request:
+        method: GET
+        url: /get
+        params:
+            foo4: ${get_num()}
+    teardown_hooks:
+        - ${teardown_hook_sleep(1)}
+    validate:
+        - eq: ["status_code", 200]
+    retry_whens:
+        - ne: ["body.args.foo4", "5"]

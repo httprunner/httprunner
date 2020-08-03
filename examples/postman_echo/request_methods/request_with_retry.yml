@@ -12,12 +12,10 @@ teststeps:
         method: GET
         url: /get
         params:
-            foo1: ${get_num()}
+            foo4: ${get_num()}
     teardown_hooks:
-        - ${teardown_hook_sleep(2)}
+        - ${teardown_hook_sleep(1)}
     extract:
-        foo1: "body.args.foo1"
+        foo4: "body.args.foo4"
     validate:
         - eq: ["status_code", 200]
-    # retry_whens:
-    #     - ne: ["body.args.foo1", "3"]
