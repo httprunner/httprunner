@@ -196,7 +196,7 @@ class HarParser(object):
 
             teststep_dict["request"][request_data_key] = post_data
 
-    def _make_validate(self, teststep_dict, entry_json):
+    def _make_validate(self, teststep_dict, entry_json, only_status=False):
         """ parse HAR entry response and make teststep validate.
 
         Args:
@@ -231,52 +231,52 @@ class HarParser(object):
         teststep_dict["validate"].append(
             {"eq": ["status_code", entry_json["response"].get("status")]}
         )
+        if not only_status:
+            resp_content_dict = entry_json["response"].get("content")
 
-        resp_content_dict = entry_json["response"].get("content")
-
-        headers_mapping = utils.convert_list_to_dict(
-            entry_json["response"].get("headers", [])
-        )
-        if "Content-Type" in headers_mapping:
-            teststep_dict["validate"].append(
-                {"eq": ["headers.Content-Type", headers_mapping["Content-Type"]]}
+            headers_mapping = utils.convert_list_to_dict(
+                entry_json["response"].get("headers", [])
             )
+            if "Content-Type" in headers_mapping:
+                teststep_dict["validate"].append(
+                    {"eq": ["headers.Content-Type", headers_mapping["Content-Type"]]}
+                )
 
-        text = resp_content_dict.get("text")
-        if not text:
-            return
+            text = resp_content_dict.get("text")
+            if not text:
+                return
 
-        mime_type = resp_content_dict.get("mimeType")
-        if mime_type and mime_type.startswith("application/json"):
+            mime_type = resp_content_dict.get("mimeType")
+            if mime_type and mime_type.startswith("application/json"):
 
-            encoding = resp_content_dict.get("encoding")
-            if encoding and encoding == "base64":
-                content = base64.b64decode(text)
+                encoding = resp_content_dict.get("encoding")
+                if encoding and encoding == "base64":
+                    content = base64.b64decode(text)
+                    try:
+                        content = content.decode("utf-8")
+                    except UnicodeDecodeError:
+                        logger.warning(f"failed to decode base64 content with utf-8 !")
+                        return
+                else:
+                    content = text
+
                 try:
-                    content = content.decode("utf-8")
-                except UnicodeDecodeError:
-                    logger.warning(f"failed to decode base64 content with utf-8 !")
+                    resp_content_json = json.loads(content)
+                except JSONDecodeError:
+                    logger.warning(f"response content can not be loaded as json: {content}")
                     return
-            else:
-                content = text
 
-            try:
-                resp_content_json = json.loads(content)
-            except JSONDecodeError:
-                logger.warning(f"response content can not be loaded as json: {content}")
-                return
+                if not isinstance(resp_content_json, dict):
+                    # e.g. ['a', 'b']
+                    return
 
-            if not isinstance(resp_content_json, dict):
-                # e.g. ['a', 'b']
-                return
+                for key, value in resp_content_json.items():
+                    if isinstance(value, (dict, list)):
+                        continue
 
-            for key, value in resp_content_json.items():
-                if isinstance(value, (dict, list)):
-                    continue
+                    teststep_dict["validate"].append({"eq": ["body.{}".format(key), value]})
 
-                teststep_dict["validate"].append({"eq": ["body.{}".format(key), value]})
-
-    def _prepare_teststep(self, entry_json):
+    def _prepare_teststep(self, entry_json, only_status=False):
         """ extract info from entry dict and make teststep
 
         Args:
@@ -304,7 +304,7 @@ class HarParser(object):
         self.__make_request_cookies(teststep_dict, entry_json)
         self.__make_request_headers(teststep_dict, entry_json)
         self._make_request_data(teststep_dict, entry_json)
-        self._make_validate(teststep_dict, entry_json)
+        self._make_validate(teststep_dict, entry_json, only_status)
 
         return teststep_dict
 
@@ -313,7 +313,7 @@ class HarParser(object):
         """
         return {"name": "testcase description", "variables": {}, "verify": False}
 
-    def _prepare_teststeps(self):
+    def _prepare_teststeps(self, only_status=False):
         """ make teststep list.
             teststeps list are parsed from HAR log entries list.
 
@@ -337,27 +337,27 @@ class HarParser(object):
             if is_exclude(url, self.exclude_str):
                 continue
 
-            teststeps.append(self._prepare_teststep(entry_json))
+            teststeps.append(self._prepare_teststep(entry_json, only_status))
 
         return teststeps
 
-    def _make_testcase(self):
+    def _make_testcase(self, only_status=False):
         """ Extract info from HAR file and prepare for testcase
         """
         logger.info("Extract info from HAR file and prepare for testcase.")
 
         config = self._prepare_config()
-        teststeps = self._prepare_teststeps()
+        teststeps = self._prepare_teststeps(only_status)
 
         testcase = {"config": config, "teststeps": teststeps}
         return testcase
 
-    def gen_testcase(self, file_type="pytest"):
+    def gen_testcase(self, file_type="pytest", only_status=False):
         logger.info(f"Start to generate testcase from {self.har_file_path}")
         harfile = os.path.splitext(self.har_file_path)[0]
 
         try:
-            testcase = self._make_testcase()
+            testcase = self._make_testcase(only_status)
         except Exception as ex:
             capture_exception(ex)
             raise
