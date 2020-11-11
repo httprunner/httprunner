@@ -49,6 +49,7 @@ class TestUtils(unittest.TestCase):
         functions_mapping["contains"](["1", "2"], "1")
         functions_mapping["contains"]({"a": 1, "b": 2}, "a")
         functions_mapping["contained_by"]("3ab", "123abc456")
+        functions_mapping["contained_by"](0, [0, 200])
 
         functions_mapping["regex_match"]("123abc456", "^123\w+456$")
         with self.assertRaises(AssertionError):
