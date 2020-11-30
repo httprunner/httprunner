@@ -267,20 +267,18 @@ def filter_dict(data: Dict, filter_condition='@null@') -> Dict:
 		return data
 
 		if not isinstance(filter_condition, str) or not isinstance(data, dict):
-			raise TypeError('过滤条件必须为字符串并且待过滤的数据必须为字典数据')
+			raise TypeError('filter_condition must str and data will be dict for the method filter_dict')
 		result_data = {}
 		for key, value in data.items():
 			if isinstance(value, (int, float, complex, bool)):
 				result_data[key] = value
 			elif isinstance(value, str):
-				# 字符串的话，则进行处去空格，小写话的处理
 				value = value.strip().lower()
 				if value == filter_condition:
 					continue
 				else:
 					result_data[key] = value
 			elif isinstance(value, dict):
-				# 如果是字典的话，则递归调用该函数
 				result_data[key] = filter_dict(value, filter_condition=filter_condition)
 			elif isinstance(value, list):
 				result_data[key] = filter_list(value, filter_condition=filter_condition)
@@ -291,7 +289,7 @@ def filter_dict(data: Dict, filter_condition='@null@') -> Dict:
 			elif value is None:
 				result_data[key] = value
 			else:
-				raise TypeError("类型不存在{}".format(value))
+				raise TypeError("error for type {}".format(value))
 		return result_data
 
 
@@ -300,7 +298,7 @@ def filter_list(data: list, filter_condition='@null@') -> list:
 		return data
 	result_data = []
 	if not isinstance(filter_condition, str) or not isinstance(data, list):
-		raise TypeError('过滤条件必须为字符串并且待过滤的数据必须为list类型')
+		raise TypeError('filter_condition must str and data will be list for the method filter_list')
 
 	for element in data:
 		if isinstance(element, (int, float, complex, bool)):
@@ -322,7 +320,7 @@ def filter_list(data: list, filter_condition='@null@') -> list:
 		elif element is None:
 			result_data.append(element)
 		else:
-			raise TypeError("数据类型不存在{}".format(element))
+			raise TypeError("no this type {}".format(element))
 	return result_data
 
 
@@ -331,7 +329,7 @@ def filter_tuple(data: tuple, filter_condition="@null@") -> tuple:
 		return data
 	result_data = tuple()
 	if not isinstance(filter_condition, str) or not isinstance(data, tuple):
-		raise TypeError('过滤条件必须为字符串并且待过滤的数据必须为tuple类型')
+		raise TypeError('filter_condition must str and data will be tuple for the method filter_tuple')
 	for element in data:
 		if isinstance(element, (int, float, complex, bool)):
 			result_data = result_data + (element,)
@@ -352,7 +350,7 @@ def filter_tuple(data: tuple, filter_condition="@null@") -> tuple:
 		elif element is None:
 			result_data = result_data + (element,)
 		else:
-			raise TypeError("数据类型不存在{}".format(element))
+			raise TypeError("no this type {}".format(element))
 	return result_data
 
 
@@ -361,7 +359,7 @@ def filter_set(data: set, filter_condition='@null@') -> set:
 		return data
 	result_data = set()
 	if not isinstance(filter_condition, str) or not isinstance(data, set):
-		raise TypeError('过滤条件必须为字符串并且待过滤的数据必须为set类型')
+		raise TypeError('filter_condition must str and data will be set for the method filter_set')
 
 	for element in data:
 		if isinstance(element, (int, float, complex, bool)):
@@ -373,9 +371,9 @@ def filter_set(data: set, filter_condition='@null@') -> set:
 			else:
 				result_data.add(element)
 		elif isinstance(element, (dict, list, set, tuple)):
-			raise TypeError("set的子元素不能为dict/list/set/tuple: {}".format(element))
+			raise TypeError("set no daughter elements for dict/list/set/tuple: {}".format(element))
 		elif element is None:
 			result_data.add(element)
 		else:
-			raise TypeError("数据类型不存在{}".format(element))
+			raise TypeError("no this type {}".format(element))
 	return result_data
