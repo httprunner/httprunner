@@ -54,6 +54,7 @@ nav:
     - Introduction: index.md
     - Installation: installation.md
     - User Guide:
+        - Concepts: user/concepts.md
         - Scaffold: user/scaffold.md
         - Record & Generate testcase: user/gen_tests.md
         - Write Testcase: user/write_testcase.md
