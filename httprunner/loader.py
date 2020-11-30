@@ -183,11 +183,16 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
     csv_content_list = []
 
-    with open(csv_file, encoding="utf-8") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            csv_content_list.append(row)
-
+    try:
+        with open(csv_file, encoding="utf-8") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                csv_content_list.append(row)
+    except UnicodeDecodeError:
+        with open(csv_file, encoding="gbk") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                csv_content_list.append(row)
     return csv_content_list
 
 
