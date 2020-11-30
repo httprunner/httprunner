@@ -3,6 +3,7 @@ import time
 import uuid
 from datetime import datetime
 from typing import List, Dict, Text, NoReturn
+import copy
 
 try:
     import allure
@@ -21,7 +22,7 @@ from httprunner.loader import load_project_meta, load_testcase_file
 from httprunner.parser import build_url, parse_data, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.testcase import Config, Step
-from httprunner.utils import merge_variables
+from httprunner.utils import *
 from httprunner.models import (
     TConfig,
     TStep,
@@ -161,6 +162,10 @@ class HttpRunner(object):
         url = build_url(self.__config.base_url, url_path)
         parsed_request_dict["verify"] = self.__config.verify
         parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
+
+
+        # 在这里做一个过滤，把参数为 -- "@null@"字符串的时候过滤掉
+        # parsed_request_dict = filter_dict(copy.deepcopy(parsed_request_dict))
 
         # request
         resp = self.__session.request(method, url, **parsed_request_dict)
