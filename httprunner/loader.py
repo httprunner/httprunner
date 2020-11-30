@@ -183,7 +183,9 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
     csv_content_list = []
 
+
     try:
+
         with open(csv_file, encoding="utf-8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:

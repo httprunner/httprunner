@@ -162,10 +162,8 @@ class HttpRunner(object):
         url = build_url(self.__config.base_url, url_path)
         parsed_request_dict["verify"] = self.__config.verify
         parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
-
-
-        # 在这里做一个过滤，把参数为 -- "@null@"字符串的时候过滤掉
-        # parsed_request_dict = filter_dict(copy.deepcopy(parsed_request_dict))
+        #filter "@null@"
+        parsed_request_dict = filter_dict(copy.deepcopy(parsed_request_dict))
 
         # request
         resp = self.__session.request(method, url, **parsed_request_dict)

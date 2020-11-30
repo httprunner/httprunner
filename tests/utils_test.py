@@ -151,3 +151,23 @@ class TestUtils(unittest.TestCase):
         parameters_content_list = []
         product_list = utils.gen_cartesian_product(*parameters_content_list)
         self.assertEqual(product_list, [])
+
+    def test_filter_set(self):
+        parameters_content_set = set()
+        product_set = utils.filter_set(parameters_content_set, filter_condition='@null@')
+        self.assertEqual(product_set, set())
+
+    def test_filter_tuple(self):
+        parameters_content_tuple = ()
+        product_tuple = utils.filter_tuple(parameters_content_tuple, filter_condition='@null@')
+        self.assertEqual(product_tuple, ())
+
+    def test_filter_list(self):
+        parameters_content_list = []
+        product_list = utils.filter_list(parameters_content_list, filter_condition='@null@')
+        self.assertEqual(product_list, [])
+
+    def test_filter_dict(self):
+        parameters_content_dict = {}
+        product_dict = utils.filter_dict(parameters_content_dict, filter_condition='@null@')
+        self.assertEqual(product_dict, {})
