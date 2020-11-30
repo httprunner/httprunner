@@ -1,0 +1,64 @@
+# install mkdocs
+# $ pip install mkdocs            # 1.1.2
+# $ pip install mkdocs-material   # 5.2.2
+
+# Project information
+site_name: HttpRunner V3.x Docs
+site_description: HttpRunner V3.x User Documentation
+site_author: 'debugtalk'
+
+# Repository
+repo_name: HttpRunner
+repo_url: https://github.com/httprunner/httprunner
+edit_uri: ""
+
+# Copyright
+copyright: 'Copyright &copy; 2017 - 2020 debugtalk'
+
+# Configuration
+theme:
+    name: 'material'
+    language: 'zh'
+    palette:
+        primary: 'indigo'
+        accent: 'indigo'
+    font:
+        text: 'Roboto'
+        code: 'Roboto Mono'
+
+# Google Analytics
+google_analytics:
+    - 'UA-114587036-3'
+    - 'auto'
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+
+# extra
+extra:
+    search:
+        language: 'jp'
+    social:
+        -   icon: material/library
+            link: https://debugtalk.com
+        -   icon: fontawesome/brands/github-alt
+            link: 'https://github.com/httprunner'
+
+# index pages
+nav:
+    - Introduction: index.md
+    - Installation: installation.md
+    - User Guide:
+        - Scaffold: user/scaffold.md
+        - Record & Generate testcase: user/gen_tests.md
+        - Write Testcase: user/write_testcase.md
+        - Run Testcase: user/run_testcase.md
+        - Testing Report: user/testing_report.md
+        - Run load test: user/run_loadtest.md
+    - Sponsors: sponsors.md
+    - CHANGELOG: CHANGELOG.md

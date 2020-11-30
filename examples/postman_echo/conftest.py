@@ -53,7 +53,7 @@ def session_fixture(request):
         testcase_summary_json["records"] = testcase_summary_json.pop("step_datas")
         summary["details"].append(testcase_summary_json)
 
-    summary_path = "/Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/examples/postman_echo/logs/request_methods/hardcode.summary.json"
+    summary_path = "D:\Code\Pycharm\httprunner\examples\postman_echo\logs\request_methods\hardcode.summary.json"
     summary_dir = os.path.dirname(summary_path)
     os.makedirs(summary_dir, exist_ok=True)
 
