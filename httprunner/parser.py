@@ -405,9 +405,7 @@ def parse_data(
         return parse_string(raw_data, variables_mapping, functions_mapping)
 
     elif isinstance(raw_data, (list, set, tuple)):
-        return [
-            parse_data(item, variables_mapping, functions_mapping) for item in raw_data
-        ]
+        return next(parse_data(item, variables_mapping, functions_mapping) for item in raw_data)
 
     elif isinstance(raw_data, dict):
         parsed_data = {}
@@ -426,7 +424,6 @@ def parse_data(
 def parse_variables_mapping(
     variables_mapping: VariablesMapping, functions_mapping: FunctionsMapping = None
 ) -> VariablesMapping:
-
     parsed_variables: VariablesMapping = {}
 
     while len(parsed_variables) != len(variables_mapping):
