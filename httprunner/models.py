@@ -133,7 +133,7 @@ class ResponseData(BaseModel):
     cookies: Cookies
     encoding: Union[Text, None] = None
     content_type: Text
-    body: Union[Text, bytes, Dict]
+    body: Union[Text, bytes, Dict, List]
 
 
 class ReqRespData(BaseModel):
