@@ -211,6 +211,9 @@ class ResponseObject(object):
 
             if check_item and isinstance(check_item, Text):
                 check_value = self._search_jmespath(check_item)
+                #fixed: if _search_jmespath get NoneType use variables check_item
+                if not check_value:
+                    check_value = check_item
             else:
                 # variable or function evaluation result is "" or not text
                 check_value = check_item
