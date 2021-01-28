@@ -260,3 +260,122 @@ def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
         product_list.append(product_item_dict)
 
     return product_list
+
+
+def filter_dict(data: Dict, filter_condition='@null@') -> Dict:
+	if data is None:
+		return data
+
+	if not isinstance(filter_condition, str) or not isinstance(data, dict):
+		raise TypeError('filter_condition must str and data will be dict for the method filter_dict')
+	result_data = {}
+	for key, value in data.items():
+		if isinstance(value, (int, float, complex, bool)):
+			result_data[key] = value
+		elif isinstance(value, str):
+			value = value.strip().lower()
+			if value == filter_condition:
+				continue
+			else:
+				result_data[key] = value
+		elif isinstance(value, dict):
+			result_data[key] = filter_dict(value, filter_condition=filter_condition)
+		elif isinstance(value, list):
+			result_data[key] = filter_list(value, filter_condition=filter_condition)
+		elif isinstance(value, set):
+			result_data[key] = filter_set(value, filter_condition=filter_condition)
+		elif isinstance(value, tuple):
+			result_data[key] = filter_tuple(value, filter_condition=filter_condition)
+		elif value is None:
+			result_data[key] = value
+		else:
+			raise TypeError("error for type {}".format(value))
+	return result_data
+
+
+def filter_list(data: list, filter_condition='@null@') -> list:
+	if data is None:
+		return data
+	result_data = []
+
+	if not isinstance(filter_condition, str) or not isinstance(data, list):
+		raise TypeError('filter_condition must str and data will be list for the method filter_list')
+
+	for element in data:
+		if isinstance(element, (int, float, complex, bool)):
+			result_data.append(element)
+		elif isinstance(element, str):
+			element = element.strip().lower()
+			if element == filter_condition:
+				continue
+			else:
+				result_data.append(element)
+		elif isinstance(element, dict):
+			result_data.append(filter_dict(element, filter_condition=filter_condition))
+		elif isinstance(element, list):
+			result_data.extend(filter_list(element, filter_condition=filter_condition))
+		elif isinstance(element, tuple):
+			result_data.append(filter_tuple(element, filter_condition=filter_condition))
+		elif isinstance(element, set):
+			result_data.append(filter_set(element, filter_condition=filter_condition))
+		elif element is None:
+			result_data.append(element)
+		else:
+			raise TypeError("no this type {}".format(element))
+	return result_data
+
+
+def filter_tuple(data: tuple, filter_condition="@null@") -> tuple:
+	if data is None:
+		return data
+	result_data = tuple()
+	if not isinstance(filter_condition, str) or not isinstance(data, tuple):
+		raise TypeError('filter_condition must str and data will be tuple for the method filter_tuple')
+
+	for element in data:
+		if isinstance(element, (int, float, complex, bool)):
+			result_data = result_data + (element,)
+		elif isinstance(element, str):
+			element = element.strip().lower()
+			if element == filter_condition:
+				continue
+			else:
+				result_data = result_data + (element,)
+		elif isinstance(element, dict):
+			result_data = result_data + (filter_dict(element, filter_condition=filter_condition),)
+		elif isinstance(element, list):
+			result_data = result_data + (filter_list(element, filter_condition=filter_condition),)
+		elif isinstance(element, tuple):
+			result_data = result_data + (filter_tuple(element, filter_condition=filter_condition),)
+		elif isinstance(element, set):
+			result_data = result_data + (filter_set(element, filter_condition=filter_condition),)
+		elif element is None:
+			result_data = result_data + (element,)
+		else:
+			raise TypeError("no this type {}".format(element))
+	return result_data
+
+
+def filter_set(data: set, filter_condition='@null@') -> set:
+	if data is None:
+		return data
+	result_data = set()
+	if not isinstance(filter_condition, str) or not isinstance(data, set):
+		raise TypeError('filter_condition must str and data will be set for the method filter_set')
+
+	for element in data:
+		if isinstance(element, (int, float, complex, bool)):
+			result_data.add(element)
+		elif isinstance(element, str):
+			element = element.strip().lower()
+			if element == filter_condition:
+				continue
+			else:
+				result_data.add(element)
+		elif isinstance(element, (dict, list, set, tuple)):
+			raise TypeError("set no daughter elements for dict/list/set/tuple: {}".format(element))
+		elif element is None:
+			result_data.add(element)
+		else:
+			raise TypeError("no this type {}".format(element))
+	return result_data
