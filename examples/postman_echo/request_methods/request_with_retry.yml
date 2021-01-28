@@ -1,0 +1,21 @@
+config:
+    name: "request methods testcase: retry_whens"
+    variables:
+        app_version: f1
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: get with params
+    request:
+        method: GET
+        url: /get
+        params:
+            foo4: ${get_num()}
+    teardown_hooks:
+        - ${teardown_hook_sleep(1)}
+    extract:
+        foo4: "body.args.foo4"
+    validate:
+        - eq: ["status_code", 200]

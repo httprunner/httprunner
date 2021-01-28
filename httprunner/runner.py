@@ -3,6 +3,7 @@ import time
 import uuid
 from datetime import datetime
 from typing import List, Dict, Text, NoReturn
+import requests
 
 try:
     import allure
@@ -351,12 +352,31 @@ class HttpRunner(object):
                 step.variables, self.__project_meta.functions
             )
 
-            # run step
-            if USE_ALLURE:
-                with allure.step(f"step: {step.name}"):
+
+            while True:
+                # run step
+                if USE_ALLURE:
+                    with allure.step(f"step: {step.name}"):
+                        extract_mapping = self.__run_step(step)
+                else:
                     extract_mapping = self.__run_step(step)
-            else:
-                extract_mapping = self.__run_step(step)
+
+                if step.retry_whens:
+                    variables_mapping = step.variables
+                    variables_mapping.update(extract_mapping)
+            
+                    try:
+                        response = step.variables.get('response') or ResponseObject(requests.Response())
+                        if isinstance(response, ResponseObject):
+                            response.validate(
+                                step.retry_whens, variables_mapping, self.__project_meta.functions
+                            )
+                        else:
+                            break
+                    except ValidationFailure:
+                        break
+                else:
+                    break
 
             # save extracted variables to session variables
             extracted_variables.update(extract_mapping)

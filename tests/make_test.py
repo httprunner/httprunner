@@ -246,3 +246,21 @@ from request_methods.request_with_functions_test import (
             teststep_chain_style,
             """Step(RunRequest("get with params").with_variables(**{'foo1': 'bar1', 'foo2': 123, 'sum_v': '${sum_two(1, 2)}', 'myjson': {'name': 'user', 'password': '123456'}}).get("/get").with_params(**{'foo1': '$foo1', 'foo2': '$foo2', 'sum_v': '$sum_v'}).with_headers(**{'User-Agent': 'HttpRunner/${get_httprunner_version()}'}).with_json("$myjson").extract().with_jmespath('body.args.foo1', 'session_foo1').with_jmespath('body.args.foo2', 'session_foo2').validate().assert_equal("status_code", 200).assert_equal("body.args.sum_v", "3"))""",
         )
+
+    def test_make_requests_with_retry_whens_chain_style(self):
+        step = {
+            "name": "request with retry",
+            "testcase": "request_methods/request_with_retry.yml",
+            "export": [
+                "foo4"
+            ],
+            "retry_whens": [
+                {"ne": ["$foo4", 3]}
+            ]
+        }
+        teststep_chain_style = make_teststep_chain_style(step)
+        print(teststep_chain_style)
+        self.assertEqual(
+            teststep_chain_style,
+            """Step(RunTestCase("request with retry").call(request_methods/request_with_retry.yml).export(*['foo4']).retry_whens().assert_not_equal("$foo4", 3))""",
+        )

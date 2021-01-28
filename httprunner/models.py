@@ -74,6 +74,7 @@ class TStep(BaseModel):
     export: Export = []
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
+    retry_whens: Validators = []
 
 
 class TestCase(BaseModel):

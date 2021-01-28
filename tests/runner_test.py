@@ -38,3 +38,13 @@ class TestHttpRunner(unittest.TestCase):
         self.assertTrue(os.path.exists("tests/data/debugtalk.py"))
         self.assertTrue(os.path.exists("tests/data/a_b_c/T1_test.py"))
         self.assertTrue(os.path.exists("tests/data/a_b_c/T2_3_test.py"))
+
+    def test_run_testcase_by_retry_whens_testcase(self):
+        self.runner.run_path(
+            "examples/postman_echo/request_methods/testcase_with_retry.yml"
+        )
+        result = self.runner.get_summary()
+        self.assertTrue(result.success)
+        self.assertEqual(result.name, "request methods testcase: retry_whens")
+        self.assertEqual(result.step_datas[0].name, "request with retry")
+        self.assertEqual(len(result.step_datas), 5)

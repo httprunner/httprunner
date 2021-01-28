@@ -188,6 +188,13 @@ def _ensure_step_attachment(step: Dict) -> Dict:
             )
         test_dict["validate"] = _convert_validators(step["validate"])
 
+    if "retry_whens" in step:
+        if not isinstance(step["retry_whens"], List):
+            raise exceptions.TestCaseFormatError(
+                f'Invalid teststep retry_whens: {step["retry_whens"]}'
+            )
+        test_dict["retry_whens"] = _convert_validators(step["retry_whens"])
+
     if "validate_script" in step:
         test_dict["validate_script"] = step["validate_script"]
 

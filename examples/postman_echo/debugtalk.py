@@ -1,3 +1,4 @@
+import time
 from httprunner import __version__
 
 
@@ -23,3 +24,16 @@ def get_app_version():
 
 def calculate_two_nums(a, b=1):
     return [a + b, b - a]
+
+
+num: int = 0
+
+
+def get_num() ->int:
+    global num
+    num += 1
+    return num
+
+
+def teardown_hook_sleep(n):
+    time.sleep(n)
