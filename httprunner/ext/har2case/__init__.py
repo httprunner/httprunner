@@ -46,6 +46,14 @@ def init_har2case_parser(subparsers):
         "multiple keywords can be joined with '|'",
     )
 
+    parser.add_argument(
+        "--only-status",
+        dest="only_status",
+        action="store_true",
+        help="Generate assertions with only the response status code (it is recommended to enable this option during "
+             "load testing).",
+    )
+
     return parser
 
 
@@ -60,6 +68,6 @@ def main_har2case(args):
         output_file_type = "pytest"
 
     capture_message(f"har2case {output_file_type}")
-    HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type)
+    HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type, args.only_status)
 
     return 0
