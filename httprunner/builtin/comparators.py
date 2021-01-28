@@ -92,7 +92,7 @@ def contains(check_value: Any, expect_value: Any, message: Text = ""):
 
 def contained_by(check_value: Any, expect_value: Any, message: Text = ""):
     assert isinstance(
-        check_value, (list, tuple, dict, str, bytes)
+        expect_value, (list, tuple, dict, str, bytes)
     ), "expect_value should be list/tuple/dict/str/bytes type"
     assert check_value in expect_value, message
 
