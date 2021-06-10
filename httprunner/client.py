@@ -34,7 +34,7 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
         msg = f"\n================== {r_type} details ==================\n"
         for key, value in req_or_resp.dict().items():
             if isinstance(value, dict):
-                value = json.dumps(value, indent=4)
+                value = json.dumps(value, indent=4, ensure_ascii=False)
 
             msg += "{:<8} : {}\n".format(key, value)
         logger.debug(msg)
