@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "httprunner"
-version = "3.1.4"
+version = "3.1.5"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
@@ -43,6 +43,7 @@ allure-pytest = {version = "^2.8.16", optional = true}
 requests-toolbelt = {version = "^0.9.1", optional = true}
 filetype = {version = "^1.0.7", optional = true}
 locust = {version = "^1.0.3", optional = true}
+Brotli = "^1.0.9"
 
 [tool.poetry.extras]
 allure = ["allure-pytest"]                  # pip install "httprunner[allure]", poetry install -E allure
