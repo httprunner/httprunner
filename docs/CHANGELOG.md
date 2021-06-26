@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.5 (2021-06-27)
+
+**Fixed**
+
+- fix: decode brotli encoding
+
 ## 3.1.4 (2020-07-30)
 
 **Changed**
