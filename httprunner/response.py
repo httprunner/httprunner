@@ -153,6 +153,7 @@ class ResponseObject(object):
         }
         if not expr.startswith(tuple(resp_obj_meta.keys())):
             return expr
+        
         try:
             check_value = jmespath.search(expr, resp_obj_meta)
         except JMESPathError as ex:
