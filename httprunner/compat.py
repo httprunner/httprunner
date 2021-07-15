@@ -58,17 +58,22 @@ def _convert_jmespath(raw: Text) -> Text:
 
     raw_list = []
     for item in raw.split("."):
-        if "-" in item:
+        if "-" in item and item[0]!= '-':
             # add quotes for field with separator
             # e.g. headers.Content-Type => headers."Content-Type"
+
             item = item.strip('"')
             raw_list.append(f'"{item}"')
-        elif item.isdigit():
-            # convert lst.0.name to lst[0].name
+            continue
+        try:
+            int(item)
+            is_number = 1
+        except:
+            is_number = 0
+        if is_number:
             if len(raw_list) == 0:
                 logger.error(f"Invalid jmespath: {raw}")
                 sys.exit(1)
-
             last_item = raw_list.pop()
             item = f"{last_item}[{item}]"
             raw_list.append(item)
