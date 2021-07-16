@@ -161,6 +161,9 @@ class StepData(BaseModel):
     data: Union[SessionData, List['StepData']] = None
     export_vars: VariablesMapping = {}
 
+        
+StepData.update_forward_refs()
+
 
 class TestCaseSummary(BaseModel):
     name: Text
