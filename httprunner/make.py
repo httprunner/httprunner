@@ -279,7 +279,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                 step_info += f'.setup_hook("{hook}")'
             elif isinstance(hook, Dict) and len(hook) == 1:
                 assign_var_name, hook_content = list(hook.items())[0]
-                step_info += f'.setup_hook("{hook}", "{assign_var_name}")'
+                step_info += f'.setup_hook("{hook_content}", "{assign_var_name}")'
             else:
                 raise exceptions.TestCaseFormatError(f"Invalid setup hook: {hook}")
 
@@ -297,7 +297,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                 step_info += f'.teardown_hook("{hook}")'
             elif isinstance(hook, Dict) and len(hook) == 1:
                 assign_var_name, hook_content = list(hook.items())[0]
-                step_info += f'.teardown_hook("{hook}", "{assign_var_name}")'
+                step_info += f'.teardown_hook("{hook_content}", "{assign_var_name}")'
             else:
                 raise exceptions.TestCaseFormatError(f"Invalid teardown hook: {hook}")
 

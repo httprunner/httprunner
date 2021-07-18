@@ -158,8 +158,11 @@ class StepData(BaseModel):
 
     success: bool = False
     name: Text = ""  # teststep name
-    data: Union[SessionData, List[SessionData]] = None
+    data: Union[SessionData, List['StepData']] = None
     export_vars: VariablesMapping = {}
+
+        
+StepData.update_forward_refs()
 
 
 class TestCaseSummary(BaseModel):
