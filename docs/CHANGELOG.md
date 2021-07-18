@@ -1,5 +1,14 @@
 # Release History
 
+## 3.1.6 (2021-07-18)
+
+**Fixed**
+
+- fix #1086: chinese garbled in response
+- fix #1059#1068: incorrect variables and variable type hints
+- fix #1079: display error in request body if the list inputted from with_json() contains dict
+- fix #1056: validation failed when validation-value is in string format
+
 ## 3.1.5 (2021-06-27)
 
 **Fixed**
