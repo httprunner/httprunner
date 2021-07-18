@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import unittest
+import platform
 
 from httprunner.scaffold import create_scaffold
 
@@ -18,7 +19,10 @@ class TestScaffold(unittest.TestCase):
 
         # run demo testcases
         try:
-            subprocess.check_call(["hrun", project_name])
+            if platform.system() is "Windows":
+                subprocess.check_call(["hrun", project_name], shell=True)
+            else:
+                subprocess.check_call(["hrun", project_name])
         except subprocess.SubprocessError:
             raise
         finally:
