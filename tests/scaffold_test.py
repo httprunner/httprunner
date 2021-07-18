@@ -18,7 +18,7 @@ class TestScaffold(unittest.TestCase):
 
         # run demo testcases
         try:
-            subprocess.check_call(["hrun", project_name])
+            subprocess.check_call(["hrun", project_name]， shell=True)
         except subprocess.SubprocessError:
             raise
         finally:
