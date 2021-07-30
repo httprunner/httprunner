@@ -15,7 +15,7 @@ absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 # use $$ to escape $ notation
 dolloar_regex_compile = re.compile(r"\$\$")
 # variable notation, e.g. ${var} or $var
-variable_regex_compile = re.compile(r"\$\{(\w+)\}|\$(\w+)")
+variable_regex_compile = re.compile(r"\$\{([^\W0-9]\w+)\}|\$([^\W0-9]\w+)")
 # function notation, e.g. ${func1($var_1, $var_3)}
 function_regex_compile = re.compile(r"\$\{(\w+)\(([\$\w\.\-/\s=,]*)\)\}")
 
