@@ -195,7 +195,7 @@ class HttpRunner(object):
 
         # extract
         extractors = step.extract
-        extract_mapping = resp_obj.extract(extractors)
+        extract_mapping = resp_obj.extract(extractors, step.variables, self.__project_meta.functions)
         step_data.export_vars = extract_mapping
 
         variables_mapping = step.variables
