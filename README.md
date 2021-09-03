@@ -11,6 +11,10 @@
 [![pyversions](https://img.shields.io/pypi/pyversions/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![TesterHome](https://img.shields.io/badge/TTF-TesterHome-2955C5.svg)](https://testerhome.com/github_statistics)
 
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/httprunner/httprunner.svg)](https://starchart.cc/httprunner/httprunner)
+
+
 *HttpRunner* is a simple & elegant, yet powerful HTTP(S) testing framework. Enjoy! ✨ 🚀 ✨
 
 ## Design Philosophy
