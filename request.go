@@ -74,10 +74,6 @@ func (req *Request) PATCH(url string) *RequestWithOptionalArgs {
 	}
 }
 
-func (req *Request) Run() error {
-	return req.TStep.Run()
-}
-
 // implements IStep interface
 type RequestWithOptionalArgs struct {
 	*TStep
