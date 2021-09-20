@@ -4,6 +4,7 @@ func RunRequest(name string) *Request {
 	return &Request{
 		TStep: &TStep{
 			Name:      name,
+			Request:   &TRequest{},
 			Variables: make(Variables),
 		},
 	}
