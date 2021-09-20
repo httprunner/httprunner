@@ -50,6 +50,7 @@ type TValidator struct {
 type TStep struct {
 	Name          string            `json:"name"`
 	Request       *TRequest         `json:"request"`
+	TestCase      *TestCase         `json:"testcase"`
 	Variables     Variables         `json:"variables"`
 	SetupHooks    []string          `json:"setup_hooks"`
 	TeardownHooks []string          `json:"teardown_hooks"`
