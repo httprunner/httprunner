@@ -21,6 +21,7 @@ func TestHttpRunner(t *testing.T) {
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.\"user-agent\"", "python-requests", "check User-Agent"),
+			RunTestCase("TestCase3").WithVariables(Variables{"var1": "value1"}),
 		},
 	}
 	testcase2 := &TestCase{
