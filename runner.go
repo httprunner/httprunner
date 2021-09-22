@@ -6,11 +6,16 @@ import (
 	"github.com/imroc/req"
 )
 
+var defaultRunner = HttpRunner()
+
 func HttpRunner() *Runner {
-	return &Runner{}
+	return &Runner{
+		Client: req.New(),
+	}
 }
 
 type Runner struct {
+	Client *req.Req
 }
 
 func (r *Runner) Run(testcases ...*TestCase) error {
@@ -25,23 +30,14 @@ func (r *Runner) Run(testcases ...*TestCase) error {
 func (r *Runner) runCase(testcase *TestCase) error {
 	// config := testcase.Config
 	for _, step := range testcase.TestSteps {
-		if err := r.runStep(step); err != nil {
+		if err := step.Run(); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (r *Runner) runStep(req IStep) error {
-	return req.Run()
-}
-
-func (r *Runner) GetSummary() *TestCaseSummary {
-	return &TestCaseSummary{}
-}
-
-func (step *TStep) Run() error {
-
+func (r *Runner) runStep(step *TStep) error {
 	var v []interface{}
 	v = append(v, req.Header(step.Request.Headers))
 	v = append(v, req.Param(step.Request.Params))
@@ -53,11 +49,14 @@ func (step *TStep) Run() error {
 		})
 	}
 
-	req.Debug = true
-	resp, err := req.Do(string(step.Request.Method), step.Request.URL, v...)
+	resp, err := r.Client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
 		return err
 	}
 	resp.Response().Body.Close()
 	return nil
+}
+
+func (r *Runner) GetSummary() *TestCaseSummary {
+	return &TestCaseSummary{}
 }
