@@ -8,7 +8,7 @@ func Step(name string) *step {
 		TStep: &TStep{
 			Name:      name,
 			Request:   &TRequest{},
-			Variables: make(Variables),
+			Variables: make(map[string]interface{}),
 		},
 	}
 }
@@ -23,7 +23,7 @@ func (s *step) WithRunner(runner *Runner) *step {
 	return s
 }
 
-func (s *step) WithVariables(variables Variables) *step {
+func (s *step) WithVariables(variables map[string]interface{}) *step {
 	s.TStep.Variables = variables
 	return s
 }
@@ -136,17 +136,17 @@ func (s *requestWithOptionalArgs) SetAuth(auth map[string]string) *requestWithOp
 	return s
 }
 
-func (s *requestWithOptionalArgs) WithParams(params Params) *requestWithOptionalArgs {
+func (s *requestWithOptionalArgs) WithParams(params map[string]interface{}) *requestWithOptionalArgs {
 	s.step.Request.Params = params
 	return s
 }
 
-func (s *requestWithOptionalArgs) WithHeaders(headers Headers) *requestWithOptionalArgs {
+func (s *requestWithOptionalArgs) WithHeaders(headers map[string]string) *requestWithOptionalArgs {
 	s.step.Request.Headers = headers
 	return s
 }
 
-func (s *requestWithOptionalArgs) WithCookies(cookies Cookies) *requestWithOptionalArgs {
+func (s *requestWithOptionalArgs) WithCookies(cookies map[string]string) *requestWithOptionalArgs {
 	s.step.Request.Cookies = cookies
 	return s
 }

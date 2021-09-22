@@ -7,17 +7,17 @@ import (
 var (
 	stepGET = Step("get with params").
 		GET("https://postman-echo.com/get").
-		WithParams(Params{"foo1": "bar1", "foo2": "bar2"}).
-		WithHeaders(Headers{"User-Agent": "HttpBoomer"}).
-		WithCookies(Cookies{"user": "debugtalk"}).
+		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+		WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+		WithCookies(map[string]string{"user": "debugtalk"}).
 		Validate().
 		AssertEqual("status_code", 200, "check status code")
 	stepPOSTData = Step("post form data").
 			POST("https://postman-echo.com/post").
-			WithParams(Params{"foo1": "bar1", "foo2": "bar2"}).
-			WithHeaders(Headers{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
+			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+			WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
 			WithData("a=1&b=2").
-			WithCookies(Cookies{"user": "debugtalk"}).
+			WithCookies(map[string]string{"user": "debugtalk"}).
 			Validate().
 			AssertEqual("status_code", 200, "check status code")
 )
