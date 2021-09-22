@@ -14,64 +14,64 @@ type Request struct {
 	*TStep
 }
 
-func (req *Request) WithVariables(variables Variables) *Request {
-	req.TStep.Variables = variables
-	return req
+func (r *Request) WithVariables(variables Variables) *Request {
+	r.TStep.Variables = variables
+	return r
 }
 
-func (req *Request) GET(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = GET
-	req.TStep.Request.URL = url
+func (r *Request) GET(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = GET
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *Request) HEAD(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = HEAD
-	req.TStep.Request.URL = url
+func (r *Request) HEAD(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = HEAD
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *Request) POST(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = POST
-	req.TStep.Request.URL = url
+func (r *Request) POST(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = POST
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *Request) PUT(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = PUT
-	req.TStep.Request.URL = url
+func (r *Request) PUT(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = PUT
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *Request) DELETE(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = DELETE
-	req.TStep.Request.URL = url
+func (r *Request) DELETE(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = DELETE
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *Request) OPTIONS(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = OPTIONS
-	req.TStep.Request.URL = url
+func (r *Request) OPTIONS(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = OPTIONS
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *Request) PATCH(url string) *RequestWithOptionalArgs {
-	req.TStep.Request.Method = PATCH
-	req.TStep.Request.URL = url
+func (r *Request) PATCH(url string) *RequestWithOptionalArgs {
+	r.TStep.Request.Method = PATCH
+	r.TStep.Request.URL = url
 	return &RequestWithOptionalArgs{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
@@ -80,66 +80,66 @@ type RequestWithOptionalArgs struct {
 	*TStep
 }
 
-func (req *RequestWithOptionalArgs) SetVerify(verify bool) *RequestWithOptionalArgs {
-	req.TStep.Request.Verify = verify
-	return req
+func (r *RequestWithOptionalArgs) SetVerify(verify bool) *RequestWithOptionalArgs {
+	r.TStep.Request.Verify = verify
+	return r
 }
 
-func (req *RequestWithOptionalArgs) SetTimeout(timeout float32) *RequestWithOptionalArgs {
-	req.TStep.Request.Timeout = timeout
-	return req
+func (r *RequestWithOptionalArgs) SetTimeout(timeout float32) *RequestWithOptionalArgs {
+	r.TStep.Request.Timeout = timeout
+	return r
 }
 
-func (req *RequestWithOptionalArgs) SetProxies(proxies map[string]string) *RequestWithOptionalArgs {
+func (r *RequestWithOptionalArgs) SetProxies(proxies map[string]string) *RequestWithOptionalArgs {
 	// TODO
-	return req
+	return r
 }
 
-func (req *RequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *RequestWithOptionalArgs {
-	req.TStep.Request.AllowRedirects = allowRedirects
-	return req
+func (r *RequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *RequestWithOptionalArgs {
+	r.TStep.Request.AllowRedirects = allowRedirects
+	return r
 }
 
-func (req *RequestWithOptionalArgs) SetAuth(auth map[string]string) *RequestWithOptionalArgs {
+func (r *RequestWithOptionalArgs) SetAuth(auth map[string]string) *RequestWithOptionalArgs {
 	// TODO
-	return req
+	return r
 }
 
-func (req *RequestWithOptionalArgs) WithParams(params Params) *RequestWithOptionalArgs {
-	req.TStep.Request.Params = params
-	return req
+func (r *RequestWithOptionalArgs) WithParams(params Params) *RequestWithOptionalArgs {
+	r.TStep.Request.Params = params
+	return r
 }
 
-func (req *RequestWithOptionalArgs) WithHeaders(headers Headers) *RequestWithOptionalArgs {
-	req.TStep.Request.Headers = headers
-	return req
+func (r *RequestWithOptionalArgs) WithHeaders(headers Headers) *RequestWithOptionalArgs {
+	r.TStep.Request.Headers = headers
+	return r
 }
 
-func (req *RequestWithOptionalArgs) WithCookies(cookies Cookies) *RequestWithOptionalArgs {
-	req.TStep.Request.Cookies = cookies
-	return req
+func (r *RequestWithOptionalArgs) WithCookies(cookies Cookies) *RequestWithOptionalArgs {
+	r.TStep.Request.Cookies = cookies
+	return r
 }
 
-func (req *RequestWithOptionalArgs) WithData(data interface{}) *RequestWithOptionalArgs {
-	req.TStep.Request.Data = data
-	return req
+func (r *RequestWithOptionalArgs) WithData(data interface{}) *RequestWithOptionalArgs {
+	r.TStep.Request.Data = data
+	return r
 }
 
-func (req *RequestWithOptionalArgs) WithJSON(json interface{}) *RequestWithOptionalArgs {
-	req.TStep.Request.JSON = json
-	return req
+func (r *RequestWithOptionalArgs) WithJSON(json interface{}) *RequestWithOptionalArgs {
+	r.TStep.Request.JSON = json
+	return r
 }
 
-func (req *RequestWithOptionalArgs) Validate() *StepRequestValidation {
+func (r *RequestWithOptionalArgs) Validate() *StepRequestValidation {
 	return &StepRequestValidation{
-		TStep: req.TStep,
+		TStep: r.TStep,
 	}
 }
 
-func (req *RequestWithOptionalArgs) ToStruct() *TStep {
-	return req.TStep
+func (r *RequestWithOptionalArgs) ToStruct() *TStep {
+	return r.TStep
 }
 
-func (req *RequestWithOptionalArgs) Run() error {
-	return req.TStep.Run()
+func (r *RequestWithOptionalArgs) Run() error {
+	return r.TStep.Run()
 }

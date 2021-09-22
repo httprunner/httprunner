@@ -5,21 +5,21 @@ type StepRequestExtraction struct {
 	*TStep
 }
 
-func (req *StepRequestExtraction) WithJmesPath(jmesPath string, varName string) *StepRequestExtraction {
-	req.TStep.Extract[varName] = jmesPath
-	return req
+func (step *StepRequestExtraction) WithJmesPath(jmesPath string, varName string) *StepRequestExtraction {
+	step.TStep.Extract[varName] = jmesPath
+	return step
 }
 
-func (req *StepRequestExtraction) Validate() *StepRequestValidation {
+func (step *StepRequestExtraction) Validate() *StepRequestValidation {
 	return &StepRequestValidation{
-		TStep: req.TStep,
+		TStep: step.TStep,
 	}
 }
 
-func (req *StepRequestExtraction) ToStruct() *TStep {
-	return req.TStep
+func (step *StepRequestExtraction) ToStruct() *TStep {
+	return step.TStep
 }
 
-func (req *StepRequestExtraction) Run() error {
-	return req.TStep.Run()
+func (step *StepRequestExtraction) Run() error {
+	return step.TStep.Run()
 }

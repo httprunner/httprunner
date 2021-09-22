@@ -5,21 +5,21 @@ type StepRequestValidation struct {
 	*TStep
 }
 
-func (req *StepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+func (step *StepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
 	validator := TValidator{
 		Check:      jmesPath,
 		Comparator: "equals",
 		Expect:     expected,
 		Message:    msg,
 	}
-	req.TStep.Validators = append(req.TStep.Validators, validator)
-	return req
+	step.TStep.Validators = append(step.TStep.Validators, validator)
+	return step
 }
 
-func (req *StepRequestValidation) ToStruct() *TStep {
-	return req.TStep
+func (step *StepRequestValidation) ToStruct() *TStep {
+	return step.TStep
 }
 
-func (req *StepRequestValidation) Run() error {
-	return req.TStep.Run()
+func (step *StepRequestValidation) Run() error {
+	return step.TStep.Run()
 }
