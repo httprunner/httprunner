@@ -4,8 +4,7 @@ import "fmt"
 
 // implements IStep interface
 type stepRequestValidation struct {
-	runner *Runner
-	step   *TStep
+	step *TStep
 }
 
 func (s *stepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
@@ -27,6 +26,6 @@ func (s *stepRequestValidation) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestValidation) Run(config *TConfig) error {
-	return s.runner.runStep(s.step)
+func (s *stepRequestValidation) ToStruct() *TStep {
+	return s.step
 }

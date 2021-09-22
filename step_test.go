@@ -6,14 +6,14 @@ import (
 
 var (
 	stepGET = Step("get with params").
-		GET("https://postman-echo.com/get").
+		GET("/get").
 		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 		WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
 		WithCookies(map[string]string{"user": "debugtalk"}).
 		Validate().
 		AssertEqual("status_code", 200, "check status code")
 	stepPOSTData = Step("post form data").
-			POST("https://postman-echo.com/post").
+			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
 			WithData("a=1&b=2").
@@ -27,8 +27,8 @@ func TestRunRequestGetToStruct(t *testing.T) {
 	if tStep.Request.Method != GET {
 		t.Fatalf("tStep.Request.Method != GET")
 	}
-	if tStep.Request.URL != "https://postman-echo.com/get" {
-		t.Fatalf("tStep.Request.URL != 'https://postman-echo.com/get'")
+	if tStep.Request.URL != "/get" {
+		t.Fatalf("tStep.Request.URL != '/get'")
 	}
 	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
 		t.Fatalf("tStep.Request.Params mismatch")
@@ -49,8 +49,8 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 	if tStep.Request.Method != POST {
 		t.Fatalf("tStep.Request.Method != POST")
 	}
-	if tStep.Request.URL != "https://postman-echo.com/post" {
-		t.Fatalf("tStep.Request.URL != 'https://postman-echo.com/post'")
+	if tStep.Request.URL != "/post" {
+		t.Fatalf("tStep.Request.URL != '/post'")
 	}
 	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
 		t.Fatalf("tStep.Request.Params mismatch")
@@ -70,11 +70,13 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 }
 
 func TestRunRequestRun(t *testing.T) {
-	config := &TConfig{}
-	if err := stepGET.Run(config); err != nil {
+	config := &TConfig{
+		BaseURL: "https://postman-echo.com",
+	}
+	if err := defaultRunner.runStep(parseStep(stepGET, config)); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
 	}
-	if err := stepPOSTData.Run(config); err != nil {
+	if err := defaultRunner.runStep(parseStep(stepPOSTData, config)); err != nil {
 		t.Fatalf("tStepPOSTData.Run() error: %s", err)
 	}
 }

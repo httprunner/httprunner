@@ -58,7 +58,7 @@ type TStep struct {
 type IStep interface {
 	Name() string
 	Type() string
-	Run(config *TConfig) error
+	ToStruct() *TStep
 }
 
 type TestCase struct {
