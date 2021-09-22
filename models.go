@@ -1,10 +1,5 @@
 package httpboomer
 
-type Variables map[string]interface{}
-type Params map[string]interface{}
-type Headers map[string]string
-type Cookies map[string]string
-
 type enumHTTPMethod string
 
 const (
@@ -18,26 +13,26 @@ const (
 )
 
 type TConfig struct {
-	Name       string    `json:"name"`
-	Verify     bool      `json:"verify"`
-	BaseURL    string    `json:"base_url"`
-	Variables  Variables `json:"variables"`
-	Parameters Variables `json:"parameters"`
-	Export     []string  `json:"export"`
-	Weight     int       `json:"weight"`
+	Name       string                 `json:"name"`
+	Verify     bool                   `json:"verify"`
+	BaseURL    string                 `json:"base_url"`
+	Variables  map[string]interface{} `json:"variables"`
+	Parameters map[string]interface{} `json:"parameters"`
+	Export     []string               `json:"export"`
+	Weight     int                    `json:"weight"`
 }
 
 type TRequest struct {
-	Method         enumHTTPMethod `json:"method"`
-	URL            string         `json:"url"`
-	Params         Params         `json:"params"`
-	Headers        Headers        `json:"headers"`
-	Cookies        Cookies        `json:"cookies"`
-	Data           interface{}    `json:"data"`
-	JSON           interface{}    `json:"json"`
-	Timeout        float32        `json:"timeout"`
-	AllowRedirects bool           `json:"allow_redirects"`
-	Verify         bool           `json:"verify"`
+	Method         enumHTTPMethod         `json:"method"`
+	URL            string                 `json:"url"`
+	Params         map[string]interface{} `json:"params"`
+	Headers        map[string]string      `json:"headers"`
+	Cookies        map[string]string      `json:"cookies"`
+	Data           interface{}            `json:"data"`
+	JSON           interface{}            `json:"json"`
+	Timeout        float32                `json:"timeout"`
+	AllowRedirects bool                   `json:"allow_redirects"`
+	Verify         bool                   `json:"verify"`
 }
 
 type TValidator struct {
@@ -48,15 +43,15 @@ type TValidator struct {
 }
 
 type TStep struct {
-	Name          string            `json:"name"`
-	Request       *TRequest         `json:"request"`
-	TestCase      *TestCase         `json:"testcase"`
-	Variables     Variables         `json:"variables"`
-	SetupHooks    []string          `json:"setup_hooks"`
-	TeardownHooks []string          `json:"teardown_hooks"`
-	Extract       map[string]string `json:"extract"`
-	Validators    []TValidator      `json:"validators"`
-	Export        []string          `json:"export"`
+	Name          string                 `json:"name"`
+	Request       *TRequest              `json:"request"`
+	TestCase      *TestCase              `json:"testcase"`
+	Variables     map[string]interface{} `json:"variables"`
+	SetupHooks    []string               `json:"setup_hooks"`
+	TeardownHooks []string               `json:"teardown_hooks"`
+	Extract       map[string]string      `json:"extract"`
+	Validators    []TValidator           `json:"validators"`
+	Export        []string               `json:"export"`
 }
 
 // interface for all types of steps
