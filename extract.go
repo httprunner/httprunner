@@ -27,6 +27,6 @@ func (s *stepRequestExtraction) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestExtraction) Run() error {
+func (s *stepRequestExtraction) Run(config *TConfig) error {
 	return s.runner.runStep(s.step)
 }

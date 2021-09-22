@@ -27,6 +27,6 @@ func (s *stepRequestValidation) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestValidation) Run() error {
+func (s *stepRequestValidation) Run(config *TConfig) error {
 	return s.runner.runStep(s.step)
 }

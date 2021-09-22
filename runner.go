@@ -32,9 +32,9 @@ func (r *Runner) Run(testcases ...*TestCase) error {
 }
 
 func (r *Runner) runCase(testcase *TestCase) error {
-	// config := testcase.Config
+	config := &testcase.Config
 	for _, step := range testcase.TestSteps {
-		if err := step.Run(); err != nil {
+		if err := step.Run(config); err != nil {
 			return err
 		}
 	}
