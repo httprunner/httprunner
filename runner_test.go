@@ -11,17 +11,17 @@ func TestHttpRunner(t *testing.T) {
 			BaseURL: "http://httpbin.org",
 		},
 		TestSteps: []IStep{
-			RunRequest("headers").
+			Step("headers").
 				GET("/headers").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.Host", "httpbin.org", "check http response host"),
-			RunRequest("user-agent").
+			Step("user-agent").
 				GET("/user-agent").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.\"user-agent\"", "python-requests", "check User-Agent"),
-			RunTestCase("TestCase3").WithVariables(Variables{"var1": "value1"}),
+			Step("TestCase3").CallRefCase(&TestCase{}),
 		},
 	}
 	testcase2 := &TestCase{

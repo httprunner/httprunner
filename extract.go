@@ -1,25 +1,26 @@
 package httpboomer
 
 // implements IStep interface
-type StepRequestExtraction struct {
-	*TStep
+type stepRequestExtraction struct {
+	runner *Runner
+	step   *TStep
 }
 
-func (step *StepRequestExtraction) WithJmesPath(jmesPath string, varName string) *StepRequestExtraction {
-	step.TStep.Extract[varName] = jmesPath
-	return step
+func (s *stepRequestExtraction) WithJmesPath(jmesPath string, varName string) *stepRequestExtraction {
+	s.step.Extract[varName] = jmesPath
+	return s
 }
 
-func (step *StepRequestExtraction) Validate() *StepRequestValidation {
-	return &StepRequestValidation{
-		TStep: step.TStep,
+func (s *stepRequestExtraction) Validate() *stepRequestValidation {
+	return &stepRequestValidation{
+		TStep: s.step,
 	}
 }
 
-func (step *StepRequestExtraction) ToStruct() *TStep {
-	return step.TStep
+func (s *stepRequestExtraction) ToStruct() *TStep {
+	return s.step
 }
 
-func (step *StepRequestExtraction) Run() error {
-	return step.TStep.Run()
+func (s *stepRequestExtraction) Run() error {
+	return s.runner.runStep(s.step)
 }

@@ -1,25 +1,26 @@
 package httpboomer
 
 // implements IStep interface
-type StepRequestValidation struct {
-	*TStep
+type stepRequestValidation struct {
+	runner *Runner
+	TStep  *TStep
 }
 
-func (step *StepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+func (s *stepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
 	validator := TValidator{
 		Check:      jmesPath,
 		Comparator: "equals",
 		Expect:     expected,
 		Message:    msg,
 	}
-	step.TStep.Validators = append(step.TStep.Validators, validator)
-	return step
+	s.TStep.Validators = append(s.TStep.Validators, validator)
+	return s
 }
 
-func (step *StepRequestValidation) ToStruct() *TStep {
-	return step.TStep
+func (s *stepRequestValidation) ToStruct() *TStep {
+	return s.TStep
 }
 
-func (step *StepRequestValidation) Run() error {
-	return step.TStep.Run()
+func (s *stepRequestValidation) Run() error {
+	return s.runner.runStep(s.TStep)
 }
