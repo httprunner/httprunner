@@ -6,14 +6,14 @@ import (
 
 var (
 	tStepGET = RunRequest("get with params").
-			GET("/get").
+			GET("https://postman-echo.com/get").
 			WithParams(Params{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(Headers{"User-Agent": "HttpBoomer"}).
 			WithCookies(Cookies{"user": "debugtalk"}).
 			Validate().
 			AssertEqual("status_code", 200, "check status code")
 	tStepPOSTData = RunRequest("post form data").
-			POST("/post").
+			POST("https://postman-echo.com/post").
 			WithParams(Params{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(Headers{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
 			WithData("a=1&b=2").
