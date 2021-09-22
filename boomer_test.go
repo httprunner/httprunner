@@ -18,5 +18,5 @@ func TestHttpBoomer(t *testing.T) {
 		},
 	}
 
-	HttpBoomer().Run(testcase1, testcase2)
+	Run(testcase1, testcase2)
 }

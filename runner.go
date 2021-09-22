@@ -6,9 +6,13 @@ import (
 	"github.com/imroc/req"
 )
 
-var defaultRunner = HttpRunner()
+var defaultRunner = NewRunner()
 
-func HttpRunner() *Runner {
+func Test(testcases ...*TestCase) error {
+	return defaultRunner.Run(testcases...)
+}
+
+func NewRunner() *Runner {
 	return &Runner{
 		Client: req.New(),
 	}
