@@ -6,7 +6,13 @@ import (
 	"github.com/myzhan/boomer"
 )
 
-func HttpBoomer() *Boomer {
+var defaultBoomer = NewBoomer()
+
+func Run(testcases ...*TestCase) {
+	defaultBoomer.Run(testcases...)
+}
+
+func NewBoomer() *Boomer {
 	return &Boomer{}
 }
 

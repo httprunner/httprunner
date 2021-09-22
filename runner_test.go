@@ -31,7 +31,7 @@ func TestHttpRunner(t *testing.T) {
 		},
 	}
 
-	err := HttpRunner().Run(testcase1, testcase2)
+	err := Test(testcase1, testcase2)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
