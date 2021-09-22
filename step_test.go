@@ -70,10 +70,11 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 }
 
 func TestRunRequestRun(t *testing.T) {
-	if err := stepGET.Run(); err != nil {
+	config := &TConfig{}
+	if err := stepGET.Run(config); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
 	}
-	if err := stepPOSTData.Run(); err != nil {
+	if err := stepPOSTData.Run(config); err != nil {
 		t.Fatalf("tStepPOSTData.Run() error: %s", err)
 	}
 }

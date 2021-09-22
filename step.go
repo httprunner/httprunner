@@ -15,6 +15,7 @@ func Step(name string) *step {
 
 type step struct {
 	runner *Runner
+	config *TConfig
 	*TStep
 }
 
@@ -188,7 +189,7 @@ func (s *requestWithOptionalArgs) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *requestWithOptionalArgs) Run() error {
+func (s *requestWithOptionalArgs) Run(config *TConfig) error {
 	return s.runner.runStep(s.step)
 }
 
@@ -216,6 +217,6 @@ func (s *testcaseWithOptionalArgs) Type() string {
 	return "testcase"
 }
 
-func (s *testcaseWithOptionalArgs) Run() error {
+func (s *testcaseWithOptionalArgs) Run(config *TConfig) error {
 	return s.runner.runCase(s.step.TestCase)
 }
