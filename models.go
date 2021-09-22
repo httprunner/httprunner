@@ -61,7 +61,8 @@ type TStep struct {
 
 // interface for all types of steps
 type IStep interface {
-	ToStruct() *TStep
+	Name() string
+	Type() string
 	Run() error
 }
 
