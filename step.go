@@ -4,7 +4,6 @@ import "fmt"
 
 func Step(name string) *step {
 	return &step{
-		runner: defaultRunner,
 		TStep: &TStep{
 			Name:      name,
 			Request:   &TRequest{},
@@ -14,14 +13,7 @@ func Step(name string) *step {
 }
 
 type step struct {
-	runner *Runner
-	config *TConfig
 	*TStep
-}
-
-func (s *step) WithRunner(runner *Runner) *step {
-	s.runner = runner
-	return s
 }
 
 func (s *step) WithVariables(variables map[string]interface{}) *step {
@@ -38,8 +30,7 @@ func (s *step) GET(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = GET
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -47,8 +38,7 @@ func (s *step) HEAD(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = HEAD
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -56,8 +46,7 @@ func (s *step) POST(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = POST
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -65,8 +54,7 @@ func (s *step) PUT(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = PUT
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -74,8 +62,7 @@ func (s *step) DELETE(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = DELETE
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -83,8 +70,7 @@ func (s *step) OPTIONS(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = OPTIONS
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -92,8 +78,7 @@ func (s *step) PATCH(url string) *requestWithOptionalArgs {
 	s.TStep.Request.Method = PATCH
 	s.TStep.Request.URL = url
 	return &requestWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
@@ -101,15 +86,13 @@ func (s *step) PATCH(url string) *requestWithOptionalArgs {
 func (s *step) CallRefCase(tc *TestCase) *testcaseWithOptionalArgs {
 	s.TStep.TestCase = tc
 	return &testcaseWithOptionalArgs{
-		runner: s.runner,
-		step:   s.TStep,
+		step: s.TStep,
 	}
 }
 
 // implements IStep interface
 type requestWithOptionalArgs struct {
-	runner *Runner
-	step   *TStep
+	step *TStep
 }
 
 func (s *requestWithOptionalArgs) SetVerify(verify bool) *requestWithOptionalArgs {
@@ -169,15 +152,13 @@ func (s *requestWithOptionalArgs) TeardownHook(hook string) *requestWithOptional
 
 func (s *requestWithOptionalArgs) Validate() *stepRequestValidation {
 	return &stepRequestValidation{
-		runner: s.runner,
-		step:   s.step,
+		step: s.step,
 	}
 }
 
 func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
 	return &stepRequestExtraction{
-		runner: s.runner,
-		step:   s.step,
+		step: s.step,
 	}
 }
 
@@ -189,14 +170,13 @@ func (s *requestWithOptionalArgs) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *requestWithOptionalArgs) Run(config *TConfig) error {
-	return s.runner.runStep(s.step)
+func (s *requestWithOptionalArgs) ToStruct() *TStep {
+	return s.step
 }
 
 // implements IStep interface
 type testcaseWithOptionalArgs struct {
-	runner *Runner
-	step   *TStep
+	step *TStep
 }
 
 func (s *testcaseWithOptionalArgs) TeardownHook(hook string) *testcaseWithOptionalArgs {
@@ -217,6 +197,6 @@ func (s *testcaseWithOptionalArgs) Type() string {
 	return "testcase"
 }
 
-func (s *testcaseWithOptionalArgs) Run(config *TConfig) error {
-	return s.runner.runCase(s.step.TestCase)
+func (s *testcaseWithOptionalArgs) ToStruct() *TStep {
+	return s.step
 }

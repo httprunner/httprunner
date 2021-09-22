@@ -4,8 +4,7 @@ import "fmt"
 
 // implements IStep interface
 type stepRequestExtraction struct {
-	runner *Runner
-	step   *TStep
+	step *TStep
 }
 
 func (s *stepRequestExtraction) WithJmesPath(jmesPath string, varName string) *stepRequestExtraction {
@@ -27,6 +26,6 @@ func (s *stepRequestExtraction) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestExtraction) Run(config *TConfig) error {
-	return s.runner.runStep(s.step)
+func (s *stepRequestExtraction) ToStruct() *TStep {
+	return s.step
 }
