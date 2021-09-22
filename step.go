@@ -1,5 +1,7 @@
 package httpboomer
 
+import "fmt"
+
 func Step(name string) *step {
 	return &step{
 		runner: defaultRunner,
@@ -167,7 +169,7 @@ func (s *requestWithOptionalArgs) TeardownHook(hook string) *requestWithOptional
 func (s *requestWithOptionalArgs) Validate() *stepRequestValidation {
 	return &stepRequestValidation{
 		runner: s.runner,
-		TStep:  s.step,
+		step:   s.step,
 	}
 }
 
@@ -178,8 +180,12 @@ func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
 	}
 }
 
-func (s *requestWithOptionalArgs) ToStruct() *TStep {
-	return s.step
+func (s *requestWithOptionalArgs) Name() string {
+	return s.step.Name
+}
+
+func (s *requestWithOptionalArgs) Type() string {
+	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
 func (s *requestWithOptionalArgs) Run() error {
@@ -202,8 +208,12 @@ func (s *testcaseWithOptionalArgs) Export(names ...string) *testcaseWithOptional
 	return s
 }
 
-func (s *testcaseWithOptionalArgs) ToStruct() *TStep {
-	return s.step
+func (s *testcaseWithOptionalArgs) Name() string {
+	return s.step.Name
+}
+
+func (s *testcaseWithOptionalArgs) Type() string {
+	return "testcase"
 }
 
 func (s *testcaseWithOptionalArgs) Run() error {

@@ -32,11 +32,10 @@ func convertBoomerTask(testcase *TestCase) *boomer.Task {
 				err := step.Run()
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 
-				tStep := step.ToStruct()
 				if err == nil {
-					boomer.RecordSuccess(string(tStep.Request.Method), tStep.Name, elapsed, int64(0))
+					boomer.RecordSuccess(step.Type(), step.Name(), elapsed, int64(0))
 				} else {
-					boomer.RecordFailure(string(tStep.Request.Method), tStep.Name, elapsed, err.Error())
+					boomer.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
 				}
 			}
 		},
