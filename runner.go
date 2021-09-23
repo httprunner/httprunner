@@ -36,9 +36,18 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	config := &testcase.Config
 	log.Printf("Start to run testcase: %v", config.Name)
 	for _, step := range testcase.TestSteps {
-		tStep := parseStep(step, config)
-		if err := r.runStep(tStep); err != nil {
-			return err
+		if tc, ok := step.(*testcaseWithOptionalArgs); ok {
+			// run referenced testcase
+			log.Printf("run referenced testcase: %v", tc.step.Name)
+			if err := r.runCase(tc.step.TestCase); err != nil {
+				return err
+			}
+		} else {
+			// run request
+			tStep := parseStep(step, config)
+			if err := r.runStep(tStep); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
