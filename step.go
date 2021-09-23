@@ -6,7 +6,6 @@ func Step(name string) *step {
 	return &step{
 		TStep: &TStep{
 			Name:      name,
-			Request:   &TRequest{},
 			Variables: make(map[string]interface{}),
 		},
 	}
@@ -27,56 +26,70 @@ func (s *step) SetupHook(hook string) *step {
 }
 
 func (s *step) GET(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = GET
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: GET,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
 }
 
 func (s *step) HEAD(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = HEAD
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: HEAD,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
 }
 
 func (s *step) POST(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = POST
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: POST,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
 }
 
 func (s *step) PUT(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = PUT
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: PUT,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
 }
 
 func (s *step) DELETE(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = DELETE
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: DELETE,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
 }
 
 func (s *step) OPTIONS(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = OPTIONS
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: OPTIONS,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
 }
 
 func (s *step) PATCH(url string) *requestWithOptionalArgs {
-	s.TStep.Request.Method = PATCH
-	s.TStep.Request.URL = url
+	s.TStep.Request = &TRequest{
+		Method: PATCH,
+		URL:    url,
+	}
 	return &requestWithOptionalArgs{
 		step: s.TStep,
 	}
