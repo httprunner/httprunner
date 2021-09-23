@@ -44,12 +44,6 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func parseStep(step IStep, config *TConfig) *TStep {
-	tStep := step.ToStruct()
-	tStep.Request.URL = config.BaseURL + tStep.Request.URL
-	return tStep
-}
-
 func (r *Runner) runStep(step *TStep) error {
 	log.Printf("run step begin: %v >>>>>>", step.Name)
 	var v []interface{}
