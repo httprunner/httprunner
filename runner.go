@@ -58,6 +58,7 @@ func (r *Runner) runStep(step *TStep) error {
 	var v []interface{}
 	v = append(v, req.Header(step.Request.Headers))
 	v = append(v, req.Param(step.Request.Params))
+	v = append(v, step.Request.Data)
 
 	for cookieName, cookieValue := range step.Request.Cookies {
 		v = append(v, &http.Cookie{
