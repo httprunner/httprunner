@@ -26,6 +26,18 @@ func TestCaseHardcode(t *testing.T) {
 				WithData("This is expected to be sent back as part of response body.").
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
+			httpboomer.Step("post form data").
+				POST("/post").
+				WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
+				WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+			httpboomer.Step("put request").
+				PUT("/put").
+				WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "text/plain"}).
+				WithData("This is expected to be sent back as part of response body.").
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
 		},
 	}
 
