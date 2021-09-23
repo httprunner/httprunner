@@ -32,6 +32,12 @@ func TestCaseHardcode(t *testing.T) {
 				WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
+			httpboomer.Step("post json data").
+				POST("/post").
+				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+				WithJSON(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
 			httpboomer.Step("put request").
 				PUT("/put").
 				WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "text/plain"}).
