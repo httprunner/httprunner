@@ -47,7 +47,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) error {
 		// run referenced testcase
 		log.Printf("run referenced testcase: %v", tc.step.Name)
 		// TODO: override testcase config
-		if err := r.runCase(tc.step.TestCase); err != nil {
+		if err := r.runStepTestCase(tc.step); err != nil {
 			return err
 		}
 	} else {
@@ -82,6 +82,11 @@ func (r *Runner) runStepRequest(step *TStep) error {
 	}
 	defer resp.Response().Body.Close()
 	return nil
+}
+
+func (r *Runner) runStepTestCase(step *TStep) error {
+	testcase := step.TestCase
+	return r.runCase(testcase)
 }
 
 func (r *Runner) GetSummary() *TestCaseSummary {
