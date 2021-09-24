@@ -36,25 +36,32 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	config := &testcase.Config
 	log.Printf("Start to run testcase: %v", config.Name)
 	for _, step := range testcase.TestSteps {
-		if tc, ok := step.(*testcaseWithOptionalArgs); ok {
-			// run referenced testcase
-			log.Printf("run referenced testcase: %v", tc.step.Name)
-			if err := r.runCase(tc.step.TestCase); err != nil {
-				return err
-			}
-		} else {
-			// run request
-			tStep := parseStep(step, config)
-			if err := r.runStep(tStep); err != nil {
-				return err
-			}
-		}
+		r.runStep(step, config)
 	}
 	return nil
 }
 
-func (r *Runner) runStep(step *TStep) error {
-	log.Printf("run step begin: %v >>>>>>", step.Name)
+func (r *Runner) runStep(step IStep, config *TConfig) error {
+	log.Printf("run step begin: %v >>>>>>", step.Name())
+	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
+		// run referenced testcase
+		log.Printf("run referenced testcase: %v", tc.step.Name)
+		// TODO: override testcase config
+		if err := r.runCase(tc.step.TestCase); err != nil {
+			return err
+		}
+	} else {
+		// run request
+		tStep := parseStep(step, config)
+		if err := r.runStepRequest(tStep); err != nil {
+			return err
+		}
+	}
+	log.Printf("run step end: %v <<<<<<\n", step.Name())
+	return nil
+}
+
+func (r *Runner) runStepRequest(step *TStep) error {
 	var v []interface{}
 	v = append(v, req.Header(step.Request.Headers))
 	v = append(v, req.Param(step.Request.Params))
@@ -73,8 +80,7 @@ func (r *Runner) runStep(step *TStep) error {
 	if err != nil {
 		return err
 	}
-	resp.Response().Body.Close()
-	log.Printf("run step end: %v <<<<<<\n", step.Name)
+	defer resp.Response().Body.Close()
 	return nil
 }
 
