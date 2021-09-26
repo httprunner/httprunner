@@ -72,10 +72,18 @@ func (r *Runner) runStep(step IStep, config *TConfig) error {
 func (r *Runner) runStepRequest(step *TStep) error {
 	// prepare request args
 	var v []interface{}
-	v = append(v, req.Header(step.Request.Headers))
-	v = append(v, req.Param(step.Request.Params))
-	v = append(v, step.Request.Data)
-	v = append(v, req.BodyJSON(step.Request.JSON))
+	if len(step.Request.Headers) > 0 {
+		v = append(v, req.Header(step.Request.Headers))
+	}
+	if len(step.Request.Params) > 0 {
+		v = append(v, req.Param(step.Request.Params))
+	}
+	if step.Request.Data != nil {
+		v = append(v, step.Request.Data)
+	}
+	if step.Request.JSON != nil {
+		v = append(v, req.BodyJSON(step.Request.JSON))
+	}
 
 	for cookieName, cookieValue := range step.Request.Cookies {
 		v = append(v, &http.Cookie{
