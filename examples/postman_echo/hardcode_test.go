@@ -47,7 +47,7 @@ func TestCaseHardcode(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Test(testcase)
+	err := httpboomer.Test(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

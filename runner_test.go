@@ -15,12 +15,12 @@ func TestHttpRunner(t *testing.T) {
 				GET("/headers").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
-				AssertEqual("headers.Host", "httpbin.org", "check http response host"),
+				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
 			Step("user-agent").
 				GET("/user-agent").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
-				AssertEqual("body.\"user-agent\"", "python-requests", "check User-Agent"),
+				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
 			Step("TestCase3").CallRefCase(&TestCase{Config: TConfig{Name: "TestCase3"}}),
 		},
 	}
@@ -31,7 +31,7 @@ func TestHttpRunner(t *testing.T) {
 		},
 	}
 
-	err := Test(testcase1, testcase2)
+	err := Test(t, testcase1, testcase2)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

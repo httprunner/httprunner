@@ -11,7 +11,11 @@ var (
 		WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
 		WithCookies(map[string]string{"user": "debugtalk"}).
 		Validate().
-		AssertEqual("status_code", 200, "check status code")
+		AssertEqual("status_code", 200, "check status code").
+		AssertEqual("headers.Connection", "keep-alive", "check header Connection").
+		AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
+		AssertEqual("body.args.foo1", "bar1", "check param foo1").
+		AssertEqual("body.args.foo2", "bar2", "check param foo2")
 	stepPOSTData = Step("post form data").
 			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
@@ -73,10 +77,10 @@ func TestRunRequestRun(t *testing.T) {
 	config := &TConfig{
 		BaseURL: "https://postman-echo.com",
 	}
-	if err := defaultRunner.runStep(stepGET, config); err != nil {
+	if err := defaultRunner.WithTestingT(t).runStep(stepGET, config); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
 	}
-	if err := defaultRunner.runStep(stepPOSTData, config); err != nil {
+	if err := defaultRunner.WithTestingT(t).runStep(stepPOSTData, config); err != nil {
 		t.Fatalf("tStepPOSTData.Run() error: %s", err)
 	}
 }

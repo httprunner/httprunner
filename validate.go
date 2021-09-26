@@ -1,6 +1,8 @@
 package httpboomer
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // implements IStep interface
 type stepRequestValidation struct {
@@ -9,10 +11,10 @@ type stepRequestValidation struct {
 
 func (s *stepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
 	validator := TValidator{
-		Check:      jmesPath,
-		Comparator: "equals",
-		Expect:     expected,
-		Message:    msg,
+		Check:   jmesPath,
+		Assert:  "equals",
+		Expect:  expected,
+		Message: msg,
 	}
 	s.step.Validators = append(s.step.Validators, validator)
 	return s
