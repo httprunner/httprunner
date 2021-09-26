@@ -36,10 +36,10 @@ type TRequest struct {
 }
 
 type TValidator struct {
-	Check      string // get value with jmespath
-	Comparator string
-	Expect     interface{}
-	Message    string
+	Check   string // get value with jmespath
+	Assert  string
+	Expect  interface{}
+	Message string
 }
 
 type TStep struct {

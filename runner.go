@@ -3,24 +3,32 @@ package httpboomer
 import (
 	"log"
 	"net/http"
+	"testing"
 
 	"github.com/imroc/req"
 )
 
 var defaultRunner = NewRunner()
 
-func Test(testcases ...*TestCase) error {
-	return defaultRunner.Run(testcases...)
+func Test(t *testing.T, testcases ...*TestCase) error {
+	return defaultRunner.WithTestingT(t).Run(testcases...)
 }
 
 func NewRunner() *Runner {
 	return &Runner{
+		t:      &testing.T{},
 		Client: req.New(),
 	}
 }
 
 type Runner struct {
+	t      *testing.T
 	Client *req.Req
+}
+
+func (r *Runner) WithTestingT(t *testing.T) *Runner {
+	r.t = t
+	return r
 }
 
 func (r *Runner) Run(testcases ...*TestCase) error {
@@ -62,6 +70,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) error {
 }
 
 func (r *Runner) runStepRequest(step *TStep) error {
+	// prepare request args
 	var v []interface{}
 	v = append(v, req.Header(step.Request.Headers))
 	v = append(v, req.Param(step.Request.Params))
@@ -75,12 +84,21 @@ func (r *Runner) runStepRequest(step *TStep) error {
 		})
 	}
 
+	// do request action
 	req.Debug = true
 	resp, err := r.Client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
 		return err
 	}
 	defer resp.Response().Body.Close()
+
+	// validate response
+	respObj := NewResponseObject(r.t, resp)
+	err = respObj.Validate(step.Validators)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
