@@ -6,10 +6,8 @@ import (
 	"github.com/myzhan/boomer"
 )
 
-var defaultBoomer = NewBoomer()
-
 func Run(testcases ...*TestCase) {
-	defaultBoomer.Run(testcases...)
+	NewBoomer().Run(testcases...)
 }
 
 func NewBoomer() *Boomer {
