@@ -80,7 +80,7 @@ type ResponseObject struct {
 	validationResults map[string]interface{}
 }
 
-func (v *ResponseObject) Validate(validators []TValidator) error {
+func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[string]interface{}) error {
 	for _, validator := range validators {
 		// parse check value
 		checkItem := validator.Check
@@ -89,7 +89,7 @@ func (v *ResponseObject) Validate(validators []TValidator) error {
 		assertMethod := validator.Assert
 		assertFunc := assertFunctionsMap[assertMethod]
 		// parse expected value
-		expectValue := validator.Expect
+		expectValue := parseData(validator.Expect, variablesMapping)
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)
 		log.Printf("assert %s %s %v => %v", checkItem, assertMethod, expectValue, result)
