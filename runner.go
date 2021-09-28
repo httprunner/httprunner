@@ -107,7 +107,7 @@ func (r *Runner) runStepRequest(step *TStep) error {
 
 	// validate response
 	respObj := NewResponseObject(r.t, resp)
-	err = respObj.Validate(step.Validators)
+	err = respObj.Validate(step.Validators, step.Variables)
 	if err != nil {
 		return err
 	}

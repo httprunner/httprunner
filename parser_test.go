@@ -2,6 +2,8 @@ package httpboomer
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuildURL(t *testing.T) {
@@ -25,5 +27,32 @@ func TestBuildURL(t *testing.T) {
 	url = buildURL("https://postman-echo.com", "https://httpbin.org/get")
 	if url != "https://httpbin.org/get" {
 		t.Fatalf("buildURL error, %s != 'https://httpbin.org/get'", url)
+	}
+}
+
+func TestParseDataStringWithVariables(t *testing.T) {
+	variablesMapping := map[string]interface{}{
+		"var_1": "abc",
+		"var_2": "def",
+		"var_3": 123,
+		"var_4": map[string]interface{}{"a": 1},
+		"var_5": true,
+		"var_6": nil,
+	}
+
+	if !assert.Equal(t, "abc", parseData("$var_1", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, "abc", parseData("${var_1}", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, "var_1", parseData("var_1", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, "abc#XYZ", parseData("$var_1#XYZ", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, "abc#XYZ", parseData("${var_1}#XYZ", variablesMapping)) {
+		t.Fail()
 	}
 }
