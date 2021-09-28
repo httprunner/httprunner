@@ -17,17 +17,24 @@ func Test(t *testing.T, testcases ...*TestCase) error {
 func NewRunner() *Runner {
 	return &Runner{
 		t:      &testing.T{},
+		debug:  false, // default to turn off debug
 		Client: req.New(),
 	}
 }
 
 type Runner struct {
 	t      *testing.T
+	debug  bool
 	Client *req.Req
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
 	r.t = t
+	return r
+}
+
+func (r *Runner) SetDebug(debug bool) *Runner {
+	r.debug = debug
 	return r
 }
 
@@ -93,7 +100,7 @@ func (r *Runner) runStepRequest(step *TStep) error {
 	}
 
 	// do request action
-	req.Debug = true
+	req.Debug = r.debug
 	resp, err := r.Client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
 		return err
