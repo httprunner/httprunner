@@ -37,8 +37,7 @@ func (b *Boomer) Run(testcases ...*TestCase) {
 }
 
 func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
-	runner := NewRunner()
-	runner = runner.SetDebug(b.debug)
+	runner := NewRunner().SetDebug(b.debug)
 	return &boomer.Task{
 		Name:   testcase.Config.Name,
 		Weight: testcase.Config.Weight,

@@ -8,10 +8,8 @@ import (
 	"github.com/imroc/req"
 )
 
-var defaultRunner = NewRunner()
-
 func Test(t *testing.T, testcases ...*TestCase) error {
-	return defaultRunner.WithTestingT(t).Run(testcases...)
+	return NewRunner().WithTestingT(t).SetDebug(true).Run(testcases...)
 }
 
 func NewRunner() *Runner {
