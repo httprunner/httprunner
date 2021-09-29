@@ -42,7 +42,8 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 }
 
 var (
-	regexCompileVariable = regexp.MustCompile(`\$\{(\w+)\}|\$(\w+)`) // parse ${var} or $var
+	regexVariable        = `[a-zA-Z_]\w*`                                                                     // variable name should start with a letter or underscore
+	regexCompileVariable = regexp.MustCompile(fmt.Sprintf(`\$\{(%s)\}|\$(%s)`, regexVariable, regexVariable)) // parse ${var} or $var
 )
 
 // parseString parse string with variables
@@ -87,6 +88,9 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 			log.Printf("[parseString] parsedString: %v, matchStartPosition: %v", parsedString, matchStartPosition)
 			continue
 		}
+
+		parsedString += remainedString
+		break
 	}
 
 	return parsedString
