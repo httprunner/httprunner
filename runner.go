@@ -78,13 +78,16 @@ func (r *Runner) runStepRequest(step *TStep) error {
 	// prepare request args
 	var v []interface{}
 	if len(step.Request.Headers) > 0 {
-		v = append(v, req.Header(step.Request.Headers))
+		headers := parseData(step.Request.Headers, step.Variables)
+		v = append(v, req.Header(headers.(map[string]string)))
 	}
 	if len(step.Request.Params) > 0 {
-		v = append(v, req.Param(step.Request.Params))
+		params := parseData(step.Request.Params, step.Variables)
+		v = append(v, req.Param(params.(map[string]interface{})))
 	}
 	if step.Request.Data != nil {
-		v = append(v, step.Request.Data)
+		data := parseData(step.Request.Data, step.Variables)
+		v = append(v, data)
 	}
 	if step.Request.JSON != nil {
 		v = append(v, req.BodyJSON(step.Request.JSON))

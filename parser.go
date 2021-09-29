@@ -32,11 +32,18 @@ func buildURL(baseURL, stepURL string) string {
 }
 
 func parseData(raw interface{}, variablesMapping map[string]interface{}) interface{} {
-	switch v := raw.(type) {
+	switch value := raw.(type) {
 	case string:
-		v = strings.TrimSpace(v)
-		return parseString(v, variablesMapping)
+		value = strings.TrimSpace(value)
+		return parseString(value, variablesMapping)
+	case map[string]interface{}:
+		parsedMap := make(map[string]interface{})
+		for k, v := range value {
+			parsedMap[k] = parseData(v, variablesMapping)
+		}
+		return parsedMap
 	default:
+		// other types, e.g. nil, int, float, bool
 		return raw
 	}
 }
