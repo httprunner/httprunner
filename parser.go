@@ -70,7 +70,7 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 		remainedString = remainedString[startPosition:]
 
 		// search variable like ${var} or $var
-		varMatched := regexCompileVariable.FindStringSubmatch(raw[matchStartPosition:])
+		varMatched := regexCompileVariable.FindStringSubmatch(remainedString)
 		if len(varMatched) == 3 {
 			var varName string
 			if varMatched[1] != "" {
