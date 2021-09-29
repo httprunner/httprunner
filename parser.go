@@ -76,8 +76,21 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 			continue
 		}
 
+		currentPosition := matchStartPosition
+		var remainedString string
+		// find next $ location
+		nextStartPosition := strings.Index(raw[currentPosition+1:], "$")
+		if nextStartPosition == -1 { // no $ found
+			remainedString = raw[currentPosition:]
+			// break loop
+			matchStartPosition = len(raw)
+		} else { // found next $
+			matchStartPosition = nextStartPosition
+			remainedString = raw[currentPosition:nextStartPosition]
+		}
+
 		// append remained string
-		parsedString += raw[matchStartPosition:]
+		parsedString += remainedString
 	}
 
 	return parsedString
