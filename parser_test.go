@@ -129,3 +129,27 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 		}
 	}
 }
+
+func TestParseDataMapWithVariables(t *testing.T) {
+	variablesMapping := map[string]interface{}{
+		"var1": "foo1",
+		"val1": 200,
+		"var2": 123,
+	}
+
+	testData := []struct {
+		expr   map[string]interface{}
+		expect interface{}
+	}{
+		{map[string]interface{}{"key": "$var1"}, map[string]interface{}{"key": "foo1"}},
+		{map[string]interface{}{"foo1": "$val1", "foo2": "bar2"}, map[string]interface{}{"foo1": 200, "foo2": "bar2"}},
+		// {map[string]interface{}{"$var1": "$val1"}, map[string]interface{}{"foo1": 200}},
+		// {map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{123: 200}},
+	}
+
+	for _, data := range testData {
+		if !assert.Equal(t, data.expect, parseData(data.expr, variablesMapping)) {
+			t.Fail()
+		}
+	}
+}
