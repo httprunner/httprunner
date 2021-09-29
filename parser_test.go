@@ -55,4 +55,31 @@ func TestParseDataStringWithVariables(t *testing.T) {
 	if !assert.Equal(t, "abc#XYZ", parseData("${var_1}#XYZ", variablesMapping)) {
 		t.Fail()
 	}
+	if !assert.Equal(t, "/abc/def/var3", parseData("/$var_1/$var_2/var3", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, 123, parseData("$var_3", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, map[string]interface{}{"a": 1}, parseData("$var_4", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, true, parseData("$var_5", variablesMapping)) {
+		t.Fail()
+	}
+	if !assert.Equal(t, nil, parseData("$var_6", variablesMapping)) {
+		t.Fail()
+	}
+	// TODO: fix compatibility with python version, "abc{'a': 1}"
+	if !assert.Equal(t, "abcmap[a:1]", parseData("abc$var_4", variablesMapping)) {
+		t.Fail()
+	}
+	// TODO: fix compatibility with python version, "abcTrue"
+	if !assert.Equal(t, "abctrue", parseData("abc$var_5", variablesMapping)) {
+		t.Fail()
+	}
+	// TODO: fix compatibility with python version, raise exception
+	if !assert.Equal(t, "/api/<nil>", parseData("/api/$SECRET_KEY", variablesMapping)) {
+		t.Fail()
+	}
 }

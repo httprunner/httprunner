@@ -47,13 +47,24 @@ var (
 
 // parseString parse string with variables
 func parseString(raw string, variablesMapping map[string]interface{}) interface{} {
-	matchStartPosition := strings.Index(raw, "$")
-	if matchStartPosition == -1 { // no $ found
-		return raw
-	}
-	parsedString := raw[0:matchStartPosition]
+	matchStartPosition := 0
+	parsedString := ""
+	remainedString := raw
 
 	for matchStartPosition < len(raw) {
+		// locate $ char position
+		startPosition := strings.Index(remainedString, "$")
+		if startPosition == -1 { // no $ found
+			// append remained string
+			parsedString += remainedString
+			break
+		}
+
+		// found $, check if variable or function
+		matchStartPosition += startPosition
+		parsedString += remainedString[0:startPosition]
+		remainedString = remainedString[startPosition:]
+
 		// search variable like ${var} or $var
 		varMatched := regexCompileVariable.FindStringSubmatch(raw[matchStartPosition:])
 		if len(varMatched) == 3 {
@@ -70,27 +81,12 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 				return varValue
 			}
 
-			parsedString += fmt.Sprintf("%v", varValue)
 			matchStartPosition += len(varMatched[0])
+			parsedString += fmt.Sprintf("%v", varValue)
+			remainedString = raw[matchStartPosition:]
 			log.Printf("[parseString] parsedString: %v, matchStartPosition: %v", parsedString, matchStartPosition)
 			continue
 		}
-
-		currentPosition := matchStartPosition
-		var remainedString string
-		// find next $ location
-		nextStartPosition := strings.Index(raw[currentPosition+1:], "$")
-		if nextStartPosition == -1 { // no $ found
-			remainedString = raw[currentPosition:]
-			// break loop
-			matchStartPosition = len(raw)
-		} else { // found next $
-			matchStartPosition = nextStartPosition
-			remainedString = raw[currentPosition:nextStartPosition]
-		}
-
-		// append remained string
-		parsedString += remainedString
 	}
 
 	return parsedString
