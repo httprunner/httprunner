@@ -48,9 +48,6 @@ func TestParseDataStringWithVariables(t *testing.T) {
 	}{
 		// no variable
 		{"var_1", "var_1"},
-		{"$", "$"},
-		{"var_1$", "var_1$"},
-		{"var_1$123", "var_1$123"}, // variable should starts with a letter
 		// single variable
 		{"$var_1", "abc"},
 		{"${var_1}", "abc"},
@@ -109,6 +106,9 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 		expr   string
 		expect interface{}
 	}{
+		{"$", "$"},
+		{"var_1$", "var_1$"},
+		{"var_1$123", "var_1$123"},        // variable should starts with a letter
 		{"ABC$var_1{", "ABCabc{"},         // {
 		{"ABC$var_1}", "ABCabc}"},         // }
 		{"{ABC$var_1{}a}", "{ABCabc{}a}"}, // {xx}
