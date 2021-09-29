@@ -69,6 +69,14 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 		parsedString += remainedString[0:startPosition]
 		remainedString = remainedString[startPosition:]
 
+		// search $$, use $$ to escape $ notation
+		if strings.HasPrefix(remainedString, "$$") { // found $$
+			matchStartPosition += 2
+			parsedString += "$"
+			remainedString = remainedString[2:]
+			continue
+		}
+
 		// search variable like ${var} or $var
 		varMatched := regexCompileVariable.FindStringSubmatch(remainedString)
 		if len(varMatched) == 3 {

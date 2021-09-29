@@ -109,10 +109,18 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 		expr   string
 		expect interface{}
 	}{
-		{"ABC$var_1{", "ABCabc{"},
-		{"{ABC$var_1{}a}", "{ABCabc{}a}"},
-		{"AB{C$var_1{}a}", "AB{Cabc{}a}"},
-		{"ABC$var_1}", "ABCabc}"},
+		{"ABC$var_1{", "ABCabc{"},         // {
+		{"ABC$var_1}", "ABCabc}"},         // }
+		{"{ABC$var_1{}a}", "{ABCabc{}a}"}, // {xx}
+		{"AB{C$var_1{}a}", "AB{Cabc{}a}"}, // {xx{}x}
+		{"ABC$$var_1{", "ABC$var_1{"},     // $$
+		{"ABC$$$var_1{", "ABC$abc{"},      // $$$
+		{"ABC$$$$var_1{", "ABC$$var_1{"},  // $$$$
+		{"ABC$var_1${", "ABCabc${"},       // ${
+		{"ABC$var_1${a", "ABCabc${a"},     // ${
+		{"ABC$var_1$}a", "ABCabc$}a"},     // $}
+		{"ABC$var_1}{a", "ABCabc}{a"},     // }{
+		{"ABC$var_1{}a", "ABCabc{}a"},     // {}
 	}
 
 	for _, data := range testData {
