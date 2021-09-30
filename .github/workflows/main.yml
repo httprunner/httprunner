@@ -30,4 +30,7 @@ jobs:
       - name: Run coverage
         run: go test -race -coverprofile="cover.out" -covermode=atomic ./...
       - name: Upload coverage to Codecov
-        run: bash <(curl -s https://codecov.io/bash)
+        if: success()
+        run: |
+          curl -s https://codecov.io/bash | bash
+        shell: bash
