@@ -15,16 +15,21 @@ func TestCaseVariables(t *testing.T) {
 		},
 		TestSteps: []httpboomer.IStep{
 			httpboomer.Step("get with params").
-				WithVariables(map[string]interface{}{"var1": "bar1", "expectedStatusCode": 200}).
+				WithVariables(map[string]interface{}{
+					"var1":               "bar1",
+					"agent":              "HttpBoomer",
+					"expectedStatusCode": 200,
+				}).
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "$var1", "foo2": "bar2"}).
-				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+				WithHeaders(map[string]string{"User-Agent": "$agent"}).
 				Validate().
 				AssertEqual("status_code", "$expectedStatusCode", "check status code").
 				AssertEqual("headers.Connection", "keep-alive", "check header Connection").
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
-				AssertEqual("body.args.foo1", "$var1", "check args foo1").
-				AssertEqual("body.args.foo2", "bar2", "check args foo2"),
+				AssertEqual("body.args.foo1", "bar1", "check args foo1").
+				AssertEqual("body.args.foo2", "bar2", "check args foo2").
+				AssertEqual("body.headers.\"user-agent\"", "HttpBoomer", "check header user agent"),
 		},
 	}
 
