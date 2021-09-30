@@ -30,6 +30,11 @@ jobs:
       - name: Run coverage
         run: go test -race -coverprofile="cover.out" -covermode=atomic ./...
       - name: Upload coverage to Codecov
-        if: success()
-        run: curl -s https://codecov.io/bash | bash
-        shell: bash
+        uses: codecov/codecov-action@v2
+        with:
+          name: httpboomer # User defined upload name. Visible in Codecov UI
+          token: ${{ secrets.CODECOV_TOKEN }} # Repository upload token
+          file: ./cover.out # Path to coverage file to upload
+          flags: unittests # Flag upload to group coverage metrics
+          fail_ci_if_error: true # Specify whether or not CI build should fail if Codecov runs into an error during upload
+          verbose: true
