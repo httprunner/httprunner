@@ -87,10 +87,11 @@ func (v *ResponseObject) Extract(extractors map[string]string) map[string]interf
 
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
-		extractMapping[key] = v.searchJmespath(value)
+		extractedValue := v.searchJmespath(value)
+		log.Printf("extract %s => %v", value, extractedValue)
+		extractMapping[key] = extractedValue
 	}
 
-	log.Printf("[Extract] extractMapping: %v", extractMapping)
 	return extractMapping
 }
 
