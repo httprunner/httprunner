@@ -39,6 +39,8 @@ func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]inte
 		if value, ok := parsedValue.(string); ok {
 			parsedHeaders[k] = value
 		} else {
+			// parsed value is not string, e.g. int, float, etc.
+			// convert to string
 			parsedHeaders[k] = fmt.Sprintf("%v", parsedValue)
 		}
 	}
@@ -55,8 +57,17 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
+			parsedKey := parseString(k.String(), variablesMapping)
 			v := rawValue.MapIndex(k)
-			parsedMap[k.String()] = parseData(v.Interface(), variablesMapping)
+			parsedValue := parseData(v.Interface(), variablesMapping)
+
+			if key, ok := parsedKey.(string); ok {
+				parsedMap[key] = parsedValue
+			} else {
+				// parsed key is not string, e.g. int, float, etc.
+				// convert to string
+				parsedMap[fmt.Sprintf("%v", parsedKey)] = parsedValue
+			}
 		}
 		return parsedMap
 	default:
