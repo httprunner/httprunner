@@ -184,3 +184,22 @@ func TestParseHeaders(t *testing.T) {
 		}
 	}
 }
+
+func TestMergeVariables(t *testing.T) {
+	stepVariables := map[string]interface{}{
+		"base_url": "$base_url",
+		"foo1":     "bar1",
+	}
+	configVariables := map[string]interface{}{
+		"base_url": "https://httpbin.org",
+		"foo1":     "bar111",
+	}
+	mergedVariables := mergeVariables(stepVariables, configVariables)
+	expectVariables := map[string]interface{}{
+		"base_url": "https://httpbin.org",
+		"foo1":     "bar1",
+	}
+	if !assert.Equal(t, expectVariables, mergedVariables) {
+		t.Fail()
+	}
+}
