@@ -1,4 +1,5 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/httpboomer.svg)](https://pkg.go.dev/github.com/httprunner/httpboomer)
+[![Github Actions](https://github.com/httprunner/HttpBoomer/actions/workflows/main.yml/badge.svg)](https://github.com/httprunner/HttpBoomer/actions)
 
 # HttpBoomer
 

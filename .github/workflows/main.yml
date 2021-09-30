@@ -1,4 +1,4 @@
-name: HttpBoomer CI
+name: Build and Test
 
 on:
   push:
