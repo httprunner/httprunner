@@ -31,6 +31,5 @@ jobs:
         run: go test -race -coverprofile="cover.out" -covermode=atomic ./...
       - name: Upload coverage to Codecov
         if: success()
-        run: |
-          curl -s https://codecov.io/bash | bash
+        run: curl -s https://codecov.io/bash | bash
         shell: bash
