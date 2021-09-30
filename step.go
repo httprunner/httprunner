@@ -170,6 +170,7 @@ func (s *requestWithOptionalArgs) Validate() *stepRequestValidation {
 }
 
 func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
+	s.step.Extract = make(map[string]string)
 	return &stepRequestExtraction{
 		step: s.step,
 	}

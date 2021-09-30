@@ -140,8 +140,11 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	extractMapping := respObj.Extract(extractors)
 	stepData.ExportVars = extractMapping
 
+	// override step variables with extracted variables
+	stepVariables := mergeVariables(step.Variables, extractMapping)
+
 	// validate response
-	err = respObj.Validate(step.Validators, step.Variables)
+	err = respObj.Validate(step.Validators, stepVariables)
 	if err != nil {
 		return
 	}
