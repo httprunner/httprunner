@@ -1,6 +1,6 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/httpboomer.svg)](https://pkg.go.dev/github.com/httprunner/httpboomer)
 [![Github Actions](https://github.com/httprunner/HttpBoomer/actions/workflows/main.yml/badge.svg)](https://github.com/httprunner/HttpBoomer/actions)
-[![Coverage Status](https://coveralls.io/repos/github/httprunner/HttpBoomer/badge.svg?branch=main)](https://coveralls.io/github/httprunner/HttpBoomer?branch=main)
+[![codecov](https://codecov.io/gh/httprunner/HttpBoomer/branch/main/graph/badge.svg?token=HPCQWCD7KO)](https://codecov.io/gh/httprunner/HttpBoomer)
 
 # HttpBoomer
 
