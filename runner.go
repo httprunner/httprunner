@@ -49,39 +49,56 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	config := &testcase.Config
 	log.Printf("Start to run testcase: %v", config.Name)
 
+	extractedVariables := make(map[string]interface{})
+
 	for _, step := range testcase.TestSteps {
 		// override variables
 		// step variables > extracted variables from previous steps
+		step.ToStruct().Variables = mergeVariables(step.ToStruct().Variables, extractedVariables)
 		// step variables > testcase config variables
 		step.ToStruct().Variables = mergeVariables(step.ToStruct().Variables, config.Variables)
 
-		r.runStep(step, config)
+		stepData, err := r.runStep(step, config)
+		if err != nil {
+			return err
+		}
+		// update extracted variables
+		for k, v := range stepData.ExportVars {
+			extractedVariables[k] = v
+		}
 	}
 
 	return nil
 }
 
-func (r *Runner) runStep(step IStep, config *TConfig) error {
+func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
 	log.Printf("run step begin: %v >>>>>>", step.Name())
 	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Printf("run referenced testcase: %v", tc.step.Name)
 		// TODO: override testcase config
-		if err := r.runStepTestCase(tc.step); err != nil {
-			return err
+		stepData, err = r.runStepTestCase(tc.step)
+		if err != nil {
+			return
 		}
 	} else {
 		// run request
 		tStep := parseStep(step, config)
-		if err := r.runStepRequest(tStep); err != nil {
-			return err
+		stepData, err = r.runStepRequest(tStep)
+		if err != nil {
+			return
 		}
 	}
 	log.Printf("run step end: %v <<<<<<\n", step.Name())
-	return nil
+	return
 }
 
-func (r *Runner) runStepRequest(step *TStep) error {
+func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
+	stepData = &StepData{
+		Name:    step.Name,
+		Success: false,
+	}
+
 	// prepare request args
 	var v []interface{}
 	if len(step.Request.Headers) > 0 {
@@ -111,23 +128,36 @@ func (r *Runner) runStepRequest(step *TStep) error {
 	req.Debug = r.debug
 	resp, err := r.Client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
-		return err
+		return
 	}
 	defer resp.Response().Body.Close()
 
-	// validate response
+	// new response object
 	respObj := NewResponseObject(r.t, resp)
+
+	// extract variables from response
+	extractors := step.Extract
+	extractMapping := respObj.Extract(extractors)
+	stepData.ExportVars = extractMapping
+
+	// validate response
 	err = respObj.Validate(step.Validators, step.Variables)
 	if err != nil {
-		return err
+		return
 	}
 
-	return nil
+	stepData.Success = true
+	return
 }
 
-func (r *Runner) runStepTestCase(step *TStep) error {
+func (r *Runner) runStepTestCase(step *TStep) (stepData *StepData, err error) {
+	stepData = &StepData{
+		Name:    step.Name,
+		Success: false,
+	}
 	testcase := step.TestCase
-	return r.runCase(testcase)
+	err = r.runCase(testcase)
+	return
 }
 
 func (r *Runner) GetSummary() *TestCaseSummary {

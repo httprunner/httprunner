@@ -43,7 +43,7 @@ func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			config := &testcase.Config
 			for _, step := range testcase.TestSteps {
 				start := time.Now()
-				err := runner.runStep(step, config)
+				_, err := runner.runStep(step, config)
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 
 				if err == nil {
