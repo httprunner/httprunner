@@ -1,4 +1,4 @@
-package postman_echo
+package examples
 
 import (
 	"testing"
