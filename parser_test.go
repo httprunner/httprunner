@@ -134,7 +134,7 @@ func TestParseDataMapWithVariables(t *testing.T) {
 	variablesMapping := map[string]interface{}{
 		"var1": "foo1",
 		"val1": 200,
-		"var2": 123,
+		"var2": 123, // key is int
 	}
 
 	testData := []struct {
@@ -143,8 +143,10 @@ func TestParseDataMapWithVariables(t *testing.T) {
 	}{
 		{map[string]interface{}{"key": "$var1"}, map[string]interface{}{"key": "foo1"}},
 		{map[string]interface{}{"foo1": "$val1", "foo2": "bar2"}, map[string]interface{}{"foo1": 200, "foo2": "bar2"}},
-		// {map[string]interface{}{"$var1": "$val1"}, map[string]interface{}{"foo1": 200}},
-		// {map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{123: 200}},
+		// parse map key
+		{map[string]interface{}{"$var1": "$val1"}, map[string]interface{}{"foo1": 200}},
+		// map key is int
+		{map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{"123": 200}},
 	}
 
 	for _, data := range testData {
