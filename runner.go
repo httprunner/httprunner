@@ -48,9 +48,16 @@ func (r *Runner) Run(testcases ...*TestCase) error {
 func (r *Runner) runCase(testcase *TestCase) error {
 	config := &testcase.Config
 	log.Printf("Start to run testcase: %v", config.Name)
+
 	for _, step := range testcase.TestSteps {
+		// override variables
+		// step variables > extracted variables from previous steps
+		// step variables > testcase config variables
+		step.ToStruct().Variables = mergeVariables(step.ToStruct().Variables, config.Variables)
+
 		r.runStep(step, config)
 	}
+
 	return nil
 }
 

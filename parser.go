@@ -139,3 +139,28 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 
 	return parsedString
 }
+
+// merge two variables mapping, the first variables have higher priority
+func mergeVariables(variables, overriddenVariables map[string]interface{}) map[string]interface{} {
+	if overriddenVariables == nil {
+		return variables
+	}
+	if variables == nil {
+		return overriddenVariables
+	}
+
+	mergedVariables := make(map[string]interface{})
+	for k, v := range overriddenVariables {
+		mergedVariables[k] = v
+	}
+	for k, v := range variables {
+		if fmt.Sprintf("${%s}", k) == v || fmt.Sprintf("$%s", k) == v {
+			// e.g. {"base_url": "$base_url"}
+			// or {"base_url": "${base_url}"}
+			continue
+		}
+
+		mergedVariables[k] = v
+	}
+	return mergedVariables
+}
