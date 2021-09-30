@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -31,15 +32,31 @@ func buildURL(baseURL, stepURL string) string {
 	return uStep.String()
 }
 
+func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) map[string]string {
+	parsedHeaders := make(map[string]string)
+	for k, v := range rawHeaders {
+		parsedValue := parseString(v, variablesMapping)
+		if value, ok := parsedValue.(string); ok {
+			parsedHeaders[k] = value
+		} else {
+			parsedHeaders[k] = fmt.Sprintf("%v", parsedValue)
+		}
+	}
+	return parsedHeaders
+}
+
 func parseData(raw interface{}, variablesMapping map[string]interface{}) interface{} {
-	switch value := raw.(type) {
-	case string:
+	rawValue := reflect.ValueOf(raw)
+	switch rawValue.Kind() {
+	case reflect.String:
+		value := rawValue.String()
 		value = strings.TrimSpace(value)
 		return parseString(value, variablesMapping)
-	case map[string]interface{}:
+	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
-		for k, v := range value {
-			parsedMap[k] = parseData(v, variablesMapping)
+		for _, k := range rawValue.MapKeys() {
+			v := rawValue.MapIndex(k)
+			parsedMap[k.String()] = parseData(v.Interface(), variablesMapping)
 		}
 		return parsedMap
 	default:
