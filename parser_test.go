@@ -143,14 +143,43 @@ func TestParseDataMapWithVariables(t *testing.T) {
 	}{
 		{map[string]interface{}{"key": "$var1"}, map[string]interface{}{"key": "foo1"}},
 		{map[string]interface{}{"foo1": "$val1", "foo2": "bar2"}, map[string]interface{}{"foo1": 200, "foo2": "bar2"}},
-		// parse map key
+		// parse map key, key is string
 		{map[string]interface{}{"$var1": "$val1"}, map[string]interface{}{"foo1": 200}},
-		// map key is int
+		// parse map key, key is int
 		{map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{"123": 200}},
 	}
 
 	for _, data := range testData {
 		if !assert.Equal(t, data.expect, parseData(data.expr, variablesMapping)) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseHeaders(t *testing.T) {
+	variablesMapping := map[string]interface{}{
+		"var1": "foo1",
+		"val1": 200,
+		"var2": 123, // key is int
+		"val2": nil, // value is nil
+	}
+
+	testData := []struct {
+		rawHeaders    map[string]string
+		expectHeaders map[string]string
+	}{
+		{map[string]string{"key": "$var1"}, map[string]string{"key": "foo1"}},
+		{map[string]string{"foo1": "$val1", "foo2": "bar2"}, map[string]string{"foo1": "200", "foo2": "bar2"}},
+		// parse map key, key is string
+		{map[string]string{"$var1": "$val1"}, map[string]string{"foo1": "200"}},
+		// parse map key, key is int
+		{map[string]string{"$var2": "$val1"}, map[string]string{"123": "200"}},
+		// parse map key & value, key is int, value is nil
+		{map[string]string{"$var2": "$val2"}, map[string]string{"123": "<nil>"}},
+	}
+
+	for _, data := range testData {
+		if !assert.Equal(t, data.expectHeaders, parseHeaders(data.rawHeaders, variablesMapping)) {
 			t.Fail()
 		}
 	}

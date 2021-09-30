@@ -34,14 +34,12 @@ func buildURL(baseURL, stepURL string) string {
 
 func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) map[string]string {
 	parsedHeaders := make(map[string]string)
-	for k, v := range rawHeaders {
-		parsedValue := parseString(v, variablesMapping)
-		if value, ok := parsedValue.(string); ok {
+	headers := parseData(rawHeaders, variablesMapping).(map[string]interface{})
+	for k, v := range headers {
+		if value, ok := v.(string); ok {
 			parsedHeaders[k] = value
 		} else {
-			// parsed value is not string, e.g. int, float, etc.
-			// convert to string
-			parsedHeaders[k] = fmt.Sprintf("%v", parsedValue)
+			parsedHeaders[k] = fmt.Sprintf("%v", v)
 		}
 	}
 	return parsedHeaders
