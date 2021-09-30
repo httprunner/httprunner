@@ -80,6 +80,20 @@ type ResponseObject struct {
 	validationResults map[string]interface{}
 }
 
+func (v *ResponseObject) Extract(extractors map[string]string) map[string]interface{} {
+	if extractors == nil {
+		return nil
+	}
+
+	extractMapping := make(map[string]interface{})
+	for key, value := range extractors {
+		extractMapping[key] = v.searchJmespath(value)
+	}
+
+	log.Printf("[Extract] extractMapping: %v", extractMapping)
+	return extractMapping
+}
+
 func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[string]interface{}) error {
 	for _, validator := range validators {
 		// parse check value

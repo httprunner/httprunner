@@ -67,3 +67,9 @@ type TestCase struct {
 }
 
 type TestCaseSummary struct{}
+
+type StepData struct {
+	Name       string                 // step name
+	Success    bool                   // step execution result
+	ExportVars map[string]interface{} // extract variables
+}
