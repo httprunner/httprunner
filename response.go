@@ -89,7 +89,8 @@ func (v *ResponseObject) Extract(extractors map[string]string) map[string]interf
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
 		extractedValue := v.searchJmespath(value)
-		log.Printf("extract %s => %v", value, extractedValue)
+		log.Printf("[extract] %s => %v", value, extractedValue)
+		log.Printf("[setVariable] %s = %v", key, extractedValue)
 		extractMapping[key] = extractedValue
 	}
 
@@ -117,7 +118,7 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)
-		log.Printf("assert %s %s %v => %v", checkItem, assertMethod, expectValue, result)
+		log.Printf("[assert] %s <%s> %v => %v", checkItem, assertMethod, expectValue, result)
 		if !result {
 			v.t.Fail()
 		}
