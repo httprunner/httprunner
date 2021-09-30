@@ -3,6 +3,7 @@ package httpboomer
 import (
 	"encoding/json"
 	"log"
+	"strings"
 	"testing"
 
 	"github.com/imroc/req"
@@ -99,12 +100,21 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 	for _, validator := range validators {
 		// parse check value
 		checkItem := validator.Check
-		checkValue := v.searchJmespath(checkItem)
+		var checkValue interface{}
+		if strings.Contains(checkItem, "$") {
+			// reference variable
+			checkValue = parseData(checkItem, variablesMapping)
+		} else {
+			checkValue = v.searchJmespath(checkItem)
+		}
+
 		// get assert method
 		assertMethod := validator.Assert
 		assertFunc := assertFunctionsMap[assertMethod]
+
 		// parse expected value
 		expectValue := parseData(validator.Expect, variablesMapping)
+
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)
 		log.Printf("assert %s %s %v => %v", checkItem, assertMethod, expectValue, result)
@@ -119,7 +129,7 @@ func (v *ResponseObject) searchJmespath(expr string) interface{} {
 	checkValue, err := jmespath.Search(expr, v.respObjMeta)
 	if err != nil {
 		log.Printf("[searchJmespath] jmespath.Search error: %v", err)
-		return nil
+		return expr // jmespath not found, return the expression
 	}
 	return checkValue
 }
