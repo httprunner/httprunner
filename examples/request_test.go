@@ -1,4 +1,4 @@
-package postman_echo
+package examples
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/httprunner/httpboomer"
 )
 
-func TestCaseHardcode(t *testing.T) {
+func TestCaseBasicRequest(t *testing.T) {
 	testcase := &httpboomer.TestCase{
 		Config: httpboomer.TConfig{
 			Name:    "request methods testcase in hardcode",
