@@ -75,11 +75,13 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 }
 
 const (
-	regexVariable = `[a-zA-Z_]\w*` // variable name should start with a letter or underscore
+	regexVariable     = `[a-zA-Z_]\w*` // variable name should start with a letter or underscore
+	regexFunctionName = `[a-zA-Z_]\w*` // function name should start with a letter or underscore
 )
 
 var (
-	regexCompileVariable = regexp.MustCompile(fmt.Sprintf(`\$\{(%s)\}|\$(%s)`, regexVariable, regexVariable)) // parse ${var} or $var
+	regexCompileVariable = regexp.MustCompile(fmt.Sprintf(`\$\{(%s)\}|\$(%s)`, regexVariable, regexVariable))     // parse ${var} or $var
+	regexCompileFunction = regexp.MustCompile(fmt.Sprintf(`\$\{(%s)\(([\$\w\.\-/\s=,]*)\)\}`, regexFunctionName)) // parse ${func1($a, $b)}
 )
 
 // parseString parse string with variables
