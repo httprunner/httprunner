@@ -64,6 +64,47 @@ func TestRegexCompileAbnormalVariable(t *testing.T) {
 		}
 	}
 }
+
+func TestRegexCompileFunction(t *testing.T) {
+	testData := []string{
+		"${func1()}",
+		"${func1($a)}",
+		"${func1($a, $b)}",
+		"${func1($a, 123)}",
+		"${func1(123, $b)}",
+		"abc${func1(123, $b)}123",
+	}
+
+	for _, expr := range testData {
+		varMatched := regexCompileFunction.FindStringSubmatch(expr)
+		if !assert.Len(t, varMatched, 3) {
+			t.Fail()
+		}
+	}
+}
+
+func TestRegexCompileAbnormalFunction(t *testing.T) {
+	testData := []string{
+		"${func1()",
+		"${func1(}",
+		"${func1)}",
+		"$func1()}",
+		"${1func1()}", // function name can not start with number
+		"${func1($a}",
+		"abc$func1(123, $b)}123",
+		// "${func1($a $b)}",
+		// "${func1($a, $123)}",
+		// "${func1(123 $b)}",
+	}
+
+	for _, expr := range testData {
+		varMatched := regexCompileFunction.FindStringSubmatch(expr)
+		if !assert.Len(t, varMatched, 0) {
+			t.Fail()
+		}
+	}
+}
+
 func TestParseDataStringWithVariables(t *testing.T) {
 	variablesMapping := map[string]interface{}{
 		"var_1": "abc",
