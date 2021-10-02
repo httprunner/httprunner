@@ -30,6 +30,40 @@ func TestBuildURL(t *testing.T) {
 	}
 }
 
+func TestRegexCompileVariable(t *testing.T) {
+	testData := []string{
+		"$var1",
+		"${var1}",
+		"$v",
+		"var_1$_v",
+		"${var_1}#XYZ",
+		"func1($var_1, $var_3)",
+	}
+
+	for _, expr := range testData {
+		varMatched := regexCompileVariable.FindStringSubmatch(expr)
+		if !assert.Len(t, varMatched, 3) {
+			t.Fail()
+		}
+	}
+}
+
+func TestRegexCompileAbnormalVariable(t *testing.T) {
+	testData := []string{
+		"var1",
+		"${var1",
+		"$123",
+		"var_1$",
+		"func1($123, var_3)",
+	}
+
+	for _, expr := range testData {
+		varMatched := regexCompileVariable.FindStringSubmatch(expr)
+		if !assert.Len(t, varMatched, 0) {
+			t.Fail()
+		}
+	}
+}
 func TestParseDataStringWithVariables(t *testing.T) {
 	variablesMapping := map[string]interface{}{
 		"var_1": "abc",
