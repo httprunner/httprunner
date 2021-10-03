@@ -16,6 +16,10 @@ var Functions = map[string]interface{}{
 	"md5":               MD5,
 }
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 func getTimestamp() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
 }
@@ -24,10 +28,10 @@ func sleep(nSecs int) {
 	time.Sleep(time.Duration(nSecs) * time.Second)
 }
 
-func genRandomString(n int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-	const lettersLen = len(letters)
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
+func genRandomString(n int) string {
+	lettersLen := len(letters)
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = letters[rand.Intn(lettersLen)]
