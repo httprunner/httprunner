@@ -55,6 +55,12 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 		value := rawValue.String()
 		value = strings.TrimSpace(value)
 		return parseString(value, variablesMapping)
+	case reflect.Slice:
+		parsedSlice := make([]interface{}, rawValue.Len())
+		for i := 0; i < rawValue.Len(); i++ {
+			parsedSlice[i] = parseData(rawValue.Index(i).Interface(), variablesMapping)
+		}
+		return parsedSlice
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
@@ -109,11 +115,43 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 		parsedString += remainedString[0:startPosition]
 		remainedString = remainedString[startPosition:]
 
+		// Notice: notation priority
+		// $$ > ${func($a, $b)} > $var
+
 		// search $$, use $$ to escape $ notation
 		if strings.HasPrefix(remainedString, "$$") { // found $$
 			matchStartPosition += 2
 			parsedString += "$"
 			remainedString = remainedString[2:]
+			continue
+		}
+
+		// search function like ${func($a, $b)}
+		funcMatched := regexCompileFunction.FindStringSubmatch(remainedString)
+		if len(funcMatched) == 3 {
+			funcName := funcMatched[1]
+			argsStr := funcMatched[2]
+			arguments, err := parseFunctionArguments(argsStr)
+			if err != nil {
+				return raw
+			}
+			parsedArgs := parseData(arguments, variablesMapping).([]interface{})
+
+			result, err := callFunc(funcName, parsedArgs...)
+			if err != nil {
+				return raw
+			}
+
+			if funcMatched[0] == raw {
+				// raw_string is a function, e.g. "${add_one(3)}", return its eval value directly
+				return result
+			}
+
+			// raw_string contains one or many functions, e.g. "abc${add_one(3)}def"
+			matchStartPosition += len(funcMatched[0])
+			parsedString += fmt.Sprintf("%v", result)
+			remainedString = raw[matchStartPosition:]
+			log.Printf("[parseString] parsedString: %v, matchStartPosition: %v", parsedString, matchStartPosition)
 			continue
 		}
 

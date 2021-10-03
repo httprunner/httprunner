@@ -166,6 +166,7 @@ func TestParseDataStringWithVariables(t *testing.T) {
 		}
 	}
 }
+
 func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 	variablesMapping := map[string]interface{}{
 		"var_1": "abc",
@@ -372,5 +373,37 @@ func TestParseFunctionArguments(t *testing.T) {
 		if !assert.Equal(t, data.expect, value) {
 			t.Fail()
 		}
+	}
+}
+
+func TestParseDataStringWithFunctions(t *testing.T) {
+	variablesMapping := map[string]interface{}{
+		"n": 5,
+		"a": 12.3,
+		"b": 3.45,
+	}
+
+	if !assert.Len(t, parseData("${gen_random_string(5)}", variablesMapping), 5) {
+		t.Fail()
+	}
+	if !assert.Len(t, parseData("${gen_random_string($n)}", variablesMapping), 5) {
+		t.Fail()
+	}
+
+	if !assert.Len(t, parseData("123${gen_random_string(5)}abc", variablesMapping), 11) {
+		t.Fail()
+	}
+	if !assert.Len(t, parseData("123${gen_random_string($n)}abc", variablesMapping), 11) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, parseData("${max($a, $b)}", variablesMapping), 12.3) {
+		t.Fail()
+	}
+	if !assert.Equal(t, parseData("abc${max($a, $b)}123", variablesMapping), "abc12.3123") {
+		t.Fail()
+	}
+	if !assert.Equal(t, parseData("abc${max($a, 3.45)}123", variablesMapping), "abc12.3123") {
+		t.Fail()
 	}
 }
