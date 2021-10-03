@@ -326,12 +326,46 @@ func TestLiteralEval(t *testing.T) {
 		{"-123", -123},
 		{"-1.23", -1.23},
 		{"abc", "abc"},
+		{" a bc ", "a bc"},
+		{" a $bc ", "a $bc"},
 		{"$var", "$var"},
+		{" $var ", "$var"},
+		{" $var1 ", "$var1"},
 		{"", ""},
 	}
 
 	for _, data := range testData {
 		value, err := literalEval(data.expr)
+		if !assert.Nil(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseFunctionArguments(t *testing.T) {
+	testData := []struct {
+		expr   string
+		expect interface{}
+	}{
+		{"", []interface{}{}},
+		{"123", []interface{}{123}},
+		{"1.23", []interface{}{1.23}},
+		{"-123", []interface{}{-123}},
+		{"-1.23", []interface{}{-1.23}},
+		{"abc", []interface{}{"abc"}},
+		{"$var", []interface{}{"$var"}},
+		{"1,2", []interface{}{1, 2}},
+		{"1,2.3", []interface{}{1, 2.3}},
+		{"1, -2.3", []interface{}{1, -2.3}},
+		{"1,,2", []interface{}{1, nil, 2}},
+		{" $var1 , 2 ", []interface{}{"$var1", 2}},
+	}
+
+	for _, data := range testData {
+		value, err := parseFunctionArguments(data.expr)
 		if !assert.Nil(t, err) {
 			t.Fail()
 		}
