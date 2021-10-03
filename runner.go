@@ -47,6 +47,10 @@ func (r *Runner) Run(testcases ...*TestCase) error {
 
 func (r *Runner) runCase(testcase *TestCase) error {
 	config := &testcase.Config
+	if err := r.parseConfig(config); err != nil {
+		return err
+	}
+
 	log.Printf("Start to run testcase: %v", config.Name)
 
 	extractedVariables := make(map[string]interface{})
@@ -162,6 +166,26 @@ func (r *Runner) runStepTestCase(step *TStep) (stepData *StepData, err error) {
 	testcase := step.TestCase
 	err = r.runCase(testcase)
 	return
+}
+
+func (r *Runner) parseConfig(config *TConfig) error {
+	// parse config variables
+	parsedVariables, err := parseVariables(config.Variables)
+	if err != nil {
+		log.Printf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
+		return err
+	}
+	config.Variables = parsedVariables
+
+	// parse config name
+	parsedName := parseString(config.Name, config.Variables)
+	config.Name = convertString(parsedName)
+
+	// parse config base url
+	parsedBaseURL := parseString(config.BaseURL, config.Variables)
+	config.BaseURL = convertString(parsedBaseURL)
+
+	return nil
 }
 
 func (r *Runner) GetSummary() *TestCaseSummary {
