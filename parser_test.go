@@ -2,6 +2,7 @@ package httpboomer
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -275,6 +276,19 @@ func TestMergeVariables(t *testing.T) {
 		"foo1":     "bar1",
 	}
 	if !assert.Equal(t, expectVariables, mergedVariables) {
+		t.Fail()
+	}
+}
+
+func TestCallFunction(t *testing.T) {
+	funcName := "sleep"
+	params := []interface{}{1}
+	timeStart := time.Now()
+	_, err := callFunction(funcName, params)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Greater(t, time.Since(timeStart), time.Duration(1)*time.Second) {
 		t.Fail()
 	}
 }
