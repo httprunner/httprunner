@@ -9,7 +9,7 @@ import (
 func TestCaseValidateStep(t *testing.T) {
 	testcase := &httpboomer.TestCase{
 		Config: httpboomer.TConfig{
-			Name:    "run request with variables",
+			Name:    "run request with validation",
 			BaseURL: "https://postman-echo.com",
 			Verify:  false,
 		},

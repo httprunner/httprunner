@@ -1,6 +1,8 @@
 package builtin
 
-import "github.com/stretchr/testify/assert"
+import (
+	"github.com/stretchr/testify/assert"
+)
 
 var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual interface{}, msgAndArgs ...interface{}) bool{
 	"equals":            assert.EqualValues,
@@ -12,4 +14,11 @@ var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual
 	"not_equal":         assert.NotEqual,
 	"contains":          assert.Contains,
 	"regex_match":       assert.Regexp,
+	// custom assertions
+	"length_equals": EqualLength,
+	"length_equal":  EqualLength, // alias for length_equals
+}
+
+func EqualLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	return assert.Len(t, actual, expected.(int), msgAndArgs...)
 }
