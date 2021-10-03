@@ -2,7 +2,7 @@ package builtin
 
 import "time"
 
-var FunctionsMap = map[string]interface{}{
+var Functions = map[string]interface{}{
 	"sleep": Sleep,
 }
 

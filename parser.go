@@ -170,7 +170,7 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 }
 
 func callFunction(funcName string, params []interface{}) (interface{}, error) {
-	function, ok := builtin.FunctionsMap[funcName]
+	function, ok := builtin.Functions[funcName]
 	if !ok {
 		// function not found
 		return nil, fmt.Errorf("function %s is not found", funcName)
