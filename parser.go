@@ -169,7 +169,9 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
-func callFunction(funcName string, params []interface{}) (interface{}, error) {
+// callFunction call function with arguments
+// only support return at most one result value
+func callFunction(funcName string, arguments []interface{}) (interface{}, error) {
 	function, ok := builtin.Functions[funcName]
 	if !ok {
 		// function not found
@@ -182,13 +184,25 @@ func callFunction(funcName string, params []interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("function %s is invalid", funcName)
 	}
 
-	paramsValue := make([]reflect.Value, len(params))
-	for index, param := range params {
-		paramsValue[index] = reflect.ValueOf(param)
+	argumentsValue := make([]reflect.Value, len(arguments))
+	for index, argument := range arguments {
+		argumentsValue[index] = reflect.ValueOf(argument)
 	}
 
-	log.Printf("[callFunction] function: %v, params: %v", funcName, params)
-	result := funcValue.Call(paramsValue)
-	log.Printf("[callFunction] result: %v", result)
+	log.Printf("[callFunction] func: %v, input arguments: %v", funcName, arguments)
+	resultValues := funcValue.Call(argumentsValue)
+	log.Printf("[callFunction] output results: %v", resultValues)
+
+	if len(resultValues) == 0 {
+		return nil, nil
+	} else if len(resultValues) > 1 {
+		// function should return at most one value
+		err := fmt.Errorf("function %s should return at most one value", funcName)
+		log.Printf("[callFunction] error: %s", err.Error())
+		return nil, err
+	}
+
+	// convert reflect.Value to interface{}
+	result := resultValues[0].Interface()
 	return result, nil
 }

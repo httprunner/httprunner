@@ -281,6 +281,7 @@ func TestMergeVariables(t *testing.T) {
 }
 
 func TestCallFunction(t *testing.T) {
+	// call function without arguments
 	funcName := "sleep"
 	params := []interface{}{1}
 	timeStart := time.Now()
@@ -289,6 +290,17 @@ func TestCallFunction(t *testing.T) {
 		t.Fail()
 	}
 	if !assert.Greater(t, time.Since(timeStart), time.Duration(1)*time.Second) {
+		t.Fail()
+	}
+
+	// call function with one argument
+	funcName = "gen_random_string"
+	params = []interface{}{10}
+	result, err := callFunction(funcName, params)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, 10, len(result.(string))) {
 		t.Fail()
 	}
 }
