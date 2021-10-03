@@ -171,7 +171,7 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 
 // callFunc call function with arguments
 // only support return at most one result value
-func callFunc(funcName string, arguments []interface{}) (interface{}, error) {
+func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	function, ok := builtin.Functions[funcName]
 	if !ok {
 		// function not found
