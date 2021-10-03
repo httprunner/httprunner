@@ -407,3 +407,24 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestConvertString(t *testing.T) {
+	testData := []struct {
+		raw    interface{}
+		expect interface{}
+	}{
+		{"", ""},
+		{"abc", "abc"},
+		{"123", "123"},
+		{123, "123"},
+		{1.23, "1.23"},
+		{nil, "<nil>"},
+	}
+
+	for _, data := range testData {
+		value := convertString(data.raw)
+		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
+	}
+}
