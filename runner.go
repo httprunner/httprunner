@@ -114,7 +114,8 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		v = append(v, data)
 	}
 	if step.Request.JSON != nil {
-		v = append(v, req.BodyJSON(step.Request.JSON))
+		jsonData := parseData(step.Request.JSON, step.Variables)
+		v = append(v, req.BodyJSON(jsonData))
 	}
 
 	for cookieName, cookieValue := range step.Request.Cookies {
