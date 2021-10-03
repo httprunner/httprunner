@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/httprunner/httpboomer/builtin"
 )
 
 func parseStep(step IStep, config *TConfig) *TStep {
@@ -165,4 +167,28 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 		mergedVariables[k] = v
 	}
 	return mergedVariables
+}
+
+func callFunction(funcName string, params []interface{}) (interface{}, error) {
+	function, ok := builtin.FunctionsMap[funcName]
+	if !ok {
+		// function not found
+		return nil, fmt.Errorf("function %s is not found", funcName)
+	}
+
+	funcValue := reflect.ValueOf(function)
+	if funcValue.Kind() != reflect.Func {
+		// function not valid
+		return nil, fmt.Errorf("function %s is invalid", funcName)
+	}
+
+	paramsValue := make([]reflect.Value, len(params))
+	for index, param := range params {
+		paramsValue[index] = reflect.ValueOf(param)
+	}
+
+	log.Printf("[callFunction] function: %v, params: %v", funcName, params)
+	result := funcValue.Call(paramsValue)
+	log.Printf("[callFunction] result: %v", result)
+	return result, nil
 }
