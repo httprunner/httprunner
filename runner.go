@@ -58,9 +58,17 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	for _, step := range testcase.TestSteps {
 		// override variables
 		// step variables > extracted variables from previous steps
-		step.ToStruct().Variables = mergeVariables(step.ToStruct().Variables, extractedVariables)
+		stepVariables := mergeVariables(step.ToStruct().Variables, extractedVariables)
 		// step variables > testcase config variables
-		step.ToStruct().Variables = mergeVariables(step.ToStruct().Variables, config.Variables)
+		stepVariables = mergeVariables(stepVariables, config.Variables)
+
+		// parse step variables
+		parsedVariables, err := parseVariables(stepVariables)
+		if err != nil {
+			log.Printf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
+			return err
+		}
+		step.ToStruct().Variables = parsedVariables
 
 		stepData, err := r.runStep(step, config)
 		if err != nil {
