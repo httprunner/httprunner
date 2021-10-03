@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/httprunner/httpboomer/builtin"
+	"github.com/maja42/goval"
 )
 
 func parseStep(step IStep, config *TConfig) *TStep {
@@ -77,13 +78,15 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 }
 
 const (
-	regexVariable     = `[a-zA-Z_]\w*` // variable name should start with a letter or underscore
-	regexFunctionName = `[a-zA-Z_]\w*` // function name should start with a letter or underscore
+	regexVariable     = `[a-zA-Z_]\w*`  // variable name should start with a letter or underscore
+	regexFunctionName = `[a-zA-Z_]\w*`  // function name should start with a letter or underscore
+	regexNumber       = `-?\d+(\.\d+)?` // match number, e.g. 123, -123, 1.23, -1.23
 )
 
 var (
 	regexCompileVariable = regexp.MustCompile(fmt.Sprintf(`\$\{(%s)\}|\$(%s)`, regexVariable, regexVariable))     // parse ${var} or $var
 	regexCompileFunction = regexp.MustCompile(fmt.Sprintf(`\$\{(%s)\(([\$\w\.\-/\s=,]*)\)\}`, regexFunctionName)) // parse ${func1($a, $b)}
+	regexCompileNumber   = regexp.MustCompile(regexNumber)                                                        // parse number
 )
 
 // parseString parse string with variables
@@ -224,5 +227,26 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// convert reflect.Value to interface{}
 	result := resultValues[0].Interface()
 	log.Printf("[callFunction] output result: %+v(%T)", result, result)
+	return result, nil
+}
+
+var eval = goval.NewEvaluator()
+
+// literalEval parse string to number if possible
+// e.g. "123" => 123
+//      "1.23" => 1.23
+//      "abc" => "abc"
+//      "$var" => "$var"
+func literalEval(raw string) (interface{}, error) {
+	// check if raw is a number
+	if !regexCompileNumber.Match([]byte(raw)) {
+		return raw, nil
+	}
+
+	// eval string to number
+	result, err := eval.Evaluate(raw, nil, nil)
+	if err != nil {
+		return raw, err
+	}
 	return result, nil
 }

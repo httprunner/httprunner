@@ -315,3 +315,28 @@ func TestCallFunction(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestLiteralEval(t *testing.T) {
+	testData := []struct {
+		expr   string
+		expect interface{}
+	}{
+		{"123", 123},
+		{"1.23", 1.23},
+		{"-123", -123},
+		{"-1.23", -1.23},
+		{"abc", "abc"},
+		{"$var", "$var"},
+		{"", ""},
+	}
+
+	for _, data := range testData {
+		value, err := literalEval(data.expr)
+		if !assert.Nil(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
+	}
+}
