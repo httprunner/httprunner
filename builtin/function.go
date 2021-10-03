@@ -1,13 +1,15 @@
 package builtin
 
 import (
+	"math"
 	"math/rand"
 	"time"
 )
 
 var Functions = map[string]interface{}{
-	"sleep":             sleep,
-	"gen_random_string": genRandomString,
+	"sleep":             sleep,           // call with one argument
+	"gen_random_string": genRandomString, // call with one argument
+	"max":               math.Max,        // call with two arguments
 }
 
 func sleep(nSecs int) {
