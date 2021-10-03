@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/imroc/req v0.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/maja42/goval v1.2.1 // indirect
 	github.com/myzhan/boomer v1.6.0
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/shirou/gopsutil v3.21.8+incompatible // indirect
