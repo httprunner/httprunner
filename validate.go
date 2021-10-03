@@ -9,6 +9,18 @@ type stepRequestValidation struct {
 	step *TStep
 }
 
+func (s *stepRequestValidation) Name() string {
+	return s.step.Name
+}
+
+func (s *stepRequestValidation) Type() string {
+	return fmt.Sprintf("request-%v", s.step.Request.Method)
+}
+
+func (s *stepRequestValidation) ToStruct() *TStep {
+	return s.step
+}
+
 func (s *stepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
 	validator := TValidator{
 		Check:   jmesPath,
@@ -20,14 +32,13 @@ func (s *stepRequestValidation) AssertEqual(jmesPath string, expected interface{
 	return s
 }
 
-func (s *stepRequestValidation) Name() string {
-	return s.step.Name
-}
-
-func (s *stepRequestValidation) Type() string {
-	return fmt.Sprintf("request-%v", s.step.Request.Method)
-}
-
-func (s *stepRequestValidation) ToStruct() *TStep {
-	return s.step
+func (s *stepRequestValidation) AssertLengthEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
+	validator := TValidator{
+		Check:   jmesPath,
+		Assert:  "length_equals",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, validator)
+	return s
 }
