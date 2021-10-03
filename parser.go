@@ -78,9 +78,9 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 }
 
 const (
-	regexVariable     = `[a-zA-Z_]\w*`  // variable name should start with a letter or underscore
-	regexFunctionName = `[a-zA-Z_]\w*`  // function name should start with a letter or underscore
-	regexNumber       = `-?\d+(\.\d+)?` // match number, e.g. 123, -123, 1.23, -1.23
+	regexVariable     = `[a-zA-Z_]\w*`    // variable name should start with a letter or underscore
+	regexFunctionName = `[a-zA-Z_]\w*`    // function name should start with a letter or underscore
+	regexNumber       = `^-?\d+(\.\d+)?$` // match number, e.g. 123, -123, 1.23, -1.23
 )
 
 var (
@@ -233,12 +233,10 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 var eval = goval.NewEvaluator()
 
 // literalEval parse string to number if possible
-// e.g. "123" => 123
-//      "1.23" => 1.23
-//      "abc" => "abc"
-//      "$var" => "$var"
 func literalEval(raw string) (interface{}, error) {
-	// check if raw is a number
+	raw = strings.TrimSpace(raw)
+
+	// return raw string if not number
 	if !regexCompileNumber.Match([]byte(raw)) {
 		return raw, nil
 	}
@@ -246,7 +244,34 @@ func literalEval(raw string) (interface{}, error) {
 	// eval string to number
 	result, err := eval.Evaluate(raw, nil, nil)
 	if err != nil {
+		log.Printf("[literalEval] eval %s error: %s", raw, err.Error())
 		return raw, err
 	}
 	return result, nil
+}
+
+func parseFunctionArguments(argsStr string) ([]interface{}, error) {
+	argsStr = strings.TrimSpace(argsStr)
+	if argsStr == "" {
+		return []interface{}{}, nil
+	}
+
+	// split arguments by comma
+	args := strings.Split(argsStr, ",")
+	arguments := make([]interface{}, len(args))
+	for index, arg := range args {
+		arg = strings.TrimSpace(arg)
+		if arg == "" {
+			continue
+		}
+
+		// parse argument to number if possible
+		arg, err := literalEval(arg)
+		if err != nil {
+			return nil, err
+		}
+		arguments[index] = arg
+	}
+
+	return arguments, nil
 }
