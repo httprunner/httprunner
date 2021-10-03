@@ -282,10 +282,14 @@ func TestMergeVariables(t *testing.T) {
 
 func TestCallFunction(t *testing.T) {
 	// call function without arguments
-	funcName := "sleep"
-	arguments := []interface{}{1}
+	_, err := callFunc("get_timestamp")
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+
+	// call function with one argument
 	timeStart := time.Now()
-	_, err := callFunc(funcName, arguments)
+	_, err = callFunc("sleep", 1)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
@@ -294,9 +298,7 @@ func TestCallFunction(t *testing.T) {
 	}
 
 	// call function with one argument
-	funcName = "gen_random_string"
-	arguments = []interface{}{10}
-	result, err := callFunc(funcName, arguments)
+	result, err := callFunc("gen_random_string", 10)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
@@ -305,9 +307,7 @@ func TestCallFunction(t *testing.T) {
 	}
 
 	// call function with two argument
-	funcName = "max"
-	arguments = []interface{}{float64(10), 9.99}
-	result, err = callFunc(funcName, arguments)
+	result, err = callFunc("max", float64(10), 9.99)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
