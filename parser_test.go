@@ -283,9 +283,9 @@ func TestMergeVariables(t *testing.T) {
 func TestCallFunction(t *testing.T) {
 	// call function without arguments
 	funcName := "sleep"
-	params := []interface{}{1}
+	arguments := []interface{}{1}
 	timeStart := time.Now()
-	_, err := callFunction(funcName, params)
+	_, err := callFunc(funcName, arguments)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
@@ -295,12 +295,23 @@ func TestCallFunction(t *testing.T) {
 
 	// call function with one argument
 	funcName = "gen_random_string"
-	params = []interface{}{10}
-	result, err := callFunction(funcName, params)
+	arguments = []interface{}{10}
+	result, err := callFunc(funcName, arguments)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 	if !assert.Equal(t, 10, len(result.(string))) {
+		t.Fail()
+	}
+
+	// call function with two argument
+	funcName = "max"
+	arguments = []interface{}{float64(10), 9.99}
+	result, err = callFunc(funcName, arguments)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, float64(10), result.(float64)) {
 		t.Fail()
 	}
 }

@@ -169,9 +169,9 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
-// callFunction call function with arguments
+// callFunc call function with arguments
 // only support return at most one result value
-func callFunction(funcName string, arguments []interface{}) (interface{}, error) {
+func callFunc(funcName string, arguments []interface{}) (interface{}, error) {
 	function, ok := builtin.Functions[funcName]
 	if !ok {
 		// function not found
@@ -184,25 +184,45 @@ func callFunction(funcName string, arguments []interface{}) (interface{}, error)
 		return nil, fmt.Errorf("function %s is invalid", funcName)
 	}
 
+	if funcValue.Type().NumIn() != len(arguments) {
+		// function arguments not match
+		return nil, fmt.Errorf("function %s arguments number not match", funcName)
+	}
+
 	argumentsValue := make([]reflect.Value, len(arguments))
 	for index, argument := range arguments {
+		// ensure each argument type match
+		expectArgumentType := funcValue.Type().In(index)
+		actualArgumentType := reflect.TypeOf(argument)
+		if expectArgumentType != actualArgumentType {
+			// function argument type not match
+			err := fmt.Errorf("function %s argument %d type not match, expect %v, actual %v",
+				funcName, index, expectArgumentType, actualArgumentType)
+			log.Printf("[callFunction] error: %s", err.Error())
+			return nil, err
+		}
 		argumentsValue[index] = reflect.ValueOf(argument)
 	}
 
 	log.Printf("[callFunction] func: %v, input arguments: %v", funcName, arguments)
 	resultValues := funcValue.Call(argumentsValue)
-	log.Printf("[callFunction] output results: %v", resultValues)
+	log.Printf("[callFunction] output values: %v", resultValues)
 
-	if len(resultValues) == 0 {
-		return nil, nil
-	} else if len(resultValues) > 1 {
+	if len(resultValues) > 1 {
 		// function should return at most one value
 		err := fmt.Errorf("function %s should return at most one value", funcName)
 		log.Printf("[callFunction] error: %s", err.Error())
 		return nil, err
 	}
 
+	// no return value
+	if len(resultValues) == 0 {
+		return nil, nil
+	}
+
+	// return one value
 	// convert reflect.Value to interface{}
 	result := resultValues[0].Interface()
+	log.Printf("[callFunction] output result: %+v(%T)", result, result)
 	return result, nil
 }
