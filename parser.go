@@ -35,13 +35,16 @@ func buildURL(baseURL, stepURL string) string {
 	return uStep.String()
 }
 
-func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) map[string]string {
+func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
 	parsedHeaders := make(map[string]string)
-	headers := parseData(rawHeaders, variablesMapping).(map[string]interface{})
-	for k, v := range headers {
+	headers, err := parseData(rawHeaders, variablesMapping)
+	if err != nil {
+		return rawHeaders, err
+	}
+	for k, v := range headers.(map[string]interface{}) {
 		parsedHeaders[k] = convertString(v)
 	}
-	return parsedHeaders
+	return parsedHeaders, nil
 }
 
 func convertString(raw interface{}) string {
@@ -54,7 +57,7 @@ func convertString(raw interface{}) string {
 	}
 }
 
-func parseData(raw interface{}, variablesMapping map[string]interface{}) interface{} {
+func parseData(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
 	rawValue := reflect.ValueOf(raw)
 	switch rawValue.Kind() {
 	case reflect.String:
@@ -64,23 +67,33 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) interfa
 	case reflect.Slice:
 		parsedSlice := make([]interface{}, rawValue.Len())
 		for i := 0; i < rawValue.Len(); i++ {
-			parsedSlice[i] = parseData(rawValue.Index(i).Interface(), variablesMapping)
+			parsedValue, err := parseData(rawValue.Index(i).Interface(), variablesMapping)
+			if err != nil {
+				return raw, err
+			}
+			parsedSlice[i] = parsedValue
 		}
-		return parsedSlice
+		return parsedSlice, nil
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
-			parsedKey := parseString(k.String(), variablesMapping)
+			parsedKey, err := parseString(k.String(), variablesMapping)
+			if err != nil {
+				return raw, err
+			}
 			v := rawValue.MapIndex(k)
-			parsedValue := parseData(v.Interface(), variablesMapping)
+			parsedValue, err := parseData(v.Interface(), variablesMapping)
+			if err != nil {
+				return raw, err
+			}
 
 			key := convertString(parsedKey)
 			parsedMap[key] = parsedValue
 		}
-		return parsedMap
+		return parsedMap, nil
 	default:
 		// other types, e.g. nil, int, float, bool
-		return raw
+		return raw, nil
 	}
 }
 
@@ -97,7 +110,7 @@ var (
 )
 
 // parseString parse string with variables
-func parseString(raw string, variablesMapping map[string]interface{}) interface{} {
+func parseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
 	matchStartPosition := 0
 	parsedString := ""
 	remainedString := raw
@@ -134,18 +147,21 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 			argsStr := funcMatched[2]
 			arguments, err := parseFunctionArguments(argsStr)
 			if err != nil {
-				return raw
+				return raw, err
 			}
-			parsedArgs := parseData(arguments, variablesMapping).([]interface{})
-
-			result, err := callFunc(funcName, parsedArgs...)
+			parsedArgs, err := parseData(arguments, variablesMapping)
 			if err != nil {
-				return raw
+				return raw, err
+			}
+
+			result, err := callFunc(funcName, parsedArgs.([]interface{})...)
+			if err != nil {
+				return raw, err
 			}
 
 			if funcMatched[0] == raw {
 				// raw_string is a function, e.g. "${add_one(3)}", return its eval value directly
-				return result
+				return result, nil
 			}
 
 			// raw_string contains one or many functions, e.g. "abc${add_one(3)}def"
@@ -165,11 +181,14 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 			} else {
 				varName = varMatched[2] // match $var
 			}
-			varValue := variablesMapping[varName]
+			varValue, ok := variablesMapping[varName]
+			if !ok {
+				return raw, fmt.Errorf("variable %s not found", varName)
+			}
 
 			if fmt.Sprintf("${%s}", varName) == raw || fmt.Sprintf("$%s", varName) == raw {
 				// raw string is a variable, $var or ${var}, return its value directly
-				return varValue
+				return varValue, nil
 			}
 
 			matchStartPosition += len(varMatched[0])
@@ -183,7 +202,7 @@ func parseString(raw string, variablesMapping map[string]interface{}) interface{
 		break
 	}
 
-	return parsedString
+	return parsedString, nil
 }
 
 // merge two variables mapping, the first variables have higher priority
@@ -353,8 +372,8 @@ func parseVariables(variables map[string]interface{}) (map[string]interface{}, e
 				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
 			}
 
-			parsedValue := parseData(varValue, parsedVariables)
-			if parsedValue == nil {
+			parsedValue, err := parseData(varValue, parsedVariables)
+			if err != nil {
 				continue
 			}
 			parsedVariables[varName] = parsedValue
