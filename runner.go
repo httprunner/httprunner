@@ -114,19 +114,31 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	// prepare request args
 	var v []interface{}
 	if len(step.Request.Headers) > 0 {
-		headers := parseHeaders(step.Request.Headers, step.Variables)
+		headers, err := parseHeaders(step.Request.Headers, step.Variables)
+		if err != nil {
+			return nil, err
+		}
 		v = append(v, req.Header(headers))
 	}
 	if len(step.Request.Params) > 0 {
-		params := parseData(step.Request.Params, step.Variables)
+		params, err := parseData(step.Request.Params, step.Variables)
+		if err != nil {
+			return nil, err
+		}
 		v = append(v, req.Param(params.(map[string]interface{})))
 	}
 	if step.Request.Data != nil {
-		data := parseData(step.Request.Data, step.Variables)
+		data, err := parseData(step.Request.Data, step.Variables)
+		if err != nil {
+			return nil, err
+		}
 		v = append(v, data)
 	}
 	if step.Request.JSON != nil {
-		jsonData := parseData(step.Request.JSON, step.Variables)
+		jsonData, err := parseData(step.Request.JSON, step.Variables)
+		if err != nil {
+			return nil, err
+		}
 		v = append(v, req.BodyJSON(jsonData))
 	}
 
@@ -186,11 +198,17 @@ func (r *Runner) parseConfig(config *TConfig) error {
 	config.Variables = parsedVariables
 
 	// parse config name
-	parsedName := parseString(config.Name, config.Variables)
+	parsedName, err := parseString(config.Name, config.Variables)
+	if err != nil {
+		return err
+	}
 	config.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL := parseString(config.BaseURL, config.Variables)
+	parsedBaseURL, err := parseString(config.BaseURL, config.Variables)
+	if err != nil {
+		return err
+	}
 	config.BaseURL = convertString(parsedBaseURL)
 
 	return nil

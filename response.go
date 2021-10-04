@@ -86,14 +86,17 @@ func (v *ResponseObject) Extract(extractors map[string]string) map[string]interf
 	return extractMapping
 }
 
-func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[string]interface{}) error {
+func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[string]interface{}) (err error) {
 	for _, validator := range validators {
 		// parse check value
 		checkItem := validator.Check
 		var checkValue interface{}
 		if strings.Contains(checkItem, "$") {
 			// reference variable
-			checkValue = parseData(checkItem, variablesMapping)
+			checkValue, err = parseData(checkItem, variablesMapping)
+			if err != nil {
+				return err
+			}
 		} else {
 			checkValue = v.searchJmespath(checkItem)
 		}
@@ -103,7 +106,10 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 		assertFunc := builtin.Assertions[assertMethod]
 
 		// parse expected value
-		expectValue := parseData(validator.Expect, variablesMapping)
+		expectValue, err := parseData(validator.Expect, variablesMapping)
+		if err != nil {
+			return err
+		}
 
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)

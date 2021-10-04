@@ -156,13 +156,40 @@ func TestParseDataStringWithVariables(t *testing.T) {
 		{"func1($var_1, $var_3)", "func1(abc, 123)"},
 		{"func1($var_1, ${var_3})", "func1(abc, 123)"},
 		// TODO: fix compatibility with python version
-		{"abc$var_4", "abcmap[a:1]"},       // "abc{'a': 1}"
-		{"abc$var_5", "abctrue"},           // "abcTrue"
-		{"/api/$SECRET_KEY", "/api/<nil>"}, // raise error
+		{"abc$var_4", "abcmap[a:1]"}, // "abc{'a': 1}"
+		{"abc$var_5", "abctrue"},     // "abcTrue"
 	}
 
 	for _, data := range testData {
-		if !assert.Equal(t, data.expect, parseData(data.expr, variablesMapping)) {
+		parsedData, err := parseData(data.expr, variablesMapping)
+		if !assert.NoError(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, parsedData) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseDataStringWithUndefinedVariables(t *testing.T) {
+	variablesMapping := map[string]interface{}{
+		"var_1": "abc",
+		"var_2": "def",
+	}
+
+	testData := []struct {
+		expr   string
+		expect interface{}
+	}{
+		{"/api/$SECRET_KEY", "/api/$SECRET_KEY"}, // raise error
+	}
+
+	for _, data := range testData {
+		parsedData, err := parseData(data.expr, variablesMapping)
+		if !assert.Error(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, parsedData) {
 			t.Fail()
 		}
 	}
@@ -202,7 +229,11 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.Equal(t, data.expect, parseData(data.expr, variablesMapping)) {
+		parsedData, err := parseData(data.expr, variablesMapping)
+		if !assert.NoError(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, parsedData) {
 			t.Fail()
 		}
 	}
@@ -228,7 +259,11 @@ func TestParseDataMapWithVariables(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.Equal(t, data.expect, parseData(data.expr, variablesMapping)) {
+		parsedData, err := parseData(data.expr, variablesMapping)
+		if !assert.NoError(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, parsedData) {
 			t.Fail()
 		}
 	}
@@ -257,7 +292,11 @@ func TestParseHeaders(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.Equal(t, data.expectHeaders, parseHeaders(data.rawHeaders, variablesMapping)) {
+		parsedHeaders, err := parseHeaders(data.rawHeaders, variablesMapping)
+		if !assert.NoError(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expectHeaders, parsedHeaders) {
 			t.Fail()
 		}
 	}
@@ -292,14 +331,14 @@ func TestMergeVariables(t *testing.T) {
 func TestCallFunction(t *testing.T) {
 	// call function without arguments
 	_, err := callFunc("get_timestamp")
-	if !assert.Nil(t, err) {
+	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 
 	// call function with one argument
 	timeStart := time.Now()
 	_, err = callFunc("sleep", 1)
-	if !assert.Nil(t, err) {
+	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 	if !assert.Greater(t, time.Since(timeStart), time.Duration(1)*time.Second) {
@@ -308,7 +347,7 @@ func TestCallFunction(t *testing.T) {
 
 	// call function with one argument
 	result, err := callFunc("gen_random_string", 10)
-	if !assert.Nil(t, err) {
+	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 	if !assert.Equal(t, 10, len(result.(string))) {
@@ -317,7 +356,7 @@ func TestCallFunction(t *testing.T) {
 
 	// call function with two argument
 	result, err = callFunc("max", float64(10), 9.99)
-	if !assert.Nil(t, err) {
+	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 	if !assert.Equal(t, float64(10), result.(float64)) {
@@ -345,7 +384,7 @@ func TestLiteralEval(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := literalEval(data.expr)
-		if !assert.Nil(t, err) {
+		if !assert.NoError(t, err) {
 			t.Fail()
 		}
 		if !assert.Equal(t, data.expect, value) {
@@ -375,7 +414,7 @@ func TestParseFunctionArguments(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := parseFunctionArguments(data.expr)
-		if !assert.Nil(t, err) {
+		if !assert.NoError(t, err) {
 			t.Fail()
 		}
 		if !assert.Equal(t, data.expect, value) {
@@ -391,28 +430,43 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 		"b": 3.45,
 	}
 
-	if !assert.Len(t, parseData("${gen_random_string(5)}", variablesMapping), 5) {
-		t.Fail()
-	}
-	if !assert.Len(t, parseData("${gen_random_string($n)}", variablesMapping), 5) {
-		t.Fail()
-	}
-
-	if !assert.Len(t, parseData("123${gen_random_string(5)}abc", variablesMapping), 11) {
-		t.Fail()
-	}
-	if !assert.Len(t, parseData("123${gen_random_string($n)}abc", variablesMapping), 11) {
-		t.Fail()
+	testData1 := []struct {
+		expr   string
+		expect interface{}
+	}{
+		{"${gen_random_string(5)}", 5},
+		{"${gen_random_string($n)}", 5},
+		{"123${gen_random_string(5)}abc", 11},
+		{"123${gen_random_string($n)}abc", 11},
 	}
 
-	if !assert.Equal(t, parseData("${max($a, $b)}", variablesMapping), 12.3) {
-		t.Fail()
+	for _, data := range testData1 {
+		value, err := parseData(data.expr, variablesMapping)
+		if !assert.NoError(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, len(value.(string))) {
+			t.Fail()
+		}
 	}
-	if !assert.Equal(t, parseData("abc${max($a, $b)}123", variablesMapping), "abc12.3123") {
-		t.Fail()
+
+	testData2 := []struct {
+		expr   string
+		expect interface{}
+	}{
+		{"${max($a, $b)}", 12.3},
+		{"abc${max($a, $b)}123", "abc12.3123"},
+		{"abc${max($a, 3.45)}123", "abc12.3123"},
 	}
-	if !assert.Equal(t, parseData("abc${max($a, 3.45)}123", variablesMapping), "abc12.3123") {
-		t.Fail()
+
+	for _, data := range testData2 {
+		value, err := parseData(data.expr, variablesMapping)
+		if !assert.NoError(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
 	}
 }
 
@@ -454,7 +508,7 @@ func TestParseVariables(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := parseVariables(data.rawVars)
-		if !assert.Nil(t, err) {
+		if !assert.NoError(t, err) {
 			t.Fail()
 		}
 		if !assert.Equal(t, data.expectVars, value) {
