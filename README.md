@@ -12,8 +12,20 @@ HttpBoomer is a golang implementation of [HttpRunner]. Ideally, HttpBoomer will 
 
 ## Key Features
 
+- [x] Full support for HTTP(S) requests, more protocols are also in the plan.
+- [ ] Testcases can be described in multiple formats, `YAML`/`JSON`/`Golang`, and they are interchangeable.
+- [ ] With [`HAR`][HAR] support, you can use Charles/Fiddler/Chrome/etc as a script recording generator.
+- [x] Supports `variables`/`extract`/`validate`/`hooks` mechanisms to create extremely complex test scenarios.
+- [ ] Built-in integration of rich functions, and you can also use [`go plugin`][plugin] to create and call custom functions.
+- [x] Inherit all powerful features of [`Boomer`][Boomer] and [`locust`][locust], you can run `load test` without extra work.
+- [ ] Use it as a `CLI tool` or as a `library` are both supported.
+
 ## Quick Start
 
 [HttpRunner]: https://github.com/httprunner/httprunner
 [Boomer]: https://github.com/myzhan/boomer
 [locust]: https://github.com/locustio/locust
+[jmespath]: https://jmespath.org/
+[allure]: https://docs.qameta.io/allure/
+[HAR]: http://httparchive.org/
+[plugin]: https://pkg.go.dev/plugin
