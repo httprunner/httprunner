@@ -538,7 +538,7 @@ func TestParseVariablesAbnormal(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := parseVariables(data.rawVars)
-		if !assert.NotNil(t, err) {
+		if !assert.Error(t, err) {
 			t.Fail()
 		}
 		if !assert.Equal(t, data.expectVars, value) {
