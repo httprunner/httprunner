@@ -316,5 +316,134 @@ func parseFunctionArguments(argsStr string) ([]interface{}, error) {
 }
 
 func parseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
-	return variables, nil
+	parsedVariables := make(map[string]interface{})
+	var traverseRounds int
+
+	for len(parsedVariables) != len(variables) {
+		for varName, varValue := range variables {
+			// skip parsed variables
+			if _, ok := parsedVariables[varName]; ok {
+				continue
+			}
+
+			// extract variables from current value
+			extractVarsSet := extractVariables(varValue)
+
+			// check if reference variable itself
+			// e.g.
+			// variables = {"token": "abc$token"}
+			// variables = {"key": ["$key", 2]}
+			if _, ok := extractVarsSet[varName]; ok {
+				log.Printf("[parseVariables] variable self reference error: %v", variables)
+				return variables, fmt.Errorf("variable self reference: %v", varName)
+			}
+
+			// check if reference variable not in variables mapping
+			// e.g.
+			// {"varA": "123$varB", "varB": "456$varC"} => $varC not defined
+			// {"varC": "${sum_two($a, $b)}"} => $a, $b not defined
+			var undefinedVars []string
+			for extractVar := range extractVarsSet {
+				if _, ok := variables[extractVar]; !ok { // not in variables mapping
+					undefinedVars = append(undefinedVars, extractVar)
+				}
+			}
+			if len(undefinedVars) > 0 {
+				log.Printf("[parseVariables] variable not defined error: %v", undefinedVars)
+				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
+			}
+
+			parsedValue := parseData(varValue, parsedVariables)
+			if parsedValue == nil {
+				continue
+			}
+			parsedVariables[varName] = parsedValue
+		}
+		traverseRounds += 1
+		// check if circular reference exists
+		if traverseRounds > len(variables) {
+			log.Printf("[parseVariables] circular reference error, break infinite loop!")
+			return variables, fmt.Errorf("circular reference")
+		}
+	}
+
+	return parsedVariables, nil
+}
+
+type variableSet map[string]struct{}
+
+func extractVariables(raw interface{}) variableSet {
+	rawValue := reflect.ValueOf(raw)
+	switch rawValue.Kind() {
+	case reflect.String:
+		return findallVariables(rawValue.String())
+	case reflect.Slice:
+		varSet := make(variableSet)
+		for i := 0; i < rawValue.Len(); i++ {
+			for extractVar := range extractVariables(rawValue.Index(i).Interface()) {
+				varSet[extractVar] = struct{}{}
+			}
+		}
+		return varSet
+	case reflect.Map:
+		varSet := make(variableSet)
+		for _, key := range rawValue.MapKeys() {
+			value := rawValue.MapIndex(key)
+			for extractVar := range extractVariables(value.Interface()) {
+				varSet[extractVar] = struct{}{}
+			}
+		}
+		return varSet
+	default:
+		// other types, e.g. nil, int, float, bool
+		return make(variableSet)
+	}
+}
+
+func findallVariables(raw string) variableSet {
+	matchStartPosition := 0
+	remainedString := raw
+	varSet := make(variableSet)
+
+	for matchStartPosition < len(raw) {
+		// locate $ char position
+		startPosition := strings.Index(remainedString, "$")
+		if startPosition == -1 { // no $ found
+			return varSet
+		}
+
+		// found $, check if variable or function
+		matchStartPosition += startPosition
+		remainedString = remainedString[startPosition:]
+
+		// Notice: notation priority
+		// $$ > $var
+
+		// search $$, use $$ to escape $ notation
+		if strings.HasPrefix(remainedString, "$$") { // found $$
+			matchStartPosition += 2
+			remainedString = remainedString[2:]
+			continue
+		}
+
+		// search variable like ${var} or $var
+		varMatched := regexCompileVariable.FindStringSubmatch(remainedString)
+		if len(varMatched) == 3 {
+			var varName string
+			if varMatched[1] != "" {
+				varName = varMatched[1] // match ${var}
+			} else {
+				varName = varMatched[2] // match $var
+			}
+			varSet[varName] = struct{}{}
+
+			matchStartPosition += len(varMatched[0])
+			remainedString = raw[matchStartPosition:]
+			continue
+		}
+
+		break
+	}
+
+	return varSet
 }

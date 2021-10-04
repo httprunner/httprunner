@@ -1,6 +1,7 @@
 package httpboomer
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -424,6 +425,130 @@ func TestConvertString(t *testing.T) {
 	for _, data := range testData {
 		value := convertString(data.raw)
 		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseVariables(t *testing.T) {
+	testData := []struct {
+		rawVars    map[string]interface{}
+		expectVars map[string]interface{}
+	}{
+		{
+			map[string]interface{}{"varA": "$varB", "varB": "$varC", "varC": "123", "a": 1, "b": 2},
+			map[string]interface{}{"varA": "123", "varB": "123", "varC": "123", "a": 1, "b": 2},
+		},
+	}
+
+	for _, data := range testData {
+		value, err := parseVariables(data.rawVars)
+		if !assert.Nil(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expectVars, value) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseVariablesAbnormal(t *testing.T) {
+	testData := []struct {
+		rawVars    map[string]interface{}
+		expectVars map[string]interface{}
+	}{
+		{ // self referenced variable $varA
+			map[string]interface{}{"varA": "$varA"},
+			map[string]interface{}{"varA": "$varA"},
+		},
+		{ // undefined variable $varC
+			map[string]interface{}{"varA": "$varB", "varB": "$varC", "a": 1, "b": 2},
+			map[string]interface{}{"varA": "$varB", "varB": "$varC", "a": 1, "b": 2},
+		},
+		{ // circular reference
+			map[string]interface{}{"varA": "$varB", "varB": "$varA"},
+			map[string]interface{}{"varA": "$varB", "varB": "$varA"},
+		},
+	}
+
+	for _, data := range testData {
+		value, err := parseVariables(data.rawVars)
+		if !assert.NotNil(t, err) {
+			t.Fail()
+		}
+		if !assert.Equal(t, data.expectVars, value) {
+			t.Fail()
+		}
+	}
+}
+
+func TestExtractVariables(t *testing.T) {
+	testData := []struct {
+		raw        interface{}
+		expectVars []string
+	}{
+		{nil, nil},
+		{"/$var1/$var1", []string{"var1"}},
+		{
+			map[string]interface{}{"varA": "$varB", "varB": "$varC", "varC": "123"},
+			[]string{"varB", "varC"},
+		},
+		{
+			[]interface{}{"varA", "$varB", 123, "$varC", "123"},
+			[]string{"varB", "varC"},
+		},
+		{ // nested map and slice
+			map[string]interface{}{"varA": "$varB", "varB": map[string]interface{}{"C": "$varC", "D": []string{"$varE"}}},
+			[]string{"varB", "varC", "varE"},
+		},
+	}
+
+	for _, data := range testData {
+		var varList []string
+		for varName := range extractVariables(data.raw) {
+			varList = append(varList, varName)
+		}
+		sort.Strings(varList)
+		if !assert.Equal(t, data.expectVars, varList) {
+			t.Fail()
+		}
+	}
+}
+
+func TestFindallVariables(t *testing.T) {
+	testData := []struct {
+		raw        string
+		expectVars []string
+	}{
+		{"", nil},
+		{"$variable", []string{"variable"}},
+		{"${variable}123", []string{"variable"}},
+		{"/blog/$postid", []string{"postid"}},
+		{"/$var1/$var2", []string{"var1", "var2"}},
+		{"/$var1/$var1", []string{"var1"}},
+		{"abc", nil},
+		{"Z:2>1*0*1+1$a", []string{"a"}},
+		{"Z:2>1*0*1+1$$a", nil},
+		{"Z:2>1*0*1+1$$$a", []string{"a"}},
+		{"Z:2>1*0*1+1$$$$a", nil},
+		{"Z:2>1*0*1+1$$a$b", []string{"b"}},
+		{"Z:2>1*0*1+1$$a$$b", nil},
+		{"Z:2>1*0*1+1$a$b", []string{"a", "b"}},
+		{"Z:2>1*0*1+1$$1", nil},
+		{"a$var", []string{"var"}},
+		{"a$v b", []string{"v"}},
+		{"${func()}", nil},
+		{"a${func(1,2)}b", nil},
+		{"${gen_md5($TOKEN, $data, $random)}", []string{"TOKEN", "data", "random"}},
+	}
+
+	for _, data := range testData {
+		var varList []string
+		for varName := range findallVariables(data.raw) {
+			varList = append(varList, varName)
+		}
+		sort.Strings(varList)
+		if !assert.Equal(t, data.expectVars, varList) {
 			t.Fail()
 		}
 	}
