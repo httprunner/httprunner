@@ -264,21 +264,28 @@ func TestParseHeaders(t *testing.T) {
 }
 
 func TestMergeVariables(t *testing.T) {
-	stepVariables := map[string]interface{}{
-		"base_url": "$base_url",
-		"foo1":     "bar1",
+	testData := []struct {
+		stepVariables   map[string]interface{}
+		configVariables map[string]interface{}
+		expectVariables map[string]interface{}
+	}{
+		{
+			map[string]interface{}{"base_url": "$base_url", "foo1": "bar1"},
+			map[string]interface{}{"base_url": "https://httpbin.org", "foo1": "bar111"},
+			map[string]interface{}{"base_url": "https://httpbin.org", "foo1": "bar1"},
+		},
+		{
+			map[string]interface{}{"n": 3, "b": 34.5, "varFoo2": "${max($a, $b)}"},
+			map[string]interface{}{"n": 5, "a": 12.3, "b": 3.45, "varFoo1": "7a6K3", "varFoo2": 12.3},
+			map[string]interface{}{"n": 3, "a": 12.3, "b": 34.5, "varFoo1": "7a6K3", "varFoo2": "${max($a, $b)}"},
+		},
 	}
-	configVariables := map[string]interface{}{
-		"base_url": "https://httpbin.org",
-		"foo1":     "bar111",
-	}
-	mergedVariables := mergeVariables(stepVariables, configVariables)
-	expectVariables := map[string]interface{}{
-		"base_url": "https://httpbin.org",
-		"foo1":     "bar1",
-	}
-	if !assert.Equal(t, expectVariables, mergedVariables) {
-		t.Fail()
+
+	for _, data := range testData {
+		mergedVariables := mergeVariables(data.stepVariables, data.configVariables)
+		if !assert.Equal(t, data.expectVariables, mergedVariables) {
+			t.Fail()
+		}
 	}
 }
 
@@ -438,6 +445,10 @@ func TestParseVariables(t *testing.T) {
 		{
 			map[string]interface{}{"varA": "$varB", "varB": "$varC", "varC": "123", "a": 1, "b": 2},
 			map[string]interface{}{"varA": "123", "varB": "123", "varC": "123", "a": 1, "b": 2},
+		},
+		{
+			map[string]interface{}{"n": 34.5, "a": 12.3, "b": "$n", "varFoo2": "${max($a, $b)}"},
+			map[string]interface{}{"n": 34.5, "a": 12.3, "b": 34.5, "varFoo2": 34.5},
 		},
 	}
 
