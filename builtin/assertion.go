@@ -49,5 +49,8 @@ func EndsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...int
 }
 
 func EqualLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	if !assert.IsType(t, 129, expected, fmt.Sprintf("expected type is not int, got %#v", expected)) {
+		return false
+	}
 	return assert.Len(t, actual, expected.(int), msgAndArgs...)
 }
