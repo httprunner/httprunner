@@ -12,6 +12,8 @@ HttpBoomer is a golang implementation of [HttpRunner]. Ideally, HttpBoomer will 
 
 ## Key Features
 
+![flow chart](docs/flow.jpg)
+
 - [x] Full support for HTTP(S) requests, more protocols are also in the plan.
 - [ ] Testcases can be described in multiple formats, `YAML`/`JSON`/`Golang`, and they are interchangeable.
 - [ ] With [`HAR`][HAR] support, you can use Charles/Fiddler/Chrome/etc as a script recording generator.
