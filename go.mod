@@ -6,13 +6,14 @@ require (
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/imroc/req v0.3.0 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/maja42/goval v1.2.1 // indirect
+	github.com/imroc/req v0.3.0
+	github.com/jmespath/go-jmespath v0.4.0
+	github.com/maja42/goval v1.2.1
 	github.com/myzhan/boomer v1.6.0
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/shirou/gopsutil v3.21.8+incompatible // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/spf13/cobra v1.2.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tklauser/go-sysconf v0.3.9 // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/zeromq/goczmq v4.1.0+incompatible // indirect
