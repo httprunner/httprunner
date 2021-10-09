@@ -80,7 +80,9 @@ func loadFromJSON(path string) (*TCase, error) {
 	}
 
 	tc := &TCase{}
-	err = json.Unmarshal(file, tc)
+	decoder := json.NewDecoder(bytes.NewReader(file))
+	decoder.UseNumber()
+	err = decoder.Decode(tc)
 	return tc, err
 }
 
