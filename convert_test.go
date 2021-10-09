@@ -49,9 +49,26 @@ var demoTestCase = &TestCase{
 	},
 }
 
-func TestDump2JSON(t *testing.T) {
-	err := demoTestCase.dump2JSON("demo.json")
+func TestDumpAndLoadJSON(t *testing.T) {
+	jsonPath := "demo.json"
+	err := demoTestCase.dump2JSON(jsonPath)
 	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	tc, err := loadFromJSON(jsonPath)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.Config.Name, demoTestCase.Config.Name) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.Config.BaseURL, demoTestCase.Config.BaseURL) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.TestSteps[1].Name, demoTestCase.TestSteps[1].Name()) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.TestSteps[1].Request, demoTestCase.TestSteps[1].ToStruct().Request) {
 		t.Fail()
 	}
 }

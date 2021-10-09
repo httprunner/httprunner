@@ -64,3 +64,22 @@ func (tc *TestCase) dump2YAML(path string) error {
 	}
 	return nil
 }
+
+func loadFromJSON(path string) (*TCase, error) {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		log.Printf("convert absolute path error: %v, path: %v", err, path)
+		return nil, err
+	}
+	log.Printf("load testcase from json path: %s", path)
+
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Printf("dump json path error: %v", err)
+		return nil, err
+	}
+
+	tc := &TCase{}
+	err = json.Unmarshal(file, tc)
+	return tc, err
+}
