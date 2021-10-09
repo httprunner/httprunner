@@ -1,6 +1,7 @@
 package httpboomer
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -49,13 +50,39 @@ var demoTestCase = &TestCase{
 	},
 }
 
-func TestDumpAndLoadJSON(t *testing.T) {
-	jsonPath := demoTestCaseJSONPath
-	err := demoTestCase.dump2JSON(jsonPath)
-	if !assert.NoError(t, err) {
-		t.Fail()
+var (
+	demoTestCaseJSONPath = "demo.json"
+	demoTestCaseYAMLPath = "demo.yaml"
+)
+
+func TestMain(m *testing.M) {
+	// setup, prepare demo json/yaml testcase file path
+	err := demoTestCase.dump2JSON(demoTestCaseJSONPath)
+	if err != nil {
+		os.Exit(1)
 	}
-	tc, err := loadFromJSON(jsonPath)
+	err = demoTestCase.dump2YAML(demoTestCaseYAMLPath)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	// run all tests
+	code := m.Run()
+	defer os.Exit(code)
+
+	// teardown
+	err = os.Remove(demoTestCaseJSONPath)
+	if err != nil {
+		os.Exit(1)
+	}
+	err = os.Remove(demoTestCaseYAMLPath)
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func TestLoadJSONCase(t *testing.T) {
+	tc, err := loadFromJSON(demoTestCaseJSONPath)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -73,13 +100,8 @@ func TestDumpAndLoadJSON(t *testing.T) {
 	}
 }
 
-func TestDumpAndLoadYAML(t *testing.T) {
-	yamlPath := "demo.yaml"
-	err := demoTestCase.dump2YAML(yamlPath)
-	if !assert.NoError(t, err) {
-		t.Fail()
-	}
-	tc, err := loadFromYAML(yamlPath)
+func TestLoadYAMLCase(t *testing.T) {
+	tc, err := loadFromYAML(demoTestCaseYAMLPath)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -93,8 +115,6 @@ func TestDumpAndLoadYAML(t *testing.T) {
 		t.Fail()
 	}
 }
-
-var demoTestCaseJSONPath = "demo.json"
 
 func TestLoadJSONAndRun(t *testing.T) {
 	jsonPath := &TestCasePath{demoTestCaseJSONPath}
