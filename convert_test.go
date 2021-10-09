@@ -83,10 +83,7 @@ func TestDumpAndLoadYAML(t *testing.T) {
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	if !assert.Equal(t, tc.Config.Name, demoTestCase.Config.Name) {
-		t.Fail()
-	}
-	if !assert.Equal(t, tc.Config.BaseURL, demoTestCase.Config.BaseURL) {
+	if !assert.Equal(t, tc.Config, demoTestCase.Config) {
 		t.Fail()
 	}
 	if !assert.Equal(t, tc.TestSteps[1].Name, demoTestCase.TestSteps[1].Name()) {

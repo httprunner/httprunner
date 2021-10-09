@@ -1,6 +1,7 @@
 package httpboomer
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -61,6 +62,11 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) (interf
 	rawValue := reflect.ValueOf(raw)
 	switch rawValue.Kind() {
 	case reflect.String:
+		// json.Number
+		if rawValue, ok := raw.(json.Number); ok {
+			return parseJSONNumber(rawValue)
+		}
+		// other string
 		value := rawValue.String()
 		value = strings.TrimSpace(value)
 		return parseString(value, variablesMapping)
@@ -94,6 +100,16 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) (interf
 	default:
 		// other types, e.g. nil, int, float, bool
 		return raw, nil
+	}
+}
+
+func parseJSONNumber(raw json.Number) (interface{}, error) {
+	if strings.Contains(raw.String(), ".") {
+		// float64
+		return raw.Float64()
+	} else {
+		// int64
+		return raw.Int64()
 	}
 }
 
@@ -252,17 +268,26 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 
 	argumentsValue := make([]reflect.Value, len(arguments))
 	for index, argument := range arguments {
-		// ensure each argument type match
+		argumentValue := reflect.ValueOf(argument)
 		expectArgumentType := funcValue.Type().In(index)
 		actualArgumentType := reflect.TypeOf(argument)
-		if expectArgumentType != actualArgumentType {
-			// function argument type not match
-			err := fmt.Errorf("function %s argument %d type not match, expect %v, actual %v",
+
+		// type match
+		if expectArgumentType == actualArgumentType {
+			argumentsValue[index] = argumentValue
+			continue
+		}
+
+		// type not match, check if convertible
+		if !actualArgumentType.ConvertibleTo(expectArgumentType) {
+			// function argument type not match and not convertible
+			err := fmt.Errorf("function %s argument %d type is neither match nor convertible, expect %v, actual %v",
 				funcName, index, expectArgumentType, actualArgumentType)
 			log.Printf("[callFunction] error: %s", err.Error())
 			return nil, err
 		}
-		argumentsValue[index] = reflect.ValueOf(argument)
+		// convert argument to expect type
+		argumentsValue[index] = argumentValue.Convert(expectArgumentType)
 	}
 
 	log.Printf("[callFunction] func: %v, input arguments: %v", funcName, arguments)
