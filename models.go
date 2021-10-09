@@ -82,7 +82,7 @@ func (tc *TestCase) ToStruct() (*TestCase, error) {
 }
 
 type TestCasePath struct {
-	string
+	Path string
 }
 
 func (path *TestCasePath) ToStruct() (*TestCase, error) {
