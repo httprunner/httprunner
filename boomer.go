@@ -6,7 +6,7 @@ import (
 	"github.com/myzhan/boomer"
 )
 
-func Run(testcases ...*TestCase) {
+func Run(testcases ...ITestCase) {
 	NewBoomer().Run(testcases...)
 }
 
@@ -25,10 +25,14 @@ func (b *Boomer) SetDebug(debug bool) *Boomer {
 	return b
 }
 
-func (b *Boomer) Run(testcases ...*TestCase) {
+func (b *Boomer) Run(testcases ...ITestCase) {
 	var taskSlice []*boomer.Task
 	for _, testcase := range testcases {
-		task := b.convertBoomerTask(testcase)
+		tcStruct, err := testcase.ToStruct()
+		if err != nil {
+			panic(err)
+		}
+		task := b.convertBoomerTask(tcStruct)
 		taskSlice = append(taskSlice, task)
 	}
 	boomer.Run(taskSlice...)
