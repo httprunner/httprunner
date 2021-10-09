@@ -20,4 +20,5 @@ require (
 	github.com/zeromq/gomq v0.0.0-20201031135124-cef4e507bb8e // indirect
 	github.com/zeromq/gomq/zmtp v0.0.0-20201031135124-cef4e507bb8e // indirect
 	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

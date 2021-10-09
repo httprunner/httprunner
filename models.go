@@ -13,51 +13,51 @@ const (
 )
 
 type TConfig struct {
-	Name       string                 `json:"name"`
-	Verify     bool                   `json:"verify,omitempty"`
-	BaseURL    string                 `json:"base_url,omitempty"`
-	Variables  map[string]interface{} `json:"variables,omitempty"`
-	Parameters map[string]interface{} `json:"parameters,omitempty"`
-	Export     []string               `json:"export,omitempty"`
-	Weight     int                    `json:"weight,omitempty"`
+	Name       string                 `json:"name" yaml:"name"`
+	Verify     bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
+	BaseURL    string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
+	Variables  map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Export     []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Weight     int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 }
 
 type TRequest struct {
-	Method         enumHTTPMethod         `json:"method"`
-	URL            string                 `json:"url"`
-	Params         map[string]interface{} `json:"params,omitempty"`
-	Headers        map[string]string      `json:"headers,omitempty"`
-	Cookies        map[string]string      `json:"cookies,omitempty"`
-	Data           interface{}            `json:"data,omitempty"`
-	JSON           interface{}            `json:"json,omitempty"`
-	Timeout        float32                `json:"timeout,omitempty"`
-	AllowRedirects bool                   `json:"allow_redirects,omitempty"`
-	Verify         bool                   `json:"verify,omitempty"`
+	Method         enumHTTPMethod         `json:"method" yaml:"method"`
+	URL            string                 `json:"url" yaml:"url"`
+	Params         map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
+	Headers        map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Cookies        map[string]string      `json:"cookies,omitempty" yaml:"cookies,omitempty"`
+	Data           interface{}            `json:"data,omitempty" yaml:"data,omitempty"`
+	JSON           interface{}            `json:"json,omitempty" yaml:"json,omitempty"`
+	Timeout        float32                `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	AllowRedirects bool                   `json:"allow_redirects,omitempty" yaml:"allow_redirects,omitempty"`
+	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
 }
 
 type TValidator struct {
-	Check   string      `json:"check,omitempty"` // get value with jmespath
-	Assert  string      `json:"assert,omitempty"`
-	Expect  interface{} `json:"expect,omitempty"`
-	Message string      `json:"msg,omitempty"`
+	Check   string      `json:"check,omitempty" yaml:"check,omitempty"` // get value with jmespath
+	Assert  string      `json:"assert,omitempty" yaml:"assert,omitempty"`
+	Expect  interface{} `json:"expect,omitempty" yaml:"expect,omitempty"`
+	Message string      `json:"msg,omitempty" yaml:"msg,omitempty"`
 }
 
 type TStep struct {
-	Name          string                 `json:"name"`
-	Request       *TRequest              `json:"request,omitempty"`
-	TestCase      *TestCase              `json:"testcase,omitempty"`
-	Variables     map[string]interface{} `json:"variables,omitempty"`
-	SetupHooks    []string               `json:"setup_hooks,omitempty"`
-	TeardownHooks []string               `json:"teardown_hooks,omitempty"`
-	Extract       map[string]string      `json:"extract,omitempty"`
-	Validators    []TValidator           `json:"validate,omitempty"`
-	Export        []string               `json:"export,omitempty"`
+	Name          string                 `json:"name" yaml:"name"`
+	Request       *TRequest              `json:"request,omitempty" yaml:"request,omitempty"`
+	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
+	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators    []TValidator           `json:"validate,omitempty" yaml:"validate,omitempty"`
+	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 }
 
 // used for testcase json loading and dumping
 type TCase struct {
-	Config    TConfig  `json:"config"`
-	TestSteps []*TStep `json:"teststeps"`
+	Config    TConfig  `json:"config" yaml:"config"`
+	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
 // interface for all types of steps
