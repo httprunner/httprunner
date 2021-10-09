@@ -50,7 +50,7 @@ var demoTestCase = &TestCase{
 }
 
 func TestDumpAndLoadJSON(t *testing.T) {
-	jsonPath := "demo.json"
+	jsonPath := demoTestCaseJSONPath
 	err := demoTestCase.dump2JSON(jsonPath)
 	if !assert.NoError(t, err) {
 		t.Fail()
@@ -94,13 +94,11 @@ func TestDumpAndLoadYAML(t *testing.T) {
 	}
 }
 
+var demoTestCaseJSONPath = "demo.json"
+
 func TestLoadJSONAndRun(t *testing.T) {
-	jsonPath := "demo.json"
-	tc, err := loadFromJSON(jsonPath)
-	if !assert.NoError(t, err) {
-		t.Fail()
-	}
-	testcase, err := convertTestCase(tc)
+	jsonPath := &TestCasePath{demoTestCaseJSONPath}
+	testcase, err := loadTestFile(jsonPath)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}

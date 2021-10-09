@@ -67,10 +67,30 @@ type IStep interface {
 	ToStruct() *TStep
 }
 
+type ITestCase interface {
+	ToStruct() (*TestCase, error)
+}
+
 // used for testcase runner
 type TestCase struct {
 	Config    TConfig
 	TestSteps []IStep
+}
+
+func (tc *TestCase) ToStruct() (*TestCase, error) {
+	return tc, nil
+}
+
+type TestCasePath struct {
+	string
+}
+
+func (path *TestCasePath) ToStruct() (*TestCase, error) {
+	testcase, err := loadTestFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return testcase, nil
 }
 
 type TestCaseSummary struct{}

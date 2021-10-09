@@ -1,6 +1,7 @@
 package httpboomer
 
 import (
+	"os"
 	"testing"
 )
 
@@ -30,9 +31,29 @@ func TestHttpRunner(t *testing.T) {
 			Weight: 3,
 		},
 	}
+	testcase3 := &TestCasePath{demoTestCaseJSONPath}
 
-	err := Test(t, testcase1, testcase2)
+	err := Test(t, testcase1, testcase2, testcase3)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
+	}
+}
+
+func TestMain(m *testing.M) {
+	// setup, prepare demo json testcase file path
+	jsonPath := demoTestCaseJSONPath
+	err := demoTestCase.dump2JSON(jsonPath)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	// run all tests
+	code := m.Run()
+	defer os.Exit(code)
+
+	// teardown
+	err = os.Remove(jsonPath)
+	if err != nil {
+		os.Exit(1)
 	}
 }

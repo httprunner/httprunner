@@ -8,7 +8,7 @@ import (
 	"github.com/imroc/req"
 )
 
-func Test(t *testing.T, testcases ...*TestCase) error {
+func Test(t *testing.T, testcases ...ITestCase) error {
 	return NewRunner().WithTestingT(t).SetDebug(true).Run(testcases...)
 }
 
@@ -36,9 +36,15 @@ func (r *Runner) SetDebug(debug bool) *Runner {
 	return r
 }
 
-func (r *Runner) Run(testcases ...*TestCase) error {
+func (r *Runner) Run(testcases ...ITestCase) error {
 	for _, testcase := range testcases {
-		if err := r.runCase(testcase); err != nil {
+		tcStruct, err := testcase.ToStruct()
+		if err != nil {
+			log.Printf("[Run] testcase.ToStruct() error: %v", err)
+			return err
+		}
+		if err := r.runCase(tcStruct); err != nil {
+			log.Printf("[Run] runCase error: %v", err)
 			return err
 		}
 	}
