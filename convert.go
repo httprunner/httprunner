@@ -132,7 +132,7 @@ func loadTestFile(path *TestCasePath) (*TestCase, error) {
 	var tc *TCase
 	var err error
 
-	casePath := path.string
+	casePath := path.Path
 	ext := filepath.Ext(casePath)
 	switch ext {
 	case ".json":
