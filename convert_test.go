@@ -96,3 +96,19 @@ func TestDumpAndLoadYAML(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestLoadJSONAndRun(t *testing.T) {
+	jsonPath := "demo.json"
+	tc, err := loadFromJSON(jsonPath)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	testcase, err := convertTestCase(tc)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	err = Test(t, testcase)
+	if err != nil {
+		t.Fatalf("run testcase error: %v", err)
+	}
+}
