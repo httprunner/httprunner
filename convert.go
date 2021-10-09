@@ -3,6 +3,7 @@ package httpboomer
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -123,4 +124,30 @@ func convertTestCase(tc *TCase) (*TestCase, error) {
 		}
 	}
 	return testCase, nil
+}
+
+var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
+
+func loadTestFile(path *TestCasePath) (*TestCase, error) {
+	var tc *TCase
+	var err error
+
+	casePath := path.string
+	ext := filepath.Ext(casePath)
+	switch ext {
+	case ".json":
+		tc, err = loadFromJSON(casePath)
+	case ".yaml", ".yml":
+		tc, err = loadFromYAML(casePath)
+	default:
+		err = ErrUnsupportedFileExt
+	}
+	if err != nil {
+		return nil, err
+	}
+	testcase, err := convertTestCase(tc)
+	if err != nil {
+		return nil, err
+	}
+	return testcase, nil
 }
