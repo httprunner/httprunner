@@ -83,3 +83,22 @@ func loadFromJSON(path string) (*TCase, error) {
 	err = json.Unmarshal(file, tc)
 	return tc, err
 }
+
+func loadFromYAML(path string) (*TCase, error) {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		log.Printf("convert absolute path error: %v, path: %v", err, path)
+		return nil, err
+	}
+	log.Printf("load testcase from yaml path: %s", path)
+
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Printf("dump yaml path error: %v", err)
+		return nil, err
+	}
+
+	tc := &TCase{}
+	err = yaml.Unmarshal(file, tc)
+	return tc, err
+}

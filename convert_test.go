@@ -73,9 +73,26 @@ func TestDumpAndLoadJSON(t *testing.T) {
 	}
 }
 
-func TestDump2YAML(t *testing.T) {
-	err := demoTestCase.dump2YAML("demo.yml")
+func TestDumpAndLoadYAML(t *testing.T) {
+	yamlPath := "demo.yaml"
+	err := demoTestCase.dump2YAML(yamlPath)
 	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	tc, err := loadFromYAML(yamlPath)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.Config.Name, demoTestCase.Config.Name) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.Config.BaseURL, demoTestCase.Config.BaseURL) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.TestSteps[1].Name, demoTestCase.TestSteps[1].Name()) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tc.TestSteps[1].Request, demoTestCase.TestSteps[1].ToStruct().Request) {
 		t.Fail()
 	}
 }
