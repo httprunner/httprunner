@@ -102,3 +102,23 @@ func loadFromYAML(path string) (*TCase, error) {
 	err = yaml.Unmarshal(file, tc)
 	return tc, err
 }
+
+func convertTestCase(tc *TCase) (*TestCase, error) {
+	testCase := &TestCase{
+		Config: tc.Config,
+	}
+	for _, step := range tc.TestSteps {
+		if step.Request != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &requestWithOptionalArgs{
+				step: step,
+			})
+		} else if step.TestCase != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &testcaseWithOptionalArgs{
+				step: step,
+			})
+		} else {
+			log.Printf("[convertTestCase] unexpected step: %+v", step)
+		}
+	}
+	return testCase, nil
+}
