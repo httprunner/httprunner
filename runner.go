@@ -8,7 +8,7 @@ import (
 	"github.com/imroc/req"
 )
 
-func Test(t *testing.T, testcases ...ITestCase) error {
+func Run(t *testing.T, testcases ...ITestCase) error {
 	return NewRunner().WithTestingT(t).SetDebug(true).Run(testcases...)
 }
 

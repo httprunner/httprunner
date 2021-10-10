@@ -122,7 +122,7 @@ func TestLoadJSONAndRun(t *testing.T) {
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	err = Test(t, testcase)
+	err = Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

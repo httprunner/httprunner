@@ -32,7 +32,7 @@ func TestHttpRunner(t *testing.T) {
 	}
 	testcase3 := &TestCasePath{demoTestCaseJSONPath}
 
-	err := Test(t, testcase1, testcase2, testcase3)
+	err := Run(t, testcase1, testcase2, testcase3)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

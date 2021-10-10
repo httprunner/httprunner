@@ -51,7 +51,7 @@ func TestCaseValidateStep(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Test(t, testcase)
+	err := httpboomer.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

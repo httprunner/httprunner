@@ -33,7 +33,7 @@ func TestCaseConfigVariables(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Test(t, testcase)
+	err := httpboomer.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestCaseStepVariables(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Test(t, testcase)
+	err := httpboomer.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestCaseOverrideConfigVariables(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Test(t, testcase)
+	err := httpboomer.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestCaseParseVariables(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Test(t, testcase)
+	err := httpboomer.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
