@@ -6,7 +6,7 @@ import (
 	"github.com/myzhan/boomer"
 )
 
-func Run(testcases ...ITestCase) {
+func Boom(testcases ...ITestCase) {
 	NewBoomer().Run(testcases...)
 }
 
