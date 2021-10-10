@@ -12,7 +12,7 @@ import (
 var runCmd = &cobra.Command{
 	Use:   "run path...",
 	Short: "run API test",
-	Long:  `run yaml/json testcase files`,
+	Long:  `run yaml/json testcase files for API test`,
 	Example: `  $ httpboomer run demo.json	# run specified json testcase file
   $ httpboomer run demo.yaml	# run specified yaml testcase file
   $ httpboomer run examples/	# run testcases in specified folder`,

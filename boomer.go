@@ -6,17 +6,25 @@ import (
 	"github.com/myzhan/boomer"
 )
 
+var (
+	defaultMasterHost = "127.0.0.1"
+	defaultMasterPort = 5557
+)
+
+// run load test with default configs
 func Boom(testcases ...ITestCase) {
-	NewBoomer().Run(testcases...)
+	NewBoomer(defaultMasterHost, defaultMasterPort).Run(testcases...)
 }
 
-func NewBoomer() *Boomer {
+func NewBoomer(masterHost string, masterPort int) *Boomer {
 	return &Boomer{
-		debug: false,
+		Boomer: boomer.NewBoomer(masterHost, masterPort),
+		debug:  false,
 	}
 }
 
 type Boomer struct {
+	*boomer.Boomer
 	debug bool
 }
 

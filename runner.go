@@ -8,6 +8,7 @@ import (
 	"github.com/imroc/req"
 )
 
+// run API test with default configs
 func Run(t *testing.T, testcases ...ITestCase) error {
 	return NewRunner().WithTestingT(t).SetDebug(true).Run(testcases...)
 }
