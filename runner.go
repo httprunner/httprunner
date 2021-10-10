@@ -16,14 +16,14 @@ func NewRunner() *Runner {
 	return &Runner{
 		t:      &testing.T{},
 		debug:  false, // default to turn off debug
-		Client: req.New(),
+		client: req.New(),
 	}
 }
 
 type Runner struct {
 	t      *testing.T
 	debug  bool
-	Client *req.Req
+	client *req.Req
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
@@ -157,7 +157,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 
 	// do request action
 	req.Debug = r.debug
-	resp, err := r.Client.Do(string(step.Request.Method), step.Request.URL, v...)
+	resp, err := r.client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
 		return
 	}
