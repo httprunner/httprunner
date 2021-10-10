@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"testing"
+	"log"
 
 	"github.com/spf13/cobra"
 
@@ -16,20 +16,25 @@ var runCmd = &cobra.Command{
 	Example: `  $ httpboomer run demo.json	# run specified json testcase file
   $ httpboomer run demo.yaml	# run specified yaml testcase file
   $ httpboomer run examples/	# run testcases in specified folder`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-
-		// f, _ := cmd.Flags().GetBool("gen-html-report")
-		// fmt.Println(f)
+		// --silent flag
+		silentFlag, err := cmd.Flags().GetBool("silent")
+		if err != nil {
+			return err
+		}
+		log.Printf("[runCmd] set --silent flag: %v", silentFlag)
 
 		var paths []httpboomer.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &httpboomer.TestCasePath{Path: arg})
 		}
-		return httpboomer.Run(&testing.T{}, paths...)
+		return httpboomer.NewRunner().SetDebug(!silentFlag).Run(paths...)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().BoolP("gen-html-report", "r", false, "Generate HTML report")
+	runCmd.Flags().BoolP("silent", "s", false, "Disable logging request & response details")
+	// runCmd.Flags().BoolP("gen-html-report", "r", false, "Generate HTML report")
 }
