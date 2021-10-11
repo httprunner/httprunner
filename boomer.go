@@ -35,12 +35,12 @@ func (b *Boomer) SetDebug(debug bool) *Boomer {
 
 func (b *Boomer) Run(testcases ...ITestCase) {
 	var taskSlice []*boomer.Task
-	for _, testcase := range testcases {
-		tcStruct, err := testcase.ToStruct()
+	for _, iTestCase := range testcases {
+		testcase, err := iTestCase.ToTestCase()
 		if err != nil {
 			panic(err)
 		}
-		task := b.convertBoomerTask(tcStruct)
+		task := b.convertBoomerTask(testcase)
 		taskSlice = append(taskSlice, task)
 	}
 	boomer.Run(taskSlice...)

@@ -68,7 +68,8 @@ type IStep interface {
 }
 
 type ITestCase interface {
-	ToStruct() (*TestCase, error)
+	ToTestCase() (*TestCase, error)
+	ToTCase() (*TCase, error)
 }
 
 // used for testcase runner
@@ -77,20 +78,12 @@ type TestCase struct {
 	TestSteps []IStep
 }
 
-func (tc *TestCase) ToStruct() (*TestCase, error) {
+func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
 type TestCasePath struct {
 	Path string
-}
-
-func (path *TestCasePath) ToStruct() (*TestCase, error) {
-	testcase, err := loadTestFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return testcase, nil
 }
 
 type TestCaseSummary struct{}

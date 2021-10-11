@@ -38,13 +38,13 @@ func (r *Runner) SetDebug(debug bool) *Runner {
 }
 
 func (r *Runner) Run(testcases ...ITestCase) error {
-	for _, testcase := range testcases {
-		tcStruct, err := testcase.ToStruct()
+	for _, iTestCase := range testcases {
+		testcase, err := iTestCase.ToTestCase()
 		if err != nil {
 			log.Printf("[Run] testcase.ToStruct() error: %v", err)
 			return err
 		}
-		if err := r.runCase(tcStruct); err != nil {
+		if err := r.runCase(testcase); err != nil {
 			log.Printf("[Run] runCase error: %v", err)
 			return err
 		}
