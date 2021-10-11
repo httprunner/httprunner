@@ -19,8 +19,7 @@ type HAR struct {
 }
 
 func (h *HAR) GenJSON() (jsonPath string, err error) {
-	ext := filepath.Ext(h.path)
-	jsonPath = h.path[0:len(h.path)-len(ext)] + ".json"
+	jsonPath = getFilenameWithoutExtension(h.path) + ".json"
 
 	tCase := h.makeTestCase()
 	err = tCase.Dump2JSON(jsonPath)
@@ -28,8 +27,7 @@ func (h *HAR) GenJSON() (jsonPath string, err error) {
 }
 
 func (h *HAR) GenYAML() (yamlPath string, err error) {
-	ext := filepath.Ext(h.path)
-	yamlPath = h.path[0:len(h.path)-len(ext)] + ".yaml"
+	yamlPath = getFilenameWithoutExtension(h.path) + ".yaml"
 
 	tCase := h.makeTestCase()
 	err = tCase.Dump2YAML(yamlPath)
@@ -54,4 +52,9 @@ func (h *HAR) prepareConfig() *httpboomer.TConfig {
 func (h *HAR) prepareTestSteps() []*httpboomer.TStep {
 	var steps []*httpboomer.TStep
 	return steps
+}
+
+func getFilenameWithoutExtension(path string) string {
+	ext := filepath.Ext(path)
+	return path[0 : len(path)-len(ext)]
 }
