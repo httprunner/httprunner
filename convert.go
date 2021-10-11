@@ -11,25 +11,24 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (tc *TestCase) toStruct() *TCase {
-	tcStruct := TCase{
+func (tc *TestCase) ToTCase() (*TCase, error) {
+	tCase := TCase{
 		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
-		tcStruct.TestSteps = append(tcStruct.TestSteps, step.ToStruct())
+		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
 	}
-	return &tcStruct
+	return &tCase, nil
 }
 
-func (tc *TestCase) dump2JSON(path string) error {
+func (tc *TCase) Dump2JSON(path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Printf("convert absolute path error: %v, path: %v", err, path)
 		return err
 	}
 	log.Printf("dump testcase to json path: %s", path)
-	tcStruct := tc.toStruct()
-	file, _ := json.MarshalIndent(tcStruct, "", "    ")
+	file, _ := json.MarshalIndent(tc, "", "    ")
 	err = ioutil.WriteFile(path, file, 0644)
 	if err != nil {
 		log.Printf("dump json path error: %v", err)
@@ -38,7 +37,7 @@ func (tc *TestCase) dump2JSON(path string) error {
 	return nil
 }
 
-func (tc *TestCase) dump2YAML(path string) error {
+func (tc *TCase) Dump2YAML(path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Printf("convert absolute path error: %v, path: %v", err, path)
@@ -52,8 +51,7 @@ func (tc *TestCase) dump2YAML(path string) error {
 	encoder.SetIndent(4)
 
 	// encode
-	tcStruct := tc.toStruct()
-	err = encoder.Encode(tcStruct)
+	err = encoder.Encode(tc)
 	if err != nil {
 		return err
 	}
@@ -106,7 +104,7 @@ func loadFromYAML(path string) (*TCase, error) {
 	return tc, err
 }
 
-func convertTestCase(tc *TCase) (*TestCase, error) {
+func (tc *TCase) ToTestCase() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
 	}
@@ -128,7 +126,7 @@ func convertTestCase(tc *TCase) (*TestCase, error) {
 
 var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
 
-func loadTestFile(path *TestCasePath) (*TestCase, error) {
+func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	var tc *TCase
 	var err error
 
@@ -145,9 +143,17 @@ func loadTestFile(path *TestCasePath) (*TestCase, error) {
 	if err != nil {
 		return nil, err
 	}
-	testcase, err := convertTestCase(tc)
+	testcase, err := tc.ToTestCase()
 	if err != nil {
 		return nil, err
 	}
 	return testcase, nil
+}
+
+func (path *TestCasePath) ToTCase() (*TCase, error) {
+	testcase, err := path.ToTestCase()
+	if err != nil {
+		return nil, err
+	}
+	return testcase.ToTCase()
 }

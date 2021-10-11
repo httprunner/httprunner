@@ -56,12 +56,13 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	tCase, _ := demoTestCase.ToTCase()
 	// setup, prepare demo json/yaml testcase file path
-	err := demoTestCase.dump2JSON(demoTestCaseJSONPath)
+	err := tCase.Dump2JSON(demoTestCaseJSONPath)
 	if err != nil {
 		os.Exit(1)
 	}
-	err = demoTestCase.dump2YAML(demoTestCaseYAMLPath)
+	err = tCase.Dump2YAML(demoTestCaseYAMLPath)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -118,7 +119,7 @@ func TestLoadYAMLCase(t *testing.T) {
 
 func TestLoadJSONAndRun(t *testing.T) {
 	jsonPath := &TestCasePath{demoTestCaseJSONPath}
-	testcase, err := loadTestFile(jsonPath)
+	testcase, err := jsonPath.ToTestCase()
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
