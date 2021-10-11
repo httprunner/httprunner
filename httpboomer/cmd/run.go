@@ -34,7 +34,7 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().BoolP("silent", "s", false, "Disable logging request & response details")
 	// runCmd.Flags().BoolP("gen-html-report", "r", false, "Generate HTML report")
 }

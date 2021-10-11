@@ -40,7 +40,7 @@ var cpuProfile string
 var cpuProfileDuration time.Duration
 
 func init() {
-	rootCmd.AddCommand(boomCmd)
+	RootCmd.AddCommand(boomCmd)
 
 	boomCmd.Flags().Int64Var(&maxRPS, "max-rps", 0, "Max RPS that boomer can generate, disabled by default.")
 	boomCmd.Flags().StringVar(&requestIncreaseRate, "request-increase-rate", "-1", "Request increase rate, disabled by default.")
