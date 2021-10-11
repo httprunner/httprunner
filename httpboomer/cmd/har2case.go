@@ -26,7 +26,7 @@ var har2caseCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(har2caseCmd)
+	RootCmd.AddCommand(har2caseCmd)
 
 	// Here you will define your flags and configuration settings.
 
