@@ -74,7 +74,7 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 			httpboomer.Step("post json data").
 				POST("/post").
 				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
-				WithJSON(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+				WithBody(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				Validate().
 				AssertEqual("status_code", "$statusCode", "check status code"). // assert with extracted variable from previous step
 				AssertEqual("$varFoo1", "bar1", "check json foo1").             // assert with extracted variable from previous step

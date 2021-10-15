@@ -39,7 +39,7 @@ func TestCaseDemo(t *testing.T) {
 				AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
 			httpboomer.Step("post json data").
 				POST("/post").
-				WithJSON(map[string]interface{}{
+				WithBody(map[string]interface{}{
 					"foo1": "$varFoo1",       // reference former extracted variable
 					"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
 				}).

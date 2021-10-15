@@ -87,7 +87,7 @@ func TestMakeTestCase(t *testing.T) {
 	}
 
 	// make request data
-	if !assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.TestSteps[1].Request.Data) {
+	if !assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.TestSteps[1].Request.Body) {
 		t.Fail()
 	}
 }

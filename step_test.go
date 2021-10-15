@@ -20,7 +20,7 @@ var (
 			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
-			WithData("a=1&b=2").
+			WithBody("a=1&b=2").
 			WithCookies(map[string]string{"user": "debugtalk"}).
 			Validate().
 			AssertEqual("status_code", 200, "check status code")
@@ -65,7 +65,7 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 	if tStep.Request.Cookies["user"] != "debugtalk" {
 		t.Fatalf("tStep.Request.Cookies mismatch")
 	}
-	if tStep.Request.Data != "a=1&b=2" {
+	if tStep.Request.Body != "a=1&b=2" {
 		t.Fatalf("tStep.Request.Data mismatch")
 	}
 	if tStep.Validators[0].Check != "status_code" || tStep.Validators[0].Expect != 200 {

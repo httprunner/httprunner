@@ -32,7 +32,7 @@ func TestCaseCallFunction(t *testing.T) {
 			httpboomer.Step("post json data with functions").
 				POST("/post").
 				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
-				WithJSON(map[string]interface{}{"foo1": "${gen_random_string($n)}", "foo2": "${max($a, $b)}"}).
+				WithBody(map[string]interface{}{"foo1": "${gen_random_string($n)}", "foo2": "${max($a, $b)}"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertLengthEqual("body.json.foo1", 5, "check args foo1").

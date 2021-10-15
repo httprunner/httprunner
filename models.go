@@ -28,8 +28,7 @@ type TRequest struct {
 	Params         map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
 	Headers        map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Cookies        map[string]string      `json:"cookies,omitempty" yaml:"cookies,omitempty"`
-	Data           interface{}            `json:"data,omitempty" yaml:"data,omitempty"`
-	JSON           interface{}            `json:"json,omitempty" yaml:"json,omitempty"`
+	Body           interface{}            `json:"body,omitempty" yaml:"body,omitempty"`
 	Timeout        float32                `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 	AllowRedirects bool                   `json:"allow_redirects,omitempty" yaml:"allow_redirects,omitempty"`
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
