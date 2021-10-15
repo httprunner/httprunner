@@ -1,6 +1,7 @@
 package har2case
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/httprunner/httpboomer"
+	"github.com/pkg/errors"
 )
 
 func NewHAR(path string) *HAR {
@@ -132,7 +134,7 @@ func (h *HAR) prepareTestStep(entry *Entry) (*httpboomer.TStep, error) {
 	if err := tStep.makeRequestBody(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeValidate(); err != nil {
+	if err := tStep.makeValidate(entry); err != nil {
 		return nil, err
 	}
 	return &tStep.TStep, nil
@@ -187,6 +189,12 @@ func (s *TStep) makeRequestHeaders(entry *Entry) error {
 
 func (s *TStep) makeRequestBody(entry *Entry) error {
 	mimeType := entry.Request.PostData.MimeType
+	if mimeType == "" {
+		// GET/HEAD/DELETE without body
+		return nil
+	}
+
+	// POST/PUT with body
 	if strings.HasPrefix(mimeType, "application/json") {
 		// post json
 		var body interface{}
@@ -203,12 +211,78 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 			paramsList = append(paramsList, fmt.Sprintf("%s=%s", param.Name, param.Value))
 		}
 		s.Request.Body = strings.Join(paramsList, "&")
+	} else {
+		// TODO
+		log.Fatalf("makeRequestBody: NotImplemented for mimeType %s", mimeType)
 	}
 	return nil
 }
 
-func (s *TStep) makeValidate() error {
-	s.Validators = nil
+func (s *TStep) makeValidate(entry *Entry) error {
+	// make validator for response status code
+	s.Validators = append(s.Validators, httpboomer.TValidator{
+		Check:   "status_code",
+		Assert:  "equals",
+		Expect:  entry.Response.Status,
+		Message: "assert response status code",
+	})
+
+	// make validators for response headers
+	for _, header := range entry.Response.Headers {
+		// assert Content-Type
+		if strings.EqualFold(header.Name, "Content-Type") {
+			s.Validators = append(s.Validators, httpboomer.TValidator{
+				Check:   "headers.Content-Type",
+				Assert:  "equals",
+				Expect:  header.Value,
+				Message: "assert response header Content-Type",
+			})
+		}
+	}
+
+	// make validators for response body
+	respBody := entry.Response.Content
+	if respBody.Text == "" {
+		// response body is empty
+		return nil
+	}
+	if strings.HasPrefix(respBody.MimeType, "application/json") {
+		// response body is json
+		if respBody.Encoding == "base64" {
+			// decode base64 text
+			data, err := base64.StdEncoding.DecodeString(respBody.Text)
+			if err != nil {
+				return errors.Wrap(err, "decode base64 error")
+			}
+
+			// convert to json
+			var body interface{}
+			if err = json.Unmarshal(data, &body); err != nil {
+				return errors.Wrap(err, "json.Unmarshal body error")
+			}
+			if _, ok := body.(map[string]interface{}); !ok {
+				return fmt.Errorf("response body is not json, not matched with MimeType")
+			}
+
+			// response body is json
+			for key, value := range body.(map[string]interface{}) {
+				switch v := value.(type) {
+				case map[string]interface{}:
+					continue
+				case []interface{}:
+					continue
+				default:
+					s.Validators = append(s.Validators, httpboomer.TValidator{
+						Check:   fmt.Sprintf("body.%s", key),
+						Assert:  "equals",
+						Expect:  v,
+						Message: fmt.Sprintf("assert response body %s", key),
+					})
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
