@@ -47,7 +47,7 @@ teststeps:
       request:
         method: POST
         url: /post
-        json:
+        body:
             foo1: $varFoo1
             foo2: ${max($a, $b)}
       validate:

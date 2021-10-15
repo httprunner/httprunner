@@ -148,13 +148,8 @@ func (s *requestWithOptionalArgs) WithCookies(cookies map[string]string) *reques
 	return s
 }
 
-func (s *requestWithOptionalArgs) WithData(data interface{}) *requestWithOptionalArgs {
-	s.step.Request.Data = data
-	return s
-}
-
-func (s *requestWithOptionalArgs) WithJSON(json interface{}) *requestWithOptionalArgs {
-	s.step.Request.JSON = json
+func (s *requestWithOptionalArgs) WithBody(body interface{}) *requestWithOptionalArgs {
+	s.step.Request.Body = body
 	return s
 }
 

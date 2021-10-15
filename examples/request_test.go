@@ -27,7 +27,7 @@ func TestCaseBasicRequest(t *testing.T) {
 			httpboomer.Step("post raw text").
 				POST("/post").
 				WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "text/plain"}).
-				WithData("This is expected to be sent back as part of response body.").
+				WithBody("This is expected to be sent back as part of response body.").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.data", "This is expected to be sent back as part of response body.", "check data"),
@@ -42,7 +42,7 @@ func TestCaseBasicRequest(t *testing.T) {
 			httpboomer.Step("post json data").
 				POST("/post").
 				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
-				WithJSON(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+				WithBody(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.json.foo1", "bar1", "check json foo1").
@@ -50,7 +50,7 @@ func TestCaseBasicRequest(t *testing.T) {
 			httpboomer.Step("put request").
 				PUT("/put").
 				WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "text/plain"}).
-				WithData("This is expected to be sent back as part of response body.").
+				WithBody("This is expected to be sent back as part of response body.").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.data", "This is expected to be sent back as part of response body.", "check data"),

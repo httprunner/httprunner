@@ -189,13 +189,13 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 	mimeType := entry.Request.PostData.MimeType
 	if strings.HasPrefix(mimeType, "application/json") {
 		// post json
-		var data interface{}
-		err := json.Unmarshal([]byte(entry.Request.PostData.Text), &data)
+		var body interface{}
+		err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
 		if err != nil {
 			log.Printf("makeRequestBody error: %v", err)
 			return err
 		}
-		s.Request.Data = data
+		s.Request.Body = body
 	} else if strings.HasPrefix(mimeType, "application/x-www-form-urlencoded") {
 		// TODO: post form data
 	}

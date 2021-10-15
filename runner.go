@@ -134,19 +134,17 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		}
 		v = append(v, req.Param(params.(map[string]interface{})))
 	}
-	if step.Request.Data != nil {
-		data, err := parseData(step.Request.Data, step.Variables)
+	if step.Request.Body != nil {
+		data, err := parseData(step.Request.Body, step.Variables)
 		if err != nil {
 			return nil, err
 		}
-		v = append(v, data)
-	}
-	if step.Request.JSON != nil {
-		jsonData, err := parseData(step.Request.JSON, step.Variables)
-		if err != nil {
-			return nil, err
+		switch data.(type) {
+		case map[string]interface{}: // post json
+			v = append(v, req.BodyJSON(data))
+		default: // post raw data
+			v = append(v, data)
 		}
-		v = append(v, req.BodyJSON(jsonData))
 	}
 
 	for cookieName, cookieValue := range step.Request.Cookies {
@@ -158,6 +156,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 
 	// do request action
 	req.Debug = r.debug
+	// r.client.SetProxyUrl("http://127.0.0.1:8888")
 	resp, err := r.client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
 		return
