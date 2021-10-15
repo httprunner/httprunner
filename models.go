@@ -1,15 +1,15 @@
 package httpboomer
 
-type enumHTTPMethod string
+type EnumHTTPMethod string
 
 const (
-	GET     enumHTTPMethod = "GET"
-	HEAD    enumHTTPMethod = "HEAD"
-	POST    enumHTTPMethod = "POST"
-	PUT     enumHTTPMethod = "PUT"
-	DELETE  enumHTTPMethod = "DELETE"
-	OPTIONS enumHTTPMethod = "OPTIONS"
-	PATCH   enumHTTPMethod = "PATCH"
+	GET     EnumHTTPMethod = "GET"
+	HEAD    EnumHTTPMethod = "HEAD"
+	POST    EnumHTTPMethod = "POST"
+	PUT     EnumHTTPMethod = "PUT"
+	DELETE  EnumHTTPMethod = "DELETE"
+	OPTIONS EnumHTTPMethod = "OPTIONS"
+	PATCH   EnumHTTPMethod = "PATCH"
 )
 
 type TConfig struct {
@@ -23,7 +23,7 @@ type TConfig struct {
 }
 
 type TRequest struct {
-	Method         enumHTTPMethod         `json:"method" yaml:"method"`
+	Method         EnumHTTPMethod         `json:"method" yaml:"method"`
 	URL            string                 `json:"url" yaml:"url"`
 	Params         map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
 	Headers        map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
