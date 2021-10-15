@@ -197,7 +197,12 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 		}
 		s.Request.Body = body
 	} else if strings.HasPrefix(mimeType, "application/x-www-form-urlencoded") {
-		// TODO: post form data
+		// post form
+		var paramsList []string
+		for _, param := range entry.Request.PostData.Params {
+			paramsList = append(paramsList, fmt.Sprintf("%s=%s", param.Name, param.Value))
+		}
+		s.Request.Body = strings.Join(paramsList, "&")
 	}
 	return nil
 }
