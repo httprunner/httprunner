@@ -63,3 +63,23 @@ teststeps:
           assert: equals
           expect: 12.3
           msg: check args foo2
+    - name: post form data
+      request:
+        method: POST
+        url: /post
+        params:
+            foo1: $varFoo1
+            foo2: ${max($a, $b)}
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: check status code
+        - check: body.form.foo1
+          assert: length_equals
+          expect: 5
+          msg: check args foo1
+        - check: body.form.foo2
+          assert: equals
+          expect: "12.3"
+          msg: check args foo2

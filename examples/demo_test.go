@@ -47,6 +47,16 @@ func TestCaseDemo(t *testing.T) {
 				AssertEqual("status_code", 200, "check status code").
 				AssertLengthEqual("body.json.foo1", 5, "check args foo1").
 				AssertEqual("body.json.foo2", 12.3, "check args foo2"),
+			httpboomer.Step("post form data").
+				POST("/post").
+				WithParams(map[string]interface{}{
+					"foo1": "$varFoo1",       // reference former extracted variable
+					"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
+				}).
+				Validate().
+				AssertEqual("status_code", 200, "check status code").
+				AssertLengthEqual("body.form.foo1", 5, "check args foo1").
+				AssertEqual("body.form.foo2", "12.3", "check args foo2"), // form data will be converted to string
 		},
 	}
 
