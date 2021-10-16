@@ -1,4 +1,4 @@
-package httpboomer
+package hrp
 
 import (
 	"bytes"

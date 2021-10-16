@@ -1,14 +1,14 @@
-# HttpBoomer
+# HttpRunner+ (hrp)
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/httpboomer.svg)](https://pkg.go.dev/github.com/httprunner/httpboomer)
-[![Github Actions](https://github.com/httprunner/HttpBoomer/actions/workflows/main.yml/badge.svg)](https://github.com/httprunner/HttpBoomer/actions)
-[![codecov](https://codecov.io/gh/httprunner/HttpBoomer/branch/main/graph/badge.svg?token=HPCQWCD7KO)](https://codecov.io/gh/httprunner/HttpBoomer)
-[![Go Report Card](https://goreportcard.com/badge/github.com/httprunner/HttpBoomer)](https://goreportcard.com/report/github.com/httprunner/HttpBoomer)
-[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B27856%2Fgithub.com%2Fhttprunner%2FHttpBoomer.svg?type=shield)](https://app.fossa.com/reports/fb0e64a7-7dcf-48bb-8de9-8f0e016b903b)
+[![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/hrp.svg)](https://pkg.go.dev/github.com/httprunner/hrp)
+[![Github Actions](https://github.com/httprunner/hrp/actions/workflows/main.yml/badge.svg)](https://github.com/httprunner/hrp/actions)
+[![codecov](https://codecov.io/gh/httprunner/hrp/branch/main/graph/badge.svg?token=HPCQWCD7KO)](https://codecov.io/gh/httprunner/hrp)
+[![Go Report Card](https://goreportcard.com/badge/github.com/httprunner/hrp)](https://goreportcard.com/report/github.com/httprunner/hrp)
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B27856%2Fgithub.com%2Fhttprunner%2Fhrp.svg?type=shield)](https://app.fossa.com/reports/fb0e64a7-7dcf-48bb-8de9-8f0e016b903b)
 
-> HttpBoomer = [HttpRunner] + [Boomer]
+> hrp (HttpRunnerPlus) = [HttpRunner] + [Boomer]
 
-HttpBoomer is a golang implementation of [HttpRunner]. Ideally, HttpBoomer will be fully compatible with HttpRunner, including testcase format and usage. What's more, HttpBoomer will integrate Boomer natively to be a better load generator for [locust].
+`hrp` is a golang implementation of [HttpRunner]. Ideally, `hrp` will be fully compatible with HttpRunner, including testcase format and usage. What's more, `hrp` will integrate Boomer natively to be a better load generator for [locust].
 
 ## Key Features
 
@@ -27,23 +27,23 @@ HttpBoomer is a golang implementation of [HttpRunner]. Ideally, HttpBoomer will 
 ### Install
 
 ```bash
-$ go get -u github.com/httprunner/httpboomer
+$ go get -u github.com/httprunner/hrp
 ```
 
 ### Examples
 
-This is an example of HttpBoomer testcase. You can find more in the [`examples`][examples] directory.
+This is an example of `hrp` testcase. You can find more in the [`examples`][examples] directory.
 
 ```go
 import (
     "testing"
 
-    "github.com/httprunner/httpboomer"
+    "github.com/httprunner/hrp"
 )
 
 func TestCaseDemo(t *testing.T) {
-    testcase := &httpboomer.TestCase{
-        Config: httpboomer.TConfig{
+    testcase := &hrp.TestCase{
+        Config: hrp.TConfig{
             Name:    "demo with complex mechanisms",
             BaseURL: "https://postman-echo.com",
             Variables: map[string]interface{}{ // global level variables
@@ -54,8 +54,8 @@ func TestCaseDemo(t *testing.T) {
                 "varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
             },
         },
-        TestSteps: []httpboomer.IStep{
-            httpboomer.Step("get with params").
+        TestSteps: []hrp.IStep{
+            hrp.Step("get with params").
                 WithVariables(map[string]interface{}{ // step level variables
                     "n":       3,                // inherit config level variables if not set in step level, a/varFoo1
                     "b":       34.5,             // override config level variable if existed, n/b/varFoo2
@@ -63,7 +63,7 @@ func TestCaseDemo(t *testing.T) {
                 }).
                 GET("/get").
                 WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
-                WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).                 // request with headers
+                WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).                 // request with headers
                 Extract().
                 WithJmesPath("body.args.foo1", "varFoo1"). // extract variable with jmespath
                 Validate().
@@ -72,7 +72,7 @@ func TestCaseDemo(t *testing.T) {
                 AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
                 AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
                 AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
-            httpboomer.Step("post json data").
+            hrp.Step("post json data").
                 POST("/post").
                 WithJSON(map[string]interface{}{
                     "foo1": "$varFoo1",       // reference former extracted variable
@@ -85,7 +85,7 @@ func TestCaseDemo(t *testing.T) {
         },
     }
 
-    err := httpboomer.Run(t, testcase)
+    err := hrp.Run(t, testcase)
     if err != nil {
         t.Fatalf("run testcase error: %v", err)
     }

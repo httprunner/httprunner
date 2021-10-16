@@ -11,8 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/httprunner/httpboomer"
 	"github.com/pkg/errors"
+
+	"github.com/httprunner/hrp"
 )
 
 func NewHAR(path string) *HAR {
@@ -49,13 +50,13 @@ func (h *HAR) GenYAML() (yamlPath string, err error) {
 	return
 }
 
-func (h *HAR) makeTestCase() (*httpboomer.TCase, error) {
+func (h *HAR) makeTestCase() (*hrp.TCase, error) {
 	teststeps, err := h.prepareTestSteps()
 	if err != nil {
 		return nil, err
 	}
 
-	tCase := &httpboomer.TCase{
+	tCase := &hrp.TCase{
 		Config:    *h.prepareConfig(),
 		TestSteps: teststeps,
 	}
@@ -83,21 +84,21 @@ func (h *HAR) load() (*Har, error) {
 	return har, nil
 }
 
-func (h *HAR) prepareConfig() *httpboomer.TConfig {
-	return &httpboomer.TConfig{
+func (h *HAR) prepareConfig() *hrp.TConfig {
+	return &hrp.TConfig{
 		Name:      "testcase description",
 		Variables: make(map[string]interface{}),
 		Verify:    false,
 	}
 }
 
-func (h *HAR) prepareTestSteps() ([]*httpboomer.TStep, error) {
+func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {
 	har, err := h.load()
 	if err != nil {
 		return nil, err
 	}
 
-	var steps []*httpboomer.TStep
+	var steps []*hrp.TStep
 	for _, entry := range har.Log.Entries {
 		step, err := h.prepareTestStep(&entry)
 		if err != nil {
@@ -109,12 +110,12 @@ func (h *HAR) prepareTestSteps() ([]*httpboomer.TStep, error) {
 	return steps, nil
 }
 
-func (h *HAR) prepareTestStep(entry *Entry) (*httpboomer.TStep, error) {
+func (h *HAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 	log.Printf("[prepareTestStep] %v %v", entry.Request.Method, entry.Request.URL)
 	tStep := &TStep{
-		TStep: httpboomer.TStep{
-			Request:    &httpboomer.TRequest{},
-			Validators: make([]httpboomer.TValidator, 0),
+		TStep: hrp.TStep{
+			Request:    &hrp.TRequest{},
+			Validators: make([]hrp.TValidator, 0),
 		},
 	}
 	if err := tStep.makeRequestMethod(entry); err != nil {
@@ -142,11 +143,11 @@ func (h *HAR) prepareTestStep(entry *Entry) (*httpboomer.TStep, error) {
 }
 
 type TStep struct {
-	httpboomer.TStep
+	hrp.TStep
 }
 
 func (s *TStep) makeRequestMethod(entry *Entry) error {
-	s.Request.Method = httpboomer.EnumHTTPMethod(entry.Request.Method)
+	s.Request.Method = hrp.EnumHTTPMethod(entry.Request.Method)
 	return nil
 }
 
@@ -224,7 +225,7 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 
 func (s *TStep) makeValidate(entry *Entry) error {
 	// make validator for response status code
-	s.Validators = append(s.Validators, httpboomer.TValidator{
+	s.Validators = append(s.Validators, hrp.TValidator{
 		Check:   "status_code",
 		Assert:  "equals",
 		Expect:  entry.Response.Status,
@@ -235,7 +236,7 @@ func (s *TStep) makeValidate(entry *Entry) error {
 	for _, header := range entry.Response.Headers {
 		// assert Content-Type
 		if strings.EqualFold(header.Name, "Content-Type") {
-			s.Validators = append(s.Validators, httpboomer.TValidator{
+			s.Validators = append(s.Validators, hrp.TValidator{
 				Check:   "headers.Content-Type",
 				Assert:  "equals",
 				Expect:  header.Value,
@@ -276,7 +277,7 @@ func (s *TStep) makeValidate(entry *Entry) error {
 				case []interface{}:
 					continue
 				default:
-					s.Validators = append(s.Validators, httpboomer.TValidator{
+					s.Validators = append(s.Validators, hrp.TValidator{
 						Check:   fmt.Sprintf("body.%s", key),
 						Assert:  "equals",
 						Expect:  v,

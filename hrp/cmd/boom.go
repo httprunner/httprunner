@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httpboomer"
+	"github.com/httprunner/hrp"
 )
 
 // boomCmd represents the boom command
@@ -13,16 +13,16 @@ var boomCmd = &cobra.Command{
 	Use:   "boom",
 	Short: "run load test with boomer",
 	Long:  `run yaml/json testcase files for load test`,
-	Example: `  $ httpboomer boom demo.json	# run specified json testcase file
-  $ httpboomer boom demo.yaml	# run specified yaml testcase file
-  $ httpboomer boom examples/	# run testcases in specified folder`,
+	Example: `  $ hrp boom demo.json	# run specified json testcase file
+  $ hrp boom demo.yaml	# run specified yaml testcase file
+  $ hrp boom examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		var paths []httpboomer.ITestCase
+		var paths []hrp.ITestCase
 		for _, arg := range args {
-			paths = append(paths, &httpboomer.TestCasePath{Path: arg})
+			paths = append(paths, &hrp.TestCasePath{Path: arg})
 		}
-		boomer := httpboomer.NewBoomer(masterHost, masterPort)
+		boomer := hrp.NewBoomer(masterHost, masterPort)
 		boomer.EnableCPUProfile(cpuProfile, cpuProfileDuration)
 		boomer.EnableMemoryProfile(memoryProfile, memoryProfileDuration)
 		boomer.Run(paths...)

@@ -3,12 +3,12 @@ package examples
 import (
 	"testing"
 
-	"github.com/httprunner/httpboomer"
+	"github.com/httprunner/hrp"
 )
 
 func TestCaseDemo(t *testing.T) {
-	testcase := &httpboomer.TestCase{
-		Config: httpboomer.TConfig{
+	testcase := &hrp.TestCase{
+		Config: hrp.TConfig{
 			Name:    "demo with complex mechanisms",
 			BaseURL: "https://postman-echo.com",
 			Variables: map[string]interface{}{ // global level variables
@@ -19,8 +19,8 @@ func TestCaseDemo(t *testing.T) {
 				"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
 			},
 		},
-		TestSteps: []httpboomer.IStep{
-			httpboomer.Step("get with params").
+		TestSteps: []hrp.IStep{
+			hrp.Step("get with params").
 				WithVariables(map[string]interface{}{ // step level variables
 					"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
 					"b":       34.5,             // override config level variable if existed, n/b/varFoo2
@@ -28,7 +28,7 @@ func TestCaseDemo(t *testing.T) {
 				}).
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
-				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).                 // request with headers
+				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).             // request with headers
 				Extract().
 				WithJmesPath("body.args.foo1", "varFoo1"). // extract variable with jmespath
 				Validate().
@@ -37,7 +37,7 @@ func TestCaseDemo(t *testing.T) {
 				AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
 				AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
 				AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
-			httpboomer.Step("post json data").
+			hrp.Step("post json data").
 				POST("/post").
 				WithBody(map[string]interface{}{
 					"foo1": "$varFoo1",       // reference former extracted variable
@@ -47,7 +47,7 @@ func TestCaseDemo(t *testing.T) {
 				AssertEqual("status_code", 200, "check status code").
 				AssertLengthEqual("body.json.foo1", 5, "check args foo1").
 				AssertEqual("body.json.foo2", 12.3, "check args foo2"),
-			httpboomer.Step("post form data").
+			hrp.Step("post form data").
 				POST("/post").
 				WithParams(map[string]interface{}{
 					"foo1": "$varFoo1",       // reference former extracted variable
@@ -60,7 +60,7 @@ func TestCaseDemo(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Run(t, testcase)
+	err := hrp.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra/doc"
 
-	"github.com/httprunner/httpboomer/httpboomer/cmd"
+	"github.com/httprunner/hrp/hrp/cmd"
 )
 
 // run this test to generate markdown docs

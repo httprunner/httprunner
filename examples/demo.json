@@ -21,7 +21,7 @@
                     "foo2": "$varFoo2"
                 },
                 "headers": {
-                    "User-Agent": "HttpBoomer"
+                    "User-Agent": "HttpRunnerPlus"
                 }
             },
             "variables": {

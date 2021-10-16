@@ -1,4 +1,4 @@
-package httpboomer
+package hrp
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ var (
 	stepGET = Step("get with params").
 		GET("/get").
 		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
-		WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+		WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 		WithCookies(map[string]string{"user": "debugtalk"}).
 		Validate().
 		AssertEqual("status_code", 200, "check status code").
@@ -19,7 +19,7 @@ var (
 	stepPOSTData = Step("post form data").
 			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
-			WithHeaders(map[string]string{"User-Agent": "HttpBoomer", "Content-Type": "application/x-www-form-urlencoded"}).
+			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
 			WithBody("a=1&b=2").
 			WithCookies(map[string]string{"user": "debugtalk"}).
 			Validate().
@@ -37,7 +37,7 @@ func TestRunRequestGetToStruct(t *testing.T) {
 	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
 		t.Fatalf("tStep.Request.Params mismatch")
 	}
-	if tStep.Request.Headers["User-Agent"] != "HttpBoomer" {
+	if tStep.Request.Headers["User-Agent"] != "HttpRunnerPlus" {
 		t.Fatalf("tStep.Request.Headers mismatch")
 	}
 	if tStep.Request.Cookies["user"] != "debugtalk" {
@@ -59,7 +59,7 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
 		t.Fatalf("tStep.Request.Params mismatch")
 	}
-	if tStep.Request.Headers["User-Agent"] != "HttpBoomer" {
+	if tStep.Request.Headers["User-Agent"] != "HttpRunnerPlus" {
 		t.Fatalf("tStep.Request.Headers mismatch")
 	}
 	if tStep.Request.Cookies["user"] != "debugtalk" {
