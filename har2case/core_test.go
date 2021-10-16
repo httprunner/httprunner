@@ -2,23 +2,15 @@ package har2case
 
 import (
 	"log"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var harPath string
-
-func TestMain(m *testing.M) {
-	harPath = "../examples/har/demo.har"
-
-	// run all tests
-	code := m.Run()
-	defer os.Exit(code)
-
-	// teardown
-}
+var (
+	harPath  = "../examples/har/demo.har"
+	harPath2 = "../examples/har/postman-echo.har"
+)
 
 func TestGenJSON(t *testing.T) {
 	jsonPath, err := NewHAR(harPath).GenJSON()
@@ -27,6 +19,17 @@ func TestGenJSON(t *testing.T) {
 		t.Fail()
 	}
 	if !assert.NotEmpty(t, jsonPath) {
+		t.Fail()
+	}
+}
+
+func TestGenYAML(t *testing.T) {
+	yamlPath, err := NewHAR(harPath2).GenYAML()
+	log.Printf("yamlPath: %v, err: %v", yamlPath, err)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	if !assert.NotEmpty(t, yamlPath) {
 		t.Fail()
 	}
 }
@@ -105,6 +108,13 @@ func TestMakeTestCase(t *testing.T) {
 		t.Fail()
 	}
 	if !assert.Equal(t, "body.url", tCase.TestSteps[0].Validators[2].Check) {
+		t.Fail()
+	}
+}
+
+func TestGetFilenameWithoutExtension(t *testing.T) {
+	filename := getFilenameWithoutExtension("examples/har/postman-echo.har")
+	if !assert.Equal(t, "postman-echo", filename) {
 		t.Fail()
 	}
 }
