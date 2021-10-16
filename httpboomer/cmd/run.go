@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httpboomer"
@@ -18,23 +16,26 @@ var runCmd = &cobra.Command{
   $ httpboomer run examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// --silent flag
-		silentFlag, err := cmd.Flags().GetBool("silent")
-		if err != nil {
-			return err
-		}
-		log.Printf("[runCmd] set --silent flag: %v", silentFlag)
-
 		var paths []httpboomer.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &httpboomer.TestCasePath{Path: arg})
 		}
-		return httpboomer.NewRunner().SetDebug(!silentFlag).Run(paths...)
+		runner := httpboomer.NewRunner().SetDebug(!silentFlag)
+		if proxyUrl != "" {
+			runner.SetProxyUrl(proxyUrl)
+		}
+		return runner.Run(paths...)
 	},
 }
 
+var (
+	silentFlag bool
+	proxyUrl   string
+)
+
 func init() {
 	RootCmd.AddCommand(runCmd)
-	runCmd.Flags().BoolP("silent", "s", false, "Disable logging request & response details")
+	runCmd.Flags().BoolVarP(&silentFlag, "silent", "s", false, "disable logging request & response details")
+	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
 	// runCmd.Flags().BoolP("gen-html-report", "r", false, "Generate HTML report")
 }
