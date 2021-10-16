@@ -172,7 +172,10 @@ func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
 }
 
 func (s *requestWithOptionalArgs) Name() string {
-	return s.step.Name
+	if s.step.Name != "" {
+		return s.step.Name
+	}
+	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
 func (s *requestWithOptionalArgs) Type() string {
@@ -199,7 +202,10 @@ func (s *testcaseWithOptionalArgs) Export(names ...string) *testcaseWithOptional
 }
 
 func (s *testcaseWithOptionalArgs) Name() string {
-	return s.step.Name
+	if s.step.Name != "" {
+		return s.step.Name
+	}
+	return s.step.TestCase.Config.Name
 }
 
 func (s *testcaseWithOptionalArgs) Type() string {
