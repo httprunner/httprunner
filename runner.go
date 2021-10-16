@@ -100,7 +100,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 }
 
 func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
-	log.Printf("run step begin: %v >>>>>>", step.Name())
+	log.Printf("run step [%v] begin >>>>>>", step.Name())
 	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Printf("run referenced testcase: %v", tc.step.Name)
@@ -117,14 +117,16 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 			return
 		}
 	}
-	log.Printf("run step end: %v <<<<<<\n", step.Name())
+	log.Printf("run step [%v] end, success: %v, responseLength: %v <<<<<<\n",
+		step.Name(), stepData.Success, stepData.ResponseLength)
 	return
 }
 
 func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	stepData = &StepData{
-		Name:    step.Name,
-		Success: false,
+		Name:           step.Name,
+		Success:        false,
+		ResponseLength: 0,
 	}
 
 	// prepare request args
@@ -193,6 +195,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	}
 
 	stepData.Success = true
+	stepData.ResponseLength = resp.Response().ContentLength
 	return
 }
 
