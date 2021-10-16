@@ -28,12 +28,20 @@ type Runner struct {
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
+	log.Printf("[init] WithTestingT: %v", t)
 	r.t = t
 	return r
 }
 
 func (r *Runner) SetDebug(debug bool) *Runner {
+	log.Printf("[init] SetDebug: %v", debug)
 	r.debug = debug
+	return r
+}
+
+func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
+	log.Printf("[init] SetProxyUrl: %s", proxyUrl)
+	r.client.SetProxyUrl(proxyUrl)
 	return r
 }
 
@@ -156,7 +164,6 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 
 	// do request action
 	req.Debug = r.debug
-	// r.client.SetProxyUrl("http://127.0.0.1:8888")
 	resp, err := r.client.Do(string(step.Request.Method), step.Request.URL, v...)
 	if err != nil {
 		return

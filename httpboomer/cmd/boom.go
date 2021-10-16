@@ -29,15 +29,17 @@ var boomCmd = &cobra.Command{
 	},
 }
 
-var masterHost string
-var masterPort int
-var maxRPS int64               // TODO: init boomer with this flag
-var requestIncreaseRate string // TODO: init boomer with this flag
-var runTasks string            // TODO: init boomer with this flag
-var memoryProfile string
-var memoryProfileDuration time.Duration
-var cpuProfile string
-var cpuProfileDuration time.Duration
+var (
+	masterHost            string
+	masterPort            int
+	maxRPS                int64  // TODO: init boomer with this flag
+	requestIncreaseRate   string // TODO: init boomer with this flag
+	runTasks              string // TODO: init boomer with this flag
+	memoryProfile         string
+	memoryProfileDuration time.Duration
+	cpuProfile            string
+	cpuProfileDuration    time.Duration
+)
 
 func init() {
 	RootCmd.AddCommand(boomCmd)
