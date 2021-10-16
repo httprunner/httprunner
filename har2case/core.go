@@ -110,6 +110,7 @@ func (h *HAR) prepareTestSteps() ([]*httpboomer.TStep, error) {
 }
 
 func (h *HAR) prepareTestStep(entry *Entry) (*httpboomer.TStep, error) {
+	log.Printf("[prepareTestStep] %v %v", entry.Request.Method, entry.Request.URL)
 	tStep := &TStep{
 		TStep: httpboomer.TStep{
 			Request:    &httpboomer.TRequest{},
@@ -211,9 +212,12 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 			paramsList = append(paramsList, fmt.Sprintf("%s=%s", param.Name, param.Value))
 		}
 		s.Request.Body = strings.Join(paramsList, "&")
+	} else if strings.HasPrefix(mimeType, "text/plain") {
+		// post raw data
+		s.Request.Body = entry.Request.PostData.Text
 	} else {
 		// TODO
-		log.Fatalf("makeRequestBody: NotImplemented for mimeType %s", mimeType)
+		log.Fatalf("makeRequestBody: Not implemented for mimeType %s", mimeType)
 	}
 	return nil
 }
