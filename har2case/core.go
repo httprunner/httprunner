@@ -26,10 +26,20 @@ type HAR struct {
 	path       string
 	filterStr  string
 	excludeStr string
+	outputDir  string
+}
+
+func (h *HAR) SetOutputDir(dir string) {
+	h.outputDir = dir
 }
 
 func (h *HAR) GenJSON() (jsonPath string, err error) {
-	jsonPath = getFilenameWithoutExtension(h.path) + ".json"
+	jsonFile := getFilenameWithoutExtension(h.path) + ".json"
+	if h.outputDir != "" {
+		jsonPath = filepath.Join(h.outputDir, jsonFile)
+	} else {
+		jsonPath = filepath.Join(filepath.Dir(h.path), jsonFile)
+	}
 
 	tCase, err := h.makeTestCase()
 	if err != nil {
@@ -40,7 +50,12 @@ func (h *HAR) GenJSON() (jsonPath string, err error) {
 }
 
 func (h *HAR) GenYAML() (yamlPath string, err error) {
-	yamlPath = getFilenameWithoutExtension(h.path) + ".yaml"
+	yamlFile := getFilenameWithoutExtension(h.path) + ".yaml"
+	if h.outputDir != "" {
+		yamlPath = filepath.Join(h.outputDir, yamlFile)
+	} else {
+		yamlPath = filepath.Join(filepath.Dir(h.path), yamlFile)
+	}
 
 	tCase, err := h.makeTestCase()
 	if err != nil {
@@ -292,6 +307,7 @@ func (s *TStep) makeValidate(entry *Entry) error {
 }
 
 func getFilenameWithoutExtension(path string) string {
-	ext := filepath.Ext(path)
-	return path[0 : len(path)-len(ext)]
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	return base[0 : len(base)-len(ext)]
 }
