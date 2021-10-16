@@ -14,7 +14,7 @@
 
 - [x] Full support for HTTP(S) requests, more protocols are also in the plan.
 - [x] Testcases can be described in multiple formats, `YAML`/`JSON`/`Golang`, and they are interchangeable.
-- [ ] With [`HAR`][HAR] support, you can use Charles/Fiddler/Chrome/etc as a script recording generator.
+- [x] With [`HAR`][HAR] support, you can use Charles/Fiddler/Chrome/etc as a script recording generator.
 - [x] Supports `variables`/`extract`/`validate`/`hooks` mechanisms to create extremely complex test scenarios.
 - [ ] Built-in integration of rich functions, and you can also use [`go plugin`][plugin] to create and call custom functions.
 - [x] Inherit all powerful features of [`Boomer`][Boomer] and [`locust`][locust], you can run `load test` without extra work.
