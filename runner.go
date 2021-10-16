@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/imroc/req"
+	"github.com/pkg/errors"
 )
 
 // run API test with default configs
@@ -171,7 +172,11 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	defer resp.Response().Body.Close()
 
 	// new response object
-	respObj := NewResponseObject(r.t, resp)
+	respObj, err := NewResponseObject(r.t, resp)
+	if err != nil {
+		err = errors.Wrap(err, "init ResponseObject error")
+		return
+	}
 
 	// extract variables from response
 	extractors := step.Extract

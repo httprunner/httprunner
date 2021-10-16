@@ -12,7 +12,7 @@ import (
 	"github.com/httprunner/httpboomer/builtin"
 )
 
-func NewResponseObject(t *testing.T, resp *req.Resp) *ResponseObject {
+func NewResponseObject(t *testing.T, resp *req.Resp) (*ResponseObject, error) {
 	// prepare response headers
 	headers := make(map[string]string)
 	for k, v := range resp.Response().Header {
@@ -30,9 +30,8 @@ func NewResponseObject(t *testing.T, resp *req.Resp) *ResponseObject {
 	// parse response body
 	var body interface{}
 	if err := json.Unmarshal(resp.Bytes(), &body); err != nil {
-		log.Fatalf("[NewResponseObject] json.Unmarshal response body err: %v, body: %v",
-			err, string(resp.Bytes()))
-		return nil
+		// response body is not json, use raw body
+		body = string(resp.Bytes())
 	}
 
 	respObjMeta := respObjMeta{
@@ -46,15 +45,15 @@ func NewResponseObject(t *testing.T, resp *req.Resp) *ResponseObject {
 	respObjMetaBytes, _ := json.Marshal(respObjMeta)
 	var data interface{}
 	if err := json.Unmarshal(respObjMetaBytes, &data); err != nil {
-		log.Fatalf("[NewResponseObject] json.Unmarshal respObjMeta err: %v, respObjMetaBytes: %v",
+		log.Printf("[NewResponseObject] convert respObjMeta to interface{} error: %v, respObjMeta: %v",
 			err, string(respObjMetaBytes))
-		return nil
+		return nil, err
 	}
 
 	return &ResponseObject{
 		t:           t,
 		respObjMeta: data,
-	}
+	}, nil
 }
 
 type respObjMeta struct {
