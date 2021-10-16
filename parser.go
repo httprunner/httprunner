@@ -1,4 +1,4 @@
-package httpboomer
+package hrp
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/httprunner/httpboomer/builtin"
+	"github.com/httprunner/hrp/builtin"
 	"github.com/maja42/goval"
 )
 

@@ -3,22 +3,22 @@ package examples
 import (
 	"testing"
 
-	"github.com/httprunner/httpboomer"
+	"github.com/httprunner/hrp"
 )
 
 // reference extracted variables for validation in the same step
 func TestCaseExtractStepSingle(t *testing.T) {
-	testcase := &httpboomer.TestCase{
-		Config: httpboomer.TConfig{
+	testcase := &hrp.TestCase{
+		Config: hrp.TConfig{
 			Name:    "run request with variables",
 			BaseURL: "https://postman-echo.com",
 			Verify:  false,
 		},
-		TestSteps: []httpboomer.IStep{
-			httpboomer.Step("get with params").
+		TestSteps: []hrp.IStep{
+			hrp.Step("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":               "bar1",
-					"agent":              "HttpBoomer",
+					"agent":              "HttpRunnerPlus",
 					"expectedStatusCode": 200,
 				}).
 				GET("/get").
@@ -33,11 +33,11 @@ func TestCaseExtractStepSingle(t *testing.T) {
 				AssertEqual("$contentType", "application/json; charset=utf-8", "check header Content-Type"). // assert with extracted variable from current step
 				AssertEqual("$varFoo1", "bar1", "check args foo1").                                          // assert with extracted variable from current step
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
-				AssertEqual("body.headers.\"user-agent\"", "HttpBoomer", "check header user agent"),
+				AssertEqual("body.headers.\"user-agent\"", "HttpRunnerPlus", "check header user agent"),
 		},
 	}
 
-	err := httpboomer.Run(t, testcase)
+	err := hrp.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -45,17 +45,17 @@ func TestCaseExtractStepSingle(t *testing.T) {
 
 // reference extracted variables from previous step
 func TestCaseExtractStepAssociation(t *testing.T) {
-	testcase := &httpboomer.TestCase{
-		Config: httpboomer.TConfig{
+	testcase := &hrp.TestCase{
+		Config: hrp.TConfig{
 			Name:    "run request with variables",
 			BaseURL: "https://postman-echo.com",
 			Verify:  false,
 		},
-		TestSteps: []httpboomer.IStep{
-			httpboomer.Step("get with params").
+		TestSteps: []hrp.IStep{
+			hrp.Step("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":  "bar1",
-					"agent": "HttpBoomer",
+					"agent": "HttpRunnerPlus",
 				}).
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "$var1", "foo2": "bar2"}).
@@ -70,10 +70,10 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 				AssertEqual("$contentType", "application/json; charset=utf-8", "check header Content-Type").
 				AssertEqual("$varFoo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
-				AssertEqual("body.headers.\"user-agent\"", "HttpBoomer", "check header user agent"),
-			httpboomer.Step("post json data").
+				AssertEqual("body.headers.\"user-agent\"", "HttpRunnerPlus", "check header user agent"),
+			hrp.Step("post json data").
 				POST("/post").
-				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 				WithBody(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				Validate().
 				AssertEqual("status_code", "$statusCode", "check status code"). // assert with extracted variable from previous step
@@ -82,7 +82,7 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Run(t, testcase)
+	err := hrp.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

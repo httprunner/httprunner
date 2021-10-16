@@ -79,7 +79,7 @@ func TestMakeTestCase(t *testing.T) {
 	}
 
 	// make request headers
-	if !assert.Equal(t, "HttpBoomer", tCase.TestSteps[0].Request.Headers["User-Agent"]) {
+	if !assert.Equal(t, "HttpRunnerPlus", tCase.TestSteps[0].Request.Headers["User-Agent"]) {
 		t.Fail()
 	}
 	if !assert.Equal(t, "postman-echo.com", tCase.TestSteps[0].Request.Headers["Host"]) {

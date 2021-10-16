@@ -6,19 +6,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httpboomer"
+	"github.com/httprunner/hrp"
 )
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "httpboomer",
+	Use:   "hrp",
 	Short: "One-stop solution for HTTP(S) testing.",
-	Long: `HttpBoomer is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
+	Long: `hrp(HttpRunnerPlus) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
-Github: https://github.com/httprunner/httpboomer
+Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk`,
-	Version: httpboomer.VERSION,
+	Version: hrp.VERSION,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httpboomer/har2case"
+	"github.com/httprunner/hrp/har2case"
 )
 
 // har2caseCmd represents the har2case command

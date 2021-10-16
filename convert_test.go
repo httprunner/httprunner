@@ -1,4 +1,4 @@
-package httpboomer
+package hrp
 
 import (
 	"os"
@@ -28,7 +28,7 @@ var demoTestCase = &TestCase{
 			}).
 			GET("/get").
 			WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
-			WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).                 // request with headers
+			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).             // request with headers
 			Extract().
 			WithJmesPath("body.args.foo1", "varFoo1"). // extract variable with jmespath
 			Validate().

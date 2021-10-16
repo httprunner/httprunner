@@ -3,12 +3,12 @@ package examples
 import (
 	"testing"
 
-	"github.com/httprunner/httpboomer"
+	"github.com/httprunner/hrp"
 )
 
 func TestCaseCallFunction(t *testing.T) {
-	testcase := &httpboomer.TestCase{
-		Config: httpboomer.TConfig{
+	testcase := &hrp.TestCase{
+		Config: hrp.TConfig{
 			Name:    "run request with functions",
 			BaseURL: "https://postman-echo.com",
 			Verify:  false,
@@ -18,20 +18,20 @@ func TestCaseCallFunction(t *testing.T) {
 				"b": 3.45,
 			},
 		},
-		TestSteps: []httpboomer.IStep{
-			httpboomer.Step("get with params").
+		TestSteps: []hrp.IStep{
+			hrp.Step("get with params").
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "${gen_random_string($n)}", "foo2": "${max($a, $b)}"}).
-				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 				Extract().
 				WithJmesPath("body.args.foo1", "varFoo1").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertLengthEqual("body.args.foo1", 5, "check args foo1").
 				AssertEqual("body.args.foo2", "12.3", "check args foo2"), // notice: request params value will be converted to string
-			httpboomer.Step("post json data with functions").
+			hrp.Step("post json data with functions").
 				POST("/post").
-				WithHeaders(map[string]string{"User-Agent": "HttpBoomer"}).
+				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 				WithBody(map[string]interface{}{"foo1": "${gen_random_string($n)}", "foo2": "${max($a, $b)}"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
@@ -40,7 +40,7 @@ func TestCaseCallFunction(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Run(t, testcase)
+	err := hrp.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

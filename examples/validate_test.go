@@ -3,21 +3,21 @@ package examples
 import (
 	"testing"
 
-	"github.com/httprunner/httpboomer"
+	"github.com/httprunner/hrp"
 )
 
 func TestCaseValidateStep(t *testing.T) {
-	testcase := &httpboomer.TestCase{
-		Config: httpboomer.TConfig{
+	testcase := &hrp.TestCase{
+		Config: hrp.TConfig{
 			Name:    "run request with validation",
 			BaseURL: "https://postman-echo.com",
 			Verify:  false,
 		},
-		TestSteps: []httpboomer.IStep{
-			httpboomer.Step("get with params").
+		TestSteps: []hrp.IStep{
+			hrp.Step("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":               "bar1",
-					"agent":              "HttpBoomer",
+					"agent":              "HttpRunnerPlus",
 					"expectedStatusCode": 200,
 				}).
 				GET("/get").
@@ -31,11 +31,11 @@ func TestCaseValidateStep(t *testing.T) {
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type"). // assert response header, with double quotes
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").                                                // assert response json body with jmespath
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
-				AssertEqual("body.headers.\"user-agent\"", "HttpBoomer", "check header user agent"),
-			httpboomer.Step("get with params").
+				AssertEqual("body.headers.\"user-agent\"", "HttpRunnerPlus", "check header user agent"),
+			hrp.Step("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":  "bar1",
-					"agent": "HttpBoomer",
+					"agent": "HttpRunnerPlus",
 				}).
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "$var1", "foo2": "bar2"}).
@@ -51,7 +51,7 @@ func TestCaseValidateStep(t *testing.T) {
 		},
 	}
 
-	err := httpboomer.Run(t, testcase)
+	err := hrp.Run(t, testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

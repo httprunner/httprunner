@@ -1,4 +1,4 @@
-package httpboomer
+package hrp
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/imroc/req"
 	"github.com/jmespath/go-jmespath"
 
-	"github.com/httprunner/httpboomer/builtin"
+	"github.com/httprunner/hrp/builtin"
 )
 
 func NewResponseObject(t *testing.T, resp *req.Resp) (*ResponseObject, error) {

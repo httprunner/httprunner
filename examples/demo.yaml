@@ -16,7 +16,7 @@ teststeps:
             foo1: $varFoo1
             foo2: $varFoo2
         headers:
-            User-Agent: HttpBoomer
+            User-Agent: HttpRunnerPlus
       variables:
         b: 34.5
         "n": 3

@@ -1,4 +1,4 @@
-module github.com/httprunner/httpboomer
+module github.com/httprunner/hrp
 
 go 1.16
 
@@ -11,7 +11,7 @@ require (
 	github.com/maja42/goval v1.2.1
 	github.com/myzhan/boomer v1.6.0
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil v3.21.8+incompatible // indirect
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0

@@ -1,4 +1,4 @@
-package httpboomer
+package hrp
 
 type EnumHTTPMethod string
 
@@ -43,6 +43,7 @@ type TValidator struct {
 
 type TStep struct {
 	Name          string                 `json:"name" yaml:"name"`
+	Transaction   string                 `json:"transaction,omitempty" yaml:"transaction,omitempty"`
 	Request       *TRequest              `json:"request,omitempty" yaml:"request,omitempty"`
 	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
