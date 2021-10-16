@@ -96,4 +96,15 @@ func TestMakeTestCase(t *testing.T) {
 	if !assert.Equal(t, "foo1=HDnY8&foo2=12.3", tCase.TestSteps[2].Request.Body) {
 		t.Fail()
 	}
+
+	// make validators
+	if !assert.Equal(t, "status_code", tCase.TestSteps[0].Validators[0].Check) {
+		t.Fail()
+	}
+	if !assert.Equal(t, "headers.Content-Type", tCase.TestSteps[0].Validators[1].Check) {
+		t.Fail()
+	}
+	if !assert.Equal(t, "body.url", tCase.TestSteps[0].Validators[2].Check) {
+		t.Fail()
+	}
 }
