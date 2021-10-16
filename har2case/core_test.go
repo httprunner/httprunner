@@ -11,7 +11,7 @@ import (
 var harPath string
 
 func TestMain(m *testing.M) {
-	harPath = "../examples/demo.har"
+	harPath = "../examples/har/demo.har"
 
 	// run all tests
 	code := m.Run()

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -14,27 +13,34 @@ var har2caseCmd = &cobra.Command{
 	Use:   "har2case path...",
 	Short: "Convert HAR to json/yaml testcase files",
 	Long:  `Convert HAR to json/yaml testcase files`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("har2case called")
+	Args:  cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var outputFiles []string
 		for _, arg := range args {
-			jsonPath, _ := har2case.NewHAR(arg).GenJSON()
-			outputFiles = append(outputFiles, jsonPath)
+			var outputPath string
+			var err error
+			if genYAMLFlag {
+				outputPath, err = har2case.NewHAR(arg).GenYAML()
+			} else {
+				outputPath, err = har2case.NewHAR(arg).GenJSON()
+			}
+			if err != nil {
+				return err
+			}
+			outputFiles = append(outputFiles, outputPath)
 		}
-		log.Printf("%v", outputFiles)
+		log.Printf("output: %v", outputFiles)
+		return nil
 	},
 }
 
+var (
+	genJSONFlag bool
+	genYAMLFlag bool
+)
+
 func init() {
 	RootCmd.AddCommand(har2caseCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// har2caseCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// har2caseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	har2caseCmd.Flags().BoolVarP(&genJSONFlag, "to-json", "j", false, "convert to JSON format (default)")
+	har2caseCmd.Flags().BoolVarP(&genYAMLFlag, "to-yaml", "y", false, "convert to JSON format")
 }
