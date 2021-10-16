@@ -4,7 +4,7 @@ One-stop solution for HTTP(S) testing.
 
 ### Synopsis
 
-hrp(HttpRunnerPlus) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
+hrp (HttpRunnerPlus) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
