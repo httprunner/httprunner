@@ -88,7 +88,8 @@ type TestCasePath struct {
 type TestCaseSummary struct{}
 
 type StepData struct {
-	Name       string                 // step name
-	Success    bool                   // step execution result
-	ExportVars map[string]interface{} // extract variables
+	Name           string                 // step name
+	Success        bool                   // step execution result
+	ResponseLength int64                  // response body length
+	ExportVars     map[string]interface{} // extract variables
 }
