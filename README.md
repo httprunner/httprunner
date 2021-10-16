@@ -1,14 +1,12 @@
-# HttpRunner+ (hrp)
+# hrp (HttpRunner+)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/hrp.svg)](https://pkg.go.dev/github.com/httprunner/hrp)
 [![Github Actions](https://github.com/httprunner/hrp/actions/workflows/main.yml/badge.svg)](https://github.com/httprunner/hrp/actions)
 [![codecov](https://codecov.io/gh/httprunner/hrp/branch/main/graph/badge.svg?token=HPCQWCD7KO)](https://codecov.io/gh/httprunner/hrp)
 [![Go Report Card](https://goreportcard.com/badge/github.com/httprunner/hrp)](https://goreportcard.com/report/github.com/httprunner/hrp)
-[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B27856%2Fgithub.com%2Fhttprunner%2Fhrp.svg?type=shield)](https://app.fossa.com/reports/fb0e64a7-7dcf-48bb-8de9-8f0e016b903b)
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B27856%2Fgithub.com%2Fhttprunner%2Fhrp.svg?type=shield)](https://app.fossa.com/reports/c2742455-c8ab-4b13-8fd7-4a35ba0b2840)
 
-> hrp (HttpRunnerPlus) = [HttpRunner] + [Boomer]
-
-`hrp` is a golang implementation of [HttpRunner]. Ideally, `hrp` will be fully compatible with HttpRunner, including testcase format and usage. What's more, `hrp` will integrate Boomer natively to be a better load generator for [locust].
+`hrp` is a golang implementation of [HttpRunner]. Ideally, hrp will be fully compatible with HttpRunner, including testcase format and usage. What's more, hrp will integrate Boomer natively to be a better load generator for [locust].
 
 ## Key Features
 

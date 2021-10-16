@@ -32,7 +32,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          name: hrp(HttpRunner+) # User defined upload name. Visible in Codecov UI
+          name: hrp (HttpRunner+) # User defined upload name. Visible in Codecov UI
           token: ${{ secrets.CODECOV_TOKEN }} # Repository upload token
           file: ./cover.out # Path to coverage file to upload
           flags: unittests # Flag upload to group coverage metrics

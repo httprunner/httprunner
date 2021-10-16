@@ -13,7 +13,7 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "hrp",
 	Short: "One-stop solution for HTTP(S) testing.",
-	Long: `hrp(HttpRunnerPlus) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
+	Long: `hrp (HttpRunner+) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
