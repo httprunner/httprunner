@@ -30,7 +30,7 @@ $ go get -u github.com/httprunner/hrp
 
 ### Examples
 
-This is an example of `hrp` testcase. You can find more in the [`examples`][examples] directory.
+This is an example of `HttpRunner+` testcase. You can find more in the [`examples`][examples] directory.
 
 ```go
 import (
@@ -61,7 +61,7 @@ func TestCaseDemo(t *testing.T) {
                 }).
                 GET("/get").
                 WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
-                WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).                 // request with headers
+                WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).             // request with headers
                 Extract().
                 WithJmesPath("body.args.foo1", "varFoo1"). // extract variable with jmespath
                 Validate().
@@ -72,7 +72,7 @@ func TestCaseDemo(t *testing.T) {
                 AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
             hrp.Step("post json data").
                 POST("/post").
-                WithJSON(map[string]interface{}{
+                WithBody(map[string]interface{}{
                     "foo1": "$varFoo1",       // reference former extracted variable
                     "foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
                 }).
@@ -80,6 +80,16 @@ func TestCaseDemo(t *testing.T) {
                 AssertEqual("status_code", 200, "check status code").
                 AssertLengthEqual("body.json.foo1", 5, "check args foo1").
                 AssertEqual("body.json.foo2", 12.3, "check args foo2"),
+            hrp.Step("post form data").
+                POST("/post").
+                WithParams(map[string]interface{}{
+                    "foo1": "$varFoo1",       // reference former extracted variable
+                    "foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
+                }).
+                Validate().
+                AssertEqual("status_code", 200, "check status code").
+                AssertLengthEqual("body.form.foo1", 5, "check args foo1").
+                AssertEqual("body.form.foo2", "12.3", "check args foo2"), // form data will be converted to string
         },
     }
 
