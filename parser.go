@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/maja42/goval"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/builtin"
 )
@@ -23,13 +23,13 @@ func parseStep(step IStep, config *TConfig) *TStep {
 func buildURL(baseURL, stepURL string) string {
 	uConfig, err := url.Parse(baseURL)
 	if err != nil {
-		log.Errorf("[buildURL] baseURL: %v, error: %v", baseURL, err)
+		log.Error().Str("baseURL", baseURL).Err(err).Msg("[buildURL] parse baseURL failed")
 		return ""
 	}
 
 	uStep, err := uConfig.Parse(stepURL)
 	if err != nil {
-		log.Errorf("[buildURL] baseURL: %v, error: %v", baseURL, err)
+		log.Error().Str("stepURL", stepURL).Err(err).Msg("[buildURL] parse stepURL failed")
 		return ""
 	}
 
@@ -185,7 +185,10 @@ func parseString(raw string, variablesMapping map[string]interface{}) (interface
 			matchStartPosition += len(funcMatched[0])
 			parsedString += fmt.Sprintf("%v", result)
 			remainedString = raw[matchStartPosition:]
-			log.Infof("[parseString] parsedString: %v, matchStartPosition: %v", parsedString, matchStartPosition)
+			log.Debug().
+				Str("parsedString", parsedString).
+				Int("matchStartPosition", matchStartPosition).
+				Msg("[parseString] parse function")
 			continue
 		}
 
@@ -211,7 +214,10 @@ func parseString(raw string, variablesMapping map[string]interface{}) (interface
 			matchStartPosition += len(varMatched[0])
 			parsedString += fmt.Sprintf("%v", varValue)
 			remainedString = raw[matchStartPosition:]
-			log.Infof("[parseString] parsedString: %v, matchStartPosition: %v", parsedString, matchStartPosition)
+			log.Debug().
+				Str("parsedString", parsedString).
+				Int("matchStartPosition", matchStartPosition).
+				Msg("[parseString] parse variable")
 			continue
 		}
 
@@ -284,7 +290,7 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 			// function argument type not match and not convertible
 			err := fmt.Errorf("function %s argument %d type is neither match nor convertible, expect %v, actual %v",
 				funcName, index, expectArgumentType, actualArgumentType)
-			log.Errorf("[callFunction] error: %s", err.Error())
+			log.Error().Err(err).Msg("call function failed")
 			return nil, err
 		}
 		// convert argument to expect type
@@ -295,7 +301,7 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	if len(resultValues) > 1 {
 		// function should return at most one value
 		err := fmt.Errorf("function %s should return at most one value", funcName)
-		log.Errorf("[callFunction] error: %s", err.Error())
+		log.Error().Err(err).Msg("call function failed")
 		return nil, err
 	}
 
@@ -307,11 +313,11 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// return one value
 	// convert reflect.Value to interface{}
 	result := resultValues[0].Interface()
-	log.WithFields(log.Fields{
-		"funcName":  funcName,
-		"arguments": arguments,
-		"output":    result,
-	}).Info("call function")
+	log.Info().
+		Str("funcName", funcName).
+		Interface("arguments", arguments).
+		Interface("output", result).
+		Msg("call function success")
 	return result, nil
 }
 
@@ -329,7 +335,7 @@ func literalEval(raw string) (interface{}, error) {
 	// eval string to number
 	result, err := eval.Evaluate(raw, nil, nil)
 	if err != nil {
-		log.Errorf("[literalEval] eval %s error: %s", raw, err.Error())
+		log.Error().Err(err).Msgf("[literalEval] eval %s failed", raw)
 		return raw, err
 	}
 	return result, nil
@@ -380,7 +386,7 @@ func parseVariables(variables map[string]interface{}) (map[string]interface{}, e
 			// variables = {"token": "abc$token"}
 			// variables = {"key": ["$key", 2]}
 			if _, ok := extractVarsSet[varName]; ok {
-				log.Errorf("[parseVariables] variable self reference error: %v", variables)
+				log.Error().Interface("variables", variables).Msg("[parseVariables] variable self reference error")
 				return variables, fmt.Errorf("variable self reference: %v", varName)
 			}
 
@@ -395,7 +401,7 @@ func parseVariables(variables map[string]interface{}) (map[string]interface{}, e
 				}
 			}
 			if len(undefinedVars) > 0 {
-				log.Errorf("[parseVariables] variable not defined error: %v", undefinedVars)
+				log.Error().Interface("undefinedVars", undefinedVars).Msg("[parseVariables] variable not defined error")
 				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
 			}
 
@@ -408,7 +414,7 @@ func parseVariables(variables map[string]interface{}) (map[string]interface{}, e
 		traverseRounds += 1
 		// check if circular reference exists
 		if traverseRounds > len(variables) {
-			log.Errorf("[parseVariables] circular reference error, break infinite loop!")
+			log.Error().Msg("[parseVariables] circular reference error, break infinite loop!")
 			return variables, fmt.Errorf("circular reference")
 		}
 	}

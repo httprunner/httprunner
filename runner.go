@@ -2,16 +2,17 @@ package hrp
 
 import (
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/imroc/req"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func init() {
-	log.SetLevel(log.InfoLevel)
-	log.SetFormatter(&log.TextFormatter{})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
 // run API test with default configs
@@ -34,19 +35,19 @@ type Runner struct {
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
-	log.Info("[init] WithTestingT")
+	log.Info().Msg("[init] WithTestingT")
 	r.t = t
 	return r
 }
 
 func (r *Runner) SetDebug(debug bool) *Runner {
-	log.WithField("debug", debug).Info("[init] SetDebug")
+	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
 	r.debug = debug
 	return r
 }
 
 func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
-	log.WithField("proxyUrl", proxyUrl).Info("[init] SetProxyUrl")
+	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
 	r.client.SetProxyUrl(proxyUrl)
 	return r
 }
@@ -55,11 +56,11 @@ func (r *Runner) Run(testcases ...ITestCase) error {
 	for _, iTestCase := range testcases {
 		testcase, err := iTestCase.ToTestCase()
 		if err != nil {
-			log.Errorf("[Run] testcase.ToStruct() error: %v", err)
+			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
 			return err
 		}
 		if err := r.runCase(testcase); err != nil {
-			log.Errorf("[Run] runCase error: %v", err)
+			log.Error().Err(err).Msg("[Run] run testcase failed")
 			return err
 		}
 	}
@@ -72,7 +73,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		return err
 	}
 
-	log.WithField("testcase", config.Name).Info("run testcase start")
+	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	extractedVariables := make(map[string]interface{})
 
@@ -86,7 +87,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		// parse step variables
 		parsedVariables, err := parseVariables(stepVariables)
 		if err != nil {
-			log.Errorf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
+			log.Error().Interface("variables", config.Variables).Err(err).Msg("parse step variables failed")
 			return err
 		}
 		step.ToStruct().Variables = parsedVariables
@@ -101,15 +102,15 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		}
 	}
 
-	log.WithField("testcase", config.Name).Info("run testcase end")
+	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
 }
 
 func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
-	log.WithField("step", step.Name()).Info("run step start")
+	log.Info().Str("step", step.Name()).Msg("run step start")
 	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
-		log.Infof("run referenced testcase: %v", tc.step.Name)
+		log.Info().Str("testcase", tc.step.Name).Msg("run referenced testcase")
 		// TODO: override testcase config
 		stepData, err = r.runStepTestCase(tc.step)
 		if err != nil {
@@ -123,11 +124,11 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 			return
 		}
 	}
-	log.WithFields(log.Fields{
-		"step":       step.Name(),
-		"success":    stepData.Success,
-		"exportVars": stepData.ExportVars,
-	}).Info("run step end")
+	log.Info().
+		Str("step", step.Name()).
+		Bool("success", stepData.Success).
+		Interface("exportVars", stepData.ExportVars).
+		Msg("run step end")
 	return
 }
 
@@ -222,7 +223,7 @@ func (r *Runner) parseConfig(config *TConfig) error {
 	// parse config variables
 	parsedVariables, err := parseVariables(config.Variables)
 	if err != nil {
-		log.Errorf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
+		log.Error().Interface("variables", config.Variables).Err(err).Msg("parse config variables failed")
 		return err
 	}
 	config.Variables = parsedVariables
