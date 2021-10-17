@@ -16,6 +16,11 @@ import (
 	"github.com/httprunner/hrp"
 )
 
+const (
+	suffixJSON = ".json"
+	suffixYAML = ".yaml"
+)
+
 func NewHAR(path string) *HAR {
 	return &HAR{
 		path: path,
@@ -34,33 +39,21 @@ func (h *HAR) SetOutputDir(dir string) {
 }
 
 func (h *HAR) GenJSON() (jsonPath string, err error) {
-	jsonFile := getFilenameWithoutExtension(h.path) + ".json"
-	if h.outputDir != "" {
-		jsonPath = filepath.Join(h.outputDir, jsonFile)
-	} else {
-		jsonPath = filepath.Join(filepath.Dir(h.path), jsonFile)
-	}
-
 	tCase, err := h.makeTestCase()
 	if err != nil {
 		return "", err
 	}
+	jsonPath = h.genOutputPath(suffixJSON)
 	err = tCase.Dump2JSON(jsonPath)
 	return
 }
 
 func (h *HAR) GenYAML() (yamlPath string, err error) {
-	yamlFile := getFilenameWithoutExtension(h.path) + ".yaml"
-	if h.outputDir != "" {
-		yamlPath = filepath.Join(h.outputDir, yamlFile)
-	} else {
-		yamlPath = filepath.Join(filepath.Dir(h.path), yamlFile)
-	}
-
 	tCase, err := h.makeTestCase()
 	if err != nil {
 		return "", err
 	}
+	yamlPath = h.genOutputPath(suffixYAML)
 	err = tCase.Dump2YAML(yamlPath)
 	return
 }
@@ -304,6 +297,15 @@ func (s *TStep) makeValidate(entry *Entry) error {
 	}
 
 	return nil
+}
+
+func (h *HAR) genOutputPath(suffix string) string {
+	file := getFilenameWithoutExtension(h.path) + suffix
+	if h.outputDir != "" {
+		return filepath.Join(h.outputDir, file)
+	} else {
+		return filepath.Join(filepath.Dir(h.path), file)
+	}
 }
 
 func getFilenameWithoutExtension(path string) string {
