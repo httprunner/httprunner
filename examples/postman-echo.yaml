@@ -57,6 +57,10 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
         - check: body.json
           assert: equals
           msg: assert response body json
@@ -64,10 +68,6 @@ teststeps:
           assert: equals
           expect: https://postman-echo.com/post
           msg: assert response body url
-        - check: body.data
-          assert: equals
-          expect: This is expected to be sent back as part of response body.
-          msg: assert response body data
     - name: ""
       request:
         method: POST
@@ -94,14 +94,14 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
-        - check: body.url
-          assert: equals
-          expect: https://postman-echo.com/post
-          msg: assert response body url
         - check: body.data
           assert: equals
           expect: ""
           msg: assert response body data
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/post
+          msg: assert response body url
     - name: ""
       request:
         method: PUT
@@ -128,10 +128,6 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
-        - check: body.url
-          assert: equals
-          expect: https://postman-echo.com/put
-          msg: assert response body url
         - check: body.data
           assert: equals
           expect: This is expected to be sent back as part of response body.
@@ -139,6 +135,10 @@ teststeps:
         - check: body.json
           assert: equals
           msg: assert response body json
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/put
+          msg: assert response body url
     - name: ""
       request:
         method: PATCH
@@ -165,6 +165,10 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
         - check: body.json
           assert: equals
           msg: assert response body json
@@ -172,10 +176,6 @@ teststeps:
           assert: equals
           expect: https://postman-echo.com/patch
           msg: assert response body url
-        - check: body.data
-          assert: equals
-          expect: This is expected to be sent back as part of response body.
-          msg: assert response body data
     - name: ""
       request:
         method: DELETE
@@ -202,6 +202,10 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
         - check: body.json
           assert: equals
           msg: assert response body json
@@ -209,10 +213,6 @@ teststeps:
           assert: equals
           expect: https://postman-echo.com/delete
           msg: assert response body url
-        - check: body.data
-          assert: equals
-          expect: This is expected to be sent back as part of response body.
-          msg: assert response body data
     - name: ""
       request:
         method: GET
@@ -666,14 +666,14 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
-        - check: body.method
-          assert: equals
-          expect: GET
-          msg: assert response body method
         - check: body.deflated
           assert: equals
           expect: true
           msg: assert response body deflated
+        - check: body.method
+          assert: equals
+          expect: GET
+          msg: assert response body method
     - name: ""
       request:
         method: GET
@@ -928,34 +928,34 @@ teststeps:
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
-        - check: body.hours
-          assert: equals
-          expect: 0
-          msg: assert response body hours
-        - check: body.minutes
-          assert: equals
-          expect: 0
-          msg: assert response body minutes
-        - check: body.seconds
-          assert: equals
-          expect: 0
-          msg: assert response body seconds
-        - check: body.milliseconds
-          assert: equals
-          expect: 0
-          msg: assert response body milliseconds
-        - check: body.years
-          assert: equals
-          expect: 2016
-          msg: assert response body years
-        - check: body.months
-          assert: equals
-          expect: 9
-          msg: assert response body months
         - check: body.date
           assert: equals
           expect: 10
           msg: assert response body date
+        - check: body.hours
+          assert: equals
+          expect: 0
+          msg: assert response body hours
+        - check: body.milliseconds
+          assert: equals
+          expect: 0
+          msg: assert response body milliseconds
+        - check: body.minutes
+          assert: equals
+          expect: 0
+          msg: assert response body minutes
+        - check: body.months
+          assert: equals
+          expect: 9
+          msg: assert response body months
+        - check: body.seconds
+          assert: equals
+          expect: 0
+          msg: assert response body seconds
+        - check: body.years
+          assert: equals
+          expect: 2016
+          msg: assert response body years
     - name: ""
       request:
         method: GET
