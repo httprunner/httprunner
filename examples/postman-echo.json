@@ -81,6 +81,12 @@
                     "msg": "assert response header Content-Type"
                 },
                 {
+                    "check": "body.data",
+                    "assert": "equals",
+                    "expect": "This is expected to be sent back as part of response body.",
+                    "msg": "assert response body data"
+                },
+                {
                     "check": "body.json",
                     "assert": "equals",
                     "msg": "assert response body json"
@@ -90,12 +96,6 @@
                     "assert": "equals",
                     "expect": "https://postman-echo.com/post",
                     "msg": "assert response body url"
-                },
-                {
-                    "check": "body.data",
-                    "assert": "equals",
-                    "expect": "This is expected to be sent back as part of response body.",
-                    "msg": "assert response body data"
                 }
             ]
         },
@@ -134,16 +134,16 @@
                     "msg": "assert response header Content-Type"
                 },
                 {
-                    "check": "body.url",
-                    "assert": "equals",
-                    "expect": "https://postman-echo.com/post",
-                    "msg": "assert response body url"
-                },
-                {
                     "check": "body.data",
                     "assert": "equals",
                     "expect": "",
                     "msg": "assert response body data"
+                },
+                {
+                    "check": "body.url",
+                    "assert": "equals",
+                    "expect": "https://postman-echo.com/post",
+                    "msg": "assert response body url"
                 }
             ]
         },
@@ -182,12 +182,6 @@
                     "msg": "assert response header Content-Type"
                 },
                 {
-                    "check": "body.url",
-                    "assert": "equals",
-                    "expect": "https://postman-echo.com/put",
-                    "msg": "assert response body url"
-                },
-                {
                     "check": "body.data",
                     "assert": "equals",
                     "expect": "This is expected to be sent back as part of response body.",
@@ -197,6 +191,12 @@
                     "check": "body.json",
                     "assert": "equals",
                     "msg": "assert response body json"
+                },
+                {
+                    "check": "body.url",
+                    "assert": "equals",
+                    "expect": "https://postman-echo.com/put",
+                    "msg": "assert response body url"
                 }
             ]
         },
@@ -235,6 +235,12 @@
                     "msg": "assert response header Content-Type"
                 },
                 {
+                    "check": "body.data",
+                    "assert": "equals",
+                    "expect": "This is expected to be sent back as part of response body.",
+                    "msg": "assert response body data"
+                },
+                {
                     "check": "body.json",
                     "assert": "equals",
                     "msg": "assert response body json"
@@ -244,12 +250,6 @@
                     "assert": "equals",
                     "expect": "https://postman-echo.com/patch",
                     "msg": "assert response body url"
-                },
-                {
-                    "check": "body.data",
-                    "assert": "equals",
-                    "expect": "This is expected to be sent back as part of response body.",
-                    "msg": "assert response body data"
                 }
             ]
         },
@@ -376,16 +376,16 @@
                     "msg": "assert response header Content-Type"
                 },
                 {
-                    "check": "body.foo2",
-                    "assert": "equals",
-                    "expect": "bar2",
-                    "msg": "assert response body foo2"
-                },
-                {
                     "check": "body.foo1",
                     "assert": "equals",
                     "expect": "bar1",
                     "msg": "assert response body foo1"
+                },
+                {
+                    "check": "body.foo2",
+                    "assert": "equals",
+                    "expect": "bar2",
+                    "msg": "assert response body foo2"
                 }
             ]
         },
@@ -1328,18 +1328,6 @@
                     "msg": "assert response header Content-Type"
                 },
                 {
-                    "check": "body.years",
-                    "assert": "equals",
-                    "expect": 2016,
-                    "msg": "assert response body years"
-                },
-                {
-                    "check": "body.months",
-                    "assert": "equals",
-                    "expect": 9,
-                    "msg": "assert response body months"
-                },
-                {
                     "check": "body.date",
                     "assert": "equals",
                     "expect": 10,
@@ -1352,10 +1340,22 @@
                     "msg": "assert response body hours"
                 },
                 {
+                    "check": "body.milliseconds",
+                    "assert": "equals",
+                    "expect": 0,
+                    "msg": "assert response body milliseconds"
+                },
+                {
                     "check": "body.minutes",
                     "assert": "equals",
                     "expect": 0,
                     "msg": "assert response body minutes"
+                },
+                {
+                    "check": "body.months",
+                    "assert": "equals",
+                    "expect": 9,
+                    "msg": "assert response body months"
                 },
                 {
                     "check": "body.seconds",
@@ -1364,10 +1364,10 @@
                     "msg": "assert response body seconds"
                 },
                 {
-                    "check": "body.milliseconds",
+                    "check": "body.years",
                     "assert": "equals",
-                    "expect": 0,
-                    "msg": "assert response body milliseconds"
+                    "expect": 2016,
+                    "msg": "assert response body years"
                 }
             ]
         },

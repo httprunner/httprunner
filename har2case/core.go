@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -273,12 +274,20 @@ func (s *TStep) makeValidate(entry *Entry) error {
 			if err = json.Unmarshal(data, &body); err != nil {
 				return errors.Wrap(err, "json.Unmarshal body error")
 			}
-			if _, ok := body.(map[string]interface{}); !ok {
+			jsonBody, ok := body.(map[string]interface{})
+			if !ok {
 				return fmt.Errorf("response body is not json, not matched with MimeType")
 			}
 
 			// response body is json
-			for key, value := range body.(map[string]interface{}) {
+			keys := make([]string, 0, len(jsonBody))
+			for k := range jsonBody {
+				keys = append(keys, k)
+			}
+			// sort map keys to keep validators in stable order
+			sort.Strings(keys)
+			for _, key := range keys {
+				value := jsonBody[key]
 				switch v := value.(type) {
 				case map[string]interface{}:
 					continue
