@@ -7,7 +7,7 @@ import (
 
 	"github.com/imroc/req"
 	"github.com/jmespath/go-jmespath"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/builtin"
 )
@@ -45,8 +45,10 @@ func NewResponseObject(t *testing.T, resp *req.Resp) (*ResponseObject, error) {
 	respObjMetaBytes, _ := json.Marshal(respObjMeta)
 	var data interface{}
 	if err := json.Unmarshal(respObjMetaBytes, &data); err != nil {
-		log.Errorf("[NewResponseObject] convert respObjMeta to interface{} error: %v, respObjMeta: %v",
-			err, string(respObjMetaBytes))
+		log.Error().
+			Str("respObjMeta", string(respObjMetaBytes)).
+			Err(err).
+			Msg("[NewResponseObject] convert respObjMeta to interface{} failed")
 		return nil, err
 	}
 
@@ -77,8 +79,8 @@ func (v *ResponseObject) Extract(extractors map[string]string) map[string]interf
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
 		extractedValue := v.searchJmespath(value)
-		log.WithField("value", extractedValue).Infof("extract value from %s", value)
-		log.WithField("value", extractedValue).Infof("set variable %s", key)
+		log.Info().Str("from", value).Interface("value", extractedValue).Msg("extract value")
+		log.Info().Str("variable", key).Interface("value", extractedValue).Msg("set variable")
 		extractMapping[key] = extractedValue
 	}
 
@@ -112,12 +114,12 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)
-		log.WithFields(log.Fields{
-			"assertMethod": assertMethod,
-			"expectValue":  expectValue,
-			"checkValue":   checkValue,
-			"result":       result,
-		}).Infof("validate %s", checkItem)
+		log.Info().
+			Str("assertMethod", assertMethod).
+			Interface("expectValue", expectValue).
+			Interface("checkValue", checkValue).
+			Bool("result", result).
+			Msgf("validate %s", checkItem)
 		if !result {
 			v.t.Fail()
 		}
@@ -128,7 +130,7 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 func (v *ResponseObject) searchJmespath(expr string) interface{} {
 	checkValue, err := jmespath.Search(expr, v.respObjMeta)
 	if err != nil {
-		log.Errorf("[searchJmespath] jmespath.Search error: %v", err)
+		log.Error().Str("expr", expr).Err(err).Msg("search jmespath failed")
 		return expr // jmespath not found, return the expression
 	}
 	return checkValue

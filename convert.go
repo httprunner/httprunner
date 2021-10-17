@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,14 +24,14 @@ func (tc *TestCase) ToTCase() (*TCase, error) {
 func (tc *TCase) Dump2JSON(path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		log.Errorf("convert absolute path error: %v, path: %v", err, path)
+		log.Error().Err(err).Msg("convert absolute path failed")
 		return err
 	}
-	log.Infof("dump testcase to json path: %s", path)
+	log.Info().Str("path", path).Msg("dump testcase to json")
 	file, _ := json.MarshalIndent(tc, "", "    ")
 	err = ioutil.WriteFile(path, file, 0644)
 	if err != nil {
-		log.Errorf("dump json path error: %v", err)
+		log.Error().Err(err).Msg("dump json path failed")
 		return err
 	}
 	return nil
@@ -40,10 +40,10 @@ func (tc *TCase) Dump2JSON(path string) error {
 func (tc *TCase) Dump2YAML(path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		log.Errorf("convert absolute path error: %v, path: %v", err, path)
+		log.Error().Err(err).Msg("convert absolute path failed")
 		return err
 	}
-	log.Infof("dump testcase to yaml path: %s", path)
+	log.Info().Str("path", path).Msg("dump testcase to yaml")
 
 	// init yaml encoder
 	buffer := new(bytes.Buffer)
@@ -58,7 +58,7 @@ func (tc *TCase) Dump2YAML(path string) error {
 
 	err = ioutil.WriteFile(path, buffer.Bytes(), 0644)
 	if err != nil {
-		log.Errorf("dump yaml path error: %v", err)
+		log.Error().Err(err).Msg("dump yaml path failed")
 		return err
 	}
 	return nil
@@ -67,14 +67,14 @@ func (tc *TCase) Dump2YAML(path string) error {
 func loadFromJSON(path string) (*TCase, error) {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		log.Errorf("convert absolute path error: %v, path: %v", err, path)
+		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
 		return nil, err
 	}
-	log.WithField("path", path).Info("load json testcase")
+	log.Info().Str("path", path).Msg("load json testcase")
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Errorf("dump json path error: %v", err)
+		log.Error().Err(err).Msg("load json path failed")
 		return nil, err
 	}
 
@@ -88,14 +88,14 @@ func loadFromJSON(path string) (*TCase, error) {
 func loadFromYAML(path string) (*TCase, error) {
 	path, err := filepath.Abs(path)
 	if err != nil {
-		log.Errorf("convert absolute path error: %v, path: %v", err, path)
+		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
 		return nil, err
 	}
-	log.Infof("load testcase from yaml path: %s", path)
+	log.Info().Str("path", path).Msg("load yaml testcase")
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Errorf("dump yaml path error: %v", err)
+		log.Error().Err(err).Msg("load yaml path failed")
 		return nil, err
 	}
 
@@ -118,7 +118,7 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 				step: step,
 			})
 		} else {
-			log.Warnf("[convertTestCase] unexpected step: %+v", step)
+			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
 		}
 	}
 	return testCase, nil

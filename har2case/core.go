@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp"
 )
@@ -120,10 +120,10 @@ func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {
 }
 
 func (h *HAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
-	log.WithFields(log.Fields{
-		"method": entry.Request.Method,
-		"url":    entry.Request.URL,
-	}).Info("convert teststep")
+	log.Info().
+		Str("method", entry.Request.Method).
+		Str("url", entry.Request.URL).
+		Msg("convert teststep")
 
 	tStep := &TStep{
 		TStep: hrp.TStep{
@@ -168,7 +168,7 @@ func (s *TStep) makeRequestURL(entry *Entry) error {
 
 	u, err := url.Parse(entry.Request.URL)
 	if err != nil {
-		log.Errorf("makeRequestURL error: %v", err)
+		log.Error().Err(err).Msg("make request url failed")
 		return err
 	}
 	s.Request.URL = fmt.Sprintf("%s://%s", u.Scheme, u.Hostname()+u.Path)
@@ -215,7 +215,7 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 		var body interface{}
 		err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
 		if err != nil {
-			log.Errorf("makeRequestBody error: %v", err)
+			log.Error().Err(err).Msg("make request body failed")
 			return err
 		}
 		s.Request.Body = body
@@ -231,7 +231,7 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 		s.Request.Body = entry.Request.PostData.Text
 	} else {
 		// TODO
-		log.Fatalf("makeRequestBody: Not implemented for mimeType %s", mimeType)
+		log.Error().Msgf("makeRequestBody: Not implemented for mimeType %s", mimeType)
 	}
 	return nil
 }
