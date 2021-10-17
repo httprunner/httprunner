@@ -120,7 +120,11 @@ func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {
 }
 
 func (h *HAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
-	log.Infof("[prepareTestStep] %v %v", entry.Request.Method, entry.Request.URL)
+	log.WithFields(log.Fields{
+		"method": entry.Request.Method,
+		"url":    entry.Request.URL,
+	}).Info("convert teststep")
+
 	tStep := &TStep{
 		TStep: hrp.TStep{
 			Request:    &hrp.TRequest{},
