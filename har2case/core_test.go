@@ -1,7 +1,6 @@
 package har2case
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,6 @@ var (
 
 func TestGenJSON(t *testing.T) {
 	jsonPath, err := NewHAR(harPath).GenJSON()
-	log.Printf("jsonPath: %v, err: %v", jsonPath, err)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -25,7 +23,6 @@ func TestGenJSON(t *testing.T) {
 
 func TestGenYAML(t *testing.T) {
 	yamlPath, err := NewHAR(harPath2).GenYAML()
-	log.Printf("yamlPath: %v, err: %v", yamlPath, err)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}

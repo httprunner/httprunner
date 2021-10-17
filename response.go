@@ -2,12 +2,12 @@ package hrp
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 	"testing"
 
 	"github.com/imroc/req"
 	"github.com/jmespath/go-jmespath"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/httprunner/hrp/builtin"
 )
@@ -45,7 +45,7 @@ func NewResponseObject(t *testing.T, resp *req.Resp) (*ResponseObject, error) {
 	respObjMetaBytes, _ := json.Marshal(respObjMeta)
 	var data interface{}
 	if err := json.Unmarshal(respObjMetaBytes, &data); err != nil {
-		log.Printf("[NewResponseObject] convert respObjMeta to interface{} error: %v, respObjMeta: %v",
+		log.Errorf("[NewResponseObject] convert respObjMeta to interface{} error: %v, respObjMeta: %v",
 			err, string(respObjMetaBytes))
 		return nil, err
 	}
@@ -77,8 +77,8 @@ func (v *ResponseObject) Extract(extractors map[string]string) map[string]interf
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
 		extractedValue := v.searchJmespath(value)
-		log.Printf("[extract] %s => %v", value, extractedValue)
-		log.Printf("[setVariable] %s = %v", key, extractedValue)
+		log.Infof("[extract] %s => %v", value, extractedValue)
+		log.Infof("[setVariable] %s = %v", key, extractedValue)
 		extractMapping[key] = extractedValue
 	}
 
@@ -112,7 +112,7 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)
-		log.Printf("[assert] %s <%s> %v => %v", checkItem, assertMethod, expectValue, result)
+		log.Infof("[assert] %s <%s> %v => %v", checkItem, assertMethod, expectValue, result)
 		if !result {
 			v.t.Fail()
 		}
@@ -123,7 +123,7 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 func (v *ResponseObject) searchJmespath(expr string) interface{} {
 	checkValue, err := jmespath.Search(expr, v.respObjMeta)
 	if err != nil {
-		log.Printf("[searchJmespath] jmespath.Search error: %v", err)
+		log.Errorf("[searchJmespath] jmespath.Search error: %v", err)
 		return expr // jmespath not found, return the expression
 	}
 	return checkValue

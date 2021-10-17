@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"log"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp/har2case"
@@ -38,7 +37,7 @@ var har2caseCmd = &cobra.Command{
 			}
 			outputFiles = append(outputFiles, outputPath)
 		}
-		log.Printf("output: %v", outputFiles)
+		log.Infof("output: %v", outputFiles)
 		return nil
 	},
 }

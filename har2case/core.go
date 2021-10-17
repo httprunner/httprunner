@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/httprunner/hrp"
 )
@@ -120,7 +120,7 @@ func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {
 }
 
 func (h *HAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
-	log.Printf("[prepareTestStep] %v %v", entry.Request.Method, entry.Request.URL)
+	log.Infof("[prepareTestStep] %v %v", entry.Request.Method, entry.Request.URL)
 	tStep := &TStep{
 		TStep: hrp.TStep{
 			Request:    &hrp.TRequest{},
@@ -164,7 +164,7 @@ func (s *TStep) makeRequestURL(entry *Entry) error {
 
 	u, err := url.Parse(entry.Request.URL)
 	if err != nil {
-		log.Printf("makeRequestURL error: %v", err)
+		log.Errorf("makeRequestURL error: %v", err)
 		return err
 	}
 	s.Request.URL = fmt.Sprintf("%s://%s", u.Scheme, u.Hostname()+u.Path)
@@ -211,7 +211,7 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 		var body interface{}
 		err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
 		if err != nil {
-			log.Printf("makeRequestBody error: %v", err)
+			log.Errorf("makeRequestBody error: %v", err)
 			return err
 		}
 		s.Request.Body = body
