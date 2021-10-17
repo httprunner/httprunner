@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"testing"
 
 	"github.com/spf13/cobra/doc"
@@ -13,6 +12,6 @@ import (
 func TestGenMarkdownTree(t *testing.T) {
 	err := doc.GenMarkdownTree(cmd.RootCmd, "./cmd/")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 }

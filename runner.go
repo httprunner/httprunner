@@ -1,12 +1,12 @@
 package hrp
 
 import (
-	"log"
 	"net/http"
 	"testing"
 
 	"github.com/imroc/req"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // run API test with default configs
@@ -29,19 +29,19 @@ type Runner struct {
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
-	log.Printf("[init] WithTestingT: %v", t)
+	log.Infof("[init] WithTestingT: %v", t)
 	r.t = t
 	return r
 }
 
 func (r *Runner) SetDebug(debug bool) *Runner {
-	log.Printf("[init] SetDebug: %v", debug)
+	log.Infof("[init] SetDebug: %v", debug)
 	r.debug = debug
 	return r
 }
 
 func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
-	log.Printf("[init] SetProxyUrl: %s", proxyUrl)
+	log.Infof("[init] SetProxyUrl: %s", proxyUrl)
 	r.client.SetProxyUrl(proxyUrl)
 	return r
 }
@@ -50,11 +50,11 @@ func (r *Runner) Run(testcases ...ITestCase) error {
 	for _, iTestCase := range testcases {
 		testcase, err := iTestCase.ToTestCase()
 		if err != nil {
-			log.Printf("[Run] testcase.ToStruct() error: %v", err)
+			log.Errorf("[Run] testcase.ToStruct() error: %v", err)
 			return err
 		}
 		if err := r.runCase(testcase); err != nil {
-			log.Printf("[Run] runCase error: %v", err)
+			log.Errorf("[Run] runCase error: %v", err)
 			return err
 		}
 	}
@@ -67,7 +67,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		return err
 	}
 
-	log.Printf("Start to run testcase: %v", config.Name)
+	log.Infof("Start to run testcase: %v", config.Name)
 
 	extractedVariables := make(map[string]interface{})
 
@@ -81,7 +81,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		// parse step variables
 		parsedVariables, err := parseVariables(stepVariables)
 		if err != nil {
-			log.Printf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
+			log.Errorf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
 			return err
 		}
 		step.ToStruct().Variables = parsedVariables
@@ -100,10 +100,10 @@ func (r *Runner) runCase(testcase *TestCase) error {
 }
 
 func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
-	log.Printf("run step [%v] begin >>>>>>", step.Name())
+	log.Infof("run step [%v] begin >>>>>>", step.Name())
 	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
-		log.Printf("run referenced testcase: %v", tc.step.Name)
+		log.Infof("run referenced testcase: %v", tc.step.Name)
 		// TODO: override testcase config
 		stepData, err = r.runStepTestCase(tc.step)
 		if err != nil {
@@ -117,7 +117,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 			return
 		}
 	}
-	log.Printf("run step [%v] end, success: %v, responseLength: %v <<<<<<\n",
+	log.Infof("run step [%v] end, success: %v, responseLength: %v <<<<<<\n",
 		step.Name(), stepData.Success, stepData.ResponseLength)
 	return
 }
@@ -213,7 +213,7 @@ func (r *Runner) parseConfig(config *TConfig) error {
 	// parse config variables
 	parsedVariables, err := parseVariables(config.Variables)
 	if err != nil {
-		log.Printf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
+		log.Errorf("[parseConfig] parse variables: %v, error: %v", config.Variables, err)
 		return err
 	}
 	config.Variables = parsedVariables
