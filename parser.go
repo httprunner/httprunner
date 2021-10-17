@@ -291,10 +291,7 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 		argumentsValue[index] = argumentValue.Convert(expectArgumentType)
 	}
 
-	log.Infof("[callFunction] func: %v, input arguments: %v", funcName, arguments)
 	resultValues := funcValue.Call(argumentsValue)
-	log.Infof("[callFunction] output values: %v", resultValues)
-
 	if len(resultValues) > 1 {
 		// function should return at most one value
 		err := fmt.Errorf("function %s should return at most one value", funcName)
@@ -310,7 +307,11 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// return one value
 	// convert reflect.Value to interface{}
 	result := resultValues[0].Interface()
-	log.Infof("[callFunction] output result: %+v(%T)", result, result)
+	log.WithFields(log.Fields{
+		"funcName":  funcName,
+		"arguments": arguments,
+		"output":    result,
+	}).Info("call function")
 	return result, nil
 }
 

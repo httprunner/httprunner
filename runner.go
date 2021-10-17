@@ -9,6 +9,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func init() {
+	log.SetLevel(log.InfoLevel)
+	log.SetFormatter(&log.TextFormatter{})
+}
+
 // run API test with default configs
 func Run(t *testing.T, testcases ...ITestCase) error {
 	return NewRunner().WithTestingT(t).SetDebug(true).Run(testcases...)
@@ -29,19 +34,19 @@ type Runner struct {
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
-	log.Infof("[init] WithTestingT: %v", t)
+	log.Info("[init] WithTestingT")
 	r.t = t
 	return r
 }
 
 func (r *Runner) SetDebug(debug bool) *Runner {
-	log.Infof("[init] SetDebug: %v", debug)
+	log.WithField("debug", debug).Info("[init] SetDebug")
 	r.debug = debug
 	return r
 }
 
 func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
-	log.Infof("[init] SetProxyUrl: %s", proxyUrl)
+	log.WithField("proxyUrl", proxyUrl).Info("[init] SetProxyUrl")
 	r.client.SetProxyUrl(proxyUrl)
 	return r
 }
@@ -67,7 +72,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		return err
 	}
 
-	log.Infof("Start to run testcase: %v", config.Name)
+	log.WithField("testcase", config.Name).Info("run testcase start")
 
 	extractedVariables := make(map[string]interface{})
 
@@ -96,11 +101,12 @@ func (r *Runner) runCase(testcase *TestCase) error {
 		}
 	}
 
+	log.WithField("testcase", config.Name).Info("run testcase end")
 	return nil
 }
 
 func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
-	log.Infof("run step [%v] begin >>>>>>", step.Name())
+	log.WithField("step", step.Name()).Info("run step start")
 	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Infof("run referenced testcase: %v", tc.step.Name)
@@ -117,8 +123,11 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 			return
 		}
 	}
-	log.Infof("run step [%v] end, success: %v, responseLength: %v <<<<<<\n",
-		step.Name(), stepData.Success, stepData.ResponseLength)
+	log.WithFields(log.Fields{
+		"step":       step.Name(),
+		"success":    stepData.Success,
+		"exportVars": stepData.ExportVars,
+	}).Info("run step end")
 	return
 }
 

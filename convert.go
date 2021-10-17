@@ -70,7 +70,7 @@ func loadFromJSON(path string) (*TCase, error) {
 		log.Errorf("convert absolute path error: %v, path: %v", err, path)
 		return nil, err
 	}
-	log.Infof("load testcase from json path: %s", path)
+	log.WithField("path", path).Info("load json testcase")
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
