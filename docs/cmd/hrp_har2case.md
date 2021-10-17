@@ -7,15 +7,16 @@ Convert HAR to json/yaml testcase files
 Convert HAR to json/yaml testcase files
 
 ```
-hrp har2case path... [flags]
+hrp har2case harPath... [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help      help for har2case
-  -j, --to-json   convert to JSON format (default)
-  -y, --to-yaml   convert to JSON format
+  -h, --help                help for har2case
+  -d, --output-dir string   specify output directory, default to the same dir with har file
+  -j, --to-json             convert to JSON format (default)
+  -y, --to-yaml             convert to JSON format
 ```
 
 ### SEE ALSO
