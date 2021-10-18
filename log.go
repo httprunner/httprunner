@@ -30,8 +30,8 @@ func SetLogLevel(level string) {
 }
 
 func SetLogPretty() {
-	log.Info().Msg("Set log to pretty console")
 	log = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Info().Msg("Set log to pretty console")
 }
 
 func GetLogger() zerolog.Logger {
