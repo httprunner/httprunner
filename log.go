@@ -10,10 +10,6 @@ import (
 
 var log = zlog.Logger
 
-func init() {
-	log = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-}
-
 func SetLogLevel(level string) {
 	level = strings.ToUpper(level)
 	log.Info().Msgf("Set log level to %s", level)
@@ -31,6 +27,11 @@ func SetLogLevel(level string) {
 	case "PANIC":
 		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	}
+}
+
+func SetLogPretty() {
+	log.Info().Msg("Set log to pretty console")
+	log = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
 func GetLogger() zerolog.Logger {
