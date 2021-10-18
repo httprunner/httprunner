@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 

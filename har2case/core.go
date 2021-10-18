@@ -12,10 +12,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp"
 )
+
+var log = hrp.GetLogger()
 
 const (
 	suffixJSON = ".json"

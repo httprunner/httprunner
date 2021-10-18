@@ -7,7 +7,6 @@ import (
 
 	"github.com/imroc/req"
 	"github.com/jmespath/go-jmespath"
-	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/builtin"
 )
