@@ -18,6 +18,12 @@ var RootCmd = &cobra.Command{
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if !logJSON {
+			hrp.SetLogPretty()
+		}
+		hrp.SetLogLevel(logLevel)
+	},
 	Version: hrp.VERSION,
 }
 
