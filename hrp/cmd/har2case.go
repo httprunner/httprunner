@@ -4,6 +4,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/har2case"
 )
 
@@ -14,6 +15,7 @@ var har2caseCmd = &cobra.Command{
 	Long:  `Convert HAR to json/yaml testcase files`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		hrp.SetLogLevel(logLevel)
 		var outputFiles []string
 		for _, arg := range args {
 			var outputPath string

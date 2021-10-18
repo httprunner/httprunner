@@ -16,6 +16,7 @@ var runCmd = &cobra.Command{
   $ hrp run examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		hrp.SetLogLevel(logLevel)
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})

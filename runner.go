@@ -2,18 +2,11 @@ package hrp
 
 import (
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/imroc/req"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
-
-func init() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-}
 
 // run API test with default configs
 func Run(t *testing.T, testcases ...ITestCase) error {
