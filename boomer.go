@@ -3,7 +3,7 @@ package hrp
 import (
 	"time"
 
-	"github.com/myzhan/boomer"
+	"github.com/debugtalk/boomer"
 )
 
 var (
