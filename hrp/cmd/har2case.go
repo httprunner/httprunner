@@ -16,6 +16,10 @@ var har2caseCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		hrp.SetLogLevel(logLevel)
+		if !logJSON {
+			hrp.SetLogPretty()
+		}
+
 		var outputFiles []string
 		for _, arg := range args {
 			var outputPath string

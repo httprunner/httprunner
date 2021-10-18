@@ -19,6 +19,10 @@ var boomCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		hrp.SetLogLevel(logLevel)
+		if !logJSON {
+			hrp.SetLogPretty()
+		}
+
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
