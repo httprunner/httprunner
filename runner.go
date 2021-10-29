@@ -1,10 +1,16 @@
 package hrp
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"testing"
 
-	"github.com/imroc/req"
 	"github.com/pkg/errors"
 )
 
@@ -17,14 +23,14 @@ func NewRunner() *Runner {
 	return &Runner{
 		t:      &testing.T{},
 		debug:  false, // default to turn off debug
-		client: req.New(),
+		client: &http.Client{},
 	}
 }
 
 type Runner struct {
 	t      *testing.T
 	debug  bool
-	client *req.Req
+	client *http.Client
 }
 
 func (r *Runner) WithTestingT(t *testing.T) *Runner {
@@ -41,7 +47,7 @@ func (r *Runner) SetDebug(debug bool) *Runner {
 
 func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
 	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
-	r.client.SetProxyUrl(proxyUrl)
+	// TODO
 	return r
 }
 
@@ -107,6 +113,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 		// TODO: override testcase config
 		stepData, err = r.runStepTestCase(tc.step)
 		if err != nil {
+			log.Error().Err(err).Msg("run referenced testcase step failed")
 			return
 		}
 	} else {
@@ -114,6 +121,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 		tStep := parseStep(step, config)
 		stepData, err = r.runStepRequest(tStep)
 		if err != nil {
+			log.Error().Err(err).Msg("run request step failed")
 			return
 		}
 	}
@@ -132,49 +140,110 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		ResponseLength: 0,
 	}
 
-	// prepare request args
-	var v []interface{}
+	rawUrl := step.Request.URL
+	method := step.Request.Method
+	req := &http.Request{
+		Method:     string(method),
+		Header:     make(http.Header),
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+	}
+
+	// prepare request headers
 	if len(step.Request.Headers) > 0 {
 		headers, err := parseHeaders(step.Request.Headers, step.Variables)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parse headers failed")
 		}
-		v = append(v, req.Header(headers))
+		for key, value := range headers {
+			req.Header.Add(key, value)
+		}
 	}
+	if length := req.Header.Get("Content-Length"); length != "" {
+		if l, err := strconv.ParseInt(length, 10, 64); err == nil {
+			req.ContentLength = l
+		}
+	}
+	if host := req.Header.Get("Host"); host != "" {
+		req.Host = host
+	}
+
+	// prepare request params
+	var queryParams url.Values
 	if len(step.Request.Params) > 0 {
 		params, err := parseData(step.Request.Params, step.Variables)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "parse data failed")
 		}
-		v = append(v, req.Param(params.(map[string]interface{})))
+		parsedParams := params.(map[string]interface{})
+		if len(parsedParams) > 0 {
+			queryParams = make(url.Values)
+			for k, v := range parsedParams {
+				queryParams.Add(k, fmt.Sprint(v))
+			}
+		}
 	}
-	if step.Request.Body != nil {
-		data, err := parseData(step.Request.Body, step.Variables)
-		if err != nil {
-			return nil, err
-		}
-		switch data.(type) {
-		case map[string]interface{}: // post json
-			v = append(v, req.BodyJSON(data))
-		default: // post raw data
-			v = append(v, data)
+	if queryParams != nil {
+		// append params to url
+		paramStr := queryParams.Encode()
+		if strings.IndexByte(rawUrl, '?') == -1 {
+			rawUrl = rawUrl + "?" + paramStr
+		} else {
+			rawUrl = rawUrl + "&" + paramStr
 		}
 	}
 
+	// prepare request cookies
 	for cookieName, cookieValue := range step.Request.Cookies {
-		v = append(v, &http.Cookie{
+		req.AddCookie(&http.Cookie{
 			Name:  cookieName,
 			Value: cookieValue,
 		})
 	}
 
-	// do request action
-	req.Debug = r.debug
-	resp, err := r.client.Do(string(step.Request.Method), step.Request.URL, v...)
-	if err != nil {
-		return
+	// prepare request body
+	if step.Request.Body != nil {
+		data, err := parseData(step.Request.Body, step.Variables)
+		if err != nil {
+			return nil, err
+		}
+		var dataBytes []byte
+		switch vv := data.(type) {
+		case map[string]interface{}: // post json
+			dataBytes, err = json.Marshal(vv)
+			if err != nil {
+				return nil, err
+			}
+			setContentType(req, "application/json; charset=UTF-8")
+		case string:
+			dataBytes = []byte(vv)
+		case []byte:
+			dataBytes = vv
+		case bytes.Buffer:
+			dataBytes = vv.Bytes()
+		default: // unexpected body type
+			return nil, errors.New("unexpected request body type")
+		}
+		setBodyBytes(req, dataBytes)
 	}
-	defer resp.Response().Body.Close()
+
+	// prepare url
+	u, err := url.Parse(rawUrl)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse url failed")
+	}
+	req.URL = u
+
+	// do request action
+	// req.Debug = r.debug
+	// resp, err := r.client.Do(string(step.Request.Method), step.Request.URL, v...)
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "do request failed")
+	}
+	defer resp.Body.Close()
 
 	// new response object
 	respObj, err := NewResponseObject(r.t, resp)
@@ -198,7 +267,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	}
 
 	stepData.Success = true
-	stepData.ResponseLength = resp.Response().ContentLength
+	stepData.ResponseLength = resp.ContentLength
 	return
 }
 
@@ -240,4 +309,15 @@ func (r *Runner) parseConfig(config *TConfig) error {
 
 func (r *Runner) GetSummary() *TestCaseSummary {
 	return &TestCaseSummary{}
+}
+
+func setBodyBytes(req *http.Request, data []byte) {
+	req.Body = ioutil.NopCloser(bytes.NewReader(data))
+	req.ContentLength = int64(len(data))
+}
+
+func setContentType(req *http.Request, contentType string) {
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 }

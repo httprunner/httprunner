@@ -2,19 +2,20 @@ package hrp
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/imroc/req"
 	"github.com/jmespath/go-jmespath"
 
 	"github.com/httprunner/hrp/builtin"
 )
 
-func NewResponseObject(t *testing.T, resp *req.Resp) (*ResponseObject, error) {
+func NewResponseObject(t *testing.T, resp *http.Response) (*ResponseObject, error) {
 	// prepare response headers
 	headers := make(map[string]string)
-	for k, v := range resp.Response().Header {
+	for k, v := range resp.Header {
 		if len(v) > 0 {
 			headers[k] = v[0]
 		}
@@ -22,19 +23,25 @@ func NewResponseObject(t *testing.T, resp *req.Resp) (*ResponseObject, error) {
 
 	// prepare response cookies
 	cookies := make(map[string]string)
-	for _, cookie := range resp.Response().Cookies() {
+	for _, cookie := range resp.Cookies() {
 		cookies[cookie.Name] = cookie.Value
+	}
+
+	// read response body
+	respBodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
 	// parse response body
 	var body interface{}
-	if err := json.Unmarshal(resp.Bytes(), &body); err != nil {
+	if err := json.Unmarshal(respBodyBytes, &body); err != nil {
 		// response body is not json, use raw body
-		body = string(resp.Bytes())
+		body = string(respBodyBytes)
 	}
 
 	respObjMeta := respObjMeta{
-		StatusCode: resp.Response().StatusCode,
+		StatusCode: resp.StatusCode,
 		Headers:    headers,
 		Cookies:    cookies,
 		Body:       body,

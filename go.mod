@@ -7,7 +7,6 @@ require (
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef // indirect
 	github.com/debugtalk/boomer v1.6.0
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/imroc/req v0.3.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/maja42/goval v1.2.1
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
