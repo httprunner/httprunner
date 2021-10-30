@@ -49,7 +49,8 @@ var demoTestCase = &TestCase{
 			AssertEqual("body.json.foo2", 12.3, "check args foo2"),
 		Step("post form data").
 			POST("/post").
-			WithParams(map[string]interface{}{
+			WithHeaders(map[string]string{"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}).
+			WithBody(map[string]interface{}{
 				"foo1": "$varFoo1",       // reference former extracted variable
 				"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
 			}).

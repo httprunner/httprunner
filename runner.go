@@ -210,12 +210,23 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		}
 		var dataBytes []byte
 		switch vv := data.(type) {
-		case map[string]interface{}: // post json
-			dataBytes, err = json.Marshal(vv)
-			if err != nil {
-				return nil, err
+		case map[string]interface{}:
+			contentType := req.Header.Get("Content-Type")
+			if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
+				// post form data
+				formData := make(url.Values)
+				for k, v := range vv {
+					formData.Add(k, fmt.Sprint(v))
+				}
+				dataBytes = []byte(formData.Encode())
+			} else {
+				// post json
+				dataBytes, err = json.Marshal(vv)
+				if err != nil {
+					return nil, err
+				}
+				req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 			}
-			setContentType(req, "application/json; charset=UTF-8")
 		case string:
 			dataBytes = []byte(vv)
 		case []byte:
@@ -237,7 +248,6 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 
 	// do request action
 	// req.Debug = r.debug
-	// resp, err := r.client.Do(string(step.Request.Method), step.Request.URL, v...)
 
 	resp, err := r.client.Do(req)
 	if err != nil {
@@ -314,10 +324,4 @@ func (r *Runner) GetSummary() *TestCaseSummary {
 func setBodyBytes(req *http.Request, data []byte) {
 	req.Body = ioutil.NopCloser(bytes.NewReader(data))
 	req.ContentLength = int64(len(data))
-}
-
-func setContentType(req *http.Request, contentType string) {
-	if req.Header.Get("Content-Type") == "" {
-		req.Header.Set("Content-Type", contentType)
-	}
 }

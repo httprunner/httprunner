@@ -100,7 +100,10 @@
             "request": {
                 "method": "POST",
                 "url": "/post",
-                "params": {
+                "headers": {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
+                "body": {
                     "foo1": "$varFoo1",
                     "foo2": "${max($a, $b)}"
                 }
