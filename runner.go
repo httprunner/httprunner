@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -47,7 +48,15 @@ func (r *Runner) SetDebug(debug bool) *Runner {
 
 func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
 	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
-	// TODO
+	p, err := url.Parse(proxyUrl)
+	if err != nil {
+		log.Error().Err(err).Str("proxyUrl", proxyUrl).Msg("[init] invalid proxyUrl")
+		return r
+	}
+	r.client.Transport = &http.Transport{
+		Proxy:           http.ProxyURL(p),
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	return r
 }
 
