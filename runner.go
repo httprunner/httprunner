@@ -174,9 +174,6 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 			req.ContentLength = l
 		}
 	}
-	if host := req.Header.Get("Host"); host != "" {
-		req.Host = host
-	}
 
 	// prepare request params
 	var queryParams url.Values
@@ -254,6 +251,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		return nil, errors.Wrap(err, "parse url failed")
 	}
 	req.URL = u
+	req.Host = u.Host
 
 	// do request action
 	// req.Debug = r.debug
