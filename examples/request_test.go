@@ -17,7 +17,9 @@ func TestCaseBasicRequest(t *testing.T) {
 			hrp.Step("get with params").
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
-				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
+				WithHeaders(map[string]string{
+					"User-Agent": "HttpRunnerPlus",
+				}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.Connection", "keep-alive", "check header Connection").
@@ -26,22 +28,30 @@ func TestCaseBasicRequest(t *testing.T) {
 				AssertEqual("body.args.foo2", "bar2", "check args foo2"),
 			hrp.Step("post raw text").
 				POST("/post").
-				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "text/plain"}).
+				WithHeaders(map[string]string{
+					"User-Agent":   "HttpRunnerPlus",
+					"Content-Type": "text/plain",
+				}).
 				WithBody("This is expected to be sent back as part of response body.").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.data", "This is expected to be sent back as part of response body.", "check data"),
 			hrp.Step("post form data").
 				POST("/post").
-				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
-				WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+				WithHeaders(map[string]string{
+					"User-Agent":   "HttpRunnerPlus",
+					"Content-Type": "application/x-www-form-urlencoded",
+				}).
+				WithBody(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("body.form.foo1", "bar1", "check form foo1").
 				AssertEqual("body.form.foo2", "bar2", "check form foo2"),
 			hrp.Step("post json data").
 				POST("/post").
-				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
+				WithHeaders(map[string]string{
+					"User-Agent": "HttpRunnerPlus",
+				}).
 				WithBody(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
@@ -49,7 +59,10 @@ func TestCaseBasicRequest(t *testing.T) {
 				AssertEqual("body.json.foo2", "bar2", "check json foo2"),
 			hrp.Step("put request").
 				PUT("/put").
-				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "text/plain"}).
+				WithHeaders(map[string]string{
+					"User-Agent":   "HttpRunnerPlus",
+					"Content-Type": "text/plain",
+				}).
 				WithBody("This is expected to be sent back as part of response body.").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
