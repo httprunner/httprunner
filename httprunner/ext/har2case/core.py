@@ -11,6 +11,7 @@ from sentry_sdk import capture_exception
 
 from httprunner.ext.har2case import utils
 from httprunner.make import make_testcase, format_pytest_with_black
+from httprunner.loader import load_test_file
 
 try:
     from json.decoder import JSONDecodeError
@@ -36,10 +37,11 @@ def ensure_file_path(path: Text) -> Text:
 
 
 class HarParser(object):
-    def __init__(self, har_file_path, filter_str=None, exclude_str=None):
+    def __init__(self, har_file_path, filter_str=None, exclude_str=None, profile=None):
         self.har_file_path = ensure_file_path(har_file_path)
         self.filter_str = filter_str
         self.exclude_str = exclude_str or ""
+        self.profile = profile and load_test_file(profile)
 
     def __make_request_url(self, teststep_dict, entry_json):
         """ parse HAR entry request url and queryString, and make teststep url and params
@@ -97,12 +99,15 @@ class HarParser(object):
         teststep_dict["request"]["method"] = method
 
     def __make_request_cookies(self, teststep_dict, entry_json):
-        cookies = {}
-        for cookie in entry_json["request"].get("cookies", []):
-            cookies[cookie["name"]] = cookie["value"]
+        if self.profile and self.profile.get("cookies"):
+            teststep_dict["request"]["cookies"] = self.profile.get("cookies")
+        else:
+            cookies = {}
+            for cookie in entry_json["request"].get("cookies", []):
+                cookies[cookie["name"]] = cookie["value"]
 
-        if cookies:
-            teststep_dict["request"]["cookies"] = cookies
+            if cookies:
+                teststep_dict["request"]["cookies"] = cookies
 
     def __make_request_headers(self, teststep_dict, entry_json):
         """ parse HAR entry request headers, and make teststep headers.
@@ -128,15 +133,18 @@ class HarParser(object):
             }
 
         """
-        teststep_headers = {}
-        for header in entry_json["request"].get("headers", []):
-            if header["name"] == "cookie" or header["name"].startswith(":"):
-                continue
+        if self.profile and self.profile.get("headers"):
+            teststep_dict["request"]["headers"] = self.profile.get("headers")
+        else:
+            teststep_headers = {}
+            for header in entry_json["request"].get("headers", []):
+                if header["name"] == "cookie" or header["name"].startswith(":"):
+                    continue
 
-            teststep_headers[header["name"]] = header["value"]
+                teststep_headers[header["name"]] = header["value"]
 
-        if teststep_headers:
-            teststep_dict["request"]["headers"] = teststep_headers
+            if teststep_headers:
+                teststep_dict["request"]["headers"] = teststep_headers
 
     def _make_request_data(self, teststep_dict, entry_json):
         """ parse HAR entry request data, and make teststep request data
