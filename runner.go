@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -253,14 +254,33 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	req.URL = u
 	req.Host = u.Host
 
-	// do request action
-	// req.Debug = r.debug
+	// log & print request
+	if r.debug {
+		reqDump, err := httputil.DumpRequest(req, true)
+		if err != nil {
+			return nil, errors.Wrap(err, "dump request failed")
+		}
+		fmt.Println("-------------------- request --------------------")
+		fmt.Println(string(reqDump))
+	}
 
+	// do request action
 	resp, err := r.client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "do request failed")
 	}
 	defer resp.Body.Close()
+
+	// log & print response
+	if r.debug {
+		fmt.Println("==================== response ===================")
+		respDump, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, errors.Wrap(err, "dump response failed")
+		}
+		fmt.Println(string(respDump))
+		fmt.Println("--------------------------------------------------")
+	}
 
 	// new response object
 	respObj, err := NewResponseObject(r.t, resp)
