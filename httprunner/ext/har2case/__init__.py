@@ -45,6 +45,11 @@ def init_har2case_parser(subparsers):
         help="Specify exclude keyword, url that includes exclude string will be ignored, "
         "multiple keywords can be joined with '|'",
     )
+    parser.add_argument(
+        "--profile",
+        dest="profile",
+        help="Specify yaml file to overwrite headers and cookies in HAR.",
+    )
 
     return parser
 
@@ -60,6 +65,6 @@ def main_har2case(args):
         output_file_type = "pytest"
 
     capture_message(f"har2case {output_file_type}")
-    HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type)
+    HarParser(har_source_file, args.filter, args.exclude, args.profile).gen_testcase(output_file_type)
 
     return 0

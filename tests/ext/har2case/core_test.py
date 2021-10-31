@@ -9,6 +9,7 @@ class TestHar(TestHar2CaseUtils):
     def setUp(self):
         self.har_path = os.path.join(os.path.dirname(__file__), "data", "demo.har")
         self.har_parser = HarParser(self.har_path)
+        self.profile_path = os.path.join(os.path.dirname(__file__), "data", "profile.yml")
 
     def test_prepare_teststep(self):
         log_entries = load_har_log_entries(self.har_path)
@@ -46,6 +47,18 @@ class TestHar(TestHar2CaseUtils):
         self.har_parser.gen_testcase(file_type="JSON")
         self.assertTrue(os.path.isfile(json_file))
         os.remove(json_file)
+
+    def test_profile(self):
+        har_parser = HarParser(self.har_path, profile=self.profile_path)
+        teststeps = har_parser._prepare_teststeps()
+        self.assertEqual(
+            teststeps[0]["request"]["headers"],
+            {"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        self.assertEqual(
+            teststeps[0]["request"]["cookies"],
+            {"CASTGC": "TGT"},
+        )
 
     def test_filter(self):
         filter_str = "httprunner"
