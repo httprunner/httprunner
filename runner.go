@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -23,9 +24,14 @@ func Run(t *testing.T, testcases ...ITestCase) error {
 
 func NewRunner() *Runner {
 	return &Runner{
-		t:      &testing.T{},
-		debug:  false, // default to turn off debug
-		client: &http.Client{},
+		t:     &testing.T{},
+		debug: false, // default to turn off debug
+		client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			Timeout: 30 * time.Second,
+		},
 	}
 }
 
