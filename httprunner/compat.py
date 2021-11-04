@@ -342,7 +342,7 @@ def session_fixture(request):
         testcase_summary_json["records"] = testcase_summary_json.pop("step_datas")
         summary["details"].append(testcase_summary_json)
 
-    summary_path = "{{SUMMARY_PATH_PLACEHOLDER}}"
+    summary_path = r"{{SUMMARY_PATH_PLACEHOLDER}}"
     summary_dir = os.path.dirname(summary_path)
     os.makedirs(summary_dir, exist_ok=True)
 
