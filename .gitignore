@@ -16,3 +16,4 @@
 
 __debug_bin
 .vscode/
+__pycache__
