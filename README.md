@@ -57,10 +57,12 @@ Flags:
 Use "hrp [command] --help" for more information about a command.
 ```
 
-You can use `hrp run` command to run HttpRunner JSON/YAML testcases.
+You can use `hrp run` command to run HttpRunner JSON/YAML testcases. The following is an example running [examples/demo.json](examples/demo.json)
+
+<details>
+<summary>$ hrp run examples/demo.json</summary>
 
 ```text
-$ hrp run examples/demo.json
 8:04PM INF Set log to pretty console
 8:04PM INF Set log level to INFO
 8:04PM INF [init] SetDebug debug=true
@@ -146,6 +148,7 @@ Vary: Accept-Encoding
 8:04PM INF run step end exportVars=null step="post form data" success=true
 8:04PM INF run testcase end testcase="demo with complex mechanisms"
 ```
+</details>
 
 ### use as library
 
@@ -156,6 +159,10 @@ $ go get -u github.com/httprunner/hrp
 ```
 
 This is an example of `HttpRunner+` testcase. You can find more in the [`examples`][examples] directory.
+
+
+<details>
+<summary>demo</summary>
 
 ```go
 import (
@@ -225,6 +232,7 @@ func TestCaseDemo(t *testing.T) {
     }
 }
 ```
+</details>
 
 [HttpRunner]: https://github.com/httprunner/httprunner
 [Boomer]: https://github.com/myzhan/boomer
