@@ -77,7 +77,7 @@ func TestRunRequestRun(t *testing.T) {
 	config := &TConfig{
 		BaseURL: "https://postman-echo.com",
 	}
-	runner := NewRunner().SetDebug(true).WithTestingT(t)
+	runner := NewRunner(t).SetDebug(true)
 	if _, err := runner.runStep(stepGET, config); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
 	}
