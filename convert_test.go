@@ -1,141 +1,36 @@
 package hrp
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var demoTestCase = &TestCase{
-	Config: TConfig{
-		Name:    "demo with complex mechanisms",
-		BaseURL: "https://postman-echo.com",
-		Variables: map[string]interface{}{ // global level variables
-			"n":       5,
-			"a":       12.3,
-			"b":       3.45,
-			"varFoo1": "${gen_random_string($n)}",
-			"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
-		},
-	},
-	TestSteps: []IStep{
-		Step("get with params").
-			WithVariables(map[string]interface{}{ // step level variables
-				"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
-				"b":       34.5,             // override config level variable if existed, n/b/varFoo2
-				"varFoo2": "${max($a, $b)}", // 34.5; override variable b and eval again
-			}).
-			GET("/get").
-			WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
-			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).             // request with headers
-			Extract().
-			WithJmesPath("body.args.foo1", "varFoo1"). // extract variable with jmespath
-			Validate().
-			AssertEqual("status_code", 200, "check response status code").        // validate response status code
-			AssertStartsWith("headers.\"Content-Type\"", "application/json", ""). // validate response header
-			AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
-			AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
-			AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
-		Step("post json data").
-			POST("/post").
-			WithBody(map[string]interface{}{
-				"foo1": "$varFoo1",       // reference former extracted variable
-				"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
-			}).
-			Validate().
-			AssertEqual("status_code", 200, "check status code").
-			AssertLengthEqual("body.json.foo1", 5, "check args foo1").
-			AssertEqual("body.json.foo2", 12.3, "check args foo2"),
-		Step("post form data").
-			POST("/post").
-			WithHeaders(map[string]string{"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}).
-			WithBody(map[string]interface{}{
-				"foo1": "$varFoo1",       // reference former extracted variable
-				"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
-			}).
-			Validate().
-			AssertEqual("status_code", 200, "check status code").
-			AssertLengthEqual("body.form.foo1", 5, "check args foo1").
-			AssertEqual("body.form.foo2", "12.3", "check args foo2"), // form data will be converted to string
-	},
-}
-
 var (
-	demoTestCaseJSONPath = "demo.json"
-	demoTestCaseYAMLPath = "demo.yaml"
+	demoTestCaseJSONPath = "examples/demo.json"
+	demoTestCaseYAMLPath = "examples/demo.yaml"
 )
 
-func TestMain(m *testing.M) {
-	tCase, _ := demoTestCase.ToTCase()
-	// setup, prepare demo json/yaml testcase file path
-	err := tCase.Dump2JSON(demoTestCaseJSONPath)
-	if err != nil {
-		os.Exit(1)
-	}
-	err = tCase.Dump2YAML(demoTestCaseYAMLPath)
-	if err != nil {
-		os.Exit(1)
-	}
-
-	// run all tests
-	code := m.Run()
-	defer os.Exit(code)
-
-	// teardown
-	err = os.Remove(demoTestCaseJSONPath)
-	if err != nil {
-		os.Exit(1)
-	}
-	err = os.Remove(demoTestCaseYAMLPath)
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func TestLoadJSONCase(t *testing.T) {
-	tc, err := loadFromJSON(demoTestCaseJSONPath)
+func TestLoadCase(t *testing.T) {
+	tcJSON, err := loadFromJSON(demoTestCaseJSONPath)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	if !assert.Equal(t, tc.Config.Name, demoTestCase.Config.Name) {
-		t.Fail()
-	}
-	if !assert.Equal(t, tc.Config.BaseURL, demoTestCase.Config.BaseURL) {
-		t.Fail()
-	}
-	if !assert.Equal(t, tc.TestSteps[1].Name, demoTestCase.TestSteps[1].Name()) {
-		t.Fail()
-	}
-	if !assert.Equal(t, tc.TestSteps[1].Request, demoTestCase.TestSteps[1].ToStruct().Request) {
-		t.Fail()
-	}
-}
-
-func TestLoadYAMLCase(t *testing.T) {
-	tc, err := loadFromYAML(demoTestCaseYAMLPath)
+	tcYAML, err := loadFromYAML(demoTestCaseYAMLPath)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	if !assert.Equal(t, tc.Config, demoTestCase.Config) {
-		t.Fail()
-	}
-	if !assert.Equal(t, tc.TestSteps[1].Name, demoTestCase.TestSteps[1].Name()) {
-		t.Fail()
-	}
-	if !assert.Equal(t, tc.TestSteps[1].Request, demoTestCase.TestSteps[1].ToStruct().Request) {
-		t.Fail()
-	}
-}
 
-func TestLoadJSONAndRun(t *testing.T) {
-	jsonPath := &TestCasePath{demoTestCaseJSONPath}
-	testcase, err := jsonPath.ToTestCase()
-	if !assert.NoError(t, err) {
+	if !assert.Equal(t, tcJSON.Config.Name, tcYAML.Config.Name) {
 		t.Fail()
 	}
-	err = Run(t, testcase)
-	if err != nil {
-		t.Fatalf("run testcase error: %v", err)
+	if !assert.Equal(t, tcJSON.Config.BaseURL, tcYAML.Config.BaseURL) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tcJSON.TestSteps[1].Name, tcYAML.TestSteps[1].Name) {
+		t.Fail()
+	}
+	if !assert.Equal(t, tcJSON.TestSteps[1].Request, tcYAML.TestSteps[1].Request) {
+		t.Fail()
 	}
 }
