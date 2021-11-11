@@ -22,13 +22,138 @@
 
 ## Quick Start
 
-### Install
+### use as CLI tool
+
+```bash
+$ go get -u github.com/httprunner/hrp/hrp
+```
+
+Since installed, you will get a `hrp` command with multiple sub-commands.
+
+```text
+$ hrp -h
+hrp (HttpRunner+) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
+
+License: Apache-2.0
+Github: https://github.com/httprunner/hrp
+Copyright 2021 debugtalk
+
+Usage:
+  hrp [command]
+
+Available Commands:
+  boom        run load test with boomer
+  completion  generate the autocompletion script for the specified shell
+  har2case    Convert HAR to json/yaml testcase files
+  help        Help about any command
+  run         run API test
+
+Flags:
+  -h, --help               help for hrp
+      --log-json           set log to json format
+  -l, --log-level string   set log level (default "INFO")
+  -v, --version            version for hrp
+
+Use "hrp [command] --help" for more information about a command.
+```
+
+You can use `hrp run` command to run HttpRunner JSON/YAML testcases.
+
+```text
+$ hrp run examples/demo.json
+8:04PM INF Set log to pretty console
+8:04PM INF Set log level to INFO
+8:04PM INF [init] SetDebug debug=true
+8:04PM INF load json testcase path=/Users/debugtalk/MyProjects/HttpRunner-dev/hrp/examples/demo.json
+8:04PM INF call function success arguments=[5] funcName=gen_random_string output=B64R8
+8:04PM INF call function success arguments=[12.3,3.45] funcName=max output=12.3
+8:04PM INF run testcase start testcase="demo with complex mechanisms"
+8:04PM INF call function success arguments=[12.3,34.5] funcName=max output=34.5
+8:04PM INF run step start step="get with params"
+-------------------- request --------------------
+GET /get?foo1=B64R8&foo2=34.5 HTTP/1.1
+Host: postman-echo.com
+User-Agent: HttpRunnerPlus
+
+
+==================== response ===================
+HTTP/1.1 200 OK
+Content-Length: 304
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Thu, 11 Nov 2021 12:04:32 GMT
+Etag: W/"130-LUQ0LVU7KVSZha0O3nQxqPlr5dw"
+Set-Cookie: sails.sid=s%3Ag6vZXrHHzs-B7Q1bFrYQq83dUje_EkSu.06vsqbkZvIOJ6mb1It7c6i354e%2B0t91K4cG14YFjSX0; Path=/; HttpOnly
+Vary: Accept-Encoding
+
+{"args":{"foo1":"B64R8","foo2":"34.5"},"headers":{"x-forwarded-proto":"https","x-forwarded-port":"443","host":"postman-echo.com","x-amzn-trace-id":"Root=1-618d06d0-7516144f65e561a8238adab5","user-agent":"HttpRunnerPlus","accept-encoding":"gzip"},"url":"https://postman-echo.com/get?foo1=B64R8&foo2=34.5"}
+--------------------------------------------------
+8:04PM INF extract value from=body.args.foo1 value=B64R8
+8:04PM INF set variable value=B64R8 variable=varFoo1
+8:04PM INF validate status_code assertMethod=equals checkValue=200 expectValue=200 result=true
+8:04PM INF validate headers."Content-Type" assertMethod=startswith checkValue="application/json; charset=utf-8" expectValue=application/json result=true
+8:04PM INF validate body.args.foo1 assertMethod=length_equals checkValue=B64R8 expectValue=5 result=true
+8:04PM INF validate $varFoo1 assertMethod=length_equals checkValue=B64R8 expectValue=5 result=true
+8:04PM INF validate body.args.foo2 assertMethod=equals checkValue=34.5 expectValue=34.5 result=true
+8:04PM INF run step end exportVars={"varFoo1":"B64R8"} step="get with params" success=true
+8:04PM INF run step start step="post json data"
+8:04PM INF call function success arguments=[12.3,3.45] funcName=max output=12.3
+-------------------- request --------------------
+POST /post HTTP/1.1
+Host: postman-echo.com
+Content-Type: application/json; charset=UTF-8
+
+{"foo1":"B64R8","foo2":12.3}
+==================== response ===================
+HTTP/1.1 200 OK
+Content-Length: 424
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Thu, 11 Nov 2021 12:04:32 GMT
+Etag: W/"1a8-1umvYElau4WkHR7VON+jKXozT2c"
+Set-Cookie: sails.sid=s%3AeNnS5IE6TBePzx95OfuwyIweJy5aExb0.7MH6Vb42vbZ6OhNT2nhQGcAmHgqcFmtM8X03Qsoxa1k; Path=/; HttpOnly
+Vary: Accept-Encoding
+
+{"args":{},"data":{"foo1":"B64R8","foo2":12.3},"files":{},"form":{},"headers":{"x-forwarded-proto":"https","x-forwarded-port":"443","host":"postman-echo.com","x-amzn-trace-id":"Root=1-618d06d0-360475ad34903a97191978d7","content-length":"28","user-agent":"Go-http-client/1.1","content-type":"application/json; charset=UTF-8","accept-encoding":"gzip"},"json":{"foo1":"B64R8","foo2":12.3},"url":"https://postman-echo.com/post"}
+--------------------------------------------------
+8:04PM INF validate status_code assertMethod=equals checkValue=200 expectValue=200 result=true
+8:04PM INF validate body.json.foo1 assertMethod=length_equals checkValue=B64R8 expectValue=5 result=true
+8:04PM INF validate body.json.foo2 assertMethod=equals checkValue=12.3 expectValue=12.3 result=true
+8:04PM INF run step end exportVars=null step="post json data" success=true
+8:04PM INF run step start step="post form data"
+8:04PM INF call function success arguments=[12.3,3.45] funcName=max output=12.3
+-------------------- request --------------------
+POST /post HTTP/1.1
+Host: postman-echo.com
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+
+foo1=B64R8&foo2=12.3
+==================== response ===================
+HTTP/1.1 200 OK
+Content-Length: 445
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Thu, 11 Nov 2021 12:04:32 GMT
+Etag: W/"1bd-g/z+op+J2/U1DlrEv2g2VhZ0on4"
+Set-Cookie: sails.sid=s%3ALfq9XEgKVT4dKQ8PnxUJ9-WSq4wI96Po.2P90TP9V2Pje3GNJ1hJmLcRRgcQy%2FDwBPF63Xdvdq4o; Path=/; HttpOnly
+Vary: Accept-Encoding
+
+{"args":{},"data":"","files":{},"form":{"foo1":"B64R8","foo2":"12.3"},"headers":{"x-forwarded-proto":"https","x-forwarded-port":"443","host":"postman-echo.com","x-amzn-trace-id":"Root=1-618d06d0-56d250242bf05b7144edf2cb","content-length":"20","user-agent":"Go-http-client/1.1","content-type":"application/x-www-form-urlencoded; charset=UTF-8","accept-encoding":"gzip"},"json":{"foo1":"B64R8","foo2":"12.3"},"url":"https://postman-echo.com/post"}
+--------------------------------------------------
+8:04PM INF validate status_code assertMethod=equals checkValue=200 expectValue=200 result=true
+8:04PM INF validate body.form.foo1 assertMethod=length_equals checkValue=B64R8 expectValue=5 result=true
+8:04PM INF validate body.form.foo2 assertMethod=equals checkValue=12.3 expectValue=12.3 result=true
+8:04PM INF run step end exportVars=null step="post form data" success=true
+8:04PM INF run testcase end testcase="demo with complex mechanisms"
+```
+
+### use as library
+
+Beside using `hrp` as a CLI tool, you can also use it as golang library.
 
 ```bash
 $ go get -u github.com/httprunner/hrp
 ```
-
-### Examples
 
 This is an example of `HttpRunner+` testcase. You can find more in the [`examples`][examples] directory.
 
@@ -94,7 +219,7 @@ func TestCaseDemo(t *testing.T) {
         },
     }
 
-    err := hrp.Run(t, testcase)
+    err := hrp.NewRunner(nil).Run(demoTestCase) // hrp.Run(demoTestCase)
     if err != nil {
         t.Fatalf("run testcase error: %v", err)
     }
