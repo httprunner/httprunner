@@ -40,7 +40,7 @@ func TestCaseCallFunction(t *testing.T) {
 		},
 	}
 
-	err := hrp.Run(t, testcase)
+	err := hrp.NewRunner(t).Run(testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

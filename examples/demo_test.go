@@ -79,7 +79,7 @@ func TestGenDemoTestCase(t *testing.T) {
 }
 
 func Example_TestCase() {
-	err := hrp.NewRunner().Run(demoTestCase)
+	err := hrp.NewRunner(nil).Run(demoTestCase) // hrp.Run(demoTestCase)
 	fmt.Println(err)
 	// Output:
 	// <nil>
@@ -87,7 +87,7 @@ func Example_TestCase() {
 
 func Example_JSONTestCase() {
 	testCase := &hrp.TestCasePath{Path: demoTestCaseJSONPath}
-	err := hrp.NewRunner().Run(testCase)
+	err := hrp.NewRunner(nil).Run(testCase) // hrp.Run(testCase)
 	fmt.Println(err)
 	// Output:
 	// <nil>
@@ -95,7 +95,7 @@ func Example_JSONTestCase() {
 
 func Example_YAMTestCase() {
 	testCase := &hrp.TestCasePath{Path: demoTestCaseYAMLPath}
-	err := hrp.NewRunner().Run(testCase)
+	err := hrp.NewRunner(nil).Run(testCase) // hrp.Run(testCase)
 	fmt.Println(err)
 	// Output:
 	// <nil>

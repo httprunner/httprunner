@@ -37,7 +37,7 @@ func TestCaseExtractStepSingle(t *testing.T) {
 		},
 	}
 
-	err := hrp.Run(t, testcase)
+	err := hrp.NewRunner(t).Run(testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 		},
 	}
 
-	err := hrp.Run(t, testcase)
+	err := hrp.NewRunner(t).Run(testcase)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}

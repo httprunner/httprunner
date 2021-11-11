@@ -18,13 +18,17 @@ import (
 )
 
 // run API test with default configs
-func Run(t *testing.T, testcases ...ITestCase) error {
-	return NewRunner().WithTestingT(t).SetDebug(true).Run(testcases...)
+func Run(testcases ...ITestCase) error {
+	t := &testing.T{}
+	return NewRunner(t).SetDebug(true).Run(testcases...)
 }
 
-func NewRunner() *Runner {
+func NewRunner(t *testing.T) *Runner {
+	if t == nil {
+		t = &testing.T{}
+	}
 	return &Runner{
-		t:     &testing.T{},
+		t:     t,
 		debug: false, // default to turn off debug
 		client: &http.Client{
 			Transport: &http.Transport{
@@ -39,12 +43,6 @@ type Runner struct {
 	t      *testing.T
 	debug  bool
 	client *http.Client
-}
-
-func (r *Runner) WithTestingT(t *testing.T) *Runner {
-	log.Info().Msg("[init] WithTestingT")
-	r.t = t
-	return r
 }
 
 func (r *Runner) SetDebug(debug bool) *Runner {

@@ -20,7 +20,7 @@ var runCmd = &cobra.Command{
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
 		}
-		runner := hrp.NewRunner().SetDebug(!silentFlag)
+		runner := hrp.NewRunner(nil).SetDebug(!silentFlag)
 		if proxyUrl != "" {
 			runner.SetProxyUrl(proxyUrl)
 		}
