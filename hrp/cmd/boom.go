@@ -22,7 +22,7 @@ var boomCmd = &cobra.Command{
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
 		}
-		boomer := hrp.NewBoomer(masterHost, masterPort)
+		boomer := hrp.NewStandaloneBoomer(spawnCount, spawnRate)
 		boomer.EnableCPUProfile(cpuProfile, cpuProfileDuration)
 		boomer.EnableMemoryProfile(memoryProfile, memoryProfileDuration)
 		boomer.Run(paths...)
@@ -30,8 +30,8 @@ var boomCmd = &cobra.Command{
 }
 
 var (
-	masterHost            string
-	masterPort            int
+	spawnCount            int
+	spawnRate             float64
 	maxRPS                int64  // TODO: init boomer with this flag
 	requestIncreaseRate   string // TODO: init boomer with this flag
 	runTasks              string // TODO: init boomer with this flag
@@ -47,8 +47,8 @@ func init() {
 	boomCmd.Flags().Int64Var(&maxRPS, "max-rps", 0, "Max RPS that boomer can generate, disabled by default.")
 	boomCmd.Flags().StringVar(&requestIncreaseRate, "request-increase-rate", "-1", "Request increase rate, disabled by default.")
 	boomCmd.Flags().StringVar(&runTasks, "run-tasks", "", "Run tasks without connecting to the master, multiply tasks is separated by comma. Usually, it's for debug purpose.")
-	boomCmd.Flags().StringVar(&masterHost, "master-host", "127.0.0.1", "Host or IP address of locust master for distributed load testing.")
-	boomCmd.Flags().IntVar(&masterPort, "master-port", 5557, "The port to connect to that is used by the locust master for distributed load testing.")
+	boomCmd.Flags().IntVar(&spawnCount, "spawn-count", 1, "The number of users to spawn for load testing")
+	boomCmd.Flags().Float64Var(&spawnRate, "spawn-rate", 1, "The rate for spawning users")
 	boomCmd.Flags().StringVar(&memoryProfile, "mem-profile", "", "Enable memory profiling.")
 	boomCmd.Flags().DurationVar(&memoryProfileDuration, "mem-profile-duration", 30*time.Second, "Memory profile duration.")
 	boomCmd.Flags().StringVar(&cpuProfile, "cpu-profile", "", "Enable CPU profiling.")

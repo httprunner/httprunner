@@ -18,5 +18,5 @@ func TestHttpBoomer(t *testing.T) {
 	// 	},
 	// }
 
-	// Boom(testcase1, testcase2)
+	// NewStandaloneBoomer(1, 1).Run(testcase1, testcase2)
 }
