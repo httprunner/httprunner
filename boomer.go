@@ -6,19 +6,9 @@ import (
 	"github.com/debugtalk/boomer"
 )
 
-var (
-	defaultMasterHost = "127.0.0.1"
-	defaultMasterPort = 5557
-)
-
-// run load test with default configs
-func Boom(testcases ...ITestCase) {
-	NewBoomer(defaultMasterHost, defaultMasterPort).Run(testcases...)
-}
-
-func NewBoomer(masterHost string, masterPort int) *Boomer {
+func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
 	return &Boomer{
-		Boomer: boomer.NewBoomer(masterHost, masterPort),
+		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		debug:  false,
 	}
 }
@@ -43,7 +33,7 @@ func (b *Boomer) Run(testcases ...ITestCase) {
 		task := b.convertBoomerTask(testcase)
 		taskSlice = append(taskSlice, task)
 	}
-	boomer.Run(taskSlice...)
+	b.Boomer.Run(taskSlice...)
 }
 
 func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
