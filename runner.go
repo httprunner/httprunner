@@ -91,27 +91,9 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	extractedVariables := make(map[string]interface{})
 
 	for _, step := range testcase.TestSteps {
-		// override variables
-		// step variables > extracted variables from previous steps
-		stepVariables := mergeVariables(step.ToStruct().Variables, extractedVariables)
-		// step variables > testcase config variables
-		stepVariables = mergeVariables(stepVariables, config.Variables)
-
-		// parse step variables
-		parsedVariables, err := parseVariables(stepVariables)
-		if err != nil {
-			log.Error().Interface("variables", config.Variables).Err(err).Msg("parse step variables failed")
-			return err
-		}
-		step.ToStruct().Variables = parsedVariables
-
-		stepData, err := r.runStep(step, config)
+		_, err := r.runStep(step, config, extractedVariables)
 		if err != nil {
 			return err
-		}
-		// update extracted variables
-		for k, v := range stepData.ExportVars {
-			extractedVariables[k] = v
 		}
 	}
 
@@ -119,8 +101,23 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
+func (r *Runner) runStep(step IStep, config *TConfig, extractedVariables map[string]interface{}) (stepData *StepData, err error) {
 	log.Info().Str("step", step.Name()).Msg("run step start")
+
+	// override variables
+	// step variables > extracted variables from previous steps
+	stepVariables := mergeVariables(step.ToStruct().Variables, extractedVariables)
+	// step variables > testcase config variables
+	stepVariables = mergeVariables(stepVariables, config.Variables)
+
+	// parse step variables
+	parsedVariables, err := parseVariables(stepVariables)
+	if err != nil {
+		log.Error().Interface("variables", config.Variables).Err(err).Msg("parse step variables failed")
+		return
+	}
+	step.ToStruct().Variables = parsedVariables
+
 	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Info().Str("testcase", tc.step.Name).Msg("run referenced testcase")
@@ -139,6 +136,12 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 			return
 		}
 	}
+
+	// update extracted variables
+	for k, v := range stepData.ExportVars {
+		extractedVariables[k] = v
+	}
+
 	log.Info().
 		Str("step", step.Name()).
 		Bool("success", stepData.Success).
