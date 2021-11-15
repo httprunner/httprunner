@@ -2,6 +2,10 @@
 # $ pip install mkdocs            # 1.1.2
 # $ pip install mkdocs-material   # 5.2.2
 
+# usage
+# $ mkdocs serve        # build docs and preview
+# $ mkdocs gh-deploy    # Deploy your documentation to GitHub Pages
+
 # Project information
 site_name: HttpRunner V3.x Docs
 site_description: HttpRunner V3.x User Documentation
@@ -13,7 +17,7 @@ repo_url: https://github.com/httprunner/httprunner
 edit_uri: ""
 
 # Copyright
-copyright: 'Copyright &copy; 2017 - 2020 debugtalk'
+copyright: 'Copyright &copy; 2017 - 2021 debugtalk'
 
 # Configuration
 theme:
