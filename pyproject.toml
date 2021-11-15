@@ -52,7 +52,7 @@ locust = ["locust"]                         # pip install "httprunner[locust]", 
 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5.4"
-uvicorn = "^0.11.3"
+uvicorn = "^0.11.7"
 fastapi = "^0.70.0"
 
 [tool.poetry.scripts]
