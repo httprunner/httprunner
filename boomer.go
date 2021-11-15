@@ -36,6 +36,10 @@ func (b *Boomer) Run(testcases ...ITestCase) {
 	b.Boomer.Run(taskSlice...)
 }
 
+func (b *Boomer) Quit() {
+	b.Boomer.Quit()
+}
+
 func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	runner := NewRunner(nil).SetDebug(b.debug)
 	return &boomer.Task{
