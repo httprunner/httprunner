@@ -6,9 +6,7 @@
 
 [<img src="assets/hogwarts.jpeg" alt="霍格沃兹测试学院" width="500">](https://ceshiren.com/)
 
-> [霍格沃兹测试开发学社](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=httprunner&url=https://www.testing-studio.com) 。入学会先进行技术能力测评，因材施教，帮助测试工程师实现从手工到测试开发技术转型。通过优秀的学社制度（奖学金制度、内推返学费制度、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。
-
-> 学院课程由一线大厂测试经理与资深测试开发专家参与研发，以实战驱动为导向，紧贴互联网名企的用人需求。课程方向涵盖移动app自动化测试、接口自动化测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移、测试右移、精准测试、测试平台开发、测试管理等内容，全面提升测试开发工程师的技术实力。
+> [霍格沃兹测试开发学社](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=httprunner&url=https://www.testing-studio.com) 。学院课程由一线大厂测试经理与资深测试开发专家参与研发，实战驱动。课程涵盖 web/app 自动化测试、接口测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移&右移、精准测试、测试平台开发、测试管理等内容，帮助测试工程师实现测试开发技术转型。通过优秀的学社制度（奖学金、内推返学费、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。
 
 > [进入测试开发技术能力测评!](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com/t/topic/14940)
 
