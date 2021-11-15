@@ -7,10 +7,12 @@ import (
 )
 
 func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
-	return &Boomer{
+	b := &Boomer{
 		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		debug:  false,
 	}
+	b.AddOutput(boomer.NewConsoleOutput())
+	return b
 }
 
 type Boomer struct {
@@ -53,9 +55,9 @@ func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				stepData, err := runner.runStep(step, config)
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 				if err == nil {
-					boomer.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.ResponseLength)
+					b.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.ResponseLength)
 				} else {
-					boomer.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
 				}
 			}
 		},
