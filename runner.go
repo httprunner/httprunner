@@ -36,13 +36,15 @@ func NewRunner(t *testing.T) *Runner {
 			},
 			Timeout: 30 * time.Second,
 		},
+		sessionVariables: make(map[string]interface{}),
 	}
 }
 
 type Runner struct {
-	t      *testing.T
-	debug  bool
-	client *http.Client
+	t                *testing.T
+	debug            bool
+	client           *http.Client
+	sessionVariables map[string]interface{}
 }
 
 func (r *Runner) SetDebug(debug bool) *Runner {
@@ -88,10 +90,8 @@ func (r *Runner) runCase(testcase *TestCase) error {
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
-	extractedVariables := make(map[string]interface{})
-
 	for _, step := range testcase.TestSteps {
-		_, err := r.runStep(step, config, extractedVariables)
+		_, err := r.runStep(step, config)
 		if err != nil {
 			return err
 		}
@@ -101,12 +101,12 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func (r *Runner) runStep(step IStep, config *TConfig, extractedVariables map[string]interface{}) (stepData *StepData, err error) {
+func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
 	log.Info().Str("step", step.Name()).Msg("run step start")
 
 	// override variables
-	// step variables > extracted variables from previous steps
-	stepVariables := mergeVariables(step.ToStruct().Variables, extractedVariables)
+	// step variables > session variables (extracted variables from previous steps)
+	stepVariables := mergeVariables(step.ToStruct().Variables, r.sessionVariables)
 	// step variables > testcase config variables
 	stepVariables = mergeVariables(stepVariables, config.Variables)
 
@@ -139,7 +139,7 @@ func (r *Runner) runStep(step IStep, config *TConfig, extractedVariables map[str
 
 	// update extracted variables
 	for k, v := range stepData.ExportVars {
-		extractedVariables[k] = v
+		r.sessionVariables[k] = v
 	}
 
 	log.Info().

@@ -43,11 +43,10 @@ func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 		Weight: testcase.Config.Weight,
 		Fn: func() {
 			config := &testcase.Config
-			extractedVariables := make(map[string]interface{})
 			for _, step := range testcase.TestSteps {
 				var err error
 				start := time.Now()
-				stepData, err := runner.runStep(step, config, extractedVariables)
+				stepData, err := runner.runStep(step, config)
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 				if err == nil {
 					boomer.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.ResponseLength)
