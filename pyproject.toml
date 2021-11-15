@@ -30,7 +30,7 @@ include = ["docs/CHANGELOG.md"]
 [tool.poetry.dependencies]
 python = "^3.6.2"
 requests = "^2.22.0"
-pyyaml = "^5.1.2"
+pyyaml = "^5.4.1"
 jinja2 = "^2.10.3"
 pydantic = "^1.4"
 loguru = "^0.4.1"
@@ -65,3 +65,7 @@ locusts = "httprunner.ext.locust:main_locusts"
 [build-system]
 requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
