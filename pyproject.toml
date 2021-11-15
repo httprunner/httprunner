@@ -28,7 +28,7 @@ classifiers = [
 include = ["docs/CHANGELOG.md"]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.2"
 requests = "^2.22.0"
 pyyaml = "^5.1.2"
 jinja2 = "^2.10.3"
@@ -53,7 +53,7 @@ locust = ["locust"]                         # pip install "httprunner[locust]", 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5.4"
 uvicorn = "^0.11.3"
-fastapi = "^0.49.0"
+fastapi = "^0.70.0"
 
 [tool.poetry.scripts]
 httprunner = "httprunner.cli:main"
