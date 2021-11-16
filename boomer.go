@@ -3,7 +3,7 @@ package hrp
 import (
 	"time"
 
-	"github.com/debugtalk/boomer"
+	"github.com/myzhan/boomer"
 )
 
 func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
