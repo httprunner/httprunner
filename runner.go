@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 )
 
@@ -104,9 +105,17 @@ func (r *Runner) runCase(testcase *TestCase) error {
 func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
 	log.Info().Str("step", step.Name()).Msg("run step start")
 
+	// copy step to avoid data racing
+	copiedStep := &TStep{}
+	if err = copier.Copy(copiedStep, step.ToStruct()); err != nil {
+		log.Error().Err(err).Msg("copy step data failed")
+		return
+	}
+
+	stepVariables := copiedStep.Variables
 	// override variables
 	// step variables > session variables (extracted variables from previous steps)
-	stepVariables := mergeVariables(step.ToStruct().Variables, r.sessionVariables)
+	stepVariables = mergeVariables(stepVariables, r.sessionVariables)
 	// step variables > testcase config variables
 	stepVariables = mergeVariables(stepVariables, config.Variables)
 
@@ -116,21 +125,21 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 		log.Error().Interface("variables", config.Variables).Err(err).Msg("parse step variables failed")
 		return
 	}
-	step.ToStruct().Variables = parsedVariables
+	copiedStep.Variables = parsedVariables // avoid data racing
 
-	if tc, ok := step.(*testcaseWithOptionalArgs); ok {
+	if _, ok := step.(*testcaseWithOptionalArgs); ok {
 		// run referenced testcase
-		log.Info().Str("testcase", tc.step.Name).Msg("run referenced testcase")
+		log.Info().Str("testcase", copiedStep.Name).Msg("run referenced testcase")
 		// TODO: override testcase config
-		stepData, err = r.runStepTestCase(tc.step)
+		stepData, err = r.runStepTestCase(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run referenced testcase step failed")
 			return
 		}
 	} else {
 		// run request
-		tStep := parseStep(step, config)
-		stepData, err = r.runStepRequest(tStep)
+		copiedStep.Request.URL = buildURL(config.BaseURL, copiedStep.Request.URL) // avoid data racing
+		stepData, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
 			return
