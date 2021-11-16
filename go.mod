@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/maja42/goval v1.2.1
 	github.com/mattn/go-runewidth v0.0.13 // indirect

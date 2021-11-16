@@ -13,12 +13,6 @@ import (
 	"github.com/httprunner/hrp/builtin"
 )
 
-func parseStep(step IStep, config *TConfig) *TStep {
-	tStep := step.ToStruct()
-	tStep.Request.URL = buildURL(config.BaseURL, tStep.Request.URL)
-	return tStep
-}
-
 func buildURL(baseURL, stepURL string) string {
 	uConfig, err := url.Parse(baseURL)
 	if err != nil {
