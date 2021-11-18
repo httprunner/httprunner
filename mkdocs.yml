@@ -60,4 +60,5 @@ nav:
         - hrp_run: cmd/hrp_run.md
         - hrp_har2case: cmd/hrp_har2case.md
         - hrp_boom: cmd/hrp_boom.md
+    - Sponsors: sponsors.md
     - CHANGELOG: CHANGELOG.md
