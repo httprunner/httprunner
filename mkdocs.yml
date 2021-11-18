@@ -3,8 +3,7 @@
 # $ pip install mkdocs-material   # 5.2.2
 
 # usage
-# $ mkdocs build        # Build the MkDocs documentation
-# $ mkdocs serve        # Run the builtin development server
+# $ mkdocs serve        # build docs and preview
 # $ mkdocs gh-deploy    # Deploy your documentation to GitHub Pages
 
 # Project information
@@ -54,6 +53,7 @@ extra:
 
 # index pages
 nav:
+    - README: README.md
     - Installation: installation.md
     - CLI Tools:
         - hrp: cmd/hrp.md
