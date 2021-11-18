@@ -10,7 +10,7 @@ import (
 
 // run this test to generate markdown docs
 func TestGenMarkdownTree(t *testing.T) {
-	err := doc.GenMarkdownTree(cmd.RootCmd, "./cmd/")
+	err := doc.GenMarkdownTree(cmd.RootCmd, "./")
 	if err != nil {
 		t.Fatal(err)
 	}
