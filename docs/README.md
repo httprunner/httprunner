@@ -10,7 +10,7 @@
 
 ## Key Features
 
-![flow chart](flow.jpg)
+![flow chart](assets/flow.jpg)
 
 - [x] Full support for HTTP(S) requests, more protocols are also in the plan.
 - [x] Testcases can be described in multiple formats, `YAML`/`JSON`/`Golang`, and they are interchangeable.
