@@ -4,9 +4,24 @@ import (
 	"os"
 	"strings"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 )
+
+func init() {
+	// init sentry sdk
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn:     "https://cff5efc69b1a4325a4cf873f1e70c13a@o334324.ingest.sentry.io/6070292",
+		Release: VERSION,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("init sentry sdk failed!")
+	}
+	sentry.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetLevel(sentry.LevelError)
+	})
+}
 
 var log = zlog.Logger
 

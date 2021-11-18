@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -14,6 +15,7 @@ var har2caseCmd = &cobra.Command{
 	Long:  `Convert HAR to json/yaml testcase files`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		sentry.CaptureMessage("start to convert HAR to testcases")
 		var outputFiles []string
 		for _, arg := range args {
 			var outputPath string
