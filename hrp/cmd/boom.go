@@ -3,6 +3,7 @@ package cmd
 import (
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp"
@@ -18,6 +19,7 @@ var boomCmd = &cobra.Command{
   $ hrp boom examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		sentry.CaptureMessage("start to run load test")
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})

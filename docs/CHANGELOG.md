@@ -12,8 +12,10 @@
 - docs: init documentation website with [`mkdocs`][mkdocs]
 - docs: add project badges, including go report card, codecov, github actions, FOSSA, etc.
 - test: add CI test with [github actions][github-actions]
+- test: integrate [sentry sdk][sentry sdk] for event reporting and analysis
 
 [jmespath]: https://jmespath.org/
 [mkdocs]: https://www.mkdocs.org/
 [github-actions]: https://github.com/httprunner/hrp/actions
 [boomer]: github.com/myzhan/boomer
+[sentry sdk]: https://github.com/getsentry/sentry-go

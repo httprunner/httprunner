@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/getsentry/sentry-go"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp"
@@ -16,6 +17,7 @@ var runCmd = &cobra.Command{
   $ hrp run examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		sentry.CaptureMessage("start to run API tests")
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})

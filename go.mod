@@ -3,6 +3,7 @@ module github.com/httprunner/hrp
 go 1.16
 
 require (
+	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
