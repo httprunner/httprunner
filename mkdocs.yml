@@ -42,6 +42,9 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
 
 # extra
 extra:
@@ -55,7 +58,7 @@ extra:
 
 # index pages
 nav:
-    - Introduction: index.md
+    - README: README.md
     - Installation: installation.md
     - User Guide:
         - Concepts: user/concepts.md
