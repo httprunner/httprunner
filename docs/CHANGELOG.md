@@ -1,5 +1,9 @@
 # Release History
 
+## v0.2.0 (2021-11-18)
+
+- feat: deploy mkdocs to github pages when PR merged
+
 ## v0.1.0 (2021-11-18)
 
 - feat: full support for HTTP(S)/1.1 methods
