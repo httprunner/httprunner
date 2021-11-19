@@ -238,7 +238,7 @@ func TestCaseDemo(t *testing.T) {
 
 Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](sponsors.md))
 
-### 金牌赞助商（Gold Sponsor）
+### Gold Sponsor
 
 [<img src="assets/hogwarts.jpeg" alt="霍格沃兹测试开发学社" width="400">](https://ceshiren.com/)
 
@@ -246,7 +246,7 @@ Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](sponsors.md))
 
 > [进入测试开发技术能力测评!](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com/t/topic/14940)
 
-### 开源服务赞助商（Open Source Sponsor）
+### Open Source Sponsor
 
 [<img src="assets/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
 
