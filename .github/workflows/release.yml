@@ -1,0 +1,31 @@
+name: Release hrp cli binaries
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  releases-matrix:
+    name: Release hrp cli binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/amd64/windows
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Release hrp cli binaries
+        uses: wangyoucao577/go-release-action@v1.21
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: "./hrp" # go build ./hrp/main.go
+          binary_name: "hrp"
+          ldflags: "-s -w"
+          extra_files: LICENSE docs/README.md docs/CHANGELOG.md
