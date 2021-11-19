@@ -17,3 +17,7 @@
 __debug_bin
 .vscode/
 __pycache__
+.DS_Store
+
+site/
+output/
