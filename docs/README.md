@@ -1,7 +1,7 @@
 # hrp (HttpRunner+)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/hrp.svg)](https://pkg.go.dev/github.com/httprunner/hrp)
-[![Github Actions](https://github.com/httprunner/hrp/actions/workflows/main.yml/badge.svg)](https://github.com/httprunner/hrp/actions)
+[![Github Actions](https://github.com/httprunner/hrp/actions/workflows/unittest.yml/badge.svg)](https://github.com/httprunner/hrp/actions)
 [![codecov](https://codecov.io/gh/httprunner/hrp/branch/main/graph/badge.svg?token=HPCQWCD7KO)](https://codecov.io/gh/httprunner/hrp)
 [![Go Report Card](https://goreportcard.com/badge/github.com/httprunner/hrp)](https://goreportcard.com/report/github.com/httprunner/hrp)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B27856%2Fgithub.com%2Fhttprunner%2Fhrp.svg?type=shield)](https://app.fossa.com/reports/c2742455-c8ab-4b13-8fd7-4a35ba0b2840)
