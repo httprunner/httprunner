@@ -1,4 +1,4 @@
-name: Build and Test
+name: Run unittest with coverage
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         go-version:
           - 1.13.x

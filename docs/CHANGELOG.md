@@ -1,8 +1,10 @@
 # Release History
 
-## v0.2.0 (2021-11-18)
+## v0.2.0 (2021-11-19)
 
 - feat: deploy mkdocs to github pages when PR merged
+- feat: release hrp cli binaries automatically with github actions
+- feat: add Makefile for running unittest and building hrp cli binary
 
 ## v0.1.0 (2021-11-18)
 
