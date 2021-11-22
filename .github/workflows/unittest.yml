@@ -1,4 +1,4 @@
-name: Run unittest with coverage
+name: Run unittests
 
 on:
   push:

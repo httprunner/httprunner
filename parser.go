@@ -10,7 +10,7 @@ import (
 
 	"github.com/maja42/goval"
 
-	"github.com/httprunner/hrp/builtin"
+	"github.com/httprunner/hrp/internal/builtin"
 )
 
 func buildURL(baseURL, stepURL string) string {

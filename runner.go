@@ -16,6 +16,8 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+
+	"github.com/httprunner/hrp/internal/ga"
 )
 
 // run API test with default configs
@@ -69,6 +71,15 @@ func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
 }
 
 func (r *Runner) Run(testcases ...ITestCase) error {
+	event := ga.EventTracking{
+		Category: "RunAPITests",
+		Action:   "hrp run",
+	}
+	// report start event
+	go ga.SendEvent(event)
+	// report execution timing event
+	defer ga.SendEvent(event.StartTiming("execution"))
+
 	for _, iTestCase := range testcases {
 		testcase, err := iTestCase.ToTestCase()
 		if err != nil {

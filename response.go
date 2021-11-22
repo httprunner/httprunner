@@ -9,7 +9,7 @@ import (
 
 	"github.com/jmespath/go-jmespath"
 
-	"github.com/httprunner/hrp/builtin"
+	"github.com/httprunner/hrp/internal/builtin"
 )
 
 func NewResponseObject(t *testing.T, resp *http.Response) (*ResponseObject, error) {
