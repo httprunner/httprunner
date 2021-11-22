@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/httprunner/hrp"
+	"github.com/httprunner/hrp/internal/ga"
 )
 
 var log = hrp.GetLogger()
@@ -41,6 +42,15 @@ func (h *HAR) SetOutputDir(dir string) {
 }
 
 func (h *HAR) GenJSON() (jsonPath string, err error) {
+	event := ga.EventTracking{
+		Category: "har2case",
+		Action:   "hrp har2case --to-json",
+	}
+	// report start event
+	go ga.SendEvent(event)
+	// report running timing event
+	defer ga.SendEvent(event.StartTiming("execution"))
+
 	tCase, err := h.makeTestCase()
 	if err != nil {
 		return "", err
@@ -51,6 +61,15 @@ func (h *HAR) GenJSON() (jsonPath string, err error) {
 }
 
 func (h *HAR) GenYAML() (yamlPath string, err error) {
+	event := ga.EventTracking{
+		Category: "har2case",
+		Action:   "hrp har2case --to-yaml",
+	}
+	// report start event
+	go ga.SendEvent(event)
+	// report running timing event
+	defer ga.SendEvent(event.StartTiming("execution"))
+
 	tCase, err := h.makeTestCase()
 	if err != nil {
 		return "", err

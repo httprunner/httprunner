@@ -1,5 +1,9 @@
 # Release History
 
+## v0.2.1 (2021-11-26)
+
+- feat: report events with Google Analytics
+
 ## v0.2.0 (2021-11-19)
 
 - feat: deploy mkdocs to github pages when PR merged

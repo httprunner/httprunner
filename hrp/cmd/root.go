@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp"
+	"github.com/httprunner/hrp/internal/version"
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -24,7 +25,7 @@ Copyright 2021 debugtalk`,
 		}
 		hrp.SetLogLevel(logLevel)
 	},
-	Version: hrp.VERSION,
+	Version: version.VERSION,
 }
 
 var (
