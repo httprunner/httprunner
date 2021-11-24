@@ -16,6 +16,7 @@
 
 __debug_bin
 .vscode/
+.idea/
 __pycache__
 .DS_Store
 
