@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"reflect"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -23,11 +21,10 @@ type GAClient struct {
 }
 
 // NewGAClient creates a new GAClient object with the trackingID and clientID.
-func NewGAClient(trackingID string) *GAClient {
-	nodeUUID, _ := uuid.NewUUID()
+func NewGAClient(trackingID, clientID string) *GAClient {
 	return &GAClient{
 		TrackingID: trackingID,
-		ClientID:   nodeUUID.String(),
+		ClientID:   clientID,
 		Version:    "1", // constant v1
 		httpClient: &http.Client{
 			Timeout: 5 * time.Second,
