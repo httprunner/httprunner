@@ -15,7 +15,7 @@ type EventTracking struct {
 	Category string `form:"ec"` // Required. Event Category.
 	Action   string `form:"ea"` // Required. Event Action.
 	Label    string `form:"el"` // Optional. Event label
-	Value    int    `form:"ev"` // Optional. Event value
+	Value    string `form:"ev"` // Optional. Event value, must be digits, "123"
 }
 
 func (e EventTracking) StartTiming(variable string) UserTimingTracking {
