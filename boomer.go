@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/myzhan/boomer"
+
+	"github.com/httprunner/hrp/internal/ga"
 )
 
 func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
@@ -11,7 +13,6 @@ func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
 		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		debug:  false,
 	}
-	b.AddOutput(boomer.NewConsoleOutput())
 	return b
 }
 
@@ -26,6 +27,15 @@ func (b *Boomer) SetDebug(debug bool) *Boomer {
 }
 
 func (b *Boomer) Run(testcases ...ITestCase) {
+	event := ga.EventTracking{
+		Category: "RunLoadTests",
+		Action:   "hrp boom",
+	}
+	// report start event
+	go ga.SendEvent(event)
+	// report execution timing event
+	defer ga.SendEvent(event.StartTiming("execution"))
+
 	var taskSlice []*boomer.Task
 	for _, iTestCase := range testcases {
 		testcase, err := iTestCase.ToTestCase()

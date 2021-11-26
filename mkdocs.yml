@@ -49,6 +49,9 @@ extra:
             link: https://debugtalk.com
         -   icon: fontawesome/brands/github-alt
             link: 'https://github.com/httprunner'
+    analytics:
+        provider: google
+        property: G-N2DPN3VP7K
 
 # index pages
 nav:
