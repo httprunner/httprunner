@@ -172,7 +172,7 @@ import (
 )
 
 func TestCaseDemo(t *testing.T) {
-    testcase := &hrp.TestCase{
+    demoTestCase := &hrp.TestCase{
         Config: hrp.TConfig{
             Name:    "demo with complex mechanisms",
             BaseURL: "https://postman-echo.com",
