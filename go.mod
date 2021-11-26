@@ -3,6 +3,7 @@ module github.com/httprunner/hrp
 go 1.16
 
 require (
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/google/uuid v1.3.0

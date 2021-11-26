@@ -1,5 +1,10 @@
 package ga
 
+import (
+	"github.com/denisbrodbeck/machineid"
+	"github.com/google/uuid"
+)
+
 const (
 	trackingID = "UA-114587036-1" // Tracking ID for Google Analytics
 )
@@ -7,7 +12,12 @@ const (
 var gaClient *GAClient
 
 func init() {
-	gaClient = NewGAClient(trackingID)
+	clientID, err := machineid.ProtectedID("hrp")
+	if err != nil {
+		nodeUUID, _ := uuid.NewUUID()
+		clientID = nodeUUID.String()
+	}
+	gaClient = NewGAClient(trackingID, clientID)
 }
 
 func SendEvent(e IEvent) error {
