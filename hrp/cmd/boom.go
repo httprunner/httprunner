@@ -18,13 +18,21 @@ var boomCmd = &cobra.Command{
   $ hrp boom demo.yaml	# run specified yaml testcase file
   $ hrp boom examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
+	PreRun: func(cmd *cobra.Command, args []string) {
+		hrp.SetLogLevel("WARN") // disable info logs for load testing
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
 		}
 		hrpBoomer := hrp.NewStandaloneBoomer(spawnCount, spawnRate)
-		hrpBoomer.AddOutput(boomer.NewConsoleOutput())
+		if !disableConsoleOutput {
+			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
+		}
+		if prometheusPushgatewayURL != "" {
+			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(prometheusPushgatewayURL, "hrp"))
+		}
 		hrpBoomer.EnableCPUProfile(cpuProfile, cpuProfileDuration)
 		hrpBoomer.EnableMemoryProfile(memoryProfile, memoryProfileDuration)
 		hrpBoomer.Run(paths...)
@@ -32,15 +40,17 @@ var boomCmd = &cobra.Command{
 }
 
 var (
-	spawnCount            int
-	spawnRate             float64
-	maxRPS                int64  // TODO: init boomer with this flag
-	requestIncreaseRate   string // TODO: init boomer with this flag
-	runTasks              string // TODO: init boomer with this flag
-	memoryProfile         string
-	memoryProfileDuration time.Duration
-	cpuProfile            string
-	cpuProfileDuration    time.Duration
+	spawnCount               int
+	spawnRate                float64
+	maxRPS                   int64  // TODO: init boomer with this flag
+	requestIncreaseRate      string // TODO: init boomer with this flag
+	runTasks                 string // TODO: init boomer with this flag
+	memoryProfile            string
+	memoryProfileDuration    time.Duration
+	cpuProfile               string
+	cpuProfileDuration       time.Duration
+	prometheusPushgatewayURL string
+	disableConsoleOutput     bool
 )
 
 func init() {
@@ -55,4 +65,6 @@ func init() {
 	boomCmd.Flags().DurationVar(&memoryProfileDuration, "mem-profile-duration", 30*time.Second, "Memory profile duration.")
 	boomCmd.Flags().StringVar(&cpuProfile, "cpu-profile", "", "Enable CPU profiling.")
 	boomCmd.Flags().DurationVar(&cpuProfileDuration, "cpu-profile-duration", 30*time.Second, "CPU profile duration.")
+	boomCmd.Flags().StringVar(&prometheusPushgatewayURL, "prometheus-gateway", "", "Prometheus Pushgateway url.")
+	boomCmd.Flags().BoolVar(&disableConsoleOutput, "disable-console-output", false, "Disable console output.")
 }
