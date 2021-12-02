@@ -1,7 +1,8 @@
 # Release History
 
-## v0.2.1 (2021-11-26)
+## v0.2.1 (2021-12-02)
 
+- feat: push load testing metrics to Prometheus Pushgateway
 - feat: report events with Google Analytics
 
 ## v0.2.0 (2021-11-19)
