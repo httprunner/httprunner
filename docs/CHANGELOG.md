@@ -1,5 +1,9 @@
 # Release History
 
+## v0.2.2 (2021-12-06)
+
+- change: remove mkdocs, move to [repo](https://github.com/httprunner/httprunner.github.io)
+
 ## v0.2.1 (2021-12-02)
 
 - feat: push load testing metrics to Prometheus Pushgateway
