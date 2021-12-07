@@ -15,7 +15,7 @@ func TestCaseExtractStepSingle(t *testing.T) {
 			Verify:  false,
 		},
 		TestSteps: []hrp.IStep{
-			hrp.Step("get with params").
+			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":               "bar1",
 					"agent":              "HttpRunnerPlus",
@@ -52,7 +52,7 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 			Verify:  false,
 		},
 		TestSteps: []hrp.IStep{
-			hrp.Step("get with params").
+			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":  "bar1",
 					"agent": "HttpRunnerPlus",
@@ -71,7 +71,7 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 				AssertEqual("$varFoo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
 				AssertEqual("body.headers.\"user-agent\"", "HttpRunnerPlus", "check header user agent"),
-			hrp.Step("post json data").
+			hrp.NewStep("post json data").
 				POST("/post").
 				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 				WithBody(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).

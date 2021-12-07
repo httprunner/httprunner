@@ -2,7 +2,8 @@ package hrp
 
 import "fmt"
 
-func Step(name string) *step {
+// NewStep returns a new constructed teststep with specified step name.
+func NewStep(name string) *step {
 	return &step{
 		TStep: &TStep{
 			Name:      name,
