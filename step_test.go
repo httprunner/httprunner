@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	stepGET = Step("get with params").
+	stepGET = NewStep("get with params").
 		GET("/get").
 		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 		WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
@@ -16,7 +16,7 @@ var (
 		AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 		AssertEqual("body.args.foo1", "bar1", "check param foo1").
 		AssertEqual("body.args.foo2", "bar2", "check param foo2")
-	stepPOSTData = Step("post form data").
+	stepPOSTData = NewStep("post form data").
 			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).

@@ -20,7 +20,7 @@ var demoTestCase = &hrp.TestCase{
 		},
 	},
 	TestSteps: []hrp.IStep{
-		hrp.Step("get with params").
+		hrp.NewStep("get with params").
 			WithVariables(map[string]interface{}{ // step level variables
 				"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
 				"b":       34.5,             // override config level variable if existed, n/b/varFoo2
@@ -37,7 +37,7 @@ var demoTestCase = &hrp.TestCase{
 			AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
 			AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
 			AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
-		hrp.Step("post json data").
+		hrp.NewStep("post json data").
 			POST("/post").
 			WithBody(map[string]interface{}{
 				"foo1": "$varFoo1",       // reference former extracted variable
@@ -47,7 +47,7 @@ var demoTestCase = &hrp.TestCase{
 			AssertEqual("status_code", 200, "check status code").
 			AssertLengthEqual("body.json.foo1", 5, "check args foo1").
 			AssertEqual("body.json.foo2", 12.3, "check args foo2"),
-		hrp.Step("post form data").
+		hrp.NewStep("post form data").
 			POST("/post").
 			WithHeaders(map[string]string{"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}).
 			WithBody(map[string]interface{}{

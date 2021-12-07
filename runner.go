@@ -20,17 +20,18 @@ import (
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-// run API test with default configs
+// Run starts to run API test with default configs.
 func Run(testcases ...ITestCase) error {
 	t := &testing.T{}
 	return NewRunner(t).SetDebug(true).Run(testcases...)
 }
 
-func NewRunner(t *testing.T) *Runner {
+// NewRunner constructs a new runner instance.
+func NewRunner(t *testing.T) *runner {
 	if t == nil {
 		t = &testing.T{}
 	}
-	return &Runner{
+	return &runner{
 		t:     t,
 		debug: false, // default to turn off debug
 		client: &http.Client{
@@ -43,20 +44,22 @@ func NewRunner(t *testing.T) *Runner {
 	}
 }
 
-type Runner struct {
+type runner struct {
 	t                *testing.T
 	debug            bool
 	client           *http.Client
 	sessionVariables map[string]interface{}
 }
 
-func (r *Runner) SetDebug(debug bool) *Runner {
+// SetDebug configures whether to log HTTP request and response content.
+func (r *runner) SetDebug(debug bool) *runner {
 	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
 	r.debug = debug
 	return r
 }
 
-func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
+// SetProxyUrl configures the proxy URL, which is usually used to capture HTTP packets for debugging.
+func (r *runner) SetProxyUrl(proxyUrl string) *runner {
 	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
 	p, err := url.Parse(proxyUrl)
 	if err != nil {
@@ -70,7 +73,8 @@ func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
 	return r
 }
 
-func (r *Runner) Run(testcases ...ITestCase) error {
+// Run starts to execute one or multiple testcases.
+func (r *runner) Run(testcases ...ITestCase) error {
 	event := ga.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
@@ -94,7 +98,7 @@ func (r *Runner) Run(testcases ...ITestCase) error {
 	return nil
 }
 
-func (r *Runner) runCase(testcase *TestCase) error {
+func (r *runner) runCase(testcase *TestCase) error {
 	config := &testcase.Config
 	if err := r.parseConfig(config); err != nil {
 		return err
@@ -113,7 +117,7 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func (r *Runner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
+func (r *runner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
 	log.Info().Str("step", step.name()).Msg("run step start")
 
 	// copy step to avoid data racing
@@ -170,7 +174,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepResult *stepData, err
 	return
 }
 
-func (r *Runner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
+func (r *runner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
 	stepResult = &stepData{
 		name:           step.Name,
 		success:        false,
@@ -335,7 +339,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
 	return
 }
 
-func (r *Runner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
+func (r *runner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
 	stepResult = &stepData{
 		name:    step.Name,
 		success: false,
@@ -345,7 +349,7 @@ func (r *Runner) runStepTestCase(step *TStep) (stepResult *stepData, err error) 
 	return
 }
 
-func (r *Runner) parseConfig(config *TConfig) error {
+func (r *runner) parseConfig(config *TConfig) error {
 	// parse config variables
 	parsedVariables, err := parseVariables(config.Variables)
 	if err != nil {
@@ -371,7 +375,7 @@ func (r *Runner) parseConfig(config *TConfig) error {
 	return nil
 }
 
-func (r *Runner) GetSummary() *testCaseSummary {
+func (r *runner) getSummary() *testCaseSummary {
 	return &testCaseSummary{}
 }
 
