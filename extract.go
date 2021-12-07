@@ -7,11 +7,13 @@ type stepRequestExtraction struct {
 	step *TStep
 }
 
+// WithJmesPath sets the JMESPath expression to extract from the response.
 func (s *stepRequestExtraction) WithJmesPath(jmesPath string, varName string) *stepRequestExtraction {
 	s.step.Extract[varName] = jmesPath
 	return s
 }
 
+// Validate switches to step validation.
 func (s *stepRequestExtraction) Validate() *stepRequestValidation {
 	return &stepRequestValidation{
 		step: s.step,
