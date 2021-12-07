@@ -15,7 +15,7 @@ func (tc *TestCase) ToTCase() (*TCase, error) {
 		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
-		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
+		tCase.TestSteps = append(tCase.TestSteps, step.toStruct())
 	}
 	return &tCase, nil
 }

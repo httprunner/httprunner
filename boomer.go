@@ -58,16 +58,16 @@ func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 		Weight: testcase.Config.Weight,
 		Fn: func() {
 			runner := NewRunner(nil).SetDebug(b.debug)
-			config := &testcase.Config
+			config := testcase.Config
 			for _, step := range testcase.TestSteps {
 				var err error
 				start := time.Now()
 				stepData, err := runner.runStep(step, config)
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 				if err == nil {
-					b.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.ResponseLength)
+					b.RecordSuccess(step.getType(), step.name(), elapsed, stepData.responseLength)
 				} else {
-					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+					b.RecordFailure(step.getType(), step.name(), elapsed, err.Error())
 				}
 			}
 		},
