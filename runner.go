@@ -20,17 +20,18 @@ import (
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-// run API test with default configs
+// Run starts to run API test with default configs.
 func Run(testcases ...ITestCase) error {
 	t := &testing.T{}
 	return NewRunner(t).SetDebug(true).Run(testcases...)
 }
 
-func NewRunner(t *testing.T) *Runner {
+// NewRunner constructs a new runner instance.
+func NewRunner(t *testing.T) *runner {
 	if t == nil {
 		t = &testing.T{}
 	}
-	return &Runner{
+	return &runner{
 		t:     t,
 		debug: false, // default to turn off debug
 		client: &http.Client{
@@ -43,20 +44,22 @@ func NewRunner(t *testing.T) *Runner {
 	}
 }
 
-type Runner struct {
+type runner struct {
 	t                *testing.T
 	debug            bool
 	client           *http.Client
 	sessionVariables map[string]interface{}
 }
 
-func (r *Runner) SetDebug(debug bool) *Runner {
+// SetDebug configures whether to log HTTP request and response content.
+func (r *runner) SetDebug(debug bool) *runner {
 	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
 	r.debug = debug
 	return r
 }
 
-func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
+// SetProxyUrl configures the proxy URL, which is usually used to capture HTTP packets for debugging.
+func (r *runner) SetProxyUrl(proxyUrl string) *runner {
 	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
 	p, err := url.Parse(proxyUrl)
 	if err != nil {
@@ -70,7 +73,8 @@ func (r *Runner) SetProxyUrl(proxyUrl string) *Runner {
 	return r
 }
 
-func (r *Runner) Run(testcases ...ITestCase) error {
+// Run starts to execute one or multiple testcases.
+func (r *runner) Run(testcases ...ITestCase) error {
 	event := ga.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
@@ -94,8 +98,8 @@ func (r *Runner) Run(testcases ...ITestCase) error {
 	return nil
 }
 
-func (r *Runner) runCase(testcase *TestCase) error {
-	config := &testcase.Config
+func (r *runner) runCase(testcase *TestCase) error {
+	config := testcase.Config
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
@@ -113,12 +117,12 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
-	log.Info().Str("step", step.Name()).Msg("run step start")
+func (r *runner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
+	log.Info().Str("step", step.name()).Msg("run step start")
 
 	// copy step to avoid data racing
 	copiedStep := &TStep{}
-	if err = copier.Copy(copiedStep, step.ToStruct()); err != nil {
+	if err = copier.Copy(copiedStep, step.toStruct()); err != nil {
 		log.Error().Err(err).Msg("copy step data failed")
 		return
 	}
@@ -142,7 +146,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 		// run referenced testcase
 		log.Info().Str("testcase", copiedStep.Name).Msg("run referenced testcase")
 		// TODO: override testcase config
-		stepData, err = r.runStepTestCase(copiedStep)
+		stepResult, err = r.runStepTestCase(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run referenced testcase step failed")
 			return
@@ -150,7 +154,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 	} else {
 		// run request
 		copiedStep.Request.URL = buildURL(config.BaseURL, copiedStep.Request.URL) // avoid data racing
-		stepData, err = r.runStepRequest(copiedStep)
+		stepResult, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
 			return
@@ -158,23 +162,23 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 	}
 
 	// update extracted variables
-	for k, v := range stepData.ExportVars {
+	for k, v := range stepResult.exportVars {
 		r.sessionVariables[k] = v
 	}
 
 	log.Info().
-		Str("step", step.Name()).
-		Bool("success", stepData.Success).
-		Interface("exportVars", stepData.ExportVars).
+		Str("step", step.name()).
+		Bool("success", stepResult.success).
+		Interface("exportVars", stepResult.exportVars).
 		Msg("run step end")
 	return
 }
 
-func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
-	stepData = &StepData{
-		Name:           step.Name,
-		Success:        false,
-		ResponseLength: 0,
+func (r *runner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
+	stepResult = &stepData{
+		name:           step.Name,
+		success:        false,
+		responseLength: 0,
 	}
 
 	rawUrl := step.Request.URL
@@ -310,7 +314,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	}
 
 	// new response object
-	respObj, err := NewResponseObject(r.t, resp)
+	respObj, err := newResponseObject(r.t, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
@@ -319,7 +323,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	// extract variables from response
 	extractors := step.Extract
 	extractMapping := respObj.Extract(extractors)
-	stepData.ExportVars = extractMapping
+	stepResult.exportVars = extractMapping
 
 	// override step variables with extracted variables
 	stepVariables := mergeVariables(step.Variables, extractMapping)
@@ -330,22 +334,22 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		return
 	}
 
-	stepData.Success = true
-	stepData.ResponseLength = resp.ContentLength
+	stepResult.success = true
+	stepResult.responseLength = resp.ContentLength
 	return
 }
 
-func (r *Runner) runStepTestCase(step *TStep) (stepData *StepData, err error) {
-	stepData = &StepData{
-		Name:    step.Name,
-		Success: false,
+func (r *runner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
+	stepResult = &stepData{
+		name:    step.Name,
+		success: false,
 	}
 	testcase := step.TestCase
 	err = r.runCase(testcase)
 	return
 }
 
-func (r *Runner) parseConfig(config *TConfig) error {
+func (r *runner) parseConfig(config *TConfig) error {
 	// parse config variables
 	parsedVariables, err := parseVariables(config.Variables)
 	if err != nil {
@@ -371,8 +375,8 @@ func (r *Runner) parseConfig(config *TConfig) error {
 	return nil
 }
 
-func (r *Runner) GetSummary() *TestCaseSummary {
-	return &TestCaseSummary{}
+func (r *runner) getSummary() *testCaseSummary {
+	return &testCaseSummary{}
 }
 
 func setBodyBytes(req *http.Request, data []byte) {

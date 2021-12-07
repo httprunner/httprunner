@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	stepGET = Step("get with params").
+	stepGET = NewStep("get with params").
 		GET("/get").
 		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 		WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
@@ -16,7 +16,7 @@ var (
 		AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 		AssertEqual("body.args.foo1", "bar1", "check param foo1").
 		AssertEqual("body.args.foo2", "bar2", "check param foo2")
-	stepPOSTData = Step("post form data").
+	stepPOSTData = NewStep("post form data").
 			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
@@ -28,7 +28,7 @@ var (
 
 func TestRunRequestGetToStruct(t *testing.T) {
 	tStep := stepGET.step
-	if tStep.Request.Method != GET {
+	if tStep.Request.Method != httpGET {
 		t.Fatalf("tStep.Request.Method != GET")
 	}
 	if tStep.Request.URL != "/get" {
@@ -50,7 +50,7 @@ func TestRunRequestGetToStruct(t *testing.T) {
 
 func TestRunRequestPostDataToStruct(t *testing.T) {
 	tStep := stepPOSTData.step
-	if tStep.Request.Method != POST {
+	if tStep.Request.Method != httpPOST {
 		t.Fatalf("tStep.Request.Method != POST")
 	}
 	if tStep.Request.URL != "/post" {
@@ -74,9 +74,7 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 }
 
 func TestRunRequestRun(t *testing.T) {
-	config := &TConfig{
-		BaseURL: "https://postman-echo.com",
-	}
+	config := NewConfig("test").SetBaseURL("https://postman-echo.com")
 	runner := NewRunner(t).SetDebug(true)
 	if _, err := runner.runStep(stepGET, config); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
