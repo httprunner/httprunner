@@ -10,6 +10,8 @@ const (
 	httpPATCH   string = "PATCH"
 )
 
+// TConfig represents config data structure for testcase.
+// Each testcase should contain one config part.
 type TConfig struct {
 	Name       string                 `json:"name" yaml:"name"` // required
 	Verify     bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
@@ -20,6 +22,8 @@ type TConfig struct {
 	Weight     int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 }
 
+// Request represents HTTP request data structure.
+// This is used for teststep.
 type Request struct {
 	Method         string                 `json:"method" yaml:"method"` // required
 	URL            string                 `json:"url" yaml:"url"`       // required
@@ -32,6 +36,7 @@ type Request struct {
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
 }
 
+// Validator represents validator for one HTTP response.
 type Validator struct {
 	Check   string      `json:"check" yaml:"check"` // get value with jmespath
 	Assert  string      `json:"assert" yaml:"assert"`
