@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/har2case"
 )
 
@@ -37,6 +37,7 @@ var har2caseCmd = &cobra.Command{
 			}
 			outputFiles = append(outputFiles, outputPath)
 		}
+		log := hrp.GetLogger()
 		log.Info().Strs("output", outputFiles).Msg("convert testcase success")
 		return nil
 	},

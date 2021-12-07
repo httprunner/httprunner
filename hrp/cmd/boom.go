@@ -19,7 +19,7 @@ var boomCmd = &cobra.Command{
   $ hrp boom examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
-		hrp.SetLogLevel("WARN") // disable info logs for load testing
+		hrp.SetLogger("WARN", logJSON) // disable info logs for load testing
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase

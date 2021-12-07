@@ -12,36 +12,38 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 
 	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-var log = hrp.GetLogger()
+var log zerolog.Logger
 
 const (
 	suffixJSON = ".json"
 	suffixYAML = ".yaml"
 )
 
-func NewHAR(path string) *HAR {
-	return &HAR{
+func NewHAR(path string) *har {
+	log = hrp.GetLogger()
+	return &har{
 		path: path,
 	}
 }
 
-type HAR struct {
+type har struct {
 	path       string
 	filterStr  string
 	excludeStr string
 	outputDir  string
 }
 
-func (h *HAR) SetOutputDir(dir string) {
+func (h *har) SetOutputDir(dir string) {
 	h.outputDir = dir
 }
 
-func (h *HAR) GenJSON() (jsonPath string, err error) {
+func (h *har) GenJSON() (jsonPath string, err error) {
 	event := ga.EventTracking{
 		Category: "har2case",
 		Action:   "hrp har2case --to-json",
@@ -60,7 +62,7 @@ func (h *HAR) GenJSON() (jsonPath string, err error) {
 	return
 }
 
-func (h *HAR) GenYAML() (yamlPath string, err error) {
+func (h *har) GenYAML() (yamlPath string, err error) {
 	event := ga.EventTracking{
 		Category: "har2case",
 		Action:   "hrp har2case --to-yaml",
@@ -79,7 +81,7 @@ func (h *HAR) GenYAML() (yamlPath string, err error) {
 	return
 }
 
-func (h *HAR) makeTestCase() (*hrp.TCase, error) {
+func (h *har) makeTestCase() (*hrp.TCase, error) {
 	teststeps, err := h.prepareTestSteps()
 	if err != nil {
 		return nil, err
@@ -92,7 +94,7 @@ func (h *HAR) makeTestCase() (*hrp.TCase, error) {
 	return tCase, nil
 }
 
-func (h *HAR) load() (*Har, error) {
+func (h *har) load() (*Har, error) {
 	fp, err := os.Open(h.path)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
@@ -113,12 +115,12 @@ func (h *HAR) load() (*Har, error) {
 	return har, nil
 }
 
-func (h *HAR) prepareConfig() *hrp.TConfig {
+func (h *har) prepareConfig() *hrp.TConfig {
 	return hrp.NewConfig("testcase description").
 		SetVerifySSL(false)
 }
 
-func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {
+func (h *har) prepareTestSteps() ([]*hrp.TStep, error) {
 	har, err := h.load()
 	if err != nil {
 		return nil, err
@@ -136,52 +138,52 @@ func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {
 	return steps, nil
 }
 
-func (h *HAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
+func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 	log.Info().
 		Str("method", entry.Request.Method).
 		Str("url", entry.Request.URL).
 		Msg("convert teststep")
 
-	tStep := &TStep{
+	step := &tStep{
 		TStep: hrp.TStep{
 			Request:    &hrp.Request{},
 			Validators: make([]hrp.Validator, 0),
 		},
 	}
-	if err := tStep.makeRequestMethod(entry); err != nil {
+	if err := step.makeRequestMethod(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeRequestURL(entry); err != nil {
+	if err := step.makeRequestURL(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeRequestParams(entry); err != nil {
+	if err := step.makeRequestParams(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeRequestCookies(entry); err != nil {
+	if err := step.makeRequestCookies(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeRequestHeaders(entry); err != nil {
+	if err := step.makeRequestHeaders(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeRequestBody(entry); err != nil {
+	if err := step.makeRequestBody(entry); err != nil {
 		return nil, err
 	}
-	if err := tStep.makeValidate(entry); err != nil {
+	if err := step.makeValidate(entry); err != nil {
 		return nil, err
 	}
-	return &tStep.TStep, nil
+	return &step.TStep, nil
 }
 
-type TStep struct {
+type tStep struct {
 	hrp.TStep
 }
 
-func (s *TStep) makeRequestMethod(entry *Entry) error {
+func (s *tStep) makeRequestMethod(entry *Entry) error {
 	s.Request.Method = entry.Request.Method
 	return nil
 }
 
-func (s *TStep) makeRequestURL(entry *Entry) error {
+func (s *tStep) makeRequestURL(entry *Entry) error {
 
 	u, err := url.Parse(entry.Request.URL)
 	if err != nil {
@@ -192,7 +194,7 @@ func (s *TStep) makeRequestURL(entry *Entry) error {
 	return nil
 }
 
-func (s *TStep) makeRequestParams(entry *Entry) error {
+func (s *tStep) makeRequestParams(entry *Entry) error {
 	s.Request.Params = make(map[string]interface{})
 	for _, param := range entry.Request.QueryString {
 		s.Request.Params[param.Name] = param.Value
@@ -200,7 +202,7 @@ func (s *TStep) makeRequestParams(entry *Entry) error {
 	return nil
 }
 
-func (s *TStep) makeRequestCookies(entry *Entry) error {
+func (s *tStep) makeRequestCookies(entry *Entry) error {
 	s.Request.Cookies = make(map[string]string)
 	for _, cookie := range entry.Request.Cookies {
 		s.Request.Cookies[cookie.Name] = cookie.Value
@@ -208,7 +210,7 @@ func (s *TStep) makeRequestCookies(entry *Entry) error {
 	return nil
 }
 
-func (s *TStep) makeRequestHeaders(entry *Entry) error {
+func (s *tStep) makeRequestHeaders(entry *Entry) error {
 	s.Request.Headers = make(map[string]string)
 	for _, header := range entry.Request.Headers {
 		if strings.EqualFold(header.Name, "cookie") {
@@ -219,7 +221,7 @@ func (s *TStep) makeRequestHeaders(entry *Entry) error {
 	return nil
 }
 
-func (s *TStep) makeRequestBody(entry *Entry) error {
+func (s *tStep) makeRequestBody(entry *Entry) error {
 	mimeType := entry.Request.PostData.MimeType
 	if mimeType == "" {
 		// GET/HEAD/DELETE without body
@@ -253,7 +255,7 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 	return nil
 }
 
-func (s *TStep) makeValidate(entry *Entry) error {
+func (s *tStep) makeValidate(entry *Entry) error {
 	// make validator for response status code
 	s.Validators = append(s.Validators, hrp.Validator{
 		Check:   "status_code",
@@ -329,7 +331,7 @@ func (s *TStep) makeValidate(entry *Entry) error {
 	return nil
 }
 
-func (h *HAR) genOutputPath(suffix string) string {
+func (h *har) genOutputPath(suffix string) string {
 	file := getFilenameWithoutExtension(h.path) + suffix
 	if h.outputDir != "" {
 		return filepath.Join(h.outputDir, file)

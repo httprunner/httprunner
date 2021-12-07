@@ -9,18 +9,18 @@ type stepRequestValidation struct {
 	step *TStep
 }
 
-func (s *stepRequestValidation) name() string {
+func (s *stepRequestValidation) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
-func (s *stepRequestValidation) getType() string {
+func (s *stepRequestValidation) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestValidation) toStruct() *TStep {
+func (s *stepRequestValidation) ToStruct() *TStep {
 	return s.step
 }
 

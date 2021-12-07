@@ -65,14 +65,14 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// IStep represents interface for all types for teststeps
+// IStep represents interface for all types for teststeps.
 type IStep interface {
-	name() string
-	getType() string
-	toStruct() *TStep
+	Name() string
+	Type() string
+	ToStruct() *TStep
 }
 
-// ITestCase represents interface for all types for testcases
+// ITestCase represents interface for all types for testcases.
 type ITestCase interface {
 	ToTestCase() (*TestCase, error)
 	ToTCase() (*TCase, error)

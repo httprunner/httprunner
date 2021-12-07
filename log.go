@@ -10,7 +10,15 @@ import (
 
 var log = zlog.Logger
 
-func SetLogLevel(level string) {
+// SetLogger configures the log level and format.
+func SetLogger(level string, logJSON bool) {
+	if !logJSON {
+		setLogPretty()
+	}
+	setLogLevel(level)
+}
+
+func setLogLevel(level string) {
 	level = strings.ToUpper(level)
 	log.Info().Msgf("Set log level to %s", level)
 	switch level {
@@ -29,9 +37,9 @@ func SetLogLevel(level string) {
 	}
 }
 
-func SetLogPretty() {
+func setLogPretty() {
 	log = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	log.Info().Msg("Set log to pretty console")
+	log.Info().Msg("Set log to color console other than JSON format.")
 }
 
 func GetLogger() zerolog.Logger {

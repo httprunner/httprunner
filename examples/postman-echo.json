@@ -89,6 +89,7 @@
                 {
                     "check": "body.json",
                     "assert": "equals",
+                    "expect": null,
                     "msg": "assert response body json"
                 },
                 {
@@ -190,6 +191,7 @@
                 {
                     "check": "body.json",
                     "assert": "equals",
+                    "expect": null,
                     "msg": "assert response body json"
                 },
                 {
@@ -243,6 +245,7 @@
                 {
                     "check": "body.json",
                     "assert": "equals",
+                    "expect": null,
                     "msg": "assert response body json"
                 },
                 {
@@ -296,6 +299,7 @@
                 {
                     "check": "body.json",
                     "assert": "equals",
+                    "expect": null,
                     "msg": "assert response body json"
                 },
                 {
