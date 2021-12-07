@@ -1,7 +1,8 @@
 # Release History
 
-## v0.2.2 (2021-12-06)
+## v0.2.2 (2021-12-07)
 
+- refactor: update models to make API more concise
 - change: remove mkdocs, move to [repo](https://github.com/httprunner/httprunner.github.io)
 
 ## v0.2.1 (2021-12-02)
