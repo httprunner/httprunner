@@ -8,11 +8,9 @@ import (
 
 func TestCaseValidateStep(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with validation",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-		},
+		Config: hrp.NewConfig("run request with validation").
+			SetBaseURL("https://postman-echo.com").
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{

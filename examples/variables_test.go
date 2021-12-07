@@ -8,16 +8,13 @@ import (
 
 func TestCaseConfigVariables(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with variables",
-			BaseURL: "https://postman-echo.com",
-			Variables: map[string]interface{}{
+		Config: hrp.NewConfig("run request with variables").
+			SetBaseURL("https://postman-echo.com").
+			WithVariables(map[string]interface{}{
 				"var1":               "bar1",
 				"agent":              "HttpRunnerPlus",
 				"expectedStatusCode": 200,
-			},
-			Verify: false,
-		},
+			}).SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				GET("/get").
@@ -41,11 +38,9 @@ func TestCaseConfigVariables(t *testing.T) {
 
 func TestCaseStepVariables(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with variables",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-		},
+		Config: hrp.NewConfig("run request with variables").
+			SetBaseURL("https://postman-echo.com").
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
@@ -74,16 +69,13 @@ func TestCaseStepVariables(t *testing.T) {
 
 func TestCaseOverrideConfigVariables(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with variables",
-			BaseURL: "https://postman-echo.com",
-			Variables: map[string]interface{}{
+		Config: hrp.NewConfig("run request with variables").
+			SetBaseURL("https://postman-echo.com").
+			WithVariables(map[string]interface{}{
 				"var1":               "bar0",
 				"agent":              "HttpRunnerPlus",
 				"expectedStatusCode": 200,
-			},
-			Verify: false,
-		},
+			}).SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
@@ -112,18 +104,15 @@ func TestCaseOverrideConfigVariables(t *testing.T) {
 
 func TestCaseParseVariables(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with functions",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-			Variables: map[string]interface{}{
+		Config: hrp.NewConfig("run request with functions").
+			SetBaseURL("https://postman-echo.com").
+			WithVariables(map[string]interface{}{
 				"n":       5,
 				"a":       12.3,
 				"b":       3.45,
 				"varFoo1": "${gen_random_string($n)}",
 				"varFoo2": "${max($a, $b)}", // 12.3
-			},
-		},
+			}).SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{

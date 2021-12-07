@@ -2,6 +2,44 @@ package hrp
 
 import "fmt"
 
+// NewConfig returns a new constructed testcase config with specified testcase name.
+func NewConfig(name string) *TConfig {
+	return &TConfig{
+		Name:      name,
+		Variables: make(map[string]interface{}),
+	}
+}
+
+func (c *TConfig) WithVariables(variables map[string]interface{}) *TConfig {
+	c.Variables = variables
+	return c
+}
+
+func (c *TConfig) SetBaseURL(baseURL string) *TConfig {
+	c.BaseURL = baseURL
+	return c
+}
+
+func (c *TConfig) SetVerifySSL(verify bool) *TConfig {
+	c.Verify = verify
+	return c
+}
+
+func (c *TConfig) WithParameters(parameters map[string]interface{}) *TConfig {
+	c.Parameters = parameters
+	return c
+}
+
+func (c *TConfig) ExportVars(vars ...string) *TConfig {
+	c.Export = vars
+	return c
+}
+
+func (c *TConfig) SetWeight(weight int) *TConfig {
+	c.Weight = weight
+	return c
+}
+
 // NewStep returns a new constructed teststep with specified step name.
 func NewStep(name string) *step {
 	return &step{

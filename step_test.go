@@ -74,9 +74,7 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 }
 
 func TestRunRequestRun(t *testing.T) {
-	config := &TConfig{
-		BaseURL: "https://postman-echo.com",
-	}
+	config := NewConfig("test").SetBaseURL("https://postman-echo.com")
 	runner := NewRunner(t).SetDebug(true)
 	if _, err := runner.runStep(stepGET, config); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)

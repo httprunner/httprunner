@@ -8,11 +8,9 @@ import (
 
 func TestCaseBasicRequest(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "request methods testcase in hardcode",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-		},
+		Config: hrp.NewConfig("request methods testcase in hardcode").
+			SetBaseURL("https://postman-echo.com").
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				GET("/get").

@@ -7,10 +7,7 @@ import (
 
 func TestBoomerStandaloneRun(t *testing.T) {
 	testcase1 := &TestCase{
-		Config: TConfig{
-			Name:    "TestCase1",
-			BaseURL: "http://httpbin.org",
-		},
+		Config: NewConfig("TestCase1").SetBaseURL("http://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("headers").
 				GET("/headers").
@@ -22,7 +19,7 @@ func TestBoomerStandaloneRun(t *testing.T) {
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
-			NewStep("TestCase3").CallRefCase(&TestCase{Config: TConfig{Name: "TestCase3"}}),
+			NewStep("TestCase3").CallRefCase(&TestCase{Config: NewConfig("TestCase3")}),
 		},
 	}
 	testcase2 := &TestCasePath{demoTestCaseJSONPath}

@@ -86,7 +86,7 @@ func (h *HAR) makeTestCase() (*hrp.TCase, error) {
 	}
 
 	tCase := &hrp.TCase{
-		Config:    *h.prepareConfig(),
+		Config:    h.prepareConfig(),
 		TestSteps: teststeps,
 	}
 	return tCase, nil
@@ -114,11 +114,8 @@ func (h *HAR) load() (*Har, error) {
 }
 
 func (h *HAR) prepareConfig() *hrp.TConfig {
-	return &hrp.TConfig{
-		Name:      "testcase description",
-		Variables: make(map[string]interface{}),
-		Verify:    false,
-	}
+	return hrp.NewConfig("testcase description").
+		SetVerifySSL(false)
 }
 
 func (h *HAR) prepareTestSteps() ([]*hrp.TStep, error) {

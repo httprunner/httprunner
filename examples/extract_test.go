@@ -9,11 +9,9 @@ import (
 // reference extracted variables for validation in the same step
 func TestCaseExtractStepSingle(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with variables",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-		},
+		Config: hrp.NewConfig("run request with variables").
+			SetBaseURL("https://postman-echo.com").
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
@@ -46,11 +44,9 @@ func TestCaseExtractStepSingle(t *testing.T) {
 // reference extracted variables from previous step
 func TestCaseExtractStepAssociation(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with variables",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-		},
+		Config: hrp.NewConfig("run request with variables").
+			SetBaseURL("https://postman-echo.com").
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{

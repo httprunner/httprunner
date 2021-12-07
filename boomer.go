@@ -58,7 +58,7 @@ func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 		Weight: testcase.Config.Weight,
 		Fn: func() {
 			runner := NewRunner(nil).SetDebug(b.debug)
-			config := &testcase.Config
+			config := testcase.Config
 			for _, step := range testcase.TestSteps {
 				var err error
 				start := time.Now()
