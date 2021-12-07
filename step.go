@@ -231,18 +231,18 @@ func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
 	}
 }
 
-func (s *requestWithOptionalArgs) name() string {
+func (s *requestWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
-func (s *requestWithOptionalArgs) getType() string {
+func (s *requestWithOptionalArgs) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *requestWithOptionalArgs) toStruct() *TStep {
+func (s *requestWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
 
@@ -263,17 +263,17 @@ func (s *testcaseWithOptionalArgs) Export(names ...string) *testcaseWithOptional
 	return s
 }
 
-func (s *testcaseWithOptionalArgs) name() string {
+func (s *testcaseWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return s.step.TestCase.Config.Name
 }
 
-func (s *testcaseWithOptionalArgs) getType() string {
+func (s *testcaseWithOptionalArgs) Type() string {
 	return "testcase"
 }
 
-func (s *testcaseWithOptionalArgs) toStruct() *TStep {
+func (s *testcaseWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
