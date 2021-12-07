@@ -14,16 +14,13 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "hrp",
 	Short: "One-stop solution for HTTP(S) testing.",
-	Long: `hrp (HttpRunner+) is the next generation for HttpRunner. Enjoy! ✨ 🚀 ✨
+	Long: `hrp (HttpRunner+) is the one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if !logJSON {
-			hrp.SetLogPretty()
-		}
-		hrp.SetLogLevel(logLevel)
+		hrp.SetLogger(logLevel, logJSON)
 	},
 	Version: version.VERSION,
 }

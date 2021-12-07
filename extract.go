@@ -20,14 +20,14 @@ func (s *stepRequestExtraction) Validate() *stepRequestValidation {
 	}
 }
 
-func (s *stepRequestExtraction) name() string {
+func (s *stepRequestExtraction) Name() string {
 	return s.step.Name
 }
 
-func (s *stepRequestExtraction) getType() string {
+func (s *stepRequestExtraction) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestExtraction) toStruct() *TStep {
+func (s *stepRequestExtraction) ToStruct() *TStep {
 	return s.step
 }
