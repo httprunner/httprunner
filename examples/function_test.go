@@ -8,16 +8,14 @@ import (
 
 func TestCaseCallFunction(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with functions",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-			Variables: map[string]interface{}{
+		Config: hrp.NewConfig("run request with functions").
+			SetBaseURL("https://postman-echo.com").
+			WithVariables(map[string]interface{}{
 				"n": 5,
 				"a": 12.3,
 				"b": 3.45,
-			},
-		},
+			}).
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
 				GET("/get").

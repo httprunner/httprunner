@@ -8,17 +8,15 @@ import (
 )
 
 var demoTestCase = &hrp.TestCase{
-	Config: hrp.TConfig{
-		Name:    "demo with complex mechanisms",
-		BaseURL: "https://postman-echo.com",
-		Variables: map[string]interface{}{ // global level variables
+	Config: hrp.NewConfig("demo with complex mechanisms").
+		SetBaseURL("https://postman-echo.com").
+		WithVariables(map[string]interface{}{ // global level variables
 			"n":       5,
 			"a":       12.3,
 			"b":       3.45,
 			"varFoo1": "${gen_random_string($n)}",
 			"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
-		},
-	},
+		}),
 	TestSteps: []hrp.IStep{
 		hrp.NewStep("get with params").
 			WithVariables(map[string]interface{}{ // step level variables

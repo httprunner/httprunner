@@ -99,7 +99,7 @@ func (r *runner) Run(testcases ...ITestCase) error {
 }
 
 func (r *runner) runCase(testcase *TestCase) error {
-	config := &testcase.Config
+	config := testcase.Config
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}

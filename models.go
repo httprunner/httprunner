@@ -56,7 +56,7 @@ type TStep struct {
 // TCase represents testcase data structure.
 // Each testcase includes one public config and several sequential teststeps.
 type TCase struct {
-	Config    TConfig  `json:"config" yaml:"config"`
+	Config    *TConfig `json:"config" yaml:"config"`
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
@@ -76,7 +76,7 @@ type ITestCase interface {
 // TestCase is a container for one testcase.
 // used for testcase runner
 type TestCase struct {
-	Config    TConfig
+	Config    *TConfig
 	TestSteps []IStep
 }
 
