@@ -12,7 +12,7 @@ import (
 	"github.com/httprunner/hrp/internal/builtin"
 )
 
-func NewResponseObject(t *testing.T, resp *http.Response) (*ResponseObject, error) {
+func newResponseObject(t *testing.T, resp *http.Response) (*responseObject, error) {
 	// prepare response headers
 	headers := make(map[string]string)
 	for k, v := range resp.Header {
@@ -58,7 +58,7 @@ func NewResponseObject(t *testing.T, resp *http.Response) (*ResponseObject, erro
 		return nil, err
 	}
 
-	return &ResponseObject{
+	return &responseObject{
 		t:           t,
 		respObjMeta: data,
 	}, nil
@@ -71,13 +71,13 @@ type respObjMeta struct {
 	Body       interface{}       `json:"body"`
 }
 
-type ResponseObject struct {
+type responseObject struct {
 	t                 *testing.T
 	respObjMeta       interface{}
 	validationResults map[string]interface{}
 }
 
-func (v *ResponseObject) Extract(extractors map[string]string) map[string]interface{} {
+func (v *responseObject) Extract(extractors map[string]string) map[string]interface{} {
 	if extractors == nil {
 		return nil
 	}
@@ -93,7 +93,7 @@ func (v *ResponseObject) Extract(extractors map[string]string) map[string]interf
 	return extractMapping
 }
 
-func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[string]interface{}) (err error) {
+func (v *responseObject) Validate(validators []Validator, variablesMapping map[string]interface{}) (err error) {
 	for _, validator := range validators {
 		// parse check value
 		checkItem := validator.Check
@@ -133,7 +133,7 @@ func (v *ResponseObject) Validate(validators []TValidator, variablesMapping map[
 	return nil
 }
 
-func (v *ResponseObject) searchJmespath(expr string) interface{} {
+func (v *responseObject) searchJmespath(expr string) interface{} {
 	checkValue, err := jmespath.Search(expr, v.respObjMeta)
 	if err != nil {
 		log.Error().Str("expr", expr).Err(err).Msg("search jmespath failed")

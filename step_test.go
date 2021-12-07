@@ -28,7 +28,7 @@ var (
 
 func TestRunRequestGetToStruct(t *testing.T) {
 	tStep := stepGET.step
-	if tStep.Request.Method != GET {
+	if tStep.Request.Method != httpGET {
 		t.Fatalf("tStep.Request.Method != GET")
 	}
 	if tStep.Request.URL != "/get" {
@@ -50,7 +50,7 @@ func TestRunRequestGetToStruct(t *testing.T) {
 
 func TestRunRequestPostDataToStruct(t *testing.T) {
 	tStep := stepPOSTData.step
-	if tStep.Request.Method != POST {
+	if tStep.Request.Method != httpPOST {
 		t.Fatalf("tStep.Request.Method != POST")
 	}
 	if tStep.Request.URL != "/post" {
