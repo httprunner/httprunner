@@ -147,8 +147,8 @@ func (h *HAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 
 	tStep := &TStep{
 		TStep: hrp.TStep{
-			Request:    &hrp.TRequest{},
-			Validators: make([]hrp.TValidator, 0),
+			Request:    &hrp.Request{},
+			Validators: make([]hrp.Validator, 0),
 		},
 	}
 	if err := tStep.makeRequestMethod(entry); err != nil {
@@ -180,7 +180,7 @@ type TStep struct {
 }
 
 func (s *TStep) makeRequestMethod(entry *Entry) error {
-	s.Request.Method = hrp.EnumHTTPMethod(entry.Request.Method)
+	s.Request.Method = entry.Request.Method
 	return nil
 }
 
@@ -258,7 +258,7 @@ func (s *TStep) makeRequestBody(entry *Entry) error {
 
 func (s *TStep) makeValidate(entry *Entry) error {
 	// make validator for response status code
-	s.Validators = append(s.Validators, hrp.TValidator{
+	s.Validators = append(s.Validators, hrp.Validator{
 		Check:   "status_code",
 		Assert:  "equals",
 		Expect:  entry.Response.Status,
@@ -269,7 +269,7 @@ func (s *TStep) makeValidate(entry *Entry) error {
 	for _, header := range entry.Response.Headers {
 		// assert Content-Type
 		if strings.EqualFold(header.Name, "Content-Type") {
-			s.Validators = append(s.Validators, hrp.TValidator{
+			s.Validators = append(s.Validators, hrp.Validator{
 				Check:   "headers.Content-Type",
 				Assert:  "equals",
 				Expect:  header.Value,
@@ -318,7 +318,7 @@ func (s *TStep) makeValidate(entry *Entry) error {
 				case []interface{}:
 					continue
 				default:
-					s.Validators = append(s.Validators, hrp.TValidator{
+					s.Validators = append(s.Validators, hrp.Validator{
 						Check:   fmt.Sprintf("body.%s", key),
 						Assert:  "equals",
 						Expect:  v,

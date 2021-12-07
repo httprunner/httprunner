@@ -65,9 +65,9 @@ func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				stepData, err := runner.runStep(step, config)
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 				if err == nil {
-					b.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.ResponseLength)
+					b.RecordSuccess(step.getType(), step.name(), elapsed, stepData.responseLength)
 				} else {
-					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+					b.RecordFailure(step.getType(), step.name(), elapsed, err.Error())
 				}
 			}
 		},

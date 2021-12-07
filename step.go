@@ -26,8 +26,8 @@ func (s *step) SetupHook(hook string) *step {
 }
 
 func (s *step) GET(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: GET,
+	s.TStep.Request = &Request{
+		Method: httpGET,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -36,8 +36,8 @@ func (s *step) GET(url string) *requestWithOptionalArgs {
 }
 
 func (s *step) HEAD(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: HEAD,
+	s.TStep.Request = &Request{
+		Method: httpHEAD,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -46,8 +46,8 @@ func (s *step) HEAD(url string) *requestWithOptionalArgs {
 }
 
 func (s *step) POST(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: POST,
+	s.TStep.Request = &Request{
+		Method: httpPOST,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -56,8 +56,8 @@ func (s *step) POST(url string) *requestWithOptionalArgs {
 }
 
 func (s *step) PUT(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: PUT,
+	s.TStep.Request = &Request{
+		Method: httpPUT,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -66,8 +66,8 @@ func (s *step) PUT(url string) *requestWithOptionalArgs {
 }
 
 func (s *step) DELETE(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: DELETE,
+	s.TStep.Request = &Request{
+		Method: httpDELETE,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -76,8 +76,8 @@ func (s *step) DELETE(url string) *requestWithOptionalArgs {
 }
 
 func (s *step) OPTIONS(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: OPTIONS,
+	s.TStep.Request = &Request{
+		Method: httpOPTIONS,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -86,8 +86,8 @@ func (s *step) OPTIONS(url string) *requestWithOptionalArgs {
 }
 
 func (s *step) PATCH(url string) *requestWithOptionalArgs {
-	s.TStep.Request = &TRequest{
-		Method: PATCH,
+	s.TStep.Request = &Request{
+		Method: httpPATCH,
 		URL:    url,
 	}
 	return &requestWithOptionalArgs{
@@ -171,18 +171,18 @@ func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
 	}
 }
 
-func (s *requestWithOptionalArgs) Name() string {
+func (s *requestWithOptionalArgs) name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
-func (s *requestWithOptionalArgs) Type() string {
+func (s *requestWithOptionalArgs) getType() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *requestWithOptionalArgs) ToStruct() *TStep {
+func (s *requestWithOptionalArgs) toStruct() *TStep {
 	return s.step
 }
 
@@ -201,17 +201,17 @@ func (s *testcaseWithOptionalArgs) Export(names ...string) *testcaseWithOptional
 	return s
 }
 
-func (s *testcaseWithOptionalArgs) Name() string {
+func (s *testcaseWithOptionalArgs) name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return s.step.TestCase.Config.Name
 }
 
-func (s *testcaseWithOptionalArgs) Type() string {
+func (s *testcaseWithOptionalArgs) getType() string {
 	return "testcase"
 }
 
-func (s *testcaseWithOptionalArgs) ToStruct() *TStep {
+func (s *testcaseWithOptionalArgs) toStruct() *TStep {
 	return s.step
 }

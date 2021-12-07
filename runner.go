@@ -113,12 +113,12 @@ func (r *Runner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err error) {
-	log.Info().Str("step", step.Name()).Msg("run step start")
+func (r *Runner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
+	log.Info().Str("step", step.name()).Msg("run step start")
 
 	// copy step to avoid data racing
 	copiedStep := &TStep{}
-	if err = copier.Copy(copiedStep, step.ToStruct()); err != nil {
+	if err = copier.Copy(copiedStep, step.toStruct()); err != nil {
 		log.Error().Err(err).Msg("copy step data failed")
 		return
 	}
@@ -142,7 +142,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 		// run referenced testcase
 		log.Info().Str("testcase", copiedStep.Name).Msg("run referenced testcase")
 		// TODO: override testcase config
-		stepData, err = r.runStepTestCase(copiedStep)
+		stepResult, err = r.runStepTestCase(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run referenced testcase step failed")
 			return
@@ -150,7 +150,7 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 	} else {
 		// run request
 		copiedStep.Request.URL = buildURL(config.BaseURL, copiedStep.Request.URL) // avoid data racing
-		stepData, err = r.runStepRequest(copiedStep)
+		stepResult, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
 			return
@@ -158,23 +158,23 @@ func (r *Runner) runStep(step IStep, config *TConfig) (stepData *StepData, err e
 	}
 
 	// update extracted variables
-	for k, v := range stepData.ExportVars {
+	for k, v := range stepResult.exportVars {
 		r.sessionVariables[k] = v
 	}
 
 	log.Info().
-		Str("step", step.Name()).
-		Bool("success", stepData.Success).
-		Interface("exportVars", stepData.ExportVars).
+		Str("step", step.name()).
+		Bool("success", stepResult.success).
+		Interface("exportVars", stepResult.exportVars).
 		Msg("run step end")
 	return
 }
 
-func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
-	stepData = &StepData{
-		Name:           step.Name,
-		Success:        false,
-		ResponseLength: 0,
+func (r *Runner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
+	stepResult = &stepData{
+		name:           step.Name,
+		success:        false,
+		responseLength: 0,
 	}
 
 	rawUrl := step.Request.URL
@@ -310,7 +310,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	}
 
 	// new response object
-	respObj, err := NewResponseObject(r.t, resp)
+	respObj, err := newResponseObject(r.t, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
@@ -319,7 +319,7 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 	// extract variables from response
 	extractors := step.Extract
 	extractMapping := respObj.Extract(extractors)
-	stepData.ExportVars = extractMapping
+	stepResult.exportVars = extractMapping
 
 	// override step variables with extracted variables
 	stepVariables := mergeVariables(step.Variables, extractMapping)
@@ -330,15 +330,15 @@ func (r *Runner) runStepRequest(step *TStep) (stepData *StepData, err error) {
 		return
 	}
 
-	stepData.Success = true
-	stepData.ResponseLength = resp.ContentLength
+	stepResult.success = true
+	stepResult.responseLength = resp.ContentLength
 	return
 }
 
-func (r *Runner) runStepTestCase(step *TStep) (stepData *StepData, err error) {
-	stepData = &StepData{
-		Name:    step.Name,
-		Success: false,
+func (r *Runner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
+	stepResult = &stepData{
+		name:    step.Name,
+		success: false,
 	}
 	testcase := step.TestCase
 	err = r.runCase(testcase)
@@ -371,8 +371,8 @@ func (r *Runner) parseConfig(config *TConfig) error {
 	return nil
 }
 
-func (r *Runner) GetSummary() *TestCaseSummary {
-	return &TestCaseSummary{}
+func (r *Runner) GetSummary() *testCaseSummary {
+	return &testCaseSummary{}
 }
 
 func setBodyBytes(req *http.Request, data []byte) {
