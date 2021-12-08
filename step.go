@@ -67,213 +67,213 @@ func (s *TStep) SetupHook(hook string) *TStep {
 }
 
 // GET makes a HTTP GET request.
-func (s *TStep) GET(url string) *requestWithOptionalArgs {
+func (s *TStep) GET(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpGET,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // HEAD makes a HTTP HEAD request.
-func (s *TStep) HEAD(url string) *requestWithOptionalArgs {
+func (s *TStep) HEAD(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpHEAD,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // POST makes a HTTP POST request.
-func (s *TStep) POST(url string) *requestWithOptionalArgs {
+func (s *TStep) POST(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpPOST,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // PUT makes a HTTP PUT request.
-func (s *TStep) PUT(url string) *requestWithOptionalArgs {
+func (s *TStep) PUT(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpPUT,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // DELETE makes a HTTP DELETE request.
-func (s *TStep) DELETE(url string) *requestWithOptionalArgs {
+func (s *TStep) DELETE(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpDELETE,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // OPTIONS makes a HTTP OPTIONS request.
-func (s *TStep) OPTIONS(url string) *requestWithOptionalArgs {
+func (s *TStep) OPTIONS(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpOPTIONS,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // PATCH makes a HTTP PATCH request.
-func (s *TStep) PATCH(url string) *requestWithOptionalArgs {
+func (s *TStep) PATCH(url string) *stepRequestWithOptionalArgs {
 	s.Request = &Request{
 		Method: httpPATCH,
 		URL:    url,
 	}
-	return &requestWithOptionalArgs{
+	return &stepRequestWithOptionalArgs{
 		step: s,
 	}
 }
 
 // CallRefCase calls a referenced testcase.
-func (s *TStep) CallRefCase(tc *TestCase) *testcaseWithOptionalArgs {
+func (s *TStep) CallRefCase(tc *TestCase) *stepTestCaseWithOptionalArgs {
 	s.TestCase = tc
-	return &testcaseWithOptionalArgs{
+	return &stepTestCaseWithOptionalArgs{
 		step: s,
 	}
 }
 
 // implements IStep interface
-type requestWithOptionalArgs struct {
+type stepRequestWithOptionalArgs struct {
 	step *TStep
 }
 
 // SetVerify sets whether to verify SSL for current HTTP request.
-func (s *requestWithOptionalArgs) SetVerify(verify bool) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) SetVerify(verify bool) *stepRequestWithOptionalArgs {
 	s.step.Request.Verify = verify
 	return s
 }
 
 // SetTimeout sets timeout for current HTTP request.
-func (s *requestWithOptionalArgs) SetTimeout(timeout float32) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) SetTimeout(timeout float32) *stepRequestWithOptionalArgs {
 	s.step.Request.Timeout = timeout
 	return s
 }
 
 // SetProxies sets proxies for current HTTP request.
-func (s *requestWithOptionalArgs) SetProxies(proxies map[string]string) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) SetProxies(proxies map[string]string) *stepRequestWithOptionalArgs {
 	// TODO
 	return s
 }
 
 // SetAllowRedirects sets whether to allow redirects for current HTTP request.
-func (s *requestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *stepRequestWithOptionalArgs {
 	s.step.Request.AllowRedirects = allowRedirects
 	return s
 }
 
 // SetAuth sets auth for current HTTP request.
-func (s *requestWithOptionalArgs) SetAuth(auth map[string]string) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) SetAuth(auth map[string]string) *stepRequestWithOptionalArgs {
 	// TODO
 	return s
 }
 
 // WithParams sets HTTP request params for current step.
-func (s *requestWithOptionalArgs) WithParams(params map[string]interface{}) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) WithParams(params map[string]interface{}) *stepRequestWithOptionalArgs {
 	s.step.Request.Params = params
 	return s
 }
 
 // WithHeaders sets HTTP request headers for current step.
-func (s *requestWithOptionalArgs) WithHeaders(headers map[string]string) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) WithHeaders(headers map[string]string) *stepRequestWithOptionalArgs {
 	s.step.Request.Headers = headers
 	return s
 }
 
 // WithCookies sets HTTP request cookies for current step.
-func (s *requestWithOptionalArgs) WithCookies(cookies map[string]string) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) WithCookies(cookies map[string]string) *stepRequestWithOptionalArgs {
 	s.step.Request.Cookies = cookies
 	return s
 }
 
 // WithBody sets HTTP request body for current step.
-func (s *requestWithOptionalArgs) WithBody(body interface{}) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) WithBody(body interface{}) *stepRequestWithOptionalArgs {
 	s.step.Request.Body = body
 	return s
 }
 
 // TeardownHook adds a teardown hook for current teststep.
-func (s *requestWithOptionalArgs) TeardownHook(hook string) *requestWithOptionalArgs {
+func (s *stepRequestWithOptionalArgs) TeardownHook(hook string) *stepRequestWithOptionalArgs {
 	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
 	return s
 }
 
 // Validate switches to step validation.
-func (s *requestWithOptionalArgs) Validate() *stepRequestValidation {
+func (s *stepRequestWithOptionalArgs) Validate() *stepRequestValidation {
 	return &stepRequestValidation{
 		step: s.step,
 	}
 }
 
 // Extract switches to step extraction.
-func (s *requestWithOptionalArgs) Extract() *stepRequestExtraction {
+func (s *stepRequestWithOptionalArgs) Extract() *stepRequestExtraction {
 	s.step.Extract = make(map[string]string)
 	return &stepRequestExtraction{
 		step: s.step,
 	}
 }
 
-func (s *requestWithOptionalArgs) Name() string {
+func (s *stepRequestWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
-func (s *requestWithOptionalArgs) Type() string {
+func (s *stepRequestWithOptionalArgs) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *requestWithOptionalArgs) ToStruct() *TStep {
+func (s *stepRequestWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
 
 // implements IStep interface
-type testcaseWithOptionalArgs struct {
+type stepTestCaseWithOptionalArgs struct {
 	step *TStep
 }
 
 // TeardownHook adds a teardown hook for current teststep.
-func (s *testcaseWithOptionalArgs) TeardownHook(hook string) *testcaseWithOptionalArgs {
+func (s *stepTestCaseWithOptionalArgs) TeardownHook(hook string) *stepTestCaseWithOptionalArgs {
 	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
 	return s
 }
 
 // Export specifies variable names to export from referenced testcase for current step.
-func (s *testcaseWithOptionalArgs) Export(names ...string) *testcaseWithOptionalArgs {
+func (s *stepTestCaseWithOptionalArgs) Export(names ...string) *stepTestCaseWithOptionalArgs {
 	s.step.Export = append(s.step.Export, names...)
 	return s
 }
 
-func (s *testcaseWithOptionalArgs) Name() string {
+func (s *stepTestCaseWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return s.step.TestCase.Config.Name
 }
 
-func (s *testcaseWithOptionalArgs) Type() string {
+func (s *stepTestCaseWithOptionalArgs) Type() string {
 	return "testcase"
 }
 
-func (s *testcaseWithOptionalArgs) ToStruct() *TStep {
+func (s *stepTestCaseWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }

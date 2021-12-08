@@ -142,7 +142,7 @@ func (r *hrpRunner) runStep(step IStep, config *TConfig) (stepResult *stepData, 
 	}
 	copiedStep.Variables = parsedVariables // avoid data racing
 
-	if _, ok := step.(*testcaseWithOptionalArgs); ok {
+	if _, ok := step.(*stepTestCaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Info().Str("testcase", copiedStep.Name).Msg("run referenced testcase")
 		// TODO: override testcase config
