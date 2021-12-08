@@ -119,14 +119,14 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 
 func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, err error) {
 	// step type priority order: transaction > rendezvous > testcase > request
-	if stepTran, ok := step.(*stepTransaction); ok {
+	if stepTran, ok := step.(*StepTransaction); ok {
 		// transaction
 		log.Info().
 			Str("name", stepTran.step.Transaction.Name).
 			Str("type", stepTran.step.Transaction.Type).
 			Msg("transaction")
 		return nil, nil
-	} else if stepRend, ok := step.(*stepRendezvous); ok {
+	} else if stepRend, ok := step.(*StepRendezvous); ok {
 		// rendezvous
 		log.Info().
 			Str("name", stepRend.step.Rendezvous.Name).
@@ -162,7 +162,7 @@ func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, e
 	}
 	copiedStep.Variables = parsedVariables // avoid data racing
 
-	if _, ok := step.(*stepTestCaseWithOptionalArgs); ok {
+	if _, ok := step.(*StepTestCaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Info().Str("testcase", copiedStep.Name).Msg("run referenced testcase")
 		// TODO: override testcase config

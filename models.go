@@ -97,8 +97,8 @@ type ITestCase interface {
 	ToTCase() (*TCase, error)
 }
 
-// TestCase is a container for one testcase.
-// used for testcase runner
+// TestCase is a container for one testcase, which is used for testcase runner.
+// TestCase implements ITestCase interface.
 type TestCase struct {
 	Config    IConfig
 	TestSteps []IStep
@@ -108,6 +108,7 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
+// TestCasePath implements ITestCase interface.
 type TestCasePath struct {
 	Path string
 }

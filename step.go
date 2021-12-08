@@ -12,6 +12,7 @@ func NewConfig(name string) *Config {
 	}
 }
 
+// Config implements IConfig interface.
 type Config struct {
 	cfg *TConfig
 }
@@ -63,273 +64,279 @@ func (c *Config) ToStruct() *TConfig {
 }
 
 // NewStep returns a new constructed teststep with specified step name.
-func NewStep(name string) *TStep {
-	return &TStep{
-		Name:      name,
-		Variables: make(map[string]interface{}),
+func NewStep(name string) *StepRequest {
+	return &StepRequest{
+		step: &TStep{
+			Name:      name,
+			Variables: make(map[string]interface{}),
+		},
 	}
 }
 
+type StepRequest struct {
+	step *TStep
+}
+
 // WithVariables sets variables for current teststep.
-func (s *TStep) WithVariables(variables map[string]interface{}) *TStep {
-	s.Variables = variables
+func (s *StepRequest) WithVariables(variables map[string]interface{}) *StepRequest {
+	s.step.Variables = variables
 	return s
 }
 
 // SetupHook adds a setup hook for current teststep.
-func (s *TStep) SetupHook(hook string) *TStep {
-	s.SetupHooks = append(s.SetupHooks, hook)
+func (s *StepRequest) SetupHook(hook string) *StepRequest {
+	s.step.SetupHooks = append(s.step.SetupHooks, hook)
 	return s
 }
 
 // GET makes a HTTP GET request.
-func (s *TStep) GET(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpGET,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // HEAD makes a HTTP HEAD request.
-func (s *TStep) HEAD(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) HEAD(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpHEAD,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // POST makes a HTTP POST request.
-func (s *TStep) POST(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) POST(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpPOST,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // PUT makes a HTTP PUT request.
-func (s *TStep) PUT(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) PUT(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpPUT,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // DELETE makes a HTTP DELETE request.
-func (s *TStep) DELETE(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) DELETE(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpDELETE,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // OPTIONS makes a HTTP OPTIONS request.
-func (s *TStep) OPTIONS(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) OPTIONS(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpOPTIONS,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // PATCH makes a HTTP PATCH request.
-func (s *TStep) PATCH(url string) *stepRequestWithOptionalArgs {
-	s.Request = &Request{
+func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
+	s.step.Request = &Request{
 		Method: httpPATCH,
 		URL:    url,
 	}
-	return &stepRequestWithOptionalArgs{
-		step: s,
+	return &StepRequestWithOptionalArgs{
+		step: s.step,
 	}
 }
 
 // CallRefCase calls a referenced testcase.
-func (s *TStep) CallRefCase(tc *TestCase) *stepTestCaseWithOptionalArgs {
-	s.TestCase = tc
-	return &stepTestCaseWithOptionalArgs{
-		step: s,
+func (s *StepRequest) CallRefCase(tc *TestCase) *StepTestCaseWithOptionalArgs {
+	s.step.TestCase = tc
+	return &StepTestCaseWithOptionalArgs{
+		step: s.step,
 	}
 }
 
-// implements IStep interface
-type stepRequestWithOptionalArgs struct {
+// StepRequestWithOptionalArgs implements IStep interface.
+type StepRequestWithOptionalArgs struct {
 	step *TStep
 }
 
 // SetVerify sets whether to verify SSL for current HTTP request.
-func (s *stepRequestWithOptionalArgs) SetVerify(verify bool) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) SetVerify(verify bool) *StepRequestWithOptionalArgs {
 	s.step.Request.Verify = verify
 	return s
 }
 
 // SetTimeout sets timeout for current HTTP request.
-func (s *stepRequestWithOptionalArgs) SetTimeout(timeout float32) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) SetTimeout(timeout float32) *StepRequestWithOptionalArgs {
 	s.step.Request.Timeout = timeout
 	return s
 }
 
 // SetProxies sets proxies for current HTTP request.
-func (s *stepRequestWithOptionalArgs) SetProxies(proxies map[string]string) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) SetProxies(proxies map[string]string) *StepRequestWithOptionalArgs {
 	// TODO
 	return s
 }
 
 // SetAllowRedirects sets whether to allow redirects for current HTTP request.
-func (s *stepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *StepRequestWithOptionalArgs {
 	s.step.Request.AllowRedirects = allowRedirects
 	return s
 }
 
 // SetAuth sets auth for current HTTP request.
-func (s *stepRequestWithOptionalArgs) SetAuth(auth map[string]string) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) SetAuth(auth map[string]string) *StepRequestWithOptionalArgs {
 	// TODO
 	return s
 }
 
 // WithParams sets HTTP request params for current step.
-func (s *stepRequestWithOptionalArgs) WithParams(params map[string]interface{}) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) WithParams(params map[string]interface{}) *StepRequestWithOptionalArgs {
 	s.step.Request.Params = params
 	return s
 }
 
 // WithHeaders sets HTTP request headers for current step.
-func (s *stepRequestWithOptionalArgs) WithHeaders(headers map[string]string) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) WithHeaders(headers map[string]string) *StepRequestWithOptionalArgs {
 	s.step.Request.Headers = headers
 	return s
 }
 
 // WithCookies sets HTTP request cookies for current step.
-func (s *stepRequestWithOptionalArgs) WithCookies(cookies map[string]string) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) WithCookies(cookies map[string]string) *StepRequestWithOptionalArgs {
 	s.step.Request.Cookies = cookies
 	return s
 }
 
 // WithBody sets HTTP request body for current step.
-func (s *stepRequestWithOptionalArgs) WithBody(body interface{}) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) WithBody(body interface{}) *StepRequestWithOptionalArgs {
 	s.step.Request.Body = body
 	return s
 }
 
 // TeardownHook adds a teardown hook for current teststep.
-func (s *stepRequestWithOptionalArgs) TeardownHook(hook string) *stepRequestWithOptionalArgs {
+func (s *StepRequestWithOptionalArgs) TeardownHook(hook string) *StepRequestWithOptionalArgs {
 	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
 	return s
 }
 
 // Validate switches to step validation.
-func (s *stepRequestWithOptionalArgs) Validate() *stepRequestValidation {
-	return &stepRequestValidation{
+func (s *StepRequestWithOptionalArgs) Validate() *StepRequestValidation {
+	return &StepRequestValidation{
 		step: s.step,
 	}
 }
 
 // Extract switches to step extraction.
-func (s *stepRequestWithOptionalArgs) Extract() *stepRequestExtraction {
+func (s *StepRequestWithOptionalArgs) Extract() *StepRequestExtraction {
 	s.step.Extract = make(map[string]string)
-	return &stepRequestExtraction{
+	return &StepRequestExtraction{
 		step: s.step,
 	}
 }
 
-func (s *stepRequestWithOptionalArgs) Name() string {
+func (s *StepRequestWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
-func (s *stepRequestWithOptionalArgs) Type() string {
+func (s *StepRequestWithOptionalArgs) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestWithOptionalArgs) ToStruct() *TStep {
+func (s *StepRequestWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
 
-// implements IStep interface
-type stepTestCaseWithOptionalArgs struct {
+// StepTestCaseWithOptionalArgs implements IStep interface.
+type StepTestCaseWithOptionalArgs struct {
 	step *TStep
 }
 
 // TeardownHook adds a teardown hook for current teststep.
-func (s *stepTestCaseWithOptionalArgs) TeardownHook(hook string) *stepTestCaseWithOptionalArgs {
+func (s *StepTestCaseWithOptionalArgs) TeardownHook(hook string) *StepTestCaseWithOptionalArgs {
 	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
 	return s
 }
 
 // Export specifies variable names to export from referenced testcase for current step.
-func (s *stepTestCaseWithOptionalArgs) Export(names ...string) *stepTestCaseWithOptionalArgs {
+func (s *StepTestCaseWithOptionalArgs) Export(names ...string) *StepTestCaseWithOptionalArgs {
 	s.step.Export = append(s.step.Export, names...)
 	return s
 }
 
-func (s *stepTestCaseWithOptionalArgs) Name() string {
+func (s *StepTestCaseWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return s.step.TestCase.Config.Name()
 }
 
-func (s *stepTestCaseWithOptionalArgs) Type() string {
+func (s *StepTestCaseWithOptionalArgs) Type() string {
 	return "testcase"
 }
 
-func (s *stepTestCaseWithOptionalArgs) ToStruct() *TStep {
+func (s *StepTestCaseWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
 
-// implements IStep interface
-type stepTransaction struct {
+// StepTransaction implements IStep interface.
+type StepTransaction struct {
 	step *TStep
 }
 
-func (s *stepTransaction) Name() string {
+func (s *StepTransaction) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("transaction %s %s", s.step.Transaction.Name, s.step.Transaction.Type)
 }
 
-func (s *stepTransaction) Type() string {
+func (s *StepTransaction) Type() string {
 	return "transaction"
 }
 
-func (s *stepTransaction) ToStruct() *TStep {
+func (s *StepTransaction) ToStruct() *TStep {
 	return s.step
 }
 
-// implements IStep interface
-type stepRendezvous struct {
+// StepRendezvous implements IStep interface.
+type StepRendezvous struct {
 	step *TStep
 }
 
-func (s *stepRendezvous) Name() string {
+func (s *StepRendezvous) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return s.step.Rendezvous.Name
 }
 
-func (s *stepRendezvous) Type() string {
+func (s *StepRendezvous) Type() string {
 	return "rendezvous"
 }
 
-func (s *stepRendezvous) ToStruct() *TStep {
+func (s *StepRendezvous) ToStruct() *TStep {
 	return s.step
 }
