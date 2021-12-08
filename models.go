@@ -51,6 +51,7 @@ type TStep struct {
 	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
 	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
 	Transaction   *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
+	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
@@ -62,6 +63,12 @@ type TStep struct {
 type Transaction struct {
 	Name string `json:"name" yaml:"name"`
 	Type string `json:"type" yaml:"type"` // start/end
+}
+type Rendezvous struct {
+	Name    string  `json:"name" yaml:"name"`                           // required
+	Percent float32 `json:"percent,omitempty" yaml:"percent,omitempty"` // default to 1(100%)
+	Number  int64   `json:"number,omitempty" yaml:"number,omitempty"`
+	Timeout int64   `json:"timeout,omitempty" yaml:"timeout,omitempty"` // milliseconds
 }
 
 // TCase represents testcase data structure.
