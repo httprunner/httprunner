@@ -50,12 +50,18 @@ type TStep struct {
 	Name          string                 `json:"name" yaml:"name"` // required
 	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
 	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
+	Transaction   *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
 	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
 	Validators    []Validator            `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+}
+
+type Transaction struct {
+	Name string `json:"name" yaml:"name"`
+	Type string `json:"type" yaml:"type"` // start/end
 }
 
 // TCase represents testcase data structure.
