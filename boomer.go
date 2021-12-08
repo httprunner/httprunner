@@ -57,15 +57,14 @@ func (b *hrpBoomer) Quit() {
 
 func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	return &boomer.Task{
-		Name:   testcase.Config.Name,
-		Weight: testcase.Config.Weight,
+		Name:   testcase.Config.ToStruct().Name,
+		Weight: testcase.Config.ToStruct().Weight,
 		Fn: func() {
 			runner := NewRunner(nil).SetDebug(b.debug)
-			config := testcase.Config
 			for _, step := range testcase.TestSteps {
 				var err error
 				start := time.Now()
-				stepData, err := runner.runStep(step, config)
+				stepData, err := runner.runStep(step, testcase.Config)
 				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
 				if err == nil {
 					b.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.responseLength)

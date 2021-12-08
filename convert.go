@@ -12,7 +12,7 @@ import (
 
 func (tc *TestCase) ToTCase() (*TCase, error) {
 	tCase := TCase{
-		Config: tc.Config,
+		Config: tc.Config.ToStruct(),
 	}
 	for _, step := range tc.TestSteps {
 		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
@@ -105,7 +105,7 @@ func loadFromYAML(path string) (*TCase, error) {
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
 	testCase := &TestCase{
-		Config: tc.Config,
+		Config: &Config{cfg: tc.Config},
 	}
 	for _, step := range tc.TestSteps {
 		if step.Request != nil {

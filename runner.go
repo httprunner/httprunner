@@ -104,7 +104,7 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 		return err
 	}
 
-	log.Info().Str("testcase", config.Name).Msg("run testcase start")
+	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
 
 	for _, step := range testcase.TestSteps {
 		_, err := r.runStep(step, config)
@@ -113,11 +113,11 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 		}
 	}
 
-	log.Info().Str("testcase", config.Name).Msg("run testcase end")
+	log.Info().Str("testcase", config.Name()).Msg("run testcase end")
 	return nil
 }
 
-func (r *hrpRunner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
+func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, err error) {
 	// step type priority order: transaction > rendezvous > testcase > request
 	if stepTran, ok := step.(*stepTransaction); ok {
 		// transaction
@@ -146,17 +146,18 @@ func (r *hrpRunner) runStep(step IStep, config *TConfig) (stepResult *stepData, 
 		return
 	}
 
+	cfg := config.ToStruct()
 	stepVariables := copiedStep.Variables
 	// override variables
 	// step variables > session variables (extracted variables from previous steps)
 	stepVariables = mergeVariables(stepVariables, r.sessionVariables)
 	// step variables > testcase config variables
-	stepVariables = mergeVariables(stepVariables, config.Variables)
+	stepVariables = mergeVariables(stepVariables, cfg.Variables)
 
 	// parse step variables
 	parsedVariables, err := parseVariables(stepVariables)
 	if err != nil {
-		log.Error().Interface("variables", config.Variables).Err(err).Msg("parse step variables failed")
+		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse step variables failed")
 		return
 	}
 	copiedStep.Variables = parsedVariables // avoid data racing
@@ -172,7 +173,7 @@ func (r *hrpRunner) runStep(step IStep, config *TConfig) (stepResult *stepData, 
 		}
 	} else {
 		// run request
-		copiedStep.Request.URL = buildURL(config.BaseURL, copiedStep.Request.URL) // avoid data racing
+		copiedStep.Request.URL = buildURL(cfg.BaseURL, copiedStep.Request.URL) // avoid data racing
 		stepResult, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
@@ -368,28 +369,29 @@ func (r *hrpRunner) runStepTestCase(step *TStep) (stepResult *stepData, err erro
 	return
 }
 
-func (r *hrpRunner) parseConfig(config *TConfig) error {
+func (r *hrpRunner) parseConfig(config IConfig) error {
+	cfg := config.ToStruct()
 	// parse config variables
-	parsedVariables, err := parseVariables(config.Variables)
+	parsedVariables, err := parseVariables(cfg.Variables)
 	if err != nil {
-		log.Error().Interface("variables", config.Variables).Err(err).Msg("parse config variables failed")
+		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
 		return err
 	}
-	config.Variables = parsedVariables
+	cfg.Variables = parsedVariables
 
 	// parse config name
-	parsedName, err := parseString(config.Name, config.Variables)
+	parsedName, err := parseString(cfg.Name, cfg.Variables)
 	if err != nil {
 		return err
 	}
-	config.Name = convertString(parsedName)
+	cfg.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL, err := parseString(config.BaseURL, config.Variables)
+	parsedBaseURL, err := parseString(cfg.BaseURL, cfg.Variables)
 	if err != nil {
 		return err
 	}
-	config.BaseURL = convertString(parsedBaseURL)
+	cfg.BaseURL = convertString(parsedBaseURL)
 
 	return nil
 }

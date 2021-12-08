@@ -3,47 +3,63 @@ package hrp
 import "fmt"
 
 // NewConfig returns a new constructed testcase config with specified testcase name.
-func NewConfig(name string) *TConfig {
-	return &TConfig{
-		Name:      name,
-		Variables: make(map[string]interface{}),
+func NewConfig(name string) *Config {
+	return &Config{
+		cfg: &TConfig{
+			Name:      name,
+			Variables: make(map[string]interface{}),
+		},
 	}
 }
 
+type Config struct {
+	cfg *TConfig
+}
+
 // WithVariables sets variables for current testcase.
-func (c *TConfig) WithVariables(variables map[string]interface{}) *TConfig {
-	c.Variables = variables
+func (c *Config) WithVariables(variables map[string]interface{}) *Config {
+	c.cfg.Variables = variables
 	return c
 }
 
 // SetBaseURL sets base URL for current testcase.
-func (c *TConfig) SetBaseURL(baseURL string) *TConfig {
-	c.BaseURL = baseURL
+func (c *Config) SetBaseURL(baseURL string) *Config {
+	c.cfg.BaseURL = baseURL
 	return c
 }
 
 // SetVerifySSL sets whether to verify SSL for current testcase.
-func (c *TConfig) SetVerifySSL(verify bool) *TConfig {
-	c.Verify = verify
+func (c *Config) SetVerifySSL(verify bool) *Config {
+	c.cfg.Verify = verify
 	return c
 }
 
 // WithParameters sets parameters for current testcase.
-func (c *TConfig) WithParameters(parameters map[string]interface{}) *TConfig {
-	c.Parameters = parameters
+func (c *Config) WithParameters(parameters map[string]interface{}) *Config {
+	c.cfg.Parameters = parameters
 	return c
 }
 
 // ExportVars specifies variable names to export for current testcase.
-func (c *TConfig) ExportVars(vars ...string) *TConfig {
-	c.Export = vars
+func (c *Config) ExportVars(vars ...string) *Config {
+	c.cfg.Export = vars
 	return c
 }
 
 // SetWeight sets weight for current testcase, which is used in load testing.
-func (c *TConfig) SetWeight(weight int) *TConfig {
-	c.Weight = weight
+func (c *Config) SetWeight(weight int) *Config {
+	c.cfg.Weight = weight
 	return c
+}
+
+// Name returns config name, this implements IConfig interface.
+func (c *Config) Name() string {
+	return c.cfg.Name
+}
+
+// ToStruct returns *TConfig, this implements IConfig interface.
+func (c *Config) ToStruct() *TConfig {
+	return c.cfg
 }
 
 // NewStep returns a new constructed teststep with specified step name.
@@ -267,7 +283,7 @@ func (s *stepTestCaseWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
-	return s.step.TestCase.Config.Name
+	return s.step.TestCase.Config.Name()
 }
 
 func (s *stepTestCaseWithOptionalArgs) Type() string {

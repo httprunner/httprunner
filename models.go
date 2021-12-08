@@ -78,6 +78,12 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
+// IConfig represents interface for testcase config.
+type IConfig interface {
+	Name() string
+	ToStruct() *TConfig
+}
+
 // IStep represents interface for all types for teststeps.
 type IStep interface {
 	Name() string
@@ -94,7 +100,7 @@ type ITestCase interface {
 // TestCase is a container for one testcase.
 // used for testcase runner
 type TestCase struct {
-	Config    *TConfig
+	Config    IConfig
 	TestSteps []IStep
 }
 
