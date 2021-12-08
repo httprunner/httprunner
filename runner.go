@@ -118,13 +118,22 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 }
 
 func (r *hrpRunner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
-	// step type priority order: transaction > testcase > request
-	if stepTransaction, ok := step.(*stepTransaction); ok {
+	// step type priority order: transaction > rendezvous > testcase > request
+	if stepTran, ok := step.(*stepTransaction); ok {
 		// transaction
 		log.Info().
-			Str("name", stepTransaction.step.Transaction.Name).
-			Str("type", stepTransaction.step.Transaction.Type).
+			Str("name", stepTran.step.Transaction.Name).
+			Str("type", stepTran.step.Transaction.Type).
 			Msg("transaction")
+		return nil, nil
+	} else if stepRend, ok := step.(*stepRendezvous); ok {
+		// rendezvous
+		log.Info().
+			Str("name", stepRend.step.Rendezvous.Name).
+			Float32("percent", stepRend.step.Rendezvous.Percent).
+			Int64("number", stepRend.step.Rendezvous.Number).
+			Int64("timeout", stepRend.step.Rendezvous.Timeout).
+			Msg("rendezvous")
 		return nil, nil
 	}
 

@@ -120,6 +120,10 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 			testCase.TestSteps = append(testCase.TestSteps, &stepTransaction{
 				step: step,
 			})
+		} else if step.Rendezvous != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &stepRendezvous{
+				step: step,
+			})
 		} else {
 			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
 		}

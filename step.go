@@ -297,3 +297,23 @@ func (s *stepTransaction) Type() string {
 func (s *stepTransaction) ToStruct() *TStep {
 	return s.step
 }
+
+// implements IStep interface
+type stepRendezvous struct {
+	step *TStep
+}
+
+func (s *stepRendezvous) Name() string {
+	if s.step.Name != "" {
+		return s.step.Name
+	}
+	return s.step.Rendezvous.Name
+}
+
+func (s *stepRendezvous) Type() string {
+	return "rendezvous"
+}
+
+func (s *stepRendezvous) ToStruct() *TStep {
+	return s.step
+}
