@@ -277,3 +277,23 @@ func (s *stepTestCaseWithOptionalArgs) Type() string {
 func (s *stepTestCaseWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
+
+// implements IStep interface
+type stepTransaction struct {
+	step *TStep
+}
+
+func (s *stepTransaction) Name() string {
+	if s.step.Name != "" {
+		return s.step.Name
+	}
+	return fmt.Sprintf("transaction %s %s", s.step.Transaction.Name, s.step.Transaction.Type)
+}
+
+func (s *stepTransaction) Type() string {
+	return "transaction"
+}
+
+func (s *stepTransaction) ToStruct() *TStep {
+	return s.step
+}

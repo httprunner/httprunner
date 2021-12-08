@@ -118,6 +118,16 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 }
 
 func (r *hrpRunner) runStep(step IStep, config *TConfig) (stepResult *stepData, err error) {
+	// step type priority order: transaction > testcase > request
+	if stepTransaction, ok := step.(*stepTransaction); ok {
+		// transaction
+		log.Info().
+			Str("name", stepTransaction.step.Transaction.Name).
+			Str("type", stepTransaction.step.Transaction.Type).
+			Msg("transaction")
+		return nil, nil
+	}
+
 	log.Info().Str("step", step.Name()).Msg("run step start")
 
 	// copy step to avoid data racing
