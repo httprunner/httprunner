@@ -10,16 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (tc *TestCase) ToTCase() (*TCase, error) {
-	tCase := TCase{
-		Config: tc.Config.ToStruct(),
-	}
-	for _, step := range tc.TestSteps {
-		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
-	}
-	return &tCase, nil
-}
-
 func (tc *TCase) Dump2JSON(path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
@@ -132,6 +122,11 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 }
 
 var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
+
+// TestCasePath implements ITestCase interface.
+type TestCasePath struct {
+	Path string
+}
 
 func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	var tc *TCase

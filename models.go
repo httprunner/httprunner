@@ -108,9 +108,14 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
-// TestCasePath implements ITestCase interface.
-type TestCasePath struct {
-	Path string
+func (tc *TestCase) ToTCase() (*TCase, error) {
+	tCase := TCase{
+		Config: tc.Config.ToStruct(),
+	}
+	for _, step := range tc.TestSteps {
+		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
+	}
+	return &tCase, nil
 }
 
 type testCaseSummary struct{}
