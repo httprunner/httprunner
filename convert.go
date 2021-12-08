@@ -109,19 +109,19 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	}
 	for _, step := range tc.TestSteps {
 		if step.Request != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &stepRequestWithOptionalArgs{
+			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
 				step: step,
 			})
 		} else if step.TestCase != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &stepTestCaseWithOptionalArgs{
+			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
 				step: step,
 			})
 		} else if step.Transaction != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &stepTransaction{
+			testCase.TestSteps = append(testCase.TestSteps, &StepTransaction{
 				step: step,
 			})
 		} else if step.Rendezvous != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &stepRendezvous{
+			testCase.TestSteps = append(testCase.TestSteps, &StepRendezvous{
 				step: step,
 			})
 		} else {
