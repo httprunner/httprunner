@@ -60,9 +60,25 @@ type TStep struct {
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 }
 
+type stepType string
+
+const (
+	stepTypeRequest     stepType = "request"
+	stepTypeTestCase    stepType = "testcase"
+	stepTypeTransaction stepType = "transaction"
+	stepTypeRendezvous  stepType = "rendezvous"
+)
+
+type TransactionType string
+
+const (
+	TransactionStart TransactionType = "start"
+	TransactionEnd   TransactionType = "end"
+)
+
 type Transaction struct {
-	Name string `json:"name" yaml:"name"`
-	Type string `json:"type" yaml:"type"` // start/end
+	Name string          `json:"name" yaml:"name"`
+	Type TransactionType `json:"type" yaml:"type"`
 }
 type Rendezvous struct {
 	Name    string  `json:"name" yaml:"name"`                           // required
@@ -127,7 +143,9 @@ type testCaseSummary struct{}
 
 type stepData struct {
 	name           string                 // step name
+	stepType       stepType               // step type, testcase/request/transaction/rendezvous
 	success        bool                   // step execution result
+	elapsed        int64                  // step execution time in millisecond(ms)
 	responseLength int64                  // response body length
 	exportVars     map[string]interface{} // extract variables
 }

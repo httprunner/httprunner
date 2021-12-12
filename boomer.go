@@ -56,20 +56,47 @@ func (b *hrpBoomer) Quit() {
 }
 
 func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
+	config := testcase.Config.ToStruct()
 	return &boomer.Task{
-		Name:   testcase.Config.ToStruct().Name,
-		Weight: testcase.Config.ToStruct().Weight,
+		Name:   config.Name,
+		Weight: config.Weight,
 		Fn: func() {
-			runner := NewRunner(nil).SetDebug(b.debug)
+			runner := NewRunner(nil).SetDebug(b.debug).Reset()
 			for _, step := range testcase.TestSteps {
-				var err error
-				start := time.Now()
 				stepData, err := runner.runStep(step, testcase.Config)
-				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
+
+				if stepData.stepType == stepTypeRendezvous {
+					// TODO: implement rendezvous in boomer
+					continue
+				}
+
+				// record transaction
+				if stepData.stepType == stepTypeTransaction {
+					// TODO: implement recording transaction in boomer
+					if stepData.elapsed != 0 {
+						b.RecordSuccess(string(stepTypeTransaction), stepData.name, stepData.elapsed, 0)
+					}
+					continue
+				}
+
 				if err == nil {
-					b.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.responseLength)
+					b.RecordSuccess(step.Type(), step.Name(), stepData.elapsed, stepData.responseLength)
 				} else {
+					var elapsed int64
+					if stepData != nil {
+						elapsed = stepData.elapsed
+					}
 					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+				}
+			}
+			endTime := time.Now()
+
+			// report duration for transaction without end
+			for name, transaction := range runner.transactions {
+				if len(transaction) == 1 {
+					// if transaction end time not exists, use testcase end time instead
+					duration := endTime.Sub(transaction[TransactionStart])
+					b.RecordSuccess(string(stepTypeTransaction), name, duration.Milliseconds(), 0)
 				}
 			}
 		},
