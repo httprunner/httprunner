@@ -1,5 +1,9 @@
 # Release History
 
+## v0.3.0 (2021-12-13)
+
+- feat: implement transaction for load test
+
 ## v0.2.2 (2021-12-07)
 
 - refactor: update models to make API more concise
