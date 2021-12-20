@@ -206,9 +206,11 @@ func (r *hrpRunner) runStepTransaction(transaction *Transaction) (stepResult *st
 		Msg("transaction")
 
 	stepResult = &stepData{
-		name:     transaction.Name,
-		stepType: stepTypeTransaction,
-		success:  true,
+		name:           transaction.Name,
+		stepType:       stepTypeTransaction,
+		success:        true,
+		elapsed:        0,
+		responseLength: 0, // TODO: record transaction total response length
 	}
 
 	// create transaction if not exists

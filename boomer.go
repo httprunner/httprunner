@@ -62,6 +62,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 		Weight: config.Weight,
 		Fn: func() {
 			runner := NewRunner(nil).SetDebug(b.debug).Reset()
+			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				stepData, err := runner.runStep(step, testcase.Config)
 
@@ -72,9 +73,8 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 
 				// record transaction
 				if stepData.stepType == stepTypeTransaction {
-					// TODO: implement recording transaction in boomer
-					if stepData.elapsed != 0 {
-						b.RecordSuccess(string(stepTypeTransaction), stepData.name, stepData.elapsed, 0)
+					if stepData.elapsed != 0 { // only record when transaction ends
+						b.RecordTransaction(stepData.name, stepData.elapsed, 0)
 					}
 					continue
 				}
@@ -96,9 +96,12 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
 					duration := endTime.Sub(transaction[TransactionStart])
-					b.RecordSuccess(string(stepTypeTransaction), name, duration.Milliseconds(), 0)
+					b.RecordTransaction(name, duration.Milliseconds(), 0)
 				}
 			}
+
+			// report testcase as a whole Action transaction, inspired by LoadRunner
+			b.RecordTransaction("Action", endTime.Sub(startTime).Milliseconds(), 0)
 		},
 	}
 }
