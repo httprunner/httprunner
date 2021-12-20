@@ -34,7 +34,7 @@ Since installed, you will get a `hrp` command with multiple sub-commands.
 
 ```text
 $ hrp -h
-hrp (HttpRunner+) is the one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
+hrp (HttpRunner+) is one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp

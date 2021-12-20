@@ -14,7 +14,7 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "hrp",
 	Short: "One-stop solution for HTTP(S) testing.",
-	Long: `hrp (HttpRunner+) is the one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
+	Long: `hrp (HttpRunner+) is one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
