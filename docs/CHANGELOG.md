@@ -4,6 +4,7 @@
 
 - feat: implement transaction mechanism for load test
 - feat: support `--continue-on-failure` flag to continue running next step when failure occurs
+- refactor: fork [boomer] as sub module
 
 ## v0.2.2 (2021-12-07)
 
