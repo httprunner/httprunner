@@ -3,12 +3,11 @@ package hrp
 import (
 	"time"
 
-	"github.com/myzhan/boomer"
-
+	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-func NewStandaloneBoomer(spawnCount int, spawnRate float64) *hrpBoomer {
+func NewBoomer(spawnCount int, spawnRate float64) *hrpBoomer {
 	b := &hrpBoomer{
 		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		debug:  false,
@@ -48,11 +47,6 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 		taskSlice = append(taskSlice, task)
 	}
 	b.Boomer.Run(taskSlice...)
-}
-
-// Quit stops running load test.
-func (b *hrpBoomer) Quit() {
-	b.Boomer.Quit()
 }
 
 func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
