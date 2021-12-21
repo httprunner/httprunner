@@ -32,8 +32,9 @@ func NewRunner(t *testing.T) *hrpRunner {
 		t = &testing.T{}
 	}
 	return &hrpRunner{
-		t:     t,
-		debug: false, // default to turn off debug
+		t:        t,
+		failfast: true,  // default to failfast
+		debug:    false, // default to turn off debug
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -41,11 +42,13 @@ func NewRunner(t *testing.T) *hrpRunner {
 			Timeout: 30 * time.Second,
 		},
 		sessionVariables: make(map[string]interface{}),
+		transactions:     make(map[string]map[TransactionType]time.Time),
 	}
 }
 
 type hrpRunner struct {
 	t                *testing.T
+	failfast         bool
 	debug            bool
 	client           *http.Client
 	sessionVariables map[string]interface{}
@@ -61,6 +64,13 @@ func (r *hrpRunner) Reset() *hrpRunner {
 	r.sessionVariables = make(map[string]interface{})
 	r.transactions = make(map[string]map[TransactionType]time.Time)
 	r.startTime = time.Now()
+	return r
+}
+
+// SetFailfast configures whether to stop running when one step fails.
+func (r *hrpRunner) SetFailfast(failfast bool) *hrpRunner {
+	log.Info().Bool("failfast", failfast).Msg("[init] SetFailfast")
+	r.failfast = failfast
 	return r
 }
 
@@ -123,7 +133,11 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 	for _, step := range testcase.TestSteps {
 		_, err := r.runStep(step, config)
 		if err != nil {
-			return err
+			if r.failfast {
+				log.Error().Err(err).Msg("abort running due to failfast setting")
+				return err
+			}
+			log.Warn().Err(err).Msg("run step failed, continue next step")
 		}
 	}
 
@@ -206,11 +220,11 @@ func (r *hrpRunner) runStepTransaction(transaction *Transaction) (stepResult *st
 		Msg("transaction")
 
 	stepResult = &stepData{
-		name:           transaction.Name,
-		stepType:       stepTypeTransaction,
-		success:        true,
-		elapsed:        0,
-		responseLength: 0, // TODO: record transaction total response length
+		name:        transaction.Name,
+		stepType:    stepTypeTransaction,
+		success:     true,
+		elapsed:     0,
+		contentSize: 0, // TODO: record transaction total response length
 	}
 
 	// create transaction if not exists
@@ -258,10 +272,10 @@ func (r *hrpRunner) runStepRendezvous(rend *Rendezvous) (stepResult *stepData, e
 
 func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
 	stepResult = &stepData{
-		name:           step.Name,
-		stepType:       stepTypeRequest,
-		success:        false,
-		responseLength: 0,
+		name:        step.Name,
+		stepType:    stepTypeRequest,
+		success:     false,
+		contentSize: 0,
 	}
 
 	rawUrl := step.Request.URL
@@ -420,7 +434,7 @@ func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error
 	}
 
 	stepResult.success = true
-	stepResult.responseLength = resp.ContentLength
+	stepResult.contentSize = resp.ContentLength
 	return stepResult, nil
 }
 

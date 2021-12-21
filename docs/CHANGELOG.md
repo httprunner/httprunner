@@ -1,8 +1,9 @@
 # Release History
 
-## v0.3.0 (2021-12-13)
+## v0.3.0 (2021-12-21)
 
-- feat: implement transaction for load test
+- feat: implement transaction mechanism for load test
+- feat: support `--continue-on-failure` flag to continue running next step when failure occurs
 
 ## v0.2.2 (2021-12-07)
 
