@@ -62,31 +62,47 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 		Weight: config.Weight,
 		Fn: func() {
 			runner := NewRunner(nil).SetDebug(b.debug).Reset()
+
+			testcaseSuccess := true       // flag whole testcase result
+			var transactionSuccess = true // flag current transaction result
+
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				stepData, err := runner.runStep(step, testcase.Config)
-
-				if stepData.stepType == stepTypeRendezvous {
-					// TODO: implement rendezvous in boomer
-					continue
-				}
-
-				// record transaction
-				if stepData.stepType == stepTypeTransaction {
-					if stepData.elapsed != 0 { // only record when transaction ends
-						b.RecordTransaction(stepData.name, stepData.elapsed, 0)
-					}
-					continue
-				}
-
-				if err == nil {
-					b.RecordSuccess(step.Type(), step.Name(), stepData.elapsed, stepData.responseLength)
-				} else {
+				if err != nil {
+					// step failed
 					var elapsed int64
 					if stepData != nil {
 						elapsed = stepData.elapsed
 					}
 					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+
+					// update flag
+					testcaseSuccess = false
+					transactionSuccess = false
+
+					if runner.failfast {
+						log.Error().Err(err).Msg("abort running due to failfast setting")
+						break
+					}
+					log.Warn().Err(err).Msg("run step failed, continue next step")
+					continue
+				}
+
+				// step success
+				if stepData.stepType == stepTypeTransaction {
+					// transaction
+					// FIXME: support nested transactions
+					if stepData.elapsed != 0 { // only record when transaction ends
+						b.RecordTransaction(stepData.name, transactionSuccess, stepData.elapsed, 0)
+						transactionSuccess = true // reset flag for next transaction
+					}
+				} else if stepData.stepType == stepTypeRendezvous {
+					// rendezvous
+					// TODO: implement rendezvous in boomer
+				} else {
+					// request or testcase step
+					b.RecordSuccess(step.Type(), step.Name(), stepData.elapsed, stepData.contentSize)
 				}
 			}
 			endTime := time.Now()
@@ -96,12 +112,12 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
 					duration := endTime.Sub(transaction[TransactionStart])
-					b.RecordTransaction(name, duration.Milliseconds(), 0)
+					b.RecordTransaction(name, transactionSuccess, duration.Milliseconds(), 0)
 				}
 			}
 
 			// report testcase as a whole Action transaction, inspired by LoadRunner
-			b.RecordTransaction("Action", endTime.Sub(startTime).Milliseconds(), 0)
+			b.RecordTransaction("Action", testcaseSuccess, endTime.Sub(startTime).Milliseconds(), 0)
 		},
 	}
 }

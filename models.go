@@ -142,10 +142,10 @@ func (tc *TestCase) ToTCase() (*TCase, error) {
 type testCaseSummary struct{}
 
 type stepData struct {
-	name           string                 // step name
-	stepType       stepType               // step type, testcase/request/transaction/rendezvous
-	success        bool                   // step execution result
-	elapsed        int64                  // step execution time in millisecond(ms)
-	responseLength int64                  // response body length
-	exportVars     map[string]interface{} // extract variables
+	name        string                 // step name
+	stepType    stepType               // step type, testcase/request/transaction/rendezvous
+	success     bool                   // step execution result
+	elapsed     int64                  // step execution time in millisecond(ms)
+	contentSize int64                  // response body length
+	exportVars  map[string]interface{} // extract variables
 }
