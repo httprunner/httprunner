@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/httprunner/hrp/internal/version"
 )
 
 type IEvent interface {
@@ -14,7 +16,7 @@ type EventTracking struct {
 	HitType  string `form:"t"`  // Event hit type = event
 	Category string `form:"ec"` // Required. Event Category.
 	Action   string `form:"ea"` // Required. Event Action.
-	Label    string `form:"el"` // Optional. Event label
+	Label    string `form:"el"` // Optional. Event label, used as version.
 	Value    string `form:"ev"` // Optional. Event value, must be digits, "123"
 }
 
@@ -30,6 +32,7 @@ func (e EventTracking) StartTiming(variable string) UserTimingTracking {
 
 func (e EventTracking) ToUrlValues() url.Values {
 	e.HitType = "event"
+	e.Label = version.VERSION
 	return structToUrlValues(e)
 }
 
@@ -45,6 +48,7 @@ type UserTimingTracking struct {
 
 func (e UserTimingTracking) ToUrlValues() url.Values {
 	e.HitType = "timing"
+	e.Label = version.VERSION
 	e.Duration = fmt.Sprintf("%d", int64(e.duration.Seconds()*1000))
 	return structToUrlValues(e)
 }
