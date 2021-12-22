@@ -15,12 +15,17 @@ var runCmd = &cobra.Command{
   $ hrp run demo.yaml	# run specified yaml testcase file
   $ hrp run examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
+	PreRun: func(cmd *cobra.Command, args []string) {
+		setLogLevel(logLevel)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
 		}
-		runner := hrp.NewRunner(nil).SetDebug(!silentFlag).SetFailfast(!continueOnFailure)
+		runner := hrp.NewRunner(nil).
+			SetDebug(!silentFlag).
+			SetFailfast(!continueOnFailure)
 		if proxyUrl != "" {
 			runner.SetProxyUrl(proxyUrl)
 		}

@@ -16,6 +16,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/ga"
 )
