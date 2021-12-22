@@ -1,6 +1,7 @@
 package boomer
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -311,23 +312,15 @@ func (s *statsEntry) logError(err string) {
 }
 
 func (s *statsEntry) serialize() map[string]interface{} {
-	result := make(map[string]interface{})
-	result["name"] = s.Name
-	result["method"] = s.Method
-	result["last_request_timestamp"] = s.LastRequestTimestamp
-	result["start_time"] = s.StartTime
-	result["num_requests"] = s.NumRequests
-	// Boomer doesn't allow None response time for requests like locust.
-	// num_none_requests is added to keep compatible with locust.
-	result["num_none_requests"] = 0
-	result["num_failures"] = s.NumFailures
-	result["total_response_time"] = s.TotalResponseTime
-	result["max_response_time"] = s.MaxResponseTime
-	result["min_response_time"] = s.MinResponseTime
-	result["total_content_length"] = s.TotalContentLength
-	result["response_times"] = s.ResponseTimes
-	result["num_reqs_per_sec"] = s.NumReqsPerSec
-	result["num_fail_per_sec"] = s.NumFailPerSec
+	var result map[string]interface{}
+	val, err := json.Marshal(s)
+	if err != nil {
+		return nil
+	}
+	err = json.Unmarshal(val, &result)
+	if err != nil {
+		return nil
+	}
 	return result
 }
 

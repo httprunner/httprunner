@@ -246,81 +246,68 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 	return
 }
 
-const (
-	namespace = "boomer"
-)
-
 // gauge vectors for requests
 var (
 	gaugeNumRequests = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "num_requests",
-			Help:      "The number of requests",
+			Name: "num_requests",
+			Help: "The number of requests",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeNumFailures = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "num_failures",
-			Help:      "The number of failures",
+			Name: "num_failures",
+			Help: "The number of failures",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeMedianResponseTime = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "median_response_time",
-			Help:      "The median response time",
+			Name: "median_response_time",
+			Help: "The median response time",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeAverageResponseTime = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "average_response_time",
-			Help:      "The average response time",
+			Name: "average_response_time",
+			Help: "The average response time",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeMinResponseTime = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "min_response_time",
-			Help:      "The min response time",
+			Name: "min_response_time",
+			Help: "The min response time",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeMaxResponseTime = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "max_response_time",
-			Help:      "The max response time",
+			Name: "max_response_time",
+			Help: "The max response time",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeAverageContentLength = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "average_content_length",
-			Help:      "The average content length",
+			Name: "average_content_length",
+			Help: "The average content length",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeCurrentRPS = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "current_rps",
-			Help:      "The current requests per second",
+			Name: "current_rps",
+			Help: "The current requests per second",
 		},
 		[]string{"method", "name"},
 	)
 	gaugeCurrentFailPerSec = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "current_fail_per_sec",
-			Help:      "The current failure number per second",
+			Name: "current_fail_per_sec",
+			Help: "The current failure number per second",
 		},
 		[]string{"method", "name"},
 	)
@@ -330,37 +317,32 @@ var (
 var (
 	gaugeUsers = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "users",
-			Help:      "The current number of users",
+			Name: "users",
+			Help: "The current number of users",
 		},
 	)
 	gaugeTotalRPS = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "total_rps",
-			Help:      "The requests per second in total",
+			Name: "total_rps",
+			Help: "The requests per second in total",
 		},
 	)
 	gaugeTotalFailRatio = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "fail_ratio",
-			Help:      "The ratio of request failures in total",
+			Name: "fail_ratio",
+			Help: "The ratio of request failures in total",
 		},
 	)
 	gaugeTransactionsPassed = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "transactions_passed",
-			Help:      "The accumulated number of passed transactions",
+			Name: "transactions_passed",
+			Help: "The accumulated number of passed transactions",
 		},
 	)
 	gaugeTransactionsFailed = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Namespace: namespace,
-			Name:      "transactions_failed",
-			Help:      "The accumulated number of failed transactions",
+			Name: "transactions_failed",
+			Help: "The accumulated number of failed transactions",
 		},
 	)
 )
