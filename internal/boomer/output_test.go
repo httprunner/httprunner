@@ -1,9 +1,7 @@
 package boomer
 
 import (
-	"fmt"
 	"math"
-	"sort"
 	"testing"
 )
 
@@ -107,28 +105,4 @@ func TestConsoleOutput(t *testing.T) {
 	o.OnEvent(data)
 
 	o.OnStop()
-}
-
-func TestSortString(t *testing.T) {
-
-	stats := []struct {
-		method string
-		name   string
-	}{
-		{"transaction", "Action"},
-		{"request-GET", "get with params"},
-		{"request-POST", "post form data"},
-		{"request-POST", "post json data"},
-		{"transaction", "tran1"},
-	}
-
-	sort.Slice(stats, func(i, j int) bool {
-		if stats[i].method < stats[j].method {
-			return true
-		}
-
-		return stats[i].name < stats[j].name
-	})
-
-	fmt.Println(stats)
 }
