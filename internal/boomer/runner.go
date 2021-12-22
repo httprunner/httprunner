@@ -2,13 +2,14 @@ package boomer
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -116,7 +117,7 @@ func (r *runner) outputOnStop() {
 }
 
 func (r *runner) spawnWorkers(spawnCount int, quit chan bool, spawnCompleteFunc func()) {
-	log.Println("Spawning", spawnCount, "clients immediately")
+	log.Info().Int("spawnCount", spawnCount).Msg("Spawning clients immediately")
 
 	for i := 1; i <= spawnCount; i++ {
 		select {

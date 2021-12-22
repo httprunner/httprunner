@@ -49,7 +49,7 @@ func Execute() {
 
 func setLogLevel(level string) {
 	level = strings.ToUpper(level)
-	log.Info().Msgf("Set log level to %s", level)
+	log.Info().Str("level", level).Msg("Set log level")
 	switch level {
 	case "DEBUG":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)

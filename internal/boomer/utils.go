@@ -4,11 +4,12 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"os"
 	"runtime/pprof"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func round(val float64, roundOn float64, places int) (newVal float64) {
@@ -41,14 +42,14 @@ func startMemoryProfile(file string, duration time.Duration) (err error) {
 		return err
 	}
 
-	log.Println("Start memory profiling for", duration)
+	log.Info().Dur("duration", duration).Msg("Start memory profiling")
 	time.AfterFunc(duration, func() {
 		err = pprof.WriteHeapProfile(f)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err).Msg("failed to write memory profile")
 		}
 		f.Close()
-		log.Println("Stop memory profiling after", duration)
+		log.Info().Dur("duration", duration).Msg("Stop memory profiling")
 	})
 	return nil
 }
@@ -60,7 +61,7 @@ func startCPUProfile(file string, duration time.Duration) (err error) {
 		return err
 	}
 
-	log.Println("Start cpu profiling for", duration)
+	log.Info().Dur("duration", duration).Msg("Start CPU profiling")
 	err = pprof.StartCPUProfile(f)
 	if err != nil {
 		f.Close()
@@ -70,7 +71,7 @@ func startCPUProfile(file string, duration time.Duration) (err error) {
 	time.AfterFunc(duration, func() {
 		pprof.StopCPUProfile()
 		f.Close()
-		log.Println("Stop CPU profiling after", duration)
+		log.Info().Dur("duration", duration).Msg("Stop CPU profiling")
 	})
 	return nil
 }

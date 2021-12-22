@@ -3,7 +3,6 @@ package boomer
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+	"github.com/rs/zerolog/log"
 )
 
 // Output is primarily responsible for printing test results to different destinations
@@ -120,7 +120,7 @@ func (o *ConsoleOutput) OnStop() {
 func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 	output, err := convertData(data)
 	if err != nil {
-		log.Println(fmt.Sprintf("convert data error: %v", err))
+		log.Error().Err(err).Msg("failed to convert data")
 		return
 	}
 
@@ -380,7 +380,7 @@ type PrometheusPusherOutput struct {
 
 // OnStart will register all prometheus metric collectors
 func (o *PrometheusPusherOutput) OnStart() {
-	log.Println("register prometheus metric collectors")
+	log.Info().Msg("register prometheus metric collectors")
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
 		// gauge vectors for requests
@@ -412,7 +412,7 @@ func (o *PrometheusPusherOutput) OnStop() {
 func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 	output, err := convertData(data)
 	if err != nil {
-		log.Println(fmt.Sprintf("convert data error: %v", err))
+		log.Error().Err(err).Msg("failed to convert data")
 		return
 	}
 
@@ -444,6 +444,6 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 	}
 
 	if err := o.pusher.Push(); err != nil {
-		log.Println(fmt.Sprintf("Could not push to Pushgateway: error: %v", err))
+		log.Error().Err(err).Msg("push to Pushgateway failed")
 	}
 }

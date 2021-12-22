@@ -6,6 +6,8 @@
 - feat: support `--continue-on-failure` flag to continue running next step when failure occurs, default to failfast
 - refactor: fork [boomer] as sub module
 - feat: report GA events with version
+- feat: run load test with the given limit and burst as rate limiter
+- change: update API models
 
 ## v0.2.2 (2021-12-07)
 
