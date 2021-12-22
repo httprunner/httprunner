@@ -1,9 +1,10 @@
 package boomer
 
 import (
-	"log"
 	"math"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // A Boomer is used to run tasks.
@@ -36,20 +37,19 @@ func (b *Boomer) SetRateLimiter(maxRPS int64, requestIncreaseRate string) {
 	var rateLimiter RateLimiter
 	var err error
 	if requestIncreaseRate != "-1" {
-		if maxRPS > 0 {
-			log.Println("The max RPS that boomer may generate is limited to", maxRPS, "with a increase rate", requestIncreaseRate)
-			rateLimiter, err = NewRampUpRateLimiter(maxRPS, requestIncreaseRate, time.Second)
-		} else {
-			log.Println("The max RPS that boomer may generate is limited by a increase rate", requestIncreaseRate)
-			rateLimiter, err = NewRampUpRateLimiter(math.MaxInt64, requestIncreaseRate, time.Second)
+		if maxRPS <= 0 {
+			maxRPS = math.MaxInt64
 		}
+		log.Warn().Int64("maxRPS", maxRPS).Str("increaseRate", requestIncreaseRate).Msg("set ramp up rate limiter")
+		rateLimiter, err = NewRampUpRateLimiter(math.MaxInt64, requestIncreaseRate, time.Second)
 	} else {
 		if maxRPS > 0 {
-			log.Println("The max RPS that boomer may generate is limited to", maxRPS)
+			log.Warn().Int64("maxRPS", maxRPS).Msg("set stable rate limiter")
 			rateLimiter = NewStableRateLimiter(maxRPS, time.Second)
 		}
 	}
 	if err != nil {
+		log.Error().Err(err).Msg("failed to create rate limiter")
 		return
 	}
 	b.rateLimiter = rateLimiter
@@ -77,13 +77,13 @@ func (b *Boomer) Run(tasks ...*Task) {
 	if b.cpuProfile != "" {
 		err := startCPUProfile(b.cpuProfile, b.cpuProfileDuration)
 		if err != nil {
-			log.Printf("Error starting cpu profiling, %v", err)
+			log.Error().Err(err).Msg("failed to start cpu profiling")
 		}
 	}
 	if b.memoryProfile != "" {
 		err := startMemoryProfile(b.memoryProfile, b.memoryProfileDuration)
 		if err != nil {
-			log.Printf("Error starting memory profiling, %v", err)
+			log.Error().Err(err).Msg("failed to start memory profiling")
 		}
 	}
 
