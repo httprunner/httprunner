@@ -3,6 +3,8 @@ package hrp
 import (
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
 )

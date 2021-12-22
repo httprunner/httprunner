@@ -12,13 +12,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/internal/ga"
 )
-
-var log zerolog.Logger
 
 const (
 	suffixJSON = ".json"
@@ -26,7 +24,6 @@ const (
 )
 
 func NewHAR(path string) *har {
-	log = hrp.GetLogger()
 	return &har{
 		path: path,
 	}
