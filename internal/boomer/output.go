@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
@@ -366,8 +367,9 @@ var (
 
 // NewPrometheusPusherOutput returns a PrometheusPusherOutput.
 func NewPrometheusPusherOutput(gatewayURL, jobName string) *PrometheusPusherOutput {
+	nodeUUID, _ := uuid.NewUUID()
 	return &PrometheusPusherOutput{
-		pusher: push.New(gatewayURL, jobName),
+		pusher: push.New(gatewayURL, jobName).Grouping("instance", nodeUUID.String()),
 	}
 }
 
