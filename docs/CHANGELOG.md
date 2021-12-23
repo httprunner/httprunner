@@ -2,7 +2,7 @@
 
 ## v0.3.0 (2021-12-22)
 
-- feat: implement transaction mechanism for load test
+- feat: implement `transaction` mechanism for load test
 - feat: support `--continue-on-failure` flag to continue running next step when failure occurs, default to failfast
 - refactor: fork [boomer] as sub module
 - feat: report GA events with version

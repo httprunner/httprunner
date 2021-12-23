@@ -174,6 +174,28 @@ func (s *StepRequest) CallRefCase(tc *TestCase) *StepTestCaseWithOptionalArgs {
 	}
 }
 
+// StartTransaction starts a transaction.
+func (s *StepRequest) StartTransaction(name string) *StepTransaction {
+	s.step.Transaction = &Transaction{
+		Name: name,
+		Type: TransactionStart,
+	}
+	return &StepTransaction{
+		step: s.step,
+	}
+}
+
+// EndTransaction ends a transaction.
+func (s *StepRequest) EndTransaction(name string) *StepTransaction {
+	s.step.Transaction = &Transaction{
+		Name: name,
+		Type: TransactionEnd,
+	}
+	return &StepTransaction{
+		step: s.step,
+	}
+}
+
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
 	step *TStep
