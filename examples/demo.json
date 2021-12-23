@@ -12,6 +12,13 @@
     },
     "teststeps": [
         {
+            "name": "transaction 1 start",
+            "transaction": {
+                "name": "tran1",
+                "type": "start"
+            }
+        },
+        {
             "name": "get with params",
             "request": {
                 "method": "GET",
@@ -63,6 +70,13 @@
                     "msg": "check args foo2"
                 }
             ]
+        },
+        {
+            "name": "transaction 1 end",
+            "transaction": {
+                "name": "tran1",
+                "type": "end"
+            }
         },
         {
             "name": "post json data",

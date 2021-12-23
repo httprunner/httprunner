@@ -24,7 +24,7 @@ func TestBoomerStandaloneRun(t *testing.T) {
 	}
 	testcase2 := &TestCasePath{demoTestCaseJSONPath}
 
-	b := NewStandaloneBoomer(2, 1)
+	b := NewBoomer(2, 1)
 	go b.Run(testcase1, testcase2)
 	time.Sleep(5 * time.Second)
 	b.Quit()
