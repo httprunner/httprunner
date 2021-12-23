@@ -8,6 +8,10 @@ config:
         varFoo1: ${gen_random_string($n)}
         varFoo2: ${max($a, $b)}
 teststeps:
+    - name: transaction 1 start
+      transaction:
+        name: tran1
+        type: start
     - name: get with params
       request:
         method: GET
@@ -43,6 +47,10 @@ teststeps:
           assert: equals
           expect: "34.5"
           msg: check args foo2
+    - name: transaction 1 end
+      transaction:
+        name: tran1
+        type: end
     - name: post json data
       request:
         method: POST
