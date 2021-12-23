@@ -3,10 +3,10 @@ package cmd
 import (
 	"time"
 
-	"github.com/myzhan/boomer"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp"
+	"github.com/httprunner/hrp/internal/boomer"
 )
 
 // boomCmd represents the boom command
@@ -19,14 +19,15 @@ var boomCmd = &cobra.Command{
   $ hrp boom examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
-		hrp.SetLogger("WARN", logJSON) // disable info logs for load testing
+		setLogLevel("WARN") // disable info logs for load testing
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
 		}
-		hrpBoomer := hrp.NewStandaloneBoomer(spawnCount, spawnRate)
+		hrpBoomer := hrp.NewBoomer(spawnCount, spawnRate)
+		hrpBoomer.SetRateLimiter(maxRPS, requestIncreaseRate)
 		if !disableConsoleOutput {
 			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
 		}
@@ -42,9 +43,8 @@ var boomCmd = &cobra.Command{
 var (
 	spawnCount               int
 	spawnRate                float64
-	maxRPS                   int64  // TODO: init boomer with this flag
-	requestIncreaseRate      string // TODO: init boomer with this flag
-	runTasks                 string // TODO: init boomer with this flag
+	maxRPS                   int64
+	requestIncreaseRate      string
 	memoryProfile            string
 	memoryProfileDuration    time.Duration
 	cpuProfile               string
@@ -58,7 +58,6 @@ func init() {
 
 	boomCmd.Flags().Int64Var(&maxRPS, "max-rps", 0, "Max RPS that boomer can generate, disabled by default.")
 	boomCmd.Flags().StringVar(&requestIncreaseRate, "request-increase-rate", "-1", "Request increase rate, disabled by default.")
-	boomCmd.Flags().StringVar(&runTasks, "run-tasks", "", "Run tasks without connecting to the master, multiply tasks is separated by comma. Usually, it's for debug purpose.")
 	boomCmd.Flags().IntVar(&spawnCount, "spawn-count", 1, "The number of users to spawn for load testing")
 	boomCmd.Flags().Float64Var(&spawnRate, "spawn-rate", 1, "The rate for spawning users")
 	boomCmd.Flags().StringVar(&memoryProfile, "mem-profile", "", "Enable memory profiling.")
