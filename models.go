@@ -50,12 +50,41 @@ type TStep struct {
 	Name          string                 `json:"name" yaml:"name"` // required
 	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
 	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
+	Transaction   *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
+	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
 	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
 	Validators    []Validator            `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+}
+
+type stepType string
+
+const (
+	stepTypeRequest     stepType = "request"
+	stepTypeTestCase    stepType = "testcase"
+	stepTypeTransaction stepType = "transaction"
+	stepTypeRendezvous  stepType = "rendezvous"
+)
+
+type TransactionType string
+
+const (
+	TransactionStart TransactionType = "start"
+	TransactionEnd   TransactionType = "end"
+)
+
+type Transaction struct {
+	Name string          `json:"name" yaml:"name"`
+	Type TransactionType `json:"type" yaml:"type"`
+}
+type Rendezvous struct {
+	Name    string  `json:"name" yaml:"name"`                           // required
+	Percent float32 `json:"percent,omitempty" yaml:"percent,omitempty"` // default to 1(100%)
+	Number  int64   `json:"number,omitempty" yaml:"number,omitempty"`
+	Timeout int64   `json:"timeout,omitempty" yaml:"timeout,omitempty"` // milliseconds
 }
 
 // TCase represents testcase data structure.
@@ -65,23 +94,34 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// IStep represents interface for all types for teststeps.
+// IConfig represents interface for testcase config,
+// includes Config.
+type IConfig interface {
+	Name() string
+	ToStruct() *TConfig
+}
+
+// IStep represents interface for all types for teststeps, includes:
+// StepRequest, StepRequestWithOptionalArgs, StepRequestValidation, StepRequestExtraction,
+// StepTestCaseWithOptionalArgs,
+// StepTransaction, StepRendezvous.
 type IStep interface {
 	Name() string
 	Type() string
 	ToStruct() *TStep
 }
 
-// ITestCase represents interface for all types for testcases.
+// ITestCase represents interface for testcases,
+// includes TestCase and TestCasePath.
 type ITestCase interface {
 	ToTestCase() (*TestCase, error)
 	ToTCase() (*TCase, error)
 }
 
-// TestCase is a container for one testcase.
-// used for testcase runner
+// TestCase is a container for one testcase, which is used for testcase runner.
+// TestCase implements ITestCase interface.
 type TestCase struct {
-	Config    *TConfig
+	Config    IConfig
 	TestSteps []IStep
 }
 
@@ -89,15 +129,23 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
-type TestCasePath struct {
-	Path string
+func (tc *TestCase) ToTCase() (*TCase, error) {
+	tCase := TCase{
+		Config: tc.Config.ToStruct(),
+	}
+	for _, step := range tc.TestSteps {
+		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
+	}
+	return &tCase, nil
 }
 
 type testCaseSummary struct{}
 
 type stepData struct {
-	name           string                 // step name
-	success        bool                   // step execution result
-	responseLength int64                  // response body length
-	exportVars     map[string]interface{} // extract variables
+	name        string                 // step name
+	stepType    stepType               // step type, testcase/request/transaction/rendezvous
+	success     bool                   // step execution result
+	elapsed     int64                  // step execution time in millisecond(ms)
+	contentSize int64                  // response body length
+	exportVars  map[string]interface{} // extract variables
 }
