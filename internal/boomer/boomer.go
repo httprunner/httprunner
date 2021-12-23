@@ -97,6 +97,7 @@ func (b *Boomer) Run(tasks ...*Task) {
 // RecordTransaction reports a transaction stat.
 func (b *Boomer) RecordTransaction(name string, success bool, elapsedTime int64, contentSize int64) {
 	if b.localRunner == nil {
+		log.Warn().Msg("boomer not initialized")
 		return
 	}
 	b.localRunner.stats.transactionChan <- &transaction{
@@ -110,6 +111,7 @@ func (b *Boomer) RecordTransaction(name string, success bool, elapsedTime int64,
 // RecordSuccess reports a success.
 func (b *Boomer) RecordSuccess(requestType, name string, responseTime int64, responseLength int64) {
 	if b.localRunner == nil {
+		log.Warn().Msg("boomer not initialized")
 		return
 	}
 	b.localRunner.stats.requestSuccessChan <- &requestSuccess{
@@ -123,6 +125,7 @@ func (b *Boomer) RecordSuccess(requestType, name string, responseTime int64, res
 // RecordFailure reports a failure.
 func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exception string) {
 	if b.localRunner == nil {
+		log.Warn().Msg("boomer not initialized")
 		return
 	}
 	b.localRunner.stats.requestFailureChan <- &requestFailure{
@@ -135,5 +138,9 @@ func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exc
 
 // Quit will send a quit message to the master.
 func (b *Boomer) Quit() {
+	if b.localRunner == nil {
+		log.Warn().Msg("boomer not initialized")
+		return
+	}
 	b.localRunner.close()
 }
