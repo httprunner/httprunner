@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jmespath/go-jmespath"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
 )

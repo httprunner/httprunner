@@ -7,18 +7,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
-
-func (tc *TestCase) ToTCase() (*TCase, error) {
-	tCase := TCase{
-		Config: tc.Config,
-	}
-	for _, step := range tc.TestSteps {
-		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
-	}
-	return &tCase, nil
-}
 
 func (tc *TCase) Dump2JSON(path string) error {
 	path, err := filepath.Abs(path)
@@ -105,15 +96,23 @@ func loadFromYAML(path string) (*TCase, error) {
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
 	testCase := &TestCase{
-		Config: tc.Config,
+		Config: &Config{cfg: tc.Config},
 	}
 	for _, step := range tc.TestSteps {
 		if step.Request != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &requestWithOptionalArgs{
+			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
 				step: step,
 			})
 		} else if step.TestCase != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &testcaseWithOptionalArgs{
+			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
+				step: step,
+			})
+		} else if step.Transaction != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepTransaction{
+				step: step,
+			})
+		} else if step.Rendezvous != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepRendezvous{
 				step: step,
 			})
 		} else {
@@ -124,6 +123,11 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 }
 
 var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
+
+// TestCasePath implements ITestCase interface.
+type TestCasePath struct {
+	Path string
+}
 
 func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	var tc *TCase
