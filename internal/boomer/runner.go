@@ -197,7 +197,7 @@ func (r *runner) startSpawning(spawnCount int, spawnRate float64, spawnCompleteF
 	r.stats.clearStatsChan <- true
 	r.stopChan = make(chan bool)
 
-	r.numClients = 0
+	atomic.StoreInt32(&r.numClients, 0)
 
 	go r.spawnWorkers(spawnCount, r.stopChan, spawnCompleteFunc)
 }
@@ -244,7 +244,7 @@ func (r *localRunner) run() {
 		for {
 			select {
 			case data := <-r.stats.messageToRunnerChan:
-				data["user_count"] = r.numClients
+				data["user_count"] = atomic.LoadInt32(&r.numClients)
 				r.outputOnEevent(data)
 			case <-r.closeChan:
 				r.stop()
