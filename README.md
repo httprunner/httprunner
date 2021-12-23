@@ -185,6 +185,7 @@ func TestCaseDemo(t *testing.T) {
                 "varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
             }),
         TestSteps: []hrp.IStep{
+            hrp.NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
             hrp.NewStep("get with params").
                 WithVariables(map[string]interface{}{ // step level variables
                     "n":       3,                // inherit config level variables if not set in step level, a/varFoo1
@@ -202,6 +203,7 @@ func TestCaseDemo(t *testing.T) {
                 AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
                 AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
                 AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
+            hrp.NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
             hrp.NewStep("post json data").
                 POST("/post").
                 WithBody(map[string]interface{}{

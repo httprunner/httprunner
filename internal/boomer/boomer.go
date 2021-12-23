@@ -41,7 +41,7 @@ func (b *Boomer) SetRateLimiter(maxRPS int64, requestIncreaseRate string) {
 			maxRPS = math.MaxInt64
 		}
 		log.Warn().Int64("maxRPS", maxRPS).Str("increaseRate", requestIncreaseRate).Msg("set ramp up rate limiter")
-		rateLimiter, err = NewRampUpRateLimiter(math.MaxInt64, requestIncreaseRate, time.Second)
+		rateLimiter, err = NewRampUpRateLimiter(maxRPS, requestIncreaseRate, time.Second)
 	} else {
 		if maxRPS > 0 {
 			log.Warn().Int64("maxRPS", maxRPS).Msg("set stable rate limiter")
