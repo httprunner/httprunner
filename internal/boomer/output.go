@@ -125,8 +125,8 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 	}
 
 	currentTime := time.Now()
-	println(fmt.Sprintf("Current time: %s, Users: %d, Total RPS: %d, Total Fail Ratio: %.1f%%",
-		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, output.TotalRPS, output.TotalFailRatio*100))
+	println(fmt.Sprintf("Current time: %s, Users: %d, State: %d, Total RPS: %d, Total Fail Ratio: %.1f%%",
+		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, output.State, output.TotalRPS, output.TotalFailRatio*100))
 	println(fmt.Sprintf("Accumulated Transactions: %d Passed, %d Failed",
 		output.TransactionsPassed, output.TransactionsFailed))
 	table := tablewriter.NewWriter(os.Stdout)
@@ -163,6 +163,7 @@ type statsEntryOutput struct {
 
 type dataOutput struct {
 	UserCount          int32                             `json:"user_count"`
+	State              int32                             `json:"state"`
 	TotalStats         *statsEntryOutput                 `json:"stats_total"`
 	TransactionsPassed int64                             `json:"transactions_passed"`
 	TransactionsFailed int64                             `json:"transactions_failed"`
@@ -176,6 +177,10 @@ func convertData(data map[string]interface{}) (output *dataOutput, err error) {
 	userCount, ok := data["user_count"].(int32)
 	if !ok {
 		return nil, fmt.Errorf("user_count is not int32")
+	}
+	state, ok := data["state"].(int32)
+	if !ok {
+		return nil, fmt.Errorf("state is not int32")
 	}
 	stats, ok := data["stats"].([]interface{})
 	if !ok {
@@ -201,6 +206,7 @@ func convertData(data map[string]interface{}) (output *dataOutput, err error) {
 
 	output = &dataOutput{
 		UserCount:          userCount,
+		State:              state,
 		TotalStats:         entryTotalOutput,
 		TransactionsPassed: transactionsPassed,
 		TransactionsFailed: transactionsFailed,
@@ -321,6 +327,12 @@ var (
 			Help: "The current number of users",
 		},
 	)
+	gaugeState = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "state",
+			Help: "The current runner state, 1=initializing, 2=spawning, 3=running, 4=quitting, 5=stopped",
+		},
+	)
 	gaugeTotalRPS = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "total_rps",
@@ -377,6 +389,7 @@ func (o *PrometheusPusherOutput) OnStart() {
 		gaugeCurrentFailPerSec,
 		// gauges for total
 		gaugeUsers,
+		gaugeState,
 		gaugeTotalRPS,
 		gaugeTotalFailRatio,
 		gaugeTransactionsPassed,
@@ -400,6 +413,9 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 
 	// user count
 	gaugeUsers.Set(float64(output.UserCount))
+
+	// runner state
+	gaugeState.Set(float64(output.State))
 
 	// rps in total
 	gaugeTotalRPS.Set(float64(output.TotalRPS))
