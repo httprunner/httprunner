@@ -116,12 +116,7 @@ func (s *requestStats) get(name string, method string) (entry *statsEntry) {
 }
 
 func (s *requestStats) clearAll() {
-	s.total = &statsEntry{
-		Name:   "Total",
-		Method: "",
-	}
 	s.total.reset()
-
 	s.transactionPassed = 0
 	s.transactionFailed = 0
 	s.entries = make(map[string]*statsEntry)
@@ -227,6 +222,8 @@ type statsEntry struct {
 }
 
 func (s *statsEntry) reset() {
+	s.Name = ""
+	s.Method = ""
 	s.StartTime = time.Now().Unix()
 	s.NumRequests = 0
 	s.NumFailures = 0

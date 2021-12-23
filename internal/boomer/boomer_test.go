@@ -85,7 +85,7 @@ func TestStandaloneRun(t *testing.T) {
 
 	b.Quit()
 
-	if count != 10 {
+	if atomic.LoadInt64(&count) != 10 {
 		t.Error("count is", count, "expected: 10")
 	}
 
