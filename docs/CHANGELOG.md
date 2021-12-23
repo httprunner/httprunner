@@ -8,6 +8,7 @@
 - feat: report GA events with version
 - feat: run load test with the given limit and burst as rate limiter
 - change: update API models
+- feat: report runner state
 
 ## v0.2.2 (2021-12-07)
 

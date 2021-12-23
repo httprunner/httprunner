@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	stateInit     = "ready"
-	stateSpawning = "spawning"
-	stateRunning  = "running"
-	stateStopped  = "stopped"
-	stateQuitting = "quitting"
+	stateInit     = iota + 1 // initializing
+	stateSpawning            // spawning
+	stateRunning             // running
+	stateQuitting            // quitting
+	stateStopped             // stopped
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 )
 
 type runner struct {
-	state string
+	state int32
 
 	tasks           []*Task
 	totalTaskWeight int
@@ -116,6 +116,7 @@ func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool,
 		Float64("spawnRate", spawnRate).
 		Msg("Spawning workers")
 
+	atomic.StoreInt32(&r.state, stateSpawning)
 	// TODO: spawn workers with spawnRate
 	for i := 1; i <= spawnCount; i++ {
 		select {
@@ -150,6 +151,7 @@ func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool,
 	if spawnCompleteFunc != nil {
 		spawnCompleteFunc()
 	}
+	atomic.StoreInt32(&r.state, stateRunning)
 }
 
 // setTasks will set the runner's task list AND the total task weight
@@ -217,7 +219,7 @@ func newLocalRunner(tasks []*Task, rateLimiter RateLimiter, spawnCount int, spaw
 
 func (r *localRunner) start() {
 	// init state
-	r.state = stateInit
+	atomic.StoreInt32(&r.state, stateInit)
 	atomic.StoreInt32(&r.currentClientsNum, 0)
 	r.stats.clearAll()
 
@@ -248,6 +250,7 @@ func (r *localRunner) start() {
 		case <-ticker.C:
 			data := r.stats.collectReportData()
 			data["user_count"] = atomic.LoadInt32(&r.currentClientsNum)
+			data["state"] = atomic.LoadInt32(&r.state)
 			r.outputOnEevent(data)
 		case <-r.stopChan:
 			// stop previous goroutines without blocking
@@ -265,5 +268,7 @@ func (r *localRunner) start() {
 }
 
 func (r *localRunner) stop() {
+	atomic.StoreInt32(&r.state, stateQuitting)
 	close(r.stopChan)
+	atomic.StoreInt32(&r.state, stateStopped)
 }
