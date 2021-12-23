@@ -20,11 +20,11 @@ func TestStructToUrlValues(t *testing.T) {
 	event := EventTracking{
 		Category: "unittest",
 		Action:   "convert",
-		Label:    "StructToUrlValues",
+		Label:    "v0.3.0",
 		Value:    "123",
 	}
 	val := structToUrlValues(event)
-	if val.Encode() != "ea=convert&ec=unittest&el=StructToUrlValues&ev=123" {
+	if val.Encode() != "ea=convert&ec=unittest&el=v0.3.0&ev=123" {
 		t.Fail()
 	}
 }

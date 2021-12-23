@@ -12,13 +12,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/internal/ga"
 )
-
-var log zerolog.Logger
 
 const (
 	suffixJSON = ".json"
@@ -26,7 +24,6 @@ const (
 )
 
 func NewHAR(path string) *har {
-	log = hrp.GetLogger()
 	return &har{
 		path: path,
 	}
@@ -117,7 +114,7 @@ func (h *har) load() (*Har, error) {
 
 func (h *har) prepareConfig() *hrp.TConfig {
 	return hrp.NewConfig("testcase description").
-		SetVerifySSL(false)
+		SetVerifySSL(false).ToStruct()
 }
 
 func (h *har) prepareTestSteps() ([]*hrp.TStep, error) {

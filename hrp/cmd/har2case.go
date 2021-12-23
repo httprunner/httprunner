@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/har2case"
 )
 
@@ -13,6 +13,9 @@ var har2caseCmd = &cobra.Command{
 	Short: "Convert HAR to json/yaml testcase files",
 	Long:  `Convert HAR to json/yaml testcase files`,
 	Args:  cobra.MinimumNArgs(1),
+	PreRun: func(cmd *cobra.Command, args []string) {
+		setLogLevel(logLevel)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var outputFiles []string
 		for _, arg := range args {
@@ -37,7 +40,6 @@ var har2caseCmd = &cobra.Command{
 			}
 			outputFiles = append(outputFiles, outputPath)
 		}
-		log := hrp.GetLogger()
 		log.Info().Strs("output", outputFiles).Msg("convert testcase success")
 		return nil
 	},
