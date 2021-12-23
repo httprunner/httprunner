@@ -1,12 +1,13 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
+	"strings"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/internal/version"
 )
 
@@ -14,13 +15,16 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "hrp",
 	Short: "One-stop solution for HTTP(S) testing.",
-	Long: `hrp (HttpRunner+) is the one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
+	Long: `hrp (HttpRunner+) is one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		hrp.SetLogger(logLevel, logJSON)
+		if !logJSON {
+			log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
+			log.Info().Msg("Set log to color console other than JSON format.")
+		}
 	},
 	Version: version.VERSION,
 }
@@ -37,7 +41,26 @@ func Execute() {
 	RootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
 
 	if err := RootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Msg("Failed to execute root command")
 		os.Exit(1)
+	}
+}
+
+func setLogLevel(level string) {
+	level = strings.ToUpper(level)
+	log.Info().Str("level", level).Msg("Set log level")
+	switch level {
+	case "DEBUG":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "INFO":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "WARN":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "ERROR":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	case "FATAL":
+		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+	case "PANIC":
+		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	}
 }

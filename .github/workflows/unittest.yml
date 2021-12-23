@@ -28,7 +28,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Run coverage
-        run: go test -race -coverprofile="cover.out" -covermode=atomic ./...
+        run: go test -coverprofile="cover.out" -covermode=atomic ./... # FIXME: -race
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:

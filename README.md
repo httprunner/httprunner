@@ -18,7 +18,7 @@
 - [x] Supports `variables`/`extract`/`validate`/`hooks` mechanisms to create extremely complex test scenarios.
 - [ ] Built-in integration of rich functions, and you can also use [`go plugin`][plugin] to create and call custom functions.
 - [x] Inherit all powerful features of [`Boomer`][Boomer] and [`locust`][locust], you can run `load test` without extra work.
-- [x] Use it as a `CLI tool` or as a `library` are both supported.
+- [x] Using it as a `CLI tool` or a `library` are both supported.
 
 See [CHANGELOG].
 
@@ -34,7 +34,7 @@ Since installed, you will get a `hrp` command with multiple sub-commands.
 
 ```text
 $ hrp -h
-hrp (HttpRunner+) is the one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
+hrp (HttpRunner+) is one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
@@ -185,6 +185,7 @@ func TestCaseDemo(t *testing.T) {
                 "varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
             }),
         TestSteps: []hrp.IStep{
+            hrp.NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
             hrp.NewStep("get with params").
                 WithVariables(map[string]interface{}{ // step level variables
                     "n":       3,                // inherit config level variables if not set in step level, a/varFoo1
@@ -202,6 +203,7 @@ func TestCaseDemo(t *testing.T) {
                 AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
                 AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
                 AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
+            hrp.NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
             hrp.NewStep("post json data").
                 POST("/post").
                 WithBody(map[string]interface{}{
