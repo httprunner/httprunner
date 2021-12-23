@@ -91,7 +91,7 @@ func (b *Boomer) Run(tasks ...*Task) {
 	for _, o := range b.outputs {
 		b.localRunner.addOutput(o)
 	}
-	b.localRunner.run()
+	b.localRunner.start()
 }
 
 // RecordTransaction reports a transaction stat.
@@ -142,5 +142,5 @@ func (b *Boomer) Quit() {
 		log.Warn().Msg("boomer not initialized")
 		return
 	}
-	b.localRunner.close()
+	b.localRunner.stop()
 }

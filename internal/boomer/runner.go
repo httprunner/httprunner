@@ -34,15 +34,9 @@ type runner struct {
 	rateLimitEnabled bool
 	stats            *requestStats
 
-	numClients int32
-	spawnRate  float64
-
-	// all running workers(goroutines) will select on this channel.
-	// close this channel will stop all running workers.
-	stopChan chan bool
-
-	// close this channel will stop all goroutines used in runner.
-	closeChan chan bool
+	currentClientsNum int32 // current clients count
+	spawnCount        int   // target clients to spawn
+	spawnRate         float64
 
 	outputs []Output
 }
@@ -116,16 +110,21 @@ func (r *runner) outputOnStop() {
 	wg.Wait()
 }
 
-func (r *runner) spawnWorkers(spawnCount int, quit chan bool, spawnCompleteFunc func()) {
-	log.Info().Int("spawnCount", spawnCount).Msg("Spawning clients immediately")
+func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
+	log.Info().
+		Int("spawnCount", spawnCount).
+		Float64("spawnRate", spawnRate).
+		Msg("Spawning workers")
 
+	// TODO: spawn workers with spawnRate
 	for i := 1; i <= spawnCount; i++ {
 		select {
 		case <-quit:
 			// quit spawning goroutine
+			log.Info().Msg("Quitting spawning workers")
 			return
 		default:
-			atomic.AddInt32(&r.numClients, 1)
+			atomic.AddInt32(&r.currentClientsNum, 1)
 			go func() {
 				for {
 					select {
@@ -193,28 +192,11 @@ func (r *runner) getTask() *Task {
 	return nil
 }
 
-func (r *runner) startSpawning(spawnCount int, spawnRate float64, spawnCompleteFunc func()) {
-	r.stats.clearStatsChan <- true
-	r.stopChan = make(chan bool)
-
-	atomic.StoreInt32(&r.numClients, 0)
-
-	go r.spawnWorkers(spawnCount, r.stopChan, spawnCompleteFunc)
-}
-
-func (r *runner) stop() {
-	// stop previous goroutines without blocking
-	// those goroutines will exit when r.safeRun returns
-	close(r.stopChan)
-	if r.rateLimitEnabled {
-		r.rateLimiter.Stop()
-	}
-}
-
 type localRunner struct {
 	runner
 
-	spawnCount int
+	// close this channel will stop all goroutines used in runner.
+	stopChan chan bool
 }
 
 func newLocalRunner(tasks []*Task, rateLimiter RateLimiter, spawnCount int, spawnRate float64) (r *localRunner) {
@@ -222,7 +204,7 @@ func newLocalRunner(tasks []*Task, rateLimiter RateLimiter, spawnCount int, spaw
 	r.setTasks(tasks)
 	r.spawnRate = spawnRate
 	r.spawnCount = spawnCount
-	r.closeChan = make(chan bool)
+	r.stopChan = make(chan bool)
 
 	if rateLimiter != nil {
 		r.rateLimitEnabled = true
@@ -233,39 +215,55 @@ func newLocalRunner(tasks []*Task, rateLimiter RateLimiter, spawnCount int, spaw
 	return r
 }
 
-func (r *localRunner) run() {
+func (r *localRunner) start() {
+	// init state
 	r.state = stateInit
-	r.stats.start()
-	r.outputOnStart()
+	atomic.StoreInt32(&r.currentClientsNum, 0)
+	r.stats.clearAll()
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		for {
-			select {
-			case data := <-r.stats.messageToRunnerChan:
-				data["user_count"] = atomic.LoadInt32(&r.numClients)
-				r.outputOnEevent(data)
-			case <-r.closeChan:
-				r.stop()
-				wg.Done()
-				r.outputOnStop()
-				return
-			}
-		}
-	}()
-
+	// start rate limiter
 	if r.rateLimitEnabled {
 		r.rateLimiter.Start()
 	}
-	r.startSpawning(r.spawnCount, r.spawnRate, nil)
 
-	wg.Wait()
+	// all running workers(goroutines) will select on this channel.
+	// close this channel will stop all running workers.
+	quitChan := make(chan bool)
+	go r.spawnWorkers(r.spawnCount, r.spawnRate, quitChan, nil)
+
+	// output setup
+	r.outputOnStart()
+
+	// start running
+	var ticker = time.NewTicker(reportStatsInterval)
+	for {
+		select {
+		case t := <-r.stats.transactionChan:
+			r.stats.logTransaction(t.name, t.success, t.elapsedTime, t.contentSize)
+		case m := <-r.stats.requestSuccessChan:
+			r.stats.logRequest(m.requestType, m.name, m.responseTime, m.responseLength)
+		case n := <-r.stats.requestFailureChan:
+			r.stats.logRequest(n.requestType, n.name, n.responseTime, 0)
+			r.stats.logError(n.requestType, n.name, n.errMsg)
+		case <-ticker.C:
+			data := r.stats.collectReportData()
+			data["user_count"] = atomic.LoadInt32(&r.currentClientsNum)
+			r.outputOnEevent(data)
+		case <-r.stopChan:
+			// stop previous goroutines without blocking
+			// those goroutines will exit when r.safeRun returns
+			close(quitChan)
+			// stop rate limiter
+			if r.rateLimitEnabled {
+				r.rateLimiter.Stop()
+			}
+			// output teardown
+			r.outputOnStop()
+			return
+		}
+	}
 }
 
-func (r *localRunner) close() {
-	if r.stats != nil {
-		r.stats.close()
-	}
-	close(r.closeChan)
+func (r *localRunner) stop() {
+	close(r.stopChan)
 }
