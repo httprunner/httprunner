@@ -492,3 +492,21 @@ func findallVariables(raw string) variableSet {
 
 	return varSet
 }
+
+//func parseParameters(parameters map[string]interface{}) []map[string]interface{} {
+//	for k, v := range parameters {
+//		parameter_name_list := strings.Split(k, "-")
+//		rawValue := reflect.ValueOf(v)
+//		switch rawValue.Kind() {
+//		case reflect.String:
+//			var varList []map[string]interface{}
+//
+//		case reflect.Slice:
+//			for i := 0; i < rawValue.Len(); i++ {
+//				rawValue.Index(i).Interface()
+//			}
+//		default:
+//			panic(fmt.Sprintf("parameter content should be List or Text(variables or functions call), got %v", v))
+//		}
+//	}
+//}
