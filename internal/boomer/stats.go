@@ -36,11 +36,8 @@ type requestStats struct {
 	transactionPassed int64 // accumulated number of passed transactions
 	transactionFailed int64 // accumulated number of failed transactions
 
-	requestSuccessChan  chan *requestSuccess
-	requestFailureChan  chan *requestFailure
-	clearStatsChan      chan bool
-	messageToRunnerChan chan map[string]interface{}
-	shutdownChan        chan bool
+	requestSuccessChan chan *requestSuccess
+	requestFailureChan chan *requestFailure
 }
 
 func newRequestStats() (stats *requestStats) {
@@ -54,9 +51,6 @@ func newRequestStats() (stats *requestStats) {
 	stats.transactionChan = make(chan *transaction, 100)
 	stats.requestSuccessChan = make(chan *requestSuccess, 100)
 	stats.requestFailureChan = make(chan *requestFailure, 100)
-	stats.clearStatsChan = make(chan bool)
-	stats.messageToRunnerChan = make(chan map[string]interface{}, 10)
-	stats.shutdownChan = make(chan bool)
 
 	stats.total = &statsEntry{
 		Name:   "Total",
@@ -106,9 +100,9 @@ func (s *requestStats) get(name string, method string) (entry *statsEntry) {
 			Name:          name,
 			Method:        method,
 			NumReqsPerSec: make(map[int64]int64),
+			NumFailPerSec: make(map[int64]int64),
 			ResponseTimes: make(map[int64]int64),
 		}
-		newEntry.reset()
 		s.entries[name+method] = newEntry
 		return newEntry
 	}
@@ -153,36 +147,6 @@ func (s *requestStats) collectReportData() map[string]interface{} {
 	data["errors"] = s.serializeErrors()
 	s.errors = make(map[string]*statsError)
 	return data
-}
-
-func (s *requestStats) start() {
-	go func() {
-		var ticker = time.NewTicker(reportStatsInterval)
-		for {
-			select {
-			case t := <-s.transactionChan:
-				s.logTransaction(t.name, t.success, t.elapsedTime, t.contentSize)
-			case m := <-s.requestSuccessChan:
-				s.logRequest(m.requestType, m.name, m.responseTime, m.responseLength)
-			case n := <-s.requestFailureChan:
-				s.logRequest(n.requestType, n.name, n.responseTime, 0)
-				s.logError(n.requestType, n.name, n.errMsg)
-			case <-s.clearStatsChan:
-				s.clearAll()
-			case <-ticker.C:
-				data := s.collectReportData()
-				// send data to channel, no network IO in this goroutine
-				s.messageToRunnerChan <- data
-			case <-s.shutdownChan:
-				return
-			}
-		}
-	}()
-}
-
-// close is used by unit tests to avoid leakage of goroutines
-func (s *requestStats) close() {
-	close(s.shutdownChan)
 }
 
 // statsEntry represents a single stats entry (name and method)
