@@ -107,7 +107,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			for name, transaction := range runner.transactions {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
-					duration := endTime.Sub(transaction[TransactionStart])
+					duration := endTime.Sub(transaction[transactionStart])
 					b.RecordTransaction(name, transactionSuccess, duration.Milliseconds(), 0)
 				}
 			}
