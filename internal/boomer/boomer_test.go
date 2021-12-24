@@ -12,11 +12,11 @@ import (
 func TestNewStandaloneBoomer(t *testing.T) {
 	b := NewStandaloneBoomer(100, 10)
 
-	if b.spawnCount != 100 {
+	if b.localRunner.spawnCount != 100 {
 		t.Error("spawnCount should be 100")
 	}
 
-	if b.spawnRate != 10 {
+	if b.localRunner.spawnRate != 10 {
 		t.Error("spawnRate should be 10")
 	}
 }
@@ -25,7 +25,7 @@ func TestSetRateLimiter(t *testing.T) {
 	b := NewStandaloneBoomer(100, 10)
 	b.SetRateLimiter(10, "10/1s")
 
-	if b.rateLimiter == nil {
+	if b.localRunner.rateLimiter == nil {
 		t.Error("b.rateLimiter should not be nil")
 	}
 }
@@ -35,7 +35,7 @@ func TestAddOutput(t *testing.T) {
 	b.AddOutput(NewConsoleOutput())
 	b.AddOutput(NewConsoleOutput())
 
-	if len(b.outputs) != 2 {
+	if len(b.localRunner.outputs) != 2 {
 		t.Error("length of outputs should be 2")
 	}
 }
@@ -85,7 +85,7 @@ func TestStandaloneRun(t *testing.T) {
 
 	b.Quit()
 
-	if count != 10 {
+	if atomic.LoadInt64(&count) != 10 {
 		t.Error("count is", count, "expected: 10")
 	}
 
@@ -106,7 +106,7 @@ func TestCreateRatelimiter(t *testing.T) {
 	b := NewStandaloneBoomer(10, 10)
 	b.SetRateLimiter(100, "-1")
 
-	if stableRateLimiter, ok := b.rateLimiter.(*StableRateLimiter); !ok {
+	if stableRateLimiter, ok := b.localRunner.rateLimiter.(*StableRateLimiter); !ok {
 		t.Error("Expected stableRateLimiter")
 	} else {
 		if stableRateLimiter.threshold != 100 {
@@ -115,7 +115,7 @@ func TestCreateRatelimiter(t *testing.T) {
 	}
 
 	b.SetRateLimiter(0, "1")
-	if rampUpRateLimiter, ok := b.rateLimiter.(*RampUpRateLimiter); !ok {
+	if rampUpRateLimiter, ok := b.localRunner.rateLimiter.(*RampUpRateLimiter); !ok {
 		t.Error("Expected rampUpRateLimiter")
 	} else {
 		if rampUpRateLimiter.maxThreshold != math.MaxInt64 {
@@ -127,7 +127,7 @@ func TestCreateRatelimiter(t *testing.T) {
 	}
 
 	b.SetRateLimiter(10, "2/2s")
-	if rampUpRateLimiter, ok := b.rateLimiter.(*RampUpRateLimiter); !ok {
+	if rampUpRateLimiter, ok := b.localRunner.rateLimiter.(*RampUpRateLimiter); !ok {
 		t.Error("Expected rampUpRateLimiter")
 	} else {
 		if rampUpRateLimiter.maxThreshold != 10 {

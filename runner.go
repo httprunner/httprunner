@@ -158,25 +158,29 @@ func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, e
 
 	log.Info().Str("step", step.Name()).Msg("run step start")
 
-	// copy step to avoid data racing
+	// copy step and config to avoid data racing
 	copiedStep := &TStep{}
 	if err = copier.Copy(copiedStep, step.ToStruct()); err != nil {
 		log.Error().Err(err).Msg("copy step data failed")
 		return nil, err
 	}
+	copiedConfig := &TConfig{}
+	if err = copier.Copy(copiedConfig, config.ToStruct()); err != nil {
+		log.Error().Err(err).Msg("copy config data failed")
+		return nil, err
+	}
 
-	cfg := config.ToStruct()
 	stepVariables := copiedStep.Variables
 	// override variables
 	// step variables > session variables (extracted variables from previous steps)
 	stepVariables = mergeVariables(stepVariables, r.sessionVariables)
 	// step variables > testcase config variables
-	stepVariables = mergeVariables(stepVariables, cfg.Variables)
+	stepVariables = mergeVariables(stepVariables, copiedConfig.Variables)
 
 	// parse step variables
 	parsedVariables, err := parseVariables(stepVariables)
 	if err != nil {
-		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse step variables failed")
+		log.Error().Interface("variables", copiedConfig.Variables).Err(err).Msg("parse step variables failed")
 		return nil, err
 	}
 	copiedStep.Variables = parsedVariables // avoid data racing
@@ -193,7 +197,7 @@ func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, e
 		}
 	} else {
 		// run request
-		copiedStep.Request.URL = buildURL(cfg.BaseURL, copiedStep.Request.URL) // avoid data racing
+		copiedStep.Request.URL = buildURL(copiedConfig.BaseURL, copiedStep.Request.URL) // avoid data racing
 		stepResult, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
