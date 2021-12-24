@@ -3,7 +3,8 @@
 ## v0.3.0 (2021-12-22)
 
 - feat: implement `transaction` mechanism for load test
-- feat: support `--continue-on-failure` flag to continue running next step when failure occurs, default to failfast
+- feat: continue running next step when failure occurs with `--continue-on-failure` flag, default to failfast
+- feat: spawn workers with `--spawn-rate` flag
 - refactor: fork [boomer] as sub module
 - feat: report GA events with version
 - feat: run load test with the given limit and burst as rate limiter
