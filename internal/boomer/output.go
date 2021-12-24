@@ -120,9 +120,23 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 		return
 	}
 
+	var state string
+	switch output.State {
+	case 1:
+		state = "initializing"
+	case 2:
+		state = "spawning"
+	case 3:
+		state = "running"
+	case 4:
+		state = "quitting"
+	case 5:
+		state = "stopped"
+	}
+
 	currentTime := time.Now()
-	println(fmt.Sprintf("Current time: %s, Users: %d, State: %d, Total RPS: %.1f, Total Fail Ratio: %.1f%%",
-		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, output.State, output.TotalRPS, output.TotalFailRatio*100))
+	println(fmt.Sprintf("Current time: %s, Users: %d, State: %s, Total RPS: %.1f, Total Fail Ratio: %.1f%%",
+		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, state, output.TotalRPS, output.TotalFailRatio*100))
 	println(fmt.Sprintf("Accumulated Transactions: %d Passed, %d Failed",
 		output.TransactionsPassed, output.TransactionsFailed))
 	table := tablewriter.NewWriter(os.Stdout)
