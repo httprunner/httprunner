@@ -6,7 +6,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/httprunner/hrp)](https://goreportcard.com/report/github.com/httprunner/hrp)
 [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B27856%2Fgithub.com%2Fhttprunner%2Fhrp.svg?type=shield)](https://app.fossa.com/reports/c2742455-c8ab-4b13-8fd7-4a35ba0b2840)
 
-`hrp` is a golang implementation of [HttpRunner]. Ideally, hrp will be fully compatible with HttpRunner, including testcase format and usage. What's more, hrp will integrate Boomer natively to be a better load generator for [locust].
+`hrp` aims to be a one-stop solution for HTTP(S) testing, covering API testing, load testing and digital experience monitoring (DEM).
 
 ## Key Features
 
@@ -34,7 +34,7 @@ Since installed, you will get a `hrp` command with multiple sub-commands.
 
 ```text
 $ hrp -h
-hrp (HttpRunner+) is one-stop solution for HTTP(S) testing. Enjoy! ✨ 🚀 ✨
+hrp (HttpRunner+) aims to be a one-stop solution for HTTP(S) testing, covering API testing, load testing and digital experience monitoring (DEM). Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Github: https://github.com/httprunner/hrp
@@ -240,22 +240,6 @@ func TestCaseDemo(t *testing.T) {
 }
 ```
 </details>
-
-## Sponsors
-
-Thank you to all our sponsors! ✨🍰✨ ([become a sponsor](sponsors.md))
-
-### Gold Sponsor
-
-[<img src="docs/assets/hogwarts.jpeg" alt="霍格沃兹测试开发学社" width="400">](https://ceshiren.com/)
-
-> [霍格沃兹测试开发学社](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=httprunner&url=https://www.testing-studio.com) 。学院课程由一线大厂测试经理与资深测试开发专家参与研发，实战驱动。课程涵盖 web/app 自动化测试、接口测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移&右移、精准测试、测试平台开发、测试管理等内容，帮助测试工程师实现测试开发技术转型。通过优秀的学社制度（奖学金、内推返学费、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。
-
-> [进入测试开发技术能力测评!](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com/t/topic/14940)
-
-### Open Source Sponsor
-
-[<img src="docs/assets/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
 
 ## Subscribe
 
