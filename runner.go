@@ -43,7 +43,7 @@ func NewRunner(t *testing.T) *hrpRunner {
 			Timeout: 30 * time.Second,
 		},
 		sessionVariables: make(map[string]interface{}),
-		transactions:     make(map[string]map[TransactionType]time.Time),
+		transactions:     make(map[string]map[transactionType]time.Time),
 	}
 }
 
@@ -55,7 +55,7 @@ type hrpRunner struct {
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
-	transactions map[string]map[TransactionType]time.Time
+	transactions map[string]map[transactionType]time.Time
 	startTime    time.Time // record start time of the testcase
 }
 
@@ -63,7 +63,7 @@ type hrpRunner struct {
 func (r *hrpRunner) Reset() *hrpRunner {
 	log.Info().Msg("[init] Reset session variables")
 	r.sessionVariables = make(map[string]interface{})
-	r.transactions = make(map[string]map[TransactionType]time.Time)
+	r.transactions = make(map[string]map[transactionType]time.Time)
 	r.startTime = time.Now()
 	return r
 }
@@ -234,25 +234,25 @@ func (r *hrpRunner) runStepTransaction(transaction *Transaction) (stepResult *st
 
 	// create transaction if not exists
 	if _, ok := r.transactions[transaction.Name]; !ok {
-		r.transactions[transaction.Name] = make(map[TransactionType]time.Time)
+		r.transactions[transaction.Name] = make(map[transactionType]time.Time)
 	}
 
 	// record transaction start time, override if already exists
-	if transaction.Type == TransactionStart {
-		r.transactions[transaction.Name][TransactionStart] = time.Now()
+	if transaction.Type == transactionStart {
+		r.transactions[transaction.Name][transactionStart] = time.Now()
 	}
 	// record transaction end time, override if already exists
-	if transaction.Type == TransactionEnd {
-		r.transactions[transaction.Name][TransactionEnd] = time.Now()
+	if transaction.Type == transactionEnd {
+		r.transactions[transaction.Name][transactionEnd] = time.Now()
 
 		// if transaction start time not exists, use testcase start time instead
-		if _, ok := r.transactions[transaction.Name][TransactionStart]; !ok {
-			r.transactions[transaction.Name][TransactionStart] = r.startTime
+		if _, ok := r.transactions[transaction.Name][transactionStart]; !ok {
+			r.transactions[transaction.Name][transactionStart] = r.startTime
 		}
 
 		// calculate transaction duration
-		duration := r.transactions[transaction.Name][TransactionEnd].Sub(
-			r.transactions[transaction.Name][TransactionStart])
+		duration := r.transactions[transaction.Name][transactionEnd].Sub(
+			r.transactions[transaction.Name][transactionStart])
 		stepResult.elapsed = duration.Milliseconds()
 		log.Info().Str("name", transaction.Name).Dur("elapsed", duration).Msg("transaction")
 	}
