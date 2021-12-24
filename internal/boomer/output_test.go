@@ -1,6 +1,7 @@
 package boomer
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -57,22 +58,16 @@ func TestGetAvgContentLength(t *testing.T) {
 }
 
 func TestGetCurrentRps(t *testing.T) {
-	numRequests := int64(10)
-	numReqsPerSecond := map[int64]int64{}
-
-	currentRps := getCurrentRps(numRequests, numReqsPerSecond)
-	if currentRps != 0 {
-		t.Error("currentRps should be 0")
-	}
-
-	numReqsPerSecond[1] = 2
-	numReqsPerSecond[2] = 3
-	numReqsPerSecond[3] = 2
-	numReqsPerSecond[4] = 3
-
-	currentRps = getCurrentRps(numRequests, numReqsPerSecond)
+	numRequests := int64(6)
+	currentRps := getCurrentRps(numRequests)
 	if currentRps != 2 {
 		t.Error("currentRps should be 2")
+	}
+
+	numRequests = int64(8)
+	currentRps = getCurrentRps(numRequests)
+	if fmt.Sprintf("%.2f", currentRps) != "2.67" {
+		t.Error("currentRps should be 2.67")
 	}
 }
 

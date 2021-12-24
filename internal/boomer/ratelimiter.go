@@ -164,7 +164,7 @@ func (limiter *RampUpRateLimiter) Start() {
 			case <-quitChannel:
 				return
 			default:
-				atomic.StoreInt64(&limiter.currentThreshold, limiter.nextThreshold)
+				atomic.StoreInt64(&limiter.currentThreshold, atomic.LoadInt64(&limiter.nextThreshold))
 				time.Sleep(limiter.refillPeriod)
 				close(limiter.broadcastChannel)
 				limiter.broadcastChannel = make(chan bool)
@@ -178,7 +178,7 @@ func (limiter *RampUpRateLimiter) Start() {
 			case <-quitChannel:
 				return
 			default:
-				nextValue := limiter.nextThreshold + limiter.rampUpStep
+				nextValue := atomic.LoadInt64(&limiter.nextThreshold) + limiter.rampUpStep
 				if nextValue < 0 {
 					// int64 overflow
 					nextValue = int64(math.MaxInt64)
@@ -208,6 +208,6 @@ func (limiter *RampUpRateLimiter) Acquire() (blocked bool) {
 
 // Stop the rate limiter.
 func (limiter *RampUpRateLimiter) Stop() {
-	limiter.nextThreshold = 0
+	atomic.StoreInt64(&limiter.nextThreshold, 0)
 	close(limiter.quitChannel)
 }
