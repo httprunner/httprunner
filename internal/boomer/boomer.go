@@ -9,26 +9,19 @@ import (
 
 // A Boomer is used to run tasks.
 type Boomer struct {
-	rateLimiter RateLimiter
-
 	localRunner *localRunner
-	spawnCount  int
-	spawnRate   float64
 
 	cpuProfile         string
 	cpuProfileDuration time.Duration
 
 	memoryProfile         string
 	memoryProfileDuration time.Duration
-
-	outputs []Output
 }
 
 // NewStandaloneBoomer returns a new Boomer, which can run without master.
 func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
 	return &Boomer{
-		spawnCount: spawnCount,
-		spawnRate:  spawnRate,
+		localRunner: newLocalRunner(spawnCount, spawnRate),
 	}
 }
 
@@ -52,12 +45,16 @@ func (b *Boomer) SetRateLimiter(maxRPS int64, requestIncreaseRate string) {
 		log.Error().Err(err).Msg("failed to create rate limiter")
 		return
 	}
-	b.rateLimiter = rateLimiter
+
+	if rateLimiter != nil {
+		b.localRunner.rateLimitEnabled = true
+		b.localRunner.rateLimiter = rateLimiter
+	}
 }
 
 // AddOutput accepts outputs which implements the boomer.Output interface.
 func (b *Boomer) AddOutput(o Output) {
-	b.outputs = append(b.outputs, o)
+	b.localRunner.addOutput(o)
 }
 
 // EnableCPUProfile will start cpu profiling after run.
@@ -87,19 +84,12 @@ func (b *Boomer) Run(tasks ...*Task) {
 		}
 	}
 
-	b.localRunner = newLocalRunner(tasks, b.rateLimiter, b.spawnCount, b.spawnRate)
-	for _, o := range b.outputs {
-		b.localRunner.addOutput(o)
-	}
+	b.localRunner.setTasks(tasks)
 	b.localRunner.start()
 }
 
 // RecordTransaction reports a transaction stat.
 func (b *Boomer) RecordTransaction(name string, success bool, elapsedTime int64, contentSize int64) {
-	if b.localRunner == nil {
-		log.Warn().Msg("boomer not initialized")
-		return
-	}
 	b.localRunner.stats.transactionChan <- &transaction{
 		name:        name,
 		success:     success,
@@ -110,10 +100,6 @@ func (b *Boomer) RecordTransaction(name string, success bool, elapsedTime int64,
 
 // RecordSuccess reports a success.
 func (b *Boomer) RecordSuccess(requestType, name string, responseTime int64, responseLength int64) {
-	if b.localRunner == nil {
-		log.Warn().Msg("boomer not initialized")
-		return
-	}
 	b.localRunner.stats.requestSuccessChan <- &requestSuccess{
 		requestType:    requestType,
 		name:           name,
@@ -124,10 +110,6 @@ func (b *Boomer) RecordSuccess(requestType, name string, responseTime int64, res
 
 // RecordFailure reports a failure.
 func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exception string) {
-	if b.localRunner == nil {
-		log.Warn().Msg("boomer not initialized")
-		return
-	}
 	b.localRunner.stats.requestFailureChan <- &requestFailure{
 		requestType:  requestType,
 		name:         name,
@@ -138,9 +120,5 @@ func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exc
 
 // Quit will send a quit message to the master.
 func (b *Boomer) Quit() {
-	if b.localRunner == nil {
-		log.Warn().Msg("boomer not initialized")
-		return
-	}
 	b.localRunner.stop()
 }
