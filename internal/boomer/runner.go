@@ -117,8 +117,11 @@ func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool,
 		Msg("Spawning workers")
 
 	atomic.StoreInt32(&r.state, stateSpawning)
-	// TODO: spawn workers with spawnRate
 	for i := 1; i <= spawnCount; i++ {
+		// spawn workers with rate limit
+		sleepTime := time.Duration(1000000/r.spawnRate) * time.Microsecond
+		time.Sleep(sleepTime)
+
 		select {
 		case <-quit:
 			// quit spawning goroutine
