@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -39,6 +40,7 @@ type StableRateLimiter struct {
 	threshold        int64
 	currentThreshold int64
 	refillPeriod     time.Duration
+	broadcastChanMux *sync.RWMutex // avoid data race
 	broadcastChannel chan bool
 	quitChannel      chan bool
 }
@@ -49,6 +51,7 @@ func NewStableRateLimiter(threshold int64, refillPeriod time.Duration) (rateLimi
 		threshold:        threshold,
 		currentThreshold: threshold,
 		refillPeriod:     refillPeriod,
+		broadcastChanMux: new(sync.RWMutex),
 		broadcastChannel: make(chan bool),
 	}
 	return rateLimiter
@@ -67,7 +70,10 @@ func (limiter *StableRateLimiter) Start() {
 				atomic.StoreInt64(&limiter.currentThreshold, limiter.threshold)
 				time.Sleep(limiter.refillPeriod)
 				close(limiter.broadcastChannel)
+				// avoid data race
+				limiter.broadcastChanMux.Lock()
 				limiter.broadcastChannel = make(chan bool)
+				limiter.broadcastChanMux.Unlock()
 			}
 		}
 	}()
@@ -79,7 +85,9 @@ func (limiter *StableRateLimiter) Acquire() (blocked bool) {
 	if permit < 0 {
 		blocked = true
 		// block until the bucket is refilled
+		limiter.broadcastChanMux.Lock()
 		<-limiter.broadcastChannel
+		limiter.broadcastChanMux.Unlock()
 	} else {
 		blocked = false
 	}
@@ -105,9 +113,12 @@ type RampUpRateLimiter struct {
 	rampUpRate       string
 	rampUpStep       int64
 	rampUpPeroid     time.Duration
+
+	broadcastChanMux *sync.RWMutex // avoid data race
 	broadcastChannel chan bool
-	rampUpChannel    chan bool
-	quitChannel      chan bool
+
+	rampUpChannel chan bool
+	quitChannel   chan bool
 }
 
 // NewRampUpRateLimiter returns a RampUpRateLimiter.
@@ -119,6 +130,7 @@ func NewRampUpRateLimiter(maxThreshold int64, rampUpRate string, refillPeriod ti
 		currentThreshold: 0,
 		rampUpRate:       rampUpRate,
 		refillPeriod:     refillPeriod,
+		broadcastChanMux: new(sync.RWMutex),
 		broadcastChannel: make(chan bool),
 	}
 	rateLimiter.rampUpStep, rateLimiter.rampUpPeroid, err = rateLimiter.parseRampUpRate(rateLimiter.rampUpRate)
@@ -167,7 +179,10 @@ func (limiter *RampUpRateLimiter) Start() {
 				atomic.StoreInt64(&limiter.currentThreshold, atomic.LoadInt64(&limiter.nextThreshold))
 				time.Sleep(limiter.refillPeriod)
 				close(limiter.broadcastChannel)
+				// avoid data race
+				limiter.broadcastChanMux.Lock()
 				limiter.broadcastChannel = make(chan bool)
+				limiter.broadcastChanMux.Unlock()
 			}
 		}
 	}()
@@ -199,7 +214,9 @@ func (limiter *RampUpRateLimiter) Acquire() (blocked bool) {
 	if permit < 0 {
 		blocked = true
 		// block until the bucket is refilled
+		limiter.broadcastChanMux.Lock()
 		<-limiter.broadcastChannel
+		limiter.broadcastChanMux.Unlock()
 	} else {
 		blocked = false
 	}
