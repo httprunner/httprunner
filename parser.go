@@ -3,16 +3,13 @@ package hrp
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"github.com/maja42/goval"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/maja42/goval"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
 )
@@ -248,15 +245,6 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 		mergedVariables[k] = v
 	}
 	return mergedVariables
-}
-
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if strings.EqualFold(a, e) {
-			return true
-		}
-	}
-	return false
 }
 
 func getMappingFunction(funcName string) (interface{}, error) {
@@ -517,31 +505,6 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
-func shuffleCartesianProduct(slice []map[string]interface{}) {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	for len(slice) > 0 {
-		n := len(slice)
-		randIndex := r.Intn(n)
-		slice[n-1], slice[randIndex] = slice[randIndex], slice[n-1]
-		slice = slice[:n-1]
-	}
-}
-
-func genCartesianProduct(params [][]map[string]interface{}) []map[string]interface{} {
-	var cartesianProduct []map[string]interface{}
-	cartesianProduct = params[0]
-	for i := 0; i < len(params)-1; i++ {
-		var tempProduct []map[string]interface{}
-		for _, param1 := range cartesianProduct {
-			for _, param2 := range params[i+1] {
-				tempProduct = append(tempProduct, mergeVariables(param1, param2))
-			}
-		}
-		cartesianProduct = tempProduct
-	}
-	return cartesianProduct
-}
-
 func getParameters(config IConfig) []map[string]interface{} {
 	cfg := config.ToStruct()
 	// parse config parameters
@@ -615,7 +578,8 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 				parameterList = append(parameterList, parameterMap)
 			}
 		default:
-			panic(fmt.Sprintf("parameter content should be List or Text(variables or functions call), got %v", v))
+			log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be List or Text(variables or functions call), got %v")
+			return nil, errors.New("parameter content should be List or Text(variables or functions call)")
 		}
 		parsedParametersList = append(parsedParametersList, parameterList)
 	}
