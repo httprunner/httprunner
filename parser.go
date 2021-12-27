@@ -3,10 +3,12 @@ package hrp
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/maja42/goval"
 	"github.com/pkg/errors"
@@ -515,16 +517,42 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
+func shuffleCartesianProduct(slice []map[string]interface{}) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	for len(slice) > 0 {
+		n := len(slice)
+		randIndex := r.Intn(n)
+		slice[n-1], slice[randIndex] = slice[randIndex], slice[n-1]
+		slice = slice[:n-1]
+	}
+}
+
 func genCartesianProduct(params [][]map[string]interface{}) []map[string]interface{} {
 	var cartesianProduct []map[string]interface{}
+	cartesianProduct = params[0]
 	for i := 0; i < len(params)-1; i++ {
-		for _, param1 := range params[i] {
+		var tempProduct []map[string]interface{}
+		for _, param1 := range cartesianProduct {
 			for _, param2 := range params[i+1] {
-				cartesianProduct = append(cartesianProduct, mergeVariables(param1, param2))
+				tempProduct = append(tempProduct, mergeVariables(param1, param2))
 			}
 		}
+		cartesianProduct = tempProduct
 	}
 	return cartesianProduct
+}
+
+func getParameters(config IConfig) []map[string]interface{} {
+	cfg := config.ToStruct()
+	// parse config parameters
+	parsedParams, err := parseParameters(cfg.Parameters, cfg.Variables)
+	if err != nil {
+		log.Error().Interface("params", cfg.Parameters).Err(err).Msg("parse config parameters failed")
+	}
+	if cfg.ParametersSetting["strategy"] != nil && strings.ToLower(cfg.ParametersSetting["strategy"].(string)) == "random" {
+		shuffleCartesianProduct(parsedParams)
+	}
+	return parsedParams
 }
 
 func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]map[string]interface{}, error) {
