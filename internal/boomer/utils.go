@@ -44,7 +44,7 @@ func startMemoryProfile(file string, duration time.Duration) (err error) {
 
 	log.Info().Dur("duration", duration).Msg("Start memory profiling")
 	time.AfterFunc(duration, func() {
-		err = pprof.WriteHeapProfile(f)
+		err := pprof.WriteHeapProfile(f)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to write memory profile")
 		}

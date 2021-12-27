@@ -2,7 +2,6 @@ package boomer
 
 import (
 	"testing"
-	"time"
 )
 
 func TestLogRequest(t *testing.T) {
@@ -135,10 +134,8 @@ func TestClearAll(t *testing.T) {
 
 func TestClearAllByChannel(t *testing.T) {
 	newStats := newRequestStats()
-	newStats.start()
-	defer newStats.close()
 	newStats.logRequest("http", "success", 1, 20)
-	newStats.clearStatsChan <- true
+	newStats.clearAll()
 
 	if newStats.total.NumRequests != 0 {
 		t.Error("After clearAll(), newStats.total.numRequests is wrong, expected: 0, got:", newStats.total.NumRequests)
@@ -216,35 +213,4 @@ func TestCollectReportData(t *testing.T) {
 	if _, ok := result["errors"]; !ok {
 		t.Error("Key stats not found")
 	}
-}
-
-func TestStatsStart(t *testing.T) {
-	newStats := newRequestStats()
-	newStats.start()
-	defer newStats.close()
-
-	newStats.requestSuccessChan <- &requestSuccess{
-		requestType:    "http",
-		name:           "success",
-		responseTime:   2,
-		responseLength: 30,
-	}
-
-	newStats.requestFailureChan <- &requestFailure{
-		requestType:  "http",
-		name:         "failure",
-		responseTime: 1,
-		errMsg:       "500 error",
-	}
-
-	var ticker = time.NewTicker(reportStatsInterval + 500*time.Millisecond)
-	for {
-		select {
-		case <-ticker.C:
-			t.Error("Timeout waiting for stats reports to runner")
-		case <-newStats.messageToRunnerChan:
-			goto end
-		}
-	}
-end:
 }
