@@ -84,8 +84,9 @@ func TestLocalRunner(t *testing.T) {
 		Name: "TaskA",
 	}
 	tasks := []*Task{taskA}
-	runner := newLocalRunner(tasks, nil, 2, 2)
-	go runner.run()
+	runner := newLocalRunner(2, 2)
+	runner.setTasks(tasks)
+	go runner.start()
 	time.Sleep(4 * time.Second)
-	runner.close()
+	runner.stop()
 }
