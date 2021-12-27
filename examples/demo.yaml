@@ -7,6 +7,11 @@ config:
         "n": 5
         varFoo1: ${gen_random_string($n)}
         varFoo2: ${max($a, $b)}
+    parameters:
+        username-password: ${parameterize(examples/account.csv)}
+        user_agent: ["iOS/10.1", "iOS/10.2"]
+    parameters_setting:
+        strategy: random
 teststeps:
     - name: transaction 1 start
       transaction:
@@ -19,6 +24,8 @@ teststeps:
         params:
             foo1: $varFoo1
             foo2: $varFoo2
+            foo3: $username
+            foo4: $password
         headers:
             User-Agent: HttpRunnerPlus
       variables:

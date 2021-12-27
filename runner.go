@@ -130,15 +130,24 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 	}
 
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
-	r.startTime = time.Now()
-	for _, step := range testcase.TestSteps {
-		_, err := r.runStep(step, config)
-		if err != nil {
-			if r.failfast {
-				log.Error().Err(err).Msg("abort running due to failfast setting")
-				return err
+	// parse config parameters
+	parsedParams, err := parseParameters(config.ToStruct().Parameters, config.ToStruct().Variables)
+	if err != nil {
+		log.Error().Interface("params", config.ToStruct().Parameters).Err(err).Msg("parse config parameters failed")
+		return err
+	}
+	for _, parameter := range parsedParams {
+		config.ToStruct().Variables = mergeVariables(parameter, config.ToStruct().Variables)
+		r.startTime = time.Now()
+		for _, step := range testcase.TestSteps {
+			_, err := r.runStep(step, config)
+			if err != nil {
+				if r.failfast {
+					log.Error().Err(err).Msg("abort running due to failfast setting")
+					return err
+				}
+				log.Warn().Err(err).Msg("run step failed, continue next step")
 			}
-			log.Warn().Err(err).Msg("run step failed, continue next step")
 		}
 	}
 
@@ -465,7 +474,6 @@ func (r *hrpRunner) parseConfig(config IConfig) error {
 		return err
 	}
 	cfg.Variables = parsedVariables
-
 	// parse config name
 	parsedName, err := parseString(cfg.Name, cfg.Variables)
 	if err != nil {

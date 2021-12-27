@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/maja42/goval"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
@@ -247,15 +248,35 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
-// callFunc call function with arguments
-// only support return at most one result value
-func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
-	function, ok := builtin.Functions[funcName]
-	if !ok {
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if strings.EqualFold(a, e) {
+			return true
+		}
+	}
+	return false
+}
+
+func getMappingFunction(funcName string) (interface{}, error) {
+	if function, ok := builtin.Functions[funcName]; ok {
+		// function is builtin
+		return function, nil
+	} else if contains([]string{"parameterize", "P"}, funcName) {
+		// parameterize function
+		return loadFromCSV, nil
+	} else {
 		// function not found
 		return nil, fmt.Errorf("function %s is not found", funcName)
 	}
+}
 
+// callFunc call function with arguments
+// only support return at most one result value
+func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
+	function, err := getMappingFunction(funcName)
+	if err != nil {
+		return nil, err
+	}
 	funcValue := reflect.ValueOf(function)
 	if funcValue.Kind() != reflect.Func {
 		// function not valid
@@ -494,20 +515,81 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
-//func parseParameters(parameters map[string]interface{}) []map[string]interface{} {
-//	for k, v := range parameters {
-//		parameter_name_list := strings.Split(k, "-")
-//		rawValue := reflect.ValueOf(v)
-//		switch rawValue.Kind() {
-//		case reflect.String:
-//			var varList []map[string]interface{}
-//
-//		case reflect.Slice:
-//			for i := 0; i < rawValue.Len(); i++ {
-//				rawValue.Index(i).Interface()
-//			}
-//		default:
-//			panic(fmt.Sprintf("parameter content should be List or Text(variables or functions call), got %v", v))
-//		}
-//	}
-//}
+func genCartesianProduct(params [][]map[string]interface{}) []map[string]interface{} {
+	var cartesianProduct []map[string]interface{}
+	for i := 0; i < len(params)-1; i++ {
+		for _, param1 := range params[i] {
+			for _, param2 := range params[i+1] {
+				cartesianProduct = append(cartesianProduct, mergeVariables(param1, param2))
+			}
+		}
+	}
+	return cartesianProduct
+}
+
+func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]map[string]interface{}, error) {
+	var parsedParametersList [][]map[string]interface{}
+	for k, v := range parameters {
+		parameterNameList := strings.Split(k, "-")
+		var parameterList []map[string]interface{}
+		rawValue := reflect.ValueOf(v)
+		switch rawValue.Kind() {
+		case reflect.String:
+			parsedParameterContent, err := parseData(rawValue.Interface(), variablesMapping)
+			if err != nil {
+				log.Error().Interface("parameter", parameters).Msg("[parseParameters] parse parameter error")
+				return nil, err
+			}
+			parsedParameterRawValue := reflect.ValueOf(parsedParameterContent)
+			if parsedParameterRawValue.Kind() != reflect.Slice {
+				log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be List or Text(variables or functions call), got %v")
+				return nil, errors.New("parameter content should be List or Text(variables or functions call)")
+			}
+			for i := 0; i < parsedParameterRawValue.Len(); i++ {
+				parameterMap := make(map[string]interface{})
+				if parsedParameterRawValue.Index(i).Kind() == reflect.Map {
+					for _, key := range parameterNameList {
+						parameterMap[key] = parsedParameterRawValue.Index(i).MapIndex(reflect.ValueOf(key)).Interface()
+					}
+				} else if parsedParameterRawValue.Index(i).Kind() == reflect.Slice {
+					if len(parameterNameList) != parsedParameterRawValue.Index(i).Len() {
+						log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter name list and parameter content list should have the same length")
+						return nil, errors.New("parameter name list and parameter content list should have the same length")
+					}
+					for i := 0; i < parsedParameterRawValue.Index(i).Len(); i++ {
+						parameterMap[parameterNameList[i]] = parsedParameterRawValue.Index(i).Index(i).Interface()
+					}
+				} else if len(parameterNameList) == 1 {
+					parameterMap[parameterNameList[0]] = parsedParameterRawValue.Index(i).Interface()
+				} else {
+					log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be List or Text(variables or functions call), got %v")
+					return nil, errors.New("parameter content should be List or Text(variables or functions call)")
+				}
+				parameterList = append(parameterList, parameterMap)
+			}
+		case reflect.Slice:
+			for i := 0; i < rawValue.Len(); i++ {
+				parameterMap := make(map[string]interface{})
+				if rawValue.Index(i).Kind() == reflect.Interface || rawValue.Index(i).Kind() == reflect.String {
+					parameterMap[parameterNameList[0]] = rawValue.Index(i).Interface()
+				} else if rawValue.Index(i).Kind() == reflect.Slice {
+					if len(parameterNameList) != rawValue.Index(i).Len() {
+						log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter name list and parameter content list should have the same length")
+						return nil, errors.New("parameter name list and parameter content list should have the same length")
+					}
+					for i := 0; i < rawValue.Index(i).Len(); i++ {
+						parameterMap[parameterNameList[i]] = rawValue.Index(i).Index(i).Interface()
+					}
+				} else {
+					log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be List or Text(variables or functions call), got %v")
+					return nil, errors.New("parameter content should be List or Text(variables or functions call)")
+				}
+				parameterList = append(parameterList, parameterMap)
+			}
+		default:
+			panic(fmt.Sprintf("parameter content should be List or Text(variables or functions call), got %v", v))
+		}
+		parsedParametersList = append(parsedParametersList, parameterList)
+	}
+	return genCartesianProduct(parsedParametersList), nil
+}
