@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	harPath  = "../examples/har/demo.har"
-	harPath2 = "../examples/har/postman-echo.har"
+	harPath  = "../../examples/har/demo.har"
+	harPath2 = "../../examples/har/postman-echo.har"
 )
 
 func TestGenJSON(t *testing.T) {

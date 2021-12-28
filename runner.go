@@ -42,30 +42,14 @@ func NewRunner(t *testing.T) *hrpRunner {
 			},
 			Timeout: 30 * time.Second,
 		},
-		sessionVariables: make(map[string]interface{}),
-		transactions:     make(map[string]map[transactionType]time.Time),
 	}
 }
 
 type hrpRunner struct {
-	t                *testing.T
-	failfast         bool
-	debug            bool
-	client           *http.Client
-	sessionVariables map[string]interface{}
-	// transactions stores transaction timing info.
-	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
-	transactions map[string]map[transactionType]time.Time
-	startTime    time.Time // record start time of the testcase
-}
-
-// Reset clears runner session variables.
-func (r *hrpRunner) Reset() *hrpRunner {
-	log.Info().Msg("[init] Reset session variables")
-	r.sessionVariables = make(map[string]interface{})
-	r.transactions = make(map[string]map[transactionType]time.Time)
-	r.startTime = time.Now()
-	return r
+	t        *testing.T
+	failfast bool
+	debug    bool
+	client   *http.Client
 }
 
 // SetFailfast configures whether to stop running when one step fails.
@@ -108,14 +92,13 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 	// report execution timing event
 	defer ga.SendEvent(event.StartTiming("execution"))
 
-	r.Reset()
 	for _, iTestCase := range testcases {
 		testcase, err := iTestCase.ToTestCase()
 		if err != nil {
 			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
 			return err
 		}
-		if err := r.runCase(testcase); err != nil {
+		if err := r.newCaseRunner(testcase).run(); err != nil {
 			log.Error().Err(err).Msg("[Run] run testcase failed")
 			return err
 		}
@@ -123,18 +106,48 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 	return nil
 }
 
-func (r *hrpRunner) runCase(testcase *TestCase) error {
-	config := testcase.Config
+func (r *hrpRunner) newCaseRunner(testcase *TestCase) *caseRunner {
+	caseRunner := &caseRunner{
+		TestCase:  testcase,
+		hrpRunner: r,
+	}
+	caseRunner.reset()
+	return caseRunner
+}
+
+// caseRunner is used to run testcase and its steps.
+// each testcase has its own caseRunner instance and share session variables.
+type caseRunner struct {
+	*TestCase
+	hrpRunner        *hrpRunner
+	sessionVariables map[string]interface{}
+	// transactions stores transaction timing info.
+	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
+	transactions map[string]map[transactionType]time.Time
+	startTime    time.Time // record start time of the testcase
+}
+
+// reset clears runner session variables.
+func (r *caseRunner) reset() *caseRunner {
+	log.Info().Msg("[init] Reset session variables")
+	r.sessionVariables = make(map[string]interface{})
+	r.transactions = make(map[string]map[transactionType]time.Time)
+	r.startTime = time.Now()
+	return r
+}
+
+func (r *caseRunner) run() error {
+	config := r.TestCase.Config
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
 
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
 	r.startTime = time.Now()
-	for _, step := range testcase.TestSteps {
-		_, err := r.runStep(step, config)
+	for index := range r.TestCase.TestSteps {
+		_, err := r.runStep(index)
 		if err != nil {
-			if r.failfast {
+			if r.hrpRunner.failfast {
 				log.Error().Err(err).Msg("abort running due to failfast setting")
 				return err
 			}
@@ -146,7 +159,10 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 	return nil
 }
 
-func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, err error) {
+func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
+	config := r.TestCase.Config
+	step := r.TestCase.TestSteps[index]
+
 	// step type priority order: transaction > rendezvous > testcase > request
 	if stepTran, ok := step.(*StepTransaction); ok {
 		// transaction step
@@ -218,7 +234,7 @@ func (r *hrpRunner) runStep(step IStep, config IConfig) (stepResult *stepData, e
 	return stepResult, nil
 }
 
-func (r *hrpRunner) runStepTransaction(transaction *Transaction) (stepResult *stepData, err error) {
+func (r *caseRunner) runStepTransaction(transaction *Transaction) (stepResult *stepData, err error) {
 	log.Info().
 		Str("name", transaction.Name).
 		Str("type", string(transaction.Type)).
@@ -260,7 +276,7 @@ func (r *hrpRunner) runStepTransaction(transaction *Transaction) (stepResult *st
 	return stepResult, nil
 }
 
-func (r *hrpRunner) runStepRendezvous(rend *Rendezvous) (stepResult *stepData, err error) {
+func (r *caseRunner) runStepRendezvous(rend *Rendezvous) (stepResult *stepData, err error) {
 	log.Info().
 		Str("name", rend.Name).
 		Float32("percent", rend.Percent).
@@ -275,7 +291,7 @@ func (r *hrpRunner) runStepRendezvous(rend *Rendezvous) (stepResult *stepData, e
 	return stepResult, nil
 }
 
-func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
+func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err error) {
 	stepResult = &stepData{
 		name:        step.Name,
 		stepType:    stepTypeRequest,
@@ -388,7 +404,7 @@ func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error
 	req.Host = u.Host
 
 	// log & print request
-	if r.debug {
+	if r.hrpRunner.debug {
 		reqDump, err := httputil.DumpRequest(req, true)
 		if err != nil {
 			return nil, errors.Wrap(err, "dump request failed")
@@ -399,7 +415,7 @@ func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error
 
 	// do request action
 	start := time.Now()
-	resp, err := r.client.Do(req)
+	resp, err := r.hrpRunner.client.Do(req)
 	stepResult.elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return nil, errors.Wrap(err, "do request failed")
@@ -407,7 +423,7 @@ func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error
 	defer resp.Body.Close()
 
 	// log & print response
-	if r.debug {
+	if r.hrpRunner.debug {
 		fmt.Println("==================== response ===================")
 		respDump, err := httputil.DumpResponse(resp, true)
 		if err != nil {
@@ -418,7 +434,7 @@ func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error
 	}
 
 	// new response object
-	respObj, err := newResponseObject(r.t, resp)
+	respObj, err := newResponseObject(r.hrpRunner.t, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
@@ -443,7 +459,7 @@ func (r *hrpRunner) runStepRequest(step *TStep) (stepResult *stepData, err error
 	return stepResult, nil
 }
 
-func (r *hrpRunner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
+func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
 	stepResult = &stepData{
 		name:     step.Name,
 		stepType: stepTypeTestCase,
@@ -451,7 +467,7 @@ func (r *hrpRunner) runStepTestCase(step *TStep) (stepResult *stepData, err erro
 	}
 	testcase := step.TestCase
 	start := time.Now()
-	err = r.runCase(testcase)
+	err = r.hrpRunner.newCaseRunner(testcase).run()
 	stepResult.elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, err
@@ -460,7 +476,7 @@ func (r *hrpRunner) runStepTestCase(step *TStep) (stepResult *stepData, err erro
 	return stepResult, nil
 }
 
-func (r *hrpRunner) parseConfig(config IConfig) error {
+func (r *caseRunner) parseConfig(config IConfig) error {
 	cfg := config.ToStruct()
 	// parse config variables
 	parsedVariables, err := parseVariables(cfg.Variables)
@@ -487,7 +503,7 @@ func (r *hrpRunner) parseConfig(config IConfig) error {
 	return nil
 }
 
-func (r *hrpRunner) getSummary() *testCaseSummary {
+func (r *caseRunner) getSummary() *testCaseSummary {
 	return &testCaseSummary{}
 }
 
