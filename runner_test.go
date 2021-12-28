@@ -1,22 +1,11 @@
 package hrp
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	fmt.Println("[TestMain] build go plugin")
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
-	if err := cmd.Run(); err != nil {
-		panic(err)
-	}
-	os.Exit(m.Run())
-}
 
 func TestLocatePlugin(t *testing.T) {
 	cwd, _ := os.Getwd()

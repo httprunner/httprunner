@@ -1,7 +1,6 @@
 package hrp
 
 import (
-	"plugin"
 	"sort"
 	"testing"
 	"time"
@@ -365,24 +364,6 @@ func TestCallBuiltinFunction(t *testing.T) {
 		t.Fail()
 	}
 	if !assert.Equal(t, float64(10), result.(float64)) {
-		t.Fail()
-	}
-}
-
-func TestCallPluginFunction(t *testing.T) {
-	plugins, err := plugin.Open("examples/debugtalk.so")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	pluginLoader := &pluginLoader{plugins}
-
-	// call function without arguments
-	f1, _ := getMappingFunction("Concatenate", pluginLoader)
-	result, err := callFunc(f1, 1, "2", 3.14)
-	if !assert.NoError(t, err) {
-		t.Fail()
-	}
-	if !assert.Equal(t, result, "1_2_3.14") {
 		t.Fail()
 	}
 }
