@@ -1,5 +1,6 @@
 // +build linux freebsd darwin
 // go plugin doesn't support windows
+
 package hrp
 
 import (
@@ -14,7 +15,11 @@ import (
 
 func TestMain(m *testing.M) {
 	fmt.Println("[TestMain] build go plugin")
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
+	// go tool compile -help
+	// all=: apply to all packages
+	// -N: disable optimizations
+	// -l: disable inlining
+	cmd := exec.Command("go", "build", "-buildmode=plugin", `-gcflags="all=-N -l"`, "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
