@@ -2,10 +2,12 @@ package hrp
 
 import (
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -92,6 +94,36 @@ func loadFromYAML(path string) (*TCase, error) {
 	tc := &TCase{}
 	err = yaml.Unmarshal(file, tc)
 	return tc, err
+}
+
+func loadFromCSV(path string) []map[string]string {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
+		panic(err)
+	}
+	log.Info().Str("path", path).Msg("load csv file")
+
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("load csv file failed")
+		panic(err)
+	}
+	r := csv.NewReader(strings.NewReader(string(file)))
+	content, err := r.ReadAll()
+	if err != nil {
+		log.Error().Err(err).Msg("parse csv file failed")
+		panic(err)
+	}
+	var result []map[string]string
+	for i := 1; i < len(content); i++ {
+		row := make(map[string]string)
+		for j := 0; j < len(content[i]); j++ {
+			row[content[0][j]] = content[i][j]
+		}
+		result = append(result, row)
+	}
+	return result
 }
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
