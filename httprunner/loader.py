@@ -450,4 +450,4 @@ def convert_relative_project_root_dir(abs_path: Text) -> Text:
             f"project_meta.RootDir: {_project_meta.RootDir}"
         )
 
-    return abs_path[len(_project_meta.RootDir) + 1 :]
+    return abs_path[len(_project_meta.RootDir) + 1:]
