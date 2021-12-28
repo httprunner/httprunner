@@ -31,9 +31,9 @@ func buildURL(baseURL, stepURL string) string {
 	return uStep.String()
 }
 
-func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
+func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}, pluginLoader *pluginLoader) (map[string]string, error) {
 	parsedHeaders := make(map[string]string)
-	headers, err := parseData(rawHeaders, variablesMapping)
+	headers, err := parseData(rawHeaders, variablesMapping, pluginLoader)
 	if err != nil {
 		return rawHeaders, err
 	}
@@ -53,7 +53,7 @@ func convertString(raw interface{}) string {
 	}
 }
 
-func parseData(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
+func parseData(raw interface{}, variablesMapping map[string]interface{}, pluginLoader *pluginLoader) (interface{}, error) {
 	rawValue := reflect.ValueOf(raw)
 	switch rawValue.Kind() {
 	case reflect.String:
@@ -64,11 +64,11 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) (interf
 		// other string
 		value := rawValue.String()
 		value = strings.TrimSpace(value)
-		return parseString(value, variablesMapping)
+		return parseString(value, variablesMapping, pluginLoader)
 	case reflect.Slice:
 		parsedSlice := make([]interface{}, rawValue.Len())
 		for i := 0; i < rawValue.Len(); i++ {
-			parsedValue, err := parseData(rawValue.Index(i).Interface(), variablesMapping)
+			parsedValue, err := parseData(rawValue.Index(i).Interface(), variablesMapping, pluginLoader)
 			if err != nil {
 				return raw, err
 			}
@@ -78,12 +78,12 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) (interf
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
-			parsedKey, err := parseString(k.String(), variablesMapping)
+			parsedKey, err := parseString(k.String(), variablesMapping, pluginLoader)
 			if err != nil {
 				return raw, err
 			}
 			v := rawValue.MapIndex(k)
-			parsedValue, err := parseData(v.Interface(), variablesMapping)
+			parsedValue, err := parseData(v.Interface(), variablesMapping, pluginLoader)
 			if err != nil {
 				return raw, err
 			}
@@ -121,7 +121,7 @@ var (
 )
 
 // parseString parse string with variables
-func parseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
+func parseString(raw string, variablesMapping map[string]interface{}, pluginLoader *pluginLoader) (interface{}, error) {
 	matchStartPosition := 0
 	parsedString := ""
 	remainedString := raw
@@ -160,15 +160,24 @@ func parseString(raw string, variablesMapping map[string]interface{}) (interface
 			if err != nil {
 				return raw, err
 			}
-			parsedArgs, err := parseData(arguments, variablesMapping)
+			parsedArgs, err := parseData(arguments, variablesMapping, pluginLoader)
 			if err != nil {
 				return raw, err
 			}
 
-			result, err := callFunc(funcName, parsedArgs.([]interface{})...)
+			fn, err := getMappingFunction(funcName, pluginLoader)
 			if err != nil {
 				return raw, err
 			}
+
+			result, err := callFunc(fn, parsedArgs.([]interface{})...)
+			if err != nil {
+				log.Error().Str("funcName", funcName).Interface("arguments", arguments).
+					Err(err).Msg("call function failed")
+				return raw, err
+			}
+			log.Info().Str("funcName", funcName).Interface("arguments", arguments).
+				Interface("output", result).Msg("call function success")
 
 			if funcMatched[0] == raw {
 				// raw_string is a function, e.g. "${add_one(3)}", return its eval value directly
@@ -247,30 +256,50 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
+func getMappingFunction(funcName string, pluginLoader *pluginLoader) (reflect.Value, error) {
+	var fn reflect.Value
+	var err error
+
+	defer func() {
+		// check function type
+		if err == nil && fn.Kind() != reflect.Func {
+			// function not valid
+			err = fmt.Errorf("function %s is invalid", funcName)
+			return
+		}
+	}()
+
+	// get function from plugin loader
+	if pluginLoader != nil {
+		sym, err := pluginLoader.Lookup(funcName)
+		if err == nil {
+			fn = reflect.ValueOf(sym)
+			return fn, nil
+		}
+	}
+
+	// get builtin function
+	if function, ok := builtin.Functions[funcName]; ok {
+		fn = reflect.ValueOf(function)
+		return fn, nil
+	}
+
+	// function not found
+	return reflect.Value{}, fmt.Errorf("function %s is not found", funcName)
+}
+
 // callFunc call function with arguments
 // only support return at most one result value
-func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
-	function, ok := builtin.Functions[funcName]
-	if !ok {
-		// function not found
-		return nil, fmt.Errorf("function %s is not found", funcName)
-	}
-
-	funcValue := reflect.ValueOf(function)
-	if funcValue.Kind() != reflect.Func {
-		// function not valid
-		return nil, fmt.Errorf("function %s is invalid", funcName)
-	}
-
-	if funcValue.Type().NumIn() != len(arguments) {
+func callFunc(fn reflect.Value, arguments ...interface{}) (interface{}, error) {
+	if fn.Type().NumIn() != len(arguments) {
 		// function arguments not match
-		return nil, fmt.Errorf("function %s arguments number not match", funcName)
+		return nil, fmt.Errorf("function arguments number not match")
 	}
 
 	argumentsValue := make([]reflect.Value, len(arguments))
 	for index, argument := range arguments {
 		argumentValue := reflect.ValueOf(argument)
-		expectArgumentType := funcValue.Type().In(index)
+		expectArgumentType := fn.Type().In(index)
 		actualArgumentType := reflect.TypeOf(argument)
 
 		// type match
@@ -282,20 +311,18 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 		// type not match, check if convertible
 		if !actualArgumentType.ConvertibleTo(expectArgumentType) {
 			// function argument type not match and not convertible
-			err := fmt.Errorf("function %s argument %d type is neither match nor convertible, expect %v, actual %v",
-				funcName, index, expectArgumentType, actualArgumentType)
-			log.Error().Err(err).Msg("call function failed")
+			err := fmt.Errorf("function argument %d's type is neither match nor convertible, expect %v, actual %v",
+				index, expectArgumentType, actualArgumentType)
 			return nil, err
 		}
 		// convert argument to expect type
 		argumentsValue[index] = argumentValue.Convert(expectArgumentType)
 	}
 
-	resultValues := funcValue.Call(argumentsValue)
+	resultValues := fn.Call(argumentsValue)
 	if len(resultValues) > 1 {
 		// function should return at most one value
-		err := fmt.Errorf("function %s should return at most one value", funcName)
-		log.Error().Err(err).Msg("call function failed")
+		err := fmt.Errorf("function should return at most one value")
 		return nil, err
 	}
 
@@ -307,11 +334,6 @@ func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// return one value
 	// convert reflect.Value to interface{}
 	result := resultValues[0].Interface()
-	log.Info().
-		Str("funcName", funcName).
-		Interface("arguments", arguments).
-		Interface("output", result).
-		Msg("call function success")
 	return result, nil
 }
 
@@ -361,7 +383,7 @@ func parseFunctionArguments(argsStr string) ([]interface{}, error) {
 	return arguments, nil
 }
 
-func parseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
+func parseVariables(variables map[string]interface{}, pluginLoader *pluginLoader) (map[string]interface{}, error) {
 	parsedVariables := make(map[string]interface{})
 	var traverseRounds int
 
@@ -399,7 +421,7 @@ func parseVariables(variables map[string]interface{}) (map[string]interface{}, e
 				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
 			}
 
-			parsedValue, err := parseData(varValue, parsedVariables)
+			parsedValue, err := parseData(varValue, parsedVariables, pluginLoader)
 			if err != nil {
 				continue
 			}

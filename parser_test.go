@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"plugin"
 	"sort"
 	"testing"
 	"time"
@@ -161,7 +162,7 @@ func TestParseDataStringWithVariables(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parseData(data.expr, variablesMapping, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -185,7 +186,7 @@ func TestParseDataStringWithUndefinedVariables(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parseData(data.expr, variablesMapping, nil)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
@@ -229,7 +230,7 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parseData(data.expr, variablesMapping, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -259,7 +260,7 @@ func TestParseDataMapWithVariables(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parseData(data.expr, variablesMapping, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -292,7 +293,7 @@ func TestParseHeaders(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		parsedHeaders, err := parseHeaders(data.rawHeaders, variablesMapping)
+		parsedHeaders, err := parseHeaders(data.rawHeaders, variablesMapping, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -328,16 +329,18 @@ func TestMergeVariables(t *testing.T) {
 	}
 }
 
-func TestCallFunction(t *testing.T) {
+func TestCallBuiltinFunction(t *testing.T) {
 	// call function without arguments
-	_, err := callFunc("get_timestamp")
+	f1, _ := getMappingFunction("get_timestamp", nil)
+	_, err := callFunc(f1)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 
 	// call function with one argument
 	timeStart := time.Now()
-	_, err = callFunc("sleep", 1)
+	f2, _ := getMappingFunction("sleep", nil)
+	_, err = callFunc(f2, 1)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -346,7 +349,8 @@ func TestCallFunction(t *testing.T) {
 	}
 
 	// call function with one argument
-	result, err := callFunc("gen_random_string", 10)
+	f3, _ := getMappingFunction("gen_random_string", nil)
+	result, err := callFunc(f3, 10)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -355,11 +359,30 @@ func TestCallFunction(t *testing.T) {
 	}
 
 	// call function with two argument
-	result, err = callFunc("max", float64(10), 9.99)
+	f4, _ := getMappingFunction("max", nil)
+	result, err = callFunc(f4, float64(10), 9.99)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 	if !assert.Equal(t, float64(10), result.(float64)) {
+		t.Fail()
+	}
+}
+
+func TestCallPluginFunction(t *testing.T) {
+	plugins, err := plugin.Open("examples/debugtalk.so")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	pluginLoader := &pluginLoader{plugins}
+
+	// call function without arguments
+	f1, _ := getMappingFunction("Concatenate", pluginLoader)
+	result, err := callFunc(f1, 1, "2", 3.14)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, result, "1_2_3.14") {
 		t.Fail()
 	}
 }
@@ -441,7 +464,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 	}
 
 	for _, data := range testData1 {
-		value, err := parseData(data.expr, variablesMapping)
+		value, err := parseData(data.expr, variablesMapping, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -460,7 +483,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 	}
 
 	for _, data := range testData2 {
-		value, err := parseData(data.expr, variablesMapping)
+		value, err := parseData(data.expr, variablesMapping, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -507,7 +530,7 @@ func TestParseVariables(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		value, err := parseVariables(data.rawVars)
+		value, err := parseVariables(data.rawVars, nil)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -537,7 +560,7 @@ func TestParseVariablesAbnormal(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		value, err := parseVariables(data.rawVars)
+		value, err := parseVariables(data.rawVars, nil)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}

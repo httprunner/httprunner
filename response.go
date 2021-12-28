@@ -13,7 +13,7 @@ import (
 	"github.com/httprunner/hrp/internal/builtin"
 )
 
-func newResponseObject(t *testing.T, resp *http.Response) (*responseObject, error) {
+func newResponseObject(t *testing.T, pluginLoader *pluginLoader, resp *http.Response) (*responseObject, error) {
 	// prepare response headers
 	headers := make(map[string]string)
 	for k, v := range resp.Header {
@@ -60,8 +60,9 @@ func newResponseObject(t *testing.T, resp *http.Response) (*responseObject, erro
 	}
 
 	return &responseObject{
-		t:           t,
-		respObjMeta: data,
+		t:            t,
+		pluginLoader: pluginLoader,
+		respObjMeta:  data,
 	}, nil
 }
 
@@ -74,6 +75,7 @@ type respObjMeta struct {
 
 type responseObject struct {
 	t                 *testing.T
+	pluginLoader      *pluginLoader
 	respObjMeta       interface{}
 	validationResults map[string]interface{}
 }
@@ -101,7 +103,7 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		var checkValue interface{}
 		if strings.Contains(checkItem, "$") {
 			// reference variable
-			checkValue, err = parseData(checkItem, variablesMapping)
+			checkValue, err = parseData(checkItem, variablesMapping, v.pluginLoader)
 			if err != nil {
 				return err
 			}
@@ -114,7 +116,7 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		assertFunc := builtin.Assertions[assertMethod]
 
 		// parse expected value
-		expectValue, err := parseData(validator.Expect, variablesMapping)
+		expectValue, err := parseData(validator.Expect, variablesMapping, v.pluginLoader)
 		if err != nil {
 			return err
 		}
