@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -519,6 +520,11 @@ type pluginLoader struct {
 }
 
 func (r *caseRunner) loadPlugin(path string) error {
+	if runtime.GOOS == "windows" {
+		log.Warn().Msg("go plugin does not support windows")
+		return nil
+	}
+
 	if path == "" {
 		return nil
 	}
@@ -551,8 +557,8 @@ func (r *hrpRunner) getSummary() *testCaseSummary {
 	return &testCaseSummary{}
 }
 
-// locatePlugin
-// searching will be recursive upward until current working directory or system root dir.
+// locatePlugin searches debugtalk.so upward recursively until current
+// working directory or system root dir.
 func locatePlugin(startPath string) (string, error) {
 	stat, err := os.Stat(startPath)
 	if os.IsNotExist(err) {
