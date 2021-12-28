@@ -80,10 +80,10 @@ if __name__ == "__main__":
 def __ensure_absolute(path: Text) -> Text:
     if path.startswith("./"):
         # Linux/Darwin, hrun ./test.yml
-        path = path[len("./") :]
+        path = path[len("./"):]
     elif path.startswith(".\\"):
         # Windows, hrun .\\test.yml
-        path = path[len(".\\") :]
+        path = path[len(".\\"):]
 
     path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
@@ -173,7 +173,7 @@ def format_pytest_with_black(*python_paths: Text) -> NoReturn:
             subprocess.run(["black", *python_paths])
         else:
             logger.warning(
-                f"this system does not support multiprocessing well, format files one by one ..."
+                "this system does not support multiprocessing well, format files one by one ..."
             )
             [subprocess.run(["black", path]) for path in python_paths]
     except subprocess.CalledProcessError as ex:
