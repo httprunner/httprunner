@@ -100,20 +100,20 @@ func loadFromCSV(path string) []map[string]string {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return nil
+		panic(err)
 	}
 	log.Info().Str("path", path).Msg("load csv file")
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("load csv file failed")
-		return nil
+		panic(err)
 	}
 	r := csv.NewReader(strings.NewReader(string(file)))
 	content, err := r.ReadAll()
 	if err != nil {
 		log.Error().Err(err).Msg("parse csv file failed")
-		return nil
+		panic(err)
 	}
 	var result []map[string]string
 	for i := 1; i < len(content); i++ {

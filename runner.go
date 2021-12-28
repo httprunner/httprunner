@@ -131,6 +131,9 @@ func (r *hrpRunner) runCase(testcase *TestCase) error {
 	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
 	parameters := getParameters(config)
+	if parameters == nil {
+		parameters = []map[string]interface{}{{}}
+	}
 	for _, parameter := range parameters {
 		cfg.Variables = mergeVariables(parameter, cfg.Variables)
 		r.startTime = time.Now()

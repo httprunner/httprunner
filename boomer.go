@@ -47,6 +47,9 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 		}
 		cfg := testcase.Config.ToStruct()
 		parameters := getParameters(testcase.Config)
+		if parameters == nil {
+			parameters = []map[string]interface{}{{}}
+		}
 		for _, parameter := range parameters {
 			cfg.Variables = mergeVariables(parameter, cfg.Variables)
 			task := b.convertBoomerTask(testcase)
