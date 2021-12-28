@@ -1,6 +1,5 @@
-# install mkdocs
-# $ pip install mkdocs            # 1.1.2
-# $ pip install mkdocs-material   # 5.2.2
+# install mkdocs and material design
+# $ pip install mkdocs-material
 
 # usage
 # $ mkdocs serve        # build docs and preview
@@ -30,11 +29,6 @@ theme:
         text: 'Roboto'
         code: 'Roboto Mono'
 
-# Google Analytics
-google_analytics:
-    - 'UA-114587036-3'
-    - 'auto'
-
 # Extensions
 markdown_extensions:
   - admonition
@@ -42,6 +36,9 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
 
 # extra
 extra:
@@ -52,10 +49,13 @@ extra:
             link: https://debugtalk.com
         -   icon: fontawesome/brands/github-alt
             link: 'https://github.com/httprunner'
+    analytics:
+        provider: google # Google Analytics
+        property: UA-114587036-3
 
 # index pages
 nav:
-    - Introduction: index.md
+    - README: README.md
     - Installation: installation.md
     - User Guide:
         - Concepts: user/concepts.md
