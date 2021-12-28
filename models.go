@@ -13,13 +13,14 @@ const (
 // TConfig represents config data structure for testcase.
 // Each testcase should contain one config part.
 type TConfig struct {
-	Name       string                 `json:"name" yaml:"name"` // required
-	Verify     bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
-	BaseURL    string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
-	Variables  map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Export     []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Weight     int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
+	Name              string                 `json:"name" yaml:"name"` // required
+	Verify            bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
+	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
+	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ParametersSetting map[string]interface{} `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 }
 
 // Request represents HTTP request data structure.
