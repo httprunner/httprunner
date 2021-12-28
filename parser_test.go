@@ -618,3 +618,56 @@ func TestFindallVariables(t *testing.T) {
 		}
 	}
 }
+
+func TestParseParameters(t *testing.T) {
+	testData := []struct {
+		rawVars    map[string]interface{}
+		expectVars []map[string]interface{}
+	}{
+		{
+			map[string]interface{}{"username-password": "${parameterize(examples/account.csv)}", "user_agent": []interface{}{"IOS/10.1", "IOS/10.2"}},
+			[]map[string]interface{}{{"username": "test1", "password": "111111", "user_agent": "IOS/10.1"},
+				{"username": "test1", "password": "111111", "user_agent": "IOS/10.2"},
+				{"username": "test2", "password": "222222", "user_agent": "IOS/10.1"},
+				{"username": "test2", "password": "222222", "user_agent": "IOS/10.2"},
+				{"username": "test3", "password": "333333", "user_agent": "IOS/10.1"},
+				{"username": "test3", "password": "333333", "user_agent": "IOS/10.2"}},
+		},
+		{
+			map[string]interface{}{},
+			nil,
+		},
+		{
+			nil,
+			nil,
+		},
+	}
+	for _, data := range testData {
+		value, _ := parseParameters(data.rawVars, map[string]interface{}{})
+		if !assert.Equal(t, data.expectVars, value) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseParametersError(t *testing.T) {
+	testData := []struct {
+		rawVars map[string]interface{}
+	}{
+		{
+			map[string]interface{}{"username_password": "${parameterize(examples/account.csv)}", "user_agent": []interface{}{"IOS/10.1", "IOS/10.2"}},
+		},
+		{
+			map[string]interface{}{"username-password": "${parameterize(examples/account.csv)}", "user-agent": []interface{}{"IOS/10.1", "IOS/10.2"}},
+		},
+		{
+			map[string]interface{}{"username-password": "${param(examples/account.csv)}", "user_agent": []interface{}{"IOS/10.1", "IOS/10.2"}},
+		},
+	}
+	for _, data := range testData {
+		_, err := parseParameters(data.rawVars, map[string]interface{}{})
+		if !assert.Error(t, err) {
+			t.Fail()
+		}
+	}
+}
