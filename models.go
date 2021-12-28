@@ -20,6 +20,7 @@ type TConfig struct {
 	Parameters map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Export     []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight     int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
+	Path       string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
 }
 
 // Request represents HTTP request data structure.

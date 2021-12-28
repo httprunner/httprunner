@@ -146,6 +146,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	if err != nil {
 		return nil, err
 	}
+	tc.Config.Path = path.Path
 	testcase, err := tc.ToTestCase()
 	if err != nil {
 		return nil, err

@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"path/filepath"
+	"plugin"
 	"strconv"
 	"strings"
 	"testing"
@@ -125,6 +128,8 @@ type caseRunner struct {
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
 	transactions map[string]map[transactionType]time.Time
 	startTime    time.Time // record start time of the testcase
+	// pluginLoader stores loaded go plugins.
+	pluginLoader *pluginLoader
 }
 
 // reset clears runner session variables.
@@ -194,7 +199,7 @@ func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
 	stepVariables = mergeVariables(stepVariables, copiedConfig.Variables)
 
 	// parse step variables
-	parsedVariables, err := parseVariables(stepVariables)
+	parsedVariables, err := parseVariables(stepVariables, r.pluginLoader)
 	if err != nil {
 		log.Error().Interface("variables", copiedConfig.Variables).Err(err).Msg("parse step variables failed")
 		return nil, err
@@ -311,7 +316,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 	// prepare request headers
 	if len(step.Request.Headers) > 0 {
-		headers, err := parseHeaders(step.Request.Headers, step.Variables)
+		headers, err := parseHeaders(step.Request.Headers, step.Variables, r.pluginLoader)
 		if err != nil {
 			return nil, errors.Wrap(err, "parse headers failed")
 		}
@@ -328,7 +333,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	// prepare request params
 	var queryParams url.Values
 	if len(step.Request.Params) > 0 {
-		params, err := parseData(step.Request.Params, step.Variables)
+		params, err := parseData(step.Request.Params, step.Variables, r.pluginLoader)
 		if err != nil {
 			return nil, errors.Wrap(err, "parse data failed")
 		}
@@ -360,7 +365,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 	// prepare request body
 	if step.Request.Body != nil {
-		data, err := parseData(step.Request.Body, step.Variables)
+		data, err := parseData(step.Request.Body, step.Variables, r.pluginLoader)
 		if err != nil {
 			return nil, err
 		}
@@ -434,7 +439,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 
 	// new response object
-	respObj, err := newResponseObject(r.hrpRunner.t, resp)
+	respObj, err := newResponseObject(r.hrpRunner.t, r.pluginLoader, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
@@ -479,22 +484,28 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 func (r *caseRunner) parseConfig(config IConfig) error {
 	cfg := config.ToStruct()
 	// parse config variables
-	parsedVariables, err := parseVariables(cfg.Variables)
+	parsedVariables, err := parseVariables(cfg.Variables, r.pluginLoader)
 	if err != nil {
 		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
 		return err
 	}
 	cfg.Variables = parsedVariables
 
+	// load plugin variables and functions
+	err = r.loadPlugin(cfg.Path)
+	if err != nil {
+		return err
+	}
+
 	// parse config name
-	parsedName, err := parseString(cfg.Name, cfg.Variables)
+	parsedName, err := parseString(cfg.Name, cfg.Variables, r.pluginLoader)
 	if err != nil {
 		return err
 	}
 	cfg.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL, err := parseString(cfg.BaseURL, cfg.Variables)
+	parsedBaseURL, err := parseString(cfg.BaseURL, cfg.Variables, r.pluginLoader)
 	if err != nil {
 		return err
 	}
@@ -503,8 +514,79 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 	return nil
 }
 
-func (r *caseRunner) getSummary() *testCaseSummary {
+type pluginLoader struct {
+	*plugin.Plugin
+}
+
+func (r *caseRunner) loadPlugin(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	// check if loaded before
+	if r.pluginLoader != nil {
+		return nil
+	}
+
+	// locate plugin file
+	pluginPath, err := locatePlugin(path)
+	if err != nil {
+		// plugin not found
+		return nil
+	}
+
+	// load plugin
+	plugins, err := plugin.Open(pluginPath)
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("load go plugin failed")
+		return err
+	}
+	r.pluginLoader = &pluginLoader{plugins}
+
+	log.Info().Str("path", path).Msg("load go plugin success")
+	return nil
+}
+
+func (r *hrpRunner) getSummary() *testCaseSummary {
 	return &testCaseSummary{}
+}
+
+// locatePlugin
+// searching will be recursive upward until current working directory or system root dir.
+func locatePlugin(startPath string) (string, error) {
+	stat, err := os.Stat(startPath)
+	if os.IsNotExist(err) {
+		return "", err
+	}
+
+	var startDir string
+	if stat.IsDir() {
+		startDir = startPath
+	} else {
+		startDir = filepath.Dir(startPath)
+	}
+	startDir, _ = filepath.Abs(startDir)
+
+	// convention over configuration
+	// target plugin file name is always debugtalk.so
+	pluginPath := filepath.Join(startDir, "debugtalk.so")
+	if _, err := os.Stat(pluginPath); err == nil {
+		return pluginPath, nil
+	}
+
+	// current working directory
+	cwd, _ := os.Getwd()
+	if startDir == cwd {
+		return "", fmt.Errorf("searched to CWD, plugin file not found")
+	}
+
+	// system root dir
+	parentDir, _ := filepath.Abs(filepath.Dir(startDir))
+	if parentDir == startDir {
+		return "", fmt.Errorf("searched to system root dir, plugin file not found")
+	}
+
+	return locatePlugin(parentDir)
 }
 
 func setBodyBytes(req *http.Request, data []byte) {
