@@ -27,6 +27,7 @@ hrp (HttpRunner+) aims to be a one-stop solution for HTTP(S) testing, covering A
 load testing and digital experience monitoring (DEM). Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
+Website: https://httprunner.com
 Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
