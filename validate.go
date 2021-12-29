@@ -67,3 +67,47 @@ func (s *StepRequestValidation) AssertLengthEqual(jmesPath string, expected inte
 	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
+
+func (s *StepRequestValidation) AssertLengthLessThan(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "length_less_than",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepRequestValidation) AssertLengthLessOrEquals(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "length_less_or_equals",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepRequestValidation) AssertLengthGreaterThan(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "length_greater_than",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepRequestValidation) AssertLengthGreaterOrEquals(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "length_greater_or_equals",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}

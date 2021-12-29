@@ -61,3 +61,80 @@ func TestEqualLength(t *testing.T) {
 		}
 	}
 }
+
+func TestLessThanLength(t *testing.T) {
+	testData := []struct {
+		raw      interface{}
+		expected int
+	}{
+		{"", 1},
+		{[]string{}, 1},
+		{map[string]interface{}{}, 1},
+		{"a", 2},
+		{[]string{"a"}, 2},
+		{map[string]interface{}{"a": 123}, 2},
+	}
+
+	for _, data := range testData {
+		if !assert.True(t, LessThanLength(t, data.expected, data.raw)) {
+			t.Fail()
+		}
+	}
+}
+
+func TestLessOrEqualsLength(t *testing.T) {
+	testData := []struct {
+		raw      interface{}
+		expected int
+	}{
+		{"", 1},
+		{[]string{}, 1},
+		{map[string]interface{}{"A": 111}, 1},
+		{"a", 1},
+		{[]string{"a"}, 2},
+		{map[string]interface{}{"a": 123}, 2},
+	}
+
+	for _, data := range testData {
+		if !assert.True(t, LessOrEqualsLength(t, data.expected, data.raw)) {
+			t.Fail()
+		}
+	}
+}
+
+func TestGreaterThanLength(t *testing.T) {
+	testData := []struct {
+		raw      interface{}
+		expected int
+	}{
+		{"abcd", 3},
+		{[]string{"a", "b", "c"}, 2},
+		{map[string]interface{}{"a": 123, "b": 223, "c": 323}, 2},
+	}
+
+	for _, data := range testData {
+		if !assert.True(t, GreaterThanLength(t, data.expected, data.raw)) {
+			t.Fail()
+		}
+	}
+}
+
+func TestGreaterOrEqualsLength(t *testing.T) {
+	testData := []struct {
+		raw      interface{}
+		expected int
+	}{
+		{"abcd", 3},
+		{[]string{"w"}, 1},
+		{map[string]interface{}{"A": 111}, 1},
+		{"a", 1},
+		{[]string{"a", "b", "c"}, 2},
+		{map[string]interface{}{"a": 123, "b": 223, "c": 323}, 2},
+	}
+
+	for _, data := range testData {
+		if !assert.True(t, GreaterOrEqualsLength(t, data.expected, data.raw)) {
+			t.Fail()
+		}
+	}
+}
