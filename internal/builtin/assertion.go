@@ -71,7 +71,7 @@ func GreaterThanLength(t assert.TestingT, expected, actual interface{}, msgAndAr
 	if !ok {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
 	}
-	if l > length {
+	if l <= length {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" should be more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
 	}
 	return true
@@ -86,7 +86,7 @@ func GreaterOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgA
 	if !ok {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
 	}
-	if l >= length {
+	if l < length {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no less than %d item(s), but has %d", actual, length, l), msgAndArgs...)
 	}
 	return true
@@ -101,7 +101,7 @@ func LessThanLength(t assert.TestingT, expected, actual interface{}, msgAndArgs 
 	if !ok {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
 	}
-	if l < length {
+	if l >= length {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" should be less than %d item(s), but has %d", actual, length, l), msgAndArgs...)
 	}
 	return true
@@ -116,7 +116,7 @@ func LessOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgAndA
 	if !ok {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
 	}
-	if l <= length {
+	if l > length {
 		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
 	}
 	return true
