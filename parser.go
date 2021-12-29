@@ -259,25 +259,13 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func getMappingFunction(funcName string) (interface{}, error) {
-	if function, ok := builtin.Functions[funcName]; ok {
-		// function is builtin
-		return function, nil
-	} else if contains([]string{"parameterize", "P"}, funcName) {
-		// parameterize function
-		return loadFromCSV, nil
-	} else {
-		// function not found
-		return nil, fmt.Errorf("function %s is not found", funcName)
-	}
-}
-
 // callFunc call function with arguments
 // only support return at most one result value
 func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
-	function, err := getMappingFunction(funcName)
-	if err != nil {
-		return nil, err
+	function, ok := builtin.Functions[funcName]
+	if !ok {
+		// function not found
+		return nil, fmt.Errorf("function %s is not found", funcName)
 	}
 	funcValue := reflect.ValueOf(function)
 	if funcValue.Kind() != reflect.Func {

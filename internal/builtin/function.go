@@ -3,6 +3,7 @@ package builtin
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/httprunner/hrp"
 	"math"
 	"math/rand"
 	"time"
@@ -14,7 +15,8 @@ var Functions = map[string]interface{}{
 	"gen_random_string": genRandomString, // call with one argument
 	"max":               math.Max,        // call with two arguments
 	"md5":               MD5,
-	"getAppVersion":     getAppVersion, // test
+	"parameterize":      hrp.LoadFromCSV,
+	"P":                 hrp.LoadFromCSV,
 }
 
 func init() {
@@ -44,8 +46,4 @@ func MD5(str string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(str))
 	return hex.EncodeToString(hasher.Sum(nil))
-}
-
-func getAppVersion() []float64 {
-	return []float64{3.1, 3.3}
 }
