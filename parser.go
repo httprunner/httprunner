@@ -553,12 +553,12 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		case reflect.String:
 			parsedParameterContent, err := parseData(rawValue.Interface(), variablesMapping)
 			if err != nil {
-				log.Error().Interface("parameter", parameters).Msg("[parseParameters] parse parameter error")
+				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
 				return nil, err
 			}
 			parsedParameterRawValue := reflect.ValueOf(parsedParameterContent)
 			if parsedParameterRawValue.Kind() != reflect.Slice {
-				log.Error().Interface("parameter", parameters).Msg("[parseParameters] parsed parameter content should be Slice, got %v")
+				log.Error().Interface("parameterContent", parsedParameterRawValue).Msg("[parseParameters] parsed parameter content should be Slice, got %v")
 				return nil, errors.New("parsed parameter content should be Slice")
 			}
 			for i := 0; i < parsedParameterRawValue.Len(); i++ {
@@ -579,7 +579,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 				} else if elem.Kind() == reflect.Slice {
 					// e.g. [["test1", "passwd1"], ["test2", "passwd2"]] -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
 					if len(parameterNameSlice) != elem.Len() {
-						log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
+						log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
 						return nil, errors.New("parameter name Slice and parameter cjntent Slice should have the same length")
 					} else {
 						for j := 0; j < elem.Len(); j++ {
@@ -603,7 +603,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 				if elem.Kind() == reflect.Slice {
 					// e.g. username-password: [["test1", "passwd1"], ["test2", "passwd2"]]
 					if len(parameterNameSlice) != elem.Len() {
-						log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
+						log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
 						return nil, errors.New("parameter name Slice and parameter content Slice should have the same length")
 					}
 					for j := 0; j < elem.Len(); j++ {
