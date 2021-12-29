@@ -250,15 +250,6 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if strings.EqualFold(a, e) {
-			return true
-		}
-	}
-	return false
-}
-
 // callFunc call function with arguments
 // only support return at most one result value
 func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
