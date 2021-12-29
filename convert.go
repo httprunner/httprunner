@@ -96,7 +96,7 @@ func loadFromYAML(path string) (*TCase, error) {
 	return tc, err
 }
 
-func loadFromCSV(path string) []map[string]string {
+func LoadFromCSV(path string) []map[string]string {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
