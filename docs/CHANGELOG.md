@@ -1,15 +1,19 @@
 # Release History
 
-## v0.3.0 (2021-12-22)
+## v0.3.1 (2021-12-30)
+
+- feat: set ulimit to 10240 before load testing
+- fix: concurrent map writes in load testing
+
+## v0.3.0 (2021-12-24)
 
 - feat: implement `transaction` mechanism for load test
 - feat: continue running next step when failure occurs with `--continue-on-failure` flag, default to failfast
-- feat: spawn workers with `--spawn-rate` flag
-- refactor: fork [boomer] as sub module
 - feat: report GA events with version
-- feat: run load test with the given limit and burst as rate limiter
+- feat: run load test with the given limit and burst as rate limiter, use `--spawn-count`, `--spawn-rate` and `--request-increase-rate` flag
+- feat: report runner state to prometheus
+- refactor: fork [boomer] as submodule initially and made a lot of changes
 - change: update API models
-- feat: report runner state
 
 ## v0.2.2 (2021-12-07)
 

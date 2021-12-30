@@ -60,19 +60,20 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 }
 
 func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
+	hrpRunner := NewRunner(nil).SetDebug(b.debug)
 	config := testcase.Config.ToStruct()
 	return &boomer.Task{
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
-			runner := NewRunner(nil).SetDebug(b.debug).Reset()
+			runner := hrpRunner.newCaseRunner(testcase)
 
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
 			startTime := time.Now()
-			for _, step := range testcase.TestSteps {
-				stepData, err := runner.runStep(step, testcase.Config)
+			for index, step := range testcase.TestSteps {
+				stepData, err := runner.runStep(index)
 				if err != nil {
 					// step failed
 					var elapsed int64
@@ -85,8 +86,8 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					testcaseSuccess = false
 					transactionSuccess = false
 
-					if runner.failfast {
-						log.Error().Err(err).Msg("abort running due to failfast setting")
+					if runner.hrpRunner.failfast {
+						log.Error().Msg("abort running due to failfast setting")
 						break
 					}
 					log.Warn().Err(err).Msg("run step failed, continue next step")
@@ -115,7 +116,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			for name, transaction := range runner.transactions {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
-					duration := endTime.Sub(transaction[TransactionStart])
+					duration := endTime.Sub(transaction[transactionStart])
 					b.RecordTransaction(name, transactionSuccess, duration.Milliseconds(), 0)
 				}
 			}
