@@ -53,12 +53,13 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 
 func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	hrpRunner := NewRunner(nil).SetDebug(b.debug)
-	runner := hrpRunner.newCaseRunner(testcase)
 	config := testcase.Config.ToStruct()
 	return &boomer.Task{
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
+			runner := hrpRunner.newCaseRunner(testcase)
+
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
