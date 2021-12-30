@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"path/filepath"
+
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 func (tc *TCase) Dump2JSON(path string) error {

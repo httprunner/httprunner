@@ -69,7 +69,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			var transactionSuccess = true // flag current transaction result
 
 			cfg := testcase.Config.ToStruct()
-			if it := cfg.ParameterIterator; it.HasNext() {
+			if it := cfg.ParametersSetting.Iterator; it.HasNext() {
 				cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
 			}
 			startTime := time.Now()

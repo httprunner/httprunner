@@ -2,7 +2,6 @@ package hrp
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -25,21 +24,26 @@ type TConfig struct {
 	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
-	ParameterIterator *Iterator              `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"`
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 }
 
 type TParamsConfig struct {
-	Strategy  string `json:"strategy,omitempty" yaml:"strategy,omitempty"`
-	Iteration int    `json:"iteration,omitempty" yaml:"iteration,omitempty"`
+	Strategy  string    `json:"strategy,omitempty" yaml:"strategy,omitempty"`
+	Iteration int       `json:"iteration,omitempty" yaml:"iteration,omitempty"`
+	Iterator  *Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"`
 }
+
+const (
+	strategyRandom     string = "random"
+	strategySequential string = "Sequential"
+)
 
 type paramsType []map[string]interface{}
 
 type Iterator struct {
 	data      paramsType
-	strategy  string
+	strategy  string // random, sequential
 	iteration int
 	index     int
 }
@@ -64,7 +68,7 @@ func (iter *Iterator) Next() (value map[string]interface{}) {
 	if len(iter.data) == 0 {
 		return map[string]interface{}{}
 	}
-	if strings.ToLower(iter.strategy) == "random" {
+	if iter.strategy == strategyRandom {
 		randSource := rand.New(rand.NewSource(time.Now().Unix()))
 		randIndex := randSource.Intn(len(iter.data))
 		value = iter.data[randIndex]
