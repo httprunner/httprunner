@@ -2,6 +2,7 @@
 
 ## v0.4.0 (2021-12-30)
 
+- feat: set ulimit to 10240 before load testing
 - fix: concurrent map writes in load testing
 
 ## v0.3.0 (2021-12-24)
