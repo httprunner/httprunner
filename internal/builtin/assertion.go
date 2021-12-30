@@ -87,7 +87,7 @@ func convertInt(value interface{}) (int, error) {
 	}
 }
 
-// Contains assert whether actual
+// Contains assert whether actual element contains expected element
 func Contains(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	return assert.Contains(t, actual, expected, msgAndArgs)
 }
