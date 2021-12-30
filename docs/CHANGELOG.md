@@ -1,5 +1,25 @@
 # Release History
 
+## v0.3.1 (2021-12-30)
+
+- feat: set ulimit to 10240 before load testing
+- fix: concurrent map writes in load testing
+
+## v0.3.0 (2021-12-24)
+
+- feat: implement `transaction` mechanism for load test
+- feat: continue running next step when failure occurs with `--continue-on-failure` flag, default to failfast
+- feat: report GA events with version
+- feat: run load test with the given limit and burst as rate limiter, use `--spawn-count`, `--spawn-rate` and `--request-increase-rate` flag
+- feat: report runner state to prometheus
+- refactor: fork [boomer] as submodule initially and made a lot of changes
+- change: update API models
+
+## v0.2.2 (2021-12-07)
+
+- refactor: update models to make API more concise
+- change: remove mkdocs, move to [repo](https://github.com/httprunner/httprunner.github.io)
+
 ## v0.2.1 (2021-12-02)
 
 - feat: push load testing metrics to Prometheus Pushgateway

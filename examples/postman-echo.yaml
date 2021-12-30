@@ -63,6 +63,7 @@ teststeps:
           msg: assert response body data
         - check: body.json
           assert: equals
+          expect: null
           msg: assert response body json
         - check: body.url
           assert: equals
@@ -134,6 +135,7 @@ teststeps:
           msg: assert response body data
         - check: body.json
           assert: equals
+          expect: null
           msg: assert response body json
         - check: body.url
           assert: equals
@@ -171,6 +173,7 @@ teststeps:
           msg: assert response body data
         - check: body.json
           assert: equals
+          expect: null
           msg: assert response body json
         - check: body.url
           assert: equals
@@ -208,6 +211,7 @@ teststeps:
           msg: assert response body data
         - check: body.json
           assert: equals
+          expect: null
           msg: assert response body json
         - check: body.url
           assert: equals

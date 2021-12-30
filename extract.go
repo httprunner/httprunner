@@ -2,30 +2,32 @@ package hrp
 
 import "fmt"
 
-// implements IStep interface
-type stepRequestExtraction struct {
+// StepRequestExtraction implements IStep interface.
+type StepRequestExtraction struct {
 	step *TStep
 }
 
-func (s *stepRequestExtraction) WithJmesPath(jmesPath string, varName string) *stepRequestExtraction {
+// WithJmesPath sets the JMESPath expression to extract from the response.
+func (s *StepRequestExtraction) WithJmesPath(jmesPath string, varName string) *StepRequestExtraction {
 	s.step.Extract[varName] = jmesPath
 	return s
 }
 
-func (s *stepRequestExtraction) Validate() *stepRequestValidation {
-	return &stepRequestValidation{
+// Validate switches to step validation.
+func (s *StepRequestExtraction) Validate() *StepRequestValidation {
+	return &StepRequestValidation{
 		step: s.step,
 	}
 }
 
-func (s *stepRequestExtraction) Name() string {
+func (s *StepRequestExtraction) Name() string {
 	return s.step.Name
 }
 
-func (s *stepRequestExtraction) Type() string {
+func (s *StepRequestExtraction) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestExtraction) ToStruct() *TStep {
+func (s *StepRequestExtraction) ToStruct() *TStep {
 	return s.step
 }

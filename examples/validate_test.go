@@ -8,13 +8,11 @@ import (
 
 func TestCaseValidateStep(t *testing.T) {
 	testcase := &hrp.TestCase{
-		Config: hrp.TConfig{
-			Name:    "run request with validation",
-			BaseURL: "https://postman-echo.com",
-			Verify:  false,
-		},
+		Config: hrp.NewConfig("run request with validation").
+			SetBaseURL("https://postman-echo.com").
+			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
-			hrp.Step("get with params").
+			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":               "bar1",
 					"agent":              "HttpRunnerPlus",
@@ -32,7 +30,7 @@ func TestCaseValidateStep(t *testing.T) {
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").                                                // assert response json body with jmespath
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
 				AssertEqual("body.headers.\"user-agent\"", "HttpRunnerPlus", "check header user agent"),
-			hrp.Step("get with params").
+			hrp.NewStep("get with params").
 				WithVariables(map[string]interface{}{
 					"var1":  "bar1",
 					"agent": "HttpRunnerPlus",

@@ -3,30 +3,33 @@ package hrp
 import (
 	"time"
 
-	"github.com/myzhan/boomer"
+	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
-	b := &Boomer{
+func NewBoomer(spawnCount int, spawnRate float64) *hrpBoomer {
+	b := &hrpBoomer{
 		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		debug:  false,
 	}
 	return b
 }
 
-type Boomer struct {
+type hrpBoomer struct {
 	*boomer.Boomer
 	debug bool
 }
 
-func (b *Boomer) SetDebug(debug bool) *Boomer {
+// SetDebug configures whether to log HTTP request and response content.
+func (b *hrpBoomer) SetDebug(debug bool) *hrpBoomer {
 	b.debug = debug
 	return b
 }
 
-func (b *Boomer) Run(testcases ...ITestCase) {
+// Run starts to run load test for one or multiple testcases.
+func (b *hrpBoomer) Run(testcases ...ITestCase) {
 	event := ga.EventTracking{
 		Category: "RunLoadTests",
 		Action:   "hrp boom",
@@ -48,28 +51,70 @@ func (b *Boomer) Run(testcases ...ITestCase) {
 	b.Boomer.Run(taskSlice...)
 }
 
-func (b *Boomer) Quit() {
-	b.Boomer.Quit()
-}
-
-func (b *Boomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
+func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
+	hrpRunner := NewRunner(nil).SetDebug(b.debug)
+	config := testcase.Config.ToStruct()
 	return &boomer.Task{
-		Name:   testcase.Config.Name,
-		Weight: testcase.Config.Weight,
+		Name:   config.Name,
+		Weight: config.Weight,
 		Fn: func() {
-			runner := NewRunner(nil).SetDebug(b.debug)
-			config := &testcase.Config
-			for _, step := range testcase.TestSteps {
-				var err error
-				start := time.Now()
-				stepData, err := runner.runStep(step, config)
-				elapsed := time.Since(start).Nanoseconds() / int64(time.Millisecond)
-				if err == nil {
-					b.RecordSuccess(step.Type(), step.Name(), elapsed, stepData.ResponseLength)
-				} else {
+			runner := hrpRunner.newCaseRunner(testcase)
+
+			testcaseSuccess := true       // flag whole testcase result
+			var transactionSuccess = true // flag current transaction result
+
+			startTime := time.Now()
+			for index, step := range testcase.TestSteps {
+				stepData, err := runner.runStep(index)
+				if err != nil {
+					// step failed
+					var elapsed int64
+					if stepData != nil {
+						elapsed = stepData.elapsed
+					}
 					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+
+					// update flag
+					testcaseSuccess = false
+					transactionSuccess = false
+
+					if runner.hrpRunner.failfast {
+						log.Error().Msg("abort running due to failfast setting")
+						break
+					}
+					log.Warn().Err(err).Msg("run step failed, continue next step")
+					continue
+				}
+
+				// step success
+				if stepData.stepType == stepTypeTransaction {
+					// transaction
+					// FIXME: support nested transactions
+					if stepData.elapsed != 0 { // only record when transaction ends
+						b.RecordTransaction(stepData.name, transactionSuccess, stepData.elapsed, 0)
+						transactionSuccess = true // reset flag for next transaction
+					}
+				} else if stepData.stepType == stepTypeRendezvous {
+					// rendezvous
+					// TODO: implement rendezvous in boomer
+				} else {
+					// request or testcase step
+					b.RecordSuccess(step.Type(), step.Name(), stepData.elapsed, stepData.contentSize)
 				}
 			}
+			endTime := time.Now()
+
+			// report duration for transaction without end
+			for name, transaction := range runner.transactions {
+				if len(transaction) == 1 {
+					// if transaction end time not exists, use testcase end time instead
+					duration := endTime.Sub(transaction[transactionStart])
+					b.RecordTransaction(name, transactionSuccess, duration.Milliseconds(), 0)
+				}
+			}
+
+			// report testcase as a whole Action transaction, inspired by LoadRunner
+			b.RecordTransaction("Action", testcaseSuccess, endTime.Sub(startTime).Milliseconds(), 0)
 		},
 	}
 }
