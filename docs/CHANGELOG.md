@@ -1,5 +1,7 @@
 # Release History
 
+-feat: add more plentiful response assertion methods
+
 ## v0.3.0 (2021-12-22)
 
 - feat: implement `transaction` mechanism for load test
