@@ -70,16 +70,16 @@ const (
 	stepTypeRendezvous  stepType = "rendezvous"
 )
 
-type TransactionType string
+type transactionType string
 
 const (
-	TransactionStart TransactionType = "start"
-	TransactionEnd   TransactionType = "end"
+	transactionStart transactionType = "start"
+	transactionEnd   transactionType = "end"
 )
 
 type Transaction struct {
 	Name string          `json:"name" yaml:"name"`
-	Type TransactionType `json:"type" yaml:"type"`
+	Type transactionType `json:"type" yaml:"type"`
 }
 type Rendezvous struct {
 	Name    string  `json:"name" yaml:"name"`                           // required
