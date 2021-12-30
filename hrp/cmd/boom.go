@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"runtime"
 	"syscall"
 	"time"
 
@@ -74,6 +75,10 @@ func init() {
 // set resource limit
 // ulimit -n 10240
 func setUlimit() {
+	if runtime.GOOS == "windows" {
+		log.Warn().Msg("windows does not support setting ulimit")
+		return
+	}
 	var rLimit syscall.Rlimit
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
