@@ -28,11 +28,11 @@ func Run(testcases ...ITestCase) error {
 }
 
 // NewRunner constructs a new runner instance.
-func NewRunner(t *testing.T) *hrpRunner {
+func NewRunner(t *testing.T) *HRPRunner {
 	if t == nil {
 		t = &testing.T{}
 	}
-	return &hrpRunner{
+	return &HRPRunner{
 		t:        t,
 		failfast: true,  // default to failfast
 		debug:    false, // default to turn off debug
@@ -45,7 +45,7 @@ func NewRunner(t *testing.T) *hrpRunner {
 	}
 }
 
-type hrpRunner struct {
+type HRPRunner struct {
 	t        *testing.T
 	failfast bool
 	debug    bool
@@ -53,21 +53,21 @@ type hrpRunner struct {
 }
 
 // SetFailfast configures whether to stop running when one step fails.
-func (r *hrpRunner) SetFailfast(failfast bool) *hrpRunner {
+func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 	log.Info().Bool("failfast", failfast).Msg("[init] SetFailfast")
 	r.failfast = failfast
 	return r
 }
 
 // SetDebug configures whether to log HTTP request and response content.
-func (r *hrpRunner) SetDebug(debug bool) *hrpRunner {
+func (r *HRPRunner) SetDebug(debug bool) *HRPRunner {
 	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
 	r.debug = debug
 	return r
 }
 
 // SetProxyUrl configures the proxy URL, which is usually used to capture HTTP packets for debugging.
-func (r *hrpRunner) SetProxyUrl(proxyUrl string) *hrpRunner {
+func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
 	p, err := url.Parse(proxyUrl)
 	if err != nil {
@@ -82,7 +82,7 @@ func (r *hrpRunner) SetProxyUrl(proxyUrl string) *hrpRunner {
 }
 
 // Run starts to execute one or multiple testcases.
-func (r *hrpRunner) Run(testcases ...ITestCase) error {
+func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	event := ga.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
@@ -106,7 +106,7 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 	return nil
 }
 
-func (r *hrpRunner) newCaseRunner(testcase *TestCase) *caseRunner {
+func (r *HRPRunner) newCaseRunner(testcase *TestCase) *caseRunner {
 	caseRunner := &caseRunner{
 		TestCase:  testcase,
 		hrpRunner: r,
@@ -119,7 +119,7 @@ func (r *hrpRunner) newCaseRunner(testcase *TestCase) *caseRunner {
 // each testcase has its own caseRunner instance and share session variables.
 type caseRunner struct {
 	*TestCase
-	hrpRunner        *hrpRunner
+	hrpRunner        *HRPRunner
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
