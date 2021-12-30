@@ -692,7 +692,7 @@ func TestParseParametersError(t *testing.T) {
 	}
 }
 
-func TestHandleSlice(t *testing.T) {
+func TestParseSlice(t *testing.T) {
 	testData := []struct {
 		rawVar1 string
 		rawVar2 interface{}
@@ -724,8 +724,30 @@ func TestHandleSlice(t *testing.T) {
 		},
 	}
 	for _, data := range testData {
-		value, _ := handleSlice(data.rawVar1, data.rawVar2)
+		value, _ := parseSlice(data.rawVar1, data.rawVar2)
 		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
+	}
+}
+
+func TestParseSliceError(t *testing.T) {
+	testData := []struct {
+		rawVar1 string
+		rawVar2 interface{}
+	}{
+		{
+			"app_version",
+			123,
+		},
+		{
+			"app_version",
+			"123",
+		},
+	}
+	for _, data := range testData {
+		_, err := parseSlice(data.rawVar1, data.rawVar2)
+		if !assert.Error(t, err) {
 			t.Fail()
 		}
 	}

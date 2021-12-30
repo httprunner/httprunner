@@ -46,15 +46,12 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 			panic(err)
 		}
 		cfg := testcase.Config.ToStruct()
-		parameters := getParameters(testcase.Config)
-		if parameters == nil {
-			parameters = []map[string]interface{}{{}}
+		err = initParameterIterator(cfg, "boomer")
+		if err != nil {
+			panic(err)
 		}
-		for _, parameter := range parameters {
-			cfg.Variables = mergeVariables(parameter, cfg.Variables)
-			task := b.convertBoomerTask(testcase)
-			taskSlice = append(taskSlice, task)
-		}
+		task := b.convertBoomerTask(testcase)
+		taskSlice = append(taskSlice, task)
 	}
 	b.Boomer.Run(taskSlice...)
 }
@@ -71,6 +68,10 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
+			cfg := testcase.Config.ToStruct()
+			if it := cfg.ParameterIterator; it.HasNext() {
+				cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+			}
 			startTime := time.Now()
 			for index, step := range testcase.TestSteps {
 				stepData, err := runner.runStep(index)

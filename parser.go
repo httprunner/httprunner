@@ -3,16 +3,13 @@ package hrp
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"github.com/maja42/goval"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/maja42/goval"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
 )
@@ -496,19 +493,6 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
-func shuffleCartesianProduct(slice []map[string]interface{}) {
-	if len(slice) == 0 {
-		return
-	}
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	for len(slice) > 0 {
-		n := len(slice)
-		randIndex := r.Intn(n)
-		slice[n-1], slice[randIndex] = slice[randIndex], slice[n-1]
-		slice = slice[:n-1]
-	}
-}
-
 func genCartesianProduct(params [][]map[string]interface{}) []map[string]interface{} {
 	if len(params) == 0 {
 		return nil
@@ -525,19 +509,6 @@ func genCartesianProduct(params [][]map[string]interface{}) []map[string]interfa
 		cartesianProduct = tempProduct
 	}
 	return cartesianProduct
-}
-
-func getParameters(config IConfig) []map[string]interface{} {
-	cfg := config.ToStruct()
-	// parse config parameters
-	parsedParams, err := parseParameters(cfg.Parameters, cfg.Variables)
-	if err != nil {
-		log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
-	}
-	if cfg.ParametersSetting["strategy"] != nil && strings.ToLower(cfg.ParametersSetting["strategy"].(string)) == "random" {
-		shuffleCartesianProduct(parsedParams)
-	}
-	return parsedParams
 }
 
 func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]map[string]interface{}, error) {
@@ -562,9 +533,9 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 				log.Error().Interface("parameterContent", parsedParameterRawValue).Msg("[parseParameters] parsed parameter content should be Slice, got %v")
 				return nil, errors.New("parsed parameter content should be Slice")
 			}
-			parameterSlice, err = handleSlice(k, parsedParameterRawValue.Interface())
+			parameterSlice, err = parseSlice(k, parsedParameterRawValue.Interface())
 		case reflect.Slice:
-			parameterSlice, err = handleSlice(k, rawValue.Interface())
+			parameterSlice, err = parseSlice(k, rawValue.Interface())
 		default:
 			log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be Slice or Text(variables or functions call)")
 			return nil, errors.New("parameter content should be Slice or Text(variables or functions call)")
@@ -577,10 +548,13 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 	return genCartesianProduct(parsedParametersSlice), nil
 }
 
-func handleSlice(parameterName string, parameterContent interface{}) ([]map[string]interface{}, error) {
+func parseSlice(parameterName string, parameterContent interface{}) ([]map[string]interface{}, error) {
 	parameterNameSlice := strings.Split(parameterName, "-")
 	var parameterSlice []map[string]interface{}
 	parameterContentSlice := reflect.ValueOf(parameterContent)
+	if parameterContentSlice.Kind() != reflect.Slice {
+		return nil, errors.New("parameterContent should be Slice")
+	}
 	for i := 0; i < parameterContentSlice.Len(); i++ {
 		parameterMap := make(map[string]interface{})
 		elem := reflect.ValueOf(parameterContentSlice.Index(i).Interface())
@@ -619,4 +593,32 @@ func handleSlice(parameterName string, parameterContent interface{}) ([]map[stri
 		parameterSlice = append(parameterSlice, parameterMap)
 	}
 	return parameterSlice, nil
+}
+
+func initParameterIterator(cfg *TConfig, mode string) (err error) {
+	var parameters paramsType
+	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
+	cfg.ParameterIterator = parameters.Iterator()
+	if err != nil {
+		return err
+	}
+	// parse config parameters setting
+	if cfg.ParametersSetting == nil {
+		cfg.ParametersSetting = &TParamsConfig{}
+	}
+	if len(cfg.ParametersSetting.Strategy) == 0 {
+		cfg.ParametersSetting.Strategy = "sequential"
+	} else {
+		cfg.ParametersSetting.Strategy = strings.ToLower(cfg.ParametersSetting.Strategy)
+	}
+	cfg.ParameterIterator.strategy = cfg.ParametersSetting.Strategy
+	if mode == "boomer" {
+		cfg.ParametersSetting.Iteration = -1
+		cfg.ParameterIterator.iteration = cfg.ParametersSetting.Iteration
+	} else {
+		if cfg.ParametersSetting.Iteration != 0 {
+			cfg.ParameterIterator.iteration = cfg.ParametersSetting.Iteration
+		}
+	}
+	return nil
 }

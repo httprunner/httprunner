@@ -5,6 +5,7 @@ config:
         username-password: ${parameterize(examples/account.csv)}
     parameters_setting:
         strategy: random
+        iteration: 1
     variables:
         app_version: f1
     base_url: "https://postman-echo.com"
