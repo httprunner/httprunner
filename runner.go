@@ -143,7 +143,7 @@ func (r *caseRunner) run() error {
 	}
 	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
-	for it := cfg.ParameterIterator; it.HasNext(); {
+	for it := cfg.ParametersSetting.Iterator; it.HasNext(); {
 		cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
 		r.startTime = time.Now()
 		for index := range r.TestCase.TestSteps {

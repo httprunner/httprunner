@@ -4,13 +4,14 @@ import (
 	"crypto/md5"
 	"encoding/csv"
 	"encoding/hex"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"math"
 	"math/rand"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 var Functions = map[string]interface{}{
@@ -19,8 +20,8 @@ var Functions = map[string]interface{}{
 	"gen_random_string": genRandomString, // call with one argument
 	"max":               math.Max,        // call with two arguments
 	"md5":               MD5,
-	"parameterize":      LoadFromCSV,
-	"P":                 LoadFromCSV,
+	"parameterize":      loadFromCSV,
+	"P":                 loadFromCSV,
 }
 
 func init() {
@@ -52,7 +53,7 @@ func MD5(str string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func LoadFromCSV(path string) []map[string]interface{} {
+func loadFromCSV(path string) []map[string]interface{} {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")

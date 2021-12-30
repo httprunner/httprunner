@@ -3,13 +3,14 @@ package hrp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/maja42/goval"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/maja42/goval"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
 )
@@ -522,23 +523,25 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		rawValue := reflect.ValueOf(v)
 		switch rawValue.Kind() {
 		case reflect.String:
+			// e.g. username-password: ${parameterize(examples/account.csv)} -> [{"username": "test1", "password": "111111"}, {"username": "test2", "password": "222222"}]
 			var parsedParameterContent interface{}
-			parsedParameterContent, err = parseData(rawValue.Interface(), variablesMapping)
+			parsedParameterContent, err = parseString(rawValue.String(), variablesMapping)
 			if err != nil {
 				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
 				return nil, err
 			}
 			parsedParameterRawValue := reflect.ValueOf(parsedParameterContent)
 			if parsedParameterRawValue.Kind() != reflect.Slice {
-				log.Error().Interface("parameterContent", parsedParameterRawValue).Msg("[parseParameters] parsed parameter content should be Slice, got %v")
-				return nil, errors.New("parsed parameter content should be Slice")
+				log.Error().Interface("parameterContent", parsedParameterRawValue).Msg("[parseParameters] parsed parameter content should be slice")
+				return nil, errors.New("parsed parameter content should be slice")
 			}
 			parameterSlice, err = parseSlice(k, parsedParameterRawValue.Interface())
 		case reflect.Slice:
+			// e.g. user_agent: ["iOS/10.1", "iOS/10.2"] -> [{"user_agent": "iOS/10.1"}, {"user_agent": "iOS/10.2"}]
 			parameterSlice, err = parseSlice(k, rawValue.Interface())
 		default:
-			log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be Slice or Text(variables or functions call)")
-			return nil, errors.New("parameter content should be Slice or Text(variables or functions call)")
+			log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be slice or text(functions call)")
+			return nil, errors.New("parameter content should be slice or text(functions call)")
 		}
 		if err != nil {
 			return nil, err
@@ -553,7 +556,7 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 	var parameterSlice []map[string]interface{}
 	parameterContentSlice := reflect.ValueOf(parameterContent)
 	if parameterContentSlice.Kind() != reflect.Slice {
-		return nil, errors.New("parameterContent should be Slice")
+		return nil, errors.New("parameterContent should be slice")
 	}
 	for i := 0; i < parameterContentSlice.Len(); i++ {
 		parameterMap := make(map[string]interface{})
@@ -574,8 +577,8 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 			// e.g. "username-password": [["test1", "passwd1"], ["test2", "passwd2"]]
 			// -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
 			if len(parameterNameSlice) != elem.Len() {
-				log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
-				return nil, errors.New("parameter name Slice and parameter cjntent Slice should have the same length")
+				log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name slice and parameter content slice should have the same length")
+				return nil, errors.New("parameter name slice and parameter content slice should have the same length")
 			} else {
 				for j := 0; j < elem.Len(); j++ {
 					parameterMap[parameterNameSlice[j]] = elem.Index(j).Interface()
@@ -598,7 +601,7 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	var parameters paramsType
 	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
-	cfg.ParameterIterator = parameters.Iterator()
+	cfg.ParametersSetting.Iterator = parameters.Iterator()
 	if err != nil {
 		return err
 	}
@@ -607,17 +610,17 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 		cfg.ParametersSetting = &TParamsConfig{}
 	}
 	if len(cfg.ParametersSetting.Strategy) == 0 {
-		cfg.ParametersSetting.Strategy = "sequential"
+		cfg.ParametersSetting.Strategy = strategySequential
 	} else {
 		cfg.ParametersSetting.Strategy = strings.ToLower(cfg.ParametersSetting.Strategy)
 	}
-	cfg.ParameterIterator.strategy = cfg.ParametersSetting.Strategy
+	cfg.ParametersSetting.Iterator.strategy = cfg.ParametersSetting.Strategy
 	if mode == "boomer" {
 		cfg.ParametersSetting.Iteration = -1
-		cfg.ParameterIterator.iteration = cfg.ParametersSetting.Iteration
+		cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
 	} else {
 		if cfg.ParametersSetting.Iteration != 0 {
-			cfg.ParameterIterator.iteration = cfg.ParametersSetting.Iteration
+			cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
 		}
 	}
 	return nil
