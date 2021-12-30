@@ -1,6 +1,10 @@
 # Release History
 
-## v0.3.0 (2021-12-22)
+## v0.4.0 (2021-12-30)
+
+- fix: concurrent map writes in load testing
+
+## v0.3.0 (2021-12-24)
 
 - feat: implement `transaction` mechanism for load test
 - feat: continue running next step when failure occurs with `--continue-on-failure` flag, default to failfast
