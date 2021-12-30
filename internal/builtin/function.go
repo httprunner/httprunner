@@ -52,7 +52,7 @@ func MD5(str string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func LoadFromCSV(path string) []map[string]string {
+func LoadFromCSV(path string) []map[string]interface{} {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
@@ -71,9 +71,9 @@ func LoadFromCSV(path string) []map[string]string {
 		log.Error().Err(err).Msg("parse csv file failed")
 		panic(err)
 	}
-	var result []map[string]string
+	var result []map[string]interface{}
 	for i := 1; i < len(content); i++ {
-		row := make(map[string]string)
+		row := make(map[string]interface{})
 		for j := 0; j < len(content[i]); j++ {
 			row[content[0][j]] = content[i][j]
 		}

@@ -3,7 +3,6 @@ config:
     parameters:
         user_agent: ["iOS/10.1", "iOS/10.2"]
         username-password: ${parameterize(examples/account.csv)}
-        app_version: ${getAppVersion()}
     parameters_setting:
         strategy: random
     variables:
