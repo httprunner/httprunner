@@ -497,7 +497,7 @@ func findallVariables(raw string) variableSet {
 }
 
 func shuffleCartesianProduct(slice []map[string]interface{}) {
-	if slice == nil || len(slice) == 0 {
+	if len(slice) == 0 {
 		return
 	}
 	r := rand.New(rand.NewSource(time.Now().Unix()))
@@ -510,7 +510,7 @@ func shuffleCartesianProduct(slice []map[string]interface{}) {
 }
 
 func genCartesianProduct(params [][]map[string]interface{}) []map[string]interface{} {
-	if params == nil || len(params) == 0 {
+	if len(params) == 0 {
 		return nil
 	}
 	var cartesianProduct []map[string]interface{}
@@ -541,17 +541,18 @@ func getParameters(config IConfig) []map[string]interface{} {
 }
 
 func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]map[string]interface{}, error) {
-	if parameters == nil || len(parameters) == 0 {
+	if len(parameters) == 0 {
 		return nil, nil
 	}
 	var parsedParametersSlice [][]map[string]interface{}
+	var err error
 	for k, v := range parameters {
-		parameterNameSlice := strings.Split(k, "-")
 		var parameterSlice []map[string]interface{}
 		rawValue := reflect.ValueOf(v)
 		switch rawValue.Kind() {
 		case reflect.String:
-			parsedParameterContent, err := parseData(rawValue.Interface(), variablesMapping)
+			var parsedParameterContent interface{}
+			parsedParameterContent, err = parseData(rawValue.Interface(), variablesMapping)
 			if err != nil {
 				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
 				return nil, err
@@ -561,69 +562,61 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 				log.Error().Interface("parameterContent", parsedParameterRawValue).Msg("[parseParameters] parsed parameter content should be Slice, got %v")
 				return nil, errors.New("parsed parameter content should be Slice")
 			}
-			for i := 0; i < parsedParameterRawValue.Len(); i++ {
-				parameterMap := make(map[string]interface{})
-				// e.g.
-				elem := reflect.ValueOf(parsedParameterRawValue.Index(i).Interface())
-				if elem.Kind() == reflect.Map {
-					// e.g. [{"username": "test1", "password": "passwd1", "other": "111"}, {"username": "test2", "password": "passwd2", "other": ""222}]
-					// -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}] (username, password in parameterNameSlice)
-					for _, key := range parameterNameSlice {
-						if _, ok := elem.Interface().(map[string]string)[key]; ok {
-							parameterMap[key] = elem.MapIndex(reflect.ValueOf(key)).Interface()
-						} else {
-							log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name not found")
-							return nil, errors.New("parameter name not found")
-						}
-					}
-				} else if elem.Kind() == reflect.Slice {
-					// e.g. [["test1", "passwd1"], ["test2", "passwd2"]] -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
-					if len(parameterNameSlice) != elem.Len() {
-						log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
-						return nil, errors.New("parameter name Slice and parameter cjntent Slice should have the same length")
-					} else {
-						for j := 0; j < elem.Len(); j++ {
-							parameterMap[parameterNameSlice[j]] = elem.Index(j).Interface()
-						}
-					}
-				} else {
-					// e.g. ${getAppVersion()} -> [3.1, 3.0] -> [{"app_version": 3.1}, {"app_version": 3.0}]
-					if len(parameterNameSlice) != 1 {
-						log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name slice should have only one element when parameter content is string")
-						return nil, errors.New("parameter name slice should have only one element when parameter content is string")
-					}
-					parameterMap[parameterNameSlice[0]] = elem.Interface()
-				}
-				parameterSlice = append(parameterSlice, parameterMap)
-			}
+			parameterSlice, err = handleSlice(k, parsedParameterRawValue.Interface())
 		case reflect.Slice:
-			for i := 0; i < rawValue.Len(); i++ {
-				parameterMap := make(map[string]interface{})
-				elem := reflect.ValueOf(rawValue.Index(i).Interface())
-				if elem.Kind() == reflect.Slice {
-					// e.g. username-password: [["test1", "passwd1"], ["test2", "passwd2"]]
-					if len(parameterNameSlice) != elem.Len() {
-						log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
-						return nil, errors.New("parameter name Slice and parameter content Slice should have the same length")
-					}
-					for j := 0; j < elem.Len(); j++ {
-						parameterMap[parameterNameSlice[j]] = elem.Index(j).Interface()
-					}
-				} else {
-					// e.g. user_agent: ["iOS/10.1", "iOS/10.2"]
-					if len(parameterNameSlice) != 1 {
-						log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name slice should have only one element when parameter content is string")
-						return nil, errors.New("parameter name slice should have only one element when parameter content is string")
-					}
-					parameterMap[parameterNameSlice[0]] = elem.Interface()
-				}
-				parameterSlice = append(parameterSlice, parameterMap)
-			}
+			parameterSlice, err = handleSlice(k, rawValue.Interface())
 		default:
 			log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be Slice or Text(variables or functions call)")
 			return nil, errors.New("parameter content should be Slice or Text(variables or functions call)")
 		}
+		if err != nil {
+			return nil, err
+		}
 		parsedParametersSlice = append(parsedParametersSlice, parameterSlice)
 	}
 	return genCartesianProduct(parsedParametersSlice), nil
+}
+
+func handleSlice(parameterName string, parameterContent interface{}) ([]map[string]interface{}, error) {
+	parameterNameSlice := strings.Split(parameterName, "-")
+	var parameterSlice []map[string]interface{}
+	parameterContentSlice := reflect.ValueOf(parameterContent)
+	for i := 0; i < parameterContentSlice.Len(); i++ {
+		parameterMap := make(map[string]interface{})
+		elem := reflect.ValueOf(parameterContentSlice.Index(i).Interface())
+		switch elem.Kind() {
+		case reflect.Map:
+			// e.g. "username-password": [{"username": "test1", "password": "passwd1", "other": "111"}, {"username": "test2", "password": "passwd2", "other": ""222}]
+			// -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
+			for _, key := range parameterNameSlice {
+				if _, ok := elem.Interface().(map[string]interface{})[key]; ok {
+					parameterMap[key] = elem.MapIndex(reflect.ValueOf(key)).Interface()
+				} else {
+					log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name not found")
+					return nil, errors.New("parameter name not found")
+				}
+			}
+		case reflect.Slice:
+			// e.g. "username-password": [["test1", "passwd1"], ["test2", "passwd2"]]
+			// -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
+			if len(parameterNameSlice) != elem.Len() {
+				log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name Slice and parameter content Slice should have the same length")
+				return nil, errors.New("parameter name Slice and parameter cjntent Slice should have the same length")
+			} else {
+				for j := 0; j < elem.Len(); j++ {
+					parameterMap[parameterNameSlice[j]] = elem.Index(j).Interface()
+				}
+			}
+		default:
+			// e.g. "app_version": [3.1, 3.0]
+			// -> [{"app_version": 3.1}, {"app_version": 3.0}]
+			if len(parameterNameSlice) != 1 {
+				log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name slice should have only one element when parameter content is string")
+				return nil, errors.New("parameter name slice should have only one element when parameter content is string")
+			}
+			parameterMap[parameterNameSlice[0]] = elem.Interface()
+		}
+		parameterSlice = append(parameterSlice, parameterMap)
+	}
+	return parameterSlice, nil
 }

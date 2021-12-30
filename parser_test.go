@@ -691,3 +691,42 @@ func TestParseParametersError(t *testing.T) {
 		}
 	}
 }
+
+func TestHandleSlice(t *testing.T) {
+	testData := []struct {
+		rawVar1 string
+		rawVar2 interface{}
+		expect  []map[string]interface{}
+	}{
+		{
+			"username-password",
+			[]map[string]interface{}{{"username": "test1", "password": 111111, "other": "111"}, {"username": "test2", "password": 222222, "other": "222"}},
+			[]map[string]interface{}{
+				{"username": "test1", "password": 111111},
+				{"username": "test2", "password": 222222},
+			},
+		},
+		{
+			"username-password",
+			[][]string{{"test1", "111111"}, {"test2", "222222"}},
+			[]map[string]interface{}{
+				{"username": "test1", "password": "111111"},
+				{"username": "test2", "password": "222222"},
+			},
+		},
+		{
+			"app_version",
+			[]float64{3.1, 3.0},
+			[]map[string]interface{}{
+				{"app_version": 3.1},
+				{"app_version": 3.0},
+			},
+		},
+	}
+	for _, data := range testData {
+		value, _ := handleSlice(data.rawVar1, data.rawVar2)
+		if !assert.Equal(t, data.expect, value) {
+			t.Fail()
+		}
+	}
+}
