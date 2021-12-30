@@ -75,6 +75,7 @@ func init() {
 // set resource limit
 // ulimit -n 10240
 func setUlimit() {
+	log.Info().Str("runtime.GOOS", runtime.GOOS).Msg("check GOOS")
 	if runtime.GOOS == "windows" {
 		log.Warn().Msg("windows does not support setting ulimit")
 		return
