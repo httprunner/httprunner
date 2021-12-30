@@ -79,7 +79,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					transactionSuccess = false
 
 					if runner.hrpRunner.failfast {
-						log.Error().Err(err).Msg("abort running due to failfast setting")
+						log.Error().Msg("abort running due to failfast setting")
 						break
 					}
 					log.Warn().Err(err).Msg("run step failed, continue next step")

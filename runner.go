@@ -148,8 +148,7 @@ func (r *caseRunner) run() error {
 		_, err := r.runStep(index)
 		if err != nil {
 			if r.hrpRunner.failfast {
-				log.Error().Err(err).Msg("abort running due to failfast setting")
-				return err
+				return errors.Wrap(err, "abort running due to failfast setting")
 			}
 			log.Warn().Err(err).Msg("run step failed, continue next step")
 		}
