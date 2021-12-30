@@ -6,14 +6,11 @@
         "iOS/10.1",
         "iOS/10.2"
       ],
-      "username1-password1": [
-        ["a", "123"],
-        ["b", "456"]
-      ],
       "username-password": "${parameterize(examples/account.csv)}"
     },
     "parameters_setting": {
-      "strategy": "random"
+      "strategy": "random",
+      "iteration": 1
     },
     "variables": {
       "app_version": "f1"

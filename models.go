@@ -1,5 +1,11 @@
 package hrp
 
+import (
+	"math/rand"
+	"strings"
+	"time"
+)
+
 const (
 	httpGET     string = "GET"
 	httpHEAD    string = "HEAD"
@@ -18,9 +24,54 @@ type TConfig struct {
 	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
 	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ParametersSetting map[string]interface{} `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	ParameterIterator *Iterator              `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"`
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
+}
+
+type TParamsConfig struct {
+	Strategy  string `json:"strategy,omitempty" yaml:"strategy,omitempty"`
+	Iteration int    `json:"iteration,omitempty" yaml:"iteration,omitempty"`
+}
+
+type paramsType []map[string]interface{}
+
+type Iterator struct {
+	data      paramsType
+	strategy  string
+	iteration int
+	index     int
+}
+
+func (params paramsType) Iterator() *Iterator {
+	return &Iterator{
+		data:      params,
+		iteration: len(params),
+		index:     0,
+	}
+}
+
+func (iter *Iterator) HasNext() bool {
+	if iter.iteration == -1 {
+		return true
+	}
+	return iter.index < iter.iteration
+}
+
+func (iter *Iterator) Next() (value map[string]interface{}) {
+	iter.index++
+	if len(iter.data) == 0 {
+		return map[string]interface{}{}
+	}
+	if strings.ToLower(iter.strategy) == "random" {
+		randSource := rand.New(rand.NewSource(time.Now().Unix()))
+		randIndex := randSource.Intn(len(iter.data))
+		value = iter.data[randIndex]
+	} else {
+		value = iter.data[iter.index%len(iter.data)]
+	}
+	return value
 }
 
 // Request represents HTTP request data structure.

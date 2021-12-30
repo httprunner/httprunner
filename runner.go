@@ -141,13 +141,17 @@ func (r *caseRunner) run() error {
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
+	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
-	r.startTime = time.Now()
-	for index := range r.TestCase.TestSteps {
-		_, err := r.runStep(index)
-		if err != nil {
-			if r.hrpRunner.failfast {
-				return errors.Wrap(err, "abort running due to failfast setting")
+	for it := cfg.ParameterIterator; it.HasNext(); {
+		cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+		r.startTime = time.Now()
+		for index := range r.TestCase.TestSteps {
+			_, err := r.runStep(index)
+			if err != nil {
+				if r.hrpRunner.failfast {
+					return errors.Wrap(err, "abort running due to failfast setting")
+				}
 			}
 		}
 	}
@@ -482,6 +486,12 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 		return err
 	}
 	cfg.Variables = parsedVariables
+	// parse config parameters
+	err = initParameterIterator(cfg, "runner")
+	if err != nil {
+		log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
+		return err
+	}
 	// parse config name
 	parsedName, err := parseString(cfg.Name, cfg.Variables)
 	if err != nil {
