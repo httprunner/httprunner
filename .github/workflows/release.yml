@@ -28,4 +28,4 @@ jobs:
           project_path: "./hrp" # go build ./hrp/main.go
           binary_name: "hrp"
           ldflags: "-s -w"
-          extra_files: LICENSE docs/README.md docs/CHANGELOG.md
+          extra_files: LICENSE README.md docs/CHANGELOG.md

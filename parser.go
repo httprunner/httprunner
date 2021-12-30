@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/maja42/goval"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
 )

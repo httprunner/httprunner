@@ -4,66 +4,66 @@ import (
 	"fmt"
 )
 
-// implements IStep interface
-type stepRequestValidation struct {
+// StepRequestValidation implements IStep interface.
+type StepRequestValidation struct {
 	step *TStep
 }
 
-func (s *stepRequestValidation) Name() string {
+func (s *StepRequestValidation) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
 	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
 }
 
-func (s *stepRequestValidation) Type() string {
+func (s *StepRequestValidation) Type() string {
 	return fmt.Sprintf("request-%v", s.step.Request.Method)
 }
 
-func (s *stepRequestValidation) ToStruct() *TStep {
+func (s *StepRequestValidation) ToStruct() *TStep {
 	return s.step
 }
 
-func (s *stepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
-	validator := TValidator{
+func (s *StepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
 		Check:   jmesPath,
 		Assert:  "equals",
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, validator)
+	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *stepRequestValidation) AssertStartsWith(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
-	validator := TValidator{
+func (s *StepRequestValidation) AssertStartsWith(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
 		Check:   jmesPath,
 		Assert:  "startswith",
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, validator)
+	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *stepRequestValidation) AssertEndsWith(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
-	validator := TValidator{
+func (s *StepRequestValidation) AssertEndsWith(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
 		Check:   jmesPath,
 		Assert:  "endswith",
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, validator)
+	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *stepRequestValidation) AssertLengthEqual(jmesPath string, expected interface{}, msg string) *stepRequestValidation {
-	validator := TValidator{
+func (s *StepRequestValidation) AssertLengthEqual(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
 		Check:   jmesPath,
 		Assert:  "length_equals",
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, validator)
+	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
