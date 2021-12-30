@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"syscall"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp"
@@ -19,6 +21,7 @@ var boomCmd = &cobra.Command{
   $ hrp boom examples/	# run testcases in specified folder`,
 	Args: cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
+		setUlimit()
 		setLogLevel("WARN") // disable info logs for load testing
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -66,4 +69,27 @@ func init() {
 	boomCmd.Flags().DurationVar(&cpuProfileDuration, "cpu-profile-duration", 30*time.Second, "CPU profile duration.")
 	boomCmd.Flags().StringVar(&prometheusPushgatewayURL, "prometheus-gateway", "", "Prometheus Pushgateway url.")
 	boomCmd.Flags().BoolVar(&disableConsoleOutput, "disable-console-output", false, "Disable console output.")
+}
+
+// set resource limit
+// ulimit -n 10240
+func setUlimit() {
+	var rLimit syscall.Rlimit
+	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		log.Error().Err(err).Msg("get ulimit failed")
+		return
+	}
+	log.Info().Uint64("limit", rLimit.Cur).Msg("get current ulimit")
+	if rLimit.Cur >= 10240 {
+		return
+	}
+
+	rLimit.Cur = 10240
+	log.Info().Uint64("limit", rLimit.Cur).Msg("set current ulimit")
+	err = syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		log.Error().Err(err).Msg("set ulimit failed")
+		return
+	}
 }
