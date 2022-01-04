@@ -69,6 +69,7 @@ func (iter *Iterator) Next() (value map[string]interface{}) {
 	iter.Lock()
 	defer iter.Unlock()
 	if len(iter.data) == 0 {
+		iter.index++
 		return map[string]interface{}{}
 	}
 	if iter.strategy == strategyRandom {
