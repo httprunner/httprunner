@@ -652,7 +652,8 @@ func TestParseParameters(t *testing.T) {
 		},
 	}
 	for _, data := range testData {
-		value, _ := parseParameters(data.rawVars, map[string]interface{}{})
+		params, _ := parseParameters(data.rawVars, map[string]interface{}{})
+		value := genCartesianProduct(params)
 		if !assert.Len(t, value, data.expectLength) {
 			t.Fail()
 		}
