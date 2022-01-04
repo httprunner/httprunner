@@ -601,13 +601,13 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	var parameters paramsType
 	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
-	cfg.ParametersSetting.Iterator = parameters.Iterator()
-	if err != nil {
-		return err
-	}
 	// parse config parameters setting
 	if cfg.ParametersSetting == nil {
 		cfg.ParametersSetting = &TParamsConfig{Iterator: &Iterator{}}
+	}
+	cfg.ParametersSetting.Iterator = parameters.Iterator()
+	if err != nil {
+		return err
 	}
 	if len(cfg.ParametersSetting.Strategy) == 0 {
 		cfg.ParametersSetting.Strategy = strategySequential
