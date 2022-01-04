@@ -143,8 +143,9 @@ func (r *caseRunner) run() error {
 	}
 	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
-	for it := cfg.ParametersSetting.Iterator[0]; it.HasNext(); {
-		for _, it = range cfg.ParametersSetting.Iterator {
+	for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
+		// iterate through all parameter iterators and update case variables
+		for _, it = range cfg.ParametersSetting.Iterators {
 			if it.HasNext() {
 				cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
 			}
