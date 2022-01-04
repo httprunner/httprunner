@@ -494,14 +494,14 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
-func genCartesianProduct(params [][]map[string]interface{}) []map[string]interface{} {
+func genCartesianProduct(params []paramsType) paramsType {
 	if len(params) == 0 {
 		return nil
 	}
-	var cartesianProduct []map[string]interface{}
+	var cartesianProduct paramsType
 	cartesianProduct = params[0]
 	for i := 0; i < len(params)-1; i++ {
-		var tempProduct []map[string]interface{}
+		var tempProduct paramsType
 		for _, param1 := range cartesianProduct {
 			for _, param2 := range params[i+1] {
 				tempProduct = append(tempProduct, mergeVariables(param1, param2))
@@ -512,14 +512,14 @@ func genCartesianProduct(params [][]map[string]interface{}) []map[string]interfa
 	return cartesianProduct
 }
 
-func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]map[string]interface{}, error) {
+func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]paramsType, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
-	var parsedParametersSlice [][]map[string]interface{}
+	var parsedParametersSlice []paramsType
 	var err error
 	for k, v := range parameters {
-		var parameterSlice []map[string]interface{}
+		var parameterSlice paramsType
 		rawValue := reflect.ValueOf(v)
 		switch rawValue.Kind() {
 		case reflect.String:
@@ -548,7 +548,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		}
 		parsedParametersSlice = append(parsedParametersSlice, parameterSlice)
 	}
-	return genCartesianProduct(parsedParametersSlice), nil
+	return parsedParametersSlice, nil
 }
 
 func parseSlice(parameterName string, parameterContent interface{}) ([]map[string]interface{}, error) {
@@ -599,31 +599,54 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 }
 
 func initParameterIterator(cfg *TConfig, mode string) (err error) {
-	var parameters paramsType
+	var parameters []paramsType
 	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
-	// parse config parameters setting
-	if cfg.ParametersSetting == nil {
-		cfg.ParametersSetting = &TParamsConfig{Iterator: &Iterator{}}
-	}
-	cfg.ParametersSetting.Iterator = parameters.Iterator()
 	if err != nil {
 		return err
 	}
-	if len(cfg.ParametersSetting.Strategy) == 0 {
-		cfg.ParametersSetting.Strategy = strategySequential
-	} else {
-		cfg.ParametersSetting.Strategy = strings.ToLower(cfg.ParametersSetting.Strategy)
+	// parse config parameters setting
+	if cfg.ParametersSetting == nil {
+		cfg.ParametersSetting = &TParamsConfig{Iterator: []*Iterator{}}
 	}
-	cfg.ParametersSetting.Iterator.strategy = cfg.ParametersSetting.Strategy
 	if mode == "boomer" {
 		cfg.ParametersSetting.Iteration = -1
-		cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
-	} else {
-		if cfg.ParametersSetting.Iteration > 0 {
-			cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
-		} else if cfg.ParametersSetting.Iterator.iteration == 0 {
-			cfg.ParametersSetting.Iterator.iteration = 1
+	}
+	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
+	switch rawValue.Kind() {
+	case reflect.String:
+		if len(rawValue.String()) == 0 {
+			cfg.ParametersSetting.Strategy = strategySequential
+		} else {
+			cfg.ParametersSetting.Strategy = strings.ToLower(rawValue.String())
+		}
+		cfg.ParametersSetting.Iterator = append(
+			cfg.ParametersSetting.Iterator,
+			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
+		)
+	case reflect.Slice:
+		if len(parameters) != rawValue.Len() {
+			return errors.New("parameters and strategy should have the same length")
+		} else {
+			for i := 0; i < rawValue.Len(); i++ {
+				cfg.ParametersSetting.Iterator = append(
+					cfg.ParametersSetting.Iterator,
+					newIterator(parameters[i], rawValue.Index(i).Interface().(string), cfg.ParametersSetting.Iteration),
+				)
+			}
 		}
 	}
 	return nil
+}
+
+func newIterator(parameters paramsType, strategy string, iteration int) *Iterator {
+	it := parameters.Iterator()
+	it.strategy = strategy
+	if iteration > 0 {
+		it.iteration = iteration
+	} else if it.iteration == 0 {
+		it.iteration = 1
+	} else {
+		it.iteration = -1
+	}
+	return it
 }
