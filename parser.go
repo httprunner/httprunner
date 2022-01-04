@@ -614,6 +614,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
 	switch rawValue.Kind() {
 	case reflect.Slice:
+		// strategy: ["random", "sequential"]
 		if len(parameters) != rawValue.Len() {
 			return errors.New("parameters and strategy should have the same length")
 		} else {
@@ -625,6 +626,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 			}
 		}
 	case reflect.String:
+		// strategy: "random"
 		if len(rawValue.String()) == 0 {
 			cfg.ParametersSetting.Strategy = strategySequential
 		} else {
@@ -635,6 +637,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
 		)
 	default:
+		// default strategy: sequential
 		cfg.ParametersSetting.Strategy = strategySequential
 		cfg.ParametersSetting.Iterator = append(
 			cfg.ParametersSetting.Iterator,
@@ -645,14 +648,14 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 }
 
 func newIterator(parameters paramsType, strategy string, iteration int) *Iterator {
-	it := parameters.Iterator()
-	it.strategy = strategy
+	iter := parameters.Iterator()
+	iter.strategy = strategy
 	if iteration > 0 {
-		it.iteration = iteration
-	} else if it.iteration == 0 {
-		it.iteration = 1
-	} else {
-		it.iteration = -1
+		iter.iteration = iteration
+	} else if iteration < 0 {
+		iter.iteration = -1
+	} else if iter.iteration == 0 {
+		iter.iteration = 1
 	}
-	return it
+	return iter
 }
