@@ -607,7 +607,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	}
 	// parse config parameters setting
 	if cfg.ParametersSetting == nil {
-		cfg.ParametersSetting = &TParamsConfig{}
+		cfg.ParametersSetting = &TParamsConfig{Iterator: &Iterator{}}
 	}
 	if len(cfg.ParametersSetting.Strategy) == 0 {
 		cfg.ParametersSetting.Strategy = strategySequential
@@ -619,7 +619,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 		cfg.ParametersSetting.Iteration = -1
 		cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
 	} else {
-		if cfg.ParametersSetting.Iteration != 0 {
+		if cfg.ParametersSetting.Iteration > 0 {
 			cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
 		}
 	}
