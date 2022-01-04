@@ -1,8 +1,9 @@
 package hrp
 
 import (
-	"github.com/jinzhu/copier"
 	"time"
+
+	"github.com/jinzhu/copier"
 
 	"github.com/rs/zerolog/log"
 
@@ -70,17 +71,17 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			var transactionSuccess = true // flag current transaction result
 
 			cfg := testcase.Config.ToStruct()
-			testCaseVariables := &TConfig{}
+			caseConfig := &TConfig{}
 			// copy config to avoid data racing
-			if err := copier.Copy(testCaseVariables, cfg); err != nil {
+			if err := copier.Copy(caseConfig, cfg); err != nil {
 				log.Error().Err(err).Msg("copy config data failed")
 			}
 			if it := cfg.ParametersSetting.Iterator; it.HasNext() {
-				testCaseVariables.Variables = mergeVariables(it.Next(), cfg.Variables)
+				caseConfig.Variables = mergeVariables(it.Next(), cfg.Variables)
 			}
 			startTime := time.Now()
 			for index, step := range testcase.TestSteps {
-				stepData, err := runner.runStep(index, testCaseVariables)
+				stepData, err := runner.runStep(index, caseConfig)
 				if err != nil {
 					// step failed
 					var elapsed int64
