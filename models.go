@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -42,6 +43,7 @@ const (
 type paramsType []map[string]interface{}
 
 type Iterator struct {
+	sync.Mutex
 	data      paramsType
 	strategy  string // random, sequential
 	iteration int
@@ -64,6 +66,8 @@ func (iter *Iterator) HasNext() bool {
 }
 
 func (iter *Iterator) Next() (value map[string]interface{}) {
+	iter.Lock()
+	defer iter.Unlock()
 	iter.index++
 	if len(iter.data) == 0 {
 		return map[string]interface{}{}
