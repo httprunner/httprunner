@@ -30,9 +30,9 @@ type TConfig struct {
 }
 
 type TParamsConfig struct {
-	Strategy  string    `json:"strategy,omitempty" yaml:"strategy,omitempty"`
-	Iteration int       `json:"iteration,omitempty" yaml:"iteration,omitempty"`
-	Iterator  *Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"`
+	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"`
+	Iteration int         `json:"iteration,omitempty" yaml:"iteration,omitempty"`
+	Iterator  []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"`
 }
 
 const (
@@ -68,7 +68,6 @@ func (iter *Iterator) HasNext() bool {
 func (iter *Iterator) Next() (value map[string]interface{}) {
 	iter.Lock()
 	defer iter.Unlock()
-	iter.index++
 	if len(iter.data) == 0 {
 		return map[string]interface{}{}
 	}
@@ -79,6 +78,7 @@ func (iter *Iterator) Next() (value map[string]interface{}) {
 	} else {
 		value = iter.data[iter.index%len(iter.data)]
 	}
+	iter.index++
 	return value
 }
 
