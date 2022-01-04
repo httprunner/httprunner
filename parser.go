@@ -621,6 +621,8 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	} else {
 		if cfg.ParametersSetting.Iteration > 0 {
 			cfg.ParametersSetting.Iterator.iteration = cfg.ParametersSetting.Iteration
+		} else if cfg.ParametersSetting.Iterator.iteration == 0 {
+			cfg.ParametersSetting.Iterator.iteration = 1
 		}
 	}
 	return nil
