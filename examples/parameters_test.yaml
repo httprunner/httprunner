@@ -8,6 +8,7 @@ config:
         iteration: 1
     variables:
         app_version: f1
+        user_agent: iOS/10.3
     base_url: "https://postman-echo.com"
     verify: False
 
@@ -17,7 +18,7 @@ teststeps:
     variables:
         foo1: $username
         foo2: $password
-        foo3: $app_version
+        foo3: $user_agent
     request:
         method: GET
         url: /get
@@ -34,5 +35,5 @@ teststeps:
           msg: check status code
         - check: body.args.foo3
           assert: not_equal
-          expect: f1
+          expect: iOS/10.3
           msg: check app version
