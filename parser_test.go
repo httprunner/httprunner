@@ -621,44 +621,39 @@ func TestFindallVariables(t *testing.T) {
 
 func TestParseParameters(t *testing.T) {
 	testData := []struct {
-		rawVars    map[string]interface{}
-		expectVars []map[string]interface{}
+		rawVars      map[string]interface{}
+		expectLength int
 	}{
 		{
 			map[string]interface{}{
 				"username-password": "${parameterize(examples/account.csv)}",
 				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
-			[]map[string]interface{}{
-				{"username": "test1", "password": "111111", "user_agent": "IOS/10.1"},
-				{"username": "test1", "password": "111111", "user_agent": "IOS/10.2"},
-				{"username": "test2", "password": "222222", "user_agent": "IOS/10.1"},
-				{"username": "test2", "password": "222222", "user_agent": "IOS/10.2"},
-				{"username": "test3", "password": "333333", "user_agent": "IOS/10.1"},
-				{"username": "test3", "password": "333333", "user_agent": "IOS/10.2"}},
+			6,
 		},
 		{
 			map[string]interface{}{
 				"username-password": [][]interface{}{{"test1", "111111"}, {"test2", "222222"}, {"test3", "333333"}},
 				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"},
 				"app_version":       []interface{}{0.3}},
-			[]map[string]interface{}{
-				{"username": "test1", "password": "111111", "user_agent": "IOS/10.1", "app_version": 0.3},
-				{"username": "test1", "password": "111111", "user_agent": "IOS/10.2", "app_version": 0.3},
-				{"username": "test2", "password": "222222", "user_agent": "IOS/10.1", "app_version": 0.3},
-				{"username": "test2", "password": "222222", "user_agent": "IOS/10.2", "app_version": 0.3},
-				{"username": "test3", "password": "333333", "user_agent": "IOS/10.1", "app_version": 0.3},
-				{"username": "test3", "password": "333333", "user_agent": "IOS/10.2", "app_version": 0.3}},
+			6,
 		},
 		{
-			map[string]interface{}{}, nil,
+			map[string]interface{}{
+				"username-password": [][]interface{}{{"test1", "111111"}, {"test2", "222222"}, {"test3", "333333"}},
+				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"},
+				"app_version":       []interface{}{0.3, 0.4, 0.5}},
+			18,
 		},
 		{
-			nil, nil,
+			map[string]interface{}{}, 0,
+		},
+		{
+			nil, 0,
 		},
 	}
 	for _, data := range testData {
 		value, _ := parseParameters(data.rawVars, map[string]interface{}{})
-		if !assert.Equal(t, data.expectVars, value) {
+		if !assert.Len(t, value, data.expectLength) {
 			t.Fail()
 		}
 	}
