@@ -7,7 +7,7 @@ config:
         strategy: random
         iteration: 1
     variables:
-        app_version: f1
+        app_version: v1
         user_agent: iOS/10.3
     base_url: "https://postman-echo.com"
     verify: False
