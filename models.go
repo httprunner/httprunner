@@ -32,7 +32,7 @@ type TConfig struct {
 type TParamsConfig struct {
 	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"`
 	Iteration int         `json:"iteration,omitempty" yaml:"iteration,omitempty"`
-	Iterator  []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"`
+	Iterators []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"` //保存参数的迭代器
 }
 
 const (

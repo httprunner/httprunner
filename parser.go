@@ -606,41 +606,42 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	}
 	// parse config parameters setting
 	if cfg.ParametersSetting == nil {
-		cfg.ParametersSetting = &TParamsConfig{Iterator: []*Iterator{}}
+		cfg.ParametersSetting = &TParamsConfig{Iterators: []*Iterator{}}
 	}
+	// boomer模式下不限制迭代次数
 	if mode == "boomer" {
 		cfg.ParametersSetting.Iteration = -1
 	}
 	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
 	switch rawValue.Kind() {
 	case reflect.Slice:
-		// strategy: ["random", "sequential"]
+		// strategy: ["random", "sequential"], 每个参数对应一个迭代器，每个迭代器随机、顺序选取元素互不影响
 		if len(parameters) != rawValue.Len() {
 			return errors.New("parameters and strategy should have the same length")
 		} else {
 			for i := 0; i < rawValue.Len(); i++ {
-				cfg.ParametersSetting.Iterator = append(
-					cfg.ParametersSetting.Iterator,
+				cfg.ParametersSetting.Iterators = append(
+					cfg.ParametersSetting.Iterators,
 					newIterator(parameters[i], rawValue.Index(i).Interface().(string), cfg.ParametersSetting.Iteration),
 				)
 			}
 		}
 	case reflect.String:
-		// strategy: "random"
+		// strategy: random, 仅生成一个的迭代器，该迭代器在参数笛卡尔积slice中随机选取元素
 		if len(rawValue.String()) == 0 {
 			cfg.ParametersSetting.Strategy = strategySequential
 		} else {
 			cfg.ParametersSetting.Strategy = strings.ToLower(rawValue.String())
 		}
-		cfg.ParametersSetting.Iterator = append(
-			cfg.ParametersSetting.Iterator,
+		cfg.ParametersSetting.Iterators = append(
+			cfg.ParametersSetting.Iterators,
 			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
 		)
 	default:
-		// default strategy: sequential
+		// default strategy: sequential, 仅生成一个的迭代器，该迭代器在参数笛卡尔积slice中顺序选取元素
 		cfg.ParametersSetting.Strategy = strategySequential
-		cfg.ParametersSetting.Iterator = append(
-			cfg.ParametersSetting.Iterator,
+		cfg.ParametersSetting.Iterators = append(
+			cfg.ParametersSetting.Iterators,
 			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
 		)
 	}
