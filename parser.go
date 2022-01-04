@@ -613,16 +613,6 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	}
 	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
 	switch rawValue.Kind() {
-	case reflect.String:
-		if len(rawValue.String()) == 0 {
-			cfg.ParametersSetting.Strategy = strategySequential
-		} else {
-			cfg.ParametersSetting.Strategy = strings.ToLower(rawValue.String())
-		}
-		cfg.ParametersSetting.Iterator = append(
-			cfg.ParametersSetting.Iterator,
-			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
-		)
 	case reflect.Slice:
 		if len(parameters) != rawValue.Len() {
 			return errors.New("parameters and strategy should have the same length")
@@ -634,6 +624,22 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 				)
 			}
 		}
+	case reflect.String:
+		if len(rawValue.String()) == 0 {
+			cfg.ParametersSetting.Strategy = strategySequential
+		} else {
+			cfg.ParametersSetting.Strategy = strings.ToLower(rawValue.String())
+		}
+		cfg.ParametersSetting.Iterator = append(
+			cfg.ParametersSetting.Iterator,
+			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
+		)
+	default:
+		cfg.ParametersSetting.Strategy = strategySequential
+		cfg.ParametersSetting.Iterator = append(
+			cfg.ParametersSetting.Iterator,
+			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
+		)
 	}
 	return nil
 }
