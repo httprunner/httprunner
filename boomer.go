@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/boomer"

@@ -105,8 +105,8 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
 			return err
 		}
+		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
 		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
-			// iterate through all parameter iterators and update case variables
 			// iterate through all parameter iterators and update case variables
 			for _, it := range cfg.ParametersSetting.Iterators {
 				if it.HasNext() {
