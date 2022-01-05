@@ -619,15 +619,19 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
 	switch rawValue.Kind() {
 	case reflect.Map:
-		// strategy: ["random", "sequential"], 每个参数对应一个迭代器，每个迭代器随机、顺序选取元素互不影响
-		if len(parameters) != rawValue.Len() {
-			return errors.New("parameters and strategy should have the same length")
-		} else {
-			for _, k := range rawValue.MapKeys() {
-				key := k.Convert(rawValue.Type().Key())
+		// strategy: {"user_agent": "sequential", "username-password": "random"}, 每个参数对应一个迭代器，每个迭代器随机、顺序选取元素互不影响
+		for k, v := range parameters {
+			if _, ok := rawValue.Interface().(map[string]interface{})[k]; ok {
+				// use strategy if configured
 				cfg.ParametersSetting.Iterators = append(
 					cfg.ParametersSetting.Iterators,
-					newIterator(parameters[k.Interface().(string)], rawValue.MapIndex(key).String(), cfg.ParametersSetting.Iteration),
+					newIterator(v, rawValue.MapIndex(reflect.ValueOf(k)).Interface().(string), cfg.ParametersSetting.Iteration),
+				)
+			} else {
+				// use sequential strategy by default
+				cfg.ParametersSetting.Iterators = append(
+					cfg.ParametersSetting.Iterators,
+					newIterator(v, strategySequential, cfg.ParametersSetting.Iteration),
 				)
 			}
 		}
