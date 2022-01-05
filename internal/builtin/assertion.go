@@ -16,8 +16,9 @@ var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual
 	"greater_or_equals": assert.GreaterOrEqual,
 	"less_or_equals":    assert.LessOrEqual,
 	"not_equal":         assert.NotEqual,
-	"contains":          assert.Contains,
+	"contained_by":  	 assert.Contains,
 	"regex_match":       assert.Regexp,
+	"type_match":        assert.IsType,
 	// custom assertions
 	"startswith":               StartsWith, // check if string starts with substring
 	"endswith":                 EndsWith,   // check if string ends with substring
@@ -27,6 +28,8 @@ var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual
 	"length_less_or_equals":    LessOrEqualsLength,
 	"length_greater_than":      GreaterThanLength,
 	"length_greater_or_equals": GreaterOrEqualsLength,
+  "contains":                 Contains,
+	"string_equals":            EqualString,
 }
 
 func StartsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
@@ -147,6 +150,23 @@ func convertInt(value interface{}) (int, error) {
 	default:
 		return 0, fmt.Errorf("unsupported int convertion for %v(%T)", v, v)
 	}
+}
+
+// Contains assert whether actual element contains expected element
+func Contains(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	return assert.Contains(t, actual, expected, msgAndArgs)
+}
+
+func EqualString(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	if !assert.IsType(t, "string", actual, msgAndArgs) {
+		return false
+	}
+	if !assert.IsType(t, "string", expected, msgAndArgs) {
+		return false
+	}
+	actualString := actual.(string)
+	expectedString := expected.(string)
+	return assert.True(t, strings.EqualFold(actualString, expectedString), msgAndArgs)
 }
 
 // getLen try to get length of object.

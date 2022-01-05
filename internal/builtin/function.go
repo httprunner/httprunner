@@ -19,7 +19,7 @@ var Functions = map[string]interface{}{
 	"sleep":             sleep,           // call with one argument
 	"gen_random_string": genRandomString, // call with one argument
 	"max":               math.Max,        // call with two arguments
-	"md5":               MD5,
+	"md5":               MD5,			        // call with one argument
 	"parameterize":      loadFromCSV,
 	"P":                 loadFromCSV,
 }
