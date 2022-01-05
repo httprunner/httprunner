@@ -86,7 +86,7 @@ func (s *requestStats) logError(method, name, err string) {
 		entry = &statsError{
 			name:   name,
 			method: method,
-			error:  err,
+			errMsg: err,
 		}
 		s.errors[key] = entry
 	}
@@ -296,7 +296,7 @@ func (s *statsEntry) getStrippedReport() map[string]interface{} {
 type statsError struct {
 	name        string
 	method      string
-	error       string
+	errMsg      string
 	occurrences int64
 }
 
@@ -308,7 +308,7 @@ func (err *statsError) toMap() map[string]interface{} {
 	m := make(map[string]interface{})
 	m["method"] = err.method
 	m["name"] = err.name
-	m["error"] = err.error
+	m["error"] = err.errMsg
 	m["occurrences"] = err.occurrences
 	return m
 }
