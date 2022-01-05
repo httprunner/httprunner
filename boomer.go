@@ -3,6 +3,7 @@ package hrp
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/boomer"
@@ -45,6 +46,11 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 		if err != nil {
 			panic(err)
 		}
+		cfg := testcase.Config.ToStruct()
+		err = initParameterIterator(cfg, "boomer")
+		if err != nil {
+			panic(err)
+		}
 		task := b.convertBoomerTask(testcase)
 		taskSlice = append(taskSlice, task)
 	}
@@ -63,9 +69,21 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
+			cfg := testcase.Config.ToStruct()
+			caseConfig := &TConfig{}
+			// copy config to avoid data racing
+			if err := copier.Copy(caseConfig, cfg); err != nil {
+				log.Error().Err(err).Msg("copy config data failed")
+			}
+			// iterate through all parameter iterators and update case variables
+			for _, it := range caseConfig.ParametersSetting.Iterators {
+				if it.HasNext() {
+					caseConfig.Variables = mergeVariables(it.Next(), caseConfig.Variables)
+				}
+			}
 			startTime := time.Now()
 			for index, step := range testcase.TestSteps {
-				stepData, err := runner.runStep(index)
+				stepData, err := runner.runStep(index, caseConfig)
 				if err != nil {
 					// step failed
 					var elapsed int64
