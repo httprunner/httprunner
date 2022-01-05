@@ -178,7 +178,7 @@ func (s *StepRequest) CallRefCase(tc *TestCase) *StepTestCaseWithOptionalArgs {
 func (s *StepRequest) StartTransaction(name string) *StepTransaction {
 	s.step.Transaction = &Transaction{
 		Name: name,
-		Type: TransactionStart,
+		Type: transactionStart,
 	}
 	return &StepTransaction{
 		step: s.step,
@@ -189,7 +189,7 @@ func (s *StepRequest) StartTransaction(name string) *StepTransaction {
 func (s *StepRequest) EndTransaction(name string) *StepTransaction {
 	s.step.Transaction = &Transaction{
 		Name: name,
-		Type: TransactionEnd,
+		Type: transactionEnd,
 	}
 	return &StepTransaction{
 		step: s.step,

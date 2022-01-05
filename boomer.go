@@ -3,6 +3,7 @@ package hrp
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/boomer"
@@ -46,33 +47,43 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 			panic(err)
 		}
 		cfg := testcase.Config.ToStruct()
-		parameters := getParameters(testcase.Config)
-		if parameters == nil {
-			parameters = []map[string]interface{}{{}}
+		err = initParameterIterator(cfg, "boomer")
+		if err != nil {
+			panic(err)
 		}
-		for _, parameter := range parameters {
-			cfg.Variables = mergeVariables(parameter, cfg.Variables)
-			task := b.convertBoomerTask(testcase)
-			taskSlice = append(taskSlice, task)
-		}
+		task := b.convertBoomerTask(testcase)
+		taskSlice = append(taskSlice, task)
 	}
 	b.Boomer.Run(taskSlice...)
 }
 
 func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
+	hrpRunner := NewRunner(nil).SetDebug(b.debug)
 	config := testcase.Config.ToStruct()
 	return &boomer.Task{
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
-			runner := NewRunner(nil).SetDebug(b.debug).Reset()
+			runner := hrpRunner.newCaseRunner(testcase)
 
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
+			cfg := testcase.Config.ToStruct()
+			caseConfig := &TConfig{}
+			// copy config to avoid data racing
+			if err := copier.Copy(caseConfig, cfg); err != nil {
+				log.Error().Err(err).Msg("copy config data failed")
+			}
+			// iterate through all parameter iterators and update case variables
+			for _, it := range caseConfig.ParametersSetting.Iterators {
+				if it.HasNext() {
+					caseConfig.Variables = mergeVariables(it.Next(), caseConfig.Variables)
+				}
+			}
 			startTime := time.Now()
-			for _, step := range testcase.TestSteps {
-				stepData, err := runner.runStep(step, testcase.Config)
+			for index, step := range testcase.TestSteps {
+				stepData, err := runner.runStep(index, caseConfig)
 				if err != nil {
 					// step failed
 					var elapsed int64
@@ -85,8 +96,8 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					testcaseSuccess = false
 					transactionSuccess = false
 
-					if runner.failfast {
-						log.Error().Err(err).Msg("abort running due to failfast setting")
+					if runner.hrpRunner.failfast {
+						log.Error().Msg("abort running due to failfast setting")
 						break
 					}
 					log.Warn().Err(err).Msg("run step failed, continue next step")
@@ -115,7 +126,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			for name, transaction := range runner.transactions {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
-					duration := endTime.Sub(transaction[TransactionStart])
+					duration := endTime.Sub(transaction[transactionStart])
 					b.RecordTransaction(name, transactionSuccess, duration.Milliseconds(), 0)
 				}
 			}

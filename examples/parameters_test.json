@@ -6,14 +6,18 @@
         "iOS/10.1",
         "iOS/10.2"
       ],
-      "username-password": "${parameterize(examples/account.csv)}",
-      "app_version": "${getAppVersion()}"
+      "username-password": "${parameterize(examples/account.csv)}"
     },
     "parameters_setting": {
-      "strategy": "random"
+      "strategy": {
+        "user_agent": "sequential",
+        "username-password": "random"
+      },
+      "iteration": 6
     },
     "variables": {
-      "app_version": "f1"
+      "app_version": "v1",
+      "user_agent": "iOS/10.3"
     },
     "base_url": "https://postman-echo.com",
     "verify": false
@@ -24,7 +28,7 @@
       "variables": {
         "foo1": "$username",
         "foo2": "$password",
-        "foo3": "$app_version"
+        "foo3": "$user_agent"
       },
       "request": {
         "method": "GET",
@@ -48,7 +52,7 @@
         {
           "check": "body.args.foo3",
           "assert": "not_equal",
-          "expect": "f1",
+          "expect": "iOS/10.3",
           "msg": "check app version"
         }
       ]

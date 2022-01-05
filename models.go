@@ -1,5 +1,11 @@
 package hrp
 
+import (
+	"math/rand"
+	"sync"
+	"time"
+)
+
 const (
 	httpGET     string = "GET"
 	httpHEAD    string = "HEAD"
@@ -18,9 +24,63 @@ type TConfig struct {
 	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
 	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ParametersSetting map[string]interface{} `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
+}
+
+type TParamsConfig struct {
+	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"`
+	Iteration int         `json:"iteration,omitempty" yaml:"iteration,omitempty"`
+	Iterators []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"` //保存参数的迭代器
+}
+
+const (
+	strategyRandom     string = "random"
+	strategySequential string = "Sequential"
+)
+
+type paramsType []map[string]interface{}
+
+type Iterator struct {
+	sync.Mutex
+	data      paramsType
+	strategy  string // random, sequential
+	iteration int
+	index     int
+}
+
+func (params paramsType) Iterator() *Iterator {
+	return &Iterator{
+		data:      params,
+		iteration: len(params),
+		index:     0,
+	}
+}
+
+func (iter *Iterator) HasNext() bool {
+	if iter.iteration == -1 {
+		return true
+	}
+	return iter.index < iter.iteration
+}
+
+func (iter *Iterator) Next() (value map[string]interface{}) {
+	iter.Lock()
+	defer iter.Unlock()
+	if len(iter.data) == 0 {
+		iter.index++
+		return map[string]interface{}{}
+	}
+	if iter.strategy == strategyRandom {
+		randSource := rand.New(rand.NewSource(time.Now().Unix()))
+		randIndex := randSource.Intn(len(iter.data))
+		value = iter.data[randIndex]
+	} else {
+		value = iter.data[iter.index%len(iter.data)]
+	}
+	iter.index++
+	return value
 }
 
 // Request represents HTTP request data structure.
@@ -70,16 +130,16 @@ const (
 	stepTypeRendezvous  stepType = "rendezvous"
 )
 
-type TransactionType string
+type transactionType string
 
 const (
-	TransactionStart TransactionType = "start"
-	TransactionEnd   TransactionType = "end"
+	transactionStart transactionType = "start"
+	transactionEnd   transactionType = "end"
 )
 
 type Transaction struct {
 	Name string          `json:"name" yaml:"name"`
-	Type TransactionType `json:"type" yaml:"type"`
+	Type transactionType `json:"type" yaml:"type"`
 }
 type Rendezvous struct {
 	Name    string  `json:"name" yaml:"name"`                           // required

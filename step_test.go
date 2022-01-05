@@ -74,12 +74,15 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 }
 
 func TestRunRequestRun(t *testing.T) {
-	config := NewConfig("test").SetBaseURL("https://postman-echo.com")
-	runner := NewRunner(t).SetDebug(true)
-	if _, err := runner.runStep(stepGET, config); err != nil {
+	testcase := &TestCase{
+		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
+		TestSteps: []IStep{stepGET, stepPOSTData},
+	}
+	runner := NewRunner(t).SetDebug(true).newCaseRunner(testcase)
+	if _, err := runner.runStep(0, testcase.Config.ToStruct()); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
 	}
-	if _, err := runner.runStep(stepPOSTData, config); err != nil {
+	if _, err := runner.runStep(1, testcase.Config.ToStruct()); err != nil {
 		t.Fatalf("tStepPOSTData.Run() error: %s", err)
 	}
 }
