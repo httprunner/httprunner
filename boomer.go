@@ -77,7 +77,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				log.Error().Err(err).Msg("copy config data failed")
 			}
 			// iterate through all parameter iterators and update case variables
-			for _, it := range cfg.ParametersSetting.Iterators {
+			for _, it := range caseConfig.ParametersSetting.Iterators {
 				if it.HasNext() {
 					caseConfig.Variables = mergeVariables(it.Next(), caseConfig.Variables)
 				}
