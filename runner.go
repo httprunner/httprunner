@@ -98,9 +98,19 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
 			return err
 		}
-		if err := r.newCaseRunner(testcase).run(); err != nil {
-			log.Error().Err(err).Msg("[Run] run testcase failed")
-			return err
+		cfg := testcase.Config.ToStruct()
+		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
+			// iterate through all parameter iterators and update case variables
+			// iterate through all parameter iterators and update case variables
+			for _, it := range cfg.ParametersSetting.Iterators {
+				if it.HasNext() {
+					cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+				}
+			}
+			if err := r.newCaseRunner(testcase).run(); err != nil {
+				log.Error().Err(err).Msg("[Run] run testcase failed")
+				return err
+			}
 		}
 	}
 	return nil
@@ -143,20 +153,13 @@ func (r *caseRunner) run() error {
 	}
 	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
-	for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
-		// iterate through all parameter iterators and update case variables
-		for _, it = range cfg.ParametersSetting.Iterators {
-			if it.HasNext() {
-				cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
-			}
-		}
-		r.startTime = time.Now()
-		for index := range r.TestCase.TestSteps {
-			_, err := r.runStep(index, cfg)
-			if err != nil {
-				if r.hrpRunner.failfast {
-					return errors.Wrap(err, "abort running due to failfast setting")
-				}
+
+	r.startTime = time.Now()
+	for index := range r.TestCase.TestSteps {
+		_, err := r.runStep(index, cfg)
+		if err != nil {
+			if r.hrpRunner.failfast {
+				return errors.Wrap(err, "abort running due to failfast setting")
 			}
 		}
 	}
