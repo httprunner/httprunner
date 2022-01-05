@@ -1,5 +1,10 @@
 # Release History
 
+## v0.4.0 (2022-01-05)
+
+- feat: implement `parameterize` mechanism for data driven
+- feat: add multiple builtin assertion methods
+
 ## v0.3.1 (2021-12-30)
 
 - fix: set ulimit to 10240 before load testing
