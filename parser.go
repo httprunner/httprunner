@@ -494,9 +494,13 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
-func genCartesianProduct(params []paramsType) paramsType {
-	if len(params) == 0 {
+func genCartesianProduct(paramsMap map[string]paramsType) paramsType {
+	if len(paramsMap) == 0 {
 		return nil
+	}
+	var params []paramsType
+	for _, v := range paramsMap {
+		params = append(params, v)
 	}
 	var cartesianProduct paramsType
 	cartesianProduct = params[0]
@@ -512,11 +516,11 @@ func genCartesianProduct(params []paramsType) paramsType {
 	return cartesianProduct
 }
 
-func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) ([]paramsType, error) {
+func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) (map[string]paramsType, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
-	var parsedParametersSlice []paramsType
+	parsedParametersSlice := make(map[string]paramsType)
 	var err error
 	for k, v := range parameters {
 		var parameterSlice paramsType
@@ -546,7 +550,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		if err != nil {
 			return nil, err
 		}
-		parsedParametersSlice = append(parsedParametersSlice, parameterSlice)
+		parsedParametersSlice[k] = parameterSlice
 	}
 	return parsedParametersSlice, nil
 }
@@ -599,7 +603,7 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 }
 
 func initParameterIterator(cfg *TConfig, mode string) (err error) {
-	var parameters []paramsType
+	var parameters map[string]paramsType
 	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
 	if err != nil {
 		return err
@@ -614,15 +618,16 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 	}
 	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
 	switch rawValue.Kind() {
-	case reflect.Slice:
+	case reflect.Map:
 		// strategy: ["random", "sequential"], 每个参数对应一个迭代器，每个迭代器随机、顺序选取元素互不影响
 		if len(parameters) != rawValue.Len() {
 			return errors.New("parameters and strategy should have the same length")
 		} else {
-			for i := 0; i < rawValue.Len(); i++ {
+			for _, k := range rawValue.MapKeys() {
+				key := k.Convert(rawValue.Type().Key())
 				cfg.ParametersSetting.Iterators = append(
 					cfg.ParametersSetting.Iterators,
-					newIterator(parameters[i], rawValue.Index(i).Interface().(string), cfg.ParametersSetting.Iteration),
+					newIterator(parameters[k.Interface().(string)], rawValue.MapIndex(key).String(), cfg.ParametersSetting.Iteration),
 				)
 			}
 		}

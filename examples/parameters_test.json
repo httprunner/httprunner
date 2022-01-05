@@ -9,10 +9,10 @@
       "username-password": "${parameterize(examples/account.csv)}"
     },
     "parameters_setting": {
-      "strategy": [
-        "random",
-        "sequential"
-      ],
+      "strategy": {
+        "user_agent": "sequential",
+        "username-password": "random"
+      },
       "iteration": 10
     },
     "variables": {
