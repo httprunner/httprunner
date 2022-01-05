@@ -2,6 +2,7 @@
 
 ## v0.3.1 (2021-12-30)
 
+- feat: add more plentiful response assertion methods
 - feat: set ulimit to 10240 before load testing
 - fix: concurrent map writes in load testing
 
