@@ -99,6 +99,12 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 			return err
 		}
 		cfg := testcase.Config.ToStruct()
+		// parse config parameters
+		err = initParameterIterator(cfg, "runner")
+		if err != nil {
+			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
+			return err
+		}
 		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
 			// iterate through all parameter iterators and update case variables
 			// iterate through all parameter iterators and update case variables
@@ -488,12 +494,6 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 		return err
 	}
 	cfg.Variables = parsedVariables
-	// parse config parameters
-	err = initParameterIterator(cfg, "runner")
-	if err != nil {
-		log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
-		return err
-	}
 	// parse config name
 	parsedName, err := parseString(cfg.Name, cfg.Variables)
 	if err != nil {
