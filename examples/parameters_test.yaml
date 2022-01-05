@@ -1,0 +1,40 @@
+config:
+  name: "request methods testcase: validate with parameters"
+  parameters:
+    user_agent: [ "iOS/10.1", "iOS/10.2" ]
+    username-password: ${parameterize(examples/account.csv)}
+  parameters_setting:
+    strategy:
+      user_agent: "sequential"
+      username-password: "random"
+    iteration: 6
+  variables:
+    app_version: v1
+    user_agent: iOS/10.3
+  base_url: "https://postman-echo.com"
+  verify: False
+
+teststeps:
+  - name: get with params
+    variables:
+      foo1: $username
+      foo2: $password
+      foo3: $user_agent
+    request:
+      method: GET
+      url: /get
+      params:
+        foo1: $foo1
+        foo2: $foo2
+        foo3: $foo3
+      headers:
+        User-Agent: $user_agent,$app_version
+    validate:
+      - check: status_code
+        assert: equals
+        expect: 200
+        msg: check status code
+      - check: body.args.foo3
+        assert: not_equal
+        expect: iOS/10.3
+        msg: check app version

@@ -79,10 +79,10 @@ func TestRunRequestRun(t *testing.T) {
 		TestSteps: []IStep{stepGET, stepPOSTData},
 	}
 	runner := NewRunner(t).SetDebug(true).newCaseRunner(testcase)
-	if _, err := runner.runStep(0); err != nil {
+	if _, err := runner.runStep(0, testcase.Config.ToStruct()); err != nil {
 		t.Fatalf("tStep.Run() error: %s", err)
 	}
-	if _, err := runner.runStep(1); err != nil {
+	if _, err := runner.runStep(1, testcase.Config.ToStruct()); err != nil {
 		t.Fatalf("tStepPOSTData.Run() error: %s", err)
 	}
 }
