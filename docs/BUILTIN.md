@@ -1,44 +1,53 @@
 # Builtin
 
-## Assertion Methods
+## Builtin assertions
 
-### Usage
-In "teststeps" of each json/yaml testcase, the "validate" part contains four fields: "check", "assert", "expect" and 
-"msg", when using assertion methods, method name should be put in "assert" field. The assertion result of "check" 
-element will be checked out using the regulation you put in "assert" field and compared with the element in "expect"
-field.
+HttpRunner+ validation should follow the following format. `check`, `assert` and `expect` are required field.
 
-### Method List
+```json
+{
+    "check": "status_code", // target field, usually used with jmespath
+    "assert": "equals", // assertion method, you can use builtin method or custom defined function
+    "expect": 200, // expected value
+    "msg": "check response status code" // optional, print this message if assertion failed
+}
+```
 
-- equals: assert the element to check equals the expected element.
-- equal: alias for equals.
-- greater_than: assert the element to check is greater than the expected element.
-- less_than: assert the element to check is less than the expected element.
-- greater_or_equals: assert the element to check is greater than or equal with the expected element.
-- less_or_equals: assert the element to check is less than or equal with the expected element.
-- not_equal: assert the element to check is not equal with the expected element.
-- contained_by: assert the expected element contains the element to check.
-- regex_match: assert the element to check matches the expected element using regex.
-- type_match: assert the element to check matches the expected element in type.
-- startswith: assert the element to check starts with the expected element.
-- endswith: assert the element to check ends with the expected element.
-- length_equals: assert the length of the element to check is equal with the expected element.
-- length_equal: alias for length_equals.
-- contains: assert the element to check contains the expected element.
-- string_equals: assert the string is equal with the expected string.
+The `assert` method name will be mapped to a built-in function with the following function signature.
 
-## Common Functions
+```go
+func(t assert.TestingT, expected interface{}, actual interface{}, msgAndArgs ...interface{}) bool
+```
 
-### Usage
-The common functions are useful during the variables configuration, you can use "${FUNCTION_NAME}" to call the specific 
-function to define variables.
+Currently, HttpRunner+ has the following built-in assertion functions.
 
-### Function List
-- get_timestamp: get the thirteen-digit timestamp of current time. (call without argument)
-- sleep: sleep n seconds to simulate the thinking time. (call with one argument n)
-- gen_random_string: get the n-digit random string. (call with one argument n)
-- max: get the maximum of two numbers m and n. (call with two argument m and n)
-- md5: get the MD5 of the input string s. (call with one argument s)
+| `assert` | Description | A(check), B(expect) | examples |
+| -- | -- | -- | -- |
+| `eq`, `equals`, `equal` | value is equal | A == B | 9 eq 9 |
+| `lt`, `less_than` | less than | A < B | 7 lt 8 |
+| `le`, `less_or_equals` | less than or equals | A <= B | 7 le 8, 8 le 8 |
+| `gt`, `greater_than` | greater than | A > B | 8 gt 7 |
+| `ge`, `greater_or_equals` | greater than or equals | A >= B | 8 ge 7, 8 ge 8 |
+| `ne`, `not_equal` | not equals | A != B | 6 ne 9 |
+| `str_eq`, `string_equals` | string equals | str(A) == str(B) | 123 str_eq '123' |
+| `len_eq`, `length_equals`, `length_equal` | length equals | len(A) == B | 'abc' len_eq 3, [1,2] len_eq 2 |
+| `len_gt`, `count_gt` | length greater than | len(A) > B | 'abc' len_gt 2, [1,2,3] len_gt 2 |
+| `len_ge`, `count_ge` | length greater than or equals | len(A) >= B | 'abc' len_ge 3, [1,2,3] len_gt 3 |
+| `len_lt`, `count_lt` | length less than | len(A) < B | 'abc' len_lt 4, [1,2,3] len_lt 4 |
+| `len_le`, `count_le` | length less than or equals | len(A) <= B | 'abc' len_le 3, [1,2,3] len_le 3 |
+| `contains` | contains | [1, 2] contains 1 | 'abc' contains 'a', [1,2,3] len_lt 4 |
+| `contained_by` | contained by | A in B | 'a' contained_by 'abc', 1 contained_by [1,2] |
+| `type_match` | A and B are in the same type | type(A) == type(B) | 123 type_match 1 |
+| `regex_match` | regex matches | re.match(B, A) | 'abcdef' regex 'a\w+d' |
+| `startswith` | starts with | A.startswith(B) is True | 'abc' startswith 'ab' |
+| `endswith` | ends with | A.endswith(B) is True | 'abc' endswith 'bc' |
 
+## Builtin functions
 
-
+| Name | Arguments | Description |
+| --- | --- | --- |
+| `get_timestamp` | () | get the thirteen-digit timestamp of current time. |
+| `sleep` | (n int) | sleep n seconds to simulate the thinking time. |
+| `gen_random_string` | (n int) | get the n-digit random string. |
+| `max` | (m,n int) | get the maximum of two numbers m and n. |
+| `md5` | (s string) | get the MD5 of the input string s. |
