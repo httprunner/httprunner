@@ -7,7 +7,7 @@ config:
     strategy:
       user_agent: "sequential"
       username-password: "random"
-    iteration: 10
+    iteration: 6
   variables:
     app_version: v1
     user_agent: iOS/10.3
