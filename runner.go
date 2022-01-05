@@ -98,9 +98,25 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
 			return err
 		}
-		if err := r.newCaseRunner(testcase).run(); err != nil {
-			log.Error().Err(err).Msg("[Run] run testcase failed")
+		cfg := testcase.Config.ToStruct()
+		// parse config parameters
+		err = initParameterIterator(cfg, "runner")
+		if err != nil {
+			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
 			return err
+		}
+		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
+		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
+			// iterate through all parameter iterators and update case variables
+			for _, it := range cfg.ParametersSetting.Iterators {
+				if it.HasNext() {
+					cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+				}
+			}
+			if err := r.newCaseRunner(testcase).run(); err != nil {
+				log.Error().Err(err).Msg("[Run] run testcase failed")
+				return err
+			}
 		}
 	}
 	return nil
@@ -141,16 +157,16 @@ func (r *caseRunner) run() error {
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
-
+	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
+
 	r.startTime = time.Now()
 	for index := range r.TestCase.TestSteps {
-		_, err := r.runStep(index)
+		_, err := r.runStep(index, cfg)
 		if err != nil {
 			if r.hrpRunner.failfast {
 				return errors.Wrap(err, "abort running due to failfast setting")
 			}
-			log.Warn().Err(err).Msg("run step failed, continue next step")
 		}
 	}
 
@@ -158,8 +174,7 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
-	config := r.TestCase.Config
+func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepData, err error) {
 	step := r.TestCase.TestSteps[index]
 
 	// step type priority order: transaction > rendezvous > testcase > request
@@ -179,23 +194,18 @@ func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
 		log.Error().Err(err).Msg("copy step data failed")
 		return nil, err
 	}
-	copiedConfig := &TConfig{}
-	if err = copier.Copy(copiedConfig, config.ToStruct()); err != nil {
-		log.Error().Err(err).Msg("copy config data failed")
-		return nil, err
-	}
 
 	stepVariables := copiedStep.Variables
 	// override variables
 	// step variables > session variables (extracted variables from previous steps)
 	stepVariables = mergeVariables(stepVariables, r.sessionVariables)
 	// step variables > testcase config variables
-	stepVariables = mergeVariables(stepVariables, copiedConfig.Variables)
+	stepVariables = mergeVariables(stepVariables, caseConfig.Variables)
 
 	// parse step variables
 	parsedVariables, err := parseVariables(stepVariables)
 	if err != nil {
-		log.Error().Interface("variables", copiedConfig.Variables).Err(err).Msg("parse step variables failed")
+		log.Error().Interface("variables", caseConfig.Variables).Err(err).Msg("parse step variables failed")
 		return nil, err
 	}
 	copiedStep.Variables = parsedVariables // avoid data racing
@@ -212,7 +222,7 @@ func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
 		}
 	} else {
 		// run request
-		copiedStep.Request.URL = buildURL(copiedConfig.BaseURL, copiedStep.Request.URL) // avoid data racing
+		copiedStep.Request.URL = buildURL(caseConfig.BaseURL, copiedStep.Request.URL) // avoid data racing
 		stepResult, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
@@ -484,7 +494,6 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 		return err
 	}
 	cfg.Variables = parsedVariables
-
 	// parse config name
 	parsedName, err := parseString(cfg.Name, cfg.Variables)
 	if err != nil {
