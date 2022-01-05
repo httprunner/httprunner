@@ -2,6 +2,7 @@ package builtin
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/stretchr/testify/assert"
@@ -19,12 +20,16 @@ var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual
 	"regex_match":       assert.Regexp,
 	"type_match":        assert.IsType,
 	// custom assertions
-	"startswith":    StartsWith, // check if string starts with substring
-	"endswith":      EndsWith,   // check if string ends with substring
-	"length_equals": EqualLength,
-	"length_equal":  EqualLength, // alias for length_equals
-	"contains":      Contains,
-	"string_equals": EqualString,
+	"startswith":               StartsWith, // check if string starts with substring
+	"endswith":                 EndsWith,   // check if string ends with substring
+	"length_equals":            EqualLength,
+	"length_equal":             EqualLength, // alias for length_equals
+	"length_less_than":         LessThanLength,
+	"length_less_or_equals":    LessOrEqualsLength,
+	"length_greater_than":      GreaterThanLength,
+	"length_greater_or_equals": GreaterOrEqualsLength,
+  "contains":                 Contains,
+	"string_equals":            EqualString,
 }
 
 func StartsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
@@ -58,6 +63,66 @@ func EqualLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...
 	}
 
 	return assert.Len(t, actual, length, msgAndArgs...)
+}
+
+func GreaterThanLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	length, err := convertInt(expected)
+	if err != nil {
+		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+	}
+	ok, l := getLen(actual)
+	if !ok {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+	}
+	if l <= length {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" should be more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+	}
+	return true
+}
+
+func GreaterOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	length, err := convertInt(expected)
+	if err != nil {
+		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+	}
+	ok, l := getLen(actual)
+	if !ok {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+	}
+	if l < length {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no less than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+	}
+	return true
+}
+
+func LessThanLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	length, err := convertInt(expected)
+	if err != nil {
+		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+	}
+	ok, l := getLen(actual)
+	if !ok {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+	}
+	if l >= length {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" should be less than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+	}
+	return true
+}
+
+func LessOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	length, err := convertInt(expected)
+	if err != nil {
+		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+	}
+	ok, l := getLen(actual)
+	if !ok {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+	}
+	if l > length {
+		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+	}
+	return true
 }
 
 func convertInt(value interface{}) (int, error) {
@@ -102,4 +167,16 @@ func EqualString(t assert.TestingT, expected, actual interface{}, msgAndArgs ...
 	actualString := actual.(string)
 	expectedString := expected.(string)
 	return assert.True(t, strings.EqualFold(actualString, expectedString), msgAndArgs)
+}
+
+// getLen try to get length of object.
+// return (false, 0) if impossible.
+func getLen(x interface{}) (ok bool, length int) {
+	v := reflect.ValueOf(x)
+	defer func() {
+		if e := recover(); e != nil {
+			ok = false
+		}
+	}()
+	return true, v.Len()
 }
