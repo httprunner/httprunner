@@ -477,8 +477,16 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		success:  false,
 	}
 	testcase := step.TestCase
+
+	// copy testcase to avoid data racing
+	copiedTestCase := &TestCase{}
+	if err = copier.Copy(copiedTestCase, testcase); err != nil {
+		log.Error().Err(err).Msg("copy testcase failed")
+		return nil, err
+	}
+
 	start := time.Now()
-	err = r.hrpRunner.newCaseRunner(testcase).run()
+	err = r.hrpRunner.newCaseRunner(copiedTestCase).run()
 	stepResult.elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, err
