@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"plugin"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,14 +26,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestCallPluginFunction(t *testing.T) {
-	pluginLoader, err := plugin.Open("examples/debugtalk.so")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+	parser := newParser()
+	parser.loadPlugin("examples/debugtalk.so")
 
 	// call function without arguments
-	f1, _ := getMappingFunction("Concatenate", pluginLoader)
-	result, err := callFunc(f1, 1, "2", 3.14)
+	result, err := parser.callFunc("Concatenate", 1, "2", 3.14)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}

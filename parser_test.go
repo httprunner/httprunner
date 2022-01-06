@@ -378,17 +378,17 @@ func TestMergeVariables(t *testing.T) {
 }
 
 func TestCallBuiltinFunction(t *testing.T) {
+	parser := newParser()
+
 	// call function without arguments
-	f1, _ := getMappingFunction("get_timestamp", nil)
-	_, err := callFunc(f1)
+	_, err := parser.callFunc("get_timestamp")
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 
 	// call function with one argument
 	timeStart := time.Now()
-	f2, _ := getMappingFunction("sleep", nil)
-	_, err = callFunc(f2, 1)
+	_, err = parser.callFunc("sleep", 1)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -397,8 +397,7 @@ func TestCallBuiltinFunction(t *testing.T) {
 	}
 
 	// call function with one argument
-	f3, _ := getMappingFunction("gen_random_string", nil)
-	result, err := callFunc(f3, 10)
+	result, err := parser.callFunc("gen_random_string", 10)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -407,8 +406,7 @@ func TestCallBuiltinFunction(t *testing.T) {
 	}
 
 	// call function with two argument
-	f4, _ := getMappingFunction("max", nil)
-	result, err = callFunc(f4, float64(10), 9.99)
+	result, err = parser.callFunc("max", float64(10), 9.99)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
