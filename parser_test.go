@@ -1,12 +1,56 @@
 package hrp
 
 import (
+	"os"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLocatePlugin(t *testing.T) {
+	cwd, _ := os.Getwd()
+	_, err := locatePlugin(cwd)
+	if !assert.Error(t, err) {
+		t.Fail()
+	}
+
+	_, err = locatePlugin("")
+	if !assert.Error(t, err) {
+		t.Fail()
+	}
+
+	startPath := "examples/debugtalk.so"
+	_, err = locatePlugin(startPath)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+
+	startPath = "examples/demo.json"
+	_, err = locatePlugin(startPath)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+
+	startPath = "examples/"
+	_, err = locatePlugin(startPath)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+
+	startPath = "examples/plugin/debugtalk.go"
+	_, err = locatePlugin(startPath)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+
+	startPath = "/abc"
+	_, err = locatePlugin(startPath)
+	if !assert.Error(t, err) {
+		t.Fail()
+	}
+}
 
 func TestBuildURL(t *testing.T) {
 	var url string
@@ -160,8 +204,9 @@ func TestParseDataStringWithVariables(t *testing.T) {
 		{"abc$var_5", "abctrue"},     // "abcTrue"
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping, nil)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -184,8 +229,9 @@ func TestParseDataStringWithUndefinedVariables(t *testing.T) {
 		{"/api/$SECRET_KEY", "/api/$SECRET_KEY"}, // raise error
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping, nil)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
@@ -228,8 +274,9 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 		{"ABC$var_1{}a", "ABCabc{}a"},     // {}
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping, nil)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -258,8 +305,9 @@ func TestParseDataMapWithVariables(t *testing.T) {
 		{map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{"123": 200}},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping, nil)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -291,8 +339,9 @@ func TestParseHeaders(t *testing.T) {
 		{map[string]string{"$var2": "$val2"}, map[string]string{"123": "<nil>"}},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedHeaders, err := parseHeaders(data.rawHeaders, variablesMapping, nil)
+		parsedHeaders, err := parser.parseHeaders(data.rawHeaders, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -444,8 +493,9 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 		{"123${gen_random_string($n)}abc", 11},
 	}
 
+	parser := newParser()
 	for _, data := range testData1 {
-		value, err := parseData(data.expr, variablesMapping, nil)
+		value, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -464,7 +514,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 	}
 
 	for _, data := range testData2 {
-		value, err := parseData(data.expr, variablesMapping, nil)
+		value, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -510,8 +560,9 @@ func TestParseVariables(t *testing.T) {
 		},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		value, err := parseVariables(data.rawVars, nil)
+		value, err := parser.parseVariables(data.rawVars)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -540,8 +591,9 @@ func TestParseVariablesAbnormal(t *testing.T) {
 		},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		value, err := parseVariables(data.rawVars, nil)
+		value, err := parser.parseVariables(data.rawVars)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
