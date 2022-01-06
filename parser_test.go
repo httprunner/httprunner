@@ -160,8 +160,9 @@ func TestParseDataStringWithVariables(t *testing.T) {
 		{"abc$var_5", "abctrue"},     // "abcTrue"
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -184,8 +185,9 @@ func TestParseDataStringWithUndefinedVariables(t *testing.T) {
 		{"/api/$SECRET_KEY", "/api/$SECRET_KEY"}, // raise error
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
@@ -228,8 +230,9 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 		{"ABC$var_1{}a", "ABCabc{}a"},     // {}
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -258,8 +261,9 @@ func TestParseDataMapWithVariables(t *testing.T) {
 		{map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{"123": 200}},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parseData(data.expr, variablesMapping)
+		parsedData, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -291,8 +295,9 @@ func TestParseHeaders(t *testing.T) {
 		{map[string]string{"$var2": "$val2"}, map[string]string{"123": "<nil>"}},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		parsedHeaders, err := parseHeaders(data.rawHeaders, variablesMapping)
+		parsedHeaders, err := parser.parseHeaders(data.rawHeaders, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -328,16 +333,18 @@ func TestMergeVariables(t *testing.T) {
 	}
 }
 
-func TestCallFunction(t *testing.T) {
+func TestCallBuiltinFunction(t *testing.T) {
+	parser := newParser()
+
 	// call function without arguments
-	_, err := callFunc("get_timestamp")
+	_, err := parser.callFunc("get_timestamp")
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 
 	// call function with one argument
 	timeStart := time.Now()
-	_, err = callFunc("sleep", 1)
+	_, err = parser.callFunc("sleep", 1)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -346,7 +353,7 @@ func TestCallFunction(t *testing.T) {
 	}
 
 	// call function with one argument
-	result, err := callFunc("gen_random_string", 10)
+	result, err := parser.callFunc("gen_random_string", 10)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -355,7 +362,7 @@ func TestCallFunction(t *testing.T) {
 	}
 
 	// call function with two argument
-	result, err = callFunc("max", float64(10), 9.99)
+	result, err = parser.callFunc("max", float64(10), 9.99)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -440,8 +447,9 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 		{"123${gen_random_string($n)}abc", 11},
 	}
 
+	parser := newParser()
 	for _, data := range testData1 {
-		value, err := parseData(data.expr, variablesMapping)
+		value, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -460,7 +468,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 	}
 
 	for _, data := range testData2 {
-		value, err := parseData(data.expr, variablesMapping)
+		value, err := parser.parseData(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -506,8 +514,9 @@ func TestParseVariables(t *testing.T) {
 		},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		value, err := parseVariables(data.rawVars)
+		value, err := parser.parseVariables(data.rawVars)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -536,8 +545,9 @@ func TestParseVariablesAbnormal(t *testing.T) {
 		},
 	}
 
+	parser := newParser()
 	for _, data := range testData {
-		value, err := parseVariables(data.rawVars)
+		value, err := parser.parseVariables(data.rawVars)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
