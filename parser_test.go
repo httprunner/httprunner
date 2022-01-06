@@ -1,56 +1,12 @@
 package hrp
 
 import (
-	"os"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestLocatePlugin(t *testing.T) {
-	cwd, _ := os.Getwd()
-	_, err := locatePlugin(cwd)
-	if !assert.Error(t, err) {
-		t.Fail()
-	}
-
-	_, err = locatePlugin("")
-	if !assert.Error(t, err) {
-		t.Fail()
-	}
-
-	startPath := "examples/debugtalk.so"
-	_, err = locatePlugin(startPath)
-	if !assert.Nil(t, err) {
-		t.Fail()
-	}
-
-	startPath = "examples/demo.json"
-	_, err = locatePlugin(startPath)
-	if !assert.Nil(t, err) {
-		t.Fail()
-	}
-
-	startPath = "examples/"
-	_, err = locatePlugin(startPath)
-	if !assert.Nil(t, err) {
-		t.Fail()
-	}
-
-	startPath = "examples/plugin/debugtalk.go"
-	_, err = locatePlugin(startPath)
-	if !assert.Nil(t, err) {
-		t.Fail()
-	}
-
-	startPath = "/abc"
-	_, err = locatePlugin(startPath)
-	if !assert.Error(t, err) {
-		t.Fail()
-	}
-}
 
 func TestBuildURL(t *testing.T) {
 	var url string
