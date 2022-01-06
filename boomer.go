@@ -3,33 +3,34 @@ package hrp
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-func NewBoomer(spawnCount int, spawnRate float64) *hrpBoomer {
-	b := &hrpBoomer{
+func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
+	b := &HRPBoomer{
 		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		debug:  false,
 	}
 	return b
 }
 
-type hrpBoomer struct {
+type HRPBoomer struct {
 	*boomer.Boomer
 	debug bool
 }
 
 // SetDebug configures whether to log HTTP request and response content.
-func (b *hrpBoomer) SetDebug(debug bool) *hrpBoomer {
+func (b *HRPBoomer) SetDebug(debug bool) *HRPBoomer {
 	b.debug = debug
 	return b
 }
 
 // Run starts to run load test for one or multiple testcases.
-func (b *hrpBoomer) Run(testcases ...ITestCase) {
+func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	event := ga.EventTracking{
 		Category: "RunLoadTests",
 		Action:   "hrp boom",
@@ -45,26 +46,44 @@ func (b *hrpBoomer) Run(testcases ...ITestCase) {
 		if err != nil {
 			panic(err)
 		}
+		cfg := testcase.Config.ToStruct()
+		err = initParameterIterator(cfg, "boomer")
+		if err != nil {
+			panic(err)
+		}
 		task := b.convertBoomerTask(testcase)
 		taskSlice = append(taskSlice, task)
 	}
 	b.Boomer.Run(taskSlice...)
 }
 
-func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
+func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	hrpRunner := NewRunner(nil).SetDebug(b.debug)
-	runner := hrpRunner.newCaseRunner(testcase)
 	config := testcase.Config.ToStruct()
 	return &boomer.Task{
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
+			runner := hrpRunner.newCaseRunner(testcase)
+
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
+			cfg := testcase.Config.ToStruct()
+			caseConfig := &TConfig{}
+			// copy config to avoid data racing
+			if err := copier.Copy(caseConfig, cfg); err != nil {
+				log.Error().Err(err).Msg("copy config data failed")
+			}
+			// iterate through all parameter iterators and update case variables
+			for _, it := range caseConfig.ParametersSetting.Iterators {
+				if it.HasNext() {
+					caseConfig.Variables = mergeVariables(it.Next(), caseConfig.Variables)
+				}
+			}
 			startTime := time.Now()
 			for index, step := range testcase.TestSteps {
-				stepData, err := runner.runStep(index)
+				stepData, err := runner.runStep(index, caseConfig)
 				if err != nil {
 					// step failed
 					var elapsed int64
@@ -78,7 +97,7 @@ func (b *hrpBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					transactionSuccess = false
 
 					if runner.hrpRunner.failfast {
-						log.Error().Err(err).Msg("abort running due to failfast setting")
+						log.Error().Msg("abort running due to failfast setting")
 						break
 					}
 					log.Warn().Err(err).Msg("run step failed, continue next step")
