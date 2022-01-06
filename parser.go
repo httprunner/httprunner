@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
+	"plugin"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/maja42/goval"
@@ -14,6 +18,87 @@ import (
 
 	"github.com/httprunner/hrp/internal/builtin"
 )
+
+func newParser() *parser {
+	return &parser{}
+}
+
+type parser struct {
+	// pluginLoader stores loaded go plugins.
+	pluginLoader *plugin.Plugin
+}
+
+func (p *parser) loadPlugin(path string) error {
+	if runtime.GOOS == "windows" {
+		log.Warn().Msg("go plugin does not support windows")
+		return nil
+	}
+
+	if path == "" {
+		return nil
+	}
+
+	// check if loaded before
+	if p.pluginLoader != nil {
+		return nil
+	}
+
+	// locate plugin file
+	pluginPath, err := locatePlugin(path)
+	if err != nil {
+		// plugin not found
+		return nil
+	}
+
+	// load plugin
+	plugins, err := plugin.Open(pluginPath)
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("load go plugin failed")
+		return err
+	}
+	p.pluginLoader = plugins
+
+	log.Info().Str("path", path).Msg("load go plugin success")
+	return nil
+}
+
+// locatePlugin searches debugtalk.so upward recursively until current
+// working directory or system root dir.
+func locatePlugin(startPath string) (string, error) {
+	stat, err := os.Stat(startPath)
+	if os.IsNotExist(err) {
+		return "", err
+	}
+
+	var startDir string
+	if stat.IsDir() {
+		startDir = startPath
+	} else {
+		startDir = filepath.Dir(startPath)
+	}
+	startDir, _ = filepath.Abs(startDir)
+
+	// convention over configuration
+	// target plugin file name is always debugtalk.so
+	pluginPath := filepath.Join(startDir, "debugtalk.so")
+	if _, err := os.Stat(pluginPath); err == nil {
+		return pluginPath, nil
+	}
+
+	// current working directory
+	cwd, _ := os.Getwd()
+	if startDir == cwd {
+		return "", fmt.Errorf("searched to CWD, plugin file not found")
+	}
+
+	// system root dir
+	parentDir, _ := filepath.Abs(filepath.Dir(startDir))
+	if parentDir == startDir {
+		return "", fmt.Errorf("searched to system root dir, plugin file not found")
+	}
+
+	return locatePlugin(parentDir)
+}
 
 func buildURL(baseURL, stepURL string) string {
 	uConfig, err := url.Parse(baseURL)
@@ -32,9 +117,9 @@ func buildURL(baseURL, stepURL string) string {
 	return uStep.String()
 }
 
-func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}, pluginLoader *pluginLoader) (map[string]string, error) {
+func (p *parser) parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
 	parsedHeaders := make(map[string]string)
-	headers, err := parseData(rawHeaders, variablesMapping, pluginLoader)
+	headers, err := p.parseData(rawHeaders, variablesMapping)
 	if err != nil {
 		return rawHeaders, err
 	}
@@ -54,7 +139,7 @@ func convertString(raw interface{}) string {
 	}
 }
 
-func parseData(raw interface{}, variablesMapping map[string]interface{}, pluginLoader *pluginLoader) (interface{}, error) {
+func (p *parser) parseData(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
 	rawValue := reflect.ValueOf(raw)
 	switch rawValue.Kind() {
 	case reflect.String:
@@ -65,11 +150,11 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}, pluginL
 		// other string
 		value := rawValue.String()
 		value = strings.TrimSpace(value)
-		return parseString(value, variablesMapping, pluginLoader)
+		return p.parseString(value, variablesMapping)
 	case reflect.Slice:
 		parsedSlice := make([]interface{}, rawValue.Len())
 		for i := 0; i < rawValue.Len(); i++ {
-			parsedValue, err := parseData(rawValue.Index(i).Interface(), variablesMapping, pluginLoader)
+			parsedValue, err := p.parseData(rawValue.Index(i).Interface(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
@@ -79,12 +164,12 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}, pluginL
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
-			parsedKey, err := parseString(k.String(), variablesMapping, pluginLoader)
+			parsedKey, err := p.parseString(k.String(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 			v := rawValue.MapIndex(k)
-			parsedValue, err := parseData(v.Interface(), variablesMapping, pluginLoader)
+			parsedValue, err := p.parseData(v.Interface(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
@@ -122,7 +207,7 @@ var (
 )
 
 // parseString parse string with variables
-func parseString(raw string, variablesMapping map[string]interface{}, pluginLoader *pluginLoader) (interface{}, error) {
+func (p *parser) parseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
 	matchStartPosition := 0
 	parsedString := ""
 	remainedString := raw
@@ -161,12 +246,12 @@ func parseString(raw string, variablesMapping map[string]interface{}, pluginLoad
 			if err != nil {
 				return raw, err
 			}
-			parsedArgs, err := parseData(arguments, variablesMapping, pluginLoader)
+			parsedArgs, err := p.parseData(arguments, variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 
-			fn, err := getMappingFunction(funcName, pluginLoader)
+			fn, err := getMappingFunction(funcName, p.pluginLoader)
 			if err != nil {
 				return raw, err
 			}
@@ -257,7 +342,7 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
-func getMappingFunction(funcName string, pluginLoader *pluginLoader) (reflect.Value, error) {
+func getMappingFunction(funcName string, pluginLoader *plugin.Plugin) (reflect.Value, error) {
 	var fn reflect.Value
 	var err error
 
@@ -384,7 +469,7 @@ func parseFunctionArguments(argsStr string) ([]interface{}, error) {
 	return arguments, nil
 }
 
-func parseVariables(variables map[string]interface{}, pluginLoader *pluginLoader) (map[string]interface{}, error) {
+func (p *parser) parseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
 	parsedVariables := make(map[string]interface{})
 	var traverseRounds int
 
@@ -422,7 +507,7 @@ func parseVariables(variables map[string]interface{}, pluginLoader *pluginLoader
 				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
 			}
 
-			parsedValue, err := parseData(varValue, parsedVariables, pluginLoader)
+			parsedValue, err := p.parseData(varValue, parsedVariables)
 			if err != nil {
 				continue
 			}
@@ -552,7 +637,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		case reflect.String:
 			// e.g. username-password: ${parameterize(examples/account.csv)} -> [{"username": "test1", "password": "111111"}, {"username": "test2", "password": "222222"}]
 			var parsedParameterContent interface{}
-			parsedParameterContent, err = parseString(rawValue.String(), variablesMapping, nil)
+			parsedParameterContent, err = newParser().parseString(rawValue.String(), variablesMapping)
 			if err != nil {
 				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
 				return nil, err

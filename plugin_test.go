@@ -27,11 +27,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestCallPluginFunction(t *testing.T) {
-	plugins, err := plugin.Open("examples/debugtalk.so")
+	pluginLoader, err := plugin.Open("examples/debugtalk.so")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	pluginLoader := &pluginLoader{plugins}
 
 	// call function without arguments
 	f1, _ := getMappingFunction("Concatenate", pluginLoader)
