@@ -32,11 +32,11 @@ func Run(testcases ...ITestCase) error {
 }
 
 // NewRunner constructs a new runner instance.
-func NewRunner(t *testing.T) *hrpRunner {
+func NewRunner(t *testing.T) *HRPRunner {
 	if t == nil {
 		t = &testing.T{}
 	}
-	return &hrpRunner{
+	return &HRPRunner{
 		t:        t,
 		failfast: true,  // default to failfast
 		debug:    false, // default to turn off debug
@@ -49,7 +49,7 @@ func NewRunner(t *testing.T) *hrpRunner {
 	}
 }
 
-type hrpRunner struct {
+type HRPRunner struct {
 	t        *testing.T
 	failfast bool
 	debug    bool
@@ -57,21 +57,21 @@ type hrpRunner struct {
 }
 
 // SetFailfast configures whether to stop running when one step fails.
-func (r *hrpRunner) SetFailfast(failfast bool) *hrpRunner {
+func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 	log.Info().Bool("failfast", failfast).Msg("[init] SetFailfast")
 	r.failfast = failfast
 	return r
 }
 
 // SetDebug configures whether to log HTTP request and response content.
-func (r *hrpRunner) SetDebug(debug bool) *hrpRunner {
+func (r *HRPRunner) SetDebug(debug bool) *HRPRunner {
 	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
 	r.debug = debug
 	return r
 }
 
 // SetProxyUrl configures the proxy URL, which is usually used to capture HTTP packets for debugging.
-func (r *hrpRunner) SetProxyUrl(proxyUrl string) *hrpRunner {
+func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 	log.Info().Str("proxyUrl", proxyUrl).Msg("[init] SetProxyUrl")
 	p, err := url.Parse(proxyUrl)
 	if err != nil {
@@ -86,7 +86,7 @@ func (r *hrpRunner) SetProxyUrl(proxyUrl string) *hrpRunner {
 }
 
 // Run starts to execute one or multiple testcases.
-func (r *hrpRunner) Run(testcases ...ITestCase) error {
+func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	event := ga.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
@@ -102,15 +102,31 @@ func (r *hrpRunner) Run(testcases ...ITestCase) error {
 			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
 			return err
 		}
-		if err := r.newCaseRunner(testcase).run(); err != nil {
-			log.Error().Err(err).Msg("[Run] run testcase failed")
+		cfg := testcase.Config.ToStruct()
+		// parse config parameters
+		err = initParameterIterator(cfg, "runner")
+		if err != nil {
+			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
 			return err
+		}
+		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
+		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
+			// iterate through all parameter iterators and update case variables
+			for _, it := range cfg.ParametersSetting.Iterators {
+				if it.HasNext() {
+					cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+				}
+			}
+			if err := r.newCaseRunner(testcase).run(); err != nil {
+				log.Error().Err(err).Msg("[Run] run testcase failed")
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (r *hrpRunner) newCaseRunner(testcase *TestCase) *caseRunner {
+func (r *HRPRunner) newCaseRunner(testcase *TestCase) *caseRunner {
 	caseRunner := &caseRunner{
 		TestCase:  testcase,
 		hrpRunner: r,
@@ -123,7 +139,7 @@ func (r *hrpRunner) newCaseRunner(testcase *TestCase) *caseRunner {
 // each testcase has its own caseRunner instance and share session variables.
 type caseRunner struct {
 	*TestCase
-	hrpRunner        *hrpRunner
+	hrpRunner        *HRPRunner
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
@@ -147,17 +163,16 @@ func (r *caseRunner) run() error {
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
-
+	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
+
 	r.startTime = time.Now()
 	for index := range r.TestCase.TestSteps {
-		_, err := r.runStep(index)
+		_, err := r.runStep(index, cfg)
 		if err != nil {
 			if r.hrpRunner.failfast {
-				log.Error().Err(err).Msg("abort running due to failfast setting")
-				return err
+				return errors.Wrap(err, "abort running due to failfast setting")
 			}
-			log.Warn().Err(err).Msg("run step failed, continue next step")
 		}
 	}
 
@@ -165,8 +180,7 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
-	config := r.TestCase.Config
+func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepData, err error) {
 	step := r.TestCase.TestSteps[index]
 
 	// step type priority order: transaction > rendezvous > testcase > request
@@ -186,23 +200,18 @@ func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
 		log.Error().Err(err).Msg("copy step data failed")
 		return nil, err
 	}
-	copiedConfig := &TConfig{}
-	if err = copier.Copy(copiedConfig, config.ToStruct()); err != nil {
-		log.Error().Err(err).Msg("copy config data failed")
-		return nil, err
-	}
 
 	stepVariables := copiedStep.Variables
 	// override variables
 	// step variables > session variables (extracted variables from previous steps)
 	stepVariables = mergeVariables(stepVariables, r.sessionVariables)
 	// step variables > testcase config variables
-	stepVariables = mergeVariables(stepVariables, copiedConfig.Variables)
+	stepVariables = mergeVariables(stepVariables, caseConfig.Variables)
 
 	// parse step variables
 	parsedVariables, err := parseVariables(stepVariables, r.pluginLoader)
 	if err != nil {
-		log.Error().Interface("variables", copiedConfig.Variables).Err(err).Msg("parse step variables failed")
+		log.Error().Interface("variables", caseConfig.Variables).Err(err).Msg("parse step variables failed")
 		return nil, err
 	}
 	copiedStep.Variables = parsedVariables // avoid data racing
@@ -219,7 +228,7 @@ func (r *caseRunner) runStep(index int) (stepResult *stepData, err error) {
 		}
 	} else {
 		// run request
-		copiedStep.Request.URL = buildURL(copiedConfig.BaseURL, copiedStep.Request.URL) // avoid data racing
+		copiedStep.Request.URL = buildURL(caseConfig.BaseURL, copiedStep.Request.URL) // avoid data racing
 		stepResult, err = r.runStepRequest(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
@@ -553,7 +562,7 @@ func (r *caseRunner) loadPlugin(path string) error {
 	return nil
 }
 
-func (r *hrpRunner) getSummary() *testCaseSummary {
+func (r *caseRunner) getSummary() *testCaseSummary {
 	return &testCaseSummary{}
 }
 

@@ -1,8 +1,15 @@
 # Release History
 
-## v0.4.0 (2021-12-28)
+## v0.4.0 (2022-01-05)
 
-- feat: support creating and calling custom functions with `go plugin`
+- feat: implement `parameterize` mechanism for data driven
+- feat: support creating and calling custom functions with [go plugin](https://pkg.go.dev/plugin)
+- feat: add multiple builtin assertion methods and builtin functions
+
+## v0.3.1 (2021-12-30)
+
+- fix: set ulimit to 10240 before load testing
+- fix: concurrent map writes in load testing
 
 ## v0.3.0 (2021-12-24)
 
