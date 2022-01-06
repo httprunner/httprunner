@@ -51,7 +51,6 @@ func Execute() {
 	RootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
 
 	if err := RootCmd.Execute(); err != nil {
-		log.Error().Err(err).Msg("Failed to execute root command")
 		os.Exit(1)
 	}
 }
