@@ -1,9 +1,13 @@
 # Release History
 
+## v0.5.0 (2022-01-06)
+
+- feat: support creating and calling custom functions with [go plugin](https://pkg.go.dev/plugin)
+
 ## v0.4.0 (2022-01-05)
 
 - feat: implement `parameterize` mechanism for data driven
-- feat: add multiple builtin assertion methods
+- feat: add multiple builtin assertion methods and builtin functions
 
 ## v0.3.1 (2021-12-30)
 

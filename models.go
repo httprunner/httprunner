@@ -27,6 +27,7 @@ type TConfig struct {
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
+	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
 }
 
 type TParamsConfig struct {

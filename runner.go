@@ -126,6 +126,7 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) *caseRunner {
 	caseRunner := &caseRunner{
 		TestCase:  testcase,
 		hrpRunner: r,
+		parser:    newParser(),
 	}
 	caseRunner.reset()
 	return caseRunner
@@ -136,6 +137,7 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) *caseRunner {
 type caseRunner struct {
 	*TestCase
 	hrpRunner        *HRPRunner
+	parser           *parser
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
@@ -203,7 +205,7 @@ func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepDa
 	stepVariables = mergeVariables(stepVariables, caseConfig.Variables)
 
 	// parse step variables
-	parsedVariables, err := parseVariables(stepVariables)
+	parsedVariables, err := r.parser.parseVariables(stepVariables)
 	if err != nil {
 		log.Error().Interface("variables", caseConfig.Variables).Err(err).Msg("parse step variables failed")
 		return nil, err
@@ -320,7 +322,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 	// prepare request headers
 	if len(step.Request.Headers) > 0 {
-		headers, err := parseHeaders(step.Request.Headers, step.Variables)
+		headers, err := r.parser.parseHeaders(step.Request.Headers, step.Variables)
 		if err != nil {
 			return nil, errors.Wrap(err, "parse headers failed")
 		}
@@ -337,7 +339,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	// prepare request params
 	var queryParams url.Values
 	if len(step.Request.Params) > 0 {
-		params, err := parseData(step.Request.Params, step.Variables)
+		params, err := r.parser.parseData(step.Request.Params, step.Variables)
 		if err != nil {
 			return nil, errors.Wrap(err, "parse data failed")
 		}
@@ -369,7 +371,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 	// prepare request body
 	if step.Request.Body != nil {
-		data, err := parseData(step.Request.Body, step.Variables)
+		data, err := r.parser.parseData(step.Request.Body, step.Variables)
 		if err != nil {
 			return nil, err
 		}
@@ -443,7 +445,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 
 	// new response object
-	respObj, err := newResponseObject(r.hrpRunner.t, resp)
+	respObj, err := newResponseObject(r.hrpRunner.t, r.parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
@@ -475,8 +477,16 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		success:  false,
 	}
 	testcase := step.TestCase
+
+	// copy testcase to avoid data racing
+	copiedTestCase := &TestCase{}
+	if err = copier.Copy(copiedTestCase, testcase); err != nil {
+		log.Error().Err(err).Msg("copy testcase failed")
+		return nil, err
+	}
+
 	start := time.Now()
-	err = r.hrpRunner.newCaseRunner(testcase).run()
+	err = r.hrpRunner.newCaseRunner(copiedTestCase).run()
 	stepResult.elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, err
@@ -488,21 +498,28 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 func (r *caseRunner) parseConfig(config IConfig) error {
 	cfg := config.ToStruct()
 	// parse config variables
-	parsedVariables, err := parseVariables(cfg.Variables)
+	parsedVariables, err := r.parser.parseVariables(cfg.Variables)
 	if err != nil {
 		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
 		return err
 	}
 	cfg.Variables = parsedVariables
+
+	// load plugin variables and functions
+	err = r.parser.loadPlugin(cfg.Path)
+	if err != nil {
+		return err
+	}
+
 	// parse config name
-	parsedName, err := parseString(cfg.Name, cfg.Variables)
+	parsedName, err := r.parser.parseString(cfg.Name, cfg.Variables)
 	if err != nil {
 		return err
 	}
 	cfg.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL, err := parseString(cfg.BaseURL, cfg.Variables)
+	parsedBaseURL, err := r.parser.parseString(cfg.BaseURL, cfg.Variables)
 	if err != nil {
 		return err
 	}

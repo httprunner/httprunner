@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
+	"plugin"
 	"reflect"
 	"regexp"
 	"strings"
@@ -11,9 +14,54 @@ import (
 	"github.com/maja42/goval"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/hrp/internal/builtin"
 )
+
+func newParser() *parser {
+	return &parser{}
+}
+
+type parser struct {
+	// pluginLoader stores loaded go plugins.
+	pluginLoader *plugin.Plugin
+}
+
+// locatePlugin searches debugtalk.so upward recursively until current
+// working directory or system root dir.
+func locatePlugin(startPath string) (string, error) {
+	stat, err := os.Stat(startPath)
+	if os.IsNotExist(err) {
+		return "", err
+	}
+
+	var startDir string
+	if stat.IsDir() {
+		startDir = startPath
+	} else {
+		startDir = filepath.Dir(startPath)
+	}
+	startDir, _ = filepath.Abs(startDir)
+
+	// convention over configuration
+	// target plugin file name is always debugtalk.so
+	pluginPath := filepath.Join(startDir, "debugtalk.so")
+	if _, err := os.Stat(pluginPath); err == nil {
+		return pluginPath, nil
+	}
+
+	// current working directory
+	cwd, _ := os.Getwd()
+	if startDir == cwd {
+		return "", fmt.Errorf("searched to CWD, plugin file not found")
+	}
+
+	// system root dir
+	parentDir, _ := filepath.Abs(filepath.Dir(startDir))
+	if parentDir == startDir {
+		return "", fmt.Errorf("searched to system root dir, plugin file not found")
+	}
+
+	return locatePlugin(parentDir)
+}
 
 func buildURL(baseURL, stepURL string) string {
 	uConfig, err := url.Parse(baseURL)
@@ -32,9 +80,9 @@ func buildURL(baseURL, stepURL string) string {
 	return uStep.String()
 }
 
-func parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
+func (p *parser) parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
 	parsedHeaders := make(map[string]string)
-	headers, err := parseData(rawHeaders, variablesMapping)
+	headers, err := p.parseData(rawHeaders, variablesMapping)
 	if err != nil {
 		return rawHeaders, err
 	}
@@ -54,7 +102,7 @@ func convertString(raw interface{}) string {
 	}
 }
 
-func parseData(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
+func (p *parser) parseData(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
 	rawValue := reflect.ValueOf(raw)
 	switch rawValue.Kind() {
 	case reflect.String:
@@ -65,11 +113,11 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) (interf
 		// other string
 		value := rawValue.String()
 		value = strings.TrimSpace(value)
-		return parseString(value, variablesMapping)
+		return p.parseString(value, variablesMapping)
 	case reflect.Slice:
 		parsedSlice := make([]interface{}, rawValue.Len())
 		for i := 0; i < rawValue.Len(); i++ {
-			parsedValue, err := parseData(rawValue.Index(i).Interface(), variablesMapping)
+			parsedValue, err := p.parseData(rawValue.Index(i).Interface(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
@@ -79,12 +127,12 @@ func parseData(raw interface{}, variablesMapping map[string]interface{}) (interf
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
-			parsedKey, err := parseString(k.String(), variablesMapping)
+			parsedKey, err := p.parseString(k.String(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 			v := rawValue.MapIndex(k)
-			parsedValue, err := parseData(v.Interface(), variablesMapping)
+			parsedValue, err := p.parseData(v.Interface(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
@@ -122,7 +170,7 @@ var (
 )
 
 // parseString parse string with variables
-func parseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
+func (p *parser) parseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
 	matchStartPosition := 0
 	parsedString := ""
 	remainedString := raw
@@ -161,15 +209,19 @@ func parseString(raw string, variablesMapping map[string]interface{}) (interface
 			if err != nil {
 				return raw, err
 			}
-			parsedArgs, err := parseData(arguments, variablesMapping)
+			parsedArgs, err := p.parseData(arguments, variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 
-			result, err := callFunc(funcName, parsedArgs.([]interface{})...)
+			result, err := p.callFunc(funcName, parsedArgs.([]interface{})...)
 			if err != nil {
+				log.Error().Str("funcName", funcName).Interface("arguments", arguments).
+					Err(err).Msg("call function failed")
 				return raw, err
 			}
+			log.Info().Str("funcName", funcName).Interface("arguments", arguments).
+				Interface("output", result).Msg("call function success")
 
 			if funcMatched[0] == raw {
 				// raw_string is a function, e.g. "${add_one(3)}", return its eval value directly
@@ -248,73 +300,6 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
-// callFunc call function with arguments
-// only support return at most one result value
-func callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
-	function, ok := builtin.Functions[funcName]
-	if !ok {
-		// function not found
-		return nil, fmt.Errorf("function %s is not found", funcName)
-	}
-	funcValue := reflect.ValueOf(function)
-	if funcValue.Kind() != reflect.Func {
-		// function not valid
-		return nil, fmt.Errorf("function %s is invalid", funcName)
-	}
-
-	if funcValue.Type().NumIn() != len(arguments) {
-		// function arguments not match
-		return nil, fmt.Errorf("function %s arguments number not match", funcName)
-	}
-
-	argumentsValue := make([]reflect.Value, len(arguments))
-	for index, argument := range arguments {
-		argumentValue := reflect.ValueOf(argument)
-		expectArgumentType := funcValue.Type().In(index)
-		actualArgumentType := reflect.TypeOf(argument)
-
-		// type match
-		if expectArgumentType == actualArgumentType {
-			argumentsValue[index] = argumentValue
-			continue
-		}
-
-		// type not match, check if convertible
-		if !actualArgumentType.ConvertibleTo(expectArgumentType) {
-			// function argument type not match and not convertible
-			err := fmt.Errorf("function %s argument %d type is neither match nor convertible, expect %v, actual %v",
-				funcName, index, expectArgumentType, actualArgumentType)
-			log.Error().Err(err).Msg("call function failed")
-			return nil, err
-		}
-		// convert argument to expect type
-		argumentsValue[index] = argumentValue.Convert(expectArgumentType)
-	}
-
-	resultValues := funcValue.Call(argumentsValue)
-	if len(resultValues) > 1 {
-		// function should return at most one value
-		err := fmt.Errorf("function %s should return at most one value", funcName)
-		log.Error().Err(err).Msg("call function failed")
-		return nil, err
-	}
-
-	// no return value
-	if len(resultValues) == 0 {
-		return nil, nil
-	}
-
-	// return one value
-	// convert reflect.Value to interface{}
-	result := resultValues[0].Interface()
-	log.Info().
-		Str("funcName", funcName).
-		Interface("arguments", arguments).
-		Interface("output", result).
-		Msg("call function success")
-	return result, nil
-}
-
 var eval = goval.NewEvaluator()
 
 // literalEval parse string to number if possible
@@ -361,7 +346,7 @@ func parseFunctionArguments(argsStr string) ([]interface{}, error) {
 	return arguments, nil
 }
 
-func parseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
+func (p *parser) parseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
 	parsedVariables := make(map[string]interface{})
 	var traverseRounds int
 
@@ -399,7 +384,7 @@ func parseVariables(variables map[string]interface{}) (map[string]interface{}, e
 				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
 			}
 
-			parsedValue, err := parseData(varValue, parsedVariables)
+			parsedValue, err := p.parseData(varValue, parsedVariables)
 			if err != nil {
 				continue
 			}
@@ -529,7 +514,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		case reflect.String:
 			// e.g. username-password: ${parameterize(examples/account.csv)} -> [{"username": "test1", "password": "111111"}, {"username": "test2", "password": "222222"}]
 			var parsedParameterContent interface{}
-			parsedParameterContent, err = parseString(rawValue.String(), variablesMapping)
+			parsedParameterContent, err = newParser().parseString(rawValue.String(), variablesMapping)
 			if err != nil {
 				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
 				return nil, err
