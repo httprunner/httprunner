@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/hrp"
@@ -18,7 +20,7 @@ var runCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			paths = append(paths, &hrp.TestCasePath{Path: arg})
@@ -29,7 +31,10 @@ var runCmd = &cobra.Command{
 		if proxyUrl != "" {
 			runner.SetProxyUrl(proxyUrl)
 		}
-		return runner.Run(paths...)
+		err := runner.Run(paths...)
+		if err != nil {
+			os.Exit(1)
+		}
 	},
 }
 

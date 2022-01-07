@@ -1,17 +1,16 @@
 package ga
 
 import (
+	"os"
+
 	"github.com/denisbrodbeck/machineid"
 	"github.com/google/uuid"
-)
-
-const (
-	trackingID = "UA-114587036-1" // Tracking ID for Google Analytics
 )
 
 var gaClient *GAClient
 
 func init() {
+	trackingID := os.Getenv("GA_TRACKING_ID") // Tracking ID for Google Analytics
 	clientID, err := machineid.ProtectedID("hrp")
 	if err != nil {
 		nodeUUID, _ := uuid.NewUUID()
