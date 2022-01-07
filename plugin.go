@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/hrp/internal/ga"
 )
 
 func (p *parser) loadPlugin(path string) error {
@@ -32,6 +33,12 @@ func (p *parser) loadPlugin(path string) error {
 		// plugin not found
 		return nil
 	}
+
+	// report event for loading go plugin
+	go ga.SendEvent(ga.EventTracking{
+		Category: "LoadGoPlugin",
+		Action:   "plugin.Open",
+	})
 
 	// load plugin
 	plugins, err := plugin.Open(pluginPath)
