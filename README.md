@@ -26,6 +26,14 @@ See [CHANGELOG].
 
 ### use as CLI tool
 
+You can install `hrp` with one shell command, which will download the latest version's released binary and install to the current system.
+
+```bash
+$ curl -sL https://raw.githubusercontent.com/httprunner/hrp/main/hrp/scripts/install.sh | bash
+```
+
+If you are a golang developer, you can also install `hrp` with `go get`.
+
 ```bash
 $ go get -u github.com/httprunner/hrp/hrp
 ```
@@ -34,9 +42,19 @@ Since installed, you will get a `hrp` command with multiple sub-commands.
 
 ```text
 $ hrp -h
-hrp (HttpRunner+) aims to be a one-stop solution for HTTP(S) testing, covering API testing, load testing and digital experience monitoring (DEM). Enjoy! ✨ 🚀 ✨
+
+██╗  ██╗████████╗████████╗██████╗ ██████╗ ██╗   ██╗███╗   ██╗███╗   ██╗███████╗██████╗
+██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗██╔══██╗██║   ██║████╗  ██║████╗  ██║██╔════╝██╔══██╗
+███████║   ██║      ██║   ██████╔╝██████╔╝██║   ██║██╔██╗ ██║██╔██╗ ██║█████╗  ██████╔╝
+██╔══██║   ██║      ██║   ██╔═══╝ ██╔══██╗██║   ██║██║╚██╗██║██║╚██╗██║██╔══╝  ██╔══██╗
+██║  ██║   ██║      ██║   ██║     ██║  ██║╚██████╔╝██║ ╚████║██║ ╚████║███████╗██║  ██║
+╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
+
+hrp (HttpRunner+) aims to be a one-stop solution for HTTP(S) testing, covering API testing,
+load testing and digital experience monitoring (DEM). Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
+Website: https://httprunner.com
 Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk
 
