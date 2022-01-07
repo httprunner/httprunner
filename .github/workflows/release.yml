@@ -1,8 +1,11 @@
 name: Release hrp cli binaries
 
 on:
-  release:
-    types: [created]
+  # release:
+  #   types: [created]
+  push:
+  pull_request:
+    types: [synchronize]
 
 jobs:
   releases-matrix:
