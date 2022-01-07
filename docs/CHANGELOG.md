@@ -4,6 +4,7 @@
 
 - feat: support creating and calling custom functions with [go plugin](https://pkg.go.dev/plugin)
 - feat: install hrp with one shell command
+- feat: report GA event for loading go plugin
 
 ## v0.4.0 (2022-01-05)
 
