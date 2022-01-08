@@ -1,7 +1,6 @@
 name: Run scaffold
 
 on:
-  push:
   pull_request:
     types: [synchronize]
 
