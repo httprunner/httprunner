@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/hrp/internal/scaffold"
 )
 
 var scaffoldCmd = &cobra.Command{
@@ -16,7 +16,7 @@ var scaffoldCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		err := builtin.CreateScaffold(args[0])
+		err := scaffold.CreateScaffold(args[0])
 		if err != nil {
 			os.Exit(1)
 		}
