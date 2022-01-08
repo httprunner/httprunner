@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/httprunner/hrp/hrp/cmd"
+	"github.com/httprunner/hrp/cli/hrp/cmd"
 	"github.com/httprunner/hrp/internal/sentry"
 )
 

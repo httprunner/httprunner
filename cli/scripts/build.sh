@@ -5,7 +5,7 @@
 # Usage:
 # $ make build
 # or
-# $ bash hrp/scripts/build.sh
+# $ bash cli/scripts/build.sh
 
 set -e
 set -x
@@ -15,7 +15,7 @@ mkdir -p "output"
 bin_path="output/hrp"
 
 # build
-go build -ldflags '-s -w' -o "$bin_path" hrp/main.go
+go build -ldflags '-s -w' -o "$bin_path" cli/hrp/main.go
 
 # check output and version
 ls -lh "$bin_path"

@@ -1,6 +1,6 @@
 #!/bin/bash
 # install hrp with one shell command
-# curl -sL https://raw.githubusercontent.com/httprunner/hrp/main/hrp/scripts/install.sh | bash
+# curl -sL https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh | bash
 
 set -e
 

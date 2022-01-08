@@ -11,7 +11,7 @@ test: ## run unit tests
 .PHONY: build
 build: ## build hrp cli tool
 	@echo "[info] build hrp cli tool"
-	@. hrp/scripts/build.sh
+	@. cli/scripts/build.sh
 
 .PHONY: help
 help: ## print make commands

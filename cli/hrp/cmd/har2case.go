@@ -9,9 +9,9 @@ import (
 
 // har2caseCmd represents the har2case command
 var har2caseCmd = &cobra.Command{
-	Use:   "har2case harPath...",
-	Short: "Convert HAR to json/yaml testcase files",
-	Long:  `Convert HAR to json/yaml testcase files`,
+	Use:   "har2case $har_path...",
+	Short: "convert HAR to json/yaml testcase files",
+	Long:  `convert HAR to json/yaml testcase files`,
 	Args:  cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
@@ -52,7 +52,7 @@ var (
 )
 
 func init() {
-	RootCmd.AddCommand(har2caseCmd)
+	rootCmd.AddCommand(har2caseCmd)
 	har2caseCmd.Flags().BoolVarP(&genJSONFlag, "to-json", "j", false, "convert to JSON format (default)")
 	har2caseCmd.Flags().BoolVarP(&genYAMLFlag, "to-yaml", "y", false, "convert to JSON format")
 	har2caseCmd.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory, default to the same dir with har file")
