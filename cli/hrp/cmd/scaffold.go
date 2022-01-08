@@ -24,5 +24,5 @@ var scaffoldCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(scaffoldCmd)
+	rootCmd.AddCommand(scaffoldCmd)
 }

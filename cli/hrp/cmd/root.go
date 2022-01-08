@@ -11,8 +11,8 @@ import (
 	"github.com/httprunner/hrp/internal/version"
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
 	Use:   "hrp",
 	Short: "One-stop solution for HTTP(S) testing.",
 	Long: `
@@ -47,10 +47,10 @@ var (
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
-	RootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
+	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
 
-	if err := RootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
