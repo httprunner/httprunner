@@ -2,6 +2,7 @@ package scaffold
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
@@ -62,7 +63,7 @@ func createFolder(folderPath string) error {
 
 func createFile(filePath string, data string) error {
 	log.Info().Str("filePath", filePath).Msg("create file")
-	err := os.WriteFile(filePath, []byte(data), 0o644)
+	err := ioutil.WriteFile(filePath, []byte(data), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("create file failed")
 		return err

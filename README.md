@@ -62,11 +62,12 @@ Usage:
   hrp [command]
 
 Available Commands:
-  boom        run load test with boomer
-  completion  generate the autocompletion script for the specified shell
-  har2case    Convert HAR to json/yaml testcase files
-  help        Help about any command
-  run         run API test
+  boom         run load test with boomer
+  completion   generate the autocompletion script for the specified shell
+  har2case     convert HAR to json/yaml testcase files
+  help         Help about any command
+  run          run API test
+  startproject create a scaffold project
 
 Flags:
   -h, --help               help for hrp
