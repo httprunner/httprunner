@@ -10,7 +10,7 @@ import (
 
 var scaffoldCmd = &cobra.Command{
 	Use:   "startproject $project_name",
-	Short: "Create a scaffold project",
+	Short: "create a scaffold project",
 	Args:  cobra.ExactValidArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
