@@ -52,7 +52,7 @@ var (
 )
 
 func init() {
-	RootCmd.AddCommand(har2caseCmd)
+	rootCmd.AddCommand(har2caseCmd)
 	har2caseCmd.Flags().BoolVarP(&genJSONFlag, "to-json", "j", false, "convert to JSON format (default)")
 	har2caseCmd.Flags().BoolVarP(&genYAMLFlag, "to-yaml", "y", false, "convert to JSON format")
 	har2caseCmd.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory, default to the same dir with har file")
