@@ -9,7 +9,7 @@ import (
 
 // har2caseCmd represents the har2case command
 var har2caseCmd = &cobra.Command{
-	Use:   "har2case harPath...",
+	Use:   "har2case $har_path...",
 	Short: "Convert HAR to json/yaml testcase files",
 	Long:  `Convert HAR to json/yaml testcase files`,
 	Args:  cobra.MinimumNArgs(1),
