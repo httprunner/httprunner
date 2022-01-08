@@ -26,11 +26,19 @@ func CreateScaffold(projectName string) error {
 
 	log.Info().Str("projectName", projectName).Msg("create new scaffold project")
 
-	// create project folder
-	createFolder(projectName)
-	createFolder(path.Join(projectName, "har"))
-	createFolder(path.Join(projectName, "testcases"))
-	createFolder(path.Join(projectName, "reports"))
+	// create project folders
+	if err := createFolder(projectName); err != nil {
+		return err
+	}
+	if err := createFolder(path.Join(projectName, "har")); err != nil {
+		return err
+	}
+	if err := createFolder(path.Join(projectName, "testcases")); err != nil {
+		return err
+	}
+	if err := createFolder(path.Join(projectName, "reports")); err != nil {
+		return err
+	}
 
 	// create demo testcases
 	tCase, _ := demoTestCase.ToTCase()
@@ -45,14 +53,20 @@ func CreateScaffold(projectName string) error {
 		return err
 	}
 
-	createFile(path.Join(projectName, ".gitignore"), demoIgnoreContent)
-	createFile(path.Join(projectName, ".env"), demoEnvContent)
+	// create .gitignore
+	if err := createFile(path.Join(projectName, ".gitignore"), demoIgnoreContent); err != nil {
+		return err
+	}
+	// create .env
+	if err := createFile(path.Join(projectName, ".env"), demoEnvContent); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func createFolder(folderPath string) error {
-	log.Info().Str("folderPath", folderPath).Msg("create folder")
+	log.Info().Str("path", folderPath).Msg("create folder")
 	err := os.MkdirAll(folderPath, os.ModePerm)
 	if err != nil {
 		log.Error().Err(err).Msg("create folder failed")
@@ -62,7 +76,7 @@ func createFolder(folderPath string) error {
 }
 
 func createFile(filePath string, data string) error {
-	log.Info().Str("filePath", filePath).Msg("create file")
+	log.Info().Str("path", filePath).Msg("create file")
 	err := ioutil.WriteFile(filePath, []byte(data), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("create file failed")
