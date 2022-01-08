@@ -10,7 +10,7 @@ import (
 
 // runCmd represents the run command
 var runCmd = &cobra.Command{
-	Use:   "run path...",
+	Use:   "run $path...",
 	Short: "run API test",
 	Long:  `run yaml/json testcase files for API test`,
 	Example: `  $ hrp run demo.json	# run specified json testcase file
@@ -45,7 +45,7 @@ var (
 )
 
 func init() {
-	RootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().BoolVar(&continueOnFailure, "continue-on-failure", false, "continue running next step when failure occurs")
 	runCmd.Flags().BoolVarP(&silentFlag, "silent", "s", false, "disable logging request & response details")
 	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")

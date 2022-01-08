@@ -29,13 +29,13 @@ See [CHANGELOG].
 You can install `hrp` with one shell command, which will download the latest version's released binary and install to the current system.
 
 ```bash
-$ curl -sL https://raw.githubusercontent.com/httprunner/hrp/main/hrp/scripts/install.sh | bash
+$ curl -sL https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh | bash
 ```
 
 If you are a golang developer, you can also install `hrp` with `go get`.
 
 ```bash
-$ go get -u github.com/httprunner/hrp/hrp
+$ go get -u github.com/httprunner/hrp/cli/hrp
 ```
 
 Since installed, you will get a `hrp` command with multiple sub-commands.
@@ -62,11 +62,12 @@ Usage:
   hrp [command]
 
 Available Commands:
-  boom        run load test with boomer
-  completion  generate the autocompletion script for the specified shell
-  har2case    Convert HAR to json/yaml testcase files
-  help        Help about any command
-  run         run API test
+  boom         run load test with boomer
+  completion   generate the autocompletion script for the specified shell
+  har2case     convert HAR to json/yaml testcase files
+  help         Help about any command
+  run          run API test
+  startproject create a scaffold project
 
 Flags:
   -h, --help               help for hrp

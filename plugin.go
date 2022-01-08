@@ -35,10 +35,16 @@ func (p *parser) loadPlugin(path string) error {
 	}
 
 	// report event for loading go plugin
-	go ga.SendEvent(ga.EventTracking{
-		Category: "LoadGoPlugin",
-		Action:   "plugin.Open",
-	})
+	defer func() {
+		event := ga.EventTracking{
+			Category: "LoadGoPlugin",
+			Action:   "plugin.Open",
+		}
+		if err != nil {
+			event.Value = 1 // failed
+		}
+		go ga.SendEvent(event)
+	}()
 
 	// load plugin
 	plugins, err := plugin.Open(pluginPath)
