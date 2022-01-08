@@ -21,8 +21,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Release hrp cli binaries
         uses: wangyoucao577/go-release-action@v1.22
-        env:
-          GA_TRACKING_ID: ${{ secrets.GA_TRACKING_ID }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
