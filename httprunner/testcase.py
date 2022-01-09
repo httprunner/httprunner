@@ -365,6 +365,9 @@ class StepRefCase(object):
     def perform(self) -> TStep:
         return self.__step_context
 
+    def validate(self) -> StepRequestValidation:
+        return StepRequestValidation(self.__step_context)
+
 
 class RunTestCase(object):
     def __init__(self, name: Text):

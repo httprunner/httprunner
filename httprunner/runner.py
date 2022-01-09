@@ -33,6 +33,7 @@ from httprunner.models import (
     ProjectMeta,
     TestCase,
     Hooks,
+    Validators
 )
 
 
@@ -46,6 +47,7 @@ class HttpRunner(object):
     __project_meta: ProjectMeta = None
     __case_id: Text = ""
     __export: List[Text] = []
+    __validators: Validators = []
     __step_datas: List[StepData] = []
     __session: HttpSession = None
     __session_variables: VariablesMapping = {}
@@ -86,6 +88,10 @@ class HttpRunner(object):
 
     def with_export(self, export: List[Text]) -> "HttpRunner":
         self.__export = export
+        return self
+
+    def with_validators(self, validators: Validators):
+        self.__validators = validators
         return self
 
     def __call_hooks(
@@ -234,6 +240,7 @@ class HttpRunner(object):
         """run teststep: referenced testcase"""
         step_data = StepData(name=step.name)
         step_variables = step.variables
+        step_validators = step.validators
         step_export = step.export
 
         # setup hooks
@@ -248,6 +255,7 @@ class HttpRunner(object):
                 .with_case_id(self.__case_id)
                 .with_variables(step_variables)
                 .with_export(step_export)
+                .with_validators(step_validators)
                 .run()
             )
 
@@ -265,6 +273,7 @@ class HttpRunner(object):
                 .with_case_id(self.__case_id)
                 .with_variables(step_variables)
                 .with_export(step_export)
+                .with_validators(step_validators)
                 .run_path(ref_testcase_path)
             )
 
@@ -337,6 +346,11 @@ class HttpRunner(object):
         self.__session = self.__session or HttpSession()
         # save extracted variables of teststeps
         extracted_variables: VariablesMapping = {}
+
+        # extend validators
+        last_step = self.__teststeps[-1]
+        if last_step.request:
+            last_step.validators.extend(self.__validators)
 
         # run teststeps
         for step in self.__teststeps:
