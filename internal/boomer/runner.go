@@ -24,6 +24,31 @@ const (
 	reportStatsInterval = 3 * time.Second
 )
 
+type Loop struct {
+	loopCount     int64 // more than 0
+	acquiredCount int64 // count acquired of load testing
+	finishedCount int64 // count finished of load testing
+}
+
+func (l *Loop) isFinished() bool {
+	// return true when there are no remaining loop count to test
+	return atomic.LoadInt64(&l.finishedCount) == l.loopCount
+}
+
+func (l *Loop) acquire() bool {
+	// get one ticket when there are still remaining loop count to test
+	// return true when getting ticket successfully
+	if atomic.LoadInt64(&l.acquiredCount) < l.loopCount {
+		atomic.AddInt64(&l.acquiredCount, 1)
+		return true
+	}
+	return false
+}
+
+func (l *Loop) increaseFinishedCount() {
+	atomic.AddInt64(&l.finishedCount, 1)
+}
+
 type runner struct {
 	state int32
 
@@ -37,6 +62,7 @@ type runner struct {
 	currentClientsNum int32 // current clients count
 	spawnCount        int   // target clients to spawn
 	spawnRate         float64
+	loop              *Loop // specify running cycles
 
 	outputs []Output
 }
@@ -78,7 +104,7 @@ func (r *runner) outputOnStart() {
 	wg.Wait()
 }
 
-func (r *runner) outputOnEevent(data map[string]interface{}) {
+func (r *runner) outputOnEvent(data map[string]interface{}) {
 	size := len(r.outputs)
 	if size == 0 {
 		return
@@ -110,7 +136,14 @@ func (r *runner) outputOnStop() {
 	wg.Wait()
 }
 
-func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
+func (r *runner) reportStats() {
+	data := r.stats.collectReportData()
+	data["user_count"] = atomic.LoadInt32(&r.currentClientsNum)
+	data["state"] = atomic.LoadInt32(&r.state)
+	r.outputOnEvent(data)
+}
+
+func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
 	log.Info().
 		Int("spawnCount", spawnCount).
 		Float64("spawnRate", spawnRate).
@@ -135,6 +168,9 @@ func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool,
 					case <-quit:
 						return
 					default:
+						if r.loop != nil && !r.loop.acquire() {
+							return
+						}
 						if r.rateLimitEnabled {
 							blocked := r.rateLimiter.Acquire()
 							if !blocked {
@@ -144,6 +180,12 @@ func (r *runner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool,
 						} else {
 							task := r.getTask()
 							r.safeRun(task.Fn)
+						}
+						if r.loop != nil {
+							r.loop.increaseFinishedCount()
+							if r.loop.isFinished() {
+								r.stop()
+							}
 						}
 					}
 				}
@@ -250,10 +292,7 @@ func (r *localRunner) start() {
 			r.stats.logError(n.requestType, n.name, n.errMsg)
 		// report stats
 		case <-ticker.C:
-			data := r.stats.collectReportData()
-			data["user_count"] = atomic.LoadInt32(&r.currentClientsNum)
-			data["state"] = atomic.LoadInt32(&r.state)
-			r.outputOnEevent(data)
+			r.reportStats()
 		// stop
 		case <-r.stopChan:
 			atomic.StoreInt32(&r.state, stateQuitting)
@@ -266,6 +305,10 @@ func (r *localRunner) start() {
 			if r.rateLimitEnabled {
 				r.rateLimiter.Stop()
 			}
+
+			// report last stats
+			<-ticker.C
+			r.reportStats()
 
 			// output teardown
 			r.outputOnStop()
