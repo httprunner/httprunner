@@ -29,6 +29,9 @@ var boomCmd = &cobra.Command{
 		}
 		hrpBoomer := hrp.NewBoomer(spawnCount, spawnRate)
 		hrpBoomer.SetRateLimiter(maxRPS, requestIncreaseRate)
+		if loopCount > 0 {
+			hrpBoomer.SetLoopCount(loopCount)
+		}
 		if !disableConsoleOutput {
 			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
 		}
@@ -45,6 +48,7 @@ var (
 	spawnCount               int
 	spawnRate                float64
 	maxRPS                   int64
+	loopCount                int64
 	requestIncreaseRate      string
 	memoryProfile            string
 	memoryProfileDuration    time.Duration
