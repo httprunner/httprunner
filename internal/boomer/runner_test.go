@@ -1,6 +1,7 @@
 package boomer
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -109,7 +110,7 @@ func TestLoopCount(t *testing.T) {
 	ticker := time.NewTicker(4 * time.Second)
 	defer ticker.Stop()
 	<-ticker.C
-	if !assert.Equal(t, runner.loop.loopCount, runner.loop.finishedCount) {
+	if !assert.Equal(t, runner.loop.loopCount, atomic.LoadInt64(&runner.loop.finishedCount)) {
 		t.Fail()
 	}
 }
