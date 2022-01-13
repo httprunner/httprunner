@@ -2,12 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
-)
 
-func init() {
-	log.Println("plugin init function called")
-}
+	plugin "github.com/httprunner/hrp/plugin-gosdk"
+)
 
 func SumInt(args ...interface{}) (interface{}, error) {
 	var sum int
@@ -31,4 +28,11 @@ func ConcatenateString(args ...interface{}) (interface{}, error) {
 		result += v
 	}
 	return result, nil
+}
+
+// register functions and build to plugin binary
+func main() {
+	plugin.Register("sum_int", SumInt)
+	plugin.Register("concatenate_string", ConcatenateString)
+	plugin.Serve()
 }

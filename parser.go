@@ -18,8 +18,7 @@ func newParser() *parser {
 }
 
 type parser struct {
-	plugin          hrpPlugin                // plugin is used to call functions
-	cachedFunctions map[string]reflect.Value // cache loaded functions to improve performance
+	plugin hrpPlugin // plugin is used to call functions
 }
 
 func buildURL(baseURL, stepURL string) string {
