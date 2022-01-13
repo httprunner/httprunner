@@ -169,6 +169,9 @@ def _ensure_step_attachment(step: Dict) -> Dict:
     if "variables" in step:
         test_dict["variables"] = step["variables"]
 
+    if "retry" in step:
+        test_dict["retry"] = step["retry"]
+
     if "setup_hooks" in step:
         test_dict["setup_hooks"] = step["setup_hooks"]
 

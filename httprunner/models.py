@@ -31,6 +31,11 @@ class MethodEnum(Text, Enum):
     PATCH = "PATCH"
 
 
+class TRetry(BaseModel):
+    tries: int
+    delay: int
+
+
 class TConfig(BaseModel):
     name: Name
     verify: Verify = False
@@ -74,6 +79,7 @@ class TStep(BaseModel):
     export: Export = []
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
+    retry: Union[TRetry, None] = TRetry(tries=1, delay=0)
 
 
 class TestCase(BaseModel):

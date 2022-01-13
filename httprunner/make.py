@@ -272,6 +272,11 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
         variables = teststep["variables"]
         step_info += f".with_variables(**{variables})"
 
+    if "retry" in teststep:
+        tries = teststep["retry"]["tries"]
+        delay = teststep["retry"]["delay"]
+        step_info += f".with_retry(tries={tries}, delay={delay})"
+
     if "setup_hooks" in teststep:
         setup_hooks = teststep["setup_hooks"]
         for hook in setup_hooks:

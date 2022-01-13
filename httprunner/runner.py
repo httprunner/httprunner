@@ -12,6 +12,7 @@ except ModuleNotFoundError:
     USE_ALLURE = False
 
 from loguru import logger
+from retry.api import retry_call
 
 from httprunner import utils, exceptions
 from httprunner.client import HttpSession
@@ -368,9 +369,15 @@ class HttpRunner(object):
             # run step
             if USE_ALLURE:
                 with allure.step(f"step: {step.name}"):
-                    extract_mapping = self.__run_step(step)
+                    extract_mapping = retry_call(
+                        self.__run_step, fargs=(step,), fkwargs={},
+                        tries=step.retry.tries, delay=step.retry.delay
+                    )
             else:
-                extract_mapping = self.__run_step(step)
+                extract_mapping = retry_call(
+                    self.__run_step, fargs=(step, ), fkwargs={},
+                    tries=step.retry.tries, delay=step.retry.delay
+                )
 
             # save extracted variables to session variables
             extracted_variables.update(extract_mapping)
