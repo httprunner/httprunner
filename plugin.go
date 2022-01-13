@@ -12,26 +12,28 @@ import (
 
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
+	pluginSDK "github.com/httprunner/hrp/plugin-gosdk"
 )
 
 type pluginFile string
 
 const (
-	goPluginFile          pluginFile = "debugtalk.so" // built from go plugin
-	hashicorpGoPluginFile pluginFile = "debugtalk"    // built from hashicorp go plugin
-	hashicorpPyPluginFile pluginFile = "debugtalk.py"
+	goPluginFile          pluginFile = pluginSDK.Name + ".so"  // built from go plugin
+	hashicorpGoPluginFile pluginFile = pluginSDK.Name + ".bin" // built from hashicorp go plugin
+	hashicorpPyPluginFile pluginFile = pluginSDK.Name + ".py"
 )
 
 type hrpPlugin interface {
-	init(path string) error
-	lookup(funcName string) (reflect.Value, error) // lookup function
-	// call(funcName string, args ...interface{}) (interface{}, error)
-	quit() error
+	init(path string) error                                         // init plugin
+	has(funcName string) bool                                       // check if plugin has function
+	call(funcName string, args ...interface{}) (interface{}, error) // call function
+	quit() error                                                    // quit plugin
 }
 
 // goPlugin implements golang official plugin
 type goPlugin struct {
 	*plugin.Plugin
+	cachedFunctions map[string]reflect.Value // cache loaded functions to improve performance
 }
 
 func (p *goPlugin) init(path string) error {
@@ -59,58 +61,93 @@ func (p *goPlugin) init(path string) error {
 		return err
 	}
 
+	p.cachedFunctions = make(map[string]reflect.Value)
 	log.Info().Str("path", path).Msg("load go plugin success")
 	return nil
 }
 
-func (p *goPlugin) lookup(funcName string) (reflect.Value, error) {
-	if p.Plugin == nil {
-		return reflect.Value{}, fmt.Errorf("go plugin is not loaded")
+func (p *goPlugin) has(funcName string) bool {
+	fn, ok := p.cachedFunctions[funcName]
+	if ok {
+		return fn.IsValid()
 	}
 
 	sym, err := p.Plugin.Lookup(funcName)
 	if err != nil {
-		return reflect.Value{}, fmt.Errorf("function %s is not found", funcName)
+		p.cachedFunctions[funcName] = reflect.Value{} // mark as invalid
+		return false
 	}
-	fn := reflect.ValueOf(sym)
+	fn = reflect.ValueOf(sym)
 
 	// check function type
 	if fn.Kind() != reflect.Func {
-		return reflect.Value{}, fmt.Errorf("function %s is invalid", funcName)
+		p.cachedFunctions[funcName] = reflect.Value{} // mark as invalid
+		return false
 	}
 
-	return fn, nil
+	p.cachedFunctions[funcName] = fn
+	return true
 }
 
 func (p *goPlugin) call(funcName string, args ...interface{}) (interface{}, error) {
-	if p.Plugin == nil {
-		return nil, fmt.Errorf("go plugin is not loaded")
-	}
-	return nil, nil
+	fn := p.cachedFunctions[funcName]
+	return callFunc(fn, args...)
 }
 
 func (p *goPlugin) quit() error {
+	// no need to quit for go plugin
 	return nil
 }
 
 // hashicorpPlugin implements hashicorp/go-plugin
 type hashicorpPlugin struct {
+	pluginSDK.FuncCaller
+	cachedFunctions map[string]bool // cache loaded functions to improve performance
 }
 
 func (p *hashicorpPlugin) init(path string) error {
+
+	f, err := pluginSDK.Init(path)
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("load go hashicorp plugin failed")
+		return err
+	}
+	p.FuncCaller = f
+
+	p.cachedFunctions = make(map[string]bool)
 	log.Info().Str("path", path).Msg("load hashicorp go plugin success")
 	return nil
 }
 
-func (p *hashicorpPlugin) lookup(funcName string) (reflect.Value, error) {
-	return reflect.Value{}, nil
+func (p *hashicorpPlugin) has(funcName string) bool {
+	flag, ok := p.cachedFunctions[funcName]
+	if ok {
+		return flag
+	}
+
+	funcNames, err := p.GetNames()
+	if err != nil {
+		return false
+	}
+
+	for _, name := range funcNames {
+		if name == funcName {
+			p.cachedFunctions[funcName] = true // cache as exists
+			return true
+		}
+	}
+
+	p.cachedFunctions[funcName] = false // cache as not exists
+	return false
 }
 
 func (p *hashicorpPlugin) call(funcName string, args ...interface{}) (interface{}, error) {
-	return nil, nil
+	return p.FuncCaller.Call(funcName, args...)
 }
 
 func (p *hashicorpPlugin) quit() error {
+	// kill hashicorp plugin process
+	pluginSDK.Quit()
 	return nil
 }
 
@@ -119,19 +156,20 @@ func (p *parser) initPlugin(path string) error {
 		return nil
 	}
 
-	// locate go plugin file
-	pluginPath, err := locatePlugin(path, goPluginFile)
-	if err == nil {
-		// found go plugin file
-		p.plugin = &goPlugin{}
-		return p.plugin.init(pluginPath)
-	}
-
+	// priority: hashicorp plugin > go plugin > builtin functions
 	// locate hashicorp plugin file
-	pluginPath, err = locatePlugin(path, hashicorpGoPluginFile)
+	pluginPath, err := locatePlugin(path, hashicorpGoPluginFile)
 	if err == nil {
 		// found hashicorp go plugin file
 		p.plugin = &hashicorpPlugin{}
+		return p.plugin.init(pluginPath)
+	}
+
+	// locate go plugin file
+	pluginPath, err = locatePlugin(path, goPluginFile)
+	if err == nil {
+		// found go plugin file
+		p.plugin = &goPlugin{}
 		return p.plugin.init(pluginPath)
 	}
 
@@ -176,83 +214,65 @@ func locatePlugin(startPath string, destPluginFile pluginFile) (string, error) {
 	return locatePlugin(parentDir, destPluginFile)
 }
 
-func (p *parser) getMappingFunction(funcName string) (reflect.Value, error) {
-	if function, ok := p.cachedFunctions[funcName]; ok {
-		return function, nil
-	}
-
-	var fn reflect.Value
-
-	// get function from plugin
-	if p.plugin != nil {
-		fn, err := p.plugin.lookup(funcName)
-		if err == nil {
-			p.cachedFunctions[funcName] = fn
-			return fn, nil
-		}
-	}
-
-	// get builtin function
-	if function, ok := builtin.Functions[funcName]; ok {
-		fn = reflect.ValueOf(function)
-		p.cachedFunctions[funcName] = fn
-		return fn, nil
-	}
-
-	// function not found
-	return reflect.Value{}, fmt.Errorf("function %s is not found", funcName)
-}
-
 // callFunc calls function with arguments
 // only support return at most one result value
 func (p *parser) callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
-	fn, err := p.getMappingFunction(funcName)
-	if err != nil {
-		return nil, err
+	// call with plugin function
+	if p.plugin != nil && p.plugin.has(funcName) {
+		return p.plugin.call(funcName, arguments...)
 	}
 
-	if fn.Type().NumIn() != len(arguments) {
+	// get builtin function
+	function, ok := builtin.Functions[funcName]
+	if !ok {
+		return nil, fmt.Errorf("function %s is not found", funcName)
+	}
+	fn := reflect.ValueOf(function)
+
+	// call with builtin function
+	return callFunc(fn, arguments...)
+}
+
+// callFunc calls function with arguments
+// it is used when calling go plugin or builtin functions
+func callFunc(fn reflect.Value, args ...interface{}) (interface{}, error) {
+	fnArgsNum := fn.Type().NumIn()
+	if fnArgsNum > 0 && fn.Type().In(fnArgsNum-1).Kind() == reflect.Slice {
+		// last argument is slice, do not check arguments number
+		// e.g. ...interface{}
+		// e.g. a, b string, c ...interface{}
+	} else if fnArgsNum != len(args) {
 		// function arguments not match
 		return nil, fmt.Errorf("function arguments number not match")
 	}
+	// arguments do not have slice, and arguments number matched
 
-	argumentsValue := make([]reflect.Value, len(arguments))
-	for index, argument := range arguments {
-		argumentValue := reflect.ValueOf(argument)
-		expectArgumentType := fn.Type().In(index)
-		actualArgumentType := reflect.TypeOf(argument)
-
-		// type match
-		if expectArgumentType == actualArgumentType {
-			argumentsValue[index] = argumentValue
-			continue
+	argumentsValue := make([]reflect.Value, len(args))
+	for index, argument := range args {
+		if argument == nil {
+			argumentsValue[index] = reflect.Zero(fn.Type().In(index))
+		} else {
+			argumentsValue[index] = reflect.ValueOf(args[index])
 		}
-
-		// type not match, check if convertible
-		if !actualArgumentType.ConvertibleTo(expectArgumentType) {
-			// function argument type not match and not convertible
-			err := fmt.Errorf("function argument %d's type is neither match nor convertible, expect %v, actual %v",
-				index, expectArgumentType, actualArgumentType)
-			return nil, err
-		}
-		// convert argument to expect type
-		argumentsValue[index] = argumentValue.Convert(expectArgumentType)
 	}
 
 	resultValues := fn.Call(argumentsValue)
-	if len(resultValues) > 1 {
-		// function should return at most one value
-		err := fmt.Errorf("function should return at most one value")
+	if resultValues == nil {
+		// no returns
+		return nil, nil
+	} else if len(resultValues) == 2 {
+		// return two arguments: interface{}, error
+		if resultValues[1].Interface() != nil {
+			return resultValues[0].Interface(), resultValues[1].Interface().(error)
+		} else {
+			return resultValues[0].Interface(), nil
+		}
+	} else if len(resultValues) == 1 {
+		// return one arguments: interface{}
+		return resultValues[0].Interface(), nil
+	} else {
+		// return more than 2 arguments, unexpected
+		err := fmt.Errorf("function should return at most 2 arguments")
 		return nil, err
 	}
-
-	// no return value
-	if len(resultValues) == 0 {
-		return nil, nil
-	}
-
-	// return one value
-	// convert reflect.Value to interface{}
-	result := resultValues[0].Interface()
-	return result, nil
 }

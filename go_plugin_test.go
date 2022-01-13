@@ -12,17 +12,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	fmt.Println("[TestMain] build go plugin")
+func buildGoPlugin() {
+	fmt.Println("[setup] build go plugin")
 	// flag -race is necessary in order to be consistent with go test
 	cmd := exec.Command("go", "build", "-buildmode=plugin", "-race", "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
-	os.Exit(m.Run())
+}
+
+func removeGoPlugin() {
+	fmt.Println("[teardown] remove go plugin")
+	os.Remove("examples/debugtalk.so")
 }
 
 func TestLocatePlugin(t *testing.T) {
+	buildGoPlugin()
+	defer removeGoPlugin()
+
 	cwd, _ := os.Getwd()
 	_, err := locatePlugin(cwd, goPluginFile)
 	if !assert.Error(t, err) {
@@ -66,15 +73,19 @@ func TestLocatePlugin(t *testing.T) {
 }
 
 func TestCallPluginFunction(t *testing.T) {
+	buildGoPlugin()
+	removeHashicorpPlugin()
+	defer removeGoPlugin()
+
 	parser := newParser()
 	parser.initPlugin("examples/debugtalk.so")
 
 	// call function without arguments
-	result, err := parser.callFunc("Concatenate", 1, "2", 3.14)
+	result, err := parser.callFunc("ConcatenateString", "1", "2", "3.14")
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	if !assert.Equal(t, result, "1_2_3.14") {
+	if !assert.Equal(t, "123.14", result) {
 		t.Fail()
 	}
 }
