@@ -1,8 +1,11 @@
 package boomer
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type HitOutput struct {
@@ -45,13 +48,13 @@ func TestOutputOnStart(t *testing.T) {
 	}
 }
 
-func TestOutputOnEevent(t *testing.T) {
+func TestOutputOnEvent(t *testing.T) {
 	hitOutput := &HitOutput{}
 	hitOutput2 := &HitOutput{}
 	runner := &runner{}
 	runner.addOutput(hitOutput)
 	runner.addOutput(hitOutput2)
-	runner.outputOnEevent(nil)
+	runner.outputOnEvent(nil)
 	if !hitOutput.onEvent {
 		t.Error("hitOutput's OnEvent has not been called")
 	}
@@ -89,4 +92,25 @@ func TestLocalRunner(t *testing.T) {
 	go runner.start()
 	time.Sleep(4 * time.Second)
 	runner.stop()
+}
+
+func TestLoopCount(t *testing.T) {
+	taskA := &Task{
+		Weight: 10,
+		Fn: func() {
+			time.Sleep(time.Second)
+		},
+		Name: "TaskA",
+	}
+	tasks := []*Task{taskA}
+	runner := newLocalRunner(2, 2)
+	runner.loop = &Loop{loopCount: 4}
+	runner.setTasks(tasks)
+	go runner.start()
+	ticker := time.NewTicker(4 * time.Second)
+	defer ticker.Stop()
+	<-ticker.C
+	if !assert.Equal(t, runner.loop.loopCount, atomic.LoadInt64(&runner.loop.finishedCount)) {
+		t.Fail()
+	}
 }
