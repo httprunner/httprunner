@@ -197,6 +197,8 @@ func convertData(data map[string]interface{}) (output *dataOutput, err error) {
 		return nil, fmt.Errorf("stats is not []interface{}")
 	}
 
+	errors := data["errors"].(map[string]map[string]interface{})
+
 	transactions, ok := data["transactions"].(map[string]int64)
 	if !ok {
 		return nil, fmt.Errorf("transactions is not map[string]int64")
@@ -223,6 +225,7 @@ func convertData(data map[string]interface{}) (output *dataOutput, err error) {
 		TotalRPS:           getCurrentRps(entryTotalOutput.NumRequests),
 		TotalFailRatio:     getTotalFailRatio(entryTotalOutput.NumRequests, entryTotalOutput.NumFailures),
 		Stats:              make([]*statsEntryOutput, 0, len(stats)),
+		Errors:             errors,
 	}
 
 	// convert stats
@@ -329,6 +332,24 @@ var (
 	)
 )
 
+// summary for total
+var (
+	summaryResponseTime = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "response_time",
+			Help: "The summary of response time",
+			Objectives: map[float64]float64{
+				0.5:  0.01,
+				0.9:  0.01,
+				0.95: 0.005,
+			},
+			AgeBuckets: 1,
+			MaxAge:     100000 * time.Second,
+		},
+		[]string{"method", "name"},
+	)
+)
+
 // gauges for total
 var (
 	gaugeUsers = prometheus.NewGauge(
@@ -367,6 +388,13 @@ var (
 			Help: "The accumulated number of failed transactions",
 		},
 	)
+	gaugeErrors = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "errors",
+			Help: "The errors of load testing",
+		},
+		[]string{"method", "name", "error"},
+	)
 )
 
 // NewPrometheusPusherOutput returns a PrometheusPusherOutput.
@@ -397,6 +425,9 @@ func (o *PrometheusPusherOutput) OnStart() {
 		gaugeAverageContentLength,
 		gaugeCurrentRPS,
 		gaugeCurrentFailPerSec,
+		gaugeErrors,
+		// summary for total
+		summaryResponseTime,
 		// gauges for total
 		gaugeUsers,
 		gaugeState,
@@ -449,6 +480,21 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 		gaugeAverageContentLength.WithLabelValues(method, name).Set(float64(stat.avgContentLength))
 		gaugeCurrentRPS.WithLabelValues(method, name).Set(stat.currentRps)
 		gaugeCurrentFailPerSec.WithLabelValues(method, name).Set(float64(stat.currentFailPerSec))
+		for responseTime, count := range stat.ResponseTimes {
+			var i int64
+			for i = 0; i < count; i++ {
+				summaryResponseTime.WithLabelValues(method, name).Observe(float64(responseTime))
+			}
+		}
+	}
+
+	// errors
+	for _, requestError := range output.Errors {
+		gaugeErrors.WithLabelValues(
+			requestError["method"].(string),
+			requestError["name"].(string),
+			requestError["error"].(string),
+		).Set(float64(requestError["occurrences"].(int64)))
 	}
 
 	if err := o.pusher.Push(); err != nil {
