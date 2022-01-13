@@ -506,7 +506,7 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 	cfg.Variables = parsedVariables
 
 	// load plugin variables and functions
-	err = r.parser.loadPlugin(cfg.Path)
+	err = r.parser.initPlugin(cfg.Path)
 	if err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ import (
 func TestMain(m *testing.M) {
 	fmt.Println("[TestMain] build go plugin")
 	// flag -race is necessary in order to be consistent with go test
-	cmd := exec.Command("go", "build", "-buildmode=plugin", `-race`, "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "-race", "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
@@ -24,42 +24,42 @@ func TestMain(m *testing.M) {
 
 func TestLocatePlugin(t *testing.T) {
 	cwd, _ := os.Getwd()
-	_, err := locatePlugin(cwd)
+	_, err := locatePlugin(cwd, goPluginFile)
 	if !assert.Error(t, err) {
 		t.Fail()
 	}
 
-	_, err = locatePlugin("")
+	_, err = locatePlugin("", goPluginFile)
 	if !assert.Error(t, err) {
 		t.Fail()
 	}
 
 	startPath := "examples/debugtalk.so"
-	_, err = locatePlugin(startPath)
+	_, err = locatePlugin(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	startPath = "examples/demo.json"
-	_, err = locatePlugin(startPath)
+	_, err = locatePlugin(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	startPath = "examples/"
-	_, err = locatePlugin(startPath)
+	_, err = locatePlugin(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	startPath = "examples/plugin/debugtalk.go"
-	_, err = locatePlugin(startPath)
+	_, err = locatePlugin(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	startPath = "/abc"
-	_, err = locatePlugin(startPath)
+	_, err = locatePlugin(startPath, goPluginFile)
 	if !assert.Error(t, err) {
 		t.Fail()
 	}
@@ -67,7 +67,7 @@ func TestLocatePlugin(t *testing.T) {
 
 func TestCallPluginFunction(t *testing.T) {
 	parser := newParser()
-	parser.loadPlugin("examples/debugtalk.so")
+	parser.initPlugin("examples/debugtalk.so")
 
 	// call function without arguments
 	result, err := parser.callFunc("Concatenate", 1, "2", 3.14)
