@@ -95,7 +95,6 @@ func (p *goPlugin) quit() error {
 
 // hashicorpPlugin implements hashicorp/go-plugin
 type hashicorpPlugin struct {
-	cachedFunctions map[string]reflect.Value
 }
 
 func (p *hashicorpPlugin) init(path string) error {
@@ -178,12 +177,17 @@ func locatePlugin(startPath string, destPluginFile pluginFile) (string, error) {
 }
 
 func (p *parser) getMappingFunction(funcName string) (reflect.Value, error) {
+	if function, ok := p.cachedFunctions[funcName]; ok {
+		return function, nil
+	}
+
 	var fn reflect.Value
 
 	// get function from plugin
 	if p.plugin != nil {
 		fn, err := p.plugin.lookup(funcName)
 		if err == nil {
+			p.cachedFunctions[funcName] = fn
 			return fn, nil
 		}
 	}
@@ -191,6 +195,7 @@ func (p *parser) getMappingFunction(funcName string) (reflect.Value, error) {
 	// get builtin function
 	if function, ok := builtin.Functions[funcName]; ok {
 		fn = reflect.ValueOf(function)
+		p.cachedFunctions[funcName] = fn
 		return fn, nil
 	}
 
