@@ -52,6 +52,11 @@ func (b *Boomer) SetRateLimiter(maxRPS int64, requestIncreaseRate string) {
 	}
 }
 
+// SetLoopCount set loop count for test.
+func (b *Boomer) SetLoopCount(loopCount int64) {
+	b.localRunner.loop = &Loop{loopCount: loopCount}
+}
+
 // AddOutput accepts outputs which implements the boomer.Output interface.
 func (b *Boomer) AddOutput(o Output) {
 	b.localRunner.addOutput(o)
