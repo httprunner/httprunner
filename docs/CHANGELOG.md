@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.1 (2022-01-13)
+
+- feat: support specifying running cycles for load testing
+- fix: ensure last stats reported when stop running
+
 ## v0.5.0 (2022-01-08)
 
 - feat: support creating and calling custom functions with [go plugin](https://pkg.go.dev/plugin)
