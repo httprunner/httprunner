@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	plugin "github.com/httprunner/hrp/plugin"
+	"github.com/httprunner/hrp/plugin"
 )
 
 func SumTwoInt(a, b int) int {
