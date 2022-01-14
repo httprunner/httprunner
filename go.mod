@@ -6,6 +6,8 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-hclog v1.1.0
+	github.com/hashicorp/go-plugin v1.4.3
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/maja42/goval v1.2.1
