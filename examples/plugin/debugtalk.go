@@ -9,26 +9,49 @@ func init() {
 	log.Println("plugin init function called")
 }
 
-func SumInt(args ...interface{}) (interface{}, error) {
+func SumTwoInt(a, b int) int {
+	return a + b
+}
+
+func SumInts(args ...int) int {
 	var sum int
 	for _, arg := range args {
-		v, ok := arg.(int)
-		if !ok {
+		sum += arg
+	}
+	return sum
+}
+
+func Sum(args ...interface{}) (interface{}, error) {
+	var sum float64
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case int:
+			sum += float64(v)
+		case float64:
+			sum += v
+		default:
 			return nil, fmt.Errorf("unexpected type: %T", arg)
 		}
-		sum += v
 	}
 	return sum, nil
 }
 
-func ConcatenateString(args ...interface{}) (interface{}, error) {
+func SumTwoString(a, b string) string {
+	return a + b
+}
+
+func SumStrings(s ...string) string {
+	var sum string
+	for _, arg := range s {
+		sum += arg
+	}
+	return sum
+}
+
+func Concatenate(args ...interface{}) (interface{}, error) {
 	var result string
 	for _, arg := range args {
-		v, ok := arg.(string)
-		if !ok {
-			return nil, fmt.Errorf("unexpected type: %T", arg)
-		}
-		result += v
+		result += fmt.Sprintf("%v", arg)
 	}
 	return result, nil
 }
