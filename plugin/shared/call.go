@@ -23,9 +23,28 @@ func CallFunc(fn reflect.Value, args ...interface{}) (interface{}, error) {
 	for index, argument := range args {
 		if argument == nil {
 			argumentsValue[index] = reflect.Zero(fn.Type().In(index))
-		} else {
-			argumentsValue[index] = reflect.ValueOf(args[index])
+			continue
 		}
+
+		argumentValue := reflect.ValueOf(argument)
+		expectArgumentType := fn.Type().In(index)
+		actualArgumentType := reflect.TypeOf(argument)
+
+		// type match
+		if expectArgumentType == actualArgumentType {
+			argumentsValue[index] = argumentValue
+			continue
+		}
+
+		// type not match, check if convertible
+		if !actualArgumentType.ConvertibleTo(expectArgumentType) {
+			// function argument type not match and not convertible
+			err := fmt.Errorf("function argument %d's type is neither match nor convertible, expect %v, actual %v",
+				index, expectArgumentType, actualArgumentType)
+			return nil, err
+		}
+		// convert argument to expect type
+		argumentsValue[index] = argumentValue.Convert(expectArgumentType)
 	}
 
 	resultValues := fn.Call(argumentsValue)
@@ -40,8 +59,14 @@ func CallFunc(fn reflect.Value, args ...interface{}) (interface{}, error) {
 			return resultValues[0].Interface(), nil
 		}
 	} else if len(resultValues) == 1 {
-		// return one arguments: interface{}
-		return resultValues[0].Interface(), nil
+		// return one argument
+		if err, ok := resultValues[0].Interface().(error); ok {
+			// return error
+			return nil, err
+		} else {
+			// return interface{}
+			return resultValues[0].Interface(), nil
+		}
 	} else {
 		// return more than 2 arguments, unexpected
 		err := fmt.Errorf("function should return at most 2 arguments")

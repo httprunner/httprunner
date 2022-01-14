@@ -1,4 +1,4 @@
-package main
+package hrp
 
 import (
 	"fmt"
@@ -6,22 +6,30 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/httprunner/hrp/plugin/host"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	fmt.Println("[TestMain] build go plugin")
-	cmd := exec.Command("go", "build", "-o=debugtalk.bin", "./debugtalk.go")
+func buildHashicorpPlugin() {
+	fmt.Println("[init] build hashicorp go plugin")
+	cmd := exec.Command("go", "build",
+		"-o=examples/debugtalk.bin",
+		"examples/plugin/hashicorp.go", "examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
-	os.Exit(m.Run())
+}
+
+func removeHashicorpPlugin() {
+	fmt.Println("[teardown] remove hashicorp plugin")
+	os.Remove("examples/debugtalk.bin")
 }
 
 func TestInitHashicorpPlugin(t *testing.T) {
-	f, err := host.Init("./debugtalk.bin")
+	buildHashicorpPlugin()
+	defer removeHashicorpPlugin()
+
+	f, err := host.Init("examples/debugtalk.bin")
 	if err != nil {
 		t.Fatal(err)
 	}
