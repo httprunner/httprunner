@@ -9,6 +9,26 @@ func init() {
 	log.Println("plugin init function called")
 }
 
-func Concatenate(a int, b string, c float64) string {
-	return fmt.Sprintf("%v_%v_%v", a, b, c)
+func SumInt(args ...interface{}) (interface{}, error) {
+	var sum int
+	for _, arg := range args {
+		v, ok := arg.(int)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type: %T", arg)
+		}
+		sum += v
+	}
+	return sum, nil
+}
+
+func ConcatenateString(args ...interface{}) (interface{}, error) {
+	var result string
+	for _, arg := range args {
+		v, ok := arg.(string)
+		if !ok {
+			return nil, fmt.Errorf("unexpected type: %T", arg)
+		}
+		result += v
+	}
+	return result, nil
 }
