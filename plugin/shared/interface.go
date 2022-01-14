@@ -1,4 +1,4 @@
-package plugin
+package shared
 
 import (
 	"encoding/gob"
@@ -83,23 +83,21 @@ func (s *functionRPCServer) Call(args interface{}, resp *interface{}) error {
 	var err error
 	*resp, err = s.Impl.Call(f.Name, f.Args...)
 	if err != nil {
-		log.Error().Err(err).
-			Interface("args", args).
-			Msg("function execution failed")
+		log.Error().Err(err).Interface("args", args).Msg("function execution failed")
 		return err
 	}
 	return nil
 }
 
-// hashicorpPlugin implements hashicorp's plugin.Plugin.
-type hashicorpPlugin struct {
+// HashicorpPlugin implements hashicorp's plugin.Plugin.
+type HashicorpPlugin struct {
 	Impl FuncCaller
 }
 
-func (p *hashicorpPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
+func (p *HashicorpPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
 	return &functionRPCServer{Impl: p.Impl}, nil
 }
 
-func (hashicorpPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+func (HashicorpPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return &functionRPC{client: c}, nil
 }

@@ -12,15 +12,16 @@ import (
 
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
-	pluginSDK "github.com/httprunner/hrp/plugin-gosdk"
+	pluginHost "github.com/httprunner/hrp/plugin/host"
+	pluginShared "github.com/httprunner/hrp/plugin/shared"
 )
 
 type pluginFile string
 
 const (
-	goPluginFile          pluginFile = pluginSDK.Name + ".so"  // built from go plugin
-	hashicorpGoPluginFile pluginFile = pluginSDK.Name + ".bin" // built from hashicorp go plugin
-	hashicorpPyPluginFile pluginFile = pluginSDK.Name + ".py"
+	goPluginFile          pluginFile = pluginShared.Name + ".so"  // built from go plugin
+	hashicorpGoPluginFile pluginFile = pluginShared.Name + ".bin" // built from hashicorp go plugin
+	hashicorpPyPluginFile pluginFile = pluginShared.Name + ".py"
 )
 
 type hrpPlugin interface {
@@ -91,7 +92,7 @@ func (p *goPlugin) has(funcName string) bool {
 
 func (p *goPlugin) call(funcName string, args ...interface{}) (interface{}, error) {
 	fn := p.cachedFunctions[funcName]
-	return callFunc(fn, args...)
+	return pluginShared.CallFunc(fn, args...)
 }
 
 func (p *goPlugin) quit() error {
@@ -101,13 +102,13 @@ func (p *goPlugin) quit() error {
 
 // hashicorpPlugin implements hashicorp/go-plugin
 type hashicorpPlugin struct {
-	pluginSDK.FuncCaller
+	pluginShared.FuncCaller
 	cachedFunctions map[string]bool // cache loaded functions to improve performance
 }
 
 func (p *hashicorpPlugin) init(path string) error {
 
-	f, err := pluginSDK.Init(path)
+	f, err := pluginHost.Init(path)
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("load go hashicorp plugin failed")
 		return err
@@ -147,7 +148,7 @@ func (p *hashicorpPlugin) call(funcName string, args ...interface{}) (interface{
 
 func (p *hashicorpPlugin) quit() error {
 	// kill hashicorp plugin process
-	pluginSDK.Quit()
+	pluginHost.Quit()
 	return nil
 }
 
@@ -230,49 +231,5 @@ func (p *parser) callFunc(funcName string, arguments ...interface{}) (interface{
 	fn := reflect.ValueOf(function)
 
 	// call with builtin function
-	return callFunc(fn, arguments...)
-}
-
-// callFunc calls function with arguments
-// it is used when calling go plugin or builtin functions
-func callFunc(fn reflect.Value, args ...interface{}) (interface{}, error) {
-	fnArgsNum := fn.Type().NumIn()
-	if fnArgsNum > 0 && fn.Type().In(fnArgsNum-1).Kind() == reflect.Slice {
-		// last argument is slice, do not check arguments number
-		// e.g. ...interface{}
-		// e.g. a, b string, c ...interface{}
-	} else if fnArgsNum != len(args) {
-		// function arguments not match
-		return nil, fmt.Errorf("function arguments number not match")
-	}
-	// arguments do not have slice, and arguments number matched
-
-	argumentsValue := make([]reflect.Value, len(args))
-	for index, argument := range args {
-		if argument == nil {
-			argumentsValue[index] = reflect.Zero(fn.Type().In(index))
-		} else {
-			argumentsValue[index] = reflect.ValueOf(args[index])
-		}
-	}
-
-	resultValues := fn.Call(argumentsValue)
-	if resultValues == nil {
-		// no returns
-		return nil, nil
-	} else if len(resultValues) == 2 {
-		// return two arguments: interface{}, error
-		if resultValues[1].Interface() != nil {
-			return resultValues[0].Interface(), resultValues[1].Interface().(error)
-		} else {
-			return resultValues[0].Interface(), nil
-		}
-	} else if len(resultValues) == 1 {
-		// return one arguments: interface{}
-		return resultValues[0].Interface(), nil
-	} else {
-		// return more than 2 arguments, unexpected
-		err := fmt.Errorf("function should return at most 2 arguments")
-		return nil, err
-	}
+	return pluginShared.CallFunc(fn, arguments...)
 }
