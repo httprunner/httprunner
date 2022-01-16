@@ -168,8 +168,30 @@ func TestCallFuncComplex(t *testing.T) {
 			args:   []interface{}{1, 2, []int{3, 4}},
 			expVal: 10,
 		},
+	}
 
-		// FIXME: return more than 2 values
+	for _, p := range params {
+		fn := reflect.ValueOf(p.f)
+		val, err := CallFunc(fn, p.args...)
+		if !assert.Equal(t, p.expErr, err) {
+			t.Fatal(err)
+		}
+		if !assert.Equal(t, p.expVal, val) {
+			t.Fatal()
+		}
+	}
+
+}
+
+func TestCallFuncAbnormal(t *testing.T) {
+	params := []data{
+		// return more than 2 values
+		{
+			f:      func() (int, int, error) { return 1, 2, nil },
+			args:   []interface{}{},
+			expVal: nil,
+			expErr: fmt.Errorf("function should return at most 2 values"),
+		},
 	}
 
 	for _, p := range params {
