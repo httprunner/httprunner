@@ -8,7 +8,8 @@ import jinja2
 from loguru import logger
 from sentry_sdk import capture_exception
 
-from httprunner import exceptions, __version__
+from httprunner.parser import function_regex_compile, parse_function_params
+from httprunner import exceptions, __version__, Parameters
 from httprunner.compat import (
     ensure_testcase_v3_api,
     ensure_testcase_v3,
@@ -44,9 +45,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__){% for _ in range(diff_levels) %}.parent{% endfor %}))
 {% endif %}
 
-{% if parameters %}
+{% if pytest_marks %}
 import pytest
-from httprunner import Parameters
+import debugtalk
 {% endif %}
 
 from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
@@ -56,11 +57,7 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 
 class {{ class_name }}(HttpRunner):
 
-    {% if parameters %}
-    @pytest.mark.parametrize("param", Parameters({{parameters}}))
-    def test_start(self, param):
-        super().test_start(param)
-    {% endif %}
+{{ pytest_marks }}
 
     config = {{ config_chain_style }}
 
@@ -426,7 +423,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         "class_name": f"TestCase{testcase_cls_name}",
         "imports_list": imports_list,
         "config_chain_style": make_config_chain_style(config),
-        "parameters": config.get("parameters"),
+        "pytest_marks": make_pytest_marks(config),
         "teststeps_chain_style": [
             make_teststep_chain_style(step) for step in teststeps
         ],
@@ -504,6 +501,79 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
         pytest_files_run_set.add(testcase_pytest_path)
+
+
+def make_pytest_marks(config: Dict) -> (Text, Text):
+    project_meta = load_project_meta(config["path"])
+
+    # pytest marks, refer:
+    # https://docs.pytest.org/en/6.2.x/mark.html
+    # https://docs.pytest.org/en/6.2.x/reference.html
+    result = ""
+    default_test_start = "    def test_start(self): \n        super().test_start()\n"
+    parameters_test_start = "    def test_start(self, param): \n        super().test_start(param)\n"
+
+    # marks
+    # keep yaml load order, refer:
+    # https://stackoverflow.com/a/47881325
+    # https://mail.python.org/pipermail/python-dev/2016-September/146327.html
+    parameters_exist = False
+    for key, param in config.items():
+
+        if key == "filterwarnings":
+            result += f"    @pytest.mark.filterwarnings({param})\n"
+
+        elif key == "parameters":
+            parameters_exist = True
+            param = Parameters(param)
+            result += f"    @pytest.mark.parametrize('param', {param})\n"
+
+        elif key == "skip":
+            result += f"    @pytest.mark.skip(reason=\"{param}\")\n"
+
+        elif key == "usefixtures":
+            errmsg = f"usefixtures type should be List[str], got ({type(param)}, {param})"
+            assert isinstance(param, list), errmsg
+            result += f"    @pytest.mark.usefixtures(*{param})\n"
+
+        elif key == "custom_marks":
+            errmsg = f"fixtures type should be List[str], got ({type(param)}, {param})"
+            assert isinstance(param, list), errmsg
+            for mark in param:
+                result += f"    @pytest.mark.{mark}\n"
+
+        elif key in ("skipif", "xfail"):
+            condition = param.get("condition")
+            func_match = function_regex_compile.match(condition)
+            if func_match:
+                func_name = func_match.group(1)
+                func_params_str = func_match.group(2)
+                func_meta = parse_function_params(func_params_str)
+                if project_meta.functions.get(func_name):
+                    condition = f"debugtalk.{func_name}(*{func_meta['args']}, **{func_meta['kwargs']})"
+
+            if key == "skipif":
+                reason = param.get("reason")
+                result += f"    @pytest.mark.skipif({condition}, reason=\"{reason}\")\n"
+
+            if key == "xfail":
+                reason = param.get("reason")
+                raises = param.get("raises", None)
+                run = param.get("run", True)
+                strict = param.get("strict", False)
+                result += (f"    @pytest.mark.skipif({condition}, reason=\"{reason}\", "
+                           f"raises={raises}, run={run}, strict={strict})\n")
+
+    if not result:
+        return result
+
+    # test_start
+    if parameters_exist:
+        result += parameters_test_start
+    else:
+        result += default_test_start
+
+    return result
 
 
 def __make(tests_path: Text) -> NoReturn:

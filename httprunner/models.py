@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 from typing import Any
-from typing import Dict, Text, Union, Callable
+from typing import Dict, Text, Union, Callable, Any
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -36,18 +36,38 @@ class TRetry(BaseModel):
     delay: int
 
 
+class SkipIF(BaseModel):
+    condition: Text = None
+    reason: Text = None
+
+
+class XFail(BaseModel):
+    condition: Text = None
+    reason: Text = None
+    raises: Any = None                   # expect type: None or Exception
+    run: bool = True
+    strict: bool = False
+
+
 class TConfig(BaseModel):
     name: Name
     verify: Verify = False
     base_url: BaseUrl = ""
     # Text: prepare variables in debugtalk.py, ${gen_variables()}
     variables: Union[VariablesMapping, Text] = {}
-    parameters: Union[VariablesMapping, Text] = {}
     # setup_hooks: Hooks = []
     # teardown_hooks: Hooks = []
     export: Export = []
     path: Text = None
     weight: int = 1
+
+    filterwarnings: Text = None
+    parameters: Union[VariablesMapping, Text] = {}
+    usefixtures: List[Text] = []
+    skip: Text = None
+    skipif: SkipIF = None
+    custom_marks: List[Text] = []
+    xfail: XFail = None
 
 
 class TRequest(BaseModel):
