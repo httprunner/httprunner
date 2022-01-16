@@ -1,6 +1,6 @@
 # Release History
 
-## v0.5.2 (2022-01-14)
+## v0.5.2 (2022-01-16)
 
 - feat: support creating and calling custom functions with [hashicorp/go-plugin](https://github.com/hashicorp/go-plugin)
 

@@ -15,7 +15,8 @@ import (
 func buildGoPlugin() {
 	fmt.Println("[setup] build go plugin")
 	// flag -race is necessary in order to be consistent with go test
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "-race", "-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "-race",
+		"-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
@@ -78,10 +79,13 @@ func TestCallPluginFunction(t *testing.T) {
 	defer removeGoPlugin()
 
 	parser := newParser()
-	parser.initPlugin("examples/debugtalk.so")
+	err := parser.initPlugin("examples/debugtalk.so")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// call function without arguments
-	result, err := parser.callFunc("ConcatenateString", "1", "2", "3.14")
+	result, err := parser.callFunc("Concatenate", "1", 2, "3.14")
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
