@@ -1,6 +1,7 @@
 name: Run unittests
 
 on:
+  push:
   pull_request:
     types: [synchronize]
   schedule:
