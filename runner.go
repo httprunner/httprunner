@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/ga"
+	"github.com/httprunner/hrp/plugin/common"
 )
 
 // Run starts to run API test with default configs.
@@ -157,7 +158,7 @@ func (r *caseRunner) reset() *caseRunner {
 func (r *caseRunner) run() error {
 	defer func() {
 		if r.parser.plugin != nil {
-			r.parser.plugin.quit()
+			r.parser.plugin.Quit()
 		}
 	}()
 	config := r.TestCase.Config
@@ -504,7 +505,8 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 	cfg := config.ToStruct()
 
 	// init plugin
-	err := r.parser.initPlugin(cfg.Path)
+	var err error
+	r.parser.plugin, err = common.Init(cfg.Path)
 	if err != nil {
 		return err
 	}
