@@ -506,6 +506,27 @@ func (r *caseRunner) parseConfig(config IConfig) error {
 
 	// init plugin
 	var err error
+	defer func() {
+		if r.parser.plugin == nil {
+			return
+		}
+		var pluginType string
+		if _, ok := r.parser.plugin.(*common.GoPlugin); ok {
+			pluginType = "go"
+		} else {
+			pluginType = "hashicorp"
+		}
+
+		// report event for initializing plugin
+		event := ga.EventTracking{
+			Category: "InitPlugin",
+			Action:   fmt.Sprintf("Init %s plugin", pluginType),
+		}
+		if err != nil {
+			event.Value = 1 // failed
+		}
+		go ga.SendEvent(event)
+	}()
 	r.parser.plugin, err = common.Init(cfg.Path)
 	if err != nil {
 		return err
