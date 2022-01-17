@@ -8,6 +8,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 
+	"github.com/httprunner/hrp/plugin/common"
 	pluginShared "github.com/httprunner/hrp/plugin/shared"
 )
 
@@ -36,7 +37,7 @@ func (p *functionPlugin) Call(funcName string, args ...interface{}) (interface{}
 		return nil, fmt.Errorf("function %s not found", funcName)
 	}
 
-	return pluginShared.CallFunc(fn, args...)
+	return common.CallFunc(fn, args...)
 }
 
 var functions = make(functionsMap)
