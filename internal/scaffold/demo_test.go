@@ -25,6 +25,7 @@ func TestGenDemoTestCase(t *testing.T) {
 }
 
 func Example_demo() {
+	demoTestCase.Config.ToStruct().Path = "../../examples/debugtalk.bin"
 	err := hrp.NewRunner(nil).Run(demoTestCase) // hrp.Run(demoTestCase)
 	fmt.Println(err)
 	// Output:

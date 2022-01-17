@@ -3,9 +3,9 @@
         "name": "demo with complex mechanisms",
         "base_url": "https://postman-echo.com",
         "variables": {
-            "a": 12.3,
+            "a": "${sum(10, 2.3)}",
             "b": 3.45,
-            "n": 5,
+            "n": "${sum_ints(1, 2, 2)}",
             "varFoo1": "${gen_random_string($n)}",
             "varFoo2": "${max($a, $b)}"
         }
