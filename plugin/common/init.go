@@ -10,7 +10,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/hrp/internal/ga"
 	pluginHost "github.com/httprunner/hrp/plugin/host"
 	pluginShared "github.com/httprunner/hrp/plugin/shared"
 )
@@ -30,31 +29,19 @@ type Plugin interface {
 	Quit() error                                                    // quit plugin
 }
 
-// goPlugin implements golang official plugin
-type goPlugin struct {
+// GoPlugin implements golang official plugin
+type GoPlugin struct {
 	*plugin.Plugin
 	cachedFunctions map[string]reflect.Value // cache loaded functions to improve performance
 }
 
-func (p *goPlugin) Init(path string) error {
+func (p *GoPlugin) Init(path string) error {
 	if runtime.GOOS == "windows" {
 		log.Warn().Msg("go plugin does not support windows")
 		return fmt.Errorf("go plugin does not support windows")
 	}
 
 	var err error
-	// report event for loading go plugin
-	defer func() {
-		event := ga.EventTracking{
-			Category: "LoadGoPlugin",
-			Action:   "plugin.Open",
-		}
-		if err != nil {
-			event.Value = 1 // failed
-		}
-		go ga.SendEvent(event)
-	}()
-
 	p.Plugin, err = plugin.Open(path)
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("load go plugin failed")
@@ -66,7 +53,7 @@ func (p *goPlugin) Init(path string) error {
 	return nil
 }
 
-func (p *goPlugin) Has(funcName string) bool {
+func (p *GoPlugin) Has(funcName string) bool {
 	fn, ok := p.cachedFunctions[funcName]
 	if ok {
 		return fn.IsValid()
@@ -89,7 +76,7 @@ func (p *goPlugin) Has(funcName string) bool {
 	return true
 }
 
-func (p *goPlugin) Call(funcName string, args ...interface{}) (interface{}, error) {
+func (p *GoPlugin) Call(funcName string, args ...interface{}) (interface{}, error) {
 	if !p.Has(funcName) {
 		return nil, fmt.Errorf("function %s not found", funcName)
 	}
@@ -97,18 +84,18 @@ func (p *goPlugin) Call(funcName string, args ...interface{}) (interface{}, erro
 	return CallFunc(fn, args...)
 }
 
-func (p *goPlugin) Quit() error {
+func (p *GoPlugin) Quit() error {
 	// no need to quit for go plugin
 	return nil
 }
 
-// hashicorpPlugin implements hashicorp/go-plugin
-type hashicorpPlugin struct {
+// HashicorpPlugin implements hashicorp/go-plugin
+type HashicorpPlugin struct {
 	pluginShared.FuncCaller
 	cachedFunctions map[string]bool // cache loaded functions to improve performance
 }
 
-func (p *hashicorpPlugin) Init(path string) error {
+func (p *HashicorpPlugin) Init(path string) error {
 
 	f, err := pluginHost.Init(path)
 	if err != nil {
@@ -122,7 +109,7 @@ func (p *hashicorpPlugin) Init(path string) error {
 	return nil
 }
 
-func (p *hashicorpPlugin) Has(funcName string) bool {
+func (p *HashicorpPlugin) Has(funcName string) bool {
 	flag, ok := p.cachedFunctions[funcName]
 	if ok {
 		return flag
@@ -144,11 +131,11 @@ func (p *hashicorpPlugin) Has(funcName string) bool {
 	return false
 }
 
-func (p *hashicorpPlugin) Call(funcName string, args ...interface{}) (interface{}, error) {
+func (p *HashicorpPlugin) Call(funcName string, args ...interface{}) (interface{}, error) {
 	return p.FuncCaller.Call(funcName, args...)
 }
 
-func (p *hashicorpPlugin) Quit() error {
+func (p *HashicorpPlugin) Quit() error {
 	// kill hashicorp plugin process
 	pluginHost.Quit()
 	return nil
@@ -165,7 +152,7 @@ func Init(path string) (Plugin, error) {
 	pluginPath, err := locateFile(path, hashicorpGoPluginFile)
 	if err == nil {
 		// found hashicorp go plugin file
-		plugin = &hashicorpPlugin{}
+		plugin = &HashicorpPlugin{}
 		err = plugin.Init(pluginPath)
 		return plugin, err
 	}
@@ -174,7 +161,7 @@ func Init(path string) (Plugin, error) {
 	pluginPath, err = locateFile(path, goPluginFile)
 	if err == nil {
 		// found go plugin file
-		plugin = &goPlugin{}
+		plugin = &GoPlugin{}
 		err = plugin.Init(pluginPath)
 		return plugin, err
 	}
