@@ -42,6 +42,8 @@ func (p *functionPlugin) Call(funcName string, args ...interface{}) (interface{}
 
 var functions = make(functionsMap)
 
+// Register registers a plugin function.
+// Every plugin function must be registered before Serve() is called.
 func Register(funcName string, fn interface{}) {
 	if _, ok := functions[funcName]; ok {
 		return
@@ -49,6 +51,7 @@ func Register(funcName string, fn interface{}) {
 	functions[funcName] = reflect.ValueOf(fn)
 }
 
+// Serve starts a plugin server process.
 func Serve() {
 	funcPlugin := &functionPlugin{
 		logger: hclog.New(&hclog.LoggerOptions{
