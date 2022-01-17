@@ -6,8 +6,8 @@ var demoTestCase = &hrp.TestCase{
 	Config: hrp.NewConfig("demo with complex mechanisms").
 		SetBaseURL("https://postman-echo.com").
 		WithVariables(map[string]interface{}{ // global level variables
-			"n":       5,
-			"a":       12.3,
+			"n":       "${sum_ints(1, 2, 2)}",
+			"a":       "${sum(10, 2.3)}",
 			"b":       3.45,
 			"varFoo1": "${gen_random_string($n)}",
 			"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
@@ -56,6 +56,50 @@ var demoTestCase = &hrp.TestCase{
 	},
 }
 
+// debugtalk.go
+var demoPlugin = `package main
+
+import (
+	"fmt"
+
+	"github.com/httprunner/hrp/plugin"
+)
+
+func SumTwoInt(a, b int) int {
+	return a + b
+}
+
+func SumInts(args ...int) int {
+	var sum int
+	for _, arg := range args {
+		sum += arg
+	}
+	return sum
+}
+
+func Sum(args ...interface{}) (interface{}, error) {
+	var sum float64
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case int:
+			sum += float64(v)
+		case float64:
+			sum += v
+		default:
+			return nil, fmt.Errorf("unexpected type: %T", arg)
+		}
+	}
+	return sum, nil
+}
+
+func main() {
+	plugin.Register("sum_ints", SumInts)
+	plugin.Register("sum_two_int", SumTwoInt)
+	plugin.Register("sum", Sum)
+	plugin.Serve()
+}
+`
+
 // .gitignore
 var demoIgnoreContent = `.env
 reports/*
@@ -64,9 +108,13 @@ reports/*
 .idea/
 .DS_Store
 output/
+
+# plugin
+debugtalk.bin
+debugtalk.so
 `
 
 // .env
 var demoEnvContent = `USERNAME=debugtalk
-"PASSWORD=123456
+PASSWORD=123456
 `
