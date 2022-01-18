@@ -2,6 +2,8 @@ package hrp
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -131,6 +133,12 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 			Msgf("validate %s", checkItem)
 		if !result {
 			v.t.Fail()
+			return errors.New(fmt.Sprintf(
+				"do assertion failed, assertMethod: %v, expectValue: %v, checkValue: %v",
+				assertMethod,
+				expectValue,
+				checkValue,
+			))
 		}
 	}
 	return nil
