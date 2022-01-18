@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -213,6 +216,18 @@ func initPlugin(path string) (plugin common.Plugin, err error) {
 		go ga.SendEvent(event)
 	}()
 	plugin, err = common.Init(path)
+
+	// catch Interrupt and SIGTERM signals to ensure plugin quitted
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		if plugin != nil {
+			plugin.Quit()
+		}
+		os.Exit(1)
+	}()
+
 	return
 }
 
