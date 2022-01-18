@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"sync"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -13,16 +14,18 @@ import (
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	b := &HRPBoomer{
-		Boomer: boomer.NewStandaloneBoomer(spawnCount, spawnRate),
-		debug:  false,
+		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
+		pluginsMutex: new(sync.RWMutex),
+		debug:        false,
 	}
 	return b
 }
 
 type HRPBoomer struct {
 	*boomer.Boomer
-	plugins []common.Plugin // each task has its own plugin process
-	debug   bool
+	plugins      []common.Plugin // each task has its own plugin process
+	pluginsMutex *sync.RWMutex   // avoid data race
+	debug        bool
 }
 
 // SetDebug configures whether to log HTTP request and response content.
@@ -60,7 +63,10 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 }
 
 func (b *HRPBoomer) Quit() {
-	for _, plugin := range b.plugins {
+	b.pluginsMutex.Lock()
+	plugins := b.plugins
+	b.pluginsMutex.Unlock()
+	for _, plugin := range plugins {
 		plugin.Quit()
 	}
 	b.Boomer.Quit()
@@ -73,7 +79,9 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	// each testcase has its own plugin process
 	plugin, _ := initPlugin(config.Path)
 	if plugin != nil {
+		b.pluginsMutex.Lock()
 		b.plugins = append(b.plugins, plugin)
+		b.pluginsMutex.Unlock()
 	}
 
 	return &boomer.Task{
