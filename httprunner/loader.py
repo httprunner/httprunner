@@ -130,6 +130,9 @@ def load_dot_env_file(dot_env_path: Text) -> Dict:
     with open(dot_env_path, mode="rb") as fp:
         for line in fp:
             # maxsplit=1
+            line = line.strip()
+            if not len(line) or line.startswith(b"#"):
+                continue
             if b"=" in line:
                 variable, value = line.split(b"=", 1)
             elif b":" in line:
