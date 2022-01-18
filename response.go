@@ -2,12 +2,14 @@ package hrp
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/jmespath/go-jmespath"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
@@ -131,6 +133,12 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 			Msgf("validate %s", checkItem)
 		if !result {
 			v.t.Fail()
+			return errors.New(fmt.Sprintf(
+				"do assertion failed, assertMethod: %v, expectValue: %v, checkValue: %v",
+				assertMethod,
+				expectValue,
+				checkValue,
+			))
 		}
 	}
 	return nil
