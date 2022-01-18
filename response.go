@@ -3,11 +3,12 @@ package hrp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/jmespath/go-jmespath"
 	"github.com/rs/zerolog/log"
