@@ -156,12 +156,19 @@ func (r *caseRunner) reset() *caseRunner {
 }
 
 func (r *caseRunner) run() error {
+	config := r.TestCase.Config
+
+	// init plugin
+	var err error
+	if r.parser.plugin, err = initPlugin(config.ToStruct().Path); err != nil {
+		return err
+	}
 	defer func() {
 		if r.parser.plugin != nil {
 			r.parser.plugin.Quit()
 		}
 	}()
-	config := r.TestCase.Config
+
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
@@ -180,6 +187,33 @@ func (r *caseRunner) run() error {
 
 	log.Info().Str("testcase", config.Name()).Msg("run testcase end")
 	return nil
+}
+
+func initPlugin(path string) (plugin common.Plugin, err error) {
+	defer func() {
+		if plugin == nil {
+			return
+		}
+
+		var pluginType string
+		if _, ok := plugin.(*common.GoPlugin); ok {
+			pluginType = "go"
+		} else {
+			pluginType = "hashicorp"
+		}
+
+		// report event for initializing plugin
+		event := ga.EventTracking{
+			Category: "InitPlugin",
+			Action:   fmt.Sprintf("Init %s plugin", pluginType),
+		}
+		if err != nil {
+			event.Value = 1 // failed
+		}
+		go ga.SendEvent(event)
+	}()
+	plugin, err = common.Init(path)
+	return
 }
 
 func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepData, err error) {
@@ -503,34 +537,6 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 
 func (r *caseRunner) parseConfig(config IConfig) error {
 	cfg := config.ToStruct()
-
-	// init plugin
-	var err error
-	defer func() {
-		if r.parser.plugin == nil {
-			return
-		}
-		var pluginType string
-		if _, ok := r.parser.plugin.(*common.GoPlugin); ok {
-			pluginType = "go"
-		} else {
-			pluginType = "hashicorp"
-		}
-
-		// report event for initializing plugin
-		event := ga.EventTracking{
-			Category: "InitPlugin",
-			Action:   fmt.Sprintf("Init %s plugin", pluginType),
-		}
-		if err != nil {
-			event.Value = 1 // failed
-		}
-		go ga.SendEvent(event)
-	}()
-	r.parser.plugin, err = common.Init(cfg.Path)
-	if err != nil {
-		return err
-	}
 
 	// parse config variables
 	parsedVariables, err := r.parser.parseVariables(cfg.Variables)

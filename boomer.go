@@ -8,6 +8,7 @@ import (
 
 	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
+	"github.com/httprunner/hrp/plugin/common"
 )
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
@@ -20,7 +21,8 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 
 type HRPBoomer struct {
 	*boomer.Boomer
-	debug bool
+	plugins []common.Plugin // each task has its own plugin process
+	debug   bool
 }
 
 // SetDebug configures whether to log HTTP request and response content.
@@ -57,14 +59,29 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	b.Boomer.Run(taskSlice...)
 }
 
+func (b *HRPBoomer) Quit() {
+	for _, plugin := range b.plugins {
+		plugin.Quit()
+	}
+	b.Boomer.Quit()
+}
+
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	hrpRunner := NewRunner(nil).SetDebug(b.debug)
 	config := testcase.Config.ToStruct()
+
+	// each testcase has its own plugin process
+	plugin, _ := initPlugin(config.Path)
+	if plugin != nil {
+		b.plugins = append(b.plugins, plugin)
+	}
+
 	return &boomer.Task{
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
 			runner := hrpRunner.newCaseRunner(testcase)
+			runner.parser.plugin = plugin
 
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
@@ -74,6 +91,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			// copy config to avoid data racing
 			if err := copier.Copy(caseConfig, cfg); err != nil {
 				log.Error().Err(err).Msg("copy config data failed")
+				return
 			}
 			// iterate through all parameter iterators and update case variables
 			for _, it := range caseConfig.ParametersSetting.Iterators {
@@ -81,6 +99,13 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					caseConfig.Variables = mergeVariables(it.Next(), caseConfig.Variables)
 				}
 			}
+
+			config := runner.TestCase.Config
+			if err := runner.parseConfig(config); err != nil {
+				log.Error().Err(err).Msg("parse config failed")
+				return
+			}
+
 			startTime := time.Now()
 			for index, step := range testcase.TestSteps {
 				stepData, err := runner.runStep(index, caseConfig)
