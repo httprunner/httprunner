@@ -1,10 +1,32 @@
 package hrp
 
 import (
+	"os"
+	"os/exec"
 	"testing"
+
+	"github.com/rs/zerolog/log"
 )
 
+func buildHashicorpPlugin() {
+	log.Info().Msg("[init] build hashicorp go plugin")
+	cmd := exec.Command("go", "build",
+		"-o", "examples/debugtalk.bin",
+		"examples/plugin/hashicorp.go", "examples/plugin/debugtalk.go")
+	if err := cmd.Run(); err != nil {
+		panic(err)
+	}
+}
+
+func removeHashicorpPlugin() {
+	log.Info().Msg("[teardown] remove hashicorp plugin")
+	os.Remove("examples/debugtalk.bin")
+}
+
 func TestHttpRunner(t *testing.T) {
+	buildHashicorpPlugin()
+	defer removeHashicorpPlugin()
+
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetBaseURL("http://httpbin.org"),

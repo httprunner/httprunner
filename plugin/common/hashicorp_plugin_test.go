@@ -1,18 +1,18 @@
 package common
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 )
 
 func buildHashicorpPlugin() {
-	fmt.Println("[init] build hashicorp go plugin")
+	log.Info().Msg("[init] build hashicorp go plugin")
 	cmd := exec.Command("go", "build",
-		"-o=debugtalk.bin",
+		"-o", "../../examples/debugtalk.bin",
 		"../../examples/plugin/hashicorp.go", "../../examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
@@ -20,15 +20,15 @@ func buildHashicorpPlugin() {
 }
 
 func removeHashicorpPlugin() {
-	fmt.Println("[teardown] remove hashicorp plugin")
-	os.Remove("debugtalk.bin")
+	log.Info().Msg("[teardown] remove hashicorp plugin")
+	os.Remove("../../examples/debugtalk.bin")
 }
 
 func TestInitHashicorpPlugin(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
-	plugin, err := Init("debugtalk.bin")
+	plugin, err := Init("../../examples/debugtalk.bin")
 	if err != nil {
 		t.Fatal(err)
 	}

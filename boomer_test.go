@@ -6,6 +6,9 @@ import (
 )
 
 func TestBoomerStandaloneRun(t *testing.T) {
+	buildHashicorpPlugin()
+	defer removeHashicorpPlugin()
+
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").SetBaseURL("http://httpbin.org"),
 		TestSteps: []IStep{
