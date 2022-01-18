@@ -148,7 +148,7 @@ func Init(path string) (Plugin, error) {
 	}
 	var plugin Plugin
 
-	// priority: hashicorp plugin > go plugin > builtin functions
+	// priority: hashicorp plugin > go plugin
 	// locate hashicorp plugin file
 	pluginPath, err := locateFile(path, hashicorpGoPluginFile)
 	if err == nil {

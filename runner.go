@@ -193,40 +193,35 @@ func (r *caseRunner) run() error {
 }
 
 func initPlugin(path string) (plugin common.Plugin, err error) {
-	defer func() {
-		if plugin == nil {
-			return
-		}
-
-		var pluginType string
-		if _, ok := plugin.(*common.GoPlugin); ok {
-			pluginType = "go"
-		} else {
-			pluginType = "hashicorp"
-		}
-
-		// report event for initializing plugin
-		event := ga.EventTracking{
-			Category: "InitPlugin",
-			Action:   fmt.Sprintf("Init %s plugin", pluginType),
-		}
-		if err != nil {
-			event.Value = 1 // failed
-		}
-		go ga.SendEvent(event)
-	}()
 	plugin, err = common.Init(path)
+	if plugin == nil {
+		return
+	}
 
 	// catch Interrupt and SIGTERM signals to ensure plugin quitted
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		if plugin != nil {
-			plugin.Quit()
-		}
+		plugin.Quit()
 		os.Exit(1)
 	}()
+
+	// report event for initializing plugin
+	var pluginType string
+	if _, ok := plugin.(*common.GoPlugin); ok {
+		pluginType = "go"
+	} else {
+		pluginType = "hashicorp"
+	}
+	event := ga.EventTracking{
+		Category: "InitPlugin",
+		Action:   fmt.Sprintf("Init %s plugin", pluginType),
+	}
+	if err != nil {
+		event.Value = 1 // failed
+	}
+	go ga.SendEvent(event)
 
 	return
 }
