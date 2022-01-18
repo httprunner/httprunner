@@ -66,6 +66,7 @@ func (s *requestStats) logTransaction(name string, success bool, responseTime in
 		s.transactionPassed++
 	} else {
 		s.transactionFailed++
+		s.get(name, "transaction").logError("")
 	}
 	s.get(name, "transaction").log(responseTime, contentLength)
 }
