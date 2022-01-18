@@ -22,3 +22,7 @@ __pycache__
 
 site/
 output/
+
+# built plugins
+debugtalk.bin
+debugtalk.so

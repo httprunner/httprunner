@@ -1,5 +1,9 @@
 # Release History
 
+## v0.5.2 (2022-01-16)
+
+- feat: support creating and calling custom functions with [hashicorp/go-plugin](https://github.com/hashicorp/go-plugin)
+
 ## v0.5.1 (2022-01-13)
 
 - feat: support specifying running cycles for load testing
