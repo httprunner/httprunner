@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"os"
-	"path/filepath"
-	"plugin"
 	"reflect"
 	"regexp"
 	"strings"
@@ -21,46 +18,7 @@ func newParser() *parser {
 }
 
 type parser struct {
-	// pluginLoader stores loaded go plugins.
-	pluginLoader *plugin.Plugin
-}
-
-// locatePlugin searches debugtalk.so upward recursively until current
-// working directory or system root dir.
-func locatePlugin(startPath string) (string, error) {
-	stat, err := os.Stat(startPath)
-	if os.IsNotExist(err) {
-		return "", err
-	}
-
-	var startDir string
-	if stat.IsDir() {
-		startDir = startPath
-	} else {
-		startDir = filepath.Dir(startPath)
-	}
-	startDir, _ = filepath.Abs(startDir)
-
-	// convention over configuration
-	// target plugin file name is always debugtalk.so
-	pluginPath := filepath.Join(startDir, "debugtalk.so")
-	if _, err := os.Stat(pluginPath); err == nil {
-		return pluginPath, nil
-	}
-
-	// current working directory
-	cwd, _ := os.Getwd()
-	if startDir == cwd {
-		return "", fmt.Errorf("searched to CWD, plugin file not found")
-	}
-
-	// system root dir
-	parentDir, _ := filepath.Abs(filepath.Dir(startDir))
-	if parentDir == startDir {
-		return "", fmt.Errorf("searched to system root dir, plugin file not found")
-	}
-
-	return locatePlugin(parentDir)
+	plugin hrpPlugin // plugin is used to call functions
 }
 
 func buildURL(baseURL, stepURL string) string {
