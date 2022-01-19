@@ -108,8 +108,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				}
 			}
 
-			config := runner.TestCase.Config
-			if err := runner.parseConfig(config); err != nil {
+			if err := runner.parseConfig(caseConfig); err != nil {
 				log.Error().Err(err).Msg("parse config failed")
 				return
 			}
