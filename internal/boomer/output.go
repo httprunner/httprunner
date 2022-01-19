@@ -131,7 +131,7 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 	}
 
 	currentTime := time.Now()
-	println(fmt.Sprintf("Current time: %s, Users: %d, State: %s, Total RPS: %.1f, Total Average Response Time: %.1f, Total Fail Ratio: %.1f%%",
+	println(fmt.Sprintf("Current time: %s, Users: %d, State: %s, Total RPS: %.1f, Total Average Response Time: %.1fms, Total Fail Ratio: %.1f%%",
 		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, state, output.TotalRPS, output.TotalAvgResponseTime, output.TotalFailRatio*100))
 	println(fmt.Sprintf("Accumulated Transactions: %d Passed, %d Failed",
 		output.TransactionsPassed, output.TransactionsFailed))
@@ -372,7 +372,7 @@ var (
 	gaugeTotalAverageResponseTime = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "total_average_response_time",
-			Help: "The average response time in total",
+			Help: "The average response time in total milliseconds",
 		},
 	)
 	gaugeTotalRPS = prometheus.NewGauge(
