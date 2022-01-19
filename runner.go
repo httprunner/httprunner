@@ -160,10 +160,10 @@ func (r *caseRunner) reset() *caseRunner {
 
 func (r *caseRunner) run() error {
 	config := r.TestCase.Config
-
+	cfg := config.ToStruct()
 	// init plugin
 	var err error
-	if r.parser.plugin, err = initPlugin(config.ToStruct().Path); err != nil {
+	if r.parser.plugin, err = initPlugin(cfg.Path); err != nil {
 		return err
 	}
 	defer func() {
@@ -171,11 +171,9 @@ func (r *caseRunner) run() error {
 			r.parser.plugin.Quit()
 		}
 	}()
-
-	if err := r.parseConfig(config); err != nil {
+	if err := r.parseConfig(cfg); err != nil {
 		return err
 	}
-	cfg := config.ToStruct()
 	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
 
 	r.startTime = time.Now()
@@ -545,9 +543,7 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 	return stepResult, nil
 }
 
-func (r *caseRunner) parseConfig(config IConfig) error {
-	cfg := config.ToStruct()
-
+func (r *caseRunner) parseConfig(cfg *TConfig) error {
 	// parse config variables
 	parsedVariables, err := r.parser.parseVariables(cfg.Variables)
 	if err != nil {

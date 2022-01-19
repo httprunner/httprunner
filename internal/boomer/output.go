@@ -81,17 +81,13 @@ func getAvgContentLength(numRequests int64, totalContentLength int64) (avgConten
 	return avgContentLength
 }
 
-func getCurrentRps(numRequests int64) (currentRps float64) {
-	currentRps = float64(numRequests) / float64(reportStatsInterval/time.Second)
+func getCurrentRps(numRequests int64, duration float64) (currentRps float64) {
+	currentRps = float64(numRequests) / duration
 	return currentRps
 }
 
-func getCurrentFailPerSec(numFailures int64, numFailPerSecond map[int64]int64) (currentFailPerSec int64) {
-	currentFailPerSec = int64(0)
-	numFailPerSecondLength := int64(len(numFailPerSecond))
-	if numFailPerSecondLength != 0 {
-		currentFailPerSec = numFailures / numFailPerSecondLength
-	}
+func getCurrentFailPerSec(numFailures int64, duration float64) (currentFailPerSec float64) {
+	currentFailPerSec = float64(numFailures) / duration
 	return currentFailPerSec
 }
 
@@ -135,8 +131,8 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 	}
 
 	currentTime := time.Now()
-	println(fmt.Sprintf("Current time: %s, Users: %d, State: %s, Total RPS: %.1f, Total Fail Ratio: %.1f%%",
-		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, state, output.TotalRPS, output.TotalFailRatio*100))
+	println(fmt.Sprintf("Current time: %s, Users: %d, State: %s, Total RPS: %.1f, Total Average Response Time: %.1fms, Total Fail Ratio: %.1f%%",
+		currentTime.Format("2006/01/02 15:04:05"), output.UserCount, state, output.TotalRPS, output.TotalAvgResponseTime, output.TotalFailRatio*100))
 	println(fmt.Sprintf("Accumulated Transactions: %d Passed, %d Failed",
 		output.TransactionsPassed, output.TransactionsFailed))
 	table := tablewriter.NewWriter(os.Stdout)
@@ -154,7 +150,7 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 		row[7] = strconv.FormatInt(stat.MaxResponseTime, 10)
 		row[8] = strconv.FormatInt(stat.avgContentLength, 10)
 		row[9] = strconv.FormatFloat(stat.currentRps, 'f', 2, 64)
-		row[10] = strconv.FormatInt(stat.currentFailPerSec, 10)
+		row[10] = strconv.FormatFloat(stat.currentFailPerSec, 'f', 2, 64)
 		table.Append(row)
 	}
 	table.Render()
@@ -168,19 +164,20 @@ type statsEntryOutput struct {
 	avgResponseTime    float64 // average response time, round float to 2 decimal places
 	avgContentLength   int64   // average content size
 	currentRps         float64 // # reqs/sec
-	currentFailPerSec  int64   // # fails/sec
+	currentFailPerSec  float64 // # fails/sec
 }
 
 type dataOutput struct {
-	UserCount          int32                             `json:"user_count"`
-	State              int32                             `json:"state"`
-	TotalStats         *statsEntryOutput                 `json:"stats_total"`
-	TransactionsPassed int64                             `json:"transactions_passed"`
-	TransactionsFailed int64                             `json:"transactions_failed"`
-	TotalRPS           float64                           `json:"total_rps"`
-	TotalFailRatio     float64                           `json:"total_fail_ratio"`
-	Stats              []*statsEntryOutput               `json:"stats"`
-	Errors             map[string]map[string]interface{} `json:"errors"`
+	UserCount            int32                             `json:"user_count"`
+	State                int32                             `json:"state"`
+	TotalStats           *statsEntryOutput                 `json:"stats_total"`
+	TransactionsPassed   int64                             `json:"transactions_passed"`
+	TransactionsFailed   int64                             `json:"transactions_failed"`
+	TotalAvgResponseTime float64                           `json:"total_avg_response_time"`
+	TotalRPS             float64                           `json:"total_rps"`
+	TotalFailRatio       float64                           `json:"total_fail_ratio"`
+	Stats                []*statsEntryOutput               `json:"stats"`
+	Errors               map[string]map[string]interface{} `json:"errors"`
 }
 
 func convertData(data map[string]interface{}) (output *dataOutput, err error) {
@@ -217,15 +214,16 @@ func convertData(data map[string]interface{}) (output *dataOutput, err error) {
 	}
 
 	output = &dataOutput{
-		UserCount:          userCount,
-		State:              state,
-		TotalStats:         entryTotalOutput,
-		TransactionsPassed: transactionsPassed,
-		TransactionsFailed: transactionsFailed,
-		TotalRPS:           getCurrentRps(entryTotalOutput.NumRequests),
-		TotalFailRatio:     getTotalFailRatio(entryTotalOutput.NumRequests, entryTotalOutput.NumFailures),
-		Stats:              make([]*statsEntryOutput, 0, len(stats)),
-		Errors:             errors,
+		UserCount:            userCount,
+		State:                state,
+		TotalStats:           entryTotalOutput,
+		TransactionsPassed:   transactionsPassed,
+		TransactionsFailed:   transactionsFailed,
+		TotalAvgResponseTime: entryTotalOutput.avgResponseTime,
+		TotalRPS:             entryTotalOutput.currentRps,
+		TotalFailRatio:       getTotalFailRatio(entryTotalOutput.NumRequests, entryTotalOutput.NumFailures),
+		Stats:                make([]*statsEntryOutput, 0, len(stats)),
+		Errors:               errors,
 	}
 
 	// convert stats
@@ -253,14 +251,21 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 		return nil, err
 	}
 
+	var duration float64
+	if entry.Name == "Total" {
+		duration = float64(entry.LastRequestTimestamp - entry.StartTime)
+	} else {
+		duration = float64(reportStatsInterval / time.Second)
+	}
+
 	numRequests := entry.NumRequests
 	entryOutput = &statsEntryOutput{
 		statsEntry:         entry,
 		medianResponseTime: getMedianResponseTime(numRequests, entry.ResponseTimes),
 		avgResponseTime:    getAvgResponseTime(numRequests, entry.TotalResponseTime),
 		avgContentLength:   getAvgContentLength(numRequests, entry.TotalContentLength),
-		currentRps:         getCurrentRps(numRequests),
-		currentFailPerSec:  getCurrentFailPerSec(entry.NumFailures, entry.NumFailPerSec),
+		currentRps:         getCurrentRps(numRequests, duration),
+		currentFailPerSec:  getCurrentFailPerSec(entry.NumFailures, duration),
 	}
 	return
 }
@@ -364,6 +369,12 @@ var (
 			Help: "The current runner state, 1=initializing, 2=spawning, 3=running, 4=quitting, 5=stopped",
 		},
 	)
+	gaugeTotalAverageResponseTime = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "total_average_response_time",
+			Help: "The average response time in total milliseconds",
+		},
+	)
 	gaugeTotalRPS = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "total_rps",
@@ -431,6 +442,7 @@ func (o *PrometheusPusherOutput) OnStart() {
 		// gauges for total
 		gaugeUsers,
 		gaugeState,
+		gaugeTotalAverageResponseTime,
 		gaugeTotalRPS,
 		gaugeTotalFailRatio,
 		gaugeTransactionsPassed,
@@ -458,6 +470,9 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 	// runner state
 	gaugeState.Set(float64(output.State))
 
+	// avg response time in total
+	gaugeTotalAverageResponseTime.Set(output.TotalAvgResponseTime)
+
 	// rps in total
 	gaugeTotalRPS.Set(output.TotalRPS)
 
@@ -479,7 +494,7 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 		gaugeMaxResponseTime.WithLabelValues(method, name).Set(float64(stat.MaxResponseTime))
 		gaugeAverageContentLength.WithLabelValues(method, name).Set(float64(stat.avgContentLength))
 		gaugeCurrentRPS.WithLabelValues(method, name).Set(stat.currentRps)
-		gaugeCurrentFailPerSec.WithLabelValues(method, name).Set(float64(stat.currentFailPerSec))
+		gaugeCurrentFailPerSec.WithLabelValues(method, name).Set(stat.currentFailPerSec)
 		for responseTime, count := range stat.ResponseTimes {
 			var i int64
 			for i = 0; i < count; i++ {

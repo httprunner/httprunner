@@ -148,7 +148,7 @@ func (s *requestStats) collectReportData() map[string]interface{} {
 		"failed": s.transactionFailed,
 	}
 	data["stats"] = s.serializeStats()
-	data["stats_total"] = s.total.getStrippedReport()
+	data["stats_total"] = s.total.serialize()
 	data["errors"] = s.serializeErrors()
 	s.errors = make(map[string]*statsError)
 	return data
