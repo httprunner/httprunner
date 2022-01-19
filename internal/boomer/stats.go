@@ -66,7 +66,7 @@ func (s *requestStats) logTransaction(name string, success bool, responseTime in
 		s.transactionPassed++
 	} else {
 		s.transactionFailed++
-		s.get(name, "transaction").logError("")
+		s.get(name, "transaction").logFailures()
 	}
 	s.get(name, "transaction").log(responseTime, contentLength)
 }
@@ -77,8 +77,8 @@ func (s *requestStats) logRequest(method, name string, responseTime int64, conte
 }
 
 func (s *requestStats) logError(method, name, err string) {
-	s.total.logError(err)
-	s.get(name, method).logError(err)
+	s.total.logFailures()
+	s.get(name, method).logFailures()
 
 	// store error in errors map
 	key := genMD5(method, name, err)
@@ -264,7 +264,7 @@ func (s *statsEntry) logResponseTime(responseTime int64) {
 	}
 }
 
-func (s *statsEntry) logError(err string) {
+func (s *statsEntry) logFailures() {
 	s.NumFailures++
 	key := time.Now().Unix()
 	_, ok := s.NumFailPerSec[key]

@@ -1,8 +1,11 @@
 # Release History
 
-## v0.5.2 (2022-01-16)
+## v0.5.2 (2022-01-19)
 
 - feat: support creating and calling custom functions with [hashicorp/go-plugin](https://github.com/hashicorp/go-plugin)
+- feat: add scaffold demo with hashicorp plugin
+- feat: report events for initializing plugin
+- fix: log failures when the assertion failed
 
 ## v0.5.1 (2022-01-13)
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/httprunner/hrp/internal/ga"
@@ -36,6 +37,9 @@ func CreateScaffold(projectName string) error {
 	if err := createFolder(path.Join(projectName, "testcases")); err != nil {
 		return err
 	}
+	if err := createFolder(path.Join(projectName, "plugin")); err != nil {
+		return err
+	}
 	if err := createFolder(path.Join(projectName, "reports")); err != nil {
 		return err
 	}
@@ -51,6 +55,18 @@ func CreateScaffold(projectName string) error {
 	if err != nil {
 		log.Error().Err(err).Msg("create demo.yml testcase failed")
 		return err
+	}
+
+	// create debugtalk.go
+	pluginFile := path.Join(projectName, "plugin", "debugtalk.go")
+	if err := createFile(pluginFile, demoPlugin); err != nil {
+		return err
+	}
+	cmd := exec.Command("go", "build",
+		"-o", path.Join(projectName, "debugtalk.bin"),
+		pluginFile)
+	if err := cmd.Run(); err != nil {
+		log.Error().Err(err).Msg("build plugin debugtalk.bin failed")
 	}
 
 	// create .gitignore
