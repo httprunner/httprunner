@@ -204,7 +204,7 @@ func initPlugin(path string) (plugin common.Plugin, err error) {
 	go func() {
 		<-c
 		plugin.Quit()
-		os.Exit(1)
+		os.Exit(0)
 	}()
 
 	// report event for initializing plugin
