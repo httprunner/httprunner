@@ -1,7 +1,6 @@
 package scaffold
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"testing"
@@ -43,35 +42,35 @@ func TestGenDemoTestCase(t *testing.T) {
 	}
 }
 
-func Example_demo() {
+func TestExampleDemo(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
 	demoTestCase.Config.ToStruct().Path = "../../examples/debugtalk.bin"
 	err := hrp.NewRunner(nil).Run(demoTestCase) // hrp.Run(demoTestCase)
-	fmt.Println(err)
-	// Output:
-	// <nil>
+	if err != nil {
+		t.Fail()
+	}
 }
 
-func Example_jsonDemo() {
+func TestJsonDemo(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
 	testCase := &hrp.TestCasePath{Path: demoTestCaseJSONPath}
 	err := hrp.NewRunner(nil).Run(testCase) // hrp.Run(testCase)
-	fmt.Println(err)
-	// Output:
-	// <nil>
+	if err != nil {
+		t.Fail()
+	}
 }
 
-func Example_yamlDemo() {
+func TestYamlDemo(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
 	testCase := &hrp.TestCasePath{Path: demoTestCaseYAMLPath}
 	err := hrp.NewRunner(nil).Run(testCase) // hrp.Run(testCase)
-	fmt.Println(err)
-	// Output:
-	// <nil>
+	if err != nil {
+		t.Fail()
+	}
 }

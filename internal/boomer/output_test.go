@@ -58,14 +58,15 @@ func TestGetAvgContentLength(t *testing.T) {
 }
 
 func TestGetCurrentRps(t *testing.T) {
+	duration := float64(3)
 	numRequests := int64(6)
-	currentRps := getCurrentRps(numRequests)
+	currentRps := getCurrentRps(numRequests, duration)
 	if currentRps != 2 {
 		t.Error("currentRps should be 2")
 	}
 
 	numRequests = int64(8)
-	currentRps = getCurrentRps(numRequests)
+	currentRps = getCurrentRps(numRequests, duration)
 	if fmt.Sprintf("%.2f", currentRps) != "2.67" {
 		t.Error("currentRps should be 2.67")
 	}
