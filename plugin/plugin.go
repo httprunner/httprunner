@@ -8,6 +8,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 
+	"github.com/httprunner/hrp/plugin/common"
 	pluginShared "github.com/httprunner/hrp/plugin/shared"
 )
 
@@ -36,11 +37,13 @@ func (p *functionPlugin) Call(funcName string, args ...interface{}) (interface{}
 		return nil, fmt.Errorf("function %s not found", funcName)
 	}
 
-	return pluginShared.CallFunc(fn, args...)
+	return common.CallFunc(fn, args...)
 }
 
 var functions = make(functionsMap)
 
+// Register registers a plugin function.
+// Every plugin function must be registered before Serve() is called.
 func Register(funcName string, fn interface{}) {
 	if _, ok := functions[funcName]; ok {
 		return
@@ -48,6 +51,7 @@ func Register(funcName string, fn interface{}) {
 	functions[funcName] = reflect.ValueOf(fn)
 }
 
+// Serve starts a plugin server process.
 func Serve() {
 	funcPlugin := &functionPlugin{
 		logger: hclog.New(&hclog.LoggerOptions{

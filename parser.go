@@ -11,6 +11,9 @@ import (
 	"github.com/maja42/goval"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/hrp/plugin/common"
 )
 
 func newParser() *parser {
@@ -18,7 +21,7 @@ func newParser() *parser {
 }
 
 type parser struct {
-	plugin hrpPlugin // plugin is used to call functions
+	plugin common.Plugin // plugin is used to call functions
 }
 
 func buildURL(baseURL, stepURL string) string {
@@ -231,6 +234,25 @@ func (p *parser) parseString(raw string, variablesMapping map[string]interface{}
 	}
 
 	return parsedString, nil
+}
+
+// callFunc calls function with arguments
+// only support return at most one result value
+func (p *parser) callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
+	// call with plugin function
+	if p.plugin != nil && p.plugin.Has(funcName) {
+		return p.plugin.Call(funcName, arguments...)
+	}
+
+	// get builtin function
+	function, ok := builtin.Functions[funcName]
+	if !ok {
+		return nil, fmt.Errorf("function %s is not found", funcName)
+	}
+	fn := reflect.ValueOf(function)
+
+	// call with builtin function
+	return common.CallFunc(fn, arguments...)
 }
 
 // merge two variables mapping, the first variables have higher priority

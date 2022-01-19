@@ -1,7 +1,7 @@
 // +build linux freebsd darwin
 // go plugin doesn't support windows
 
-package hrp
+package common
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func buildGoPlugin() {
 	fmt.Println("[setup] build go plugin")
 	// flag -race is necessary in order to be consistent with go test
 	cmd := exec.Command("go", "build", "-buildmode=plugin", "-race",
-		"-o=examples/debugtalk.so", "examples/plugin/debugtalk.go")
+		"-o=debugtalk.so", "../../examples/plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
@@ -24,50 +24,43 @@ func buildGoPlugin() {
 
 func removeGoPlugin() {
 	fmt.Println("[teardown] remove go plugin")
-	os.Remove("examples/debugtalk.so")
+	os.Remove("debugtalk.so")
 }
 
 func TestLocatePlugin(t *testing.T) {
 	buildGoPlugin()
 	defer removeGoPlugin()
 
-	cwd, _ := os.Getwd()
-	_, err := locatePlugin(cwd, goPluginFile)
+	_, err := locateFile("../", goPluginFile)
 	if !assert.Error(t, err) {
 		t.Fail()
 	}
 
-	_, err = locatePlugin("", goPluginFile)
+	_, err = locateFile("", goPluginFile)
 	if !assert.Error(t, err) {
 		t.Fail()
 	}
 
-	startPath := "examples/debugtalk.so"
-	_, err = locatePlugin(startPath, goPluginFile)
+	startPath := "debugtalk.so"
+	_, err = locateFile(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
-	startPath = "examples/demo.json"
-	_, err = locatePlugin(startPath, goPluginFile)
+	startPath = "call.go"
+	_, err = locateFile(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
-	startPath = "examples/"
-	_, err = locatePlugin(startPath, goPluginFile)
-	if !assert.Nil(t, err) {
-		t.Fail()
-	}
-
-	startPath = "examples/plugin/debugtalk.go"
-	_, err = locatePlugin(startPath, goPluginFile)
+	startPath = "."
+	_, err = locateFile(startPath, goPluginFile)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	startPath = "/abc"
-	_, err = locatePlugin(startPath, goPluginFile)
+	_, err = locateFile(startPath, goPluginFile)
 	if !assert.Error(t, err) {
 		t.Fail()
 	}
@@ -75,17 +68,19 @@ func TestLocatePlugin(t *testing.T) {
 
 func TestCallPluginFunction(t *testing.T) {
 	buildGoPlugin()
-	removeHashicorpPlugin()
 	defer removeGoPlugin()
 
-	parser := newParser()
-	err := parser.initPlugin("examples/debugtalk.so")
+	plugin, err := Init("debugtalk.so")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	if !assert.True(t, plugin.Has("Concatenate")) {
+		t.Fail()
+	}
+
 	// call function without arguments
-	result, err := parser.callFunc("Concatenate", "1", 2, "3.14")
+	result, err := plugin.Call("Concatenate", "1", 2, "3.14")
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
