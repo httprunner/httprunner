@@ -102,7 +102,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
 			return err
 		}
-		cfg := testcase.Config.ToStruct()
+		cfg := testcase.Config
 		// parse config parameters
 		err = initParameterIterator(cfg, "runner")
 		if err != nil {
@@ -160,10 +160,9 @@ func (r *caseRunner) reset() *caseRunner {
 
 func (r *caseRunner) run() error {
 	config := r.TestCase.Config
-	cfg := config.ToStruct()
 	// init plugin
 	var err error
-	if r.parser.plugin, err = initPlugin(cfg.Path); err != nil {
+	if r.parser.plugin, err = initPlugin(config.Path); err != nil {
 		return err
 	}
 	defer func() {
@@ -171,14 +170,14 @@ func (r *caseRunner) run() error {
 			r.parser.plugin.Quit()
 		}
 	}()
-	if err := r.parseConfig(cfg); err != nil {
+	if err := r.parseConfig(config); err != nil {
 		return err
 	}
-	log.Info().Str("testcase", config.Name()).Msg("run testcase start")
+	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	r.startTime = time.Now()
 	for index := range r.TestCase.TestSteps {
-		_, err := r.runStep(index, cfg)
+		_, err := r.runStep(index, config)
 		if err != nil {
 			if r.hrpRunner.failfast {
 				return errors.Wrap(err, "abort running due to failfast setting")
@@ -186,7 +185,7 @@ func (r *caseRunner) run() error {
 		}
 	}
 
-	log.Info().Str("testcase", config.Name()).Msg("run testcase end")
+	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
 }
 

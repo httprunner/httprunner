@@ -137,7 +137,7 @@ func (p *HashicorpPlugin) Call(funcName string, args ...interface{}) (interface{
 
 func (p *HashicorpPlugin) Quit() error {
 	// kill hashicorp plugin process
-	log.Warn().Msg("quit hashicorp plugin process")
+	log.Info().Msg("quit hashicorp plugin process")
 	pluginHost.Quit()
 	return nil
 }
