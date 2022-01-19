@@ -114,7 +114,7 @@ func (h *har) load() (*Har, error) {
 
 func (h *har) prepareConfig() *hrp.TConfig {
 	return hrp.NewConfig("testcase description").
-		SetVerifySSL(false).ToStruct()
+		SetVerifySSL(false)
 }
 
 func (h *har) prepareTestSteps() ([]*hrp.TStep, error) {

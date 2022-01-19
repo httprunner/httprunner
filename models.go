@@ -156,13 +156,6 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// IConfig represents interface for testcase config,
-// includes Config.
-type IConfig interface {
-	Name() string
-	ToStruct() *TConfig
-}
-
 // IStep represents interface for all types for teststeps, includes:
 // StepRequest, StepRequestWithOptionalArgs, StepRequestValidation, StepRequestExtraction,
 // StepTestCaseWithOptionalArgs,
@@ -183,7 +176,7 @@ type ITestCase interface {
 // TestCase is a container for one testcase, which is used for testcase runner.
 // TestCase implements ITestCase interface.
 type TestCase struct {
-	Config    IConfig
+	Config    *TConfig
 	TestSteps []IStep
 }
 
@@ -193,7 +186,7 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 
 func (tc *TestCase) ToTCase() (*TCase, error) {
 	tCase := TCase{
-		Config: tc.Config.ToStruct(),
+		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
 		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())

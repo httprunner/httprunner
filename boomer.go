@@ -51,7 +51,7 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 		if err != nil {
 			panic(err)
 		}
-		cfg := testcase.Config.ToStruct()
+		cfg := testcase.Config
 		err = initParameterIterator(cfg, "boomer")
 		if err != nil {
 			panic(err)
@@ -74,7 +74,7 @@ func (b *HRPBoomer) Quit() {
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 	hrpRunner := NewRunner(nil).SetDebug(b.debug)
-	config := testcase.Config.ToStruct()
+	config := testcase.Config
 
 	// each testcase has its own plugin process
 	plugin, _ := initPlugin(config.Path)
@@ -94,7 +94,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
-			cfg := testcase.Config.ToStruct()
+			cfg := testcase.Config
 			caseConfig := &TConfig{}
 			// copy config to avoid data racing
 			if err := copier.Copy(caseConfig, cfg); err != nil {
