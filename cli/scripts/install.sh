@@ -60,6 +60,7 @@ function main() {
     echoInfo "Extracting..."
     echo "$ tar -xzf $pkg"
     tar -xzf "$pkg"
+    echo "$ ls -lh"
     ls -lh
     echo
 
@@ -70,7 +71,7 @@ function main() {
         rm -rf "$(which hrp)"
     fi
 
-    echo "chmod +x hrp && mv hrp /usr/local/bin/"
+    echo "$ chmod +x hrp && mv hrp /usr/local/bin/"
     chmod +x hrp
     mv hrp /usr/local/bin/
     echo
