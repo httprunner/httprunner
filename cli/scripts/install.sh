@@ -46,8 +46,8 @@ function main() {
     echo
 
     echoInfo "Created temp dir..."
-    echo "$ mktemp -d -t hrp"
-    tmp_dir=$(mktemp -d -t hrp)
+    echo "$ mktemp -d -t hrp.XXXX"
+    tmp_dir=$(mktemp -d -t hrp.XXXX)
     echo "$tmp_dir"
     cd "$tmp_dir"
     echo
