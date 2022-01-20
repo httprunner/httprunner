@@ -1,6 +1,6 @@
 #!/bin/bash
 # install hrp with one shell command
-# curl -sL https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh | bash
+# bash -c "$(curl -ksSL https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh)"
 
 set -e
 
@@ -46,17 +46,20 @@ function main() {
     echo
 
     echoInfo "Created temp dir..."
+    echo "$ mktemp -d -t hrp"
     tmp_dir=$(mktemp -d -t hrp)
     echo "$tmp_dir"
     cd "$tmp_dir"
     echo
 
     echoInfo "Downloading..."
-    curl -L $url -o "$pkg"
+    echo "$ curl -kL $url -o $pkg"
+    curl -kL $url -o "$pkg"
     echo
 
     echoInfo "Extracting..."
-    tar -zxf "$pkg"
+    echo "$ tar -xzf $pkg"
+    tar -xzf "$pkg"
     ls -lh
     echo
 
