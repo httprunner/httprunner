@@ -30,9 +30,9 @@ You can install `hrp` with one shell command, which will download the latest ver
 
 ```bash
 # install via curl
-$ bash -c "$(curl -ksSL https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh)"
+$ bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
 # install via wget
-$ bash -c "$(wget https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh -O -)"
+$ bash -c "$(wget https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh -O -)"
 ```
 
 If you are a golang developer, you can also install `hrp` with `go get`.
