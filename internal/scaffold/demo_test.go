@@ -46,7 +46,7 @@ func TestExampleDemo(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
-	demoTestCase.Config.ToStruct().Path = "../../examples/debugtalk.bin"
+	demoTestCase.Config.Path = "../../examples/debugtalk.bin"
 	err := hrp.NewRunner(nil).Run(demoTestCase) // hrp.Run(demoTestCase)
 	if err != nil {
 		t.Fail()
