@@ -37,6 +37,15 @@ function get_arch() {
     echo "$arch"
 }
 
+function get_pkg_suffix() {
+    os=$1
+    if [ "$os" == "windows" ]; then
+        echo ".zip"
+    else
+        echo ".tar.gz"
+    fi
+}
+
 function get_download_url() {
     # github
     # url="https://github.com/httprunner/hrp/releases/download/$version/$1"
@@ -53,7 +62,7 @@ function main() {
     echo "Current OS: $os"
     arch=$(get_arch)
     echo "Current ARCH: $arch"
-    pkg="hrp-$version-$os-$arch.tar.gz"
+    pkg="hrp-$version-$os-$arch$(get_pkg_suffix $os)"
     url=$(get_download_url $pkg)
     echo "Selected package: $url"
     echo
