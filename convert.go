@@ -96,7 +96,7 @@ func loadFromYAML(path string) (*TCase, error) {
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
 	testCase := &TestCase{
-		Config: &Config{cfg: tc.Config},
+		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
 		if step.Request != nil {
