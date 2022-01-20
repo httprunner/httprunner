@@ -54,6 +54,17 @@ function get_download_url() {
     echo $url
 }
 
+function extract_pkg() {
+    pkg=$1
+    if [[ $pkg == *.zip ]]; then # windows
+        echo "$ unzip -o $pkg -d ."
+        unzip -o $pkg -d .
+    else
+        echo "$ tar -xzf $pkg"
+        tar -xzf "$pkg"
+    fi
+}
+
 function main() {
     echoInfo "Detect target hrp package..."
     version=$(get_latest_version)
@@ -62,7 +73,8 @@ function main() {
     echo "Current OS: $os"
     arch=$(get_arch)
     echo "Current ARCH: $arch"
-    pkg="hrp-$version-$os-$arch$(get_pkg_suffix $os)"
+    pkg_suffix=$(get_pkg_suffix $os)
+    pkg="hrp-$version-$os-$arch$pkg_suffix"
     url=$(get_download_url $pkg)
     echo "Selected package: $url"
     echo
@@ -80,8 +92,7 @@ function main() {
     echo
 
     echoInfo "Extracting..."
-    echo "$ tar -xzf $pkg"
-    tar -xzf "$pkg"
+    extract_pkg "$pkg"
     echo "$ ls -lh"
     ls -lh
     echo

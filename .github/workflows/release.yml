@@ -29,6 +29,8 @@ jobs:
           binary_name: "hrp"
           ldflags: "-s -w"
           extra_files: LICENSE README.md docs/CHANGELOG.md
+      - name: Test install.sh
+        run: bash cli/scripts/install.sh
       - name: Setup aliyun OSS
         uses: manyuanrong/setup-ossutil@v2.0
         with:
