@@ -29,3 +29,13 @@ jobs:
           binary_name: "hrp"
           ldflags: "-s -w"
           extra_files: LICENSE README.md docs/CHANGELOG.md
+      - name: Test install.sh
+        run: bash cli/scripts/install.sh
+      - name: Setup aliyun OSS
+        uses: manyuanrong/setup-ossutil@v2.0
+        with:
+          endpoint: "oss-cn-beijing.aliyuncs.com"
+          access-key-id: ${{ secrets.ALIYUN_ACCESSKEY_ID }}
+          access-key-secret: ${{ secrets.ALIYUN_ACCESSKEY_SECRET }}
+      - name: Upload to aliyun OSS
+        run: ossutil cp -rf cli/scripts/install.sh *.tar.gz *.zip oss://httprunner/

@@ -1,6 +1,6 @@
 #!/bin/bash
 # install hrp with one shell command
-# bash -c "$(curl -ksSL https://raw.githubusercontent.com/httprunner/hrp/main/cli/scripts/install.sh)"
+# bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
 
 set -e
 
@@ -24,6 +24,11 @@ function get_latest_version() {
     curl -sL https://github.com/httprunner/hrp/releases/latest | grep '<title>Release' | cut -d" " -f4
 }
 
+function get_os() {
+    os=$(uname -s)
+    echo "$os" | tr '[:upper:]' '[:lower:]'
+}
+
 function get_arch() {
     arch=$(uname -m)
     if [ "$arch" == "x86_64" ]; then
@@ -32,16 +37,45 @@ function get_arch() {
     echo "$arch"
 }
 
+function get_pkg_suffix() {
+    os=$1
+    if [ "$os" == "windows" ]; then
+        echo ".zip"
+    else
+        echo ".tar.gz"
+    fi
+}
+
+function get_download_url() {
+    # github
+    # url="https://github.com/httprunner/hrp/releases/download/$version/$1"
+    # aliyun oss
+    url="https://httprunner.oss-cn-beijing.aliyuncs.com/$1"
+    echo $url
+}
+
+function extract_pkg() {
+    pkg=$1
+    if [[ $pkg == *.zip ]]; then # windows
+        echo "$ unzip -o $pkg -d ."
+        unzip -o $pkg -d .
+    else
+        echo "$ tar -xzf $pkg"
+        tar -xzf "$pkg"
+    fi
+}
+
 function main() {
     echoInfo "Detect target hrp package..."
     version=$(get_latest_version)
     echo "Latest version: $version"
-    os=$(uname -s)
+    os=$(get_os)
     echo "Current OS: $os"
     arch=$(get_arch)
     echo "Current ARCH: $arch"
-    pkg="hrp-$version-$os-$arch.tar.gz"
-    url="https://github.com/httprunner/hrp/releases/download/$version/$pkg"
+    pkg_suffix=$(get_pkg_suffix $os)
+    pkg="hrp-$version-$os-$arch$pkg_suffix"
+    url=$(get_download_url $pkg)
     echo "Selected package: $url"
     echo
 
@@ -58,8 +92,7 @@ function main() {
     echo
 
     echoInfo "Extracting..."
-    echo "$ tar -xzf $pkg"
-    tar -xzf "$pkg"
+    extract_pkg "$pkg"
     echo "$ ls -lh"
     ls -lh
     echo
