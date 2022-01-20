@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -31,8 +32,12 @@ Website: https://httprunner.com
 Github: https://github.com/httprunner/hrp
 Copyright 2021 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		var noColor = false
+		if runtime.GOOS == "windows" {
+			noColor = true
+		}
 		if !logJSON {
-			log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
+			log.Logger = zerolog.New(zerolog.ConsoleWriter{NoColor: noColor, Out: os.Stderr}).With().Timestamp().Logger()
 			log.Info().Msg("Set log to color console other than JSON format.")
 		}
 	},
