@@ -1,3 +1,5 @@
+import inspect
+import json
 import os
 import time
 import uuid
@@ -6,6 +8,7 @@ from typing import List, Dict, Text, NoReturn
 
 try:
     import allure
+    from allure_commons.types import AttachmentType
 
     USE_ALLURE = True
 except ModuleNotFoundError:
@@ -173,6 +176,17 @@ class HttpRunner(object):
         resp = self.__session.request(method, url, **parsed_request_dict)
         resp_obj = ResponseObject(resp)
         step.variables["response"] = resp_obj
+
+        # allure attach: request / response
+        if USE_ALLURE:
+            params = dict(url=url, method=method, **parsed_request_dict)
+            allure.attach(json.dumps(params, indent=4), f"request detail: {method}: {url}", AttachmentType.JSON)
+
+            params = dict(status_code=resp.status_code, reason=resp.reason, headers=dict(resp.headers),
+                          cookies=resp.cookies.get_dict(), content=resp.json())
+            allure.attach(json.dumps(params, indent=4), "response detail", AttachmentType.JSON)
+
+            allure.attach(json.dumps(step.validators, indent=4), "assert detail", AttachmentType.JSON)
 
         # teardown hooks
         if step.teardown_hooks:
@@ -462,11 +476,6 @@ class HttpRunner(object):
         self.__config.name = parse_data(
             self.__config.name, config_variables, self.__project_meta.functions
         )
-
-        if USE_ALLURE:
-            # update allure report meta
-            allure.dynamic.title(self.__config.name)
-            allure.dynamic.description(f"TestCase ID: {self.__case_id}")
 
         logger.info(
             f"Start to run testcase: {self.__config.name}, TestCase ID: {self.__case_id}"

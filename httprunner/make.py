@@ -8,6 +8,14 @@ import jinja2
 from loguru import logger
 from sentry_sdk import capture_exception
 
+try:
+    import allure
+    from allure_commons.types import AttachmentType
+
+    USE_ALLURE = True
+except ModuleNotFoundError:
+    USE_ALLURE = False
+
 from httprunner.parser import function_regex_compile, parse_function_params
 from httprunner import exceptions, __version__, Parameters
 from httprunner.compat import (
@@ -46,8 +54,12 @@ sys.path.insert(0, str(Path(__file__){% for _ in range(diff_levels) %}.parent{% 
 {% endif %}
 
 {% if pytest_marks %}
-import pytest
 import debugtalk
+import pytest
+{% endif %}
+
+{% if use_allure %}
+import allure
 {% endif %}
 
 from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
@@ -424,6 +436,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         "imports_list": imports_list,
         "config_chain_style": make_config_chain_style(config),
         "pytest_marks": make_pytest_marks(config),
+        "use_allure": USE_ALLURE,
         "teststeps_chain_style": [
             make_teststep_chain_style(step) for step in teststeps
         ],
@@ -526,7 +539,7 @@ def make_pytest_marks(config: Dict) -> (Text, Text):
         elif key == "parameters":
             parameters_exist = True
             param = Parameters(param)
-            result += f"    @pytest.mark.parametrize('param', {param})\n"
+            result += f"    @pytest.mark.parametrize(\"param\", {param})\n"
 
         elif key == "skip":
             result += f"    @pytest.mark.skip(reason=\"{param}\")\n"
@@ -537,10 +550,26 @@ def make_pytest_marks(config: Dict) -> (Text, Text):
             result += f"    @pytest.mark.usefixtures(*{param})\n"
 
         elif key == "custom_marks":
-            errmsg = f"fixtures type should be List[str], got ({type(param)}, {param})"
+            errmsg = f"custom_marks type should be List[str], got ({type(param)}, {param})"
             assert isinstance(param, list), errmsg
             for mark in param:
                 result += f"    @pytest.mark.{mark}\n"
+
+        elif USE_ALLURE and key == "links":
+            errmsg = f"links type should be List[dict], got ({type(param)}, {param})"
+            assert isinstance(param, list), errmsg
+            assert param and isinstance(param[0], dict), errmsg
+            for link in reversed(param):
+                if link.get("name"):
+                    result += f"    @allure.link(\"{link['url']}\", name=\"{link['name']}\")\n"
+                else:
+                    result += f"    @allure.link(\"{link['url']}\")\n"
+
+        elif USE_ALLURE and key == "description":
+            result += f"    @allure.description(\"{param}\")\n"
+
+        elif USE_ALLURE and key == "name":
+            result += f"    @allure.title(\"{param}\")\n"
 
         elif key in ("skipif", "xfail"):
             condition = param.get("condition")

@@ -1,8 +1,6 @@
 import os
 from enum import Enum
-from typing import Any
-from typing import Dict, Text, Union, Callable, Any
-from typing import List
+from typing import Dict, Text, Union, Callable, Any, List, Tuple
 
 from pydantic import BaseModel, Field
 from pydantic import HttpUrl
@@ -66,8 +64,11 @@ class TConfig(BaseModel):
     usefixtures: List[Text] = []
     skip: Text = None
     skipif: SkipIF = None
-    custom_marks: List[Text] = []
+    custom_marks: List[Text] = []                                   # allure tags
     xfail: XFail = None
+
+    description: Text = ""                                          # allure description
+    links: List[Dict] = []                                          # allure links
 
 
 class TRequest(BaseModel):
