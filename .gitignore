@@ -19,6 +19,7 @@ __debug_bin
 .idea/
 __pycache__
 .DS_Store
+*.bak
 
 site/
 output/
