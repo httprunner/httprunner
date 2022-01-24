@@ -1,5 +1,10 @@
 # Release History
 
+## v0.5.3 (2022-01-20)
+
+- change: download package assets from aliyun OSS
+- fix: disable color logging on Windows
+
 ## v0.5.2 (2022-01-19)
 
 - feat: support creating and calling custom functions with [hashicorp/go-plugin](https://github.com/hashicorp/go-plugin)
