@@ -2,7 +2,6 @@
 
 ## v0.5.3 (2022-01-20)
 
-- feat: upload released assets to aliyun OSS
 - change: download package assets from aliyun OSS
 - fix: disable color logging on Windows
 
