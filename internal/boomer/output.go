@@ -337,6 +337,17 @@ var (
 	)
 )
 
+// counter for total
+var (
+	counterErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "errors",
+			Help: "The errors of load testing",
+		},
+		[]string{"method", "name", "error"},
+	)
+)
+
 // summary for total
 var (
 	summaryResponseTime = prometheus.NewSummaryVec(
@@ -399,13 +410,6 @@ var (
 			Help: "The accumulated number of failed transactions",
 		},
 	)
-	gaugeErrors = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "errors",
-			Help: "The errors of load testing",
-		},
-		[]string{"method", "name", "error"},
-	)
 )
 
 // NewPrometheusPusherOutput returns a PrometheusPusherOutput.
@@ -436,7 +440,8 @@ func (o *PrometheusPusherOutput) OnStart() {
 		gaugeAverageContentLength,
 		gaugeCurrentRPS,
 		gaugeCurrentFailPerSec,
-		gaugeErrors,
+		// counter for total
+		counterErrors,
 		// summary for total
 		summaryResponseTime,
 		// gauges for total
@@ -505,11 +510,11 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 
 	// errors
 	for _, requestError := range output.Errors {
-		gaugeErrors.WithLabelValues(
+		counterErrors.WithLabelValues(
 			requestError["method"].(string),
 			requestError["name"].(string),
 			requestError["error"].(string),
-		).Set(float64(requestError["occurrences"].(int64)))
+		).Add(float64(requestError["occurrences"].(int64)))
 	}
 
 	if err := o.pusher.Push(); err != nil {
