@@ -101,10 +101,10 @@ function main() {
     echo
 
     echoInfo "Installing..."
-    if hrp -v > /dev/null; then
+    if hrp -v > /dev/null && [ $(command -v hrp) != "./hrp" ]; then
         echoWarn "$(hrp -v) exists, remove first !!!"
-        echo "$ rm -rf $(which hrp)"
-        rm -rf "$(which hrp)"
+        echo "$ rm -rf $(command -v hrp)"
+        rm -rf "$(command -v hrp)"
     fi
 
     echo "$ chmod +x hrp && mv hrp /usr/local/bin/"
@@ -113,8 +113,8 @@ function main() {
     echo
 
     echoInfo "Check installation..."
-    echo "$ which hrp"
-    which hrp
+    echo "$ command -v hrp"
+    command -v hrp
     echo "$ hrp -v"
     hrp -v
     echo "$ hrp -h"
