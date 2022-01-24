@@ -2,6 +2,8 @@
 # install hrp with one shell command
 # bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
 
+LATEST_VERSION="v0.5.2"
+
 set -e
 
 function echoError() {
@@ -46,14 +48,6 @@ function get_pkg_suffix() {
     fi
 }
 
-function get_download_url() {
-    # github
-    # url="https://github.com/httprunner/hrp/releases/download/$version/$1"
-    # aliyun oss
-    url="https://httprunner.oss-cn-beijing.aliyuncs.com/$1"
-    echo $url
-}
-
 function extract_pkg() {
     pkg=$1
     if [[ $pkg == *.zip ]]; then # windows
@@ -67,16 +61,25 @@ function extract_pkg() {
 
 function main() {
     echoInfo "Detect target hrp package..."
-    version=$(get_latest_version)
-    echo "Latest version: $version"
+    version=$LATEST_VERSION
     os=$(get_os)
     echo "Current OS: $os"
     arch=$(get_arch)
     echo "Current ARCH: $arch"
     pkg_suffix=$(get_pkg_suffix $os)
     pkg="hrp-$version-$os-$arch$pkg_suffix"
-    url=$(get_download_url $pkg)
-    echo "Selected package: $url"
+
+    # download from aliyun OSS
+    url="https://httprunner.oss-cn-beijing.aliyuncs.com/$pkg"
+    if ! curl --output /dev/null --silent --head --fail "$url"; then
+        # aliyun OSS url is invalid, try to download from github
+        version=$(get_latest_version)
+        pkg="hrp-$version-$os-$arch$pkg_suffix"
+        url="https://github.com/httprunner/hrp/releases/download/$version/$pkg"
+    fi
+
+    echo "Latest version: $version"
+    echo "Download url: $url"
     echo
 
     echoInfo "Created temp dir..."

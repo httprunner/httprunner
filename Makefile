@@ -8,6 +8,11 @@ test: ## run unit tests
 	@echo "go test -race -v ./..."
 	@go test -race -v ./...
 
+.PHONY: bump
+bump: ## bump hrp version
+	@echo "[info] bump hrp version"
+	@. cli/scripts/bump_version.sh $(version)
+
 .PHONY: build
 build: ## build hrp cli tool
 	@echo "[info] build hrp cli tool"
