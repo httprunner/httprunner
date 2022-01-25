@@ -38,7 +38,7 @@ $ bash -c "$(wget https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh -O -
 If you are a golang developer, you can also install `hrp` with `go get`.
 
 ```bash
-$ go get -u github.com/httprunner/hrp/cli/hrp
+$ go get github.com/httprunner/hrp/cli/hrp
 ```
 
 Since installed, you will get a `hrp` command with multiple sub-commands.
