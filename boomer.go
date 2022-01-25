@@ -56,8 +56,10 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 		if err != nil {
 			panic(err)
 		}
+		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
 		task := b.convertBoomerTask(testcase)
 		taskSlice = append(taskSlice, task)
+		waitRendezvous(rendezvousList)
 	}
 	b.Boomer.Run(taskSlice...)
 }
@@ -147,6 +149,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				} else if stepData.stepType == stepTypeRendezvous {
 					// rendezvous
 					// TODO: implement rendezvous in boomer
+					rendezvous := step.ToStruct().Rendezvous
+					if !rendezvous.isSpawnDone() && b.IsSpawnDone() {
+						rendezvous.setSpawnDone()
+					}
 				} else {
 					// request or testcase step
 					b.RecordSuccess(step.Type(), step.Name(), stepData.elapsed, stepData.contentSize)
