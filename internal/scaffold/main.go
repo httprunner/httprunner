@@ -65,6 +65,11 @@ func CreateScaffold(projectName string) error {
 		return err
 	}
 
+	// create go mod
+	if err := execCommand(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
+		return err
+	}
+
 	// download plugin dependency
 	if err := execCommand(exec.Command("go", "get", "github.com/httprunner/hrp/plugin"), pluginDir); err != nil {
 		return err
