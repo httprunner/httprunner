@@ -1,9 +1,11 @@
 # Release History
 
-## v0.5.3 (2022-01-20)
+## v0.5.3 (2022-01-25)
 
 - change: download package assets from aliyun OSS
 - fix: disable color logging on Windows
+- fix: print stderr when exec command failed
+- fix: build hashicorp plugin failed when creating scaffold
 
 ## v0.5.2 (2022-01-19)
 
