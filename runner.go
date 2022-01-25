@@ -365,7 +365,7 @@ func (r *caseRunner) runStepRendezvous(rendezvous *Rendezvous) (stepResult *step
 		if atomic.LoadInt64(&rendezvous.cnt) < rendezvous.Number {
 			atomic.AddInt64(&rendezvous.cnt, 1)
 			rendezvous.wg.Done()
-			rendezvous.msg <- struct{}{}
+			rendezvous.timerResetChan <- struct{}{}
 		}
 		rendezvous.lock.Unlock()
 	}
@@ -397,9 +397,9 @@ func (r *Rendezvous) reset() {
 	r.cnt = 0
 	r.releasedFlag = 0
 	r.wg.Add(int(r.Number))
-	// msg channel will not be closed, init only once
-	if r.msg == nil {
-		r.msg = make(chan struct{})
+	// timerResetChan channel will not be closed, thus init only once
+	if r.timerResetChan == nil {
+		r.timerResetChan = make(chan struct{})
 	}
 	r.activateChan = make(chan struct{})
 	r.releaseChan = make(chan struct{})
@@ -437,6 +437,11 @@ func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
 		} else if rendezvous.Number > 0 && rendezvous.Number <= total && rendezvous.Percent == 0 {
 			rendezvous.Percent = float32(rendezvous.Number) / float32(total)
 		} else {
+			log.Warn().
+				Str("name", rendezvous.Name).
+				Int64("default number", total).
+				Float32("default percent", defaultRendezvousPercent).
+				Msg("rendezvous parameter error, set to default value")
 			rendezvous.Number = total
 			rendezvous.Percent = defaultRendezvousPercent
 		}
@@ -473,7 +478,7 @@ func waitSingleRendezvous(rendezvous *Rendezvous, rendezvousList []*Rendezvous, 
 		}()
 		for !rendezvous.isReleased() {
 			select {
-			case <-rendezvous.msg:
+			case <-rendezvous.timerResetChan:
 				timer.Reset(timeout)
 			case <-stop:
 				rendezvous.setReleased()

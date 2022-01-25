@@ -149,19 +149,19 @@ const (
 )
 
 type Rendezvous struct {
-	Name          string  `json:"name" yaml:"name"`                           // required
-	Percent       float32 `json:"percent,omitempty" yaml:"percent,omitempty"` // default to 1(100%)
-	Number        int64   `json:"number,omitempty" yaml:"number,omitempty"`
-	Timeout       int64   `json:"timeout,omitempty" yaml:"timeout,omitempty"` // milliseconds
-	cnt           int64
-	releasedFlag  uint32
-	spawnDoneFlag uint32
-	wg            sync.WaitGroup
-	msg           chan struct{}
-	activateChan  chan struct{}
-	releaseChan   chan struct{}
-	once          *sync.Once
-	lock          sync.Mutex
+	Name           string  `json:"name" yaml:"name"`                           // required
+	Percent        float32 `json:"percent,omitempty" yaml:"percent,omitempty"` // default to 1(100%)
+	Number         int64   `json:"number,omitempty" yaml:"number,omitempty"`
+	Timeout        int64   `json:"timeout,omitempty" yaml:"timeout,omitempty"` // milliseconds
+	cnt            int64
+	releasedFlag   uint32
+	spawnDoneFlag  uint32
+	wg             sync.WaitGroup
+	timerResetChan chan struct{}
+	activateChan   chan struct{}
+	releaseChan    chan struct{}
+	once           *sync.Once
+	lock           sync.Mutex
 }
 
 // TCase represents testcase data structure.
