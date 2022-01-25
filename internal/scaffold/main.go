@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/httprunner/hrp/internal/ga"
 	"github.com/rs/zerolog/log"
@@ -37,7 +38,8 @@ func CreateScaffold(projectName string) error {
 	if err := createFolder(path.Join(projectName, "testcases")); err != nil {
 		return err
 	}
-	if err := createFolder(path.Join(projectName, "plugin")); err != nil {
+	pluginDir := path.Join(projectName, "plugin")
+	if err := createFolder(pluginDir); err != nil {
 		return err
 	}
 	if err := createFolder(path.Join(projectName, "reports")); err != nil {
@@ -58,15 +60,19 @@ func CreateScaffold(projectName string) error {
 	}
 
 	// create debugtalk.go
-	pluginFile := path.Join(projectName, "plugin", "debugtalk.go")
+	pluginFile := path.Join(pluginDir, "debugtalk.go")
 	if err := createFile(pluginFile, demoPlugin); err != nil {
 		return err
 	}
-	cmd := exec.Command("go", "build",
-		"-o", path.Join(projectName, "debugtalk.bin"),
-		pluginFile)
-	if err := cmd.Run(); err != nil {
-		log.Error().Err(err).Msg("build plugin debugtalk.bin failed")
+
+	// download plugin dependency
+	if err := execCommand(exec.Command("go", "get", "github.com/httprunner/hrp/plugin"), pluginDir); err != nil {
+		return err
+	}
+
+	// build plugin debugtalk.bin
+	if err := execCommand(exec.Command("go", "build", "-o", path.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
+		return err
 	}
 
 	// create .gitignore
@@ -79,6 +85,19 @@ func CreateScaffold(projectName string) error {
 	}
 
 	return nil
+}
+
+func execCommand(cmd *exec.Cmd, cwd string) error {
+	log.Info().Str("cmd", cmd.String()).Str("cwd", cwd).Msg("exec command")
+	cmd.Dir = cwd
+	output, err := cmd.CombinedOutput()
+	out := strings.TrimSpace(string(output))
+	if err != nil {
+		log.Error().Err(err).Str("output", out).Msg("exec command failed")
+	} else if len(out) != 0 {
+		log.Info().Str("output", out).Msg("exec command success")
+	}
+	return err
 }
 
 func createFolder(folderPath string) error {
