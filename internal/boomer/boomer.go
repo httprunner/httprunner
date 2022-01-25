@@ -127,3 +127,11 @@ func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exc
 func (b *Boomer) Quit() {
 	b.localRunner.stop()
 }
+
+func (b *Boomer) IsSpawnDone() bool {
+	return b.localRunner.isSpawnDone
+}
+
+func (b *Boomer) GetSpawnCount() int {
+	return b.localRunner.spawnCount
+}
