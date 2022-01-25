@@ -1,0 +1,152 @@
+{
+    "config": {
+        "name": "run request with functions",
+        "base_url": "https://postman-echo.com",
+        "variables": {
+            "a": 12.3,
+            "b": 3.45,
+            "n": 5
+        }
+    },
+    "teststeps": [
+        {
+            "name": "test negative number",
+            "rendezvous": {
+                "name": "test negative number",
+                "number": -1
+            }
+        },
+        {
+            "name": "test overflow number",
+            "rendezvous": {
+                "name": "test overflow number",
+                "number": 1000000
+            }
+        },
+        {
+            "name": "test negative percent",
+            "rendezvous": {
+                "name": "test very low percent",
+                "percent": -0.5
+            }
+        },
+        {
+            "name": "test very low percent",
+            "rendezvous": {
+                "name": "test very low percent",
+                "percent": 0.00001
+            }
+        },
+        {
+            "name": "test overflow percent",
+            "rendezvous": {
+                "name": "test overflow percent",
+                "percent": 1.5
+            }
+        },
+        {
+            "name": "test conflict params",
+            "rendezvous": {
+                "name": "test conflict params",
+                "percent": 0.123,
+                "number": 1
+            }
+        },
+        {
+            "name": "test negative timeout",
+            "rendezvous": {
+                "name": "test negative timeout",
+                "timeout": -1000
+            }
+        },
+        {
+            "name": "waiting for all users in the beginning",
+            "rendezvous": {
+                "name": "rendezvous0",
+                "number": 10,
+                "timeout": 3000
+            }
+        },
+        {
+            "name": "rendezvous before get",
+            "rendezvous": {
+                "name": "rendezvous1",
+                "number": 10,
+                "timeout": 3000
+            }
+        },
+        {
+            "name": "get with params",
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "params": {
+                    "foo1": "foo1",
+                    "foo2": "foo2"
+                },
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                }
+            },
+            "extract": {
+                "varFoo1": "body.args.foo1"
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                }
+            ]
+        },
+        {
+            "name": "rendezvous before post",
+            "rendezvous": {
+                "name": "rendezvous2",
+                "number": 20,
+                "timeout": 2000
+            }
+        },
+        {
+            "name": "post json data with functions",
+            "request": {
+                "method": "POST",
+                "url": "/post",
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                },
+                "body": {
+                    "foo1": "foo1",
+                    "foo2": "foo2"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "body.json.foo1",
+                    "assert": "length_equals",
+                    "expect": 4,
+                    "msg": "check args foo1"
+                },
+                {
+                    "check": "body.json.foo2",
+                    "assert": "equals",
+                    "expect": "foo2",
+                    "msg": "check args foo2"
+                }
+            ]
+        },
+        {
+            "name": "waiting for all users in the end",
+            "rendezvous": {
+                "name": "rendezvous3"
+            }
+        }
+    ]
+}

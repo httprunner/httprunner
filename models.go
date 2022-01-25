@@ -33,7 +33,7 @@ type TConfig struct {
 type TParamsConfig struct {
 	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"`
 	Iteration int         `json:"iteration,omitempty" yaml:"iteration,omitempty"`
-	Iterators []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"` //保存参数的迭代器
+	Iterators []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"` // 保存参数的迭代器
 }
 
 const (
@@ -142,11 +142,26 @@ type Transaction struct {
 	Name string          `json:"name" yaml:"name"`
 	Type transactionType `json:"type" yaml:"type"`
 }
+
+const (
+	defaultRendezvousTimeout int64   = 5000
+	defaultRendezvousPercent float32 = 1.0
+)
+
 type Rendezvous struct {
-	Name    string  `json:"name" yaml:"name"`                           // required
-	Percent float32 `json:"percent,omitempty" yaml:"percent,omitempty"` // default to 1(100%)
-	Number  int64   `json:"number,omitempty" yaml:"number,omitempty"`
-	Timeout int64   `json:"timeout,omitempty" yaml:"timeout,omitempty"` // milliseconds
+	Name          string  `json:"name" yaml:"name"`                           // required
+	Percent       float32 `json:"percent,omitempty" yaml:"percent,omitempty"` // default to 1(100%)
+	Number        int64   `json:"number,omitempty" yaml:"number,omitempty"`
+	Timeout       int64   `json:"timeout,omitempty" yaml:"timeout,omitempty"` // milliseconds
+	cnt           int64
+	releasedFlag  uint32
+	spawnDoneFlag uint32
+	wg            sync.WaitGroup
+	msg           chan struct{}
+	activateChan  chan struct{}
+	releaseChan   chan struct{}
+	once          *sync.Once
+	lock          sync.Mutex
 }
 
 // TCase represents testcase data structure.

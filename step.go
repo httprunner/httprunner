@@ -345,3 +345,31 @@ func (s *StepRendezvous) Type() string {
 func (s *StepRendezvous) ToStruct() *TStep {
 	return s.step
 }
+
+// Rendezvous creates a new rendezvous
+func (s *StepRequest) Rendezvous(name string) *StepRendezvous {
+	s.step.Rendezvous = &Rendezvous{
+		Name: name,
+	}
+	return &StepRendezvous{
+		step: s.step,
+	}
+}
+
+// WithUserNumber sets the user number needed to release the current rendezvous
+func (s *StepRendezvous) WithUserNumber(number int64) *StepRendezvous {
+	s.step.Rendezvous.Number = number
+	return s
+}
+
+// WithUserPercent sets the user percent needed to release the current rendezvous
+func (s *StepRendezvous) WithUserPercent(percent float32) *StepRendezvous {
+	s.step.Rendezvous.Percent = percent
+	return s
+}
+
+// WithTimeout sets the timeout of duration between each user arriving at the current rendezvous
+func (s *StepRendezvous) WithTimeout(timeout int64) *StepRendezvous {
+	s.step.Rendezvous.Timeout = timeout
+	return s
+}

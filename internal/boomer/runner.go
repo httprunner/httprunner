@@ -63,6 +63,7 @@ type runner struct {
 	spawnCount        int   // target clients to spawn
 	spawnRate         float64
 	loop              *Loop // specify running cycles
+	isSpawnDone       bool
 
 	outputs []Output
 }
@@ -193,6 +194,7 @@ func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan 
 		}
 	}
 
+	r.isSpawnDone = true
 	if spawnCompleteFunc != nil {
 		spawnCompleteFunc()
 	}
