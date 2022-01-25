@@ -58,7 +58,7 @@
 
 ## v0.2.1 (2021-12-02)
 
-- feat: push load testing metrics to Prometheus Pushgateway
+- feat: push load testing metrics to [Prometheus Pushgateway][pushgateway]
 - feat: report events with Google Analytics
 
 ## v0.2.0 (2021-11-19)
@@ -86,3 +86,4 @@
 [github-actions]: https://github.com/httprunner/hrp/actions
 [boomer]: github.com/myzhan/boomer
 [sentry sdk]: https://github.com/getsentry/sentry-go
+[pushgateway]: https://github.com/prometheus/pushgateway

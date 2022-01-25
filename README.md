@@ -8,19 +8,46 @@
 
 `hrp` aims to be a one-stop solution for HTTP(S) testing, covering API testing, load testing and digital experience monitoring (DEM).
 
+See [CHANGELOG].
 ## Key Features
 
 ![flow chart](docs/assets/flow.jpg)
 
-- [x] Full support for HTTP(S) requests, more protocols are also in the plan.
+### API Testing
+
+- [x] Full support for HTTP(S)/1.1 requests.
+- [ ] Support more protocols, HTTP/2, WebSocket, TCP, RPC etc.
 - [x] Testcases can be described in multiple formats, `YAML`/`JSON`/`Golang`, and they are interchangeable.
-- [x] With [`HAR`][HAR] support, you can use Charles/Fiddler/Chrome/etc as a script recording generator.
+- [x] Use Charles/Fiddler/Chrome/etc to record HTTP requests and generate testcases from exported [`HAR`][HAR].
 - [x] Supports `variables`/`extract`/`validate`/`hooks` mechanisms to create extremely complex test scenarios.
-- [x] Built-in integration of rich functions, and you can also use [hashicorp/plugin] or [go plugin] to create and call custom functions.
-- [x] Inherit all powerful features of [`Boomer`][Boomer] and [`locust`][locust], you can run `load test` without extra work.
+- [x] Data driven with `parameterize` mechanism, supporting sequential/random/unique strategies to select data.
+- [ ] Built-in 100+ commonly used functions for ease, including md5sum, max/min, sleep, gen_random_string etc.
+- [x] Create and call custom functions with `plugin` mechanism, support [hashicorp plugin] and [go plugin].
+- [ ] Generate html reports with rich test results.
 - [x] Using it as a `CLI tool` or a `library` are both supported.
 
-See [CHANGELOG].
+### Load Testing
+
+Base on the API testing testcases, you can run professional load testing without extra work.
+
+- [x] Inherit all powerful features of [`locust`][locust] and [`boomer`][boomer].
+- [x] Report performance metrics to [prometheus pushgateway][pushgateway].
+- [x] Use `transaction` to define a set of end-user actions that represent the real user activities.
+- [x] Use `rendezvous` points to force Vusers to perform tasks concurrently during test execution.
+- [x] Load testing with specified concurrent users or constant RPS, also supports spawn rate.
+- [ ] Support mixed-scenario testing with custom weight.
+- [ ] Simulate browser's HTTP parallel connections.
+- [ ] IP spoofing.
+- [ ] Run in distributed mode to generate unlimited RPS.
+
+### Digital Experience Monitoring (DEM)
+
+You can also monitor online services for digital experience assessments.
+
+- [ ] HTTP(S) latency statistics including DNSLookup, TCP connections, SSL handshakes, content transfers, etc.
+- [ ] `ping` indicators including latency, throughput and packets loss.
+- [ ] traceroute
+- [ ] DNS monitoring
 
 ## Quick Start
 
@@ -270,13 +297,14 @@ func TestCaseDemo(t *testing.T) {
 <img src="docs/assets/qrcode.jpg" alt="HttpRunner" width="200">
 
 [HttpRunner]: https://github.com/httprunner/httprunner
-[Boomer]: https://github.com/myzhan/boomer
+[boomer]: https://github.com/myzhan/boomer
 [locust]: https://github.com/locustio/locust
 [jmespath]: https://jmespath.org/
 [allure]: https://docs.qameta.io/allure/
 [HAR]: http://httparchive.org/
-[hashicorp/plugin]: https://github.com/hashicorp/go-plugin
+[hashicorp plugin]: https://github.com/hashicorp/go-plugin
 [go plugin]: https://pkg.go.dev/plugin
 [demo.json]: https://github.com/httprunner/hrp/blob/main/examples/demo.json
 [examples]: https://github.com/httprunner/hrp/blob/main/examples/
 [CHANGELOG]: docs/CHANGELOG.md
+[pushgateway]: https://github.com/prometheus/pushgateway
