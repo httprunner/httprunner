@@ -6,7 +6,7 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/google/uuid v1.3.0
-	github.com/httprunner/hrp/plugin v0.0.0-00010101000000-000000000000
+	github.com/httprunner/hrp/plugin v0.0.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/maja42/goval v1.2.1
