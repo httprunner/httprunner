@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/getsentry/sentry-go v0.11.0
 	github.com/google/uuid v1.3.0
 	github.com/httprunner/hrp/plugin v0.0.0
 	github.com/jinzhu/copier v0.3.2
