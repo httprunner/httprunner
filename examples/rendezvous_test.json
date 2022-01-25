@@ -62,9 +62,7 @@
         {
             "name": "waiting for all users in the beginning",
             "rendezvous": {
-                "name": "rendezvous0",
-                "number": 10,
-                "timeout": 3000
+                "name": "rendezvous0"
             }
         },
         {

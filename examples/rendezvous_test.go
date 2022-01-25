@@ -15,7 +15,6 @@ var rendezvousTestcase = &hrp.TestCase{
 			"b": 3.45,
 		}),
 	TestSteps: []hrp.IStep{
-		// rendezvous boundary test
 		hrp.NewStep("test negative number").
 			Rendezvous("test negative number").
 			WithUserNumber(-1),
@@ -38,11 +37,8 @@ var rendezvousTestcase = &hrp.TestCase{
 		hrp.NewStep("test negative timeout").
 			Rendezvous("test negative timeout").
 			WithTimeout(-1000),
-		// rendezvous normal test
 		hrp.NewStep("waiting for all users in the beginning").
-			Rendezvous("rendezvous0").
-			WithUserNumber(10).
-			WithTimeout(3000),
+			Rendezvous("rendezvous0"),
 		hrp.NewStep("rendezvous before get").
 			Rendezvous("rendezvous1").
 			WithUserNumber(10).
