@@ -15,33 +15,11 @@ var rendezvousTestcase = &hrp.TestCase{
 			"b": 3.45,
 		}),
 	TestSteps: []hrp.IStep{
-		hrp.NewStep("test negative number").
-			Rendezvous("test negative number").
-			WithUserNumber(-1),
-		hrp.NewStep("test overflow number").
-			Rendezvous("test overflow number").
-			WithUserNumber(1000000),
-		hrp.NewStep("test negative percent").
-			Rendezvous("test very low percent").
-			WithUserPercent(-0.5),
-		hrp.NewStep("test very low percent").
-			Rendezvous("test very low percent").
-			WithUserPercent(0.00001),
-		hrp.NewStep("test overflow percent").
-			Rendezvous("test overflow percent").
-			WithUserPercent(1.5),
-		hrp.NewStep("test conflict params").
-			Rendezvous("test conflict params").
-			WithUserNumber(1).
-			WithUserPercent(0.123),
-		hrp.NewStep("test negative timeout").
-			Rendezvous("test negative timeout").
-			WithTimeout(-1000),
 		hrp.NewStep("waiting for all users in the beginning").
 			Rendezvous("rendezvous0"),
 		hrp.NewStep("rendezvous before get").
 			Rendezvous("rendezvous1").
-			WithUserNumber(10).
+			WithUserNumber(50).
 			WithTimeout(3000),
 		hrp.NewStep("get with params").
 			GET("/get").

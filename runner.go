@@ -441,7 +441,7 @@ func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
 				Str("name", rendezvous.Name).
 				Int64("default number", total).
 				Float32("default percent", defaultRendezvousPercent).
-				Msg("rendezvous parameter error, set to default value")
+				Msg("rendezvous parameter not defined or error, set to default value")
 			rendezvous.Number = total
 			rendezvous.Percent = defaultRendezvousPercent
 		}
@@ -483,7 +483,7 @@ func waitSingleRendezvous(rendezvous *Rendezvous, rendezvousList []*Rendezvous, 
 			case <-stop:
 				rendezvous.setReleased()
 				close(rendezvous.releaseChan)
-				log.Warn().
+				log.Info().
 					Str("name", rendezvous.Name).
 					Float32("percent", rendezvous.Percent).
 					Int64("number", rendezvous.Number).
@@ -494,7 +494,7 @@ func waitSingleRendezvous(rendezvous *Rendezvous, rendezvousList []*Rendezvous, 
 			case <-timer.C:
 				rendezvous.setReleased()
 				close(rendezvous.releaseChan)
-				log.Warn().
+				log.Info().
 					Str("name", rendezvous.Name).
 					Float32("percent", rendezvous.Percent).
 					Int64("number", rendezvous.Number).
