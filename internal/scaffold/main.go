@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
 	"github.com/rs/zerolog/log"
 )
@@ -48,12 +49,12 @@ func CreateScaffold(projectName string) error {
 
 	// create demo testcases
 	tCase, _ := demoTestCase.ToTCase()
-	err := tCase.Dump2JSON(path.Join(projectName, "testcases", "demo.json"))
+	err := builtin.Dump2JSON(tCase, path.Join(projectName, "testcases", "demo.json"))
 	if err != nil {
 		log.Error().Err(err).Msg("create demo.json testcase failed")
 		return err
 	}
-	err = tCase.Dump2YAML(path.Join(projectName, "testcases", "demo.yaml"))
+	err = builtin.Dump2YAML(tCase, path.Join(projectName, "testcases", "demo.yaml"))
 	if err != nil {
 		log.Error().Err(err).Msg("create demo.yml testcase failed")
 		return err

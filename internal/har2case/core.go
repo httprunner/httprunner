@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp"
+	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
 )
 
@@ -55,7 +56,7 @@ func (h *har) GenJSON() (jsonPath string, err error) {
 		return "", err
 	}
 	jsonPath = h.genOutputPath(suffixJSON)
-	err = tCase.Dump2JSON(jsonPath)
+	err = builtin.Dump2JSON(tCase, jsonPath)
 	return
 }
 
@@ -74,7 +75,7 @@ func (h *har) GenYAML() (yamlPath string, err error) {
 		return "", err
 	}
 	yamlPath = h.genOutputPath(suffixYAML)
-	err = tCase.Dump2YAML(yamlPath)
+	err = builtin.Dump2YAML(tCase, yamlPath)
 	return
 }
 
