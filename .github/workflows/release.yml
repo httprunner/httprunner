@@ -19,12 +19,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Setup aliyun OSS
-        uses: manyuanrong/setup-ossutil@v2.0
-        with:
-          endpoint: "oss-cn-beijing.aliyuncs.com"
-          access-key-id: ${{ secrets.ALIYUN_ACCESSKEY_ID }}
-          access-key-secret: ${{ secrets.ALIYUN_ACCESSKEY_SECRET }}
       - name: Release hrp cli binaries
         uses: wangyoucao577/go-release-action@v1.23
         with:
@@ -36,13 +30,16 @@ jobs:
           ldflags: "-s -w"
           extra_files: LICENSE README.md docs/CHANGELOG.md
           post_command: |
-            pwd
-            export ASSET_PATH="$INPUT_PROJECT_PATH/$BUILD_ARTIFACTS_FOLDER/$RELEASE_ASSET_FILE"
-            echo "::set-env name=ASSET_PATH::$ASSET_PATH"
+            echo "ASSET_PATH=$INPUT_PROJECT_PATH/$BUILD_ARTIFACTS_FOLDER/$RELEASE_ASSET_FILE" >> $GITHUB_ENV
+      - name: Setup aliyun OSS
+        uses: manyuanrong/setup-ossutil@v2.0
+        with:
+          endpoint: "oss-cn-beijing.aliyuncs.com"
+          access-key-id: ${{ secrets.ALIYUN_ACCESSKEY_ID }}
+          access-key-secret: ${{ secrets.ALIYUN_ACCESSKEY_SECRET }}
       - name: Upload artifacts to aliyun OSS
         run: |
-          which ossutil
           ossutil cp -rf cli/scripts/install.sh oss://httprunner/
-          ossutil cp -rf "$ASSET_PATH" oss://httprunner/
+          ossutil cp -rf ${{ env.ASSET_PATH }} oss://httprunner/
       - name: Test install.sh
         run: bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
