@@ -16,7 +16,7 @@ var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual
 	"greater_or_equals": assert.GreaterOrEqual,
 	"less_or_equals":    assert.LessOrEqual,
 	"not_equal":         assert.NotEqual,
-	"contained_by":  	 assert.Contains,
+	"contained_by":      assert.Contains,
 	"regex_match":       assert.Regexp,
 	"type_match":        assert.IsType,
 	// custom assertions
@@ -28,7 +28,7 @@ var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual
 	"length_less_or_equals":    LessOrEqualsLength,
 	"length_greater_than":      GreaterThanLength,
 	"length_greater_or_equals": GreaterOrEqualsLength,
-  "contains":                 Contains,
+	"contains":                 Contains,
 	"string_equals":            EqualString,
 }
 

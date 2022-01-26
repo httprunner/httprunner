@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/httprunner/hrp"
+	"github.com/httprunner/hrp/internal/builtin"
 )
 
 var rendezvousTestcase = &hrp.TestCase{
@@ -58,7 +59,7 @@ func TestRendezvousDump2JSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ToTCase error: %v", err)
 	}
-	err = tCase.Dump2JSON("rendezvous_test.json")
+	err = builtin.Dump2JSON(tCase, "rendezvous_test.json")
 	if err != nil {
 		t.Fatalf("dump to json error: %v", err)
 	}

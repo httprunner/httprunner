@@ -11,49 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (tc *TCase) Dump2JSON(path string) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Err(err).Msg("convert absolute path failed")
-		return err
-	}
-	log.Info().Str("path", path).Msg("dump testcase to json")
-	file, _ := json.MarshalIndent(tc, "", "    ")
-	err = ioutil.WriteFile(path, file, 0644)
-	if err != nil {
-		log.Error().Err(err).Msg("dump json path failed")
-		return err
-	}
-	return nil
-}
-
-func (tc *TCase) Dump2YAML(path string) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Err(err).Msg("convert absolute path failed")
-		return err
-	}
-	log.Info().Str("path", path).Msg("dump testcase to yaml")
-
-	// init yaml encoder
-	buffer := new(bytes.Buffer)
-	encoder := yaml.NewEncoder(buffer)
-	encoder.SetIndent(4)
-
-	// encode
-	err = encoder.Encode(tc)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(path, buffer.Bytes(), 0644)
-	if err != nil {
-		log.Error().Err(err).Msg("dump yaml path failed")
-		return err
-	}
-	return nil
-}
-
 func loadFromJSON(path string) (*TCase, error) {
 	path, err := filepath.Abs(path)
 	if err != nil {
