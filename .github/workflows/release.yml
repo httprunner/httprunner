@@ -1,6 +1,7 @@
 name: Release hrp cli binaries
 
 on:
+  push:
   release:
     types: [created]
 
@@ -19,8 +20,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Setup aliyun OSS
+        uses: manyuanrong/setup-ossutil@v2.0
+        with:
+          endpoint: "oss-cn-beijing.aliyuncs.com"
+          access-key-id: ${{ secrets.ALIYUN_ACCESSKEY_ID }}
+          access-key-secret: ${{ secrets.ALIYUN_ACCESSKEY_SECRET }}
+      - name: Upload artifacts to aliyun OSS
+        run: |
+          pwd
+          which ossutil
+          ossutil cp -rf cli/scripts/install.sh oss://httprunner/
       - name: Release hrp cli binaries
-        uses: wangyoucao577/go-release-action@v1.22
+        uses: wangyoucao577/go-release-action@v1.23
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
@@ -29,15 +41,6 @@ jobs:
           binary_name: "hrp"
           ldflags: "-s -w"
           extra_files: LICENSE README.md docs/CHANGELOG.md
-      - name: Setup aliyun OSS
-        uses: manyuanrong/setup-ossutil@v2.0
-        with:
-          endpoint: "oss-cn-beijing.aliyuncs.com"
-          access-key-id: ${{ secrets.ALIYUN_ACCESSKEY_ID }}
-          access-key-secret: ${{ secrets.ALIYUN_ACCESSKEY_SECRET }}
-      # - name: Upload to aliyun OSS
-      #   run: |
-      #     ossutil cp -rf cli/scripts/install.sh oss://httprunner/
-      #     ossutil cp -rf hrp-*.tar.gz hrp-*.zip oss://httprunner/ || true
-      # - name: Test install.sh
-      #   run: bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
+          post_command: mv "$RELEASE_ASSET_FILE" /home/runner/work/hrp/hrp/
+      - name: Test install.sh
+        run: bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
