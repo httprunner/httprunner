@@ -122,7 +122,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					// step failed
 					var elapsed int64
 					if stepData != nil {
-						elapsed = stepData.elapsed
+						elapsed = stepData.Elapsed
 					}
 					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
 
@@ -139,14 +139,14 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 				}
 
 				// step success
-				if stepData.stepType == stepTypeTransaction {
+				if stepData.StepType == stepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
 					if step.ToStruct().Transaction.Type == transactionEnd { // only record when transaction ends
-						b.RecordTransaction(stepData.name, transactionSuccess, stepData.elapsed, 0)
+						b.RecordTransaction(stepData.Name, transactionSuccess, stepData.Elapsed, 0)
 						transactionSuccess = true // reset flag for next transaction
 					}
-				} else if stepData.stepType == stepTypeRendezvous {
+				} else if stepData.StepType == stepTypeRendezvous {
 					// rendezvous
 					// TODO: implement rendezvous in boomer
 					rendezvous := step.ToStruct().Rendezvous
@@ -155,7 +155,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase) *boomer.Task {
 					}
 				} else {
 					// request or testcase step
-					b.RecordSuccess(step.Type(), step.Name(), stepData.elapsed, stepData.contentSize)
+					b.RecordSuccess(step.Type(), step.Name(), stepData.Elapsed, stepData.ContentSize)
 				}
 			}
 			endTime := time.Now()

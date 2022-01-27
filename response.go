@@ -79,7 +79,7 @@ type responseObject struct {
 	t                 *testing.T
 	parser            *parser
 	respObjMeta       interface{}
-	validationResults map[string]interface{}
+	validationResults []*validationResult
 }
 
 func (v *responseObject) Extract(extractors map[string]string) map[string]interface{} {
@@ -122,9 +122,23 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		if err != nil {
 			return err
 		}
+		validResult := &validationResult{
+			Validator: Validator{
+				Check:   validator.Check,
+				Expect:  expectValue,
+				Assert:  assertMethod,
+				Message: validator.Message,
+			},
+			CheckValue:  checkValue,
+			CheckResult: "fail",
+		}
 
 		// do assertion
 		result := assertFunc(v.t, expectValue, checkValue)
+		if result {
+			validResult.CheckResult = "pass"
+		}
+		v.validationResults = append(v.validationResults, validResult)
 		log.Info().
 			Str("assertMethod", assertMethod).
 			Interface("expectValue", expectValue).
