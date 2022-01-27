@@ -6,6 +6,12 @@
             "a": 12.3,
             "b": 3.45,
             "n": 5
+        },
+        "parameters_setting": {
+            "strategy": "Sequential",
+            "parameterIterator": [
+                {}
+            ]
         }
     },
     "teststeps": [
