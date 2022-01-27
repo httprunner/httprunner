@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp"
+	"github.com/httprunner/hrp/internal/builtin"
 )
 
 var (
@@ -32,11 +33,11 @@ func removeHashicorpPlugin() {
 
 func TestGenDemoTestCase(t *testing.T) {
 	tCase, _ := demoTestCase.ToTCase()
-	err := tCase.Dump2JSON(demoTestCaseJSONPath)
+	err := builtin.Dump2JSON(tCase, demoTestCaseJSONPath)
 	if err != nil {
 		t.Fail()
 	}
-	err = tCase.Dump2YAML(demoTestCaseYAMLPath)
+	err = builtin.Dump2YAML(tCase, demoTestCaseYAMLPath)
 	if err != nil {
 		t.Fail()
 	}

@@ -27,7 +27,8 @@ var runCmd = &cobra.Command{
 		}
 		runner := hrp.NewRunner(nil).
 			SetDebug(!silentFlag).
-			SetFailfast(!continueOnFailure)
+			SetFailfast(!continueOnFailure).
+			SetSaveTests(saveTests)
 		if proxyUrl != "" {
 			runner.SetProxyUrl(proxyUrl)
 		}
@@ -42,6 +43,7 @@ var (
 	continueOnFailure bool
 	silentFlag        bool
 	proxyUrl          string
+	saveTests         bool
 )
 
 func init() {
@@ -49,5 +51,6 @@ func init() {
 	runCmd.Flags().BoolVar(&continueOnFailure, "continue-on-failure", false, "continue running next step when failure occurs")
 	runCmd.Flags().BoolVarP(&silentFlag, "silent", "s", false, "disable logging request & response details")
 	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
+	runCmd.Flags().BoolVar(&saveTests, "save-tests", false, "save tests summary")
 	// runCmd.Flags().BoolP("gen-html-report", "r", false, "Generate HTML report")
 }

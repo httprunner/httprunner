@@ -1,9 +1,13 @@
 package hrp
 
 import (
+	"fmt"
 	"math/rand"
+	"runtime"
 	"sync"
 	"time"
+
+	"github.com/httprunner/hrp/internal/version"
 )
 
 const (
@@ -209,13 +213,132 @@ func (tc *TestCase) ToTCase() (*TCase, error) {
 	return &tCase, nil
 }
 
-type testCaseSummary struct{}
+type testCaseStat struct {
+	Total   int `json:"total" yaml:"total"`
+	Success int `json:"success" yaml:"success"`
+	Fail    int `json:"fail" yaml:"fail"`
+}
+
+type testStepStat struct {
+	Total     int `json:"total" yaml:"total"`
+	Successes int `json:"successes" yaml:"successes"`
+	Failures  int `json:"failures" yaml:"failures"`
+}
+
+type stat struct {
+	TestCases testCaseStat `json:"testcases" yaml:"test_cases"`
+	TestSteps testStepStat `json:"teststeps" yaml:"test_steps"`
+}
+
+type testCaseTime struct {
+	StartAt  time.Time `json:"start_at,omitempty" yaml:"start_at,omitempty"`
+	Duration float64   `json:"duration,omitempty" yaml:"duration,omitempty"`
+}
+
+type platform struct {
+	HttprunnerVersion string `json:"httprunner_version" yaml:"httprunner_version"`
+	GoVersion         string `json:"go_version" yaml:"go_version"`
+	Platform          string `json:"platform" yaml:"platform"`
+}
+
+// summary stores tests summary for current task execution, maybe include one or multiple testcases
+type summary struct {
+	Success  bool               `json:"success" yaml:"success"`
+	Stat     *stat              `json:"stat" yaml:"stat"`
+	Time     *testCaseTime      `json:"time" yaml:"time"`
+	Platform *platform          `json:"platform" yaml:"platform"`
+	Details  []*testCaseSummary `json:"details" yaml:"details"`
+}
+
+func newOutSummary() *summary {
+	platForm := &platform{
+		HttprunnerVersion: version.VERSION,
+		GoVersion:         runtime.Version(),
+		Platform:          fmt.Sprintf("%v-%v", runtime.GOOS, runtime.GOARCH),
+	}
+	return &summary{
+		Success: true,
+		Stat:    &stat{},
+		Time: &testCaseTime{
+			StartAt: time.Now(),
+		},
+		Platform: platForm,
+	}
+}
+
+func (s *summary) appendCaseSummary(caseSummary *testCaseSummary) {
+	s.Success = s.Success && caseSummary.Success
+	s.Stat.TestCases.Total += 1
+	s.Stat.TestSteps.Total += len(caseSummary.Records)
+	if caseSummary.Success {
+		s.Stat.TestCases.Success += 1
+		s.Stat.TestSteps.Successes += len(caseSummary.Records)
+	} else {
+		s.Stat.TestCases.Fail += 1
+		s.Stat.TestSteps.Successes += len(caseSummary.Records) - 1
+		s.Stat.TestSteps.Failures += 1
+	}
+	s.Details = append(s.Details, caseSummary)
+	s.Success = s.Success && caseSummary.Success
+}
 
 type stepData struct {
-	name        string                 // step name
-	stepType    stepType               // step type, testcase/request/transaction/rendezvous
-	success     bool                   // step execution result
-	elapsed     int64                  // step execution time in millisecond(ms)
-	contentSize int64                  // response body length
-	exportVars  map[string]interface{} // extract variables
+	Name        string                 `json:"name" yaml:"name"`                                   // step name
+	StepType    stepType               `json:"step_type" yaml:"step_type"`                         // step type, testcase/request/transaction/rendezvous
+	Success     bool                   `json:"success" yaml:"success"`                             // step execution result
+	Elapsed     int64                  `json:"elapsed_ms" yaml:"elapsed_ms"`                       // step execution time in millisecond(ms)
+	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`               // session data or slice of step data
+	ContentSize int64                  `json:"content_size" yaml:"content_size"`                   // response body length
+	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"` // extract variables
+}
+
+type testCaseInOut struct {
+	ConfigVars map[string]interface{} `json:"config_vars" yaml:"config_vars"`
+	ExportVars map[string]interface{} `json:"export_vars" yaml:"export_vars"`
+}
+
+// testCaseSummary stores tests summary for one testcase
+type testCaseSummary struct {
+	Name    string         `json:"name" yaml:"name"`
+	Success bool           `json:"success" yaml:"success"`
+	CaseId  string         `json:"case_id,omitempty" yaml:"case_id,omitempty"` //TODO
+	Time    *testCaseTime  `json:"time" yaml:"time"`
+	InOut   *testCaseInOut `json:"in_out" yaml:"in_out"`
+	Log     string         `json:"log,omitempty" yaml:"log,omitempty"` //TODO
+	Records []*stepData    `json:"records" yaml:"records"`
+}
+
+type validationResult struct {
+	Validator
+	CheckValue  interface{} `json:"check_value" yaml:"check_value"`
+	CheckResult string      `json:"check_result" yaml:"check_result"`
+}
+
+type reqResps struct {
+	Request  *Request    `json:"request" yaml:"request"`
+	Response interface{} `json:"response" yaml:"response"`
+}
+
+type address struct {
+	ClientIP   string `json:"client_ip,omitempty" yaml:"client_ip,omitempty"`
+	ClientPort string `json:"client_port,omitempty" yaml:"client_port,omitempty"`
+	ServerIP   string `json:"server_ip,omitempty" yaml:"server_ip,omitempty"`
+	ServerPort string `json:"server_port,omitempty" yaml:"server_port,omitempty"`
+}
+
+type SessionData struct {
+	Success    bool                `json:"success" yaml:"success"`
+	ReqResps   *reqResps           `json:"req_resps" yaml:"req_resps"`
+	Address    *address            `json:"address,omitempty" yaml:"address,omitempty"` //TODO
+	Validators []*validationResult `json:"validators,omitempty" yaml:"validators,omitempty"`
+}
+
+func newSessionData() *SessionData {
+	reqResps := &reqResps{
+		Request: &Request{},
+	}
+	return &SessionData{
+		Success:  false,
+		ReqResps: reqResps,
+	}
 }
