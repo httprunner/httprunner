@@ -120,3 +120,11 @@ func TestInitRendezvous(t *testing.T) {
 		}
 	}
 }
+
+func TestGenHTMLReport(t *testing.T) {
+	summary := newOutSummary()
+	err := genHTMLReport(summary)
+	if err != nil {
+		t.Error(err)
+	}
+}
