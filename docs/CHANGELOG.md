@@ -1,9 +1,11 @@
 # Release History
 
-## v0.6.0 (2022-01-26)
+## v0.6.0 (2022-02-08)
 
 - feat: implement `rendezvous` mechanism for data driven
 - feat: upload release artifacts to aliyun oss
+- feat: dump tests summary for execution results
+- feat: generate html report for API testing
 - change: remove sentry sdk
 
 ## v0.5.3 (2022-01-25)

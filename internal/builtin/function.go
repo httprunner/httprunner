@@ -10,6 +10,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -128,4 +129,31 @@ func Dump2YAML(data interface{}, path string) error {
 		return err
 	}
 	return nil
+}
+
+func formatValue(raw interface{}) interface{} {
+	rawValue := reflect.ValueOf(raw)
+	switch rawValue.Kind() {
+	case reflect.Map:
+		m := make(map[string]interface{})
+		for key, value := range rawValue.Interface().(map[string]interface{}) {
+			b, _ := json.MarshalIndent(&value, "", "    ")
+			m[key] = string(b)
+		}
+		return m
+	case reflect.Slice:
+		b, _ := json.MarshalIndent(&raw, "", "    ")
+		return string(b)
+	default:
+		return raw
+	}
+}
+
+func FormatResponse(raw interface{}) interface{} {
+	formattedResponse := make(map[string]interface{})
+	for key, value := range raw.(map[string]interface{}) {
+		// convert value to json
+		formattedResponse[key] = formatValue(value)
+	}
+	return formattedResponse
 }

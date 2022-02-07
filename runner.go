@@ -1,10 +1,13 @@
 package hrp
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
+	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -30,6 +33,7 @@ import (
 
 const (
 	summaryPath string = "summary.json"
+	reportPath  string = "report.html"
 )
 
 // Run starts to run API test with default configs.
@@ -44,9 +48,10 @@ func NewRunner(t *testing.T) *HRPRunner {
 		t = &testing.T{}
 	}
 	return &HRPRunner{
-		t:        t,
-		failfast: true,  // default to failfast
-		debug:    false, // default to turn off debug
+		t:             t,
+		failfast:      true,  // default to failfast
+		debug:         false, // default to turn off debug
+		genHTMLReport: false,
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -57,11 +62,12 @@ func NewRunner(t *testing.T) *HRPRunner {
 }
 
 type HRPRunner struct {
-	t         *testing.T
-	failfast  bool
-	debug     bool
-	saveTests bool
-	client    *http.Client
+	t             *testing.T
+	failfast      bool
+	debug         bool
+	saveTests     bool
+	genHTMLReport bool
+	client        *http.Client
 }
 
 // SetFailfast configures whether to stop running when one step fails.
@@ -97,6 +103,13 @@ func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 func (r *HRPRunner) SetSaveTests(saveTests bool) *HRPRunner {
 	log.Info().Bool("saveTests", saveTests).Msg("[init] SetSaveTests")
 	r.saveTests = saveTests
+	return r
+}
+
+// GenHTMLReport configures whether to gen html report of api tests.
+func (r *HRPRunner) GenHTMLReport() *HRPRunner {
+	log.Info().Bool("genHTMLReport", true).Msg("[init] SetgenHTMLReport")
+	r.genHTMLReport = true
 	return r
 }
 
@@ -143,8 +156,16 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		}
 		s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
 		if r.saveTests {
-			err = builtin.Dump2JSON(s, summaryPath)
-			return err
+			err := builtin.Dump2JSON(s, summaryPath)
+			if err != nil {
+				return err
+			}
+		}
+		if r.genHTMLReport {
+			err := genHTMLReport(s)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -211,8 +232,17 @@ func (r *caseRunner) run() error {
 			}
 		}
 		if stepData != nil {
+			if err != nil {
+				stepData.Attachment = err.Error()
+			}
 			r.summary.Records = append(r.summary.Records, stepData)
 			r.summary.Success = r.summary.Success && stepData.Success
+			r.summary.Stat.Total += 1
+			if stepData.Success {
+				r.summary.Stat.Successes += 1
+			} else {
+				r.summary.Stat.Failures += 1
+			}
 		}
 	}
 
@@ -558,14 +588,16 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		ContentSize: 0,
 	}
 	sessionData := newSessionData()
-	if err = copier.Copy(&sessionData.ReqResps.Request, step.Request); err != nil {
-		log.Error().Err(err).Msg("copy step request data failed")
-		return
-	}
+
+	// convert request struct to map
+	jsonRequest, _ := json.Marshal(&step.Request)
+	var requestMap map[string]interface{}
+	_ = json.Unmarshal(jsonRequest, &requestMap)
+
 	rawUrl := step.Request.URL
 	method := step.Request.Method
 	req := &http.Request{
-		Method:     string(method),
+		Method:     method,
 		Header:     make(http.Header),
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
@@ -596,7 +628,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 			return stepResult, errors.Wrap(err, "parse data failed")
 		}
 		parsedParams := params.(map[string]interface{})
-		sessionData.ReqResps.Request.Params = parsedParams
+		requestMap["params"] = parsedParams
 		if len(parsedParams) > 0 {
 			queryParams = make(url.Values)
 			for k, v := range parsedParams {
@@ -628,7 +660,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		if err != nil {
 			return stepResult, err
 		}
-		sessionData.ReqResps.Request.Body = data
+		requestMap["body"] = data
 		var dataBytes []byte
 		switch vv := data.(type) {
 		case map[string]interface{}:
@@ -660,10 +692,11 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		setBodyBytes(req, dataBytes)
 	}
 	// update header
-	sessionData.ReqResps.Request.Headers = make(map[string]string)
+	headers := make(map[string]string)
 	for key, value := range req.Header {
-		sessionData.ReqResps.Request.Headers[key] = value[0]
+		headers[key] = value[0]
 	}
+	requestMap["headers"] = headers
 
 	// prepare url
 	u, err := url.Parse(rawUrl)
@@ -709,7 +742,8 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
 	}
-	sessionData.ReqResps.Response = respObj.respObjMeta
+	sessionData.ReqResps.Request = requestMap
+	sessionData.ReqResps.Response = builtin.FormatResponse(respObj.respObjMeta)
 
 	// extract variables from response
 	extractors := step.Extract
@@ -787,6 +821,7 @@ func (r *caseRunner) parseConfig(cfg *TConfig) error {
 func newSummary() *testCaseSummary {
 	return &testCaseSummary{
 		Success: true,
+		Stat:    &testStepStat{},
 		Time:    &testCaseTime{},
 		InOut:   &testCaseInOut{},
 	}
@@ -808,4 +843,25 @@ func (r *caseRunner) getSummary() *testCaseSummary {
 func setBodyBytes(req *http.Request, data []byte) {
 	req.Body = ioutil.NopCloser(bytes.NewReader(data))
 	req.ContentLength = int64(len(data))
+}
+
+//go:embed internal/report/template.html
+var reportTemplate string
+
+func genHTMLReport(summary *Summary) error {
+	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0666)
+	defer file.Close()
+	if err != nil {
+		log.Error().Err(err).Msg("open file failed")
+		return err
+	}
+	writer := bufio.NewWriter(file)
+	tmpl := template.Must(template.New("report").Parse(reportTemplate))
+	err = tmpl.Execute(writer, summary)
+	if err != nil {
+		log.Error().Err(err).Msg("execute applies a parsed template to the specified data object failed")
+		return err
+	}
+	err = writer.Flush()
+	return err
 }
