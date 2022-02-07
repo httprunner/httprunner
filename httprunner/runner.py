@@ -456,7 +456,7 @@ class HttpRunner(object):
             step_datas=self.__step_datas,
         )
 
-    def test_start(self, param: Dict = None) -> "HttpRunner":
+    def test_start(self, fixtures: Dict = None, param: Dict = None) -> "HttpRunner":
         """main entrance, discovered by pytest"""
         self.__init_tests__()
         self.__project_meta = self.__project_meta or load_project_meta(
@@ -469,12 +469,11 @@ class HttpRunner(object):
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
         # parse config name
-        config_variables = self.__config.variables
-        if param:
-            config_variables.update(param)
-        config_variables.update(self.__session_variables)
+        self.__config.variables.update(self.__session_variables)
+        self.__config.variables.update(param or {})
+        self.__config.variables.update(fixtures or {})
         self.__config.name = parse_data(
-            self.__config.name, config_variables, self.__project_meta.functions
+            self.__config.name, self.__config.variables, self.__project_meta.functions
         )
 
         logger.info(

@@ -523,13 +523,33 @@ def make_pytest_marks(config: Dict) -> (Text, Text):
     # https://docs.pytest.org/en/6.2.x/mark.html
     # https://docs.pytest.org/en/6.2.x/reference.html
     result = ""
-    default_test_start = "    def test_start(self): \n        super().test_start()\n"
-    parameters_test_start = "    def test_start(self, param): \n        super().test_start(param)\n"
+    default_test_start = (
+        "    def test_start(self):    \n"
+        "        super().test_start() \n"
+    )
+    fixtures_test_start = (
+        "    def test_start(self, {fixture_str}):                         \n"
+        "        scope, fixtures = locals(), {fixture_list}               \n"
+        "        values = map(lambda x: scope.get(x), fixtures)           \n"
+        "        super().test_start(fixtures=dict(zip(fixtures, values))) \n"
+    )
+    parameters_test_start = (
+        "    def test_start(self, param):        \n"
+        "        super().test_start(param=param) \n"
+    )
+    both_test_start = (
+        "    def test_start(self, {fixture_str}, param):                                 \n"
+        "        scope, fixtures = locals(), {fixture_list}                              \n"
+        "        values = map(lambda x: scope.get(x), fixtures)                          \n"
+        "        super().test_start(fixtures=dict(zip({fixtures}, values)), param=param) \n"
+    )
 
     # marks
     # keep yaml load order, refer:
     # https://stackoverflow.com/a/47881325
     # https://mail.python.org/pipermail/python-dev/2016-September/146327.html
+    fixture_list = []
+    fixtures_exist = False
     parameters_exist = False
     for key, param in config.items():
 
@@ -547,7 +567,8 @@ def make_pytest_marks(config: Dict) -> (Text, Text):
         elif key == "usefixtures":
             errmsg = f"usefixtures type should be List[str], got ({type(param)}, {param})"
             assert isinstance(param, list), errmsg
-            result += f"    @pytest.mark.usefixtures(*{param})\n"
+            fixture_list.extend(param)
+            fixtures_exist = True
 
         elif key == "custom_marks":
             errmsg = f"custom_marks type should be List[str], got ({type(param)}, {param})"
@@ -597,7 +618,17 @@ def make_pytest_marks(config: Dict) -> (Text, Text):
         return result
 
     # test_start
-    if parameters_exist:
+    if parameters_exist and fixtures_exist:
+        result += both_test_start.format(
+            fixture_str=", ".join(fixture_list),
+            fixture_list=fixture_list
+        )
+    elif fixtures_exist:
+        result += fixtures_test_start.format(
+            fixture_str=", ".join(fixture_list),
+            fixture_list=fixture_list
+        )
+    elif parameters_exist:
         result += parameters_test_start
     else:
         result += default_test_start
