@@ -273,10 +273,6 @@
                                         {{- range $k, $v := $value}}
                                         <pre>{{$k}}: {{$v}}</pre>
                                         {{- end -}}
-                                        {{- else if eq $key "body" }}
-                                        {{- range $k, $v := $value }}
-                                        <pre>{{$k}}: {{$v}}</pre>
-                                        {{- end -}}
                                         {{- else if eq $key "cookies" }}
                                         {{- range $k, $v := $value }}
                                         <pre>{{$k}}: {{$v}}</pre>
