@@ -23,7 +23,7 @@ See [CHANGELOG].
 - [x] Data driven with `parameterize` mechanism, supporting sequential/random/unique strategies to select data.
 - [ ] Built-in 100+ commonly used functions for ease, including md5sum, max/min, sleep, gen_random_string etc.
 - [x] Create and call custom functions with `plugin` mechanism, support [hashicorp plugin] and [go plugin].
-- [ ] Generate html reports with rich test results.
+- [x] Generate html reports with rich test results.
 - [x] Using it as a `CLI tool` or a `library` are both supported.
 
 ### Load Testing

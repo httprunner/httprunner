@@ -241,8 +241,8 @@ type platform struct {
 	Platform          string `json:"platform" yaml:"platform"`
 }
 
-// summary stores tests summary for current task execution, maybe include one or multiple testcases
-type summary struct {
+// Summary stores tests summary for current task execution, maybe include one or multiple testcases
+type Summary struct {
 	Success  bool               `json:"success" yaml:"success"`
 	Stat     *stat              `json:"stat" yaml:"stat"`
 	Time     *testCaseTime      `json:"time" yaml:"time"`
@@ -250,13 +250,13 @@ type summary struct {
 	Details  []*testCaseSummary `json:"details" yaml:"details"`
 }
 
-func newOutSummary() *summary {
+func newOutSummary() *Summary {
 	platForm := &platform{
 		HttprunnerVersion: version.VERSION,
 		GoVersion:         runtime.Version(),
 		Platform:          fmt.Sprintf("%v-%v", runtime.GOOS, runtime.GOARCH),
 	}
-	return &summary{
+	return &Summary{
 		Success: true,
 		Stat:    &stat{},
 		Time: &testCaseTime{
@@ -266,7 +266,7 @@ func newOutSummary() *summary {
 	}
 }
 
-func (s *summary) appendCaseSummary(caseSummary *testCaseSummary) {
+func (s *Summary) appendCaseSummary(caseSummary *testCaseSummary) {
 	s.Success = s.Success && caseSummary.Success
 	s.Stat.TestCases.Total += 1
 	s.Stat.TestSteps.Total += len(caseSummary.Records)
@@ -290,6 +290,7 @@ type stepData struct {
 	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`               // session data or slice of step data
 	ContentSize int64                  `json:"content_size" yaml:"content_size"`                   // response body length
 	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"` // extract variables
+	Attachment  string                 `json:"attachment,omitempty" yaml:"attachment,omitempty"`   // step error information
 }
 
 type testCaseInOut struct {
@@ -302,6 +303,7 @@ type testCaseSummary struct {
 	Name    string         `json:"name" yaml:"name"`
 	Success bool           `json:"success" yaml:"success"`
 	CaseId  string         `json:"case_id,omitempty" yaml:"case_id,omitempty"` //TODO
+	Stat    *testStepStat  `json:"stat" yaml:"stat"`
 	Time    *testCaseTime  `json:"time" yaml:"time"`
 	InOut   *testCaseInOut `json:"in_out" yaml:"in_out"`
 	Log     string         `json:"log,omitempty" yaml:"log,omitempty"` //TODO
@@ -315,7 +317,7 @@ type validationResult struct {
 }
 
 type reqResps struct {
-	Request  *Request    `json:"request" yaml:"request"`
+	Request  interface{} `json:"request" yaml:"request"`
 	Response interface{} `json:"response" yaml:"response"`
 }
 
@@ -334,11 +336,8 @@ type SessionData struct {
 }
 
 func newSessionData() *SessionData {
-	reqResps := &reqResps{
-		Request: &Request{},
-	}
 	return &SessionData{
 		Success:  false,
-		ReqResps: reqResps,
+		ReqResps: &reqResps{},
 	}
 }

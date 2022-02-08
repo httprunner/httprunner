@@ -129,3 +129,16 @@ func Dump2YAML(data interface{}, path string) error {
 	}
 	return nil
 }
+
+func FormatResponse(raw interface{}) interface{} {
+	formattedResponse := make(map[string]interface{})
+	for key, value := range raw.(map[string]interface{}) {
+		// convert value to json
+		if key == "body" {
+			b, _ := json.MarshalIndent(&value, "", "    ")
+			value = string(b)
+		}
+		formattedResponse[key] = value
+	}
+	return formattedResponse
+}
