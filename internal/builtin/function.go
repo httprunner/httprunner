@@ -137,8 +137,12 @@ func formatValue(raw interface{}) interface{} {
 	case reflect.Map:
 		m := make(map[string]interface{})
 		for key, value := range rawValue.Interface().(map[string]interface{}) {
-			b, _ := json.MarshalIndent(&value, "", "    ")
-			m[key] = string(b)
+			fmtValue, ok := value.(string)
+			if !ok {
+				b, _ := json.MarshalIndent(&value, "", "    ")
+				fmtValue = string(b)
+			}
+			m[key] = fmtValue
 		}
 		return m
 	case reflect.Slice:
