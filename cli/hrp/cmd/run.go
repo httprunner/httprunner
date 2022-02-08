@@ -29,6 +29,9 @@ var runCmd = &cobra.Command{
 			SetDebug(!silentFlag).
 			SetFailfast(!continueOnFailure).
 			SetSaveTests(saveTests)
+		if genHTMLReport {
+			runner.GenHTMLReport()
+		}
 		if proxyUrl != "" {
 			runner.SetProxyUrl(proxyUrl)
 		}
@@ -44,6 +47,7 @@ var (
 	silentFlag        bool
 	proxyUrl          string
 	saveTests         bool
+	genHTMLReport     bool
 )
 
 func init() {
@@ -52,5 +56,5 @@ func init() {
 	runCmd.Flags().BoolVarP(&silentFlag, "silent", "s", false, "disable logging request & response details")
 	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
 	runCmd.Flags().BoolVar(&saveTests, "save-tests", false, "save tests summary")
-	// runCmd.Flags().BoolP("gen-html-report", "r", false, "Generate HTML report")
+	runCmd.Flags().BoolVarP(&genHTMLReport, "gen-html-report", "r", false, "generate html report")
 }
