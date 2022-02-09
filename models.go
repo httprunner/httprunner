@@ -272,12 +272,11 @@ func (s *Summary) appendCaseSummary(caseSummary *testCaseSummary) {
 	s.Stat.TestSteps.Total += len(caseSummary.Records)
 	if caseSummary.Success {
 		s.Stat.TestCases.Success += 1
-		s.Stat.TestSteps.Successes += len(caseSummary.Records)
 	} else {
 		s.Stat.TestCases.Fail += 1
-		s.Stat.TestSteps.Successes += len(caseSummary.Records) - 1
-		s.Stat.TestSteps.Failures += 1
 	}
+	s.Stat.TestSteps.Successes += caseSummary.Stat.Successes
+	s.Stat.TestSteps.Failures += caseSummary.Stat.Failures
 	s.Details = append(s.Details, caseSummary)
 	s.Success = s.Success && caseSummary.Success
 }
