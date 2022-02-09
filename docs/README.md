@@ -13,6 +13,8 @@
 
 *HttpRunner* is a simple & elegant, yet powerful HTTP(S) testing framework. Enjoy! ✨ 🚀 ✨
 
+> 欢迎参加 HttpRunner [用户调研问卷][survey]，你的反馈将帮助 HttpRunner 更好地成长！
+
 ## Design Philosophy
 
 - Convention over configuration
@@ -56,6 +58,8 @@ HttpRunner is in Sentry Sponsored plan.
 
 <img src="assets/qrcode.jpg" alt="HttpRunner" width="200">
 
+如果你期望加入 HttpRunner 核心用户群，请填写[用户调研问卷][survey]并留下你的联系方式，作者将拉你进群。
+
 [requests]: http://docs.python-requests.org/en/master/
 [pytest]: https://docs.pytest.org/
 [pydantic]: https://pydantic-docs.helpmanual.io/
@@ -63,5 +67,4 @@ HttpRunner is in Sentry Sponsored plan.
 [jmespath]: https://jmespath.org/
 [allure]: https://docs.qameta.io/allure/
 [HAR]: http://httparchive.org/
-
-
+[survey]: https://wenjuan.feishu.cn/m?t=sVRvigY12Szi-gbbo
