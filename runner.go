@@ -678,7 +678,9 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 				if err != nil {
 					return stepResult, err
 				}
-				req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+				if req.Header.Get("Content-Type") == "" {
+					req.Header.Set("Content-Type", "application/json; charset=utf-8")
+				}
 			}
 		case string:
 			dataBytes = []byte(vv)
