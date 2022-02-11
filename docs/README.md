@@ -67,4 +67,4 @@ HttpRunner is in Sentry Sponsored plan.
 [jmespath]: https://jmespath.org/
 [allure]: https://docs.qameta.io/allure/
 [HAR]: http://httparchive.org/
-[survey]: https://wenjuan.feishu.cn/m?t=sVRvigY12Szi-gbbo
+[survey]: https://wj.qq.com/s2/9699514/0d19/
