@@ -123,6 +123,19 @@ func TestInitRendezvous(t *testing.T) {
 
 func TestGenHTMLReport(t *testing.T) {
 	summary := newOutSummary()
+	caseSummary1 := newSummary()
+	caseSummary2 := newSummary()
+	stepResult1 := &stepData{}
+	stepResult2 := &stepData{
+		Name:        "Test",
+		StepType:    stepTypeRequest,
+		Success:     false,
+		ContentSize: 0,
+		Attachment:  "err",
+	}
+	caseSummary1.Records = []*stepData{stepResult1, stepResult2, nil}
+	summary.appendCaseSummary(caseSummary1)
+	summary.appendCaseSummary(caseSummary2)
 	err := genHTMLReport(summary)
 	if err != nil {
 		t.Error(err)

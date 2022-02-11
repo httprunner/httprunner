@@ -235,6 +235,7 @@
                     <a class="close" href="#record_{{$suite_index}}_{{$loop_index}}">&times;</a>
                     <div class="content">
                         <h3>Name: {{ .Name }}</h3>
+                        {{- if .Data}}
                         <h3>Request:</h3>
                         <div style="overflow: auto">
                             <table>
@@ -332,8 +333,8 @@
                                     </tr>
                                 </table>
                             </div>
-
                         </div>
+                        {{- end }}
                     </div>
                 </div>
             </div>
