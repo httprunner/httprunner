@@ -1,0 +1,32 @@
+{
+    "config": {
+        "name": "request methods testcase: validate with parameters",
+        "base_url": "https://httpbingo.bytedance.net"
+    },
+    "teststeps": [
+        {
+            "name": "get with params",
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "params": {
+                    "a": 1
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "greater_than",
+                    "expect": 199,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "body.args.a",
+                    "assert": "equal",
+                    "expect": "1",
+                    "msg": "check argument a"
+                }
+            ]
+        }
+    ]
+}
