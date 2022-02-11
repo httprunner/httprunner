@@ -225,23 +225,25 @@ func (r *caseRunner) run() error {
 
 	r.startTime = time.Now()
 	for index := range r.TestCase.TestSteps {
-		stepData, err := r.runStep(index, config)
-		if err != nil {
-			if r.hrpRunner.failfast {
-				return errors.Wrap(err, "abort running due to failfast setting")
+		stepDataObj, err := r.runStep(index, config)
+		if stepDataObj == nil {
+			stepDataObj = &stepData{
+				Name:    r.TestCase.TestSteps[index].Name(),
+				Success: false,
 			}
 		}
-		if stepData != nil {
-			if err != nil {
-				stepData.Attachment = err.Error()
-			}
-			r.summary.Records = append(r.summary.Records, stepData)
-			r.summary.Success = r.summary.Success && stepData.Success
-			r.summary.Stat.Total += 1
-			if stepData.Success {
-				r.summary.Stat.Successes += 1
-			} else {
-				r.summary.Stat.Failures += 1
+		r.summary.Records = append(r.summary.Records, stepDataObj)
+		r.summary.Success = r.summary.Success && stepDataObj.Success
+		r.summary.Stat.Total += 1
+		if stepDataObj.Success {
+			r.summary.Stat.Successes += 1
+		} else {
+			r.summary.Stat.Failures += 1
+		}
+		if err != nil {
+			stepDataObj.Attachment = err.Error()
+			if r.hrpRunner.failfast {
+				return errors.Wrap(err, "abort running due to failfast setting")
 			}
 		}
 	}
@@ -602,6 +604,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
 		ProtoMinor: 1,
+		Close:      true, // prevent the connection from being re-used
 	}
 
 	// prepare request headers
