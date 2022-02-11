@@ -9,6 +9,9 @@
 `hrp` aims to be a one-stop solution for HTTP(S) testing, covering API testing, load testing and digital experience monitoring (DEM).
 
 See [CHANGELOG].
+
+> 欢迎参加 HttpRunner [用户调研问卷][survey]，你的反馈将帮助 HttpRunner 更好地成长！
+
 ## Key Features
 
 ![flow chart](docs/assets/flow.jpg)
@@ -296,6 +299,8 @@ func TestCaseDemo(t *testing.T) {
 
 <img src="docs/assets/qrcode.jpg" alt="HttpRunner" width="200">
 
+如果你期望加入 HttpRunner 核心用户群，请填写[用户调研问卷][survey]并留下你的联系方式，作者将拉你进群。
+
 [HttpRunner]: https://github.com/httprunner/httprunner
 [boomer]: https://github.com/myzhan/boomer
 [locust]: https://github.com/locustio/locust
@@ -308,3 +313,4 @@ func TestCaseDemo(t *testing.T) {
 [examples]: https://github.com/httprunner/hrp/blob/main/examples/
 [CHANGELOG]: docs/CHANGELOG.md
 [pushgateway]: https://github.com/prometheus/pushgateway
+[survey]: https://wenjuan.feishu.cn/m?t=sVRvigY12Szi-gbbo
