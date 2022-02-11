@@ -11,10 +11,10 @@ import (
 var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual interface{}, msgAndArgs ...interface{}) bool{
 	"equals":            assert.EqualValues,
 	"equal":             assert.EqualValues, // alias for equals
-	"greater_than":      assert.Greater,
-	"less_than":         assert.Less,
-	"greater_or_equals": assert.GreaterOrEqual,
-	"less_or_equals":    assert.LessOrEqual,
+	"greater_than":      assert.Less,
+	"less_than":         assert.Greater,
+	"greater_or_equals": assert.LessOrEqual,
+	"less_or_equals":    assert.GreaterOrEqual,
 	"not_equal":         assert.NotEqual,
 	"contained_by":      assert.Contains,
 	"regex_match":       assert.Regexp,
