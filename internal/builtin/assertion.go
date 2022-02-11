@@ -8,31 +8,48 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var Assertions = map[string]func(t assert.TestingT, expected interface{}, actual interface{}, msgAndArgs ...interface{}) bool{
+var Assertions = map[string]func(t assert.TestingT, actual interface{}, expected interface{}, msgAndArgs ...interface{}) bool{
+	"eq":                assert.EqualValues,
 	"equals":            assert.EqualValues,
-	"equal":             assert.EqualValues, // alias for equals
-	"greater_than":      assert.Less,
-	"less_than":         assert.Greater,
-	"greater_or_equals": assert.LessOrEqual,
-	"less_or_equals":    assert.GreaterOrEqual,
+	"equal":             assert.EqualValues,
+	"lt":                assert.Less,
+	"less_than":         assert.Less,
+	"le":                assert.LessOrEqual,
+	"less_or_equals":    assert.LessOrEqual,
+	"gt":                assert.Greater,
+	"greater_than":      assert.Greater,
+	"ge":                assert.GreaterOrEqual,
+	"greater_or_equals": assert.GreaterOrEqual,
+	"ne":                assert.NotEqual,
 	"not_equal":         assert.NotEqual,
-	"contained_by":      assert.Contains,
-	"regex_match":       assert.Regexp,
+	"contains":          assert.Contains,
 	"type_match":        assert.IsType,
 	// custom assertions
-	"startswith":               StartsWith, // check if string starts with substring
-	"endswith":                 EndsWith,   // check if string ends with substring
+	"starts_with":              StartsWith,
+	"ends_with":                EndsWith,
+	"len_eq":                   EqualLength,
 	"length_equals":            EqualLength,
-	"length_equal":             EqualLength, // alias for length_equals
+	"length_equal":             EqualLength,
+	"len_lt":                   LessThanLength,
+	"count_lt":                 LessThanLength,
 	"length_less_than":         LessThanLength,
+	"len_le":                   LessOrEqualsLength,
+	"count_le":                 LessOrEqualsLength,
 	"length_less_or_equals":    LessOrEqualsLength,
+	"len_gt":                   GreaterThanLength,
+	"count_gt":                 GreaterThanLength,
 	"length_greater_than":      GreaterThanLength,
+	"len_ge":                   GreaterOrEqualsLength,
+	"count_ge":                 GreaterOrEqualsLength,
 	"length_greater_or_equals": GreaterOrEqualsLength,
-	"contains":                 Contains,
-	"string_equals":            EqualString,
+	"contained_by":             ContainedBy,
+	"str_eq":                   StringEqual,
+	"string_equals":            StringEqual,
+	"regex_match":              RegexMatch,
 }
 
-func StartsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+// StartsWith check if string starts with substring
+func StartsWith(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	if !assert.IsType(t, "string", actual, fmt.Sprintf("actual is %v", actual)) {
 		return false
 	}
@@ -44,7 +61,8 @@ func StartsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...i
 	return assert.True(t, strings.HasPrefix(actualString, expectedString), msgAndArgs...)
 }
 
-func EndsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+// EndsWith check if string ends with substring
+func EndsWith(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	if !assert.IsType(t, "string", actual, fmt.Sprintf("actual is %v", actual)) {
 		return false
 	}
@@ -56,7 +74,7 @@ func EndsWith(t assert.TestingT, expected, actual interface{}, msgAndArgs ...int
 	return assert.True(t, strings.HasSuffix(actualString, expectedString), msgAndArgs...)
 }
 
-func EqualLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func EqualLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
@@ -65,7 +83,7 @@ func EqualLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...
 	return assert.Len(t, actual, length, msgAndArgs...)
 }
 
-func GreaterThanLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func GreaterThanLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
@@ -80,7 +98,7 @@ func GreaterThanLength(t assert.TestingT, expected, actual interface{}, msgAndAr
 	return true
 }
 
-func GreaterOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func GreaterOrEqualsLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
@@ -95,7 +113,7 @@ func GreaterOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgA
 	return true
 }
 
-func LessThanLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func LessThanLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
@@ -110,7 +128,7 @@ func LessThanLength(t assert.TestingT, expected, actual interface{}, msgAndArgs 
 	return true
 }
 
-func LessOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func LessOrEqualsLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
@@ -123,6 +141,27 @@ func LessOrEqualsLength(t assert.TestingT, expected, actual interface{}, msgAndA
 		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
 	}
 	return true
+}
+
+// ContainedBy assert whether actual element contains expected element
+func ContainedBy(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
+	return assert.Contains(t, expected, actual, msgAndArgs)
+}
+
+func StringEqual(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
+	if !assert.IsType(t, "string", actual, msgAndArgs) {
+		return false
+	}
+	if !assert.IsType(t, "string", expected, msgAndArgs) {
+		return false
+	}
+	actualString := actual.(string)
+	expectedString := expected.(string)
+	return assert.True(t, strings.EqualFold(actualString, expectedString), msgAndArgs)
+}
+
+func RegexMatch(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
+	return assert.Regexp(t, expected, actual, msgAndArgs)
 }
 
 func convertInt(value interface{}) (int, error) {
@@ -150,23 +189,6 @@ func convertInt(value interface{}) (int, error) {
 	default:
 		return 0, fmt.Errorf("unsupported int convertion for %v(%T)", v, v)
 	}
-}
-
-// Contains assert whether actual element contains expected element
-func Contains(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
-	return assert.Contains(t, actual, expected, msgAndArgs)
-}
-
-func EqualString(t assert.TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
-	if !assert.IsType(t, "string", actual, msgAndArgs) {
-		return false
-	}
-	if !assert.IsType(t, "string", expected, msgAndArgs) {
-		return false
-	}
-	actualString := actual.(string)
-	expectedString := expected.(string)
-	return assert.True(t, strings.EqualFold(actualString, expectedString), msgAndArgs)
 }
 
 // getLen try to get length of object.
