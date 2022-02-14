@@ -313,4 +313,4 @@ func TestCaseDemo(t *testing.T) {
 [examples]: https://github.com/httprunner/hrp/blob/main/examples/
 [CHANGELOG]: docs/CHANGELOG.md
 [pushgateway]: https://github.com/prometheus/pushgateway
-[survey]: https://wenjuan.feishu.cn/m?t=sVRvigY12Szi-gbbo
+[survey]: https://wj.qq.com/s2/9699514/0d19/
