@@ -6,16 +6,12 @@ HttpRunner+ validation should follow the following format. `check`, `assert` and
 
 ```json
 {
-    "check": "status_code",
-    // target field, usually used with jmespath
-    "assert": "equals",
-    // assertion method, you can use builtin method or custom defined function
-    "expect": 200,
-    // expected value
-    "msg": "check response status code"
-    // optional, print this message if assertion failed
+    "check": "status_code", // target field, usually used with jmespath
+    "assert": "equals", // assertion method, you can use builtin method or custom defined function
+    "expect": 200, // expected value
+    "msg": "check response status code" // optional, print this message if assertion failed
 }
-```
+```g
 
 The `assert` method name will be mapped to a built-in function with the following function signature.
 
