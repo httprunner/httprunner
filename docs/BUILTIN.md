@@ -11,7 +11,7 @@ HttpRunner+ validation should follow the following format. `check`, `assert` and
     "expect": 200, // expected value
     "msg": "check response status code" // optional, print this message if assertion failed
 }
-```g
+```
 
 The `assert` method name will be mapped to a built-in function with the following function signature.
 
