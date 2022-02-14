@@ -58,12 +58,9 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 				WithHeaders(map[string]string{"User-Agent": "$agent"}).
 				Extract().
 				WithJmesPath("status_code", "statusCode").
-				WithJmesPath("headers.\"Content-Type\"", "contentType").
 				WithJmesPath("body.args.foo1", "varFoo1").
 				Validate().
 				AssertEqual("$statusCode", 200, "check status code").
-				AssertEqual("headers.Connection", "keep-alive", "check header Connection").
-				AssertEqual("$contentType", "application/json; charset=utf-8", "check header Content-Type").
 				AssertEqual("$varFoo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
 				AssertEqual("body.headers.\"user-agent\"", "HttpRunnerPlus", "check header user agent"),
