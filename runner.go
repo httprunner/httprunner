@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,8 +33,8 @@ import (
 )
 
 const (
-	summaryPath string = "summary.json"
-	reportPath  string = "report.html"
+	summaryPath string = "reports/summary-%v.json"
+	reportPath  string = "reports/report-%v.html"
 )
 
 // Run starts to run API test with default configs.
@@ -123,7 +124,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	go ga.SendEvent(event)
 	// report execution timing event
 	defer ga.SendEvent(event.StartTiming("execution"))
-
+	// record execution data to summary
+	s := newOutSummary()
 	for _, iTestCase := range testcases {
 		testcase, err := iTestCase.ToTestCase()
 		if err != nil {
@@ -137,7 +139,6 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
 			return err
 		}
-		s := newOutSummary()
 		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
 		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
 			// iterate through all parameter iterators and update case variables
@@ -147,25 +148,32 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 				}
 			}
 			caseRunnerObj := r.newCaseRunner(testcase)
-			if err := caseRunnerObj.run(); err != nil {
+			if err = caseRunnerObj.run(); err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				return err
 			}
 			caseSummary := caseRunnerObj.getSummary()
 			s.appendCaseSummary(caseSummary)
 		}
-		s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
-		if r.saveTests {
-			err := builtin.Dump2JSON(s, summaryPath)
-			if err != nil {
-				return err
-			}
+	}
+	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
+	// save summary
+	if r.saveTests {
+		dir, _ := filepath.Split(summaryPath)
+		err := builtin.EnsureFolderExists(dir)
+		if err != nil {
+			return err
 		}
-		if r.genHTMLReport {
-			err := genHTMLReport(s)
-			if err != nil {
-				return err
-			}
+		err = builtin.Dump2JSON(s, fmt.Sprintf(summaryPath, s.Time.StartAt.Unix()))
+		if err != nil {
+			return err
+		}
+	}
+	// generate HTML report
+	if r.genHTMLReport {
+		err := s.genHTMLReport()
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -232,14 +240,28 @@ func (r *caseRunner) run() error {
 				Success: false,
 			}
 		}
-		r.summary.Records = append(r.summary.Records, stepDataObj)
-		r.summary.Success = r.summary.Success && stepDataObj.Success
-		r.summary.Stat.Total += 1
-		if stepDataObj.Success {
-			r.summary.Stat.Successes += 1
-		} else {
-			r.summary.Stat.Failures += 1
+		if stepDataObj.StepType == stepTypeTestCase {
+			// merge test case if the step is test case
+			summary, ok := stepDataObj.Data.(*testCaseSummary)
+			if ok {
+				for _, rc := range summary.Records {
+					r.summary.Records = append(r.summary.Records, rc)
+				}
+				r.summary.Stat.Total += summary.Stat.Total
+				r.summary.Stat.Successes += summary.Stat.Successes
+				r.summary.Stat.Failures += summary.Stat.Failures
+			}
+		} else if stepDataObj.StepType == stepTypeRequest {
+			// only record that the test step is the request step
+			r.summary.Records = append(r.summary.Records, stepDataObj)
+			r.summary.Stat.Total += 1
+			if stepDataObj.Success {
+				r.summary.Stat.Successes += 1
+			} else {
+				r.summary.Stat.Failures += 1
+			}
 		}
+		r.summary.Success = r.summary.Success && stepDataObj.Success
 		if err != nil {
 			stepDataObj.Attachment = err.Error()
 			if r.hrpRunner.failfast {
@@ -853,8 +875,13 @@ func setBodyBytes(req *http.Request, data []byte) {
 //go:embed internal/report/template.html
 var reportTemplate string
 
-func genHTMLReport(summary *Summary) error {
-	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0666)
+func (s *Summary) genHTMLReport() error {
+	dir, _ := filepath.Split(reportPath)
+	err := builtin.EnsureFolderExists(dir)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(fmt.Sprintf(reportPath, s.Time.StartAt.Unix()), os.O_WRONLY|os.O_CREATE, 0666)
 	defer file.Close()
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
@@ -862,7 +889,7 @@ func genHTMLReport(summary *Summary) error {
 	}
 	writer := bufio.NewWriter(file)
 	tmpl := template.Must(template.New("report").Parse(reportTemplate))
-	err = tmpl.Execute(writer, summary)
+	err = tmpl.Execute(writer, s)
 	if err != nil {
 		log.Error().Err(err).Msg("execute applies a parsed template to the specified data object failed")
 		return err

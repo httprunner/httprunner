@@ -22,7 +22,6 @@ func TestCaseConfigVariables(t *testing.T) {
 				WithHeaders(map[string]string{"User-Agent": "$agent"}).
 				Validate().
 				AssertEqual("status_code", "$expectedStatusCode", "check status code").
-				AssertEqual("headers.Connection", "keep-alive", "check header Connection").
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
@@ -53,7 +52,6 @@ func TestCaseStepVariables(t *testing.T) {
 				WithHeaders(map[string]string{"User-Agent": "$agent"}).
 				Validate().
 				AssertEqual("status_code", "$expectedStatusCode", "check status code").
-				AssertEqual("headers.Connection", "keep-alive", "check header Connection").
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
@@ -88,7 +86,6 @@ func TestCaseOverrideConfigVariables(t *testing.T) {
 				WithHeaders(map[string]string{"User-Agent": "$agent"}).
 				Validate().
 				AssertEqual("status_code", "$expectedStatusCode", "check status code").
-				AssertEqual("headers.Connection", "keep-alive", "check header Connection").
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").

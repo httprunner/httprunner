@@ -6,9 +6,12 @@ import (
 	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math"
 	"math/rand"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -141,4 +144,71 @@ func FormatResponse(raw interface{}) interface{} {
 		formattedResponse[key] = value
 	}
 	return formattedResponse
+}
+
+func ExecCommand(cmd *exec.Cmd, cwd string) error {
+	log.Info().Str("cmd", cmd.String()).Str("cwd", cwd).Msg("exec command")
+	cmd.Dir = cwd
+	output, err := cmd.CombinedOutput()
+	out := strings.TrimSpace(string(output))
+	if err != nil {
+		log.Error().Err(err).Str("output", out).Msg("exec command failed")
+	} else if len(out) != 0 {
+		log.Info().Str("output", out).Msg("exec command success")
+	}
+	return err
+}
+
+func CreateFolder(folderPath string) error {
+	log.Info().Str("path", folderPath).Msg("create folder")
+	err := os.MkdirAll(folderPath, os.ModePerm)
+	if err != nil {
+		log.Error().Err(err).Msg("create folder failed")
+		return err
+	}
+	return nil
+}
+
+func CreateFile(filePath string, data string) error {
+	log.Info().Str("path", filePath).Msg("create file")
+	err := ioutil.WriteFile(filePath, []byte(data), 0o644)
+	if err != nil {
+		log.Error().Err(err).Msg("create file failed")
+		return err
+	}
+	return nil
+}
+
+// isFilePathExists returns true if path exists, whether path is file or dir
+func isPathExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+// isFilePathExists returns true if path exists and path is file
+func isFilePathExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		// path not exists
+		return false
+	}
+
+	// path exists
+	if info.IsDir() {
+		// path is dir, not file
+		return false
+	}
+	return true
+}
+
+func EnsureFolderExists(folderPath string) error {
+	if !isPathExists(folderPath) {
+		err := CreateFolder(folderPath)
+		return err
+	} else if isFilePathExists(folderPath) {
+		return fmt.Errorf("path %v should be directory", folderPath)
+	}
+	return nil
 }
