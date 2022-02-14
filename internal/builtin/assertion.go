@@ -186,6 +186,10 @@ func convertInt(value interface{}) (int, error) {
 		return int(v), nil
 	case uint64:
 		return int(v), nil
+	case float32:
+		return int(v), nil
+	case float64:
+		return int(v), nil
 	default:
 		return 0, fmt.Errorf("unsupported int convertion for %v(%T)", v, v)
 	}
