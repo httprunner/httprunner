@@ -25,7 +25,6 @@ func TestCaseValidateStep(t *testing.T) {
 				WithJmesPath("body.args.foo1", "varFoo1").
 				Validate().
 				AssertEqual("status_code", "$expectedStatusCode", "check status code").                                  // assert status code
-				AssertEqual("headers.Connection", "keep-alive", "check header Connection").                              // assert response header
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type"). // assert response header, with double quotes
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").                                                // assert response json body with jmespath
 				AssertEqual("body.args.foo2", "bar2", "check args foo2").
