@@ -48,7 +48,7 @@
                 },
                 {
                     "check": "headers.\"Content-Type\"",
-                    "assert": "startswith",
+                    "assert": "starts_with",
                     "expect": "application/json"
                 },
                 {

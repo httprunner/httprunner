@@ -10,21 +10,70 @@
                 "method": "GET",
                 "url": "/get",
                 "params": {
-                    "a": 1
+                    "a": 1,
+                    "foo": "I'm a happy guy"
                 }
             },
             "validate": [
                 {
+                    "check": "body.args.a",
+                    "assert": "eq",
+                    "expect": "1",
+                    "msg": "check argument a"
+                },
+                {
                     "check": "status_code",
-                    "assert": "greater_than",
+                    "assert": "lt",
+                    "expect": 201,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "status_code",
+                    "assert": "gt",
                     "expect": 199,
                     "msg": "check status code"
                 },
                 {
-                    "check": "body.args.a",
-                    "assert": "equal",
-                    "expect": "1",
-                    "msg": "check argument a"
+                    "check": "status_code",
+                    "assert": "ge",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "status_code",
+                    "assert": "le",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "status_code",
+                    "assert": "ne",
+                    "expect": 199,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "body.args.foo",
+                    "assert": "contains",
+                    "expect": "happy",
+                    "msg": "check status code"
+                },
+                {
+                    "check": "body.args.foo",
+                    "assert": "type_match",
+                    "expect": "string",
+                    "msg": "check status code"
+                },
+                {
+                    "check": "body.args.foo",
+                    "assert": "starts_with",
+                    "expect": "I'm",
+                    "msg": "check status code"
+                },
+                {
+                    "check": "body.args.foo",
+                    "assert": "type_match",
+                    "expect": "string",
+                    "msg": "check status code"
                 }
             ]
         }

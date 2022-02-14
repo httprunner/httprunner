@@ -42,9 +42,9 @@ Currently, HttpRunner+ has the following built-in assertion functions.
 | `contains` | contains | [1, 2] contains 1 | 'abc' contains 'a', [1,2,3] len_lt 4 |
 | `contained_by` | contained by | A in B | 'a' contained_by 'abc', 1 contained_by [1,2] |
 | `type_match` | A and B are in the same type | type(A) == type(B) | 123 type_match 1 |
-| `regex_match` | regex matches | re.match(B, A) | 'abcdef' regex 'a\w+d' |
-| `starts_with` | starts with | A.startswith(B) is True | 'abc' startswith 'ab' |
-| `ends_with` | ends with | A.endswith(B) is True | 'abc' endswith 'bc' |
+| `regex_match` | regex matches | re.match(B, A) | 'abcdef' regex_match 'a\w+d' |
+| `starts_with` | starts with | A.starts_with(B) is True | 'abc' starts_with 'ab' |
+| `ends_with` | ends with | A.ends_with(B) is True | 'abc' ends_with 'bc' |
 
 ## Builtin functions
 
