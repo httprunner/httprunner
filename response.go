@@ -115,7 +115,10 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 
 		// get assert method
 		assertMethod := validator.Assert
-		assertFunc := builtin.Assertions[assertMethod]
+		assertFunc, ok := builtin.Assertions[assertMethod]
+		if !ok {
+			return errors.New(fmt.Sprintf("unexpected assertMethod: %v", assertMethod))
+		}
 
 		// parse expected value
 		expectValue, err := v.parser.parseData(validator.Expect, variablesMapping)
@@ -134,7 +137,7 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		}
 
 		// do assertion
-		result := assertFunc(v.t, expectValue, checkValue)
+		result := assertFunc(v.t, checkValue, expectValue)
 		if result {
 			validResult.CheckResult = "pass"
 		}
@@ -148,10 +151,10 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		if !result {
 			v.t.Fail()
 			return errors.New(fmt.Sprintf(
-				"do assertion failed, assertMethod: %v, expectValue: %v, checkValue: %v",
+				"do assertion failed, assertMethod: %v, checkValue: %v, expectValue: %v",
 				assertMethod,
-				expectValue,
 				checkValue,
+				expectValue,
 			))
 		}
 	}
