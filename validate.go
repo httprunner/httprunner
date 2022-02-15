@@ -126,7 +126,7 @@ func (s *StepRequestValidation) AssertRegexp(jmesPath string, expected interface
 func (s *StepRequestValidation) AssertStartsWith(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
 	v := Validator{
 		Check:   jmesPath,
-		Assert:  "starts_with",
+		Assert:  "startswith",
 		Expect:  expected,
 		Message: msg,
 	}
@@ -137,7 +137,7 @@ func (s *StepRequestValidation) AssertStartsWith(jmesPath string, expected inter
 func (s *StepRequestValidation) AssertEndsWith(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
 	v := Validator{
 		Check:   jmesPath,
-		Assert:  "ends_with",
+		Assert:  "endswith",
 		Expect:  expected,
 		Message: msg,
 	}

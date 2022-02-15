@@ -20,6 +20,7 @@ func TestCaseBasicRequest(t *testing.T) {
 				}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
+				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 				AssertEqual("body.args.foo1", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2"),
 			hrp.NewStep("post raw text").

@@ -33,7 +33,7 @@ teststeps:
           expect: 200
           msg: check response status code
         - check: headers."Content-Type"
-          assert: starts_with
+          assert: startswith
           expect: application/json
         - check: body.args.foo1
           assert: length_equals
