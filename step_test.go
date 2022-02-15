@@ -12,6 +12,7 @@ var (
 		WithCookies(map[string]string{"user": "debugtalk"}).
 		Validate().
 		AssertEqual("status_code", 200, "check status code").
+		AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 		AssertEqual("body.args.foo1", "bar1", "check param foo1").
 		AssertEqual("body.args.foo2", "bar2", "check param foo2")
 	stepPOSTData = NewStep("post form data").

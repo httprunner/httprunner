@@ -25,8 +25,8 @@ var Assertions = map[string]func(t assert.TestingT, actual interface{}, expected
 	"contains":          assert.Contains,
 	"type_match":        assert.IsType,
 	// custom assertions
-	"starts_with":              StartsWith,
-	"ends_with":                EndsWith,
+	"startswith":               StartsWith,
+	"endswith":                 EndsWith,
 	"len_eq":                   EqualLength,
 	"length_equals":            EqualLength,
 	"length_equal":             EqualLength,
