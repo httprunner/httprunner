@@ -1,5 +1,9 @@
 # Release History
 
+## v0.6.1 (2022-02-11)
+
+- fix: assertion function errors and json number parse rule
+
 ## v0.6.0 (2022-02-08)
 
 - feat: implement `rendezvous` mechanism for data driven
