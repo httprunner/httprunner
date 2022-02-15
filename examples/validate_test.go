@@ -39,10 +39,12 @@ func TestCaseValidateStep(t *testing.T) {
 				WithHeaders(map[string]string{"User-Agent": "$agent"}).
 				Extract().
 				WithJmesPath("status_code", "statusCode").
+				WithJmesPath("headers.\"Content-Type\"", "contentType").
 				Validate().
-				AssertEqual("$statusCode", 200, "check status code").     // assert with extracted variable from current step
-				AssertEqual("$varFoo1", "bar1", "check args foo1").       // assert with extracted variable from previous step
-				AssertEqual("body.args.foo2", "bar2", "check args foo2"), // assert response json body with jmespath
+				AssertEqual("$statusCode", 200, "check status code").                                        // assert with extracted variable from current step
+				AssertEqual("$contentType", "application/json; charset=utf-8", "check header Content-Type"). // assert with extracted variable from current step
+				AssertEqual("$varFoo1", "bar1", "check args foo1").                                          // assert with extracted variable from previous step
+				AssertEqual("body.args.foo2", "bar2", "check args foo2"),                                    // assert response json body with jmespath
 		},
 	}
 
