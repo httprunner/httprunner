@@ -1,8 +1,11 @@
 # Release History
 
-## v0.6.1 (2022-02-11)
+## v0.6.1 (2022-02-17)
 
-- fix: assertion function errors and json number parse rule
+- fix: set request Content-Type for posting json only when not specified
+- fix: failed to generate API test report when data is null
+- fix: panic when assertion function not exists
+- change: json unmarshal to float64 when parsing data
 - fix: broadcast to all rendezvous at once when spawn done
 
 ## v0.6.0 (2022-02-08)
