@@ -3,6 +3,7 @@
 ## v0.6.1 (2022-02-11)
 
 - fix: assertion function errors and json number parse rule
+- fix: broadcast to all rendezvous at once when spawn done
 
 ## v0.6.0 (2022-02-08)
 
