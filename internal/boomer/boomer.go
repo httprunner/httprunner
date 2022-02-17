@@ -128,8 +128,8 @@ func (b *Boomer) Quit() {
 	b.localRunner.stop()
 }
 
-func (b *Boomer) IsSpawnDone() bool {
-	return b.localRunner.isSpawnDone
+func (b *Boomer) GetSpawnDoneChan() chan struct{} {
+	return b.localRunner.spawnDone
 }
 
 func (b *Boomer) GetSpawnCount() int {
