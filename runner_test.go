@@ -42,7 +42,13 @@ func TestHttpRunner(t *testing.T) {
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
-			NewStep("TestCase3").CallRefCase(&TestCase{Config: NewConfig("TestCase3")}),
+			NewStep("TestCase3").CallRefCase(&TestCase{Config: NewConfig("TestCase3").SetBaseURL("http://httpbin.org"), TestSteps: []IStep{
+				NewStep("ip").
+					GET("/ip").
+					Validate().
+					AssertEqual("status_code", 200, "check status code").
+					AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
+			}}),
 		},
 	}
 	testcase2 := &TestCase{
@@ -50,7 +56,10 @@ func TestHttpRunner(t *testing.T) {
 	}
 	testcase3 := &TestCasePath{demoTestCaseJSONPath}
 
-	err := NewRunner(t).Run(testcase1, testcase2, testcase3)
+	r := NewRunner(t)
+	r.saveTests = true
+	r.genHTMLReport = true
+	err := r.Run(testcase1, testcase2, testcase3)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -136,7 +145,7 @@ func TestGenHTMLReport(t *testing.T) {
 	caseSummary1.Records = []*stepData{stepResult1, stepResult2, nil}
 	summary.appendCaseSummary(caseSummary1)
 	summary.appendCaseSummary(caseSummary2)
-	err := genHTMLReport(summary)
+	err := summary.genHTMLReport()
 	if err != nil {
 		t.Error(err)
 	}
