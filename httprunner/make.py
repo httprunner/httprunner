@@ -175,7 +175,7 @@ def format_pytest_with_black(*python_paths: Text) -> NoReturn:
             logger.warning(
                 f"this system does not support multiprocessing well, format files one by one ..."
             )
-            [subprocess.run(["black", path]) for path in python_paths]
+            [subprocess.run(["python", "-m", "black", path]) for path in python_paths]
     except subprocess.CalledProcessError as ex:
         capture_exception(ex)
         logger.error(ex)
