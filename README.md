@@ -10,7 +10,7 @@
 
 See [CHANGELOG].
 
-> 欢迎参加 HttpRunner [用户调研问卷][survey]，你的反馈将帮助 HttpRunner 更好地成长！
+> HttpRunner [用户调研问卷][survey] 持续收集中，我们将基于用户反馈动态调整产品特性和需求优先级。
 
 ## Key Features
 
