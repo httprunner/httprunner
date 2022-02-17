@@ -63,7 +63,7 @@ type runner struct {
 	spawnCount        int   // target clients to spawn
 	spawnRate         float64
 	loop              *Loop // specify running cycles
-	isSpawnDone       bool
+	spawnDone         chan struct{}
 
 	outputs []Output
 }
@@ -194,7 +194,7 @@ func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan 
 		}
 	}
 
-	r.isSpawnDone = true
+	close(r.spawnDone)
 	if spawnCompleteFunc != nil {
 		spawnCompleteFunc()
 	}
@@ -256,6 +256,7 @@ func newLocalRunner(spawnCount int, spawnRate float64) *localRunner {
 			spawnCount: spawnCount,
 			stats:      newRequestStats(),
 			outputs:    make([]Output, 0),
+			spawnDone:  make(chan struct{}),
 		},
 		stopChan: make(chan bool),
 	}
