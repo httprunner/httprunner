@@ -26,7 +26,6 @@ type HRPBoomer struct {
 	plugins      []common.Plugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex   // avoid data race
 	debug        bool
-	once         sync.Once
 }
 
 // SetDebug configures whether to log HTTP request and response content.
