@@ -3,6 +3,7 @@
 ## v0.6.2 (2022-02-18)
 
 - fix: omit pseudo header names for HTTP/1, e.g. :authority
+- fix: generate `headers.\"Content-Type\"` in har2case
 
 ## v0.6.1 (2022-02-17)
 
