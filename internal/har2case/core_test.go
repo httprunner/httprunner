@@ -101,7 +101,7 @@ func TestMakeTestCase(t *testing.T) {
 	if !assert.Equal(t, "status_code", tCase.TestSteps[0].Validators[0].Check) {
 		t.Fail()
 	}
-	if !assert.Equal(t, "headers.Content-Type", tCase.TestSteps[0].Validators[1].Check) {
+	if !assert.Equal(t, "headers.\"Content-Type\"", tCase.TestSteps[0].Validators[1].Check) {
 		t.Fail()
 	}
 	if !assert.Equal(t, "body.url", tCase.TestSteps[0].Validators[2].Check) {
