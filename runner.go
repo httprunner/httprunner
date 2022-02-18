@@ -628,6 +628,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		ProtoMinor: 1,
 		Close:      true, // prevent the connection from being re-used
 	}
+	var contentType string
 
 	// prepare request headers
 	if len(step.Request.Headers) > 0 {
@@ -636,12 +637,19 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 			return stepResult, errors.Wrap(err, "parse headers failed")
 		}
 		for key, value := range headers {
+			// omit pseudo header names for HTTP/1, e.g. :authority, :method, :path, :scheme
+			if strings.HasPrefix(key, ":") {
+				continue
+			}
 			req.Header.Add(key, value)
-		}
-	}
-	if length := req.Header.Get("Content-Length"); length != "" {
-		if l, err := strconv.ParseInt(length, 10, 64); err == nil {
-			req.ContentLength = l
+
+			// prepare content length
+			if strings.EqualFold(key, "Content-Length") && value != "" {
+				contentType = value
+				if l, err := strconv.ParseInt(value, 10, 64); err == nil {
+					req.ContentLength = l
+				}
+			}
 		}
 	}
 
@@ -689,7 +697,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		var dataBytes []byte
 		switch vv := data.(type) {
 		case map[string]interface{}:
-			contentType := req.Header.Get("Content-Type")
 			if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
 				// post form data
 				formData := make(url.Values)
@@ -703,7 +710,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 				if err != nil {
 					return stepResult, err
 				}
-				if req.Header.Get("Content-Type") == "" {
+				if contentType == "" {
 					req.Header.Set("Content-Type", "application/json; charset=utf-8")
 				}
 			}

@@ -1,5 +1,9 @@
 # Release History
 
+## v0.6.2 (2022-02-18)
+
+- fix: omit pseudo header names for HTTP/1, e.g. :authority
+
 ## v0.6.1 (2022-02-17)
 
 - fix: set request Content-Type for posting json only when not specified
