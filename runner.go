@@ -628,7 +628,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		ProtoMinor: 1,
 		Close:      true, // prevent the connection from being re-used
 	}
-	var contentType string
 
 	// prepare request headers
 	if len(step.Request.Headers) > 0 {
@@ -645,7 +644,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 			// prepare content length
 			if strings.EqualFold(key, "Content-Length") && value != "" {
-				contentType = value
 				if l, err := strconv.ParseInt(value, 10, 64); err == nil {
 					req.ContentLength = l
 				}
@@ -697,6 +695,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		var dataBytes []byte
 		switch vv := data.(type) {
 		case map[string]interface{}:
+			contentType := req.Header.Get("Content-Type")
 			if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
 				// post form data
 				formData := make(url.Values)
