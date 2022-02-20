@@ -148,7 +148,7 @@
             ]
         },
         {
-            "name": "final check",
+            "name": "get with timestamp",
             "request": {
                 "method": "GET",
                 "url": "/get",
