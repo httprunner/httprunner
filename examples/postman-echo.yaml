@@ -23,7 +23,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -53,7 +53,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -91,7 +91,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -125,7 +125,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -163,7 +163,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -201,7 +201,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -237,7 +237,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -263,7 +263,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -295,7 +295,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -323,7 +323,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -351,7 +351,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -379,7 +379,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -413,7 +413,7 @@ teststeps:
           assert: equals
           expect: 302
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: text/plain; charset=utf-8
           msg: assert response header Content-Type
@@ -439,7 +439,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -464,7 +464,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -492,7 +492,7 @@ teststeps:
           assert: equals
           expect: 302
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: text/plain; charset=utf-8
           msg: assert response header Content-Type
@@ -516,7 +516,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -539,7 +539,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -585,7 +585,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -612,7 +612,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: text/html; charset=utf-8
           msg: assert response header Content-Type
@@ -635,7 +635,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -666,7 +666,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -697,7 +697,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -724,7 +724,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: text/html; charset=utf-8
           msg: assert response header Content-Type
@@ -749,7 +749,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -779,7 +779,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -809,7 +809,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -839,7 +839,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -869,7 +869,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -899,7 +899,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -928,7 +928,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -982,7 +982,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -1012,7 +1012,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -1043,7 +1043,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type
@@ -1072,7 +1072,7 @@ teststeps:
           assert: equals
           expect: 200
           msg: assert response status code
-        - check: headers.Content-Type
+        - check: headers."Content-Type"
           assert: equals
           expect: application/json; charset=utf-8
           msg: assert response header Content-Type

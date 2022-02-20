@@ -267,7 +267,7 @@ func (s *tStep) makeValidate(entry *Entry) error {
 		// assert Content-Type
 		if strings.EqualFold(header.Name, "Content-Type") {
 			s.Validators = append(s.Validators, hrp.Validator{
-				Check:   "headers.Content-Type",
+				Check:   "headers.\"Content-Type\"",
 				Assert:  "equals",
 				Expect:  header.Value,
 				Message: "assert response header Content-Type",
