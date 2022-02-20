@@ -80,6 +80,9 @@ teststeps:
         body:
             foo1: $varFoo1
             foo2: ${max($a, $b)}
+            time: ${get_timestamp()}
+      extract:
+        varTime: body.form.time
       validate:
         - check: status_code
           assert: equals
@@ -93,3 +96,14 @@ teststeps:
           assert: equals
           expect: "12.3"
           msg: check args foo2
+    - name: final check
+      request:
+        method: GET
+        url: /get
+        params:
+            time: $varTime
+      validate:
+        - check: body.args.time
+          assert: length_equals
+          expect: 13
+          msg: check extracted var timestamp

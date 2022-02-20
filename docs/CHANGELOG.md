@@ -1,5 +1,9 @@
 # Release History
 
+## v0.6.2 (2022-02-20)
+- change: json unmarshal to json.Number when parsing data
+- fix: incorrect data type when extracting data using jmespath
+
 ## v0.6.1 (2022-02-17)
 
 - fix: set request Content-Type for posting json only when not specified
