@@ -1,6 +1,8 @@
 # Release History
 
 ## v0.6.2 (2022-02-20)
+- fix: omit pseudo header names for HTTP/1, e.g. :authority
+- fix: generate `headers.\"Content-Type\"` in har2case
 - change: json unmarshal to json.Number when parsing data
 - fix: incorrect data type when extracting data using jmespath
 
