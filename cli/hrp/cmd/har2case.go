@@ -23,7 +23,6 @@ var har2caseCmd = &cobra.Command{
                         if !genYAMLFlag && !genJSONFlag {
 			        return errors.New("please select to-json flag or to-yaml flag.")
 			}
-			
 			var outputPath string
 			var err error
 
@@ -33,7 +32,6 @@ var har2caseCmd = &cobra.Command{
 			if outputDir != "" {
 				har.SetOutputDir(outputDir)
 			}
-			
 			// generate json/yaml files
 			if genYAMLFlag {
 				outputPath, err = har.GenYAML()
@@ -58,7 +56,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(har2caseCmd)
-	har2caseCmd.Flags().BoolVarP(&genJSONFlag, "to-json", "j", true, "convert to JSON format (default)")
+	har2caseCmd.Flags().BoolVarP(&genJSONFlag, "to-json", "j", true, "convert to JSON format")
 	har2caseCmd.Flags().BoolVarP(&genYAMLFlag, "to-yaml", "y", false, "convert to YAML format")
 	har2caseCmd.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory, default to the same dir with har file")
 }
