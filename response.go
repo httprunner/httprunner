@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -53,7 +54,9 @@ func newResponseObject(t *testing.T, parser *parser, resp *http.Response) (*resp
 	// convert respObjMeta to interface{}
 	respObjMetaBytes, _ := json.Marshal(respObjMeta)
 	var data interface{}
-	if err := json.Unmarshal(respObjMetaBytes, &data); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(respObjMetaBytes))
+	decoder.UseNumber()
+	if err := decoder.Decode(&data); err != nil {
 		log.Error().
 			Str("respObjMeta", string(respObjMetaBytes)).
 			Err(err).
@@ -166,6 +169,13 @@ func (v *responseObject) searchJmespath(expr string) interface{} {
 	if err != nil {
 		log.Error().Str("expr", expr).Err(err).Msg("search jmespath failed")
 		return expr // jmespath not found, return the expression
+	}
+	if number, ok := checkValue.(json.Number); ok {
+		checkNumber, err := parseJSONNumber(number)
+		if err != nil {
+			log.Error().Interface("json number", number).Err(err).Msg("convert json number failed")
+		}
+		return checkNumber
 	}
 	return checkValue
 }
