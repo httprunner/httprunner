@@ -743,13 +743,8 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	req.Host = u.Host
 
 	// log & print request
-	if r.hrpRunner.debug {
-		reqDump, err := httputil.DumpRequest(req, true)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "dump request failed")
-		}
-		fmt.Println("-------------------- request --------------------")
-		fmt.Println(string(reqDump))
+	if err := r.printRequest(req); err != nil {
+		return stepResult, err
 	}
 
 	// do request action
@@ -768,14 +763,8 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 
 	// log & print response
-	if r.hrpRunner.debug {
-		fmt.Println("==================== response ===================")
-		respDump, err := httputil.DumpResponse(resp, true)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "dump response failed")
-		}
-		fmt.Println(string(respDump))
-		fmt.Println("--------------------------------------------------")
+	if err := r.printResponse(resp); err != nil {
+		return stepResult, err
 	}
 
 	// new response object
@@ -805,6 +794,63 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
 	return stepResult, err
+}
+
+func (r *caseRunner) printRequest(req *http.Request) error {
+	if !r.hrpRunner.debug {
+		return nil
+	}
+	reqContentType := req.Header.Get("Content-Type")
+	printBody := shouldPrintBody(reqContentType)
+	reqDump, err := httputil.DumpRequest(req, printBody)
+	if err != nil {
+		return errors.Wrap(err, "dump request failed")
+	}
+	fmt.Println("-------------------- request --------------------")
+	reqContent := string(reqDump)
+	if req.Body != nil && !printBody {
+		reqContent += fmt.Sprintf("(request body omitted for Content-Type: %v)", reqContentType)
+	}
+	fmt.Println(reqContent)
+	return nil
+}
+
+func (r *caseRunner) printResponse(resp *http.Response) error {
+	if !r.hrpRunner.debug {
+		return nil
+	}
+	fmt.Println("==================== response ===================")
+	respContentType := resp.Header.Get("Content-Type")
+	printBody := shouldPrintBody(respContentType)
+	respDump, err := httputil.DumpResponse(resp, printBody)
+	if err != nil {
+		return errors.Wrap(err, "dump response failed")
+	}
+	respContent := string(respDump)
+	if !printBody {
+		respContent += fmt.Sprintf("(response body omitted for Content-Type: %v)", respContentType)
+	}
+	fmt.Println(respContent)
+	fmt.Println("--------------------------------------------------")
+	return nil
+}
+
+// shouldPrintBody return true if the Content-Type is printable
+// including text/*, application/json, application/xml, application/www-form-urlencoded
+func shouldPrintBody(contentType string) bool {
+	if strings.HasPrefix(contentType, "text/") {
+		return true
+	}
+	if strings.HasPrefix(contentType, "application/json") {
+		return true
+	}
+	if strings.HasPrefix(contentType, "application/xml") {
+		return true
+	}
+	if strings.HasPrefix(contentType, "application/www-form-urlencoded") {
+		return true
+	}
+	return false
 }
 
 func decodeResponseBody(resp *http.Response) error {

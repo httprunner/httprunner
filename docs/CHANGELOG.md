@@ -7,6 +7,7 @@
 - change: json unmarshal to json.Number when parsing data
 - fix: incorrect data type when extracting data using jmespath
 - fix: decode response body in br/gzip/deflate formats
+- fix: omit print request/response body for non-text content
 
 ## v0.6.1 (2022-02-17)
 
