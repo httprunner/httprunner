@@ -69,8 +69,7 @@ func (p *parser) parseData(raw interface{}, variablesMapping map[string]interfac
 	case reflect.String:
 		// json.Number
 		if rawValue, ok := raw.(json.Number); ok {
-			// use the same rule as json.Unmarshal (float64, for JSON numbers)
-			return rawValue.Float64()
+			return parseJSONNumber(rawValue)
 		}
 		// other string
 		value := rawValue.String()
@@ -106,6 +105,16 @@ func (p *parser) parseData(raw interface{}, variablesMapping map[string]interfac
 	default:
 		// other types, e.g. nil, int, float, bool
 		return raw, nil
+	}
+}
+
+func parseJSONNumber(raw json.Number) (interface{}, error) {
+	if strings.Contains(raw.String(), ".") {
+		// float64
+		return raw.Float64()
+	} else {
+		// int64
+		return raw.Int64()
 	}
 }
 
