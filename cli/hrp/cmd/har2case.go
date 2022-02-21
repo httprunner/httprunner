@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -20,8 +21,8 @@ var har2caseCmd = &cobra.Command{
 		var outputFiles []string
 		for _, arg := range args {
 			// must choose one
-                        if !genYAMLFlag && !genJSONFlag {
-			        return errors.New("please select to-json flag or to-yaml flag.")
+			if !genYAMLFlag && !genJSONFlag {
+				return errors.New("please select to-json flag or to-yaml flag.")
 			}
 			var outputPath string
 			var err error
