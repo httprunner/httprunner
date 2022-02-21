@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/google/brotli/go/cbrotli v0.0.0-20220110100810-f4153a09f87c
 	github.com/google/uuid v1.3.0
 	github.com/httprunner/hrp/plugin v0.0.0
 	github.com/jinzhu/copier v0.3.2
