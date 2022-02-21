@@ -3,6 +3,8 @@ package hrp
 import (
 	"bufio"
 	"bytes"
+	"compress/flate"
+	"compress/gzip"
 	"crypto/tls"
 	_ "embed"
 	"encoding/json"
@@ -23,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/brotli/go/cbrotli"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -758,6 +761,12 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 	defer resp.Body.Close()
 
+	// decode response body in br/gzip/deflate formats
+	err = decodeResponseBody(resp)
+	if err != nil {
+		return stepResult, errors.Wrap(err, "decode response body failed")
+	}
+
 	// log & print response
 	if r.hrpRunner.debug {
 		fmt.Println("==================== response ===================")
@@ -796,6 +805,22 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
 	return stepResult, err
+}
+
+func decodeResponseBody(resp *http.Response) error {
+	switch resp.Header.Get("Content-Encoding") {
+	case "br":
+		resp.Body = cbrotli.NewReader(resp.Body)
+	case "gzip":
+		gr, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return err
+		}
+		resp.Body = gr
+	case "deflate":
+		resp.Body = flate.NewReader(resp.Body)
+	}
+	return nil
 }
 
 func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err error) {
