@@ -97,7 +97,7 @@ func Dump2JSON(data interface{}, path string) error {
 		return err
 	}
 	log.Info().Str("path", path).Msg("dump data to json")
-	file, _ := json.MarshalIndent(data, "", "    ")
+	file, _ := json.MarshalIndent(data, "", "\t")
 	err = ioutil.WriteFile(path, file, 0644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump json path failed")
@@ -138,7 +138,7 @@ func FormatResponse(raw interface{}) interface{} {
 	for key, value := range raw.(map[string]interface{}) {
 		// convert value to json
 		if key == "body" {
-			b, _ := json.MarshalIndent(&value, "", "    ")
+			b, _ := json.MarshalIndent(&value, "", "\t")
 			value = string(b)
 		}
 		formattedResponse[key] = value
