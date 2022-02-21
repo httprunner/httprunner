@@ -817,6 +817,7 @@ func decodeResponseBody(resp *http.Response) error {
 			return err
 		}
 		resp.Body = gr
+		resp.ContentLength = -1 // set to unknown to avoid Content-Length mismatched
 	case "deflate":
 		resp.Body = flate.NewReader(resp.Body)
 	}
