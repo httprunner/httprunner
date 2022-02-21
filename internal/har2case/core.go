@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -98,7 +98,7 @@ func (h *har) load() (*Har, error) {
 		return nil, fmt.Errorf("open: %w", err)
 	}
 
-	data, err := ioutil.ReadAll(fp)
+	data, err := io.ReadAll(fp)
 	fp.Close()
 	if err != nil {
 		return nil, fmt.Errorf("read: %w", err)
