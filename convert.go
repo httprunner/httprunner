@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
@@ -19,7 +19,7 @@ func loadFromJSON(path string) (*TCase, error) {
 	}
 	log.Info().Str("path", path).Msg("load json testcase")
 
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("load json path failed")
 		return nil, err
@@ -40,7 +40,7 @@ func loadFromYAML(path string) (*TCase, error) {
 	}
 	log.Info().Str("path", path).Msg("load yaml testcase")
 
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("load yaml path failed")
 		return nil, err

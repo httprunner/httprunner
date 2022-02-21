@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -808,30 +807,10 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	return stepResult, err
 }
 
-// convert brotli.Reader to io.ReadCloser,
-// so that we can assign it to resp.Body
-type brotliReader struct {
-	r io.Reader
-}
-
-func (br *brotliReader) Read(p []byte) (n int, err error) {
-	return br.r.Read(p)
-}
-
-func (br *brotliReader) Close() (err error) {
-	return nil
-}
-
-func newBrotliReader(r io.Reader) io.ReadCloser {
-	b := &brotliReader{}
-	b.r = brotli.NewReader(r)
-	return b
-}
-
 func decodeResponseBody(resp *http.Response) error {
 	switch resp.Header.Get("Content-Encoding") {
 	case "br":
-		resp.Body = newBrotliReader(resp.Body)
+		resp.Body = io.NopCloser(brotli.NewReader(resp.Body))
 	case "gzip":
 		gr, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -920,7 +899,7 @@ func (r *caseRunner) getSummary() *testCaseSummary {
 }
 
 func setBodyBytes(req *http.Request, data []byte) {
-	req.Body = ioutil.NopCloser(bytes.NewReader(data))
+	req.Body = io.NopCloser(bytes.NewReader(data))
 	req.ContentLength = int64(len(data))
 }
 

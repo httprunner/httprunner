@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -68,7 +67,7 @@ func loadFromCSV(path string) []map[string]interface{} {
 	}
 	log.Info().Str("path", path).Msg("load csv file")
 
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("load csv file failed")
 		panic(err)
@@ -98,7 +97,7 @@ func Dump2JSON(data interface{}, path string) error {
 	}
 	log.Info().Str("path", path).Msg("dump data to json")
 	file, _ := json.MarshalIndent(data, "", "\t")
-	err = ioutil.WriteFile(path, file, 0644)
+	err = os.WriteFile(path, file, 0644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump json path failed")
 		return err
@@ -125,7 +124,7 @@ func Dump2YAML(data interface{}, path string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(path, buffer.Bytes(), 0644)
+	err = os.WriteFile(path, buffer.Bytes(), 0644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump yaml path failed")
 		return err
@@ -171,7 +170,7 @@ func CreateFolder(folderPath string) error {
 
 func CreateFile(filePath string, data string) error {
 	log.Info().Str("path", filePath).Msg("create file")
-	err := ioutil.WriteFile(filePath, []byte(data), 0o644)
+	err := os.WriteFile(filePath, []byte(data), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("create file failed")
 		return err
