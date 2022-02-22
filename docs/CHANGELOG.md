@@ -9,6 +9,7 @@
 - fix: incorrect data type when extracting data using jmespath
 - fix: decode response body in br/gzip/deflate formats
 - fix: omit print request/response body for non-text content
+- fix: parse data for request cookie value
 
 ## v0.6.1 (2022-02-17)
 
