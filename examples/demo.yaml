@@ -24,7 +24,12 @@ teststeps:
       variables:
         b: 34.5
         "n": 3
+        name: get with params
         varFoo2: ${max($a, $b)}
+      setup_hooks:
+        - ${setup_hook_example($name)}
+      teardown_hooks:
+        - ${teardown_hook_example($name)}
       extract:
         varFoo1: body.args.foo1
       validate:
