@@ -1,5 +1,9 @@
 # Release History
 
+## v0.6.3 (2022-02-22)
+
+- feat: support customized setup/teardown hooks (variable assignment not supported)
+
 ## v0.6.2 (2022-02-22)
 
 - feat: support text/html extraction with regex
