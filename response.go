@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -85,6 +86,18 @@ type responseObject struct {
 	validationResults []*validationResult
 }
 
+const textExtractorSubRegexp string = `(.*)`
+
+func (v *responseObject) extractField(value string) interface{} {
+	var result interface{}
+	if strings.Contains(value, textExtractorSubRegexp) {
+		result = v.searchRegexp(value)
+	} else {
+		result = v.searchJmespath(value)
+	}
+	return result
+}
+
 func (v *responseObject) Extract(extractors map[string]string) map[string]interface{} {
 	if extractors == nil {
 		return nil
@@ -92,7 +105,7 @@ func (v *responseObject) Extract(extractors map[string]string) map[string]interf
 
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
-		extractedValue := v.searchJmespath(value)
+		extractedValue := v.extractField(value)
 		log.Info().Str("from", value).Interface("value", extractedValue).Msg("extract value")
 		log.Info().Str("variable", key).Interface("value", extractedValue).Msg("set variable")
 		extractMapping[key] = extractedValue
@@ -113,7 +126,8 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 				return err
 			}
 		} else {
-			checkValue = v.searchJmespath(checkItem)
+			// regExp or jmesPath
+			checkValue = v.extractField(checkItem)
 		}
 
 		// get assert method
@@ -178,4 +192,28 @@ func (v *responseObject) searchJmespath(expr string) interface{} {
 		return checkNumber
 	}
 	return checkValue
+}
+
+func (v *responseObject) searchRegexp(expr string) interface{} {
+	respMap, ok := v.respObjMeta.(map[string]interface{})
+	if !ok {
+		log.Error().Interface("resp", v.respObjMeta).Msg("convert respObjMeta to map failed")
+		return expr
+	}
+	bodyStr, ok := respMap["body"].(string)
+	if !ok {
+		log.Error().Interface("resp", respMap).Msg("convert body to string failed")
+		return expr
+	}
+	regexpCompile, err := regexp.Compile(expr)
+	if err != nil {
+		log.Error().Str("expr", expr).Err(err).Msg("compile expr failed")
+		return expr
+	}
+	match := regexpCompile.FindStringSubmatch(bodyStr)
+	if match != nil || len(match) > 1 {
+		return match[1] //return first matched result in parentheses
+	}
+	log.Error().Str("expr", expr).Msg("search regexp failed")
+	return expr
 }
