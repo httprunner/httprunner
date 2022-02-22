@@ -682,9 +682,13 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 	// prepare request cookies
 	for cookieName, cookieValue := range step.Request.Cookies {
+		value, err := r.parser.parseData(cookieValue, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "parse cookie value failed")
+		}
 		req.AddCookie(&http.Cookie{
 			Name:  cookieName,
-			Value: cookieValue,
+			Value: fmt.Sprintf("%v", value),
 		})
 	}
 
