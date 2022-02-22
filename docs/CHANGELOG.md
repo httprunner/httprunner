@@ -3,20 +3,20 @@
 ## v0.6.2 (2022-02-22)
 
 - feat: support text/html extraction with regex
+- change: json unmarshal to json.Number when parsing data
 - fix: omit pseudo header names for HTTP/1, e.g. :authority
 - fix: generate `headers.\"Content-Type\"` in har2case
-- change: json unmarshal to json.Number when parsing data
 - fix: incorrect data type when extracting data using jmespath
-- fix: decode response body in br/gzip/deflate formats
+- fix: decode response body in brotli/gzip/deflate formats
 - fix: omit print request/response body for non-text content
 - fix: parse data for request cookie value
 
 ## v0.6.1 (2022-02-17)
 
+- change: json unmarshal to float64 when parsing data
 - fix: set request Content-Type for posting json only when not specified
 - fix: failed to generate API test report when data is null
 - fix: panic when assertion function not exists
-- change: json unmarshal to float64 when parsing data
 - fix: broadcast to all rendezvous at once when spawn done
 
 ## v0.6.0 (2022-02-08)
