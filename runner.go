@@ -616,14 +616,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 	sessionData := newSessionData()
 
-	// deal with setup hooks
-	for _, setupHook := range step.SetupHooks {
-		_, err = r.parser.parseData(setupHook, step.Variables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "run setup hooks failed")
-		}
-	}
-
 	// convert request struct to map
 	jsonRequest, _ := json.Marshal(&step.Request)
 	var requestMap map[string]interface{}
@@ -754,6 +746,18 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	req.URL = u
 	req.Host = u.Host
 
+	// add request object to step variables, could be used in setup hooks
+	step.Variables["hrp_step_name"] = step.Name
+	step.Variables["hrp_step_request"] = requestMap
+
+	// deal with setup hooks
+	for _, setupHook := range step.SetupHooks {
+		_, err = r.parser.parseData(setupHook, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "run setup hooks failed")
+		}
+	}
+
 	// log & print request
 	if err := r.printRequest(req); err != nil {
 		return stepResult, err
@@ -785,6 +789,18 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
 	}
+
+	// add response object to step variables, could be used in teardown hooks
+	step.Variables["hrp_step_response"] = respObj.respObjMeta
+
+	// deal with teardown hooks
+	for _, teardownHook := range step.TeardownHooks {
+		_, err = r.parser.parseData(teardownHook, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "run teardown hooks failed")
+		}
+	}
+
 	sessionData.ReqResps.Request = requestMap
 	sessionData.ReqResps.Response = builtin.FormatResponse(respObj.respObjMeta)
 
@@ -806,13 +822,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
 
-	// deal with teardown hooks
-	for _, teardownHook := range step.TeardownHooks {
-		_, err = r.parser.parseData(teardownHook, step.Variables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "run teardown hooks failed")
-		}
-	}
 	return stepResult, err
 }
 
