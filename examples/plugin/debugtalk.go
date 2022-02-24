@@ -55,3 +55,11 @@ func Concatenate(args ...interface{}) (interface{}, error) {
 	}
 	return result, nil
 }
+
+func SetupHookExample(args string) string {
+	return fmt.Sprintf("step name: %v, setup...", args)
+}
+
+func TeardownHookExample(args string) string {
+	return fmt.Sprintf("step name: %v, teardown...", args)
+}

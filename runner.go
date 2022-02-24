@@ -616,6 +616,14 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 	sessionData := newSessionData()
 
+	// deal with setup hooks
+	for _, setupHook := range step.SetupHooks {
+		_, err = r.parser.parseData(setupHook, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "run setup hooks failed")
+		}
+	}
+
 	// convert request struct to map
 	jsonRequest, _ := json.Marshal(&step.Request)
 	var requestMap map[string]interface{}
@@ -659,7 +667,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	if len(step.Request.Params) > 0 {
 		params, err := r.parser.parseData(step.Request.Params, step.Variables)
 		if err != nil {
-			return stepResult, errors.Wrap(err, "parse data failed")
+			return stepResult, errors.Wrap(err, "parse request params failed")
 		}
 		parsedParams := params.(map[string]interface{})
 		requestMap["params"] = parsedParams
@@ -682,9 +690,13 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 
 	// prepare request cookies
 	for cookieName, cookieValue := range step.Request.Cookies {
+		value, err := r.parser.parseData(cookieValue, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "parse cookie value failed")
+		}
 		req.AddCookie(&http.Cookie{
 			Name:  cookieName,
-			Value: cookieValue,
+			Value: fmt.Sprintf("%v", value),
 		})
 	}
 
@@ -803,6 +815,14 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
+
+	// deal with teardown hooks
+	for _, teardownHook := range step.TeardownHooks {
+		_, err = r.parser.parseData(teardownHook, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "run teardown hooks failed")
+		}
+	}
 	return stepResult, err
 }
 
