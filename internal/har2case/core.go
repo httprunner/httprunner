@@ -282,46 +282,53 @@ func (s *tStep) makeValidate(entry *Entry) error {
 		return nil
 	}
 	if strings.HasPrefix(respBody.MimeType, "application/json") {
+		var data []byte
+		var err error
 		// response body is json
 		if respBody.Encoding == "base64" {
 			// decode base64 text
-			data, err := base64.StdEncoding.DecodeString(respBody.Text)
+			data, err = base64.StdEncoding.DecodeString(respBody.Text)
 			if err != nil {
 				return errors.Wrap(err, "decode base64 error")
 			}
+		} else if respBody.Encoding == "" {
+			// no encoding
+			data = []byte(respBody.Text)
+		} else {
+			// other encoding type
+			return nil
+		}
+		// convert to json
+		var body interface{}
+		if err = json.Unmarshal(data, &body); err != nil {
+			return errors.Wrap(err, "json.Unmarshal body error")
+		}
+		jsonBody, ok := body.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("response body is not json, not matched with MimeType")
+		}
 
-			// convert to json
-			var body interface{}
-			if err = json.Unmarshal(data, &body); err != nil {
-				return errors.Wrap(err, "json.Unmarshal body error")
-			}
-			jsonBody, ok := body.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("response body is not json, not matched with MimeType")
-			}
-
-			// response body is json
-			keys := make([]string, 0, len(jsonBody))
-			for k := range jsonBody {
-				keys = append(keys, k)
-			}
-			// sort map keys to keep validators in stable order
-			sort.Strings(keys)
-			for _, key := range keys {
-				value := jsonBody[key]
-				switch v := value.(type) {
-				case map[string]interface{}:
-					continue
-				case []interface{}:
-					continue
-				default:
-					s.Validators = append(s.Validators, hrp.Validator{
-						Check:   fmt.Sprintf("body.%s", key),
-						Assert:  "equals",
-						Expect:  v,
-						Message: fmt.Sprintf("assert response body %s", key),
-					})
-				}
+		// response body is json
+		keys := make([]string, 0, len(jsonBody))
+		for k := range jsonBody {
+			keys = append(keys, k)
+		}
+		// sort map keys to keep validators in stable order
+		sort.Strings(keys)
+		for _, key := range keys {
+			value := jsonBody[key]
+			switch v := value.(type) {
+			case map[string]interface{}:
+				continue
+			case []interface{}:
+				continue
+			default:
+				s.Validators = append(s.Validators, hrp.Validator{
+					Check:   fmt.Sprintf("body.%s", key),
+					Assert:  "equals",
+					Expect:  v,
+					Message: fmt.Sprintf("assert response body %s", key),
+				})
 			}
 		}
 	}
