@@ -19,8 +19,11 @@ var demoTestCase = &hrp.TestCase{
 				"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
 				"b":       34.5,             // override config level variable if existed, n/b/varFoo2
 				"varFoo2": "${max($a, $b)}", // 34.5; override variable b and eval again
+				"name":    "get with params",
 			}).
+			SetupHook("${setup_hook_example($name)}").
 			GET("/get").
+			TeardownHook("${teardown_hook_example($name)}").
 			WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
 			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).             // request with headers
 			Extract().
@@ -99,10 +102,20 @@ func Sum(args ...interface{}) (interface{}, error) {
 	return sum, nil
 }
 
+func SetupHookExample(args string) string {
+	return fmt.Sprintf("step name: %v, setup...", args)
+}
+
+func TeardownHookExample(args string) string {
+	return fmt.Sprintf("step name: %v, teardown...", args)
+}
+
 func main() {
 	plugin.Register("sum_ints", SumInts)
 	plugin.Register("sum_two_int", SumTwoInt)
 	plugin.Register("sum", Sum)
+	plugin.Register("setup_hook_example", SetupHookExample)
+	plugin.Register("teardown_hook_example", TeardownHookExample)
 	plugin.Serve()
 }
 `
