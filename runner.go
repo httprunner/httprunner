@@ -716,6 +716,16 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 					req.Header.Set("Content-Type", "application/json; charset=utf-8")
 				}
 			}
+		case []interface{}:
+			contentType := req.Header.Get("Content-Type")
+			// post json
+			dataBytes, err = json.Marshal(vv)
+			if err != nil {
+				return stepResult, err
+			}
+			if contentType == "" {
+				req.Header.Set("Content-Type", "application/json; charset=utf-8")
+			}
 		case string:
 			dataBytes = []byte(vv)
 		case []byte:
