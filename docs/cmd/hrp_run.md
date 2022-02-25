@@ -24,10 +24,10 @@ hrp run $path... [flags]
   -c, --continue-on-failure   continue running next step when failure occurs
   -g, --gen-html-report       generate html report
   -h, --help                  help for run
-      --plugin-log            turn on plugin logging
+      --log-plugin            turn on plugin logging
+      --log-requests-off      turn off request & response details logging
   -p, --proxy-url string      set proxy url
-      --save-tests            save tests summary
-  -s, --silent                disable logging request & response details
+  -s, --save-tests            save tests summary
 ```
 
 ### SEE ALSO
