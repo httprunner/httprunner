@@ -1,7 +1,7 @@
 // +build linux freebsd darwin
 // go plugin doesn't support windows
 
-package common
+package pluginInternal
 
 import (
 	"fmt"
@@ -70,7 +70,7 @@ func TestCallPluginFunction(t *testing.T) {
 	buildGoPlugin()
 	defer removeGoPlugin()
 
-	plugin, err := Init("debugtalk.so")
+	plugin, err := Init("debugtalk.so", false)
 	if err != nil {
 		t.Fatal(err)
 	}
