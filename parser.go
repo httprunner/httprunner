@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
-	pluginInternal "github.com/httprunner/hrp/plugin/internal"
+	pluginInternal "github.com/httprunner/hrp/plugin/inner"
 )
 
 func newParser() *parser {
