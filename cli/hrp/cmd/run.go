@@ -52,7 +52,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().BoolVar(&continueOnFailure, "continue-on-failure", false, "continue running next step when failure occurs")
+	runCmd.Flags().BoolVarP(&continueOnFailure, "continue-on-failure", "c", false, "continue running next step when failure occurs")
 	runCmd.Flags().BoolVarP(&silentFlag, "silent", "s", false, "disable logging request & response details")
 	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
 	runCmd.Flags().BoolVar(&saveTests, "save-tests", false, "save tests summary")
