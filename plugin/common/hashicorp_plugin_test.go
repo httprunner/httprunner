@@ -28,7 +28,7 @@ func TestInitHashicorpPlugin(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
-	plugin, err := Init("../../examples/debugtalk.bin")
+	plugin, err := Init("../../examples/debugtalk.bin", false)
 	if err != nil {
 		t.Fatal(err)
 	}

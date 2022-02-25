@@ -16,7 +16,6 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	b := &HRPBoomer{
 		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		pluginsMutex: new(sync.RWMutex),
-		debug:        false,
 	}
 	return b
 }
@@ -25,13 +24,6 @@ type HRPBoomer struct {
 	*boomer.Boomer
 	plugins      []common.Plugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex   // avoid data race
-	debug        bool
-}
-
-// SetDebug configures whether to log HTTP request and response content.
-func (b *HRPBoomer) SetDebug(debug bool) *HRPBoomer {
-	b.debug = debug
-	return b
 }
 
 // Run starts to run load test for one or multiple testcases.
@@ -75,11 +67,11 @@ func (b *HRPBoomer) Quit() {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	hrpRunner := NewRunner(nil).SetDebug(b.debug)
+	hrpRunner := NewRunner(nil)
 	config := testcase.Config
 
 	// each testcase has its own plugin process
-	plugin, _ := initPlugin(config.Path)
+	plugin, _ := initPlugin(config.Path, false)
 	if plugin != nil {
 		b.pluginsMutex.Lock()
 		b.plugins = append(b.plugins, plugin)

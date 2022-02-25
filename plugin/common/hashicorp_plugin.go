@@ -1,25 +1,62 @@
 package common
 
 import (
-	pluginHost "github.com/httprunner/hrp/plugin/host"
+	"os"
+	"os/exec"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+	"github.com/httprunner/hrp/plugin/shared"
 	pluginShared "github.com/httprunner/hrp/plugin/shared"
 	"github.com/rs/zerolog/log"
 )
 
+var client *plugin.Client
+
 // HashicorpPlugin implements hashicorp/go-plugin
 type HashicorpPlugin struct {
+	logOn bool // turn on plugin log
 	pluginShared.FuncCaller
 	cachedFunctions map[string]bool // cache loaded functions to improve performance
 }
 
 func (p *HashicorpPlugin) Init(path string) error {
+	loggerOptions := &hclog.LoggerOptions{
+		Name:   shared.Name,
+		Output: os.Stdout,
+	}
+	if p.logOn {
+		loggerOptions.Level = hclog.Debug
+	} else {
+		loggerOptions.Level = hclog.Info
+	}
+	// launch the plugin process
+	client = plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: shared.HandshakeConfig,
+		Plugins: map[string]plugin.Plugin{
+			shared.Name: &shared.HashicorpPlugin{},
+		},
+		Cmd:    exec.Command(path),
+		Logger: hclog.New(loggerOptions),
+	})
 
-	f, err := pluginHost.Init(path)
+	// Connect via RPC
+	rpcClient, err := client.Client()
 	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("load go hashicorp plugin failed")
+		log.Error().Err(err).Msg("connect plugin via RPC failed")
 		return err
 	}
-	p.FuncCaller = f
+
+	// Request the plugin
+	raw, err := rpcClient.Dispense(shared.Name)
+	if err != nil {
+		log.Error().Err(err).Msg("request plugin failed")
+		return err
+	}
+
+	// We should have a Function now! This feels like a normal interface
+	// implementation but is in fact over an RPC connection.
+	p.FuncCaller = raw.(shared.FuncCaller)
 
 	p.cachedFunctions = make(map[string]bool)
 	log.Info().Str("path", path).Msg("load hashicorp go plugin success")
@@ -55,6 +92,6 @@ func (p *HashicorpPlugin) Call(funcName string, args ...interface{}) (interface{
 func (p *HashicorpPlugin) Quit() error {
 	// kill hashicorp plugin process
 	log.Info().Msg("quit hashicorp plugin process")
-	pluginHost.Quit()
+	client.Kill()
 	return nil
 }
