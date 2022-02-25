@@ -886,7 +886,7 @@ func shouldPrintBody(contentType string) bool {
 	if strings.HasPrefix(contentType, "application/xml") {
 		return true
 	}
-	if strings.HasPrefix(contentType, "application/www-form-urlencoded") {
+	if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
 		return true
 	}
 	return false
