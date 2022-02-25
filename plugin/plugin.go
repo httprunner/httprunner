@@ -8,8 +8,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 
-	"github.com/httprunner/hrp/plugin/common"
-	pluginShared "github.com/httprunner/hrp/plugin/shared"
+	pluginInternal "github.com/httprunner/hrp/plugin/internal"
 )
 
 // functionsMap stores plugin functions
@@ -37,7 +36,7 @@ func (p *functionPlugin) Call(funcName string, args ...interface{}) (interface{}
 		return nil, fmt.Errorf("function %s not found", funcName)
 	}
 
-	return common.CallFunc(fn, args...)
+	return pluginInternal.CallFunc(fn, args...)
 }
 
 var functions = make(functionsMap)
@@ -55,17 +54,17 @@ func Register(funcName string, fn interface{}) {
 func Serve() {
 	funcPlugin := &functionPlugin{
 		logger: hclog.New(&hclog.LoggerOptions{
-			Name:   pluginShared.Name,
+			Name:   pluginInternal.PluginName,
 			Output: os.Stdout,
 			Level:  hclog.Info,
 		}),
 		functions: functions,
 	}
 	var pluginMap = map[string]plugin.Plugin{
-		pluginShared.Name: &pluginShared.HashicorpPlugin{Impl: funcPlugin},
+		pluginInternal.PluginName: &pluginInternal.HRPPlugin{Impl: funcPlugin},
 	}
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: pluginShared.HandshakeConfig,
+		HandshakeConfig: pluginInternal.HandshakeConfig,
 		Plugins:         pluginMap,
 	})
 }

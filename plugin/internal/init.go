@@ -1,33 +1,24 @@
-package common
+package pluginInternal
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	pluginShared "github.com/httprunner/hrp/plugin/shared"
 )
 
 type pluginFile string
 
 const (
-	goPluginFile          pluginFile = pluginShared.Name + ".so"  // built from go plugin
-	hashicorpGoPluginFile pluginFile = pluginShared.Name + ".bin" // built from hashicorp go plugin
-	hashicorpPyPluginFile pluginFile = pluginShared.Name + ".py"
+	goPluginFile          pluginFile = PluginName + ".so"  // built from go plugin
+	hashicorpGoPluginFile pluginFile = PluginName + ".bin" // built from hashicorp go plugin
+	hashicorpPyPluginFile pluginFile = PluginName + ".py"
 )
 
-type Plugin interface {
-	Init(path string) error                                         // init plugin
-	Has(funcName string) bool                                       // check if plugin has function
-	Call(funcName string, args ...interface{}) (interface{}, error) // call function
-	Quit() error                                                    // quit plugin
-}
-
-func Init(path string, logOn bool) (Plugin, error) {
+func Init(path string, logOn bool) (IPlugin, error) {
 	if path == "" {
 		return nil, nil
 	}
-	var plugin Plugin
+	var plugin IPlugin
 
 	// priority: hashicorp plugin > go plugin
 	// locate hashicorp plugin file

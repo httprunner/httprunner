@@ -1,7 +1,7 @@
 // +build linux freebsd darwin
 // go plugin doesn't support windows
 
-package common
+package pluginInternal
 
 import (
 	"fmt"

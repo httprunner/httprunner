@@ -1,4 +1,4 @@
-package common
+package pluginInternal
 
 import (
 	"os"
@@ -6,8 +6,6 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/httprunner/hrp/plugin/shared"
-	pluginShared "github.com/httprunner/hrp/plugin/shared"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,13 +14,13 @@ var client *plugin.Client
 // HashicorpPlugin implements hashicorp/go-plugin
 type HashicorpPlugin struct {
 	logOn bool // turn on plugin log
-	pluginShared.FuncCaller
+	FuncCaller
 	cachedFunctions map[string]bool // cache loaded functions to improve performance
 }
 
 func (p *HashicorpPlugin) Init(path string) error {
 	loggerOptions := &hclog.LoggerOptions{
-		Name:   shared.Name,
+		Name:   PluginName,
 		Output: os.Stdout,
 	}
 	if p.logOn {
@@ -32,9 +30,9 @@ func (p *HashicorpPlugin) Init(path string) error {
 	}
 	// launch the plugin process
 	client = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: shared.HandshakeConfig,
+		HandshakeConfig: HandshakeConfig,
 		Plugins: map[string]plugin.Plugin{
-			shared.Name: &shared.HashicorpPlugin{},
+			PluginName: &HRPPlugin{},
 		},
 		Cmd:    exec.Command(path),
 		Logger: hclog.New(loggerOptions),
@@ -48,7 +46,7 @@ func (p *HashicorpPlugin) Init(path string) error {
 	}
 
 	// Request the plugin
-	raw, err := rpcClient.Dispense(shared.Name)
+	raw, err := rpcClient.Dispense(PluginName)
 	if err != nil {
 		log.Error().Err(err).Msg("request plugin failed")
 		return err
@@ -56,7 +54,7 @@ func (p *HashicorpPlugin) Init(path string) error {
 
 	// We should have a Function now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
-	p.FuncCaller = raw.(shared.FuncCaller)
+	p.FuncCaller = raw.(FuncCaller)
 
 	p.cachedFunctions = make(map[string]bool)
 	log.Info().Str("path", path).Msg("load hashicorp go plugin success")

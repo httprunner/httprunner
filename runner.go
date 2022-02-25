@@ -32,7 +32,7 @@ import (
 
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
-	"github.com/httprunner/hrp/plugin/common"
+	pluginInternal "github.com/httprunner/hrp/plugin/internal"
 )
 
 const (
@@ -282,8 +282,8 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func initPlugin(path string, logOn bool) (plugin common.Plugin, err error) {
-	plugin, err = common.Init(path, logOn)
+func initPlugin(path string, logOn bool) (plugin pluginInternal.IPlugin, err error) {
+	plugin, err = pluginInternal.Init(path, logOn)
 	if plugin == nil {
 		return
 	}
@@ -299,7 +299,7 @@ func initPlugin(path string, logOn bool) (plugin common.Plugin, err error) {
 
 	// report event for initializing plugin
 	var pluginType string
-	if _, ok := plugin.(*common.GoPlugin); ok {
+	if _, ok := plugin.(*pluginInternal.GoPlugin); ok {
 		pluginType = "go"
 	} else {
 		pluginType = "hashicorp"
