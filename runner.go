@@ -43,7 +43,7 @@ const (
 // Run starts to run API test with default configs.
 func Run(testcases ...ITestCase) error {
 	t := &testing.T{}
-	return NewRunner(t).SetDebug(true).Run(testcases...)
+	return NewRunner(t).SetRequestsLogOn().Run(testcases...)
 }
 
 // NewRunner constructs a new runner instance.
@@ -53,8 +53,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 	}
 	return &HRPRunner{
 		t:             t,
-		failfast:      true,  // default to failfast
-		debug:         false, // default to turn off debug
+		failfast:      true, // default to failfast
 		genHTMLReport: false,
 		client: &http.Client{
 			Transport: &http.Transport{
@@ -68,7 +67,8 @@ func NewRunner(t *testing.T) *HRPRunner {
 type HRPRunner struct {
 	t             *testing.T
 	failfast      bool
-	debug         bool
+	requestsLogOn bool
+	pluginLogOn   bool
 	saveTests     bool
 	genHTMLReport bool
 	client        *http.Client
@@ -81,10 +81,17 @@ func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 	return r
 }
 
-// SetDebug configures whether to log HTTP request and response content.
-func (r *HRPRunner) SetDebug(debug bool) *HRPRunner {
-	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
-	r.debug = debug
+// SetRequestsLogOn turns on request & response details logging.
+func (r *HRPRunner) SetRequestsLogOn() *HRPRunner {
+	log.Info().Msg("[init] SetRequestsLogOn")
+	r.requestsLogOn = true
+	return r
+}
+
+// SetPluginLogOn turns on plugin logging.
+func (r *HRPRunner) SetPluginLogOn() *HRPRunner {
+	log.Info().Msg("[init] SetPluginLogOn")
+	r.pluginLogOn = true
 	return r
 }
 
@@ -221,7 +228,7 @@ func (r *caseRunner) run() error {
 	config := r.TestCase.Config
 	// init plugin
 	var err error
-	if r.parser.plugin, err = initPlugin(config.Path); err != nil {
+	if r.parser.plugin, err = initPlugin(config.Path, r.hrpRunner.pluginLogOn); err != nil {
 		return err
 	}
 	defer func() {
@@ -247,9 +254,7 @@ func (r *caseRunner) run() error {
 			// merge test case if the step is test case
 			summary, ok := stepDataObj.Data.(*testCaseSummary)
 			if ok {
-				for _, rc := range summary.Records {
-					r.summary.Records = append(r.summary.Records, rc)
-				}
+				r.summary.Records = append(r.summary.Records, summary.Records...)
 				r.summary.Stat.Total += summary.Stat.Total
 				r.summary.Stat.Successes += summary.Stat.Successes
 				r.summary.Stat.Failures += summary.Stat.Failures
@@ -277,8 +282,8 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func initPlugin(path string) (plugin common.Plugin, err error) {
-	plugin, err = common.Init(path)
+func initPlugin(path string, logOn bool) (plugin common.Plugin, err error) {
+	plugin, err = common.Init(path, logOn)
 	if plugin == nil {
 		return
 	}
@@ -836,7 +841,7 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 }
 
 func (r *caseRunner) printRequest(req *http.Request) error {
-	if !r.hrpRunner.debug {
+	if !r.hrpRunner.requestsLogOn {
 		return nil
 	}
 	reqContentType := req.Header.Get("Content-Type")
@@ -855,7 +860,7 @@ func (r *caseRunner) printRequest(req *http.Request) error {
 }
 
 func (r *caseRunner) printResponse(resp *http.Response) error {
-	if !r.hrpRunner.debug {
+	if !r.hrpRunner.requestsLogOn {
 		return nil
 	}
 	fmt.Println("==================== response ===================")

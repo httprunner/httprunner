@@ -23,7 +23,7 @@ type Plugin interface {
 	Quit() error                                                    // quit plugin
 }
 
-func Init(path string) (Plugin, error) {
+func Init(path string, logOn bool) (Plugin, error) {
 	if path == "" {
 		return nil, nil
 	}
@@ -34,7 +34,9 @@ func Init(path string) (Plugin, error) {
 	pluginPath, err := locateFile(path, hashicorpGoPluginFile)
 	if err == nil {
 		// found hashicorp go plugin file
-		plugin = &HashicorpPlugin{}
+		plugin = &HashicorpPlugin{
+			logOn: logOn,
+		}
 		err = plugin.Init(pluginPath)
 		return plugin, err
 	}
