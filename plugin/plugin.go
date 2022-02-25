@@ -8,7 +8,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 
-	pluginInternal "github.com/httprunner/hrp/plugin/internal"
+	pluginInternal "github.com/httprunner/hrp/plugin/inner"
 )
 
 // functionsMap stores plugin functions
