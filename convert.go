@@ -68,7 +68,7 @@ func convertCompatTestCase(tc *TCase) (err error) {
 	}()
 	for _, step := range tc.TestSteps {
 		// 1. deal with body compatible with HttpRunner
-		if step.Request.Body == nil {
+		if step.Request != nil && step.Request.Body == nil {
 			if step.Request.Json != nil {
 				step.Request.Body = step.Request.Json
 			} else if step.Request.Data != nil {
