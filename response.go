@@ -160,7 +160,7 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		}
 		v.validationResults = append(v.validationResults, validResult)
 		log.Info().
-			Str("jmespath", validator.Check).
+			Str("checkExpr", validator.Check).
 			Str("assertMethod", assertMethod).
 			Interface("expectValue", expectValue).
 			Interface("checkValue", checkValue).
@@ -169,7 +169,7 @@ func (v *responseObject) Validate(validators []Validator, variablesMapping map[s
 		if !result {
 			v.t.Fail()
 			return errors.New(fmt.Sprintf(
-				"do assertion failed, jmespath: %v, assertMethod: %v, checkValue: %v, expectValue: %v",
+				"do assertion failed, checkExpr: %v, assertMethod: %v, checkValue: %v, expectValue: %v",
 				validator.Check,
 				assertMethod,
 				checkValue,
