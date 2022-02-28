@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -71,25 +70,9 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		// 1. deal with body compatible with HttpRunner
 		if step.Request.Body == nil {
 			if step.Request.Json != nil {
-				// Content-Type is "application/json; charset=UTF-8"
 				step.Request.Body = step.Request.Json
 			} else if step.Request.Data != nil {
-				dataValue := reflect.ValueOf(step.Request.Data)
-				switch dataValue.Kind() {
-				case reflect.String:
-					// Content-Type is "text/plain"
-					step.Request.Body = dataValue.String()
-				case reflect.Map:
-					// Content-Type is "application/x-www-form-urlencoded"
-					var paramsList []string
-					mapRange := dataValue.MapRange()
-					for mapRange.Next() {
-						paramsList = append(paramsList, fmt.Sprintf("%s=%s", mapRange.Key(), mapRange.Value()))
-					}
-					step.Request.Body = strings.Join(paramsList, "&")
-				default:
-					log.Error().Msgf("[convert compat testcase] unexpected body type: %v", dataValue.Kind())
-				}
+				step.Request.Body = step.Request.Data
 			}
 		}
 
@@ -110,29 +93,35 @@ func convertCompatTestCase(tc *TCase) (err error) {
 				if msg, exist := validatorMap["msg"]; exist {
 					validator.Message = msg.(string)
 				}
+				convertCompatHeader(&validator)
+				step.Validators = append(step.Validators, validator)
 			} else if len(validatorMap) == 1 {
 				// HttpRunner validator format
-				validatorValue := reflect.ValueOf(validatorMap)
-				assertMethod := validatorValue.MapKeys()[0]
-				iValidatorContent := validatorValue.MapIndex(assertMethod).Interface().([]interface{})
-				validator.Check = iValidatorContent[0].(string)
-				validator.Assert = assertMethod.String()
-				validator.Expect = iValidatorContent[1]
+				for assertMethod, iValidatorContent := range validatorMap {
+					checkAndExpect := iValidatorContent.([]interface{})
+					validator.Check = checkAndExpect[0].(string)
+					validator.Assert = assertMethod
+					validator.Expect = checkAndExpect[1]
+				}
+				convertCompatHeader(&validator)
+				step.Validators = append(step.Validators, validator)
 			} else {
 				log.Error().Msgf("[convert compat testcase] unexpected validator format: %v", validatorMap)
 			}
-			// deal with headers format in HttpRunner
-			// e.g. headers.Content-Type => headers.\"Content-Type\"
-			if strings.Contains(validator.Check, "headers.") &&
-				!strings.Contains(validator.Check, "\"") &&
-				strings.Contains(validator.Check, "-") {
-				replacedHeader := fmt.Sprintf("headers.\"%s\"", validator.Check[len("headers."):])
-				validator.Check = replacedHeader
-			}
-			step.Validators = append(step.Validators, validator)
 		}
 	}
 	return err
+}
+
+// convertCompatHeader deals with headers format in HttpRunner
+// e.g. headers.Content-Type => headers.\"Content-Type\"
+func convertCompatHeader(validator *Validator) {
+	if strings.Contains(validator.Check, "headers.") &&
+		!strings.Contains(validator.Check, "\"") &&
+		strings.Contains(validator.Check, "-") {
+		replacedHeader := fmt.Sprintf("headers.\"%s\"", validator.Check[len("headers."):])
+		validator.Check = replacedHeader
+	}
 }
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
