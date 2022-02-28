@@ -32,7 +32,7 @@ import (
 
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
-	"github.com/httprunner/hrp/plugin/common"
+	pluginInternal "github.com/httprunner/hrp/plugin/inner"
 )
 
 const (
@@ -43,7 +43,7 @@ const (
 // Run starts to run API test with default configs.
 func Run(testcases ...ITestCase) error {
 	t := &testing.T{}
-	return NewRunner(t).SetDebug(true).Run(testcases...)
+	return NewRunner(t).SetRequestsLogOn().Run(testcases...)
 }
 
 // NewRunner constructs a new runner instance.
@@ -53,8 +53,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 	}
 	return &HRPRunner{
 		t:             t,
-		failfast:      true,  // default to failfast
-		debug:         false, // default to turn off debug
+		failfast:      true, // default to failfast
 		genHTMLReport: false,
 		client: &http.Client{
 			Transport: &http.Transport{
@@ -68,7 +67,8 @@ func NewRunner(t *testing.T) *HRPRunner {
 type HRPRunner struct {
 	t             *testing.T
 	failfast      bool
-	debug         bool
+	requestsLogOn bool
+	pluginLogOn   bool
 	saveTests     bool
 	genHTMLReport bool
 	client        *http.Client
@@ -81,10 +81,17 @@ func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 	return r
 }
 
-// SetDebug configures whether to log HTTP request and response content.
-func (r *HRPRunner) SetDebug(debug bool) *HRPRunner {
-	log.Info().Bool("debug", debug).Msg("[init] SetDebug")
-	r.debug = debug
+// SetRequestsLogOn turns on request & response details logging.
+func (r *HRPRunner) SetRequestsLogOn() *HRPRunner {
+	log.Info().Msg("[init] SetRequestsLogOn")
+	r.requestsLogOn = true
+	return r
+}
+
+// SetPluginLogOn turns on plugin logging.
+func (r *HRPRunner) SetPluginLogOn() *HRPRunner {
+	log.Info().Msg("[init] SetPluginLogOn")
+	r.pluginLogOn = true
 	return r
 }
 
@@ -221,7 +228,7 @@ func (r *caseRunner) run() error {
 	config := r.TestCase.Config
 	// init plugin
 	var err error
-	if r.parser.plugin, err = initPlugin(config.Path); err != nil {
+	if r.parser.plugin, err = initPlugin(config.Path, r.hrpRunner.pluginLogOn); err != nil {
 		return err
 	}
 	defer func() {
@@ -247,9 +254,7 @@ func (r *caseRunner) run() error {
 			// merge test case if the step is test case
 			summary, ok := stepDataObj.Data.(*testCaseSummary)
 			if ok {
-				for _, rc := range summary.Records {
-					r.summary.Records = append(r.summary.Records, rc)
-				}
+				r.summary.Records = append(r.summary.Records, summary.Records...)
 				r.summary.Stat.Total += summary.Stat.Total
 				r.summary.Stat.Successes += summary.Stat.Successes
 				r.summary.Stat.Failures += summary.Stat.Failures
@@ -277,8 +282,8 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func initPlugin(path string) (plugin common.Plugin, err error) {
-	plugin, err = common.Init(path)
+func initPlugin(path string, logOn bool) (plugin pluginInternal.IPlugin, err error) {
+	plugin, err = pluginInternal.Init(path, logOn)
 	if plugin == nil {
 		return
 	}
@@ -294,7 +299,7 @@ func initPlugin(path string) (plugin common.Plugin, err error) {
 
 	// report event for initializing plugin
 	var pluginType string
-	if _, ok := plugin.(*common.GoPlugin); ok {
+	if _, ok := plugin.(*pluginInternal.GoPlugin); ok {
 		pluginType = "go"
 	} else {
 		pluginType = "hashicorp"
@@ -616,14 +621,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	}
 	sessionData := newSessionData()
 
-	// deal with setup hooks
-	for _, setupHook := range step.SetupHooks {
-		_, err = r.parser.parseData(setupHook, step.Variables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "run setup hooks failed")
-		}
-	}
-
 	// convert request struct to map
 	jsonRequest, _ := json.Marshal(&step.Request)
 	var requestMap map[string]interface{}
@@ -764,6 +761,18 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	req.URL = u
 	req.Host = u.Host
 
+	// add request object to step variables, could be used in setup hooks
+	step.Variables["hrp_step_name"] = step.Name
+	step.Variables["hrp_step_request"] = requestMap
+
+	// deal with setup hooks
+	for _, setupHook := range step.SetupHooks {
+		_, err = r.parser.parseData(setupHook, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "run setup hooks failed")
+		}
+	}
+
 	// log & print request
 	if err := r.printRequest(req); err != nil {
 		return stepResult, err
@@ -795,6 +804,18 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
 	}
+
+	// add response object to step variables, could be used in teardown hooks
+	step.Variables["hrp_step_response"] = respObj.respObjMeta
+
+	// deal with teardown hooks
+	for _, teardownHook := range step.TeardownHooks {
+		_, err = r.parser.parseData(teardownHook, step.Variables)
+		if err != nil {
+			return stepResult, errors.Wrap(err, "run teardown hooks failed")
+		}
+	}
+
 	sessionData.ReqResps.Request = requestMap
 	sessionData.ReqResps.Response = builtin.FormatResponse(respObj.respObjMeta)
 
@@ -816,18 +837,11 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
 
-	// deal with teardown hooks
-	for _, teardownHook := range step.TeardownHooks {
-		_, err = r.parser.parseData(teardownHook, step.Variables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "run teardown hooks failed")
-		}
-	}
 	return stepResult, err
 }
 
 func (r *caseRunner) printRequest(req *http.Request) error {
-	if !r.hrpRunner.debug {
+	if !r.hrpRunner.requestsLogOn {
 		return nil
 	}
 	reqContentType := req.Header.Get("Content-Type")
@@ -846,7 +860,7 @@ func (r *caseRunner) printRequest(req *http.Request) error {
 }
 
 func (r *caseRunner) printResponse(resp *http.Response) error {
-	if !r.hrpRunner.debug {
+	if !r.hrpRunner.requestsLogOn {
 		return nil
 	}
 	fmt.Println("==================== response ===================")
@@ -877,7 +891,7 @@ func shouldPrintBody(contentType string) bool {
 	if strings.HasPrefix(contentType, "application/xml") {
 		return true
 	}
-	if strings.HasPrefix(contentType, "application/www-form-urlencoded") {
+	if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
 		return true
 	}
 	return false
