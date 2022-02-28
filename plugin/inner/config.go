@@ -1,8 +1,8 @@
-package shared
+package pluginInternal
 
 import "github.com/hashicorp/go-plugin"
 
-const Name = "debugtalk"
+const PluginName = "debugtalk"
 
 // handshakeConfigs are used to just do a basic handshake between
 // a plugin and host. If the handshake fails, a user friendly error is shown.
@@ -11,5 +11,5 @@ const Name = "debugtalk"
 var HandshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
 	MagicCookieKey:   "HttpRunnerPlus",
-	MagicCookieValue: Name,
+	MagicCookieValue: PluginName,
 }
