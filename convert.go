@@ -80,13 +80,9 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		// 2. deal with validators compatible with HttpRunner
 		for i, iValidator := range step.Validators {
 			validatorMap := iValidator.(map[string]interface{})
-			if len(validatorMap) == 0 {
-				// pass invalid or empty validator
-				continue
-			}
 			// check priority: HRP > HttpRunner
 			validator := Validator{}
-			if len(validatorMap) == 4 {
+			if len(validatorMap) == 4 || len(validatorMap) == 3 {
 				// HRP validator format
 				validator.Check = validatorMap["check"].(string)
 				validator.Assert = validatorMap["assert"].(string)
@@ -108,6 +104,7 @@ func convertCompatTestCase(tc *TCase) (err error) {
 				step.Validators[i] = validator
 			} else {
 				log.Error().Msgf("[convert compat testcase] unexpected validator format: %v", validatorMap)
+				step.Validators[i] = validator
 			}
 		}
 	}
