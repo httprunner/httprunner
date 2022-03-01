@@ -114,8 +114,12 @@ func (v *responseObject) Extract(extractors map[string]string) map[string]interf
 	return extractMapping
 }
 
-func (v *responseObject) Validate(validators []Validator, variablesMapping map[string]interface{}) (err error) {
-	for _, validator := range validators {
+func (v *responseObject) Validate(iValidators []interface{}, variablesMapping map[string]interface{}) (err error) {
+	for _, iValidator := range iValidators {
+		validator, ok := iValidator.(Validator)
+		if !ok {
+			return errors.New("validator type error")
+		}
 		// parse check value
 		checkItem := validator.Check
 		var checkValue interface{}

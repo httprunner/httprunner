@@ -703,6 +703,15 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		if err != nil {
 			return stepResult, err
 		}
+		// check request body format if Content-Type specified as application/json
+		if strings.HasPrefix(req.Header.Get("Content-Type"), "application/json") {
+			switch data.(type) {
+			case bool, float64, string, map[string]interface{}, []interface{}, nil:
+				break
+			default:
+				return stepResult, errors.Errorf("request body type inconsistent with Content-Type: %v", req.Header.Get("Content-Type"))
+			}
+		}
 		requestMap["body"] = data
 		var dataBytes []byte
 		switch vv := data.(type) {

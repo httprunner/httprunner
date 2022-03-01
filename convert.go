@@ -67,9 +67,10 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		}
 	}()
 	for _, step := range tc.TestSteps {
-		// 1. deal with body compatible with HttpRunner
+		// 1. deal with request body compatible with HttpRunner
 		if step.Request != nil && step.Request.Body == nil {
 			if step.Request.Json != nil {
+				step.Request.Headers["Content-Type"] = "application/json; charset=utf-8"
 				step.Request.Body = step.Request.Json
 			} else if step.Request.Data != nil {
 				step.Request.Body = step.Request.Data
@@ -77,9 +78,9 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		}
 
 		// 2. deal with validators compatible with HttpRunner
-		for _, iValidator := range step.ValidatorsCompat {
-			validatorMap, ok := iValidator.(map[string]interface{})
-			if !ok || len(validatorMap) == 0 {
+		for i, iValidator := range step.Validators {
+			validatorMap := iValidator.(map[string]interface{})
+			if len(validatorMap) == 0 {
 				// pass invalid or empty validator
 				continue
 			}
@@ -94,7 +95,7 @@ func convertCompatTestCase(tc *TCase) (err error) {
 					validator.Message = msg.(string)
 				}
 				convertCompatHeader(&validator)
-				step.Validators = append(step.Validators, validator)
+				step.Validators[i] = validator
 			} else if len(validatorMap) == 1 {
 				// HttpRunner validator format
 				for assertMethod, iValidatorContent := range validatorMap {
@@ -104,7 +105,7 @@ func convertCompatTestCase(tc *TCase) (err error) {
 					validator.Expect = checkAndExpect[1]
 				}
 				convertCompatHeader(&validator)
-				step.Validators = append(step.Validators, validator)
+				step.Validators[i] = validator
 			} else {
 				log.Error().Msgf("[convert compat testcase] unexpected validator format: %v", validatorMap)
 			}
