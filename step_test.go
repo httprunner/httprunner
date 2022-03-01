@@ -42,7 +42,7 @@ func TestRunRequestGetToStruct(t *testing.T) {
 	if tStep.Request.Cookies["user"] != "debugtalk" {
 		t.Fatalf("tStep.Request.Cookies mismatch")
 	}
-	if tStep.Validators[0].Check != "status_code" || tStep.Validators[0].Expect != 200 {
+	if validator, ok := tStep.Validators[0].(Validator); !ok || validator.Check != "status_code" || validator.Expect != 200 {
 		t.Fatalf("tStep.Validators mismatch")
 	}
 }
@@ -67,7 +67,7 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 	if tStep.Request.Body != "a=1&b=2" {
 		t.Fatalf("tStep.Request.Data mismatch")
 	}
-	if tStep.Validators[0].Check != "status_code" || tStep.Validators[0].Expect != 200 {
+	if validator, ok := tStep.Validators[0].(Validator); !ok || validator.Check != "status_code" || validator.Expect != 200 {
 		t.Fatalf("tStep.Validators mismatch")
 	}
 }

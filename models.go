@@ -115,18 +115,17 @@ type Validator struct {
 // TStep represents teststep data structure.
 // Each step maybe two different type: make one HTTP request or reference another testcase.
 type TStep struct {
-	Name             string                 `json:"name" yaml:"name"` // required
-	Request          *Request               `json:"request,omitempty" yaml:"request,omitempty"`
-	TestCase         *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
-	Transaction      *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
-	Rendezvous       *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
-	Variables        map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	SetupHooks       []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
-	TeardownHooks    []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
-	Extract          map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	ValidatorsCompat []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
-	Export           []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Validators       []Validator
+	Name          string                 `json:"name" yaml:"name"` // required
+	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
+	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
+	Transaction   *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
+	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
+	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 }
 
 type stepType string

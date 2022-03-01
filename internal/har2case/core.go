@@ -145,7 +145,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 	step := &tStep{
 		TStep: hrp.TStep{
 			Request:    &hrp.Request{},
-			Validators: make([]hrp.Validator, 0),
+			Validators: make([]interface{}, 0),
 		},
 	}
 	if err := step.makeRequestMethod(entry); err != nil {
