@@ -18,12 +18,6 @@ type funcData struct {
 	Args []interface{} // function arguments
 }
 
-// FuncCaller is the interface that we're exposing as a plugin.
-type FuncCaller interface {
-	GetNames() ([]string, error)                                    // get all plugin function names list
-	Call(funcName string, args ...interface{}) (interface{}, error) // call plugin function
-}
-
 // functionRPC runs on the host side.
 type functionRPC struct {
 	client *rpc.Client
@@ -100,11 +94,4 @@ func (p *HRPPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
 
 func (HRPPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return &functionRPC{client: c}, nil
-}
-
-type IPlugin interface {
-	Init(path string) error                                         // init plugin
-	Has(funcName string) bool                                       // check if plugin has function
-	Call(funcName string, args ...interface{}) (interface{}, error) // call function
-	Quit() error                                                    // quit plugin
 }
