@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -80,46 +79,38 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		// 2. deal with validators compatible with HttpRunner
 		for i, iValidator := range step.Validators {
 			validatorMap := iValidator.(map[string]interface{})
-			// check priority: HRP > HttpRunner
 			validator := Validator{}
-			if len(validatorMap) == 4 || len(validatorMap) == 3 {
+			_, checkExisted := validatorMap["check"]
+			_, assertExisted := validatorMap["assert"]
+			_, expectExisted := validatorMap["expect"]
+			// check priority: HRP > HttpRunner
+			if checkExisted && assertExisted && expectExisted {
 				// HRP validator format
 				validator.Check = validatorMap["check"].(string)
 				validator.Assert = validatorMap["assert"].(string)
 				validator.Expect = validatorMap["expect"]
-				if msg, exist := validatorMap["msg"]; exist {
+				if msg, existed := validatorMap["msg"]; existed {
 					validator.Message = msg.(string)
 				}
-				convertCompatHeader(&validator)
 				step.Validators[i] = validator
 			} else if len(validatorMap) == 1 {
 				// HttpRunner validator format
 				for assertMethod, iValidatorContent := range validatorMap {
 					checkAndExpect := iValidatorContent.([]interface{})
+					if len(checkAndExpect) != 2 {
+						return fmt.Errorf("unexpected validator format: %v", validatorMap)
+					}
 					validator.Check = checkAndExpect[0].(string)
 					validator.Assert = assertMethod
 					validator.Expect = checkAndExpect[1]
 				}
-				convertCompatHeader(&validator)
 				step.Validators[i] = validator
 			} else {
-				log.Error().Msgf("[convert compat testcase] unexpected validator format: %v", validatorMap)
-				step.Validators[i] = validator
+				return fmt.Errorf("unexpected validator format: %v", validatorMap)
 			}
 		}
 	}
 	return err
-}
-
-// convertCompatHeader deals with headers format in HttpRunner
-// e.g. headers.Content-Type => headers.\"Content-Type\"
-func convertCompatHeader(validator *Validator) {
-	if strings.Contains(validator.Check, "headers.") &&
-		!strings.Contains(validator.Check, "\"") &&
-		strings.Contains(validator.Check, "-") {
-		replacedHeader := fmt.Sprintf("headers.\"%s\"", validator.Check[len("headers."):])
-		validator.Check = replacedHeader
-	}
 }
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
