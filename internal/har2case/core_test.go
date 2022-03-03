@@ -1,10 +1,11 @@
 package har2case
 
 import (
-	"github.com/httprunner/hrp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/hrp"
 )
 
 var (
@@ -99,13 +100,16 @@ func TestMakeTestCase(t *testing.T) {
 	}
 
 	// make validators
-	if validator, ok := tCase.TestSteps[0].Validators[0].(hrp.Validator); !ok || !assert.Equal(t, "status_code", validator.Check) {
+	validator, ok := tCase.TestSteps[0].Validators[0].(hrp.Validator)
+	if !ok || !assert.Equal(t, "status_code", validator.Check) {
 		t.Fail()
 	}
-	if validator, ok := tCase.TestSteps[0].Validators[1].(hrp.Validator); !ok || !assert.Equal(t, "headers.\"Content-Type\"", validator.Check) {
+	validator, ok = tCase.TestSteps[0].Validators[1].(hrp.Validator)
+	if !ok || !assert.Equal(t, "headers.\"Content-Type\"", validator.Check) {
 		t.Fail()
 	}
-	if validator, ok := tCase.TestSteps[0].Validators[2].(hrp.Validator); !ok || !assert.Equal(t, "body.url", validator.Check) {
+	validator, ok = tCase.TestSteps[0].Validators[2].(hrp.Validator)
+	if !ok || !assert.Equal(t, "body.url", validator.Check) {
 		t.Fail()
 	}
 }

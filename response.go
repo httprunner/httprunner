@@ -185,6 +185,7 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 }
 
 func (v *responseObject) searchJmespath(expr string) interface{} {
+	expr = convertJmespath(expr)
 	checkValue, err := jmespath.Search(expr, v.respObjMeta)
 	if err != nil {
 		log.Error().Str("expr", expr).Err(err).Msg("search jmespath failed")
@@ -198,6 +199,20 @@ func (v *responseObject) searchJmespath(expr string) interface{} {
 		return checkNumber
 	}
 	return checkValue
+}
+
+// convertJmespath deals with check expression including hyphen
+func convertJmespath(checkExpr string) string {
+	if strings.Contains(checkExpr, textExtractorSubRegexp) {
+		return checkExpr
+	}
+	checkItems := strings.Split(checkExpr, ".")
+	for i, checkItem := range checkItems {
+		if strings.Contains(checkItem, "-") && !strings.Contains(checkItem, "\"") {
+			checkItems[i] = fmt.Sprintf("\"%s\"", checkItem)
+		}
+	}
+	return strings.Join(checkItems, ".")
 }
 
 func (v *responseObject) searchRegexp(expr string) interface{} {
