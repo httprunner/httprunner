@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -92,6 +93,7 @@ func convertCompatTestCase(tc *TCase) (err error) {
 				if msg, existed := validatorMap["msg"]; existed {
 					validator.Message = msg.(string)
 				}
+				validator.Check = convertCheckExpr(validator.Check)
 				step.Validators[i] = validator
 			} else if len(validatorMap) == 1 {
 				// HttpRunner validator format
@@ -104,6 +106,7 @@ func convertCompatTestCase(tc *TCase) (err error) {
 					validator.Assert = assertMethod
 					validator.Expect = checkAndExpect[1]
 				}
+				validator.Check = convertCheckExpr(validator.Check)
 				step.Validators[i] = validator
 			} else {
 				return fmt.Errorf("unexpected validator format: %v", validatorMap)
@@ -111,6 +114,20 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		}
 	}
 	return err
+}
+
+// convertCheckExpr deals with check expression including hyphen
+func convertCheckExpr(checkExpr string) string {
+	if strings.Contains(checkExpr, textExtractorSubRegexp) {
+		return checkExpr
+	}
+	checkItems := strings.Split(checkExpr, ".")
+	for i, checkItem := range checkItems {
+		if strings.Contains(checkItem, "-") && !strings.Contains(checkItem, "\"") {
+			checkItems[i] = fmt.Sprintf("\"%s\"", checkItem)
+		}
+	}
+	return strings.Join(checkItems, ".")
 }
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
