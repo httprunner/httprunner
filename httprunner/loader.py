@@ -129,6 +129,16 @@ def load_dot_env_file(dot_env_path: Text) -> Dict:
 
     with open(dot_env_path, mode="rb") as fp:
         for line in fp:
+            # 注释处理
+            # 行注释
+            if b"#" in line[0:1]:
+                continue
+            # 空行
+            elif b'\r\n' == line:
+                continue
+            # 尾注释
+            elif b"#" in line:
+                line = line.split(b"#", 1)[0]
             # maxsplit=1
             if b"=" in line:
                 variable, value = line.split(b"=", 1)
