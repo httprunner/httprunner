@@ -19,8 +19,9 @@ type HashicorpPlugin struct {
 }
 
 func (p *HashicorpPlugin) Init(path string) error {
+	pluginName := GRPCPluginName
 	loggerOptions := &hclog.LoggerOptions{
-		Name:   PluginName,
+		Name:   pluginName,
 		Output: os.Stdout,
 	}
 	if p.logOn {
@@ -32,10 +33,15 @@ func (p *HashicorpPlugin) Init(path string) error {
 	client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: HandshakeConfig,
 		Plugins: map[string]plugin.Plugin{
-			PluginName: &HRPPlugin{},
+			RPCPluginName:  &RPCPlugin{},
+			GRPCPluginName: &GRPCPlugin{},
 		},
 		Cmd:    exec.Command(path),
 		Logger: hclog.New(loggerOptions),
+		AllowedProtocols: []plugin.Protocol{
+			plugin.ProtocolNetRPC,
+			plugin.ProtocolGRPC,
+		},
 	})
 
 	// Connect via RPC
@@ -46,7 +52,7 @@ func (p *HashicorpPlugin) Init(path string) error {
 	}
 
 	// Request the plugin
-	raw, err := rpcClient.Dispense(PluginName)
+	raw, err := rpcClient.Dispense(pluginName)
 	if err != nil {
 		log.Error().Err(err).Msg("request plugin failed")
 		return err
