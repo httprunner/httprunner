@@ -99,6 +99,18 @@ Then, you can call your defined plugin function in your `YAML/JSON` testcase at 
 }
 ```
 
+### rpc vs. gRPC
+
+HttpRunner+ has both supported `net/rpc` and `gRPC` in [hashicorp/plugin]. It is recommended to use `gRPC` and this is the default choice.
+
+If you want to run plugin in `net/rpc` mode, you can set an environment variable `HRP_PLUGIN_TYPE=rpc`.
+
+```bash
+$ export HRP_PLUGIN_TYPE=rpc
+$ hrp run examples/demo.json
+$ hrp boom examples/demo.json
+```
+
 ## go plugin
 
 The golang official plugin is only supported on Linux, FreeBSD, and macOS. And this solution also has many drawbacks.

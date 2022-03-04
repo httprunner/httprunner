@@ -18,18 +18,12 @@ type funcData struct {
 	Args []interface{} // function arguments
 }
 
-// FuncCaller is the interface that we're exposing as a plugin.
-type FuncCaller interface {
-	GetNames() ([]string, error)                                    // get all plugin function names list
-	Call(funcName string, args ...interface{}) (interface{}, error) // call plugin function
-}
-
-// functionRPC runs on the host side.
-type functionRPC struct {
+// functionRPCClient runs on the host side, it implements FuncCaller interface
+type functionRPCClient struct {
 	client *rpc.Client
 }
 
-func (g *functionRPC) GetNames() ([]string, error) {
+func (g *functionRPCClient) GetNames() ([]string, error) {
 	var resp []string
 	err := g.client.Call("Plugin.GetNames", new(interface{}), &resp)
 	if err != nil {
@@ -40,7 +34,7 @@ func (g *functionRPC) GetNames() ([]string, error) {
 }
 
 // host -> plugin
-func (g *functionRPC) Call(funcName string, funcArgs ...interface{}) (interface{}, error) {
+func (g *functionRPCClient) Call(funcName string, funcArgs ...interface{}) (interface{}, error) {
 	log.Info().Str("funcName", funcName).Interface("funcArgs", funcArgs).Msg("call function via RPC")
 	f := funcData{
 		Name: funcName,
@@ -53,7 +47,7 @@ func (g *functionRPC) Call(funcName string, funcArgs ...interface{}) (interface{
 	if err != nil {
 		log.Error().Err(err).
 			Str("funcName", funcName).Interface("funcArgs", funcArgs).
-			Msg("rpc call Call() failed")
+			Msg("rpc Call() failed")
 		return nil, err
 	}
 	return resp, nil
@@ -66,11 +60,11 @@ type functionRPCServer struct {
 
 // plugin execution
 func (s *functionRPCServer) GetNames(args interface{}, resp *[]string) error {
-	log.Info().Interface("args", args).Msg("GetNames called on plugin side")
+	log.Info().Interface("args", args).Msg("rpc GetNames() called on plugin side")
 	var err error
 	*resp, err = s.Impl.GetNames()
 	if err != nil {
-		log.Error().Err(err).Msg("GetNames execution failed")
+		log.Error().Err(err).Msg("rpc GetNames() execution failed")
 		return err
 	}
 	return nil
@@ -78,33 +72,26 @@ func (s *functionRPCServer) GetNames(args interface{}, resp *[]string) error {
 
 // plugin execution
 func (s *functionRPCServer) Call(args interface{}, resp *interface{}) error {
-	log.Info().Interface("args", args).Msg("function called on plugin side")
+	log.Info().Interface("args", args).Msg("rpc Call() called on plugin side")
 	f := args.(*funcData)
 	var err error
 	*resp, err = s.Impl.Call(f.Name, f.Args...)
 	if err != nil {
-		log.Error().Err(err).Interface("args", args).Msg("function execution failed")
+		log.Error().Err(err).Interface("args", args).Msg("rpc Call() execution failed")
 		return err
 	}
 	return nil
 }
 
-// HRPPlugin implements hashicorp's plugin.Plugin.
-type HRPPlugin struct {
+// RPCPlugin implements hashicorp's plugin.Plugin.
+type RPCPlugin struct {
 	Impl FuncCaller
 }
 
-func (p *HRPPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
+func (p *RPCPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
 	return &functionRPCServer{Impl: p.Impl}, nil
 }
 
-func (HRPPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return &functionRPC{client: c}, nil
-}
-
-type IPlugin interface {
-	Init(path string) error                                         // init plugin
-	Has(funcName string) bool                                       // check if plugin has function
-	Call(funcName string, args ...interface{}) (interface{}, error) // call function
-	Quit() error                                                    // quit plugin
+func (RPCPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+	return &functionRPCClient{client: c}, nil
 }
