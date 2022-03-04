@@ -1,7 +1,7 @@
 syntax = "proto3";
 package proto;
 
-option go_package = "github.com/httprunner/hrp/plugin/proto";
+option go_package = "plugin/go/proto";
 
 message Empty {}
 

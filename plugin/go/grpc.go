@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/httprunner/hrp/internal/json"
-	"github.com/httprunner/hrp/plugin/proto"
+	"github.com/httprunner/hrp/plugin/go/proto"
 )
 
 // functionGRPCClient runs on the host side, it implements FuncCaller interface

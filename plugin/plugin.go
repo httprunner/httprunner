@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/rs/zerolog/log"
 
-	pluginInternal "github.com/httprunner/hrp/plugin/inner"
+	pluginInternal "github.com/httprunner/hrp/plugin/go"
+	pluginUtils "github.com/httprunner/hrp/plugin/utils"
 )
 
 // functionsMap stores plugin functions
@@ -37,7 +38,7 @@ func (p *functionPlugin) Call(funcName string, args ...interface{}) (interface{}
 		return nil, fmt.Errorf("function %s not found", funcName)
 	}
 
-	return pluginInternal.CallFunc(fn, args...)
+	return pluginUtils.CallFunc(fn, args...)
 }
 
 var functions = make(functionsMap)
