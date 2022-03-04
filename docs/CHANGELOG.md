@@ -1,5 +1,10 @@
 # Release History
 
+## v0.7.0 (2022-03-04)
+
+- feat: both support gPRC(default) and net/rpc mode in hashicorp plugin, switch with environment `HRP_PLUGIN_TYPE`
+- refactor: replace builtin json library with json-iterator/go to improve performance
+
 ## v0.6.3 (2022-03-04)
 
 - feat: support customized setup/teardown hooks (variable assignment not supported)

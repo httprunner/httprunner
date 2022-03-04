@@ -9,6 +9,7 @@ require (
 	github.com/httprunner/hrp/plugin v0.0.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
+	github.com/json-iterator/go v1.1.12
 	github.com/maja42/goval v1.2.1
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/olekukonko/tablewriter v0.0.5

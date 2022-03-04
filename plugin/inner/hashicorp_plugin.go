@@ -1,11 +1,13 @@
 package pluginInternal
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -19,8 +21,16 @@ type HashicorpPlugin struct {
 }
 
 func (p *HashicorpPlugin) Init(path string) error {
+	var pluginName string
+	if IsRPCPluginType() {
+		pluginName = RPCPluginName
+	} else {
+		pluginName = GRPCPluginName
+	}
+
+	// logger
 	loggerOptions := &hclog.LoggerOptions{
-		Name:   PluginName,
+		Name:   pluginName,
 		Output: os.Stdout,
 	}
 	if p.logOn {
@@ -28,28 +38,36 @@ func (p *HashicorpPlugin) Init(path string) error {
 	} else {
 		loggerOptions.Level = hclog.Info
 	}
+
+	// cmd
+	cmd := exec.Command(path)
+	cmd.Env = append(os.Environ(), fmt.Sprintf("%s=%s", hrpPluginTypeEnvName, hrpPluginType))
+
 	// launch the plugin process
 	client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: HandshakeConfig,
 		Plugins: map[string]plugin.Plugin{
-			PluginName: &HRPPlugin{},
+			RPCPluginName:  &RPCPlugin{},
+			GRPCPluginName: &GRPCPlugin{},
 		},
-		Cmd:    exec.Command(path),
+		Cmd:    cmd,
 		Logger: hclog.New(loggerOptions),
+		AllowedProtocols: []plugin.Protocol{
+			plugin.ProtocolNetRPC,
+			plugin.ProtocolGRPC,
+		},
 	})
 
-	// Connect via RPC
+	// Connect via RPC/gRPC
 	rpcClient, err := client.Client()
 	if err != nil {
-		log.Error().Err(err).Msg("connect plugin via RPC failed")
-		return err
+		return errors.Wrap(err, fmt.Sprintf("connect %s plugin failed", hrpPluginType))
 	}
 
 	// Request the plugin
-	raw, err := rpcClient.Dispense(PluginName)
+	raw, err := rpcClient.Dispense(pluginName)
 	if err != nil {
-		log.Error().Err(err).Msg("request plugin failed")
-		return err
+		return errors.Wrap(err, fmt.Sprintf("request %s plugin failed", hrpPluginType))
 	}
 
 	// We should have a Function now! This feels like a normal interface

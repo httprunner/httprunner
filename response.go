@@ -2,7 +2,7 @@ package hrp
 
 import (
 	"bytes"
-	"encoding/json"
+	builtinJSON "encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/hrp/internal/json"
 )
 
 func newResponseObject(t *testing.T, parser *parser, resp *http.Response) (*responseObject, error) {
@@ -190,7 +191,7 @@ func (v *responseObject) searchJmespath(expr string) interface{} {
 		log.Error().Str("expr", expr).Err(err).Msg("search jmespath failed")
 		return expr // jmespath not found, return the expression
 	}
-	if number, ok := checkValue.(json.Number); ok {
+	if number, ok := checkValue.(builtinJSON.Number); ok {
 		checkNumber, err := parseJSONNumber(number)
 		if err != nil {
 			log.Error().Interface("json number", number).Err(err).Msg("convert json number failed")
