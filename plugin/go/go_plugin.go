@@ -7,6 +7,8 @@ import (
 	"runtime"
 
 	"github.com/rs/zerolog/log"
+
+	pluginUtils "github.com/httprunner/hrp/plugin/utils"
 )
 
 // GoPlugin implements golang official plugin
@@ -61,7 +63,7 @@ func (p *GoPlugin) Call(funcName string, args ...interface{}) (interface{}, erro
 		return nil, fmt.Errorf("function %s not found", funcName)
 	}
 	fn := p.cachedFunctions[funcName]
-	return CallFunc(fn, args...)
+	return pluginUtils.CallFunc(fn, args...)
 }
 
 func (p *GoPlugin) Quit() error {

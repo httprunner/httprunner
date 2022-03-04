@@ -13,7 +13,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/hrp/internal/builtin"
-	pluginInternal "github.com/httprunner/hrp/plugin/inner"
+	pluginInternal "github.com/httprunner/hrp/plugin/go"
+	pluginUtils "github.com/httprunner/hrp/plugin/utils"
 )
 
 func newParser() *parser {
@@ -252,7 +253,7 @@ func (p *parser) callFunc(funcName string, arguments ...interface{}) (interface{
 	fn := reflect.ValueOf(function)
 
 	// call with builtin function
-	return pluginInternal.CallFunc(fn, arguments...)
+	return pluginUtils.CallFunc(fn, arguments...)
 }
 
 // merge two variables mapping, the first variables have higher priority
