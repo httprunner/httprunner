@@ -34,3 +34,30 @@ func TestLoadCase(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func Test_convertCheckExpr(t *testing.T) {
+	exprs := []struct {
+		before string
+		after  string
+	}{
+		// normal check expression
+		{"a.b.c", "a.b.c"},
+		{"headers.\"Content-Type\"", "headers.\"Content-Type\""},
+		// check expression using regex
+		{"covering (.*) testing,", "covering (.*) testing,"},
+		{" (.*) a-b-c", " (.*) a-b-c"},
+		// abnormal check expression
+		{"-", "\"-\""},
+		{"b-c", "\"b-c\""},
+		{"a.b-c.d", "a.\"b-c\".d"},
+		{"a-b.c-d", "\"a-b\".\"c-d\""},
+		{"\"a-b\".c-d", "\"a-b\".\"c-d\""},
+		{"headers.Content-Type", "headers.\"Content-Type\""},
+		{"body.I-am-a-Key.name", "body.\"I-am-a-Key\".name"},
+	}
+	for _, expr := range exprs {
+		if !assert.Equal(t, convertCheckExpr(expr.before), expr.after) {
+			t.Fail()
+		}
+	}
+}

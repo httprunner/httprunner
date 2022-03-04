@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/hrp"
 )
 
 var (
@@ -98,13 +100,16 @@ func TestMakeTestCase(t *testing.T) {
 	}
 
 	// make validators
-	if !assert.Equal(t, "status_code", tCase.TestSteps[0].Validators[0].Check) {
+	validator, ok := tCase.TestSteps[0].Validators[0].(hrp.Validator)
+	if !ok || !assert.Equal(t, "status_code", validator.Check) {
 		t.Fail()
 	}
-	if !assert.Equal(t, "headers.\"Content-Type\"", tCase.TestSteps[0].Validators[1].Check) {
+	validator, ok = tCase.TestSteps[0].Validators[1].(hrp.Validator)
+	if !ok || !assert.Equal(t, "headers.\"Content-Type\"", validator.Check) {
 		t.Fail()
 	}
-	if !assert.Equal(t, "body.url", tCase.TestSteps[0].Validators[2].Check) {
+	validator, ok = tCase.TestSteps[0].Validators[2].(hrp.Validator)
+	if !ok || !assert.Equal(t, "body.url", validator.Check) {
 		t.Fail()
 	}
 }
