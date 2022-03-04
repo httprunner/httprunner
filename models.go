@@ -97,6 +97,8 @@ type Request struct {
 	Headers        map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Cookies        map[string]string      `json:"cookies,omitempty" yaml:"cookies,omitempty"`
 	Body           interface{}            `json:"body,omitempty" yaml:"body,omitempty"`
+	Json           interface{}            `json:"json,omitempty" yaml:"json,omitempty"`
+	Data           interface{}            `json:"data,omitempty" yaml:"data,omitempty"`
 	Timeout        float32                `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 	AllowRedirects bool                   `json:"allow_redirects,omitempty" yaml:"allow_redirects,omitempty"`
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
@@ -122,7 +124,7 @@ type TStep struct {
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
 	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	Validators    []Validator            `json:"validate,omitempty" yaml:"validate,omitempty"`
+	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 }
 
@@ -301,11 +303,11 @@ type testCaseInOut struct {
 type testCaseSummary struct {
 	Name    string         `json:"name" yaml:"name"`
 	Success bool           `json:"success" yaml:"success"`
-	CaseId  string         `json:"case_id,omitempty" yaml:"case_id,omitempty"` //TODO
+	CaseId  string         `json:"case_id,omitempty" yaml:"case_id,omitempty"` // TODO
 	Stat    *testStepStat  `json:"stat" yaml:"stat"`
 	Time    *testCaseTime  `json:"time" yaml:"time"`
 	InOut   *testCaseInOut `json:"in_out" yaml:"in_out"`
-	Log     string         `json:"log,omitempty" yaml:"log,omitempty"` //TODO
+	Log     string         `json:"log,omitempty" yaml:"log,omitempty"` // TODO
 	Records []*stepData    `json:"records" yaml:"records"`
 }
 
@@ -330,7 +332,7 @@ type address struct {
 type SessionData struct {
 	Success    bool                `json:"success" yaml:"success"`
 	ReqResps   *reqResps           `json:"req_resps" yaml:"req_resps"`
-	Address    *address            `json:"address,omitempty" yaml:"address,omitempty"` //TODO
+	Address    *address            `json:"address,omitempty" yaml:"address,omitempty"` // TODO
 	Validators []*validationResult `json:"validators,omitempty" yaml:"validators,omitempty"`
 }
 

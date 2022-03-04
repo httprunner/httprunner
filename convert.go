@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -30,6 +31,10 @@ func loadFromJSON(path string) (*TCase, error) {
 	decoder := json.NewDecoder(bytes.NewReader(file))
 	decoder.UseNumber()
 	err = decoder.Decode(tc)
+	if err != nil {
+		return tc, err
+	}
+	err = convertCompatTestCase(tc)
 	return tc, err
 }
 
@@ -49,7 +54,81 @@ func loadFromYAML(path string) (*TCase, error) {
 
 	tc := &TCase{}
 	err = yaml.Unmarshal(file, tc)
+	if err != nil {
+		return tc, nil
+	}
+	err = convertCompatTestCase(tc)
 	return tc, err
+}
+
+func convertCompatTestCase(tc *TCase) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("convert compat testcase error: %v", p)
+		}
+	}()
+	for _, step := range tc.TestSteps {
+		// 1. deal with request body compatible with HttpRunner
+		if step.Request != nil && step.Request.Body == nil {
+			if step.Request.Json != nil {
+				step.Request.Headers["Content-Type"] = "application/json; charset=utf-8"
+				step.Request.Body = step.Request.Json
+			} else if step.Request.Data != nil {
+				step.Request.Body = step.Request.Data
+			}
+		}
+
+		// 2. deal with validators compatible with HttpRunner
+		for i, iValidator := range step.Validators {
+			validatorMap := iValidator.(map[string]interface{})
+			validator := Validator{}
+			_, checkExisted := validatorMap["check"]
+			_, assertExisted := validatorMap["assert"]
+			_, expectExisted := validatorMap["expect"]
+			// check priority: HRP > HttpRunner
+			if checkExisted && assertExisted && expectExisted {
+				// HRP validator format
+				validator.Check = validatorMap["check"].(string)
+				validator.Assert = validatorMap["assert"].(string)
+				validator.Expect = validatorMap["expect"]
+				if msg, existed := validatorMap["msg"]; existed {
+					validator.Message = msg.(string)
+				}
+				validator.Check = convertCheckExpr(validator.Check)
+				step.Validators[i] = validator
+			} else if len(validatorMap) == 1 {
+				// HttpRunner validator format
+				for assertMethod, iValidatorContent := range validatorMap {
+					checkAndExpect := iValidatorContent.([]interface{})
+					if len(checkAndExpect) != 2 {
+						return fmt.Errorf("unexpected validator format: %v", validatorMap)
+					}
+					validator.Check = checkAndExpect[0].(string)
+					validator.Assert = assertMethod
+					validator.Expect = checkAndExpect[1]
+				}
+				validator.Check = convertCheckExpr(validator.Check)
+				step.Validators[i] = validator
+			} else {
+				return fmt.Errorf("unexpected validator format: %v", validatorMap)
+			}
+		}
+	}
+	return err
+}
+
+// convertCheckExpr deals with check expression including hyphen
+func convertCheckExpr(checkExpr string) string {
+	if strings.Contains(checkExpr, textExtractorSubRegexp) {
+		return checkExpr
+	}
+	checkItems := strings.Split(checkExpr, ".")
+	for i, checkItem := range checkItems {
+		if strings.Contains(checkItem, "-") && !strings.Contains(checkItem, "\"") {
+			checkItems[i] = fmt.Sprintf("\"%s\"", checkItem)
+		}
+	}
+	return strings.Join(checkItems, ".")
 }
 
 func (tc *TCase) ToTestCase() (*TestCase, error) {
