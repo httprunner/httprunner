@@ -7,7 +7,6 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -32,6 +31,7 @@ import (
 
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
+	"github.com/httprunner/hrp/internal/json"
 	pluginInternal "github.com/httprunner/hrp/plugin/inner"
 )
 

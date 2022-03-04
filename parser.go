@@ -1,7 +1,7 @@
 package hrp
 
 import (
-	"encoding/json"
+	builtinJSON "encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -68,7 +68,7 @@ func (p *parser) parseData(raw interface{}, variablesMapping map[string]interfac
 	switch rawValue.Kind() {
 	case reflect.String:
 		// json.Number
-		if rawValue, ok := raw.(json.Number); ok {
+		if rawValue, ok := raw.(builtinJSON.Number); ok {
 			return parseJSONNumber(rawValue)
 		}
 		// other string
@@ -108,7 +108,7 @@ func (p *parser) parseData(raw interface{}, variablesMapping map[string]interfac
 	}
 }
 
-func parseJSONNumber(raw json.Number) (interface{}, error) {
+func parseJSONNumber(raw builtinJSON.Number) (interface{}, error) {
 	if strings.Contains(raw.String(), ".") {
 		// float64
 		return raw.Float64()

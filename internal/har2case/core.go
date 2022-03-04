@@ -2,7 +2,6 @@ package har2case
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/httprunner/hrp"
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
+	"github.com/httprunner/hrp/internal/json"
 )
 
 const (
