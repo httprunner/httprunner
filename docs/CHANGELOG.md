@@ -2,7 +2,7 @@
 
 ## v0.7.0 (2022-03-04)
 
-- refactor: replace hashicorp plugin from net/rpc to gPRC mode
+- feat: both support gPRC(default) and net/rpc mode in hashicorp plugin, switch with environment `HRP_PLUGIN_TYPE`
 - refactor: replace builtin json library with json-iterator/go to improve performance
 
 ## v0.6.3 (2022-03-04)

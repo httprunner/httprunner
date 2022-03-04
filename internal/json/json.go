@@ -4,6 +4,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+// replace with third-party json library to improve performance
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var (
