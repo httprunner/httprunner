@@ -2,13 +2,13 @@ package pluginInternal
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
+	"github.com/httprunner/hrp/internal/json"
 	"github.com/httprunner/hrp/plugin/proto"
 )
 

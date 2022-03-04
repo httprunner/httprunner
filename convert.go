@@ -2,13 +2,14 @@ package hrp
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
+
+	"github.com/httprunner/hrp/internal/json"
 )
 
 func loadFromJSON(path string) (*TCase, error) {

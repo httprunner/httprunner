@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/csv"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
@@ -15,9 +14,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/hrp/internal/json"
 )
 
 var Functions = map[string]interface{}{

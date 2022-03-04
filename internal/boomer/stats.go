@@ -1,8 +1,9 @@
 package boomer
 
 import (
-	"encoding/json"
 	"time"
+
+	"github.com/httprunner/hrp/internal/json"
 )
 
 type transaction struct {
