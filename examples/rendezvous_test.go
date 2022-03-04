@@ -7,6 +7,8 @@ import (
 	"github.com/httprunner/hrp/internal/builtin"
 )
 
+const rendezvousTestJSONPath = "rendezvous_test.json"
+
 var rendezvousTestcase = &hrp.TestCase{
 	Config: hrp.NewConfig("run request with functions").
 		SetBaseURL("https://postman-echo.com").
@@ -59,7 +61,7 @@ func TestRendezvousDump2JSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ToTCase error: %v", err)
 	}
-	err = builtin.Dump2JSON(tCase, "rendezvous_test.json")
+	err = builtin.Dump2JSON(tCase, rendezvousTestJSONPath)
 	if err != nil {
 		t.Fatalf("dump to json error: %v", err)
 	}
