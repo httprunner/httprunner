@@ -30,14 +30,14 @@ func (m *functionGRPCClient) GetNames() ([]string, error) {
 func (m *functionGRPCClient) Call(funcName string, funcArgs ...interface{}) (interface{}, error) {
 	log.Info().Str("funcName", funcName).Interface("funcArgs", funcArgs).Msg("call function via gRPC")
 
-	req := &proto.CallRequest{
-		Name: funcName,
-	}
 	funcArgBytes, err := json.Marshal(funcArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal Call() funcArgs")
 	}
-	req.Args = funcArgBytes
+	req := &proto.CallRequest{
+		Name: funcName,
+		Args: funcArgBytes,
+	}
 
 	response, err := m.client.Call(context.Background(), req)
 	if err != nil {
@@ -65,7 +65,7 @@ func (m *functionGRPCServer) GetNames(ctx context.Context, req *proto.Empty) (*p
 	log.Info().Interface("req", req).Msg("gRPC GetNames() called on plugin side")
 	v, err := m.Impl.GetNames()
 	if err != nil {
-		log.Error().Err(err).Msg("gRPC GetNames execution failed")
+		log.Error().Err(err).Msg("gRPC GetNames() execution failed")
 		return nil, err
 	}
 	return &proto.GetNamesResponse{Names: v}, err

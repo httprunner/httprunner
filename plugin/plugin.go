@@ -51,8 +51,8 @@ func Register(funcName string, fn interface{}) {
 	functions[funcName] = reflect.ValueOf(fn)
 }
 
-// Serve starts a plugin server process in RPC mode.
-func ServeRPC() {
+// serveRPC starts a plugin server process in RPC mode.
+func serveRPC() {
 	log.Info().Msg("start plugin server in RPC mode")
 	funcPlugin := &functionPlugin{
 		logger: hclog.New(&hclog.LoggerOptions{
@@ -72,8 +72,8 @@ func ServeRPC() {
 	})
 }
 
-// Serve starts a plugin server process in gRPC mode.
-func ServeGRPC() {
+// serveGRPC starts a plugin server process in gRPC mode.
+func serveGRPC() {
 	log.Info().Msg("start plugin server in gRPC mode")
 	funcPlugin := &functionPlugin{
 		logger: hclog.New(&hclog.LoggerOptions{
@@ -95,4 +95,11 @@ func ServeGRPC() {
 }
 
 // default to run plugin in gRPC mode
-var Serve = ServeGRPC
+func Serve() {
+	if pluginInternal.IsRPCPluginType() {
+		serveRPC()
+	} else {
+		// default
+		serveGRPC()
+	}
+}
