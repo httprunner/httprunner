@@ -1,8 +1,13 @@
 # Release History
 
-## v0.6.3 (2022-02-22)
+## v0.6.3 (2022-03-04)
 
+- refactor: replace hashicorp plugin from net/rpc to gPRC mode
 - feat: support customized setup/teardown hooks (variable assignment not supported)
+- feat: add flag `--log-plugin` to turn on plugin logging
+- change: add short flag `-c` for `--continue-on-failure`
+- change: use `--log-requests-off` flag to turn off request & response details logging
+- fix: support posting body in json array format
 
 ## v0.6.2 (2022-02-22)
 
