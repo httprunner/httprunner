@@ -7,6 +7,7 @@ import (
 
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/rs/zerolog/log"
 
 	pluginInternal "github.com/httprunner/hrp/plugin/inner"
 )
@@ -50,21 +51,48 @@ func Register(funcName string, fn interface{}) {
 	functions[funcName] = reflect.ValueOf(fn)
 }
 
-// Serve starts a plugin server process.
-func Serve() {
+// Serve starts a plugin server process in RPC mode.
+func ServeRPC() {
+	log.Info().Msg("start plugin server in RPC mode")
 	funcPlugin := &functionPlugin{
 		logger: hclog.New(&hclog.LoggerOptions{
-			Name:   pluginInternal.PluginName,
+			Name:   pluginInternal.RPCPluginName,
 			Output: os.Stdout,
 			Level:  hclog.Info,
 		}),
 		functions: functions,
 	}
 	var pluginMap = map[string]plugin.Plugin{
-		pluginInternal.PluginName: &pluginInternal.HRPPlugin{Impl: funcPlugin},
+		pluginInternal.RPCPluginName: &pluginInternal.RPCPlugin{Impl: funcPlugin},
 	}
+	// start RPC server
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: pluginInternal.HandshakeConfig,
 		Plugins:         pluginMap,
 	})
 }
+
+// Serve starts a plugin server process in gRPC mode.
+func ServeGRPC() {
+	log.Info().Msg("start plugin server in gRPC mode")
+	funcPlugin := &functionPlugin{
+		logger: hclog.New(&hclog.LoggerOptions{
+			Name:   pluginInternal.GRPCPluginName,
+			Output: os.Stdout,
+			Level:  hclog.Info,
+		}),
+		functions: functions,
+	}
+	var pluginMap = map[string]plugin.Plugin{
+		pluginInternal.GRPCPluginName: &pluginInternal.GRPCPlugin{Impl: funcPlugin},
+	}
+	// start gRPC server
+	plugin.Serve(&plugin.ServeConfig{
+		HandshakeConfig: pluginInternal.HandshakeConfig,
+		Plugins:         pluginMap,
+		GRPCServer:      plugin.DefaultGRPCServer,
+	})
+}
+
+// default to run plugin in gRPC mode
+var Serve = ServeGRPC

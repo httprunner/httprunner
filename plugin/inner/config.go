@@ -3,6 +3,8 @@ package pluginInternal
 import "github.com/hashicorp/go-plugin"
 
 const PluginName = "debugtalk"
+const RPCPluginName = PluginName + "_rpc"
+const GRPCPluginName = PluginName + "_grpc"
 
 // handshakeConfigs are used to just do a basic handshake between
 // a plugin and host. If the handshake fails, a user friendly error is shown.
