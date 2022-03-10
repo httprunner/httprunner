@@ -72,7 +72,7 @@ var demoPlugin = `package main
 import (
 	"fmt"
 
-	"github.com/httprunner/hrp/plugin"
+	"github.com/httprunner/plugin"
 )
 
 func SumTwoInt(a, b int) int {

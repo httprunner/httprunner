@@ -32,7 +32,7 @@ import (
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
 	"github.com/httprunner/hrp/internal/json"
-	pluginInternal "github.com/httprunner/hrp/plugin/go"
+	pluginInternal "github.com/httprunner/plugin/go"
 )
 
 const (
