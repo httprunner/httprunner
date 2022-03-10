@@ -6,7 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/httprunner/hrp/plugin v0.0.0
+	github.com/httprunner/plugin v0.1.1
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
@@ -18,8 +18,7 @@ require (
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
-replace github.com/httprunner/hrp/plugin => ./plugin
+// replace github.com/httprunner/plugin => ./plugin

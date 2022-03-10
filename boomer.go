@@ -9,7 +9,7 @@ import (
 
 	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
-	pluginInternal "github.com/httprunner/hrp/plugin/go"
+	pluginInternal "github.com/httprunner/plugin/go"
 )
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
