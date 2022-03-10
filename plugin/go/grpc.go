@@ -8,9 +8,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
-	"github.com/httprunner/hrp/internal/json"
 	"github.com/httprunner/hrp/plugin/go/proto"
+	jsoniter "github.com/json-iterator/go"
 )
+
+// replace with third-party json library to improve performance
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // functionGRPCClient runs on the host side, it implements FuncCaller interface
 type functionGRPCClient struct {
