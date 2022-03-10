@@ -7,7 +7,7 @@ on:
 jobs:
   scaffold:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         go-version:
           - 1.17.x

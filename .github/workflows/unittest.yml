@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         go-version:
           - 1.16.x
