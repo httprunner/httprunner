@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	demoTestCaseJSONPath = "../../examples/demo.json"
-	demoTestCaseYAMLPath = "../../examples/demo.yaml"
+	demoTestCaseJSONPath hrp.TestCasePath = "../../examples/demo.json"
+	demoTestCaseYAMLPath hrp.TestCasePath = "../../examples/demo.yaml"
 )
 
 func buildHashicorpPlugin() {
@@ -33,11 +33,11 @@ func removeHashicorpPlugin() {
 
 func TestGenDemoTestCase(t *testing.T) {
 	tCase, _ := demoTestCase.ToTCase()
-	err := builtin.Dump2JSON(tCase, demoTestCaseJSONPath)
+	err := builtin.Dump2JSON(tCase, demoTestCaseJSONPath.ToString())
 	if err != nil {
 		t.Fail()
 	}
-	err = builtin.Dump2YAML(tCase, demoTestCaseYAMLPath)
+	err = builtin.Dump2YAML(tCase, demoTestCaseYAMLPath.ToString())
 	if err != nil {
 		t.Fail()
 	}
@@ -58,8 +58,7 @@ func TestJsonDemo(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
-	testCase := &hrp.TestCasePath{Path: demoTestCaseJSONPath}
-	err := hrp.NewRunner(nil).Run(testCase) // hrp.Run(testCase)
+	err := hrp.NewRunner(nil).Run(&demoTestCaseJSONPath) // hrp.Run(testCase)
 	if err != nil {
 		t.Fail()
 	}
@@ -69,8 +68,7 @@ func TestYamlDemo(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
-	testCase := &hrp.TestCasePath{Path: demoTestCaseYAMLPath}
-	err := hrp.NewRunner(nil).Run(testCase) // hrp.Run(testCase)
+	err := hrp.NewRunner(nil).Run(&demoTestCaseYAMLPath) // hrp.Run(testCase)
 	if err != nil {
 		t.Fail()
 	}

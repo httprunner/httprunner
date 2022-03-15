@@ -585,13 +585,13 @@
                 {
                     "check": "status_code",
                     "assert": "equals",
-                    "expect": 302,
+                    "expect": 200,
                     "msg": "assert response status code"
                 },
                 {
                     "check": "headers.\"Content-Type\"",
                     "assert": "equals",
-                    "expect": "text/plain; charset=utf-8",
+                    "expect": "application/json; charset=utf-8",
                     "msg": "assert response header Content-Type"
                 }
             ]
@@ -695,13 +695,13 @@
                 {
                     "check": "status_code",
                     "assert": "equals",
-                    "expect": 302,
+                    "expect": 200,
                     "msg": "assert response status code"
                 },
                 {
                     "check": "headers.\"Content-Type\"",
                     "assert": "equals",
-                    "expect": "text/plain; charset=utf-8",
+                    "expect": "application/json; charset=utf-8",
                     "msg": "assert response header Content-Type"
                 }
             ]

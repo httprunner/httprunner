@@ -1,0 +1,11 @@
+config:
+  name: "reference testcase test"
+  base_url: "https://postman-echo.com"
+  variables:
+    os_platform: 'ios'
+
+teststeps:
+  - name: run demo_httprunner.yaml
+    testcase: examples/demo_httprunner.yaml
+    variables:
+      os_platform: $os_platform

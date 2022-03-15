@@ -333,6 +333,112 @@ func TestMergeVariables(t *testing.T) {
 	}
 }
 
+func TestMergeMap(t *testing.T) {
+	testData := []struct {
+		m             map[string]string
+		overriddenMap map[string]string
+		expectMap     map[string]string
+	}{
+		{
+			map[string]string{"Accept": "*/*", "Accept-Encoding": "gzip, deflate, br", "Connection": "close"},
+			map[string]string{"Cache-Control": "no-cache", "Connection": "keep-alive"},
+			map[string]string{"Accept": "*/*", "Accept-Encoding": "gzip, deflate, br", "Connection": "close", "Cache-Control": "no-cache"},
+		},
+		{
+			map[string]string{"Host": "postman-echo.com", "Postman-Token": "ea19464c-ddd4-4724-abe9-5e2b254c2723"},
+			map[string]string{"Host": "Postman-echo.com", "Connection": "keep-alive", "Postman-Token": "ea19464c-ddd4-4724-abe9-5e2b342c2723"},
+			map[string]string{"Host": "postman-echo.com", "Postman-Token": "ea19464c-ddd4-4724-abe9-5e2b254c2723", "Connection": "keep-alive"},
+		},
+		{
+			map[string]string{"Accept": "*/*", "Accept-Encoding": "gzip, deflate, br", "Connection": "close"},
+			nil,
+			map[string]string{"Accept": "*/*", "Accept-Encoding": "gzip, deflate, br", "Connection": "close"},
+		},
+		{
+			nil,
+			map[string]string{"Cache-Control": "no-cache", "Connection": "keep-alive"},
+			map[string]string{"Cache-Control": "no-cache", "Connection": "keep-alive"},
+		},
+	}
+
+	for _, data := range testData {
+		mergedMap := mergeMap(data.m, data.overriddenMap)
+		if !assert.Equal(t, data.expectMap, mergedMap) {
+			t.Fail()
+		}
+	}
+}
+
+func TestMergeSlices(t *testing.T) {
+	testData := []struct {
+		slice           []string
+		overriddenSlice []string
+		expectSlice     []string
+	}{
+		{
+			[]string{"${setup_hook_example1($name)}", "${setup_hook_example2($name)}"},
+			[]string{"${setup_hook_example3($name)}", "${setup_hook_example4($name)}"},
+			[]string{"${setup_hook_example1($name)}", "${setup_hook_example2($name)}", "${setup_hook_example3($name)}", "${setup_hook_example4($name)}"},
+		},
+		{
+			[]string{"${setup_hook_example1($name)}", "${setup_hook_example2($name)}"},
+			nil,
+			[]string{"${setup_hook_example1($name)}", "${setup_hook_example2($name)}"},
+		},
+		{
+			nil,
+			[]string{"${setup_hook_example3($name)}", "${setup_hook_example4($name)}"},
+			[]string{"${setup_hook_example3($name)}", "${setup_hook_example4($name)}"},
+		},
+	}
+
+	for _, data := range testData {
+		mergedSlice := mergeSlices(data.slice, data.overriddenSlice)
+		if !assert.Equal(t, data.expectSlice, mergedSlice) {
+			t.Fail()
+		}
+	}
+}
+
+func TestMergeValidators(t *testing.T) {
+	testData := []struct {
+		validators           []interface{}
+		overriddenValidators []interface{}
+		expectValidators     []interface{}
+	}{
+		{
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 200, Message: "assert response status code"}},
+			[]interface{}{Validator{Check: `headers."Content-Type"`, Assert: "equals", Expect: "application/json; charset=utf-8", Message: "assert response header Content-Typ"}},
+			[]interface{}{
+				Validator{Check: "status_code", Assert: "equals", Expect: 200, Message: "assert response status code"},
+				Validator{Check: `headers."Content-Type"`, Assert: "equals", Expect: "application/json; charset=utf-8", Message: "assert response header Content-Typ"},
+			},
+		},
+		{
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 302, Message: "assert response status code"}},
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 200, Message: "assert response status code"}},
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 302, Message: "assert response status code"}},
+		},
+		{
+			nil,
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 200, Message: "assert response status code"}},
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 200, Message: "assert response status code"}},
+		},
+		{
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 302, Message: "assert response status code"}},
+			nil,
+			[]interface{}{Validator{Check: "status_code", Assert: "equals", Expect: 302, Message: "assert response status code"}},
+		},
+	}
+
+	for _, data := range testData {
+		mergedValidators := mergeValidators(data.validators, data.overriddenValidators)
+		if !assert.Equal(t, data.expectValidators, mergedValidators) {
+			t.Fail()
+		}
+	}
+}
+
 func TestCallBuiltinFunction(t *testing.T) {
 	parser := newParser()
 

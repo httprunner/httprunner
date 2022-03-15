@@ -13,52 +13,80 @@ import (
 	"github.com/httprunner/hrp/internal/json"
 )
 
-func loadFromJSON(path string) (*TCase, error) {
+func loadFromJSON(path string, structObj interface{}) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return nil, err
+		return err
 	}
-	log.Info().Str("path", path).Msg("load json testcase")
+	log.Info().Str("path", path).Msg("load json")
 
 	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("load json path failed")
-		return nil, err
+		return err
 	}
 
-	tc := &TCase{}
 	decoder := json.NewDecoder(bytes.NewReader(file))
 	decoder.UseNumber()
-	err = decoder.Decode(tc)
-	if err != nil {
-		return tc, err
-	}
-	err = convertCompatTestCase(tc)
-	return tc, err
+	err = decoder.Decode(structObj)
+	return err
 }
 
-func loadFromYAML(path string) (*TCase, error) {
+func loadFromYAML(path string, structObj interface{}) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return nil, err
+		return err
 	}
-	log.Info().Str("path", path).Msg("load yaml testcase")
+	log.Info().Str("path", path).Msg("load yaml")
 
 	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("load yaml path failed")
-		return nil, err
+		return err
 	}
 
-	tc := &TCase{}
-	err = yaml.Unmarshal(file, tc)
-	if err != nil {
-		return tc, nil
+	err = yaml.Unmarshal(file, structObj)
+	return err
+}
+
+func convertCompatValidator(Validators []interface{}) (err error) {
+	for i, iValidator := range Validators {
+		validatorMap := iValidator.(map[string]interface{})
+		validator := Validator{}
+		_, checkExisted := validatorMap["check"]
+		_, assertExisted := validatorMap["assert"]
+		_, expectExisted := validatorMap["expect"]
+		// check priority: HRP > HttpRunner
+		if checkExisted && assertExisted && expectExisted {
+			// HRP validator format
+			validator.Check = validatorMap["check"].(string)
+			validator.Assert = validatorMap["assert"].(string)
+			validator.Expect = validatorMap["expect"]
+			if msg, existed := validatorMap["msg"]; existed {
+				validator.Message = msg.(string)
+			}
+			validator.Check = convertCheckExpr(validator.Check)
+			Validators[i] = validator
+		} else if len(validatorMap) == 1 {
+			// HttpRunner validator format
+			for assertMethod, iValidatorContent := range validatorMap {
+				checkAndExpect := iValidatorContent.([]interface{})
+				if len(checkAndExpect) != 2 {
+					return fmt.Errorf("unexpected validator format: %v", validatorMap)
+				}
+				validator.Check = checkAndExpect[0].(string)
+				validator.Assert = assertMethod
+				validator.Expect = checkAndExpect[1]
+			}
+			validator.Check = convertCheckExpr(validator.Check)
+			Validators[i] = validator
+		} else {
+			return fmt.Errorf("unexpected validator format: %v", validatorMap)
+		}
 	}
-	err = convertCompatTestCase(tc)
-	return tc, err
+	return nil
 }
 
 func convertCompatTestCase(tc *TCase) (err error) {
@@ -79,42 +107,12 @@ func convertCompatTestCase(tc *TCase) (err error) {
 		}
 
 		// 2. deal with validators compatible with HttpRunner
-		for i, iValidator := range step.Validators {
-			validatorMap := iValidator.(map[string]interface{})
-			validator := Validator{}
-			_, checkExisted := validatorMap["check"]
-			_, assertExisted := validatorMap["assert"]
-			_, expectExisted := validatorMap["expect"]
-			// check priority: HRP > HttpRunner
-			if checkExisted && assertExisted && expectExisted {
-				// HRP validator format
-				validator.Check = validatorMap["check"].(string)
-				validator.Assert = validatorMap["assert"].(string)
-				validator.Expect = validatorMap["expect"]
-				if msg, existed := validatorMap["msg"]; existed {
-					validator.Message = msg.(string)
-				}
-				validator.Check = convertCheckExpr(validator.Check)
-				step.Validators[i] = validator
-			} else if len(validatorMap) == 1 {
-				// HttpRunner validator format
-				for assertMethod, iValidatorContent := range validatorMap {
-					checkAndExpect := iValidatorContent.([]interface{})
-					if len(checkAndExpect) != 2 {
-						return fmt.Errorf("unexpected validator format: %v", validatorMap)
-					}
-					validator.Check = checkAndExpect[0].(string)
-					validator.Assert = assertMethod
-					validator.Expect = checkAndExpect[1]
-				}
-				validator.Check = convertCheckExpr(validator.Check)
-				step.Validators[i] = validator
-			} else {
-				return fmt.Errorf("unexpected validator format: %v", validatorMap)
-			}
+		err = convertCompatValidator(step.Validators)
+		if err != nil {
+			return err
 		}
 	}
-	return err
+	return nil
 }
 
 // convertCheckExpr deals with check expression including hyphen
@@ -136,12 +134,30 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
-		if step.Request != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
+		if step.APIPath != "" {
+			refAPI := APIPath(step.APIPath)
+			step.APIContent = &refAPI
+			apiContent, err := step.APIContent.ToAPI()
+			if err != nil {
+				return nil, err
+			}
+			step.APIContent = apiContent
+			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
 				step: step,
 			})
-		} else if step.TestCase != nil {
+		} else if step.TestCasePath != "" {
+			refTestCase := TestCasePath(step.TestCasePath)
+			step.TestCaseContent = &refTestCase
+			tc, err := step.TestCaseContent.ToTestCase()
+			if err != nil {
+				return nil, err
+			}
+			step.TestCaseContent = tc
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
+				step: step,
+			})
+		} else if step.Request != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
 				step: step,
 			})
 		} else if step.Transaction != nil {
@@ -161,29 +177,63 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 
 var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
 
-// TestCasePath implements ITestCase interface.
-type TestCasePath struct {
-	Path string
+// APIPath implements IAPI interface.
+type APIPath string
+
+func (path *APIPath) ToString() string {
+	return fmt.Sprintf("%v", *path)
 }
 
-func (path *TestCasePath) ToTestCase() (*TestCase, error) {
-	var tc *TCase
+func (path *APIPath) ToAPI() (*API, error) {
+	api := &API{}
 	var err error
 
-	casePath := path.Path
-	ext := filepath.Ext(casePath)
+	apiPath := path.ToString()
+	ext := filepath.Ext(apiPath)
 	switch ext {
 	case ".json":
-		tc, err = loadFromJSON(casePath)
+		err = loadFromJSON(apiPath, api)
 	case ".yaml", ".yml":
-		tc, err = loadFromYAML(casePath)
+		err = loadFromYAML(apiPath, api)
 	default:
 		err = ErrUnsupportedFileExt
 	}
 	if err != nil {
 		return nil, err
 	}
-	tc.Config.Path = path.Path
+	err = convertCompatValidator(api.Validators)
+	return api, err
+}
+
+// TestCasePath implements ITestCase interface.
+type TestCasePath string
+
+func (path *TestCasePath) ToString() string {
+	return fmt.Sprintf("%v", *path)
+}
+
+func (path *TestCasePath) ToTestCase() (*TestCase, error) {
+	tc := &TCase{}
+	var err error
+
+	casePath := path.ToString()
+	ext := filepath.Ext(casePath)
+	switch ext {
+	case ".json":
+		err = loadFromJSON(casePath, tc)
+	case ".yaml", ".yml":
+		err = loadFromYAML(casePath, tc)
+	default:
+		err = ErrUnsupportedFileExt
+	}
+	if err != nil {
+		return nil, err
+	}
+	err = convertCompatTestCase(tc)
+	if err != nil {
+		return nil, err
+	}
+	tc.Config.Path = path.ToString()
 	testcase, err := tc.ToTestCase()
 	if err != nil {
 		return nil, err
