@@ -49,17 +49,26 @@ func TestHttpRunner(t *testing.T) {
 					AssertEqual("status_code", 200, "check status code").
 					AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
 			}}),
+			NewStep("TestCase4").CallRefCase(&demoRefAPIYAMLPath),
+			NewStep("TestCase5").CallRefCase(&demoTestCaseJSONPath),
 		},
 	}
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").SetWeight(3),
 	}
-	testcase3 := &TestCasePath{demoTestCaseJSONPath}
+	testcase3 := &TestCase{
+		Config: NewConfig("TestCase1").
+			SetBaseURL("https://postman-echo.com"),
+		TestSteps: []IStep{
+			NewStep("TestCase5").CallRefAPI(&demoAPIYAMLPath),
+		},
+	}
+	testcase4 := &demoRefTestCaseJSONPath
 
 	r := NewRunner(t)
 	r.saveTests = true
 	r.genHTMLReport = true
-	err := r.Run(testcase1, testcase2, testcase3)
+	err := r.Run(testcase1, testcase2, testcase3, testcase4)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
