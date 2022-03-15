@@ -1,0 +1,45 @@
+{
+    "name": "",
+    "request": {
+        "method": "POST",
+        "url": "/post",
+        "headers": {
+            "Content-Length": "58",
+            "Content-Type": "text/plain",
+            "Postman-Token": "$session_token"
+        },
+        "body": "This is expected to be sent back as part of response body."
+    },
+    "validate": [
+        {
+            "check": "status_code",
+            "assert": "equals",
+            "expect": 200,
+            "msg": "assert response status code"
+        },
+        {
+            "check": "headers.\"Content-Type\"",
+            "assert": "equals",
+            "expect": "application/json; charset=utf-8",
+            "msg": "assert response header Content-Type"
+        },
+        {
+            "check": "body.data",
+            "assert": "equals",
+            "expect": "This is expected to be sent back as part of response body.",
+            "msg": "assert response body data"
+        },
+        {
+            "check": "body.json",
+            "assert": "equals",
+            "expect": null,
+            "msg": "assert response body json"
+        },
+        {
+            "check": "body.url",
+            "assert": "equals",
+            "expect": "https://postman-echo.com/post",
+            "msg": "assert response body url"
+        }
+    ]
+}
