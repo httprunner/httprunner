@@ -7,9 +7,9 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
 
+	funcPlugin "github.com/httprunner/func-plugin"
 	"github.com/httprunner/hrp/internal/boomer"
 	"github.com/httprunner/hrp/internal/ga"
-	pluginInternal "github.com/httprunner/plugin/go"
 )
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
@@ -22,8 +22,8 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 
 type HRPBoomer struct {
 	*boomer.Boomer
-	plugins      []pluginInternal.IPlugin // each task has its own plugin process
-	pluginsMutex *sync.RWMutex            // avoid data race
+	plugins      []funcPlugin.IPlugin // each task has its own plugin process
+	pluginsMutex *sync.RWMutex        // avoid data race
 }
 
 // Run starts to run load test for one or multiple testcases.

@@ -12,9 +12,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	funcPlugin "github.com/httprunner/func-plugin"
+	"github.com/httprunner/func-plugin/shared"
 	"github.com/httprunner/hrp/internal/builtin"
-	pluginInternal "github.com/httprunner/plugin/go"
-	pluginUtils "github.com/httprunner/plugin/utils"
 )
 
 func newParser() *parser {
@@ -22,7 +22,7 @@ func newParser() *parser {
 }
 
 type parser struct {
-	plugin pluginInternal.IPlugin // plugin is used to call functions
+	plugin funcPlugin.IPlugin // plugin is used to call functions
 }
 
 func buildURL(baseURL, stepURL string) string {
@@ -253,7 +253,7 @@ func (p *parser) callFunc(funcName string, arguments ...interface{}) (interface{
 	fn := reflect.ValueOf(function)
 
 	// call with builtin function
-	return pluginUtils.CallFunc(fn, arguments...)
+	return shared.CallFunc(fn, arguments...)
 }
 
 // merge two variables mapping, the first variables have higher priority

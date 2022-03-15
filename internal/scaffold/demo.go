@@ -72,7 +72,7 @@ var demoPlugin = `package main
 import (
 	"fmt"
 
-	"github.com/httprunner/plugin"
+	plugin "github.com/httprunner/func-plugin/go"
 )
 
 func SumTwoInt(a, b int) int {
