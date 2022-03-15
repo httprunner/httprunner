@@ -281,6 +281,99 @@ func mergeVariables(variables, overriddenVariables map[string]interface{}) map[s
 	return mergedVariables
 }
 
+// merge two map, the first map have higher priority
+func mergeMap(m, overriddenMap map[string]string) map[string]string {
+	if overriddenMap == nil {
+		return m
+	}
+	if m == nil {
+		return overriddenMap
+	}
+
+	mergedMap := make(map[string]string)
+	for k, v := range overriddenMap {
+		mergedMap[k] = v
+	}
+	for k, v := range m {
+		mergedMap[k] = v
+	}
+	return mergedMap
+}
+
+// merge two validators slice, the first validators have higher priority
+func mergeValidators(validators, overriddenValidators []interface{}) []interface{} {
+	if validators == nil {
+		return overriddenValidators
+	}
+	if overriddenValidators == nil {
+		return validators
+	}
+	var mergedValidators []interface{}
+	validators = append(validators, overriddenValidators...)
+	for _, validator := range validators {
+		flag := true
+		for _, mergedValidator := range mergedValidators {
+			if validator.(Validator).Check == mergedValidator.(Validator).Check {
+				flag = false
+				break
+			}
+		}
+		if flag {
+			mergedValidators = append(mergedValidators, validator)
+		}
+	}
+	return mergedValidators
+}
+
+// merge two slices, the first slice have higher priority
+func mergeSlices(slice, overriddenSlice []string) []string {
+	if slice == nil {
+		return overriddenSlice
+	}
+	if overriddenSlice == nil {
+		return slice
+	}
+
+	for _, value := range overriddenSlice {
+		if !builtin.Contains(slice, value) {
+			slice = append(slice, value)
+		}
+	}
+	return slice
+}
+
+// extend teststep with api, teststep will merge and override referenced api
+func extendWithAPI(testStep *TStep, overriddenStep *API) {
+	// override api name
+	if testStep.Name == "" {
+		testStep.Name = overriddenStep.Name
+	}
+	// merge & override request
+	testStep.Request = overriddenStep.Request
+	// merge & override variables
+	testStep.Variables = mergeVariables(testStep.Variables, overriddenStep.Variables)
+	// merge & override extractors
+	testStep.Extract = mergeMap(testStep.Extract, overriddenStep.Extract)
+	// merge & override validators
+	testStep.Validators = mergeValidators(testStep.Validators, overriddenStep.Validators)
+	// merge & override setupHooks
+	testStep.SetupHooks = mergeSlices(testStep.SetupHooks, overriddenStep.SetupHooks)
+	// merge & override teardownHooks
+	testStep.TeardownHooks = mergeSlices(testStep.TeardownHooks, overriddenStep.TeardownHooks)
+}
+
+// extend referenced testcase with teststep, teststep config merge and override referenced testcase config
+func extendWithTestCase(testStep *TStep, overriddenTestCase *TestCase) {
+	// override testcase name
+	if testStep.Name != "" {
+		overriddenTestCase.Config.Name = testStep.Name
+	}
+	// merge & override variables
+	overriddenTestCase.Config.Variables = mergeVariables(testStep.Variables, overriddenTestCase.Config.Variables)
+	// merge & override extractors
+	overriddenTestCase.Config.Export = mergeSlices(testStep.Export, overriddenTestCase.Config.Export)
+}
+
 var eval = goval.NewEvaluator()
 
 // literalEval parse string to number if possible

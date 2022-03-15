@@ -12,4 +12,5 @@ var (
 	MarshalIndent = json.MarshalIndent
 	Unmarshal     = json.Unmarshal
 	NewDecoder    = json.NewDecoder
+	Get           = json.Get
 )
