@@ -29,10 +29,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	funcPlugin "github.com/httprunner/func-plugin"
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
 	"github.com/httprunner/hrp/internal/json"
-	pluginInternal "github.com/httprunner/plugin/go"
 )
 
 const (
@@ -282,8 +282,8 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func initPlugin(path string, logOn bool) (plugin pluginInternal.IPlugin, err error) {
-	plugin, err = pluginInternal.Init(path, logOn)
+func initPlugin(path string, logOn bool) (plugin funcPlugin.IPlugin, err error) {
+	plugin, err = funcPlugin.Init(path, logOn)
 	if plugin == nil {
 		return
 	}
@@ -298,15 +298,9 @@ func initPlugin(path string, logOn bool) (plugin pluginInternal.IPlugin, err err
 	}()
 
 	// report event for initializing plugin
-	var pluginType string
-	if _, ok := plugin.(*pluginInternal.GoPlugin); ok {
-		pluginType = "go"
-	} else {
-		pluginType = "hashicorp"
-	}
 	event := ga.EventTracking{
 		Category: "InitPlugin",
-		Action:   fmt.Sprintf("Init %s plugin", pluginType),
+		Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
 	}
 	if err != nil {
 		event.Value = 1 // failed
