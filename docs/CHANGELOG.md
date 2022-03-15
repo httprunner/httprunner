@@ -1,5 +1,13 @@
 # Release History
 
+## v0.7.0 (2022-03-15)
+
+- feat: support API layer for testcase #94
+- feat: support global headers for testcase #95
+- feat: support call referenced testcase by path in YAML/JSON testcases
+- fix: decode failure when content-encoding is deflate
+- fix: unstable RPS when load testing in high concurrency
+
 ## v0.6.4 (2022-03-10)
 
 - feat: both support gPRC(default) and net/rpc mode in hashicorp plugin, switch with environment `HRP_PLUGIN_TYPE`
