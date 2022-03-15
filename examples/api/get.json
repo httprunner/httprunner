@@ -1,0 +1,34 @@
+{
+    "name": "",
+    "request": {
+        "method": "GET",
+        "url": "/get",
+        "params": {
+            "foo1": "bar1",
+            "foo2": "bar2"
+        },
+        "headers": {
+            "Postman-Token": "ea19464c-ddd4-4724-abe9-5e2b254c2723"
+        }
+    },
+    "validate": [
+        {
+            "check": "status_code",
+            "assert": "equals",
+            "expect": 200,
+            "msg": "assert response status code"
+        },
+        {
+            "check": "headers.\"Content-Type\"",
+            "assert": "equals",
+            "expect": "application/json; charset=utf-8",
+            "msg": "assert response header Content-Type"
+        },
+        {
+            "check": "body.url",
+            "assert": "equals",
+            "expect": "https://postman-echo.com/get?foo1=bar1&foo2=bar2",
+            "msg": "assert response body url"
+        }
+    ]
+}

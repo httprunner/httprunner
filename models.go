@@ -26,6 +26,7 @@ type TConfig struct {
 	Name              string                 `json:"name" yaml:"name"` // required
 	Verify            bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
 	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
+	Headers           map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
@@ -104,6 +105,21 @@ type Request struct {
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
 }
 
+type API struct {
+	Name          string                 `json:"name" yaml:"name"` // required
+	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
+	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+}
+
+func (api *API) ToAPI() (*API, error) {
+	return api, nil
+}
+
 // Validator represents validator for one HTTP response.
 type Validator struct {
 	Check   string      `json:"check" yaml:"check"` // get value with jmespath
@@ -112,20 +128,29 @@ type Validator struct {
 	Message string      `json:"msg,omitempty" yaml:"msg,omitempty"` // optional
 }
 
+// IAPI represents interface for api,
+// includes API and APIPath.
+type IAPI interface {
+	ToAPI() (*API, error)
+}
+
 // TStep represents teststep data structure.
 // Each step maybe two different type: make one HTTP request or reference another testcase.
 type TStep struct {
-	Name          string                 `json:"name" yaml:"name"` // required
-	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
-	TestCase      *TestCase              `json:"testcase,omitempty" yaml:"testcase,omitempty"`
-	Transaction   *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
-	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
-	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
-	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
-	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
-	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Name            string                 `json:"name" yaml:"name"` // required
+	Request         *Request               `json:"request,omitempty" yaml:"request,omitempty"`
+	APIPath         string                 `json:"api,omitempty" yaml:"api,omitempty"`
+	TestCasePath    string                 `json:"testcase,omitempty" yaml:"testcase,omitempty"`
+	APIContent      IAPI                   `json:"api_content,omitempty" yaml:"api_content,omitempty"`
+	TestCaseContent ITestCase              `json:"testcase_content,omitempty" yaml:"testcase_content,omitempty"`
+	Transaction     *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
+	Rendezvous      *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
+	Variables       map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks      []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks   []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract         map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators      []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	Export          []string               `json:"export,omitempty" yaml:"export,omitempty"`
 }
 
 type stepType string

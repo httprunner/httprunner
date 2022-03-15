@@ -3,13 +3,14 @@ package hrp
 import (
 	"bufio"
 	"bytes"
-	"compress/flate"
 	"compress/gzip"
+	"compress/zlib"
 	"crypto/tls"
 	_ "embed"
 	"fmt"
 	"html/template"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -72,6 +73,20 @@ type HRPRunner struct {
 	saveTests     bool
 	genHTMLReport bool
 	client        *http.Client
+}
+
+// SetClientTransport configures transport of http client for high concurrency load testing
+func (r *HRPRunner) SetClientTransport(maxConns int, disableKeepAlive bool, disableCompression bool) *HRPRunner {
+	log.Info().Int("maxConns", maxConns).Msg("[init] SetClientTransport")
+	r.client.Transport = &http.Transport{
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
+		DialContext:         (&net.Dialer{}).DialContext,
+		MaxIdleConns:        0,
+		MaxIdleConnsPerHost: maxConns,
+		DisableKeepAlives:   disableKeepAlive,
+		DisableCompression:  disableCompression,
+	}
+	return r
 }
 
 // SetFailfast configures whether to stop running when one step fails.
@@ -350,12 +365,21 @@ func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepDa
 	if _, ok := step.(*StepTestCaseWithOptionalArgs); ok {
 		// run referenced testcase
 		log.Info().Str("testcase", copiedStep.Name).Msg("run referenced testcase")
-		// TODO: override testcase config
 		stepResult, err = r.runStepTestCase(copiedStep)
 		if err != nil {
 			log.Error().Err(err).Msg("run referenced testcase step failed")
 		}
 	} else {
+		if _, ok := step.(*StepAPIWithOptionalArgs); ok {
+			// run referenced API
+			log.Info().Str("api", copiedStep.Name).Msg("run referenced api")
+			api, _ := copiedStep.APIContent.ToAPI()
+			extendWithAPI(copiedStep, api)
+		}
+		// override headers
+		if caseConfig.Headers != nil {
+			copiedStep.Request.Headers = mergeMap(copiedStep.Request.Headers, caseConfig.Headers)
+		}
 		// parse step request url
 		var requestUrl interface{}
 		requestUrl, err = r.parser.parseString(copiedStep.Request.URL, copiedStep.Variables)
@@ -628,7 +652,6 @@ func (r *caseRunner) runStepRequest(step *TStep) (stepResult *stepData, err erro
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
 		ProtoMinor: 1,
-		Close:      true, // prevent the connection from being re-used
 	}
 
 	// prepare request headers
@@ -900,19 +923,22 @@ func shouldPrintBody(contentType string) bool {
 	return false
 }
 
-func decodeResponseBody(resp *http.Response) error {
+func decodeResponseBody(resp *http.Response) (err error) {
 	switch resp.Header.Get("Content-Encoding") {
 	case "br":
 		resp.Body = io.NopCloser(brotli.NewReader(resp.Body))
 	case "gzip":
-		gr, err := gzip.NewReader(resp.Body)
+		resp.Body, err = gzip.NewReader(resp.Body)
 		if err != nil {
 			return err
 		}
-		resp.Body = gr
 		resp.ContentLength = -1 // set to unknown to avoid Content-Length mismatched
 	case "deflate":
-		resp.Body = flate.NewReader(resp.Body)
+		resp.Body, err = zlib.NewReader(resp.Body)
+		if err != nil {
+			return err
+		}
+		resp.ContentLength = -1 // set to unknown to avoid Content-Length mismatched
 	}
 	return nil
 }
@@ -923,7 +949,7 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
-	testcase := step.TestCase
+	testcase := step.TestCaseContent
 
 	// copy testcase to avoid data racing
 	copiedTestCase := &TestCase{}
@@ -931,6 +957,8 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		log.Error().Err(err).Msg("copy testcase failed")
 		return stepResult, err
 	}
+	// override testcase config
+	extendWithTestCase(step, copiedTestCase)
 
 	start := time.Now()
 	caseRunnerObj := r.hrpRunner.newCaseRunner(copiedTestCase)
@@ -940,6 +968,8 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		return stepResult, err
 	}
 	stepResult.Data = caseRunnerObj.getSummary()
+	// export testcase export variables
+	stepResult.ExportVars = caseRunnerObj.summary.InOut.ExportVars
 	stepResult.Success = true
 	return stepResult, nil
 }
@@ -985,7 +1015,7 @@ func (r *caseRunner) getSummary() *testCaseSummary {
 	caseSummary.Time.Duration = time.Since(r.startTime).Seconds()
 	exportVars := make(map[string]interface{})
 	for _, value := range r.Config.Export {
-		exportVars[value] = r.Config.Variables[value]
+		exportVars[value] = r.sessionVariables[value]
 	}
 	caseSummary.InOut.ExportVars = exportVars
 	caseSummary.InOut.ConfigVars = r.Config.Variables

@@ -255,6 +255,10 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 	var duration float64
 	if entry.Name == "Total" {
 		duration = float64(entry.LastRequestTimestamp - entry.StartTime)
+		// fix: avoid divide by zero
+		if duration < 1 {
+			duration = 1
+		}
 	} else {
 		duration = float64(reportStatsInterval / time.Second)
 	}
