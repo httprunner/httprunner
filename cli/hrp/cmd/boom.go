@@ -25,7 +25,8 @@ var boomCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
-			paths = append(paths, &hrp.TestCasePath{Path: arg})
+			path := hrp.TestCasePath(arg)
+			paths = append(paths, &path)
 		}
 		hrpBoomer := hrp.NewBoomer(spawnCount, spawnRate)
 		hrpBoomer.SetRateLimiter(maxRPS, requestIncreaseRate)
@@ -38,6 +39,8 @@ var boomCmd = &cobra.Command{
 		if prometheusPushgatewayURL != "" {
 			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(prometheusPushgatewayURL, "hrp"))
 		}
+		hrpBoomer.SetDisableKeepAlive(disableKeepalive)
+		hrpBoomer.SetDisableCompression(disableCompression)
 		hrpBoomer.EnableCPUProfile(cpuProfile, cpuProfileDuration)
 		hrpBoomer.EnableMemoryProfile(memoryProfile, memoryProfileDuration)
 		hrpBoomer.Run(paths...)
@@ -56,6 +59,8 @@ var (
 	cpuProfileDuration       time.Duration
 	prometheusPushgatewayURL string
 	disableConsoleOutput     bool
+	disableCompression       bool
+	disableKeepalive         bool
 )
 
 func init() {
@@ -72,4 +77,6 @@ func init() {
 	boomCmd.Flags().DurationVar(&cpuProfileDuration, "cpu-profile-duration", 30*time.Second, "CPU profile duration.")
 	boomCmd.Flags().StringVar(&prometheusPushgatewayURL, "prometheus-gateway", "", "Prometheus Pushgateway url.")
 	boomCmd.Flags().BoolVar(&disableConsoleOutput, "disable-console-output", false, "Disable console output.")
+	boomCmd.Flags().BoolVar(&disableCompression, "disable-compression", false, "Disable compression")
+	boomCmd.Flags().BoolVar(&disableKeepalive, "disable-keepalive", false, "Disable keepalive")
 }

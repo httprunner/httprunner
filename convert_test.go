@@ -7,16 +7,21 @@ import (
 )
 
 var (
-	demoTestCaseJSONPath = "examples/demo.json"
-	demoTestCaseYAMLPath = "examples/demo.yaml"
+	demoTestCaseJSONPath    TestCasePath = "examples/demo.json"
+	demoTestCaseYAMLPath    TestCasePath = "examples/demo.yaml"
+	demoRefAPIYAMLPath      TestCasePath = "examples/ref_api_test.yaml"
+	demoRefTestCaseJSONPath TestCasePath = "examples/ref_testcase_test.json"
+	demoAPIYAMLPath         APIPath      = "examples/api/put.yml"
 )
 
 func TestLoadCase(t *testing.T) {
-	tcJSON, err := loadFromJSON(demoTestCaseJSONPath)
+	tcJSON := &TCase{}
+	tcYAML := &TCase{}
+	err := loadFromJSON(demoTestCaseJSONPath.ToString(), tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	tcYAML, err := loadFromYAML(demoTestCaseYAMLPath)
+	err = loadFromYAML(demoTestCaseYAMLPath.ToString(), tcYAML)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}

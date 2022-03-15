@@ -23,7 +23,8 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
-			paths = append(paths, &hrp.TestCasePath{Path: arg})
+			path := hrp.TestCasePath(arg)
+			paths = append(paths, &path)
 		}
 		runner := hrp.NewRunner(nil).
 			SetFailfast(!continueOnFailure).

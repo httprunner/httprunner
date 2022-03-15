@@ -22,6 +22,12 @@ func (c *TConfig) SetBaseURL(baseURL string) *TConfig {
 	return c
 }
 
+// SetHeaders sets global headers for current testcase.
+func (c *TConfig) SetHeaders(headers map[string]string) *TConfig {
+	c.Headers = headers
+	return c
+}
+
 // SetVerifySSL sets whether to verify SSL for current testcase.
 func (c *TConfig) SetVerifySSL(verify bool) *TConfig {
 	c.Verify = verify
@@ -150,9 +156,17 @@ func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
 }
 
 // CallRefCase calls a referenced testcase.
-func (s *StepRequest) CallRefCase(tc *TestCase) *StepTestCaseWithOptionalArgs {
-	s.step.TestCase = tc
+func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
+	s.step.TestCaseContent, _ = tc.ToTestCase()
 	return &StepTestCaseWithOptionalArgs{
+		step: s.step,
+	}
+}
+
+// CallRefAPI calls a referenced api.
+func (s *StepRequest) CallRefAPI(api IAPI) *StepAPIWithOptionalArgs {
+	s.step.APIContent, _ = api.ToAPI()
+	return &StepAPIWithOptionalArgs{
 		step: s.step,
 	}
 }
@@ -274,6 +288,40 @@ func (s *StepRequestWithOptionalArgs) ToStruct() *TStep {
 	return s.step
 }
 
+// StepAPIWithOptionalArgs implements IStep interface.
+type StepAPIWithOptionalArgs struct {
+	step *TStep
+}
+
+// TeardownHook adds a teardown hook for current teststep.
+func (s *StepAPIWithOptionalArgs) TeardownHook(hook string) *StepAPIWithOptionalArgs {
+	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
+	return s
+}
+
+// Export specifies variable names to export from referenced api for current step.
+func (s *StepAPIWithOptionalArgs) Export(names ...string) *StepAPIWithOptionalArgs {
+	api, _ := s.step.APIContent.ToAPI()
+	s.step.Export = append(api.Export, names...)
+	return s
+}
+
+func (s *StepAPIWithOptionalArgs) Name() string {
+	if s.step.Name != "" {
+		return s.step.Name
+	}
+	api, _ := s.step.APIContent.ToAPI()
+	return api.Name
+}
+
+func (s *StepAPIWithOptionalArgs) Type() string {
+	return "api"
+}
+
+func (s *StepAPIWithOptionalArgs) ToStruct() *TStep {
+	return s.step
+}
+
 // StepTestCaseWithOptionalArgs implements IStep interface.
 type StepTestCaseWithOptionalArgs struct {
 	step *TStep
@@ -295,7 +343,8 @@ func (s *StepTestCaseWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
-	return s.step.TestCase.Config.Name
+	ts, _ := s.step.TestCaseContent.ToTestCase()
+	return ts.Config.Name
 }
 
 func (s *StepTestCaseWithOptionalArgs) Type() string {
