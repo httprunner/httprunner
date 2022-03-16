@@ -2,6 +2,9 @@ package boomer
 
 import (
 	"math"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -93,6 +96,16 @@ func (b *Boomer) EnableCPUProfile(cpuProfile string, duration time.Duration) {
 func (b *Boomer) EnableMemoryProfile(memoryProfile string, duration time.Duration) {
 	b.memoryProfile = memoryProfile
 	b.memoryProfileDuration = duration
+}
+
+// EnableGracefulQuit catch SIGINT and SIGTERM signals to quit gracefully
+func (b *Boomer) EnableGracefulQuit() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		<-c
+		b.Quit()
+	}()
 }
 
 // Run accepts a slice of Task and connects to the locust master.

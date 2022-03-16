@@ -5,9 +5,12 @@ import (
 	"math/rand"
 	"os"
 	"runtime/debug"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/rs/zerolog/log"
 )
@@ -142,6 +145,36 @@ func (r *runner) reportStats() {
 	data["user_count"] = atomic.LoadInt32(&r.currentClientsNum)
 	data["state"] = atomic.LoadInt32(&r.state)
 	r.outputOnEvent(data)
+}
+
+func (r *runner) reportTestResult() {
+	// convert stats in total
+	var statsTotal interface{} = r.stats.total.serialize()
+	entryTotalOutput, err := deserializeStatsEntry(statsTotal)
+	if err != nil {
+		return
+	}
+	duration := time.Duration(entryTotalOutput.LastRequestTimestamp-entryTotalOutput.StartTime) * time.Second
+	currentTime := time.Now()
+	println(fmt.Sprint("=========================================== Statistics Summary =========================================="))
+	println(fmt.Sprintf("Current time: %s, Users: %v, Duration: %v, Accumulated Transactions: %d Passed, %d Failed",
+		currentTime.Format("2006/01/02 15:04:05"), atomic.LoadInt32(&r.currentClientsNum), duration, r.stats.transactionPassed, r.stats.transactionFailed))
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "# requests", "# fails", "Median", "Average", "Min", "Max", "Content Size", "# reqs/sec", "# fails/sec"})
+	row := make([]string, 10)
+	row[0] = entryTotalOutput.Name
+	row[1] = strconv.FormatInt(entryTotalOutput.NumRequests, 10)
+	row[2] = strconv.FormatInt(entryTotalOutput.NumFailures, 10)
+	row[3] = strconv.FormatInt(entryTotalOutput.medianResponseTime, 10)
+	row[4] = strconv.FormatFloat(entryTotalOutput.avgResponseTime, 'f', 2, 64)
+	row[5] = strconv.FormatInt(entryTotalOutput.MinResponseTime, 10)
+	row[6] = strconv.FormatInt(entryTotalOutput.MaxResponseTime, 10)
+	row[7] = strconv.FormatInt(entryTotalOutput.avgContentLength, 10)
+	row[8] = strconv.FormatFloat(entryTotalOutput.currentRps, 'f', 2, 64)
+	row[9] = strconv.FormatFloat(entryTotalOutput.currentFailPerSec, 'f', 2, 64)
+	table.Append(row)
+	table.Render()
+	println()
 }
 
 func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
@@ -323,6 +356,9 @@ func (r *localRunner) start() {
 	if r.rateLimitEnabled {
 		r.rateLimiter.Stop()
 	}
+
+	// report test result
+	r.reportTestResult()
 
 	// output teardown
 	r.outputOnStop()
