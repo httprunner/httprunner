@@ -43,6 +43,7 @@ var boomCmd = &cobra.Command{
 		hrpBoomer.SetDisableCompression(disableCompression)
 		hrpBoomer.EnableCPUProfile(cpuProfile, cpuProfileDuration)
 		hrpBoomer.EnableMemoryProfile(memoryProfile, memoryProfileDuration)
+		hrpBoomer.EnableGracefulQuit()
 		hrpBoomer.Run(paths...)
 	},
 }
