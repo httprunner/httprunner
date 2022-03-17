@@ -6,7 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/httprunner/func-plugin v0.2.0
+	github.com/httprunner/funplugin v0.3.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
@@ -21,4 +21,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
-// replace github.com/httprunner/func-plugin => ../func-plugin
+// replace github.com/httprunner/funplugin => ../funplugin

@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	funcPlugin "github.com/httprunner/func-plugin"
-	"github.com/httprunner/func-plugin/shared"
+	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/hrp/internal/builtin"
 )
 
@@ -22,7 +22,7 @@ func newParser() *parser {
 }
 
 type parser struct {
-	plugin funcPlugin.IPlugin // plugin is used to call functions
+	plugin funplugin.IPlugin // plugin is used to call functions
 }
 
 func buildURL(baseURL, stepURL string) string {

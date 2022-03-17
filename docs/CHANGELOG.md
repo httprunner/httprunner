@@ -11,7 +11,7 @@
 ## v0.6.4 (2022-03-10)
 
 - feat: both support gPRC(default) and net/rpc mode in hashicorp plugin, switch with environment `HRP_PLUGIN_TYPE`
-- refactor: move submodule `plugin` to separate repo `github.com/httprunner/func-plugin`
+- refactor: move submodule `plugin` to separate repo `github.com/httprunner/funplugin`
 - refactor: replace builtin json library with `json-iterator/go` to improve performance
 
 ## v0.6.3 (2022-03-04)

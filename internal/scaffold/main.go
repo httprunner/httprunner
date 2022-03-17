@@ -70,7 +70,7 @@ func CreateScaffold(projectName string) error {
 	}
 
 	// download plugin dependency
-	if err := builtin.ExecCommand(exec.Command("go", "get", "github.com/httprunner/func-plugin"), pluginDir); err != nil {
+	if err := builtin.ExecCommand(exec.Command("go", "get", "github.com/httprunner/funplugin"), pluginDir); err != nil {
 		return err
 	}
 

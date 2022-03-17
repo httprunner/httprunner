@@ -30,7 +30,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	funcPlugin "github.com/httprunner/func-plugin"
+	"github.com/httprunner/funplugin"
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
 	"github.com/httprunner/hrp/internal/json"
@@ -297,8 +297,8 @@ func (r *caseRunner) run() error {
 	return nil
 }
 
-func initPlugin(path string, logOn bool) (plugin funcPlugin.IPlugin, err error) {
-	plugin, err = funcPlugin.Init(path, logOn)
+func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
+	plugin, err = funplugin.Init(path, logOn)
 	if plugin == nil {
 		return
 	}
