@@ -119,15 +119,15 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 
 	var state string
 	switch output.State {
-	case 1:
+	case stateInit:
 		state = "initializing"
-	case 2:
+	case stateSpawning:
 		state = "spawning"
-	case 3:
+	case stateRunning:
 		state = "running"
-	case 4:
+	case stateQuitting:
 		state = "quitting"
-	case 5:
+	case stateStopped:
 		state = "stopped"
 	}
 
@@ -463,7 +463,11 @@ func (o *PrometheusPusherOutput) OnStart() {
 
 // OnStop of PrometheusPusherOutput has nothing to do.
 func (o *PrometheusPusherOutput) OnStop() {
-
+	// update runner state: stopped
+	gaugeState.Set(float64(stateStopped))
+	if err := o.pusher.Push(); err != nil {
+		log.Error().Err(err).Msg("push to Pushgateway failed")
+	}
 }
 
 // OnEvent will push metric to Prometheus Pushgataway
