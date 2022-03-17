@@ -1,0 +1,3000 @@
+{
+	"config": {
+		"name": "testcase description"
+	},
+	"teststeps": [
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/",
+					":scheme": "https",
+					"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"cache-control": "max-age=0",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "document",
+					"sec-fetch-mode": "navigate",
+					"sec-fetch-site": "same-origin",
+					"sec-fetch-user": "?1",
+					"upgrade-insecure-requests": "1",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "text/html; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/common/people_confusion/",
+				"params": {
+					"data": "[6921286]"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/common/people_confusion/?data=[6921286]",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/common/feature_list/",
+				"params": {
+					"products": "[\"corehr\"]"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/common/feature_list/?products=[%22corehr%22]",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/node/api/todo",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/node/api/todo",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.msg",
+					"assert": "equals",
+					"expect": "ok",
+					"msg": "assert response body msg"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/festival_mail_gift/festival_info/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/festival_mail_gift/festival_info/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.current_festival_id",
+					"assert": "equals",
+					"expect": 6,
+					"msg": "assert response body current_festival_id"
+				},
+				{
+					"check": "body.max_export_num",
+					"assert": "equals",
+					"expect": 10000,
+					"msg": "assert response body max_export_num"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/common/get_homepage_billboard_config/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/common/get_homepage_billboard_config/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/cc/security/hidden_watermark",
+				"params": {
+					"color": "FFFFFF",
+					"img_size": "0"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/cc/security/hidden_watermark?color=FFFFFF\u0026img_size=0",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"content-type": "application/json;charset=utf-8",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.msg",
+					"assert": "equals",
+					"expect": "",
+					"msg": "assert response body msg"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/cc/app/dashboard",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/cc/app/dashboard",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.msg",
+					"assert": "equals",
+					"expect": "",
+					"msg": "assert response body msg"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/interview/list_count/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/interview/list_count/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/common/get_avatar_v2/",
+				"params": {
+					"employee_id": "6921286",
+					"size_type": "2"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/common/get_avatar_v2/?size_type=2\u0026employee_id=6921286",
+					":scheme": "https",
+					"accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "image",
+					"sec-fetch-mode": "no-cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "image/png",
+					"msg": "assert response header Content-Type"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/api/festival_mail_gift/check/",
+				"params": {
+					"festival_id": "6"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/api/festival_mail_gift/check/?festival_id=6",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"content-type": "application/json;charset=utf-8",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.is_apply",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body is_apply"
+				},
+				{
+					"check": "body.is_base_china",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body is_base_china"
+				},
+				{
+					"check": "body.is_open",
+					"assert": "equals",
+					"expect": false,
+					"msg": "assert response body is_open"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/interview/list/",
+				"params": {
+					"activity_status": "0",
+					"composite_option": "{\"with_extra\":true,\"without_same_application_interview\":true}",
+					"filters": "{\"interview_time\":[1645286400000,1645891199999]}",
+					"limit": "1000",
+					"offset": "0"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/interview/list/?filters=%7B%22interview_time%22:[1645286400000,1645891199999]%7D\u0026activity_status=0\u0026offset=0\u0026limit=1000\u0026composite_option=%7B%22with_extra%22:true,%22without_same_application_interview%22:true%7D",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"content-type": "application/json;charset=utf-8",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/node/api/todo",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/node/api/todo",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.msg",
+					"assert": "equals",
+					"expect": "ok",
+					"msg": "assert response body msg"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/referral/stats/stage_stats/",
+				"params": {
+					"stage_ids": "all,6694104661676394766"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/referral/stats/stage_stats/?stage_ids=all,6694104661676394766",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"page-language": "zh_CN",
+					"referer": "https://people.bytedance.net/",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"x-people-request-agent-platform": "web"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/hire/referral/position",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/hire/referral/position",
+					":scheme": "https",
+					"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "document",
+					"sec-fetch-mode": "navigate",
+					"sec-fetch-site": "same-origin",
+					"sec-fetch-user": "?1",
+					"upgrade-insecure-requests": "1",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
+				},
+				"cookies": {
+					"MONITOR_DEVICE_ID": "a54e359c-3f10-4212-b900-8af2158d5a6a",
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"extract": {
+				"atsxCsrfToken": "cookies.\"atsx-csrf-token\""
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "text/html; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/admin/aggregation/get_preference/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/admin/aggregation/get_preference/",
+					":scheme": "https",
+					"accept": "application/json",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "70",
+					"content-type": "application/json;charset=UTF-8",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "$atsxCsrfToken",
+					"x-requested-with": "XMLHttpRequest",
+					"x-tt-logid": "02164542364100442fb94239aea5052264fb3861e5165cc20bdb6"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "$atsxCsrfToken",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"options": [
+						"checkedExtensionVersion",
+						"ProgrammingQuestionPublished"
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/common/setting/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/common/setting/",
+					":scheme": "https",
+					"accept": "application/json",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "29",
+					"content-type": "application/json;charset=UTF-8",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest",
+					"x-tt-logid": "02164542364100442fb94239aea5052264fb3861e5165cc5fe24b"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"options": [
+						"delivery_type"
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/application/scene/get_user_scene_label/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/application/scene/get_user_scene_label/",
+					":scheme": "https",
+					"accept": "application/json",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "2",
+					"content-type": "application/json;charset=UTF-8",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest",
+					"x-tt-logid": "02164542364100442fb94239aea5052264fb3861e5165ccd38355"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/auth/uac/check_atsx_access/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/auth/uac/check_atsx_access/",
+					":scheme": "https",
+					"accept": "*/*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest",
+					"x-tt-logid": "02164542364104742fb94239aea5052264fb3861e5165cc344a91"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/tenant_preference/get/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/tenant_preference/get/",
+					":scheme": "https",
+					"accept": "*/*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest",
+					"x-tt-logid": "02164542364104742fb94239aea5052264fb3861e5165cc604760"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "00edc243087b1ad9b1945ec9ff461a4e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/hire/referral/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/hire/referral/",
+					":scheme": "https",
+					"accept": "*/*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-hire-fe-version": "subApp"
+				},
+				"cookies": {
+					"MONITOR_DEVICE_ID": "a54e359c-3f10-4212-b900-8af2158d5a6a",
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "text/html; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/hr/v1/users/6689199397223613955",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/hr/v1/users/6689199397223613955",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"content-type": "application/json;charset=utf-8",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-admin-request-appid": "6677429551611512334",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.email",
+					"assert": "equals",
+					"expect": "lilong.129@bytedance.com",
+					"msg": "assert response body email"
+				},
+				{
+					"check": "body.employeeType",
+					"assert": "equals",
+					"expect": "FULL_TIME",
+					"msg": "assert response body employeeType"
+				},
+				{
+					"check": "body.hashID",
+					"assert": "equals",
+					"expect": "a35542926de7b10a10ce632ccb3f8dad",
+					"msg": "assert response body hashID"
+				},
+				{
+					"check": "body.id",
+					"assert": "equals",
+					"expect": "6689199397223613955",
+					"msg": "assert response body id"
+				},
+				{
+					"check": "body.isByteDance",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body isByteDance"
+				},
+				{
+					"check": "body.lang",
+					"assert": "equals",
+					"expect": "zh-CN",
+					"msg": "assert response body lang"
+				},
+				{
+					"check": "body.larkOpenID",
+					"assert": "equals",
+					"expect": "ou_dec689db71d84865a817f66dfa806798",
+					"msg": "assert response body larkOpenID"
+				},
+				{
+					"check": "body.status",
+					"assert": "equals",
+					"expect": "SERVING",
+					"msg": "assert response body status"
+				},
+				{
+					"check": "body.timezone",
+					"assert": "equals",
+					"expect": "Asia/Shanghai",
+					"msg": "assert response body timezone"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/hr/v1/timezones",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/hr/v1/timezones",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"content-type": "application/json;charset=utf-8",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-admin-request-appid": "6677429551611512334",
+					"x-csrf-token": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/referral/job/posts/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/referral/job/posts/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "23",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "$atsxCsrfToken",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "$atsxCsrfToken",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"limit": 30,
+					"offset": 0
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/referral/banner/pic/",
+				"params": {
+					"banner_type": "2"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/referral/banner/pic/?banner_type=2",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/referral/job/config/data/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/referral/job/config/data/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/application/list_job_process_for_switch/",
+				"params": {
+					"switch_scene": "1"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/application/list_job_process_for_switch/?switch_scene=1",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/application/virtual_atom_check/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/application/virtual_atom_check/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "140",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"check_list": [
+						{
+							"atom_list": [
+								"/conf/referral_award_detail/manage",
+								"/conf/referral_award_detail/search",
+								"/conf/referral_award_detail/pay"
+							]
+						}
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/application/virtual_atom_check/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/application/virtual_atom_check/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "240",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"check_list": [
+						{
+							"atom_list": [
+								"/virtual/menu/referral",
+								"/conf/referral_award_detail/manage",
+								"/conf/referral_award_detail/search",
+								"/conf/referral_award_detail/pay",
+								"/talent/view/basic",
+								"/talent/view/entry",
+								"/talent/search/confidentiality"
+							]
+						}
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/common/watermark/",
+				"params": {
+					"color": "rgb(255,255,255)"
+				},
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/common/watermark/?color=rgb(255,255,255)",
+					":scheme": "https",
+					"accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "image",
+					"sec-fetch-mode": "no-cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "image/png",
+					"msg": "assert response header Content-Type"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/user/preference/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/user/preference/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "45",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"options": [
+						"REFERRAL_HOT_POSITIONS_ONLINE"
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "GET",
+				"url": "https://people.bytedance.net/atsx/api/user_preference/get_for_consumer/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "GET",
+					":path": "/atsx/api/user_preference/get_for_consumer/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/user/preference/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/user/preference/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "44",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"options": [
+						"timeStampOfFirstEntryIntoApp"
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/user/preference/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/user/preference/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "43",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"options": [
+						"subsider-sort-search-select"
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/user/preference/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/user/preference/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "47",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"options": [
+						"onboardingGuide-userHasBeenHere"
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/auth/atom/check/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/auth/atom/check/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "166",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"check_list": [
+						{
+							"atom_list": [
+								"/talent/create",
+								"/talent/view/entry",
+								"/talent/view/basic",
+								"/talent/search/confidentiality",
+								"/application/application_list_entry/get"
+							]
+						}
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/job/job_dynamic_menu_check/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/job/job_dynamic_menu_check/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "44",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "DE0Ar6N6jTYmEBVgjlDMY72gmuOZHqKcJWxxs1fqLoA",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"check_request_list": [
+						{
+							"dynamic_menu": 13
+						}
+					]
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		},
+		{
+			"name": "",
+			"request": {
+				"method": "POST",
+				"url": "https://people.bytedance.net/atsx/api/referral/job/posts/",
+				"headers": {
+					":authority": "people.bytedance.net",
+					":method": "POST",
+					":path": "/atsx/api/referral/job/posts/",
+					":scheme": "https",
+					"accept": "application/json, text/plain, */*",
+					"accept-encoding": "gzip, deflate, br",
+					"accept-language": "zh-CN",
+					"content-length": "61",
+					"content-type": "application/json",
+					"origin": "https://people.bytedance.net",
+					"referer": "https://people.bytedance.net/hire/referral/position?limit=30\u0026department_id=6688201818192741901\u0026current=0",
+					"sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"98\", \"Google Chrome\";v=\"98\"",
+					"sec-ch-ua-mobile": "?0",
+					"sec-ch-ua-platform": "\"macOS\"",
+					"sec-fetch-dest": "empty",
+					"sec-fetch-mode": "cors",
+					"sec-fetch-site": "same-origin",
+					"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+					"x-csrf-token": "$atsxCsrfToken",
+					"x-requested-with": "XMLHttpRequest"
+				},
+				"cookies": {
+					"MONITOR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"SLARDAR_WEB_ID": "1d16460acb77ff3ea2023e33d47d019e",
+					"__tea_cookie_tokens_176217": "%257B%2522web_id%2522%253A%25227034041106556110349%2522%252C%2522ssid%2522%253A%2522d03bb106-d552-4bbb-930d-b6b908a3d085%2522%252C%2522user_unique_id%2522%253A%25227034041106556110349%2522%252C%2522timestamp%2522%253A1637740322074%257D",
+					"_ga": "GA1.2.1701374734.1622444315",
+					"_tea_utm_cache_1943": "undefined",
+					"admin-csrf-token": "ss/guS+K9iOA0NO7roHWZv2M4IjbxsPFitc9i+pfshoWHqyRaPO8hjRbXeCVfswRdmPcYAxIuROGCx3GOhjwXU5qGeQbR7sRay3F48DbDXldA8DVUFkC+dR6gk7BJ6qw5Lqv7A==",
+					"atsx-csrf-token": "$atsxCsrfToken",
+					"ee-session": "XN0YXJ0-63ff6519-e050-5a5a-9d18-9823f767becb-WVuZA",
+					"gftoken": "Mjc1MjMxNDE3OHwxNjMwNTgyMTA4OTF8fDAGBgYGBgY",
+					"lang": "zh-CN",
+					"people-csrftoken": "GUsWJwnxrE5DJPJG1MefQ1zrMiT2C2JpfNqZ5Al4dwB54g3au128omMfbjskXPjq",
+					"people-fe-home-ver": "Wed, 16 Feb 2022 09:00:26 GMT",
+					"people-fe-people-oe-ver": "Tue, 25 Jan 2022 12:55:42 GMT",
+					"people-session-7": "XN0YXJ0-wmnur78qwd49rlqyyxibgei1lbfbpluh-WVuZA"
+				},
+				"body": {
+					"department_id": "6688201818192741901",
+					"limit": 30,
+					"offset": 0
+				}
+			},
+			"validate": [
+				{
+					"check": "status_code",
+					"assert": "equals",
+					"expect": 200,
+					"msg": "assert response status code"
+				},
+				{
+					"check": "headers.\"Content-Type\"",
+					"assert": "equals",
+					"expect": "application/json; charset=utf-8",
+					"msg": "assert response header Content-Type"
+				},
+				{
+					"check": "body.code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body code"
+				},
+				{
+					"check": "body.message",
+					"assert": "equals",
+					"expect": "OK",
+					"msg": "assert response body message"
+				},
+				{
+					"check": "body.special_case_code",
+					"assert": "equals",
+					"expect": 0,
+					"msg": "assert response body special_case_code"
+				},
+				{
+					"check": "body.success",
+					"assert": "equals",
+					"expect": true,
+					"msg": "assert response body success"
+				}
+			]
+		}
+	]
+}

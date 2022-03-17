@@ -1,18 +1,18 @@
 package main
 
 import (
-	plugin "github.com/httprunner/func-plugin/go"
+	"github.com/httprunner/funplugin/fungo"
 )
 
 // register functions and build to plugin binary
 func main() {
-	plugin.Register("sum_ints", SumInts)
-	plugin.Register("sum_two_int", SumTwoInt)
-	plugin.Register("sum", Sum)
-	plugin.Register("sum_two_string", SumTwoString)
-	plugin.Register("sum_strings", SumStrings)
-	plugin.Register("concatenate", Concatenate)
-	plugin.Register("setup_hook_example", SetupHookExample)
-	plugin.Register("teardown_hook_example", TeardownHookExample)
-	plugin.Serve()
+	fungo.Register("sum_ints", SumInts)
+	fungo.Register("sum_two_int", SumTwoInt)
+	fungo.Register("sum", Sum)
+	fungo.Register("sum_two_string", SumTwoString)
+	fungo.Register("sum_strings", SumStrings)
+	fungo.Register("concatenate", Concatenate)
+	fungo.Register("setup_hook_example", SetupHookExample)
+	fungo.Register("teardown_hook_example", TeardownHookExample)
+	fungo.Serve()
 }

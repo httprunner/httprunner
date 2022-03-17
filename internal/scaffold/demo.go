@@ -72,7 +72,7 @@ var demoPlugin = `package main
 import (
 	"fmt"
 
-	plugin "github.com/httprunner/func-plugin/go"
+	"github.com/httprunner/funplugin/fungo"
 )
 
 func SumTwoInt(a, b int) int {
@@ -111,12 +111,12 @@ func TeardownHookExample(args string) string {
 }
 
 func main() {
-	plugin.Register("sum_ints", SumInts)
-	plugin.Register("sum_two_int", SumTwoInt)
-	plugin.Register("sum", Sum)
-	plugin.Register("setup_hook_example", SetupHookExample)
-	plugin.Register("teardown_hook_example", TeardownHookExample)
-	plugin.Serve()
+	fungo.Register("sum_ints", SumInts)
+	fungo.Register("sum_two_int", SumTwoInt)
+	fungo.Register("sum", Sum)
+	fungo.Register("setup_hook_example", SetupHookExample)
+	fungo.Register("teardown_hook_example", TeardownHookExample)
+	fungo.Serve()
 }
 `
 
