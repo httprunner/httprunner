@@ -15,13 +15,11 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"testing"
 	"time"
 
@@ -30,7 +28,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin"
 	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/ga"
 	"github.com/httprunner/hrp/internal/json"
@@ -295,34 +292,6 @@ func (r *caseRunner) run() error {
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
-}
-
-func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
-	plugin, err = funplugin.Init(path, logOn)
-	if plugin == nil {
-		return
-	}
-
-	// catch Interrupt and SIGTERM signals to ensure plugin quitted
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		plugin.Quit()
-		os.Exit(0)
-	}()
-
-	// report event for initializing plugin
-	event := ga.EventTracking{
-		Category: "InitPlugin",
-		Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
-	}
-	if err != nil {
-		event.Value = 1 // failed
-	}
-	go ga.SendEvent(event)
-
-	return
 }
 
 func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepData, err error) {
