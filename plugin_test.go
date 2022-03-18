@@ -44,9 +44,18 @@ func TestLocateFile(t *testing.T) {
 	}
 }
 
-func TestLocatePlugin(t *testing.T) {
-	// specify target plugin path
-	_, err := locatePlugin("examples/plugin/debugtalk.py")
+func TestLocatePythonPlugin(t *testing.T) {
+	_, err := locatePlugin("examples/debugtalk.py")
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+}
+
+func TestLocateGoPlugin(t *testing.T) {
+	buildHashicorpPlugin()
+	defer removeHashicorpPlugin()
+
+	_, err := locatePlugin("examples/debugtalk.bin")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}

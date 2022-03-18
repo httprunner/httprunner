@@ -220,11 +220,11 @@ def concatenate(*args: List[str]) -> str:
     return result
 
 def setup_hook_example(name):
-    logging.warn("setup_hook_example")
+    logging.warning("setup_hook_example")
     return f"setup_hook_example: {name}"
 
 def teardown_hook_example(name):
-    logging.warn("teardown_hook_example")
+    logging.warning("teardown_hook_example")
     return f"teardown_hook_example: {name}"
 
 
