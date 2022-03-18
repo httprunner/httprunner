@@ -1,11 +1,12 @@
 name: Run scaffold
 
 on:
+  push:
   pull_request:
     types: [synchronize]
 
 jobs:
-  scaffold:
+  scaffold-with-python-plugin:
     strategy:
       fail-fast: false
       matrix:
@@ -24,5 +25,49 @@ jobs:
         run: make build
       - name: Run start project
         run: ./output/hrp startproject demo
+      - name: Run demo tests
+        run: ./output/hrp run demo/testcases/demo.json demo/testcases/demo.yaml
+
+  scaffold-with-go-plugin:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - 1.17.x
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build hrp binary
+        run: make build
+      - name: Run start project
+        run: ./output/hrp startproject demo --go
+      - name: Run demo tests
+        run: ./output/hrp run demo/testcases/demo.json demo/testcases/demo.yaml
+
+  scaffold-without-custom-plugin:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - 1.17.x
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build hrp binary
+        run: make build
+      - name: Run start project
+        run: ./output/hrp startproject demo --ignore-plugin
       - name: Run demo tests
         run: ./output/hrp run demo/testcases/demo.json demo/testcases/demo.yaml
