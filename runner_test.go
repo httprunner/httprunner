@@ -24,10 +24,18 @@ func removeHashicorpPlugin() {
 	os.Remove("examples/debugtalk.bin")
 }
 
-func TestHttpRunner(t *testing.T) {
+func TestHttpRunnerWithGoPlugin(t *testing.T) {
 	buildHashicorpPlugin()
 	defer removeHashicorpPlugin()
 
+	assertRunTestCases(t)
+}
+
+func TestHttpRunnerWithPythonPlugin(t *testing.T) {
+	assertRunTestCases(t)
+}
+
+func assertRunTestCases(t *testing.T) {
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetBaseURL("http://httpbin.org"),
@@ -66,8 +74,6 @@ func TestHttpRunner(t *testing.T) {
 	testcase4 := &demoRefTestCaseJSONPath
 
 	r := NewRunner(t)
-	r.saveTests = true
-	r.genHTMLReport = true
 	err := r.Run(testcase1, testcase2, testcase3, testcase4)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
