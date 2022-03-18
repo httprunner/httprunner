@@ -1,5 +1,9 @@
 # Release History
 
+## v0.8.0 (2022-03-18)
+
+- feat: create scaffold with python plugin
+
 ## v0.7.0 (2022-03-15)
 
 - feat: support API layer for testcase #94

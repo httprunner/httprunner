@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
@@ -22,7 +23,7 @@ var har2caseCmd = &cobra.Command{
 		for _, arg := range args {
 			// must choose one
 			if !genYAMLFlag && !genJSONFlag {
-				return errors.New("please select to-json flag or to-yaml flag.")
+				return errors.New("please select convert format type")
 			}
 			var outputPath string
 			var err error
@@ -37,7 +38,7 @@ var har2caseCmd = &cobra.Command{
 			if genYAMLFlag {
 				outputPath, err = har.GenYAML()
 			} else {
-				outputPath, err = har.GenJSON()
+				outputPath, err = har.GenJSON() // default
 			}
 			if err != nil {
 				return err

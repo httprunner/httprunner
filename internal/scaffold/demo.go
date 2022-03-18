@@ -66,8 +66,70 @@ var demoTestCase = &hrp.TestCase{
 	},
 }
 
+var demoTestCaseWithoutPlugin = &hrp.TestCase{
+	Config: hrp.NewConfig("demo without custom function plugin").
+		SetBaseURL("https://postman-echo.com").
+		WithVariables(map[string]interface{}{ // global level variables
+			"n":       5,
+			"a":       12.3,
+			"b":       3.45,
+			"varFoo1": "${gen_random_string($n)}",
+			"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
+		}),
+	TestSteps: []hrp.IStep{
+		hrp.NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
+		hrp.NewStep("get with params").
+			WithVariables(map[string]interface{}{ // step level variables
+				"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
+				"b":       34.5,             // override config level variable if existed, n/b/varFoo2
+				"varFoo2": "${max($a, $b)}", // 34.5; override variable b and eval again
+				"name":    "get with params",
+			}).
+			GET("/get").
+			WithParams(map[string]interface{}{"foo1": "$varFoo1", "foo2": "$varFoo2"}). // request with params
+			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).             // request with headers
+			Extract().
+			WithJmesPath("body.args.foo1", "varFoo1"). // extract variable with jmespath
+			Validate().
+			AssertEqual("status_code", 200, "check response status code").        // validate response status code
+			AssertStartsWith("headers.\"Content-Type\"", "application/json", ""). // validate response header
+			AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
+			AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
+			AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
+		hrp.NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
+		hrp.NewStep("post json data").
+			POST("/post").
+			WithBody(map[string]interface{}{
+				"foo1": "$varFoo1",       // reference former extracted variable
+				"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
+			}).
+			Validate().
+			AssertEqual("status_code", 200, "check status code").
+			AssertLengthEqual("body.json.foo1", 5, "check args foo1").
+			AssertEqual("body.json.foo2", 12.3, "check args foo2"),
+		hrp.NewStep("post form data").
+			POST("/post").
+			WithHeaders(map[string]string{"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}).
+			WithBody(map[string]interface{}{
+				"foo1": "$varFoo1",       // reference former extracted variable
+				"foo2": "${max($a, $b)}", // 12.3; step level variables are independent, variable b is 3.45 here
+				"time": "${get_timestamp()}",
+			}).
+			Extract().
+			WithJmesPath("body.form.time", "varTime").
+			Validate().
+			AssertEqual("status_code", 200, "check status code").
+			AssertLengthEqual("body.form.foo1", 5, "check args foo1").
+			AssertEqual("body.form.foo2", "12.3", "check args foo2"), // form data will be converted to string
+		hrp.NewStep("get with timestamp").
+			GET("/get").WithParams(map[string]interface{}{"time": "$varTime"}).
+			Validate().
+			AssertLengthEqual("body.args.time", 13, "check extracted var timestamp"),
+	},
+}
+
 // debugtalk.go
-var demoPlugin = `package main
+var demoGoPlugin = `package main
 
 import (
 	"fmt"
@@ -120,9 +182,67 @@ func main() {
 }
 `
 
+// debugtalk.py
+var demoPyPlugin = `import logging
+from typing import List
+
+import funppy
+
+
+def sum(*args):
+    result = 0
+    for arg in args:
+        result += arg
+    return result
+
+def sum_ints(*args: List[int]) -> int:
+    result = 0
+    for arg in args:
+        result += arg
+    return result
+
+def sum_two_int(a: int, b: int) -> int:
+    return a + b
+
+def sum_two_string(a: str, b: str) -> str:
+    return a + b
+
+def sum_strings(*args: List[str]) -> str:
+    result = ""
+    for arg in args:
+        result += arg
+    return result
+
+def concatenate(*args: List[str]) -> str:
+    result = ""
+    for arg in args:
+        result += str(arg)
+    return result
+
+def setup_hook_example(name):
+    logging.warn("setup_hook_example")
+    return f"setup_hook_example: {name}"
+
+def teardown_hook_example(name):
+    logging.warn("teardown_hook_example")
+    return f"teardown_hook_example: {name}"
+
+
+if __name__ == '__main__':
+    funppy.register("sum", sum)
+    funppy.register("sum_ints", sum_ints)
+    funppy.register("concatenate", concatenate)
+    funppy.register("sum_two_int", sum_two_int)
+    funppy.register("sum_two_string", sum_two_string)
+    funppy.register("sum_strings", sum_strings)
+    funppy.register("setup_hook_example", setup_hook_example)
+    funppy.register("teardown_hook_example", teardown_hook_example)
+    funppy.serve()
+`
+
 // .gitignore
 var demoIgnoreContent = `.env
-reports/*
+reports/
 *.so
 .vscode/
 .idea/
