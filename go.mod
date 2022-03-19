@@ -6,7 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/google/uuid v1.3.0
-	github.com/httprunner/funplugin v0.3.1
+	github.com/httprunner/funplugin v0.3.2-0.20220319011341-76c4084b52ae
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
