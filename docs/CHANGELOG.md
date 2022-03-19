@@ -3,6 +3,8 @@
 ## v0.8.0 (2022-03-18)
 
 - feat: create scaffold with python plugin
+- feat: print statistics summary after load testing finished
+- fix: update prometheus state to stopped on quit
 
 ## v0.7.0 (2022-03-15)
 
