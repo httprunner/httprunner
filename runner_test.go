@@ -74,6 +74,7 @@ func assertRunTestCases(t *testing.T) {
 	testcase4 := &demoRefTestCaseJSONPath
 
 	r := NewRunner(t)
+	r.SetPluginLogOn()
 	err := r.Run(testcase1, testcase2, testcase3, testcase4)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
