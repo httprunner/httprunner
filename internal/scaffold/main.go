@@ -15,12 +15,12 @@ import (
 	"github.com/httprunner/hrp/internal/ga"
 )
 
-type PluginType uint
+type PluginType string
 
 const (
-	Ignore PluginType = iota
-	Py
-	Go
+	Ignore PluginType = "ignore"
+	Py     PluginType = "py"
+	Go     PluginType = "go"
 )
 
 func CreateScaffold(projectName string, pluginType PluginType) error {
@@ -37,7 +37,10 @@ func CreateScaffold(projectName string, pluginType PluginType) error {
 		return fmt.Errorf("project name already exists")
 	}
 
-	log.Info().Str("projectName", projectName).Msg("create new scaffold project")
+	log.Info().
+		Str("projectName", projectName).
+		Str("pluginType", string(pluginType)).
+		Msg("create new scaffold project")
 
 	// create project folders
 	if err := builtin.CreateFolder(projectName); err != nil {

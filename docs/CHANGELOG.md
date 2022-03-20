@@ -1,8 +1,9 @@
 # Release History
 
-## v0.8.0 (2022-03-18)
+## v0.8.0 (2022-03-21)
 
-- feat: create scaffold with python plugin
+- feat: support hashicorp python plugin over gRPC
+- feat: create scaffold with plugin option, `--py`(default), `--go`, `--ignore-plugin`
 - feat: print statistics summary after load testing finished
 - fix: update prometheus state to stopped on quit
 
@@ -16,7 +17,7 @@
 
 ## v0.6.4 (2022-03-10)
 
-- feat: both support gPRC(default) and net/rpc mode in hashicorp plugin, switch with environment `HRP_PLUGIN_TYPE`
+- feat: both support gRPC(default) and net/rpc mode in hashicorp plugin, switch with environment `HRP_PLUGIN_TYPE`
 - refactor: move submodule `plugin` to separate repo `github.com/httprunner/funplugin`
 - refactor: replace builtin json library with `json-iterator/go` to improve performance
 

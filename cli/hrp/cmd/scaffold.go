@@ -35,6 +35,7 @@ var scaffoldCmd = &cobra.Command{
 			log.Error().Err(err).Msg("create scaffold project failed")
 			os.Exit(1)
 		}
+		log.Info().Str("projectName", args[0]).Msg("create scaffold success")
 		return nil
 	},
 }
