@@ -5,12 +5,15 @@ import (
 	"crypto/md5"
 	"encoding/csv"
 	"encoding/hex"
+	builtinJSON "encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -219,4 +222,39 @@ func Contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func GetRandomNumber(min, max int) int {
+	if min > max {
+		return 0
+	}
+	r := rand.Intn(max - min + 1)
+	return min + r
+}
+
+func Interface2Float64(i interface{}) (float64, error) {
+	switch i.(type) {
+	case int:
+		return float64(i.(int)), nil
+	case int32:
+		return float64(i.(int32)), nil
+	case int64:
+		return float64(i.(int64)), nil
+	case float32:
+		return float64(i.(float32)), nil
+	case float64:
+		return i.(float64), nil
+	case string:
+		intVar, err := strconv.Atoi(i.(string))
+		if err != nil {
+			return 0, err
+		}
+		return float64(intVar), err
+	}
+	// json.Number
+	value, ok := i.(builtinJSON.Number)
+	if ok {
+		return value.Float64()
+	}
+	return 0, errors.New("failed to convert interface to float64")
 }
