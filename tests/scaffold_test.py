@@ -19,7 +19,7 @@ class TestScaffold(unittest.TestCase):
 
         # run demo testcases
         try:
-            if platform.system() is "Windows":
+            if platform.system() == "Windows":
                 subprocess.check_call(["hrun", project_name], shell=True)
             else:
                 subprocess.check_call(["hrun", project_name])
