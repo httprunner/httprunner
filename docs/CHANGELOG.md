@@ -6,6 +6,7 @@
 - fix: failure in getting client and server IP/port when requesting HTTPS
 - fix: upgrade dependencies for security
 - fix: parameterize failure caused by pydantic version
+- change: upgrade python support version to ^3.7
 
 ## 3.1.6 (2021-07-18)
 
