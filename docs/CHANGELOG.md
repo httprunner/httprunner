@@ -2,10 +2,11 @@
 
 ## 3.1.7 (2022-03-21)
 
-- fix: ignore comments and blank lines when parsing .env file
+- fix #1117: ignore comments and blank lines when parsing .env file
+- fix #1141: parameterize failure caused by pydantic version
+- fix #1165: ImportError caused by jinja2 version
 - fix: failure in getting client and server IP/port when requesting HTTPS
 - fix: upgrade dependencies for security
-- fix: parameterize failure caused by pydantic version
 - change: upgrade python support version to ^3.7
 
 ## 3.1.6 (2021-07-18)
