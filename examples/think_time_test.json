@@ -1,0 +1,63 @@
+{
+    "config": {
+        "name": "think time test demo",
+        "variables": {
+            "app_version": "v1",
+            "user_agent": "iOS/10.3"
+        },
+        "base_url": "https://postman-echo.com",
+        "think_time": {
+            "strategy": "random_percentage",
+            "setting": {
+                "min_percentage": 1,
+                "max_percentage": 1.5
+            },
+            "limit": 4
+        },
+        "verify": false
+    },
+    "teststeps": [
+        {
+            "name": "get with params",
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "headers": {
+                    "User-Agent": "$user_agent,$app_version"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                }
+            ]
+        },
+        {
+            "name": "think time 1",
+            "think_time": {
+                "time": 3
+            }
+        },
+        {
+            "name": "post with params",
+            "request": {
+                "method": "POST",
+                "url": "/post",
+                "headers": {
+                    "User-Agent": "$user_agent,$app_version"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                }
+            ]
+        }
+    ]
+}

@@ -156,6 +156,10 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
 				step: step,
 			})
+		} else if step.ThinkTime != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepThinkTime{
+				step: step,
+			})
 		} else if step.Request != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
 				step: step,

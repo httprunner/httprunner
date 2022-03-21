@@ -3,10 +3,12 @@ package hrp
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/hrp/internal/version"
 )
 
@@ -30,13 +32,14 @@ type TConfig struct {
 	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	ThinkTime         *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
 }
 
 type TParamsConfig struct {
-	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"`
+	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"` // map[string]string、string
 	Iteration int         `json:"iteration,omitempty" yaml:"iteration,omitempty"`
 	Iterators []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"` // 保存参数的迭代器
 }
@@ -45,6 +48,82 @@ const (
 	strategyRandom     string = "random"
 	strategySequential string = "Sequential"
 )
+
+type ThinkTimeConfig struct {
+	Strategy string      `json:"strategy,omitempty" yaml:"strategy,omitempty"` // default、random、limit、multiply、ignore
+	Setting  interface{} `json:"setting,omitempty" yaml:"setting,omitempty"`   // random(map): {"min_percentage": 0.5, "max_percentage": 1.5}; 10、multiply(float64): 1.5
+	Limit    float64     `json:"limit,omitempty" yaml:"limit,omitempty"`       // limit think time no more than specific time, ignore if value <= 0
+}
+
+const (
+	thinkTimeDefault          string = "default"           // as recorded
+	thinkTimeRandomPercentage string = "random_percentage" // use random percentage of recorded think time
+	thinkTimeMultiply         string = "multiply"          // multiply recorded think time
+	thinkTimeIgnore           string = "ignore"            // ignore recorded think time
+)
+
+const (
+	thinkTimeDefaultMultiply = 1
+)
+
+var (
+	thinkTimeDefaultRandom = map[string]float64{"min_percentage": 0.5, "max_percentage": 1.5}
+)
+
+func (ttc *ThinkTimeConfig) checkThinkTime() {
+	if ttc == nil {
+		return
+	}
+	// unset strategy, set default strategy
+	if ttc.Strategy == "" {
+		ttc.Strategy = thinkTimeDefault
+	}
+	// check think time
+	if ttc.Strategy == thinkTimeRandomPercentage {
+		if ttc.Setting == nil || reflect.TypeOf(ttc.Setting).Kind() != reflect.Map {
+			ttc.Setting = thinkTimeDefaultRandom
+			return
+		}
+		value, ok := ttc.Setting.(map[string]interface{})
+		if !ok {
+			ttc.Setting = thinkTimeDefaultRandom
+			return
+		}
+		if _, ok := value["min_percentage"]; !ok {
+			ttc.Setting = thinkTimeDefaultRandom
+			return
+		}
+		if _, ok := value["max_percentage"]; !ok {
+			ttc.Setting = thinkTimeDefaultRandom
+			return
+		}
+		left, err := builtin.Interface2Float64(value["min_percentage"])
+		if err != nil {
+			ttc.Setting = thinkTimeDefaultRandom
+			return
+		}
+		right, err := builtin.Interface2Float64(value["max_percentage"])
+		if err != nil {
+			ttc.Setting = thinkTimeDefaultRandom
+			return
+		}
+		ttc.Setting = map[string]float64{"min_percentage": left, "max_percentage": right}
+	} else if ttc.Strategy == thinkTimeMultiply {
+		if ttc.Setting == nil {
+			ttc.Setting = float64(0) // default
+			return
+		}
+		value, err := builtin.Interface2Float64(ttc.Setting)
+		if err != nil {
+			ttc.Setting = float64(0) // default
+			return
+		}
+		ttc.Setting = value
+	} else if ttc.Strategy != thinkTimeIgnore {
+		// unrecognized strategy, set default strategy
+		ttc.Strategy = thinkTimeDefault
+	}
+}
 
 type paramsType []map[string]interface{}
 
@@ -145,6 +224,7 @@ type TStep struct {
 	TestCaseContent ITestCase              `json:"testcase_content,omitempty" yaml:"testcase_content,omitempty"`
 	Transaction     *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
 	Rendezvous      *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
+	ThinkTime       *ThinkTime             `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	Variables       map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks      []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks   []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
@@ -160,7 +240,12 @@ const (
 	stepTypeTestCase    stepType = "testcase"
 	stepTypeTransaction stepType = "transaction"
 	stepTypeRendezvous  stepType = "rendezvous"
+	stepTypeThinkTime   stepType = "thinktime"
 )
+
+type ThinkTime struct {
+	Time float64 `json:"time" yaml:"time"`
+}
 
 type transactionType string
 
