@@ -1,5 +1,11 @@
 # Release History
 
+## 3.1.7 (2022-03-21)
+
+- fix: ignore comments and blank lines when parsing .env file
+- fix: failure in getting client and server IP/port when requesting HTTPS
+- fix: upgrade dependencies for security
+
 ## 3.1.6 (2021-07-18)
 
 **Fixed**
@@ -259,7 +265,7 @@
 
 **Added**
 
-- feat: add `make` sub-command to generate python testcases from YAML/JSON  
+- feat: add `make` sub-command to generate python testcases from YAML/JSON
 - feat: format generated python testcases with [`black`](https://github.com/psf/black)
 - test: add postman echo & httpbin as testcase examples
 
