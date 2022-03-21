@@ -32,7 +32,7 @@ python = "^3.6.2"
 requests = "^2.22.0"
 pyyaml = "^5.4.1"
 jinja2 = "^2.10.3"
-pydantic = "^1.4"
+pydantic = "~1.8"   # >=1.8.0 <1.9.0
 loguru = "^0.4.1"
 jmespath = "^0.9.5"
 black = "^19.10b0"

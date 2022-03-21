@@ -5,6 +5,7 @@
 - fix: ignore comments and blank lines when parsing .env file
 - fix: failure in getting client and server IP/port when requesting HTTPS
 - fix: upgrade dependencies for security
+- fix: parameterize failure caused by pydantic version
 
 ## 3.1.6 (2021-07-18)
 
