@@ -32,7 +32,6 @@ include = ["docs/CHANGELOG.md"]
 python = "^3.7"
 requests = "^2.22.0"
 pyyaml = "^5.4.1"
-jinja2 = "^2.10.3"
 pydantic = "~1.8"   # >=1.8.0 <1.9.0
 loguru = "^0.4.1"
 jmespath = "^0.9.5"
@@ -45,6 +44,7 @@ requests-toolbelt = {version = "^0.9.1", optional = true}
 filetype = {version = "^1.0.7", optional = true}
 locust = {version = "^1.0.3", optional = true}
 Brotli = "^1.0.9"
+jinja2 = "^3.0.3"
 
 [tool.poetry.extras]
 allure = ["allure-pytest"]                  # pip install "httprunner[allure]", poetry install -E allure
