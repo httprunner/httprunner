@@ -11,6 +11,7 @@ jobs:
     name: integration_test - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       max-parallel: 6
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10']
