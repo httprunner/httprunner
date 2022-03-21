@@ -20,15 +20,16 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8"
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10"
 ]
 
 include = ["docs/CHANGELOG.md"]
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
+python = "^3.7"
 requests = "^2.22.0"
 pyyaml = "^5.4.1"
 jinja2 = "^2.10.3"
