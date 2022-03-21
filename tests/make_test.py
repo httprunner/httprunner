@@ -107,8 +107,8 @@ from request_methods.request_with_functions_test import (
         )
         loader.project_meta = None
         self.assertEqual(
-            ensure_file_abs_path_valid(os.path.join(os.getcwd(), "README.md")),
-            os.path.join(os.getcwd(), "README.md"),
+            ensure_file_abs_path_valid(os.path.join(os.getcwd(), "pyproject.toml")),
+            os.path.join(os.getcwd(), "pyproject.toml"),
         )
         loader.project_meta = None
         self.assertEqual(
