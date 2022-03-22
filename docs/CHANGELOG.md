@@ -2,7 +2,10 @@
 
 ## 3.1.8 (2022-03-22)
 
+- feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json configuration file
+- feat: support variable and function in response extract expression
 - fix: keep negative index in jmespath unchanged when converting pytest files, e.g. body.users[-1]
+- fix: variable should not start with digit
 - change: load yaml file with FullLoader
 
 ## 3.1.7 (2022-03-22)
