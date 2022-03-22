@@ -40,6 +40,12 @@ func (c *TConfig) WithParameters(parameters map[string]interface{}) *TConfig {
 	return c
 }
 
+// SetThinkTime sets think time config for current testcase.
+func (c *TConfig) SetThinkTime(strategy string, cfg interface{}, limit float64) *TConfig {
+	c.ThinkTime = &ThinkTimeConfig{strategy, cfg, limit}
+	return c
+}
+
 // ExportVars specifies variable names to export for current testcase.
 func (c *TConfig) ExportVars(vars ...string) *TConfig {
 	c.Export = vars
@@ -189,6 +195,16 @@ func (s *StepRequest) EndTransaction(name string) *StepTransaction {
 		Type: transactionEnd,
 	}
 	return &StepTransaction{
+		step: s.step,
+	}
+}
+
+// SetThinkTime sets think time.
+func (s *StepRequest) SetThinkTime(time float64) *StepThinkTime {
+	s.step.ThinkTime = &ThinkTime{
+		Time: time,
+	}
+	return &StepThinkTime{
 		step: s.step,
 	}
 }
@@ -352,6 +368,23 @@ func (s *StepTestCaseWithOptionalArgs) Type() string {
 }
 
 func (s *StepTestCaseWithOptionalArgs) ToStruct() *TStep {
+	return s.step
+}
+
+// StepThinkTime implements IStep interface.
+type StepThinkTime struct {
+	step *TStep
+}
+
+func (s *StepThinkTime) Name() string {
+	return s.step.Name
+}
+
+func (s *StepThinkTime) Type() string {
+	return "thinktime"
+}
+
+func (s *StepThinkTime) ToStruct() *TStep {
 	return s.step
 }
 
