@@ -21,11 +21,26 @@ class TestResponse(unittest.TestCase):
         self.resp_obj = ResponseObject(resp)
 
     def test_extract(self):
+        variables_mapping = {
+            'body': 'body'
+        }
+        functions_mapping = {
+            'get_name': lambda: 'name',
+        }
         extract_mapping = self.resp_obj.extract(
-            {"var_1": "body.json.locations[0]", "var_2": "body.json.locations[3].name"}
+            {
+                "var_1": "body.json.locations[0]",
+                "var_2": "body.json.locations[3].name",
+                "var_3": "$body.json.locations[3].name",
+                "var_4": "$body.json.locations[3].${get_name()}",
+            },
+            variables_mapping=variables_mapping,
+            functions_mapping=functions_mapping,
         )
         self.assertEqual(extract_mapping["var_1"], {"name": "Seattle", "state": "WA"})
         self.assertEqual(extract_mapping["var_2"], "Olympia")
+        self.assertEqual(extract_mapping["var_3"], "Olympia")
+        self.assertEqual(extract_mapping["var_4"], "Olympia")
 
     def test_validate(self):
         self.resp_obj.validate(
