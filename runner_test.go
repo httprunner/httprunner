@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -142,6 +143,63 @@ func TestInitRendezvous(t *testing.T) {
 		}
 		if r.Timeout != expectedRendezvousParams[i].timeout {
 			t.Fatalf("run rendezvous %v error: expected timeout: %v, real timeout: %v", r.Name, expectedRendezvousParams[i].timeout, r.Timeout)
+		}
+	}
+}
+
+func TestThinkTime(t *testing.T) {
+	buildHashicorpPlugin()
+	defer removeHashicorpPlugin()
+
+	testcases := []*TestCase{
+		{
+			Config: NewConfig("TestCase1"),
+			TestSteps: []IStep{
+				NewStep("thinkTime").SetThinkTime(2),
+			},
+		},
+		{
+			Config: NewConfig("TestCase2").
+				SetThinkTime(thinkTimeIgnore, nil, 0),
+			TestSteps: []IStep{
+				NewStep("thinkTime").SetThinkTime(0.5),
+			},
+		},
+		{
+			Config: NewConfig("TestCase3").
+				SetThinkTime(thinkTimeRandomPercentage, nil, 0),
+			TestSteps: []IStep{
+				NewStep("thinkTime").SetThinkTime(1),
+			},
+		},
+		{
+			Config: NewConfig("TestCase4").
+				SetThinkTime(thinkTimeRandomPercentage, map[string]interface{}{"min_percentage": 2, "max_percentage": 3}, 2.5),
+			TestSteps: []IStep{
+				NewStep("thinkTime").SetThinkTime(1),
+			},
+		},
+		{
+			Config: NewConfig("TestCase5"),
+			TestSteps: []IStep{
+				NewStep("thinkTime").CallRefCase(&demoThinkTimeJsonPath), // think time: 3s, random pct: {"min_percentage":1, "max_percentage":1.5}, limit: 4s
+			},
+		},
+	}
+	expectedMinValue := []float64{2, 0, 0.5, 2, 3}
+	expectedMaxValue := []float64{2.5, 0.5, 2, 3, 10}
+	for idx, testcase := range testcases {
+		r := NewRunner(t)
+		startTime := time.Now()
+		err := r.Run(testcase)
+		if err != nil {
+			t.Fatalf("run testcase error: %v", err)
+		}
+		duration := time.Since(startTime)
+		minValue := time.Duration(expectedMinValue[idx]*1000) * time.Millisecond
+		maxValue := time.Duration(expectedMaxValue[idx]*1000) * time.Millisecond
+		if duration < minValue || duration > maxValue {
+			t.Fatalf("failed to test think time, expect value: [%v, %v], actual value: %v", minValue, maxValue, duration)
 		}
 	}
 }
