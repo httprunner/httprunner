@@ -150,6 +150,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					}
 				} else if stepData.StepType == stepTypeRendezvous {
 					// rendezvous
+					// TODO: implement rendezvous in boomer
+				} else if stepData.StepType == stepTypeThinkTime {
+					// think time
+					// no record required
 				} else {
 					// request or testcase step
 					b.RecordSuccess(step.Type(), step.Name(), stepData.Elapsed, stepData.ContentSize)

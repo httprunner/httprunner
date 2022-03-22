@@ -41,7 +41,6 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	go func() {
 		<-c
 		plugin.Quit()
-		os.Exit(0)
 	}()
 
 	// report event for initializing plugin
