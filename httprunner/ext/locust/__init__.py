@@ -70,11 +70,8 @@ def prepare_locust_tests() -> List:
 def main_locusts():
     """ locusts entrance
     """
-    from httprunner.utils import init_sentry_sdk
-    from sentry_sdk import capture_message
-
-    init_sentry_sdk()
-    capture_message("start to run locusts")
+    from httprunner.utils import ga_client
+    ga_client.track_event("RunLoadTests", "locust")
 
     # avoid print too much log details in console
     logger.remove()

@@ -15,7 +15,7 @@ If you want to keep up with the latest version, you can install with github repo
 $ pip3 install git+https://github.com/httprunner/httprunner.git@master
 ```
 
-If you have installed `HttpRunner` before and want to upgrade to the latest version, you can use the `-U` option.
+If you have installed `HttpRunner` before and want to upgrade to the latest version, you can use the `-U` option.
 
 ```bash
 $ pip3 install -U httprunner

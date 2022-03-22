@@ -1,5 +1,19 @@
 # Release History
 
+## 3.1.8 (2022-03-22)
+
+- change: load yaml file with FullLoader
+
+## 3.1.7 (2022-03-22)
+
+- fix #1117: ignore comments and blank lines when parsing .env file
+- fix #1141: parameterize failure caused by pydantic version
+- fix #1165: ImportError caused by jinja2 version
+- fix: failure in getting client and server IP/port when requesting HTTPS
+- fix: upgrade dependencies for security
+- change: remove support for dead python 3.6, upgrade supported python version to 3.7/3.8/3.9/3.10
+- change: replace events reporter from sentry to Google Analytics
+
 ## 3.1.6 (2021-07-18)
 
 **Fixed**
@@ -259,7 +273,7 @@
 
 **Added**
 
-- feat: add `make` sub-command to generate python testcases from YAML/JSON  
+- feat: add `make` sub-command to generate python testcases from YAML/JSON
 - feat: format generated python testcases with [`black`](https://github.com/psf/black)
 - test: add postman echo & httpbin as testcase examples
 
