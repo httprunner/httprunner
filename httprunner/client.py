@@ -181,19 +181,19 @@ class HttpSession(requests.Session):
 
         try:
             client_ip, client_port = response.raw.connection.sock.getsockname()
-            self.data.address.client_ip = client_ip
-            self.data.address.client_port = client_port
-            logger.debug(f"client IP: {client_ip}, Port: {client_port}")
-        except AttributeError as ex:
-            logger.warning(f"failed to get client address info: {ex}")
+        except AttributeError:
+            client_ip, client_port = response.raw.connection.sock.socket.getsockname()
+        self.data.address.client_ip = client_ip
+        self.data.address.client_port = client_port
+        logger.debug(f"client IP: {client_ip}, Port: {client_port}")
 
         try:
             server_ip, server_port = response.raw.connection.sock.getpeername()
-            self.data.address.server_ip = server_ip
-            self.data.address.server_port = server_port
-            logger.debug(f"server IP: {server_ip}, Port: {server_port}")
-        except AttributeError as ex:
-            logger.warning(f"failed to get server address info: {ex}")
+        except AttributeError:
+            server_ip, server_port = response.raw.connection.sock.socket.getpeername()
+        self.data.address.server_ip = server_ip
+        self.data.address.server_port = server_port
+        logger.debug(f"server IP: {server_ip}, Port: {server_port}")
 
         # get length of the response content
         content_size = int(dict(response.headers).get("content-length") or 0)

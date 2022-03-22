@@ -3,7 +3,8 @@ import subprocess
 import sys
 
 from loguru import logger
-from sentry_sdk import capture_message
+
+from httprunner.utils import ga_client
 
 
 def init_parser_scaffold(subparsers):
@@ -199,5 +200,5 @@ def sleep(n_secs):
 
 
 def main_scaffold(args):
-    capture_message("startproject with scaffold")
+    ga_client.track_event("Scaffold", "startproject")
     sys.exit(create_scaffold(args.project_name))
