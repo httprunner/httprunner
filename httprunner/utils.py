@@ -1,18 +1,18 @@
 import collections
 import copy
+import itertools
 import json
 import os.path
 import platform
 import uuid
 from multiprocessing import Queue
-import itertools
-from typing import Dict, List, Any, Union, Text
+from typing import Any, Dict, List, Text
 
+import requests
 import sentry_sdk
 from loguru import logger
 
-from httprunner import __version__
-from httprunner import exceptions
+from httprunner import __version__, exceptions
 from httprunner.models import VariablesMapping
 
 
@@ -23,6 +23,48 @@ def init_sentry_sdk():
     )
     with sentry_sdk.configure_scope() as scope:
         scope.set_user({"id": uuid.getnode()})
+
+
+class GAClient(object):
+
+    version = '1'   # GA API Version
+    report_url = 'https://www.google-analytics.com/collect'
+    report_debug_url = 'https://www.google-analytics.com/debug/collect'   # used for debug
+
+    def __init__(self, tracking_id: Text):
+        self.http_client = requests.Session()
+        self.label = str(__version__)
+        self.common_params = {
+            'v': self.version,
+            'tid': tracking_id,    # Tracking ID / Property ID, XX-XXXXXXX-X
+            'cid': uuid.getnode(),      # Anonymous Client ID
+            'ua': f'HttpRunner/{__version__}',
+        }
+
+    def track_event(self, category: Text, action: Text, value: int = 0):
+        data = {
+            't': 'event',       # Event hit type = event
+            'ec': category,     # Required. Event Category.
+            'ea': action,       # Required. Event Action.
+            'el': self.label,   # Optional. Event label, used as version.
+            'ev': value,        # Optional. Event value, must be non-negative integer
+        }
+        data.update(self.common_params)
+        self.http_client.post(self.report_url, data=data)
+
+    def track_user_timing(self, category: Text, variable: Text, duration: int):
+        data = {
+            't': 'timing',      # Event hit type = timing
+            'utc': category,    # Required. user timing category. e.g. jsonLoader
+            'utv': variable,    # Required. timing variable. e.g. load
+            'utt': duration,    # Required. time took duration.
+            'utl': self.label,  # Optional. user timing label, used as version.
+        }
+        data.update(self.common_params)
+        self.http_client.post(self.report_url, data=data)
+
+
+ga_client = GAClient("UA-114587036-1")
 
 
 def set_os_environ(variables_mapping):

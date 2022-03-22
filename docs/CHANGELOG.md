@@ -1,13 +1,14 @@
 # Release History
 
-## 3.1.7 (2022-03-21)
+## 3.1.7 (2022-03-22)
 
+- feat: report events with Google Analytics
 - fix #1117: ignore comments and blank lines when parsing .env file
 - fix #1141: parameterize failure caused by pydantic version
 - fix #1165: ImportError caused by jinja2 version
 - fix: failure in getting client and server IP/port when requesting HTTPS
 - fix: upgrade dependencies for security
-- change: upgrade python support version to ^3.7
+- change: remove support for dead python 3.6, upgrade supported python version to 3.7/3.8/3.9/3.10
 
 ## 3.1.6 (2021-07-18)
 
