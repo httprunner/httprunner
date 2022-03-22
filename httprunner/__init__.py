@@ -1,4 +1,4 @@
-__version__ = "3.1.5"
+__version__ = "3.1.8-beta"
 __description__ = "One-stop solution for HTTP(S) testing."
 
 # import firstly for monkey patch if needed

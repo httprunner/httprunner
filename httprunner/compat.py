@@ -58,19 +58,14 @@ def _convert_jmespath(raw: Text) -> Text:
 
     raw_list = []
     for item in raw.split("."):
-        if "-" in item and item[0]!= '-':
+        if "-" in item and "[-" not in item:
             # add quotes for field with separator
             # e.g. headers.Content-Type => headers."Content-Type"
-
+            # also need to avoid replacing negative index in jmespath
+            # e.g. body.users[-1] => body.users[-1], keep unchanged
             item = item.strip('"')
             raw_list.append(f'"{item}"')
-            continue
-        try:
-            int(item)
-            is_number = 1
-        except:
-            is_number = 0
-        if is_number:
+        elif item.isdigit():
             if len(raw_list) == 0:
                 logger.error(f"Invalid jmespath: {raw}")
                 sys.exit(1)
@@ -347,7 +342,7 @@ def session_fixture(request):
         testcase_summary_json["records"] = testcase_summary_json.pop("step_datas")
         summary["details"].append(testcase_summary_json)
 
-    summary_path = "{{SUMMARY_PATH_PLACEHOLDER}}"
+    summary_path = r"{{SUMMARY_PATH_PLACEHOLDER}}"
     summary_dir = os.path.dirname(summary_path)
     os.makedirs(summary_dir, exist_ok=True)
 

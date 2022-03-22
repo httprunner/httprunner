@@ -2,29 +2,21 @@ import os
 import string
 import subprocess
 import sys
-from typing import Text, List, Tuple, Dict, Set, NoReturn
+from typing import Dict, List, NoReturn, Set, Text, Tuple
 
 import jinja2
 from loguru import logger
 from sentry_sdk import capture_exception
 
-from httprunner import exceptions, __version__
-from httprunner.compat import (
-    ensure_testcase_v3_api,
-    ensure_testcase_v3,
-    convert_variables,
-    ensure_path_sep,
-)
-from httprunner.loader import (
-    load_folder_files,
-    load_test_file,
-    load_testcase,
-    load_testsuite,
-    load_project_meta,
-    convert_relative_project_root_dir,
-)
+from httprunner import __version__, exceptions
+from httprunner.compat import (convert_variables, ensure_path_sep,
+                               ensure_testcase_v3, ensure_testcase_v3_api)
+from httprunner.loader import (convert_relative_project_root_dir,
+                               load_folder_files, load_project_meta,
+                               load_test_file, load_testcase, load_testsuite)
 from httprunner.response import uniform_validator
-from httprunner.utils import merge_variables, is_support_multiprocessing
+from httprunner.utils import (ga_client, is_support_multiprocessing,
+                              merge_variables)
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -80,10 +72,10 @@ if __name__ == "__main__":
 def __ensure_absolute(path: Text) -> Text:
     if path.startswith("./"):
         # Linux/Darwin, hrun ./test.yml
-        path = path[len("./") :]
+        path = path[len("./"):]
     elif path.startswith(".\\"):
         # Windows, hrun .\\test.yml
-        path = path[len(".\\") :]
+        path = path[len(".\\"):]
 
     path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
@@ -173,7 +165,7 @@ def format_pytest_with_black(*python_paths: Text) -> NoReturn:
             subprocess.run(["black", *python_paths])
         else:
             logger.warning(
-                f"this system does not support multiprocessing well, format files one by one ..."
+                "this system does not support multiprocessing well, format files one by one ..."
             )
             [subprocess.run(["black", path]) for path in python_paths]
     except subprocess.CalledProcessError as ex:
@@ -279,7 +271,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                 step_info += f'.setup_hook("{hook}")'
             elif isinstance(hook, Dict) and len(hook) == 1:
                 assign_var_name, hook_content = list(hook.items())[0]
-                step_info += f'.setup_hook("{hook}", "{assign_var_name}")'
+                step_info += f'.setup_hook("{hook_content}", "{assign_var_name}")'
             else:
                 raise exceptions.TestCaseFormatError(f"Invalid setup hook: {hook}")
 
@@ -297,7 +289,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                 step_info += f'.teardown_hook("{hook}")'
             elif isinstance(hook, Dict) and len(hook) == 1:
                 assign_var_name, hook_content = list(hook.items())[0]
-                step_info += f'.teardown_hook("{hook}", "{assign_var_name}")'
+                step_info += f'.teardown_hook("{hook_content}", "{assign_var_name}")'
             else:
                 raise exceptions.TestCaseFormatError(f"Invalid teardown hook: {hook}")
 
@@ -589,6 +581,8 @@ def __make(tests_path: Text) -> NoReturn:
 def main_make(tests_paths: List[Text]) -> List[Text]:
     if not tests_paths:
         return []
+
+    ga_client.track_event("ConvertTests", "hmake")
 
     for tests_path in tests_paths:
         tests_path = ensure_path_sep(tests_path)

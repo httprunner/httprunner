@@ -1,5 +1,32 @@
 # Release History
 
+## 3.1.8 (2022-03-22)
+
+- feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json configuration file
+- feat: support variable and function in response extract expression
+- fix: keep negative index in jmespath unchanged when converting pytest files, e.g. body.users[-1]
+- fix: variable should not start with digit
+- change: load yaml file with FullLoader
+
+## 3.1.7 (2022-03-22)
+
+- fix #1117: ignore comments and blank lines when parsing .env file
+- fix #1141: parameterize failure caused by pydantic version
+- fix #1165: ImportError caused by jinja2 version
+- fix: failure in getting client and server IP/port when requesting HTTPS
+- fix: upgrade dependencies for security
+- change: remove support for dead python 3.6, upgrade supported python version to 3.7/3.8/3.9/3.10
+- change: replace events reporter from sentry to Google Analytics
+
+## 3.1.6 (2021-07-18)
+
+**Fixed**
+
+- fix #1086: chinese garbled in response
+- fix #1068: incorrect variables and variable type hints
+- fix #1079: display error in request body if the list inputted from with_json() contains dict
+- fix #1056: validation failed when validation-value is in string format
+
 ## 3.1.5 (2021-06-27)
 
 **Fixed**
@@ -250,7 +277,7 @@
 
 **Added**
 
-- feat: add `make` sub-command to generate python testcases from YAML/JSON  
+- feat: add `make` sub-command to generate python testcases from YAML/JSON
 - feat: format generated python testcases with [`black`](https://github.com/psf/black)
 - test: add postman echo & httpbin as testcase examples
 
