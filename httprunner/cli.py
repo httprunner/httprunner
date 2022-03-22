@@ -5,7 +5,6 @@ import sys
 
 import pytest
 from loguru import logger
-from sentry_sdk import capture_message
 
 from httprunner import __description__, __version__
 from httprunner.compat import ensure_cli_args
@@ -25,7 +24,6 @@ def init_parser_run(subparsers):
 
 
 def main_run(extra_args) -> enum.IntEnum:
-    capture_message("start to run")
     ga_client.track_event("RunAPITests", "hrun")
     # keep compatibility with v2
     extra_args = ensure_cli_args(extra_args)
