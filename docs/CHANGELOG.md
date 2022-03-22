@@ -2,6 +2,7 @@
 
 ## 3.1.8 (2022-03-22)
 
+- fix: keep negative index in jmespath unchanged when converting pytest files, e.g. body.users[-1]
 - change: load yaml file with FullLoader
 
 ## 3.1.7 (2022-03-22)
