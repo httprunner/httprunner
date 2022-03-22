@@ -43,7 +43,7 @@ func (h *har) SetOutputDir(dir string) {
 
 func (h *har) GenJSON() (jsonPath string, err error) {
 	event := ga.EventTracking{
-		Category: "har2case",
+		Category: "ConvertTests",
 		Action:   "hrp har2case --to-json",
 	}
 	// report start event
@@ -62,7 +62,7 @@ func (h *har) GenJSON() (jsonPath string, err error) {
 
 func (h *har) GenYAML() (yamlPath string, err error) {
 	event := ga.EventTracking{
-		Category: "har2case",
+		Category: "ConvertTests",
 		Action:   "hrp har2case --to-yaml",
 	}
 	// report start event
