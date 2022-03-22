@@ -23,6 +23,7 @@ from typing import List
 
 from loguru import logger
 
+from httprunner.utils import ga_client
 
 """ converted pytest files from YAML/JSON testcases
 """
@@ -75,6 +76,7 @@ def main_locusts():
 
     init_sentry_sdk()
     capture_message("start to run locusts")
+    ga_client.track_event("RunLoadTests", "locust")
 
     # avoid print too much log details in console
     logger.remove()

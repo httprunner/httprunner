@@ -10,6 +10,7 @@ Usage:
 """
 
 from httprunner.ext.har2case.core import HarParser
+from httprunner.utils import ga_client
 from sentry_sdk import capture_message
 
 
@@ -60,6 +61,7 @@ def main_har2case(args):
         output_file_type = "pytest"
 
     capture_message(f"har2case {output_file_type}")
+    ga_client.track_event("ConvertTests", f"har2case {output_file_type}")
     HarParser(har_source_file, args.filter, args.exclude).gen_testcase(output_file_type)
 
     return 0
