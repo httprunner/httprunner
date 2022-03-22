@@ -40,7 +40,7 @@ type UserTimingTracking struct {
 	HitType   string `form:"t"`   // Timing hit type
 	Category  string `form:"utc"` // Required. user timing category. e.g. jsonLoader
 	Variable  string `form:"utv"` // Required. timing variable. e.g. load
-	Duration  string `form:"utt"` // Required. time took duration. Required.
+	Duration  string `form:"utt"` // Required. time took duration.
 	Label     string `form:"utl"` // Optional. user timing label. e.g jQuery
 	startTime time.Time
 	duration  time.Duration // time took duration

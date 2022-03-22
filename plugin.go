@@ -48,6 +48,7 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	event := ga.EventTracking{
 		Category: "InitPlugin",
 		Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
+		Value:    0, // success
 	}
 	if err != nil {
 		event.Value = 1 // failed
