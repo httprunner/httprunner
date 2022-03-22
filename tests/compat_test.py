@@ -45,6 +45,10 @@ class TestCompat(unittest.TestCase):
             compat._convert_jmespath("body.data.buildings.0.building_id"),
             "body.data.buildings[0].building_id",
         )
+        self.assertEqual(
+            compat._convert_jmespath("body.users[-1]"),
+            "body.users[-1]",
+        )
         with self.assertRaises(SystemExit):
             compat._convert_jmespath("2.buildings.0.building_id")
 
