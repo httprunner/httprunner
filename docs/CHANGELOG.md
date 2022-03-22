@@ -1,5 +1,9 @@
 # Release History
 
+## 3.1.8 (2022-03-22)
+
+- change: load yaml file with FullLoader
+
 ## 3.1.7 (2022-03-22)
 
 - fix #1117: ignore comments and blank lines when parsing .env file
