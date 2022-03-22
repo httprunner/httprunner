@@ -297,13 +297,16 @@ func (r *caseRunner) run() error {
 func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepData, err error) {
 	step := r.TestCase.TestSteps[index]
 
-	// step type priority order: transaction > rendezvous > testcase > request
+	// step type priority order: transaction > rendezvous > thinktime > testcase > request
 	if stepTran, ok := step.(*StepTransaction); ok {
 		// transaction step
 		return r.runStepTransaction(stepTran.step.Transaction)
 	} else if stepRend, ok := step.(*StepRendezvous); ok {
 		// rendezvous step
 		return r.runStepRendezvous(stepRend.step.Rendezvous)
+	} else if stepThink, ok := step.(*StepThinkTime); ok {
+		// think time step
+		return r.runStepThinkTime(stepThink.step, caseConfig.ThinkTime)
 	}
 
 	log.Info().Str("step", step.Name()).Msg("run step start")
@@ -375,6 +378,52 @@ func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepDa
 		Interface("exportVars", stepResult.ExportVars).
 		Msg("run step end")
 	return stepResult, err
+}
+
+func (r *caseRunner) runStepThinkTime(step *TStep, ttc *ThinkTimeConfig) (stepResult *stepData, err error) {
+	thinkTime := step.ThinkTime
+	log.Info().
+		Str("name", step.Name).
+		Float64("time", thinkTime.Time).
+		Msg("think time")
+	stepResult = &stepData{
+		Name:     step.Name,
+		StepType: stepTypeThinkTime,
+		Success:  true,
+	}
+	if ttc == nil {
+		ttc = &ThinkTimeConfig{thinkTimeDefault, nil, 0}
+	}
+	var tt time.Duration
+	switch ttc.Strategy {
+	case thinkTimeDefault:
+		tt = time.Duration(thinkTime.Time*1000) * time.Millisecond
+	case thinkTimeRandomPercentage:
+		m, ok := ttc.Setting.(map[string]float64) // e.g. {"min_percentage": 0.5, "max_percentage": 1.5}
+		if !ok {
+			tt = time.Duration(thinkTime.Time*1000) * time.Millisecond
+			break
+		}
+		res := builtin.GetRandomNumber(int(thinkTime.Time*m["min_percentage"]*1000), int(thinkTime.Time*m["max_percentage"]*1000))
+		tt = time.Duration(res) * time.Millisecond
+	case thinkTimeMultiply:
+		value, ok := ttc.Setting.(float64) // e.g. 0.5
+		if !ok || value <= 0 {
+			value = thinkTimeDefaultMultiply
+		}
+		tt = time.Duration(thinkTime.Time*value*1000) * time.Millisecond
+	case thinkTimeIgnore:
+		// nothing to do
+	}
+	// no more than limit
+	if ttc.Limit > 0 {
+		limit := time.Duration(ttc.Limit*1000) * time.Millisecond
+		if limit < tt {
+			tt = limit
+		}
+	}
+	time.Sleep(tt)
+	return stepResult, nil
 }
 
 func (r *caseRunner) runStepTransaction(transaction *Transaction) (stepResult *stepData, err error) {
@@ -965,6 +1014,9 @@ func (r *caseRunner) parseConfig(cfg *TConfig) error {
 		return err
 	}
 	cfg.BaseURL = convertString(parsedBaseURL)
+
+	// ensure correction of think time config
+	cfg.ThinkTime.checkThinkTime()
 
 	return nil
 }

@@ -11,6 +11,7 @@ var (
 	demoTestCaseYAMLPath    TestCasePath = "examples/demo.yaml"
 	demoRefAPIYAMLPath      TestCasePath = "examples/ref_api_test.yaml"
 	demoRefTestCaseJSONPath TestCasePath = "examples/ref_testcase_test.json"
+	demoThinkTimeJsonPath   TestCasePath = "examples/think_time_test.json"
 	demoAPIYAMLPath         APIPath      = "examples/api/put.yml"
 )
 
