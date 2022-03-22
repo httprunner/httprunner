@@ -1,10 +1,11 @@
 # Release History
 
-## v0.8.0 (2022-03-21)
+## v0.8.0 (2022-03-22)
 
 - feat: support hashicorp python plugin over gRPC
 - feat: create scaffold with plugin option, `--py`(default), `--go`, `--ignore-plugin`
 - feat: print statistics summary after load testing finished
+- feat: support think time for api/load testing
 - fix: update prometheus state to stopped on quit
 
 ## v0.7.0 (2022-03-15)
