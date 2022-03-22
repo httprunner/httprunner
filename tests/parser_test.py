@@ -41,6 +41,9 @@ class TestParserBasic(unittest.TestCase):
         self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$$$a"), [])
         self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$a$b"), ["b"])
         self.assertEqual(parser.regex_findall_variables("Z:2>1*0*1+1$$a$$b"), [])
+        # variable should not start with digit
+        self.assertEqual(parser.regex_findall_variables("$1a"), [])
+        self.assertEqual(parser.regex_findall_variables("${1a}"), [])
 
     def test_extract_variables(self):
         self.assertEqual(parser.extract_variables("$var"), {"var"})
@@ -230,7 +233,8 @@ class TestParserBasic(unittest.TestCase):
         )
 
     def test_parse_data_string_with_functions(self):
-        import random, string
+        import random
+        import string
 
         functions_mapping = {
             "gen_random_string": lambda str_len: "".join(
@@ -243,8 +247,7 @@ class TestParserBasic(unittest.TestCase):
         )
         self.assertEqual(len(result), 5)
 
-        add_two_nums = lambda a, b=1: a + b
-        functions_mapping["add_two_nums"] = add_two_nums
+        functions_mapping["add_two_nums"] = lambda a, b=1: a + b
         self.assertEqual(
             parser.parse_data(
                 "${add_two_nums(1)}", functions_mapping=functions_mapping
