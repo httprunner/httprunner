@@ -2,10 +2,8 @@
 # HttpRunner
 
 [![downloads](https://pepy.tech/badge/httprunner)](https://pepy.tech/project/httprunner)
-[![unittest](https://github.com/httprunner/httprunner/workflows/unittest/badge.svg
-)](https://github.com/httprunner/httprunner/actions)
-[![integration-test](https://github.com/httprunner/httprunner/workflows/integration_test/badge.svg
-)](https://github.com/httprunner/httprunner/actions)
+[![unittest](https://github.com/httprunner/httprunner/workflows/unittest/badge.svg)](https://github.com/httprunner/httprunner/actions)
+[![integration-test](https://github.com/httprunner/httprunner/workflows/integration_test/badge.svg)](https://github.com/httprunner/httprunner/actions)
 [![codecov](https://codecov.io/gh/httprunner/httprunner/branch/master/graph/badge.svg)](https://codecov.io/gh/httprunner/httprunner)
 [![pypi version](https://img.shields.io/pypi/v/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![pyversions](https://img.shields.io/pypi/pyversions/httprunner.svg)](https://pypi.python.org/pypi/httprunner)

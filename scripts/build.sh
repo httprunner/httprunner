@@ -15,7 +15,7 @@ mkdir -p "output"
 bin_path="output/hrp"
 
 # build
-go build -ldflags '-s -w' -o "$bin_path" main.go
+go build -ldflags '-s -w' -o "$bin_path" hrp/cmd/cli/main.go
 
 # check output and version
 ls -lh "$bin_path"

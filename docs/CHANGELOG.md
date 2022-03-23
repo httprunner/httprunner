@@ -452,6 +452,10 @@
 - remove cli `--validate`
 - remove cli `--pretty`
 
+## 2.0 (2019-01-01~2020-02-21)
+
+reference: [v2-changelog]
+
 
 [hrp]: https://github.com/httprunner/hrp
 [hashicorp/go-plugin]: https://github.com/hashicorp/go-plugin
@@ -467,3 +471,4 @@
 [locust]: https://locust.io/
 [black]: https://github.com/psf/black
 [loguru]: https://github.com/Delgan/loguru
+[v2-changelog]: https://github.com/httprunner/httprunner/blob/v2/docs/CHANGELOG.md

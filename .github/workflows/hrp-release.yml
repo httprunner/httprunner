@@ -25,7 +25,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          project_path: "." # go build ./main.go
+          project_path: "hrp/cmd/cli/" # go build hrp/cmd/cli/main.go
           binary_name: "hrp"
           ldflags: "-s -w"
           extra_files: LICENSE README.md docs/CHANGELOG.md
