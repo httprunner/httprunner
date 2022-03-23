@@ -1,17 +1,21 @@
-name: integration_test
+name: smoketest
 
-on: [push]
+on:
+  push:
+  pull_request:
+    types: [synchronize]
 
 jobs:
-  integration_test:
+  smoketest:
 
-    name: integration_test - ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: smoketest - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       max-parallel: 6
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
-        os: [ubuntu-latest, macos-latest] # TODO: windows-latest
+        python-version: [2.7, 3.5, 3.6]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
@@ -26,12 +30,12 @@ jobs:
         pip install poetry
         poetry --version
         poetry install -vv
-    - name: Test package installation
+    - name: Test build package
       run: |
         poetry build
-        ls dist/*.whl | xargs pip install # test installation
-        hrun -V
-        locusts -V
+        ls dist/
     - name: Run smoketest for hrun command
       run: |
-        cd tests/httpbin && hrun basic.yml --failfast && cd -
+        cd tests/httpbin
+        poetry run hrun basic.yml --failfast
+        cd -

@@ -1,6 +1,6 @@
 # Release History
 
-## 2.5.8 (2020-03-23)
+## 2.5.8 (2022-03-23)
 
 - change: replace events reporter from sentry to Google Analytics
 

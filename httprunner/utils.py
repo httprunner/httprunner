@@ -9,7 +9,6 @@ import os.path
 import re
 import uuid
 from datetime import datetime
-from typing import Text
 
 import requests
 import sentry_sdk
@@ -37,17 +36,17 @@ class GAClient(object):
     report_url = 'https://www.google-analytics.com/collect'
     report_debug_url = 'https://www.google-analytics.com/debug/collect'   # used for debug
 
-    def __init__(self, tracking_id: Text):
+    def __init__(self, tracking_id):
         self.http_client = requests.Session()
         self.label = str(__version__)
         self.common_params = {
             'v': self.version,
             'tid': tracking_id,    # Tracking ID / Property ID, XX-XXXXXXX-X
             'cid': uuid.getnode(),      # Anonymous Client ID
-            'ua': f'HttpRunner/{__version__}',
+            'ua': 'HttpRunner/{}'.format(__version__),
         }
 
-    def track_event(self, category: Text, action: Text, value: int = 0):
+    def track_event(self, category, action, value=0):
         data = {
             't': 'event',       # Event hit type = event
             'ec': category,     # Required. Event Category.
@@ -58,7 +57,7 @@ class GAClient(object):
         data.update(self.common_params)
         self.http_client.post(self.report_url, data=data)
 
-    def track_user_timing(self, category: Text, variable: Text, duration: int):
+    def track_user_timing(self, category, variable, duration):
         data = {
             't': 'timing',      # Event hit type = timing
             'utc': category,    # Required. user timing category. e.g. jsonLoader

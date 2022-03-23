@@ -1,6 +1,9 @@
 name: unittest
 
-on: [push]
+on:
+  push:
+  pull_request:
+    types: [synchronize]
 
 jobs:
   unittest:
@@ -8,10 +11,11 @@ jobs:
     name: unittest - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 12
+      fail-fast: false
+      max-parallel: 6
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7]  # TODO: 3.8
-        os: [ubuntu-latest, macos-latest] # TODO: windows-latest
+        python-version: [2.7, 3.5, 3.6]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
