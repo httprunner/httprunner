@@ -1,4 +1,4 @@
-name: integration_test
+name: run smoke tests for httprunner
 
 on:
   push:
@@ -6,9 +6,9 @@ on:
     types: [synchronize]
 
 jobs:
-  integration_test:
+  smoke-test:
 
-    name: integration_test - ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: smoketest - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

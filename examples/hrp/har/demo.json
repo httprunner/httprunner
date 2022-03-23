@@ -1,0 +1,128 @@
+{
+    "config": {
+        "name": "testcase description"
+    },
+    "teststeps": [
+        {
+            "name": "",
+            "request": {
+                "method": "GET",
+                "url": "https://postman-echo.com/get",
+                "params": {
+                    "foo1": "HDnY8",
+                    "foo2": "34.5"
+                },
+                "headers": {
+                    "Accept-Encoding": "gzip",
+                    "Host": "postman-echo.com",
+                    "User-Agent": "HttpRunnerPlus"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "assert response status code"
+                },
+                {
+                    "check": "headers.\"Content-Type\"",
+                    "assert": "equals",
+                    "expect": "application/json; charset=utf-8",
+                    "msg": "assert response header Content-Type"
+                },
+                {
+                    "check": "body.url",
+                    "assert": "equals",
+                    "expect": "https://postman-echo.com/get?foo1=HDnY8\u0026foo2=34.5",
+                    "msg": "assert response body url"
+                }
+            ]
+        },
+        {
+            "name": "",
+            "request": {
+                "method": "POST",
+                "url": "https://postman-echo.com/post",
+                "headers": {
+                    "Accept-Encoding": "gzip",
+                    "Content-Length": "28",
+                    "Content-Type": "application/json; charset=UTF-8",
+                    "Host": "postman-echo.com",
+                    "User-Agent": "Go-http-client/1.1"
+                },
+                "cookies": {
+                    "sails.sid": "s%3Az_LpglkKxTvJ_eHVUH6V67drKp0AGWW-.PidabaXOnatLRP47hVyqqepl6BdrpEQzRlJQXtbIiwk"
+                },
+                "body": {
+                    "foo1": "HDnY8",
+                    "foo2": 12.3
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "assert response status code"
+                },
+                {
+                    "check": "headers.\"Content-Type\"",
+                    "assert": "equals",
+                    "expect": "application/json; charset=utf-8",
+                    "msg": "assert response header Content-Type"
+                },
+                {
+                    "check": "body.url",
+                    "assert": "equals",
+                    "expect": "https://postman-echo.com/post",
+                    "msg": "assert response body url"
+                }
+            ]
+        },
+        {
+            "name": "",
+            "request": {
+                "method": "POST",
+                "url": "https://postman-echo.com/post",
+                "headers": {
+                    "Accept-Encoding": "gzip",
+                    "Content-Length": "20",
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "Host": "postman-echo.com",
+                    "User-Agent": "Go-http-client/1.1"
+                },
+                "cookies": {
+                    "sails.sid": "s%3AS5e7w0zQ0xAsCwh9L8T6R7QLYCO7_gtD.r8%2B2w9IWqEIfuVkrZjnxzm2xADIk34zKAWXRPapr%2FAw"
+                },
+                "body": "foo1=HDnY8\u0026foo2=12.3"
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "assert response status code"
+                },
+                {
+                    "check": "headers.\"Content-Type\"",
+                    "assert": "equals",
+                    "expect": "application/json; charset=utf-8",
+                    "msg": "assert response header Content-Type"
+                },
+                {
+                    "check": "body.data",
+                    "assert": "equals",
+                    "expect": "",
+                    "msg": "assert response body data"
+                },
+                {
+                    "check": "body.url",
+                    "assert": "equals",
+                    "expect": "https://postman-echo.com/post",
+                    "msg": "assert response body url"
+                }
+            ]
+        }
+    ]
+}
