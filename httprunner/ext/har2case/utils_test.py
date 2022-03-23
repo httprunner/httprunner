@@ -6,10 +6,13 @@ from httprunner.ext.har2case import utils
 
 
 class TestHar2CaseUtils(unittest.TestCase):
+
+    data_dir = os.path.join(os.getcwd(), "examples", "data", "har2case")
+
     @staticmethod
     def create_har_file(file_name, content):
         file_path = os.path.join(
-            os.path.dirname(__file__), "data", "{}.har".format(file_name)
+            TestHar2CaseUtils.data_dir, "{}.har".format(file_name)
         )
         with open(file_path, "w") as f:
             f.write(json.dumps(content))
@@ -17,7 +20,7 @@ class TestHar2CaseUtils(unittest.TestCase):
         return file_path
 
     def test_load_har_log_entries(self):
-        har_path = os.path.join(os.path.dirname(__file__), "data", "demo.har")
+        har_path = os.path.join(TestHar2CaseUtils.data_dir, "demo.har")
         log_entries = utils.load_har_log_entries(har_path)
         self.assertIsInstance(log_entries, list)
         self.assertIn("request", log_entries[0])

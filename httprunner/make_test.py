@@ -18,6 +18,7 @@ class TestMake(unittest.TestCase):
         pytest_files_made_cache_mapping.clear()
         pytest_files_run_set.clear()
         loader.project_meta = None
+        self.data_dir = os.path.join(os.getcwd(), "examples", "data")
 
     def test_make_testcase(self):
         path = ["examples/postman_echo/request_methods/request_with_variables.yml"]
@@ -94,9 +95,9 @@ from request_methods.request_with_functions_test import (
     def test_ensure_file_path_valid(self):
         self.assertEqual(
             ensure_file_abs_path_valid(
-                os.path.join(os.getcwd(), "tests", "data", "a-b.c", "2 3.yml")
+                os.path.join(self.data_dir, "a-b.c", "2 3.yml")
             ),
-            os.path.join(os.getcwd(), "tests", "data", "a_b_c", "T2_3.yml"),
+            os.path.join(self.data_dir, "a_b_c", "T2_3.yml"),
         )
         loader.project_meta = None
         self.assertEqual(
@@ -117,30 +118,27 @@ from request_methods.request_with_functions_test import (
         loader.project_meta = None
         self.assertEqual(
             ensure_file_abs_path_valid(
-                os.path.join(os.getcwd(), "tests", "data", ".csv")
+                os.path.join(self.data_dir, ".csv")
             ),
-            os.path.join(os.getcwd(), "tests", "data", ".csv"),
+            os.path.join(self.data_dir, ".csv"),
         )
 
     def test_convert_testcase_path(self):
         self.assertEqual(
             convert_testcase_path(
-                os.path.join(os.getcwd(), "tests", "data", "a-b.c", "2 3.yml")
+                os.path.join(self.data_dir, "a-b.c", "2 3.yml")
             ),
             (
-                os.path.join(os.getcwd(), "tests", "data", "a_b_c", "T2_3_test.py"),
+                os.path.join(self.data_dir, "a_b_c", "T2_3_test.py"),
                 "T23",
             ),
         )
         self.assertEqual(
             convert_testcase_path(
-                os.path.join(os.getcwd(), "tests", "data", "a-b.c", "中文case.yml")
+                os.path.join(self.data_dir, "a-b.c", "中文case.yml")
             ),
             (
-                os.path.join(
-                    os.getcwd(),
-                    os.path.join("tests", "data", "a_b_c", "中文case_test.py"),
-                ),
+                os.path.join(self.data_dir, "a_b_c", "中文case_test.py"),
                 "中文Case",
             ),
         )

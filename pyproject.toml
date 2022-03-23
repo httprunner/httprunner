@@ -3,14 +3,14 @@ name = "httprunner"
 version = "4.0.0-alpha"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
-readme = "docs/README.md"
+readme = "README.md"
 authors = ["debugtalk <debugtalk@gmail.com>"]
 
 homepage = "https://github.com/httprunner/httprunner"
 repository = "https://github.com/httprunner/httprunner"
-documentation = "https://docs.httprunner.org"
+documentation = "https://httprunner.com/docs"
 
-keywords = ["HTTP", "api", "test", "requests", "locustio"]
+keywords = ["HTTP", "apitest", "perftest", "DEM", "requests", "locustio"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",

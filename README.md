@@ -2,7 +2,6 @@
 
 [![Github Actions](https://github.com/httprunner/httprunner/actions/workflows/unittest.yml/badge.svg)](https://github.com/httprunner/httprunner/actions)
 [![codecov](https://codecov.io/gh/httprunner/httprunner/branch/master/graph/badge.svg)](https://codecov.io/gh/httprunner/httprunner)
-[![Go Report Card](https://goreportcard.com/badge/github.com/httprunner/httprunner)](https://goreportcard.com/report/github.com/httprunner/httprunner)
 [![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/httprunner.svg)](https://pkg.go.dev/github.com/httprunner/httprunner)
 [![downloads](https://pepy.tech/badge/httprunner)](https://pepy.tech/project/httprunner)
 [![pypi version](https://img.shields.io/pypi/v/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
