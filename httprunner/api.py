@@ -1,10 +1,9 @@
 import os
 import unittest
 
-from sentry_sdk import capture_message
-
 from httprunner import (__version__, exceptions, loader, logger, parser,
                         report, runner, utils)
+from httprunner.utils import ga_client
 
 
 class HttpRunner(object):
@@ -185,7 +184,7 @@ class HttpRunner(object):
     def run_tests(self, tests_mapping):
         """ run testcase/testsuite data
         """
-        capture_message("start to run tests")
+        ga_client.track_event("RunAPITests", "hrun")
         project_mapping = tests_mapping.get("project_mapping", {})
         self.project_working_directory = project_mapping.get("PWD", os.getcwd())
 

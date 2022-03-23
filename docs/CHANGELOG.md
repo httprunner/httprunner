@@ -1,5 +1,9 @@
 # Release History
 
+## 2.5.8 (2020-03-23)
+
+- change: replace events reporter from sentry to Google Analytics
+
 ## 2.5.7 (2020-02-21)
 
 **Changed**
@@ -193,7 +197,7 @@
 **Added**
 
 - feat: add `upload` keyword for upload test, see [doc](https://docs.httprunner.org/prepare/upload-case/)
-- test: pip install package 
+- test: pip install package
 - test: hrun command
 
 **Fixed**

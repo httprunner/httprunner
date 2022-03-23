@@ -66,6 +66,9 @@ def gen_locustfile(testcase_file_path):
 
 
 def start_locust_main():
+    from httprunner.utils import ga_client
+    ga_client.track_event("RunLoadTests", "locust")
+
     locust_main.main()
 
 
