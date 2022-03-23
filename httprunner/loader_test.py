@@ -41,7 +41,7 @@ class TestLoader(unittest.TestCase):
         os.remove(json_tmp_file)
 
     def test_load_testcases_bad_filepath(self):
-        testcase_file_path = os.path.join(os.getcwd(), "tests/data/demo")
+        testcase_file_path = os.path.join(os.getcwd(), "examples/data/demo")
         with self.assertRaises(exceptions.FileNotFound):
             loader.load_testcase_file(testcase_file_path)
 

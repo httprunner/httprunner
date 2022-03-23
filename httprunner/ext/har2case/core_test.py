@@ -2,14 +2,15 @@ import os
 
 from httprunner.ext.har2case.core import HarParser
 from httprunner.ext.har2case.utils import load_har_log_entries
-from tests.ext.har2case.har_utils_test import TestHar2CaseUtils
+from httprunner.ext.har2case.utils_test import TestHar2CaseUtils
 
 
 class TestHar(TestHar2CaseUtils):
     def setUp(self):
-        self.har_path = os.path.join(os.path.dirname(__file__), "data", "demo.har")
+        self.data_dir = os.path.join(os.getcwd(), "examples", "data", "har2case")
+        self.har_path = os.path.join(self.data_dir, "demo.har")
         self.har_parser = HarParser(self.har_path)
-        self.profile_path = os.path.join(os.path.dirname(__file__), "data", "profile.yml")
+        self.profile_path = os.path.join(self.data_dir, "profile.yml")
 
     def test_prepare_teststep(self):
         log_entries = load_har_log_entries(self.har_path)
@@ -35,14 +36,14 @@ class TestHar(TestHar2CaseUtils):
         self.assertIn("validate", teststeps[0])
 
     def test_gen_testcase_yaml(self):
-        yaml_file = os.path.join(os.path.dirname(__file__), "data", "demo.yml")
+        yaml_file = os.path.join(self.data_dir, "demo.yml")
 
         self.har_parser.gen_testcase(file_type="YAML")
         self.assertTrue(os.path.isfile(yaml_file))
         os.remove(yaml_file)
 
     def test_gen_testcase_json(self):
-        json_file = os.path.join(os.path.dirname(__file__), "data", "demo.json")
+        json_file = os.path.join(self.data_dir, "demo.json")
 
         self.har_parser.gen_testcase(file_type="JSON")
         self.assertTrue(os.path.isfile(json_file))
@@ -169,7 +170,7 @@ class TestHar(TestHar2CaseUtils):
 
     def test_make_testcase(self):
         har_path = os.path.join(
-            os.path.dirname(__file__), "data", "demo-quickstart.har"
+            self.data_dir, "demo-quickstart.har"
         )
         har_parser = HarParser(har_path)
         testcase = har_parser._make_testcase()
