@@ -1,0 +1,78 @@
+{
+    "config": {
+        "name": "api test demo",
+        "variables": {
+            "user_agent": "iOS/10.3",
+            "device_sn": "TESTCASE_SETUP_XXX",
+            "os_platform": "ios",
+            "app_version": "2.8.6"
+        },
+        "base_url": "https://postman-echo.com",
+        "herader": [
+            {
+                "Accept": "*/*",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Host": "postman-echo.com",
+                "User-Agent": "PostmanRuntime/7.28.4"
+            }
+        ],
+        "verify": false,
+        "export": [
+            "session_token"
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "test api /get",
+            "api": "api/get.json",
+            "variables": {
+                "user_agent": "iOS/10.4",
+                "device_sn": "$device_sn",
+                "os_platform": "ios",
+                "app_version": "2.8.7"
+            },
+            "extract": {
+                "session_token": "body.headers.\"postman-token\""
+            }
+        },
+        {
+            "name": "test api /post",
+            "api": "api/post.json",
+            "variables": {
+                "user_agent": "iOS/10.5",
+                "device_sn": "$device_sn",
+                "os_platform": "ios",
+                "app_version": "2.8.9"
+            },
+            "validate": [
+                {
+                    "eq": [
+                        "status_code",
+                        200
+                    ]
+                },
+                {
+                    "eq": [
+                        "body.headers.postman-token",
+                        "ea19464c-ddd4-4724-abe9-5e2b254c2723"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "test api /put",
+            "api": "api/put.json",
+            "variables": {
+                "user_agent": "iOS/10.6",
+                "device_sn": "$device_sn",
+                "os_platform": "ios",
+                "app_version": "2.8.10"
+            },
+            "extract": {
+                "session_token": "body.headers.\"postman-token\""
+            }
+        }
+    ]
+}

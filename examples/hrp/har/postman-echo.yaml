@@ -1,0 +1,1101 @@
+config:
+    name: testcase description
+teststeps:
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/get
+        params:
+            foo1: bar1
+            foo2: bar2
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: ea19464c-ddd4-4724-abe9-5e2b254c2723
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3ASAXM8INphoz4_-5nCeQNBtrlsWuHs5Mt.83PsbOXUZUoPolzR2vpghXLUghDPLyA3NSrVKI8A8ws
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/get?foo1=bar1&foo2=bar2
+          msg: assert response body url
+    - name: ""
+      request:
+        method: POST
+        url: https://postman-echo.com/post
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Content-Length: "58"
+            Content-Type: text/plain
+            Host: postman-echo.com
+            Postman-Token: 40756814-a974-4fcc-98d2-1f2aec73c295
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3Ack89N2nb1AxU-T-nxvJrvOS1KvUXbiU2.3nAhh%2FjA%2F%2FNvHtWI8NApXa1QWV3hDD6LBsfUwpIdYQc
+        body: This is expected to be sent back as part of response body.
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
+        - check: body.json
+          assert: equals
+          expect: null
+          msg: assert response body json
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/post
+          msg: assert response body url
+    - name: ""
+      request:
+        method: POST
+        url: https://postman-echo.com/post
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Content-Length: "19"
+            Content-Type: application/x-www-form-urlencoded
+            Host: postman-echo.com
+            Postman-Token: 93843e50-2fe8-422d-b900-91095f9f0cdb
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A4bF7QNsgYKOBRnxJEclo-wiPIm6YxzFY.zmgnSBoVtZ3C40cBCJPsFS6KXTPoQBlKdS2FIdoxFaA
+        body: foo1=bar1&foo2=bar2
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: ""
+          msg: assert response body data
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/post
+          msg: assert response body url
+    - name: ""
+      request:
+        method: PUT
+        url: https://postman-echo.com/put
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Content-Length: "58"
+            Content-Type: text/plain
+            Host: postman-echo.com
+            Postman-Token: 5d357b2b-0f10-4ded-bc9a-299ebef7a2d5
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A7Kp8q3TlXZgZpLiLQNE4OGvpaqJwWmWX.SkW6gD2iyLO%2FFZYMAbg0bTsfuHwnEBezprz6nbykPWg
+        body: This is expected to be sent back as part of response body.
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
+        - check: body.json
+          assert: equals
+          expect: null
+          msg: assert response body json
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/put
+          msg: assert response body url
+    - name: ""
+      request:
+        method: PATCH
+        url: https://postman-echo.com/patch
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Content-Length: "58"
+            Content-Type: text/plain
+            Host: postman-echo.com
+            Postman-Token: 27a30a79-5d88-43c0-8c83-fce5bb585729
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3ArMIVJXM1u78IGSzps0LYNjimloLEMdqk.6bzxgShLW4DTNlqRdZREK7OUV1kqu2kMHtEVxR9Xlyg
+        body: This is expected to be sent back as part of response body.
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
+        - check: body.json
+          assert: equals
+          expect: null
+          msg: assert response body json
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/patch
+          msg: assert response body url
+    - name: ""
+      request:
+        method: DELETE
+        url: https://postman-echo.com/delete
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Content-Length: "58"
+            Content-Type: text/plain
+            Host: postman-echo.com
+            Postman-Token: b11f7819-4c39-41b3-9d06-696b38c3e515
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AlTv3pBzULeMHqjWpJWW-rwLZYYdqzSyW.J5YSZCf1unKehq5zNyuee%2B2xYkqoK%2BcTPTr3RzHYtYM
+        body: This is expected to be sent back as part of response body.
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.data
+          assert: equals
+          expect: This is expected to be sent back as part of response body.
+          msg: assert response body data
+        - check: body.json
+          assert: equals
+          expect: null
+          msg: assert response body json
+        - check: body.url
+          assert: equals
+          expect: https://postman-echo.com/delete
+          msg: assert response body url
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/headers
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 1a4e2039-d29b-4ed7-89e9-584b354246be
+            User-Agent: PostmanRuntime/7.28.4
+            my-sample-header: Lorem ipsum dolor sit amet
+        cookies:
+            sails.sid: s%3A6Sj7Mduyb72fC-X0OQbDmFqp77bVEgt8.b5X8H%2BtACzKfkUlH%2FBtSYH%2FdSQ5fHynzHjK8gE3s%2FpI
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/response-headers
+        params:
+            foo1: bar1
+            foo2: bar2
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: b00d3c25-a84b-4152-bcf8-4c573c06024b
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AvvP5l4Bk7WCLBU9LNXalNk4w4x3Q_2Zi.JiGgykR8RlAGIdRWv%2FdCmCL0Tbmwyni9KkXXgnzn59s
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.foo1
+          assert: equals
+          expect: bar1
+          msg: assert response body foo1
+        - check: body.foo2
+          assert: equals
+          expect: bar2
+          msg: assert response body foo2
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/basic-auth
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Authorization: Basic cG9zdG1hbjpwYXNzd29yZA==
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: d9f810a2-292d-41c4-95e1-ec9f9ae778d6
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3APA71Iib2-7KqjRMajldmUsDqOqmRDB6-.zpTeobSmlq81Z7R%2FyL7q3o8%2FAP0tfOOZSPQdBlirJ6g
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.authenticated
+          assert: equals
+          expect: true
+          msg: assert response body authenticated
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/digest-auth
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Authorization: Digest username="postman", realm="Users", nonce="W7kT5VowsR0pcTfL9fTwZKv2tRdEiG6c", uri="/digest-auth", algorithm="MD5", response="bab1b1e6534f84b43e9deb17bca9371b"
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 42e8340a-852b-4c7a-ab7d-d0b027f044ca
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AT2IbNG9nLojvklvDr1mo2cCftGUgcAgU.f1XqnM5ebKiLtIs3CKYYvBo7j5iHwiP9EuG9i91RR%2FU
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.authenticated
+          assert: equals
+          expect: true
+          msg: assert response body authenticated
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/auth/hawk
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Authorization: Hawk id="dh37fgj492je", ts="1634367906", nonce="RZKGNz", mac="EASK1an/9fmDhFJcqH8XE4pTuUaSJisuQVM+NCOjNlM="
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 46645864-583c-446b-9d36-9610fb114d99
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AWyHRwAoLc64u8sF_LqU0BUYAieEguHiH.gb%2BNYX72g6n5lHjLdl5K1hsKmLHYJUwoOwKkDWVl7qY
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.message
+          assert: equals
+          expect: Hawk Authentication Successful
+          msg: assert response body message
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/oauth1
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Authorization: OAuth oauth_consumer_key="RKCGzna7bv9YD57c",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1634367907",oauth_nonce="pAoTV0k5VZa",oauth_signature="ZTkfsaUA1B2s7kyl3HaFm1zFow4%3D"
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 3d9db9bb-5bcf-425e-b0e4-a958c07d7969
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AZQRuQaIb28umtrzP-HOj4fSqeag88Pvj.KVLylhlYJ3JKMHUS0UVeLCT6qRcBgQl%2BM14UxI7EgQs
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.message
+          assert: equals
+          expect: OAuth-1.0a signature verification was successful
+          msg: assert response body message
+        - check: body.status
+          assert: equals
+          expect: pass
+          msg: assert response body status
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/cookies/set
+        params:
+            foo1: bar1
+            foo2: bar2
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: ff927796-58d3-4f43-8701-8411747c4313
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AsdmvN2_ZNE0YlwQY5GxY04ptWTOYR5NU.kkH0dnWlEMsblzPMurLX8nsQRRbRqLqteIhA0621onY
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 302
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: text/plain; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/cookies
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: ff927796-58d3-4f43-8701-8411747c4313
+            Referer: https://postman-echo.com/cookies/set?foo1=bar1&foo2=bar2
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            foo1: bar1
+            foo2: bar2
+            sails.sid: s%3AlVpTnkb0ofz6HC7QJMVtiRexW3u_onsT.rmsoerMcOQOu7KYPU80x%2FBiieqBESMNj%2FxuCvbbw%2BsQ
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/cookies
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 2dbc6d22-1713-4b96-a1a2-3358b1a1deaa
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            foo1: bar1
+            foo2: bar2
+            sails.sid: s%3Avz13GzkqWaYvFuB3I35udi2vLsikZZgi.YgVWfqmyjPpEduyCIZDFGyDSPYY8%2FFM7HePC5Ok0hQM
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/cookies/delete
+        params:
+            foo1: ""
+            foo2: ""
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 8837dd89-9db7-4f06-9187-e7a85a99b945
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            foo1: bar1
+            foo2: bar2
+            sails.sid: s%3AQ8MT5sT-2LAO0Rk7bNLLR18UQWgaJMsg.eOEyhDjqWGwn2rdqWeGLstPmrn5H1OUZGlDLuI%2F1Nng
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 302
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: text/plain; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/cookies
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 8837dd89-9db7-4f06-9187-e7a85a99b945
+            Referer: https://postman-echo.com/cookies/delete?foo1&foo2
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A1atMUPWbEEDiMqdbTqbddbqiFujSi1l2.6n40eqlOkTsKoB6K7xT98PrfQweiPlTjJTfZl%2FpAEsU
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/status/200
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 5f4c6d97-d476-407e-bbf9-532480f618d8
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A5p9FN9UVGZ9XJl6I9FXiz0AwIQRRU1ka.RFuMLR9arGQaLkM1gbvuPosvzPxsREHGEjjiVF4TXnQ
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.status
+          assert: equals
+          expect: 200
+          msg: assert response body status
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/stream/5
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 24ca01aa-6c3f-4a78-a437-33dfa8dadd0f
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AFD7Hy01JAAenWz9SoQQhJxH4Qxel9sbP.%2Ba5JmTwqOpkc%2FAOLOzzsfStpK2MTfZCYXiCoA39Zt7w
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/delay/2
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: d2ade32f-4bb8-4e6d-90d3-5fa7560def12
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AqSePO9_VmCbBbVvsCMYMHm3lShKdFNWU.RFuwKJdlZHVyB0gF1x2Yt78v5jKbese6f8HNPIjI5AY
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.delay
+          assert: equals
+          expect: "2"
+          msg: assert response body delay
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/encoding/utf8
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: bd39f8e4-8072-4ec3-b498-3aaacb621544
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AXrCX-GaGzqizPQY2AdLTLNPO_cFgVsGD.BwOoj2gClsAzDrsP0%2FObypcumuYCfV%2F4vHCrKIWdTAQ
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: text/html; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/gzip
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: ef40db18-75f9-4d0c-9fe8-94274a0a589e
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AdknETdvYiCwRbtxpWR58ZhmohmZJOqdI.SA8%2FR072CZkldOTuVv7TYyKpzEQWpkt%2F2YTTTBFn%2BzU
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.gzipped
+          assert: equals
+          expect: true
+          msg: assert response body gzipped
+        - check: body.method
+          assert: equals
+          expect: GET
+          msg: assert response body method
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/deflate
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 06b47e94-9131-4ab7-8d0e-d0990f1a1144
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AdknETdvYiCwRbtxpWR58ZhmohmZJOqdI.SA8%2FR072CZkldOTuVv7TYyKpzEQWpkt%2F2YTTTBFn%2BzU
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.deflated
+          assert: equals
+          expect: true
+          msg: assert response body deflated
+        - check: body.method
+          assert: equals
+          expect: GET
+          msg: assert response body method
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/ip
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 246c423e-9285-4fad-b471-434bf4bf3369
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A_sZ_Nn5QQ0b2Swfp9tMHX9CWKJb9X3is.fa%2FQ9D9WhuFBgpatC2Yo33cPynch4YqbG%2Fw9iB92Jxo
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.ip
+          assert: equals
+          expect: 122.14.229.79
+          msg: assert response body ip
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/now
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: e1107fa9-80cb-4e69-b3dd-6fd0c92832b1
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AFqdFnM7dGE1ds2DZfijQergoGKJKdivs.TZy6jaQuf3wKK7VHSuQRNwDrZuuvCx3pGhhj7lKouQs
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: text/html; charset=utf-8
+          msg: assert response header Content-Type
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/valid
+        params:
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 05eb8403-8a83-4bde-bdd4-67952910c00f
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AFqdFnM7dGE1ds2DZfijQergoGKJKdivs.TZy6jaQuf3wKK7VHSuQRNwDrZuuvCx3pGhhj7lKouQs
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.valid
+          assert: equals
+          expect: true
+          msg: assert response body valid
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/format
+        params:
+            format: mm
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 7bab6bdc-6fe5-4eb8-aff0-3cfa08e5a823
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3Ai_9yOOqBlD9Nq0-5kptXL_qLhgITKpaZ.HU5sTJC0jVIzJvykONaDFYTiMZrZpQgdiwMInhSADss
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.format
+          assert: equals
+          expect: "20"
+          msg: assert response body format
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/unit
+        params:
+            timestamp: "2016-10-10"
+            unit: day
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 8dbb7595-3ff0-47cd-8883-4c1f24a840ef
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AlSI63UO-j2SWcK0YQfFAScLu2YKvhtlr.0wPoZkmPHUiNtTVy55Bdt9ulnQxk%2FahmG6a7%2BE6gtg8
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.unit
+          assert: equals
+          expect: 1
+          msg: assert response body unit
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/add
+        params:
+            timestamp: "2016-10-10"
+            years: "100"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 12c5137f-ee8e-48c2-b1b7-99c85f0667e4
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AlSI63UO-j2SWcK0YQfFAScLu2YKvhtlr.0wPoZkmPHUiNtTVy55Bdt9ulnQxk%2FahmG6a7%2BE6gtg8
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.sum
+          assert: equals
+          expect: Sat Oct 10 2116 00:00:00 GMT+0000
+          msg: assert response body sum
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/subtract
+        params:
+            timestamp: "2016-10-10"
+            years: "50"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: d903ee32-4361-44a4-af56-819e7fa10cc4
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A5OS8kEURZ8ZYZzfO7we0KvxaGI1AdMRZ.L6C2S4%2B6rTQd5qdQufDhV9rDv9CJgENLudOAk9h0Yow
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.difference
+          assert: equals
+          expect: Mon Oct 10 1966 00:00:00 GMT+0000
+          msg: assert response body difference
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/start
+        params:
+            timestamp: "2016-10-10"
+            unit: month
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 2d666d32-2815-45be-ae8d-266eea519043
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3A2PKCLJCVRo_5V_uagkV5b3Kn9dV0eQUm.Dp5OFZ%2FCtOcDKqB8y8yywFHO6LbN9oe10o4DQ%2FnoKRk
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.start
+          assert: equals
+          expect: Sat Oct 01 2016 00:00:00 GMT+0000
+          msg: assert response body start
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/object
+        params:
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 6ecae5c7-b9b4-450d-865c-10aea2f6384c
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AWJZnlAAItW8H8a4UMGox8Iz7cv3TM5Zq.YRYNuDnd6fkHDDvlbilW9q4AkvSPwE8SsBs2JRC52HU
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.date
+          assert: equals
+          expect: 10
+          msg: assert response body date
+        - check: body.hours
+          assert: equals
+          expect: 0
+          msg: assert response body hours
+        - check: body.milliseconds
+          assert: equals
+          expect: 0
+          msg: assert response body milliseconds
+        - check: body.minutes
+          assert: equals
+          expect: 0
+          msg: assert response body minutes
+        - check: body.months
+          assert: equals
+          expect: 9
+          msg: assert response body months
+        - check: body.seconds
+          assert: equals
+          expect: 0
+          msg: assert response body seconds
+        - check: body.years
+          assert: equals
+          expect: 2016
+          msg: assert response body years
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/before
+        params:
+            target: "2017-10-10"
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: faaa8cb6-13c5-4d0c-a7d2-133520637dde
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AJSsXggdxTpnvv6WVFqDrJ8Sjeuu77nE4.IcUuska8iBP1lkpKISqwIPOaqy5qLB%2F2o8v2Txs%2F5f8
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.before
+          assert: equals
+          expect: true
+          msg: assert response body before
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/after
+        params:
+            target: "2017-10-10"
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 28c6c8f1-bb76-4fce-986c-adc2fd5df80d
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AQ9JCfRzQhaoMt6eD7gx_qk3JQ8CWnAxO.g3tHBGmTN8Vc1mqWWnSqGV1VOQdmKk8HG3z29e%2FBzhA
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.after
+          assert: equals
+          expect: false
+          msg: assert response body after
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/between
+        params:
+            end: "2019-10-10"
+            start: "2017-10-10"
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 32aaca4e-02a8-4559-9368-5705a1a65e19
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AYE-1ygWzH5aScrDeYC7-Q8-dC1A5zkJv.XyirbigQ0duqX6jD9om1q%2FS%2FqkhbFl43yu7HHYciXkI
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.between
+          assert: equals
+          expect: false
+          msg: assert response body between
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/time/leap
+        params:
+            timestamp: "2016-10-10"
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: ff77428a-b157-463a-91e0-e5126d99d6c0
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AYE-1ygWzH5aScrDeYC7-Q8-dC1A5zkJv.XyirbigQ0duqX6jD9om1q%2FS%2FqkhbFl43yu7HHYciXkI
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 200
+          msg: assert response status code
+        - check: headers."Content-Type"
+          assert: equals
+          expect: application/json; charset=utf-8
+          msg: assert response header Content-Type
+        - check: body.leap
+          assert: equals
+          expect: true
+          msg: assert response body leap
+    - name: ""
+      request:
+        method: GET
+        url: https://postman-echo.com/digest-auth
+        headers:
+            Accept: '*/*'
+            Accept-Encoding: gzip, deflate, br
+            Cache-Control: no-cache
+            Connection: keep-alive
+            Host: postman-echo.com
+            Postman-Token: 8f6b453b-580c-44bc-8f9f-b2baa64ab530
+            User-Agent: PostmanRuntime/7.28.4
+        cookies:
+            sails.sid: s%3AhLPrbCV0ByxRorQusdRky8bws0S2qQjf.V4SIDOu%2BdIgGVSCA5qvRYwhi3xR%2Bd0R9gL9RDUPdpI4
+      validate:
+        - check: status_code
+          assert: equals
+          expect: 401
+          msg: assert response status code

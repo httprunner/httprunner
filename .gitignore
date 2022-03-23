@@ -1,18 +1,41 @@
-*.pyc
-__pycache__
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# system or IDE generated files
+__debug_bin
+.vscode/
+.idea/
 .DS_Store
-.vscode
-.idea
-.pypirc
-*/tmp/*
-build/*
-dist/*
-*.egg-info
-.python-version
+*.bak
+
+# project output files
+site/
+output/
 logs
 .coverage
-site/
 reports
-.venv
 *.xml
 htmlcov/
+
+# built plugins
+debugtalk.bin
+debugtalk.so
+
+# python files
+.venv
+__pycache__
+*.pyc
+dist
+*.egg-info
+.python-version
+.pytest_cache
