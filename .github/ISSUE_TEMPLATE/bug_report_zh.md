@@ -3,7 +3,6 @@ name: Bug 反馈（中文）
 about: 提交 bug 反馈
 title: ''
 labels: Pending
-assignees: debugtalk
 ---
 
 ## 问题描述
@@ -14,7 +13,7 @@ assignees: debugtalk
 
 请提供如下版本信息：
 
- - 操作系统类型: [e.g. macos, Linux, Windows]
+ - 操作系统类型: [e.g. macOS, Linux, Windows]
  - Python 版本 [e.g. 3.6]
  - HttpRunner 版本 [e.g. 2.1.2]
  - **设备 ID**: [e.g. 190070690681122]
@@ -37,12 +36,3 @@ assignees: debugtalk
 ## 运行命令 && 堆栈信息
 
 请提供在命令行中运行测试时所在的目录和命令，以及报错时的详细堆栈内容。
-
-```bash
-$ pwd
-/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/tests
-$ hrun testcases/setup.yml
-INFO     Loading environment variables from /Users/debugtalk/MyProjects/HttpRunner-dev/HttpRunner/tests/.env
-ERROR    !!!!!!!!!! exception stage: load tests !!!!!!!!!!
-ModuleNotFoundError: No module named 'tests.api_server'
-```

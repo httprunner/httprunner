@@ -3,7 +3,6 @@ name: Bug report
 about: Create a report to help us improve
 title: ''
 labels: Pending
-assignees: debugtalk
 ---
 
 ## Describe the bug
@@ -14,7 +13,7 @@ A clear and concise description of what the bug is.
 
 Please complete the following information:
 
- - OS: [e.g. macos, Linux, Windows]
+ - OS: [e.g. macOS, Linux, Windows]
  - Python [e.g. 3.6]
  - HttpRunner [e.g. 2.1.2]
 - **Device ID**: [e.g. 190070690681122]
