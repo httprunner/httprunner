@@ -1,4 +1,3 @@
-
 # HttpRunner
 
 [![downloads](https://pepy.tech/badge/httprunner)](https://pepy.tech/project/httprunner)
@@ -10,6 +9,7 @@
 [![pypi version](https://img.shields.io/pypi/v/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![pyversions](https://img.shields.io/pypi/pyversions/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![TesterHome](https://img.shields.io/badge/TTF-TesterHome-2955C5.svg)](https://testerhome.com/github_statistics)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhttprunner%2Fhttprunner.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhttprunner%2Fhttprunner?ref=badge_shield)
 
 *HttpRunner* is a simple & elegant, yet powerful HTTP(S) testing framework. Enjoy! ✨ 🚀 ✨
 
@@ -68,3 +68,7 @@ HttpRunner is in Sentry Sponsored plan.
 [allure]: https://docs.qameta.io/allure/
 [HAR]: http://httparchive.org/
 [survey]: https://wj.qq.com/s2/9699514/0d19/
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhttprunner%2Fhttprunner.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhttprunner%2Fhttprunner?ref=badge_large)
