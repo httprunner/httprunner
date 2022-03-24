@@ -65,7 +65,7 @@ type runner struct {
 	currentClientsNum int32 // current clients count
 	spawnCount        int   // target clients to spawn
 	spawnRate         float64
-	loop              *Loop // specify running cycles
+	loop              *Loop // specify loop count for testcase, count = loopCount * spawnCount
 	spawnDone         chan struct{}
 
 	outputs []Output
@@ -189,6 +189,12 @@ func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan 
 		sleepTime := time.Duration(1000000/r.spawnRate) * time.Microsecond
 		time.Sleep(sleepTime)
 
+		// loop count per worker
+		var workerLoop *Loop
+		if r.loop != nil {
+			workerLoop = &Loop{loopCount: atomic.LoadInt64(&r.loop.loopCount) / int64(r.spawnCount)}
+		}
+
 		select {
 		case <-quit:
 			// quit spawning goroutine
@@ -202,7 +208,7 @@ func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan 
 					case <-quit:
 						return
 					default:
-						if r.loop != nil && !r.loop.acquire() {
+						if workerLoop != nil && !workerLoop.acquire() {
 							return
 						}
 						if r.rateLimitEnabled {
@@ -215,8 +221,11 @@ func (r *localRunner) spawnWorkers(spawnCount int, spawnRate float64, quit chan 
 							task := r.getTask()
 							r.safeRun(task.Fn)
 						}
-						if r.loop != nil {
+						if workerLoop != nil {
+							// finished count of total
 							r.loop.increaseFinishedCount()
+							// finished count of single worker
+							workerLoop.increaseFinishedCount()
 							if r.loop.isFinished() {
 								r.stop()
 							}

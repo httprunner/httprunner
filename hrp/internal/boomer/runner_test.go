@@ -98,7 +98,7 @@ func TestLoopCount(t *testing.T) {
 	taskA := &Task{
 		Weight: 10,
 		Fn: func() {
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond)
 		},
 		Name: "TaskA",
 	}
@@ -107,9 +107,7 @@ func TestLoopCount(t *testing.T) {
 	runner.loop = &Loop{loopCount: 4}
 	runner.setTasks(tasks)
 	go runner.start()
-	ticker := time.NewTicker(4 * time.Second)
-	defer ticker.Stop()
-	<-ticker.C
+	<-runner.stopChan
 	if !assert.Equal(t, runner.loop.loopCount, atomic.LoadInt64(&runner.loop.finishedCount)) {
 		t.Fail()
 	}
