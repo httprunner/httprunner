@@ -1058,11 +1058,11 @@ func (s *Summary) genHTMLReport() error {
 		return err
 	}
 	file, err := os.OpenFile(fmt.Sprintf(reportPath, s.Time.StartAt.Unix()), os.O_WRONLY|os.O_CREATE, 0666)
-	defer file.Close()
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
 		return err
 	}
+	defer file.Close()
 	writer := bufio.NewWriter(file)
 	tmpl := template.Must(template.New("report").Parse(reportTemplate))
 	err = tmpl.Execute(writer, s)
