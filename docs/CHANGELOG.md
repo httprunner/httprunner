@@ -5,6 +5,7 @@
 - refactor: merge [hrp] into httprunner repo
 - fix: call referenced api/testcase with relative path
 - fix: ignore exceptions when reporting GA events
+- change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 
 ## hrp-v0.8.0 (2022-03-22)
 
