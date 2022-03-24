@@ -78,7 +78,8 @@ func (b *Boomer) GetDisableCompression() bool {
 
 // SetLoopCount set loop count for test.
 func (b *Boomer) SetLoopCount(loopCount int64) {
-	b.localRunner.loop = &Loop{loopCount: loopCount}
+	// total loop count for testcase, it will be evenly distributed to each worker
+	b.localRunner.loop = &Loop{loopCount: loopCount * int64(b.localRunner.spawnCount)}
 }
 
 // AddOutput accepts outputs which implements the boomer.Output interface.
