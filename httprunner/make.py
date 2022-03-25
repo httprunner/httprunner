@@ -2,7 +2,7 @@ import os
 import string
 import subprocess
 import sys
-from typing import Dict, List, NoReturn, Set, Text, Tuple
+from typing import Dict, List, Set, Text, Tuple
 
 import jinja2
 from loguru import logger
@@ -133,7 +133,7 @@ def ensure_file_abs_path_valid(file_abs_path: Text) -> Text:
     return new_file_path
 
 
-def __ensure_testcase_module(path: Text) -> NoReturn:
+def __ensure_testcase_module(path: Text):
     """ ensure pytest files are in python module, generate __init__.py on demand
     """
     init_file = os.path.join(os.path.dirname(path), "__init__.py")
@@ -158,7 +158,7 @@ def convert_testcase_path(testcase_abs_path: Text) -> Tuple[Text, Text]:
     return testcase_python_abs_path, name_in_title_case
 
 
-def format_pytest_with_black(*python_paths: Text) -> NoReturn:
+def format_pytest_with_black(*python_paths: Text):
     logger.info("format pytest cases with black ...")
     try:
         if is_support_multiprocessing() or len(python_paths) <= 1:
@@ -436,7 +436,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     return testcase_python_abs_path
 
 
-def make_testsuite(testsuite: Dict) -> NoReturn:
+def make_testsuite(testsuite: Dict):
     """convert valid testsuite dict to pytest folder with testcases"""
     # validate testsuite format
     load_testsuite(testsuite)
@@ -493,7 +493,7 @@ def make_testsuite(testsuite: Dict) -> NoReturn:
         pytest_files_run_set.add(testcase_pytest_path)
 
 
-def __make(tests_path: Text) -> NoReturn:
+def __make(tests_path: Text):
     """ make testcase(s) with testcase/testsuite/folder absolute path
         generated pytest file path will be cached in pytest_files_made_cache_mapping
 
