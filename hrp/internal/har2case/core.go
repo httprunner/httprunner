@@ -15,8 +15,8 @@ import (
 
 	"github.com/httprunner/httprunner/hrp"
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/ga"
 	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 const (
@@ -42,14 +42,14 @@ func (h *har) SetOutputDir(dir string) {
 }
 
 func (h *har) GenJSON() (jsonPath string, err error) {
-	event := ga.EventTracking{
+	event := sdk.EventTracking{
 		Category: "ConvertTests",
 		Action:   "hrp har2case --to-json",
 	}
 	// report start event
-	go ga.SendEvent(event)
+	go sdk.SendEvent(event)
 	// report running timing event
-	defer ga.SendEvent(event.StartTiming("execution"))
+	defer sdk.SendEvent(event.StartTiming("execution"))
 
 	tCase, err := h.makeTestCase()
 	if err != nil {
@@ -61,14 +61,14 @@ func (h *har) GenJSON() (jsonPath string, err error) {
 }
 
 func (h *har) GenYAML() (yamlPath string, err error) {
-	event := ga.EventTracking{
+	event := sdk.EventTracking{
 		Category: "ConvertTests",
 		Action:   "hrp har2case --to-yaml",
 	}
 	// report start event
-	go ga.SendEvent(event)
+	go sdk.SendEvent(event)
 	// report running timing event
-	defer ga.SendEvent(event.StartTiming("execution"))
+	defer sdk.SendEvent(event.StartTiming("execution"))
 
 	tCase, err := h.makeTestCase()
 	if err != nil {
