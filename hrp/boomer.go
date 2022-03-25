@@ -9,7 +9,7 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/hrp/internal/boomer"
-	"github.com/httprunner/httprunner/hrp/internal/ga"
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
@@ -28,14 +28,14 @@ type HRPBoomer struct {
 
 // Run starts to run load test for one or multiple testcases.
 func (b *HRPBoomer) Run(testcases ...ITestCase) {
-	event := ga.EventTracking{
+	event := sdk.EventTracking{
 		Category: "RunLoadTests",
 		Action:   "hrp boom",
 	}
 	// report start event
-	go ga.SendEvent(event)
+	go sdk.SendEvent(event)
 	// report execution timing event
-	defer ga.SendEvent(event.StartTiming("execution"))
+	defer sdk.SendEvent(event.StartTiming("execution"))
 
 	var taskSlice []*boomer.Task
 	for _, iTestCase := range testcases {
