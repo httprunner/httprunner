@@ -29,8 +29,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/ga"
 	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 const (
@@ -138,14 +138,14 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) error {
-	event := ga.EventTracking{
+	event := sdk.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
 	}
 	// report start event
-	go ga.SendEvent(event)
+	go sdk.SendEvent(event)
 	// report execution timing event
-	defer ga.SendEvent(event.StartTiming("execution"))
+	defer sdk.SendEvent(event.StartTiming("execution"))
 	// record execution data to summary
 	s := newOutSummary()
 	for _, iTestCase := range testcases {

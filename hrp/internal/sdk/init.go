@@ -1,4 +1,4 @@
-package ga
+package sdk
 
 import (
 	"fmt"
@@ -19,6 +19,7 @@ const (
 var gaClient *GAClient
 
 func init() {
+	// init GA client
 	clientID, err := machineid.ProtectedID("hrp")
 	if err != nil {
 		nodeUUID, _ := uuid.NewUUID()

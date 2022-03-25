@@ -8,8 +8,9 @@ import (
 	"syscall"
 
 	"github.com/httprunner/funplugin"
-	"github.com/httprunner/httprunner/hrp/internal/ga"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 const (
@@ -44,7 +45,7 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	}()
 
 	// report event for initializing plugin
-	event := ga.EventTracking{
+	event := sdk.EventTracking{
 		Category: "InitPlugin",
 		Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
 		Value:    0, // success
@@ -52,7 +53,7 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	if err != nil {
 		event.Value = 1 // failed
 	}
-	go ga.SendEvent(event)
+	go sdk.SendEvent(event)
 
 	return
 }
