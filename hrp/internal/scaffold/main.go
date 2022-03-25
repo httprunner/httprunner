@@ -12,7 +12,7 @@ import (
 	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/httprunner/hrp"
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/ga"
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 type PluginType string
@@ -25,7 +25,7 @@ const (
 
 func CreateScaffold(projectName string, pluginType PluginType) error {
 	// report event
-	ga.SendEvent(ga.EventTracking{
+	sdk.SendEvent(sdk.EventTracking{
 		Category: "Scaffold",
 		Action:   "hrp startproject",
 	})

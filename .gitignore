@@ -17,6 +17,7 @@ __debug_bin
 .idea/
 .DS_Store
 *.bak
+.commit.txt
 
 # project output files
 site/
