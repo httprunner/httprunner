@@ -182,7 +182,6 @@ func (s *tStep) makeRequestMethod(entry *Entry) error {
 }
 
 func (s *tStep) makeRequestURL(entry *Entry) error {
-
 	u, err := url.Parse(entry.Request.URL)
 	if err != nil {
 		log.Error().Err(err).Msg("make request url failed")
@@ -230,10 +229,14 @@ func (s *tStep) makeRequestBody(entry *Entry) error {
 	if strings.HasPrefix(mimeType, "application/json") {
 		// post json
 		var body interface{}
-		err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
-		if err != nil {
-			log.Error().Err(err).Msg("make request body failed")
-			return err
+		if entry.Request.PostData.Text == "" {
+			body = nil
+		} else {
+			err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
+			if err != nil {
+				log.Error().Err(err).Msg("make request body failed")
+				return err
+			}
 		}
 		s.Request.Body = body
 	} else if strings.HasPrefix(mimeType, "application/x-www-form-urlencoded") {
