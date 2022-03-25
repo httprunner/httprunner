@@ -120,3 +120,130 @@ func TestGetFilenameWithoutExtension(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestMakeRequestDataParams(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			PostData: PostData{
+				MimeType: "application/x-www-form-urlencoded; charset=utf-8",
+				Params: []PostParam{
+					{Name: "a", Value: "1"},
+					{Name: "b", Value: "2"},
+				},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, "a=1&b=2", step.Request.Body) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestDataJSON(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			PostData: PostData{
+				MimeType: "application/json; charset=utf-8",
+				Text:     "{\"a\":\"1\",\"b\":\"2\"}",
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]interface{}{"a": "1", "b": "2"}, step.Request.Body) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestDataTextEmpty(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			PostData: PostData{
+				MimeType: "application/json; charset=utf-8",
+				Text:     "",
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, nil, step.Request.Body) { // TODO
+		t.Fail()
+	}
+}
+
+func TestMakeValidate(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Response: Response{
+			Status: 200,
+			Headers: []NVP{
+				{Name: "Content-Type", Value: "application/json; charset=utf-8"},
+			},
+			Content: Content{
+				Size:     71,
+				MimeType: "application/json; charset=utf-8",
+				// map[Code:200 IsSuccess:true Message:<nil> Value:map[BlnResult:true]]
+				Text:     "eyJJc1N1Y2Nlc3MiOnRydWUsIkNvZGUiOjIwMCwiTWVzc2FnZSI6bnVsbCwiVmFsdWUiOnsiQmxuUmVzdWx0Ijp0cnVlfX0=",
+				Encoding: "base64",
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	validator, ok := step.Validators[0].(hrp.Validator)
+	if !ok {
+		t.Fail()
+	}
+	if !assert.Equal(t, validator,
+		hrp.Validator{
+			Check:   "status_code",
+			Expect:  200,
+			Assert:  "equals",
+			Message: "assert response status code"}) {
+		t.Fail()
+	}
+
+	validator, ok = step.Validators[1].(hrp.Validator)
+	if !ok {
+		t.Fail()
+	}
+	if !assert.Equal(t, validator,
+		hrp.Validator{
+			Check:   "headers.\"Content-Type\"",
+			Expect:  "application/json; charset=utf-8",
+			Assert:  "equals",
+			Message: "assert response header Content-Type"}) {
+		t.Fail()
+	}
+
+	validator, ok = step.Validators[2].(hrp.Validator)
+	if !ok {
+		t.Fail()
+	}
+	if !assert.Equal(t, validator,
+		hrp.Validator{
+			Check:   "body.Code",
+			Expect:  float64(200), // TODO
+			Assert:  "equals",
+			Message: "assert response body Code"}) {
+		t.Fail()
+	}
+}
