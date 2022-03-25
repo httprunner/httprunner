@@ -51,8 +51,6 @@ upload = ["requests-toolbelt", "filetype"]  # pip install "httprunner[upload]", 
 
 [tool.poetry.dev-dependencies]
 coverage = "^4.5.4"
-fastapi = "^0.70.0"
-uvicorn = "^0.17.6"
 
 [tool.poetry.scripts]
 httprunner = "httprunner.cli:main"
