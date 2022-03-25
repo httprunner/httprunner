@@ -3,9 +3,16 @@
 ## 4.0.0
 
 - refactor: merge [hrp] into httprunner repo
-- fix: call referenced api/testcase with relative path
-- fix: ignore exceptions when reporting GA events
+
+**go version**
+
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
+- fix: call referenced api/testcase with relative path
+
+**python version**
+
+- fix: ignore exceptions when reporting GA events
+- fix: remove misuse of NoReturn in Python typing
 
 ## hrp-v0.8.0 (2022-03-22)
 
