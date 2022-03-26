@@ -8,31 +8,49 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 )
 
-func buildHashicorpPlugin() {
+func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
 	cmd := exec.Command("go", "build",
-		"-o", "../examples/hrp/debugtalk.bin",
-		"../examples/hrp/plugin/hashicorp.go", "../examples/hrp/plugin/debugtalk.go")
+		"-o", templatesDir+"debugtalk.bin", templatesDir+"plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
 }
 
-func removeHashicorpPlugin() {
-	log.Info().Msg("[teardown] remove hashicorp plugin")
-	os.Remove("../examples/hrp/debugtalk.bin")
+func removeHashicorpGoPlugin() {
+	log.Info().Msg("[teardown] remove hashicorp go plugin")
+	os.Remove(templatesDir + "debugtalk.bin")
+}
+
+func buildHashicorpPyPlugin() {
+	log.Info().Msg("[init] prepare hashicorp python plugin")
+	pluginFile := templatesDir + "debugtalk.py"
+	err := scaffold.CopyFile("templates/plugin/debugtalk.py", pluginFile)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func removeHashicorpPyPlugin() {
+	log.Info().Msg("[teardown] remove hashicorp python plugin")
+	os.Remove(templatesDir + "debugtalk.py")
 }
 
 func TestHttpRunnerWithGoPlugin(t *testing.T) {
-	buildHashicorpPlugin()
-	defer removeHashicorpPlugin()
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
 
 	assertRunTestCases(t)
 }
 
 func TestHttpRunnerWithPythonPlugin(t *testing.T) {
+	buildHashicorpPyPlugin()
+	defer removeHashicorpPyPlugin()
+
 	assertRunTestCases(t)
 }
 
@@ -64,7 +82,7 @@ func assertRunTestCases(t *testing.T) {
 				},
 			),
 			NewStep("TestCase4").CallRefCase(&demoRefAPIYAMLPath),
-			NewStep("TestCase5").CallRefCase(&demoTestCaseJSONPath),
+			NewStep("TestCase5").CallRefCase(&demoTestCaseWithPluginJSONPath),
 		},
 	}
 	testcase2 := &TestCase{
@@ -153,8 +171,8 @@ func TestInitRendezvous(t *testing.T) {
 }
 
 func TestThinkTime(t *testing.T) {
-	buildHashicorpPlugin()
-	defer removeHashicorpPlugin()
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
 
 	testcases := []*TestCase{
 		{

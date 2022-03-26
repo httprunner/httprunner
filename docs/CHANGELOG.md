@@ -12,6 +12,7 @@
 
 **python version**
 
+- change: remove startproject, move all features to go version, replace with `hrp startproject`
 - change: remove har2case, move all features to go version, replace with `hrp run`
 - change: remove locust, you should run load tests with go version, replace with `hrp boom`
 - change: remove fastapi and uvicorn dependencies

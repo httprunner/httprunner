@@ -1,16 +1,16 @@
 package scaffold
 
 import (
+	"embed"
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp"
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
@@ -22,6 +22,25 @@ const (
 	Py     PluginType = "py"
 	Go     PluginType = "go"
 )
+
+//go:embed templates/*
+var templatesDir embed.FS
+
+// CopyFile copies a file from templates dir to scaffold project
+func CopyFile(templateFile, targetFile string) error {
+	log.Info().Str("path", targetFile).Msg("create file")
+	content, err := templatesDir.ReadFile(templateFile)
+	if err != nil {
+		return errors.Wrap(err, "template file not found")
+	}
+
+	err = os.WriteFile(targetFile, content, 0o644)
+	if err != nil {
+		log.Error().Err(err).Msg("create file failed")
+		return err
+	}
+	return nil
+}
 
 func CreateScaffold(projectName string, pluginType PluginType) error {
 	// report event
@@ -46,48 +65,56 @@ func CreateScaffold(projectName string, pluginType PluginType) error {
 	if err := builtin.CreateFolder(projectName); err != nil {
 		return err
 	}
-	if err := builtin.CreateFolder(path.Join(projectName, "har")); err != nil {
+	if err := builtin.CreateFolder(filepath.Join(projectName, "har")); err != nil {
 		return err
 	}
-	if err := builtin.CreateFolder(path.Join(projectName, "testcases")); err != nil {
+	if err := builtin.CreateFolder(filepath.Join(projectName, "testcases")); err != nil {
 		return err
 	}
-	if err := builtin.CreateFolder(path.Join(projectName, "reports")); err != nil {
-		return err
-	}
-
-	// create demo testcases
-	var tCase *hrp.TCase
-	if pluginType == Ignore {
-		tCase, _ = demoTestCaseWithoutPlugin.ToTCase()
-	} else {
-		tCase, _ = demoTestCase.ToTCase()
-	}
-	err := builtin.Dump2JSON(tCase, path.Join(projectName, "testcases", "demo.json"))
-	if err != nil {
-		log.Error().Err(err).Msg("create demo.json testcase failed")
-		return err
-	}
-	err = builtin.Dump2YAML(tCase, path.Join(projectName, "testcases", "demo.yaml"))
-	if err != nil {
-		log.Error().Err(err).Msg("create demo.yml testcase failed")
+	if err := builtin.CreateFolder(filepath.Join(projectName, "reports")); err != nil {
 		return err
 	}
 
 	// create .gitignore
-	if err := builtin.CreateFile(path.Join(projectName, ".gitignore"), demoIgnoreContent); err != nil {
+	err := CopyFile("templates/gitignore", filepath.Join(projectName, ".gitignore"))
+	if err != nil {
 		return err
 	}
 	// create .env
-	if err := builtin.CreateFile(path.Join(projectName, ".env"), demoEnvContent); err != nil {
+	err = CopyFile("templates/env", filepath.Join(projectName, ".env"))
+	if err != nil {
+		return err
+	}
+
+	// create demo testcases
+	if pluginType == Ignore {
+		err := CopyFile("templates/testcases/demo_without_plugin.json",
+			filepath.Join(projectName, "testcases", "demo_without_plugin.json"))
+		if err != nil {
+			return err
+		}
+		log.Info().Msg("skip creating function plugin")
+		return nil
+	}
+
+	err = CopyFile("templates/testcases/demo_with_funplugin.json",
+		filepath.Join(projectName, "testcases", "demo_with_funplugin.json"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_requests.yml",
+		filepath.Join(projectName, "testcases", "demo_requests.yml"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_ref_testcase.yml",
+		filepath.Join(projectName, "testcases", "demo_ref_testcase.yml"))
+	if err != nil {
 		return err
 	}
 
 	// create debugtalk function plugin
 	switch pluginType {
-	case Ignore:
-		log.Info().Msg("skip creating function plugin")
-		return nil
 	case Py:
 		return createPythonPlugin(projectName)
 	case Go:
@@ -105,12 +132,13 @@ func createGoPlugin(projectName string) error {
 	}
 
 	// create debugtalk.go
-	pluginDir := path.Join(projectName, "plugin")
+	pluginDir := filepath.Join(projectName, "plugin")
 	if err := builtin.CreateFolder(pluginDir); err != nil {
 		return err
 	}
-	pluginFile := path.Join(pluginDir, "debugtalk.go")
-	if err := builtin.CreateFile(pluginFile, demoGoPlugin); err != nil {
+	err := CopyFile("templates/plugin/debugtalk.go",
+		filepath.Join(projectName, "plugin", "debugtalk.go"))
+	if err != nil {
 		return err
 	}
 
@@ -125,7 +153,7 @@ func createGoPlugin(projectName string) error {
 	}
 
 	// build plugin debugtalk.bin
-	if err := builtin.ExecCommand(exec.Command("go", "build", "-o", path.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
+	if err := builtin.ExecCommand(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
 		return err
 	}
 
@@ -136,8 +164,9 @@ func createPythonPlugin(projectName string) error {
 	log.Info().Msg("start to create hashicorp python plugin")
 
 	// create debugtalk.py
-	pluginFile := path.Join(projectName, "debugtalk.py")
-	if err := builtin.CreateFile(pluginFile, demoPyPlugin); err != nil {
+	pluginFile := filepath.Join(projectName, "debugtalk.py")
+	err := CopyFile("templates/plugin/debugtalk.py", pluginFile)
+	if err != nil {
 		return err
 	}
 
