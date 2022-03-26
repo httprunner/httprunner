@@ -8,32 +8,24 @@ import (
 
 func TestLocateFile(t *testing.T) {
 	// specify target file path
-	_, err := locateFile("../examples/hrp/plugin/debugtalk.go", "debugtalk.go")
+	_, err := locateFile(templatesDir+"plugin/debugtalk.go", "debugtalk.go")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	// specify path with the same dir
-	_, err = locateFile("../examples/hrp/plugin/hashicorp.go", "debugtalk.go")
+	_, err = locateFile(templatesDir+"plugin/debugtalk.py", "debugtalk.go")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	// specify target file path dir
-	_, err = locateFile("../examples/hrp/plugin/", "debugtalk.go")
+	_, err = locateFile(templatesDir+"plugin/", "debugtalk.go")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 
 	// specify wrong path
-	_, err = locateFile("../examples/hrp", "debugtalk.go")
-	if !assert.Error(t, err) {
-		t.Fail()
-	}
-	_, err = locateFile("../examples/hrp/demo.json", "debugtalk.go")
-	if !assert.Error(t, err) {
-		t.Fail()
-	}
 	_, err = locateFile(".", "debugtalk.go")
 	if !assert.Error(t, err) {
 		t.Fail()
@@ -45,17 +37,17 @@ func TestLocateFile(t *testing.T) {
 }
 
 func TestLocatePythonPlugin(t *testing.T) {
-	_, err := locatePlugin("../examples/hrp/debugtalk.py")
+	_, err := locatePlugin(templatesDir + "plugin/debugtalk.py")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
 }
 
 func TestLocateGoPlugin(t *testing.T) {
-	buildHashicorpPlugin()
-	defer removeHashicorpPlugin()
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
 
-	_, err := locatePlugin("../examples/hrp/debugtalk.bin")
+	_, err := locatePlugin(templatesDir + "debugtalk.bin")
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}

@@ -37,7 +37,6 @@ jobs:
       run: |
         poetry run hrun -V
         poetry run httprunner run -h
-        poetry run httprunner startproject -h
     - name: Run smoketest - postman echo
       run: |
         poetry run hrun examples/postman_echo/request_methods

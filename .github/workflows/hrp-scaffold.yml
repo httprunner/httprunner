@@ -26,7 +26,7 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo
       - name: Run demo tests
-        run: ./output/hrp run demo/testcases/demo.json demo/testcases/demo.yaml
+        run: ./output/hrp run demo/testcases/demo_with_funplugin.json demo/testcases/demo_requests.yml demo/testcases/demo_ref_testcase.yml
 
   scaffold-with-go-plugin:
     strategy:
@@ -48,7 +48,7 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo --go
       - name: Run demo tests
-        run: ./output/hrp run demo/testcases/demo.json demo/testcases/demo.yaml
+        run: ./output/hrp run demo/testcases/demo_with_funplugin.json demo/testcases/demo_requests.yml demo/testcases/demo_ref_testcase.yml
 
   scaffold-without-custom-plugin:
     strategy:
@@ -70,4 +70,4 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo --ignore-plugin
       - name: Run demo tests
-        run: ./output/hrp run demo/testcases/demo.json demo/testcases/demo.yaml
+        run: ./output/hrp run demo/testcases/demo_without_plugin.json
