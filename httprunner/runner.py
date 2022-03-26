@@ -138,7 +138,7 @@ class HttpRunner(object):
 
         # parse
         functions = self.__project_meta.functions
-        # prepare_upload_step(step, functions)
+        prepare_upload_step(step, functions)
         request_dict = step.request.dict()
         request_dict.pop("upload", None)
         parsed_request_dict = parse_data(

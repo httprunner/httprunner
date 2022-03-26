@@ -33,7 +33,6 @@ jobs:
         poetry run httprunner
         poetry run hmake
         poetry run hrun
-        poetry run har2case
         poetry run coverage run --source=httprunner -m pytest httprunner
     - name: coverage report
       run: |

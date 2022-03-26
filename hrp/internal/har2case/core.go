@@ -29,17 +29,17 @@ func NewHAR(path string) *har {
 }
 
 type har struct {
-	path        string
-	filterStr   string
-	excludeStr  string
-	profileJSON map[string]interface{}
-	outputDir   string
+	path       string
+	filterStr  string
+	excludeStr string
+	profile    map[string]interface{}
+	outputDir  string
 }
 
 func (h *har) SetProfile(path string) {
 	log.Info().Str("path", path).Msg("set profile")
-	h.profileJSON = make(map[string]interface{})
-	err := builtin.LoadFile(path, h.profileJSON)
+	h.profile = make(map[string]interface{})
+	err := builtin.LoadFile(path, h.profile)
 	if err != nil {
 		log.Warn().Str("path", path).
 			Msg("invalid profile format, ignore!")
@@ -145,7 +145,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 			Request:    &hrp.Request{},
 			Validators: make([]interface{}, 0),
 		},
-		profileJSON: h.profileJSON,
+		profile: h.profile,
 	}
 	if err := step.makeRequestMethod(entry); err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 
 type tStep struct {
 	hrp.TStep
-	profileJSON map[string]interface{}
+	profile map[string]interface{}
 }
 
 func (s *tStep) makeRequestMethod(entry *Entry) error {
@@ -201,7 +201,7 @@ func (s *tStep) makeRequestParams(entry *Entry) error {
 
 func (s *tStep) makeRequestCookies(entry *Entry) error {
 	s.Request.Cookies = make(map[string]string)
-	cookies, ok := s.profileJSON["cookies"]
+	cookies, ok := s.profile["cookies"]
 	if ok {
 		// use cookies from profile
 		cookies, ok := cookies.(map[string]interface{})
@@ -224,7 +224,7 @@ func (s *tStep) makeRequestCookies(entry *Entry) error {
 
 func (s *tStep) makeRequestHeaders(entry *Entry) error {
 	s.Request.Headers = make(map[string]string)
-	headers, ok := s.profileJSON["headers"]
+	headers, ok := s.profile["headers"]
 	if ok {
 		// use headers from profile
 		cookies, ok := headers.(map[string]interface{})

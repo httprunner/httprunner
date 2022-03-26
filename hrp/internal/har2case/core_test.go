@@ -58,12 +58,12 @@ func TestLoadHARWithProfile(t *testing.T) {
 
 	if !assert.Equal(t,
 		map[string]interface{}{"Content-Type": "application/x-www-form-urlencoded"},
-		har.profileJSON["headers"]) {
+		har.profile["headers"]) {
 		t.Fail()
 	}
 	if !assert.Equal(t,
 		map[string]interface{}{"UserName": "debugtalk"},
-		har.profileJSON["cookies"]) {
+		har.profile["cookies"]) {
 		t.Fail()
 	}
 }
