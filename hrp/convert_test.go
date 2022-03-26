@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/httprunner/hrp/internal/builtin"
 )
 
 var (
@@ -18,11 +20,11 @@ var (
 func TestLoadCase(t *testing.T) {
 	tcJSON := &TCase{}
 	tcYAML := &TCase{}
-	err := loadFromJSON(demoTestCaseJSONPath.ToString(), tcJSON)
+	err := builtin.LoadFile(demoTestCaseJSONPath.ToString(), tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
-	err = loadFromYAML(demoTestCaseYAMLPath.ToString(), tcYAML)
+	err = builtin.LoadFile(demoTestCaseYAMLPath.ToString(), tcYAML)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}

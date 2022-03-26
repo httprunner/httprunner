@@ -1,55 +1,14 @@
 package hrp
 
 import (
-	"bytes"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/hrp/internal/builtin"
 )
-
-func loadFromJSON(path string, structObj interface{}) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return err
-	}
-	log.Info().Str("path", path).Msg("load json")
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("load json path failed")
-		return err
-	}
-
-	decoder := json.NewDecoder(bytes.NewReader(file))
-	decoder.UseNumber()
-	err = decoder.Decode(structObj)
-	return err
-}
-
-func loadFromYAML(path string, structObj interface{}) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return err
-	}
-	log.Info().Str("path", path).Msg("load yaml")
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("load yaml path failed")
-		return err
-	}
-
-	err = yaml.Unmarshal(file, structObj)
-	return err
-}
 
 func convertCompatValidator(Validators []interface{}) (err error) {
 	for i, iValidator := range Validators {
@@ -192,18 +151,8 @@ func (path *APIPath) ToString() string {
 
 func (path *APIPath) ToAPI() (*API, error) {
 	api := &API{}
-	var err error
-
 	apiPath := path.ToString()
-	ext := filepath.Ext(apiPath)
-	switch ext {
-	case ".json":
-		err = loadFromJSON(apiPath, api)
-	case ".yaml", ".yml":
-		err = loadFromYAML(apiPath, api)
-	default:
-		err = ErrUnsupportedFileExt
-	}
+	err := builtin.LoadFile(apiPath, api)
 	if err != nil {
 		return nil, err
 	}
@@ -220,18 +169,8 @@ func (path *TestCasePath) ToString() string {
 
 func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	tc := &TCase{}
-	var err error
-
 	casePath := path.ToString()
-	ext := filepath.Ext(casePath)
-	switch ext {
-	case ".json":
-		err = loadFromJSON(casePath, tc)
-	case ".yaml", ".yml":
-		err = loadFromYAML(casePath, tc)
-	default:
-		err = ErrUnsupportedFileExt
-	}
+	err := builtin.LoadFile(casePath, tc)
 	if err != nil {
 		return nil, err
 	}
