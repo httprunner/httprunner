@@ -34,6 +34,12 @@ var har2caseCmd = &cobra.Command{
 			if outputDir != "" {
 				har.SetOutputDir(outputDir)
 			}
+
+			// specify profile
+			if profilePath != "" {
+				har.SetProfile(profilePath)
+			}
+
 			// generate json/yaml files
 			if genYAMLFlag {
 				outputPath, err = har.GenYAML()
@@ -54,6 +60,7 @@ var (
 	genJSONFlag bool
 	genYAMLFlag bool
 	outputDir   string
+	profilePath string
 )
 
 func init() {
@@ -61,4 +68,5 @@ func init() {
 	har2caseCmd.Flags().BoolVarP(&genJSONFlag, "to-json", "j", true, "convert to JSON format")
 	har2caseCmd.Flags().BoolVarP(&genYAMLFlag, "to-yaml", "y", false, "convert to YAML format")
 	har2caseCmd.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory, default to the same dir with har file")
+	har2caseCmd.Flags().StringVarP(&profilePath, "profile", "p", "", "specify profile path to override headers and cookies")
 }

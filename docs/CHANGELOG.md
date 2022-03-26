@@ -2,15 +2,18 @@
 
 ## 4.0.0
 
-- refactor: merge [hrp] into httprunner repo
+- refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
 
 **go version**
 
+- feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json profile file
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - fix: call referenced api/testcase with relative path
 
 **python version**
 
+- change: remove locust, you should run load tests with go version
+- change: remove fastapi and uvicorn dependencies
 - fix: ignore exceptions when reporting GA events
 - fix: remove misuse of NoReturn in Python typing
 

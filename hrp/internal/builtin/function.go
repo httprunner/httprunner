@@ -6,7 +6,6 @@ import (
 	"encoding/csv"
 	"encoding/hex"
 	builtinJSON "encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -17,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
@@ -235,13 +235,12 @@ func LoadFile(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
 	file, err := readFile(path)
 	if err != nil {
-		log.Error().Err(err).Msg("read file failed")
-		return err
+		return errors.Wrap(err, "read file failed")
 	}
 
 	ext := filepath.Ext(path)
 	switch ext {
-	case ".json":
+	case ".json", ".har":
 		decoder := json.NewDecoder(bytes.NewReader(file))
 		decoder.UseNumber()
 		err = decoder.Decode(structObj)

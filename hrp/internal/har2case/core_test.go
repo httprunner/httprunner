@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	harPath  = "../../../examples/hrp/har/demo.har"
-	harPath2 = "../../../examples/hrp/har/postman-echo.har"
+	harPath     = "../../../examples/data/har/demo.har"
+	harPath2    = "../../../examples/data/har/postman-echo.har"
+	profilePath = "../../../examples/data/har/profile.yml"
 )
 
 func TestGenJSON(t *testing.T) {
@@ -43,6 +44,26 @@ func TestLoadHAR(t *testing.T) {
 		t.Fail()
 	}
 	if !assert.Equal(t, "POST", h.Log.Entries[1].Request.Method) {
+		t.Fail()
+	}
+}
+
+func TestLoadHARWithProfile(t *testing.T) {
+	har := NewHAR(harPath)
+	har.SetProfile(profilePath)
+	_, err := har.load()
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t,
+		map[string]interface{}{"Content-Type": "application/x-www-form-urlencoded"},
+		har.profileJSON["headers"]) {
+		t.Fail()
+	}
+	if !assert.Equal(t,
+		map[string]interface{}{"UserName": "debugtalk"},
+		har.profileJSON["cookies"]) {
 		t.Fail()
 	}
 }
@@ -115,8 +136,101 @@ func TestMakeTestCase(t *testing.T) {
 }
 
 func TestGetFilenameWithoutExtension(t *testing.T) {
-	filename := getFilenameWithoutExtension("../../../examples/hrp/har/postman-echo.har")
+	filename := getFilenameWithoutExtension(harPath2)
 	if !assert.Equal(t, "postman-echo", filename) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestHeaders(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Headers: []NVP{
+				{Name: "Content-Type", Value: "application/json; charset=utf-8"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"Content-Type": "application/json; charset=utf-8",
+	}, step.Request.Headers) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestHeadersWithProfile(t *testing.T) {
+	har := NewHAR("")
+	har.SetProfile(profilePath)
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Headers: []NVP{
+				{Name: "Content-Type", Value: "application/json; charset=utf-8"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
+	}, step.Request.Headers) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestCookies(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Cookies: []Cookie{
+				{Name: "abc", Value: "123"},
+				{Name: "UserName", Value: "leolee"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"abc":      "123",
+		"UserName": "leolee",
+	}, step.Request.Cookies) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestCookiesWithProfile(t *testing.T) {
+	har := NewHAR("")
+	har.SetProfile(profilePath)
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Cookies: []Cookie{
+				{Name: "abc", Value: "123"},
+				{Name: "UserName", Value: "leolee"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"UserName": "debugtalk",
+	}, step.Request.Cookies) {
 		t.Fail()
 	}
 }
