@@ -62,36 +62,6 @@ func MD5(str string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func loadFromCSV(path string) []map[string]interface{} {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		panic(err)
-	}
-	log.Info().Str("path", path).Msg("load csv file")
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("load csv file failed")
-		panic(err)
-	}
-	r := csv.NewReader(strings.NewReader(string(file)))
-	content, err := r.ReadAll()
-	if err != nil {
-		log.Error().Err(err).Msg("parse csv file failed")
-		panic(err)
-	}
-	var result []map[string]interface{}
-	for i := 1; i < len(content); i++ {
-		row := make(map[string]interface{})
-		for j := 0; j < len(content[i]); j++ {
-			row[content[0][j]] = content[i][j]
-		}
-		result = append(result, row)
-	}
-	return result
-}
-
 func Dump2JSON(data interface{}, path string) error {
 	path, err := filepath.Abs(path)
 	if err != nil {
@@ -257,4 +227,69 @@ func Interface2Float64(i interface{}) (float64, error) {
 		return value.Float64()
 	}
 	return 0, errors.New("failed to convert interface to float64")
+}
+
+var ErrUnsupportedFileExt = fmt.Errorf("unsupported file extension")
+
+func LoadFile(path string, structObj interface{}) (err error) {
+	log.Info().Str("path", path).Msg("load file")
+	file, err := readFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("read file failed")
+		return err
+	}
+
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		decoder := json.NewDecoder(bytes.NewReader(file))
+		decoder.UseNumber()
+		err = decoder.Decode(structObj)
+	case ".yaml", ".yml":
+		err = yaml.Unmarshal(file, structObj)
+	default:
+		err = ErrUnsupportedFileExt
+	}
+	return err
+}
+
+func loadFromCSV(path string) []map[string]interface{} {
+	log.Info().Str("path", path).Msg("load csv file")
+	file, err := readFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("read csv file failed")
+		panic(err)
+	}
+
+	r := csv.NewReader(strings.NewReader(string(file)))
+	content, err := r.ReadAll()
+	if err != nil {
+		log.Error().Err(err).Msg("parse csv file failed")
+		panic(err)
+	}
+	var result []map[string]interface{}
+	for i := 1; i < len(content); i++ {
+		row := make(map[string]interface{})
+		for j := 0; j < len(content[i]); j++ {
+			row[content[0][j]] = content[i][j]
+		}
+		result = append(result, row)
+	}
+	return result
+}
+
+func readFile(path string) ([]byte, error) {
+	var err error
+	path, err = filepath.Abs(path)
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
+		return nil, err
+	}
+
+	file, err := os.ReadFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("read file failed")
+		return nil, err
+	}
+	return file, nil
 }
