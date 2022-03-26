@@ -36,10 +36,8 @@ jobs:
     - name: Test commands
       run: |
         poetry run hrun -V
-        poetry run har2case -h
         poetry run httprunner run -h
         poetry run httprunner startproject -h
-        poetry run httprunner har2case -h
     - name: Run smoketest - postman echo
       run: |
         poetry run hrun examples/postman_echo/request_methods

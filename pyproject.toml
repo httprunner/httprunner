@@ -10,7 +10,7 @@ homepage = "https://github.com/httprunner/httprunner"
 repository = "https://github.com/httprunner/httprunner"
 documentation = "https://httprunner.com/docs"
 
-keywords = ["HTTP", "apitest", "perftest", "DEM", "requests", "locustio"]
+keywords = ["HTTP", "apitest", "perftest", "requests"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -56,7 +56,6 @@ coverage = "^4.5.4"
 httprunner = "httprunner.cli:main"
 hrun = "httprunner.cli:main_hrun_alias"
 hmake = "httprunner.cli:main_make_alias"
-har2case = "httprunner.cli:main_har2case_alias"
 
 [build-system]
 requires = ["poetry>=1.0.0"]

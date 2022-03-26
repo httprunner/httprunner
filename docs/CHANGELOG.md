@@ -12,7 +12,8 @@
 
 **python version**
 
-- change: remove locust, you should run load tests with go version
+- change: remove har2case, move all features to go version, replace with `hrp run`
+- change: remove locust, you should run load tests with go version, replace with `hrp boom`
 - change: remove fastapi and uvicorn dependencies
 - fix: ignore exceptions when reporting GA events
 - fix: remove misuse of NoReturn in Python typing

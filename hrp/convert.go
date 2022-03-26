@@ -140,8 +140,6 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	return testCase, nil
 }
 
-var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
-
 // APIPath implements IAPI interface.
 type APIPath string
 
