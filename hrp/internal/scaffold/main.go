@@ -68,10 +68,16 @@ func CreateScaffold(projectName string, pluginType PluginType) error {
 	if err := builtin.CreateFolder(filepath.Join(projectName, "har")); err != nil {
 		return err
 	}
+	if err := builtin.CreateFile(filepath.Join(projectName, "har", ".keep"), ""); err != nil {
+		return err
+	}
 	if err := builtin.CreateFolder(filepath.Join(projectName, "testcases")); err != nil {
 		return err
 	}
 	if err := builtin.CreateFolder(filepath.Join(projectName, "reports")); err != nil {
+		return err
+	}
+	if err := builtin.CreateFile(filepath.Join(projectName, "reports", ".keep"), ""); err != nil {
 		return err
 	}
 
@@ -88,8 +94,8 @@ func CreateScaffold(projectName string, pluginType PluginType) error {
 
 	// create demo testcases
 	if pluginType == Ignore {
-		err := CopyFile("templates/testcases/demo_without_plugin.json",
-			filepath.Join(projectName, "testcases", "demo_without_plugin.json"))
+		err := CopyFile("templates/testcases/demo_without_funplugin.json",
+			filepath.Join(projectName, "testcases", "demo_without_funplugin.json"))
 		if err != nil {
 			return err
 		}
