@@ -1,6 +1,11 @@
 package hrp
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+
+	"github.com/rs/zerolog/log"
+)
 
 // NewConfig returns a new constructed testcase config with specified testcase name.
 func NewConfig(name string) *TConfig {
@@ -163,7 +168,12 @@ func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
 
 // CallRefCase calls a referenced testcase.
 func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
-	s.step.TestCaseContent, _ = tc.ToTestCase()
+	var err error
+	s.step.TestCaseContent, err = tc.ToTestCase()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to load testcase")
+		os.Exit(1)
+	}
 	return &StepTestCaseWithOptionalArgs{
 		step: s.step,
 	}
@@ -171,7 +181,12 @@ func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
 
 // CallRefAPI calls a referenced api.
 func (s *StepRequest) CallRefAPI(api IAPI) *StepAPIWithOptionalArgs {
-	s.step.APIContent, _ = api.ToAPI()
+	var err error
+	s.step.APIContent, err = api.ToAPI()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to load api")
+		os.Exit(1)
+	}
 	return &StepAPIWithOptionalArgs{
 		step: s.step,
 	}

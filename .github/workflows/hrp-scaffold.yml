@@ -25,8 +25,11 @@ jobs:
         run: make build
       - name: Run start project
         run: ./output/hrp startproject demo
-      - name: Run demo tests
+      - name: Run generated demo tests
         run: ./output/hrp run demo/testcases/demo_with_funplugin.json demo/testcases/demo_requests.yml demo/testcases/demo_ref_testcase.yml
+      - name: Run demo in examples
+        run: |
+          ./output/hrp run examples/demo-with-py-plugin/testcases/demo_with_funplugin.json
 
   scaffold-with-go-plugin:
     strategy:
@@ -47,8 +50,12 @@ jobs:
         run: make build
       - name: Run start project
         run: ./output/hrp startproject demo --go
-      - name: Run demo tests
+      - name: Run generated demo tests
         run: ./output/hrp run demo/testcases/demo_with_funplugin.json demo/testcases/demo_requests.yml demo/testcases/demo_ref_testcase.yml
+      - name: Run demo in examples
+        run: |
+          go build -o examples/demo-with-go-plugin/debugtalk.bin examples/demo-with-go-plugin/plugin/debugtalk.go
+          ./output/hrp run examples/demo-with-go-plugin/testcases/demo_with_funplugin.json
 
   scaffold-without-custom-plugin:
     strategy:
@@ -69,5 +76,8 @@ jobs:
         run: make build
       - name: Run start project
         run: ./output/hrp startproject demo --ignore-plugin
-      - name: Run demo tests
+      - name: Run generated demo tests
         run: ./output/hrp run demo/testcases/demo_without_funplugin.json
+      - name: Run demo in examples
+        run: |
+          ./output/hrp run examples/demo-without-plugin/testcases/demo_without_funplugin.json

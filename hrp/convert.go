@@ -2,9 +2,11 @@ package hrp
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
@@ -92,9 +94,21 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
 	}
+
+	// locate project root dir by plugin path
+	projectRootDir, err := getProjectRootDirPath(testCase.Config.Path)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get project root dir")
+	}
+	log.Info().Str("dir", projectRootDir).Msg("located project root dir")
+
 	for _, step := range tc.TestSteps {
 		if step.APIPath != "" {
-			path := filepath.Join(filepath.Dir(testCase.Config.Path), step.APIPath)
+			path := filepath.Join(projectRootDir, step.APIPath)
+			if !builtin.IsFilePathExists(path) {
+				return nil, errors.New("referenced api file not found: " + path)
+			}
+
 			refAPI := APIPath(path)
 			step.APIContent = &refAPI
 			apiContent, err := step.APIContent.ToAPI()
@@ -106,7 +120,11 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 				step: step,
 			})
 		} else if step.TestCasePath != "" {
-			path := filepath.Join(filepath.Dir(testCase.Config.Path), step.TestCasePath)
+			path := filepath.Join(projectRootDir, step.TestCasePath)
+			if !builtin.IsFilePathExists(path) {
+				return nil, errors.New("referenced testcase file not found: " + path)
+			}
+
 			refTestCase := TestCasePath(path)
 			step.TestCaseContent = &refTestCase
 			tc, err := step.TestCaseContent.ToTestCase()
@@ -140,16 +158,29 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	return testCase, nil
 }
 
+func getProjectRootDirPath(path string) (rootDir string, err error) {
+	pluginPath, err := locatePlugin(path)
+	if err == nil {
+		rootDir = filepath.Dir(pluginPath)
+		return
+	}
+
+	// failed to locate project root dir
+	// maybe project plugin debugtalk.xx is not exist
+	// use current dir instead
+	return os.Getwd()
+}
+
 // APIPath implements IAPI interface.
 type APIPath string
 
-func (path *APIPath) ToString() string {
+func (path *APIPath) GetPath() string {
 	return fmt.Sprintf("%v", *path)
 }
 
 func (path *APIPath) ToAPI() (*API, error) {
 	api := &API{}
-	apiPath := path.ToString()
+	apiPath := path.GetPath()
 	err := builtin.LoadFile(apiPath, api)
 	if err != nil {
 		return nil, err
@@ -161,22 +192,23 @@ func (path *APIPath) ToAPI() (*API, error) {
 // TestCasePath implements ITestCase interface.
 type TestCasePath string
 
-func (path *TestCasePath) ToString() string {
+func (path *TestCasePath) GetPath() string {
 	return fmt.Sprintf("%v", *path)
 }
 
 func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	tc := &TCase{}
-	casePath := path.ToString()
+	casePath := path.GetPath()
 	err := builtin.LoadFile(casePath, tc)
 	if err != nil {
 		return nil, err
 	}
+
 	err = convertCompatTestCase(tc)
 	if err != nil {
 		return nil, err
 	}
-	tc.Config.Path = path.ToString()
+	tc.Config.Path = casePath
 	testcase, err := tc.ToTestCase()
 	if err != nil {
 		return nil, err

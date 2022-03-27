@@ -108,16 +108,16 @@ func CreateFile(filePath string, data string) error {
 	return nil
 }
 
-// isFilePathExists returns true if path exists, whether path is file or dir
-func isPathExists(path string) bool {
+// IsPathExists returns true if path exists, whether path is file or dir
+func IsPathExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
 	}
 	return true
 }
 
-// isFilePathExists returns true if path exists and path is file
-func isFilePathExists(path string) bool {
+// IsFilePathExists returns true if path exists and path is file
+func IsFilePathExists(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
 		// path not exists
@@ -133,10 +133,10 @@ func isFilePathExists(path string) bool {
 }
 
 func EnsureFolderExists(folderPath string) error {
-	if !isPathExists(folderPath) {
+	if !IsPathExists(folderPath) {
 		err := CreateFolder(folderPath)
 		return err
-	} else if isFilePathExists(folderPath) {
+	} else if IsFilePathExists(folderPath) {
 		return fmt.Errorf("path %v should be directory", folderPath)
 	}
 	return nil
