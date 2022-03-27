@@ -193,6 +193,11 @@ type API struct {
 	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
 	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Path          string
+}
+
+func (api *API) GetPath() string {
+	return api.Path
 }
 
 func (api *API) ToAPI() (*API, error) {
@@ -210,6 +215,7 @@ type Validator struct {
 // IAPI represents interface for api,
 // includes API and APIPath.
 type IAPI interface {
+	GetPath() string
 	ToAPI() (*API, error)
 }
 
@@ -219,8 +225,8 @@ type TStep struct {
 	Name            string                 `json:"name" yaml:"name"` // required
 	Request         *Request               `json:"request,omitempty" yaml:"request,omitempty"`
 	APIPath         string                 `json:"api,omitempty" yaml:"api,omitempty"`
-	TestCasePath    string                 `json:"testcase,omitempty" yaml:"testcase,omitempty"`
 	APIContent      IAPI                   `json:"api_content,omitempty" yaml:"api_content,omitempty"`
+	TestCasePath    string                 `json:"testcase,omitempty" yaml:"testcase,omitempty"`
 	TestCaseContent ITestCase              `json:"testcase_content,omitempty" yaml:"testcase_content,omitempty"`
 	Transaction     *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
 	Rendezvous      *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
@@ -287,6 +293,10 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
+func (tc *TCase) Path() string {
+	return tc.Config.Path
+}
+
 // IStep represents interface for all types for teststeps, includes:
 // StepRequest, StepRequestWithOptionalArgs, StepRequestValidation, StepRequestExtraction,
 // StepTestCaseWithOptionalArgs,
@@ -300,6 +310,7 @@ type IStep interface {
 // ITestCase represents interface for testcases,
 // includes TestCase and TestCasePath.
 type ITestCase interface {
+	GetPath() string
 	ToTestCase() (*TestCase, error)
 	ToTCase() (*TCase, error)
 }
@@ -309,6 +320,10 @@ type ITestCase interface {
 type TestCase struct {
 	Config    *TConfig
 	TestSteps []IStep
+}
+
+func (tc *TestCase) GetPath() string {
+	return tc.Config.Path
 }
 
 func (tc *TestCase) ToTestCase() (*TestCase, error) {

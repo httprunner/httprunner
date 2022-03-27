@@ -3,9 +3,7 @@ package har2case
 import (
 	"encoding/base64"
 	"fmt"
-	"io"
 	"net/url"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -34,10 +32,22 @@ type har struct {
 	path       string
 	filterStr  string
 	excludeStr string
+	profile    map[string]interface{}
 	outputDir  string
 }
 
+func (h *har) SetProfile(path string) {
+	log.Info().Str("path", path).Msg("set profile")
+	h.profile = make(map[string]interface{})
+	err := builtin.LoadFile(path, h.profile)
+	if err != nil {
+		log.Warn().Str("path", path).
+			Msg("invalid profile format, ignore!")
+	}
+}
+
 func (h *har) SetOutputDir(dir string) {
+	log.Info().Str("dir", dir).Msg("set output directory")
 	h.outputDir = dir
 }
 
@@ -93,23 +103,11 @@ func (h *har) makeTestCase() (*hrp.TCase, error) {
 }
 
 func (h *har) load() (*Har, error) {
-	fp, err := os.Open(h.path)
-	if err != nil {
-		return nil, fmt.Errorf("open: %w", err)
-	}
-
-	data, err := io.ReadAll(fp)
-	fp.Close()
-	if err != nil {
-		return nil, fmt.Errorf("read: %w", err)
-	}
-
 	har := &Har{}
-	err = json.Unmarshal(data, har)
+	err := builtin.LoadFile(h.path, har)
 	if err != nil {
-		return nil, fmt.Errorf("json.Unmarshal error: %w", err)
+		return nil, errors.Wrap(err, "load har failed")
 	}
-
 	return har, nil
 }
 
@@ -147,6 +145,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 			Request:    &hrp.Request{},
 			Validators: make([]interface{}, 0),
 		},
+		profile: h.profile,
 	}
 	if err := step.makeRequestMethod(entry); err != nil {
 		return nil, err
@@ -174,6 +173,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 
 type tStep struct {
 	hrp.TStep
+	profile map[string]interface{}
 }
 
 func (s *tStep) makeRequestMethod(entry *Entry) error {
@@ -182,7 +182,6 @@ func (s *tStep) makeRequestMethod(entry *Entry) error {
 }
 
 func (s *tStep) makeRequestURL(entry *Entry) error {
-
 	u, err := url.Parse(entry.Request.URL)
 	if err != nil {
 		log.Error().Err(err).Msg("make request url failed")
@@ -202,6 +201,21 @@ func (s *tStep) makeRequestParams(entry *Entry) error {
 
 func (s *tStep) makeRequestCookies(entry *Entry) error {
 	s.Request.Cookies = make(map[string]string)
+	cookies, ok := s.profile["cookies"]
+	if ok {
+		// use cookies from profile
+		cookies, ok := cookies.(map[string]interface{})
+		if ok {
+			for k, v := range cookies {
+				s.Request.Cookies[k] = fmt.Sprintf("%v", v)
+			}
+			return nil
+		}
+		log.Warn().Interface("cookies", cookies).
+			Msg("cookies from profile is not a map, ignore!")
+	}
+
+	// use cookies from har
 	for _, cookie := range entry.Request.Cookies {
 		s.Request.Cookies[cookie.Name] = cookie.Value
 	}
@@ -210,6 +224,21 @@ func (s *tStep) makeRequestCookies(entry *Entry) error {
 
 func (s *tStep) makeRequestHeaders(entry *Entry) error {
 	s.Request.Headers = make(map[string]string)
+	headers, ok := s.profile["headers"]
+	if ok {
+		// use headers from profile
+		cookies, ok := headers.(map[string]interface{})
+		if ok {
+			for k, v := range cookies {
+				s.Request.Headers[k] = fmt.Sprintf("%v", v)
+			}
+			return nil
+		}
+		log.Warn().Interface("headers", headers).
+			Msg("headers from profile is not a map, ignore!")
+	}
+
+	// use headers from har
 	for _, header := range entry.Request.Headers {
 		if strings.EqualFold(header.Name, "cookie") {
 			continue
@@ -230,10 +259,14 @@ func (s *tStep) makeRequestBody(entry *Entry) error {
 	if strings.HasPrefix(mimeType, "application/json") {
 		// post json
 		var body interface{}
-		err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
-		if err != nil {
-			log.Error().Err(err).Msg("make request body failed")
-			return err
+		if entry.Request.PostData.Text == "" {
+			body = nil
+		} else {
+			err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
+			if err != nil {
+				log.Error().Err(err).Msg("make request body failed")
+				return err
+			}
 		}
 		s.Request.Body = body
 	} else if strings.HasPrefix(mimeType, "application/x-www-form-urlencoded") {

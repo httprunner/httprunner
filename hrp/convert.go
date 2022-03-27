@@ -1,55 +1,16 @@
 package hrp
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/hrp/internal/builtin"
 )
-
-func loadFromJSON(path string, structObj interface{}) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return err
-	}
-	log.Info().Str("path", path).Msg("load json")
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("load json path failed")
-		return err
-	}
-
-	decoder := json.NewDecoder(bytes.NewReader(file))
-	decoder.UseNumber()
-	err = decoder.Decode(structObj)
-	return err
-}
-
-func loadFromYAML(path string, structObj interface{}) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		log.Error().Str("path", path).Err(err).Msg("convert absolute path failed")
-		return err
-	}
-	log.Info().Str("path", path).Msg("load yaml")
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("load yaml path failed")
-		return err
-	}
-
-	err = yaml.Unmarshal(file, structObj)
-	return err
-}
 
 func convertCompatValidator(Validators []interface{}) (err error) {
 	for i, iValidator := range Validators {
@@ -133,9 +94,21 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
 	}
+
+	// locate project root dir by plugin path
+	projectRootDir, err := getProjectRootDirPath(testCase.Config.Path)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get project root dir")
+	}
+	log.Info().Str("dir", projectRootDir).Msg("located project root dir")
+
 	for _, step := range tc.TestSteps {
 		if step.APIPath != "" {
-			path := filepath.Join(filepath.Dir(testCase.Config.Path), step.APIPath)
+			path := filepath.Join(projectRootDir, step.APIPath)
+			if !builtin.IsFilePathExists(path) {
+				return nil, errors.New("referenced api file not found: " + path)
+			}
+
 			refAPI := APIPath(path)
 			step.APIContent = &refAPI
 			apiContent, err := step.APIContent.ToAPI()
@@ -147,7 +120,11 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 				step: step,
 			})
 		} else if step.TestCasePath != "" {
-			path := filepath.Join(filepath.Dir(testCase.Config.Path), step.TestCasePath)
+			path := filepath.Join(projectRootDir, step.TestCasePath)
+			if !builtin.IsFilePathExists(path) {
+				return nil, errors.New("referenced testcase file not found: " + path)
+			}
+
 			refTestCase := TestCasePath(path)
 			step.TestCaseContent = &refTestCase
 			tc, err := step.TestCaseContent.ToTestCase()
@@ -181,29 +158,30 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	return testCase, nil
 }
 
-var ErrUnsupportedFileExt = fmt.Errorf("unsupported testcase file extension")
+func getProjectRootDirPath(path string) (rootDir string, err error) {
+	pluginPath, err := locatePlugin(path)
+	if err == nil {
+		rootDir = filepath.Dir(pluginPath)
+		return
+	}
+
+	// failed to locate project root dir
+	// maybe project plugin debugtalk.xx is not exist
+	// use current dir instead
+	return os.Getwd()
+}
 
 // APIPath implements IAPI interface.
 type APIPath string
 
-func (path *APIPath) ToString() string {
+func (path *APIPath) GetPath() string {
 	return fmt.Sprintf("%v", *path)
 }
 
 func (path *APIPath) ToAPI() (*API, error) {
 	api := &API{}
-	var err error
-
-	apiPath := path.ToString()
-	ext := filepath.Ext(apiPath)
-	switch ext {
-	case ".json":
-		err = loadFromJSON(apiPath, api)
-	case ".yaml", ".yml":
-		err = loadFromYAML(apiPath, api)
-	default:
-		err = ErrUnsupportedFileExt
-	}
+	apiPath := path.GetPath()
+	err := builtin.LoadFile(apiPath, api)
 	if err != nil {
 		return nil, err
 	}
@@ -214,32 +192,23 @@ func (path *APIPath) ToAPI() (*API, error) {
 // TestCasePath implements ITestCase interface.
 type TestCasePath string
 
-func (path *TestCasePath) ToString() string {
+func (path *TestCasePath) GetPath() string {
 	return fmt.Sprintf("%v", *path)
 }
 
 func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	tc := &TCase{}
-	var err error
-
-	casePath := path.ToString()
-	ext := filepath.Ext(casePath)
-	switch ext {
-	case ".json":
-		err = loadFromJSON(casePath, tc)
-	case ".yaml", ".yml":
-		err = loadFromYAML(casePath, tc)
-	default:
-		err = ErrUnsupportedFileExt
-	}
+	casePath := path.GetPath()
+	err := builtin.LoadFile(casePath, tc)
 	if err != nil {
 		return nil, err
 	}
+
 	err = convertCompatTestCase(tc)
 	if err != nil {
 		return nil, err
 	}
-	tc.Config.Path = path.ToString()
+	tc.Config.Path = casePath
 	testcase, err := tc.ToTestCase()
 	if err != nil {
 		return nil, err
