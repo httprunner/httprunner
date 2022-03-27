@@ -238,6 +238,7 @@ func (r *caseRunner) reset() *caseRunner {
 
 func (r *caseRunner) run() error {
 	config := r.TestCase.Config
+	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 	// init plugin
 	var err error
 	if r.parser.plugin, err = initPlugin(config.Path, r.hrpRunner.pluginLogOn); err != nil {
@@ -251,7 +252,6 @@ func (r *caseRunner) run() error {
 	if err := r.parseConfig(config); err != nil {
 		return err
 	}
-	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	r.startTime = time.Now()
 	for index := range r.TestCase.TestSteps {
@@ -1048,7 +1048,7 @@ func setBodyBytes(req *http.Request, data []byte) {
 	req.ContentLength = int64(len(data))
 }
 
-//go:embed internal/report/template.html
+//go:embed internal/scaffold/templates/report/template.html
 var reportTemplate string
 
 func (s *Summary) genHTMLReport() error {

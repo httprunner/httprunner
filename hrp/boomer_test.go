@@ -6,8 +6,8 @@ import (
 )
 
 func TestBoomerStandaloneRun(t *testing.T) {
-	buildHashicorpPlugin()
-	defer removeHashicorpPlugin()
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
 
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").SetBaseURL("http://httpbin.org"),
@@ -25,7 +25,7 @@ func TestBoomerStandaloneRun(t *testing.T) {
 			NewStep("TestCase3").CallRefCase(&TestCase{Config: NewConfig("TestCase3")}),
 		},
 	}
-	testcase2 := &demoTestCaseJSONPath
+	testcase2 := &demoTestCaseWithPluginJSONPath
 
 	b := NewBoomer(2, 1)
 	go b.Run(testcase1, testcase2)

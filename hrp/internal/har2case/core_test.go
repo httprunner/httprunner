@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	harPath  = "../../../examples/hrp/har/demo.har"
-	harPath2 = "../../../examples/hrp/har/postman-echo.har"
+	harPath     = "../../../examples/data/har/demo.har"
+	harPath2    = "../../../examples/data/har/postman-echo.har"
+	profilePath = "../../../examples/data/har/profile.yml"
 )
 
 func TestGenJSON(t *testing.T) {
@@ -43,6 +44,26 @@ func TestLoadHAR(t *testing.T) {
 		t.Fail()
 	}
 	if !assert.Equal(t, "POST", h.Log.Entries[1].Request.Method) {
+		t.Fail()
+	}
+}
+
+func TestLoadHARWithProfile(t *testing.T) {
+	har := NewHAR(harPath)
+	har.SetProfile(profilePath)
+	_, err := har.load()
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t,
+		map[string]interface{}{"Content-Type": "application/x-www-form-urlencoded"},
+		har.profile["headers"]) {
+		t.Fail()
+	}
+	if !assert.Equal(t,
+		map[string]interface{}{"UserName": "debugtalk"},
+		har.profile["cookies"]) {
 		t.Fail()
 	}
 }
@@ -115,8 +136,228 @@ func TestMakeTestCase(t *testing.T) {
 }
 
 func TestGetFilenameWithoutExtension(t *testing.T) {
-	filename := getFilenameWithoutExtension("../../../examples/hrp/har/postman-echo.har")
+	filename := getFilenameWithoutExtension(harPath2)
 	if !assert.Equal(t, "postman-echo", filename) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestHeaders(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Headers: []NVP{
+				{Name: "Content-Type", Value: "application/json; charset=utf-8"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"Content-Type": "application/json; charset=utf-8",
+	}, step.Request.Headers) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestHeadersWithProfile(t *testing.T) {
+	har := NewHAR("")
+	har.SetProfile(profilePath)
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Headers: []NVP{
+				{Name: "Content-Type", Value: "application/json; charset=utf-8"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"Content-Type": "application/x-www-form-urlencoded",
+	}, step.Request.Headers) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestCookies(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Cookies: []Cookie{
+				{Name: "abc", Value: "123"},
+				{Name: "UserName", Value: "leolee"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"abc":      "123",
+		"UserName": "leolee",
+	}, step.Request.Cookies) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestCookiesWithProfile(t *testing.T) {
+	har := NewHAR("")
+	har.SetProfile(profilePath)
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			Cookies: []Cookie{
+				{Name: "abc", Value: "123"},
+				{Name: "UserName", Value: "leolee"},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]string{
+		"UserName": "debugtalk",
+	}, step.Request.Cookies) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestDataParams(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			PostData: PostData{
+				MimeType: "application/x-www-form-urlencoded; charset=utf-8",
+				Params: []PostParam{
+					{Name: "a", Value: "1"},
+					{Name: "b", Value: "2"},
+				},
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, "a=1&b=2", step.Request.Body) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestDataJSON(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			PostData: PostData{
+				MimeType: "application/json; charset=utf-8",
+				Text:     "{\"a\":\"1\",\"b\":\"2\"}",
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, map[string]interface{}{"a": "1", "b": "2"}, step.Request.Body) {
+		t.Fail()
+	}
+}
+
+func TestMakeRequestDataTextEmpty(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			Method: "POST",
+			PostData: PostData{
+				MimeType: "application/json; charset=utf-8",
+				Text:     "",
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+
+	if !assert.Equal(t, nil, step.Request.Body) { // TODO
+		t.Fail()
+	}
+}
+
+func TestMakeValidate(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Response: Response{
+			Status: 200,
+			Headers: []NVP{
+				{Name: "Content-Type", Value: "application/json; charset=utf-8"},
+			},
+			Content: Content{
+				Size:     71,
+				MimeType: "application/json; charset=utf-8",
+				// map[Code:200 IsSuccess:true Message:<nil> Value:map[BlnResult:true]]
+				Text:     "eyJJc1N1Y2Nlc3MiOnRydWUsIkNvZGUiOjIwMCwiTWVzc2FnZSI6bnVsbCwiVmFsdWUiOnsiQmxuUmVzdWx0Ijp0cnVlfX0=",
+				Encoding: "base64",
+			},
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fail()
+	}
+	validator, ok := step.Validators[0].(hrp.Validator)
+	if !ok {
+		t.Fail()
+	}
+	if !assert.Equal(t, validator,
+		hrp.Validator{
+			Check:   "status_code",
+			Expect:  200,
+			Assert:  "equals",
+			Message: "assert response status code"}) {
+		t.Fail()
+	}
+
+	validator, ok = step.Validators[1].(hrp.Validator)
+	if !ok {
+		t.Fail()
+	}
+	if !assert.Equal(t, validator,
+		hrp.Validator{
+			Check:   "headers.\"Content-Type\"",
+			Expect:  "application/json; charset=utf-8",
+			Assert:  "equals",
+			Message: "assert response header Content-Type"}) {
+		t.Fail()
+	}
+
+	validator, ok = step.Validators[2].(hrp.Validator)
+	if !ok {
+		t.Fail()
+	}
+	if !assert.Equal(t, validator,
+		hrp.Validator{
+			Check:   "body.Code",
+			Expect:  float64(200), // TODO
+			Assert:  "equals",
+			Message: "assert response body Code"}) {
 		t.Fail()
 	}
 }

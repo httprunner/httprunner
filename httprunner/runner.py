@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn
+from typing import List, Dict, Text
 
 try:
     import allure
@@ -55,7 +55,7 @@ class HttpRunner(object):
     # log
     __log_path: Text = ""
 
-    def __init_tests__(self) -> NoReturn:
+    def __init_tests__(self):
         self.__config = self.config.perform()
         self.__teststeps = []
         for step in self.teststeps:
@@ -88,9 +88,7 @@ class HttpRunner(object):
         self.__export = export
         return self
 
-    def __call_hooks(
-        self, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text,
-    ) -> NoReturn:
+    def __call_hooks(self, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text):
         """ call hook actions.
 
         Args:
@@ -139,11 +137,12 @@ class HttpRunner(object):
         step_data = StepData(name=step.name)
 
         # parse
-        prepare_upload_step(step, self.__project_meta.functions)
+        functions = self.__project_meta.functions
+        prepare_upload_step(step, functions)
         request_dict = step.request.dict()
         request_dict.pop("upload", None)
         parsed_request_dict = parse_data(
-            request_dict, step.variables, self.__project_meta.functions
+            request_dict, step.variables, functions
         )
         parsed_request_dict["headers"].setdefault(
             "HRUN-Request-ID",
@@ -195,7 +194,7 @@ class HttpRunner(object):
 
         # extract
         extractors = step.extract
-        extract_mapping = resp_obj.extract(extractors, step.variables, self.__project_meta.functions)
+        extract_mapping = resp_obj.extract(extractors, step.variables, functions)
         step_data.export_vars = extract_mapping
 
         variables_mapping = step.variables
@@ -206,7 +205,7 @@ class HttpRunner(object):
         session_success = False
         try:
             resp_obj.validate(
-                validators, variables_mapping, self.__project_meta.functions
+                validators, variables_mapping, functions
             )
             session_success = True
         except ValidationFailure:
@@ -304,7 +303,7 @@ class HttpRunner(object):
         logger.info(f"run step end: {step.name} <<<<<<\n")
         return step_data.export_vars
 
-    def __parse_config(self, config: TConfig) -> NoReturn:
+    def __parse_config(self, config: TConfig):
         config.variables.update(self.__session_variables)
         config.variables = parse_variables_mapping(
             config.variables, self.__project_meta.functions

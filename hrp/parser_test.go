@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 	"time"
@@ -742,7 +743,7 @@ func TestParseParameters(t *testing.T) {
 	}{
 		{
 			map[string]interface{}{
-				"username-password": "${parameterize(../examples/hrp/account.csv)}",
+				"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
 				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
 			6,
 		},
@@ -782,17 +783,17 @@ func TestParseParametersError(t *testing.T) {
 	}{
 		{
 			map[string]interface{}{
-				"username_password": "${parameterize(../examples/hrp/account.csv)}",
+				"username_password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
 				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
 		},
 		{
 			map[string]interface{}{
-				"username-password": "${parameterize(../examples/hrp/account.csv)}",
+				"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
 				"user-agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
 		},
 		{
 			map[string]interface{}{
-				"username-password": "${param(../examples/hrp/account.csv)}",
+				"username-password": fmt.Sprintf("${param(%s/account.csv)}", hrpExamplesDir),
 				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
 		},
 	}

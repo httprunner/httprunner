@@ -1,11 +1,24 @@
 # Release History
 
-## 4.0.0
+## v4.0.0-alpha
 
-- refactor: merge [hrp] into httprunner repo
-- fix: call referenced api/testcase with relative path
-- fix: ignore exceptions when reporting GA events
+- refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
+
+**go version**
+
+- feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json profile file
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
+- change: lock funplugin version when creating scaffold project
+- fix: call referenced api/testcase with relative path
+
+**python version**
+
+- change: remove startproject, move all features to go version, replace with `hrp startproject`
+- change: remove har2case, move all features to go version, replace with `hrp run`
+- change: remove locust, you should run load tests with go version, replace with `hrp boom`
+- change: remove fastapi and uvicorn dependencies
+- fix: ignore exceptions when reporting GA events
+- fix: remove misuse of NoReturn in Python typing
 
 ## hrp-v0.8.0 (2022-03-22)
 
