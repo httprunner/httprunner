@@ -1,4 +1,4 @@
-package examples
+package tests
 
 import (
 	"testing"
