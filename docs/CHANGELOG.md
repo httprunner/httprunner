@@ -8,6 +8,7 @@
 
 - feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json profile file
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
+- change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
 
 **python version**
