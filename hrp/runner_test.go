@@ -40,14 +40,14 @@ func removeHashicorpPyPlugin() {
 	os.Remove(templatesDir + "debugtalk.py")
 }
 
-func TestHttpRunnerWithGoPlugin(t *testing.T) {
+func TestRunCaseWithGoPlugin(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
 	assertRunTestCases(t)
 }
 
-func TestHttpRunnerWithPythonPlugin(t *testing.T) {
+func TestRunCaseWithPythonPlugin(t *testing.T) {
 	buildHashicorpPyPlugin()
 	defer removeHashicorpPyPlugin()
 
@@ -59,19 +59,19 @@ func assertRunTestCases(t *testing.T) {
 		Config: NewConfig("TestCase1").
 			SetBaseURL("http://httpbin.org"),
 		TestSteps: []IStep{
-			NewStep("headers").
+			NewStep("testcase1-step1").
 				GET("/headers").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
-			NewStep("user-agent").
+			NewStep("testcase1-step2").
 				GET("/user-agent").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
-			NewStep("TestCase3").CallRefCase(
+			NewStep("testcase1-step3").CallRefCase(
 				&TestCase{
-					Config: NewConfig("TestCase3").SetBaseURL("http://httpbin.org"),
+					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL("http://httpbin.org"),
 					TestSteps: []IStep{
 						NewStep("ip").
 							GET("/ip").
@@ -81,32 +81,23 @@ func assertRunTestCases(t *testing.T) {
 					},
 				},
 			),
-			NewStep("TestCase4").CallRefCase(&demoRefAPIYAMLPath),
-			NewStep("TestCase5").CallRefCase(&demoTestCaseWithPluginJSONPath),
+			NewStep("testcase1-step4").CallRefCase(&demoTestCaseWithPluginJSONPath),
 		},
 	}
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").SetWeight(3),
 	}
-	testcase3 := &TestCase{
-		Config: NewConfig("TestCase1").
-			SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{
-			NewStep("TestCase5").CallRefAPI(&demoAPIYAMLPath),
-		},
-	}
-	testcase4 := &demoRefTestCaseJSONPath
 
 	r := NewRunner(t)
 	r.SetPluginLogOn()
-	err := r.Run(testcase1, testcase2, testcase3, testcase4)
+	err := r.Run(testcase1, testcase2)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
 }
 
-func TestInitRendezvous(t *testing.T) {
-	rendezvousBonudaryTestcase := &TestCase{
+func TestRunCaseWithRendezvous(t *testing.T) {
+	rendezvousBoundaryTestcase := &TestCase{
 		Config: NewConfig("run request with functions").
 			SetBaseURL("https://postman-echo.com").
 			WithVariables(map[string]interface{}{
@@ -155,7 +146,7 @@ func TestInitRendezvous(t *testing.T) {
 		{number: 100, percent: 1, timeout: 5000},
 	}
 
-	rendezvousList := initRendezvous(rendezvousBonudaryTestcase, 100)
+	rendezvousList := initRendezvous(rendezvousBoundaryTestcase, 100)
 
 	for i, r := range rendezvousList {
 		if r.Number != expectedRendezvousParams[i].number {
@@ -170,7 +161,7 @@ func TestInitRendezvous(t *testing.T) {
 	}
 }
 
-func TestThinkTime(t *testing.T) {
+func TestRunCaseWithThinkTime(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
@@ -205,7 +196,8 @@ func TestThinkTime(t *testing.T) {
 		{
 			Config: NewConfig("TestCase5"),
 			TestSteps: []IStep{
-				NewStep("thinkTime").CallRefCase(&demoThinkTimeJsonPath), // think time: 3s, random pct: {"min_percentage":1, "max_percentage":1.5}, limit: 4s
+				// think time: 3s, random pct: {"min_percentage":1, "max_percentage":1.5}, limit: 4s
+				NewStep("thinkTime").CallRefCase(&demoTestCaseWithThinkTimePath),
 			},
 		},
 	}
@@ -245,5 +237,49 @@ func TestGenHTMLReport(t *testing.T) {
 	err := summary.genHTMLReport()
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestRunCaseWithPluginJSON(t *testing.T) {
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
+
+	err := NewRunner(nil).Run(&demoTestCaseWithPluginJSONPath) // hrp.Run(testCase)
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestRunCaseWithPluginYAML(t *testing.T) {
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
+
+	err := NewRunner(nil).Run(&demoTestCaseWithPluginYAMLPath) // hrp.Run(testCase)
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestRunCaseWithRefAPI(t *testing.T) {
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
+
+	err := NewRunner(nil).Run(&demoTestCaseWithRefAPIPath)
+	if err != nil {
+		t.Fail()
+	}
+
+	testcase := &TestCase{
+		Config: NewConfig("TestCase").
+			SetBaseURL("https://postman-echo.com"),
+		TestSteps: []IStep{
+			NewStep("run referenced api").CallRefAPI(&demoAPIGETPath),
+		},
+	}
+
+	r := NewRunner(t)
+	err = r.Run(testcase)
+	if err != nil {
+		t.Fail()
 	}
 }

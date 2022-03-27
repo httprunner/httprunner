@@ -1,6 +1,6 @@
 # Release History
 
-## 4.0.0
+## v4.0.0-alpha
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
 
