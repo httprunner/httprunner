@@ -70,4 +70,4 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo --ignore-plugin
       - name: Run demo tests
-        run: ./output/hrp run demo/testcases/demo_without_plugin.json
+        run: ./output/hrp run demo/testcases/demo_without_funplugin.json
