@@ -148,7 +148,9 @@ func createGoPlugin(projectName string) error {
 	}
 
 	// download plugin dependency
-	if err := builtin.ExecCommand(exec.Command("go", "get", "github.com/httprunner/funplugin"), pluginDir); err != nil {
+	// funplugin version should be locked
+	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
+	if err := builtin.ExecCommand(exec.Command("go", "get", funplugin), pluginDir); err != nil {
 		return err
 	}
 
@@ -167,12 +169,18 @@ func createPythonPlugin(projectName string) error {
 	pluginFile := filepath.Join(projectName, "debugtalk.py")
 	err := CopyFile("templates/plugin/debugtalk.py", pluginFile)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "copy file failed")
 	}
 
 	// create python venv
-	if _, err := shared.PreparePython3Venv(pluginFile); err != nil {
-		return err
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "get user home dir failed")
+	}
+	venvDir := filepath.Join(home, ".hrp", "venv")
+	_, err = shared.EnsurePython3Venv(venvDir)
+	if err != nil {
+		return errors.Wrap(err, "ensure python venv failed")
 	}
 
 	return nil
