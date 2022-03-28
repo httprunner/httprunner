@@ -33,7 +33,7 @@ class GAClient(object):
 
     def __init__(self, tracking_id: Text):
         self.http_client = requests.Session()
-        self.label = str(__version__)
+        self.label = f"v{__version__}"
         self.common_params = {
             'v': self.version,
             'tid': tracking_id,    # Tracking ID / Property ID, XX-XXXXXXX-X
