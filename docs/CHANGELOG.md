@@ -7,6 +7,7 @@
 **go version**
 
 - feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json profile file
+- feat: support run testcases in specified folder path
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
@@ -30,8 +31,8 @@
 
 ## hrp-v0.7.0 (2022-03-15)
 
-- feat: support API layer for testcase #94
-- feat: support global headers for testcase #95
+- feat: support API layer for testcase
+- feat: support global headers for testcase
 - feat: support call referenced testcase by path in YAML/JSON testcases
 - fix: decode failure when content-encoding is deflate
 - fix: unstable RPS when load testing in high concurrency

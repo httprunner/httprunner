@@ -116,7 +116,7 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 			var apiFullPath string
 			if apiPath, ok := step.API.(string); ok {
 				apiFullPath = filepath.Join(projectRootDir, apiPath)
-			} else if apiPath, ok := step.API.(APIPath); ok {
+			} else if apiPath, ok := step.API.(*APIPath); ok {
 				apiFullPath = filepath.Join(projectRootDir, apiPath.GetPath())
 			} else {
 				return nil, errors.New("invalid api format")
