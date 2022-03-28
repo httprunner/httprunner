@@ -90,90 +90,6 @@ func convertCheckExpr(checkExpr string) string {
 	return strings.Join(checkItems, ".")
 }
 
-func (tc *TCase) ToTestCase() (*TestCase, error) {
-	testCase := &TestCase{
-		Config: tc.Config,
-	}
-
-	// locate project root dir by plugin path
-	projectRootDir, err := getProjectRootDirPath(testCase.Config.Path)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get project root dir")
-	}
-	log.Info().Str("dir", projectRootDir).Msg("located project root dir")
-
-	for _, step := range tc.TestSteps {
-		if step.API != nil {
-			if apiContent, ok := step.API.(*API); ok {
-				step.API = apiContent
-				testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
-					step: step,
-				})
-				return testCase, nil
-			}
-
-			// reference api path
-			var apiFullPath string
-			if apiPath, ok := step.API.(string); ok {
-				apiFullPath = filepath.Join(projectRootDir, apiPath)
-			} else if apiPath, ok := step.API.(*APIPath); ok {
-				apiFullPath = filepath.Join(projectRootDir, apiPath.GetPath())
-			} else {
-				return nil, errors.New("invalid api format")
-			}
-
-			if !builtin.IsFilePathExists(apiFullPath) {
-				return nil, errors.New("referenced api file not found: " + apiFullPath)
-			}
-
-			refAPI := APIPath(apiFullPath)
-			apiContent, err := refAPI.ToAPI()
-			if err != nil {
-				return nil, err
-			}
-			step.API = apiContent
-
-			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
-				step: step,
-			})
-		} else if step.TestCase != nil {
-			path := filepath.Join(projectRootDir, step.TestCase.(string))
-			if !builtin.IsFilePathExists(path) {
-				return nil, errors.New("referenced testcase file not found: " + path)
-			}
-
-			refTestCase := TestCasePath(path)
-			tc, err := refTestCase.ToTestCase()
-			if err != nil {
-				return nil, err
-			}
-			step.TestCase = tc
-			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
-				step: step,
-			})
-		} else if step.ThinkTime != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepThinkTime{
-				step: step,
-			})
-		} else if step.Request != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
-				step: step,
-			})
-		} else if step.Transaction != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepTransaction{
-				step: step,
-			})
-		} else if step.Rendezvous != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepRendezvous{
-				step: step,
-			})
-		} else {
-			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
-		}
-	}
-	return testCase, nil
-}
-
 func getProjectRootDirPath(path string) (rootDir string, err error) {
 	pluginPath, err := locatePlugin(path)
 	if err == nil {
@@ -212,6 +128,7 @@ func (path *TestCasePath) GetPath() string {
 	return fmt.Sprintf("%v", *path)
 }
 
+// ToTestCase loads testcase path and convert to *TestCase
 func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	tc := &TCase{}
 	casePath := path.GetPath()
@@ -225,17 +142,76 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		return nil, err
 	}
 	tc.Config.Path = casePath
-	testcase, err := tc.ToTestCase()
-	if err != nil {
-		return nil, err
-	}
-	return testcase, nil
-}
 
-func (path *TestCasePath) ToTCase() (*TCase, error) {
-	testcase, err := path.ToTestCase()
-	if err != nil {
-		return nil, err
+	testCase := &TestCase{
+		Config: tc.Config,
 	}
-	return testcase.ToTCase()
+
+	// locate project root dir by plugin path
+	projectRootDir, err := getProjectRootDirPath(casePath)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get project root dir")
+	}
+
+	for _, step := range tc.TestSteps {
+		if step.API != nil {
+			apiPath, ok := step.API.(string)
+			if !ok {
+				return nil, fmt.Errorf("referenced api path should be string, got %v", step.API)
+			}
+			path := filepath.Join(projectRootDir, apiPath)
+			if !builtin.IsFilePathExists(path) {
+				return nil, errors.New("referenced api file not found: " + path)
+			}
+
+			refAPI := APIPath(path)
+			apiContent, err := refAPI.ToAPI()
+			if err != nil {
+				return nil, err
+			}
+			step.API = apiContent
+
+			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
+				step: step,
+			})
+		} else if step.TestCase != nil {
+			casePath, ok := step.TestCase.(string)
+			if !ok {
+				return nil, fmt.Errorf("referenced testcase path should be string, got %v", step.TestCase)
+			}
+			path := filepath.Join(projectRootDir, casePath)
+			if !builtin.IsFilePathExists(path) {
+				return nil, errors.New("referenced testcase file not found: " + path)
+			}
+
+			refTestCase := TestCasePath(path)
+			tc, err := refTestCase.ToTestCase()
+			if err != nil {
+				return nil, err
+			}
+			step.TestCase = tc
+			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
+				step: step,
+			})
+		} else if step.ThinkTime != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepThinkTime{
+				step: step,
+			})
+		} else if step.Request != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
+				step: step,
+			})
+		} else if step.Transaction != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepTransaction{
+				step: step,
+			})
+		} else if step.Rendezvous != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepRendezvous{
+				step: step,
+			})
+		} else {
+			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
+		}
+	}
+	return testCase, nil
 }
