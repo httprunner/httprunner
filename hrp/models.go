@@ -291,10 +291,6 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-func (tc *TCase) Path() string {
-	return tc.Config.Path
-}
-
 // IStep represents interface for all types for teststeps, includes:
 // StepRequest, StepRequestWithOptionalArgs, StepRequestValidation, StepRequestExtraction,
 // StepTestCaseWithOptionalArgs,
@@ -310,7 +306,6 @@ type IStep interface {
 type ITestCase interface {
 	GetPath() string
 	ToTestCase() (*TestCase, error)
-	ToTCase() (*TCase, error)
 }
 
 // TestCase is a container for one testcase, which is used for testcase runner.
@@ -328,14 +323,14 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
-func (tc *TestCase) ToTCase() (*TCase, error) {
-	tCase := TCase{
-		Config: tc.Config,
+func convertTestCase(testcase *TestCase) *TCase {
+	tCase := &TCase{
+		Config: testcase.Config,
 	}
-	for _, step := range tc.TestSteps {
+	for _, step := range testcase.TestSteps {
 		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
 	}
-	return &tCase, nil
+	return tCase
 }
 
 type testCaseStat struct {

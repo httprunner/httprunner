@@ -230,9 +230,14 @@ func loadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 			// folder path
 			files, err := ioutil.ReadDir(casePath)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to read dir")
+				return nil, errors.Wrap(err, "read dir failed")
 			}
 			for _, f := range files {
+				ext := filepath.Ext(f.Name())
+				if ext != ".yml" && ext != ".yaml" && ext != ".json" {
+					// ignore non-testcase files
+					continue
+				}
 				path := TestCasePath(filepath.Join(casePath, f.Name()))
 				casePaths = append(casePaths, &path)
 			}
@@ -244,7 +249,8 @@ func loadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 		for _, path := range casePaths {
 			tc, err := path.ToTestCase()
 			if err != nil {
-				continue
+				log.Error().Err(err).Str("path", path.GetPath()).Msg("load testcase failed")
+				return nil, errors.Wrap(err, "load testcase failed")
 			}
 			testCases = append(testCases, tc)
 		}
@@ -561,7 +567,7 @@ func (r *caseRunner) runStepRendezvous(rendezvous *Rendezvous) (stepResult *step
 }
 
 func (r *caseRunner) isPreRendezvousAllReleased(rendezvous *Rendezvous) bool {
-	tCase, _ := r.ToTCase()
+	tCase := convertTestCase(r.TestCase)
 	for _, step := range tCase.TestSteps {
 		preRendezvous := step.Rendezvous
 		if preRendezvous == nil {
@@ -608,7 +614,7 @@ func (r *Rendezvous) setReleased() {
 }
 
 func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
-	tCase, _ := testcase.ToTCase()
+	tCase := convertTestCase(testcase)
 	var rendezvousList []*Rendezvous
 	for _, step := range tCase.TestSteps {
 		if step.Rendezvous == nil {
