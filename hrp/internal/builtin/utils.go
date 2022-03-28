@@ -132,6 +132,18 @@ func IsFilePathExists(path string) bool {
 	return true
 }
 
+// IsFolderPathExists returns true if path exists and path is folder
+func IsFolderPathExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		// path not exists
+		return false
+	}
+
+	// path exists and is dir
+	return info.IsDir()
+}
+
 func EnsureFolderExists(folderPath string) error {
 	if !IsPathExists(folderPath) {
 		err := CreateFolder(folderPath)
