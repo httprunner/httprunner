@@ -169,7 +169,7 @@ func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
 // CallRefCase calls a referenced testcase.
 func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
 	var err error
-	s.step.TestCaseContent, err = tc.ToTestCase()
+	s.step.TestCase, err = tc.ToTestCase()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcase")
 		os.Exit(1)
@@ -182,7 +182,7 @@ func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
 // CallRefAPI calls a referenced api.
 func (s *StepRequest) CallRefAPI(api IAPI) *StepAPIWithOptionalArgs {
 	var err error
-	s.step.APIContent, err = api.ToAPI()
+	s.step.API, err = api.ToAPI()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load api")
 		os.Exit(1)
@@ -332,8 +332,10 @@ func (s *StepAPIWithOptionalArgs) TeardownHook(hook string) *StepAPIWithOptional
 
 // Export specifies variable names to export from referenced api for current step.
 func (s *StepAPIWithOptionalArgs) Export(names ...string) *StepAPIWithOptionalArgs {
-	api, _ := s.step.APIContent.ToAPI()
-	s.step.Export = append(api.Export, names...)
+	api, ok := s.step.API.(*API)
+	if ok {
+		s.step.Export = append(api.Export, names...)
+	}
 	return s
 }
 
@@ -341,8 +343,11 @@ func (s *StepAPIWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
-	api, _ := s.step.APIContent.ToAPI()
-	return api.Name
+	api, ok := s.step.API.(*API)
+	if ok {
+		return api.Name
+	}
+	return ""
 }
 
 func (s *StepAPIWithOptionalArgs) Type() string {
@@ -374,8 +379,11 @@ func (s *StepTestCaseWithOptionalArgs) Name() string {
 	if s.step.Name != "" {
 		return s.step.Name
 	}
-	ts, _ := s.step.TestCaseContent.ToTestCase()
-	return ts.Config.Name
+	ts, ok := s.step.TestCase.(*TestCase)
+	if ok {
+		return ts.Config.Name
+	}
+	return ""
 }
 
 func (s *StepTestCaseWithOptionalArgs) Type() string {

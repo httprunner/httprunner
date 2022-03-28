@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 )
@@ -280,6 +281,40 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 	r := NewRunner(t)
 	err = r.Run(testcase)
 	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestLoadTestCases(t *testing.T) {
+	// load test cases from folder path
+	tc := TestCasePath("../examples/demo-with-py-plugin/testcases/")
+	testCases, err := loadTestCases(&tc)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, len(testCases), 3) {
+		t.Fail()
+	}
+
+	// load test cases from single file path
+	tc = demoTestCaseWithPluginJSONPath
+	testCases, err = loadTestCases(&tc)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, len(testCases), 1) {
+		t.Fail()
+	}
+
+	// load test cases from TestCase instance
+	testcase := &TestCase{
+		Config: NewConfig("TestCase").SetWeight(3),
+	}
+	testCases, err = loadTestCases(testcase)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, len(testCases), 1) {
 		t.Fail()
 	}
 }
