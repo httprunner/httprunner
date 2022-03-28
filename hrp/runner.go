@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -219,40 +219,42 @@ func loadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 		}
 
 		// iTestCase should be a TestCasePath, file path or folder path
-		testCasePath, ok := iTestCase.(*TestCasePath)
+		tcPath, ok := iTestCase.(*TestCasePath)
 		if !ok {
 			return nil, errors.New("invalid iTestCase type")
 		}
 
-		casePaths := make([]*TestCasePath, 0)
-		casePath := iTestCase.GetPath()
-		if builtin.IsFolderPathExists(casePath) {
-			// folder path
-			files, err := ioutil.ReadDir(casePath)
-			if err != nil {
-				return nil, errors.Wrap(err, "read dir failed")
+		casePath := tcPath.GetPath()
+		err := fs.WalkDir(os.DirFS(casePath), ".", func(path string, dir fs.DirEntry, e error) error {
+			if dir == nil {
+				// casePath is a file other than a dir
+				path = casePath
+			} else if dir.IsDir() && path != "." && strings.HasPrefix(path, ".") {
+				// skip hidden folders
+				return fs.SkipDir
+			} else {
+				// casePath is a dir
+				path = filepath.Join(casePath, path)
 			}
-			for _, f := range files {
-				ext := filepath.Ext(f.Name())
-				if ext != ".yml" && ext != ".yaml" && ext != ".json" {
-					// ignore non-testcase files
-					continue
-				}
-				path := TestCasePath(filepath.Join(casePath, f.Name()))
-				casePaths = append(casePaths, &path)
-			}
-		} else {
-			// file path
-			casePaths = append(casePaths, testCasePath)
-		}
 
-		for _, path := range casePaths {
-			tc, err := path.ToTestCase()
+			// ignore non-testcase files
+			ext := filepath.Ext(path)
+			if ext != ".yml" && ext != ".yaml" && ext != ".json" {
+				return nil
+			}
+
+			// filtered testcases
+			testCasePath := TestCasePath(path)
+			tc, err := testCasePath.ToTestCase()
 			if err != nil {
-				log.Error().Err(err).Str("path", path.GetPath()).Msg("load testcase failed")
-				return nil, errors.Wrap(err, "load testcase failed")
+				log.Error().Err(err).Str("path", path).Msg("load testcase failed")
+				return errors.Wrap(err, "load testcase failed")
 			}
 			testCases = append(testCases, tc)
+			return nil
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "read dir failed")
 		}
 	}
 
