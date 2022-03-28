@@ -323,11 +323,11 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
-func convertTestCase(testcase *TestCase) *TCase {
+func (tc *TestCase) ToTCase() *TCase {
 	tCase := &TCase{
-		Config: testcase.Config,
+		Config: tc.Config,
 	}
-	for _, step := range testcase.TestSteps {
+	for _, step := range tc.TestSteps {
 		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
 	}
 	return tCase

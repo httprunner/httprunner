@@ -153,7 +153,7 @@ var demoTestCaseWithoutPlugin = &TestCase{
 }
 
 func TestGenDemoTestCase(t *testing.T) {
-	tCase := convertTestCase(demoTestCaseWithPlugin)
+	tCase := demoTestCaseWithPlugin.ToTCase()
 	err := builtin.Dump2JSON(tCase, demoTestCaseWithPluginJSONPath.GetPath())
 	if err != nil {
 		t.Fail()
@@ -163,7 +163,7 @@ func TestGenDemoTestCase(t *testing.T) {
 		t.Fail()
 	}
 
-	tCase = convertTestCase(demoTestCaseWithoutPlugin)
+	tCase = demoTestCaseWithoutPlugin.ToTCase()
 	err = builtin.Dump2JSON(tCase, demoTestCaseWithoutPluginJSONPath.GetPath())
 	if err != nil {
 		t.Fail()

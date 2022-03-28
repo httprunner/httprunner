@@ -567,7 +567,7 @@ func (r *caseRunner) runStepRendezvous(rendezvous *Rendezvous) (stepResult *step
 }
 
 func (r *caseRunner) isPreRendezvousAllReleased(rendezvous *Rendezvous) bool {
-	tCase := convertTestCase(r.TestCase)
+	tCase := r.TestCase.ToTCase()
 	for _, step := range tCase.TestSteps {
 		preRendezvous := step.Rendezvous
 		if preRendezvous == nil {
@@ -614,7 +614,7 @@ func (r *Rendezvous) setReleased() {
 }
 
 func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
-	tCase := convertTestCase(testcase)
+	tCase := testcase.ToTCase()
 	var rendezvousList []*Rendezvous
 	for _, step := range tCase.TestSteps {
 		if step.Rendezvous == nil {

@@ -287,12 +287,12 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 
 func TestLoadTestCases(t *testing.T) {
 	// load test cases from folder path
-	tc := TestCasePath(templatesDir + "testcases")
+	tc := TestCasePath("../examples/demo-with-py-plugin/testcases/")
 	testCases, err := loadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
-	if !assert.GreaterOrEqual(t, len(testCases), 5) {
+	if !assert.Equal(t, len(testCases), 3) {
 		t.Fail()
 	}
 
