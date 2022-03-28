@@ -2,6 +2,8 @@ name: run smoke tests for httprunner
 
 on:
   push:
+    branches:
+      - main
   pull_request:
     types: [synchronize]
 
