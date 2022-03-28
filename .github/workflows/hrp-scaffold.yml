@@ -2,6 +2,8 @@ name: Run scaffold for hrp
 
 on:
   push:
+    branches:
+      - main
   pull_request:
     types: [synchronize]
 
@@ -26,7 +28,7 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo
       - name: Run generated demo tests
-        run: ./output/hrp run demo/testcases/demo_with_funplugin.json demo/testcases/demo_requests.yml demo/testcases/demo_ref_testcase.yml
+        run: ./output/hrp run demo/testcases/
       - name: Run demo in examples
         run: |
           ./output/hrp run examples/demo-with-py-plugin/testcases/demo_with_funplugin.json
@@ -51,7 +53,7 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo --go
       - name: Run generated demo tests
-        run: ./output/hrp run demo/testcases/demo_with_funplugin.json demo/testcases/demo_requests.yml demo/testcases/demo_ref_testcase.yml
+        run: ./output/hrp run demo/testcases/
       - name: Run demo in examples
         run: |
           go build -o examples/demo-with-go-plugin/debugtalk.bin examples/demo-with-go-plugin/plugin/debugtalk.go

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -148,15 +149,17 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	defer sdk.SendEvent(event.StartTiming("execution"))
 	// record execution data to summary
 	s := newOutSummary()
-	for _, iTestCase := range testcases {
-		testcase, err := iTestCase.ToTestCase()
-		if err != nil {
-			log.Error().Err(err).Msg("[Run] convert ITestCase interface to TestCase struct failed")
-			return err
-		}
+
+	// load all testcases
+	testCases, err := loadTestCases(testcases...)
+	if err != nil {
+		return err
+	}
+
+	for _, testcase := range testCases {
 		cfg := testcase.Config
 		// parse config parameters
-		err = initParameterIterator(cfg, "runner")
+		err := initParameterIterator(cfg, "runner")
 		if err != nil {
 			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
 			return err
@@ -199,6 +202,62 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		}
 	}
 	return nil
+}
+
+func loadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
+	testCases := make([]*TestCase, 0)
+
+	for _, iTestCase := range iTestCases {
+		if _, ok := iTestCase.(*TestCase); ok {
+			testcase, err := iTestCase.ToTestCase()
+			if err != nil {
+				log.Error().Err(err).Msg("failed to convert ITestCase interface to TestCase struct")
+				return nil, err
+			}
+			testCases = append(testCases, testcase)
+			continue
+		}
+
+		// iTestCase should be a TestCasePath, file path or folder path
+		testCasePath, ok := iTestCase.(*TestCasePath)
+		if !ok {
+			return nil, errors.New("invalid iTestCase type")
+		}
+
+		casePaths := make([]*TestCasePath, 0)
+		casePath := iTestCase.GetPath()
+		if builtin.IsFolderPathExists(casePath) {
+			// folder path
+			files, err := ioutil.ReadDir(casePath)
+			if err != nil {
+				return nil, errors.Wrap(err, "read dir failed")
+			}
+			for _, f := range files {
+				ext := filepath.Ext(f.Name())
+				if ext != ".yml" && ext != ".yaml" && ext != ".json" {
+					// ignore non-testcase files
+					continue
+				}
+				path := TestCasePath(filepath.Join(casePath, f.Name()))
+				casePaths = append(casePaths, &path)
+			}
+		} else {
+			// file path
+			casePaths = append(casePaths, testCasePath)
+		}
+
+		for _, path := range casePaths {
+			tc, err := path.ToTestCase()
+			if err != nil {
+				log.Error().Err(err).Str("path", path.GetPath()).Msg("load testcase failed")
+				return nil, errors.Wrap(err, "load testcase failed")
+			}
+			testCases = append(testCases, tc)
+		}
+	}
+
+	log.Info().Int("count", len(testCases)).Msg("load testcases successfully")
+	return testCases, nil
 }
 
 func (r *HRPRunner) newCaseRunner(testcase *TestCase) *caseRunner {
@@ -345,7 +404,7 @@ func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepDa
 		if _, ok := step.(*StepAPIWithOptionalArgs); ok {
 			// run referenced API
 			log.Info().Str("api", copiedStep.Name).Msg("run referenced api")
-			api, _ := copiedStep.APIContent.ToAPI()
+			api, _ := copiedStep.API.(*API)
 			extendWithAPI(copiedStep, api)
 		}
 		// override headers
@@ -508,7 +567,7 @@ func (r *caseRunner) runStepRendezvous(rendezvous *Rendezvous) (stepResult *step
 }
 
 func (r *caseRunner) isPreRendezvousAllReleased(rendezvous *Rendezvous) bool {
-	tCase, _ := r.ToTCase()
+	tCase := r.TestCase.ToTCase()
 	for _, step := range tCase.TestSteps {
 		preRendezvous := step.Rendezvous
 		if preRendezvous == nil {
@@ -555,7 +614,7 @@ func (r *Rendezvous) setReleased() {
 }
 
 func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
-	tCase, _ := testcase.ToTCase()
+	tCase := testcase.ToTCase()
 	var rendezvousList []*Rendezvous
 	for _, step := range tCase.TestSteps {
 		if step.Rendezvous == nil {
@@ -967,7 +1026,7 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
-	testcase := step.TestCaseContent
+	testcase := step.TestCase.(*TestCase)
 
 	// copy testcase to avoid data racing
 	copiedTestCase := &TestCase{}

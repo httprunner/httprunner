@@ -38,11 +38,14 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	defer sdk.SendEvent(event.StartTiming("execution"))
 
 	var taskSlice []*boomer.Task
-	for _, iTestCase := range testcases {
-		testcase, err := iTestCase.ToTestCase()
-		if err != nil {
-			panic(err)
-		}
+
+	// load all testcases
+	testCases, err := loadTestCases(testcases...)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, testcase := range testCases {
 		cfg := testcase.Config
 		err = initParameterIterator(cfg, "boomer")
 		if err != nil {
