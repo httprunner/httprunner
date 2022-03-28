@@ -103,35 +103,51 @@ func (tc *TCase) ToTestCase() (*TestCase, error) {
 	log.Info().Str("dir", projectRootDir).Msg("located project root dir")
 
 	for _, step := range tc.TestSteps {
-		if step.APIPath != "" {
-			path := filepath.Join(projectRootDir, step.APIPath)
-			if !builtin.IsFilePathExists(path) {
-				return nil, errors.New("referenced api file not found: " + path)
+		if step.API != nil {
+			if apiContent, ok := step.API.(*API); ok {
+				step.API = apiContent
+				testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
+					step: step,
+				})
+				return testCase, nil
 			}
 
-			refAPI := APIPath(path)
-			step.APIContent = &refAPI
-			apiContent, err := step.APIContent.ToAPI()
+			// reference api path
+			var apiFullPath string
+			if apiPath, ok := step.API.(string); ok {
+				apiFullPath = filepath.Join(projectRootDir, apiPath)
+			} else if apiPath, ok := step.API.(APIPath); ok {
+				apiFullPath = filepath.Join(projectRootDir, apiPath.GetPath())
+			} else {
+				return nil, errors.New("invalid api format")
+			}
+
+			if !builtin.IsFilePathExists(apiFullPath) {
+				return nil, errors.New("referenced api file not found: " + apiFullPath)
+			}
+
+			refAPI := APIPath(apiFullPath)
+			apiContent, err := refAPI.ToAPI()
 			if err != nil {
 				return nil, err
 			}
-			step.APIContent = apiContent
+			step.API = apiContent
+
 			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
 				step: step,
 			})
-		} else if step.TestCasePath != "" {
-			path := filepath.Join(projectRootDir, step.TestCasePath)
+		} else if step.TestCase != nil {
+			path := filepath.Join(projectRootDir, step.TestCase.(string))
 			if !builtin.IsFilePathExists(path) {
 				return nil, errors.New("referenced testcase file not found: " + path)
 			}
 
 			refTestCase := TestCasePath(path)
-			step.TestCaseContent = &refTestCase
-			tc, err := step.TestCaseContent.ToTestCase()
+			tc, err := refTestCase.ToTestCase()
 			if err != nil {
 				return nil, err
 			}
-			step.TestCaseContent = tc
+			step.TestCase = tc
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
 				step: step,
 			})

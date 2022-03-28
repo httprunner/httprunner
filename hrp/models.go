@@ -222,21 +222,19 @@ type IAPI interface {
 // TStep represents teststep data structure.
 // Each step maybe two different type: make one HTTP request or reference another testcase.
 type TStep struct {
-	Name            string                 `json:"name" yaml:"name"` // required
-	Request         *Request               `json:"request,omitempty" yaml:"request,omitempty"`
-	APIPath         string                 `json:"api,omitempty" yaml:"api,omitempty"`
-	APIContent      IAPI                   `json:"api_content,omitempty" yaml:"api_content,omitempty"`
-	TestCasePath    string                 `json:"testcase,omitempty" yaml:"testcase,omitempty"`
-	TestCaseContent ITestCase              `json:"testcase_content,omitempty" yaml:"testcase_content,omitempty"`
-	Transaction     *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
-	Rendezvous      *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
-	ThinkTime       *ThinkTime             `json:"think_time,omitempty" yaml:"think_time,omitempty"`
-	Variables       map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	SetupHooks      []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
-	TeardownHooks   []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
-	Extract         map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	Validators      []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
-	Export          []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Name          string                 `json:"name" yaml:"name"` // required
+	Request       *Request               `json:"request,omitempty" yaml:"request,omitempty"`
+	API           interface{}            `json:"api,omitempty" yaml:"api,omitempty"`           // *APIPath or *API
+	TestCase      interface{}            `json:"testcase,omitempty" yaml:"testcase,omitempty"` // *TestCasePath or *TestCase
+	Transaction   *Transaction           `json:"transaction,omitempty" yaml:"transaction,omitempty"`
+	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
+	ThinkTime     *ThinkTime             `json:"think_time,omitempty" yaml:"think_time,omitempty"`
+	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 }
 
 type stepType string

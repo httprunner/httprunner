@@ -345,7 +345,7 @@ func (r *caseRunner) runStep(index int, caseConfig *TConfig) (stepResult *stepDa
 		if _, ok := step.(*StepAPIWithOptionalArgs); ok {
 			// run referenced API
 			log.Info().Str("api", copiedStep.Name).Msg("run referenced api")
-			api, _ := copiedStep.APIContent.ToAPI()
+			api, _ := copiedStep.API.(*API)
 			extendWithAPI(copiedStep, api)
 		}
 		// override headers
@@ -967,7 +967,7 @@ func (r *caseRunner) runStepTestCase(step *TStep) (stepResult *stepData, err err
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
-	testcase := step.TestCaseContent
+	testcase := step.TestCase.(*TestCase)
 
 	// copy testcase to avoid data racing
 	copiedTestCase := &TestCase{}
