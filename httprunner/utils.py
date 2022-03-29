@@ -82,7 +82,7 @@ def set_os_environ(variables_mapping):
 
 
 def unset_os_environ(variables_mapping):
-    """ set variables mapping to os.environ
+    """ unset variables mapping to os.environ
     """
     for variable in variables_mapping:
         os.environ.pop(variable)
