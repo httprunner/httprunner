@@ -6,19 +6,40 @@ import (
 	"time"
 
 	"github.com/httprunner/funplugin"
-	"github.com/rs/zerolog/log"
-
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/rs/zerolog/log"
 )
 
-func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
+func NewStandaloneBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	b := &HRPBoomer{
 		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		pluginsMutex: new(sync.RWMutex),
 	}
 
 	b.hrpRunner = NewRunner(nil)
+	return b
+}
+
+func NewMasterBoomer(masterBindHost string, masterBindPort int) *HRPBoomer {
+	b := &HRPBoomer{
+		Boomer:       boomer.NewMasterBoomer(masterBindHost, masterBindPort),
+		pluginsMutex: new(sync.RWMutex),
+	}
+	b.hrpRunner = NewRunner(nil)
+	return b
+}
+
+func NewWorkerBoomer(masterHost string, masterPort int) *HRPBoomer {
+	b := &HRPBoomer{
+		Boomer:       boomer.NewWorkerBoomer(masterHost, masterPort),
+		pluginsMutex: new(sync.RWMutex),
+	}
+
+	b.hrpRunner = NewRunner(nil)
+	// set client transport for high concurrency load testing
+	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 	return b
 }
 
@@ -52,8 +73,12 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	// report execution timing event
 	defer sdk.SendEvent(event.StartTiming("execution"))
 
-	var taskSlice []*boomer.Task
+	taskSlice := b.ConvertTestCasesToTasks(testcases...)
 
+	b.Boomer.Run(taskSlice...)
+}
+
+func (b *HRPBoomer) ConvertTestCasesToTasks(testcases ...ITestCase) (taskSlice []*boomer.Task) {
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
@@ -74,13 +99,105 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
 		task := b.convertBoomerTask(testcase, rendezvousList)
 		taskSlice = append(taskSlice, task)
-		waitRendezvous(rendezvousList)
+		waitRendezvous(rendezvousList, b)
 	}
-	b.Boomer.Run(taskSlice...)
+	return taskSlice
+}
+
+func (b *HRPBoomer) LoopTestCases() {
+	for {
+		select {
+		case <-b.Boomer.ParseTestCasesChan():
+			var tcs []ITestCase
+			for _, tc := range b.GetTestCasesPath() {
+				tcp := TestCasePath(tc)
+				tcs = append(tcs, &tcp)
+			}
+			b.GetTestCaseBytesChan() <- b.TestCasesToBytes(tcs...)
+			log.Info().Msg("put testcase successful")
+		case <-b.Boomer.GetCloseChan():
+			return
+		}
+	}
+}
+
+func (b *HRPBoomer) OutTestCases(testCases []*TestCase) []*TCase {
+	var outTestCases []*TCase
+	for _, tc := range testCases {
+		caseRunner, err := b.hrpRunner.newCaseRunner(tc)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to create runner")
+			os.Exit(1)
+		}
+		caseRunner.parsedConfig.Parameters = caseRunner.parametersIterator.outParameters()
+		outTestCases = append(outTestCases, &TCase{
+			Config:    caseRunner.parsedConfig,
+			TestSteps: caseRunner.testCase.ToTCase().TestSteps,
+		})
+	}
+	return outTestCases
+}
+
+func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
+	// load all testcases
+	testCases, err := LoadTestCases(testcases...)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to load testcases")
+		os.Exit(1)
+	}
+	tcs := b.OutTestCases(testCases)
+	testCasesBytes, err := json.Marshal(tcs)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to marshal testcases")
+		return nil
+	}
+	return testCasesBytes
+}
+
+func (b *HRPBoomer) BytesToTestCases(testCasesBytes []byte) []*TCase {
+	var testcase []*TCase
+	err := json.Unmarshal(testCasesBytes, &testcase)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to unmarshal testcases")
+	}
+	return testcase
 }
 
 func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
+}
+
+func (b *HRPBoomer) handleTasks(tcs []byte) {
+	//Todo: 过滤掉已经传输过的task
+	testCases := b.BytesToTestCases(tcs)
+	var testcases []ITestCase
+	for _, tc := range testCases {
+		tesecase, err := tc.toTestCase()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to load testcases")
+		}
+		testcases = append(testcases, tesecase)
+	}
+	log.Info().Interface("testcases", testcases).Msg("loop tasks successful")
+	if b.Boomer.GetState() == boomer.StateRunning || b.Boomer.GetState() == boomer.StateSpawning {
+		b.Boomer.SetTasks(b.ConvertTestCasesToTasks(testcases...)...)
+	} else {
+		b.Run(testcases...)
+	}
+}
+
+func (b *HRPBoomer) LoopTasks() {
+	for {
+		select {
+		case tcs := <-b.Boomer.GetTestCaseBytesChan():
+			if len(b.Boomer.GetTestCaseBytesChan()) > 0 {
+				continue
+			}
+			go b.handleTasks(tcs)
+		case <-b.Boomer.GetCloseChan():
+			return
+		}
+	}
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {

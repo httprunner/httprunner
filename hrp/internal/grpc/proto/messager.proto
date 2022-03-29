@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "grpc/messager";
+
+service Message {
+  rpc BidirectionalStreamingMessage(stream StreamRequest) returns (stream StreamResponse){};
+}
+
+message StreamRequest{
+  string type = 1;
+  map<string, bytes> data = 2;
+  string NodeID = 3;
+}
+
+message StreamResponse{
+  string type = 1;
+  map<string, bytes> data = 2;
+  string NodeID = 3;
+  bytes tasks = 4;
+}
