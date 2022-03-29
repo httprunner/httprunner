@@ -296,13 +296,23 @@ func TestLoadTestCases(t *testing.T) {
 		t.Fail()
 	}
 
+	// load test cases from folder path, including sub folders
+	tc = TestCasePath("../examples/demo-with-py-plugin/")
+	testCases, err = loadTestCases(&tc)
+	if !assert.Nil(t, err) {
+		t.Fail()
+	}
+	if !assert.Equal(t, len(testCases), 3) {
+		t.Fail()
+	}
+
 	// load test cases from single file path
 	tc = demoTestCaseWithPluginJSONPath
 	testCases, err = loadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fail()
 	}
-	if !assert.Equal(t, len(testCases), 1) {
+	if !assert.Equal(t, 1, len(testCases)) {
 		t.Fail()
 	}
 
