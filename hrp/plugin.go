@@ -115,3 +115,16 @@ func locateFile(startPath string, destFile string) (string, error) {
 
 	return locateFile(parentDir, destFile)
 }
+
+func getProjectRootDirPath(path string) (rootDir string, err error) {
+	pluginPath, err := locatePlugin(path)
+	if err == nil {
+		rootDir = filepath.Dir(pluginPath)
+		return
+	}
+
+	// failed to locate project root dir
+	// maybe project plugin debugtalk.xx is not exist
+	// use current dir instead
+	return os.Getwd()
+}
