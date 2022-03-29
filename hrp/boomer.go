@@ -12,7 +12,7 @@ import (
 	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
-func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
+func NewStandaloneBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	b := &HRPBoomer{
 		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		pluginsMutex: new(sync.RWMutex),
@@ -22,6 +22,26 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	// set client transport for high concurrency load testing
 	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 
+	return b
+}
+
+func NewMasterBoomer(masterBindHost string, masterBindPort int) *HRPBoomer {
+	b := &HRPBoomer{
+		Boomer:       boomer.NewMasterBoomer(masterBindHost, masterBindPort),
+		pluginsMutex: new(sync.RWMutex),
+	}
+	return b
+}
+
+func NewWorkerBoomer(masterHost string, masterPort int) *HRPBoomer {
+	b := &HRPBoomer{
+		Boomer:       boomer.NewWorkerBoomer(masterHost, masterPort),
+		pluginsMutex: new(sync.RWMutex),
+	}
+
+	b.hrpRunner = NewRunner(nil)
+	// set client transport for high concurrency load testing
+	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 	return b
 }
 
@@ -58,6 +78,7 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 		taskSlice = append(taskSlice, task)
 		waitRendezvous(rendezvousList)
 	}
+
 	b.Boomer.Run(taskSlice...)
 }
 

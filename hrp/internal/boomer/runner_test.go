@@ -1,6 +1,7 @@
 package boomer
 
 import (
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -110,5 +111,439 @@ func TestLoopCount(t *testing.T) {
 	<-runner.stopChan
 	if !assert.Equal(t, runner.loop.loopCount, atomic.LoadInt64(&runner.loop.finishedCount)) {
 		t.Fatal()
+	}
+}
+
+func TestSpawnWorkers(t *testing.T) {
+	taskA := &Task{
+		Weight: 10,
+		Fn: func() {
+			time.Sleep(time.Second)
+		},
+		Name: "TaskA",
+	}
+	tasks := []*Task{taskA}
+
+	runner := newWorkerRunner("localhost", 5557)
+	defer runner.close()
+
+	runner.client = newClient("localhost", 5557, runner.nodeID)
+	runner.setTasks(tasks)
+	go runner.spawnWorkers(10, 10, runner.stopChan, runner.spawnComplete)
+	time.Sleep(10 * time.Millisecond)
+
+	currentClients := atomic.LoadInt32(&runner.currentClientsNum)
+	if currentClients != 10 {
+		t.Error("Unexpected count", currentClients)
+	}
+}
+
+func TestSpawnWorkersWithManyTasks(t *testing.T) {
+	var lock sync.Mutex
+	taskCalls := map[string]int{}
+
+	createTask := func(name string, weight int) *Task {
+		return &Task{
+			Name:   name,
+			Weight: weight,
+			Fn: func() {
+				lock.Lock()
+				taskCalls[name]++
+				lock.Unlock()
+			},
+		}
+	}
+	tasks := []*Task{
+		createTask("one hundred", 100),
+		createTask("ten", 10),
+		createTask("one", 1),
+	}
+
+	runner := newWorkerRunner("localhost", 5557)
+	defer runner.close()
+
+	runner.setTasks(tasks)
+	runner.client = newClient("localhost", 5557, runner.nodeID)
+
+	const numToSpawn int = 30
+
+	runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
+	time.Sleep(2 * time.Second)
+
+	currentClients := atomic.LoadInt32(&runner.currentClientsNum)
+
+	assert.Equal(t, numToSpawn, int(currentClients))
+	lock.Lock()
+	hundreds := taskCalls["one hundred"]
+	tens := taskCalls["ten"]
+	ones := taskCalls["one"]
+	lock.Unlock()
+
+	total := hundreds + tens + ones
+	t.Logf("total tasks run: %d\n", total)
+
+	assert.True(t, total > 111)
+
+	assert.True(t, ones > 1)
+	actPercentage := float64(ones) / float64(total)
+	expectedPercentage := 1.0 / 111.0
+	if actPercentage > 2*expectedPercentage || actPercentage < 0.5*expectedPercentage {
+		t.Errorf("Unexpected percentage of ones task: exp %v, act %v", expectedPercentage, actPercentage)
+	}
+
+	assert.True(t, tens > 10)
+	actPercentage = float64(tens) / float64(total)
+	expectedPercentage = 10.0 / 111.0
+	if actPercentage > 2*expectedPercentage || actPercentage < 0.5*expectedPercentage {
+		t.Errorf("Unexpected percentage of tens task: exp %v, act %v", expectedPercentage, actPercentage)
+	}
+
+	assert.True(t, hundreds > 100)
+	actPercentage = float64(hundreds) / float64(total)
+	expectedPercentage = 100.0 / 111.0
+	if actPercentage > 2*expectedPercentage || actPercentage < 0.5*expectedPercentage {
+		t.Errorf("Unexpected percentage of hundreds task: exp %v, act %v", expectedPercentage, actPercentage)
+	}
+}
+
+func TestSpawnAndStop(t *testing.T) {
+	taskA := &Task{
+		Fn: func() {
+			time.Sleep(time.Second)
+		},
+	}
+	taskB := &Task{
+		Fn: func() {
+			time.Sleep(2 * time.Second)
+		},
+	}
+	tasks := []*Task{taskA, taskB}
+	runner := newWorkerRunner("localhost", 5557)
+	defer runner.close()
+	runner.client = newClient("localhost", 5557, runner.nodeID)
+
+	runner.setTasks(tasks)
+	runner.spawnCount = 10
+	runner.spawnRate = 10
+	runner.updateState(stateSpawning)
+	go func() {
+		runner.spawnStartChan <- true
+	}()
+
+	go runner.start()
+
+	// wait for spawning goroutines
+	time.Sleep(2 * time.Second)
+	if atomic.LoadInt32(&runner.currentClientsNum) != 10 {
+		t.Error("Number of goroutines mismatches, expected: 10, current count", atomic.LoadInt32(&runner.currentClientsNum))
+	}
+
+	msg := <-runner.client.sendChannel()
+	if msg.Type != "spawning_complete" {
+		t.Error("Runner should send spawning_complete message when spawning completed, got", msg.Type)
+	}
+	runner.stop()
+
+	runner.onQuiting()
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "quit" {
+		t.Error("Runner should send quit message on quitting, got", msg.Type)
+	}
+}
+
+func TestStop(t *testing.T) {
+	taskA := &Task{
+		Fn: func() {
+			time.Sleep(time.Second)
+		},
+	}
+	tasks := []*Task{taskA}
+	runner := newWorkerRunner("localhost", 5557)
+	runner.setTasks(tasks)
+	runner.spawnCount = 10
+	runner.spawnRate = 10
+	runner.updateState(stateSpawning)
+
+	runner.stop()
+
+	if runner.getState() != stateStopped {
+		t.Error("Expected runner state to be 5, was", runner.getState())
+	}
+}
+
+func TestOnSpawnMessage(t *testing.T) {
+	taskA := &Task{
+		Fn: func() {
+			time.Sleep(time.Second)
+		},
+	}
+	runner := newWorkerRunner("localhost", 5557)
+	defer runner.close()
+	runner.client = newClient("localhost", 5557, runner.nodeID)
+	runner.updateState(stateInit)
+	runner.setTasks([]*Task{taskA})
+	runner.spawnCount = 100
+	runner.spawnRate = 100
+
+	go func() {
+		var ticker = time.NewTicker(time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				t.Error("Timeout waiting for message sent by startSpawning()")
+				return
+			case <-runner.spawnStartChan:
+				// just quit
+				return
+			}
+		}
+	}()
+
+	runner.onSpawnMessage(newGenericMessage("spawn", map[string]int64{
+		"spawn_count": 20,
+		"spawn_rate":  20,
+	}, runner.nodeID))
+
+	if runner.spawnCount != 20 {
+		t.Error("workers should be overwrote by onSpawnMessage, expected: 20, was:", runner.spawnCount)
+	}
+	if runner.spawnRate != 20 {
+		t.Error("spawnRate should be overwrote by onSpawnMessage, expected: 20, was:", runner.spawnRate)
+	}
+
+	runner.onMessage(newGenericMessage("stop", nil, runner.nodeID))
+}
+
+func TestOnQuitMessage(t *testing.T) {
+	runner := newWorkerRunner("localhost", 5557)
+	runner.client = newClient("localhost", 5557, "test")
+	runner.updateState(stateInit)
+
+	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
+	<-runner.closeChan
+
+	runner.updateState(stateRunning)
+	runner.closeChan = make(chan bool)
+	runner.stopChan = make(chan bool)
+	runner.client.shutdownChan = make(chan bool)
+	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
+	<-runner.closeChan
+	if runner.getState() != stateQuitting {
+		t.Error("Runner's state should be stateQuitting")
+	}
+
+	runner.updateState(stateStopped)
+	runner.closeChan = make(chan bool)
+	runner.stopChan = make(chan bool)
+	runner.client.shutdownChan = make(chan bool)
+	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
+	<-runner.closeChan
+	if runner.getState() != stateQuitting {
+		t.Error("Runner's state should be stateQuitting")
+	}
+}
+
+func TestOnMessage(t *testing.T) {
+	taskA := &Task{
+		Fn: func() {
+			time.Sleep(time.Second)
+		},
+	}
+	taskB := &Task{
+		Fn: func() {
+			time.Sleep(2 * time.Second)
+		},
+	}
+	tasks := []*Task{taskA, taskB}
+
+	runner := newWorkerRunner("localhost", 5557)
+	defer runner.close()
+	runner.client = newClient("localhost", 5557, runner.nodeID)
+	runner.updateState(stateInit)
+	runner.setTasks(tasks)
+
+	go runner.start()
+
+	// start spawning
+	runner.onMessage(newGenericMessage("spawn", map[string]int64{
+		"spawn_count": 10,
+		"spawn_rate":  10,
+	}, runner.nodeID))
+
+	msg := <-runner.client.sendChannel()
+	if msg.Type != "spawning" {
+		t.Error("Runner should send spawning message when starting spawn, got", msg.Type)
+	}
+
+	// spawn complete and running
+	time.Sleep(2 * time.Second)
+	if runner.getState() != stateRunning {
+		t.Error("State of runner is not running after spawn, got", runner.getState())
+	}
+	if atomic.LoadInt32(&runner.currentClientsNum) != 10 {
+		t.Error("Number of goroutines mismatches, expected: 10, current count:", atomic.LoadInt32(&runner.currentClientsNum))
+	}
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "spawning_complete" {
+		t.Error("Runner should send spawning_complete message when spawn completed, got", msg.Type)
+	}
+
+	// increase goroutines while running
+	runner.onMessage(newGenericMessage("spawn", map[string]int64{
+		"spawn_count": 15,
+		"spawn_rate":  15,
+	}, runner.nodeID))
+
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "spawning" {
+		t.Error("Runner should send spawning message when starting spawn, got", msg.Type)
+	}
+
+	time.Sleep(2 * time.Second)
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "spawning_complete" {
+		t.Error("Runner should send spawning_complete message, got", msg.Type)
+	}
+	if runner.getState() != stateRunning {
+		t.Error("State of runner is not running after spawn, got", runner.getState())
+	}
+	if atomic.LoadInt32(&runner.currentClientsNum) != 15 {
+		t.Error("Number of goroutines mismatches, expected: 20, current count:", atomic.LoadInt32(&runner.currentClientsNum))
+	}
+
+	// stop all the workers
+	runner.onMessage(newGenericMessage("stop", nil, runner.nodeID))
+	if runner.getState() != stateStopped {
+		t.Error("State of runner is not stopped, got", runner.getState())
+	}
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "client_stopped" {
+		t.Error("Runner should send client_stopped message, got", msg.Type)
+	}
+
+	// spawn again
+	runner.onMessage(newGenericMessage("spawn", map[string]int64{
+		"spawn_count": 10,
+		"spawn_rate":  10,
+	}, runner.nodeID))
+
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "spawning" {
+		t.Error("Runner should send spawning message when starting spawn, got", msg.Type)
+	}
+
+	// spawn complete and running
+	time.Sleep(2 * time.Second)
+	if runner.getState() != stateRunning {
+		t.Error("State of runner is not running after spawn, got", runner.getState())
+	}
+	if atomic.LoadInt32(&runner.currentClientsNum) != 10 {
+		t.Error("Number of goroutines mismatches, expected: 10, current count:", atomic.LoadInt32(&runner.currentClientsNum))
+	}
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "spawning_complete" {
+		t.Error("Runner should send spawning_complete message when spawn completed, got", msg.Type)
+	}
+
+	// stop all the workers
+	runner.onMessage(newGenericMessage("stop", nil, runner.nodeID))
+	if runner.getState() != stateStopped {
+		t.Error("State of runner is not stopped, got", runner.getState())
+	}
+	msg = <-runner.client.sendChannel()
+	if msg.Type != "client_stopped" {
+		t.Error("Runner should send client_stopped message, got", msg.Type)
+	}
+}
+
+func TestClientListener(t *testing.T) {
+	runner := newMasterRunner("localhost", 5557)
+	defer runner.close()
+	runner.updateState(stateInit)
+	runner.spawnCount = 10
+	runner.spawnRate = 10
+	go runner.clientListener()
+	runner.server.clients.Store("testID1", &workerNode{id: "testID1", heartbeat: 3})
+	runner.server.clients.Store("testID2", &workerNode{id: "testID2", heartbeat: 3})
+	runner.server.recvChannel() <- &genericMessage{
+		Type:   typeClientReady,
+		NodeID: "testID1",
+	}
+	worker1, ok := runner.server.getClients().Load("testID1")
+	if !ok {
+		t.Fatal("error")
+	}
+	workerInfo1, ok := worker1.(*workerNode)
+	if !ok {
+		t.Fatal("error")
+	}
+	time.Sleep(time.Second)
+	if workerInfo1.getState() != stateInit {
+		t.Error("State of worker runner is not init, got", workerInfo1.getState())
+	}
+	runner.server.recvChannel() <- &genericMessage{
+		Type:   typeClientStopped,
+		NodeID: "testID2",
+	}
+	worker2, ok := runner.server.getClients().Load("testID2")
+	if !ok {
+		t.Fatal("error")
+	}
+	workerInfo2, ok := worker2.(*workerNode)
+	if !ok {
+		t.Fatal("error")
+	}
+	time.Sleep(time.Second)
+	if workerInfo2.getState() != stateStopped {
+		t.Error("State of worker runner is not stopped, got", workerInfo2.getState())
+	}
+	runner.server.recvChannel() <- &genericMessage{
+		Type:   typeClientStopped,
+		NodeID: "testID1",
+	}
+	time.Sleep(time.Second)
+	if runner.getState() != stateStopped {
+		t.Error("State of master runner is not stopped, got", runner.getState())
+	}
+}
+
+func TestHeartbeatWorker(t *testing.T) {
+	runner := newMasterRunner("localhost", 5557)
+	defer runner.close()
+	runner.updateState(stateInit)
+	runner.spawnCount = 10
+	runner.spawnRate = 10
+	runner.server.clients.Store("testID1", &workerNode{id: "testID1", heartbeat: 1, state: stateInit})
+	runner.server.clients.Store("testID2", &workerNode{id: "testID2", heartbeat: 1, state: stateInit})
+	go runner.clientListener()
+	go runner.heartbeatWorker()
+	time.Sleep(3 * time.Second)
+	worker1, ok := runner.server.getClients().Load("testID1")
+	if !ok {
+		t.Fatal()
+	}
+	workerInfo1, ok := worker1.(*workerNode)
+	if !ok {
+		t.Fatal()
+	}
+	if workerInfo1.getState() != stateMissing {
+		t.Error("expected state of worker runner is missing, but got", workerInfo1.getState())
+	}
+	runner.server.recvChannel() <- &genericMessage{
+		Type:   typeHeartbeat,
+		NodeID: "testID2",
+		Data:   map[string]int64{"state": 3},
+	}
+	worker2, ok := runner.server.getClients().Load("testID2")
+	if !ok {
+		t.Fatal()
+	}
+	workerInfo2, ok := worker2.(*workerNode)
+	if !ok {
+		t.Fatal()
+	}
+	time.Sleep(time.Second)
+	if workerInfo2.getState() == stateMissing {
+		t.Error("expected state of worker runner is not missing, but got missing")
 	}
 }

@@ -17,7 +17,7 @@ var boomCmd = &cobra.Command{
 	Example: `  $ hrp boom demo.json	# run specified json testcase file
   $ hrp boom demo.yaml	# run specified yaml testcase file
   $ hrp boom examples/	# run testcases in specified folder`,
-	Args: cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(0),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		boomer.SetUlimit(10240) // ulimit -n 10240
 		setLogLevel("WARN")     // disable info logs for load testing
@@ -28,16 +28,33 @@ var boomCmd = &cobra.Command{
 			path := hrp.TestCasePath(arg)
 			paths = append(paths, &path)
 		}
-		hrpBoomer := hrp.NewBoomer(spawnCount, spawnRate)
-		hrpBoomer.SetRateLimiter(maxRPS, requestIncreaseRate)
-		if loopCount > 0 {
-			hrpBoomer.SetLoopCount(loopCount)
+		var hrpBoomer *hrp.HRPBoomer
+		if master {
+			hrpBoomer = hrp.NewMasterBoomer(masterBindHost, masterBindPort)
+			if autoStart {
+				hrpBoomer.SetAutoStart()
+				hrpBoomer.SetExpectWorkers(expectWorkers, expectWorkersMaxWait)
+				hrpBoomer.SetSpawn(spawnCount, spawnRate)
+			}
+			hrpBoomer.EnableGracefulQuit()
+			hrpBoomer.RunMaster()
+			return
+		} else if worker {
+			hrpBoomer = hrp.NewWorkerBoomer(masterHost, masterPort)
+			go hrpBoomer.RunWorker()
+			hrpBoomer.Wait()
+		} else {
+			hrpBoomer = hrp.NewStandaloneBoomer(spawnCount, spawnRate)
+			if loopCount > 0 {
+				hrpBoomer.SetLoopCount(loopCount)
+			}
 		}
+		hrpBoomer.SetRateLimiter(maxRPS, requestIncreaseRate)
 		if !disableConsoleOutput {
 			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
 		}
 		if prometheusPushgatewayURL != "" {
-			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(prometheusPushgatewayURL, "hrp"))
+			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(prometheusPushgatewayURL, "hrp", hrpBoomer.GetMode()))
 		}
 		hrpBoomer.SetDisableKeepAlive(disableKeepalive)
 		hrpBoomer.SetDisableCompression(disableCompression)
@@ -49,6 +66,15 @@ var boomCmd = &cobra.Command{
 }
 
 var (
+	master                   bool
+	worker                   bool
+	masterHost               string
+	masterPort               int
+	masterBindHost           string
+	masterBindPort           int
+	autoStart                bool
+	expectWorkers            int
+	expectWorkersMaxWait     int
 	spawnCount               int
 	spawnRate                float64
 	maxRPS                   int64
@@ -67,6 +93,15 @@ var (
 func init() {
 	rootCmd.AddCommand(boomCmd)
 
+	boomCmd.Flags().BoolVar(&master, "master", false, "master of distributed testing")
+	boomCmd.Flags().StringVar(&masterBindHost, "master-bind-host", "127.0.0.1", "Interfaces (hostname, ip) that hrp master should bind to. Only used when running with --master. Defaults to * (all available interfaces).")
+	boomCmd.Flags().IntVar(&masterBindPort, "master-bind-port", 5557, "Port that hrp master should bind to. Only used when running with --master. Defaults to 5557.")
+	boomCmd.Flags().BoolVar(&worker, "worker", false, "worker of distributed testing")
+	boomCmd.Flags().StringVar(&masterHost, "master-host", "127.0.0.1", "Host or IP address of hrp master for distributed load testing.")
+	boomCmd.Flags().IntVar(&masterPort, "master-port", 5557, "The port to connect to that is used by the hrp master for distributed load testing.")
+	boomCmd.Flags().BoolVar(&autoStart, "autostart", false, "Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and run time")
+	boomCmd.Flags().IntVar(&expectWorkers, "expect-workers", 1, "How many workers master should expect to connect before starting the test (only when --autostart is used")
+	boomCmd.Flags().IntVar(&expectWorkersMaxWait, "expect-workers-max-wait", 0, "How many workers master should expect to connect before starting the test (only when --autostart is used")
 	boomCmd.Flags().Int64Var(&maxRPS, "max-rps", 0, "Max RPS that boomer can generate, disabled by default.")
 	boomCmd.Flags().StringVar(&requestIncreaseRate, "request-increase-rate", "-1", "Request increase rate, disabled by default.")
 	boomCmd.Flags().IntVar(&spawnCount, "spawn-count", 1, "The number of users to spawn for load testing")
