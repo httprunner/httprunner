@@ -6,10 +6,15 @@ import (
 	"io"
 	"math"
 	"os"
+	"runtime"
 	"runtime/pprof"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/rs/zerolog/log"
+	"github.com/shirou/gopsutil/process"
 )
 
 func round(val float64, roundOn float64, places int) (newVal float64) {
@@ -74,4 +79,28 @@ func startCPUProfile(file string, duration time.Duration) (err error) {
 		log.Info().Dur("duration", duration).Msg("Stop CPU profiling")
 	})
 	return nil
+}
+
+// generate a random nodeID like locust does, using the same algorithm.
+func getNodeID() (nodeID string) {
+	hostname, _ := os.Hostname()
+	id := strings.Replace(uuid.New().String(), "-", "", -1)
+	nodeID = fmt.Sprintf("%s_%s", hostname, id)
+	return
+}
+
+// GetCurrentCPUUsage get current CPU usage
+func GetCurrentCPUUsage() float64 {
+	currentPid := os.Getpid()
+	p, err := process.NewProcess(int32(currentPid))
+	if err != nil {
+		log.Printf("Fail to get CPU percent, %v\n", err)
+		return 0.0
+	}
+	percent, err := p.CPUPercent()
+	if err != nil {
+		log.Printf("Fail to get CPU percent, %v\n", err)
+		return 0.0
+	}
+	return percent / float64(runtime.NumCPU())
 }

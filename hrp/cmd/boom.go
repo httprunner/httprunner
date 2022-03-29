@@ -21,7 +21,7 @@ var boomCmd = &cobra.Command{
 	Example: `  $ hrp boom demo.json	# run specified json testcase file
   $ hrp boom demo.yaml	# run specified yaml testcase file
   $ hrp boom examples/	# run testcases in specified folder`,
-	Args: cobra.MinimumNArgs(1),
+	Args: cobra.MinimumNArgs(0),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		boomer.SetUlimit(10240) // ulimit -n 10240
 		if !strings.EqualFold(logLevel, "DEBUG") {
@@ -35,8 +35,65 @@ var boomCmd = &cobra.Command{
 			path := hrp.TestCasePath(arg)
 			paths = append(paths, &path)
 		}
-		hrpBoomer := makeHRPBoomer()
-		hrpBoomer.Run(paths...)
+
+		// if set profile, the priority is higher than the other commands
+		if boomArgs.profile != "" {
+			err := builtin.LoadFile(boomArgs.profile, &boomArgs)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to load profile")
+				os.Exit(1)
+			}
+		}
+
+		var hrpBoomer *hrp.HRPBoomer
+		if boomArgs.master {
+			hrpBoomer = hrp.NewMasterBoomer(boomArgs.masterBindHost, boomArgs.masterBindPort)
+			hrpBoomer.SetTestCasesPath(args)
+			if boomArgs.autoStart {
+				hrpBoomer.SetAutoStart()
+				hrpBoomer.SetExpectWorkers(boomArgs.expectWorkers, boomArgs.expectWorkersMaxWait)
+				hrpBoomer.SetSpawnCount(boomArgs.SpawnCount)
+				hrpBoomer.SetSpawnRate(boomArgs.SpawnRate)
+			}
+			hrpBoomer.EnableGracefulQuit()
+			go hrpBoomer.StartServer()
+			go hrpBoomer.RunMaster()
+			hrpBoomer.LoopTestCases()
+			return
+		} else if boomArgs.worker {
+			hrpBoomer = hrp.NewWorkerBoomer(boomArgs.masterHost, boomArgs.masterPort)
+			if boomArgs.ignoreQuit {
+				hrpBoomer.SetIgnoreQuit()
+			}
+			go hrpBoomer.RunWorker()
+		} else {
+			hrpBoomer = hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
+			if boomArgs.LoopCount > 0 {
+				hrpBoomer.SetLoopCount(boomArgs.LoopCount)
+			}
+		}
+		hrpBoomer.SetRateLimiter(boomArgs.MaxRPS, boomArgs.RequestIncreaseRate)
+		if !boomArgs.DisableConsoleOutput {
+
+			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
+		}
+		if boomArgs.PrometheusPushgatewayURL != "" {
+			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(boomArgs.PrometheusPushgatewayURL, "hrp", hrpBoomer.GetMode()))
+		}
+		hrpBoomer.SetDisableKeepAlive(boomArgs.DisableKeepalive)
+		hrpBoomer.SetDisableCompression(boomArgs.DisableCompression)
+		hrpBoomer.SetClientTransport()
+		if venv != "" {
+			hrpBoomer.SetPython3Venv(venv)
+		}
+		hrpBoomer.EnableCPUProfile(boomArgs.CPUProfile, boomArgs.CPUProfileDuration)
+		hrpBoomer.EnableMemoryProfile(boomArgs.MemoryProfile, boomArgs.MemoryProfileDuration)
+		hrpBoomer.EnableGracefulQuit()
+		if boomArgs.worker {
+			hrpBoomer.LoopTasks()
+		} else {
+			hrpBoomer.Run(paths...)
+		}
 	},
 }
 
@@ -55,6 +112,16 @@ type BoomArgs struct {
 	DisableCompression       bool          `json:"disable-compression,omitempty" yaml:"disable-compression,omitempty"`
 	DisableKeepalive         bool          `json:"disable-keepalive,omitempty" yaml:"disable-keepalive,omitempty"`
 	profile                  string
+	master                   bool
+	worker                   bool
+	ignoreQuit               bool
+	masterHost               string
+	masterPort               int
+	masterBindHost           string
+	masterBindPort           int
+	autoStart                bool
+	expectWorkers            int
+	expectWorkersMaxWait     int
 }
 
 var boomArgs BoomArgs
@@ -76,6 +143,16 @@ func init() {
 	boomCmd.Flags().BoolVar(&boomArgs.DisableCompression, "disable-compression", false, "Disable compression")
 	boomCmd.Flags().BoolVar(&boomArgs.DisableKeepalive, "disable-keepalive", false, "Disable keepalive")
 	boomCmd.Flags().StringVar(&boomArgs.profile, "profile", "", "profile for load testing")
+	boomCmd.Flags().BoolVar(&boomArgs.master, "master", false, "master of distributed testing")
+	boomCmd.Flags().StringVar(&boomArgs.masterBindHost, "master-bind-host", "127.0.0.1", "Interfaces (hostname, ip) that hrp master should bind to. Only used when running with --master. Defaults to * (all available interfaces).")
+	boomCmd.Flags().IntVar(&boomArgs.masterBindPort, "master-bind-port", 5557, "Port that hrp master should bind to. Only used when running with --master. Defaults to 5557.")
+	boomCmd.Flags().BoolVar(&boomArgs.worker, "worker", false, "worker of distributed testing")
+	boomCmd.Flags().BoolVar(&boomArgs.ignoreQuit, "ignore-quit", false, "ignores quit from master (only when --worker is used)")
+	boomCmd.Flags().StringVar(&boomArgs.masterHost, "master-host", "127.0.0.1", "Host or IP address of hrp master for distributed load testing.")
+	boomCmd.Flags().IntVar(&boomArgs.masterPort, "master-port", 5557, "The port to connect to that is used by the hrp master for distributed load testing.")
+	boomCmd.Flags().BoolVar(&boomArgs.autoStart, "autostart", false, "Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and run time")
+	boomCmd.Flags().IntVar(&boomArgs.expectWorkers, "expect-workers", 1, "How many workers master should expect to connect before starting the test (only when --autostart is used)")
+	boomCmd.Flags().IntVar(&boomArgs.expectWorkersMaxWait, "expect-workers-max-wait", 0, "How many workers master should expect to connect before starting the test (only when --autostart is used")
 }
 
 func makeHRPBoomer() *hrp.HRPBoomer {
@@ -88,7 +165,7 @@ func makeHRPBoomer() *hrp.HRPBoomer {
 		}
 	}
 
-	hrpBoomer := hrp.NewBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
+	hrpBoomer := hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
 	hrpBoomer.SetRateLimiter(boomArgs.MaxRPS, boomArgs.RequestIncreaseRate)
 	if boomArgs.LoopCount > 0 {
 		hrpBoomer.SetLoopCount(boomArgs.LoopCount)
