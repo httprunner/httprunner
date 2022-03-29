@@ -84,7 +84,7 @@ type responseObject struct {
 	t                 *testing.T
 	parser            *parser
 	respObjMeta       interface{}
-	validationResults []*validationResult
+	validationResults []*ValidationResult
 }
 
 const textExtractorSubRegexp string = `(.*)`
@@ -147,7 +147,7 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		if err != nil {
 			return err
 		}
-		validResult := &validationResult{
+		validResult := &ValidationResult{
 			Validator: Validator{
 				Check:   validator.Check,
 				Expect:  expectValue,

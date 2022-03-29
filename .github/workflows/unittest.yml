@@ -5,7 +5,6 @@ on:
     branches:
       - master
   pull_request:
-    types: [synchronize]
 
 jobs:
   py-httprunner:

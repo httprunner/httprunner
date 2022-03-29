@@ -16,13 +16,13 @@ var (
 		AssertEqual("body.args.foo1", "bar1", "check param foo1").
 		AssertEqual("body.args.foo2", "bar2", "check param foo2")
 	stepPOSTData = NewStep("post form data").
-		POST("/post").
-		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
-		WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
-		WithBody("a=1&b=2").
-		WithCookies(map[string]string{"user": "debugtalk"}).
-		Validate().
-		AssertEqual("status_code", 200, "check status code")
+			POST("/post").
+			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
+			WithBody("a=1&b=2").
+			WithCookies(map[string]string{"user": "debugtalk"}).
+			Validate().
+			AssertEqual("status_code", 200, "check status code")
 )
 
 func TestRunRequestGetToStruct(t *testing.T) {
@@ -79,11 +79,12 @@ func TestRunRequestRun(t *testing.T) {
 		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{stepGET, stepPOSTData},
 	}
-	runner := NewRunner(t).SetRequestsLogOn().newCaseRunner(testcase)
-	if _, err := runner.runStep(0, testcase.Config); err != nil {
-		t.Fatalf("tStep.Run() error: %s", err)
+	runner := NewRunner(t).SetRequestsLogOn()
+	sessionRunner := runner.NewSessionRunner(testcase)
+	if _, err := stepGET.Run(sessionRunner); err != nil {
+		t.Fatalf("stepGET.Run() error: %v", err)
 	}
-	if _, err := runner.runStep(1, testcase.Config); err != nil {
-		t.Fatalf("tStepPOSTData.Run() error: %s", err)
+	if _, err := stepPOSTData.Run(sessionRunner); err != nil {
+		t.Fatalf("stepPOSTData.Run() error: %v", err)
 	}
 }

@@ -553,18 +553,18 @@ func findallVariables(raw string) variableSet {
 	return varSet
 }
 
-func genCartesianProduct(paramsMap map[string]paramsType) paramsType {
+func genCartesianProduct(paramsMap map[string]iteratorParamsType) iteratorParamsType {
 	if len(paramsMap) == 0 {
 		return nil
 	}
-	var params []paramsType
+	var params []iteratorParamsType
 	for _, v := range paramsMap {
 		params = append(params, v)
 	}
-	var cartesianProduct paramsType
+	var cartesianProduct iteratorParamsType
 	cartesianProduct = params[0]
 	for i := 0; i < len(params)-1; i++ {
-		var tempProduct paramsType
+		var tempProduct iteratorParamsType
 		for _, param1 := range cartesianProduct {
 			for _, param2 := range params[i+1] {
 				tempProduct = append(tempProduct, mergeVariables(param1, param2))
@@ -575,14 +575,14 @@ func genCartesianProduct(paramsMap map[string]paramsType) paramsType {
 	return cartesianProduct
 }
 
-func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) (map[string]paramsType, error) {
+func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) (map[string]iteratorParamsType, error) {
 	if len(parameters) == 0 {
 		return nil, nil
 	}
-	parsedParametersSlice := make(map[string]paramsType)
+	parsedParametersSlice := make(map[string]iteratorParamsType)
 	var err error
 	for k, v := range parameters {
-		var parameterSlice paramsType
+		var parameterSlice iteratorParamsType
 		rawValue := reflect.ValueOf(v)
 		switch rawValue.Kind() {
 		case reflect.String:
@@ -662,7 +662,7 @@ func parseSlice(parameterName string, parameterContent interface{}) ([]map[strin
 }
 
 func initParameterIterator(cfg *TConfig, mode string) (err error) {
-	var parameters map[string]paramsType
+	var parameters map[string]iteratorParamsType
 	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
 	if err != nil {
 		return err
@@ -684,7 +684,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 				// use strategy if configured
 				cfg.ParametersSetting.Iterators = append(
 					cfg.ParametersSetting.Iterators,
-					newIterator(v, rawValue.MapIndex(reflect.ValueOf(k)).Interface().(string), cfg.ParametersSetting.Iteration),
+					newIterator(v, rawValue.MapIndex(reflect.ValueOf(k)).Interface().(iteratorStrategyType), cfg.ParametersSetting.Iteration),
 				)
 			} else {
 				// use sequential strategy by default
@@ -703,20 +703,20 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 		}
 		cfg.ParametersSetting.Iterators = append(
 			cfg.ParametersSetting.Iterators,
-			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
+			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(iteratorStrategyType), cfg.ParametersSetting.Iteration),
 		)
 	default:
 		// default strategy: sequential, 仅生成一个的迭代器，该迭代器在参数笛卡尔积slice中顺序选取元素
 		cfg.ParametersSetting.Strategy = strategySequential
 		cfg.ParametersSetting.Iterators = append(
 			cfg.ParametersSetting.Iterators,
-			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(string), cfg.ParametersSetting.Iteration),
+			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(iteratorStrategyType), cfg.ParametersSetting.Iteration),
 		)
 	}
 	return nil
 }
 
-func newIterator(parameters paramsType, strategy string, iteration int) *Iterator {
+func newIterator(parameters iteratorParamsType, strategy iteratorStrategyType, iteration int) *Iterator {
 	iter := parameters.Iterator()
 	iter.strategy = strategy
 	if iteration > 0 {
