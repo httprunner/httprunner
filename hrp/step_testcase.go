@@ -39,7 +39,7 @@ func (s *StepTestCaseWithOptionalArgs) Type() StepType {
 	return stepTypeTestCase
 }
 
-func (s *StepTestCaseWithOptionalArgs) ToStruct() *TStep {
+func (s *StepTestCaseWithOptionalArgs) Struct() *TStep {
 	return s.step
 }
 

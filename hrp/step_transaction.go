@@ -35,7 +35,7 @@ func (s *StepTransaction) Type() StepType {
 	return stepTypeTransaction
 }
 
-func (s *StepTransaction) ToStruct() *TStep {
+func (s *StepTransaction) Struct() *TStep {
 	return s.step
 }
 

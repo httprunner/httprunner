@@ -88,7 +88,7 @@ func (s *StepAPIWithOptionalArgs) Type() StepType {
 	return stepTypeAPI
 }
 
-func (s *StepAPIWithOptionalArgs) ToStruct() *TStep {
+func (s *StepAPIWithOptionalArgs) Struct() *TStep {
 	return s.step
 }
 

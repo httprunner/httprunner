@@ -24,7 +24,7 @@ func (s *StepRendezvous) Type() StepType {
 	return stepTypeRendezvous
 }
 
-func (s *StepRendezvous) ToStruct() *TStep {
+func (s *StepRendezvous) Struct() *TStep {
 	return s.step
 }
 

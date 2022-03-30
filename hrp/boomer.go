@@ -147,7 +147,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 				if stepResult.StepType == stepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
-					if step.ToStruct().Transaction.Type == transactionEnd { // only record when transaction ends
+					if step.Struct().Transaction.Type == transactionEnd { // only record when transaction ends
 						b.RecordTransaction(stepResult.Name, transactionSuccess, stepResult.Elapsed, 0)
 						transactionSuccess = true // reset flag for next transaction
 					}
