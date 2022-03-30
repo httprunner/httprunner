@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -14,7 +13,7 @@ import (
 type SessionRunner struct {
 	testCase         *TestCase
 	hrpRunner        *HRPRunner
-	parser           *parser
+	parser           *Parser
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
@@ -31,8 +30,20 @@ func (r *SessionRunner) init() {
 	r.summary.Name = r.testCase.Config.Name
 }
 
-// Run runs the test steps in sequential order.
-func (r *SessionRunner) Run() error {
+func (r *SessionRunner) GetParser() *Parser {
+	return r.parser
+}
+
+func (r *SessionRunner) GetConfig() *TConfig {
+	return r.testCase.Config
+}
+
+func (r *SessionRunner) LogOn() bool {
+	return r.hrpRunner.requestsLogOn
+}
+
+// Start runs the test steps in sequential order.
+func (r *SessionRunner) Start() error {
 	config := r.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
@@ -68,48 +79,46 @@ func (r *SessionRunner) Run() error {
 	return nil
 }
 
-func (r *SessionRunner) overrideVariables(step *TStep) (*TStep, error) {
-	// copy step and config to avoid data racing
-	copiedStep := &TStep{}
-	if err := copier.Copy(copiedStep, step); err != nil {
-		log.Error().Err(err).Msg("copy step data failed")
-		return nil, err
+func (r *SessionRunner) UpdateSession(vars map[string]interface{}) {
+	for k, v := range vars {
+		r.sessionVariables[k] = v
 	}
-
-	stepVariables := copiedStep.Variables
-	// override variables
-	// step variables > session variables (extracted variables from previous steps)
-	stepVariables = mergeVariables(stepVariables, r.sessionVariables)
-	// step variables > testcase config variables
-	stepVariables = mergeVariables(stepVariables, r.testCase.Config.Variables)
-
-	// parse step variables
-	parsedVariables, err := r.parser.parseVariables(stepVariables)
-	if err != nil {
-		log.Error().Interface("variables", r.testCase.Config.Variables).Err(err).Msg("parse step variables failed")
-		return nil, err
-	}
-	copiedStep.Variables = parsedVariables // avoid data racing
-	return copiedStep, nil
 }
 
-func (r *SessionRunner) overrideConfig(step *TStep) {
-	// override headers
-	if r.testCase.Config.Headers != nil {
-		step.Request.Headers = mergeMap(step.Request.Headers, r.testCase.Config.Headers)
+// UpdateSummary appends step result to summary
+func (r *SessionRunner) UpdateSummary(stepResult *StepResult) {
+	r.summary.Records = append(r.summary.Records, stepResult)
+	r.summary.Stat.Total += 1
+	if stepResult.Success {
+		r.summary.Stat.Successes += 1
+	} else {
+		r.summary.Stat.Failures += 1
+		// update summary result to failed
+		r.summary.Success = false
 	}
-	// parse step request url
-	requestUrl, err := r.parser.parseString(step.Request.URL, step.Variables)
+}
+
+// MergeStepVariables merges step variables with config variables and session variables
+func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[string]interface{}, error) {
+	// override variables
+	// step variables > session variables (extracted variables from previous steps)
+	overrideVars := mergeVariables(vars, r.sessionVariables)
+	// step variables > testcase config variables
+	overrideVars = mergeVariables(overrideVars, r.testCase.Config.Variables)
+
+	// parse step variables
+	parsedVariables, err := r.parser.ParseVariables(overrideVars)
 	if err != nil {
-		log.Error().Err(err).Msg("parse request url failed")
-		requestUrl = step.Variables
+		log.Error().Interface("variables", r.testCase.Config.Variables).
+			Err(err).Msg("parse step variables failed")
+		return nil, err
 	}
-	step.Request.URL = buildURL(r.testCase.Config.BaseURL, convertString(requestUrl)) // avoid data racing
+	return parsedVariables, nil
 }
 
 func (r *SessionRunner) parseConfig(cfg *TConfig) error {
 	// parse config variables
-	parsedVariables, err := r.parser.parseVariables(cfg.Variables)
+	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
 	if err != nil {
 		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
 		return err
@@ -117,14 +126,14 @@ func (r *SessionRunner) parseConfig(cfg *TConfig) error {
 	cfg.Variables = parsedVariables
 
 	// parse config name
-	parsedName, err := r.parser.parseString(cfg.Name, cfg.Variables)
+	parsedName, err := r.parser.ParseString(cfg.Name, cfg.Variables)
 	if err != nil {
 		return err
 	}
 	cfg.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL, err := r.parser.parseString(cfg.BaseURL, cfg.Variables)
+	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, cfg.Variables)
 	if err != nil {
 		return err
 	}
@@ -136,7 +145,7 @@ func (r *SessionRunner) parseConfig(cfg *TConfig) error {
 	return nil
 }
 
-func (r *SessionRunner) getSummary() *TestCaseSummary {
+func (r *SessionRunner) GetSummary() *TestCaseSummary {
 	caseSummary := r.summary
 	caseSummary.Time.StartAt = r.startTime
 	caseSummary.Time.Duration = time.Since(r.startTime).Seconds()

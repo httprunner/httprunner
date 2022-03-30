@@ -17,11 +17,11 @@ import (
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
 )
 
-func newParser() *parser {
-	return &parser{}
+func newParser() *Parser {
+	return &Parser{}
 }
 
-type parser struct {
+type Parser struct {
 	plugin funplugin.IPlugin // plugin is used to call functions
 }
 
@@ -42,9 +42,9 @@ func buildURL(baseURL, stepURL string) string {
 	return uStep.String()
 }
 
-func (p *parser) parseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
+func (p *Parser) ParseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
 	parsedHeaders := make(map[string]string)
-	headers, err := p.parseData(rawHeaders, variablesMapping)
+	headers, err := p.Parse(rawHeaders, variablesMapping)
 	if err != nil {
 		return rawHeaders, err
 	}
@@ -64,7 +64,7 @@ func convertString(raw interface{}) string {
 	}
 }
 
-func (p *parser) parseData(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
+func (p *Parser) Parse(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
 	rawValue := reflect.ValueOf(raw)
 	switch rawValue.Kind() {
 	case reflect.String:
@@ -75,11 +75,11 @@ func (p *parser) parseData(raw interface{}, variablesMapping map[string]interfac
 		// other string
 		value := rawValue.String()
 		value = strings.TrimSpace(value)
-		return p.parseString(value, variablesMapping)
+		return p.ParseString(value, variablesMapping)
 	case reflect.Slice:
 		parsedSlice := make([]interface{}, rawValue.Len())
 		for i := 0; i < rawValue.Len(); i++ {
-			parsedValue, err := p.parseData(rawValue.Index(i).Interface(), variablesMapping)
+			parsedValue, err := p.Parse(rawValue.Index(i).Interface(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
@@ -89,12 +89,12 @@ func (p *parser) parseData(raw interface{}, variablesMapping map[string]interfac
 	case reflect.Map: // convert any map to map[string]interface{}
 		parsedMap := make(map[string]interface{})
 		for _, k := range rawValue.MapKeys() {
-			parsedKey, err := p.parseString(k.String(), variablesMapping)
+			parsedKey, err := p.ParseString(k.String(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 			v := rawValue.MapIndex(k)
-			parsedValue, err := p.parseData(v.Interface(), variablesMapping)
+			parsedValue, err := p.Parse(v.Interface(), variablesMapping)
 			if err != nil {
 				return raw, err
 			}
@@ -131,8 +131,8 @@ var (
 	regexCompileNumber   = regexp.MustCompile(regexNumber)                                                        // parse number
 )
 
-// parseString parse string with variables
-func (p *parser) parseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
+// ParseString parse string with variables
+func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}) (interface{}, error) {
 	matchStartPosition := 0
 	parsedString := ""
 	remainedString := raw
@@ -171,12 +171,12 @@ func (p *parser) parseString(raw string, variablesMapping map[string]interface{}
 			if err != nil {
 				return raw, err
 			}
-			parsedArgs, err := p.parseData(arguments, variablesMapping)
+			parsedArgs, err := p.Parse(arguments, variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 
-			result, err := p.callFunc(funcName, parsedArgs.([]interface{})...)
+			result, err := p.CallFunc(funcName, parsedArgs.([]interface{})...)
 			if err != nil {
 				log.Error().Str("funcName", funcName).Interface("arguments", arguments).
 					Err(err).Msg("call function failed")
@@ -237,9 +237,9 @@ func (p *parser) parseString(raw string, variablesMapping map[string]interface{}
 	return parsedString, nil
 }
 
-// callFunc calls function with arguments
+// CallFunc calls function with arguments
 // only support return at most one result value
-func (p *parser) callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
+func (p *Parser) CallFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// call with plugin function
 	if p.plugin != nil && p.plugin.Has(funcName) {
 		return p.plugin.Call(funcName, arguments...)
@@ -342,38 +342,6 @@ func mergeSlices(slice, overriddenSlice []string) []string {
 	return slice
 }
 
-// extend teststep with api, teststep will merge and override referenced api
-func extendWithAPI(testStep *TStep, overriddenStep *API) {
-	// override api name
-	if testStep.Name == "" {
-		testStep.Name = overriddenStep.Name
-	}
-	// merge & override request
-	testStep.Request = overriddenStep.Request
-	// merge & override variables
-	testStep.Variables = mergeVariables(testStep.Variables, overriddenStep.Variables)
-	// merge & override extractors
-	testStep.Extract = mergeMap(testStep.Extract, overriddenStep.Extract)
-	// merge & override validators
-	testStep.Validators = mergeValidators(testStep.Validators, overriddenStep.Validators)
-	// merge & override setupHooks
-	testStep.SetupHooks = mergeSlices(testStep.SetupHooks, overriddenStep.SetupHooks)
-	// merge & override teardownHooks
-	testStep.TeardownHooks = mergeSlices(testStep.TeardownHooks, overriddenStep.TeardownHooks)
-}
-
-// extend referenced testcase with teststep, teststep config merge and override referenced testcase config
-func extendWithTestCase(testStep *TStep, overriddenTestCase *TestCase) {
-	// override testcase name
-	if testStep.Name != "" {
-		overriddenTestCase.Config.Name = testStep.Name
-	}
-	// merge & override variables
-	overriddenTestCase.Config.Variables = mergeVariables(testStep.Variables, overriddenTestCase.Config.Variables)
-	// merge & override extractors
-	overriddenTestCase.Config.Export = mergeSlices(testStep.Export, overriddenTestCase.Config.Export)
-}
-
 var eval = goval.NewEvaluator()
 
 // literalEval parse string to number if possible
@@ -420,7 +388,7 @@ func parseFunctionArguments(argsStr string) ([]interface{}, error) {
 	return arguments, nil
 }
 
-func (p *parser) parseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
+func (p *Parser) ParseVariables(variables map[string]interface{}) (map[string]interface{}, error) {
 	parsedVariables := make(map[string]interface{})
 	var traverseRounds int
 
@@ -458,7 +426,7 @@ func (p *parser) parseVariables(variables map[string]interface{}) (map[string]in
 				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
 			}
 
-			parsedValue, err := p.parseData(varValue, parsedVariables)
+			parsedValue, err := p.Parse(varValue, parsedVariables)
 			if err != nil {
 				continue
 			}
@@ -588,7 +556,7 @@ func parseParameters(parameters map[string]interface{}, variablesMapping map[str
 		case reflect.String:
 			// e.g. username-password: ${parameterize(examples/hrp/account.csv)} -> [{"username": "test1", "password": "111111"}, {"username": "test2", "password": "222222"}]
 			var parsedParameterContent interface{}
-			parsedParameterContent, err = newParser().parseString(rawValue.String(), variablesMapping)
+			parsedParameterContent, err = newParser().ParseString(rawValue.String(), variablesMapping)
 			if err != nil {
 				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
 				return nil, err

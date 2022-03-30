@@ -51,42 +51,55 @@ type Request struct {
 }
 
 func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
-
-	step, err = r.overrideVariables(step)
-	if err != nil {
-		return nil, err
-	}
-	r.overrideConfig(step)
-
 	log.Info().Str("step", step.Name).Msg("run step start")
+
 	stepResult = &StepResult{
 		Name:        step.Name,
 		StepType:    stepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
 	}
-	sessionData := newSessionData()
 
 	defer func() {
+		// update testcase summary
 		if err != nil {
 			log.Error().Err(err).Msg("run request step failed")
 			stepResult.Attachment = err.Error()
-			r.summary.Success = false
 		} else {
+			// update extracted variables
+			r.UpdateSession(stepResult.ExportVars)
 			log.Info().
 				Str("step", step.Name).
 				Bool("success", stepResult.Success).
 				Interface("exportVars", stepResult.ExportVars).
 				Msg("run step end")
 		}
+		r.UpdateSummary(stepResult)
 	}()
+
+	sessionData := newSessionData()
+	parser := r.GetParser()
+	config := r.GetConfig()
+
+	// override step variables
+	stepVariables, err := r.MergeStepVariables(step.Variables)
+	if err != nil {
+		return
+	}
 
 	// convert request struct to map
 	jsonRequest, _ := json.Marshal(&step.Request)
 	var requestMap map[string]interface{}
 	_ = json.Unmarshal(jsonRequest, &requestMap)
 
-	rawUrl := step.Request.URL
+	// parse step request url
+	requestUrl, err := r.parser.ParseString(step.Request.URL, stepVariables)
+	if err != nil {
+		log.Error().Err(err).Msg("parse request url failed")
+		return
+	}
+	rawUrl := buildURL(r.testCase.Config.BaseURL, convertString(requestUrl))
+
 	method := step.Request.Method
 	req := &http.Request{
 		Method:     string(method),
@@ -97,8 +110,14 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 
 	// prepare request headers
-	if len(step.Request.Headers) > 0 {
-		headers, err := r.parser.parseHeaders(step.Request.Headers, step.Variables)
+	stepHeaders := step.Request.Headers
+	if config.Headers != nil {
+		// override headers
+		stepHeaders = mergeMap(stepHeaders, config.Headers)
+	}
+
+	if len(stepHeaders) > 0 {
+		headers, err := parser.ParseHeaders(stepHeaders, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "parse headers failed")
 		}
@@ -121,7 +140,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	// prepare request params
 	var queryParams url.Values
 	if len(step.Request.Params) > 0 {
-		params, err := r.parser.parseData(step.Request.Params, step.Variables)
+		params, err := parser.Parse(step.Request.Params, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "parse request params failed")
 		}
@@ -146,7 +165,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// prepare request cookies
 	for cookieName, cookieValue := range step.Request.Cookies {
-		value, err := r.parser.parseData(cookieValue, step.Variables)
+		value, err := parser.Parse(cookieValue, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "parse cookie value failed")
 		}
@@ -158,7 +177,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// prepare request body
 	if step.Request.Body != nil {
-		data, err := r.parser.parseData(step.Request.Body, step.Variables)
+		data, err := parser.Parse(step.Request.Body, stepVariables)
 		if err != nil {
 			return stepResult, err
 		}
@@ -232,19 +251,19 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	req.Host = u.Host
 
 	// add request object to step variables, could be used in setup hooks
-	step.Variables["hrp_step_name"] = step.Name
-	step.Variables["hrp_step_request"] = requestMap
+	stepVariables["hrp_step_name"] = step.Name
+	stepVariables["hrp_step_request"] = requestMap
 
 	// deal with setup hooks
 	for _, setupHook := range step.SetupHooks {
-		_, err = r.parser.parseData(setupHook, step.Variables)
+		_, err = parser.Parse(setupHook, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run setup hooks failed")
 		}
 	}
 
 	// log & print request
-	if r.hrpRunner.requestsLogOn {
+	if r.LogOn() {
 		if err := printRequest(req); err != nil {
 			return stepResult, err
 		}
@@ -266,25 +285,25 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 
 	// log & print response
-	if r.hrpRunner.requestsLogOn {
+	if r.LogOn() {
 		if err := printResponse(resp); err != nil {
 			return stepResult, err
 		}
 	}
 
 	// new response object
-	respObj, err := newResponseObject(r.hrpRunner.t, r.parser, resp)
+	respObj, err := newResponseObject(r.hrpRunner.t, parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
 	}
 
 	// add response object to step variables, could be used in teardown hooks
-	step.Variables["hrp_step_response"] = respObj.respObjMeta
+	stepVariables["hrp_step_response"] = respObj.respObjMeta
 
 	// deal with teardown hooks
 	for _, teardownHook := range step.TeardownHooks {
-		_, err = r.parser.parseData(teardownHook, step.Variables)
+		_, err = parser.Parse(teardownHook, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run teardown hooks failed")
 		}
@@ -298,13 +317,8 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	extractMapping := respObj.Extract(extractors)
 	stepResult.ExportVars = extractMapping
 
-	// update extracted variables
-	for k, v := range stepResult.ExportVars {
-		r.sessionVariables[k] = v
-	}
-
 	// override step variables with extracted variables
-	stepVariables := mergeVariables(step.Variables, extractMapping)
+	stepVariables = mergeVariables(stepVariables, extractMapping)
 
 	// validate response
 	err = respObj.Validate(step.Validators, stepVariables)
@@ -315,15 +329,6 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
-
-	// append step result to summary
-	r.summary.Records = append(r.summary.Records, stepResult)
-	r.summary.Stat.Total += 1
-	if stepResult.Success {
-		r.summary.Stat.Successes += 1
-	} else {
-		r.summary.Stat.Failures += 1
-	}
 
 	return stepResult, err
 }

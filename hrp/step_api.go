@@ -107,3 +107,23 @@ func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
 	stepResult.StepType = stepTypeAPI
 	return stepResult, nil
 }
+
+// extend teststep with api, teststep will merge and override referenced api
+func extendWithAPI(testStep *TStep, overriddenStep *API) {
+	// override api name
+	if testStep.Name == "" {
+		testStep.Name = overriddenStep.Name
+	}
+	// merge & override request
+	testStep.Request = overriddenStep.Request
+	// merge & override variables
+	testStep.Variables = mergeVariables(testStep.Variables, overriddenStep.Variables)
+	// merge & override extractors
+	testStep.Extract = mergeMap(testStep.Extract, overriddenStep.Extract)
+	// merge & override validators
+	testStep.Validators = mergeValidators(testStep.Validators, overriddenStep.Validators)
+	// merge & override setupHooks
+	testStep.SetupHooks = mergeSlices(testStep.SetupHooks, overriddenStep.SetupHooks)
+	// merge & override teardownHooks
+	testStep.TeardownHooks = mergeSlices(testStep.TeardownHooks, overriddenStep.TeardownHooks)
+}

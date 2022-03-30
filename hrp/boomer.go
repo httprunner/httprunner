@@ -96,7 +96,6 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		Weight: config.Weight,
 		Fn: func() {
 			sessionRunner := hrpRunner.NewSessionRunner(testcase)
-			sessionRunner.init()
 			sessionRunner.parser.plugin = plugin
 
 			testcaseSuccess := true       // flag whole testcase result
@@ -136,7 +135,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					testcaseSuccess = false
 					transactionSuccess = false
 
-					if sessionRunner.hrpRunner.failfast {
+					if hrpRunner.failfast {
 						log.Error().Msg("abort running due to failfast setting")
 						break
 					}

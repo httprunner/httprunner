@@ -151,11 +151,11 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 				}
 			}
 			sessionRunner := r.NewSessionRunner(testcase)
-			if err = sessionRunner.Run(); err != nil {
+			if err = sessionRunner.Start(); err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				return err
 			}
-			caseSummary := sessionRunner.getSummary()
+			caseSummary := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
 		}
 	}
@@ -191,5 +191,6 @@ func (r *HRPRunner) NewSessionRunner(testcase *TestCase) *SessionRunner {
 		parser:    newParser(),
 		summary:   newSummary(),
 	}
+	sessionRunner.init()
 	return sessionRunner
 }

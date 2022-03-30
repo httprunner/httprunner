@@ -18,7 +18,7 @@ import (
 	"github.com/httprunner/httprunner/hrp/internal/json"
 )
 
-func newResponseObject(t *testing.T, parser *parser, resp *http.Response) (*responseObject, error) {
+func newResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*responseObject, error) {
 	// prepare response headers
 	headers := make(map[string]string)
 	for k, v := range resp.Header {
@@ -82,7 +82,7 @@ type respObjMeta struct {
 
 type responseObject struct {
 	t                 *testing.T
-	parser            *parser
+	parser            *Parser
 	respObjMeta       interface{}
 	validationResults []*ValidationResult
 }
@@ -126,7 +126,7 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		var checkValue interface{}
 		if strings.Contains(checkItem, "$") {
 			// reference variable
-			checkValue, err = v.parser.parseData(checkItem, variablesMapping)
+			checkValue, err = v.parser.Parse(checkItem, variablesMapping)
 			if err != nil {
 				return err
 			}
@@ -143,7 +143,7 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		}
 
 		// parse expected value
-		expectValue, err := v.parser.parseData(validator.Expect, variablesMapping)
+		expectValue, err := v.parser.Parse(validator.Expect, variablesMapping)
 		if err != nil {
 			return err
 		}

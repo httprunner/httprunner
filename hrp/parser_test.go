@@ -163,7 +163,7 @@ func TestParseDataStringWithVariables(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parser.parseData(data.expr, variablesMapping)
+		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -188,7 +188,7 @@ func TestParseDataStringWithUndefinedVariables(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parser.parseData(data.expr, variablesMapping)
+		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
@@ -233,7 +233,7 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parser.parseData(data.expr, variablesMapping)
+		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -264,7 +264,7 @@ func TestParseDataMapWithVariables(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		parsedData, err := parser.parseData(data.expr, variablesMapping)
+		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -298,7 +298,7 @@ func TestParseHeaders(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		parsedHeaders, err := parser.parseHeaders(data.rawHeaders, variablesMapping)
+		parsedHeaders, err := parser.ParseHeaders(data.rawHeaders, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -444,14 +444,14 @@ func TestCallBuiltinFunction(t *testing.T) {
 	parser := newParser()
 
 	// call function without arguments
-	_, err := parser.callFunc("get_timestamp")
+	_, err := parser.CallFunc("get_timestamp")
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
 
 	// call function with one argument
 	timeStart := time.Now()
-	_, err = parser.callFunc("sleep", 1)
+	_, err = parser.CallFunc("sleep", 1)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -460,7 +460,7 @@ func TestCallBuiltinFunction(t *testing.T) {
 	}
 
 	// call function with one argument
-	result, err := parser.callFunc("gen_random_string", 10)
+	result, err := parser.CallFunc("gen_random_string", 10)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -469,7 +469,7 @@ func TestCallBuiltinFunction(t *testing.T) {
 	}
 
 	// call function with two argument
-	result, err = parser.callFunc("max", float64(10), 9.99)
+	result, err = parser.CallFunc("max", float64(10), 9.99)
 	if !assert.NoError(t, err) {
 		t.Fail()
 	}
@@ -556,7 +556,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData1 {
-		value, err := parser.parseData(data.expr, variablesMapping)
+		value, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -575,7 +575,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 	}
 
 	for _, data := range testData2 {
-		value, err := parser.parseData(data.expr, variablesMapping)
+		value, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -623,7 +623,7 @@ func TestParseVariables(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		value, err := parser.parseVariables(data.rawVars)
+		value, err := parser.ParseVariables(data.rawVars)
 		if !assert.NoError(t, err) {
 			t.Fail()
 		}
@@ -654,7 +654,7 @@ func TestParseVariablesAbnormal(t *testing.T) {
 
 	parser := newParser()
 	for _, data := range testData {
-		value, err := parser.parseVariables(data.rawVars)
+		value, err := parser.ParseVariables(data.rawVars)
 		if !assert.Error(t, err) {
 			t.Fail()
 		}
