@@ -50,6 +50,198 @@ type Request struct {
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
 }
 
+func newRequestBuilder(parser *Parser, config *TConfig, stepRequest *Request) *requestBuilder {
+	// convert request struct to map
+	jsonRequest, _ := json.Marshal(stepRequest)
+	var requestMap map[string]interface{}
+	_ = json.Unmarshal(jsonRequest, &requestMap)
+
+	return &requestBuilder{
+		stepRequest: stepRequest,
+		req: &http.Request{
+			Header:     make(http.Header),
+			Proto:      "HTTP/1.1",
+			ProtoMajor: 1,
+			ProtoMinor: 1,
+		},
+		config:     config,
+		parser:     parser,
+		requestMap: requestMap,
+	}
+}
+
+type requestBuilder struct {
+	stepRequest *Request
+	req         *http.Request
+	parser      *Parser
+	config      *TConfig
+	requestMap  map[string]interface{}
+}
+
+func (r *requestBuilder) prepareHeaders(stepVariables map[string]interface{}) error {
+	// prepare request headers
+	stepHeaders := r.stepRequest.Headers
+	if r.config.Headers != nil {
+		// override headers
+		stepHeaders = mergeMap(stepHeaders, r.config.Headers)
+	}
+
+	if len(stepHeaders) > 0 {
+		headers, err := r.parser.ParseHeaders(stepHeaders, stepVariables)
+		if err != nil {
+			return errors.Wrap(err, "parse headers failed")
+		}
+		for key, value := range headers {
+			// omit pseudo header names for HTTP/1, e.g. :authority, :method, :path, :scheme
+			if strings.HasPrefix(key, ":") {
+				continue
+			}
+			r.req.Header.Add(key, value)
+
+			// prepare content length
+			if strings.EqualFold(key, "Content-Length") && value != "" {
+				if l, err := strconv.ParseInt(value, 10, 64); err == nil {
+					r.req.ContentLength = l
+				}
+			}
+		}
+	}
+
+	// prepare request cookies
+	for cookieName, cookieValue := range r.stepRequest.Cookies {
+		value, err := r.parser.Parse(cookieValue, stepVariables)
+		if err != nil {
+			return errors.Wrap(err, "parse cookie value failed")
+		}
+		r.req.AddCookie(&http.Cookie{
+			Name:  cookieName,
+			Value: fmt.Sprintf("%v", value),
+		})
+	}
+
+	// update header
+	headers := make(map[string]string)
+	for key, value := range r.req.Header {
+		headers[key] = value[0]
+	}
+	r.requestMap["headers"] = headers
+	return nil
+}
+
+func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) error {
+	// parse step request url
+	requestUrl, err := r.parser.ParseString(r.stepRequest.URL, stepVariables)
+	if err != nil {
+		log.Error().Err(err).Msg("parse request url failed")
+		return err
+	}
+	rawUrl := buildURL(r.config.BaseURL, convertString(requestUrl))
+
+	// prepare request params
+	var queryParams url.Values
+	if len(r.stepRequest.Params) > 0 {
+		params, err := r.parser.Parse(r.stepRequest.Params, stepVariables)
+		if err != nil {
+			return errors.Wrap(err, "parse request params failed")
+		}
+		parsedParams := params.(map[string]interface{})
+		r.requestMap["params"] = parsedParams
+		if len(parsedParams) > 0 {
+			queryParams = make(url.Values)
+			for k, v := range parsedParams {
+				queryParams.Add(k, fmt.Sprint(v))
+			}
+		}
+	}
+	if queryParams != nil {
+		// append params to url
+		paramStr := queryParams.Encode()
+		if strings.IndexByte(rawUrl, '?') == -1 {
+			rawUrl = rawUrl + "?" + paramStr
+		} else {
+			rawUrl = rawUrl + "&" + paramStr
+		}
+	}
+
+	// prepare url
+	u, err := url.Parse(rawUrl)
+	if err != nil {
+		return errors.Wrap(err, "parse url failed")
+	}
+	r.req.URL = u
+	r.req.Host = u.Host
+
+	return nil
+}
+
+func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error {
+	// prepare request body
+	if r.stepRequest.Body == nil {
+		return nil
+	}
+
+	data, err := r.parser.Parse(r.stepRequest.Body, stepVariables)
+	if err != nil {
+		return err
+	}
+	// check request body format if Content-Type specified as application/json
+	if strings.HasPrefix(r.req.Header.Get("Content-Type"), "application/json") {
+		switch data.(type) {
+		case bool, float64, string, map[string]interface{}, []interface{}, nil:
+			break
+		default:
+			return errors.Errorf("request body type inconsistent with Content-Type: %v",
+				r.req.Header.Get("Content-Type"))
+		}
+	}
+	r.requestMap["body"] = data
+	var dataBytes []byte
+	switch vv := data.(type) {
+	case map[string]interface{}:
+		contentType := r.req.Header.Get("Content-Type")
+		if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
+			// post form data
+			formData := make(url.Values)
+			for k, v := range vv {
+				formData.Add(k, fmt.Sprint(v))
+			}
+			dataBytes = []byte(formData.Encode())
+		} else {
+			// post json
+			dataBytes, err = json.Marshal(vv)
+			if err != nil {
+				return err
+			}
+			if contentType == "" {
+				r.req.Header.Set("Content-Type", "application/json; charset=utf-8")
+			}
+		}
+	case []interface{}:
+		contentType := r.req.Header.Get("Content-Type")
+		// post json
+		dataBytes, err = json.Marshal(vv)
+		if err != nil {
+			return err
+		}
+		if contentType == "" {
+			r.req.Header.Set("Content-Type", "application/json; charset=utf-8")
+		}
+	case string:
+		dataBytes = []byte(vv)
+	case []byte:
+		dataBytes = vv
+	case bytes.Buffer:
+		dataBytes = vv.Bytes()
+	default: // unexpected body type
+		return errors.New("unexpected request body type")
+	}
+
+	r.req.Body = io.NopCloser(bytes.NewReader(dataBytes))
+	r.req.ContentLength = int64(len(dataBytes))
+
+	return nil
+}
+
 func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
 	log.Info().Str("step", step.Name).Msg("run step start")
 
@@ -81,178 +273,33 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	parser := r.GetParser()
 	config := r.GetConfig()
 
+	rb := newRequestBuilder(parser, config, step.Request)
+	rb.req.Method = string(step.Request.Method)
+
 	// override step variables
 	stepVariables, err := r.MergeStepVariables(step.Variables)
 	if err != nil {
 		return
 	}
 
-	// convert request struct to map
-	jsonRequest, _ := json.Marshal(&step.Request)
-	var requestMap map[string]interface{}
-	_ = json.Unmarshal(jsonRequest, &requestMap)
-
-	// parse step request url
-	requestUrl, err := r.parser.ParseString(step.Request.URL, stepVariables)
+	err = rb.prepareUrlParams(stepVariables)
 	if err != nil {
-		log.Error().Err(err).Msg("parse request url failed")
 		return
 	}
-	rawUrl := buildURL(r.testCase.Config.BaseURL, convertString(requestUrl))
 
-	method := step.Request.Method
-	req := &http.Request{
-		Method:     string(method),
-		Header:     make(http.Header),
-		Proto:      "HTTP/1.1",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-	}
-
-	// prepare request headers
-	stepHeaders := step.Request.Headers
-	if config.Headers != nil {
-		// override headers
-		stepHeaders = mergeMap(stepHeaders, config.Headers)
-	}
-
-	if len(stepHeaders) > 0 {
-		headers, err := parser.ParseHeaders(stepHeaders, stepVariables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "parse headers failed")
-		}
-		for key, value := range headers {
-			// omit pseudo header names for HTTP/1, e.g. :authority, :method, :path, :scheme
-			if strings.HasPrefix(key, ":") {
-				continue
-			}
-			req.Header.Add(key, value)
-
-			// prepare content length
-			if strings.EqualFold(key, "Content-Length") && value != "" {
-				if l, err := strconv.ParseInt(value, 10, 64); err == nil {
-					req.ContentLength = l
-				}
-			}
-		}
-	}
-
-	// prepare request params
-	var queryParams url.Values
-	if len(step.Request.Params) > 0 {
-		params, err := parser.Parse(step.Request.Params, stepVariables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "parse request params failed")
-		}
-		parsedParams := params.(map[string]interface{})
-		requestMap["params"] = parsedParams
-		if len(parsedParams) > 0 {
-			queryParams = make(url.Values)
-			for k, v := range parsedParams {
-				queryParams.Add(k, fmt.Sprint(v))
-			}
-		}
-	}
-	if queryParams != nil {
-		// append params to url
-		paramStr := queryParams.Encode()
-		if strings.IndexByte(rawUrl, '?') == -1 {
-			rawUrl = rawUrl + "?" + paramStr
-		} else {
-			rawUrl = rawUrl + "&" + paramStr
-		}
-	}
-
-	// prepare request cookies
-	for cookieName, cookieValue := range step.Request.Cookies {
-		value, err := parser.Parse(cookieValue, stepVariables)
-		if err != nil {
-			return stepResult, errors.Wrap(err, "parse cookie value failed")
-		}
-		req.AddCookie(&http.Cookie{
-			Name:  cookieName,
-			Value: fmt.Sprintf("%v", value),
-		})
-	}
-
-	// prepare request body
-	if step.Request.Body != nil {
-		data, err := parser.Parse(step.Request.Body, stepVariables)
-		if err != nil {
-			return stepResult, err
-		}
-		// check request body format if Content-Type specified as application/json
-		if strings.HasPrefix(req.Header.Get("Content-Type"), "application/json") {
-			switch data.(type) {
-			case bool, float64, string, map[string]interface{}, []interface{}, nil:
-				break
-			default:
-				return stepResult, errors.Errorf("request body type inconsistent with Content-Type: %v", req.Header.Get("Content-Type"))
-			}
-		}
-		requestMap["body"] = data
-		var dataBytes []byte
-		switch vv := data.(type) {
-		case map[string]interface{}:
-			contentType := req.Header.Get("Content-Type")
-			if strings.HasPrefix(contentType, "application/x-www-form-urlencoded") {
-				// post form data
-				formData := make(url.Values)
-				for k, v := range vv {
-					formData.Add(k, fmt.Sprint(v))
-				}
-				dataBytes = []byte(formData.Encode())
-			} else {
-				// post json
-				dataBytes, err = json.Marshal(vv)
-				if err != nil {
-					return stepResult, err
-				}
-				if contentType == "" {
-					req.Header.Set("Content-Type", "application/json; charset=utf-8")
-				}
-			}
-		case []interface{}:
-			contentType := req.Header.Get("Content-Type")
-			// post json
-			dataBytes, err = json.Marshal(vv)
-			if err != nil {
-				return stepResult, err
-			}
-			if contentType == "" {
-				req.Header.Set("Content-Type", "application/json; charset=utf-8")
-			}
-		case string:
-			dataBytes = []byte(vv)
-		case []byte:
-			dataBytes = vv
-		case bytes.Buffer:
-			dataBytes = vv.Bytes()
-		default: // unexpected body type
-			return stepResult, errors.New("unexpected request body type")
-		}
-
-		req.Body = io.NopCloser(bytes.NewReader(dataBytes))
-		req.ContentLength = int64(len(dataBytes))
-	}
-	// update header
-	headers := make(map[string]string)
-	for key, value := range req.Header {
-		headers[key] = value[0]
-	}
-	requestMap["headers"] = headers
-
-	// prepare url
-	u, err := url.Parse(rawUrl)
+	err = rb.prepareHeaders(stepVariables)
 	if err != nil {
-		return stepResult, errors.Wrap(err, "parse url failed")
+		return
 	}
-	req.URL = u
-	req.Host = u.Host
+
+	err = rb.prepareBody(stepVariables)
+	if err != nil {
+		return
+	}
 
 	// add request object to step variables, could be used in setup hooks
 	stepVariables["hrp_step_name"] = step.Name
-	stepVariables["hrp_step_request"] = requestMap
+	stepVariables["hrp_step_request"] = rb.requestMap
 
 	// deal with setup hooks
 	for _, setupHook := range step.SetupHooks {
@@ -264,14 +311,14 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// log & print request
 	if r.LogOn() {
-		if err := printRequest(req); err != nil {
+		if err := printRequest(rb.req); err != nil {
 			return stepResult, err
 		}
 	}
 
 	// do request action
 	start := time.Now()
-	resp, err := r.hrpRunner.client.Do(req)
+	resp, err := r.hrpRunner.client.Do(rb.req)
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
@@ -309,7 +356,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}
 
-	sessionData.ReqResps.Request = requestMap
+	sessionData.ReqResps.Request = rb.requestMap
 	sessionData.ReqResps.Response = builtin.FormatResponse(respObj.respObjMeta)
 
 	// extract variables from response
