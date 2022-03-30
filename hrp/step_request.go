@@ -703,7 +703,7 @@ func (s *StepRequestWithOptionalArgs) Type() StepType {
 	return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
 }
 
-func (s *StepRequestWithOptionalArgs) ToStruct() *TStep {
+func (s *StepRequestWithOptionalArgs) Struct() *TStep {
 	return s.step
 }
 
@@ -737,7 +737,7 @@ func (s *StepRequestExtraction) Type() StepType {
 	return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
 }
 
-func (s *StepRequestExtraction) ToStruct() *TStep {
+func (s *StepRequestExtraction) Struct() *TStep {
 	return s.step
 }
 
@@ -761,7 +761,7 @@ func (s *StepRequestValidation) Type() StepType {
 	return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
 }
 
-func (s *StepRequestValidation) ToStruct() *TStep {
+func (s *StepRequestValidation) Struct() *TStep {
 	return s.step
 }
 

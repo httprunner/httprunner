@@ -39,7 +39,7 @@ func (tc *TestCase) ToTCase() *TCase {
 		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
-		tCase.TestSteps = append(tCase.TestSteps, step.ToStruct())
+		tCase.TestSteps = append(tCase.TestSteps, step.Struct())
 	}
 	return tCase
 }

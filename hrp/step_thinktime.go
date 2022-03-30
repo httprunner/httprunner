@@ -24,7 +24,7 @@ func (s *StepThinkTime) Type() StepType {
 	return stepTypeThinkTime
 }
 
-func (s *StepThinkTime) ToStruct() *TStep {
+func (s *StepThinkTime) Struct() *TStep {
 	return s.step
 }
 

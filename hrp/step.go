@@ -47,6 +47,6 @@ type TStep struct {
 type IStep interface {
 	Name() string
 	Type() StepType
-	ToStruct() *TStep
+	Struct() *TStep
 	Run(*SessionRunner) (*StepResult, error)
 }
