@@ -3,9 +3,8 @@ name: Run unittests
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
-    types: [synchronize]
 
 jobs:
   py-httprunner:

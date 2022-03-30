@@ -95,8 +95,8 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
-			runner := hrpRunner.newCaseRunner(testcase)
-			runner.parser.plugin = plugin
+			sessionRunner := hrpRunner.NewSessionRunner(testcase)
+			sessionRunner.parser.plugin = plugin
 
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
@@ -115,27 +115,27 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 				}
 			}
 
-			if err := runner.parseConfig(caseConfig); err != nil {
+			if err := sessionRunner.parseConfig(caseConfig); err != nil {
 				log.Error().Err(err).Msg("parse config failed")
 				return
 			}
 
 			startTime := time.Now()
-			for index, step := range testcase.TestSteps {
-				stepData, err := runner.runStep(index, caseConfig)
+			for _, step := range testcase.TestSteps {
+				stepResult, err := step.Run(sessionRunner)
 				if err != nil {
 					// step failed
 					var elapsed int64
-					if stepData != nil {
-						elapsed = stepData.Elapsed
+					if stepResult != nil {
+						elapsed = stepResult.Elapsed
 					}
-					b.RecordFailure(step.Type(), step.Name(), elapsed, err.Error())
+					b.RecordFailure(string(step.Type()), step.Name(), elapsed, err.Error())
 
 					// update flag
 					testcaseSuccess = false
 					transactionSuccess = false
 
-					if runner.hrpRunner.failfast {
+					if hrpRunner.failfast {
 						log.Error().Msg("abort running due to failfast setting")
 						break
 					}
@@ -144,28 +144,27 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 				}
 
 				// step success
-				if stepData.StepType == stepTypeTransaction {
+				if stepResult.StepType == stepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
-					if step.ToStruct().Transaction.Type == transactionEnd { // only record when transaction ends
-						b.RecordTransaction(stepData.Name, transactionSuccess, stepData.Elapsed, 0)
+					if step.Struct().Transaction.Type == transactionEnd { // only record when transaction ends
+						b.RecordTransaction(stepResult.Name, transactionSuccess, stepResult.Elapsed, 0)
 						transactionSuccess = true // reset flag for next transaction
 					}
-				} else if stepData.StepType == stepTypeRendezvous {
+				} else if stepResult.StepType == stepTypeRendezvous {
 					// rendezvous
-					// TODO: implement rendezvous in boomer
-				} else if stepData.StepType == stepTypeThinkTime {
+				} else if stepResult.StepType == stepTypeThinkTime {
 					// think time
 					// no record required
 				} else {
 					// request or testcase step
-					b.RecordSuccess(step.Type(), step.Name(), stepData.Elapsed, stepData.ContentSize)
+					b.RecordSuccess(string(step.Type()), step.Name(), stepResult.Elapsed, stepResult.ContentSize)
 				}
 			}
 			endTime := time.Now()
 
 			// report duration for transaction without end
-			for name, transaction := range runner.transactions {
+			for name, transaction := range sessionRunner.transactions {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
 					duration := endTime.Sub(transaction[transactionStart])

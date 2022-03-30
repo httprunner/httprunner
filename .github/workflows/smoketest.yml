@@ -3,9 +3,8 @@ name: run smoke tests for httprunner
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
-    types: [synchronize]
 
 jobs:
   smoke-test:

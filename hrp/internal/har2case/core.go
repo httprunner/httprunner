@@ -177,7 +177,7 @@ type tStep struct {
 }
 
 func (s *tStep) makeRequestMethod(entry *Entry) error {
-	s.Request.Method = entry.Request.Method
+	s.Request.Method = hrp.HTTPMethod(entry.Request.Method)
 	return nil
 }
 
