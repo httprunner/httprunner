@@ -95,27 +95,27 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
-			sessionRunner := hrpRunner.NewSessionRunner(testcase)
+			sessionTestCase := &TestCase{}
+			// copy testcase to avoid data racing
+			if err := copier.Copy(sessionTestCase, testcase); err != nil {
+				log.Error().Err(err).Msg("copy testcase data failed")
+				return
+			}
+			sessionRunner := hrpRunner.NewSessionRunner(sessionTestCase)
 			sessionRunner.parser.plugin = plugin
 
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
-			cfg := testcase.Config
-			caseConfig := &TConfig{}
-			// copy config to avoid data racing
-			if err := copier.Copy(caseConfig, cfg); err != nil {
-				log.Error().Err(err).Msg("copy config data failed")
-				return
-			}
+			cfg := sessionTestCase.Config
 			// iterate through all parameter iterators and update case variables
-			for _, it := range caseConfig.ParametersSetting.Iterators {
+			for _, it := range cfg.ParametersSetting.Iterators {
 				if it.HasNext() {
-					caseConfig.Variables = mergeVariables(it.Next(), caseConfig.Variables)
+					cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
 				}
 			}
 
-			if err := sessionRunner.parseConfig(caseConfig); err != nil {
+			if err := sessionRunner.parseConfig(cfg); err != nil {
 				log.Error().Err(err).Msg("parse config failed")
 				return
 			}
