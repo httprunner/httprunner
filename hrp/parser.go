@@ -652,7 +652,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 				// use strategy if configured
 				cfg.ParametersSetting.Iterators = append(
 					cfg.ParametersSetting.Iterators,
-					newIterator(v, rawValue.MapIndex(reflect.ValueOf(k)).Interface().(iteratorStrategyType), cfg.ParametersSetting.Iteration),
+					newIterator(v, iteratorStrategyType(rawValue.MapIndex(reflect.ValueOf(k)).String()), cfg.ParametersSetting.Iteration),
 				)
 			} else {
 				// use sequential strategy by default
@@ -667,7 +667,7 @@ func initParameterIterator(cfg *TConfig, mode string) (err error) {
 		if len(rawValue.String()) == 0 {
 			cfg.ParametersSetting.Strategy = strategySequential
 		} else {
-			cfg.ParametersSetting.Strategy = strings.ToLower(rawValue.String())
+			cfg.ParametersSetting.Strategy = iteratorStrategyType(strings.ToLower(rawValue.String()))
 		}
 		cfg.ParametersSetting.Iterators = append(
 			cfg.ParametersSetting.Iterators,
