@@ -50,7 +50,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	}
 	s.step.Variables = stepVariables
 
-	log.Info().Str("testcase", s.step.Name).Msg("run referenced testcase")
 	stepResult := &StepResult{
 		Name:     s.step.Name,
 		StepType: stepTypeTestCase,
@@ -73,8 +72,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	err = sessionRunner.Start()
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
-		log.Error().Err(err).Msg("run referenced testcase step failed")
-		log.Info().Str("step", s.step.Name).Bool("success", false).Msg("run step end")
 		stepResult.Attachment = err.Error()
 		r.summary.Success = false
 		return stepResult, err
@@ -95,12 +92,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	r.summary.Stat.Total += summary.Stat.Total
 	r.summary.Stat.Successes += summary.Stat.Successes
 	r.summary.Stat.Failures += summary.Stat.Failures
-
-	log.Info().
-		Str("step", s.step.Name).
-		Bool("success", true).
-		Interface("exportVars", stepResult.ExportVars).
-		Msg("run step end")
 
 	return stepResult, nil
 }

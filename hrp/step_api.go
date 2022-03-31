@@ -3,8 +3,6 @@ package hrp
 import (
 	"fmt"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
 )
 
@@ -93,8 +91,6 @@ func (s *StepAPIWithOptionalArgs) Struct() *TStep {
 }
 
 func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
-	log.Info().Str("api", s.step.Name).Msg("run referenced api")
-
 	// extend request with referenced API
 	api, _ := s.step.API.(*API)
 	extendWithAPI(s.step, api)
