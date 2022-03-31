@@ -177,7 +177,7 @@ type iteratorStrategyType string
 
 const (
 	strategyRandom     iteratorStrategyType = "random"
-	strategySequential iteratorStrategyType = "Sequential"
+	strategySequential iteratorStrategyType = "sequential"
 )
 
 type iteratorParamsType []map[string]interface{}
