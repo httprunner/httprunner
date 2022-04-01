@@ -257,18 +257,18 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}()
 
+	// override step variables
+	stepVariables, err := r.MergeStepVariables(step.Variables)
+	if err != nil {
+		return
+	}
+
 	sessionData := newSessionData()
 	parser := r.GetParser()
 	config := r.GetConfig()
 
 	rb := newRequestBuilder(parser, config, step.Request)
 	rb.req.Method = string(step.Request.Method)
-
-	// override step variables
-	stepVariables, err := r.MergeStepVariables(step.Variables)
-	if err != nil {
-		return
-	}
 
 	err = rb.prepareUrlParams(stepVariables)
 	if err != nil {

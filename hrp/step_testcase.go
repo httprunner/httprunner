@@ -77,9 +77,9 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 		return stepResult, err
 	}
 	summary := sessionRunner.GetSummary()
-	stepResult.Data = summary
+	stepResult.Data = summary.Records
 	// export testcase export variables
-	stepResult.ExportVars = sessionRunner.summary.InOut.ExportVars
+	stepResult.ExportVars = summary.InOut.ExportVars
 	stepResult.Success = true
 
 	// update extracted variables
