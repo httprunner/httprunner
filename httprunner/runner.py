@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text
+from typing import Dict, List, Text
 
 try:
     import allure
@@ -13,41 +13,29 @@ except ModuleNotFoundError:
 
 from loguru import logger
 
-from httprunner import utils, exceptions
 from httprunner.client import HttpSession
-from httprunner.exceptions import ValidationFailure, ParamsError
-from httprunner.ext.uploader import prepare_upload_step
-from httprunner.loader import load_project_meta, load_testcase_file
-from httprunner.parser import build_url, parse_data, parse_variables_mapping
-from httprunner.response import ResponseObject
-from httprunner.testcase import Config, Step
+from httprunner.config import Config
+from httprunner.exceptions import ParamsError
+from httprunner.loader import load_project_meta
+from httprunner.models import (ProjectMeta, StepData, TConfig, TestCaseInOut,
+                               TestCaseSummary, TestCaseTime, VariablesMapping)
+from httprunner.parser import Parser
 from httprunner.utils import merge_variables
-from httprunner.models import (
-    TConfig,
-    TStep,
-    VariablesMapping,
-    StepData,
-    TestCaseSummary,
-    TestCaseTime,
-    TestCaseInOut,
-    ProjectMeta,
-    TestCase,
-    Hooks,
-)
 
 
 class HttpRunner(object):
     config: Config
-    teststeps: List[Step]
+    teststeps: List[object]     # list of Step
 
-    success: bool = False  # indicate testcase execution result
+    parser: Parser = None
+    session: HttpSession = None
+    case_id: Text = ""
+    root_dir: Text = ""
+
     __config: TConfig
-    __teststeps: List[TStep]
     __project_meta: ProjectMeta = None
-    __case_id: Text = ""
     __export: List[Text] = []
     __step_datas: List[StepData] = []
-    __session: HttpSession = None
     __session_variables: VariablesMapping = {}
     # time
     __start_at: float = 0
@@ -55,29 +43,34 @@ class HttpRunner(object):
     # log
     __log_path: Text = ""
 
-    def __init_tests__(self):
-        self.__config = self.config.perform()
-        self.__teststeps = []
-        for step in self.teststeps:
-            self.__teststeps.append(step.perform())
+    def __init(self):
+        self.__config = self.config.struct()
+        self.__session_variables = {}
+        self.__start_at = 0
+        self.__duration = 0
 
-    @property
-    def raw_testcase(self) -> TestCase:
-        if not hasattr(self, "__config"):
-            self.__init_tests__()
+        self.__project_meta = self.__project_meta or load_project_meta(
+            self.__config.path
+        )
+        self.case_id = self.case_id or str(uuid.uuid4())
+        self.root_dir = self.root_dir or self.__project_meta.RootDir
+        self.__log_path = os.path.join(
+            self.root_dir, "logs", f"{self.case_id}.run.log"
+        )
 
-        return TestCase(config=self.__config, teststeps=self.__teststeps)
-
-    def with_project_meta(self, project_meta: ProjectMeta) -> "HttpRunner":
-        self.__project_meta = project_meta
-        return self
+        self.__step_datas.clear()
+        self.session = self.session or HttpSession()
+        self.parser = self.parser or Parser(self.__project_meta.functions)
 
     def with_session(self, session: HttpSession) -> "HttpRunner":
-        self.__session = session
+        self.session = session
         return self
 
+    def get_config(self) -> TConfig:
+        return self.__config
+
     def with_case_id(self, case_id: Text) -> "HttpRunner":
-        self.__case_id = case_id
+        self.case_id = case_id
         return self
 
     def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
@@ -88,302 +81,24 @@ class HttpRunner(object):
         self.__export = export
         return self
 
-    def __call_hooks(self, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text):
-        """ call hook actions.
-
-        Args:
-            hooks (list): each hook in hooks list maybe in two format.
-
-                format1 (str): only call hook functions.
-                    ${func()}
-                format2 (dict): assignment, the value returned by hook function will be assigned to variable.
-                    {"var": "${func()}"}
-
-            step_variables: current step variables to call hook, include two special variables
-
-                request: parsed request dict
-                response: ResponseObject for current response
-
-            hook_msg: setup/teardown request/testcase
-
-        """
-        logger.info(f"call hook actions: {hook_msg}")
-
-        if not isinstance(hooks, List):
-            logger.error(f"Invalid hooks format: {hooks}")
-            return
-
-        for hook in hooks:
-            if isinstance(hook, Text):
-                # format 1: ["${func()}"]
-                logger.debug(f"call hook function: {hook}")
-                parse_data(hook, step_variables, self.__project_meta.functions)
-            elif isinstance(hook, Dict) and len(hook) == 1:
-                # format 2: {"var": "${func()}"}
-                var_name, hook_content = list(hook.items())[0]
-                hook_content_eval = parse_data(
-                    hook_content, step_variables, self.__project_meta.functions
-                )
-                logger.debug(
-                    f"call hook function: {hook_content}, got value: {hook_content_eval}"
-                )
-                logger.debug(f"assign variable: {var_name} = {hook_content_eval}")
-                step_variables[var_name] = hook_content_eval
-            else:
-                logger.error(f"Invalid hook format: {hook}")
-
-    def __run_step_request(self, step: TStep) -> StepData:
-        """run teststep: request"""
-        step_data = StepData(name=step.name)
-
-        # parse
-        functions = self.__project_meta.functions
-        prepare_upload_step(step, functions)
-        request_dict = step.request.dict()
-        request_dict.pop("upload", None)
-        parsed_request_dict = parse_data(
-            request_dict, step.variables, functions
-        )
-        parsed_request_dict["headers"].setdefault(
-            "HRUN-Request-ID",
-            f"HRUN-{self.__case_id}-{str(int(time.time() * 1000))[-6:]}",
-        )
-        step.variables["request"] = parsed_request_dict
-
-        # setup hooks
-        if step.setup_hooks:
-            self.__call_hooks(step.setup_hooks, step.variables, "setup request")
-
-        # prepare arguments
-        method = parsed_request_dict.pop("method")
-        url_path = parsed_request_dict.pop("url")
-        url = build_url(self.__config.base_url, url_path)
-        parsed_request_dict["verify"] = self.__config.verify
-        parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
-
-        # request
-        resp = self.__session.request(method, url, **parsed_request_dict)
-        resp_obj = ResponseObject(resp)
-        step.variables["response"] = resp_obj
-
-        # teardown hooks
-        if step.teardown_hooks:
-            self.__call_hooks(step.teardown_hooks, step.variables, "teardown request")
-
-        def log_req_resp_details():
-            err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
-
-            # log request
-            err_msg += "====== request details ======\n"
-            err_msg += f"url: {url}\n"
-            err_msg += f"method: {method}\n"
-            headers = parsed_request_dict.pop("headers", {})
-            err_msg += f"headers: {headers}\n"
-            for k, v in parsed_request_dict.items():
-                v = utils.omit_long_data(v)
-                err_msg += f"{k}: {repr(v)}\n"
-
-            err_msg += "\n"
-
-            # log response
-            err_msg += "====== response details ======\n"
-            err_msg += f"status_code: {resp.status_code}\n"
-            err_msg += f"headers: {resp.headers}\n"
-            err_msg += f"body: {repr(resp.text)}\n"
-            logger.error(err_msg)
-
-        # extract
-        extractors = step.extract
-        extract_mapping = resp_obj.extract(extractors, step.variables, functions)
-        step_data.export_vars = extract_mapping
-
-        variables_mapping = step.variables
-        variables_mapping.update(extract_mapping)
-
-        # validate
-        validators = step.validators
-        session_success = False
-        try:
-            resp_obj.validate(
-                validators, variables_mapping, functions
-            )
-            session_success = True
-        except ValidationFailure:
-            session_success = False
-            log_req_resp_details()
-            # log testcase duration before raise ValidationFailure
-            self.__duration = time.time() - self.__start_at
-            raise
-        finally:
-            self.success = session_success
-            step_data.success = session_success
-
-            if hasattr(self.__session, "data"):
-                # httprunner.client.HttpSession, not locust.clients.HttpSession
-                # save request & response meta data
-                self.__session.data.success = session_success
-                self.__session.data.validators = resp_obj.validation_results
-
-                # save step data
-                step_data.data = self.__session.data
-
-        return step_data
-
-    def __run_step_testcase(self, step: TStep) -> StepData:
-        """run teststep: referenced testcase"""
-        step_data = StepData(name=step.name)
-        step_variables = step.variables
-        step_export = step.export
-
-        # setup hooks
-        if step.setup_hooks:
-            self.__call_hooks(step.setup_hooks, step_variables, "setup testcase")
-
-        if hasattr(step.testcase, "config") and hasattr(step.testcase, "teststeps"):
-            testcase_cls = step.testcase
-            case_result = (
-                testcase_cls()
-                .with_session(self.__session)
-                .with_case_id(self.__case_id)
-                .with_variables(step_variables)
-                .with_export(step_export)
-                .run()
-            )
-
-        elif isinstance(step.testcase, Text):
-            if os.path.isabs(step.testcase):
-                ref_testcase_path = step.testcase
-            else:
-                ref_testcase_path = os.path.join(
-                    self.__project_meta.RootDir, step.testcase
-                )
-
-            case_result = (
-                HttpRunner()
-                .with_session(self.__session)
-                .with_case_id(self.__case_id)
-                .with_variables(step_variables)
-                .with_export(step_export)
-                .run_path(ref_testcase_path)
-            )
-
-        else:
-            raise exceptions.ParamsError(
-                f"Invalid teststep referenced testcase: {step.dict()}"
-            )
-
-        # teardown hooks
-        if step.teardown_hooks:
-            self.__call_hooks(step.teardown_hooks, step.variables, "teardown testcase")
-
-        step_data.data = case_result.get_step_datas()  # list of step data
-        step_data.export_vars = case_result.get_export_variables()
-        step_data.success = case_result.success
-        self.success = case_result.success
-
-        if step_data.export_vars:
-            logger.info(f"export variables: {step_data.export_vars}")
-
-        return step_data
-
-    def __run_step(self, step: TStep) -> Dict:
-        """run teststep, teststep maybe a request or referenced testcase"""
-        logger.info(f"run step begin: {step.name} >>>>>>")
-
-        if step.request:
-            step_data = self.__run_step_request(step)
-        elif step.testcase:
-            step_data = self.__run_step_testcase(step)
-        else:
-            raise ParamsError(
-                f"teststep is neither a request nor a referenced testcase: {step.dict()}"
-            )
-
-        self.__step_datas.append(step_data)
-        logger.info(f"run step end: {step.name} <<<<<<\n")
-        return step_data.export_vars
-
-    def __parse_config(self, config: TConfig):
-        config.variables.update(self.__session_variables)
-        config.variables = parse_variables_mapping(
-            config.variables, self.__project_meta.functions
-        )
-        config.name = parse_data(
-            config.name, config.variables, self.__project_meta.functions
-        )
-        config.base_url = parse_data(
-            config.base_url, config.variables, self.__project_meta.functions
+    def __parse_config(self, param: Dict = None) -> None:
+        # parse config variables
+        self.__config.variables.update(self.__session_variables)
+        if param:
+            self.__config.variables.update(param)
+        self.__config.variables = self.parser.parse_variables(
+            self.__config.variables
         )
 
-    def run_testcase(self, testcase: TestCase) -> "HttpRunner":
-        """run specified testcase
-
-        Examples:
-            >>> testcase_obj = TestCase(config=TConfig(...), teststeps=[TStep(...)])
-            >>> HttpRunner().with_project_meta(project_meta).run_testcase(testcase_obj)
-
-        """
-        self.__config = testcase.config
-        self.__teststeps = testcase.teststeps
-
-        # prepare
-        self.__project_meta = self.__project_meta or load_project_meta(
-            self.__config.path
+        # parse config name
+        self.__config.name = self.parser.parse_data(
+            self.__config.name, self.__config.variables
         )
-        self.__parse_config(self.__config)
-        self.__start_at = time.time()
-        self.__step_datas: List[StepData] = []
-        self.__session = self.__session or HttpSession()
-        # save extracted variables of teststeps
-        extracted_variables: VariablesMapping = {}
 
-        # run teststeps
-        for step in self.__teststeps:
-            # override variables
-            # step variables > extracted variables from previous steps
-            step.variables = merge_variables(step.variables, extracted_variables)
-            # step variables > testcase config variables
-            step.variables = merge_variables(step.variables, self.__config.variables)
-
-            # parse variables
-            step.variables = parse_variables_mapping(
-                step.variables, self.__project_meta.functions
-            )
-
-            # run step
-            if USE_ALLURE:
-                with allure.step(f"step: {step.name}"):
-                    extract_mapping = self.__run_step(step)
-            else:
-                extract_mapping = self.__run_step(step)
-
-            # save extracted variables to session variables
-            extracted_variables.update(extract_mapping)
-
-        self.__session_variables.update(extracted_variables)
-        self.__duration = time.time() - self.__start_at
-        return self
-
-    def run_path(self, path: Text) -> "HttpRunner":
-        if not os.path.isfile(path):
-            raise exceptions.ParamsError(f"Invalid testcase path: {path}")
-
-        testcase_obj = load_testcase_file(path)
-        return self.run_testcase(testcase_obj)
-
-    def run(self) -> "HttpRunner":
-        """ run current testcase
-
-        Examples:
-            >>> TestCaseRequestWithFunctions().run()
-
-        """
-        self.__init_tests__()
-        testcase_obj = TestCase(config=self.__config, teststeps=self.__teststeps)
-        return self.run_testcase(testcase_obj)
-
-    def get_step_datas(self) -> List[StepData]:
-        return self.__step_datas
+        # parse config base url
+        self.__config.base_url = self.parser.parse_data(
+            self.__config.base_url, self.__config.variables
+        )
 
     def get_export_variables(self) -> Dict:
         # override testcase export vars with step export
@@ -403,10 +118,17 @@ class HttpRunner(object):
         """get testcase result summary"""
         start_at_timestamp = self.__start_at
         start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
+
+        summary_success = True
+        for step_data in self.__step_datas:
+            if not step_data.success:
+                summary_success = False
+                break
+
         return TestCaseSummary(
             name=self.__config.name,
-            success=self.success,
-            case_id=self.__case_id,
+            success=summary_success,
+            case_id=self.case_id,
             time=TestCaseTime(
                 start_at=self.__start_at,
                 start_at_iso_format=start_at_iso_format,
@@ -420,40 +142,63 @@ class HttpRunner(object):
             step_datas=self.__step_datas,
         )
 
-    def test_start(self, param: Dict = None) -> "HttpRunner":
+    def merge_step_variables(self, variables: VariablesMapping) -> VariablesMapping:
+        # override variables
+        # step variables > extracted variables from previous steps
+        variables = merge_variables(variables, self.__session_variables)
+        # step variables > testcase config variables
+        variables = merge_variables(variables, self.__config.variables)
+
+        # parse variables
+        return self.parser.parse_variables(variables)
+
+    def __run_step(self, step) -> Dict:
+        """run teststep, step maybe any kind that implements IStep interface
+
+        Args:
+            step (Step): teststep
+
+        """
+        logger.info(f"run step begin: {step.name()} >>>>>>")
+
+        # run step
+        if USE_ALLURE:
+            with allure.step(f"step: {step.name()}"):
+                step_result = step.run(self)
+        else:
+            step_result = step.run(self)
+
+        # save extracted variables to session variables
+        self.__session_variables.update(step_result.export_vars)
+        # update testcase summary
+        self.__step_datas.append(step_result)
+
+        logger.info(f"run step end: {step.name()} <<<<<<\n")
+
+    def test_start(self, param: Dict = None):
         """main entrance, discovered by pytest"""
-        self.__init_tests__()
-        self.__project_meta = self.__project_meta or load_project_meta(
-            self.__config.path
-        )
-        self.__case_id = self.__case_id or str(uuid.uuid4())
-        self.__log_path = self.__log_path or os.path.join(
-            self.__project_meta.RootDir, "logs", f"{self.__case_id}.run.log"
-        )
+        self.__init()
         log_handler = logger.add(self.__log_path, level="DEBUG")
 
-        # parse config name
-        config_variables = self.__config.variables
-        if param:
-            config_variables.update(param)
-        config_variables.update(self.__session_variables)
-        self.__config.name = parse_data(
-            self.__config.name, config_variables, self.__project_meta.functions
-        )
+        self.__parse_config(param)
 
         if USE_ALLURE:
             # update allure report meta
             allure.dynamic.title(self.__config.name)
-            allure.dynamic.description(f"TestCase ID: {self.__case_id}")
+            allure.dynamic.description(f"TestCase ID: {self.case_id}")
 
         logger.info(
-            f"Start to run testcase: {self.__config.name}, TestCase ID: {self.__case_id}"
+            f"Start to run testcase: {self.__config.name}, TestCase ID: {self.case_id}"
         )
 
+        self.__start_at = time.time()
         try:
-            return self.run_testcase(
-                TestCase(config=self.__config, teststeps=self.__teststeps)
-            )
+            # run step in sequential order
+            for step in self.teststeps:
+                self.__run_step(step)
         finally:
             logger.remove(log_handler)
             logger.info(f"generate testcase log: {self.__log_path}")
+
+        self.__duration = time.time() - self.__start_at
+        return self

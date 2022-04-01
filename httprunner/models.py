@@ -156,13 +156,33 @@ class SessionData(BaseModel):
 class StepData(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
 
+    name: Text = ""         # teststep name
+    step_type: Text = ""    # teststep type, request or testcase
     success: bool = False
-    name: Text = ""  # teststep name
     data: Union[SessionData, List['StepData']] = None
+    elapsed: float = 0.0    # teststep elapsed time
+    content_size: float = 0 # response content size
     export_vars: VariablesMapping = {}
+    attachment: Text = ""   # teststep attachment
 
-        
+
 StepData.update_forward_refs()
+
+
+class IStep(object):
+
+    def name(self) -> str:
+        raise NotImplementedError
+
+    def type(self) -> str:
+        raise NotImplementedError
+
+    def struct(self) -> TStep:
+        raise NotImplementedError
+
+    def run(self, runner) -> StepData:
+        # runner: HttpRunner
+        raise NotImplementedError
 
 
 class TestCaseSummary(BaseModel):
