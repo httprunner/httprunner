@@ -6,7 +6,7 @@ from loguru import logger
 from httprunner import utils
 from httprunner.exceptions import ValidationFailure
 from httprunner.ext.uploader import prepare_upload_step
-from httprunner.models import (Hooks, IStep, MethodEnum, StepData, TRequest,
+from httprunner.models import (Hooks, IStep, MethodEnum, StepResult, TRequest,
                                TStep, VariablesMapping)
 from httprunner.parser import build_url
 from httprunner.response import ResponseObject
@@ -58,12 +58,13 @@ def call_hooks(runner: HttpRunner, hooks: Hooks, step_variables: VariablesMappin
             logger.error(f"Invalid hook format: {hook}")
 
 
-def run_step_request(runner: HttpRunner, step: TStep) -> StepData:
+def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
-    step_data = StepData(
+    step_result = StepResult(
         name=step.name,
         success=False,
     )
+    start_time = time.time()
 
     step.variables = runner.merge_step_variables(step.variables)
 
@@ -127,7 +128,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepData:
     # extract
     extractors = step.extract
     extract_mapping = resp_obj.extract(extractors, step.variables)
-    step_data.export_vars = extract_mapping
+    step_result.export_vars = extract_mapping
 
     variables_mapping = step.variables
     variables_mapping.update(extract_mapping)
@@ -138,21 +139,20 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepData:
         resp_obj.validate(
             validators, variables_mapping
         )
-        step_data.success = True
+        step_result.success = True
     except ValidationFailure:
         log_req_resp_details()
-        # log testcase duration before raise ValidationFailure
-        step_data.elapsed = time.time() - runner.__start_at
         raise
     finally:
         session_data = runner.session.data
-        session_data.success = step_data.success
+        session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
 
         # save step data
-        step_data.data = session_data
+        step_result.data = session_data
+        step_result.elapsed = time.time() - start_time
 
-    return step_data
+    return step_result
 
 
 class StepRequestValidation(IStep):
@@ -418,6 +418,7 @@ class RequestWithOptionalArgs(IStep):
 
 
 class RunRequest(object):
+
     def __init__(self, name: Text):
         self.__step = TStep(name=name)
 

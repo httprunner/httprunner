@@ -150,20 +150,20 @@ class SessionData(BaseModel):
     validators: Dict = {}
 
 
-class StepData(BaseModel):
+class StepResult(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
 
     name: Text = ""             # teststep name
     step_type: Text = ""        # teststep type, request or testcase
     success: bool = False
-    data: Union[SessionData, List['StepData']] = None
+    data: Union[SessionData, List['StepResult']] = None
     elapsed: float = 0.0        # teststep elapsed time
     content_size: float = 0     # response content size
     export_vars: VariablesMapping = {}
     attachment: Text = ""       # teststep attachment
 
 
-StepData.update_forward_refs()
+StepResult.update_forward_refs()
 
 
 class IStep(object):
@@ -177,7 +177,7 @@ class IStep(object):
     def struct(self) -> TStep:
         raise NotImplementedError
 
-    def run(self, runner) -> StepData:
+    def run(self, runner) -> StepResult:
         # runner: HttpRunner
         raise NotImplementedError
 
@@ -189,7 +189,7 @@ class TestCaseSummary(BaseModel):
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
-    step_datas: List[StepData] = []
+    step_results: List[StepResult] = []
 
 
 class PlatformInfo(BaseModel):
