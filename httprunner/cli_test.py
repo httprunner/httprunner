@@ -5,7 +5,8 @@ import unittest
 
 import pytest
 
-from httprunner.cli import main
+from httprunner import loader
+from httprunner.cli import main, main_run
 
 
 class TestCli(unittest.TestCase):
@@ -45,8 +46,17 @@ class TestCli(unittest.TestCase):
         try:
             os.chdir(os.path.join(cwd, "examples", "postman_echo"))
             exit_code = pytest.main(
-                ["-s", "request_methods/request_with_testcase_reference_test.py",]
+                ["-s", "request_methods/request_with_testcase_reference_test.py"]
             )
             self.assertEqual(exit_code, 0)
         finally:
             os.chdir(cwd)
+
+    def test_run_testcase_with_abnormal_path(self):
+        loader.project_meta = None
+        exit_code = main_run(["examples/data/a-b.c/2 3.yml"])
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(os.path.exists("examples/data/a_b_c/__init__.py"))
+        self.assertTrue(os.path.exists("examples/data/debugtalk.py"))
+        self.assertTrue(os.path.exists("examples/data/a_b_c/T1_test.py"))
+        self.assertTrue(os.path.exists("examples/data/a_b_c/T2_3_test.py"))

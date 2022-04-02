@@ -7,8 +7,8 @@ from loguru import logger
 
 from httprunner import exceptions
 from httprunner.exceptions import ValidationFailure, ParamsError
-from httprunner.models import VariablesMapping, Validators, FunctionsMapping
-from httprunner.parser import parse_data, parse_string_value, get_mapping_function
+from httprunner.models import VariablesMapping, Validators
+from httprunner.parser import parse_string_value, Parser
 
 
 def get_uniform_comparator(comparator: Text):
@@ -115,7 +115,7 @@ def uniform_validator(validator):
 
 
 class ResponseObject(object):
-    def __init__(self, resp_obj: requests.Response):
+    def __init__(self, resp_obj: requests.Response, parser: Parser):
         """ initialize with a requests.Response object
 
         Args:
@@ -123,6 +123,7 @@ class ResponseObject(object):
 
         """
         self.resp_obj = resp_obj
+        self.parser = parser
         self.validation_results: Dict = {}
 
     def __getattr__(self, key):
@@ -170,7 +171,6 @@ class ResponseObject(object):
     def extract(self,
                 extractors: Dict[Text, Text],
                 variables_mapping: VariablesMapping = None,
-                functions_mapping: FunctionsMapping = None,
                 ) -> Dict[Text, Any]:
         if not extractors:
             return {}
@@ -179,8 +179,8 @@ class ResponseObject(object):
         for key, field in extractors.items():
             if '$' in field:
                 # field contains variable or function
-                field = parse_data(
-                    field, variables_mapping, functions_mapping
+                field = self.parser.parse_data(
+                    field, variables_mapping
                 )
             field_value = self._search_jmespath(field)
             extract_mapping[key] = field_value
@@ -192,11 +192,9 @@ class ResponseObject(object):
         self,
         validators: Validators,
         variables_mapping: VariablesMapping = None,
-        functions_mapping: FunctionsMapping = None,
     ):
 
         variables_mapping = variables_mapping or {}
-        functions_mapping = functions_mapping or {}
 
         self.validation_results = {}
         if not validators:
@@ -216,8 +214,8 @@ class ResponseObject(object):
             check_item = u_validator["check"]
             if "$" in check_item:
                 # check_item is variable or function
-                check_item = parse_data(
-                    check_item, variables_mapping, functions_mapping
+                check_item = self.parser.parse_data(
+                    check_item, variables_mapping
                 )
                 check_item = parse_string_value(check_item)
 
@@ -229,17 +227,17 @@ class ResponseObject(object):
 
             # comparator
             assert_method = u_validator["assert"]
-            assert_func = get_mapping_function(assert_method, functions_mapping)
+            assert_func = self.parser.get_mapping_function(assert_method)
 
             # expect item
             expect_item = u_validator["expect"]
             # parse expected value with config/teststep/extracted variables
-            expect_value = parse_data(expect_item, variables_mapping, functions_mapping)
+            expect_value = self.parser.parse_data(expect_item, variables_mapping)
 
             # message
             message = u_validator["message"]
             # parse message with config/teststep/extracted variables
-            message = parse_data(message, variables_mapping, functions_mapping)
+            message = self.parser.parse_data(message, variables_mapping)
 
             validate_msg = f"assert {check_item} {assert_method} {expect_value}({type(expect_value).__name__})"
 

@@ -3,6 +3,7 @@
 ## v4.0.0-alpha
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
+- refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
 
 **go version**
 
@@ -11,7 +12,6 @@
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
-- refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
 
 **python version**
 

@@ -243,8 +243,6 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 }
 
 func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
-	log.Info().Str("step", step.Name).Msg("run step start")
-
 	stepResult = &StepResult{
 		Name:        step.Name,
 		StepType:    stepTypeRequest,
@@ -255,19 +253,15 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	defer func() {
 		// update testcase summary
 		if err != nil {
-			log.Error().Err(err).Msg("run request step failed")
 			stepResult.Attachment = err.Error()
-		} else {
-			// update extracted variables
-			r.UpdateSession(stepResult.ExportVars)
-			log.Info().
-				Str("step", step.Name).
-				Bool("success", stepResult.Success).
-				Interface("exportVars", stepResult.ExportVars).
-				Msg("run step end")
 		}
-		r.UpdateSummary(stepResult)
 	}()
+
+	// override step variables
+	stepVariables, err := r.MergeStepVariables(step.Variables)
+	if err != nil {
+		return
+	}
 
 	sessionData := newSessionData()
 	parser := r.GetParser()
@@ -275,12 +269,6 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	rb := newRequestBuilder(parser, config, step.Request)
 	rb.req.Method = string(step.Request.Method)
-
-	// override step variables
-	stepVariables, err := r.MergeStepVariables(step.Variables)
-	if err != nil {
-		return
-	}
 
 	err = rb.prepareUrlParams(stepVariables)
 	if err != nil {

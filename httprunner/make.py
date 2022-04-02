@@ -198,9 +198,6 @@ def make_config_chain_style(config: Dict) -> Text:
     if "export" in config:
         config_chain_style += f'.export(*{config["export"]})'
 
-    if "weight" in config:
-        config_chain_style += f'.locust_weight({config["weight"]})'
-
     return config_chain_style
 
 
@@ -483,10 +480,6 @@ def make_testsuite(testsuite: Dict):
             testcase_dict["config"].get("variables", {}), testcase_path
         )
         testcase_dict["config"]["variables"].update(testcase_variables)
-
-        # override weight
-        if "weight" in testcase:
-            testcase_dict["config"]["weight"] = testcase["weight"]
 
         # make testcase
         testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)

@@ -1,14 +1,14 @@
 import ast
 import builtins
-import re
 import os
-from typing import Any, Set, Text, Callable, List, Dict, Union
+import re
+from typing import Any, Callable, Dict, List, Set, Text
 
 from loguru import logger
 from sentry_sdk import capture_exception
 
-from httprunner import loader, utils, exceptions
-from httprunner.models import VariablesMapping, FunctionsMapping
+from httprunner import exceptions, loader, utils
+from httprunner.models import FunctionsMapping, VariablesMapping
 
 absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 
@@ -572,3 +572,21 @@ def parse_parameters(parameters: Dict,) -> List[Dict]:
         parsed_parameters_list.append(parameter_content_list)
 
     return utils.gen_cartesian_product(*parsed_parameters_list)
+
+
+class Parser(object):
+
+    def __init__(self, functions_mapping: FunctionsMapping = None) -> None:
+        self.functions_mapping = functions_mapping
+
+    def parse_string(self, raw_string: Text, variables_mapping: VariablesMapping) -> Any:
+        return parse_string(raw_string, variables_mapping, self.functions_mapping)
+
+    def parse_variables(self, variables_mapping: VariablesMapping) -> VariablesMapping:
+        return parse_variables_mapping(variables_mapping, self.functions_mapping)
+
+    def parse_data(self, raw_data: Any, variables_mapping: VariablesMapping = None) -> Any:
+        return parse_data(raw_data, variables_mapping, self.functions_mapping)
+
+    def get_mapping_function(self, func_name: Text) -> Callable:
+        return get_mapping_function(func_name, self.functions_mapping)
