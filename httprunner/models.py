@@ -49,7 +49,7 @@ class TConfig(BaseModel):
     # teardown_hooks: Hooks = []
     export: Export = []
     path: Text = None
-    weight: int = 1
+    # configs for other protocols
     thrift: TConfigThrift = None
 
 
