@@ -23,7 +23,7 @@ def session_fixture(request):
 
     yield
 
-    logger.debug(f"teardown task fixture")
+    logger.debug("teardown task fixture")
 
     # teardown task
     # TODO: upload task summary

@@ -173,13 +173,13 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 			Msgf("validate %s", checkItem)
 		if !result {
 			v.t.Fail()
-			return errors.New(fmt.Sprintf(
-				"do assertion failed, checkExpr: %v, assertMethod: %v, checkValue: %v, expectValue: %v",
-				validator.Check,
-				assertMethod,
-				checkValue,
-				expectValue,
-			))
+			log.Error().
+				Str("checkExpr", validator.Check).
+				Str("assertMethod", assertMethod).
+				Interface("checkValue", checkValue).
+				Interface("expectValue", expectValue).
+				Msg("assert failed")
+			return errors.New("step validation failed")
 		}
 	}
 	return nil
