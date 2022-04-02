@@ -1,11 +1,8 @@
 import os
 from enum import Enum
-from typing import Any
-from typing import Dict, Text, Union, Callable
-from typing import List
+from typing import Any, Callable, Dict, List, Text, Union
 
-from pydantic import BaseModel, Field
-from pydantic import HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 
 Name = Text
 Url = Text
@@ -156,14 +153,14 @@ class SessionData(BaseModel):
 class StepData(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
 
-    name: Text = ""         # teststep name
-    step_type: Text = ""    # teststep type, request or testcase
+    name: Text = ""             # teststep name
+    step_type: Text = ""        # teststep type, request or testcase
     success: bool = False
     data: Union[SessionData, List['StepData']] = None
-    elapsed: float = 0.0    # teststep elapsed time
-    content_size: float = 0 # response content size
+    elapsed: float = 0.0        # teststep elapsed time
+    content_size: float = 0     # response content size
     export_vars: VariablesMapping = {}
-    attachment: Text = ""   # teststep attachment
+    attachment: Text = ""       # teststep attachment
 
 
 StepData.update_forward_refs()

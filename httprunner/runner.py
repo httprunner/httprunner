@@ -16,9 +16,10 @@ from loguru import logger
 from httprunner.client import HttpSession
 from httprunner.config import Config
 from httprunner.exceptions import ParamsError
-from httprunner.loader import load_project_meta
-from httprunner.models import (ProjectMeta, StepData, TConfig, TestCaseInOut,
-                               TestCaseSummary, TestCaseTime, VariablesMapping)
+from httprunner.loader import load_project_meta, load_testcase_file
+from httprunner.models import (ProjectMeta, StepData, TConfig, TestCase,
+                               TestCaseInOut, TestCaseSummary, TestCaseTime,
+                               VariablesMapping)
 from httprunner.parser import Parser
 from httprunner.utils import merge_variables
 
@@ -175,11 +176,9 @@ class HttpRunner(object):
 
         logger.info(f"run step end: {step.name()} <<<<<<\n")
 
-    def test_start(self, param: Dict = None):
+    def test_start(self, param: Dict = None) -> "HttpRunner":
         """main entrance, discovered by pytest"""
         self.__init()
-        log_handler = logger.add(self.__log_path, level="DEBUG")
-
         self.__parse_config(param)
 
         if USE_ALLURE:
@@ -191,6 +190,7 @@ class HttpRunner(object):
             f"Start to run testcase: {self.__config.name}, TestCase ID: {self.case_id}"
         )
 
+        log_handler = logger.add(self.__log_path, level="DEBUG")
         self.__start_at = time.time()
         try:
             # run step in sequential order

@@ -1,16 +1,11 @@
-import os
-from typing import Text, Callable
+from typing import Callable, Text
 
 from loguru import logger
-from httprunner import exceptions
-from httprunner.loader import load_testcase_file
 
-from httprunner.step_request import call_hooks
+from httprunner import exceptions
+from httprunner.models import IStep, StepData, TStep
 from httprunner.runner import HttpRunner
-from httprunner.models import (
-    TStep,
-    StepData
-)
+from httprunner.step_request import call_hooks
 
 
 def run_step_testcase(runner: HttpRunner, step: TStep) -> StepData:
@@ -25,9 +20,8 @@ def run_step_testcase(runner: HttpRunner, step: TStep) -> StepData:
 
     # TODO: override testcase with current step name/variables/export
 
-    ref_case_runner = HttpRunner()
-    ref_case_runner.config = step.testcase.config
-    ref_case_runner.teststeps = step.testcase.teststeps
+    # step.testcase is a referenced testcase, e.g. RequestWithFunctions
+    ref_case_runner = step.testcase()
     ref_case_runner.with_session(runner.session) \
         .with_case_id(runner.case_id) \
         .with_variables(step_variables) \
@@ -49,7 +43,7 @@ def run_step_testcase(runner: HttpRunner, step: TStep) -> StepData:
     return step_data
 
 
-class StepRefCase(object):
+class StepRefCase(IStep):
     def __init__(self, step: TStep):
         self.__step = step
 
@@ -95,13 +89,9 @@ class RunTestCase(object):
         return self
 
     def call(self, testcase: Callable) -> StepRefCase:
-        if hasattr(testcase, "config") and hasattr(testcase, "teststeps"):
+        if issubclass(testcase, HttpRunner):
+            # referenced testcase object
             self.__step.testcase = testcase
-        elif isinstance(testcase, Text):
-            if not os.path.isfile(testcase):
-                raise exceptions.ParamsError(f"Invalid testcase path: {testcase}")
-
-            self.__step.testcase = load_testcase_file(testcase)
         else:
             raise exceptions.ParamsError(
                 f"Invalid teststep referenced testcase: {testcase}"

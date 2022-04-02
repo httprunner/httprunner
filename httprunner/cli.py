@@ -63,7 +63,7 @@ def main():
     )
 
     subparsers = parser.add_subparsers(help="sub-command help")
-    sub_parser_run = init_parser_run(subparsers)
+    init_parser_run(subparsers)
     sub_parser_make = init_make_parser(subparsers)
 
     if len(sys.argv) == 1:
