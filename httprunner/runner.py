@@ -16,15 +16,14 @@ from loguru import logger
 from httprunner.client import HttpSession
 from httprunner.config import Config
 from httprunner.exceptions import ParamsError
-from httprunner.loader import load_project_meta, load_testcase_file
-from httprunner.models import (ProjectMeta, StepData, TConfig, TestCase,
-                               TestCaseInOut, TestCaseSummary, TestCaseTime,
-                               VariablesMapping)
+from httprunner.loader import load_project_meta
+from httprunner.models import (ProjectMeta, StepData, TConfig, TestCaseInOut,
+                               TestCaseSummary, TestCaseTime, VariablesMapping)
 from httprunner.parser import Parser
 from httprunner.utils import merge_variables
 
 
-class HttpRunner(object):
+class SessionRunner(object):
     config: Config
     teststeps: List[object]     # list of Step
 
@@ -63,22 +62,22 @@ class HttpRunner(object):
         self.session = self.session or HttpSession()
         self.parser = self.parser or Parser(self.__project_meta.functions)
 
-    def with_session(self, session: HttpSession) -> "HttpRunner":
+    def with_session(self, session: HttpSession) -> "SessionRunner":
         self.session = session
         return self
 
     def get_config(self) -> TConfig:
         return self.__config
 
-    def with_case_id(self, case_id: Text) -> "HttpRunner":
+    def with_case_id(self, case_id: Text) -> "SessionRunner":
         self.case_id = case_id
         return self
 
-    def with_variables(self, variables: VariablesMapping) -> "HttpRunner":
+    def with_variables(self, variables: VariablesMapping) -> "SessionRunner":
         self.__session_variables = variables
         return self
 
-    def with_export(self, export: List[Text]) -> "HttpRunner":
+    def with_export(self, export: List[Text]) -> "SessionRunner":
         self.__export = export
         return self
 
@@ -176,7 +175,7 @@ class HttpRunner(object):
 
         logger.info(f"run step end: {step.name()} <<<<<<\n")
 
-    def test_start(self, param: Dict = None) -> "HttpRunner":
+    def test_start(self, param: Dict = None) -> "SessionRunner":
         """main entrance, discovered by pytest"""
         self.__init()
         self.__parse_config(param)
@@ -202,3 +201,8 @@ class HttpRunner(object):
 
         self.__duration = time.time() - self.__start_at
         return self
+
+
+class HttpRunner(SessionRunner):
+    # split SessionRunner to keep consistant with golang version
+    pass

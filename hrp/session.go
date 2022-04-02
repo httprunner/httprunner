@@ -83,7 +83,9 @@ func (r *SessionRunner) Start() error {
 		}
 
 		// update extracted variables
-		r.updateSession(stepResult.ExportVars)
+		for k, v := range stepResult.ExportVars {
+			r.sessionVariables[k] = v
+		}
 		// update testcase summary
 		r.updateSummary(stepResult)
 
@@ -97,12 +99,6 @@ func (r *SessionRunner) Start() error {
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
-}
-
-func (r *SessionRunner) updateSession(vars map[string]interface{}) {
-	for k, v := range vars {
-		r.sessionVariables[k] = v
-	}
 }
 
 // updateSummary appends step result to summary
