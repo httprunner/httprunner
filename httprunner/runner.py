@@ -17,7 +17,7 @@ from httprunner.client import HttpSession
 from httprunner.config import Config
 from httprunner.exceptions import ParamsError
 from httprunner.loader import load_project_meta
-from httprunner.models import (ProjectMeta, StepData, TConfig, TestCaseInOut,
+from httprunner.models import (ProjectMeta, StepResult, TConfig, TestCaseInOut,
                                TestCaseSummary, TestCaseTime, VariablesMapping)
 from httprunner.parser import Parser
 from httprunner.utils import merge_variables
@@ -35,7 +35,7 @@ class SessionRunner(object):
     __config: TConfig
     __project_meta: ProjectMeta = None
     __export: List[Text] = []
-    __step_datas: List[StepData] = []
+    __step_results: List[StepResult] = []
     __session_variables: VariablesMapping = {}
     # time
     __start_at: float = 0
@@ -58,7 +58,7 @@ class SessionRunner(object):
             self.root_dir, "logs", f"{self.case_id}.run.log"
         )
 
-        self.__step_datas.clear()
+        self.__step_results.clear()
         self.session = self.session or HttpSession()
         self.parser = self.parser or Parser(self.__project_meta.functions)
 
@@ -120,8 +120,8 @@ class SessionRunner(object):
         start_at_iso_format = datetime.utcfromtimestamp(start_at_timestamp).isoformat()
 
         summary_success = True
-        for step_data in self.__step_datas:
-            if not step_data.success:
+        for step_result in self.__step_results:
+            if not step_result.success:
                 summary_success = False
                 break
 
@@ -139,7 +139,7 @@ class SessionRunner(object):
                 export_vars=self.get_export_variables(),
             ),
             log=self.__log_path,
-            step_datas=self.__step_datas,
+            step_results=self.__step_results,
         )
 
     def merge_step_variables(self, variables: VariablesMapping) -> VariablesMapping:
@@ -152,7 +152,7 @@ class SessionRunner(object):
         # parse variables
         return self.parser.parse_variables(variables)
 
-    def __run_step(self, step) -> Dict:
+    def __run_step(self, step):
         """run teststep, step maybe any kind that implements IStep interface
 
         Args:
@@ -164,14 +164,14 @@ class SessionRunner(object):
         # run step
         if USE_ALLURE:
             with allure.step(f"step: {step.name()}"):
-                step_result = step.run(self)
+                step_result: StepResult = step.run(self)
         else:
-            step_result = step.run(self)
+            step_result: StepResult = step.run(self)
 
         # save extracted variables to session variables
         self.__session_variables.update(step_result.export_vars)
         # update testcase summary
-        self.__step_datas.append(step_result)
+        self.__step_results.append(step_result)
 
         logger.info(f"run step end: {step.name()} <<<<<<\n")
 

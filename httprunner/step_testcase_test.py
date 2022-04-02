@@ -12,12 +12,12 @@ class TestRunTestCase(unittest.TestCase):
 
     def test_run_testcase_by_path(self):
 
-        step_data = RunTestCase("run referenced testcase").call(
+        step_result = RunTestCase("run referenced testcase").call(
             TestCaseRequestWithFunctions
         ).run(self.runner)
-        self.assertTrue(step_data.success)
-        self.assertEqual(step_data.name, "run referenced testcase")
-        self.assertEqual(len(step_data.data), 3)
-        self.assertEqual(step_data.data[0].name, "get with params")
-        self.assertEqual(step_data.data[1].name, "post raw text")
-        self.assertEqual(step_data.data[2].name, "post form data")
+        self.assertTrue(step_result.success)
+        self.assertEqual(step_result.name, "run referenced testcase")
+        self.assertEqual(len(step_result.data), 3)
+        self.assertEqual(step_result.data[0].name, "get with params")
+        self.assertEqual(step_result.data[1].name, "post raw text")
+        self.assertEqual(step_result.data[2].name, "post form data")

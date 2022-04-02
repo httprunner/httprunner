@@ -1,6 +1,6 @@
 from typing import Union
 
-from httprunner.models import StepData, TRequest, TStep, TestCase
+from httprunner.models import StepResult, TRequest, TStep, TestCase
 from httprunner.runner import HttpRunner
 from httprunner.step_request import RequestWithOptionalArgs, StepRequestExtraction, StepRequestValidation
 from httprunner.step_testcase import StepRefCase
@@ -36,5 +36,5 @@ class Step(object):
     def type(self) -> str:
         return self.__step.type()
 
-    def run(self, runner: HttpRunner) -> StepData:
+    def run(self, runner: HttpRunner) -> StepResult:
         return self.__step.run(runner)

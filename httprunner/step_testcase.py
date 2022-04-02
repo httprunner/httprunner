@@ -3,14 +3,14 @@ from typing import Callable, Text
 from loguru import logger
 
 from httprunner import exceptions
-from httprunner.models import IStep, StepData, TStep
+from httprunner.models import IStep, StepResult, TStep, TestCaseSummary
 from httprunner.runner import HttpRunner
 from httprunner.step_request import call_hooks
 
 
-def run_step_testcase(runner: HttpRunner, step: TStep) -> StepData:
+def run_step_testcase(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: referenced testcase"""
-    step_data = StepData(name=step.name)
+    step_result = StepResult(name=step.name)
     step_variables = step.variables
     step_export = step.export
 
@@ -32,15 +32,15 @@ def run_step_testcase(runner: HttpRunner, step: TStep) -> StepData:
     if step.teardown_hooks:
         call_hooks(runner, step.teardown_hooks, step.variables, "teardown testcase")
 
-    summary = ref_case_runner.get_summary()
-    step_data.data = summary.step_datas  # list of step data
-    step_data.export_vars = summary.in_out.export_vars
-    step_data.success = summary.success
+    summary: TestCaseSummary = ref_case_runner.get_summary()
+    step_result.data = summary.step_results  # list of step data
+    step_result.export_vars = summary.in_out.export_vars
+    step_result.success = summary.success
 
-    if step_data.export_vars:
-        logger.info(f"export variables: {step_data.export_vars}")
+    if step_result.export_vars:
+        logger.info(f"export variables: {step_result.export_vars}")
 
-    return step_data
+    return step_result
 
 
 class StepRefCase(IStep):
