@@ -1,60 +1,79 @@
 import inspect
 from typing import Text
 
-from httprunner.models import TConfig
+from httprunner.models import TConfig, TConfigThrift
 
 
-class Config(object):
-    def __init__(self, name: Text):
-        self.__name = name
-        self.__variables = {}
-        self.__base_url = ""
-        self.__verify = False
-        self.__export = []
-        self.__weight = 1
+class ConfigThrift(object):
 
-        caller_frame = inspect.stack()[1]
-        self.__path = caller_frame.filename
+    def __init__(self, config: TConfig) -> None:
+        self.__config = config
+        self.__config.thrift = TConfigThrift()
 
-    @property
-    def name(self) -> Text:
-        return self.__name
-
-    @property
-    def path(self) -> Text:
-        return self.__path
-
-    @property
-    def weight(self) -> int:
-        return self.__weight
-
-    def variables(self, **variables) -> "Config":
-        self.__variables.update(variables)
+    def psm(self, psm: Text) -> "ConfigThrift":
+        self.__config.thrift.psm = psm
         return self
 
-    def base_url(self, base_url: Text) -> "Config":
-        self.__base_url = base_url
+    def env(self, env: Text) -> "ConfigThrift":
+        self.__config.thrift.env = env
         return self
 
-    def verify(self, verify: bool) -> "Config":
-        self.__verify = verify
+    def cluster(self, cluster: Text) -> "ConfigThrift":
+        self.__config.thrift.cluster = cluster
         return self
 
-    def export(self, *export_var_name: Text) -> "Config":
-        self.__export.extend(export_var_name)
-        return self
-
-    def locust_weight(self, weight: int) -> "Config":
-        self.__weight = weight
+    def target(self, target: Text) -> "ConfigThrift":
+        self.__config.thrift.target = target
         return self
 
     def struct(self) -> TConfig:
-        return TConfig(
-            name=self.__name,
-            base_url=self.__base_url,
-            verify=self.__verify,
-            variables=self.__variables,
-            export=list(set(self.__export)),
-            path=self.__path,
-            weight=self.__weight,
+        return self.__config
+
+
+class Config(object):
+
+    def __init__(self, name: Text) -> None:
+        caller_frame = inspect.stack()[1]
+        self.__config = TConfig(
+            name=name,
+            path=caller_frame.filename
         )
+
+    @property
+    def name(self) -> Text:
+        return self.__config.name
+
+    @property
+    def path(self) -> Text:
+        return self.__config.path
+
+    @property
+    def weight(self) -> int:
+        return self.__config.weight
+
+    def variables(self, **variables) -> "Config":
+        self.__config.variables.update(variables)
+        return self
+
+    def base_url(self, base_url: Text) -> "Config":
+        self.__config.base_url = base_url
+        return self
+
+    def verify(self, verify: bool) -> "Config":
+        self.__config.verify = verify
+        return self
+
+    def export(self, *export_var_name: Text) -> "Config":
+        self.__config.export.extend(export_var_name)
+        self.__config.export = list(set(self.__config.export))
+        return self
+
+    def locust_weight(self, weight: int) -> "Config":
+        self.__config.weight = weight
+        return self
+
+    def struct(self) -> TConfig:
+        return self.__config
+
+    def thrift(self) -> ConfigThrift:
+        return ConfigThrift(self.__config)
