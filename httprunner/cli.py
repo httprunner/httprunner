@@ -93,7 +93,7 @@ def main():
         sys.exit(0)
 
     extra_args = []
-    if len(sys.argv) >= 2 and sys.argv[1] in ["run", "locusts"]:
+    if len(sys.argv) >= 2 and sys.argv[1] in ["run"]:
         args, extra_args = parser.parse_known_args()
     else:
         args = parser.parse_args()

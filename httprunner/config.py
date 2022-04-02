@@ -47,10 +47,6 @@ class Config(object):
     def path(self) -> Text:
         return self.__config.path
 
-    @property
-    def weight(self) -> int:
-        return self.__config.weight
-
     def variables(self, **variables) -> "Config":
         self.__config.variables.update(variables)
         return self
@@ -66,10 +62,6 @@ class Config(object):
     def export(self, *export_var_name: Text) -> "Config":
         self.__config.export.extend(export_var_name)
         self.__config.export = list(set(self.__config.export))
-        return self
-
-    def locust_weight(self, weight: int) -> "Config":
-        self.__config.weight = weight
         return self
 
     def struct(self) -> TConfig:
