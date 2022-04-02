@@ -1,3 +1,4 @@
+# 代码阅读指南（golang 部分）
 
 ## 核心数据结构
 
@@ -21,14 +22,14 @@ type IStep interface {
 }
 ```
 
-我们只需遵循 `IStep` 的接口定义，即可实现各种类型的测试步骤类型。当前已支持的步骤类型包括：
+我们只需遵循 `IStep` 的接口定义，即可实现各种类型的测试步骤类型。当前 hrp 已支持的步骤类型包括：
 
-- request：发起单次 HTTP 请求
-- api：引用执行其它 API 文件
-- testcase：引用执行其它测试用例文件
-- thinktime：思考时间，按照配置的逻辑进行等待
-- transaction：事务机制，用于压测
-- rendezvous：集合点机制，用于压测
+- [request](step_request.go)：发起单次 HTTP 请求
+- [api](step_api.go)：引用执行其它 API 文件
+- [testcase](step_testcase.go)：引用执行其它测试用例文件
+- [thinktime](step_thinktime.go)：思考时间，按照配置的逻辑进行等待
+- [transaction](step_transaction.go)：事务机制，用于压测
+- [rendezvous](step_rendezvous.go)：集合点机制，用于压测
 
 基于该机制，我们可以扩展支持新的协议类型，例如 HTTP2/WebSocket/RPC 等；同时也可以支持新的测试类型，例如 UI 自动化。甚至我们还可以在一个测试用例中混合调用多种不同的 Step 类型，例如实现 HTTP/RPC/UI 混合场景。
 
