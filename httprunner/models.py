@@ -28,6 +28,16 @@ class MethodEnum(Text, Enum):
     PATCH = "PATCH"
 
 
+# configs for thrift rpc
+class TConfigThrift(BaseModel):
+    psm: Text = None
+    env: Text = None
+    cluster: Text = None
+    target: Text = None
+    include_dirs: List[Text] = None
+    thrift_client: Any = None
+
+
 class TConfig(BaseModel):
     name: Name
     verify: Verify = False
@@ -40,6 +50,7 @@ class TConfig(BaseModel):
     export: Export = []
     path: Text = None
     weight: int = 1
+    thrift: TConfigThrift = None
 
 
 class TRequest(BaseModel):
