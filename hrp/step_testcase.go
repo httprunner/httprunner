@@ -44,25 +44,27 @@ func (s *StepTestCaseWithOptionalArgs) Struct() *TStep {
 }
 
 func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
-	stepVariables, err := r.MergeStepVariables(s.step.Variables)
-	if err != nil {
-		return nil, err
-	}
-	s.step.Variables = stepVariables
-
 	stepResult := &StepResult{
 		Name:     s.step.Name,
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
-	testcase := s.step.TestCase.(*TestCase)
 
-	// copy testcase to avoid data racing
-	copiedTestCase := &TestCase{}
-	if err := copier.Copy(copiedTestCase, testcase); err != nil {
-		log.Error().Err(err).Msg("copy testcase failed")
+	stepVariables, err := r.MergeStepVariables(s.step.Variables)
+	if err != nil {
 		return stepResult, err
 	}
+
+	// copy step to avoid data racing
+	copiedStep := &TStep{}
+	if err := copier.Copy(copiedStep, s.step); err != nil {
+		log.Error().Err(err).Msg("copy step failed")
+		return stepResult, err
+	}
+
+	copiedStep.Variables = stepVariables
+	copiedTestCase := copiedStep.TestCase.(*TestCase)
+
 	// override testcase config
 	extendWithTestCase(s.step, copiedTestCase)
 
