@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/getsentry/sentry-go"
@@ -46,5 +47,9 @@ func init() {
 }
 
 func SendEvent(e IEvent) error {
+	if os.Getenv("CI") == "true" {
+		// do not send GA events in CI environment
+		return nil
+	}
 	return gaClient.SendEvent(e)
 }
