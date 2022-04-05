@@ -3,11 +3,36 @@ import time
 import unittest
 
 from httprunner import parser
-from httprunner.exceptions import VariableNotFound, FunctionNotFound
+from httprunner.exceptions import FunctionNotFound, VariableNotFound
 from httprunner.loader import load_project_meta
 
 
 class TestParserBasic(unittest.TestCase):
+
+    def test_build_url(self):
+        url = parser.build_url("https://postman-echo.com", "/get")
+        self.assertEqual(url, "https://postman-echo.com/get")
+        url = parser.build_url("https://postman-echo.com", "get")
+        self.assertEqual(url, "https://postman-echo.com/get")
+        url = parser.build_url("https://postman-echo.com/", "/get")
+        self.assertEqual(url, "https://postman-echo.com/get")
+
+        url = parser.build_url("https://postman-echo.com/abc/", "/get?a=1&b=2")
+        self.assertEqual(url, "https://postman-echo.com/abc/get?a=1&b=2")
+        url = parser.build_url("https://postman-echo.com/abc/", "get?a=1&b=2")
+        self.assertEqual(url, "https://postman-echo.com/abc/get?a=1&b=2")
+
+        # omit query string in base url
+        url = parser.build_url("https://postman-echo.com/abc?x=6&y=9", "/get?a=1&b=2")
+        self.assertEqual(url, "https://postman-echo.com/abc/get?a=1&b=2")
+
+        url = parser.build_url("", "https://postman-echo.com/get")
+        self.assertEqual(url, "https://postman-echo.com/get")
+
+        # notice: step request url > config base url
+        url = parser.build_url("https://postman-echo.com", "https://httpbin.org/get")
+        self.assertEqual(url, "https://httpbin.org/get")
+
     def test_parse_variables_mapping(self):
         variables = {"varA": "$varB", "varB": "$varC", "varC": "123", "a": 1, "b": 2}
         parsed_variables = parser.parse_variables_mapping(variables)

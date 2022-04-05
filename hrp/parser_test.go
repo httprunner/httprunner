@@ -11,25 +11,44 @@ import (
 
 func TestBuildURL(t *testing.T) {
 	var url string
+
 	url = buildURL("https://postman-echo.com", "/get")
-	if url != "https://postman-echo.com/get" {
-		t.Fatalf("buildURL error, %s != 'https://postman-echo.com/get'", url)
+	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+		t.Fail()
+	}
+	url = buildURL("https://postman-echo.com", "get")
+	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+		t.Fail()
+	}
+	url = buildURL("https://postman-echo.com/", "/get")
+	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+		t.Fail()
 	}
 
 	url = buildURL("https://postman-echo.com/abc/", "/get?a=1&b=2")
-	if url != "https://postman-echo.com/get?a=1&b=2" {
-		t.Fatalf("buildURL error, %s != 'https://postman-echo.com/get'", url)
+	if !assert.Equal(t, url, "https://postman-echo.com/abc/get?a=1&b=2") {
+		t.Fail()
+	}
+	url = buildURL("https://postman-echo.com/abc", "get?a=1&b=2")
+	if !assert.Equal(t, url, "https://postman-echo.com/abc/get?a=1&b=2") {
+		t.Fail()
+	}
+
+	// omit query string in base url
+	url = buildURL("https://postman-echo.com/abc?x=6&y=9", "/get?a=1&b=2")
+	if !assert.Equal(t, url, "https://postman-echo.com/abc/get?a=1&b=2") {
+		t.Fail()
 	}
 
 	url = buildURL("", "https://postman-echo.com/get")
-	if url != "https://postman-echo.com/get" {
-		t.Fatalf("buildURL error, %s != 'https://postman-echo.com/get'", url)
+	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+		t.Fail()
 	}
 
 	// notice: step request url > config base url
 	url = buildURL("https://postman-echo.com", "https://httpbin.org/get")
-	if url != "https://httpbin.org/get" {
-		t.Fatalf("buildURL error, %s != 'https://httpbin.org/get'", url)
+	if !assert.Equal(t, url, "https://httpbin.org/get") {
+		t.Fail()
 	}
 }
 
