@@ -4,6 +4,7 @@
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
 - refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
+- feat: disable GA events report by setting environment `DISABLE_GA=true`
 
 **go version**
 

@@ -6,6 +6,9 @@ on:
       - master
   pull_request:
 
+env:
+  DISABLE_GA: "true"
+
 jobs:
   py-httprunner:
     runs-on: ${{ matrix.os }}

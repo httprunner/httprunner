@@ -10,7 +10,7 @@ func TestSendEvents(t *testing.T) {
 		Action:   "SendEvents",
 		Value:    123,
 	}
-	err := gaClient.SendEvent(event)
+	err := SendEvent(event)
 	if err != nil {
 		t.Fatal(err)
 	}
