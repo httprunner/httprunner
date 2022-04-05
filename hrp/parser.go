@@ -4,6 +4,7 @@ import (
 	builtinJSON "encoding/json"
 	"fmt"
 	"net/url"
+	"path"
 	"reflect"
 	"regexp"
 	"strings"
@@ -26,17 +27,28 @@ type Parser struct {
 }
 
 func buildURL(baseURL, stepURL string) string {
-	uConfig, err := url.Parse(baseURL)
+	uStep, err := url.Parse(stepURL)
 	if err != nil {
-		log.Error().Str("baseURL", baseURL).Err(err).Msg("[buildURL] parse baseURL failed")
+		log.Error().Str("stepURL", stepURL).Err(err).Msg("[buildURL] parse url failed")
 		return ""
 	}
 
-	uStep, err := uConfig.Parse(stepURL)
+	// step url is absolute url
+	if uStep.Host != "" {
+		return stepURL
+	}
+
+	// step url is relative, based on base url
+	uConfig, err := url.Parse(baseURL)
 	if err != nil {
-		log.Error().Str("stepURL", stepURL).Err(err).Msg("[buildURL] parse stepURL failed")
+		log.Error().Str("baseURL", baseURL).Err(err).Msg("[buildURL] parse url failed")
 		return ""
 	}
+
+	// merge url
+	uStep.Scheme = uConfig.Scheme
+	uStep.Host = uConfig.Host
+	uStep.Path = path.Join(uConfig.Path, uStep.Path)
 
 	// base url missed
 	return uStep.String()
