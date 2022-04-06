@@ -16,7 +16,8 @@ func buildHashicorpGoPlugin() {
 	cmd := exec.Command("go", "build",
 		"-o", templatesDir+"debugtalk.bin", templatesDir+"plugin/debugtalk.go")
 	if err := cmd.Run(); err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("build hashicorp go plugin failed")
+		os.Exit(1)
 	}
 }
 
@@ -30,7 +31,8 @@ func buildHashicorpPyPlugin() {
 	pluginFile := templatesDir + "debugtalk.py"
 	err := scaffold.CopyFile("templates/plugin/debugtalk.py", pluginFile)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("build hashicorp python plugin failed")
+		os.Exit(1)
 	}
 }
 
