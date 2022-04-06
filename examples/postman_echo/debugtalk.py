@@ -23,3 +23,20 @@ def get_app_version():
 
 def calculate_two_nums(a, b=1):
     return [a + b, b - a]
+
+
+def fake_rand_count():
+    """
+    return 1 at first call
+    return 2 at second call
+    """
+    l = []
+
+    def func():
+        l.append(1)
+        return len(l)
+
+    return func
+
+
+fake_randnum = fake_rand_count()

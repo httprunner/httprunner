@@ -12,10 +12,9 @@ except ModuleNotFoundError:
     USE_ALLURE = False
 
 from loguru import logger
-
 from httprunner.client import HttpSession
 from httprunner.config import Config
-from httprunner.exceptions import ParamsError
+from httprunner.exceptions import ParamsError, ValidationFailure
 from httprunner.loader import load_project_meta
 from httprunner.models import (ProjectMeta, StepResult, TConfig, TestCaseInOut,
                                TestCaseSummary, TestCaseTime, VariablesMapping)
@@ -25,7 +24,7 @@ from httprunner.utils import merge_variables
 
 class SessionRunner(object):
     config: Config
-    teststeps: List[object]     # list of Step
+    teststeps: List[object]  # list of Step
 
     parser: Parser = None
     session: HttpSession = None
@@ -162,11 +161,23 @@ class SessionRunner(object):
         logger.info(f"run step begin: {step.name()} >>>>>>")
 
         # run step
-        if USE_ALLURE:
-            with allure.step(f"step: {step.name()}"):
-                step_result: StepResult = step.run(self)
-        else:
-            step_result: StepResult = step.run(self)
+        for i in range(step.retry_times + 1):
+            try:
+                if USE_ALLURE:
+                    with allure.step(f"step: {step.name()}"):
+                        step_result: StepResult = step.run(self)
+                else:
+                    step_result: StepResult = step.run(self)
+                break
+            except ValidationFailure:
+                if i == step.retry_times:
+                    raise
+                else:
+                    logger.warning(
+                        f"run step {step.name()} validation failed,wait {step.retry_interval} sec and try again")
+                    time.sleep(step.retry_interval)
+                    logger.info(
+                        f"run step retry ({i+1}/{step.retry_times} time): {step.name()} >>>>>>")
 
         # save extracted variables to session variables
         self.__session_variables.update(step_result.export_vars)

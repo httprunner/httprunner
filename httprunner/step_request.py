@@ -426,6 +426,11 @@ class RunRequest(object):
         self.__step.variables.update(variables)
         return self
 
+    def with_retry(self, retry_times, retry_interval) -> "RunRequest":
+        self.__step.retry_times = retry_times
+        self.__step.retry_interval = retry_interval
+        return self
+
     def setup_hook(self, hook: Text, assign_var_name: Text = None) -> "RunRequest":
         if assign_var_name:
             self.__step.setup_hooks.append({assign_var_name: hook})

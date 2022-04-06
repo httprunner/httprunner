@@ -82,6 +82,9 @@ class TStep(BaseModel):
     export: Export = []
     validators: Validators = Field([], alias="validate")
     validate_script: List[Text] = []
+    retry_times: int = 0
+    retry_interval: int = 0  # sec
+
 
 
 class TestCase(BaseModel):

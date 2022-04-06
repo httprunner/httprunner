@@ -27,6 +27,14 @@ class Step(object):
     def testcase(self) -> TestCase:
         return self.__step.struct().testcase
 
+    @property
+    def retry_times(self) -> int:
+        return self.__step.struct().retry_times
+
+    @property
+    def retry_interval(self) -> int:
+        return self.__step.struct().retry_interval
+
     def struct(self) -> TStep:
         return self.__step.struct()
 
