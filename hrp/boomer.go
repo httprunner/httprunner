@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"os"
 	"sync"
 	"time"
 
@@ -42,14 +43,16 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	// load all testcases
 	testCases, err := loadTestCases(testcases...)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("failed to load testcases")
+		os.Exit(1)
 	}
 
 	for _, testcase := range testCases {
 		cfg := testcase.Config
 		err = initParameterIterator(cfg, "boomer")
 		if err != nil {
-			panic(err)
+			log.Error().Err(err).Msg("failed to init parameter iterator")
+			os.Exit(1)
 		}
 		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
 		task := b.convertBoomerTask(testcase, rendezvousList)
