@@ -16,26 +16,26 @@ func TestRunCaseWithRendezvous(t *testing.T) {
 			}),
 		TestSteps: []IStep{
 			NewStep("test negative number").
-				Rendezvous("test negative number").
+				SetRendezvous("test negative number").
 				WithUserNumber(-1),
 			NewStep("test overflow number").
-				Rendezvous("test overflow number").
+				SetRendezvous("test overflow number").
 				WithUserNumber(1000000),
 			NewStep("test negative percent").
-				Rendezvous("test very low percent").
+				SetRendezvous("test very low percent").
 				WithUserPercent(-0.5),
 			NewStep("test very low percent").
-				Rendezvous("test very low percent").
+				SetRendezvous("test very low percent").
 				WithUserPercent(0.00001),
 			NewStep("test overflow percent").
-				Rendezvous("test overflow percent").
+				SetRendezvous("test overflow percent").
 				WithUserPercent(1.5),
 			NewStep("test conflict params").
-				Rendezvous("test conflict params").
+				SetRendezvous("test conflict params").
 				WithUserNumber(1).
 				WithUserPercent(0.123),
 			NewStep("test negative timeout").
-				Rendezvous("test negative timeout").
+				SetRendezvous("test negative timeout").
 				WithTimeout(-1000),
 		},
 	}

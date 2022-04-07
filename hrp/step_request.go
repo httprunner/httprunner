@@ -39,6 +39,7 @@ const (
 type Request struct {
 	Method         HTTPMethod             `json:"method" yaml:"method"` // required
 	URL            string                 `json:"url" yaml:"url"`       // required
+	EnableHTTP2    bool                   `json:"enable_HTTP2,omitempty" yaml:"enableHTTP2,omitempty"`
 	Params         map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
 	Headers        map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Cookies        map[string]string      `json:"cookies,omitempty" yaml:"cookies,omitempty"`
@@ -56,17 +57,23 @@ func newRequestBuilder(parser *Parser, config *TConfig, stepRequest *Request) *r
 	var requestMap map[string]interface{}
 	_ = json.Unmarshal(jsonRequest, &requestMap)
 
+	request := &http.Request{
+		Header: make(http.Header),
+	}
+	if stepRequest.EnableHTTP2 {
+		request.ProtoMajor = 2
+		request.ProtoMinor = 0
+	} else {
+		request.ProtoMajor = 1
+		request.ProtoMinor = 1
+	}
+
 	return &requestBuilder{
 		stepRequest: stepRequest,
-		req: &http.Request{
-			Header:     make(http.Header),
-			Proto:      "HTTP/1.1",
-			ProtoMajor: 1,
-			ProtoMinor: 1,
-		},
-		config:     config,
-		parser:     parser,
-		requestMap: requestMap,
+		req:         request,
+		config:      config,
+		parser:      parser,
+		requestMap:  requestMap,
 	}
 }
 
@@ -318,7 +325,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// do request action
 	start := time.Now()
-	resp, err := r.hrpRunner.client.Do(rb.req)
+	var resp *http.Response
+	if step.Request.EnableHTTP2 {
+		resp, err = r.hrpRunner.http2Client.Do(rb.req)
+	} else {
+		resp, err = r.hrpRunner.httpClient.Do(rb.req)
+	}
+
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
@@ -612,6 +625,16 @@ func (s *StepRequest) SetThinkTime(time float64) *StepThinkTime {
 	}
 }
 
+// SetRendezvous creates a new rendezvous
+func (s *StepRequest) SetRendezvous(name string) *StepRendezvous {
+	s.step.Rendezvous = &Rendezvous{
+		Name: name,
+	}
+	return &StepRendezvous{
+		step: s.step,
+	}
+}
+
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
 	step *TStep
@@ -644,6 +667,12 @@ func (s *StepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *St
 // SetAuth sets auth for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetAuth(auth map[string]string) *StepRequestWithOptionalArgs {
 	// TODO
+	return s
+}
+
+// EnableHTTP2 enables HTTP/2.0 protocol
+func (s *StepRequestWithOptionalArgs) EnableHTTP2() *StepRequestWithOptionalArgs {
+	s.step.Request.EnableHTTP2 = true
 	return s
 }
 
