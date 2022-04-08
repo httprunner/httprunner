@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"golang.org/x/net/http2"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/hrp/internal/sdk"
@@ -31,8 +32,14 @@ func NewRunner(t *testing.T) *HRPRunner {
 		t:             t,
 		failfast:      true, // default to failfast
 		genHTMLReport: false,
-		client: &http.Client{
+		httpClient: &http.Client{
 			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+			Timeout: 30 * time.Second,
+		},
+		http2Client: &http.Client{
+			Transport: &http2.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 			Timeout: 30 * time.Second,
@@ -47,19 +54,28 @@ type HRPRunner struct {
 	pluginLogOn   bool
 	saveTests     bool
 	genHTMLReport bool
-	client        *http.Client
+	httpClient    *http.Client
+	http2Client   *http.Client
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
 func (r *HRPRunner) SetClientTransport(maxConns int, disableKeepAlive bool, disableCompression bool) *HRPRunner {
-	log.Info().Int("maxConns", maxConns).Msg("[init] SetClientTransport")
-	r.client.Transport = &http.Transport{
+	log.Info().
+		Int("maxConns", maxConns).
+		Bool("disableKeepAlive", disableKeepAlive).
+		Bool("disableCompression", disableCompression).
+		Msg("[init] SetClientTransport")
+	r.httpClient.Transport = &http.Transport{
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 		DialContext:         (&net.Dialer{}).DialContext,
 		MaxIdleConns:        0,
 		MaxIdleConnsPerHost: maxConns,
 		DisableKeepAlives:   disableKeepAlive,
 		DisableCompression:  disableCompression,
+	}
+	r.http2Client.Transport = &http2.Transport{
+		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
+		DisableCompression: disableCompression,
 	}
 	return r
 }
@@ -93,7 +109,7 @@ func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 		log.Error().Err(err).Str("proxyUrl", proxyUrl).Msg("[init] invalid proxyUrl")
 		return r
 	}
-	r.client.Transport = &http.Transport{
+	r.httpClient.Transport = &http.Transport{
 		Proxy:           http.ProxyURL(p),
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
