@@ -15,7 +15,7 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "hrp",
-	Short: "One-stop solution for HTTP(S) testing.",
+	Short: "One-stop solution for API testing.",
 	Long: `
 ██╗  ██╗████████╗████████╗██████╗ ██████╗ ██╗   ██╗███╗   ██╗███╗   ██╗███████╗██████╗
 ██║  ██║╚══██╔══╝╚══██╔══╝██╔══██╗██╔══██╗██║   ██║████╗  ██║████╗  ██║██╔════╝██╔══██╗
@@ -24,12 +24,13 @@ var rootCmd = &cobra.Command{
 ██║  ██║   ██║      ██║   ██║     ██║  ██║╚██████╔╝██║ ╚████║██║ ╚████║███████╗██║  ██║
 ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
 
-hrp (HttpRunner+) aims to be a one-stop solution for HTTP(S) testing, covering API testing,
-load testing and digital experience monitoring (DEM). Enjoy! ✨ 🚀 ✨
+HttpRunner is an open source API testing tool that supports HTTP(S)/HTTP2/WebSocket/RPC
+network protocols, covering API testing, performance testing and digital experience
+monitoring (DEM) test types. Enjoy! ✨ 🚀 ✨
 
 License: Apache-2.0
 Website: https://httprunner.com
-Github: https://github.com/httprunner/httprunner/hrp
+Github: https://github.com/httprunner/httprunner
 Copyright 2021 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		var noColor = false
