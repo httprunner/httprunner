@@ -30,8 +30,7 @@ func (s *StepThinkTime) Struct() *TStep {
 
 func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 	thinkTime := s.step.ThinkTime
-	log.Info().Str("name", s.step.Name).
-		Float64("time", thinkTime.Time).Msg("think time")
+	log.Info().Float64("time", thinkTime.Time).Msg("think time")
 
 	stepResult := &StepResult{
 		Name:     s.step.Name,
