@@ -10,6 +10,7 @@
 
 - feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json profile file
 - feat: support run testcases in specified folder path, including testcases in sub folders
+- feat: support HTTP/2 protocol
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
