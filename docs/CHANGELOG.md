@@ -12,7 +12,7 @@
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
 - refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
-- feat: support HTTP/2.0 protocol
+- feat: support HTTP/2 protocol
 
 **python version**
 
