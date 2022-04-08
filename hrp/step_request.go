@@ -39,7 +39,7 @@ const (
 type Request struct {
 	Method         HTTPMethod             `json:"method" yaml:"method"` // required
 	URL            string                 `json:"url" yaml:"url"`       // required
-	EnableHTTP2    bool                   `json:"enable_HTTP2,omitempty" yaml:"enableHTTP2,omitempty"`
+	HTTP2          bool                   `json:"http2,omitempty" yaml:"http2,omitempty"`
 	Params         map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
 	Headers        map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Cookies        map[string]string      `json:"cookies,omitempty" yaml:"cookies,omitempty"`
@@ -60,7 +60,7 @@ func newRequestBuilder(parser *Parser, config *TConfig, stepRequest *Request) *r
 	request := &http.Request{
 		Header: make(http.Header),
 	}
-	if stepRequest.EnableHTTP2 {
+	if stepRequest.HTTP2 {
 		request.ProtoMajor = 2
 		request.ProtoMinor = 0
 	} else {
@@ -326,7 +326,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	// do request action
 	start := time.Now()
 	var resp *http.Response
-	if step.Request.EnableHTTP2 {
+	if step.Request.HTTP2 {
 		resp, err = r.hrpRunner.http2Client.Do(rb.req)
 	} else {
 		resp, err = r.hrpRunner.httpClient.Do(rb.req)
@@ -490,11 +490,24 @@ func (s *StepRequest) SetupHook(hook string) *StepRequest {
 	return s
 }
 
+// HTTP2 enables HTTP/2 protocol
+func (s *StepRequest) HTTP2() *StepRequest {
+	s.step.Request = &Request{
+		HTTP2: true,
+	}
+	return s
+}
+
 // GET makes a HTTP GET request.
 func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpGET,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpGET
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpGET,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -503,9 +516,14 @@ func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
 
 // HEAD makes a HTTP HEAD request.
 func (s *StepRequest) HEAD(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpHEAD,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpHEAD
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpHEAD,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -514,9 +532,14 @@ func (s *StepRequest) HEAD(url string) *StepRequestWithOptionalArgs {
 
 // POST makes a HTTP POST request.
 func (s *StepRequest) POST(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpPOST,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpPOST
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpPOST,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -525,9 +548,14 @@ func (s *StepRequest) POST(url string) *StepRequestWithOptionalArgs {
 
 // PUT makes a HTTP PUT request.
 func (s *StepRequest) PUT(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpPUT,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpPUT
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpPUT,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -536,9 +564,14 @@ func (s *StepRequest) PUT(url string) *StepRequestWithOptionalArgs {
 
 // DELETE makes a HTTP DELETE request.
 func (s *StepRequest) DELETE(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpDELETE,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpDELETE
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpDELETE,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -547,9 +580,14 @@ func (s *StepRequest) DELETE(url string) *StepRequestWithOptionalArgs {
 
 // OPTIONS makes a HTTP OPTIONS request.
 func (s *StepRequest) OPTIONS(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpOPTIONS,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpOPTIONS
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpOPTIONS,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -558,9 +596,14 @@ func (s *StepRequest) OPTIONS(url string) *StepRequestWithOptionalArgs {
 
 // PATCH makes a HTTP PATCH request.
 func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
-	s.step.Request = &Request{
-		Method: httpPATCH,
-		URL:    url,
+	if s.step.Request != nil {
+		s.step.Request.Method = httpPATCH
+		s.step.Request.URL = url
+	} else {
+		s.step.Request = &Request{
+			Method: httpPATCH,
+			URL:    url,
+		}
 	}
 	return &StepRequestWithOptionalArgs{
 		step: s.step,
@@ -667,12 +710,6 @@ func (s *StepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *St
 // SetAuth sets auth for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetAuth(auth map[string]string) *StepRequestWithOptionalArgs {
 	// TODO
-	return s
-}
-
-// EnableHTTP2 enables HTTP/2.0 protocol
-func (s *StepRequestWithOptionalArgs) EnableHTTP2() *StepRequestWithOptionalArgs {
-	s.step.Request.EnableHTTP2 = true
 	return s
 }
 

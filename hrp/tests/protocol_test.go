@@ -27,18 +27,18 @@ func TestProtocol(t *testing.T) {
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("proto", "HTTP/1.1", "check protocol type").
 				AssertLengthEqual("body.json.foo1", 4, "check body foo1"),
-			hrp.NewStep("HTTP2.0 get").
+			hrp.NewStep("HTTP/2 get").
+				HTTP2().
 				GET("/get").
-				EnableHTTP2().
 				WithParams(map[string]interface{}{"foo1": "foo1", "foo2": "foo2"}).
 				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("proto", "HTTP/2.0", "check protocol type").
 				AssertLengthEqual("body.args.foo1", 4, "check param foo1"),
-			hrp.NewStep("HTTP/2.0 post").
+			hrp.NewStep("HTTP/2 post").
+				HTTP2().
 				POST("/post").
-				EnableHTTP2().
 				WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
 				WithBody(map[string]interface{}{"foo1": "foo1", "foo2": "foo2"}).
 				Validate().
