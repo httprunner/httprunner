@@ -66,7 +66,7 @@ $ bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.s
 
 Then you will get a `hrp` CLI tool.
 
-```bash
+```text
 $ hrp -h
 
 ██╗  ██╗████████╗████████╗██████╗ ██████╗ ██╗   ██╗███╗   ██╗███╗   ██╗███████╗██████╗
@@ -93,7 +93,8 @@ Available Commands:
   completion   generate the autocompletion script for the specified shell
   har2case     convert HAR to json/yaml testcase files
   help         Help about any command
-  run          run API test
+  pytest       run API test with pytest
+  run          run API test with go engine
   startproject create a scaffold project
 
 Flags:

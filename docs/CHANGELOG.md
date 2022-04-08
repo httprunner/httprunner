@@ -17,12 +17,13 @@
 
 **python version**
 
+- feat: support retry when test step failed
+- feat: add `pytest` sub-command to run pytest scripts
 - change: remove startproject, move all features to go version, replace with `hrp startproject`
 - change: remove har2case, move all features to go version, replace with `hrp run`
 - change: remove locust, you should run load tests with go version, replace with `hrp boom`
 - change: remove fastapi and uvicorn dependencies
 - change: add pytest.ini to make log colorful
-- feat: support retry when test step failed
 - fix: ignore exceptions when reporting GA events
 - fix: remove misuse of NoReturn in Python typing
 
