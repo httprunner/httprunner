@@ -86,16 +86,6 @@ func isPreRendezvousAllReleased(rendezvous *Rendezvous, testCase *TCase) bool {
 	return true
 }
 
-// Rendezvous creates a new rendezvous
-func (s *StepRequest) Rendezvous(name string) *StepRendezvous {
-	s.step.Rendezvous = &Rendezvous{
-		Name: name,
-	}
-	return &StepRendezvous{
-		step: s.step,
-	}
-}
-
 // WithUserNumber sets the user number needed to release the current rendezvous
 func (s *StepRendezvous) WithUserNumber(number int64) *StepRendezvous {
 	s.step.Rendezvous.Number = number
