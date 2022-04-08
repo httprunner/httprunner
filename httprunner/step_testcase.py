@@ -80,7 +80,7 @@ class RunTestCase(object):
         self.__step.variables.update(variables)
         return self
 
-    def with_retry(self, retry_times, retry_interval) -> "RunRequest":
+    def with_retry(self, retry_times, retry_interval) -> "RunTestCase":
         self.__step.retry_times = retry_times
         self.__step.retry_interval = retry_interval
         return self
