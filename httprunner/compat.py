@@ -257,12 +257,12 @@ def ensure_cli_args(args: List) -> List:
     """
     # remove deprecated --failfast
     if "--failfast" in args:
-        logger.warning(f"remove deprecated argument: --failfast")
+        logger.warning("remove deprecated argument: --failfast")
         args.pop(args.index("--failfast"))
 
     # convert --report-file to --html
     if "--report-file" in args:
-        logger.warning(f"replace deprecated argument --report-file with --html")
+        logger.warning("replace deprecated argument --report-file with --html")
         index = args.index("--report-file")
         args[index] = "--html"
         args.append("--self-contained-html")
@@ -270,7 +270,7 @@ def ensure_cli_args(args: List) -> List:
     # keep compatibility with --save-tests in v2
     if "--save-tests" in args:
         logger.warning(
-            f"generate conftest.py keep compatibility with --save-tests in v2"
+            "generate conftest.py keep compatibility with --save-tests in v2"
         )
         args.pop(args.index("--save-tests"))
         _generate_conftest_for_summary(args)
@@ -327,21 +327,21 @@ def session_fixture(request):
         summary["success"] &= testcase_summary.success
 
         summary["stat"]["testcases"]["total"] += 1
-        summary["stat"]["teststeps"]["total"] += len(testcase_summary.step_datas)
+        summary["stat"]["teststeps"]["total"] += len(testcase_summary.step_results)
         if testcase_summary.success:
             summary["stat"]["testcases"]["success"] += 1
             summary["stat"]["teststeps"]["successes"] += len(
-                testcase_summary.step_datas
+                testcase_summary.step_results
             )
         else:
             summary["stat"]["testcases"]["fail"] += 1
             summary["stat"]["teststeps"]["successes"] += (
-                len(testcase_summary.step_datas) - 1
+                len(testcase_summary.step_results) - 1
             )
             summary["stat"]["teststeps"]["failures"] += 1
 
         testcase_summary_json = testcase_summary.dict()
-        testcase_summary_json["records"] = testcase_summary_json.pop("step_datas")
+        testcase_summary_json["records"] = testcase_summary_json.pop("step_results")
         summary["details"].append(testcase_summary_json)
 
     summary_path = r"{{SUMMARY_PATH_PLACEHOLDER}}"

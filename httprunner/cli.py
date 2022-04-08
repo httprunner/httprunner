@@ -63,7 +63,7 @@ def main():
     )
 
     subparsers = parser.add_subparsers(help="sub-command help")
-    sub_parser_run = init_parser_run(subparsers)
+    init_parser_run(subparsers)
     sub_parser_make = init_make_parser(subparsers)
 
     if len(sys.argv) == 1:
@@ -93,7 +93,7 @@ def main():
         sys.exit(0)
 
     extra_args = []
-    if len(sys.argv) >= 2 and sys.argv[1] in ["run", "locusts"]:
+    if len(sys.argv) >= 2 and sys.argv[1] in ["run"]:
         args, extra_args = parser.parse_known_args()
     else:
         args = parser.parse_args()

@@ -4,6 +4,9 @@ on:
   release:
     types: [created]
 
+env:
+  DISABLE_GA: "true"
+
 jobs:
   releases-matrix:
     name: Release hrp cli binaries

@@ -29,7 +29,6 @@ class TestCaseRequestWithTestcaseReference(HttpRunner):
         )
         .base_url("https://postman-echo.com")
         .verify(False)
-        .locust_weight(3)
     )
 
     teststeps = [

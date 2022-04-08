@@ -3,16 +3,17 @@
 ## v4.0.0-alpha
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
+- refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
+- feat: disable GA events report by setting environment `DISABLE_GA=true`
 
 **go version**
 
 - feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json profile file
 - feat: support run testcases in specified folder path, including testcases in sub folders
+- feat: support HTTP/2 protocol
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
-- refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
-- feat: support HTTP/2 protocol
 
 **python version**
 

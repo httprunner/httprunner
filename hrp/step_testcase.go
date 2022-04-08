@@ -44,26 +44,27 @@ func (s *StepTestCaseWithOptionalArgs) Struct() *TStep {
 }
 
 func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
-	stepVariables, err := r.MergeStepVariables(s.step.Variables)
-	if err != nil {
-		return nil, err
-	}
-	s.step.Variables = stepVariables
-
-	log.Info().Str("testcase", s.step.Name).Msg("run referenced testcase")
 	stepResult := &StepResult{
 		Name:     s.step.Name,
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
-	testcase := s.step.TestCase.(*TestCase)
 
-	// copy testcase to avoid data racing
-	copiedTestCase := &TestCase{}
-	if err := copier.Copy(copiedTestCase, testcase); err != nil {
-		log.Error().Err(err).Msg("copy testcase failed")
+	stepVariables, err := r.MergeStepVariables(s.step.Variables)
+	if err != nil {
 		return stepResult, err
 	}
+
+	// copy step to avoid data racing
+	copiedStep := &TStep{}
+	if err := copier.Copy(copiedStep, s.step); err != nil {
+		log.Error().Err(err).Msg("copy step failed")
+		return stepResult, err
+	}
+
+	copiedStep.Variables = stepVariables
+	copiedTestCase := copiedStep.TestCase.(*TestCase)
+
 	// override testcase config
 	extendWithTestCase(s.step, copiedTestCase)
 
@@ -73,16 +74,14 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	err = sessionRunner.Start()
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
-		log.Error().Err(err).Msg("run referenced testcase step failed")
-		log.Info().Str("step", s.step.Name).Bool("success", false).Msg("run step end")
 		stepResult.Attachment = err.Error()
 		r.summary.Success = false
 		return stepResult, err
 	}
 	summary := sessionRunner.GetSummary()
-	stepResult.Data = summary
+	stepResult.Data = summary.Records
 	// export testcase export variables
-	stepResult.ExportVars = sessionRunner.summary.InOut.ExportVars
+	stepResult.ExportVars = summary.InOut.ExportVars
 	stepResult.Success = true
 
 	// update extracted variables
@@ -95,12 +94,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	r.summary.Stat.Total += summary.Stat.Total
 	r.summary.Stat.Successes += summary.Stat.Successes
 	r.summary.Stat.Failures += summary.Stat.Failures
-
-	log.Info().
-		Str("step", s.step.Name).
-		Bool("success", true).
-		Interface("exportVars", stepResult.ExportVars).
-		Msg("run step end")
 
 	return stepResult, nil
 }

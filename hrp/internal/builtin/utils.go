@@ -227,14 +227,14 @@ func loadFromCSV(path string) []map[string]interface{} {
 	file, err := readFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read csv file failed")
-		panic(err)
+		os.Exit(1)
 	}
 
 	r := csv.NewReader(strings.NewReader(string(file)))
 	content, err := r.ReadAll()
 	if err != nil {
 		log.Error().Err(err).Msg("parse csv file failed")
-		panic(err)
+		os.Exit(1)
 	}
 	var result []map[string]interface{}
 	for i := 1; i < len(content); i++ {

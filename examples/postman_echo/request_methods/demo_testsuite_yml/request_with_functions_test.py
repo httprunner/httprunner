@@ -20,7 +20,6 @@ class TestCaseRequestWithFunctions(HttpRunner):
         .base_url("https://postman-echo.com")
         .verify(False)
         .export(*["foo3"])
-        .locust_weight(2)
     )
 
     teststeps = [

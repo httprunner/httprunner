@@ -1,16 +1,15 @@
 import ast
 import builtins
-import re
 import os
-from typing import Any, Set, Text, Callable, List, Dict, Union
+import re
+from typing import Any, Callable, Dict, List, Set, Text
+from urllib.parse import urljoin, urlparse
 
 from loguru import logger
 from sentry_sdk import capture_exception
 
-from httprunner import loader, utils, exceptions
-from httprunner.models import VariablesMapping, FunctionsMapping
-
-absolute_http_url_regexp = re.compile(r"^https?://", re.I)
+from httprunner import exceptions, loader, utils
+from httprunner.models import FunctionsMapping, VariablesMapping
 
 # use $$ to escape $ notation
 dolloar_regex_compile = re.compile(r"\$\$")
@@ -37,14 +36,24 @@ def parse_string_value(str_value: Text) -> Any:
         return str_value
 
 
-def build_url(base_url, path):
+def build_url(base_url, step_url):
     """ prepend url with base_url unless it's already an absolute URL """
-    if absolute_http_url_regexp.match(path):
-        return path
-    elif base_url:
-        return "{}/{}".format(base_url.rstrip("/"), path.lstrip("/"))
-    else:
+    o_step_url = urlparse(step_url)
+    if o_step_url.netloc != "":
+        # step url is absolute url
+        return step_url
+
+    # step url is relative, based on base url
+    o_base_url = urlparse(base_url)
+    if o_base_url.netloc == "":
+        # missed base url
         raise exceptions.ParamsError("base url missed!")
+
+    path = o_base_url.path.rstrip("/") + "/" + o_step_url.path.lstrip("/")
+    o_step_url = o_step_url._replace(scheme=o_base_url.scheme) \
+        ._replace(netloc=o_base_url.netloc) \
+        ._replace(path=path)
+    return o_step_url.geturl()
 
 
 def regex_findall_variables(raw_string: Text) -> List[Text]:
@@ -572,3 +581,21 @@ def parse_parameters(parameters: Dict,) -> List[Dict]:
         parsed_parameters_list.append(parameter_content_list)
 
     return utils.gen_cartesian_product(*parsed_parameters_list)
+
+
+class Parser(object):
+
+    def __init__(self, functions_mapping: FunctionsMapping = None) -> None:
+        self.functions_mapping = functions_mapping
+
+    def parse_string(self, raw_string: Text, variables_mapping: VariablesMapping) -> Any:
+        return parse_string(raw_string, variables_mapping, self.functions_mapping)
+
+    def parse_variables(self, variables_mapping: VariablesMapping) -> VariablesMapping:
+        return parse_variables_mapping(variables_mapping, self.functions_mapping)
+
+    def parse_data(self, raw_data: Any, variables_mapping: VariablesMapping = None) -> Any:
+        return parse_data(raw_data, variables_mapping, self.functions_mapping)
+
+    def get_mapping_function(self, func_name: Text) -> Callable:
+        return get_mapping_function(func_name, self.functions_mapping)

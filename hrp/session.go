@@ -69,24 +69,40 @@ func (r *SessionRunner) Start() error {
 	r.startTime = time.Now()
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
-		_, err := step.Run(r)
+		log.Info().Str("step", step.Name()).
+			Str("type", string(step.Type())).Msg("run step start")
+
+		stepResult, err := step.Run(r)
 		if err != nil && r.hrpRunner.failfast {
+			log.Error().
+				Str("step", stepResult.Name).
+				Str("type", string(stepResult.StepType)).
+				Bool("success", false).
+				Msg("run step end")
 			return errors.Wrap(err, "abort running due to failfast setting")
 		}
+
+		// update extracted variables
+		for k, v := range stepResult.ExportVars {
+			r.sessionVariables[k] = v
+		}
+		// update testcase summary
+		r.updateSummary(stepResult)
+
+		log.Info().
+			Str("step", stepResult.Name).
+			Str("type", string(stepResult.StepType)).
+			Bool("success", stepResult.Success).
+			Interface("exportVars", stepResult.ExportVars).
+			Msg("run step end")
 	}
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
 }
 
-func (r *SessionRunner) UpdateSession(vars map[string]interface{}) {
-	for k, v := range vars {
-		r.sessionVariables[k] = v
-	}
-}
-
-// UpdateSummary appends step result to summary
-func (r *SessionRunner) UpdateSummary(stepResult *StepResult) {
+// updateSummary appends step result to summary
+func (r *SessionRunner) updateSummary(stepResult *StepResult) {
 	r.summary.Records = append(r.summary.Records, stepResult)
 	r.summary.Stat.Total += 1
 	if stepResult.Success {

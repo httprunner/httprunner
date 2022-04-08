@@ -1,11 +1,8 @@
 import os
 from enum import Enum
-from typing import Any
-from typing import Dict, Text, Union, Callable
-from typing import List
+from typing import Any, Callable, Dict, List, Text, Union
 
-from pydantic import BaseModel, Field
-from pydantic import HttpUrl
+from pydantic import BaseModel, Field, HttpUrl
 
 Name = Text
 Url = Text
@@ -31,6 +28,16 @@ class MethodEnum(Text, Enum):
     PATCH = "PATCH"
 
 
+# configs for thrift rpc
+class TConfigThrift(BaseModel):
+    psm: Text = None
+    env: Text = None
+    cluster: Text = None
+    target: Text = None
+    include_dirs: List[Text] = None
+    thrift_client: Any = None
+
+
 class TConfig(BaseModel):
     name: Name
     verify: Verify = False
@@ -42,7 +49,8 @@ class TConfig(BaseModel):
     # teardown_hooks: Hooks = []
     export: Export = []
     path: Text = None
-    weight: int = 1
+    # configs for other protocols
+    thrift: TConfigThrift = None
 
 
 class TRequest(BaseModel):
@@ -153,16 +161,36 @@ class SessionData(BaseModel):
     validators: Dict = {}
 
 
-class StepData(BaseModel):
+class StepResult(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
 
+    name: Text = ""             # teststep name
+    step_type: Text = ""        # teststep type, request or testcase
     success: bool = False
-    name: Text = ""  # teststep name
-    data: Union[SessionData, List['StepData']] = None
+    data: Union[SessionData, List['StepResult']] = None
+    elapsed: float = 0.0        # teststep elapsed time
+    content_size: float = 0     # response content size
     export_vars: VariablesMapping = {}
+    attachment: Text = ""       # teststep attachment
 
-        
-StepData.update_forward_refs()
+
+StepResult.update_forward_refs()
+
+
+class IStep(object):
+
+    def name(self) -> str:
+        raise NotImplementedError
+
+    def type(self) -> str:
+        raise NotImplementedError
+
+    def struct(self) -> TStep:
+        raise NotImplementedError
+
+    def run(self, runner) -> StepResult:
+        # runner: HttpRunner
+        raise NotImplementedError
 
 
 class TestCaseSummary(BaseModel):
@@ -172,7 +200,7 @@ class TestCaseSummary(BaseModel):
     time: TestCaseTime
     in_out: TestCaseInOut = {}
     log: Text = ""
-    step_datas: List[StepData] = []
+    step_results: List[StepResult] = []
 
 
 class PlatformInfo(BaseModel):

@@ -2,6 +2,7 @@ import unittest
 
 import requests
 
+from httprunner.parser import Parser
 from httprunner.response import ResponseObject
 
 
@@ -18,14 +19,15 @@ class TestResponse(unittest.TestCase):
                 ]
             },
         )
-        self.resp_obj = ResponseObject(resp)
+        parser = Parser(functions_mapping={
+            'get_name': lambda: 'name',
+            "get_num": lambda x: x
+        })
+        self.resp_obj = ResponseObject(resp, parser)
 
     def test_extract(self):
         variables_mapping = {
             'body': 'body'
-        }
-        functions_mapping = {
-            'get_name': lambda: 'name',
         }
         extract_mapping = self.resp_obj.extract(
             {
@@ -35,7 +37,6 @@ class TestResponse(unittest.TestCase):
                 "var_4": "$body.json.locations[3].${get_name()}",
             },
             variables_mapping=variables_mapping,
-            functions_mapping=functions_mapping,
         )
         self.assertEqual(extract_mapping["var_1"], {"name": "Seattle", "state": "WA"})
         self.assertEqual(extract_mapping["var_2"], "Olympia")
@@ -62,9 +63,7 @@ class TestResponse(unittest.TestCase):
 
     def test_validate_functions(self):
         variables_mapping = {"index": 1}
-        functions_mapping = {"get_num": lambda x: x}
         self.resp_obj.validate(
             [{"eq": ["${get_num(0)}", 0]}, {"eq": ["${get_num($index)}", 1]},],
             variables_mapping=variables_mapping,
-            functions_mapping=functions_mapping,
         )

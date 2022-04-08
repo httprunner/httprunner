@@ -2,6 +2,7 @@ import collections
 import copy
 import itertools
 import json
+import os
 import os.path
 import platform
 import uuid
@@ -40,8 +41,13 @@ class GAClient(object):
             'cid': uuid.getnode(),      # Anonymous Client ID
             'ua': f'HttpRunner/{__version__}',
         }
+        # do not send GA events in CI environment
+        self.__is_ci = os.getenv("DISABLE_GA") == "true"
 
     def track_event(self, category: Text, action: Text, value: int = 0):
+        if self.__is_ci:
+            return
+
         data = {
             't': 'event',       # Event hit type = event
             'ec': category,     # Required. Event Category.
@@ -51,11 +57,14 @@ class GAClient(object):
         }
         data.update(self.common_params)
         try:
-            self.http_client.post(self.report_url, data=data)
+            self.http_client.post(self.report_url, data=data, timeout=5)
         except Exception:   # ProxyError, SSLError, ConnectionError
             pass
 
     def track_user_timing(self, category: Text, variable: Text, duration: int):
+        if self.__is_ci:
+            return
+
         data = {
             't': 'timing',      # Event hit type = timing
             'utc': category,    # Required. user timing category. e.g. jsonLoader
@@ -65,7 +74,7 @@ class GAClient(object):
         }
         data.update(self.common_params)
         try:
-            self.http_client.post(self.report_url, data=data)
+            self.http_client.post(self.report_url, data=data, timeout=5)
         except Exception:   # ProxyError, SSLError, ConnectionError
             pass
 
