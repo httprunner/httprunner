@@ -11,7 +11,7 @@ import (
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run $path...",
-	Short: "run API test",
+	Short: "run API test with go engine",
 	Long:  `run yaml/json testcase files for API test`,
 	Example: `  $ hrp run demo.json	# run specified json testcase file
   $ hrp run demo.yaml	# run specified yaml testcase file
