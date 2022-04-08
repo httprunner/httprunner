@@ -47,6 +47,7 @@ func newResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*resp
 	}
 
 	respObjMeta := respObjMeta{
+		Proto:      resp.Proto,
 		StatusCode: resp.StatusCode,
 		Headers:    headers,
 		Cookies:    cookies,
@@ -74,6 +75,7 @@ func newResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*resp
 }
 
 type respObjMeta struct {
+	Proto      string            `json:"proto"`
 	StatusCode int               `json:"status_code"`
 	Headers    map[string]string `json:"headers"`
 	Cookies    map[string]string `json:"cookies"`
