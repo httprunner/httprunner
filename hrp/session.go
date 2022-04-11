@@ -86,8 +86,6 @@ func (r *SessionRunner) Start() error {
 		for k, v := range stepResult.ExportVars {
 			r.sessionVariables[k] = v
 		}
-		// update testcase summary
-		r.updateSummary(stepResult)
 
 		log.Info().
 			Str("step", stepResult.Name).
@@ -99,19 +97,6 @@ func (r *SessionRunner) Start() error {
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
-}
-
-// updateSummary appends step result to summary
-func (r *SessionRunner) updateSummary(stepResult *StepResult) {
-	r.summary.Records = append(r.summary.Records, stepResult)
-	r.summary.Stat.Total += 1
-	if stepResult.Success {
-		r.summary.Stat.Successes += 1
-	} else {
-		r.summary.Stat.Failures += 1
-		// update summary result to failed
-		r.summary.Success = false
-	}
 }
 
 // MergeStepVariables merges step variables with config variables and session variables

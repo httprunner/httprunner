@@ -378,6 +378,17 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	stepResult.ContentSize = resp.ContentLength
 	stepResult.Data = sessionData
 
+	// update summary
+	r.summary.Records = append(r.summary.Records, stepResult)
+	r.summary.Stat.Total += 1
+	if stepResult.Success {
+		r.summary.Stat.Successes += 1
+	} else {
+		r.summary.Stat.Failures += 1
+		// update summary result to failed
+		r.summary.Success = false
+	}
+
 	return stepResult, err
 }
 
