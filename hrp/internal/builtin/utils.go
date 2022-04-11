@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -196,6 +197,39 @@ func Interface2Float64(i interface{}) (float64, error) {
 		return value.Float64()
 	}
 	return 0, errors.New("failed to convert interface to float64")
+}
+
+func TypeNormalization(raw interface{}) interface{} {
+	rawValue := reflect.ValueOf(raw)
+	switch rawValue.Kind() {
+	case reflect.Int:
+		return rawValue.Int()
+	case reflect.Int8:
+		return rawValue.Int()
+	case reflect.Int16:
+		return rawValue.Int()
+	case reflect.Int32:
+		return rawValue.Int()
+	case reflect.Float32:
+		return rawValue.Float()
+	case reflect.Uint:
+		return rawValue.Uint()
+	case reflect.Uint8:
+		return rawValue.Uint()
+	case reflect.Uint16:
+		return rawValue.Uint()
+	case reflect.Uint32:
+		return rawValue.Uint()
+	default:
+		return raw
+	}
+}
+
+func InterfaceType(raw interface{}) string {
+	if raw == nil {
+		return ""
+	}
+	return reflect.TypeOf(raw).String()
 }
 
 var ErrUnsupportedFileExt = fmt.Errorf("unsupported file extension")
