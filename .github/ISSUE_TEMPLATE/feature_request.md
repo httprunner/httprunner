@@ -2,17 +2,17 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: Pending
+labels: pending
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Background
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+> Focus on describing the problems encountered: In what scenarios, the current features of HttpRunner cannot achieve the requirements.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Desired features
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+> What functional features are expected from HttpRunner.
+
+## Example description (optional)
+
+> Describing with examples helps developers to more accurately understand your needs.
