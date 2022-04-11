@@ -1,39 +1,23 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Submit a bug report
 title: ''
-labels: Pending
+labels: pending
 ---
 
 ## Describe the bug
 
-A clear and concise description of what the bug is.
+> Please give a brief description of the bug;
+> attach the running command and the stack information when the error is reported
 
 ## Versions
 
 Please complete the following information:
 
- - OS: [e.g. macOS, Linux, Windows]
- - Python [e.g. 3.6]
- - HttpRunner [e.g. 2.1.2]
-- **Device ID**: [e.g. 190070690681122]
-
-How to get device ID?
-
-In Python interactive shell, execute the following command:
-
-```bash
->>> import uuid; print(uuid.getnode())
-190070690681122
-```
-
-## Traceback
-
-Traceback when bug occurs.
-
-## Project structure
-
-File structure of your project. A good way is to run `tree -a` command.
+- OS Type: [e.g. macOS, Linux, Windows]
+- Python version: [e.g. 3.9]
+- Go version: [e.g. 1.18]
+- HttpRunner version [e.g. 3.1.8]
 
 ## Project files (If possible)
 
