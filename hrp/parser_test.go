@@ -632,7 +632,7 @@ func TestParseVariables(t *testing.T) {
 	}{
 		{
 			map[string]interface{}{"varA": "$varB", "varB": "$varC", "varC": "123", "a": 1, "b": 2},
-			map[string]interface{}{"varA": "123", "varB": "123", "varC": "123", "a": 1, "b": 2},
+			map[string]interface{}{"varA": "123", "varB": "123", "varC": "123", "a": int64(1), "b": int64(2)},
 		},
 		{
 			map[string]interface{}{"n": 34.5, "a": 12.3, "b": "$n", "varFoo2": "${max($a, $b)}"},
