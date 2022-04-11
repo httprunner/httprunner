@@ -117,7 +117,7 @@ func (p *Parser) Parse(raw interface{}, variablesMapping map[string]interface{})
 		return parsedMap, nil
 	default:
 		// other types, e.g. nil, int, float, bool
-		return raw, nil
+		return builtin.TypeNormalization(raw), nil
 	}
 }
 

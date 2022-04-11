@@ -170,7 +170,9 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 			Str("checkExpr", validator.Check).
 			Str("assertMethod", assertMethod).
 			Interface("expectValue", expectValue).
+			Str("expectValueType", builtin.InterfaceType(expectValue)).
 			Interface("checkValue", checkValue).
+			Str("checkValueType", builtin.InterfaceType(checkValue)).
 			Bool("result", result).
 			Msgf("validate %s", checkItem)
 		if !result {
@@ -179,7 +181,9 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 				Str("checkExpr", validator.Check).
 				Str("assertMethod", assertMethod).
 				Interface("checkValue", checkValue).
+				Str("checkValueType", builtin.InterfaceType(checkValue)).
 				Interface("expectValue", expectValue).
+				Str("expectValueType", builtin.InterfaceType(expectValue)).
 				Msg("assert failed")
 			return errors.New("step validation failed")
 		}
