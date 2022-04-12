@@ -170,6 +170,9 @@ func (tc *TCase) makeCompat() error {
 		if err != nil {
 			return err
 		}
+
+		// 3. deal with extract expr including hyphen
+		convertExtract(step.Extract)
 	}
 	return nil
 }
@@ -210,6 +213,13 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 		}
 	}
 	return nil
+}
+
+// convertExtract deals with extract expr including hyphen
+func convertExtract(extract map[string]string) {
+	for key, value := range extract {
+		extract[key] = convertCheckExpr(value)
+	}
 }
 
 // convertCheckExpr deals with check expression including hyphen
