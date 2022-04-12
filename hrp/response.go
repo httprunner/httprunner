@@ -91,7 +91,7 @@ type responseObject struct {
 
 const textExtractorSubRegexp string = `(.*)`
 
-func (v *responseObject) extractField(value string) interface{} {
+func (v *responseObject) searchField(value string) interface{} {
 	var result interface{}
 	if strings.Contains(value, textExtractorSubRegexp) {
 		result = v.searchRegexp(value)
@@ -108,7 +108,7 @@ func (v *responseObject) Extract(extractors map[string]string) map[string]interf
 
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
-		extractedValue := v.extractField(value)
+		extractedValue := v.searchField(value)
 		log.Info().Str("from", value).Interface("value", extractedValue).Msg("extract value")
 		log.Info().Str("variable", key).Interface("value", extractedValue).Msg("set variable")
 		extractMapping[key] = extractedValue
@@ -127,14 +127,16 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		checkItem := validator.Check
 		var checkValue interface{}
 		if strings.Contains(checkItem, "$") {
-			// reference variable
+			// parse reference variables in checkItem
 			checkValue, err = v.parser.Parse(checkItem, variablesMapping)
 			if err != nil {
 				return err
 			}
 		} else {
-			// regExp or jmesPath
-			checkValue = v.extractField(checkItem)
+			checkValue = checkItem
+		}
+		if searchCheckValue, ok := checkValue.(string); ok && checkSearchField(searchCheckValue) {
+			checkValue = v.searchField(searchCheckValue)
 		}
 
 		// get assert method
@@ -191,6 +193,15 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 	return nil
 }
 
+func checkSearchField(expr string) bool {
+	return strings.Contains(expr, "proto") ||
+		strings.Contains(expr, "status_code") ||
+		strings.Contains(expr, "headers") ||
+		strings.Contains(expr, "cookies") ||
+		strings.Contains(expr, "body") ||
+		strings.Contains(expr, textExtractorSubRegexp)
+}
+
 func (v *responseObject) searchJmespath(expr string) interface{} {
 	checkValue, err := jmespath.Search(expr, v.respObjMeta)
 	if err != nil {
@@ -224,7 +235,7 @@ func (v *responseObject) searchRegexp(expr string) interface{} {
 		return expr
 	}
 	match := regexpCompile.FindStringSubmatch(bodyStr)
-	if match != nil || len(match) > 1 {
+	if len(match) > 1 {
 		return match[1] //return first matched result in parentheses
 	}
 	log.Error().Str("expr", expr).Msg("search regexp failed")
