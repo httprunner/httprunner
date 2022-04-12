@@ -13,6 +13,7 @@ func TestCaseBasicRequest(t *testing.T) {
 			SetVerifySSL(false),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("get with params").
+				WithVariables(map[string]interface{}{"headers_key": "\"Content-Type\"", "body_key": "foo1"}).
 				GET("/get").
 				WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 				WithHeaders(map[string]string{
@@ -20,8 +21,8 @@ func TestCaseBasicRequest(t *testing.T) {
 				}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
-				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
-				AssertEqual("body.args.foo1", "bar1", "check args foo1").
+				AssertEqual("headers.$headers_key", "application/json; charset=utf-8", "check header Content-Type").
+				AssertEqual("body.args.$body_key", "bar1", "check args foo1").
 				AssertEqual("body.args.foo2", "bar2", "check args foo2"),
 			hrp.NewStep("post raw text").
 				POST("/post").
