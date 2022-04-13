@@ -182,6 +182,14 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	}
 	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
 
+	// update the report output path
+	pluginPath, err := locatePlugin(testcases[0].GetPath())
+	if err == nil {
+		outputPath, _ := filepath.Split(pluginPath)
+		summaryPath = filepath.Join(outputPath, summaryPath)
+		reportPath = filepath.Join(outputPath, reportPath)
+	}
+
 	// save summary
 	if r.saveTests {
 		dir, _ := filepath.Split(summaryPath)
