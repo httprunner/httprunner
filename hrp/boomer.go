@@ -125,7 +125,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					transactionSuccess = false
 
 					if b.hrpRunner.failfast {
-						log.Error().Msg("abort running due to failfast setting")
+						log.Error().Err(err).Msg("abort running due to failfast setting")
 						break
 					}
 					log.Warn().Err(err).Msg("run step failed, continue next step")
@@ -148,6 +148,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 				} else {
 					// request or testcase step
 					b.RecordSuccess(string(step.Type()), step.Name(), stepResult.Elapsed, stepResult.ContentSize)
+					// update extracted variables
+					for k, v := range stepResult.ExportVars {
+						sessionRunner.sessionVariables[k] = v
+					}
 				}
 			}
 			endTime := time.Now()

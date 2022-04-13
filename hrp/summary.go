@@ -61,7 +61,8 @@ func (s *Summary) genHTMLReport() error {
 	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(fmt.Sprintf(reportPath, s.Time.StartAt.Unix()), os.O_WRONLY|os.O_CREATE, 0666)
+	reportPath := fmt.Sprintf(reportPath, s.Time.StartAt.Unix())
+	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
 		return err
@@ -75,15 +76,20 @@ func (s *Summary) genHTMLReport() error {
 		return err
 	}
 	err = writer.Flush()
+	if err == nil {
+		log.Info().Str("path", reportPath).Msg("generate HTML report")
+	} else {
+		log.Error().Str("path", reportPath).Msg("generate HTML report failed")
+	}
 	return err
 }
 
 //go:embed internal/scaffold/templates/report/template.html
 var reportTemplate string
 
-const (
-	reportPath  string = "reports/report-%v.html"
-	summaryPath string = "reports/summary-%v.json"
+var (
+	reportPath  = "reports/report-%v.html"
+	summaryPath = "reports/summary-%v.json"
 )
 
 type Stat struct {
