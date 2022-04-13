@@ -24,9 +24,8 @@ type SessionRunner struct {
 	summary      *TestCaseSummary // record test case summary
 }
 
-func (r *SessionRunner) init() {
-	log.Info().Msg("init session runner")
-	r.parsedConfig = &TConfig{}
+func (r *SessionRunner) resetSession() {
+	log.Info().Msg("clear session runner")
 	r.sessionVariables = make(map[string]interface{})
 	r.transactions = make(map[string]map[transactionType]time.Time)
 	r.startTime = time.Now()
@@ -49,26 +48,9 @@ func (r *SessionRunner) Start() error {
 	config := r.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
-	// init session runner
-	r.init()
+	// reset session runner
+	r.resetSession()
 
-	// init plugin
-	var err error
-	if r.parser.plugin, err = initPlugin(config.Path, r.hrpRunner.pluginLogOn); err != nil {
-		return err
-	}
-	defer func() {
-		if r.parser.plugin != nil {
-			r.parser.plugin.Quit()
-		}
-	}()
-
-	// parse config
-	if err := r.parseConfig(nil); err != nil {
-		return err
-	}
-
-	r.startTime = time.Now()
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
 		log.Info().Str("step", step.Name()).
@@ -123,6 +105,7 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 	cfg := r.testCase.Config
 
+	r.parsedConfig = &TConfig{}
 	// deep copy config to avoid data racing
 	if err := copier.Copy(r.parsedConfig, cfg); err != nil {
 		log.Error().Err(err).Msg("copy testcase config failed")
@@ -133,20 +116,20 @@ func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 	mergedVars := mergeVariables(variables, cfg.Variables)
 	parsedVariables, err := r.parser.ParseVariables(mergedVars)
 	if err != nil {
-		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
+		log.Error().Interface("variables", mergedVars).Err(err).Msg("parse config variables failed")
 		return err
 	}
 	r.parsedConfig.Variables = parsedVariables
 
 	// parse config name
-	parsedName, err := r.parser.ParseString(cfg.Name, cfg.Variables)
+	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
 	if err != nil {
 		return err
 	}
 	r.parsedConfig.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, cfg.Variables)
+	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
 	if err != nil {
 		return err
 	}
