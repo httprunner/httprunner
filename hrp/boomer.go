@@ -107,11 +107,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					parameterVariables = it.Next()
 				}
 			}
-
-			if err := sessionRunner.parseConfig(parameterVariables); err != nil {
-				log.Error().Err(err).Msg("parse config failed")
-				return
-			}
+			sessionRunner.updateConfigVariables(parameterVariables)
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {

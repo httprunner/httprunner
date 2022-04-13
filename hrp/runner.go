@@ -172,8 +172,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 					parameterVariables = it.Next()
 				}
 			}
-			sessionRunner.parseConfig(parameterVariables)
-			if err = sessionRunner.Start(); err != nil {
+			if err = sessionRunner.Start(parameterVariables); err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				return err
 			}
@@ -224,15 +223,8 @@ func (r *HRPRunner) NewSessionRunner(testcase *TestCase) (*SessionRunner, error)
 	sessionRunner.parser.plugin = plugin
 
 	// parse testcase config
-	if err := sessionRunner.parseConfig(nil); err != nil {
+	if err := sessionRunner.parseConfig(); err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
-	}
-
-	// parse testcase config parameters
-	err = initParameterIterator(sessionRunner.parsedConfig, "runner")
-	if err != nil {
-		log.Error().Interface("parameters", sessionRunner.parsedConfig.Parameters).Err(err).Msg("parse config parameters failed")
-		return nil, errors.Wrap(err, "parse testcase config parameters failed")
 	}
 
 	return sessionRunner, nil

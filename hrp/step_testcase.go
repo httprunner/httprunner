@@ -69,8 +69,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	if s.step.Name != "" {
 		copiedTestCase.Config.Name = s.step.Name
 	}
-	// merge & override variables
-	copiedTestCase.Config.Variables = mergeVariables(stepVariables, copiedTestCase.Config.Variables)
 	// merge & override extractors
 	copiedTestCase.Config.Export = mergeSlices(s.step.Export, copiedTestCase.Config.Export)
 
@@ -81,7 +79,8 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	}
 
 	start := time.Now()
-	err = sessionRunner.Start()
+	// run referenced testcase with step variables
+	err = sessionRunner.Start(stepVariables)
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		stepResult.Attachment = err.Error()
