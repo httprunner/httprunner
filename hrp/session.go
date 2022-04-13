@@ -124,14 +124,14 @@ func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 	// parse config name
 	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "parse config name failed")
 	}
 	r.parsedConfig.Name = convertString(parsedName)
 
 	// parse config base url
 	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "parse config base url failed")
 	}
 	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
 

@@ -53,12 +53,6 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	}
 
 	for _, testcase := range testCases {
-		cfg := testcase.Config
-		err = initParameterIterator(cfg, "boomer")
-		if err != nil {
-			log.Error().Err(err).Msg("failed to init parameter iterator")
-			os.Exit(1)
-		}
 		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
 		task := b.convertBoomerTask(testcase, rendezvousList)
 		taskSlice = append(taskSlice, task)
@@ -78,9 +72,7 @@ func (b *HRPBoomer) Quit() {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	config := testcase.Config
-
-	// each testcase has its own session runner
+	// init session runner for testcase
 	sessionRunner, err := b.hrpRunner.NewSessionRunner(testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create session runner")
@@ -91,6 +83,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		b.plugins = append(b.plugins, sessionRunner.parser.plugin)
 		b.pluginsMutex.Unlock()
 	}
+	sessionRunner.resetSession()
 
 	// broadcast to all rendezvous at once when spawn done
 	go func() {
@@ -101,11 +94,11 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	}()
 
 	return &boomer.Task{
-		Name:   config.Name,
-		Weight: config.Weight,
+		Name:   testcase.Config.Name,
+		Weight: testcase.Config.Weight,
 		Fn: func() {
-			testcaseSuccess := true       // flag whole testcase result
-			var transactionSuccess = true // flag current transaction result
+			testcaseSuccess := true    // flag whole testcase result
+			transactionSuccess := true // flag current transaction result
 
 			var parameterVariables map[string]interface{}
 			// iterate through all parameter iterators and update case variables
