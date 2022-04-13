@@ -25,7 +25,7 @@ type SessionRunner struct {
 }
 
 func (r *SessionRunner) resetSession() {
-	log.Info().Msg("clear session runner")
+	log.Info().Msg("reset session runner")
 	r.sessionVariables = make(map[string]interface{})
 	r.transactions = make(map[string]map[transactionType]time.Time)
 	r.startTime = time.Now()

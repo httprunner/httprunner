@@ -3,7 +3,7 @@ import builtins
 import os
 import re
 from typing import Any, Callable, Dict, List, Set, Text
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 from loguru import logger
 from sentry_sdk import capture_exception
