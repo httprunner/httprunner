@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/funplugin"
@@ -98,27 +97,21 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
-			sessionTestCase := &TestCase{}
-			// copy testcase to avoid data racing
-			if err := copier.Copy(sessionTestCase, testcase); err != nil {
-				log.Error().Err(err).Msg("copy testcase data failed")
-				return
-			}
-			sessionRunner := hrpRunner.NewSessionRunner(sessionTestCase)
+			sessionRunner := hrpRunner.NewSessionRunner(testcase)
 			sessionRunner.parser.plugin = plugin
 
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
-			cfg := sessionTestCase.Config
+			var parameterVariables map[string]interface{}
 			// iterate through all parameter iterators and update case variables
-			for _, it := range cfg.ParametersSetting.Iterators {
+			for _, it := range testcase.Config.ParametersSetting.Iterators {
 				if it.HasNext() {
-					cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+					parameterVariables = it.Next()
 				}
 			}
 
-			if err := sessionRunner.parseConfig(cfg); err != nil {
+			if err := sessionRunner.parseConfig(parameterVariables); err != nil {
 				log.Error().Err(err).Msg("parse config failed")
 				return
 			}
