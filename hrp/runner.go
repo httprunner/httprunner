@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
@@ -151,23 +152,27 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 
 	// run testcase one by one
 	for _, testcase := range testCases {
-		cfg := testcase.Config
-		// parse config parameters
-		err := initParameterIterator(cfg, "runner")
+		sessionRunner, err := r.NewSessionRunner(testcase)
 		if err != nil {
-			log.Error().Interface("parameters", cfg.Parameters).Err(err).Msg("parse config parameters failed")
+			log.Error().Err(err).Msg("[Run] init session runner failed")
 			return err
 		}
+		defer func() {
+			if sessionRunner.parser.plugin != nil {
+				sessionRunner.parser.plugin.Quit()
+			}
+		}()
+
 		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
-		for it := cfg.ParametersSetting.Iterators[0]; it.HasNext(); {
+		for it := sessionRunner.parsedConfig.ParametersSetting.Iterators[0]; it.HasNext(); {
+			var parameterVariables map[string]interface{}
 			// iterate through all parameter iterators and update case variables
-			for _, it := range cfg.ParametersSetting.Iterators {
+			for _, it := range sessionRunner.parsedConfig.ParametersSetting.Iterators {
 				if it.HasNext() {
-					cfg.Variables = mergeVariables(it.Next(), cfg.Variables)
+					parameterVariables = it.Next()
 				}
 			}
-			sessionRunner := r.NewSessionRunner(testcase)
-			if err = sessionRunner.Start(); err != nil {
+			if err = sessionRunner.Start(parameterVariables); err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				return err
 			}
@@ -200,13 +205,27 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	return nil
 }
 
-func (r *HRPRunner) NewSessionRunner(testcase *TestCase) *SessionRunner {
+// NewSessionRunner creates a new session runner for testcase.
+// each testcase has its own session runner
+func (r *HRPRunner) NewSessionRunner(testcase *TestCase) (*SessionRunner, error) {
 	sessionRunner := &SessionRunner{
 		testCase:  testcase,
 		hrpRunner: r,
 		parser:    newParser(),
 		summary:   newSummary(),
 	}
-	sessionRunner.init()
-	return sessionRunner
+
+	// init parser plugin
+	plugin, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
+	if err != nil {
+		return nil, errors.Wrap(err, "init plugin failed")
+	}
+	sessionRunner.parser.plugin = plugin
+
+	// parse testcase config
+	if err := sessionRunner.parseConfig(); err != nil {
+		return nil, errors.Wrap(err, "parse testcase config failed")
+	}
+
+	return sessionRunner, nil
 }
