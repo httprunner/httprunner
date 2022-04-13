@@ -24,9 +24,8 @@ type SessionRunner struct {
 	summary      *TestCaseSummary // record test case summary
 }
 
-func (r *SessionRunner) init() {
-	log.Info().Msg("init session runner")
-	r.parsedConfig = &TConfig{}
+func (r *SessionRunner) resetSession() {
+	log.Info().Msg("clear session runner")
 	r.sessionVariables = make(map[string]interface{})
 	r.transactions = make(map[string]map[transactionType]time.Time)
 	r.startTime = time.Now()
@@ -45,30 +44,17 @@ func (r *SessionRunner) LogOn() bool {
 }
 
 // Start runs the test steps in sequential order.
-func (r *SessionRunner) Start() error {
+// givenVars is used for data driven
+func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	config := r.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
-	// init session runner
-	r.init()
+	// update config variables with given variables
+	r.updateConfigVariables(givenVars)
 
-	// init plugin
-	var err error
-	if r.parser.plugin, err = initPlugin(config.Path, r.hrpRunner.pluginLogOn); err != nil {
-		return err
-	}
-	defer func() {
-		if r.parser.plugin != nil {
-			r.parser.plugin.Quit()
-		}
-	}()
+	// reset session runner
+	r.resetSession()
 
-	// parse config
-	if err := r.parseConfig(nil); err != nil {
-		return err
-	}
-
-	r.startTime = time.Now()
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
 		log.Info().Str("step", step.Name()).
@@ -119,10 +105,19 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 	return parsedVariables, nil
 }
 
-// parseConfig parses testcase config with given variables, stores to parsedConfig.
-func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
+// updateConfigVariables updates config variables with given variables.
+// this is used for data driven
+func (r *SessionRunner) updateConfigVariables(givenVars map[string]interface{}) {
+	for k, v := range givenVars {
+		r.parsedConfig.Variables[k] = v
+	}
+}
+
+// parseConfig parses testcase config, stores to parsedConfig.
+func (r *SessionRunner) parseConfig() error {
 	cfg := r.testCase.Config
 
+	r.parsedConfig = &TConfig{}
 	// deep copy config to avoid data racing
 	if err := copier.Copy(r.parsedConfig, cfg); err != nil {
 		log.Error().Err(err).Msg("copy testcase config failed")
@@ -130,8 +125,7 @@ func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 	}
 
 	// parse config variables
-	mergedVars := mergeVariables(variables, cfg.Variables)
-	parsedVariables, err := r.parser.ParseVariables(mergedVars)
+	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
 	if err != nil {
 		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
 		return err
@@ -139,21 +133,28 @@ func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 	r.parsedConfig.Variables = parsedVariables
 
 	// parse config name
-	parsedName, err := r.parser.ParseString(cfg.Name, cfg.Variables)
+	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "parse config name failed")
 	}
 	r.parsedConfig.Name = convertString(parsedName)
 
 	// parse config base url
-	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, cfg.Variables)
+	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "parse config base url failed")
 	}
 	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
 
 	// ensure correction of think time config
 	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
+
+	// parse testcase config parameters
+	err = initParameterIterator(r.parsedConfig, "runner")
+	if err != nil {
+		log.Error().Interface("parameters", r.parsedConfig.Parameters).Err(err).Msg("parse config parameters failed")
+		return errors.Wrap(err, "parse testcase config parameters failed")
+	}
 
 	return nil
 }
