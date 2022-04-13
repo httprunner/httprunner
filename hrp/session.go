@@ -44,9 +44,13 @@ func (r *SessionRunner) LogOn() bool {
 }
 
 // Start runs the test steps in sequential order.
-func (r *SessionRunner) Start() error {
+// givenVars is used for data driven
+func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	config := r.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
+
+	// update config variables with given variables
+	r.updateConfigVariables(givenVars)
 
 	// reset session runner
 	r.resetSession()
@@ -101,8 +105,16 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 	return parsedVariables, nil
 }
 
-// parseConfig parses testcase config with given variables, stores to parsedConfig.
-func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
+// updateConfigVariables updates config variables with given variables.
+// this is used for data driven
+func (r *SessionRunner) updateConfigVariables(givenVars map[string]interface{}) {
+	for k, v := range givenVars {
+		r.parsedConfig.Variables[k] = v
+	}
+}
+
+// parseConfig parses testcase config, stores to parsedConfig.
+func (r *SessionRunner) parseConfig() error {
 	cfg := r.testCase.Config
 
 	r.parsedConfig = &TConfig{}
@@ -113,10 +125,9 @@ func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 	}
 
 	// parse config variables
-	mergedVars := mergeVariables(variables, cfg.Variables)
-	parsedVariables, err := r.parser.ParseVariables(mergedVars)
+	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
 	if err != nil {
-		log.Error().Interface("variables", mergedVars).Err(err).Msg("parse config variables failed")
+		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
 		return err
 	}
 	r.parsedConfig.Variables = parsedVariables
@@ -137,6 +148,13 @@ func (r *SessionRunner) parseConfig(variables map[string]interface{}) error {
 
 	// ensure correction of think time config
 	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
+
+	// parse testcase config parameters
+	err = initParameterIterator(r.parsedConfig, "runner")
+	if err != nil {
+		log.Error().Interface("parameters", r.parsedConfig.Parameters).Err(err).Msg("parse config parameters failed")
+		return errors.Wrap(err, "parse testcase config parameters failed")
+	}
 
 	return nil
 }
