@@ -17,11 +17,17 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		pluginsMutex: new(sync.RWMutex),
 	}
+
+	b.hrpRunner = NewRunner(nil)
+	// set client transport for high concurrency load testing
+	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
+
 	return b
 }
 
 type HRPBoomer struct {
 	*boomer.Boomer
+	hrpRunner    *HRPRunner
 	plugins      []funplugin.IPlugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex       // avoid data race
 }
@@ -72,16 +78,17 @@ func (b *HRPBoomer) Quit() {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	hrpRunner := NewRunner(nil)
-	// set client transport for high concurrency load testing
-	hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 	config := testcase.Config
 
-	// each testcase has its own plugin process
-	plugin, _ := initPlugin(config.Path, false)
-	if plugin != nil {
+	// each testcase has its own session runner
+	sessionRunner, err := b.hrpRunner.NewSessionRunner(testcase)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create session runner")
+		os.Exit(1)
+	}
+	if sessionRunner.parser.plugin != nil {
 		b.pluginsMutex.Lock()
-		b.plugins = append(b.plugins, plugin)
+		b.plugins = append(b.plugins, sessionRunner.parser.plugin)
 		b.pluginsMutex.Unlock()
 	}
 
@@ -97,9 +104,6 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		Name:   config.Name,
 		Weight: config.Weight,
 		Fn: func() {
-			sessionRunner := hrpRunner.NewSessionRunner(testcase)
-			sessionRunner.parser.plugin = plugin
-
 			testcaseSuccess := true       // flag whole testcase result
 			var transactionSuccess = true // flag current transaction result
 
@@ -131,7 +135,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					testcaseSuccess = false
 					transactionSuccess = false
 
-					if hrpRunner.failfast {
+					if b.hrpRunner.failfast {
 						log.Error().Msg("abort running due to failfast setting")
 						break
 					}

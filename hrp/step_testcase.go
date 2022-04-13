@@ -74,7 +74,11 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	// merge & override extractors
 	copiedTestCase.Config.Export = mergeSlices(s.step.Export, copiedTestCase.Config.Export)
 
-	sessionRunner := r.hrpRunner.NewSessionRunner(copiedTestCase)
+	sessionRunner, err := r.hrpRunner.NewSessionRunner(copiedTestCase)
+	if err != nil {
+		log.Error().Err(err).Msg("create session runner failed")
+		return stepResult, err
+	}
 
 	start := time.Now()
 	err = sessionRunner.Start()
