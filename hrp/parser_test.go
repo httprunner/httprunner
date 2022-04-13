@@ -763,28 +763,41 @@ func TestParseParameters(t *testing.T) {
 		{
 			map[string]interface{}{
 				"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
-				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
+				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"},
+			},
 			6,
 		},
 		{
 			map[string]interface{}{
-				"username-password": [][]interface{}{{"test1", "111111"}, {"test2", "222222"}, {"test3", "333333"}},
-				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"},
-				"app_version":       []interface{}{0.3}},
+				"username-password": [][]interface{}{
+					{"test1", "111111"},
+					{"test2", "222222"},
+					{"test3", "333333"},
+				},
+				"user_agent":  []interface{}{"IOS/10.1", "IOS/10.2"},
+				"app_version": []interface{}{0.3},
+			},
 			6,
 		},
 		{
 			map[string]interface{}{
-				"username-password": [][]interface{}{{"test1", "111111"}, {"test2", "222222"}, {"test3", "333333"}},
-				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"},
-				"app_version":       []interface{}{0.3, 0.4, 0.5}},
+				"username-password": [][]interface{}{
+					{"test1", "111111"},
+					{"test2", "222222"},
+					{"test3", "333333"},
+				},
+				"user_agent":  []interface{}{"IOS/10.1", "IOS/10.2"},
+				"app_version": []interface{}{0.3, 0.4, 0.5},
+			},
 			18,
 		},
 		{
-			map[string]interface{}{}, 0,
+			map[string]interface{}{},
+			0,
 		},
 		{
-			nil, 0,
+			nil,
+			0,
 		},
 	}
 	for _, data := range testData {
@@ -832,7 +845,10 @@ func TestParseSlice(t *testing.T) {
 	}{
 		{
 			"username-password",
-			[]map[string]interface{}{{"username": "test1", "password": 111111, "other": "111"}, {"username": "test2", "password": 222222, "other": "222"}},
+			[]map[string]interface{}{
+				{"username": "test1", "password": 111111, "other": "111"},
+				{"username": "test2", "password": 222222, "other": "222"},
+			},
 			[]map[string]interface{}{
 				{"username": "test1", "password": 111111},
 				{"username": "test2", "password": 222222},
@@ -840,7 +856,10 @@ func TestParseSlice(t *testing.T) {
 		},
 		{
 			"username-password",
-			[][]string{{"test1", "111111"}, {"test2", "222222"}},
+			[][]string{
+				{"test1", "111111"},
+				{"test2", "222222"},
+			},
 			[]map[string]interface{}{
 				{"username": "test1", "password": "111111"},
 				{"username": "test2", "password": "222222"},

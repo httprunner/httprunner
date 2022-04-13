@@ -102,7 +102,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			var parameterVariables map[string]interface{}
 			// iterate through all parameter iterators and update case variables
-			for _, it := range testcase.Config.ParametersSetting.Iterators {
+			for _, it := range sessionRunner.parsedConfig.ParametersSetting.Iterators {
 				if it.HasNext() {
 					parameterVariables = it.Next()
 				}
