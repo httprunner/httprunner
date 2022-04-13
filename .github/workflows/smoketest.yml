@@ -1,4 +1,4 @@
-name: run smoke tests for httprunner
+name: run smoke tests
 
 on:
   push:
@@ -10,9 +10,9 @@ env:
   DISABLE_GA: "true"
 
 jobs:
-  smoke-test:
+  smoke-test-httprunner:
 
-    name: smoketest - ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: smoketest - httprunner - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,3 +47,29 @@ jobs:
     - name: Run smoketest - httpbin
       run: |
         poetry run hrun examples/httpbin/
+
+  smoke-test-hrp:
+    name: smoketest - hrp - ${{ matrix.go-version }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - 1.17.x
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build hrp binary
+        run: make build
+      - name: Run smoketest - postman echo
+        run: ./output/hrp boom examples/hrp/postman-echo.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+      - name: Run smoketest - data driven with parameterize mechanism
+        run: ./output/hrp boom examples/hrp/parameters_test.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+      - name: Run smoketest - rendezvous
+        run: |
+          ./output/hrp boom examples/hrp/rendezvous_test.json --spawn-count 10 --spawn-rate 10 --loop-count 10
