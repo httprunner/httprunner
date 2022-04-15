@@ -155,7 +155,7 @@ func TestSerializeStats(t *testing.T) {
 	first := serialized[0]
 	entry, err := deserializeStatsEntry(first)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	if entry.Name != "success" {

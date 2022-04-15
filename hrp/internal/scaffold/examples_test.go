@@ -10,20 +10,20 @@ func TestGenDemoExamples(t *testing.T) {
 	os.RemoveAll(dir)
 	err := CreateScaffold(dir, Go)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	dir = "../../../examples/demo-with-py-plugin"
 	os.RemoveAll(dir)
 	err = CreateScaffold(dir, Py)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	dir = "../../../examples/demo-without-plugin"
 	os.RemoveAll(dir)
 	err = CreateScaffold(dir, Ignore)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 }
