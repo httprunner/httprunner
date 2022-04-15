@@ -163,16 +163,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			}
 		}()
 
-		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
-		for it := sessionRunner.parsedConfig.ParametersSetting.Iterators[0]; it.HasNext(); {
-			var parameterVariables map[string]interface{}
-			// iterate through all parameter iterators and update case variables
-			for _, it := range sessionRunner.parsedConfig.ParametersSetting.Iterators {
-				if it.HasNext() {
-					parameterVariables = it.Next()
-				}
-			}
-			if err = sessionRunner.Start(parameterVariables); err != nil {
+		for it := sessionRunner.parametersIterator; it.HasNext(); {
+			if err = sessionRunner.Start(it.Next()); err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				return err
 			}
