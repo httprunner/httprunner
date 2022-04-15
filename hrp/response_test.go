@@ -24,11 +24,11 @@ func TestSearchJmespath(t *testing.T) {
 	resp.Body = io.NopCloser(strings.NewReader(testText))
 	respObj, err := newResponseObject(t, newParser(), &resp)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	for _, data := range testData {
 		if !assert.Equal(t, data.expected, respObj.searchJmespath(data.raw)) {
-			t.Fail()
+			t.Fatal()
 		}
 	}
 }
@@ -49,11 +49,11 @@ func TestSearchRegexp(t *testing.T) {
 	resp.Body = io.NopCloser(strings.NewReader(testText))
 	respObj, err := newResponseObject(t, newParser(), &resp)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 	for _, data := range testData {
 		if !assert.Equal(t, data.expected, respObj.searchRegexp(data.raw)) {
-			t.Fail()
+			t.Fatal()
 		}
 	}
 }
