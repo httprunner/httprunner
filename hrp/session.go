@@ -12,11 +12,12 @@ import (
 // SessionRunner is used to run testcase and its steps.
 // each testcase has its own SessionRunner instance and share session variables.
 type SessionRunner struct {
-	testCase         *TestCase
-	hrpRunner        *HRPRunner
-	parser           *Parser
-	parsedConfig     *TConfig
-	sessionVariables map[string]interface{}
+	testCase           *TestCase
+	hrpRunner          *HRPRunner
+	parser             *Parser
+	parsedConfig       *TConfig
+	parametersIterator *ParametersIterator
+	sessionVariables   map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
 	transactions map[string]map[transactionType]time.Time
@@ -61,13 +62,16 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			Str("type", string(step.Type())).Msg("run step start")
 
 		stepResult, err := step.Run(r)
-		if err != nil && r.hrpRunner.failfast {
+		if err != nil {
 			log.Error().
 				Str("step", stepResult.Name).
 				Str("type", string(stepResult.StepType)).
 				Bool("success", false).
 				Msg("run step end")
-			return errors.Wrap(err, "abort running due to failfast setting")
+
+			if r.hrpRunner.failfast {
+				return errors.Wrap(err, "abort running due to failfast setting")
+			}
 		}
 
 		// update extracted variables
@@ -150,11 +154,15 @@ func (r *SessionRunner) parseConfig() error {
 	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
 
 	// parse testcase config parameters
-	err = initParameterIterator(r.parsedConfig, "runner")
+	parametersIterator, err := initParametersIterator(r.parsedConfig)
 	if err != nil {
-		log.Error().Interface("parameters", r.parsedConfig.Parameters).Err(err).Msg("parse config parameters failed")
+		log.Error().Err(err).
+			Interface("parameters", r.parsedConfig.Parameters).
+			Interface("parametersSetting", r.parsedConfig.ParametersSetting).
+			Msg("parse config parameters failed")
 		return errors.Wrap(err, "parse testcase config parameters failed")
 	}
+	r.parametersIterator = parametersIterator
 
 	return nil
 }

@@ -1,10 +1,7 @@
 package hrp
 
 import (
-	"math/rand"
 	"reflect"
-	"sync"
-	"time"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
 )
@@ -158,59 +155,3 @@ const (
 var (
 	thinkTimeDefaultRandom = map[string]float64{"min_percentage": 0.5, "max_percentage": 1.5}
 )
-
-type TParamsConfig struct {
-	Strategy  interface{} `json:"strategy,omitempty" yaml:"strategy,omitempty"` // map[string]string、string
-	Iteration int         `json:"iteration,omitempty" yaml:"iteration,omitempty"`
-	Iterators []*Iterator `json:"parameterIterator,omitempty" yaml:"parameterIterator,omitempty"` // 保存参数的迭代器
-}
-
-type Iterator struct {
-	sync.Mutex
-	data      iteratorParamsType
-	strategy  iteratorStrategyType // random, sequential
-	iteration int
-	index     int
-}
-
-type iteratorStrategyType string
-
-const (
-	strategyRandom     iteratorStrategyType = "random"
-	strategySequential iteratorStrategyType = "sequential"
-)
-
-type iteratorParamsType []map[string]interface{}
-
-func (params iteratorParamsType) Iterator() *Iterator {
-	return &Iterator{
-		data:      params,
-		iteration: len(params),
-		index:     0,
-	}
-}
-
-func (iter *Iterator) HasNext() bool {
-	if iter.iteration == -1 {
-		return true
-	}
-	return iter.index < iter.iteration
-}
-
-func (iter *Iterator) Next() (value map[string]interface{}) {
-	iter.Lock()
-	defer iter.Unlock()
-	if len(iter.data) == 0 {
-		iter.index++
-		return map[string]interface{}{}
-	}
-	if iter.strategy == strategyRandom {
-		randSource := rand.New(rand.NewSource(time.Now().Unix()))
-		randIndex := randSource.Intn(len(iter.data))
-		value = iter.data[randIndex]
-	} else {
-		value = iter.data[iter.index%len(iter.data)]
-	}
-	iter.index++
-	return value
-}

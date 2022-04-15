@@ -83,7 +83,6 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		b.plugins = append(b.plugins, sessionRunner.parser.plugin)
 		b.pluginsMutex.Unlock()
 	}
-	sessionRunner.resetSession()
 
 	// broadcast to all rendezvous at once when spawn done
 	go func() {
@@ -93,6 +92,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		}
 	}()
 
+	// set paramters mode for load testing
+	parametersIterator := sessionRunner.parametersIterator
+	parametersIterator.SetUnlimitedMode()
+
 	return &boomer.Task{
 		Name:   testcase.Config.Name,
 		Weight: testcase.Config.Weight,
@@ -100,15 +103,11 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			testcaseSuccess := true    // flag whole testcase result
 			transactionSuccess := true // flag current transaction result
 
-			var parameterVariables map[string]interface{}
-			// iterate through all parameter iterators and update case variables
-			for _, it := range sessionRunner.parsedConfig.ParametersSetting.Iterators {
-				if it.HasNext() {
-					parameterVariables = it.Next()
-				}
+			if parametersIterator.HasNext() {
+				sessionRunner.updateConfigVariables(parametersIterator.Next())
 			}
-			sessionRunner.updateConfigVariables(parameterVariables)
 
+			sessionRunner.resetSession()
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				stepResult, err := step.Run(sessionRunner)
