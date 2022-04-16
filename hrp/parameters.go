@@ -13,7 +13,7 @@ import (
 
 type TParamsConfig struct {
 	Strategy   iteratorStrategy            `json:"strategy,omitempty" yaml:"strategy,omitempty"`     // overall strategy
-	Strategies map[string]iteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // map[string]string、string
+	Strategies map[string]iteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
 	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
@@ -107,8 +107,8 @@ type ParametersIterator struct {
 	hasNext              bool       // cache query result
 	sequentialParameters Parameters // cartesian product for sequential parameters
 	randomParameterNames []string   // value is parameter names
-	limit                int
-	index                int
+	limit                int        // limit count for iteration
+	index                int        // current iteration index
 }
 
 // SetUnlimitedMode is used for load testing
@@ -142,11 +142,6 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 	defer iter.Unlock()
 
 	if !iter.hasNext {
-		return nil
-	}
-
-	if len(iter.data) == 0 {
-		iter.hasNext = false
 		return nil
 	}
 
