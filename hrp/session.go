@@ -112,7 +112,7 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 // updateConfigVariables updates config variables with given variables.
 // this is used for data driven
 func (r *SessionRunner) updateConfigVariables(parameters map[string]interface{}) {
-	if parameters == nil {
+	if len(parameters) == 0 {
 		return
 	}
 

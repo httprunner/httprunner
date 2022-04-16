@@ -248,6 +248,59 @@ func TestInitParametersIteratorCount(t *testing.T) {
 	}
 }
 
+func TestInitParametersIteratorUnlimitedCount(t *testing.T) {
+	configParameters := map[string]interface{}{
+		"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir), // 3
+		"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"},                          // 2
+		"app_version":       []interface{}{4.0},                                             // 1
+	}
+	testData := []struct {
+		cfg *TConfig
+	}{
+		// default, no parameters setting
+		{
+			&TConfig{
+				Parameters:        configParameters,
+				ParametersSetting: &TParamsConfig{},
+			},
+		},
+
+		// no parameters
+		// also will generate one empty item
+		{
+			&TConfig{
+				Parameters:        nil,
+				ParametersSetting: nil,
+			},
+		},
+	}
+	for _, data := range testData {
+		iterator, err := initParametersIterator(data.cfg)
+		if !assert.Nil(t, err) {
+			t.Fatal()
+		}
+		// set unlimited mode
+		iterator.SetUnlimitedMode()
+		if !assert.Equal(t, -1, iterator.limit) {
+			t.Fatal()
+		}
+
+		for i := 0; i < 100; i++ {
+			if !assert.True(t, iterator.HasNext()) {
+				t.Fatal()
+			}
+			iterator.Next() // consume next parameters
+		}
+		if !assert.Equal(t, 100, iterator.index) {
+			t.Fatal()
+		}
+		// should also have next
+		if !assert.True(t, iterator.HasNext()) {
+			t.Fatal()
+		}
+	}
+}
+
 func TestInitParametersIteratorContent(t *testing.T) {
 	configParameters := map[string]interface{}{
 		"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir), // 3
