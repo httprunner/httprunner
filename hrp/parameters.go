@@ -42,6 +42,9 @@ func initParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
 }
 
 func newParametersIterator(parameters map[string]Parameters, config *TParamsConfig) *ParametersIterator {
+	if config == nil {
+		config = &TParamsConfig{}
+	}
 	iterator := &ParametersIterator{
 		data:                 parameters,
 		hasNext:              true,
@@ -52,7 +55,8 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 	}
 
 	if len(parameters) == 0 {
-		iterator.hasNext = false
+		iterator.data = map[string]Parameters{}
+		iterator.limit = 1
 		return iterator
 	}
 
@@ -75,12 +79,23 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 
 	// generate cartesian product for sequential parameters
 	iterator.sequentialParameters = genCartesianProduct(parametersList)
+
+	if iterator.limit < 0 {
+		log.Warn().Msg("parameters unlimited mode is only supported for load testing")
+		iterator.limit = 0
+	}
 	if iterator.limit == 0 {
+		// limit not set
 		if len(iterator.sequentialParameters) > 0 {
+			// use cartesian product of sequential parameters size as limit
 			iterator.limit = len(iterator.sequentialParameters)
 		} else {
+			// all parameters are selected by random
+			// only run once
 			iterator.limit = 1
 		}
+	} else { // limit > 0
+		log.Info().Int("limit", iterator.limit).Msg("set limit for parameters")
 	}
 
 	return iterator
@@ -98,6 +113,7 @@ type ParametersIterator struct {
 
 // SetUnlimitedMode is used for load testing
 func (iter *ParametersIterator) SetUnlimitedMode() {
+	log.Info().Msg("set parameters unlimited mode")
 	iter.limit = -1
 }
 
@@ -134,15 +150,24 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 		return nil
 	}
 
-	selectedParameters := make(map[string]interface{})
-	if iter.index < len(iter.sequentialParameters) {
+	var selectedParameters map[string]interface{}
+	if len(iter.sequentialParameters) == 0 {
+		selectedParameters = make(map[string]interface{})
+	} else if iter.index < len(iter.sequentialParameters) {
 		selectedParameters = iter.sequentialParameters[iter.index]
+	} else {
+		// loop back to the first sequential parameter
+		index := iter.index % len(iter.sequentialParameters)
+		selectedParameters = iter.sequentialParameters[index]
 	}
 
+	// merge with random parameters
 	for _, paramName := range iter.randomParameterNames {
 		randSource := rand.New(rand.NewSource(time.Now().Unix()))
 		randIndex := randSource.Intn(len(iter.data[paramName]))
-		selectedParameters[paramName] = iter.data[paramName][randIndex]
+		for k, v := range iter.data[paramName][randIndex] {
+			selectedParameters[k] = v
+		}
 	}
 
 	iter.index++
