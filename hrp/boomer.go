@@ -72,15 +72,16 @@ func (b *HRPBoomer) Quit() {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	// init session runner for testcase
-	sessionRunner, err := b.hrpRunner.NewSessionRunner(testcase)
+	// init runner for testcase
+	// this runner is shared by multiple session runners
+	caseRunner, err := b.hrpRunner.newCaseRunner(testcase)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create session runner")
+		log.Error().Err(err).Msg("failed to create runner")
 		os.Exit(1)
 	}
-	if sessionRunner.parser.plugin != nil {
+	if caseRunner.parser.plugin != nil {
 		b.pluginsMutex.Lock()
-		b.plugins = append(b.plugins, sessionRunner.parser.plugin)
+		b.plugins = append(b.plugins, caseRunner.parser.plugin)
 		b.pluginsMutex.Unlock()
 	}
 
@@ -93,7 +94,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	}()
 
 	// set paramters mode for load testing
-	parametersIterator := sessionRunner.parametersIterator
+	parametersIterator := caseRunner.parametersIterator
 	parametersIterator.SetUnlimitedMode()
 
 	return &boomer.Task{
@@ -103,11 +104,13 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			testcaseSuccess := true    // flag whole testcase result
 			transactionSuccess := true // flag current transaction result
 
+			// init session runner
+			sessionRunner := caseRunner.newSession()
+
 			if parametersIterator.HasNext() {
 				sessionRunner.updateConfigVariables(parametersIterator.Next())
 			}
 
-			sessionRunner.resetSession()
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				stepResult, err := step.Run(sessionRunner)

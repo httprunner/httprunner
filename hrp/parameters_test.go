@@ -353,7 +353,7 @@ func TestInitParametersIteratorContent(t *testing.T) {
 				ParametersSetting: nil,
 			},
 			0,
-			map[string]interface{}(nil),
+			map[string]interface{}{},
 		},
 	}
 	for _, data := range testData {

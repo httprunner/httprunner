@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
@@ -208,11 +209,23 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 // NewSessionRunner creates a new session runner for testcase.
 // each testcase has its own session runner
 func (r *HRPRunner) NewSessionRunner(testcase *TestCase) (*SessionRunner, error) {
+	runner, err := r.newCaseRunner(testcase)
+	if err != nil {
+		return nil, err
+	}
+
 	sessionRunner := &SessionRunner{
+		testCaseRunner: runner,
+	}
+	sessionRunner.resetSession()
+	return sessionRunner, nil
+}
+
+func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
+	runner := &testCaseRunner{
 		testCase:  testcase,
 		hrpRunner: r,
 		parser:    newParser(),
-		summary:   newSummary(),
 	}
 
 	// init parser plugin
@@ -220,12 +233,80 @@ func (r *HRPRunner) NewSessionRunner(testcase *TestCase) (*SessionRunner, error)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
-	sessionRunner.parser.plugin = plugin
+	runner.parser.plugin = plugin
 
 	// parse testcase config
-	if err := sessionRunner.parseConfig(); err != nil {
+	if err := runner.parseConfig(); err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
 
-	return sessionRunner, nil
+	return runner, nil
+}
+
+type testCaseRunner struct {
+	testCase           *TestCase
+	hrpRunner          *HRPRunner
+	parser             *Parser
+	parsedConfig       *TConfig
+	parametersIterator *ParametersIterator
+}
+
+// parseConfig parses testcase config, stores to parsedConfig.
+func (r *testCaseRunner) parseConfig() error {
+	cfg := r.testCase.Config
+
+	r.parsedConfig = &TConfig{}
+	// deep copy config to avoid data racing
+	if err := copier.Copy(r.parsedConfig, cfg); err != nil {
+		log.Error().Err(err).Msg("copy testcase config failed")
+		return err
+	}
+
+	// parse config variables
+	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
+	if err != nil {
+		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
+		return err
+	}
+	r.parsedConfig.Variables = parsedVariables
+
+	// parse config name
+	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
+	if err != nil {
+		return errors.Wrap(err, "parse config name failed")
+	}
+	r.parsedConfig.Name = convertString(parsedName)
+
+	// parse config base url
+	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
+	if err != nil {
+		return errors.Wrap(err, "parse config base url failed")
+	}
+	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
+
+	// ensure correction of think time config
+	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
+
+	// parse testcase config parameters
+	parametersIterator, err := initParametersIterator(r.parsedConfig)
+	if err != nil {
+		log.Error().Err(err).
+			Interface("parameters", r.parsedConfig.Parameters).
+			Interface("parametersSetting", r.parsedConfig.ParametersSetting).
+			Msg("parse config parameters failed")
+		return errors.Wrap(err, "parse testcase config parameters failed")
+	}
+	r.parametersIterator = parametersIterator
+
+	return nil
+}
+
+// each boomer task initiates a new session
+// in order to avoid data racing
+func (r *testCaseRunner) newSession() *SessionRunner {
+	sessionRunner := &SessionRunner{
+		testCaseRunner: r,
+	}
+	sessionRunner.resetSession()
+	return sessionRunner
 }
