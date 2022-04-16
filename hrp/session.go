@@ -111,8 +111,13 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 
 // updateConfigVariables updates config variables with given variables.
 // this is used for data driven
-func (r *SessionRunner) updateConfigVariables(givenVars map[string]interface{}) {
-	for k, v := range givenVars {
+func (r *SessionRunner) updateConfigVariables(parameters map[string]interface{}) {
+	if parameters == nil {
+		return
+	}
+
+	log.Info().Interface("parameters", parameters).Msg("update config variables")
+	for k, v := range parameters {
 		r.parsedConfig.Variables[k] = v
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +30,7 @@ func TestLoadParameters(t *testing.T) {
 					{"test1", "111111"},
 					{"test2", "222222"},
 				},
-				"user_agent":  []interface{}{"IOS/10.1", "IOS/10.2"},
+				"user_agent":  []interface{}{"iOS/10.1", "iOS/10.2"},
 				"app_version": []interface{}{4.0},
 			},
 			map[string]Parameters{
@@ -40,8 +39,8 @@ func TestLoadParameters(t *testing.T) {
 					{"username": "test2", "password": "222222"},
 				},
 				"user_agent": {
-					{"user_agent": "IOS/10.1"},
-					{"user_agent": "IOS/10.2"},
+					{"user_agent": "iOS/10.1"},
+					{"user_agent": "iOS/10.2"},
 				},
 				"app_version": {
 					{"app_version": 4.0},
@@ -79,17 +78,17 @@ func TestLoadParametersError(t *testing.T) {
 		{
 			map[string]interface{}{
 				"username_password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
-				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
+				"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"}},
 		},
 		{
 			map[string]interface{}{
 				"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
-				"user-agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
+				"user-agent":        []interface{}{"iOS/10.1", "iOS/10.2"}},
 		},
 		{
 			map[string]interface{}{
 				"username-password": fmt.Sprintf("${param(%s/account.csv)}", hrpExamplesDir),
-				"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"}},
+				"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"}},
 		},
 	}
 	for _, data := range testData {
@@ -100,23 +99,69 @@ func TestLoadParametersError(t *testing.T) {
 	}
 }
 
-func TestInitParametersIterator(t *testing.T) {
+func TestInitParametersIteratorCount(t *testing.T) {
 	configParameters := map[string]interface{}{
 		"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir), // 3
-		"user_agent":        []interface{}{"IOS/10.1", "IOS/10.2"},
-		"app_version":       []interface{}{4.0},
+		"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"},                          // 2
+		"app_version":       []interface{}{4.0},                                             // 1
 	}
 	testData := []struct {
 		cfg         *TConfig
 		expectLimit int
 	}{
+		// default, no parameters setting
 		{
 			&TConfig{
 				Parameters:        configParameters,
 				ParametersSetting: &TParamsConfig{},
 			},
-			6,
+			6, // 3 * 2 * 1
 		},
+		{
+			&TConfig{
+				Parameters: configParameters,
+			},
+			6, // 3 * 2 * 1
+		},
+		// default equals to set overall parameters strategy to "sequential"
+		{
+			&TConfig{
+				Parameters: configParameters,
+				ParametersSetting: &TParamsConfig{
+					Strategy: "sequential",
+				},
+			},
+			6, // 3 * 2 * 1
+		},
+		// default equals to set each individual parameters strategy to "sequential"
+		{
+			&TConfig{
+				Parameters: configParameters,
+				ParametersSetting: &TParamsConfig{
+					Strategies: map[string]iteratorStrategy{
+						"username-password": "sequential",
+						"user_agent":        "sequential",
+						"app_version":       "sequential",
+					},
+				},
+			},
+			6, // 3 * 2 * 1
+		},
+		{
+			&TConfig{
+				Parameters: configParameters,
+				ParametersSetting: &TParamsConfig{
+					Strategies: map[string]iteratorStrategy{
+						"user_agent":  "sequential",
+						"app_version": "sequential",
+					},
+				},
+			},
+			6, // 3 * 2 * 1
+		},
+
+		// set overall parameters overall strategy to "random"
+		// each random parameters only select one item
 		{
 			&TConfig{
 				Parameters: configParameters,
@@ -124,7 +169,20 @@ func TestInitParametersIterator(t *testing.T) {
 					Strategy: "random",
 				},
 			},
-			1,
+			1, // 1 * 1 * 1
+		},
+		// set some individual parameters strategy to "random"
+		// this will override overall strategy
+		{
+			&TConfig{
+				Parameters: configParameters,
+				ParametersSetting: &TParamsConfig{
+					Strategies: map[string]iteratorStrategy{
+						"user_agent": "random",
+					},
+				},
+			},
+			3, // 3 * 1 * 1
 		},
 		{
 			&TConfig{
@@ -135,7 +193,37 @@ func TestInitParametersIterator(t *testing.T) {
 					},
 				},
 			},
-			2,
+			2, // 1 * 2 * 1
+		},
+
+		// set limit for parameters
+		{
+			&TConfig{
+				Parameters: configParameters, // total: 6 = 3 * 2 * 1
+				ParametersSetting: &TParamsConfig{
+					Limit: 4, // limit could be less than total
+				},
+			},
+			4,
+		},
+		{
+			&TConfig{
+				Parameters: configParameters, // total: 6 = 3 * 2 * 1
+				ParametersSetting: &TParamsConfig{
+					Limit: 9, // limit could also be greater than total
+				},
+			},
+			9,
+		},
+
+		// no parameters
+		// also will generate one empty item
+		{
+			&TConfig{
+				Parameters:        nil,
+				ParametersSetting: nil,
+			},
+			1,
 		},
 	}
 	for _, data := range testData {
@@ -151,10 +239,86 @@ func TestInitParametersIterator(t *testing.T) {
 			if !assert.True(t, iterator.HasNext()) {
 				t.Fatal()
 			}
-			log.Info().Interface("next", iterator.Next()).Msg("get next parameters")
+			iterator.Next() // consume next parameters
 		}
 		// should not have next
 		if !assert.False(t, iterator.HasNext()) {
+			t.Fatal()
+		}
+	}
+}
+
+func TestInitParametersIteratorContent(t *testing.T) {
+	configParameters := map[string]interface{}{
+		"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir), // 3
+		"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"},                          // 2
+		"app_version":       []interface{}{4.0},                                             // 1
+	}
+	testData := []struct {
+		cfg              *TConfig
+		checkIndex       int
+		expectParameters map[string]interface{}
+	}{
+		// default, no parameters setting
+		{
+			&TConfig{
+				Parameters: configParameters,
+			},
+			0, // check first item
+			map[string]interface{}{
+				"username": "test1", "password": "111111", "user_agent": "iOS/10.1", "app_version": 4.0,
+			},
+		},
+
+		// set limit for parameters
+		{
+			&TConfig{
+				Parameters: map[string]interface{}{
+					"username-password": []map[string]interface{}{ // 1
+						{"username": "test1", "password": 111111, "other": "111"},
+					},
+					"user_agent": []string{"iOS/10.1", "iOS/10.2"}, // 2
+				},
+				ParametersSetting: &TParamsConfig{
+					Limit: 5, // limit could also be greater than total
+					Strategies: map[string]iteratorStrategy{
+						"username-password": "random",
+					},
+				},
+			},
+			2, // check 3th item, equals to the first item
+			map[string]interface{}{
+				"username": "test1", "password": 111111, "user_agent": "iOS/10.1",
+			},
+		},
+
+		// no parameters
+		// also will generate one empty item
+		{
+			&TConfig{
+				Parameters:        nil,
+				ParametersSetting: nil,
+			},
+			0,
+			map[string]interface{}(nil),
+		},
+	}
+	for _, data := range testData {
+		iterator, err := initParametersIterator(data.cfg)
+		if !assert.Nil(t, err) {
+			t.Fatal()
+		}
+
+		// get expected parameters item
+		for i := 0; i < data.checkIndex; i++ {
+			if !assert.True(t, iterator.HasNext()) {
+				t.Fatal()
+			}
+			iterator.Next() // consume next parameters
+		}
+		parametersItem := iterator.Next()
+
+		if !assert.Equal(t, data.expectParameters, parametersItem) {
 			t.Fatal()
 		}
 	}
