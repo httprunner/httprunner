@@ -2,11 +2,9 @@ package hrp
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
@@ -175,22 +172,9 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	}
 	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
 
-	// update the report output path
-	pluginPath, err := locatePlugin(testcases[0].GetPath())
-	if err == nil {
-		outputPath, _ := filepath.Split(pluginPath)
-		summaryPath = filepath.Join(outputPath, summaryPath)
-		reportPath = filepath.Join(outputPath, reportPath)
-	}
-
 	// save summary
 	if r.saveTests {
-		dir, _ := filepath.Split(summaryPath)
-		err := builtin.EnsureFolderExists(dir)
-		if err != nil {
-			return err
-		}
-		err = builtin.Dump2JSON(s, fmt.Sprintf(summaryPath, s.Time.StartAt.Unix()))
+		err := s.genSummary()
 		if err != nil {
 			return err
 		}
@@ -229,11 +213,12 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	}
 
 	// init parser plugin
-	plugin, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
+	plugin, pluginDir, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
 	runner.parser.plugin = plugin
+	runner.rootDir = pluginDir
 
 	// parse testcase config
 	if err := runner.parseConfig(); err != nil {
@@ -249,6 +234,7 @@ type testCaseRunner struct {
 	parser             *Parser
 	parsedConfig       *TConfig
 	parametersIterator *ParametersIterator
+	rootDir            string // project root dir
 }
 
 // parseConfig parses testcase config, stores to parsedConfig.

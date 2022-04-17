@@ -19,15 +19,17 @@ const (
 	hashicorpPyPluginFile = "debugtalk.py"  // used for hashicorp python plugin
 )
 
-func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
+func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, pluginDir string, err error) {
 	// plugin file not found
 	if path == "" {
-		return nil, nil
+		return nil, "", nil
 	}
 	pluginPath, err := locatePlugin(path)
 	if err != nil {
-		return nil, nil
+		return nil, "", nil
 	}
+	// TODO: move pluginDir to funplugin
+	pluginDir = filepath.Dir(pluginPath)
 
 	// found plugin file
 	plugin, err = funplugin.Init(pluginPath, funplugin.WithLogOn(logOn))

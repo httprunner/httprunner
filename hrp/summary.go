@@ -38,6 +38,7 @@ type Summary struct {
 	Time     *TestCaseTime      `json:"time" yaml:"time"`
 	Platform *Platform          `json:"platform" yaml:"platform"`
 	Details  []*TestCaseSummary `json:"details" yaml:"details"`
+	rootDir  string
 }
 
 func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
@@ -53,15 +54,24 @@ func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
 	s.Stat.TestSteps.Failures += caseSummary.Stat.Failures
 	s.Details = append(s.Details, caseSummary)
 	s.Success = s.Success && caseSummary.Success
+
+	// specify output reports dir
+	if len(s.Details) == 1 {
+		s.rootDir = caseSummary.RootDir
+	} else if s.rootDir != caseSummary.RootDir {
+		// if multiple testcases have different root path, use current working dir
+		s.rootDir, _ = os.Getwd()
+	}
 }
 
 func (s *Summary) genHTMLReport() error {
-	dir, _ := filepath.Split(reportPath)
-	err := builtin.EnsureFolderExists(dir)
+	reportsDir := filepath.Join(s.rootDir, resultsDir)
+	err := builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
 		return err
 	}
-	reportPath := fmt.Sprintf(reportPath, s.Time.StartAt.Unix())
+
+	reportPath := filepath.Join(reportsDir, fmt.Sprintf("report-%v.html", s.Time.StartAt.Unix()))
 	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
@@ -84,13 +94,25 @@ func (s *Summary) genHTMLReport() error {
 	return err
 }
 
+func (s *Summary) genSummary() error {
+	reportsDir := filepath.Join(s.rootDir, resultsDir)
+	err := builtin.EnsureFolderExists(reportsDir)
+	if err != nil {
+		return err
+	}
+
+	summaryPath := filepath.Join(reportsDir, fmt.Sprintf("summary-%v.json", s.Time.StartAt.Unix()))
+	err = builtin.Dump2JSON(s, summaryPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //go:embed internal/scaffold/templates/report/template.html
 var reportTemplate string
 
-var (
-	reportPath  = "reports/report-%v.html"
-	summaryPath = "reports/summary-%v.json"
-)
+const resultsDir = "reports"
 
 type Stat struct {
 	TestCases TestCaseStat `json:"testcases" yaml:"test_cases"`
@@ -130,6 +152,7 @@ type TestCaseSummary struct {
 	InOut   *TestCaseInOut `json:"in_out" yaml:"in_out"`
 	Log     string         `json:"log,omitempty" yaml:"log,omitempty"` // TODO
 	Records []*StepResult  `json:"records" yaml:"records"`
+	RootDir string         `json:"root_dir" yaml:"root_dir"`
 }
 
 type TestCaseInOut struct {
