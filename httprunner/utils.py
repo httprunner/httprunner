@@ -2,6 +2,7 @@ import collections
 import copy
 import itertools
 import json
+import os
 import os.path
 import platform
 import uuid
@@ -33,15 +34,20 @@ class GAClient(object):
 
     def __init__(self, tracking_id: Text):
         self.http_client = requests.Session()
-        self.label = str(__version__)
+        self.label = f"v{__version__}"
         self.common_params = {
             'v': self.version,
             'tid': tracking_id,    # Tracking ID / Property ID, XX-XXXXXXX-X
             'cid': uuid.getnode(),      # Anonymous Client ID
             'ua': f'HttpRunner/{__version__}',
         }
+        # do not send GA events in CI environment
+        self.__is_ci = os.getenv("DISABLE_GA") == "true"
 
     def track_event(self, category: Text, action: Text, value: int = 0):
+        if self.__is_ci:
+            return
+
         data = {
             't': 'event',       # Event hit type = event
             'ec': category,     # Required. Event Category.
@@ -50,9 +56,15 @@ class GAClient(object):
             'ev': value,        # Optional. Event value, must be non-negative integer
         }
         data.update(self.common_params)
-        self.http_client.post(self.report_url, data=data)
+        try:
+            self.http_client.post(self.report_url, data=data, timeout=5)
+        except Exception:   # ProxyError, SSLError, ConnectionError
+            pass
 
     def track_user_timing(self, category: Text, variable: Text, duration: int):
+        if self.__is_ci:
+            return
+
         data = {
             't': 'timing',      # Event hit type = timing
             'utc': category,    # Required. user timing category. e.g. jsonLoader
@@ -61,7 +73,10 @@ class GAClient(object):
             'utl': self.label,  # Optional. user timing label, used as version.
         }
         data.update(self.common_params)
-        self.http_client.post(self.report_url, data=data)
+        try:
+            self.http_client.post(self.report_url, data=data, timeout=5)
+        except Exception:   # ProxyError, SSLError, ConnectionError
+            pass
 
 
 ga_client = GAClient("UA-114587036-1")
@@ -76,7 +91,7 @@ def set_os_environ(variables_mapping):
 
 
 def unset_os_environ(variables_mapping):
-    """ set variables mapping to os.environ
+    """ unset variables mapping to os.environ
     """
     for variable in variables_mapping:
         os.environ.pop(variable)
