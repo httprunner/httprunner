@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
-from typing import List, Dict, Text, NoReturn
+from typing import List, Dict, Text
 
 try:
     import allure
@@ -55,7 +55,7 @@ class HttpRunner(object):
     # log
     __log_path: Text = ""
 
-    def __init_tests__(self) -> NoReturn:
+    def __init_tests__(self):
         self.__config = self.config.perform()
         self.__teststeps = []
         for step in self.teststeps:
@@ -90,7 +90,7 @@ class HttpRunner(object):
 
     def __call_hooks(
         self, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text,
-    ) -> NoReturn:
+    ):
         """ call hook actions.
 
         Args:
@@ -304,7 +304,7 @@ class HttpRunner(object):
         logger.info(f"run step end: {step.name} <<<<<<\n")
         return step_data.export_vars
 
-    def __parse_config(self, config: TConfig) -> NoReturn:
+    def __parse_config(self, config: TConfig):
         config.variables.update(self.__session_variables)
         config.variables = parse_variables_mapping(
             config.variables, self.__project_meta.functions

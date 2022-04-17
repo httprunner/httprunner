@@ -1,4 +1,4 @@
-from typing import Dict, Text, Any, NoReturn
+from typing import Dict, Text, Any
 
 import jmespath
 import requests
@@ -153,7 +153,7 @@ class ResponseObject(object):
         }
         if not expr.startswith(tuple(resp_obj_meta.keys())):
             return expr
-        
+
         try:
             check_value = jmespath.search(expr, resp_obj_meta)
         except JMESPathError as ex:
@@ -193,7 +193,7 @@ class ResponseObject(object):
         validators: Validators,
         variables_mapping: VariablesMapping = None,
         functions_mapping: FunctionsMapping = None,
-    ) -> NoReturn:
+    ):
 
         variables_mapping = variables_mapping or {}
         functions_mapping = functions_mapping or {}

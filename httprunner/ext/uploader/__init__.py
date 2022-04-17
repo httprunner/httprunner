@@ -44,7 +44,7 @@ For compatibility, you can also write upload test script in old way:
 
 import os
 import sys
-from typing import Text, NoReturn
+from typing import Text
 
 from httprunner.models import TStep, FunctionsMapping
 from httprunner.parser import parse_variables_mapping
@@ -75,7 +75,7 @@ def ensure_upload_ready():
     sys.exit(1)
 
 
-def prepare_upload_step(step: TStep, functions: FunctionsMapping) -> "NoReturn":
+def prepare_upload_step(step: TStep, functions: FunctionsMapping):
     """ preprocess for upload test
         replace `upload` info with MultipartEncoder
 
