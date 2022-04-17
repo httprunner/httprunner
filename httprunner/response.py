@@ -1,4 +1,4 @@
-from typing import Dict, Text, Any
+from typing import Any, Dict, Text
 
 import jmespath
 import requests
@@ -6,9 +6,9 @@ from jmespath.exceptions import JMESPathError
 from loguru import logger
 
 from httprunner import exceptions
-from httprunner.exceptions import ValidationFailure, ParamsError
-from httprunner.models import VariablesMapping, Validators
-from httprunner.parser import parse_string_value, Parser
+from httprunner.exceptions import ParamsError, ValidationFailure
+from httprunner.models import Validators, VariablesMapping
+from httprunner.parser import Parser, parse_string_value
 
 
 def get_uniform_comparator(comparator: Text):
