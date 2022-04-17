@@ -133,7 +133,7 @@ class ResponseData(BaseModel):
     cookies: Cookies
     encoding: Union[Text, None] = None
     content_type: Text
-    body: Union[Text, bytes, List, Dict]
+    body: Union[Text, bytes, List, Dict, None]
 
 
 class ReqRespData(BaseModel):
@@ -161,7 +161,7 @@ class StepData(BaseModel):
     data: Union[SessionData, List['StepData']] = None
     export_vars: VariablesMapping = {}
 
-        
+
 StepData.update_forward_refs()
 
 

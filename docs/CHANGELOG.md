@@ -2,6 +2,7 @@
 
 ## 3.1.9 (2022-04-17)
 
+- fix #1174: pydantic validation error when body is None
 - fix #1209: only convert jmespath path for some fields in white list
 - fix #1233: parse upload info with session variables
 - fix #1246: catch exceptions when getting socket address failed
