@@ -58,11 +58,9 @@ def _convert_jmespath(raw: Text) -> Text:
 
     raw_list = []
     for item in raw.split("."):
-        if "-" in item and "[-" not in item:
-            # add quotes for field with separator
+        if item.lower().startswith("content-") or item.lower() in ["user-agent"]:
+            # add quotes for some field in white list
             # e.g. headers.Content-Type => headers."Content-Type"
-            # also need to avoid replacing negative index in jmespath
-            # e.g. body.users[-1] => body.users[-1], keep unchanged
             item = item.strip('"')
             raw_list.append(f'"{item}"')
         elif item.isdigit():
@@ -257,12 +255,12 @@ def ensure_cli_args(args: List) -> List:
     """
     # remove deprecated --failfast
     if "--failfast" in args:
-        logger.warning(f"remove deprecated argument: --failfast")
+        logger.warning("remove deprecated argument: --failfast")
         args.pop(args.index("--failfast"))
 
     # convert --report-file to --html
     if "--report-file" in args:
-        logger.warning(f"replace deprecated argument --report-file with --html")
+        logger.warning("replace deprecated argument --report-file with --html")
         index = args.index("--report-file")
         args[index] = "--html"
         args.append("--self-contained-html")
@@ -270,7 +268,7 @@ def ensure_cli_args(args: List) -> List:
     # keep compatibility with --save-tests in v2
     if "--save-tests" in args:
         logger.warning(
-            f"generate conftest.py keep compatibility with --save-tests in v2"
+            "generate conftest.py keep compatibility with --save-tests in v2"
         )
         args.pop(args.index("--save-tests"))
         _generate_conftest_for_summary(args)
