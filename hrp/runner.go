@@ -2,19 +2,17 @@ package hrp
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
@@ -163,16 +161,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			}
 		}()
 
-		// 在runner模式下，指定整体策略，cfg.ParametersSetting.Iterators仅包含一个CartesianProduct的迭代器
-		for it := sessionRunner.parsedConfig.ParametersSetting.Iterators[0]; it.HasNext(); {
-			var parameterVariables map[string]interface{}
-			// iterate through all parameter iterators and update case variables
-			for _, it := range sessionRunner.parsedConfig.ParametersSetting.Iterators {
-				if it.HasNext() {
-					parameterVariables = it.Next()
-				}
-			}
-			if err = sessionRunner.Start(parameterVariables); err != nil {
+		for it := sessionRunner.parametersIterator; it.HasNext(); {
+			if err = sessionRunner.Start(it.Next()); err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				return err
 			}
@@ -182,22 +172,9 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	}
 	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
 
-	// update the report output path
-	pluginPath, err := locatePlugin(testcases[0].GetPath())
-	if err == nil {
-		outputPath, _ := filepath.Split(pluginPath)
-		summaryPath = filepath.Join(outputPath, summaryPath)
-		reportPath = filepath.Join(outputPath, reportPath)
-	}
-
 	// save summary
 	if r.saveTests {
-		dir, _ := filepath.Split(summaryPath)
-		err := builtin.EnsureFolderExists(dir)
-		if err != nil {
-			return err
-		}
-		err = builtin.Dump2JSON(s, fmt.Sprintf(summaryPath, s.Time.StartAt.Unix()))
+		err := s.genSummary()
 		if err != nil {
 			return err
 		}
@@ -216,24 +193,106 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 // NewSessionRunner creates a new session runner for testcase.
 // each testcase has its own session runner
 func (r *HRPRunner) NewSessionRunner(testcase *TestCase) (*SessionRunner, error) {
+	runner, err := r.newCaseRunner(testcase)
+	if err != nil {
+		return nil, err
+	}
+
 	sessionRunner := &SessionRunner{
+		testCaseRunner: runner,
+	}
+	sessionRunner.resetSession()
+	return sessionRunner, nil
+}
+
+func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
+	runner := &testCaseRunner{
 		testCase:  testcase,
 		hrpRunner: r,
 		parser:    newParser(),
-		summary:   newSummary(),
 	}
 
 	// init parser plugin
-	plugin, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
+	plugin, pluginDir, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
-	sessionRunner.parser.plugin = plugin
+	runner.parser.plugin = plugin
+	runner.rootDir = pluginDir
 
 	// parse testcase config
-	if err := sessionRunner.parseConfig(); err != nil {
+	if err := runner.parseConfig(); err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
 
-	return sessionRunner, nil
+	return runner, nil
+}
+
+type testCaseRunner struct {
+	testCase           *TestCase
+	hrpRunner          *HRPRunner
+	parser             *Parser
+	parsedConfig       *TConfig
+	parametersIterator *ParametersIterator
+	rootDir            string // project root dir
+}
+
+// parseConfig parses testcase config, stores to parsedConfig.
+func (r *testCaseRunner) parseConfig() error {
+	cfg := r.testCase.Config
+
+	r.parsedConfig = &TConfig{}
+	// deep copy config to avoid data racing
+	if err := copier.Copy(r.parsedConfig, cfg); err != nil {
+		log.Error().Err(err).Msg("copy testcase config failed")
+		return err
+	}
+
+	// parse config variables
+	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
+	if err != nil {
+		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
+		return err
+	}
+	r.parsedConfig.Variables = parsedVariables
+
+	// parse config name
+	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
+	if err != nil {
+		return errors.Wrap(err, "parse config name failed")
+	}
+	r.parsedConfig.Name = convertString(parsedName)
+
+	// parse config base url
+	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
+	if err != nil {
+		return errors.Wrap(err, "parse config base url failed")
+	}
+	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
+
+	// ensure correction of think time config
+	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
+
+	// parse testcase config parameters
+	parametersIterator, err := initParametersIterator(r.parsedConfig)
+	if err != nil {
+		log.Error().Err(err).
+			Interface("parameters", r.parsedConfig.Parameters).
+			Interface("parametersSetting", r.parsedConfig.ParametersSetting).
+			Msg("parse config parameters failed")
+		return errors.Wrap(err, "parse testcase config parameters failed")
+	}
+	r.parametersIterator = parametersIterator
+
+	return nil
+}
+
+// each boomer task initiates a new session
+// in order to avoid data racing
+func (r *testCaseRunner) newSession() *SessionRunner {
+	sessionRunner := &SessionRunner{
+		testCaseRunner: r,
+	}
+	sessionRunner.resetSession()
+	return sessionRunner
 }

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/maja42/goval"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/funplugin"
@@ -455,7 +454,7 @@ func (p *Parser) ParseVariables(variables map[string]interface{}) (map[string]in
 	return parsedVariables, nil
 }
 
-type variableSet map[string]struct{}
+type variableSet map[string]struct{} // TODO
 
 func extractVariables(raw interface{}) variableSet {
 	rawValue := reflect.ValueOf(raw)
@@ -531,180 +530,4 @@ func findallVariables(raw string) variableSet {
 	}
 
 	return varSet
-}
-
-func genCartesianProduct(paramsMap map[string]iteratorParamsType) iteratorParamsType {
-	if len(paramsMap) == 0 {
-		return nil
-	}
-	var params []iteratorParamsType
-	for _, v := range paramsMap {
-		params = append(params, v)
-	}
-	var cartesianProduct iteratorParamsType
-	cartesianProduct = params[0]
-	for i := 0; i < len(params)-1; i++ {
-		var tempProduct iteratorParamsType
-		for _, param1 := range cartesianProduct {
-			for _, param2 := range params[i+1] {
-				tempProduct = append(tempProduct, mergeVariables(param1, param2))
-			}
-		}
-		cartesianProduct = tempProduct
-	}
-	return cartesianProduct
-}
-
-func parseParameters(parameters map[string]interface{}, variablesMapping map[string]interface{}) (map[string]iteratorParamsType, error) {
-	if len(parameters) == 0 {
-		return nil, nil
-	}
-	parsedParametersSlice := make(map[string]iteratorParamsType)
-	var err error
-	for k, v := range parameters {
-		var parameterSlice iteratorParamsType
-		rawValue := reflect.ValueOf(v)
-		switch rawValue.Kind() {
-		case reflect.String:
-			// e.g. username-password: ${parameterize(examples/hrp/account.csv)} -> [{"username": "test1", "password": "111111"}, {"username": "test2", "password": "222222"}]
-			var parsedParameterContent interface{}
-			parsedParameterContent, err = newParser().ParseString(rawValue.String(), variablesMapping)
-			if err != nil {
-				log.Error().Interface("parameterContent", rawValue).Msg("[parseParameters] parse parameter content error")
-				return nil, err
-			}
-			parsedParameterRawValue := reflect.ValueOf(parsedParameterContent)
-			if parsedParameterRawValue.Kind() != reflect.Slice {
-				log.Error().Interface("parameterContent", parsedParameterRawValue).Msg("[parseParameters] parsed parameter content should be slice")
-				return nil, errors.New("parsed parameter content should be slice")
-			}
-			parameterSlice, err = parseSlice(k, parsedParameterRawValue.Interface())
-		case reflect.Slice:
-			// e.g. user_agent: ["iOS/10.1", "iOS/10.2"] -> [{"user_agent": "iOS/10.1"}, {"user_agent": "iOS/10.2"}]
-			parameterSlice, err = parseSlice(k, rawValue.Interface())
-		default:
-			log.Error().Interface("parameter", parameters).Msg("[parseParameters] parameter content should be slice or text(functions call)")
-			return nil, errors.New("parameter content should be slice or text(functions call)")
-		}
-		if err != nil {
-			return nil, err
-		}
-		parsedParametersSlice[k] = parameterSlice
-	}
-	return parsedParametersSlice, nil
-}
-
-func parseSlice(parameterName string, parameterContent interface{}) ([]map[string]interface{}, error) {
-	parameterNameSlice := strings.Split(parameterName, "-")
-	var parameterSlice []map[string]interface{}
-	parameterContentSlice := reflect.ValueOf(parameterContent)
-	if parameterContentSlice.Kind() != reflect.Slice {
-		return nil, errors.New("parameterContent should be slice")
-	}
-	for i := 0; i < parameterContentSlice.Len(); i++ {
-		parameterMap := make(map[string]interface{})
-		elem := reflect.ValueOf(parameterContentSlice.Index(i).Interface())
-		switch elem.Kind() {
-		case reflect.Map:
-			// e.g. "username-password": [{"username": "test1", "password": "passwd1", "other": "111"}, {"username": "test2", "password": "passwd2", "other": ""222}]
-			// -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
-			for _, key := range parameterNameSlice {
-				if _, ok := elem.Interface().(map[string]interface{})[key]; ok {
-					parameterMap[key] = elem.MapIndex(reflect.ValueOf(key)).Interface()
-				} else {
-					log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name not found")
-					return nil, errors.New("parameter name not found")
-				}
-			}
-		case reflect.Slice:
-			// e.g. "username-password": [["test1", "passwd1"], ["test2", "passwd2"]]
-			// -> [{"username": "test1", "password": "passwd1"}, {"username": "test2", "password": "passwd2"}]
-			if len(parameterNameSlice) != elem.Len() {
-				log.Error().Interface("parameterNameSlice", parameterNameSlice).Interface("parameterContent", elem.Interface()).Msg("[parseParameters] parameter name slice and parameter content slice should have the same length")
-				return nil, errors.New("parameter name slice and parameter content slice should have the same length")
-			} else {
-				for j := 0; j < elem.Len(); j++ {
-					parameterMap[parameterNameSlice[j]] = elem.Index(j).Interface()
-				}
-			}
-		default:
-			// e.g. "app_version": [3.1, 3.0]
-			// -> [{"app_version": 3.1}, {"app_version": 3.0}]
-			if len(parameterNameSlice) != 1 {
-				log.Error().Interface("parameterNameSlice", parameterNameSlice).Msg("[parseParameters] parameter name slice should have only one element when parameter content is string")
-				return nil, errors.New("parameter name slice should have only one element when parameter content is string")
-			}
-			parameterMap[parameterNameSlice[0]] = elem.Interface()
-		}
-		parameterSlice = append(parameterSlice, parameterMap)
-	}
-	return parameterSlice, nil
-}
-
-func initParameterIterator(cfg *TConfig, mode string) (err error) {
-	var parameters map[string]iteratorParamsType
-	parameters, err = parseParameters(cfg.Parameters, cfg.Variables)
-	if err != nil {
-		return err
-	}
-	// parse config parameters setting
-	if cfg.ParametersSetting == nil {
-		cfg.ParametersSetting = &TParamsConfig{Iterators: []*Iterator{}}
-	}
-	// boomer模式下不限制迭代次数
-	if mode == "boomer" {
-		cfg.ParametersSetting.Iteration = -1
-	}
-	rawValue := reflect.ValueOf(cfg.ParametersSetting.Strategy)
-	switch rawValue.Kind() {
-	case reflect.Map:
-		// strategy: {"user_agent": "sequential", "username-password": "random"}, 每个参数对应一个迭代器，每个迭代器随机、顺序选取元素互不影响
-		for k, v := range parameters {
-			if _, ok := rawValue.Interface().(map[string]interface{})[k]; ok {
-				// use strategy if configured
-				cfg.ParametersSetting.Iterators = append(
-					cfg.ParametersSetting.Iterators,
-					newIterator(v, iteratorStrategyType(rawValue.MapIndex(reflect.ValueOf(k)).String()), cfg.ParametersSetting.Iteration),
-				)
-			} else {
-				// use sequential strategy by default
-				cfg.ParametersSetting.Iterators = append(
-					cfg.ParametersSetting.Iterators,
-					newIterator(v, strategySequential, cfg.ParametersSetting.Iteration),
-				)
-			}
-		}
-	case reflect.String:
-		// strategy: random, 仅生成一个的迭代器，该迭代器在参数笛卡尔积slice中随机选取元素
-		if len(rawValue.String()) == 0 {
-			cfg.ParametersSetting.Strategy = strategySequential
-		} else {
-			cfg.ParametersSetting.Strategy = iteratorStrategyType(strings.ToLower(rawValue.String()))
-		}
-		cfg.ParametersSetting.Iterators = append(
-			cfg.ParametersSetting.Iterators,
-			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(iteratorStrategyType), cfg.ParametersSetting.Iteration),
-		)
-	default:
-		// default strategy: sequential, 仅生成一个的迭代器，该迭代器在参数笛卡尔积slice中顺序选取元素
-		cfg.ParametersSetting.Strategy = strategySequential
-		cfg.ParametersSetting.Iterators = append(
-			cfg.ParametersSetting.Iterators,
-			newIterator(genCartesianProduct(parameters), cfg.ParametersSetting.Strategy.(iteratorStrategyType), cfg.ParametersSetting.Iteration),
-		)
-	}
-	return nil
-}
-
-func newIterator(parameters iteratorParamsType, strategy iteratorStrategyType, iteration int) *Iterator {
-	iter := parameters.Iterator()
-	iter.strategy = strategy
-	if iteration > 0 {
-		iter.iteration = iteration
-	} else if iteration < 0 {
-		iter.iteration = -1
-	} else if iter.iteration == 0 {
-		iter.iteration = 1
-	}
-	return iter
 }

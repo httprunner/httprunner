@@ -270,11 +270,12 @@ func loadFromCSV(path string) []map[string]interface{} {
 		log.Error().Err(err).Msg("parse csv file failed")
 		os.Exit(1)
 	}
+	firstLine := content[0] // parameter names
 	var result []map[string]interface{}
 	for i := 1; i < len(content); i++ {
 		row := make(map[string]interface{})
 		for j := 0; j < len(content[i]); j++ {
-			row[content[0][j]] = content[i][j]
+			row[firstLine[j]] = content[i][j]
 		}
 		result = append(result, row)
 	}

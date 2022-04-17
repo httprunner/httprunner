@@ -109,6 +109,6 @@ func TestLoopCount(t *testing.T) {
 	go runner.start()
 	<-runner.stopChan
 	if !assert.Equal(t, runner.loop.loopCount, atomic.LoadInt64(&runner.loop.finishedCount)) {
-		t.Fail()
+		t.Fatal()
 	}
 }

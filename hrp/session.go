@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"time"
 
-	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -12,10 +11,7 @@ import (
 // SessionRunner is used to run testcase and its steps.
 // each testcase has its own SessionRunner instance and share session variables.
 type SessionRunner struct {
-	testCase         *TestCase
-	hrpRunner        *HRPRunner
-	parser           *Parser
-	parsedConfig     *TConfig
+	*testCaseRunner
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
@@ -29,6 +25,7 @@ func (r *SessionRunner) resetSession() {
 	r.sessionVariables = make(map[string]interface{})
 	r.transactions = make(map[string]map[transactionType]time.Time)
 	r.startTime = time.Now()
+	r.summary = newSummary()
 }
 
 func (r *SessionRunner) GetParser() *Parser {
@@ -61,13 +58,16 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			Str("type", string(step.Type())).Msg("run step start")
 
 		stepResult, err := step.Run(r)
-		if err != nil && r.hrpRunner.failfast {
+		if err != nil {
 			log.Error().
 				Str("step", stepResult.Name).
 				Str("type", string(stepResult.StepType)).
 				Bool("success", false).
 				Msg("run step end")
-			return errors.Wrap(err, "abort running due to failfast setting")
+
+			if r.hrpRunner.failfast {
+				return errors.Wrap(err, "abort running due to failfast setting")
+			}
 		}
 
 		// update extracted variables
@@ -107,56 +107,15 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 
 // updateConfigVariables updates config variables with given variables.
 // this is used for data driven
-func (r *SessionRunner) updateConfigVariables(givenVars map[string]interface{}) {
-	for k, v := range givenVars {
+func (r *SessionRunner) updateConfigVariables(parameters map[string]interface{}) {
+	if len(parameters) == 0 {
+		return
+	}
+
+	log.Info().Interface("parameters", parameters).Msg("update config variables")
+	for k, v := range parameters {
 		r.parsedConfig.Variables[k] = v
 	}
-}
-
-// parseConfig parses testcase config, stores to parsedConfig.
-func (r *SessionRunner) parseConfig() error {
-	cfg := r.testCase.Config
-
-	r.parsedConfig = &TConfig{}
-	// deep copy config to avoid data racing
-	if err := copier.Copy(r.parsedConfig, cfg); err != nil {
-		log.Error().Err(err).Msg("copy testcase config failed")
-		return err
-	}
-
-	// parse config variables
-	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
-	if err != nil {
-		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
-		return err
-	}
-	r.parsedConfig.Variables = parsedVariables
-
-	// parse config name
-	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
-	if err != nil {
-		return errors.Wrap(err, "parse config name failed")
-	}
-	r.parsedConfig.Name = convertString(parsedName)
-
-	// parse config base url
-	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
-	if err != nil {
-		return errors.Wrap(err, "parse config base url failed")
-	}
-	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
-
-	// ensure correction of think time config
-	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
-
-	// parse testcase config parameters
-	err = initParameterIterator(r.parsedConfig, "runner")
-	if err != nil {
-		log.Error().Interface("parameters", r.parsedConfig.Parameters).Err(err).Msg("parse config parameters failed")
-		return errors.Wrap(err, "parse testcase config parameters failed")
-	}
-
-	return nil
 }
 
 func (r *SessionRunner) GetSummary() *TestCaseSummary {

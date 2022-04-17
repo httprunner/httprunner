@@ -72,18 +72,18 @@ func (b *HRPBoomer) Quit() {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	// init session runner for testcase
-	sessionRunner, err := b.hrpRunner.NewSessionRunner(testcase)
+	// init runner for testcase
+	// this runner is shared by multiple session runners
+	caseRunner, err := b.hrpRunner.newCaseRunner(testcase)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create session runner")
+		log.Error().Err(err).Msg("failed to create runner")
 		os.Exit(1)
 	}
-	if sessionRunner.parser.plugin != nil {
+	if caseRunner.parser.plugin != nil {
 		b.pluginsMutex.Lock()
-		b.plugins = append(b.plugins, sessionRunner.parser.plugin)
+		b.plugins = append(b.plugins, caseRunner.parser.plugin)
 		b.pluginsMutex.Unlock()
 	}
-	sessionRunner.resetSession()
 
 	// broadcast to all rendezvous at once when spawn done
 	go func() {
@@ -93,6 +93,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		}
 	}()
 
+	// set paramters mode for load testing
+	parametersIterator := caseRunner.parametersIterator
+	parametersIterator.SetUnlimitedMode()
+
 	return &boomer.Task{
 		Name:   testcase.Config.Name,
 		Weight: testcase.Config.Weight,
@@ -100,14 +104,12 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			testcaseSuccess := true    // flag whole testcase result
 			transactionSuccess := true // flag current transaction result
 
-			var parameterVariables map[string]interface{}
-			// iterate through all parameter iterators and update case variables
-			for _, it := range sessionRunner.parsedConfig.ParametersSetting.Iterators {
-				if it.HasNext() {
-					parameterVariables = it.Next()
-				}
+			// init session runner
+			sessionRunner := caseRunner.newSession()
+
+			if parametersIterator.HasNext() {
+				sessionRunner.updateConfigVariables(parametersIterator.Next())
 			}
-			sessionRunner.updateConfigVariables(parameterVariables)
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {

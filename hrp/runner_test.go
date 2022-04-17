@@ -161,7 +161,7 @@ func TestRunCaseWithPluginJSON(t *testing.T) {
 
 	err := NewRunner(nil).Run(&demoTestCaseWithPluginJSONPath) // hrp.Run(testCase)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 }
 
@@ -171,7 +171,7 @@ func TestRunCaseWithPluginYAML(t *testing.T) {
 
 	err := NewRunner(nil).Run(&demoTestCaseWithPluginYAMLPath) // hrp.Run(testCase)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 }
 
@@ -181,7 +181,7 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 
 	err := NewRunner(nil).Run(&demoTestCaseWithRefAPIPath)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 
 	testcase := &TestCase{
@@ -195,7 +195,7 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 	r := NewRunner(t)
 	err = r.Run(testcase)
 	if err != nil {
-		t.Fail()
+		t.Fatal()
 	}
 }
 
@@ -204,30 +204,30 @@ func TestLoadTestCases(t *testing.T) {
 	tc := TestCasePath("../examples/demo-with-py-plugin/testcases/")
 	testCases, err := loadTestCases(&tc)
 	if !assert.Nil(t, err) {
-		t.Fail()
+		t.Fatal()
 	}
 	if !assert.Equal(t, len(testCases), 3) {
-		t.Fail()
+		t.Fatal()
 	}
 
 	// load test cases from folder path, including sub folders
 	tc = TestCasePath("../examples/demo-with-py-plugin/")
 	testCases, err = loadTestCases(&tc)
 	if !assert.Nil(t, err) {
-		t.Fail()
+		t.Fatal()
 	}
 	if !assert.Equal(t, len(testCases), 3) {
-		t.Fail()
+		t.Fatal()
 	}
 
 	// load test cases from single file path
 	tc = demoTestCaseWithPluginJSONPath
 	testCases, err = loadTestCases(&tc)
 	if !assert.Nil(t, err) {
-		t.Fail()
+		t.Fatal()
 	}
 	if !assert.Equal(t, 1, len(testCases)) {
-		t.Fail()
+		t.Fatal()
 	}
 
 	// load test cases from TestCase instance
@@ -236,9 +236,9 @@ func TestLoadTestCases(t *testing.T) {
 	}
 	testCases, err = loadTestCases(testcase)
 	if !assert.Nil(t, err) {
-		t.Fail()
+		t.Fatal()
 	}
 	if !assert.Equal(t, len(testCases), 1) {
-		t.Fail()
+		t.Fatal()
 	}
 }
