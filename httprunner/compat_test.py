@@ -32,11 +32,13 @@ class TestCompat(unittest.TestCase):
             compat.convert_variables(None, "examples/data/a-b.c/1.yml")
 
     def test_convert_jmespath(self):
-
         self.assertEqual(compat._convert_jmespath("content.abc"), "body.abc")
         self.assertEqual(compat._convert_jmespath("json.abc"), "body.abc")
         self.assertEqual(
             compat._convert_jmespath("headers.Content-Type"), 'headers."Content-Type"'
+        )
+        self.assertEqual(
+            compat._convert_jmespath('headers.User-Agent'), 'headers."User-Agent"'
         )
         self.assertEqual(
             compat._convert_jmespath('headers."Content-Type"'), 'headers."Content-Type"'
@@ -48,6 +50,10 @@ class TestCompat(unittest.TestCase):
         self.assertEqual(
             compat._convert_jmespath("body.users[-1]"),
             "body.users[-1]",
+        )
+        self.assertEqual(
+            compat._convert_jmespath("body.result.WorkNode_-1"),
+            "body.result.WorkNode_-1",
         )
         with self.assertRaises(SystemExit):
             compat._convert_jmespath("2.buildings.0.building_id")

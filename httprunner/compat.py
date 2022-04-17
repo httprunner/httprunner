@@ -58,11 +58,9 @@ def _convert_jmespath(raw: Text) -> Text:
 
     raw_list = []
     for item in raw.split("."):
-        if "-" in item and "[-" not in item:
-            # add quotes for field with separator
+        if item.lower().startswith("content-") or item.lower() in ["user-agent"]:
+            # add quotes for some field in white list
             # e.g. headers.Content-Type => headers."Content-Type"
-            # also need to avoid replacing negative index in jmespath
-            # e.g. body.users[-1] => body.users[-1], keep unchanged
             item = item.strip('"')
             raw_list.append(f'"{item}"')
         elif item.isdigit():
