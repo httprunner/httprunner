@@ -180,20 +180,19 @@ class HttpSession(requests.Session):
         response_time_ms = round((time.time() - start_timestamp) * 1000, 2)
 
         try:
-            client_ip, client_port = response.raw.connection.sock.getsockname()
-        except AttributeError:
-            client_ip, client_port = response.raw.connection.sock.socket.getsockname()
-        self.data.address.client_ip = client_ip
-        self.data.address.client_port = client_port
-        logger.debug(f"client IP: {client_ip}, Port: {client_port}")
+            client_ip, client_port = response.raw._connection.sock.getsockname()
+            self.data.address.client_ip = client_ip
+            self.data.address.client_port = client_port
+            logger.debug(f"client IP: {client_ip}, Port: {client_port}")
+        except Exception:
+            pass
 
         try:
-            server_ip, server_port = response.raw.connection.sock.getpeername()
-        except AttributeError:
-            server_ip, server_port = response.raw.connection.sock.socket.getpeername()
-        self.data.address.server_ip = server_ip
-        self.data.address.server_port = server_port
-        logger.debug(f"server IP: {server_ip}, Port: {server_port}")
+            server_ip, server_port = response.raw._connection.sock.getpeername()
+        except Exception:
+            self.data.address.server_ip = server_ip
+            self.data.address.server_port = server_port
+            logger.debug(f"server IP: {server_ip}, Port: {server_port}")
 
         # get length of the response content
         content_size = int(dict(response.headers).get("content-length") or 0)
