@@ -25,6 +25,6 @@ func TestStructToUrlValues(t *testing.T) {
 	}
 	val := structToUrlValues(event)
 	if val.Encode() != "ea=convert&ec=unittest&el=v0.3.0&ev=123" {
-		t.Fail()
+		t.Fatal()
 	}
 }

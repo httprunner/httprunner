@@ -6,18 +6,19 @@
         "iOS/10.1",
         "iOS/10.2"
       ],
-      "username-password": "${parameterize(examples/hrp/account.csv)}"
+      "username-password": "${parameterize($file)}"
     },
     "parameters_setting": {
-      "strategy": {
+      "strategies": {
         "user_agent": "sequential",
         "username-password": "random"
       },
-      "iteration": 6
+      "limit": 6
     },
     "variables": {
       "app_version": "v1",
-      "user_agent": "iOS/10.3"
+      "user_agent": "iOS/10.3",
+      "file": "examples/hrp/account.csv"
     },
     "base_url": "https://postman-echo.com",
     "verify": false
