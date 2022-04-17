@@ -47,7 +47,7 @@ import sys
 from typing import Text
 
 from httprunner.models import TStep, FunctionsMapping
-from httprunner.parser import parse_variables_mapping
+from httprunner.parser import parse_variables_mapping, parse_data
 from loguru import logger
 
 try:
@@ -100,6 +100,11 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping):
     """
     if not step.request.upload:
         return
+
+    # parse upload info
+    step.request.upload = parse_data(
+        step.request.upload, step.variables, functions
+    )
 
     ensure_upload_ready()
     params_list = []
