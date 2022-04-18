@@ -29,6 +29,9 @@ func init() {
 	gaClient = NewGAClient(trackingID, clientID)
 
 	// init sentry sdk
+	if os.Getenv("DISABLE_SENTRY") == "true" {
+		return
+	}
 	err = sentry.Init(sentry.ClientOptions{
 		Dsn:              sentryDSN,
 		Release:          fmt.Sprintf("httprunner@%s", version.VERSION),

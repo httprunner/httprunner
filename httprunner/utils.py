@@ -18,6 +18,9 @@ from httprunner.models import VariablesMapping
 
 
 def init_sentry_sdk():
+    if os.getenv("DISABLE_SENTRY") == "true":
+        return
+
     sentry_sdk.init(
         dsn="https://460e31339bcb428c879aafa6a2e78098@sentry.io/5263855",
         release="httprunner@{}".format(__version__),
