@@ -454,7 +454,7 @@ func (p *Parser) ParseVariables(variables map[string]interface{}) (map[string]in
 	return parsedVariables, nil
 }
 
-type variableSet map[string]struct{} // TODO
+type variableSet map[string]struct{}
 
 func extractVariables(raw interface{}) variableSet {
 	rawValue := reflect.ValueOf(raw)
