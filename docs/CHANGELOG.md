@@ -164,6 +164,7 @@
 ## 3.1.10 (2022-04-18)
 
 - fix #1249: catch exceptions when requesting with disabling allow_redirects
+- fix: catch OSError when running subprocess
 
 ## 3.1.9 (2022-04-17)
 

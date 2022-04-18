@@ -172,7 +172,7 @@ def format_pytest_with_black(*python_paths: Text):
         capture_exception(ex)
         logger.error(ex)
         sys.exit(1)
-    except FileNotFoundError:
+    except OSError:
         err_msg = """
 missing dependency tool: black
 install black manually and try again:
