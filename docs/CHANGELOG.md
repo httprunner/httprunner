@@ -1,12 +1,16 @@
 # Release History
 
+## 3.1.10 (2022-04-18)
+
+- fix #1249: catch exceptions when requesting with disabling allow_redirects
+
 ## 3.1.9 (2022-04-17)
 
 - fix #1174: pydantic validation error when body is None
 - fix #1209: only convert jmespath path for some fields in white list
 - fix #1233: parse upload info with session variables
-- fix #1246: catch exceptions when getting socket address failed
-- fix #1247: catch exceptions caused by GA report failure
+- fix #1246: catch exceptions caused by GA report failure
+- fix #1247: catch exceptions when getting socket address failed
 
 ## 3.1.8 (2022-03-22)
 

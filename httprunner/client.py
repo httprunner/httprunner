@@ -189,10 +189,11 @@ class HttpSession(requests.Session):
 
         try:
             server_ip, server_port = response.raw._connection.sock.getpeername()
-        except Exception:
             self.data.address.server_ip = server_ip
             self.data.address.server_port = server_port
             logger.debug(f"server IP: {server_ip}, Port: {server_port}")
+        except Exception:
+            pass
 
         # get length of the response content
         content_size = int(dict(response.headers).get("content-length") or 0)
