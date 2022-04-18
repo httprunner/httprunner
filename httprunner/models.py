@@ -86,7 +86,6 @@ class TStep(BaseModel):
     retry_interval: int = 0  # sec
 
 
-
 class TestCase(BaseModel):
     config: TConfig
     teststeps: List[TStep]
