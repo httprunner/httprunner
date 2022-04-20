@@ -2,12 +2,12 @@ import decimal
 import json
 import os
 import unittest
+from pathlib import Path
 
-from httprunner import loader, utils
-from httprunner.utils import (
-    ExtendJSONEncoder,
-    merge_variables,
-)
+import toml
+
+from httprunner import __version__, loader, utils
+from httprunner.utils import ExtendJSONEncoder, merge_variables
 
 
 class TestUtils(unittest.TestCase):
@@ -152,3 +152,11 @@ class TestUtils(unittest.TestCase):
         parameters_content_list = []
         product_list = utils.gen_cartesian_product(*parameters_content_list)
         self.assertEqual(product_list, [])
+
+    def test_versions_are_in_sync(self):
+        """Checks if the pyproject.toml and __version__ in __init__.py are in sync."""
+
+        path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        pyproject = toml.loads(open(str(path)).read())
+        pyproject_version = pyproject["tool"]["poetry"]["version"]
+        self.assertEqual(pyproject_version, __version__)
