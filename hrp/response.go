@@ -18,7 +18,17 @@ import (
 	"github.com/httprunner/httprunner/hrp/internal/json"
 )
 
-func newResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*responseObject, error) {
+var fieldTags = []string{"proto", "status_code", "headers", "cookies", "body", textExtractorSubRegexp}
+
+type httpRespObjMeta struct {
+	Proto      string            `json:"proto"`
+	StatusCode int               `json:"status_code"`
+	Headers    map[string]string `json:"headers"`
+	Cookies    map[string]string `json:"cookies"`
+	Body       interface{}       `json:"body"`
+}
+
+func newHttpResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*responseObject, error) {
 	// prepare response headers
 	headers := make(map[string]string)
 	for k, v := range resp.Header {
@@ -46,7 +56,7 @@ func newResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*resp
 		body = string(respBodyBytes)
 	}
 
-	respObjMeta := respObjMeta{
+	respObjMeta := httpRespObjMeta{
 		Proto:      resp.Proto,
 		StatusCode: resp.StatusCode,
 		Headers:    headers,
@@ -54,32 +64,54 @@ func newResponseObject(t *testing.T, parser *Parser, resp *http.Response) (*resp
 		Body:       body,
 	}
 
-	// convert respObjMeta to interface{}
+	return convertToResponseObject(t, parser, respObjMeta)
+}
+
+type wsCloseRespObject struct {
+	StatusCode int    `json:"status_code"`
+	Text       string `json:"body"`
+}
+
+func newWsCloseResponseObject(t *testing.T, parser *Parser, resp *wsCloseRespObject) (*responseObject, error) {
+	return convertToResponseObject(t, parser, resp)
+}
+
+type wsReadRespObject struct {
+	Message     interface{} `json:"body"`
+	messageType int
+}
+
+func newWsReadResponseObject(t *testing.T, parser *Parser, resp *wsReadRespObject) (*responseObject, error) {
+	byteMessage, ok := resp.Message.([]byte)
+	if !ok {
+		return nil, errors.New("websocket message type should be []byte")
+	}
+	var msg interface{}
+	if err := json.Unmarshal(byteMessage, &msg); err != nil {
+		// response body is not json, use raw body
+		msg = string(byteMessage)
+	}
+	resp.Message = msg
+	return convertToResponseObject(t, parser, resp)
+}
+
+func convertToResponseObject(t *testing.T, parser *Parser, respObjMeta interface{}) (*responseObject, error) {
 	respObjMetaBytes, _ := json.Marshal(respObjMeta)
 	var data interface{}
 	decoder := json.NewDecoder(bytes.NewReader(respObjMetaBytes))
 	decoder.UseNumber()
 	if err := decoder.Decode(&data); err != nil {
 		log.Error().
-			Str("respObjMeta", string(respObjMetaBytes)).
+			Str("respObjectMeta", string(respObjMetaBytes)).
 			Err(err).
-			Msg("[NewResponseObject] convert respObjMeta to interface{} failed")
+			Msg("[convertToResponseObject] convert respObjectMeta to interface{} failed")
 		return nil, err
 	}
-
 	return &responseObject{
 		t:           t,
 		parser:      parser,
 		respObjMeta: data,
 	}, nil
-}
-
-type respObjMeta struct {
-	Proto      string            `json:"proto"`
-	StatusCode int               `json:"status_code"`
-	Headers    map[string]string `json:"headers"`
-	Cookies    map[string]string `json:"cookies"`
-	Body       interface{}       `json:"body"`
 }
 
 type responseObject struct {
@@ -194,12 +226,12 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 }
 
 func checkSearchField(expr string) bool {
-	return strings.Contains(expr, "proto") ||
-		strings.Contains(expr, "status_code") ||
-		strings.Contains(expr, "headers") ||
-		strings.Contains(expr, "cookies") ||
-		strings.Contains(expr, "body") ||
-		strings.Contains(expr, textExtractorSubRegexp)
+	for _, t := range fieldTags {
+		if strings.Contains(expr, t) {
+			return true
+		}
+	}
+	return false
 }
 
 func (v *responseObject) searchJmespath(expr string) interface{} {

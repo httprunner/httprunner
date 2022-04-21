@@ -340,7 +340,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 
 	// new response object
-	respObj, err := newResponseObject(r.hrpRunner.t, parser, resp)
+	respObj, err := newHttpResponseObject(r.hrpRunner.t, parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
@@ -401,7 +401,7 @@ func printRequest(req *http.Request) error {
 	}
 	fmt.Println("-------------------- request --------------------")
 	reqContent := string(reqDump)
-	if req.Body != nil && !printBody {
+	if reqContentType != "" && !printBody {
 		reqContent += fmt.Sprintf("(request body omitted for Content-Type: %v)", reqContentType)
 	}
 	fmt.Println(reqContent)
@@ -409,7 +409,7 @@ func printRequest(req *http.Request) error {
 }
 
 func printResponse(resp *http.Response) error {
-	fmt.Println("==================== response ===================")
+	fmt.Println("==================== response ====================")
 	respContentType := resp.Header.Get("Content-Type")
 	printBody := shouldPrintBody(respContentType)
 	respDump, err := httputil.DumpResponse(resp, printBody)
@@ -417,7 +417,7 @@ func printResponse(resp *http.Response) error {
 		return errors.Wrap(err, "dump response failed")
 	}
 	respContent := string(respDump)
-	if !printBody {
+	if respContentType != "" && !printBody {
 		respContent += fmt.Sprintf("(response body omitted for Content-Type: %v)", respContentType)
 	}
 	fmt.Println(respContent)
@@ -677,6 +677,14 @@ func (s *StepRequest) SetRendezvous(name string) *StepRendezvous {
 	}
 }
 
+// WebSocket creates a new websocket action
+func (s *StepRequest) WebSocket() *StepWebSocket {
+	s.step.WebSocket = &WebSocketAction{}
+	return &StepWebSocket{
+		step: s.step,
+	}
+}
+
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
 	step *TStep
@@ -799,7 +807,13 @@ func (s *StepRequestExtraction) Name() string {
 }
 
 func (s *StepRequestExtraction) Type() StepType {
-	return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
+	if s.step.Request != nil {
+		return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
+	}
+	if s.step.WebSocket != nil {
+		return StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+	}
+	return "extraction"
 }
 
 func (s *StepRequestExtraction) Struct() *TStep {
@@ -807,7 +821,13 @@ func (s *StepRequestExtraction) Struct() *TStep {
 }
 
 func (s *StepRequestExtraction) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepRequest(r, s.step)
+	if s.step.Request != nil {
+		return runStepRequest(r, s.step)
+	}
+	if s.step.WebSocket != nil {
+		return runStepWebSocket(r, s.step)
+	}
+	return nil, errors.New("unexpected protocol type")
 }
 
 // StepRequestValidation implements IStep interface.
@@ -823,7 +843,13 @@ func (s *StepRequestValidation) Name() string {
 }
 
 func (s *StepRequestValidation) Type() StepType {
-	return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
+	if s.step.Request != nil {
+		return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
+	}
+	if s.step.WebSocket != nil {
+		return StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+	}
+	return "validation"
 }
 
 func (s *StepRequestValidation) Struct() *TStep {
@@ -831,7 +857,13 @@ func (s *StepRequestValidation) Struct() *TStep {
 }
 
 func (s *StepRequestValidation) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepRequest(r, s.step)
+	if s.step.Request != nil {
+		return runStepRequest(r, s.step)
+	}
+	if s.step.WebSocket != nil {
+		return runStepWebSocket(r, s.step)
+	}
+	return nil, errors.New("unexpected protocol type")
 }
 
 func (s *StepRequestValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *StepRequestValidation {

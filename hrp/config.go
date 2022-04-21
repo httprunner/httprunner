@@ -25,6 +25,7 @@ type TConfig struct {
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
+	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
@@ -76,6 +77,14 @@ func (c *TConfig) ExportVars(vars ...string) *TConfig {
 func (c *TConfig) SetWeight(weight int) *TConfig {
 	c.Weight = weight
 	return c
+}
+
+func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) {
+	c.WebSocketSetting = &WebSocketConfig{
+		ReconnectionTimes:    times,
+		ReconnectionInterval: interval,
+		MaxMessageSize:       size,
+	}
 }
 
 type ThinkTimeConfig struct {

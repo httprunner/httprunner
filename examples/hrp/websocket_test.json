@@ -1,0 +1,145 @@
+{
+    "config": {
+        "name": "run request with WebSocket protocol",
+        "base_url": "ws://echo.websocket.events",
+        "variables": {
+            "a": 12.3,
+            "b": 3.45,
+            "n": 5
+        }
+    },
+    "teststeps": [
+        {
+            "name": "open connection",
+            "websocket": {
+                "type": "open",
+                "url": "/",
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 101,
+                    "msg": "check open status code"
+                },
+                {
+                    "check": "headers.Connection",
+                    "assert": "equals",
+                    "expect": "Upgrade",
+                    "msg": "check headers"
+                }
+            ]
+        },
+        {
+            "name": "ping pong test",
+            "websocket": {
+                "type": "ping",
+                "url": "/",
+                "timeout": 5000
+            }
+        },
+        {
+            "name": "read sponsor info",
+            "websocket": {
+                "type": "r",
+                "url": "/",
+                "timeout": 5000
+            },
+            "validate": [
+                {
+                    "check": "body",
+                    "assert": "contains",
+                    "expect": "Lob.com",
+                    "msg": "check sponsor message"
+                }
+            ]
+        },
+        {
+            "name": "write json",
+            "websocket": {
+                "type": "w",
+                "url": "/",
+                "text": {
+                    "foo1": "${gen_random_string($n)}",
+                    "foo2": "${max($a, $b)}"
+                }
+            }
+        },
+        {
+            "name": "read json",
+            "websocket": {
+                "type": "r",
+                "url": "/"
+            },
+            "extract": {
+                "varFoo1": "body.foo1"
+            },
+            "validate": [
+                {
+                    "check": "body.foo1",
+                    "assert": "length_equals",
+                    "expect": 5,
+                    "msg": "check json foo1"
+                },
+                {
+                    "check": "body.foo2",
+                    "assert": "equals",
+                    "expect": 12.3,
+                    "msg": "check json foo2"
+                }
+            ]
+        },
+        {
+            "name": "write and read text",
+            "websocket": {
+                "type": "wr",
+                "url": "/",
+                "text": "$varFoo1"
+            },
+            "validate": [
+                {
+                    "check": "body",
+                    "assert": "length_equals",
+                    "expect": 5,
+                    "msg": "check length equal"
+                }
+            ]
+        },
+        {
+            "name": "write something redundant",
+            "websocket": {
+                "type": "w",
+                "url": "/",
+                "text": "have a nice day!"
+            }
+        },
+        {
+            "name": "write something redundant",
+            "websocket": {
+                "type": "w",
+                "url": "/",
+                "text": "balabala ..."
+            }
+        },
+        {
+            "name": "close connection",
+            "websocket": {
+                "type": "close",
+                "url": "/",
+                "close_status": 1000,
+                "timeout": 30000
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 1000,
+                    "msg": "check close status code"
+                }
+            ]
+        }
+    ]
+}
