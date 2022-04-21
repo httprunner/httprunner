@@ -16,6 +16,7 @@ var Functions = map[string]interface{}{
 	"md5":               MD5,             // call with one argument
 	"parameterize":      loadFromCSV,
 	"P":                 loadFromCSV,
+	"load_ws_message":   loadMessage,
 }
 
 func init() {

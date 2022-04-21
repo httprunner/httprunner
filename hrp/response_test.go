@@ -22,7 +22,7 @@ func TestSearchJmespath(t *testing.T) {
 	}
 	resp := http.Response{}
 	resp.Body = io.NopCloser(strings.NewReader(testText))
-	respObj, err := newResponseObject(t, newParser(), &resp)
+	respObj, err := newHttpResponseObject(t, newParser(), &resp)
 	if err != nil {
 		t.Fatal()
 	}
@@ -47,7 +47,7 @@ func TestSearchRegexp(t *testing.T) {
 	// new response object
 	resp := http.Response{}
 	resp.Body = io.NopCloser(strings.NewReader(testText))
-	respObj, err := newResponseObject(t, newParser(), &resp)
+	respObj, err := newHttpResponseObject(t, newParser(), &resp)
 	if err != nil {
 		t.Fatal()
 	}
