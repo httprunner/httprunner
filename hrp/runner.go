@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -43,6 +44,10 @@ func NewRunner(t *testing.T) *HRPRunner {
 			},
 			Timeout: 30 * time.Second,
 		},
+		// use default handshake timeout (no timeout limit) here, enable timeout at step level
+		wsDialer: &websocket.Dialer{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
 }
 
@@ -55,6 +60,7 @@ type HRPRunner struct {
 	genHTMLReport bool
 	httpClient    *http.Client
 	http2Client   *http.Client
+	wsDialer      *websocket.Dialer
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
@@ -76,6 +82,7 @@ func (r *HRPRunner) SetClientTransport(maxConns int, disableKeepAlive bool, disa
 		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
 		DisableCompression: disableCompression,
 	}
+	r.wsDialer.EnableCompression = !disableCompression
 	return r
 }
 
@@ -112,6 +119,7 @@ func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 		Proxy:           http.ProxyURL(p),
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
+	r.wsDialer.Proxy = http.ProxyURL(p)
 	return r
 }
 
@@ -272,6 +280,9 @@ func (r *testCaseRunner) parseConfig() error {
 
 	// ensure correction of think time config
 	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
+
+	// ensure correction of websocket config
+	r.parsedConfig.WebSocketSetting.checkWebSocket()
 
 	// parse testcase config parameters
 	parametersIterator, err := initParametersIterator(r.parsedConfig)

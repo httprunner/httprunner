@@ -282,6 +282,16 @@ func loadFromCSV(path string) []map[string]interface{} {
 	return result
 }
 
+func loadMessage(path string) []byte {
+	log.Info().Str("path", path).Msg("load message file")
+	file, err := readFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("read message file failed")
+		os.Exit(1)
+	}
+	return file
+}
+
 func readFile(path string) ([]byte, error) {
 	var err error
 	path, err = filepath.Abs(path)

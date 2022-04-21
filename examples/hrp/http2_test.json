@@ -1,0 +1,146 @@
+{
+    "config": {
+        "name": "run request with HTTP/1.1 and HTTP/2",
+        "base_url": "https://postman-echo.com"
+    },
+    "teststeps": [
+        {
+            "name": "HTTP/1.1 get",
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "params": {
+                    "foo1": "foo1",
+                    "foo2": "foo2"
+                },
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "proto",
+                    "assert": "equals",
+                    "expect": "HTTP/1.1",
+                    "msg": "check protocol type"
+                },
+                {
+                    "check": "body.args.foo1",
+                    "assert": "length_equals",
+                    "expect": 4,
+                    "msg": "check param foo1"
+                }
+            ]
+        },
+        {
+            "name": "HTTP/1.1 post",
+            "request": {
+                "method": "POST",
+                "url": "/post",
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                },
+                "body": {
+                    "foo1": "foo1",
+                    "foo2": "foo2"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "proto",
+                    "assert": "equals",
+                    "expect": "HTTP/1.1",
+                    "msg": "check protocol type"
+                },
+                {
+                    "check": "body.json.foo1",
+                    "assert": "length_equals",
+                    "expect": 4,
+                    "msg": "check body foo1"
+                }
+            ]
+        },
+        {
+            "name": "HTTP/2 get",
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "http2": true,
+                "params": {
+                    "foo1": "foo1",
+                    "foo2": "foo2"
+                },
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "proto",
+                    "assert": "equals",
+                    "expect": "HTTP/2.0",
+                    "msg": "check protocol type"
+                },
+                {
+                    "check": "body.args.foo1",
+                    "assert": "length_equals",
+                    "expect": 4,
+                    "msg": "check param foo1"
+                }
+            ]
+        },
+        {
+            "name": "HTTP/2 post",
+            "request": {
+                "method": "POST",
+                "url": "/post",
+                "http2": true,
+                "headers": {
+                    "User-Agent": "HttpRunnerPlus"
+                },
+                "body": {
+                    "foo1": "foo1",
+                    "foo2": "foo2"
+                }
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equals",
+                    "expect": 200,
+                    "msg": "check status code"
+                },
+                {
+                    "check": "proto",
+                    "assert": "equals",
+                    "expect": "HTTP/2.0",
+                    "msg": "check protocol type"
+                },
+                {
+                    "check": "body.json.foo1",
+                    "assert": "length_equals",
+                    "expect": 4,
+                    "msg": "check body foo1"
+                }
+            ]
+        }
+    ]
+}
