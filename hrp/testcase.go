@@ -132,6 +132,10 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 			testCase.TestSteps = append(testCase.TestSteps, &StepRendezvous{
 				step: step,
 			})
+		} else if step.WebSocket != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepWebSocket{
+				step: step,
+			})
 		} else {
 			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
 		}
