@@ -6,7 +6,7 @@ license = "Apache-2.0"
 readme = "README.md"
 authors = ["debugtalk <debugtalk@gmail.com>"]
 
-homepage = "https://github.com/httprunner/httprunner"
+homepage = "https://httprunner.com"
 repository = "https://github.com/httprunner/httprunner"
 documentation = "https://httprunner.com/docs"
 
