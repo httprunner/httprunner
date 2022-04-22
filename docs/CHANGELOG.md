@@ -6,6 +6,7 @@
 - refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
 - feat: disable GA events report by setting environment `DISABLE_GA=true`
 - feat: disable sentry reports by setting environment `DISABLE_SENTRY=true`
+- feat: prepare python3 venv in `~/.hrp/venv` before running
 
 **go version**
 
@@ -13,6 +14,7 @@
 - feat: support run testcases in specified folder path, including testcases in sub folders
 - feat: support HTTP/2 protocol
 - feat: support WebSocket protocol
+- feat: convert YAML/JSON testcases to pytest scripts with `hrp convert`
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path

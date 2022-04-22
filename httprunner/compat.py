@@ -301,13 +301,13 @@ from httprunner.utils import get_platform, ExtendJSONEncoder
 @pytest.fixture(scope="session", autouse=True)
 def session_fixture(request):
     """setup and teardown each task"""
-    logger.info(f"start running testcases ...")
+    logger.info("start running testcases ...")
 
     start_at = time.time()
 
     yield
 
-    logger.info(f"task finished, generate task summary for --save-tests")
+    logger.info("task finished, generate task summary for --save-tests")
 
     summary = {
         "success": True,
