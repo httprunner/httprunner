@@ -2,20 +2,21 @@ package hrp
 
 import (
 	"os"
-	"os/exec"
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 )
 
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
-	cmd := exec.Command("go", "build",
+	err := builtin.ExecCommand("go", "build",
 		"-o", templatesDir+"debugtalk.bin", templatesDir+"plugin/debugtalk.go")
-	if err := cmd.Run(); err != nil {
+	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
 		os.Exit(1)
 	}

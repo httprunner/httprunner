@@ -92,16 +92,37 @@ func EnsurePython3Venv(packages ...string) (string, error) {
 	return python3, nil
 }
 
-func ExecCommand(cmd *exec.Cmd, cwd string) error {
-	log.Info().Str("cmd", cmd.String()).Str("cwd", cwd).Msg("exec command")
-	cmd.Dir = cwd
-	output, err := cmd.CombinedOutput()
-	out := strings.TrimSpace(string(output))
+func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
+	log.Info().Str("cmd", cmd.String()).Str("dir", dir).Msg("exec command")
+	cmd.Dir = dir
+
+	// print output with colors
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
 	if err != nil {
-		log.Error().Err(err).Str("output", out).Msg("exec command failed")
-	} else if len(out) != 0 {
-		log.Info().Str("output", out).Msg("exec command success")
+		log.Error().Err(err).Msg("exec command failed")
+		return err
 	}
+
+	return nil
+}
+
+func ExecCommand(cmdName string, args ...string) error {
+	cmd := exec.Command(cmdName, args...)
+	log.Info().Str("cmd", cmd.String()).Msg("exec command")
+
+	// print output with colors
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Error().Err(err).Msg("exec command failed")
+		return err
+	}
+
 	return err
 }
 
