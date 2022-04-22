@@ -12,6 +12,7 @@ except ModuleNotFoundError:
     USE_ALLURE = False
 
 from loguru import logger
+
 from httprunner.client import HttpSession
 from httprunner.config import Config
 from httprunner.exceptions import ParamsError, ValidationFailure
@@ -19,7 +20,7 @@ from httprunner.loader import load_project_meta
 from httprunner.models import (ProjectMeta, StepResult, TConfig, TestCaseInOut,
                                TestCaseSummary, TestCaseTime, VariablesMapping)
 from httprunner.parser import Parser
-from httprunner.utils import merge_variables
+from httprunner.utils import LOGGER_FORMAT, init_logger, merge_variables
 
 
 class SessionRunner(object):
@@ -43,6 +44,7 @@ class SessionRunner(object):
     __log_path: Text = ""
 
     def __init(self):
+        init_logger()
         self.__config = self.config.struct()
         self.__session_variables = {}
         self.__start_at = 0
@@ -188,6 +190,7 @@ class SessionRunner(object):
 
     def test_start(self, param: Dict = None) -> "SessionRunner":
         """main entrance, discovered by pytest"""
+        print("\n")
         self.__init()
         self.__parse_config(param)
 
@@ -200,14 +203,13 @@ class SessionRunner(object):
             f"Start to run testcase: {self.__config.name}, TestCase ID: {self.case_id}"
         )
 
-        log_handler = logger.add(self.__log_path, level="DEBUG")
+        logger.add(self.__log_path, format=LOGGER_FORMAT, level="DEBUG")
         self.__start_at = time.time()
         try:
             # run step in sequential order
             for step in self.teststeps:
                 self.__run_step(step)
         finally:
-            logger.remove(log_handler)
             logger.info(f"generate testcase log: {self.__log_path}")
 
         self.__duration = time.time() - self.__start_at

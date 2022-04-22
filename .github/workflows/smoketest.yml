@@ -73,3 +73,7 @@ jobs:
       - name: Run smoketest - rendezvous
         run: |
           ./output/hrp boom examples/hrp/rendezvous_test.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+      - name: Run hrp convert --pytest
+        run: ./output/hrp convert examples/postman_echo/request_methods/
+      - name: Run hrp pytest
+        run: ./output/hrp pytest examples/postman_echo/request_methods/

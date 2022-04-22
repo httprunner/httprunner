@@ -5,6 +5,7 @@ import json
 import os
 import os.path
 import platform
+import sys
 import uuid
 from multiprocessing import Queue
 from typing import Any, Dict, List, Text
@@ -320,3 +321,12 @@ def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
         product_list.append(product_item_dict)
 
     return product_list
+
+
+LOGGER_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level}</level> | <level>{message}</level>"
+
+
+def init_logger():
+    # set log level to INFO
+    logger.remove()
+    logger.add(sys.stderr, format=LOGGER_FORMAT, level="INFO")
