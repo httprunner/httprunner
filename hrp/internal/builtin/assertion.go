@@ -9,9 +9,9 @@ import (
 )
 
 var Assertions = map[string]func(t assert.TestingT, actual interface{}, expected interface{}, msgAndArgs ...interface{}) bool{
-	"eq":                assert.EqualValues,
-	"equals":            assert.EqualValues,
-	"equal":             assert.EqualValues,
+	"eq":                EqualValues,
+	"equals":            EqualValues,
+	"equal":             EqualValues,
 	"lt":                assert.Less,
 	"less_than":         assert.Less,
 	"le":                assert.LessOrEqual,
@@ -20,8 +20,8 @@ var Assertions = map[string]func(t assert.TestingT, actual interface{}, expected
 	"greater_than":      assert.Greater,
 	"ge":                assert.GreaterOrEqual,
 	"greater_or_equals": assert.GreaterOrEqual,
-	"ne":                assert.NotEqual,
-	"not_equal":         assert.NotEqual,
+	"ne":                NotEqual,
+	"not_equal":         NotEqual,
 	"contains":          assert.Contains,
 	"type_match":        assert.IsType,
 	// custom assertions
@@ -46,6 +46,14 @@ var Assertions = map[string]func(t assert.TestingT, actual interface{}, expected
 	"str_eq":                   StringEqual,
 	"string_equals":            StringEqual,
 	"regex_match":              RegexMatch,
+}
+
+func EqualValues(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
+	return assert.EqualValues(t, expected, actual, msgAndArgs)
+}
+
+func NotEqual(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
+	return assert.NotEqual(t, expected, actual, msgAndArgs)
 }
 
 // StartsWith check if string starts with substring
