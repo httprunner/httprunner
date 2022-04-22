@@ -133,7 +133,7 @@ func CreateScaffold(projectName string, pluginType PluginType) error {
 func createGoPlugin(projectName string) error {
 	log.Info().Msg("start to create hashicorp go plugin")
 	// check go sdk
-	if err := builtin.ExecCommand(exec.Command("go", "version"), projectName); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "version"), projectName); err != nil {
 		return errors.Wrap(err, "go sdk not installed")
 	}
 
@@ -149,19 +149,19 @@ func createGoPlugin(projectName string) error {
 	}
 
 	// create go mod
-	if err := builtin.ExecCommand(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
 		return err
 	}
 
 	// download plugin dependency
 	// funplugin version should be locked
 	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
-	if err := builtin.ExecCommand(exec.Command("go", "get", funplugin), pluginDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
 		return err
 	}
 
 	// build plugin debugtalk.bin
-	if err := builtin.ExecCommand(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
 		return err
 	}
 
