@@ -108,26 +108,6 @@ def main():
         main_make(args.testcase_path)
 
 
-def main_hrun_alias():
-    """ command alias
-        hrun = httprunner run
-    """
-    if len(sys.argv) == 2:
-        if sys.argv[1] in ["-V", "--version"]:
-            # hrun -V
-            sys.argv = ["httprunner", "-V"]
-        elif sys.argv[1] in ["-h", "--help"]:
-            pytest.main(["-h"])
-            sys.exit(0)
-        else:
-            # hrun /path/to/testcase
-            sys.argv.insert(1, "run")
-    else:
-        sys.argv.insert(1, "run")
-
-    main()
-
-
 def main_make_alias():
     """ command alias
         hmake = httprunner make
