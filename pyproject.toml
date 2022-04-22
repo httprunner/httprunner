@@ -54,6 +54,8 @@ coverage = "^4.5.4"
 
 [tool.poetry.scripts]
 httprunner = "httprunner.cli:main"
+hrun = "httprunner.cli:main_hrun_alias"
+hmake = "httprunner.cli:main_make_alias"
 
 [build-system]
 requires = ["poetry>=1.0.0"]
