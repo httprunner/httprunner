@@ -31,7 +31,7 @@ monitoring (DEM) test types. Enjoy! ✨ 🚀 ✨
 License: Apache-2.0
 Website: https://httprunner.com
 Github: https://github.com/httprunner/httprunner
-Copyright 2021 debugtalk`,
+Copyright 2017 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		var noColor = false
 		if runtime.GOOS == "windows" {

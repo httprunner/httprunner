@@ -9,7 +9,7 @@ hrp convert $path... [flags]
 ### Options
 
 ```
-      --gotest   convert to gotest scripts
+      --gotest   convert to gotest scripts (TODO)
   -h, --help     help for convert
       --pytest   convert to pytest scripts (default true)
 ```
