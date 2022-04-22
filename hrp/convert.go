@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 func Convert2TestScripts(destType string, paths ...string) error {
@@ -16,6 +17,11 @@ func Convert2TestScripts(destType string, paths ...string) error {
 }
 
 func convert2PyTestScripts(paths ...string) error {
+	sdk.SendEvent(sdk.EventTracking{
+		Category: "ConvertTests",
+		Action:   "hrp convert --pytest",
+	})
+
 	python3, err := builtin.EnsurePython3Venv("httprunner")
 	if err != nil {
 		return errors.Wrap(err, "ensure python venv failed")
@@ -27,6 +33,12 @@ func convert2PyTestScripts(paths ...string) error {
 
 func convert2GoTestScripts(paths ...string) error {
 	log.Warn().Msg("convert to gotest scripts is not supported yet")
+
+	sdk.SendEvent(sdk.EventTracking{
+		Category: "ConvertTests",
+		Action:   "hrp convert --gotest",
+	})
+
 	// report event
 	// sdk.SendEvent(sdk.EventTracking{
 	// 	Category: "Convert",
