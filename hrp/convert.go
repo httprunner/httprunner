@@ -1,7 +1,6 @@
 package hrp
 
 import (
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
@@ -24,7 +23,7 @@ func convert2PyTestScripts(paths ...string) error {
 
 	python3, err := builtin.EnsurePython3Venv("httprunner")
 	if err != nil {
-		return errors.Wrap(err, "ensure python venv failed")
+		return err
 	}
 
 	args := append([]string{"-m", "httprunner", "make"}, paths...)
