@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/httprunner/hrp/internal/json"
 )
 
@@ -74,6 +75,21 @@ func FormatResponse(raw interface{}) interface{} {
 		formattedResponse[key] = value
 	}
 	return formattedResponse
+}
+
+func EnsurePython3Venv(packages ...string) (string, error) {
+	// create python venv
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "get user home dir failed")
+	}
+	venvDir := filepath.Join(home, ".hrp", "venv")
+	python3, err := shared.EnsurePython3Venv(venvDir, packages...)
+	if err != nil {
+		return "", errors.Wrap(err, "ensure python venv failed")
+	}
+
+	return python3, nil
 }
 
 func ExecCommand(cmd *exec.Cmd, cwd string) error {
