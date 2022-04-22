@@ -108,13 +108,5 @@ def main():
         main_make(args.testcase_path)
 
 
-def main_make_alias():
-    """ command alias
-        hmake = httprunner make
-    """
-    sys.argv.insert(1, "make")
-    main()
-
-
 if __name__ == "__main__":
     main()
