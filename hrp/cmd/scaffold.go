@@ -19,7 +19,7 @@ var scaffoldCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !ignorePlugin && !genPythonPlugin && !genGoPlugin {
-			return errors.New("please select function plugin type")
+			return errors.New("please specify function plugin type")
 		}
 
 		var pluginType scaffold.PluginType
