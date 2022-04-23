@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/hrp"
+	"github.com/httprunner/httprunner/hrp/internal/convert"
 )
 
 var convertCmd = &cobra.Command{
@@ -24,9 +24,9 @@ var convertCmd = &cobra.Command{
 
 		var err error
 		if gotestFlag {
-			err = hrp.Convert2TestScripts("gotest", args...)
+			err = convert.Convert2TestScripts("gotest", args...)
 		} else {
-			err = hrp.Convert2TestScripts("pytest", args...)
+			err = convert.Convert2TestScripts("pytest", args...)
 		}
 		if err != nil {
 			log.Error().Err(err).Msg("convert test scripts failed")
