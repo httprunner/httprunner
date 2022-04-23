@@ -8,14 +8,21 @@ import jinja2
 from loguru import logger
 
 from httprunner import __version__, exceptions
-from httprunner.compat import (convert_variables, ensure_path_sep,
-                               ensure_testcase_v3, ensure_testcase_v3_api)
-from httprunner.loader import (convert_relative_project_root_dir,
-                               load_folder_files, load_project_meta,
-                               load_test_file, load_testcase, load_testsuite)
+from httprunner.compat import (
+    convert_variables,
+    ensure_path_sep,
+    ensure_testcase_v3,
+    ensure_testcase_v3_api,
+)
+from httprunner.loader import (
+    convert_relative_project_root_dir,
+    load_folder_files,
+    load_project_meta,
+    load_test_file,
+    load_testcase,
+)
 from httprunner.response import uniform_validator
-from httprunner.utils import (ga_client, is_support_multiprocessing,
-                              merge_variables)
+from httprunner.utils import ga_client, is_support_multiprocessing
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -71,10 +78,10 @@ if __name__ == "__main__":
 def __ensure_absolute(path: Text) -> Text:
     if path.startswith("./"):
         # Linux/Darwin, hrun ./test.yml
-        path = path[len("./"):]
+        path = path[len("./") :]
     elif path.startswith(".\\"):
         # Windows, hrun .\\test.yml
-        path = path[len(".\\"):]
+        path = path[len(".\\") :]
 
     path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
@@ -92,7 +99,7 @@ def __ensure_absolute(path: Text) -> Text:
 
 
 def ensure_file_abs_path_valid(file_abs_path: Text) -> Text:
-    """ ensure file path valid for pytest, handle cases when directory name includes dot/hyphen/space
+    """ensure file path valid for pytest, handle cases when directory name includes dot/hyphen/space
 
     Args:
         file_abs_path: absolute file path
@@ -133,8 +140,7 @@ def ensure_file_abs_path_valid(file_abs_path: Text) -> Text:
 
 
 def __ensure_testcase_module(path: Text):
-    """ ensure pytest files are in python module, generate __init__.py on demand
-    """
+    """ensure pytest files are in python module, generate __init__.py on demand"""
     init_file = os.path.join(os.path.dirname(path), "__init__.py")
     if os.path.isfile(init_file):
         return
@@ -431,61 +437,8 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     return testcase_python_abs_path
 
 
-def make_testsuite(testsuite: Dict):
-    """convert valid testsuite dict to pytest folder with testcases"""
-    # validate testsuite format
-    load_testsuite(testsuite)
-
-    testsuite_config = testsuite["config"]
-    testsuite_path = testsuite_config["path"]
-    testsuite_variables = convert_variables(
-        testsuite_config.get("variables", {}), testsuite_path
-    )
-
-    logger.info(f"start to make testsuite: {testsuite_path}")
-
-    # create directory with testsuite file name, put its testcases under this directory
-    testsuite_path = ensure_file_abs_path_valid(testsuite_path)
-    testsuite_dir, file_suffix = os.path.splitext(testsuite_path)
-    # demo_testsuite.yml => demo_testsuite_yml
-    testsuite_dir = f"{testsuite_dir}_{file_suffix.lstrip('.')}"
-
-    for testcase in testsuite["testcases"]:
-        # get referenced testcase content
-        testcase_file = testcase["testcase"]
-        testcase_path = __ensure_absolute(testcase_file)
-        testcase_dict = load_test_file(testcase_path)
-        testcase_dict.setdefault("config", {})
-        testcase_dict["config"]["path"] = testcase_path
-
-        # override testcase name
-        testcase_dict["config"]["name"] = testcase["name"]
-        # override base_url
-        base_url = testsuite_config.get("base_url") or testcase.get("base_url")
-        if base_url:
-            testcase_dict["config"]["base_url"] = base_url
-        # override verify
-        if "verify" in testsuite_config:
-            testcase_dict["config"]["verify"] = testsuite_config["verify"]
-        # override variables
-        # testsuite testcase variables > testsuite config variables
-        testcase_variables = convert_variables(
-            testcase.get("variables", {}), testcase_path
-        )
-        testcase_variables = merge_variables(testcase_variables, testsuite_variables)
-        # testsuite testcase variables > testcase config variables
-        testcase_dict["config"]["variables"] = convert_variables(
-            testcase_dict["config"].get("variables", {}), testcase_path
-        )
-        testcase_dict["config"]["variables"].update(testcase_variables)
-
-        # make testcase
-        testcase_pytest_path = make_testcase(testcase_dict, testsuite_dir)
-        pytest_files_run_set.add(testcase_pytest_path)
-
-
 def __make(tests_path: Text):
-    """ make testcase(s) with testcase/testsuite/folder absolute path
+    """make testcase(s) with testcase/folder absolute path
         generated pytest file path will be cached in pytest_files_made_cache_mapping
 
     Args:
@@ -526,13 +479,13 @@ def __make(tests_path: Text):
 
         if "config" not in test_content:
             logger.warning(
-                f"Invalid testcase/testsuite file: {test_file}\n"
+                f"Invalid testcase file: {test_file}\n"
                 f"reason: missing config part."
             )
             continue
         elif not isinstance(test_content["config"], Dict):
             logger.warning(
-                f"Invalid testcase/testsuite file: {test_file}\n"
+                f"Invalid testcase file: {test_file}\n"
                 f"reason: config should be dict type, got {test_content['config']}"
             )
             continue
@@ -540,33 +493,19 @@ def __make(tests_path: Text):
         # ensure path absolute
         test_content.setdefault("config", {})["path"] = test_file
 
-        # testcase
-        if "teststeps" in test_content:
-            try:
-                testcase_pytest_path = make_testcase(test_content)
-                pytest_files_run_set.add(testcase_pytest_path)
-            except exceptions.TestCaseFormatError as ex:
-                logger.warning(
-                    f"Invalid testcase file: {test_file}\n{type(ex).__name__}: {ex}"
-                )
-                continue
-
-        # testsuite
-        elif "testcases" in test_content:
-            try:
-                make_testsuite(test_content)
-            except exceptions.TestSuiteFormatError as ex:
-                logger.warning(
-                    f"Invalid testsuite file: {test_file}\n{type(ex).__name__}: {ex}"
-                )
-                continue
-
         # invalid format
-        else:
+        if "teststeps" not in test_content:
+            logger.warning(f"Invalid testcase file: {test_file}")
+
+        # testcase
+        try:
+            testcase_pytest_path = make_testcase(test_content)
+            pytest_files_run_set.add(testcase_pytest_path)
+        except exceptions.TestCaseFormatError as ex:
             logger.warning(
-                f"Invalid test file: {test_file}\n"
-                f"reason: file content is neither testcase nor testsuite"
+                f"Invalid testcase file: {test_file}\n{type(ex).__name__}: {ex}"
             )
+            continue
 
 
 def main_make(tests_paths: List[Text]) -> List[Text]:
@@ -594,10 +533,10 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
 
 
 def init_make_parser(subparsers):
-    """ make testcases: parse command line options and run commands.
-    """
+    """make testcases: parse command line options and run commands."""
     parser = subparsers.add_parser(
-        "make", help="Convert YAML/JSON testcases to pytest cases.",
+        "make",
+        help="Convert YAML/JSON testcases to pytest cases.",
     )
     parser.add_argument(
         "testcase_path", nargs="*", help="Specify YAML/JSON testcase file/folder path"

@@ -11,14 +11,13 @@ from loguru import logger
 from pydantic import ValidationError
 
 from httprunner import builtin, exceptions, utils
-from httprunner.models import ProjectMeta, TestCase, TestSuite
+from httprunner.models import ProjectMeta, TestCase
 
 project_meta: Union[ProjectMeta, None] = None
 
 
 def _load_yaml_file(yaml_file: Text) -> Dict:
-    """ load yaml file and check file content format
-    """
+    """load yaml file and check file content format"""
     with open(yaml_file, mode="rb") as stream:
         try:
             yaml_content = yaml.load(stream, Loader=yaml.FullLoader)
@@ -31,8 +30,7 @@ def _load_yaml_file(yaml_file: Text) -> Dict:
 
 
 def _load_json_file(json_file: Text) -> Dict:
-    """ load json file and check file content format
-    """
+    """load json file and check file content format"""
     with open(json_file, mode="rb") as data_file:
         try:
             json_content = json.load(data_file)
@@ -81,20 +79,8 @@ def load_testcase_file(testcase_file: Text) -> TestCase:
     return testcase_obj
 
 
-def load_testsuite(testsuite: Dict) -> TestSuite:
-    path = testsuite["config"]["path"]
-    try:
-        # validate with pydantic TestCase model
-        testsuite_obj = TestSuite.parse_obj(testsuite)
-    except ValidationError as ex:
-        err_msg = f"TestSuite ValidationError:\nfile: {path}\nerror: {ex}"
-        raise exceptions.TestSuiteFormatError(err_msg)
-
-    return testsuite_obj
-
-
 def load_dot_env_file(dot_env_path: Text) -> Dict:
-    """ load .env file.
+    """load .env file.
 
     Args:
         dot_env_path (str): .env file path
@@ -140,7 +126,7 @@ def load_dot_env_file(dot_env_path: Text) -> Dict:
 
 
 def load_csv_file(csv_file: Text) -> List[Dict]:
-    """ load csv file and check file content format
+    """load csv file and check file content format
 
     Args:
         csv_file (str): csv file path, csv file content is like below:
@@ -186,7 +172,7 @@ def load_csv_file(csv_file: Text) -> List[Dict]:
 
 
 def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
-    """ load folder path, return all files endswith .yml/.yaml/.json/_test.py in list.
+    """load folder path, return all files endswith .yml/.yaml/.json/_test.py in list.
 
     Args:
         folder_path (str): specified folder path to load
@@ -227,7 +213,7 @@ def load_folder_files(folder_path: Text, recursive: bool = True) -> List:
 
 
 def load_module_functions(module) -> Dict[Text, Callable]:
-    """ load python module functions.
+    """load python module functions.
 
     Args:
         module: python module
@@ -251,13 +237,12 @@ def load_module_functions(module) -> Dict[Text, Callable]:
 
 
 def load_builtin_functions() -> Dict[Text, Callable]:
-    """ load builtin module functions
-    """
+    """load builtin module functions"""
     return load_module_functions(builtin)
 
 
 def locate_file(start_path: Text, file_name: Text) -> Text:
-    """ locate filename and return absolute file path.
+    """locate filename and return absolute file path.
         searching will be recursive upward until system root dir.
 
     Args:
@@ -295,7 +280,7 @@ def locate_file(start_path: Text, file_name: Text) -> Text:
 
 
 def locate_debugtalk_py(start_path: Text) -> Text:
-    """ locate debugtalk.py file
+    """locate debugtalk.py file
 
     Args:
         start_path (str): start locating path,
@@ -315,7 +300,7 @@ def locate_debugtalk_py(start_path: Text) -> Text:
 
 
 def locate_project_root_directory(test_path: Text) -> Tuple[Text, Text]:
-    """ locate debugtalk.py path as project root directory
+    """locate debugtalk.py path as project root directory
 
     Args:
         test_path: specified testfile path
@@ -352,7 +337,7 @@ def locate_project_root_directory(test_path: Text) -> Tuple[Text, Text]:
 
 
 def load_debugtalk_functions() -> Dict[Text, Callable]:
-    """ load project debugtalk.py module functions
+    """load project debugtalk.py module functions
         debugtalk.py should be located in project root directory.
 
     Returns:
@@ -376,7 +361,7 @@ def load_debugtalk_functions() -> Dict[Text, Callable]:
 
 
 def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
-    """ load testcases, .env, debugtalk.py functions.
+    """load testcases, .env, debugtalk.py functions.
         testcases folder is relative to project_root_directory
         by default, project_meta will be loaded only once, unless set reload to true.
 
@@ -428,7 +413,7 @@ def load_project_meta(test_path: Text, reload: bool = False) -> ProjectMeta:
 
 
 def convert_relative_project_root_dir(abs_path: Text) -> Text:
-    """ convert absolute path to relative path, based on project_meta.RootDir
+    """convert absolute path to relative path, based on project_meta.RootDir
 
     Args:
         abs_path: absolute path
@@ -444,4 +429,4 @@ def convert_relative_project_root_dir(abs_path: Text) -> Text:
             f"project_meta.RootDir: {_project_meta.RootDir}"
         )
 
-    return abs_path[len(_project_meta.RootDir) + 1:]
+    return abs_path[len(_project_meta.RootDir) + 1 :]
