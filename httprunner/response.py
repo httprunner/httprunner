@@ -12,8 +12,7 @@ from httprunner.parser import Parser, parse_string_value
 
 
 def get_uniform_comparator(comparator: Text):
-    """ convert comparator alias to uniform name
-    """
+    """convert comparator alias to uniform name"""
     if comparator in ["eq", "equals", "equal"]:
         return "equal"
     elif comparator in ["lt", "less_than"]:
@@ -52,7 +51,7 @@ def get_uniform_comparator(comparator: Text):
 
 
 def uniform_validator(validator):
-    """ unify validator
+    """unify validator
 
     Args:
         validator (dict): validator maybe in two formats:
@@ -116,7 +115,7 @@ def uniform_validator(validator):
 
 class ResponseObject(object):
     def __init__(self, resp_obj: requests.Response, parser: Parser):
-        """ initialize with a requests.Response object
+        """initialize with a requests.Response object
 
         Args:
             resp_obj (instance): requests.Response instance
@@ -168,20 +167,19 @@ class ResponseObject(object):
 
         return check_value
 
-    def extract(self,
-                extractors: Dict[Text, Text],
-                variables_mapping: VariablesMapping = None,
-                ) -> Dict[Text, Any]:
+    def extract(
+        self,
+        extractors: Dict[Text, Text],
+        variables_mapping: VariablesMapping = None,
+    ) -> Dict[Text, Any]:
         if not extractors:
             return {}
 
         extract_mapping = {}
         for key, field in extractors.items():
-            if '$' in field:
+            if "$" in field:
                 # field contains variable or function
-                field = self.parser.parse_data(
-                    field, variables_mapping
-                )
+                field = self.parser.parse_data(field, variables_mapping)
             field_value = self._search_jmespath(field)
             extract_mapping[key] = field_value
 
@@ -214,9 +212,7 @@ class ResponseObject(object):
             check_item = u_validator["check"]
             if "$" in check_item:
                 # check_item is variable or function
-                check_item = self.parser.parse_data(
-                    check_item, variables_mapping
-                )
+                check_item = self.parser.parse_data(check_item, variables_mapping)
                 check_item = parse_string_value(check_item)
 
             if check_item and isinstance(check_item, Text):

@@ -17,8 +17,15 @@ from httprunner.client import HttpSession
 from httprunner.config import Config
 from httprunner.exceptions import ParamsError, ValidationFailure
 from httprunner.loader import load_project_meta
-from httprunner.models import (ProjectMeta, StepResult, TConfig, TestCaseInOut,
-                               TestCaseSummary, TestCaseTime, VariablesMapping)
+from httprunner.models import (
+    ProjectMeta,
+    StepResult,
+    TConfig,
+    TestCaseInOut,
+    TestCaseSummary,
+    TestCaseTime,
+    VariablesMapping,
+)
 from httprunner.parser import Parser
 from httprunner.utils import LOGGER_FORMAT, init_logger, merge_variables
 
@@ -55,9 +62,7 @@ class SessionRunner(object):
         )
         self.case_id = self.case_id or str(uuid.uuid4())
         self.root_dir = self.root_dir or self.__project_meta.RootDir
-        self.__log_path = os.path.join(
-            self.root_dir, "logs", f"{self.case_id}.run.log"
-        )
+        self.__log_path = os.path.join(self.root_dir, "logs", f"{self.case_id}.run.log")
 
         self.__step_results.clear()
         self.session = self.session or HttpSession()
@@ -87,9 +92,7 @@ class SessionRunner(object):
         self.__config.variables.update(self.__session_variables)
         if param:
             self.__config.variables.update(param)
-        self.__config.variables = self.parser.parse_variables(
-            self.__config.variables
-        )
+        self.__config.variables = self.parser.parse_variables(self.__config.variables)
 
         # parse config name
         self.__config.name = self.parser.parse_data(
@@ -176,10 +179,12 @@ class SessionRunner(object):
                     raise
                 else:
                     logger.warning(
-                        f"run step {step.name()} validation failed,wait {step.retry_interval} sec and try again")
+                        f"run step {step.name()} validation failed,wait {step.retry_interval} sec and try again"
+                    )
                     time.sleep(step.retry_interval)
                     logger.info(
-                        f"run step retry ({i+1}/{step.retry_times} time): {step.name()} >>>>>>")
+                        f"run step retry ({i+1}/{step.retry_times} time): {step.name()} >>>>>>"
+                    )
 
         # save extracted variables to session variables
         self.__session_variables.update(step_result.export_vars)

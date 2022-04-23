@@ -54,8 +54,7 @@ def session_fixture(request):
         summary["details"].append(testcase_summary_json)
 
     summary_path = os.path.join(
-        os.getcwd(),
-        "examples/postman_echo/logs/request_methods/hardcode.summary.json"
+        os.getcwd(), "examples/postman_echo/logs/request_methods/hardcode.summary.json"
     )
     summary_dir = os.path.dirname(summary_path)
     os.makedirs(summary_dir, exist_ok=True)

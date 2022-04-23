@@ -76,7 +76,7 @@ def ensure_upload_ready():
 
 
 def prepare_upload_step(step: TStep, functions: FunctionsMapping):
-    """ preprocess for upload test
+    """preprocess for upload test
         replace `upload` info with MultipartEncoder
 
     Args:
@@ -102,9 +102,7 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping):
         return
 
     # parse upload info
-    step.request.upload = parse_data(
-        step.request.upload, step.variables, functions
-    )
+    step.request.upload = parse_data(step.request.upload, step.variables, functions)
 
     ensure_upload_ready()
     params_list = []
@@ -124,7 +122,7 @@ def prepare_upload_step(step: TStep, functions: FunctionsMapping):
 
 
 def multipart_encoder(**kwargs):
-    """ initialize MultipartEncoder with uploading fields.
+    """initialize MultipartEncoder with uploading fields.
 
     Returns:
         MultipartEncoder: initialized MultipartEncoder object
@@ -169,7 +167,7 @@ def multipart_encoder(**kwargs):
 
 
 def multipart_content_type(m_encoder) -> Text:
-    """ prepare Content-Type for request headers
+    """prepare Content-Type for request headers
 
     Args:
         m_encoder: MultipartEncoder object

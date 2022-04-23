@@ -2,19 +2,22 @@ import unittest
 
 from httprunner.runner import HttpRunner
 from httprunner.step_testcase import RunTestCase
-from examples.postman_echo.request_methods.request_with_functions_test import TestCaseRequestWithFunctions
+from examples.postman_echo.request_methods.request_with_functions_test import (
+    TestCaseRequestWithFunctions,
+)
 
 
 class TestRunTestCase(unittest.TestCase):
-
     def setUp(self):
         self.runner = HttpRunner()
 
     def test_run_testcase_by_path(self):
 
-        step_result = RunTestCase("run referenced testcase").call(
-            TestCaseRequestWithFunctions
-        ).run(self.runner)
+        step_result = (
+            RunTestCase("run referenced testcase")
+            .call(TestCaseRequestWithFunctions)
+            .run(self.runner)
+        )
         self.assertTrue(step_result.success)
         self.assertEqual(step_result.name, "run referenced testcase")
         self.assertEqual(len(step_result.data), 3)

@@ -78,10 +78,10 @@ if __name__ == "__main__":
 def __ensure_absolute(path: Text) -> Text:
     if path.startswith("./"):
         # Linux/Darwin, hrun ./test.yml
-        path = path[len("./") :]
+        path = path[2:]
     elif path.startswith(".\\"):
         # Windows, hrun .\\test.yml
-        path = path[len(".\\") :]
+        path = path[3:]
 
     path = ensure_path_sep(path)
     project_meta = load_project_meta(path)
@@ -479,8 +479,7 @@ def __make(tests_path: Text):
 
         if "config" not in test_content:
             logger.warning(
-                f"Invalid testcase file: {test_file}\n"
-                f"reason: missing config part."
+                f"Invalid testcase file: {test_file}\nreason: missing config part."
             )
             continue
         elif not isinstance(test_content["config"], Dict):

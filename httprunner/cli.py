@@ -55,8 +55,7 @@ def main_run(extra_args) -> enum.IntEnum:
 
 
 def main():
-    """ API test: parse command line options and run commands.
-    """
+    """API test: parse command line options and run commands."""
     init_logger()
 
     parser = argparse.ArgumentParser(description=__description__)
@@ -111,8 +110,8 @@ def main():
 
 
 def main_hrun_alias():
-    """ command alias
-        hrun = httprunner run
+    """command alias
+    hrun = httprunner run
     """
     if len(sys.argv) == 2:
         if sys.argv[1] in ["-V", "--version"]:
@@ -131,8 +130,8 @@ def main_hrun_alias():
 
 
 def main_make_alias():
-    """ command alias
-        hmake = httprunner make
+    """command alias
+    hmake = httprunner make
     """
     sys.argv.insert(1, "make")
     main()
