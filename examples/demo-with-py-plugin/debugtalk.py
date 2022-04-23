@@ -59,7 +59,7 @@ def teardown_hook_example(name):
     return f"teardown_hook_example: {name}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     funppy.register("get_httprunner_version", get_httprunner_version)
     funppy.register("sum", sum)
     funppy.register("sum_ints", sum_ints)

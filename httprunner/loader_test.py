@@ -97,7 +97,11 @@ class TestLoader(unittest.TestCase):
         )
 
     def test_load_env_path_not_exist(self):
-        dot_env_path = os.path.join(os.getcwd(), "tests", "data",)
+        dot_env_path = os.path.join(
+            os.getcwd(),
+            "tests",
+            "data",
+        )
         env_variables_mapping = loader.load_dot_env_file(dot_env_path)
         self.assertEqual(env_variables_mapping, {})
 

@@ -36,8 +36,8 @@ def sum_two(m, n):
 
 
 def sum_status_code(status_code, expect_sum):
-    """ sum status code digits
-        e.g. 400 => 4, 201 => 3
+    """sum status code digits
+    e.g. 400 => 4, 201 => 3
     """
     sum_value = 0
     for digit in str(status_code):
@@ -54,8 +54,7 @@ os.environ["TEST_ENV"] = "PRODUCTION"
 
 
 def skip_test_in_production_env():
-    """ skip this test in production environment
-    """
+    """skip this test in production environment"""
     return os.environ["TEST_ENV"] == "PRODUCTION"
 
 
@@ -97,8 +96,7 @@ def setup_hook_remove_kwargs(request):
 
 
 def teardown_hook_sleep_N_secs(response, n_secs):
-    """ sleep n seconds after request
-    """
+    """sleep n seconds after request"""
     if response.status_code == 200:
         time.sleep(0.1)
     else:

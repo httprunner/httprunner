@@ -27,7 +27,8 @@ class TestHttpSession(unittest.TestCase):
         self.session.request(
             "get",
             "http://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
-            allow_redirects=True)
+            allow_redirects=True,
+        )
         address = self.session.data.address
         self.assertNotEqual(address.server_ip, "N/A")
         self.assertEqual(address.server_port, 443)
@@ -38,7 +39,8 @@ class TestHttpSession(unittest.TestCase):
         self.session.request(
             "get",
             "https://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
-            allow_redirects=True)
+            allow_redirects=True,
+        )
         address = self.session.data.address
         self.assertNotEqual(address.server_ip, "N/A")
         self.assertEqual(address.server_port, 443)
@@ -49,7 +51,8 @@ class TestHttpSession(unittest.TestCase):
         self.session.request(
             "get",
             "http://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
-            allow_redirects=False)
+            allow_redirects=False,
+        )
         address = self.session.data.address
         self.assertEqual(address.server_ip, "N/A")
         self.assertEqual(address.server_port, 0)
@@ -60,7 +63,8 @@ class TestHttpSession(unittest.TestCase):
         self.session.request(
             "get",
             "https://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
-            allow_redirects=False)
+            allow_redirects=False,
+        )
         address = self.session.data.address
         self.assertEqual(address.server_ip, "N/A")
         self.assertEqual(address.server_port, 0)

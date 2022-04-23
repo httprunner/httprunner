@@ -2,12 +2,15 @@ from typing import Union
 
 from httprunner.models import StepResult, TRequest, TStep, TestCase
 from httprunner.runner import HttpRunner
-from httprunner.step_request import RequestWithOptionalArgs, StepRequestExtraction, StepRequestValidation
+from httprunner.step_request import (
+    RequestWithOptionalArgs,
+    StepRequestExtraction,
+    StepRequestValidation,
+)
 from httprunner.step_testcase import StepRefCase
 
 
 class Step(object):
-
     def __init__(
         self,
         step: Union[

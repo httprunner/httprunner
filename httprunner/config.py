@@ -5,7 +5,6 @@ from httprunner.models import TConfig, TConfigThrift
 
 
 class ConfigThrift(object):
-
     def __init__(self, config: TConfig) -> None:
         self.__config = config
         self.__config.thrift = TConfigThrift()
@@ -31,13 +30,9 @@ class ConfigThrift(object):
 
 
 class Config(object):
-
     def __init__(self, name: Text) -> None:
         caller_frame = inspect.stack()[1]
-        self.__config = TConfig(
-            name=name,
-            path=caller_frame.filename
-        )
+        self.__config = TConfig(name=name, path=caller_frame.filename)
 
     @property
     def name(self) -> Text:
