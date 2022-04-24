@@ -19,16 +19,13 @@ class TestResponse(unittest.TestCase):
                 ]
             },
         )
-        parser = Parser(functions_mapping={
-            'get_name': lambda: 'name',
-            "get_num": lambda x: x
-        })
+        parser = Parser(
+            functions_mapping={"get_name": lambda: "name", "get_num": lambda x: x}
+        )
         self.resp_obj = ResponseObject(resp, parser)
 
     def test_extract(self):
-        variables_mapping = {
-            'body': 'body'
-        }
+        variables_mapping = {"body": "body"}
         extract_mapping = self.resp_obj.extract(
             {
                 "var_1": "body.json.locations[0]",
@@ -64,6 +61,9 @@ class TestResponse(unittest.TestCase):
     def test_validate_functions(self):
         variables_mapping = {"index": 1}
         self.resp_obj.validate(
-            [{"eq": ["${get_num(0)}", 0]}, {"eq": ["${get_num($index)}", 1]},],
+            [
+                {"eq": ["${get_num(0)}", 0]},
+                {"eq": ["${get_num($index)}", 1]},
+            ],
             variables_mapping=variables_mapping,
         )

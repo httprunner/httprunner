@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "httprunner"
-version = "4.0.0-alpha"
+version = "4.0.0-beta"
 description = "One-stop solution for HTTP(S) testing."
 license = "Apache-2.0"
 readme = "README.md"
 authors = ["debugtalk <debugtalk@gmail.com>"]
 
-homepage = "https://github.com/httprunner/httprunner"
+homepage = "https://httprunner.com"
 repository = "https://github.com/httprunner/httprunner"
 documentation = "https://httprunner.com/docs"
 
@@ -35,7 +35,7 @@ pyyaml = "^5.4.1"
 pydantic = "~1.8"   # >=1.8.0 <1.9.0
 loguru = "^0.4.1"
 jmespath = "^0.9.5"
-black = "^19.10b0"
+black = "^22.3.0"
 pytest = "^7.1.1"
 pytest-html = "^3.1.1"
 sentry-sdk = "^0.14.4"
@@ -44,6 +44,7 @@ requests-toolbelt = {version = "^0.9.1", optional = true}
 filetype = {version = "^1.0.7", optional = true}
 Brotli = "^1.0.9"
 jinja2 = "^3.0.3"
+toml = "^0.10.2"
 
 [tool.poetry.extras]
 allure = ["allure-pytest"]                  # pip install "httprunner[allure]", poetry install -E allure

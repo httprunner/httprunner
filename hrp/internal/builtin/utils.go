@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/httprunner/hrp/internal/json"
 )
 
@@ -76,16 +77,59 @@ func FormatResponse(raw interface{}) interface{} {
 	return formattedResponse
 }
 
-func ExecCommand(cmd *exec.Cmd, cwd string) error {
-	log.Info().Str("cmd", cmd.String()).Str("cwd", cwd).Msg("exec command")
-	cmd.Dir = cwd
-	output, err := cmd.CombinedOutput()
-	out := strings.TrimSpace(string(output))
+func EnsurePython3Venv(packages ...string) (string, error) {
+	// create python venv
+	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Error().Err(err).Str("output", out).Msg("exec command failed")
-	} else if len(out) != 0 {
-		log.Info().Str("output", out).Msg("exec command success")
+		return "", errors.Wrap(err, "get user home dir failed")
 	}
+	venvDir := filepath.Join(home, ".hrp", "venv")
+	python3, err := shared.EnsurePython3Venv(venvDir, packages...)
+	if err != nil {
+		return "", errors.Wrap(err, "ensure python venv failed")
+	}
+
+	return python3, nil
+}
+
+func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
+	log.Info().Str("cmd", cmd.String()).Str("dir", dir).Msg("exec command")
+	cmd.Dir = dir
+
+	// print output with colors
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		log.Error().Err(err).Msg("exec command failed")
+		return err
+	}
+
+	return nil
+}
+
+func ExecCommand(cmdName string, args ...string) error {
+	cmd := exec.Command(cmdName, args...)
+	log.Info().Str("cmd", cmd.String()).Msg("exec command")
+
+	// print output with colors
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// add cmd dir path to PATH
+	PATH := fmt.Sprintf("%s:%s", filepath.Dir(cmdName), os.Getenv("PATH"))
+	if err := os.Setenv("PATH", PATH); err != nil {
+		log.Error().Err(err).Msg("failed to add cmd dir path to $PATH")
+		return err
+	}
+
+	err := cmd.Run()
+	if err != nil {
+		log.Error().Err(err).Msg("exec command failed")
+		return err
+	}
+
 	return err
 }
 

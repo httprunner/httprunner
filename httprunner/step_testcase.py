@@ -22,11 +22,9 @@ def run_step_testcase(runner: HttpRunner, step: TStep) -> StepResult:
 
     # step.testcase is a referenced testcase, e.g. RequestWithFunctions
     ref_case_runner = step.testcase()
-    ref_case_runner.with_session(runner.session) \
-        .with_case_id(runner.case_id) \
-        .with_variables(step_variables) \
-        .with_export(step_export) \
-        .test_start()
+    ref_case_runner.with_session(runner.session).with_case_id(
+        runner.case_id
+    ).with_variables(step_variables).with_export(step_export).test_start()
 
     # teardown hooks
     if step.teardown_hooks:

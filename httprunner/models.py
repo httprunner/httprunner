@@ -97,7 +97,9 @@ class ProjectMeta(BaseModel):
     dot_env_path: Text = ""  # .env file path
     functions: FunctionsMapping = {}  # functions defined in debugtalk.py
     env: Env = {}
-    RootDir: Text = os.getcwd()  # project root directory (ensure absolute), the path debugtalk.py located
+    RootDir: Text = (
+        os.getcwd()
+    )  # project root directory (ensure absolute), the path debugtalk.py located
 
 
 class TestsMapping(BaseModel):
@@ -166,21 +168,20 @@ class SessionData(BaseModel):
 class StepResult(BaseModel):
     """teststep data, each step maybe corresponding to one request or one testcase"""
 
-    name: Text = ""             # teststep name
-    step_type: Text = ""        # teststep type, request or testcase
+    name: Text = ""  # teststep name
+    step_type: Text = ""  # teststep type, request or testcase
     success: bool = False
-    data: Union[SessionData, List['StepResult']] = None
-    elapsed: float = 0.0        # teststep elapsed time
-    content_size: float = 0     # response content size
+    data: Union[SessionData, List["StepResult"]] = None
+    elapsed: float = 0.0  # teststep elapsed time
+    content_size: float = 0  # response content size
     export_vars: VariablesMapping = {}
-    attachment: Text = ""       # teststep attachment
+    attachment: Text = ""  # teststep attachment
 
 
 StepResult.update_forward_refs()
 
 
 class IStep(object):
-
     def name(self) -> str:
         raise NotImplementedError
 
@@ -209,18 +210,6 @@ class PlatformInfo(BaseModel):
     httprunner_version: Text
     python_version: Text
     platform: Text
-
-
-class TestCaseRef(BaseModel):
-    name: Text
-    base_url: Text = ""
-    testcase: Text
-    variables: VariablesMapping = {}
-
-
-class TestSuite(BaseModel):
-    config: TConfig
-    testcases: List[TestCaseRef]
 
 
 class Stat(BaseModel):

@@ -1,10 +1,11 @@
 import unittest
 
-from examples.postman_echo.request_methods.request_with_functions_test import TestCaseRequestWithFunctions
+from examples.postman_echo.request_methods.request_with_functions_test import (
+    TestCaseRequestWithFunctions,
+)
 
 
 class TestRunRequest(unittest.TestCase):
-
     def test_run_request(self):
         runner = TestCaseRequestWithFunctions().test_start()
         summary = runner.get_summary()

@@ -8,7 +8,6 @@ from httprunner.loader import load_project_meta
 
 
 class TestParserBasic(unittest.TestCase):
-
     def test_build_url(self):
         url = parser.build_url("https://postman-echo.com", "/get")
         self.assertEqual(url, "https://postman-echo.com/get")

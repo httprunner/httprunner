@@ -5,6 +5,7 @@ import json
 import os
 import os.path
 import platform
+import sys
 import uuid
 from multiprocessing import Queue
 from typing import Any, Dict, List, Text
@@ -31,18 +32,20 @@ def init_sentry_sdk():
 
 class GAClient(object):
 
-    version = '1'   # GA API Version
-    report_url = 'https://www.google-analytics.com/collect'
-    report_debug_url = 'https://www.google-analytics.com/debug/collect'   # used for debug
+    version = "1"  # GA API Version
+    report_url = "https://www.google-analytics.com/collect"
+    report_debug_url = (
+        "https://www.google-analytics.com/debug/collect"  # used for debug
+    )
 
     def __init__(self, tracking_id: Text):
         self.http_client = requests.Session()
         self.label = f"v{__version__}"
         self.common_params = {
-            'v': self.version,
-            'tid': tracking_id,    # Tracking ID / Property ID, XX-XXXXXXX-X
-            'cid': uuid.getnode(),      # Anonymous Client ID
-            'ua': f'HttpRunner/{__version__}',
+            "v": self.version,
+            "tid": tracking_id,  # Tracking ID / Property ID, XX-XXXXXXX-X
+            "cid": uuid.getnode(),  # Anonymous Client ID
+            "ua": f"HttpRunner/{__version__}",
         }
         # do not send GA events in CI environment
         self.__is_ci = os.getenv("DISABLE_GA") == "true"
@@ -52,16 +55,16 @@ class GAClient(object):
             return
 
         data = {
-            't': 'event',       # Event hit type = event
-            'ec': category,     # Required. Event Category.
-            'ea': action,       # Required. Event Action.
-            'el': self.label,   # Optional. Event label, used as version.
-            'ev': value,        # Optional. Event value, must be non-negative integer
+            "t": "event",  # Event hit type = event
+            "ec": category,  # Required. Event Category.
+            "ea": action,  # Required. Event Action.
+            "el": self.label,  # Optional. Event label, used as version.
+            "ev": value,  # Optional. Event value, must be non-negative integer
         }
         data.update(self.common_params)
         try:
             self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:   # ProxyError, SSLError, ConnectionError
+        except Exception:  # ProxyError, SSLError, ConnectionError
             pass
 
     def track_user_timing(self, category: Text, variable: Text, duration: int):
@@ -69,16 +72,16 @@ class GAClient(object):
             return
 
         data = {
-            't': 'timing',      # Event hit type = timing
-            'utc': category,    # Required. user timing category. e.g. jsonLoader
-            'utv': variable,    # Required. timing variable. e.g. load
-            'utt': duration,    # Required. time took duration.
-            'utl': self.label,  # Optional. user timing label, used as version.
+            "t": "timing",  # Event hit type = timing
+            "utc": category,  # Required. user timing category. e.g. jsonLoader
+            "utv": variable,  # Required. timing variable. e.g. load
+            "utt": duration,  # Required. time took duration.
+            "utl": self.label,  # Optional. user timing label, used as version.
         }
         data.update(self.common_params)
         try:
             self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:   # ProxyError, SSLError, ConnectionError
+        except Exception:  # ProxyError, SSLError, ConnectionError
             pass
 
 
@@ -86,23 +89,21 @@ ga_client = GAClient("UA-114587036-1")
 
 
 def set_os_environ(variables_mapping):
-    """ set variables mapping to os.environ
-    """
+    """set variables mapping to os.environ"""
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
         logger.debug(f"Set OS environment variable: {variable}")
 
 
 def unset_os_environ(variables_mapping):
-    """ unset variables mapping to os.environ
-    """
+    """unset variables mapping to os.environ"""
     for variable in variables_mapping:
         os.environ.pop(variable)
         logger.debug(f"Unset OS environment variable: {variable}")
 
 
 def get_os_environ(variable_name):
-    """ get value of environment variable.
+    """get value of environment variable.
 
     Args:
         variable_name(str): variable name
@@ -121,7 +122,7 @@ def get_os_environ(variable_name):
 
 
 def lower_dict_keys(origin_dict):
-    """ convert keys in dict to lower case
+    """convert keys in dict to lower case
 
     Args:
         origin_dict (dict): mapping data structure
@@ -156,7 +157,7 @@ def lower_dict_keys(origin_dict):
 
 
 def print_info(info_mapping):
-    """ print info in mapping.
+    """print info in mapping.
 
     Args:
         info_mapping (dict): input(variables) or output mapping.
@@ -201,8 +202,7 @@ def print_info(info_mapping):
 
 
 def omit_long_data(body, omit_len=512):
-    """ omit too long str/bytes
-    """
+    """omit too long str/bytes"""
     if not isinstance(body, (str, bytes)):
         return body
 
@@ -243,8 +243,7 @@ def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):
 
 
 class ExtendJSONEncoder(json.JSONEncoder):
-    """ especially used to safely dump json data with python object, such as MultipartEncoder
-    """
+    """especially used to safely dump json data with python object, such as MultipartEncoder"""
 
     def default(self, obj):
         try:
@@ -256,8 +255,7 @@ class ExtendJSONEncoder(json.JSONEncoder):
 def merge_variables(
     variables: VariablesMapping, variables_to_be_overridden: VariablesMapping
 ) -> VariablesMapping:
-    """ merge two variables mapping, the first variables have higher priority
-    """
+    """merge two variables mapping, the first variables have higher priority"""
     step_new_variables = {}
     for key, value in variables.items():
         if f"${key}" == value or "${" + key + "}" == value:
@@ -282,7 +280,7 @@ def is_support_multiprocessing() -> bool:
 
 
 def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
-    """ generate cartesian product for lists
+    """generate cartesian product for lists
 
     Args:
         args (list of list): lists to be generated with cartesian product
@@ -320,3 +318,12 @@ def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
         product_list.append(product_item_dict)
 
     return product_list
+
+
+LOGGER_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level}</level> | <level>{message}</level>"
+
+
+def init_logger():
+    # set log level to INFO
+    logger.remove()
+    logger.add(sys.stderr, format=LOGGER_FORMAT, level="INFO")

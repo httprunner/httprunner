@@ -46,7 +46,7 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	var taskSlice []*boomer.Task
 
 	// load all testcases
-	testCases, err := loadTestCases(testcases...)
+	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(1)

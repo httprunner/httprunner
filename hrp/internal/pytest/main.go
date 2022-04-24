@@ -1,23 +1,21 @@
 package pytest
 
 import (
-	"os/exec"
-	"strings"
-
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/hrp/internal/sdk"
 )
 
 func RunPytest(args []string) error {
-	cmd := exec.Command("pytest", args...)
-	log.Info().Str("cmd", cmd.String()).Msg("run pytest")
+	sdk.SendEvent(sdk.EventTracking{
+		Category: "RunAPITests",
+		Action:   "hrp pytest",
+	})
 
-	output, err := cmd.CombinedOutput()
+	python3, err := builtin.EnsurePython3Venv("httprunner")
 	if err != nil {
-		return errors.Wrap(err, "pytest running failed")
+		return err
 	}
-	out := strings.TrimSpace(string(output))
-	println(out)
 
-	return nil
+	args = append([]string{"-m", "httprunner", "run"}, args...)
+	return builtin.ExecCommand(python3, args...)
 }
