@@ -42,24 +42,31 @@ func CopyFile(templateFile, targetFile string) error {
 	return nil
 }
 
-func CreateScaffold(projectName string, pluginType PluginType) error {
+func CreateScaffold(projectName string, pluginType PluginType, force bool) error {
 	// report event
 	sdk.SendEvent(sdk.EventTracking{
 		Category: "Scaffold",
 		Action:   "hrp startproject",
 	})
 
-	// check if projectName exists
-	if _, err := os.Stat(projectName); err == nil {
-		log.Warn().Str("projectName", projectName).
-			Msg("project name already exists, please specify a new one.")
-		return fmt.Errorf("project name already exists")
-	}
-
 	log.Info().
 		Str("projectName", projectName).
 		Str("pluginType", string(pluginType)).
+		Bool("force", force).
 		Msg("create new scaffold project")
+
+	// check if projectName exists
+	if _, err := os.Stat(projectName); err == nil {
+		if !force {
+			log.Warn().Str("projectName", projectName).
+				Msg("project name already exists, please specify a new one.")
+			return fmt.Errorf("project name already exists")
+		}
+
+		log.Warn().Str("projectName", projectName).
+			Msg("project name already exists, remove first !!!")
+		os.RemoveAll(projectName)
+	}
 
 	// create project folders
 	if err := builtin.CreateFolder(projectName); err != nil {
