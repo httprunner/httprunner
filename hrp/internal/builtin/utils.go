@@ -117,6 +117,13 @@ func ExecCommand(cmdName string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// add cmd dir path to PATH
+	PATH := fmt.Sprintf("%s:%s", filepath.Dir(cmdName), os.Getenv("PATH"))
+	if err := os.Setenv("PATH", PATH); err != nil {
+		log.Error().Err(err).Msg("failed to add cmd dir path to $PATH")
+		return err
+	}
+
 	err := cmd.Run()
 	if err != nil {
 		log.Error().Err(err).Msg("exec command failed")
