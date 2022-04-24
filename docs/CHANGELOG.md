@@ -1,5 +1,9 @@
 # Release History
 
+## 3.1.11 (2022-04-24)
+
+- fix #1273: ImportError by cannot import name '_unicodefun' from 'click'
+
 ## 3.1.10 (2022-04-18)
 
 - fix #1249: catch exceptions when requesting with disabling allow_redirects
