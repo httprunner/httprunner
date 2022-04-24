@@ -1,6 +1,6 @@
 # Release History
 
-## v4.0.0-alpha
+## v4.0.0-beta (2022-04-24)
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
 - refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
@@ -164,6 +164,10 @@
 - docs: add project badges, including go report card, codecov, github actions, FOSSA, etc.
 - test: add CI test with [github actions][github-actions]
 - test: integrate [sentry sdk][sentry sdk] for event reporting and analysis
+
+## 3.1.11 (2022-04-24)
+
+- fix #1273: ImportError by cannot import name '_unicodefun' from 'click'
 
 ## 3.1.10 (2022-04-18)
 

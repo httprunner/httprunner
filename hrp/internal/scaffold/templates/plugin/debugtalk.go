@@ -42,7 +42,7 @@ func TeardownHookExample(args string) string {
 }
 
 func GetVersion() string {
-	return "v4.0.0-alpha"
+	return "v4.0.0-beta"
 }
 
 func main() {

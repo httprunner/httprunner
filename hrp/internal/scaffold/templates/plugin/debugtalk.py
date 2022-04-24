@@ -6,7 +6,7 @@ import funppy
 
 
 def get_httprunner_version():
-    return "v4.0.0-alpha"
+    return "v4.0.0-beta"
 
 
 def sleep(n_secs):
