@@ -151,8 +151,9 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	s := newOutSummary()
 
 	// load all testcases
-	testCases, err := loadTestCases(testcases...)
+	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to load testcases")
 		return err
 	}
 

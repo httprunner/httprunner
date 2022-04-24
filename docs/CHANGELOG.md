@@ -1,11 +1,12 @@
 # Release History
 
-## v4.0.0-alpha
+## v4.0.0-beta (2022-04-24)
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
 - refactor: redesign `IStep` to make step extensible to support implementing new protocols and test types
 - feat: disable GA events report by setting environment `DISABLE_GA=true`
 - feat: disable sentry reports by setting environment `DISABLE_SENTRY=true`
+- feat: prepare python3 venv in `~/.hrp/venv` before running
 
 **go version**
 
@@ -13,6 +14,7 @@
 - feat: support run testcases in specified folder path, including testcases in sub folders
 - feat: support HTTP/2 protocol
 - feat: support WebSocket protocol
+- feat: convert YAML/JSON testcases to pytest scripts with `hrp convert`
 - change: integrate [sentry sdk][sentry sdk] for panic reporting and analysis
 - change: lock funplugin version when creating scaffold project
 - fix: call referenced api/testcase with relative path
@@ -162,6 +164,10 @@
 - docs: add project badges, including go report card, codecov, github actions, FOSSA, etc.
 - test: add CI test with [github actions][github-actions]
 - test: integrate [sentry sdk][sentry sdk] for event reporting and analysis
+
+## 3.1.11 (2022-04-24)
+
+- fix #1273: ImportError by cannot import name '_unicodefun' from 'click'
 
 ## 3.1.10 (2022-04-18)
 

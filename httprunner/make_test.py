@@ -73,7 +73,8 @@ from request_methods.request_with_functions_test import (
                 content,
             )
             self.assertIn(
-                ".call(RequestWithFunctions)", content,
+                ".call(RequestWithFunctions)",
+                content,
             )
 
     def test_make_testcase_folder(self):
@@ -94,9 +95,7 @@ from request_methods.request_with_functions_test import (
 
     def test_ensure_file_path_valid(self):
         self.assertEqual(
-            ensure_file_abs_path_valid(
-                os.path.join(self.data_dir, "a-b.c", "2 3.yml")
-            ),
+            ensure_file_abs_path_valid(os.path.join(self.data_dir, "a-b.c", "2 3.yml")),
             os.path.join(self.data_dir, "a_b_c", "T2_3.yml"),
         )
         loader.project_meta = None
@@ -113,65 +112,29 @@ from request_methods.request_with_functions_test import (
         )
         loader.project_meta = None
         self.assertEqual(
-            ensure_file_abs_path_valid(os.getcwd()), os.getcwd(),
+            ensure_file_abs_path_valid(os.getcwd()),
+            os.getcwd(),
         )
         loader.project_meta = None
         self.assertEqual(
-            ensure_file_abs_path_valid(
-                os.path.join(self.data_dir, ".csv")
-            ),
+            ensure_file_abs_path_valid(os.path.join(self.data_dir, ".csv")),
             os.path.join(self.data_dir, ".csv"),
         )
 
     def test_convert_testcase_path(self):
         self.assertEqual(
-            convert_testcase_path(
-                os.path.join(self.data_dir, "a-b.c", "2 3.yml")
-            ),
+            convert_testcase_path(os.path.join(self.data_dir, "a-b.c", "2 3.yml")),
             (
                 os.path.join(self.data_dir, "a_b_c", "T2_3_test.py"),
                 "T23",
             ),
         )
         self.assertEqual(
-            convert_testcase_path(
-                os.path.join(self.data_dir, "a-b.c", "中文case.yml")
-            ),
+            convert_testcase_path(os.path.join(self.data_dir, "a-b.c", "中文case.yml")),
             (
                 os.path.join(self.data_dir, "a_b_c", "中文case_test.py"),
                 "中文Case",
             ),
-        )
-
-    def test_make_testsuite(self):
-        path = ["examples/postman_echo/request_methods/demo_testsuite.yml"]
-        testcase_python_list = main_make(path)
-        self.assertEqual(len(testcase_python_list), 2)
-        self.assertIn(
-            os.path.join(
-                os.getcwd(),
-                os.path.join(
-                    "examples",
-                    "postman_echo",
-                    "request_methods",
-                    "demo_testsuite_yml",
-                    "request_with_functions_test.py",
-                ),
-            ),
-            testcase_python_list,
-        )
-        self.assertIn(
-            os.path.join(
-                os.getcwd(),
-                os.path.join(
-                    "examples",
-                    "postman_echo",
-                    "request_methods",
-                    "demo_testsuite_yml",
-                    "request_with_testcase_reference_test.py",
-                ),
-            ),
-            testcase_python_list,
         )
 
     def test_make_config_chain_style(self):
@@ -190,7 +153,11 @@ from request_methods.request_with_functions_test import (
     def test_make_teststep_chain_style(self):
         step = {
             "name": "get with params",
-            "variables": {"foo1": "bar1", "foo2": 123, "sum_v": "${sum_two(1, 2)}",},
+            "variables": {
+                "foo1": "bar1",
+                "foo2": 123,
+                "sum_v": "${sum_two(1, 2)}",
+            },
             "request": {
                 "method": "GET",
                 "url": "/get",

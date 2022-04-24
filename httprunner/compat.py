@@ -14,24 +14,11 @@ from httprunner.utils import sort_dict_by_custom_order
 
 
 def convert_variables(
-    raw_variables: Union[Dict, List, Text], test_path: Text
+    raw_variables: Union[Dict, Text], test_path: Text
 ) -> Dict[Text, Any]:
 
     if isinstance(raw_variables, Dict):
         return raw_variables
-
-    if isinstance(raw_variables, List):
-        # [{"var1": 1}, {"var2": 2}]
-        variables: Dict[Text, Any] = {}
-        for var_item in raw_variables:
-            if not isinstance(var_item, Dict) or len(var_item) != 1:
-                raise exceptions.TestCaseFormatError(
-                    f"Invalid variables format: {raw_variables}"
-                )
-
-            variables.update(var_item)
-
-        return variables
 
     elif isinstance(raw_variables, Text):
         # get variables by function, e.g. ${get_variables()}
@@ -79,7 +66,7 @@ def _convert_jmespath(raw: Text) -> Text:
 
 
 def _convert_extractors(extractors: Union[List, Dict]) -> Dict:
-    """ convert extract list(v2) to dict(v3)
+    """convert extract list(v2) to dict(v3)
 
     Args:
         extractors: [{"varA": "content.varA"}, {"varB": "json.varB"}]
@@ -251,8 +238,7 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
 
 
 def ensure_cli_args(args: List) -> List:
-    """ ensure compatibility with deprecated cli args in v2
-    """
+    """ensure compatibility with deprecated cli args in v2"""
     # remove deprecated --failfast
     if "--failfast" in args:
         logger.warning("remove deprecated argument: --failfast")
@@ -301,13 +287,13 @@ from httprunner.utils import get_platform, ExtendJSONEncoder
 @pytest.fixture(scope="session", autouse=True)
 def session_fixture(request):
     """setup and teardown each task"""
-    logger.info(f"start running testcases ...")
+    logger.info("start running testcases ...")
 
     start_at = time.time()
 
     yield
 
-    logger.info(f"task finished, generate task summary for --save-tests")
+    logger.info("task finished, generate task summary for --save-tests")
 
     summary = {
         "success": True,
@@ -386,8 +372,7 @@ def session_fixture(request):
 
 
 def ensure_path_sep(path: Text) -> Text:
-    """ ensure compatibility with different path separators of Linux and Windows
-    """
+    """ensure compatibility with different path separators of Linux and Windows"""
     if "/" in path:
         path = os.sep.join(path.split("/"))
 

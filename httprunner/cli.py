@@ -9,7 +9,7 @@ from loguru import logger
 from httprunner import __description__, __version__
 from httprunner.compat import ensure_cli_args
 from httprunner.make import init_make_parser, main_make
-from httprunner.utils import ga_client, init_sentry_sdk
+from httprunner.utils import ga_client, init_logger, init_sentry_sdk
 
 init_sentry_sdk()
 
@@ -55,8 +55,9 @@ def main_run(extra_args) -> enum.IntEnum:
 
 
 def main():
-    """ API test: parse command line options and run commands.
-    """
+    """API test: parse command line options and run commands."""
+    init_logger()
+
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         "-V", "--version", dest="version", action="store_true", help="show version"
@@ -109,8 +110,8 @@ def main():
 
 
 def main_hrun_alias():
-    """ command alias
-        hrun = httprunner run
+    """command alias
+    hrun = httprunner run
     """
     if len(sys.argv) == 2:
         if sys.argv[1] in ["-V", "--version"]:
@@ -129,8 +130,8 @@ def main_hrun_alias():
 
 
 def main_make_alias():
-    """ command alias
-        hmake = httprunner make
+    """command alias
+    hmake = httprunner make
     """
     sys.argv.insert(1, "make")
     main()

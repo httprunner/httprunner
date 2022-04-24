@@ -27,8 +27,7 @@ class ApiResponse(Response):
 
 
 def get_req_resp_record(resp_obj: Response) -> ReqRespData:
-    """ get request and response info from Response() object.
-    """
+    """get request and response info from Response() object."""
 
     def log_print(req_or_resp, r_type):
         msg = f"\n================== {r_type} details ==================\n"

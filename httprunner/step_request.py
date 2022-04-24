@@ -6,15 +6,24 @@ from loguru import logger
 from httprunner import utils
 from httprunner.exceptions import ValidationFailure
 from httprunner.ext.uploader import prepare_upload_step
-from httprunner.models import (Hooks, IStep, MethodEnum, StepResult, TRequest,
-                               TStep, VariablesMapping)
+from httprunner.models import (
+    Hooks,
+    IStep,
+    MethodEnum,
+    StepResult,
+    TRequest,
+    TStep,
+    VariablesMapping,
+)
 from httprunner.parser import build_url
 from httprunner.response import ResponseObject
 from httprunner.runner import HttpRunner
 
 
-def call_hooks(runner: HttpRunner, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text):
-    """ call hook actions.
+def call_hooks(
+    runner: HttpRunner, hooks: Hooks, step_variables: VariablesMapping, hook_msg: Text
+):
+    """call hook actions.
 
     Args:
         hooks (list): each hook in hooks list maybe in two format.
@@ -46,9 +55,7 @@ def call_hooks(runner: HttpRunner, hooks: Hooks, step_variables: VariablesMappin
         elif isinstance(hook, Dict) and len(hook) == 1:
             # format 2: {"var": "${func()}"}
             var_name, hook_content = list(hook.items())[0]
-            hook_content_eval = runner.parser.parse_data(
-                hook_content, step_variables
-            )
+            hook_content_eval = runner.parser.parse_data(hook_content, step_variables)
             logger.debug(
                 f"call hook function: {hook_content}, got value: {hook_content_eval}"
             )
@@ -73,9 +80,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     prepare_upload_step(step, functions)
     request_dict = step.request.dict()
     request_dict.pop("upload", None)
-    parsed_request_dict = runner.parser.parse_data(
-        request_dict, step.variables
-    )
+    parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
     parsed_request_dict["headers"].setdefault(
         "HRUN-Request-ID",
         f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}",
@@ -136,9 +141,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     # validate
     validators = step.validators
     try:
-        resp_obj.validate(
-            validators, variables_mapping
-        )
+        resp_obj.validate(validators, variables_mapping)
         step_result.success = True
     except ValidationFailure:
         log_req_resp_details()
@@ -162,9 +165,7 @@ class StepRequestValidation(IStep):
     def assert_equal(
         self, jmes_path: Text, expected_value: Any, message: Text = ""
     ) -> "StepRequestValidation":
-        self.__step.validators.append(
-            {"equal": [jmes_path, expected_value, message]}
-        )
+        self.__step.validators.append({"equal": [jmes_path, expected_value, message]})
         return self
 
     def assert_not_equal(
@@ -418,7 +419,6 @@ class RequestWithOptionalArgs(IStep):
 
 
 class RunRequest(object):
-
     def __init__(self, name: Text):
         self.__step = TStep(name=name)
 

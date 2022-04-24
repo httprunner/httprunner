@@ -85,5 +85,4 @@ class TestcaseNotFound(NotFoundError):
 
 
 class SummaryEmpty(MyBaseError):
-    """ test result summary data is empty
-    """
+    """test result summary data is empty"""

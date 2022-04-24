@@ -240,7 +240,7 @@ func convertCheckExpr(checkExpr string) string {
 	return strings.Join(checkItems, ".")
 }
 
-func loadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
+func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 	testCases := make([]*TestCase, 0)
 
 	for _, iTestCase := range iTestCases {

@@ -9,11 +9,6 @@ class TestCompat(unittest.TestCase):
         loader.project_meta = None
 
     def test_convert_variables(self):
-        raw_variables = [{"var1": 1}, {"var2": "val2"}]
-        self.assertEqual(
-            compat.convert_variables(raw_variables, "examples/data/a-b.c/1.yml"),
-            {"var1": 1, "var2": "val2"},
-        )
         raw_variables = {"var1": 1, "var2": "val2"}
         self.assertEqual(
             compat.convert_variables(raw_variables, "examples/data/a-b.c/1.yml"),
@@ -38,7 +33,7 @@ class TestCompat(unittest.TestCase):
             compat._convert_jmespath("headers.Content-Type"), 'headers."Content-Type"'
         )
         self.assertEqual(
-            compat._convert_jmespath('headers.User-Agent'), 'headers."User-Agent"'
+            compat._convert_jmespath("headers.User-Agent"), 'headers."User-Agent"'
         )
         self.assertEqual(
             compat._convert_jmespath('headers."Content-Type"'), 'headers."Content-Type"'

@@ -2,20 +2,21 @@ package hrp
 
 import (
 	"os"
-	"os/exec"
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 )
 
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
-	cmd := exec.Command("go", "build",
+	err := builtin.ExecCommand("go", "build",
 		"-o", templatesDir+"debugtalk.bin", templatesDir+"plugin/debugtalk.go")
-	if err := cmd.Run(); err != nil {
+	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
 		os.Exit(1)
 	}
@@ -202,7 +203,7 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 func TestLoadTestCases(t *testing.T) {
 	// load test cases from folder path
 	tc := TestCasePath("../examples/demo-with-py-plugin/testcases/")
-	testCases, err := loadTestCases(&tc)
+	testCases, err := LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -212,7 +213,7 @@ func TestLoadTestCases(t *testing.T) {
 
 	// load test cases from folder path, including sub folders
 	tc = TestCasePath("../examples/demo-with-py-plugin/")
-	testCases, err = loadTestCases(&tc)
+	testCases, err = LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -222,7 +223,7 @@ func TestLoadTestCases(t *testing.T) {
 
 	// load test cases from single file path
 	tc = demoTestCaseWithPluginJSONPath
-	testCases, err = loadTestCases(&tc)
+	testCases, err = LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -234,7 +235,7 @@ func TestLoadTestCases(t *testing.T) {
 	testcase := &TestCase{
 		Config: NewConfig("TestCase").SetWeight(3),
 	}
-	testCases, err = loadTestCases(testcase)
+	testCases, err = LoadTestCases(testcase)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}

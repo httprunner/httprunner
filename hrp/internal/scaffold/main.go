@@ -42,24 +42,31 @@ func CopyFile(templateFile, targetFile string) error {
 	return nil
 }
 
-func CreateScaffold(projectName string, pluginType PluginType) error {
+func CreateScaffold(projectName string, pluginType PluginType, force bool) error {
 	// report event
 	sdk.SendEvent(sdk.EventTracking{
 		Category: "Scaffold",
 		Action:   "hrp startproject",
 	})
 
-	// check if projectName exists
-	if _, err := os.Stat(projectName); err == nil {
-		log.Warn().Str("projectName", projectName).
-			Msg("project name already exists, please specify a new one.")
-		return fmt.Errorf("project name already exists")
-	}
-
 	log.Info().
 		Str("projectName", projectName).
 		Str("pluginType", string(pluginType)).
+		Bool("force", force).
 		Msg("create new scaffold project")
+
+	// check if projectName exists
+	if _, err := os.Stat(projectName); err == nil {
+		if !force {
+			log.Warn().Str("projectName", projectName).
+				Msg("project name already exists, please specify a new one.")
+			return fmt.Errorf("project name already exists")
+		}
+
+		log.Warn().Str("projectName", projectName).
+			Msg("project name already exists, remove first !!!")
+		os.RemoveAll(projectName)
+	}
 
 	// create project folders
 	if err := builtin.CreateFolder(projectName); err != nil {
@@ -133,7 +140,7 @@ func CreateScaffold(projectName string, pluginType PluginType) error {
 func createGoPlugin(projectName string) error {
 	log.Info().Msg("start to create hashicorp go plugin")
 	// check go sdk
-	if err := builtin.ExecCommand(exec.Command("go", "version"), projectName); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "version"), projectName); err != nil {
 		return errors.Wrap(err, "go sdk not installed")
 	}
 
@@ -149,19 +156,19 @@ func createGoPlugin(projectName string) error {
 	}
 
 	// create go mod
-	if err := builtin.ExecCommand(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
 		return err
 	}
 
 	// download plugin dependency
 	// funplugin version should be locked
 	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
-	if err := builtin.ExecCommand(exec.Command("go", "get", funplugin), pluginDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
 		return err
 	}
 
 	// build plugin debugtalk.bin
-	if err := builtin.ExecCommand(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
 		return err
 	}
 
@@ -178,15 +185,9 @@ func createPythonPlugin(projectName string) error {
 		return errors.Wrap(err, "copy file failed")
 	}
 
-	// create python venv
-	home, err := os.UserHomeDir()
+	_, err = builtin.EnsurePython3Venv(fmt.Sprintf("funppy==%s", shared.Version))
 	if err != nil {
-		return errors.Wrap(err, "get user home dir failed")
-	}
-	venvDir := filepath.Join(home, ".hrp", "venv")
-	_, err = shared.EnsurePython3Venv(venvDir)
-	if err != nil {
-		return errors.Wrap(err, "ensure python venv failed")
+		return err
 	}
 
 	return nil

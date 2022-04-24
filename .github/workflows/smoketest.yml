@@ -66,10 +66,14 @@ jobs:
         uses: actions/checkout@v2
       - name: Build hrp binary
         run: make build
-      - name: Run smoketest - postman echo
-        run: ./output/hrp boom examples/hrp/postman-echo.json --spawn-count 10 --spawn-rate 10 --loop-count 10
-      - name: Run smoketest - data driven with parameterize mechanism
+      - name: Run smoketest - run with parameters
+        run: ./output/hrp run examples/hrp/parameters_test.json
+      - name: Run smoketest - boom with parameters
         run: ./output/hrp boom examples/hrp/parameters_test.json --spawn-count 10 --spawn-rate 10 --loop-count 10
-      - name: Run smoketest - rendezvous
+      - name: Run smoketest - boom with rendezvous
         run: |
           ./output/hrp boom examples/hrp/rendezvous_test.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+      - name: Run hrp convert --pytest
+        run: ./output/hrp convert examples/postman_echo/request_methods/
+      - name: Run hrp pytest
+        run: ./output/hrp pytest examples/postman_echo/request_methods/
