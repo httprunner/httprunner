@@ -16,11 +16,12 @@ if [ -z "$version" ]; then
     exit 1
 fi
 
-echo "bump hrp version to $version"
-sed -i'.bak' "s/\".*\"/\"v$version\"/g" hrp/internal/version/init.go
+if [[ $version != v* ]]; then
+    version="v$version"
+fi
 
-echo "bump install.sh version to $version"
-sed -i'.bak' "s/LATEST_VERSION=\".*\"/LATEST_VERSION=\"v$version\"/g" scripts/install.sh
+echo "bump hrp version to $version"
+echo -n "$version" > hrp/internal/version/VERSION
 
 echo "bump httprunner version to $version"
 sed -i'.bak' "s/__version__ = \".*\"/__version__ = \"$version\"/g" httprunner/__init__.py

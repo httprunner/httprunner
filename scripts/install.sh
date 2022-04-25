@@ -1,8 +1,6 @@
 #!/bin/bash
 # install hrp with one shell command
-# bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
-
-LATEST_VERSION="v4.0.0-beta"
+# bash -c "$(curl -ksSL https://httprunner.com/script/install.sh)"
 
 set -e
 
@@ -22,8 +20,7 @@ function echoWarn() {
 export -f echoError
 
 function get_latest_version() {
-    #   <title>Release v0.4.0 · httprunner/hrp · GitHub</title>
-    curl -sL https://github.com/httprunner/httprunner/releases/latest | grep '<title>Release' | cut -d" " -f4
+    curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/VERSION
 }
 
 function get_os() {
@@ -61,7 +58,13 @@ function extract_pkg() {
 
 function main() {
     echoInfo "Detect target hrp package..."
-    version=$LATEST_VERSION
+    version=$(get_latest_version)
+    if [[ $version != v* ]]; then
+        echo "get hrp latest version failed:"
+        echo "$version"
+        exit 1
+    fi
+
     os=$(get_os)
     echo "Current OS: $os"
     arch=$(get_arch)
