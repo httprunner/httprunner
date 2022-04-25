@@ -60,8 +60,6 @@ You can install HttpRunner via one curl command.
 
 ```bash
 $ bash -c "$(curl -ksSL https://httprunner.com/script/install.sh)"
-# backup
-$ bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
 ```
 
 Then you will get a `hrp` CLI tool.

@@ -53,8 +53,6 @@ HttpRunner 二进制命令行工具已上传至阿里云 OSS，在系统终端�
 
 ```bash
 $ bash -c "$(curl -ksSL https://httprunner.com/script/install.sh)"
-# backup
-$ bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
 ```
 
 安装成功后，你将获得一个 `hrp` 命令行工具，执行 `hrp -h` 即可查看到参数帮助说明。
