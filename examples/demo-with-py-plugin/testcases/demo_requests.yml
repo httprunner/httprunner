@@ -15,7 +15,7 @@ teststeps:
     variables:
         foo1: bar11
         foo2: bar21
-        sum_v: "${sum_two(1, 2)}"
+        sum_v: "${sum_two_int(1, 2)}"
     request:
         method: GET
         url: /get
