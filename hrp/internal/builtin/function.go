@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"math"
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -16,6 +17,8 @@ var Functions = map[string]interface{}{
 	"md5":               MD5,             // call with one argument
 	"parameterize":      loadFromCSV,
 	"P":                 loadFromCSV,
+	"environ":           os.Getenv,
+	"ENV":               os.Getenv,
 	"load_ws_message":   loadMessage,
 }
 

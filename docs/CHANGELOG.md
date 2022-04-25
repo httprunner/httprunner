@@ -1,5 +1,12 @@
 # Release History
 
+## v4.0.0-beta2 (2022-04-25)
+
+**go version**
+
+- feat: add builtin function `environ`/`ENV`
+- fix: demo function compatibility
+
 ## v4.0.0-beta (2022-04-24)
 
 - refactor: merge [hrp] into httprunner v4, which will include golang and python dual engine
