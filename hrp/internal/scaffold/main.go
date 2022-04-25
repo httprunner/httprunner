@@ -185,7 +185,7 @@ func createPythonPlugin(projectName string) error {
 		return errors.Wrap(err, "copy file failed")
 	}
 
-	_, err = builtin.EnsurePython3Venv(fmt.Sprintf("funppy==%s", shared.Version))
+	_, err = builtin.EnsurePython3Venv(fmt.Sprintf("funppy>=%s", shared.Version))
 	if err != nil {
 		return err
 	}
