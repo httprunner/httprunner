@@ -10,6 +10,7 @@ import (
 	"github.com/httprunner/httprunner/hrp"
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/hrp/internal/version"
 )
 
 func Convert2TestScripts(destType string, paths ...string) error {
@@ -28,7 +29,8 @@ func Convert2TestScripts(destType string, paths ...string) error {
 }
 
 func convert2PyTestScripts(paths ...string) error {
-	python3, err := builtin.EnsurePython3Venv("httprunner")
+	httprunner := fmt.Sprintf("httprunner>=%s", version.HttpRunnerMinVersion)
+	python3, err := builtin.EnsurePython3Venv(httprunner)
 	if err != nil {
 		return err
 	}

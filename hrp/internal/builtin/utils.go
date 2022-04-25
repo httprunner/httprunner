@@ -86,7 +86,7 @@ func EnsurePython3Venv(packages ...string) (string, error) {
 	venvDir := filepath.Join(home, ".hrp", "venv")
 	python3, err := shared.EnsurePython3Venv(venvDir, packages...)
 	if err != nil {
-		return "", errors.Wrap(err, "ensure python venv failed")
+		return "", errors.Wrap(err, "ensure python3 venv failed")
 	}
 
 	return python3, nil
