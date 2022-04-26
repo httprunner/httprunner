@@ -86,3 +86,7 @@ class TestcaseNotFound(NotFoundError):
 
 class SummaryEmpty(MyBaseError):
     """test result summary data is empty"""
+
+
+class SqlMethodNotSupport(MyBaseError):
+    pass

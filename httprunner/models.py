@@ -28,6 +28,20 @@ class MethodEnum(Text, Enum):
     PATCH = "PATCH"
 
 
+class ProtoType(Enum):
+    pBinary = 1
+    pCyBinary = 2
+    pCompact = 3
+    pJson = 4
+
+
+class TransType(Enum):
+    tBuffered = 1
+    tCyBuffered = 2
+    tFramed = 3
+    tCyFramed = 4
+
+
 # configs for thrift rpc
 class TConfigThrift(BaseModel):
     psm: Text = None
@@ -36,6 +50,66 @@ class TConfigThrift(BaseModel):
     target: Text = None
     include_dirs: List[Text] = None
     thrift_client: Any = None
+    timeout: int = 10
+    idl_path: Text = None
+    method: Text = None
+    ip: Text = "127.0.0.1"
+    port: int = 9000
+    service_name: Text = None
+    proto_type: ProtoType = ProtoType.pBinary
+    trans_type: TransType = TransType.tBuffered
+
+
+# configs for db
+class TConfigDB(BaseModel):
+    psm: Text = None
+    user: Text = None
+    password: Text = None
+    ip: Text = None
+    port: int = 3306
+    database: Text = None
+
+
+class TransportEnum(Text, Enum):
+    BUFFERED = "buffered"
+    FRAMED = "framed"
+
+
+class TThriftRequest(BaseModel):
+    """ rpc request model"""
+    method: Text = ''
+    params: Dict = {}
+    thrift_client: Any = None
+    idl_path: Text = ''  # idl local path
+    timeout: int = 10  # sec
+    transport: TransportEnum = TransportEnum.BUFFERED
+    include_dirs: List[Union[Text, None]] = []  # param of thriftpy2.load
+    target: Text = ""  # tcp://{ip}:{port} or sd://psm?cluster=xx&env=xx
+    env: Text = "prod"
+    cluster: Text = "default"
+    psm: Text = ""
+    service_name: Text = None
+    ip: Text = None
+    port: int = None
+    proto_type: ProtoType = None
+    trans_type: TransType = None
+
+
+class SqlMethodEnum(Text, Enum):
+    FETCHONE = "FETCHONE"
+    FETCHMANY = "FETCHMANY"
+    FETCHALL = "FETCHALL"
+    INSERT = "INSERT"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+
+
+class TSqlRequest(BaseModel):
+    """ sql request model"""
+    db_config: TConfigDB = TConfigDB()
+    method: SqlMethodEnum = None
+    sql: Text = None
+    size: int = 0  # limit nums of sql result
 
 
 class TConfig(BaseModel):
@@ -51,6 +125,7 @@ class TConfig(BaseModel):
     path: Text = None
     # configs for other protocols
     thrift: TConfigThrift = None
+    db: TConfigDB = TConfigDB()
 
 
 class TRequest(BaseModel):
@@ -84,6 +159,8 @@ class TStep(BaseModel):
     validate_script: List[Text] = []
     retry_times: int = 0
     retry_interval: int = 0  # sec
+    thrift_request: Union[TThriftRequest, None] = None
+    sql_request: Union[TSqlRequest, None] = None
 
 
 class TestCase(BaseModel):
