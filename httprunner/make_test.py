@@ -73,8 +73,7 @@ from request_methods.request_with_functions_test import (
                 content,
             )
             self.assertIn(
-                ".call(RequestWithFunctions)",
-                content,
+                ".call(RequestWithFunctions)", content,
             )
 
     def test_make_testcase_folder(self):
@@ -112,8 +111,7 @@ from request_methods.request_with_functions_test import (
         )
         loader.project_meta = None
         self.assertEqual(
-            ensure_file_abs_path_valid(os.getcwd()),
-            os.getcwd(),
+            ensure_file_abs_path_valid(os.getcwd()), os.getcwd(),
         )
         loader.project_meta = None
         self.assertEqual(
@@ -124,17 +122,11 @@ from request_methods.request_with_functions_test import (
     def test_convert_testcase_path(self):
         self.assertEqual(
             convert_testcase_path(os.path.join(self.data_dir, "a-b.c", "2 3.yml")),
-            (
-                os.path.join(self.data_dir, "a_b_c", "T2_3_test.py"),
-                "T23",
-            ),
+            (os.path.join(self.data_dir, "a_b_c", "T2_3_test.py"), "T23",),
         )
         self.assertEqual(
             convert_testcase_path(os.path.join(self.data_dir, "a-b.c", "中文case.yml")),
-            (
-                os.path.join(self.data_dir, "a_b_c", "中文case_test.py"),
-                "中文Case",
-            ),
+            (os.path.join(self.data_dir, "a_b_c", "中文case_test.py"), "中文Case",),
         )
 
     def test_make_config_chain_style(self):
@@ -153,11 +145,7 @@ from request_methods.request_with_functions_test import (
     def test_make_teststep_chain_style(self):
         step = {
             "name": "get with params",
-            "variables": {
-                "foo1": "bar1",
-                "foo2": 123,
-                "sum_v": "${sum_two(1, 2)}",
-            },
+            "variables": {"foo1": "bar1", "foo2": 123, "sum_v": "${sum_two(1, 2)}",},
             "request": {
                 "method": "GET",
                 "url": "/get",

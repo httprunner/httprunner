@@ -27,7 +27,7 @@ class DBEngine(object):
         """
         for k, v in row.items():
             if isinstance(v, datetime.datetime):
-                row[k] = v.strftime('%Y-%m-%d %H:%M:%S')
+                row[k] = v.strftime("%Y-%m-%d %H:%M:%S")
             elif isinstance(v, datetime.date):
                 row[k] = v.strftime("%Y-%m-%d")
             elif isinstance(v, str):
@@ -73,7 +73,6 @@ class DBEngine(object):
     def update(self, query, commit=True):
         return self._fetch(query=query, commit=commit)
 
-if __name__ == '__main__':
-    db = DBEngine(
-      f"mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")
 
+if __name__ == "__main__":
+    db = DBEngine(f"mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")

@@ -124,20 +124,17 @@ class ResponseObjectBase(object):
         self.parser = parser
         self.validation_results: Dict = {}
 
-    def extract(self,
-                extractors: Dict[Text, Text],
-                variables_mapping: VariablesMapping = None,
-                ) -> Dict[Text, Any]:
+    def extract(
+        self, extractors: Dict[Text, Text], variables_mapping: VariablesMapping = None,
+    ) -> Dict[Text, Any]:
         if not extractors:
             return {}
 
         extract_mapping = {}
         for key, field in extractors.items():
-            if '$' in field:
+            if "$" in field:
                 # field contains variable or function
-                field = self.parser.parse_data(
-                    field, variables_mapping
-                )
+                field = self.parser.parse_data(field, variables_mapping)
             field_value = self._search_jmespath(field)
             extract_mapping[key] = field_value
 
@@ -148,9 +145,7 @@ class ResponseObjectBase(object):
         raise NotImplementedError("_search_jmespath not override")
 
     def validate(
-            self,
-            validators: Validators,
-            variables_mapping: VariablesMapping = None,
+        self, validators: Validators, variables_mapping: VariablesMapping = None,
     ):
 
         variables_mapping = variables_mapping or {}
@@ -173,9 +168,7 @@ class ResponseObjectBase(object):
             check_item = u_validator["check"]
             if "$" in check_item:
                 # check_item is variable or function
-                check_item = self.parser.parse_data(
-                    check_item, variables_mapping
-                )
+                check_item = self.parser.parse_data(check_item, variables_mapping)
                 check_item = parse_string_value(check_item)
 
             if check_item and isinstance(check_item, Text):
