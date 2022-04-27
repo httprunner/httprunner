@@ -14,6 +14,8 @@ from httprunner.step_sql_request import (
     StepSqlRequestExtraction,
 )
 
+from httprunner.step_thrift_request import RunThriftRequest,StepThriftRequestValidation,StepThriftRequestExtraction
+
 
 class Step(object):
     def __init__(
@@ -26,6 +28,9 @@ class Step(object):
             RunSqlRequest,
             StepSqlRequestValidation,
             StepSqlRequestExtraction,
+            RunThriftRequest,
+            StepThriftRequestValidation,
+            StepThriftRequestExtraction
         ],
     ):
         self.__step = step
