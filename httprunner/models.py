@@ -77,10 +77,11 @@ class TransportEnum(Text, Enum):
 
 class TThriftRequest(BaseModel):
     """ rpc request model"""
-    method: Text = ''
+
+    method: Text = ""
     params: Dict = {}
     thrift_client: Any = None
-    idl_path: Text = ''  # idl local path
+    idl_path: Text = ""  # idl local path
     timeout: int = 10  # sec
     transport: TransportEnum = TransportEnum.BUFFERED
     include_dirs: List[Union[Text, None]] = []  # param of thriftpy2.load
@@ -106,6 +107,7 @@ class SqlMethodEnum(Text, Enum):
 
 class TSqlRequest(BaseModel):
     """ sql request model"""
+
     db_config: TConfigDB = TConfigDB()
     method: SqlMethodEnum = None
     sql: Text = None

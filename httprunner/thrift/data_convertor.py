@@ -19,21 +19,21 @@ text_characters = "".join(map(chr, range(32, 127))) + "\n\r\t\b"
 _null_trans = str.maketrans("", "")
 ESCAPE = re.compile(r'[\x00-\x1f\\"\b\f\n\r\t]')
 ESCAPE_ASCII = re.compile(r'([\\"]|[^\ -~])')
-HAS_UTF8 = re.compile(r'[\x80-\xff]')
+HAS_UTF8 = re.compile(r"[\x80-\xff]")
 ESCAPE_DCT = {
-    '\\': '\\\\',
+    "\\": "\\\\",
     '"': '\\"',
-    '\b': '\\b',
-    '\f': '\\f',
-    '\n': '\\n',
-    '\r': '\\r',
-    '\t': '\\t',
+    "\b": "\\b",
+    "\f": "\\f",
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
 }
 for i in range(0x20):
-    ESCAPE_DCT.setdefault(chr(i), '\\u{0:04x}'.format(i))
+    ESCAPE_DCT.setdefault(chr(i), "\\u{0:04x}".format(i))
     # ESCAPE_DCT.setdefault(chr(i), '\\u%04x' % (i,))
 
-INFINITY = float('inf')
+INFINITY = float("inf")
 FLOAT_REPR = repr
 
 
@@ -66,7 +66,7 @@ def unicode_2_utf8_keep_native(para):
     elif type(para) is tuple:
         return tuple(unicode_2_utf8_keep_native(list(para)))
     elif type(para) is str:
-        return para.encode('utf-8')
+        return para.encode("utf-8")
     else:
         logging.debug("type========", type(para))
         # if issubclass(type(para), dict):
@@ -93,7 +93,7 @@ def py_encode_basestring_ascii(s):
 
     """
     if isinstance(s, str) and HAS_UTF8.search(s) is not None:
-        s = s.decode('utf-8')
+        s = s.decode("utf-8")
 
     def replace(match):
         s = match.group(0)
@@ -102,27 +102,25 @@ def py_encode_basestring_ascii(s):
         except KeyError:
             n = ord(s)
             if n < 0x10000:
-                return '\\u{0:04x}'.format(n)
+                return "\\u{0:04x}".format(n)
                 # return '\\u%04x' % (n,)
             else:
                 # surrogate pair
                 n -= 0x10000
-                s1 = 0xd800 | ((n >> 10) & 0x3ff)
-                s2 = 0xdc00 | (n & 0x3ff)
-                return '\\u{0:04x}\\u{1:04x}'.format(s1, s2)
+                s1 = 0xD800 | ((n >> 10) & 0x3FF)
+                s2 = 0xDC00 | (n & 0x3FF)
+                return "\\u{0:04x}\\u{1:04x}".format(s1, s2)
                 # return '\\u%04x\\u%04x' % (s1, s2)
 
     return '"' + str(ESCAPE_ASCII.sub(replace, s)) + '"'
 
 
-encode_basestring_ascii = (
-        c_encode_basestring_ascii or py_encode_basestring_ascii)
+encode_basestring_ascii = c_encode_basestring_ascii or py_encode_basestring_ascii
 
 
 class ThriftJSONDecoder(json.JSONDecoder):
-
     def __init__(self, *args, **kwargs):
-        self._thrift_class = kwargs.pop('thrift_class')
+        self._thrift_class = kwargs.pop("thrift_class")
         super(ThriftJSONDecoder, self).__init__(*args, **kwargs)
 
     def decode(self, json_str):
@@ -130,9 +128,12 @@ class ThriftJSONDecoder(json.JSONDecoder):
             dct = json_str
         else:
             dct = super(ThriftJSONDecoder, self).decode(json_str)
-        return self._convert(dct, TType.STRUCT,
-                             # (self._thrift_class, self._thrift_class.thrift_spec))
-                             self._thrift_class)
+        return self._convert(
+            dct,
+            TType.STRUCT,
+            # (self._thrift_class, self._thrift_class.thrift_spec))
+            self._thrift_class,
+        )
 
     def _convert(self, val, ttype, ttype_info):
         if ttype == TType.STRUCT:
@@ -156,7 +157,9 @@ class ThriftJSONDecoder(json.JSONDecoder):
 
                     if val is None or field_name not in val:
                         continue
-                    converted_val = self._convert(val[field_name], field_ttype, field_ttype_info)
+                    converted_val = self._convert(
+                        val[field_name], field_ttype, field_ttype_info
+                    )
                     setattr(ret, field_name, converted_val)
         elif ttype == TType.LIST:
             if type(ttype_info) != tuple:  # 说明是基础类型了, 无法在细分
@@ -174,7 +177,9 @@ class ThriftJSONDecoder(json.JSONDecoder):
             else:
                 (element_ttype, element_ttype_info) = ttype_info
             if val is not None:
-                ret = set([self._convert(x, element_ttype, element_ttype_info) for x in val])
+                ret = set(
+                    [self._convert(x, element_ttype, element_ttype_info) for x in val]
+                )
             else:
                 ret = None
 
@@ -193,8 +198,15 @@ class ThriftJSONDecoder(json.JSONDecoder):
                 val_ttype, val_ttype_info = ttype_info[1]
 
             if val is not None:
-                ret = dict([(self._convert(k, key_ttype, key_ttype_info),
-                             self._convert(v, val_ttype, val_ttype_info)) for (k, v) in val.items()])
+                ret = dict(
+                    [
+                        (
+                            self._convert(k, key_ttype, key_ttype_info),
+                            self._convert(v, val_ttype, val_ttype_info),
+                        )
+                        for (k, v) in val.items()
+                    ]
+                )
             else:
                 ret = None
         elif ttype == TType.STRING:
@@ -228,13 +240,15 @@ class ThriftJSONDecoder(json.JSONDecoder):
             else:
                 ret = None
         else:
-            raise TypeError('Unrecognized thrift field type: %s' % ttype)
+            raise TypeError("Unrecognized thrift field type: %s" % ttype)
         return ret
 
 
 def json2thrift(json_str, thrift_class):
     logging.debug(json_str)
-    return json.loads(json_str, cls=ThriftJSONDecoder, thrift_class=thrift_class, strict=False)
+    return json.loads(
+        json_str, cls=ThriftJSONDecoder, thrift_class=thrift_class, strict=False
+    )
 
 
 def dumper(obj):
@@ -245,14 +259,33 @@ def dumper(obj):
 
 
 class MyJSONEncoder(json.JSONEncoder):
-    def __init__(self, skipkeys=False, ensure_ascii=True, check_circular=True,
-                 allow_nan=True, indent=None, separators=None,
-                 encoding='utf-8', default=None, sort_keys=False, **kw):
-        super(MyJSONEncoder, self).__init__(skipkeys=skipkeys, ensure_ascii=ensure_ascii,
-                                            check_circular=check_circular, allow_nan=allow_nan, indent=indent,
-                                            separators=separators, encoding=encoding, default=default,
-                                            sort_keys=sort_keys)
-        self.skip_nonutf8_value = kw.get('skip_nonutf8_value', False)  # 默认不skip忽略非utf-8编码的字段
+    def __init__(
+        self,
+        skipkeys=False,
+        ensure_ascii=True,
+        check_circular=True,
+        allow_nan=True,
+        indent=None,
+        separators=None,
+        encoding="utf-8",
+        default=None,
+        sort_keys=False,
+        **kw
+    ):
+        super(MyJSONEncoder, self).__init__(
+            skipkeys=skipkeys,
+            ensure_ascii=ensure_ascii,
+            check_circular=check_circular,
+            allow_nan=allow_nan,
+            indent=indent,
+            separators=separators,
+            encoding=encoding,
+            default=default,
+            sort_keys=sort_keys,
+        )
+        self.skip_nonutf8_value = kw.get(
+            "skip_nonutf8_value", False
+        )  # 默认不skip忽略非utf-8编码的字段
 
     def encode(self, o):
         """Return a JSON string representation of a Python data structure.
@@ -266,8 +299,7 @@ class MyJSONEncoder(json.JSONEncoder):
 
             if isinstance(o, str):
                 _encoding = self.encoding
-                if (_encoding is not None
-                        and not (_encoding == 'utf-8')):
+                if _encoding is not None and not (_encoding == "utf-8"):
                     o = o.decode(_encoding)
             if self.ensure_ascii:
                 return encode_basestring_ascii(o)
@@ -288,10 +320,10 @@ class MyJSONEncoder(json.JSONEncoder):
                     tmp_chunks.append(unicode_2_utf8_keep_native(chunk))
                 except Exception as err:
                     logging.debug(traceback.format_exc())
-            return ''.join(tmp_chunks)
+            return "".join(tmp_chunks)
 
         # 保留老的逻辑, /usr/lib/python2.7/package/json/__init__.py dumps接口
-        return ''.join(chunks)
+        return "".join(chunks)
 
 
 class ThriftJSONEncoder(json.JSONEncoder):
@@ -299,13 +331,32 @@ class ThriftJSONEncoder(json.JSONEncoder):
     add by braver(Braver@bytedance.com)
     """
 
-    def __init__(self, skipkeys=False, ensure_ascii=True, check_circular=True,
-                 allow_nan=True, indent=None, separators=None, default=None, sort_keys=False, **kw):
+    def __init__(
+        self,
+        skipkeys=False,
+        ensure_ascii=True,
+        check_circular=True,
+        allow_nan=True,
+        indent=None,
+        separators=None,
+        default=None,
+        sort_keys=False,
+        **kw
+    ):
 
-        super(ThriftJSONEncoder, self).__init__(skipkeys=skipkeys, ensure_ascii=ensure_ascii,
-                                                check_circular=check_circular, allow_nan=allow_nan, indent=indent,
-                                                separators=separators, default=default, sort_keys=sort_keys)
-        self.skip_nonutf8_value = kw.get('skip_nonutf8_value', False)  # 默认不skip忽略非utf-8编码的字段
+        super(ThriftJSONEncoder, self).__init__(
+            skipkeys=skipkeys,
+            ensure_ascii=ensure_ascii,
+            check_circular=check_circular,
+            allow_nan=allow_nan,
+            indent=indent,
+            separators=separators,
+            default=default,
+            sort_keys=sort_keys,
+        )
+        self.skip_nonutf8_value = kw.get(
+            "skip_nonutf8_value", False
+        )  # 默认不skip忽略非utf-8编码的字段
 
     def encode(self, o):
         """Return a JSON string representation of a Python data structure.
@@ -318,8 +369,7 @@ class ThriftJSONEncoder(json.JSONEncoder):
         if isinstance(o, str):
             if isinstance(o, str):
                 _encoding = self.encoding
-                if (_encoding is not None
-                        and not (_encoding == 'utf-8')):
+                if _encoding is not None and not (_encoding == "utf-8"):
                     o = o.decode(_encoding)
             if self.ensure_ascii:
                 return encode_basestring_ascii(o)
@@ -340,18 +390,18 @@ class ThriftJSONEncoder(json.JSONEncoder):
                     tmp_chunks.append(unicode_2_utf8_keep_native(chunk))
                 except Exception as err:
                     logging.debug(traceback.format_exc())
-            return ''.join(tmp_chunks)
+            return "".join(tmp_chunks)
 
         # 保留老的逻辑, /usr/lib/python2.7/package/json/__init__.py dumps接口
-        return ''.join(chunks)
+        return "".join(chunks)
 
     def default(self, o):
         if isinstance(o, bytes):
-            return str(o, encoding='utf-8')
-        if not hasattr(o, 'thrift_spec'):
+            return str(o, encoding="utf-8")
+        if not hasattr(o, "thrift_spec"):
             return super(ThriftJSONEncoder, self).default(o)
 
-        spec = getattr(o, 'thrift_spec')
+        spec = getattr(o, "thrift_spec")
         ret = {}
         for tag, field in spec.items():
             if field is None:
@@ -370,30 +420,42 @@ class ThriftJSONEncoder(json.JSONEncoder):
                         val = list(val)  # 统一转成数组(list/set)
                         is_need_binary_bs64 = False
                         if type(field_ttype_info) != tuple:  # 基础类型
-                            if field_ttype_info in [TType.BYTE] and type(val[0]) in [str] and not istext(
-                                    val[0]):
+                            if (
+                                field_ttype_info in [TType.BYTE]
+                                and type(val[0]) in [str]
+                                and not istext(val[0])
+                            ):
                                 is_need_binary_bs64 = True
                         if is_need_binary_bs64:
                             for index, item in enumerate(val):
                                 if item and type(item) in [str] and not istext(item):
-                                    val[index] = base64.b64encode(item)  # 判断为二进制字符串, 需要进行base64编码
-                if field_type in [TType.BYTE] and type(val) in [str]:  # 说明是string(明文string或者binary)
+                                    val[index] = base64.b64encode(
+                                        item
+                                    )  # 判断为二进制字符串, 需要进行base64编码
+                if field_type in [TType.BYTE] and type(val) in [
+                    str
+                ]:  # 说明是string(明文string或者binary)
                     # 需要对二进制字节字符串字段进行base64编码, 将二进制字节串字段->ascii字符编码的base64编码明文串
                     if val and not istext(val):  # 说明是该字段非空且为binary string
-                        print('4' * 100, val)
-                        val = base64.b64encode(val.encode('utf-8'))
+                        print("4" * 100, val)
+                        val = base64.b64encode(val.encode("utf-8"))
                         # val = base64.b64encode(val)  # 进行base64编码处理, 不然该字段序列化为json时会报错
                 # if val != default:
                 ret[field_name] = val
-        if 'request_id' in o.__dict__:
-            ret['request_id'] = o.__dict__['request_id']
-        if 'rpc_latency' in o.__dict__:
-            ret['rpc_latency'] = o.__dict__['rpc_latency']
+        if "request_id" in o.__dict__:
+            ret["request_id"] = o.__dict__["request_id"]
+        if "rpc_latency" in o.__dict__:
+            ret["rpc_latency"] = o.__dict__["rpc_latency"]
         return ret
 
 
 def thrift2json(obj, skip_nonutf8_value=False):
-    return json.dumps(obj, cls=ThriftJSONEncoder, ensure_ascii=False, skip_nonutf8_value=skip_nonutf8_value)
+    return json.dumps(
+        obj,
+        cls=ThriftJSONEncoder,
+        ensure_ascii=False,
+        skip_nonutf8_value=skip_nonutf8_value,
+    )
 
 
 def thrift2dict(obj):
@@ -403,8 +465,11 @@ def thrift2dict(obj):
 
 dict2thrift = json2thrift
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(istext("Всего за {$price$}, а доставка - бесплатно!"))
-    print(istext(b'\xe4\xb8\xad\xe6\x96\x87'))
-    print(istext(
-        '{"web_uri":"ad-site-i18n-sg/202103185d0d723d88b7f642452dac73","height":336,"width":336,"file_name":""}'))
+    print(istext(b"\xe4\xb8\xad\xe6\x96\x87"))
+    print(
+        istext(
+            '{"web_uri":"ad-site-i18n-sg/202103185d0d723d88b7f642452dac73","height":336,"width":336,"file_name":""}'
+        )
+    )

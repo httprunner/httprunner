@@ -43,8 +43,7 @@ class TestCompat(unittest.TestCase):
             "body.data.buildings[0].building_id",
         )
         self.assertEqual(
-            compat._convert_jmespath("body.users[-1]"),
-            "body.users[-1]",
+            compat._convert_jmespath("body.users[-1]"), "body.users[-1]",
         )
         self.assertEqual(
             compat._convert_jmespath("body.result.WorkNode_-1"),

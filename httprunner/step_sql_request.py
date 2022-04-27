@@ -10,7 +10,11 @@ from httprunner.models import IStep, StepResult, TStep
 from httprunner.models import TSqlRequest, SqlMethodEnum
 from httprunner.response import SqlResponseObject
 from httprunner.runner import HttpRunner
-from httprunner.step_request import call_hooks, StepRequestExtraction, StepRequestValidation
+from httprunner.step_request import (
+    call_hooks,
+    StepRequestExtraction,
+    StepRequestValidation,
+)
 from httprunner.database.engine import DBEngine
 from httprunner.exceptions import SqlMethodNotSupport
 
@@ -19,32 +23,42 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep:sql request"""
     start_time = time.time()
 
-    step_result = StepResult(
-        name=step.name,
-        success=False,
-    )
+    step_result = StepResult(name=step.name, success=False,)
     step.variables = runner.merge_step_variables(step.variables)
     # parse
     request_dict = step.sql_request.dict()
-    parsed_request_dict = runner.parser.parse_data(
-        request_dict, step.variables
-    )
+    parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
     config = runner.get_config()
-    parsed_request_dict["db_config"]["psm"] = parsed_request_dict["db_config"]["psm"] or config.db.psm
-    parsed_request_dict["db_config"]["user"] = parsed_request_dict["db_config"]["user"] or config.db.user
-    parsed_request_dict["db_config"]["password"] = parsed_request_dict["db_config"]["password"] or config.db.password
-    parsed_request_dict["db_config"]["ip"] = parsed_request_dict["db_config"]["ip"] or config.db.ip
-    parsed_request_dict["db_config"]["port"] = parsed_request_dict["db_config"]["port"] or config.db.port
-    parsed_request_dict["db_config"]["database"] = parsed_request_dict["db_config"]["database"] or config.db.database
+    parsed_request_dict["db_config"]["psm"] = (
+        parsed_request_dict["db_config"]["psm"] or config.db.psm
+    )
+    parsed_request_dict["db_config"]["user"] = (
+        parsed_request_dict["db_config"]["user"] or config.db.user
+    )
+    parsed_request_dict["db_config"]["password"] = (
+        parsed_request_dict["db_config"]["password"] or config.db.password
+    )
+    parsed_request_dict["db_config"]["ip"] = (
+        parsed_request_dict["db_config"]["ip"] or config.db.ip
+    )
+    parsed_request_dict["db_config"]["port"] = (
+        parsed_request_dict["db_config"]["port"] or config.db.port
+    )
+    parsed_request_dict["db_config"]["database"] = (
+        parsed_request_dict["db_config"]["database"] or config.db.database
+    )
 
     if parsed_request_dict["db_config"]["psm"]:
-        runner.db_engine = DBEngine(f'mysql+pymysql://:@/?charset=utf8mb4&db_psm={parsed_request_dict["psm"]}')
+        runner.db_engine = DBEngine(
+            f'mysql+pymysql://:@/?charset=utf8mb4&db_psm={parsed_request_dict["psm"]}'
+        )
     else:
         runner.db_engine = DBEngine(
             f'mysql+pymysql://{parsed_request_dict["db_config"]["user"]}:'
             f'{parsed_request_dict["db_config"]["password"]}@{parsed_request_dict["db_config"]["ip"]}:'
             f'{parsed_request_dict["db_config"]["port"]}/{parsed_request_dict["db_config"]["database"]}'
-            f'?charset=utf8mb4')
+            f"?charset=utf8mb4"
+        )
 
     # parsed_request_dict["headers"].setdefault(
     #     "HRUN-Request-ID",
@@ -57,19 +71,23 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     logger.info(f"Executing SQL: {parsed_request_dict['sql']}")
     if step.sql_request.method == SqlMethodEnum.FETCHONE:
-        sql_resp = runner.db_engine.fetchone(parsed_request_dict['sql'])
+        sql_resp = runner.db_engine.fetchone(parsed_request_dict["sql"])
     elif step.sql_request.method == SqlMethodEnum.INSERT:
-        sql_resp = runner.db_engine.insert(parsed_request_dict['sql'])
+        sql_resp = runner.db_engine.insert(parsed_request_dict["sql"])
     elif step.sql_request.method == SqlMethodEnum.FETCHMANY:
-        sql_resp = runner.db_engine.fetchmany(parsed_request_dict['sql'], parsed_request_dict['size'])
+        sql_resp = runner.db_engine.fetchmany(
+            parsed_request_dict["sql"], parsed_request_dict["size"]
+        )
     elif step.sql_request.method == SqlMethodEnum.FETCHALL:
-        sql_resp = runner.db_engine.fetchall(parsed_request_dict['sql'])
+        sql_resp = runner.db_engine.fetchall(parsed_request_dict["sql"])
     elif step.sql_request.method == SqlMethodEnum.UPDATE:
-        sql_resp = runner.db_engine.update(parsed_request_dict['sql'])
+        sql_resp = runner.db_engine.update(parsed_request_dict["sql"])
     elif step.sql_request.method == SqlMethodEnum.DELETE:
-        sql_resp = runner.db_engine.delete(parsed_request_dict['sql'])
+        sql_resp = runner.db_engine.delete(parsed_request_dict["sql"])
     else:
-        raise SqlMethodNotSupport(f"step.sql_request.method {parsed_request_dict['method']} not support")
+        raise SqlMethodNotSupport(
+            f"step.sql_request.method {parsed_request_dict['method']} not support"
+        )
     resp_obj = SqlResponseObject(sql_resp, parser=runner.parser)
     step.variables["sql_response"] = resp_obj
 
@@ -107,9 +125,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     # validate
     validators = step.validators
     try:
-        resp_obj.validate(
-            validators, variables_mapping
-        )
+        resp_obj.validate(validators, variables_mapping)
         step_result.success = True
     except ValidationFailure:
         log_sql_req_resp_details()
@@ -128,7 +144,7 @@ class StepSqlRequestValidation(StepRequestValidation):
     def __init__(self, step: TStep):
         self.__step = step
         super().__init__(step)
-        
+
     def run(self, runner: HttpRunner):
         return run_step_sql_request(runner, self.__step)
 
@@ -154,7 +170,9 @@ class RunSqlRequest(IStep):
         self.__step.variables.update(variables)
         return self
 
-    def with_db_config(self, psm=None, user=None, password=None, ip=None, port=None, database=None):
+    def with_db_config(
+        self, psm=None, user=None, password=None, ip=None, port=None, database=None
+    ):
         if psm:
             self.__step.sql_request.db_config.psm = psm
         if user:
@@ -205,7 +223,9 @@ class RunSqlRequest(IStep):
         self.__step.retry_interval = retry_interval
         return self
 
-    def teardown_hook(self, hook: Text, assign_var_name: Text = None) -> "RunSqlRequest":
+    def teardown_hook(
+        self, hook: Text, assign_var_name: Text = None
+    ) -> "RunSqlRequest":
         if assign_var_name:
             self.__step.teardown_hooks.append({assign_var_name: hook})
         else:
@@ -239,6 +259,8 @@ class RunSqlRequest(IStep):
     def validate(self) -> StepSqlRequestValidation:
         return StepSqlRequestValidation(self.__step)
 
-    def with_jmespath(self, jmes_path: Text, var_name: Text) -> "StepSqlRequestExtraction":
+    def with_jmespath(
+        self, jmes_path: Text, var_name: Text
+    ) -> "StepSqlRequestExtraction":
         self.__step.extract[var_name] = jmes_path
         return StepSqlRequestExtraction(self.__step)

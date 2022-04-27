@@ -476,9 +476,7 @@ def parse_variables_mapping(
     return parsed_variables
 
 
-def parse_parameters(
-    parameters: Dict,
-) -> List[Dict]:
+def parse_parameters(parameters: Dict,) -> List[Dict]:
     """parse parameters and generate cartesian product.
 
     Args:

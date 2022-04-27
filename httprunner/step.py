@@ -8,7 +8,11 @@ from httprunner.step_request import (
     StepRequestValidation,
 )
 from httprunner.step_testcase import StepRefCase
-from httprunner.step_sql_request import RunSqlRequest, StepSqlRequestValidation, StepSqlRequestExtraction
+from httprunner.step_sql_request import (
+    RunSqlRequest,
+    StepSqlRequestValidation,
+    StepSqlRequestExtraction,
+)
 
 
 class Step(object):
