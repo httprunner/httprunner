@@ -23,7 +23,10 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep:sql request"""
     start_time = time.time()
 
-    step_result = StepResult(name=step.name, success=False,)
+    step_result = StepResult(
+        name=step.name,
+        success=False,
+    )
     step.variables = runner.merge_step_variables(step.variables)
     # parse
     request_dict = step.sql_request.dict()
@@ -48,11 +51,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
         parsed_request_dict["db_config"]["database"] or config.db.database
     )
 
-    if parsed_request_dict["db_config"]["psm"]:
-        runner.db_engine = DBEngine(
-            f'mysql+pymysql://:@/?charset=utf8mb4&db_psm={parsed_request_dict["psm"]}'
-        )
-    else:
+    if not runner.db_engine:
         runner.db_engine = DBEngine(
             f'mysql+pymysql://{parsed_request_dict["db_config"]["user"]}:'
             f'{parsed_request_dict["db_config"]["password"]}@{parsed_request_dict["db_config"]["ip"]}:'
@@ -171,10 +170,8 @@ class RunSqlRequest(IStep):
         return self
 
     def with_db_config(
-        self, psm=None, user=None, password=None, ip=None, port=None, database=None
+        self, user=None, password=None, ip=None, port=None, database=None, psm=None
     ):
-        if psm:
-            self.__step.sql_request.db_config.psm = psm
         if user:
             self.__step.sql_request.db_config.user = user
         if password:
@@ -185,6 +182,8 @@ class RunSqlRequest(IStep):
             self.__step.sql_request.db_config.port = port
         if database:
             self.__step.sql_request.db_config.database = database
+        if psm:
+            self.__step.sql_request.db_config.psm = psm
         return self
 
     def fetchone(self, sql) -> "RunSqlRequest":

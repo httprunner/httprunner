@@ -22,7 +22,10 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep:thrift request"""
     start_time = time.time()
 
-    step_result = StepResult(name=step.name, success=False,)
+    step_result = StepResult(
+        name=step.name,
+        success=False,
+    )
     step.variables = runner.merge_step_variables(step.variables)
     # parse
     request_dict = step.thrift_request.dict()
@@ -65,17 +68,18 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     step.variables["thrift_request"] = parsed_request_dict
 
     psm = parsed_request_dict["psm"]
-
-    runner.thrift_client = parsed_request_dict["thrift_client"]
+    if not runner.thrift_client:
+        runner.thrift_client = parsed_request_dict["thrift_client"]
     if not runner.thrift_client:
         runner.thrift_client = ThriftClient(
-            parsed_request_dict["idl_path"],
-            parsed_request_dict["service_name"],
-            parsed_request_dict["ip"],
-            parsed_request_dict["port"],
-            parsed_request_dict["timeout"],
-            parsed_request_dict["proto_type"],
-            parsed_request_dict["trans_port"],
+            thrift_file=parsed_request_dict["idl_path"],
+            service_name=parsed_request_dict["service_name"],
+            ip=parsed_request_dict["ip"],
+            port=parsed_request_dict["port"],
+            include_dirs=parsed_request_dict["include_dirs"],
+            timeout=parsed_request_dict["timeout"],
+            proto_type=parsed_request_dict["proto_type"],
+            trans_type=parsed_request_dict["trans_port"],
         )
 
     # setup hooks

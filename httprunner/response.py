@@ -11,7 +11,7 @@ from httprunner.parser import parse_string_value, Parser
 
 
 def get_uniform_comparator(comparator: Text):
-    """ convert comparator alias to uniform name"""
+    """convert comparator alias to uniform name"""
     if comparator in ["eq", "equals", "equal"]:
         return "equal"
     elif comparator in ["lt", "less_than"]:
@@ -114,7 +114,7 @@ def uniform_validator(validator):
 
 class ResponseObjectBase(object):
     def __init__(self, resp_obj, parser: Parser):
-        """ initialize with a response object
+        """initialize with a response object
 
         Args:
             resp_obj (instance): requests.Response instance
@@ -125,7 +125,9 @@ class ResponseObjectBase(object):
         self.validation_results: Dict = {}
 
     def extract(
-        self, extractors: Dict[Text, Text], variables_mapping: VariablesMapping = None,
+        self,
+        extractors: Dict[Text, Text],
+        variables_mapping: VariablesMapping = None,
     ) -> Dict[Text, Any]:
         if not extractors:
             return {}
@@ -142,10 +144,22 @@ class ResponseObjectBase(object):
         return extract_mapping
 
     def _search_jmespath(self, expr: Text) -> Any:
-        raise NotImplementedError("_search_jmespath not override")
+        try:
+            check_value = jmespath.search(expr, self.resp_obj)
+        except JMESPathError as ex:
+            logger.error(
+                f"failed to search with jmespath\n"
+                f"expression: {expr}\n"
+                f"data: {self.resp_obj}\n"
+                f"exception: {ex}"
+            )
+            raise
+        return check_value
 
     def validate(
-        self, validators: Validators, variables_mapping: VariablesMapping = None,
+        self,
+        validators: Validators,
+        variables_mapping: VariablesMapping = None,
     ):
 
         variables_mapping = variables_mapping or {}
@@ -277,19 +291,8 @@ class ResponseObject(ResponseObjectBase):
 
 
 class ThriftResponseObject(ResponseObjectBase):
-    def _search_jmespath(self, expr: Text) -> Any:
-        try:
-            check_value = jmespath.search(expr, self.resp_obj)
-        except JMESPathError as ex:
-            logger.error(
-                f"failed to search with jmespath\n"
-                f"expression: {expr}\n"
-                f"data: {self.resp_obj}\n"
-                f"exception: {ex}"
-            )
-            raise
-        return check_value
+    pass
 
 
-class SqlResponseObject(ThriftResponseObject):
+class SqlResponseObject(ResponseObjectBase):
     pass
