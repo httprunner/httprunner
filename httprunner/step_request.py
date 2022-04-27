@@ -67,7 +67,10 @@ def call_hooks(
 
 def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
-    step_result = StepResult(name=step.name, success=False,)
+    step_result = StepResult(
+        name=step.name,
+        success=False,
+    )
     start_time = time.time()
 
     step.variables = runner.merge_step_variables(step.variables)
@@ -79,7 +82,8 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     request_dict.pop("upload", None)
     parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
     parsed_request_dict["headers"].setdefault(
-        "HRUN-Request-ID", f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}",
+        "HRUN-Request-ID",
+        f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}",
     )
     step.variables["request"] = parsed_request_dict
 

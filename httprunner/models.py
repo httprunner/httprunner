@@ -76,7 +76,7 @@ class TransportEnum(Text, Enum):
 
 
 class TThriftRequest(BaseModel):
-    """ rpc request model"""
+    """rpc request model"""
 
     method: Text = ""
     params: Dict = {}
@@ -106,7 +106,7 @@ class SqlMethodEnum(Text, Enum):
 
 
 class TSqlRequest(BaseModel):
-    """ sql request model"""
+    """sql request model"""
 
     db_config: TConfigDB = TConfigDB()
     method: SqlMethodEnum = None

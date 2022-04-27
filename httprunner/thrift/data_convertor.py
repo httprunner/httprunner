@@ -78,9 +78,7 @@ def unicode_2_utf8_keep_native(para):
 
 
 def encode_basestring(s):
-    """Return a JSON representation of a Python string
-
-    """
+    """Return a JSON representation of a Python string"""
 
     def replace(match):
         return ESCAPE_DCT[match.group(0)]
@@ -89,9 +87,7 @@ def encode_basestring(s):
 
 
 def py_encode_basestring_ascii(s):
-    """Return an ASCII-only JSON representation of a Python string
-
-    """
+    """Return an ASCII-only JSON representation of a Python string"""
     if isinstance(s, str) and HAS_UTF8.search(s) is not None:
         s = s.decode("utf-8")
 
@@ -289,10 +285,10 @@ class MyJSONEncoder(json.JSONEncoder):
 
     def encode(self, o):
         """Return a JSON string representation of a Python data structure.
-        JSONEncoder().encode({"foo": ["bar", "baz"]})
-       '{"foo": ["bar", "baz"]}'
+         JSONEncoder().encode({"foo": ["bar", "baz"]})
+        '{"foo": ["bar", "baz"]}'
 
-       """
+        """
         # This is for extremely simple cases and benchmarks.
 
         if isinstance(o, str):
@@ -363,7 +359,7 @@ class ThriftJSONEncoder(json.JSONEncoder):
         JSONEncoder().encode({"foo": ["bar", "baz"]})
        '{"foo": ["bar", "baz"]}'
 
-       """
+        """
         # This is for extremely simple cases and benchmarks.
 
         if isinstance(o, str):

@@ -534,7 +534,8 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
 def init_make_parser(subparsers):
     """make testcases: parse command line options and run commands."""
     parser = subparsers.add_parser(
-        "make", help="Convert YAML/JSON testcases to pytest cases.",
+        "make",
+        help="Convert YAML/JSON testcases to pytest cases.",
     )
     parser.add_argument(
         "testcase_path", nargs="*", help="Specify YAML/JSON testcase file/folder path"
