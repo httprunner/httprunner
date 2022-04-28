@@ -38,6 +38,8 @@ class SessionRunner(object):
     session: HttpSession = None
     case_id: Text = ""
     root_dir: Text = ""
+    thrift_client = None
+    db_engine = None
 
     __config: TConfig
     __project_meta: ProjectMeta = None
@@ -86,6 +88,12 @@ class SessionRunner(object):
     def with_export(self, export: List[Text]) -> "SessionRunner":
         self.__export = export
         return self
+
+    def with_thrift_client(self, thrift_client) -> "SessionRunner":
+        self.thrift_client = thrift_client
+
+    def with_db_engine(self, db_engine):
+        self.db_engine = db_engine
 
     def __parse_config(self, param: Dict = None) -> None:
         # parse config variables
