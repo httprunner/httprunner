@@ -45,6 +45,7 @@ filetype = {version = "^1.0.7", optional = true}
 Brotli = "^1.0.9"
 jinja2 = "^3.0.3"
 toml = "^0.10.2"
+thriftpy2 = "^0.4.14"
 
 [tool.poetry.extras]
 allure = ["allure-pytest"]                  # pip install "httprunner[allure]", poetry install -E allure
