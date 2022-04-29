@@ -311,6 +311,10 @@ func convertParameters(key string, parametersRawList interface{}) (parameterSlic
 	for i := 0; i < parametersRawSlice.Len(); i++ {
 		parametersLine := make(map[string]interface{})
 		elem := parametersRawSlice.Index(i)
+		// e.g. Type: interface{} | []interface{}, convert interface{} to []interface{}
+		if elem.Kind() == reflect.Interface {
+			elem = elem.Elem()
+		}
 		switch elem.Kind() {
 		case reflect.Slice:
 			// case 3
