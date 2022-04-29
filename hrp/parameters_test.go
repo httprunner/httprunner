@@ -48,6 +48,20 @@ func TestLoadParameters(t *testing.T) {
 			},
 		},
 		{
+			map[string]interface{}{
+				"username-password": []interface{}{
+					[]interface{}{"test1", "111111"},
+					[]interface{}{"test2", "222222"},
+				},
+			},
+			map[string]Parameters{
+				"username-password": {
+					{"username": "test1", "password": "111111"},
+					{"username": "test2", "password": "222222"},
+				},
+			},
+		},
+		{
 			map[string]interface{}{},
 			nil,
 		},

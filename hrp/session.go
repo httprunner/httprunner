@@ -52,11 +52,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	config := r.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
-	// update config variables with given variables
-	r.updateConfigVariables(givenVars)
-
 	// reset session runner
 	r.resetSession()
+
+	// update config variables with given variables
+	r.updateSessionVariables(givenVars)
 
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
@@ -122,16 +122,16 @@ func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[str
 	return parsedVariables, nil
 }
 
-// updateConfigVariables updates config variables with given variables.
+// updateSessionVariables updates session variables with given variables.
 // this is used for data driven
-func (r *SessionRunner) updateConfigVariables(parameters map[string]interface{}) {
+func (r *SessionRunner) updateSessionVariables(parameters map[string]interface{}) {
 	if len(parameters) == 0 {
 		return
 	}
 
-	log.Info().Interface("parameters", parameters).Msg("update config variables")
+	log.Info().Interface("parameters", parameters).Msg("update session variables")
 	for k, v := range parameters {
-		r.parsedConfig.Variables[k] = v
+		r.sessionVariables[k] = v
 	}
 }
 
