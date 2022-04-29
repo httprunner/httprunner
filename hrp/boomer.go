@@ -108,7 +108,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			sessionRunner := caseRunner.newSession()
 
 			if parametersIterator.HasNext() {
-				sessionRunner.updateConfigVariables(parametersIterator.Next())
+				sessionRunner.updateSessionVariables(parametersIterator.Next())
 			}
 
 			startTime := time.Now()
