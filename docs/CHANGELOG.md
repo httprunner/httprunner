@@ -1,5 +1,9 @@
 # Release History
 
+## 2.5.9 (2022-04-30)
+
+- fix #1217: reload debugtalk.py if loaded
+
 ## 2.5.8 (2022-03-23)
 
 - change: replace events reporter from sentry to Google Analytics

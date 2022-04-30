@@ -1,5 +1,6 @@
 import importlib
 import os
+import sys
 
 from httprunner import exceptions, logger, utils
 from httprunner.loader.check import JsonSchemaChecker
@@ -26,7 +27,11 @@ def load_debugtalk_functions():
 
     """
     # load debugtalk.py module
-    imported_module = importlib.import_module("debugtalk")
+    if sys.modules.get('debugtalk'):
+        imported_module = importlib.reload(sys.modules['debugtalk'])
+    else:
+        imported_module = importlib.import_module("debugtalk")
+
     return load_module_functions(imported_module)
 
 
