@@ -37,42 +37,37 @@ token_dict = {}
 
 
 def gen_random_string(str_len):
-    """ generate random string with specified length
-    """
-    return ''.join(
-        random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
+    """generate random string with specified length"""
+    return "".join(
+        random.choice(string.ascii_letters + string.digits) for _ in range(str_len)
+    )
+
 
 def get_sign(*args):
-    content = ''.join(args).encode('ascii')
-    sign_key = SECRET_KEY.encode('ascii')
+    content = "".join(args).encode("ascii")
+    sign_key = SECRET_KEY.encode("ascii")
     sign = hmac.new(sign_key, content, hashlib.sha1).hexdigest()
     return sign
 
+
 def gen_md5(*args):
-    return hashlib.md5("".join(args).encode('utf-8')).hexdigest()
+    return hashlib.md5("".join(args).encode("utf-8")).hexdigest()
 
 
 def validate_request(func):
-
     @wraps(func)
     def wrapper(*args, **kwargs):
-        device_sn = request.headers.get('device_sn', "")
-        token = request.headers.get('token', "")
+        device_sn = request.headers.get("device_sn", "")
+        token = request.headers.get("token", "")
 
         if not device_sn or not token:
-            result = {
-                'success': False,
-                'msg': "device_sn or token is null."
-            }
+            result = {"success": False, "msg": "device_sn or token is null."}
             response = make_response(json.dumps(result), 401)
             response.headers["Content-Type"] = "application/json"
             return response
 
         if token_dict.get(device_sn) != token:
-            result = {
-                'success': False,
-                'msg': "Authorization failed!"
-            }
+            result = {"success": False, "msg": "Authorization failed!"}
             response = make_response(json.dumps(result), 403)
             response.headers["Content-Type"] = "application/json"
             return response
@@ -82,107 +77,89 @@ def validate_request(func):
     return wrapper
 
 
-@app.route('/')
+@app.route("/")
 def index():
     return "Hello World!"
 
-@app.route('/api/get-token', methods=['POST'])
+
+@app.route("/api/get-token", methods=["POST"])
 def get_token():
-    device_sn = request.headers.get('device_sn', "")
-    os_platform = request.headers.get('os_platform', "")
-    app_version = request.headers.get('app_version', "")
+    device_sn = request.headers.get("device_sn", "")
+    os_platform = request.headers.get("os_platform", "")
+    app_version = request.headers.get("app_version", "")
     data = request.get_json()
-    sign = data.get('sign', "")
+    sign = data.get("sign", "")
 
     expected_sign = get_sign(device_sn, os_platform, app_version)
 
     if expected_sign != sign:
-        result = {
-            'success': False,
-            'msg': "Authorization failed!"
-        }
+        result = {"success": False, "msg": "Authorization failed!"}
         response = make_response(json.dumps(result), 403)
     else:
         token = gen_random_string(16)
         token_dict[device_sn] = token
 
-        result = {
-            'success': True,
-            'token': token
-        }
+        result = {"success": True, "token": token}
         response = make_response(json.dumps(result))
 
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/users')
+
+@app.route("/api/users")
 @validate_request
 def get_users():
     users_list = [user for uid, user in users_dict.items()]
-    users = {
-        'success': True,
-        'count': len(users_list),
-        'items': users_list
-    }
+    users = {"success": True, "count": len(users_list), "items": users_list}
     response = make_response(json.dumps(users))
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/reset-all')
+
+@app.route("/api/reset-all")
 @validate_request
 def clear_users():
     users_dict.clear()
-    result = {
-        'success': True
-    }
+    result = {"success": True}
     response = make_response(json.dumps(result))
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/users/<int:uid>', methods=['POST'])
+
+@app.route("/api/users/<int:uid>", methods=["POST"])
 @validate_request
 def create_user(uid):
     user = request.get_json()
     if uid not in users_dict:
-        result = {
-            'success': True,
-            'msg': "user created successfully."
-        }
+        result = {"success": True, "msg": "user created successfully."}
         status_code = 201
         users_dict[uid] = user
     else:
-        result = {
-            'success': False,
-            'msg': "user already existed."
-        }
+        result = {"success": False, "msg": "user already existed."}
         status_code = 500
 
     response = make_response(json.dumps(result), status_code)
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/users/<int:uid>')
+
+@app.route("/api/users/<int:uid>")
 @validate_request
 def get_user(uid):
     user = users_dict.get(uid, {})
     if user:
-        result = {
-            'success': True,
-            'data': user
-        }
+        result = {"success": True, "data": user}
         status_code = 200
     else:
-        result = {
-            'success': False,
-            'data': user
-        }
+        result = {"success": False, "data": user}
         status_code = 404
 
     response = make_response(json.dumps(result), status_code)
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/users/<int:uid>', methods=['PUT'])
+
+@app.route("/api/users/<int:uid>", methods=["PUT"])
 @validate_request
 def update_user(uid):
     user = users_dict.get(uid, {})
@@ -195,15 +172,13 @@ def update_user(uid):
         success = False
         status_code = 404
 
-    result = {
-        'success': success,
-        'data': user
-    }
+    result = {"success": success, "data": user}
     response = make_response(json.dumps(result), status_code)
     response.headers["Content-Type"] = "application/json"
     return response
 
-@app.route('/api/users/<int:uid>', methods=['DELETE'])
+
+@app.route("/api/users/<int:uid>", methods=["DELETE"])
 @validate_request
 def delete_user(uid):
     user = users_dict.pop(uid, {})
@@ -214,10 +189,7 @@ def delete_user(uid):
         success = False
         status_code = 404
 
-    result = {
-        'success': success,
-        'data': user
-    }
+    result = {"success": success, "data": user}
     response = make_response(json.dumps(result), status_code)
     response.headers["Content-Type"] = "application/json"
     return response

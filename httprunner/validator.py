@@ -16,7 +16,7 @@ class Validator(object):
     """
 
     def __init__(self, session_context, resp_obj):
-        """ initialize a Validator for each teststep (API request)
+        """initialize a Validator for each teststep (API request)
 
         Args:
             session_context: HttpRunner session context
@@ -27,7 +27,7 @@ class Validator(object):
         self.validation_results = {}
 
     def __eval_validator_check(self, check_item):
-        """ evaluate check item in validator.
+        """evaluate check item in validator.
 
         Args:
             check_item: check_item should only be the following 5 formats:
@@ -38,8 +38,9 @@ class Validator(object):
                 5, regex string, e.g. "LB[\d]*(.*)RB[\d]*"
 
         """
-        if isinstance(check_item, (dict, list)) \
-                or isinstance(check_item, parser.LazyString):
+        if isinstance(check_item, (dict, list)) or isinstance(
+            check_item, parser.LazyString
+        ):
             # format 1/2/3
             check_value = self.session_context.eval_content(check_item)
         else:
@@ -49,7 +50,7 @@ class Validator(object):
         return check_value
 
     def __eval_validator_expect(self, expect_item):
-        """ evaluate expect item in validator.
+        """evaluate expect item in validator.
 
         Args:
             expect_item: expect_item should only be in 2 types:
@@ -61,12 +62,11 @@ class Validator(object):
         return expect_value
 
     def validate_script(self, script):
-        """ make validation with python script
-        """
+        """make validation with python script"""
         result = {
             "validate_script": "<br/>".join(script),
             "check_result": "pass",
-            "output": ""
+            "output": "",
         }
 
         script = "\n    ".join(script)
@@ -75,12 +75,14 @@ class Validator(object):
 
 def run_validate_script():
     {}
-""".format(script)
+""".format(
+            script
+        )
 
         variables = {
             "status_code": self.resp_obj.status_code,
             "response_json": self.resp_obj.json,
-            "response": self.resp_obj
+            "response": self.resp_obj,
         }
         variables.update(self.session_context.test_variables_mapping)
         variables.update(globals())
@@ -90,11 +92,13 @@ def run_validate_script():
         except SyntaxError as ex:
             logger.log_warning("SyntaxError in python validate script: {}".format(ex))
             result["check_result"] = "fail"
-            result["output"] = "<br/>".join([
-                "ErrorMessage: {}".format(ex.msg),
-                "ErrorLine: {}".format(ex.lineno),
-                "ErrorText: {}".format(ex.text)
-            ])
+            result["output"] = "<br/>".join(
+                [
+                    "ErrorMessage: {}".format(ex.msg),
+                    "ErrorLine: {}".format(ex.lineno),
+                    "ErrorText: {}".format(ex.text),
+                ]
+            )
             return result
 
         try:
@@ -117,16 +121,17 @@ def run_validate_script():
             else:
                 line_no = "N/A"
 
-            result["output"] = "<br/>".join([
-                "ErrorType: {}".format(_type.__name__),
-                "ErrorLine: {}".format(line_no)
-            ])
+            result["output"] = "<br/>".join(
+                [
+                    "ErrorType: {}".format(_type.__name__),
+                    "ErrorLine: {}".format(line_no),
+                ]
+            )
 
         return result
 
     def validate(self, validators):
-        """ make validation with comparators
-        """
+        """make validation with comparators"""
         self.validation_results = {}
         if not validators:
             return
@@ -154,7 +159,8 @@ def run_validate_script():
             # validator should be LazyFunction object
             if not isinstance(validator, parser.LazyFunction):
                 raise exceptions.ValidationFailure(
-                    "validator should be parsed first: {}".format(validators))
+                    "validator should be parsed first: {}".format(validators)
+                )
 
             # evaluate validator args with context variable mapping.
             validator_args = validator.get_args()
@@ -169,13 +175,10 @@ def run_validate_script():
                 "check": check_item,
                 "check_value": check_value,
                 "expect": expect_item,
-                "expect_value": expect_value
+                "expect_value": expect_value,
             }
             validate_msg = "\nvalidate: {} {} {}({})".format(
-                check_item,
-                comparator,
-                expect_value,
-                type(expect_value).__name__
+                check_item, comparator, expect_value, type(expect_value).__name__
             )
 
             try:
@@ -192,7 +195,7 @@ def run_validate_script():
                     type(check_value).__name__,
                     comparator,
                     expect_value,
-                    type(expect_value).__name__
+                    type(expect_value).__name__,
                 )
                 logger.log_error(validate_msg)
                 failures.append(validate_msg)

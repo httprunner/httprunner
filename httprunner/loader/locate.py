@@ -7,7 +7,7 @@ project_working_directory = None
 
 
 def locate_file(start_path, file_name):
-    """ locate filename and return absolute file path.
+    """locate filename and return absolute file path.
         searching will be recursive upward until current working directory or system root dir.
 
     Args:
@@ -34,21 +34,25 @@ def locate_file(start_path, file_name):
 
     # current working directory
     if os.path.abspath(start_dir_path) == os.getcwd():
-        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
+        raise exceptions.FileNotFound(
+            "{} not found in {}".format(file_name, start_path)
+        )
 
     # system root dir
     # Windows, e.g. 'E:\\'
     # Linux/Darwin, '/'
     parent_dir = os.path.dirname(start_dir_path)
     if parent_dir == start_dir_path:
-        raise exceptions.FileNotFound("{} not found in {}".format(file_name, start_path))
+        raise exceptions.FileNotFound(
+            "{} not found in {}".format(file_name, start_path)
+        )
 
     # locate recursive upward
     return locate_file(parent_dir, file_name)
 
 
 def locate_debugtalk_py(start_path):
-    """ locate debugtalk.py file
+    """locate debugtalk.py file
 
     Args:
         start_path (str): start locating path,
@@ -68,7 +72,7 @@ def locate_debugtalk_py(start_path):
 
 
 def init_project_working_directory(test_path):
-    """ this should be called at startup
+    """this should be called at startup
 
         run test file:
             run_path -> load_cases -> load_project_data -> init_project_working_directory

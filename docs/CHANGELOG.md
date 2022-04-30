@@ -4,6 +4,7 @@
 
 - fix #1217: reload debugtalk.py if loaded
 - fix #1246: catch exceptions caused by GA report failure
+- refactor: format code with black
 
 ## 2.5.8 (2022-03-23)
 

@@ -2,7 +2,7 @@ from httprunner import loader, parser
 
 
 def prepare_locust_tests(path):
-    """ prepare locust testcases
+    """prepare locust testcases
 
     Args:
         path (str): testcase file path.

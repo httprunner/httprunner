@@ -10,9 +10,8 @@ text_extractor_regexp_compile = re.compile(r".*\(.*\).*")
 
 
 class ResponseObject(object):
-
     def __init__(self, resp_obj):
-        """ initialize with a requests.Response object
+        """initialize with a requests.Response object
 
         Args:
             resp_obj (instance): requests.Response instance
@@ -64,9 +63,9 @@ class ResponseObject(object):
             return result
         else:
             raise exceptions.ExtractFailure("\tjsonpath {} get nothing\n".format(field))
-            
+
     def _extract_field_with_regex(self, field):
-        """ extract field from response content with regex.
+        """extract field from response content with regex.
             requests.Response body could be json or html text.
 
         Args:
@@ -87,15 +86,15 @@ class ResponseObject(object):
         """
         matched = re.search(field, self.text)
         if not matched:
-            err_msg = u"Failed to extract data with regex! => {}\n".format(field)
-            err_msg += u"response body: {}\n".format(self.text)
+            err_msg = "Failed to extract data with regex! => {}\n".format(field)
+            err_msg += "response body: {}\n".format(self.text)
             logger.log_error(err_msg)
             raise exceptions.ExtractFailure(err_msg)
 
         return matched.group(1)
 
     def _extract_field_with_delimiter(self, field):
-        """ response content could be json or html text.
+        """response content could be json or html text.
 
         Args:
             field (str): string joined by delimiter.
@@ -111,7 +110,7 @@ class ResponseObject(object):
         # string.split(sep=None, maxsplit=1) -> list of strings
         # e.g. "content.person.name" => ["content", "person.name"]
         try:
-            top_query, sub_query = field.split('.', 1)
+            top_query, sub_query = field.split(".", 1)
         except ValueError:
             top_query = field
             sub_query = None
@@ -120,7 +119,7 @@ class ResponseObject(object):
         if top_query in ["status_code", "encoding", "ok", "reason", "url"]:
             if sub_query:
                 # status_code.XX
-                err_msg = u"Failed to extract: {}\n".format(field)
+                err_msg = "Failed to extract: {}\n".format(field)
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
 
@@ -136,16 +135,18 @@ class ResponseObject(object):
             try:
                 return cookies[sub_query]
             except KeyError:
-                err_msg = u"Failed to extract cookie! => {}\n".format(field)
-                err_msg += u"response cookies: {}\n".format(cookies)
+                err_msg = "Failed to extract cookie! => {}\n".format(field)
+                err_msg += "response cookies: {}\n".format(cookies)
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
 
         # elapsed
         elif top_query == "elapsed":
-            available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
+            available_attributes = (
+                "available attributes: days, seconds, microseconds, total_seconds"
+            )
             if not sub_query:
-                err_msg = u"elapsed is datetime.timedelta instance, attribute should also be specified!\n"
+                err_msg = "elapsed is datetime.timedelta instance, attribute should also be specified!\n"
                 err_msg += available_attributes
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
@@ -154,7 +155,9 @@ class ResponseObject(object):
             elif sub_query == "total_seconds":
                 return self.elapsed.total_seconds()
             else:
-                err_msg = "{} is not valid datetime.timedelta attribute.\n".format(sub_query)
+                err_msg = "{} is not valid datetime.timedelta attribute.\n".format(
+                    sub_query
+                )
                 err_msg += available_attributes
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
@@ -169,8 +172,8 @@ class ResponseObject(object):
             try:
                 return headers[sub_query]
             except KeyError:
-                err_msg = u"Failed to extract header! => {}\n".format(field)
-                err_msg += u"response headers: {}\n".format(headers)
+                err_msg = "Failed to extract header! => {}\n".format(field)
+                err_msg += "response headers: {}\n".format(headers)
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
 
@@ -193,8 +196,12 @@ class ResponseObject(object):
                 return utils.query_json(body, sub_query)
             else:
                 # content = "<html>abcdefg</html>", content.xxx
-                err_msg = u"Failed to extract attribute from response body! => {}\n".format(field)
-                err_msg += u"response body: {}\n".format(body)
+                err_msg = (
+                    "Failed to extract attribute from response body! => {}\n".format(
+                        field
+                    )
+                )
+                err_msg += "response body: {}\n".format(body)
                 logger.log_error(err_msg)
                 raise exceptions.ExtractFailure(err_msg)
 
@@ -214,26 +221,29 @@ class ResponseObject(object):
                 return utils.query_json(attributes, sub_query)
             else:
                 # content = "attributes.new_attribute_not_exist"
-                err_msg = u"Failed to extract cumstom set attribute from teardown hooks! => {}\n".format(field)
-                err_msg += u"response set attributes: {}\n".format(attributes)
+                err_msg = "Failed to extract cumstom set attribute from teardown hooks! => {}\n".format(
+                    field
+                )
+                err_msg += "response set attributes: {}\n".format(attributes)
                 logger.log_error(err_msg)
                 raise exceptions.TeardownHooksFailure(err_msg)
 
         # others
         else:
-            err_msg = u"Failed to extract attribute from response! => {}\n".format(field)
-            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, " \
-                       u"text, json, encoding, ok, reason, url.\n\n"
-            err_msg += u"If you want to set attribute in teardown_hooks, take the following example as reference:\n"
-            err_msg += u"response.new_attribute = 'new_attribute_value'\n"
+            err_msg = "Failed to extract attribute from response! => {}\n".format(field)
+            err_msg += (
+                "available response attributes: status_code, cookies, elapsed, headers, content, "
+                "text, json, encoding, ok, reason, url.\n\n"
+            )
+            err_msg += "If you want to set attribute in teardown_hooks, take the following example as reference:\n"
+            err_msg += "response.new_attribute = 'new_attribute_value'\n"
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
     def extract_field(self, field):
-        """ extract value from requests.Response.
-        """
+        """extract value from requests.Response."""
         if not isinstance(field, basestring):
-            err_msg = u"Invalid extractor! => {}\n".format(field)
+            err_msg = "Invalid extractor! => {}\n".format(field)
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
@@ -255,7 +265,7 @@ class ResponseObject(object):
         return value
 
     def extract_response(self, extractors):
-        """ extract value from requests.Response and store in OrderedDict.
+        """extract value from requests.Response and store in OrderedDict.
 
         Args:
             extractors (list):

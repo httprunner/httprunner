@@ -27,7 +27,7 @@ def get_parse_failed_testfiles():
 
 
 def parse_string_value(str_value):
-    """ parse string to number if possible
+    """parse string to number if possible
     e.g. "123" => 123
          "12.2" => 12.3
          "abc" => "abc"
@@ -43,8 +43,7 @@ def parse_string_value(str_value):
 
 
 def is_var_or_func_exist(content):
-    """ check if variable or function exist
-    """
+    """check if variable or function exist"""
     if not isinstance(content, basestring):
         return False
 
@@ -71,7 +70,7 @@ def is_var_or_func_exist(content):
 
 
 def regex_findall_variables(content):
-    """ extract all variable names from content, which is in format $variable
+    """extract all variable names from content, which is in format $variable
 
     Args:
         content (str): string content
@@ -96,16 +95,14 @@ def regex_findall_variables(content):
     try:
         vars_list = []
         for var_tuple in variable_regex_compile.findall(content):
-            vars_list.append(
-                var_tuple[0] or var_tuple[1]
-            )
+            vars_list.append(var_tuple[0] or var_tuple[1])
         return vars_list
     except TypeError:
         return []
 
 
 def regex_findall_functions(content):
-    """ extract all functions from string content, which are in format ${fun()}
+    """extract all functions from string content, which are in format ${fun()}
 
     Args:
         content (str): string content
@@ -137,7 +134,7 @@ def regex_findall_functions(content):
 
 
 def parse_parameters(parameters, variables_mapping=None, functions_mapping=None):
-    """ parse parameters and generate cartesian product.
+    """parse parameters and generate cartesian product.
 
     Args:
         parameters (list) parameters: parameter name and value in list
@@ -188,13 +185,9 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
                 parameter_content_list.append(parameter_content_dict)
         else:
             # (2) & (3)
-            parsed_variables_mapping = parse_variables_mapping(
-                variables_mapping
-            )
+            parsed_variables_mapping = parse_variables_mapping(variables_mapping)
             parsed_parameter_content = eval_lazy_data(
-                parameter_content,
-                parsed_variables_mapping,
-                functions_mapping
+                parameter_content, parsed_variables_mapping, functions_mapping
             )
             if not isinstance(parsed_parameter_content, list):
                 raise exceptions.ParamsError("parameters syntax error!")
@@ -210,7 +203,9 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
                     #       {"username": "user1", "password": "111111"},
                     #       {"username": "user2", "password": "222222"}
                     # ]
-                    parameter_dict = {key: parameter_item[key] for key in parameter_name_list}
+                    parameter_dict = {
+                        key: parameter_item[key] for key in parameter_name_list
+                    }
                 elif isinstance(parameter_item, (list, tuple)):
                     # {"username-password": "${get_account()}"}
                     # get_account() => [("user1", "111111"), ("user2", "222222")]
@@ -218,9 +213,7 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
                 elif len(parameter_name_list) == 1:
                     # {"user_agent": "${get_user_agent()}"}
                     # get_user_agent() => ["iOS/10.1", "iOS/10.2"]
-                    parameter_dict = {
-                        parameter_name_list[0]: parameter_item
-                    }
+                    parameter_dict = {parameter_name_list[0]: parameter_item}
 
                 parameter_content_list.append(parameter_dict)
 
@@ -230,8 +223,7 @@ def parse_parameters(parameters, variables_mapping=None, functions_mapping=None)
 
 
 def get_uniform_comparator(comparator):
-    """ convert comparator alias to uniform name
-    """
+    """convert comparator alias to uniform name"""
     if comparator in ["eq", "equals", "==", "is"]:
         return "equals"
     elif comparator in ["lt", "less_than"]:
@@ -248,22 +240,35 @@ def get_uniform_comparator(comparator):
         return "string_equals"
     elif comparator in ["len_eq", "length_equals", "count_eq"]:
         return "length_equals"
-    elif comparator in ["len_gt", "count_gt", "length_greater_than", "count_greater_than"]:
+    elif comparator in [
+        "len_gt",
+        "count_gt",
+        "length_greater_than",
+        "count_greater_than",
+    ]:
         return "length_greater_than"
-    elif comparator in ["len_ge", "count_ge", "length_greater_than_or_equals",
-                        "count_greater_than_or_equals"]:
+    elif comparator in [
+        "len_ge",
+        "count_ge",
+        "length_greater_than_or_equals",
+        "count_greater_than_or_equals",
+    ]:
         return "length_greater_than_or_equals"
     elif comparator in ["len_lt", "count_lt", "length_less_than", "count_less_than"]:
         return "length_less_than"
-    elif comparator in ["len_le", "count_le", "length_less_than_or_equals",
-                        "count_less_than_or_equals"]:
+    elif comparator in [
+        "len_le",
+        "count_le",
+        "length_less_than_or_equals",
+        "count_less_than_or_equals",
+    ]:
         return "length_less_than_or_equals"
     else:
         return comparator
 
 
 def uniform_validator(validator):
-    """ unify validator
+    """unify validator
 
     Args:
         validator (dict): validator maybe in two formats:
@@ -310,15 +315,11 @@ def uniform_validator(validator):
     # uniform comparator, e.g. lt => less_than, eq => equals
     comparator = get_uniform_comparator(comparator)
 
-    return {
-        "check": check_item,
-        "expect": expect_value,
-        "comparator": comparator
-    }
+    return {"check": check_item, "expect": expect_value, "comparator": comparator}
 
 
 def _convert_validators_to_mapping(validators):
-    """ convert validators list to mapping.
+    """convert validators list to mapping.
 
     Args:
         validators (list): validators in list
@@ -353,7 +354,7 @@ def _convert_validators_to_mapping(validators):
 
 
 def extend_validators(raw_validators, override_validators):
-    """ extend raw_validators with override_validators.
+    """extend raw_validators with override_validators.
         override_validators will merge and override raw_validators.
 
     Args:
@@ -393,8 +394,9 @@ def extend_validators(raw_validators, override_validators):
 ##  parse content with variables and functions mapping
 ###############################################################################
 
+
 def get_mapping_variable(variable_name, variables_mapping):
-    """ get variable from variables_mapping.
+    """get variable from variables_mapping.
 
     Args:
         variable_name (str): variable name
@@ -414,7 +416,7 @@ def get_mapping_variable(variable_name, variables_mapping):
 
 
 def get_mapping_function(function_name, functions_mapping):
-    """ get function from functions_mapping,
+    """get function from functions_mapping,
         if not found, then try to check if builtin function.
 
     Args:
@@ -440,6 +442,7 @@ def get_mapping_function(function_name, functions_mapping):
     elif function_name in ["multipart_encoder", "multipart_content_type"]:
         # extension for upload test
         from httprunner.ext import uploader
+
         return getattr(uploader, function_name)
 
     try:
@@ -459,7 +462,7 @@ def get_mapping_function(function_name, functions_mapping):
 
 
 def parse_function_params(params):
-    """ parse function params to args and kwargs.
+    """parse function params to args and kwargs.
 
     Args:
         params (str): function param in string
@@ -489,20 +492,17 @@ def parse_function_params(params):
         {'args': [1, 2], 'kwargs': {'a':3, 'b':4}}
 
     """
-    function_meta = {
-        "args": [],
-        "kwargs": {}
-    }
+    function_meta = {"args": [], "kwargs": {}}
 
     params_str = params.strip()
     if params_str == "":
         return function_meta
 
-    args_list = params_str.split(',')
+    args_list = params_str.split(",")
     for arg in args_list:
         arg = arg.strip()
-        if '=' in arg:
-            key, value = arg.split('=')
+        if "=" in arg:
+            key, value = arg.split("=")
             function_meta["kwargs"][key.strip()] = parse_string_value(value.strip())
         else:
             function_meta["args"].append(parse_string_value(arg))
@@ -511,11 +511,10 @@ def parse_function_params(params):
 
 
 class LazyFunction(object):
-    """ call function lazily.
-    """
+    """call function lazily."""
 
     def __init__(self, function_meta, functions_mapping=None, check_variables_set=None):
-        """ init LazyFunction object with function_meta
+        """init LazyFunction object with function_meta
 
         Args:
             function_meta (dict): function name, args and kwargs.
@@ -532,25 +531,24 @@ class LazyFunction(object):
         self.__parse(function_meta)
 
     def __parse(self, function_meta):
-        """ init func as lazy functon instance
+        """init func as lazy functon instance
 
         Args:
             function_meta (dict): function meta including name, args and kwargs
         """
         self._func = get_mapping_function(
-            function_meta["func_name"],
-            self.functions_mapping
+            function_meta["func_name"], self.functions_mapping
         )
         self.func_name = self._func.__name__
         self._args = prepare_lazy_data(
             function_meta.get("args", []),
             self.functions_mapping,
-            self.check_variables_set
+            self.check_variables_set,
         )
         self._kwargs = prepare_lazy_data(
             function_meta.get("kwargs", {}),
             self.functions_mapping,
-            self.check_variables_set
+            self.check_variables_set,
         )
 
         if self.func_name == "load_csv_file":
@@ -578,8 +576,7 @@ class LazyFunction(object):
         if self._kwargs:
             args_string += ", "
             str_kwargs = [
-                "{}={}".format(key, str(value))
-                for key, value in self._kwargs.items()
+                "{}={}".format(key, str(value)) for key, value in self._kwargs.items()
             ]
             args_string += ", ".join(str_kwargs)
 
@@ -589,8 +586,8 @@ class LazyFunction(object):
         return self.func_name, repr(args), repr(kwargs)
 
     def to_value(self, variables_mapping=None):
-        """ parse lazy data with evaluated variables mapping.
-            Notice: variables_mapping should not contain any variable or function.
+        """parse lazy data with evaluated variables mapping.
+        Notice: variables_mapping should not contain any variable or function.
         """
         variables_mapping = variables_mapping or {}
         args = parse_lazy_data(self._args, variables_mapping)
@@ -605,12 +602,13 @@ cached_functions_mapping = {}
 
 
 class LazyString(object):
-    """ evaluate string lazily.
-    """
+    """evaluate string lazily."""
 
-    def __init__(self, raw_string, functions_mapping=None, check_variables_set=None, cached=False):
-        """ make raw_string as lazy object with functions_mapping
-            check if any variable undefined in check_variables_set
+    def __init__(
+        self, raw_string, functions_mapping=None, check_variables_set=None, cached=False
+    ):
+        """make raw_string as lazy object with functions_mapping
+        check if any variable undefined in check_variables_set
         """
         self.raw_string = raw_string
         self.functions_mapping = functions_mapping or {}
@@ -619,7 +617,7 @@ class LazyString(object):
         self.__parse(raw_string)
 
     def __parse(self, raw_string):
-        """ parse raw string, replace function and variable with {}
+        """parse raw string, replace function and variable with {}
 
         Args:
             raw_string(str): string with functions or varialbes
@@ -658,14 +656,10 @@ class LazyString(object):
             # search function like ${func($a, $b)}
             func_match = function_regex_compile.match(raw_string, match_start_position)
             if func_match:
-                function_meta = {
-                    "func_name": func_match.group(1)
-                }
+                function_meta = {"func_name": func_match.group(1)}
                 function_meta.update(parse_function_params(func_match.group(2)))
                 lazy_func = LazyFunction(
-                    function_meta,
-                    self.functions_mapping,
-                    self.check_variables_set
+                    function_meta, self.functions_mapping, self.check_variables_set
                 )
                 self._args.append(lazy_func)
                 match_start_position = func_match.end()
@@ -701,15 +695,19 @@ class LazyString(object):
         return "LazyString({})".format(self.raw_string)
 
     def to_value(self, variables_mapping=None):
-        """ parse lazy data with evaluated variables mapping.
-            Notice: variables_mapping should not contain any variable or function.
+        """parse lazy data with evaluated variables mapping.
+        Notice: variables_mapping should not contain any variable or function.
         """
         variables_mapping = variables_mapping or {}
 
         args = []
         for arg in self._args:
             if isinstance(arg, LazyFunction):
-                if self.cached and arg.cache_key and arg.cache_key in cached_functions_mapping:
+                if (
+                    self.cached
+                    and arg.cache_key
+                    and arg.cache_key in cached_functions_mapping
+                ):
                     value = cached_functions_mapping[arg.cache_key]
                 else:
                     value = arg.to_value(variables_mapping)
@@ -726,8 +724,10 @@ class LazyString(object):
             return self._string.format(*args)
 
 
-def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None, cached=False):
-    """ make string in content as lazy object with functions_mapping
+def prepare_lazy_data(
+    content, functions_mapping=None, check_variables_set=None, cached=False
+):
+    """make string in content as lazy object with functions_mapping
 
     Raises:
         exceptions.VariableNotFound: if any variable undefined in check_variables_set
@@ -739,12 +739,7 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
 
     elif isinstance(content, (list, set, tuple)):
         return [
-            prepare_lazy_data(
-                item,
-                functions_mapping,
-                check_variables_set,
-                cached
-            )
+            prepare_lazy_data(item, functions_mapping, check_variables_set, cached)
             for item in content
         ]
 
@@ -752,16 +747,10 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
         parsed_content = {}
         for key, value in content.items():
             parsed_key = prepare_lazy_data(
-                key,
-                functions_mapping,
-                check_variables_set,
-                cached
+                key, functions_mapping, check_variables_set, cached
             )
             parsed_value = prepare_lazy_data(
-                value,
-                functions_mapping,
-                check_variables_set,
-                cached
+                value, functions_mapping, check_variables_set, cached
             )
             parsed_content[parsed_key] = parsed_value
 
@@ -783,8 +772,8 @@ def prepare_lazy_data(content, functions_mapping=None, check_variables_set=None,
 
 
 def parse_lazy_data(content, variables_mapping=None):
-    """ parse lazy data with evaluated variables mapping.
-        Notice: variables_mapping should not contain any variable or function.
+    """parse lazy data with evaluated variables mapping.
+    Notice: variables_mapping should not contain any variable or function.
     """
     # TODO: refactor type check
     if content is None or isinstance(content, (numeric_types, bool, type)):
@@ -795,10 +784,7 @@ def parse_lazy_data(content, variables_mapping=None):
         return content.to_value(variables_mapping)
 
     elif isinstance(content, (list, set, tuple)):
-        return [
-            parse_lazy_data(item, variables_mapping)
-            for item in content
-        ]
+        return [parse_lazy_data(item, variables_mapping) for item in content]
 
     elif isinstance(content, dict):
         parsed_content = {}
@@ -813,24 +799,19 @@ def parse_lazy_data(content, variables_mapping=None):
 
 
 def eval_lazy_data(content, variables_mapping=None, functions_mapping=None):
-    """ evaluate data instantly.
-        Notice: variables_mapping should not contain any variable or function.
+    """evaluate data instantly.
+    Notice: variables_mapping should not contain any variable or function.
     """
     variables_mapping = variables_mapping or {}
     check_variables_set = set(variables_mapping.keys())
     return parse_lazy_data(
-        prepare_lazy_data(
-            content,
-            functions_mapping,
-            check_variables_set
-        ),
-        variables_mapping
+        prepare_lazy_data(content, functions_mapping, check_variables_set),
+        variables_mapping,
     )
 
 
 def extract_variables(content):
-    """ extract all variables in content recursively.
-    """
+    """extract all variables in content recursively."""
     if isinstance(content, (list, set, tuple)):
         variables = set()
         for item in content:
@@ -850,7 +831,7 @@ def extract_variables(content):
 
 
 def parse_variables_mapping(variables_mapping):
-    """ eval each prepared variable and function in variables_mapping.
+    """eval each prepared variable and function in variables_mapping.
 
     Args:
         variables_mapping (dict):
@@ -911,7 +892,12 @@ def parse_variables_mapping(variables_mapping):
                 # reference other variable, or function call with other variable
                 # e.g. {"varA": "123$varB", "varB": "456$varC"}
                 # e.g. {"varC": "${sum_two($a, $b)}"}
-                if any([_var_name not in parsed_variables_mapping for _var_name in variables]):
+                if any(
+                    [
+                        _var_name not in parsed_variables_mapping
+                        for _var_name in variables
+                    ]
+                ):
                     # reference variable not parsed
                     continue
 
@@ -922,7 +908,7 @@ def parse_variables_mapping(variables_mapping):
 
 
 def _extend_with_api(test_dict, api_def_dict):
-    """ extend test with api definition, test will merge and override api definition.
+    """extend test with api definition, test will merge and override api definition.
 
     Args:
         test_dict (dict): test block, this will override api_def_dict
@@ -955,27 +941,21 @@ def _extend_with_api(test_dict, api_def_dict):
     # override variables
     def_variables = api_def_dict.pop("variables", [])
     test_dict["variables"] = utils.extend_variables(
-        def_variables,
-        test_dict.get("variables", {})
+        def_variables, test_dict.get("variables", {})
     )
 
     # merge & override validators TODO: relocate
     def_raw_validators = api_def_dict.pop("validate", [])
     def_validators = [
-        uniform_validator(_validator)
-        for _validator in def_raw_validators
+        uniform_validator(_validator) for _validator in def_raw_validators
     ]
     ref_validators = test_dict.pop("validate", [])
-    test_dict["validate"] = extend_validators(
-        def_validators,
-        ref_validators
-    )
+    test_dict["validate"] = extend_validators(def_validators, ref_validators)
 
     # merge & override extractors
     def_extrators = api_def_dict.pop("extract", {})
     test_dict["extract"] = utils.extend_variables(
-        def_extrators,
-        test_dict.get("extract", {})
+        def_extrators, test_dict.get("extract", {})
     )
 
     # merge & override request
@@ -1010,7 +990,7 @@ def _extend_with_api(test_dict, api_def_dict):
 
 
 def _extend_with_testcase(test_dict, testcase_def_dict):
-    """ extend test with testcase definition
+    """extend test with testcase definition
         test will merge and override testcase config definition.
 
     Args:
@@ -1024,7 +1004,8 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
     # override testcase config variables
     testcase_def_dict["config"].setdefault("variables", {})
     testcase_def_variables = utils.ensure_mapping_format(
-        testcase_def_dict["config"].get("variables", {}))
+        testcase_def_dict["config"].get("variables", {})
+    )
     testcase_def_variables.update(test_dict.pop("variables", {}))
     testcase_def_dict["config"]["variables"] = testcase_def_variables
 
@@ -1035,9 +1016,11 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
         testcase_def_dict["config"]["base_url"] = test_base_url
 
     # override name
-    test_name = test_dict.pop("name", None) \
-                or testcase_def_dict["config"].pop("name", None) \
-                or "testcase name undefined"
+    test_name = (
+        test_dict.pop("name", None)
+        or testcase_def_dict["config"].pop("name", None)
+        or "testcase name undefined"
+    )
 
     # override testcase config name, output, etc.
     testcase_def_dict["config"].update(test_dict)
@@ -1048,8 +1031,7 @@ def _extend_with_testcase(test_dict, testcase_def_dict):
 
 
 def __prepare_config(config, project_mapping, session_variables_set=None):
-    """ parse testcase/testsuite config.
-    """
+    """parse testcase/testsuite config."""
     # get config variables
     raw_config_variables = config.pop("variables", {})
 
@@ -1057,7 +1039,8 @@ def __prepare_config(config, project_mapping, session_variables_set=None):
     functions = project_mapping.get("functions", {})
 
     if isinstance(raw_config_variables, basestring) and function_regex_compile.match(
-            raw_config_variables):
+        raw_config_variables
+    ):
         # config variables are generated by calling function
         # e.g.
         # "config": {
@@ -1077,13 +1060,17 @@ def __prepare_config(config, project_mapping, session_variables_set=None):
         config["variables"] = raw_config_variables_mapping
 
     check_variables_set = set(raw_config_variables_mapping.keys())
-    check_variables_set |= (session_variables_set or set())
-    prepared_config = prepare_lazy_data(config, functions, check_variables_set, cached=True)
+    check_variables_set |= session_variables_set or set()
+    prepared_config = prepare_lazy_data(
+        config, functions, check_variables_set, cached=True
+    )
     return prepared_config
 
 
-def __prepare_testcase_tests(tests, config, project_mapping, session_variables_set=None):
-    """ override tests with testcase config variables, base_url and verify.
+def __prepare_testcase_tests(
+    tests, config, project_mapping, session_variables_set=None
+):
+    """override tests with testcase config variables, base_url and verify.
         test maybe nested testcase.
 
         variables priority:
@@ -1107,7 +1094,9 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
     functions = project_mapping.get("functions", {})
 
     prepared_testcase_tests = []
-    session_variables_set = set(config_variables.keys()) | (session_variables_set or set())
+    session_variables_set = set(config_variables.keys()) | (
+        session_variables_set or set()
+    )
     for test_dict in tests:
 
         teststep_variables_set = {"request", "response"}
@@ -1115,8 +1104,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
         # 1, testcase config => testcase tests
         # override test_dict variables
         test_dict_variables = utils.extend_variables(
-            test_dict.pop("variables", {}),
-            config_variables
+            test_dict.pop("variables", {}), config_variables
         )
         test_dict["variables"] = test_dict_variables
 
@@ -1128,8 +1116,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
         if "validate" in test_dict:
             ref_raw_validators = test_dict.pop("validate", [])
             test_dict["validate"] = [
-                uniform_validator(_validator)
-                for _validator in ref_raw_validators
+                uniform_validator(_validator) for _validator in ref_raw_validators
             ]
 
         if "testcase_def" in test_dict:
@@ -1152,7 +1139,9 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
             test_dict["config"].setdefault("verify", config_verify)
 
             # 3, testcase_def config => testcase_def test_dict
-            test_dict = _parse_testcase(test_dict, project_mapping, session_variables_set)
+            test_dict = _parse_testcase(
+                test_dict, project_mapping, session_variables_set
+            )
             if not test_dict:
                 continue
 
@@ -1169,6 +1158,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
 
             if "upload" in test_dict["request"]:
                 from httprunner.ext.uploader import prepare_upload_test
+
                 prepare_upload_test(test_dict)
 
         # current teststep variables
@@ -1187,27 +1177,18 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
         for _validator in validators:
             function_meta = {
                 "func_name": _validator["comparator"],
-                "args": [
-                    _validator["check"],
-                    _validator["expect"]
-                ],
-                "kwargs": {}
+                "args": [_validator["check"], _validator["expect"]],
+                "kwargs": {},
             }
             prepared_validators.append(
-                LazyFunction(
-                    function_meta,
-                    functions,
-                    teststep_variables_set
-                )
+                LazyFunction(function_meta, functions, teststep_variables_set)
             )
         test_dict["validate"] = prepared_validators
 
         # convert variables and functions to lazy object.
         # raises VariableNotFound if undefined variable exists in test_dict
         prepared_test_dict = prepare_lazy_data(
-            test_dict,
-            functions,
-            teststep_variables_set
+            test_dict, functions, teststep_variables_set
         )
         prepared_testcase_tests.append(prepared_test_dict)
 
@@ -1215,7 +1196,7 @@ def __prepare_testcase_tests(tests, config, project_mapping, session_variables_s
 
 
 def _parse_testcase(testcase, project_mapping, session_variables_set=None):
-    """ parse testcase
+    """parse testcase
 
     Args:
         testcase (dict):
@@ -1229,25 +1210,22 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
 
     try:
         prepared_config = __prepare_config(
-            testcase["config"],
-            project_mapping,
-            session_variables_set
+            testcase["config"], project_mapping, session_variables_set
         )
         prepared_testcase_tests = __prepare_testcase_tests(
             testcase["teststeps"],
             prepared_config,
             project_mapping,
-            session_variables_set
+            session_variables_set,
         )
-        return {
-            "config": prepared_config,
-            "teststeps": prepared_testcase_tests
-        }
+        return {"config": prepared_config, "teststeps": prepared_testcase_tests}
     except (exceptions.MyBaseFailure, exceptions.MyBaseError) as ex:
         testcase_type = testcase["type"]
         testcase_path = testcase.get("path")
 
-        logger.log_error("failed to parse testcase: {}, error: {}".format(testcase_path, ex))
+        logger.log_error(
+            "failed to parse testcase: {}, error: {}".format(testcase_path, ex)
+        )
 
         global parse_failed_testfiles
         if testcase_type not in parse_failed_testfiles:
@@ -1259,7 +1237,7 @@ def _parse_testcase(testcase, project_mapping, session_variables_set=None):
 
 
 def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mapping):
-    """ override testscases with testsuite config variables, base_url and verify.
+    """override testscases with testsuite config variables, base_url and verify.
 
         variables priority:
         parameters > testsuite config > testcase config > testcase_def config > testcase_def tests > api
@@ -1323,45 +1301,46 @@ def __get_parsed_testsuite_testcases(testcases, testsuite_config, project_mappin
         # 1, testsuite config => testcase config
         # override test_dict variables
         testcase_config_variables = utils.extend_variables(
-            testcase.pop("variables", {}),
-            testsuite_config_variables
+            testcase.pop("variables", {}), testsuite_config_variables
         )
 
         # 2, testcase config > testcase_def config
         # override testcase_def config variables
         overrided_testcase_config_variables = utils.extend_variables(
-            parsed_testcase["config"].pop("variables", {}),
-            testcase_config_variables
+            parsed_testcase["config"].pop("variables", {}), testcase_config_variables
         )
 
         if overrided_testcase_config_variables:
             parsed_testcase["config"]["variables"] = overrided_testcase_config_variables
 
         # parse config variables
-        parsed_config_variables = parse_variables_mapping(overrided_testcase_config_variables)
+        parsed_config_variables = parse_variables_mapping(
+            overrided_testcase_config_variables
+        )
 
         # parse parameters
         if "parameters" in testcase and testcase["parameters"]:
             cartesian_product_parameters = parse_parameters(
-                testcase["parameters"],
-                parsed_config_variables,
-                functions
+                testcase["parameters"], parsed_config_variables, functions
             )
 
             for parameter_variables in cartesian_product_parameters:
                 # deepcopy to avoid influence between parameters
                 testcase_copied = utils.deepcopy_dict(parsed_testcase)
-                parsed_config_variables_copied = utils.deepcopy_dict(parsed_config_variables)
-                testcase_copied["config"]["variables"] = utils.extend_variables(
-                    parsed_config_variables_copied,
-                    parameter_variables
+                parsed_config_variables_copied = utils.deepcopy_dict(
+                    parsed_config_variables
                 )
-                parsed_testcase_copied = _parse_testcase(testcase_copied, project_mapping)
+                testcase_copied["config"]["variables"] = utils.extend_variables(
+                    parsed_config_variables_copied, parameter_variables
+                )
+                parsed_testcase_copied = _parse_testcase(
+                    testcase_copied, project_mapping
+                )
                 if not parsed_testcase_copied:
                     continue
                 parsed_testcase_copied["config"]["name"] = parse_lazy_data(
                     parsed_testcase_copied["config"]["name"],
-                    testcase_copied["config"]["variables"]
+                    testcase_copied["config"]["variables"],
                 )
                 parsed_testcase_list.append(parsed_testcase_copied)
 
@@ -1378,15 +1357,13 @@ def _parse_testsuite(testsuite, project_mapping):
     testsuite.setdefault("config", {})
     prepared_config = __prepare_config(testsuite["config"], project_mapping)
     parsed_testcase_list = __get_parsed_testsuite_testcases(
-        testsuite["testcases"],
-        prepared_config,
-        project_mapping
+        testsuite["testcases"], prepared_config, project_mapping
     )
     return parsed_testcase_list
 
 
 def parse_tests(tests_mapping):
-    """ parse tests and load to parsed testcases
+    """parse tests and load to parsed testcases
         tests include api, testcases and testsuites.
 
     Args:
@@ -1475,12 +1452,10 @@ def parse_tests(tests_mapping):
             # encapsulate api as a testcase
             for api_content in tests_mapping["apis"]:
                 testcase = {
-                    "config": {
-                        "name": api_content.get("name")
-                    },
+                    "config": {"name": api_content.get("name")},
                     "teststeps": [api_content],
                     "path": api_content.pop("path", None),
-                    "type": api_content.pop("type", "api")
+                    "type": api_content.pop("type", "api"),
                 }
                 parsed_testcase = _parse_testcase(testcase, project_mapping)
                 if not parsed_testcase:

@@ -11,11 +11,11 @@ LOG_LEVEL = "INFO"
 LOG_FILE_PATH = ""
 
 log_colors_config = {
-    'DEBUG':    'cyan',
-    'INFO':     'green',
-    'WARNING':  'yellow',
-    'ERROR':    'red',
-    'CRITICAL': 'red',
+    "DEBUG": "cyan",
+    "INFO": "green",
+    "WARNING": "yellow",
+    "ERROR": "red",
+    "CRITICAL": "red",
 }
 loggers = {}
 
@@ -58,10 +58,10 @@ def get_logger(name=None):
         handler = logging.StreamHandler(sys.stdout)
 
     formatter = ColoredFormatter(
-        u"%(log_color)s%(bg_white)s%(levelname)-8s%(reset)s %(message)s",
+        "%(log_color)s%(bg_white)s%(levelname)-8s%(reset)s %(message)s",
         datefmt=None,
         reset=True,
-        log_colors=log_colors_config
+        log_colors=log_colors_config,
     )
     handler.setFormatter(formatter)
     _logger.addHandler(handler)
@@ -81,8 +81,8 @@ def color_print(msg, color="WHITE"):
 
 
 def log_with_color(level):
-    """ log with color by different level
-    """
+    """log with color by different level"""
+
     def wrapper(text):
         color = log_colors_config[level.upper()]
         _logger = get_logger()

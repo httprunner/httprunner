@@ -1,28 +1,38 @@
 import os
 import unittest
 
-from httprunner import (__version__, exceptions, loader, logger, parser,
-                        report, runner, utils)
+from httprunner import (
+    __version__,
+    exceptions,
+    loader,
+    logger,
+    parser,
+    report,
+    runner,
+    utils,
+)
 from httprunner.utils import ga_client
 
 
 class HttpRunner(object):
-    """ Developer Interface: Main Interface
-        Usage:
+    """Developer Interface: Main Interface
+    Usage:
 
-            from httprunner.api import HttpRunner
-            runner = HttpRunner(
-                failfast=True,
-                save_tests=True,
-                log_level="INFO",
-                log_file="test.log"
-            )
-            summary = runner.run(path_or_tests)
+        from httprunner.api import HttpRunner
+        runner = HttpRunner(
+            failfast=True,
+            save_tests=True,
+            log_level="INFO",
+            log_file="test.log"
+        )
+        summary = runner.run(path_or_tests)
 
     """
 
-    def __init__(self, failfast=False, save_tests=False, log_level="WARNING", log_file=None):
-        """ initialize HttpRunner.
+    def __init__(
+        self, failfast=False, save_tests=False, log_level="WARNING", log_file=None
+    ):
+        """initialize HttpRunner.
 
         Args:
             failfast (bool): stop the test run on the first error or failure.
@@ -34,10 +44,7 @@ class HttpRunner(object):
         logger.setup_logger(log_level, log_file)
 
         self.exception_stage = "initialize HttpRunner()"
-        kwargs = {
-            "failfast": failfast,
-            "resultclass": report.HtmlTestResult
-        }
+        kwargs = {"failfast": failfast, "resultclass": report.HtmlTestResult}
         self.unittest_runner = unittest.TextTestRunner(**kwargs)
         self.test_loader = unittest.TestLoader()
         self.save_tests = save_tests
@@ -45,7 +52,7 @@ class HttpRunner(object):
         self.project_working_directory = None
 
     def _add_tests(self, testcases):
-        """ initialize testcase with Runner() and add to test suite.
+        """initialize testcase with Runner() and add to test suite.
 
         Args:
             testcases (list): testcases list.
@@ -54,9 +61,10 @@ class HttpRunner(object):
             unittest.TestSuite()
 
         """
+
         def _add_test(test_runner, test_dict):
-            """ add test to testcase.
-            """
+            """add test to testcase."""
+
             def test(self):
                 try:
                     test_runner.run_test(test_dict)
@@ -89,7 +97,7 @@ class HttpRunner(object):
         for testcase in testcases:
             config = testcase.get("config", {})
             test_runner = runner.Runner(config)
-            TestSequense = type('TestSequense', (unittest.TestCase,), {})
+            TestSequense = type("TestSequense", (unittest.TestCase,), {})
 
             tests = testcase.get("teststeps", [])
             for index, test_dict in enumerate(tests):
@@ -98,12 +106,13 @@ class HttpRunner(object):
                     times = int(times)
                 except ValueError:
                     raise exceptions.ParamsError(
-                        "times should be digit, given: {}".format(times))
+                        "times should be digit, given: {}".format(times)
+                    )
 
                 for times_index in range(times):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
-                    test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
+                    test_method_name = "test_{:04}_{:03}".format(index, times_index)
                     test_method = _add_test(test_runner, test_dict)
                     setattr(TestSequense, test_method_name, test_method)
 
@@ -116,7 +125,7 @@ class HttpRunner(object):
         return test_suite
 
     def _run_suite(self, test_suite):
-        """ run tests in test_suite
+        """run tests in test_suite
 
         Args:
             test_suite: unittest.TestSuite()
@@ -140,7 +149,7 @@ class HttpRunner(object):
         return tests_results
 
     def _aggregate(self, tests_results):
-        """ aggregate results
+        """aggregate results
 
         Args:
             tests_results (list): list of (testcase, result)
@@ -149,16 +158,12 @@ class HttpRunner(object):
         summary = {
             "success": True,
             "stat": {
-                "testcases": {
-                    "total": len(tests_results),
-                    "success": 0,
-                    "fail": 0
-                },
-                "teststeps": {}
+                "testcases": {"total": len(tests_results), "success": 0, "fail": 0},
+                "teststeps": {},
             },
             "time": {},
             "platform": report.get_platform(),
-            "details": []
+            "details": [],
         }
 
         for tests_result in tests_results:
@@ -174,7 +179,9 @@ class HttpRunner(object):
             testcase_summary["name"] = testcase.config.get("name")
             testcase_summary["in_out"] = utils.get_testcase_io(testcase)
 
-            report.aggregate_stat(summary["stat"]["teststeps"], testcase_summary["stat"])
+            report.aggregate_stat(
+                summary["stat"]["teststeps"], testcase_summary["stat"]
+            )
             report.aggregate_stat(summary["time"], testcase_summary["time"])
 
             summary["details"].append(testcase_summary)
@@ -182,8 +189,7 @@ class HttpRunner(object):
         return summary
 
     def run_tests(self, tests_mapping):
-        """ run testcase/testsuite data
-        """
+        """run testcase/testsuite data"""
         ga_client.track_event("RunAPITests", "hrun")
         project_mapping = tests_mapping.get("project_mapping", {})
         self.project_working_directory = project_mapping.get("PWD", os.getcwd())
@@ -231,7 +237,7 @@ class HttpRunner(object):
         return self._summary
 
     def get_vars_out(self):
-        """ get variables and output
+        """get variables and output
         Returns:
             list: list of variables and output.
                 if tests are parameterized, list items are corresponded to parameters.
@@ -254,13 +260,10 @@ class HttpRunner(object):
         if not self._summary:
             return None
 
-        return [
-            summary["in_out"]
-            for summary in self._summary["details"]
-        ]
+        return [summary["in_out"] for summary in self._summary["details"]]
 
     def run_path(self, path, dot_env_path=None, mapping=None):
-        """ run testcase/testsuite file or folder.
+        """run testcase/testsuite file or folder.
 
         Args:
             path (str): testcase/testsuite file/foler path.
@@ -281,7 +284,7 @@ class HttpRunner(object):
         return self.run_tests(tests_mapping)
 
     def run(self, path_or_tests, dot_env_path=None, mapping=None):
-        """ main interface.
+        """main interface.
 
         Args:
             path_or_tests:
@@ -298,8 +301,12 @@ class HttpRunner(object):
         if loader.is_test_path(path_or_tests):
             return self.run_path(path_or_tests, dot_env_path, mapping)
         elif loader.is_test_content(path_or_tests):
-            project_working_directory = path_or_tests.get("project_mapping", {}).get("PWD", os.getcwd())
+            project_working_directory = path_or_tests.get("project_mapping", {}).get(
+                "PWD", os.getcwd()
+            )
             loader.init_pwd(project_working_directory)
             return self.run_tests(path_or_tests)
         else:
-            raise exceptions.ParamsError("Invalid testcase path or testcases: {}".format(path_or_tests))
+            raise exceptions.ParamsError(
+                "Invalid testcase path or testcases: {}".format(path_or_tests)
+            )

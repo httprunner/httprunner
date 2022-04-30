@@ -20,30 +20,21 @@ class TestHttpClient(ApiServerUnittest):
 
     def test_request_with_full_url(self):
         url = "%s/api/users/1000" % self.host
-        data = {
-            'name': 'user1',
-            'password': '123456'
-        }
+        data = {"name": "user1", "password": "123456"}
         resp = self.api_client.post(url, json=data, headers=self.headers)
         self.assertEqual(201, resp.status_code)
-        self.assertEqual(True, resp.json()['success'])
+        self.assertEqual(True, resp.json()["success"])
 
     def test_request_without_base_url(self):
         url = "{}/api/users/1000".format(self.host)
-        data = {
-            'name': 'user1',
-            'password': '123456'
-        }
+        data = {"name": "user1", "password": "123456"}
         resp = self.api_client.post(url, json=data, headers=self.headers)
         self.assertEqual(201, resp.status_code)
-        self.assertEqual(True, resp.json()['success'])
+        self.assertEqual(True, resp.json()["success"])
 
     def test_request_post_data(self):
         url = "{}/api/users/1000".format(self.host)
-        data = {
-            'name': 'user1',
-            'password': '123456'
-        }
+        data = {"name": "user1", "password": "123456"}
         resp = self.api_client.post(url, json=data, headers=self.headers)
         # b'{"name": "user1", "password": "123456"}'
         self.assertIn(b'"name": "user1"', resp.request.body)
@@ -56,14 +47,8 @@ class TestHttpClient(ApiServerUnittest):
 
     def test_request_with_cookies(self):
         url = "{}/api/users/1000".format(self.host)
-        data = {
-            'name': 'user1',
-            'password': '123456'
-        }
-        cookies = {
-            "a": "1",
-            "b": "2"
-        }
+        data = {"name": "user1", "password": "123456"}
+        cookies = {"a": "1", "b": "2"}
         resp = self.api_client.get(url, cookies=cookies, headers=self.headers)
         self.assertEqual(resp.request._cookies["a"], "1")
         self.assertEqual(resp.request._cookies["b"], "2")

@@ -61,7 +61,7 @@ from httprunner.exceptions import ParamsError
 
 
 def prepare_upload_test(test_dict):
-    """ preprocess for upload test
+    """preprocess for upload test
         replace `upload` info with MultipartEncoder
 
     Args:
@@ -96,14 +96,15 @@ def prepare_upload_test(test_dict):
     test_dict["variables"]["m_encoder"] = "${multipart_encoder(" + params_str + ")}"
 
     test_dict["request"].setdefault("headers", {})
-    test_dict["request"]["headers"]["Content-Type"] = "${multipart_content_type($m_encoder)}"
+    test_dict["request"]["headers"][
+        "Content-Type"
+    ] = "${multipart_content_type($m_encoder)}"
 
     test_dict["request"]["data"] = "$m_encoder"
 
 
 def multipart_encoder(**kwargs):
-    """ initialize MultipartEncoder with uploading fields.
-    """
+    """initialize MultipartEncoder with uploading fields."""
 
     def get_filetype(file_path):
         file_type = filetype.guess(file_path)
@@ -122,6 +123,7 @@ def multipart_encoder(**kwargs):
         else:
             # value is not absolute file path, check if it is relative file path
             from httprunner.loader import get_pwd
+
             _file_path = os.path.join(get_pwd(), value)
             is_exists_file = os.path.isfile(_file_path)
 
@@ -130,7 +132,7 @@ def multipart_encoder(**kwargs):
             filename = os.path.basename(_file_path)
             mime_type = get_filetype(_file_path)
             # TODO: fix ResourceWarning for unclosed file
-            file_handler = open(_file_path, 'rb')
+            file_handler = open(_file_path, "rb")
             fields_dict[key] = (filename, file_handler, mime_type)
         else:
             fields_dict[key] = value
@@ -139,6 +141,5 @@ def multipart_encoder(**kwargs):
 
 
 def multipart_content_type(m_encoder):
-    """ prepare Content-Type for request headers
-    """
+    """prepare Content-Type for request headers"""
     return m_encoder.content_type

@@ -7,16 +7,11 @@ from tests.base import ApiServerUnittest
 
 
 class TestRunner(ApiServerUnittest):
-
     def setUp(self):
         project_mapping = loader.load_project_data(os.path.join(os.getcwd(), "tests"))
         self.debugtalk_functions = project_mapping["functions"]
 
-        config = {
-            "name": "XXX",
-            "base_url": "http://127.0.0.1",
-            "verify": False
-        }
+        config = {"name": "XXX", "base_url": "http://127.0.0.1", "verify": False}
         self.test_runner = runner.Runner(config)
         self.reset_all()
 
@@ -27,10 +22,8 @@ class TestRunner(ApiServerUnittest):
 
     def test_run_single_testcase(self):
         testcase_file_path_list = [
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.yml'),
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
+            os.path.join(os.getcwd(), "tests/data/demo_testcase_hardcode.yml"),
+            os.path.join(os.getcwd(), "tests/data/demo_testcase_hardcode.json"),
         ]
 
         for testcase_file_path in testcase_file_path_list:
@@ -50,14 +43,8 @@ class TestRunner(ApiServerUnittest):
                 "config": {
                     "name": "basic test with httpbin",
                     "base_url": HTTPBIN_SERVER,
-                    "setup_hooks": [
-                        "${sleep(0.5)}",
-                        "${hook_print(setup)}"
-                    ],
-                    "teardown_hooks": [
-                        "${sleep(1)}",
-                        "${hook_print(teardown)}"
-                    ]
+                    "setup_hooks": ["${sleep(0.5)}", "${hook_print(setup)}"],
+                    "teardown_hooks": ["${sleep(1)}", "${hook_print(teardown)}"],
                 },
                 "teststeps": [
                     {
@@ -70,24 +57,20 @@ class TestRunner(ApiServerUnittest):
                                 "user_agent": "iOS/10.3",
                                 "device_sn": "HZfFBh6tU59EdXJ",
                                 "os_platform": "ios",
-                                "app_version": "2.8.6"
+                                "app_version": "2.8.6",
                             },
                             "json": {
                                 "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
-                            }
+                            },
                         },
-                        "validate": [
-                            {"check": "status_code", "expect": 200}
-                        ]
+                        "validate": [{"check": "status_code", "expect": 200}],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -107,7 +90,7 @@ class TestRunner(ApiServerUnittest):
             {
                 "config": {
                     "name": "basic test with httpbin",
-                    "base_url": HTTPBIN_SERVER
+                    "base_url": HTTPBIN_SERVER,
                 },
                 "teststeps": [
                     {
@@ -116,27 +99,18 @@ class TestRunner(ApiServerUnittest):
                         "request": {
                             "url": "/anything",
                             "method": "POST",
-                            "headers": {
-                                "user_agent": "iOS/10.3",
-                                "os_platform": "ios"
-                            },
-                            "data": "a=1&b=2"
+                            "headers": {"user_agent": "iOS/10.3", "os_platform": "ios"},
+                            "data": "a=1&b=2",
                         },
-                        "setup_hooks": [
-                            {"total": "${sum_two(1, 5)}"}
-                        ],
-                        "validate": [
-                            {"check": "status_code", "expect": 200}
-                        ]
+                        "setup_hooks": [{"total": "${sum_two(1, 5)}"}],
+                        "validate": [{"check": "status_code", "expect": 200}],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -151,7 +125,7 @@ class TestRunner(ApiServerUnittest):
             {
                 "config": {
                     "name": "basic test with httpbin",
-                    "base_url": HTTPBIN_SERVER
+                    "base_url": HTTPBIN_SERVER,
                 },
                 "teststeps": [
                     {
@@ -162,29 +136,25 @@ class TestRunner(ApiServerUnittest):
                             "method": "POST",
                             "headers": {
                                 "content-type": "application/json",
-                                "user_agent": "iOS/10.3"
+                                "user_agent": "iOS/10.3",
                             },
                             "json": {
                                 "os_platform": "ios",
-                                "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
-                            }
+                                "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad",
+                            },
                         },
-                        "setup_hooks": [
-                            "${modify_request_json($request, android)}"
-                        ],
+                        "setup_hooks": ["${modify_request_json($request, android)}"],
                         "validate": [
                             {"check": "status_code", "expect": 200},
-                            {"check": "content.json.os_platform", "expect": "android"}
-                        ]
+                            {"check": "content.json.os_platform", "expect": "android"},
+                        ],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -194,9 +164,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_teardown_hooks_success(self):
         testcases = [
             {
-                "config": {
-                    "name": "basic test with httpbin"
-                },
+                "config": {"name": "basic test with httpbin"},
                 "teststeps": [
                     {
                         "name": "get token",
@@ -208,25 +176,23 @@ class TestRunner(ApiServerUnittest):
                                 "user_agent": "iOS/10.3",
                                 "device_sn": "HZfFBh6tU59EdXJ",
                                 "os_platform": "ios",
-                                "app_version": "2.8.6"
+                                "app_version": "2.8.6",
                             },
                             "json": {
                                 "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
-                            }
+                            },
                         },
-                        "validate": [
-                            {"check": "status_code", "expect": 200}
+                        "validate": [{"check": "status_code", "expect": 200}],
+                        "teardown_hooks": [
+                            "${teardown_hook_sleep_N_secs($response, 2)}"
                         ],
-                        "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -241,9 +207,7 @@ class TestRunner(ApiServerUnittest):
     def test_run_testcase_with_teardown_hooks_fail(self):
         testcases = [
             {
-                "config": {
-                    "name": "basic test with httpbin"
-                },
+                "config": {"name": "basic test with httpbin"},
                 "teststeps": [
                     {
                         "name": "get token",
@@ -255,25 +219,23 @@ class TestRunner(ApiServerUnittest):
                                 "user_agent": "iOS/10.3",
                                 "device_sn": "HZfFBh6tU59EdXJ",
                                 "os_platform": "ios",
-                                "app_version": "2.8.6"
+                                "app_version": "2.8.6",
                             },
                             "json": {
                                 "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
-                            }
+                            },
                         },
-                        "validate": [
-                            {"check": "status_code", "expect": 404}
+                        "validate": [{"check": "status_code", "expect": 404}],
+                        "teardown_hooks": [
+                            "${teardown_hook_sleep_N_secs($response, 2)}"
                         ],
-                        "teardown_hooks": ["${teardown_hook_sleep_N_secs($response, 2)}"]
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -287,7 +249,8 @@ class TestRunner(ApiServerUnittest):
 
     def test_bugfix_type_match(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/bugfix_type_match.yml')
+            os.getcwd(), "tests/data/bugfix_type_match.yml"
+        )
         tests_mapping = loader.load_cases(testcase_file_path)
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -309,28 +272,38 @@ class TestRunner(ApiServerUnittest):
                                 "user_agent": "iOS/10.3",
                                 "device_sn": "HZfFBh6tU59EdXJ",
                                 "os_platform": "ios",
-                                "app_version": "2.8.6"
+                                "app_version": "2.8.6",
                             },
                             "json": {
                                 "sign": "5188962c489d1a35effa99e9346dd5efd4fdabad"
-                            }
+                            },
                         },
                         "validate": [
                             {"check": "status_code", "expect": 200},
-                            {"check": "elapsed.seconds", "comparator": "lt", "expect": 1},
+                            {
+                                "check": "elapsed.seconds",
+                                "comparator": "lt",
+                                "expect": 1,
+                            },
                             {"check": "elapsed.days", "comparator": "eq", "expect": 0},
-                            {"check": "elapsed.microseconds", "comparator": "gt", "expect": 1000},
-                            {"check": "elapsed.total_seconds", "comparator": "lt", "expect": 1}
-                        ]
+                            {
+                                "check": "elapsed.microseconds",
+                                "comparator": "gt",
+                                "expect": 1000,
+                            },
+                            {
+                                "check": "elapsed.total_seconds",
+                                "comparator": "lt",
+                                "expect": 1,
+                            },
+                        ],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]
@@ -343,7 +316,7 @@ class TestRunner(ApiServerUnittest):
                 "config": {
                     "name": "basic test with httpbin",
                     "base_url": HTTPBIN_SERVER,
-                    "variables": "${gen_variables()}"
+                    "variables": "${gen_variables()}",
                 },
                 "teststeps": [
                     {
@@ -352,24 +325,17 @@ class TestRunner(ApiServerUnittest):
                         "request": {
                             "url": "/anything",
                             "method": "POST",
-                            "headers": {
-                                "user_agent": "iOS/10.3",
-                                "os_platform": "ios"
-                            },
-                            "data": "a=1&b=2"
+                            "headers": {"user_agent": "iOS/10.3", "os_platform": "ios"},
+                            "data": "a=1&b=2",
                         },
-                        "validate": [
-                            {"check": "status_code", "expect": 200}
-                        ]
+                        "validate": [{"check": "status_code", "expect": 200}],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
-            "project_mapping": {
-                "functions": self.debugtalk_functions
-            },
-            "testcases": testcases
+            "project_mapping": {"functions": self.debugtalk_functions},
+            "testcases": testcases,
         }
         parsed_testcases = parser.parse_tests(tests_mapping)
         parsed_testcase = parsed_testcases[0]

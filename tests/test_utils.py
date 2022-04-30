@@ -7,12 +7,9 @@ from tests.base import ApiServerUnittest
 
 
 class TestUtils(ApiServerUnittest):
-
     def test_set_os_environ(self):
         self.assertNotIn("abc", os.environ)
-        variables_mapping = {
-            "abc": "123"
-        }
+        variables_mapping = {"abc": "123"}
         utils.set_os_environ(variables_mapping)
         self.assertIn("abc", os.environ)
         self.assertEqual(os.environ["abc"], "123")
@@ -26,8 +23,8 @@ class TestUtils(ApiServerUnittest):
                     "last_name": "Lee",
                 },
                 "age": 29,
-                "cities": ["Guangzhou", "Shenzhen"]
-            }
+                "cities": ["Guangzhou", "Shenzhen"],
+            },
         }
         query = "ids.2"
         result = utils.query_json(json_content, query)
@@ -63,6 +60,7 @@ class TestUtils(ApiServerUnittest):
 
     def current_validators(self):
         from httprunner.builtin import comparators
+
         functions_mapping = loader.load.load_module_functions(comparators)
 
         functions_mapping["equals"](None, None)
@@ -80,17 +78,17 @@ class TestUtils(ApiServerUnittest):
         functions_mapping["not_equals"](123, "123")
 
         functions_mapping["length_equals"]("123", 3)
-        # Because the Numbers in a CSV file are by default treated as strings, 
+        # Because the Numbers in a CSV file are by default treated as strings,
         # you need to convert them to Numbers, and we'll test that out here.
-        functions_mapping["length_equals"]("123", '3')
+        functions_mapping["length_equals"]("123", "3")
         with self.assertRaises(AssertionError):
-            functions_mapping["length_equals"]("123", 'abc')
+            functions_mapping["length_equals"]("123", "abc")
         functions_mapping["length_greater_than"]("123", 2)
         functions_mapping["length_greater_than_or_equals"]("123", 3)
 
         functions_mapping["contains"]("123abc456", "3ab")
-        functions_mapping["contains"](['1', '2'], "1")
-        functions_mapping["contains"]({'a':1, 'b':2}, "a")
+        functions_mapping["contains"](["1", "2"], "1")
+        functions_mapping["contains"]({"a": 1, "b": 2}, "a")
         functions_mapping["contained_by"]("3ab", "123abc456")
 
         functions_mapping["regex_match"]("123abc456", "^123\w+456$")
@@ -119,11 +117,8 @@ class TestUtils(ApiServerUnittest):
             "Request": {
                 "url": "http://127.0.0.1:5000",
                 "METHOD": "POST",
-                "Headers": {
-                    "Accept": "application/json",
-                    "User-Agent": "ios/9.3"
-                }
-            }
+                "Headers": {"Accept": "application/json", "User-Agent": "ios/9.3"},
+            },
         }
         new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("name", new_dict)
@@ -133,10 +128,7 @@ class TestUtils(ApiServerUnittest):
         self.assertIn("Accept", new_dict["request"]["headers"])
         self.assertIn("User-Agent", new_dict["request"]["headers"])
 
-        origin_dict = {
-            "Name": "test",
-            "Request": "$default_request"
-        }
+        origin_dict = {"Name": "test", "Request": "$default_request"}
         new_dict = utils.lower_test_dict_keys(origin_dict)
         self.assertIn("$default_request", new_dict["request"])
 
@@ -144,10 +136,7 @@ class TestUtils(ApiServerUnittest):
         request_dict = {
             "url": "http://127.0.0.1:5000",
             "METHOD": "POST",
-            "Headers": {
-                "Accept": "application/json",
-                "User-Agent": "ios/9.3"
-            }
+            "Headers": {"Accept": "application/json", "User-Agent": "ios/9.3"},
         }
         new_request_dict = utils.lower_dict_keys(request_dict)
         self.assertIn("method", new_request_dict)
@@ -164,10 +153,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(None, request_dict)
 
     def test_ensure_mapping_format(self):
-        map_list = [
-            {"a": 1},
-            {"b": 2}
-        ]
+        map_list = [{"a": 1}, {"b": 2}]
         ordered_dict = utils.ensure_mapping_format(map_list)
         self.assertIsInstance(ordered_dict, dict)
         self.assertIn("a", ordered_dict)
@@ -175,7 +161,9 @@ class TestUtils(ApiServerUnittest):
     def test_extend_variables(self):
         raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
         override_variables = [{"var1": "val111"}, {"var3": "val3"}]
-        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        extended_variables_mapping = utils.extend_variables(
+            raw_variables, override_variables
+        )
         self.assertEqual(extended_variables_mapping["var1"], "val111")
         self.assertEqual(extended_variables_mapping["var2"], "val2")
         self.assertEqual(extended_variables_mapping["var3"], "val3")
@@ -183,25 +171,27 @@ class TestUtils(ApiServerUnittest):
     def test_extend_variables_fix(self):
         raw_variables = [{"var1": "val1"}, {"var2": "val2"}]
         override_variables = {}
-        extended_variables_mapping = utils.extend_variables(raw_variables, override_variables)
+        extended_variables_mapping = utils.extend_variables(
+            raw_variables, override_variables
+        )
         self.assertEqual(extended_variables_mapping["var1"], "val1")
 
     def test_deepcopy_dict(self):
         data = {
-            'a': 1,
-            'b': [2, 4],
-            'c': lambda x: x+1,
-            'd': open('LICENSE'),
-            'f': {
-                'f1': {'a1': 2},
-                'f2': io.open('LICENSE', 'rb'),
-            }
+            "a": 1,
+            "b": [2, 4],
+            "c": lambda x: x + 1,
+            "d": open("LICENSE"),
+            "f": {
+                "f1": {"a1": 2},
+                "f2": io.open("LICENSE", "rb"),
+            },
         }
         new_data = utils.deepcopy_dict(data)
         data["a"] = 0
         self.assertEqual(new_data["a"], 1)
         data["f"]["f1"] = 123
-        self.assertEqual(new_data["f"]["f1"], {'a1': 2})
+        self.assertEqual(new_data["f"]["f1"], {"a1": 2})
         self.assertNotEqual(id(new_data["b"]), id(data["b"]))
         self.assertEqual(id(new_data["c"]), id(data["c"]))
         # self.assertEqual(id(new_data["d"]), id(data["d"]))
@@ -218,41 +208,24 @@ class TestUtils(ApiServerUnittest):
         shutil.rmtree(project_name)
 
     def test_cartesian_product_one(self):
-        parameters_content_list = [
-            [
-                {"a": 1},
-                {"a": 2}
-            ]
-        ]
+        parameters_content_list = [[{"a": 1}, {"a": 2}]]
         product_list = utils.gen_cartesian_product(*parameters_content_list)
-        self.assertEqual(
-            product_list,
-            [
-                {"a": 1},
-                {"a": 2}
-            ]
-        )
+        self.assertEqual(product_list, [{"a": 1}, {"a": 2}])
 
     def test_cartesian_product_multiple(self):
         parameters_content_list = [
-            [
-                {"a": 1},
-                {"a": 2}
-            ],
-            [
-                {"x": 111, "y": 112},
-                {"x": 121, "y": 122}
-            ]
+            [{"a": 1}, {"a": 2}],
+            [{"x": 111, "y": 112}, {"x": 121, "y": 122}],
         ]
         product_list = utils.gen_cartesian_product(*parameters_content_list)
         self.assertEqual(
             product_list,
             [
-                {'a': 1, 'x': 111, 'y': 112},
-                {'a': 1, 'x': 121, 'y': 122},
-                {'a': 2, 'x': 111, 'y': 112},
-                {'a': 2, 'x': 121, 'y': 122}
-            ]
+                {"a": 1, "x": 111, "y": 112},
+                {"a": 1, "x": 121, "y": 122},
+                {"a": 2, "x": 111, "y": 112},
+                {"a": 2, "x": 121, "y": 122},
+            ],
         )
 
     def test_cartesian_product_empty(self):
@@ -261,15 +234,7 @@ class TestUtils(ApiServerUnittest):
         self.assertEqual(product_list, [])
 
     def test_print_info(self):
-        info_mapping = {
-            "a": 1,
-            "t": (1, 2),
-            "b": {
-                "b1": 123
-            },
-            "c": None,
-            "d": [4, 5]
-        }
+        info_mapping = {"a": 1, "t": (1, 2), "b": {"b1": 123}, "c": None, "d": [4, 5]}
         utils.print_info(info_mapping)
 
     def test_prepare_dump_json_file_path_for_folder(self):
@@ -277,11 +242,13 @@ class TestUtils(ApiServerUnittest):
         project_working_directory = os.path.join(os.getcwd(), "tests")
         project_mapping = {
             "PWD": project_working_directory,
-            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c")
+            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c"),
         }
         self.assertEqual(
             utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
-            os.path.join(project_working_directory, "logs", "httpbin/a.b.c/all.loaded.json")
+            os.path.join(
+                project_working_directory, "logs", "httpbin/a.b.c/all.loaded.json"
+            ),
         )
 
     def test_prepare_dump_json_file_path_for_file(self):
@@ -289,19 +256,23 @@ class TestUtils(ApiServerUnittest):
         project_working_directory = os.path.join(os.getcwd(), "tests")
         project_mapping = {
             "PWD": project_working_directory,
-            "test_path": os.path.join(os.getcwd(), "tests", "httpbin", "a.b.c", "rpc.yml")
+            "test_path": os.path.join(
+                os.getcwd(), "tests", "httpbin", "a.b.c", "rpc.yml"
+            ),
         }
         self.assertEqual(
             utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
-            os.path.join(project_working_directory, "logs", "httpbin/a.b.c/rpc.loaded.json")
+            os.path.join(
+                project_working_directory, "logs", "httpbin/a.b.c/rpc.loaded.json"
+            ),
         )
 
     def test_prepare_dump_json_file_path_for_passed_testcase(self):
         project_working_directory = os.path.join(os.getcwd(), "tests")
-        project_mapping = {
-            "PWD": project_working_directory
-        }
+        project_mapping = {"PWD": project_working_directory}
         self.assertEqual(
             utils.prepare_dump_json_file_abs_path(project_mapping, "loaded"),
-            os.path.join(project_working_directory, "logs", "tests_mapping.loaded.json")
+            os.path.join(
+                project_working_directory, "logs", "tests_mapping.loaded.json"
+            ),
         )

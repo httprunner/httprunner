@@ -1,6 +1,7 @@
 try:
     # monkey patch ssl at beginning to avoid RecursionError when running locust.
     from gevent import monkey
+
     monkey.patch_ssl()
     from locust import main as locust_main
 except ImportError:
@@ -11,6 +12,7 @@ $ pip install locustio
 """
     print(msg)
     import sys
+
     sys.exit(0)
 
 import io
@@ -26,9 +28,9 @@ init_sentry_sdk()
 
 
 def parse_locustfile(file_path):
-    """ parse testcase file and return locustfile path.
-        if file_path is a Python file, assume it is a locustfile
-        if file_path is a YAML/JSON file, convert it to locustfile
+    """parse testcase file and return locustfile path.
+    if file_path is a Python file, assume it is a locustfile
+    if file_path is a YAML/JSON file, convert it to locustfile
     """
     if not os.path.isfile(file_path):
         logger.color_print("file path invalid, exit.", "RED")
@@ -37,7 +39,7 @@ def parse_locustfile(file_path):
     file_suffix = os.path.splitext(file_path)[1]
     if file_suffix == ".py":
         locustfile_path = file_path
-    elif file_suffix in ['.yaml', '.yml', '.json']:
+    elif file_suffix in [".yaml", ".yml", ".json"]:
         locustfile_path = gen_locustfile(file_path)
     else:
         # '' or other suffix
@@ -48,18 +50,18 @@ def parse_locustfile(file_path):
 
 
 def gen_locustfile(testcase_file_path):
-    """ generate locustfile from template.
-    """
-    locustfile_path = 'locustfile.py'
+    """generate locustfile from template."""
+    locustfile_path = "locustfile.py"
     template_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "locustfile_template.py"
+        os.path.dirname(os.path.realpath(__file__)), "locustfile_template.py"
     )
 
-    with io.open(template_path, encoding='utf-8') as template:
-        with io.open(locustfile_path, 'w', encoding='utf-8') as locustfile:
+    with io.open(template_path, encoding="utf-8") as template:
+        with io.open(locustfile_path, "w", encoding="utf-8") as locustfile:
             template_content = template.read()
-            template_content = template_content.replace("$TESTCASE_FILE", testcase_file_path)
+            template_content = template_content.replace(
+                "$TESTCASE_FILE", testcase_file_path
+            )
             locustfile.write(template_content)
 
     return locustfile_path
@@ -67,6 +69,7 @@ def gen_locustfile(testcase_file_path):
 
 def start_locust_main():
     from httprunner.utils import ga_client
+
     ga_client.track_event("RunLoadTests", "locust")
 
     locust_main.main()
@@ -106,10 +109,9 @@ def run_locusts_with_processes(sys_argv, processes_count):
 
 
 def main():
-    """ Performance test with locust: parse command line options and run commands.
-    """
+    """Performance test with locust: parse command line options and run commands."""
     print("HttpRunner version: {}".format(__version__))
-    sys.argv[0] = 'locust'
+    sys.argv[0] = "locust"
     if len(sys.argv) == 1:
         sys.argv.extend(["-h"])
 
@@ -147,29 +149,36 @@ def main():
     sys.argv[testcase_index] = parse_locustfile(testcase_file_path)
 
     if "--processes" in sys.argv:
-        """ locusts -f locustfile.py --processes 4
-        """
+        """locusts -f locustfile.py --processes 4"""
         if "--no-web" in sys.argv:
             logger.log_error("conflict parameter args: --processes & --no-web. \nexit.")
             sys.exit(1)
 
-        processes_index = sys.argv.index('--processes')
+        processes_index = sys.argv.index("--processes")
         processes_count_index = processes_index + 1
         if processes_count_index >= len(sys.argv):
-            """ do not specify processes count explicitly
-                locusts -f locustfile.py --processes
+            """do not specify processes count explicitly
+            locusts -f locustfile.py --processes
             """
             processes_count = multiprocessing.cpu_count()
-            logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
+            logger.log_warning(
+                "processes count not specified, use {} by default.".format(
+                    processes_count
+                )
+            )
         else:
             try:
-                """ locusts -f locustfile.py --processes 4 """
+                """locusts -f locustfile.py --processes 4"""
                 processes_count = int(sys.argv[processes_count_index])
                 sys.argv.pop(processes_count_index)
             except ValueError:
-                """ locusts -f locustfile.py --processes -P 8888 """
+                """locusts -f locustfile.py --processes -P 8888"""
                 processes_count = multiprocessing.cpu_count()
-                logger.log_warning("processes count not specified, use {} by default.".format(processes_count))
+                logger.log_warning(
+                    "processes count not specified, use {} by default.".format(
+                        processes_count
+                    )
+                )
 
         sys.argv.pop(processes_index)
         run_locusts_with_processes(sys.argv, processes_count)

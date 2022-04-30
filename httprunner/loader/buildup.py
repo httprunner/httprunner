@@ -4,18 +4,22 @@ import sys
 
 from httprunner import exceptions, logger, utils
 from httprunner.loader.check import JsonSchemaChecker
-from httprunner.loader.load import load_module_functions, load_file, load_dot_env_file, \
-    load_folder_files
-from httprunner.loader.locate import init_project_working_directory, get_project_working_directory
+from httprunner.loader.load import (
+    load_module_functions,
+    load_file,
+    load_dot_env_file,
+    load_folder_files,
+)
+from httprunner.loader.locate import (
+    init_project_working_directory,
+    get_project_working_directory,
+)
 
-tests_def_mapping = {
-    "api": {},
-    "testcases": {}
-}
+tests_def_mapping = {"api": {}, "testcases": {}}
 
 
 def load_debugtalk_functions():
-    """ load project debugtalk.py module functions
+    """load project debugtalk.py module functions
         debugtalk.py should be located in project working directory.
 
     Returns:
@@ -27,8 +31,8 @@ def load_debugtalk_functions():
 
     """
     # load debugtalk.py module
-    if sys.modules.get('debugtalk'):
-        imported_module = importlib.reload(sys.modules['debugtalk'])
+    if sys.modules.get("debugtalk"):
+        imported_module = importlib.reload(sys.modules["debugtalk"])
     else:
         imported_module = importlib.import_module("debugtalk")
 
@@ -36,7 +40,7 @@ def load_debugtalk_functions():
 
 
 def __extend_with_api_ref(raw_testinfo):
-    """ extend with api reference
+    """extend with api reference
 
     Raises:
         exceptions.ApiNotFound: api not found
@@ -68,17 +72,13 @@ def __extend_with_api_ref(raw_testinfo):
 
 
 def __extend_with_testcase_ref(raw_testinfo):
-    """ extend with testcase reference
-    """
+    """extend with testcase reference"""
     testcase_path = raw_testinfo["testcase"]
 
     if testcase_path not in tests_def_mapping["testcases"]:
         # make compatible with Windows/Linux
         pwd = get_project_working_directory()
-        testcase_path = os.path.join(
-            pwd,
-            *testcase_path.split("/")
-        )
+        testcase_path = os.path.join(pwd, *testcase_path.split("/"))
         loaded_testcase = load_file(testcase_path)
 
         if isinstance(loaded_testcase, list):
@@ -89,7 +89,8 @@ def __extend_with_testcase_ref(raw_testinfo):
             testcase_dict = load_testcase_v2(loaded_testcase)
         else:
             raise exceptions.FileFormatError(
-                "Invalid format testcase: {}".format(testcase_path))
+                "Invalid format testcase: {}".format(testcase_path)
+            )
 
         tests_def_mapping["testcases"][testcase_path] = testcase_dict
     else:
@@ -99,7 +100,7 @@ def __extend_with_testcase_ref(raw_testinfo):
 
 
 def load_teststep(raw_testinfo):
-    """ load testcase step content.
+    """load testcase step content.
         teststep maybe defined directly, or reference api/testcase.
 
     Args:
@@ -151,7 +152,7 @@ def load_teststep(raw_testinfo):
 
 
 def load_testcase(raw_testcase):
-    """ load testcase with api/testcase references.
+    """load testcase with api/testcase references.
 
     Args:
         raw_testcase (list): raw testcase content loaded from JSON/YAML file:
@@ -192,17 +193,16 @@ def load_testcase(raw_testcase):
             tests.append(load_teststep(test_block))
         else:
             logger.log_warning(
-                "unexpected block key: {}. block key should only be 'config' or 'test'.".format(key)
+                "unexpected block key: {}. block key should only be 'config' or 'test'.".format(
+                    key
+                )
             )
 
-    return {
-        "config": config,
-        "teststeps": tests
-    }
+    return {"config": config, "teststeps": tests}
 
 
 def load_testcase_v2(raw_testcase):
-    """ load testcase in format version 2.
+    """load testcase in format version 2.
 
     Args:
         raw_testcase (dict): raw testcase content loaded from JSON/YAML file:
@@ -233,15 +233,12 @@ def load_testcase_v2(raw_testcase):
     """
     JsonSchemaChecker.validate_testcase_v2_format(raw_testcase)
     raw_teststeps = raw_testcase.pop("teststeps")
-    raw_testcase["teststeps"] = [
-        load_teststep(teststep)
-        for teststep in raw_teststeps
-    ]
+    raw_testcase["teststeps"] = [load_teststep(teststep) for teststep in raw_teststeps]
     return raw_testcase
 
 
 def load_testsuite(raw_testsuite):
-    """ load testsuite with testcase references.
+    """load testsuite with testcase references.
         support two different formats.
 
     Args:
@@ -315,7 +312,7 @@ def load_testsuite(raw_testsuite):
 
 
 def load_test_file(path):
-    """ load test file, file maybe testcase/testsuite/api
+    """load test file, file maybe testcase/testsuite/api
 
     Args:
         path (str): test file path
@@ -390,7 +387,7 @@ def load_test_file(path):
 
 
 def load_project_data(test_path, dot_env_path=None):
-    """ load api, testcases, .env, debugtalk.py functions.
+    """load api, testcases, .env, debugtalk.py functions.
         api/testcases folder is relative to project_working_directory
 
     Args:
@@ -402,7 +399,9 @@ def load_project_data(test_path, dot_env_path=None):
             environments and debugtalk.py functions.
 
     """
-    debugtalk_path, project_working_directory = init_project_working_directory(test_path)
+    debugtalk_path, project_working_directory = init_project_working_directory(
+        test_path
+    )
 
     project_mapping = {}
 
@@ -428,7 +427,7 @@ def load_project_data(test_path, dot_env_path=None):
 
 
 def load_cases(path, dot_env_path=None):
-    """ load testcases from file path, extend and merge with api/testcase definitions.
+    """load testcases from file path, extend and merge with api/testcase definitions.
 
     Args:
         path (str): testcase/testsuite file/foler path.
@@ -481,9 +480,7 @@ def load_cases(path, dot_env_path=None):
 
     """
 
-    tests_mapping = {
-        "project_mapping": load_project_data(path, dot_env_path)
-    }
+    tests_mapping = {"project_mapping": load_project_data(path, dot_env_path)}
 
     def __load_file_content(path):
         loaded_content = None

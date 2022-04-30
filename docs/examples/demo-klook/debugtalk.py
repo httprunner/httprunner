@@ -7,5 +7,5 @@ __all__ = [
     klook_len_eq,
     check_search_area_result,
     exists_default_group,
-    teardown_hook_set_encoding
+    teardown_hook_set_encoding,
 ]

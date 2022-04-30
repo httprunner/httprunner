@@ -17,12 +17,7 @@ def get_base_url():
 
 
 def get_default_request():
-    return {
-        "base_url": BASE_URL,
-        "headers": {
-            "content-type": "application/json"
-        }
-    }
+    return {"base_url": BASE_URL, "headers": {"content-type": "application/json"}}
 
 
 def sum_two(m, n):
@@ -30,8 +25,8 @@ def sum_two(m, n):
 
 
 def sum_status_code(status_code, expect_sum):
-    """ sum status code digits
-        e.g. 400 => 4, 201 => 3
+    """sum status code digits
+    e.g. 400 => 4, 201 => 3
     """
     sum_value = 0
     for digit in str(status_code):
@@ -48,8 +43,7 @@ os.environ["TEST_ENV"] = "PRODUCTION"
 
 
 def skip_test_in_production_env():
-    """ skip this test in production environment
-    """
+    """skip this test in production environment"""
     return os.environ["TEST_ENV"] == "PRODUCTION"
 
 
@@ -58,16 +52,13 @@ def get_user_agent():
 
 
 def gen_app_version():
-    return [
-        {"app_version": "2.8.5"},
-        {"app_version": "2.8.6"}
-    ]
+    return [{"app_version": "2.8.5"}, {"app_version": "2.8.6"}]
 
 
 def get_account():
     return [
         {"username": "user1", "password": "111111"},
-        {"username": "user2", "password": "222222"}
+        {"username": "user2", "password": "222222"},
     ]
 
 
@@ -81,7 +72,7 @@ def gen_random_string(str_len):
         random_char = random.choice(string.ascii_letters + string.digits)
         random_char_list.append(random_char)
 
-    random_string = ''.join(random_char_list)
+    random_string = "".join(random_char_list)
     return random_string
 
 
@@ -94,8 +85,7 @@ def setup_hook_remove_kwargs(request):
 
 
 def teardown_hook_sleep_N_secs(response, n_secs):
-    """ sleep n seconds after request
-    """
+    """sleep n seconds after request"""
     if response.status_code == 200:
         time.sleep(0.1)
     else:
@@ -113,9 +103,11 @@ def modify_request_json(request, os_platform):
 def setup_hook_httpntlmauth(request):
     if "httpntlmauth" in request:
         from requests_ntlm import HttpNtlmAuth
+
         auth_account = request.pop("httpntlmauth")
         request["auth"] = HttpNtlmAuth(
-            auth_account["username"], auth_account["password"])
+            auth_account["username"], auth_account["password"]
+        )
 
 
 def alter_response(response):
@@ -123,18 +115,15 @@ def alter_response(response):
     response.headers["Content-Type"] = "html/text"
     response.json["headers"]["Host"] = "127.0.0.1:8888"
     response.new_attribute = "new_attribute_value"
-    response.new_attribute_dict = {
-        "key": 123
-    }
+    response.new_attribute_dict = {"key": 123}
+
 
 def alter_response_302(response):
     response.status_code = 500
     response.headers["Content-Type"] = "html/text"
     response.text = "abcdef"
     response.new_attribute = "new_attribute_value"
-    response.new_attribute_dict = {
-        "key": 123
-    }
+    response.new_attribute_dict = {"key": 123}
 
 
 def alter_response_error(response):
@@ -143,7 +132,4 @@ def alter_response_error(response):
 
 
 def gen_variables():
-    return {
-        "var_a": 1,
-        "var_b": 2
-    }
+    return {"var_a": 1, "var_b": 2}

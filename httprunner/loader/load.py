@@ -13,15 +13,14 @@ from httprunner.loader.locate import get_project_working_directory
 try:
     # PyYAML version >= 5.1
     # ref: https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
-    yaml.warnings({'YAMLLoadWarning': False})
+    yaml.warnings({"YAMLLoadWarning": False})
 except AttributeError:
     pass
 
 
 def _load_yaml_file(yaml_file):
-    """ load yaml file and check file content format
-    """
-    with io.open(yaml_file, 'r', encoding='utf-8') as stream:
+    """load yaml file and check file content format"""
+    with io.open(yaml_file, "r", encoding="utf-8") as stream:
         try:
             yaml_content = yaml.load(stream)
         except yaml.YAMLError as ex:
@@ -32,13 +31,12 @@ def _load_yaml_file(yaml_file):
 
 
 def _load_json_file(json_file):
-    """ load json file and check file content format
-    """
-    with io.open(json_file, encoding='utf-8') as data_file:
+    """load json file and check file content format"""
+    with io.open(json_file, encoding="utf-8") as data_file:
         try:
             json_content = json.load(data_file)
         except exceptions.JSONDecodeError:
-            err_msg = u"JSONDecodeError: JSON file format error: {}".format(json_file)
+            err_msg = "JSONDecodeError: JSON file format error: {}".format(json_file)
             logger.log_error(err_msg)
             raise exceptions.FileFormatError(err_msg)
 
@@ -46,7 +44,7 @@ def _load_json_file(json_file):
 
 
 def load_csv_file(csv_file):
-    """ load csv file and check file content format
+    """load csv file and check file content format
 
     Args:
         csv_file (str): csv file path, csv file content is like below:
@@ -80,7 +78,7 @@ def load_csv_file(csv_file):
 
     csv_content_list = []
 
-    with io.open(csv_file, encoding='utf-8') as csvfile:
+    with io.open(csv_file, encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             csv_content_list.append(row)
@@ -93,21 +91,21 @@ def load_file(file_path):
         raise exceptions.FileNotFound("{} does not exist.".format(file_path))
 
     file_suffix = os.path.splitext(file_path)[1].lower()
-    if file_suffix == '.json':
+    if file_suffix == ".json":
         return _load_json_file(file_path)
-    elif file_suffix in ['.yaml', '.yml']:
+    elif file_suffix in [".yaml", ".yml"]:
         return _load_yaml_file(file_path)
     elif file_suffix == ".csv":
         return load_csv_file(file_path)
     else:
         # '' or other suffix
-        err_msg = u"Unsupported file format: {}".format(file_path)
+        err_msg = "Unsupported file format: {}".format(file_path)
         logger.log_warning(err_msg)
         return []
 
 
 def load_folder_files(folder_path, recursive=True):
-    """ load folder path, return all files endswith yml/yaml/json in list.
+    """load folder path, return all files endswith yml/yaml/json in list.
 
     Args:
         folder_path (str): specified folder path to load
@@ -132,7 +130,7 @@ def load_folder_files(folder_path, recursive=True):
         filenames_list = []
 
         for filename in filenames:
-            if not filename.endswith(('.yml', '.yaml', '.json')):
+            if not filename.endswith((".yml", ".yaml", ".json")):
                 continue
 
             filenames_list.append(filename)
@@ -148,7 +146,7 @@ def load_folder_files(folder_path, recursive=True):
 
 
 def load_dot_env_file(dot_env_path):
-    """ load .env file.
+    """load .env file.
 
     Args:
         dot_env_path (str): .env file path
@@ -172,7 +170,7 @@ def load_dot_env_file(dot_env_path):
     logger.log_info("Loading environment variables from {}".format(dot_env_path))
     env_variables_mapping = {}
 
-    with io.open(dot_env_path, 'r', encoding='utf-8') as fp:
+    with io.open(dot_env_path, "r", encoding="utf-8") as fp:
         for line in fp:
             # maxsplit=1
             if "=" in line:
@@ -189,7 +187,7 @@ def load_dot_env_file(dot_env_path):
 
 
 def load_module_functions(module):
-    """ load python module functions.
+    """load python module functions.
 
     Args:
         module: python module
@@ -213,7 +211,5 @@ def load_module_functions(module):
 
 
 def load_builtin_functions():
-    """ load builtin module functions
-    """
+    """load builtin module functions"""
     return load_module_functions(builtin)
-

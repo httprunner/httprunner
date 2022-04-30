@@ -15,7 +15,7 @@ class HookTypeEnum(Enum):
 
 
 class Runner(object):
-    """ Running testcases.
+    """Running testcases.
 
     Examples:
         >>> tests_mapping = {
@@ -52,7 +52,7 @@ class Runner(object):
     """
 
     def __init__(self, config, http_client_session=None):
-        """ run testcase or testsuite.
+        """run testcase or testsuite.
 
         Args:
             config (dict): testcase/testsuite config dict
@@ -87,15 +87,14 @@ class Runner(object):
             self.do_hook_actions(self.testcase_teardown_hooks, HookTypeEnum.TEARDOWN)
 
     def __clear_test_data(self):
-        """ clear request and response data
-        """
+        """clear request and response data"""
         if not isinstance(self.http_client_session, HttpSession):
             return
 
         self.http_client_session.init_meta_data()
 
     def _handle_skip_feature(self, test_dict):
-        """ handle skip feature for test
+        """handle skip feature for test
             - skip: skip current test unconditionally
             - skipIf: skip current test if condition is true
             - skipUnless: skip current test unless condition is true
@@ -127,7 +126,7 @@ class Runner(object):
             raise SkipTest(skip_reason)
 
     def do_hook_actions(self, actions, hook_type):
-        """ call hook actions.
+        """call hook actions.
 
         Args:
             actions (list): each action in actions list maybe in two format.
@@ -153,9 +152,7 @@ class Runner(object):
                         var_name, hook_content, hook_content_eval
                     )
                 )
-                self.session_context.update_test_variables(
-                    var_name, hook_content_eval
-                )
+                self.session_context.update_test_variables(var_name, hook_content_eval)
             else:
                 # format 2
                 logger.log_debug("call hook function: {}".format(action))
@@ -163,7 +160,7 @@ class Runner(object):
                 self.session_context.eval_content(action)
 
     def _run_test(self, test_dict):
-        """ run single teststep.
+        """run single teststep.
 
         Args:
             test_dict (dict): teststep info
@@ -209,7 +206,7 @@ class Runner(object):
         test_name = self.session_context.eval_content(test_dict.get("name", ""))
 
         # parse test request
-        raw_request = test_dict.get('request', {})
+        raw_request = test_dict.get("request", {})
         parsed_test_request = self.session_context.eval_content(raw_request)
         self.session_context.update_test_variables("request", parsed_test_request)
 
@@ -219,12 +216,12 @@ class Runner(object):
             self.do_hook_actions(setup_hooks, HookTypeEnum.SETUP)
 
         # prepend url with base_url unless it's already an absolute URL
-        url = parsed_test_request.pop('url')
+        url = parsed_test_request.pop("url")
         base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
         parsed_url = utils.build_url(base_url, url)
 
         try:
-            method = parsed_test_request.pop('method')
+            method = parsed_test_request.pop("method")
             parsed_test_request.setdefault("verify", self.verify)
             group_name = parsed_test_request.pop("group", None)
         except KeyError:
@@ -232,14 +229,12 @@ class Runner(object):
 
         logger.log_info("{method} {url}".format(method=method, url=parsed_url))
         logger.log_debug(
-            "request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
+            "request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request)
+        )
 
         # request
         resp = self.http_client_session.request(
-            method,
-            parsed_url,
-            name=(group_name or test_name),
-            **parsed_test_request
+            method, parsed_url, name=(group_name or test_name), **parsed_test_request
         )
         resp_obj = response.ResponseObject(resp)
 
@@ -284,10 +279,7 @@ class Runner(object):
         validators = test_dict.get("validate") or test_dict.get("validators") or []
         validate_script = test_dict.get("validate_script", [])
         if validate_script:
-            validators.append({
-                "type": "python_script",
-                "script": validate_script
-            })
+            validators.append({"type": "python_script", "script": validate_script})
 
         validator = Validator(self.session_context, resp_obj)
         try:
@@ -299,8 +291,7 @@ class Runner(object):
             self.validation_results = validator.validation_results
 
     def _run_testcase(self, testcase_dict):
-        """ run single testcase.
-        """
+        """run single testcase."""
         self.meta_datas = []
         config = testcase_dict.get("config", {})
 
@@ -333,7 +324,7 @@ class Runner(object):
         )
 
     def run_test(self, test_dict):
-        """ run single teststep of testcase.
+        """run single teststep of testcase.
             test_dict may be in 3 types.
 
         Args:
@@ -370,7 +361,8 @@ class Runner(object):
             # nested testcase
             test_dict.setdefault("config", {}).setdefault("variables", {})
             test_dict["config"]["variables"].update(
-                self.session_context.session_variables_mapping)
+                self.session_context.session_variables_mapping
+            )
             self._run_testcase(test_dict)
         else:
             # api
@@ -388,8 +380,7 @@ class Runner(object):
                 self.meta_datas["validators"] = self.validation_results
 
     def export_variables(self, output_variables_list):
-        """ export current testcase variables
-        """
+        """export current testcase variables"""
         variables_mapping = self.session_context.session_variables_mapping
 
         output = {}

@@ -23,7 +23,7 @@ absolute_http_url_regexp = re.compile(r"^https?://", re.I)
 def init_sentry_sdk():
     sentry_sdk.init(
         dsn="https://cc6dd86fbe9f4e7fbd95248cfcff114d@sentry.io/1862849",
-        release="httprunner@{}".format(__version__)
+        release="httprunner@{}".format(__version__),
     )
 
     with sentry_sdk.configure_scope() as scope:
@@ -32,46 +32,48 @@ def init_sentry_sdk():
 
 class GAClient(object):
 
-    version = '1'   # GA API Version
-    report_url = 'https://www.google-analytics.com/collect'
-    report_debug_url = 'https://www.google-analytics.com/debug/collect'   # used for debug
+    version = "1"  # GA API Version
+    report_url = "https://www.google-analytics.com/collect"
+    report_debug_url = (
+        "https://www.google-analytics.com/debug/collect"  # used for debug
+    )
 
     def __init__(self, tracking_id):
         self.http_client = requests.Session()
         self.label = str(__version__)
         self.common_params = {
-            'v': self.version,
-            'tid': tracking_id,    # Tracking ID / Property ID, XX-XXXXXXX-X
-            'cid': uuid.getnode(),      # Anonymous Client ID
-            'ua': 'HttpRunner/{}'.format(__version__),
+            "v": self.version,
+            "tid": tracking_id,  # Tracking ID / Property ID, XX-XXXXXXX-X
+            "cid": uuid.getnode(),  # Anonymous Client ID
+            "ua": "HttpRunner/{}".format(__version__),
         }
 
     def track_event(self, category, action, value=0):
         data = {
-            't': 'event',       # Event hit type = event
-            'ec': category,     # Required. Event Category.
-            'ea': action,       # Required. Event Action.
-            'el': self.label,   # Optional. Event label, used as version.
-            'ev': value,        # Optional. Event value, must be non-negative integer
+            "t": "event",  # Event hit type = event
+            "ec": category,  # Required. Event Category.
+            "ea": action,  # Required. Event Action.
+            "el": self.label,  # Optional. Event label, used as version.
+            "ev": value,  # Optional. Event value, must be non-negative integer
         }
         data.update(self.common_params)
         try:
             self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:   # ProxyError, SSLError, ConnectionError
+        except Exception:  # ProxyError, SSLError, ConnectionError
             pass
 
     def track_user_timing(self, category, variable, duration):
         data = {
-            't': 'timing',      # Event hit type = timing
-            'utc': category,    # Required. user timing category. e.g. jsonLoader
-            'utv': variable,    # Required. timing variable. e.g. load
-            'utt': duration,    # Required. time took duration.
-            'utl': self.label,  # Optional. user timing label, used as version.
+            "t": "timing",  # Event hit type = timing
+            "utc": category,  # Required. user timing category. e.g. jsonLoader
+            "utv": variable,  # Required. timing variable. e.g. load
+            "utt": duration,  # Required. time took duration.
+            "utl": self.label,  # Optional. user timing label, used as version.
         }
         data.update(self.common_params)
         try:
             self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:   # ProxyError, SSLError, ConnectionError
+        except Exception:  # ProxyError, SSLError, ConnectionError
             pass
 
 
@@ -79,23 +81,21 @@ ga_client = GAClient("UA-114587036-1")
 
 
 def set_os_environ(variables_mapping):
-    """ set variables mapping to os.environ
-    """
+    """set variables mapping to os.environ"""
     for variable in variables_mapping:
         os.environ[variable] = variables_mapping[variable]
         logger.log_debug("Set OS environment variable: {}".format(variable))
 
 
 def unset_os_environ(variables_mapping):
-    """ set variables mapping to os.environ
-    """
+    """set variables mapping to os.environ"""
     for variable in variables_mapping:
         os.environ.pop(variable)
         logger.log_debug("Unset OS environment variable: {}".format(variable))
 
 
 def get_os_environ(variable_name):
-    """ get value of environment variable.
+    """get value of environment variable.
 
     Args:
         variable_name(str): variable name
@@ -114,7 +114,7 @@ def get_os_environ(variable_name):
 
 
 def build_url(base_url, path):
-    """ prepend url with base_url unless it's already an absolute URL """
+    """prepend url with base_url unless it's already an absolute URL"""
     if absolute_http_url_regexp.match(path):
         return path
     elif base_url:
@@ -123,8 +123,8 @@ def build_url(base_url, path):
         raise ParamsError("base url missed!")
 
 
-def query_json(json_content, query, delimiter='.'):
-    """ Do an xpath-like query with json_content.
+def query_json(json_content, query, delimiter="."):
+    """Do an xpath-like query with json_content.
 
     Args:
         json_content (dict/list/string): content to be queried.
@@ -158,7 +158,7 @@ def query_json(json_content, query, delimiter='.'):
 
     """
     raise_flag = False
-    response_body = u"response body: {}\n".format(json_content)
+    response_body = "response body: {}\n".format(json_content)
     try:
         for key in query.split(delimiter):
             if isinstance(json_content, (list, basestring)):
@@ -167,13 +167,16 @@ def query_json(json_content, query, delimiter='.'):
                 json_content = json_content[key]
             else:
                 logger.log_error(
-                    "invalid type value: {}({})".format(json_content, type(json_content)))
+                    "invalid type value: {}({})".format(
+                        json_content, type(json_content)
+                    )
+                )
                 raise_flag = True
     except (KeyError, ValueError, IndexError):
         raise_flag = True
 
     if raise_flag:
-        err_msg = u"Failed to extract! => {}\n".format(query)
+        err_msg = "Failed to extract! => {}\n".format(query)
         err_msg += response_body
         logger.log_error(err_msg)
         raise exceptions.ExtractFailure(err_msg)
@@ -182,7 +185,7 @@ def query_json(json_content, query, delimiter='.'):
 
 
 def lower_dict_keys(origin_dict):
-    """ convert keys in dict to lower case
+    """convert keys in dict to lower case
 
     Args:
         origin_dict (dict): mapping data structure
@@ -213,16 +216,13 @@ def lower_dict_keys(origin_dict):
     if not origin_dict or not isinstance(origin_dict, dict):
         return origin_dict
 
-    return {
-        key.lower(): value
-        for key, value in origin_dict.items()
-    }
+    return {key.lower(): value for key, value in origin_dict.items()}
 
 
 def lower_test_dict_keys(test_dict):
-    """ convert keys in test_dict to lower case, convertion will occur in two places:
-        1, all keys in test_dict;
-        2, all keys in test_dict["request"]
+    """convert keys in test_dict to lower case, convertion will occur in two places:
+    1, all keys in test_dict;
+    2, all keys in test_dict["request"]
     """
     # convert keys in test_dict
     test_dict = lower_dict_keys(test_dict)
@@ -235,7 +235,7 @@ def lower_test_dict_keys(test_dict):
 
 
 def deepcopy_dict(data):
-    """ deepcopy dict data, ignore file object (_io.BufferedReader)
+    """deepcopy dict data, ignore file object (_io.BufferedReader)
 
     Args:
         data (dict): dict data structure
@@ -271,7 +271,7 @@ def deepcopy_dict(data):
 
 
 def ensure_mapping_format(variables):
-    """ ensure variables are in mapping format.
+    """ensure variables are in mapping format.
 
     Args:
         variables (list/dict): original variables
@@ -306,7 +306,7 @@ def ensure_mapping_format(variables):
 
 
 def extend_variables(raw_variables, override_variables):
-    """ extend raw_variables with override_variables.
+    """extend raw_variables with override_variables.
         override_variables will merge and override raw_variables.
 
     Args:
@@ -343,7 +343,7 @@ def extend_variables(raw_variables, override_variables):
 
 
 def get_testcase_io(testcase):
-    """ get and print testcase input(variables) and output(export).
+    """get and print testcase input(variables) and output(export).
 
     Args:
         testcase (unittest.suite.TestSuite): corresponding to one YAML/JSON file, it has been set two attributes:
@@ -355,18 +355,14 @@ def get_testcase_io(testcase):
     """
     test_runner = testcase.runner
     variables = testcase.config.get("variables", {})
-    output_list = testcase.config.get("export") \
-        or testcase.config.get("output", [])
+    output_list = testcase.config.get("export") or testcase.config.get("output", [])
     export_mapping = test_runner.export_variables(output_list)
 
-    return {
-        "in": variables,
-        "out": export_mapping
-    }
+    return {"in": variables, "out": export_mapping}
 
 
 def print_info(info_mapping):
-    """ print info in mapping.
+    """print info in mapping.
 
     Args:
         info_mapping (dict): input(variables) or output mapping.
@@ -417,10 +413,11 @@ def print_info(info_mapping):
 
 
 def create_scaffold(project_name):
-    """ create scaffold with specified project name.
-    """
+    """create scaffold with specified project name."""
     if os.path.isdir(project_name):
-        logger.log_warning(u"Folder {} exists, please specify a new folder name.".format(project_name))
+        logger.log_warning(
+            "Folder {} exists, please specify a new folder name.".format(project_name)
+        )
         return
 
     ga_client.track_event("Scaffold", "startproject")
@@ -433,7 +430,7 @@ def create_scaffold(project_name):
         logger.color_print(msg, "BLUE")
 
     def create_file(path, file_content=""):
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(file_content)
         msg = "created file: {}".format(path)
         logger.color_print(msg, "BLUE")
@@ -498,24 +495,16 @@ testcases:
     variables:
         device_sn: $device_sn
 """
-    ignore_content = "\n".join([
-        ".env",
-        "reports/*",
-        "__pycache__/*",
-        "*.pyc",
-        ".python-version",
-        "logs/*"
-    ])
+    ignore_content = "\n".join(
+        [".env", "reports/*", "__pycache__/*", "*.pyc", ".python-version", "logs/*"]
+    )
     demo_debugtalk_content = """
 import time
 
 def sleep(n_secs):
     time.sleep(n_secs)
 """
-    demo_env_content = "\n".join([
-        "USERNAME=leolee",
-        "PASSWORD=123456"
-    ])
+    demo_env_content = "\n".join(["USERNAME=leolee", "PASSWORD=123456"])
 
     create_folder(project_name)
     create_folder(os.path.join(project_name, "api"))
@@ -523,15 +512,21 @@ def sleep(n_secs):
     create_folder(os.path.join(project_name, "testsuites"))
     create_folder(os.path.join(project_name, "reports"))
     create_file(os.path.join(project_name, "api", "demo_api.yml"), demo_api_content)
-    create_file(os.path.join(project_name, "testcases", "demo_testcase.yml"), demo_testcase_content)
-    create_file(os.path.join(project_name, "testsuites", "demo_testsuite.yml"), demo_testsuite_content)
+    create_file(
+        os.path.join(project_name, "testcases", "demo_testcase.yml"),
+        demo_testcase_content,
+    )
+    create_file(
+        os.path.join(project_name, "testsuites", "demo_testsuite.yml"),
+        demo_testsuite_content,
+    )
     create_file(os.path.join(project_name, "debugtalk.py"), demo_debugtalk_content)
     create_file(os.path.join(project_name, ".env"), demo_env_content)
     create_file(os.path.join(project_name, ".gitignore"), ignore_content)
 
 
 def gen_cartesian_product(*args):
-    """ generate cartesian product for lists
+    """generate cartesian product for lists
 
     Args:
         args (list of list): lists to be generated with cartesian product
@@ -572,11 +567,12 @@ def gen_cartesian_product(*args):
 
 
 def prettify_json_file(file_list):
-    """ prettify JSON testcase format
-    """
+    """prettify JSON testcase format"""
     for json_file in set(file_list):
         if not json_file.endswith(".json"):
-            logger.log_warning("Only JSON file format can be prettified, skip: {}".format(json_file))
+            logger.log_warning(
+                "Only JSON file format can be prettified, skip: {}".format(json_file)
+            )
             continue
 
         logger.color_print("Start to prettify JSON file: {}".format(json_file), "GREEN")
@@ -585,22 +581,21 @@ def prettify_json_file(file_list):
         file_name, file_suffix = os.path.splitext(os.path.basename(json_file))
         outfile = os.path.join(dir_path, "{}.pretty.json".format(file_name))
 
-        with io.open(json_file, 'r', encoding='utf-8') as stream:
+        with io.open(json_file, "r", encoding="utf-8") as stream:
             try:
                 obj = json.load(stream)
             except ValueError as e:
                 raise SystemExit(e)
 
-        with io.open(outfile, 'w', encoding='utf-8') as out:
-            json.dump(obj, out, indent=4, separators=(',', ': '))
-            out.write('\n')
+        with io.open(outfile, "w", encoding="utf-8") as out:
+            json.dump(obj, out, indent=4, separators=(",", ": "))
+            out.write("\n")
 
         print("success: {}".format(outfile))
 
 
 def omit_long_data(body, omit_len=512):
-    """ omit too long str/bytes
-    """
+    """omit too long str/bytes"""
     if not isinstance(body, basestring):
         return body
 
@@ -618,8 +613,8 @@ def omit_long_data(body, omit_len=512):
 
 
 def dump_json_file(json_data, json_file_abs_path):
-    """ dump json data to file
-    """
+    """dump json data to file"""
+
     class PythonObjectEncoder(json.JSONEncoder):
         def default(self, obj):
             try:
@@ -632,26 +627,28 @@ def dump_json_file(json_data, json_file_abs_path):
         os.makedirs(file_foder_path)
 
     try:
-        with io.open(json_file_abs_path, 'w', encoding='utf-8') as outfile:
+        with io.open(json_file_abs_path, "w", encoding="utf-8") as outfile:
             if is_py2:
                 outfile.write(
-                    unicode(json.dumps(
-                        json_data,
-                        indent=4,
-                        separators=(',', ':'),
-                        encoding="utf8",
-                        ensure_ascii=False,
-                        cls=PythonObjectEncoder
-                    ))
+                    unicode(
+                        json.dumps(
+                            json_data,
+                            indent=4,
+                            separators=(",", ":"),
+                            encoding="utf8",
+                            ensure_ascii=False,
+                            cls=PythonObjectEncoder,
+                        )
+                    )
                 )
             else:
                 json.dump(
                     json_data,
                     outfile,
                     indent=4,
-                    separators=(',', ':'),
+                    separators=(",", ":"),
                     ensure_ascii=False,
-                    cls=PythonObjectEncoder
+                    cls=PythonObjectEncoder,
                 )
 
         msg = "dump file: {}".format(json_file_abs_path)
@@ -663,8 +660,7 @@ def dump_json_file(json_data, json_file_abs_path):
 
 
 def prepare_dump_json_file_abs_path(project_mapping, tag_name):
-    """ prepare dump json file absolute path.
-    """
+    """prepare dump json file absolute path."""
     pwd_dir_path = project_mapping.get("PWD") or os.getcwd()
     test_path = project_mapping.get("test_path")
 
@@ -676,7 +672,7 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
 
     # both test_path and pwd_dir_path are absolute path
     logs_dir_path = os.path.join(pwd_dir_path, "logs")
-    test_path_relative_path = test_path[len(pwd_dir_path)+1:]
+    test_path_relative_path = test_path[len(pwd_dir_path) + 1 :]
 
     if os.path.isdir(test_path):
         file_foder_path = os.path.join(logs_dir_path, test_path_relative_path)
@@ -692,7 +688,7 @@ def prepare_dump_json_file_abs_path(project_mapping, tag_name):
 
 
 def dump_logs(json_data, project_mapping, tag_name):
-    """ dump tests data to json file.
+    """dump tests data to json file.
         the dumped file is located in PWD/logs folder.
 
     Args:
@@ -711,7 +707,11 @@ def get_python2_retire_msg():
     left_days = (retire_day - today).days
 
     if left_days > 0:
-        retire_msg = "Python 2 will retire in {} days, why not move to Python 3?".format(left_days)
+        retire_msg = (
+            "Python 2 will retire in {} days, why not move to Python 3?".format(
+                left_days
+            )
+        )
     else:
         retire_msg = "Python 2 has been retired, you should move to Python 3."
 

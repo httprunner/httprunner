@@ -5,8 +5,12 @@ import time
 import requests
 import urllib3
 from requests import Request, Response
-from requests.exceptions import (InvalidSchema, InvalidURL, MissingSchema,
-                                 RequestException)
+from requests.exceptions import (
+    InvalidSchema,
+    InvalidURL,
+    MissingSchema,
+    RequestException,
+)
 
 from httprunner import logger, response
 from httprunner.utils import lower_dict_keys, omit_long_data
@@ -15,18 +19,15 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_req_resp_record(resp_obj):
-    """ get request and response info from Response() object.
-    """
+    """get request and response info from Response() object."""
+
     def log_print(req_resp_dict, r_type):
         msg = "\n================== {} details ==================\n".format(r_type)
         for key, value in req_resp_dict[r_type].items():
             msg += "{:<16} : {}\n".format(key, repr(value))
         logger.log_debug(msg)
 
-    req_resp_dict = {
-        "request": {},
-        "response": {}
-    }
+    req_resp_dict = {"request": {}, "response": {}}
 
     # record actual request info
     req_resp_dict["request"]["url"] = resp_obj.request.url
@@ -35,9 +36,9 @@ def get_req_resp_record(resp_obj):
 
     request_body = resp_obj.request.body
     if request_body:
-        request_content_type = lower_dict_keys(
-            req_resp_dict["request"]["headers"]
-        ).get("content-type")
+        request_content_type = lower_dict_keys(req_resp_dict["request"]["headers"]).get(
+            "content-type"
+        )
         if request_content_type and "multipart/form-data" in request_content_type:
             # upload file type
             req_resp_dict["request"]["body"] = "upload file stream (OMITTED)"
@@ -83,9 +84,8 @@ def get_req_resp_record(resp_obj):
 
 
 class ApiResponse(Response):
-
     def raise_for_status(self):
-        if hasattr(self, 'error') and self.error:
+        if hasattr(self, "error") and self.error:
             raise self.error
         Response.raise_for_status(self)
 
@@ -99,35 +99,31 @@ class HttpSession(requests.Session):
     This is a slightly extended version of `python-request <http://python-requests.org>`_'s
     :py:class:`requests.Session` class and mostly this class works exactly the same.
     """
+
     def __init__(self):
         super(HttpSession, self).__init__()
         self.init_meta_data()
 
     def init_meta_data(self):
-        """ initialize meta_data, it will store detail data of request and response
-        """
+        """initialize meta_data, it will store detail data of request and response"""
         self.meta_data = {
             "name": "",
             "data": [
                 {
-                    "request": {
-                        "url": "N/A",
-                        "method": "N/A",
-                        "headers": {}
-                    },
+                    "request": {"url": "N/A", "method": "N/A", "headers": {}},
                     "response": {
                         "status_code": "N/A",
                         "headers": {},
                         "encoding": None,
-                        "content_type": ""
-                    }
+                        "content_type": "",
+                    },
                 }
             ],
             "stat": {
                 "content_size": "N/A",
                 "response_time_ms": "N/A",
                 "elapsed_ms": "N/A",
-            }
+            },
         }
 
     def update_last_req_resp_record(self, resp_obj):
@@ -202,26 +198,23 @@ class HttpSession(requests.Session):
         self.meta_data["stat"] = {
             "response_time_ms": response_time_ms,
             "elapsed_ms": response.elapsed.microseconds / 1000.0,
-            "content_size": content_size
+            "content_size": content_size,
         }
 
         # record request and response histories, include 30X redirection
         response_list = response.history + [response]
         self.meta_data["data"] = [
-            get_req_resp_record(resp_obj)
-            for resp_obj in response_list
+            get_req_resp_record(resp_obj) for resp_obj in response_list
         ]
 
         try:
             response.raise_for_status()
         except RequestException as e:
-            logger.log_error(u"{exception}".format(exception=str(e)))
+            logger.log_error("{exception}".format(exception=str(e)))
         else:
             logger.log_info(
                 """status_code: {}, response_time(ms): {} ms, response_length: {} bytes\n""".format(
-                    response.status_code,
-                    response_time_ms,
-                    content_size
+                    response.status_code, response_time_ms, content_size
                 )
             )
 

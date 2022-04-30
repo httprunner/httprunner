@@ -11,64 +11,69 @@ from tests.base import ApiServerUnittest
 
 
 class TestHttpRunner(ApiServerUnittest):
-
     def setUp(self):
         self.testcase_cli_path = "tests/data/demo_testcase_cli.yml"
         self.testcase_file_path_list = [
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.yml'),
-            os.path.join(
-                os.getcwd(), 'tests/data/demo_testcase_hardcode.json')
+            os.path.join(os.getcwd(), "tests/data/demo_testcase_hardcode.yml"),
+            os.path.join(os.getcwd(), "tests/data/demo_testcase_hardcode.json"),
         ]
-        testcases = [{
-            'config': {
-                'name': 'testcase description',
-                'request': {
-                    'base_url': '',
-                    'headers': {'User-Agent': 'python-requests/2.18.4'}
-                },
-                'variables': []
-            },
-            "teststeps": [
-                {
-                    'name': '/api/get-token',
-                    'request': {
-                        'url': 'http://127.0.0.1:5000/api/get-token',
-                        'method': 'POST',
-                        'headers': {'Content-Type': 'application/json', 'app_version': '2.8.6',
-                                    'device_sn': 'FwgRiO7CNA50DSU', 'os_platform': 'ios', 'user_agent': 'iOS/10.3'},
-                        'json': {'sign': '9c0c7e51c91ae963c833a4ccbab8d683c4a90c98'}
+        testcases = [
+            {
+                "config": {
+                    "name": "testcase description",
+                    "request": {
+                        "base_url": "",
+                        "headers": {"User-Agent": "python-requests/2.18.4"},
                     },
-                    'extract': [
-                        {'token': 'content.token'}
-                    ],
-                    'validate': [
-                        {'eq': ['status_code', 200]},
-                        {'eq': ['headers.Content-Type', 'application/json']},
-                        {'eq': ['content.success', True]}
-                    ]
+                    "variables": [],
                 },
-                {
-                    'name': '/api/users/1000',
-                    'request': {
-                        'url': 'http://127.0.0.1:5000/api/users/1000',
-                        'method': 'POST',
-                        'headers': {'Content-Type': 'application/json',
-                                    'device_sn': 'FwgRiO7CNA50DSU','token': '$token'},
-                        'json': {'name': 'user1', 'password': '123456'}
+                "teststeps": [
+                    {
+                        "name": "/api/get-token",
+                        "request": {
+                            "url": "http://127.0.0.1:5000/api/get-token",
+                            "method": "POST",
+                            "headers": {
+                                "Content-Type": "application/json",
+                                "app_version": "2.8.6",
+                                "device_sn": "FwgRiO7CNA50DSU",
+                                "os_platform": "ios",
+                                "user_agent": "iOS/10.3",
+                            },
+                            "json": {
+                                "sign": "9c0c7e51c91ae963c833a4ccbab8d683c4a90c98"
+                            },
+                        },
+                        "extract": [{"token": "content.token"}],
+                        "validate": [
+                            {"eq": ["status_code", 200]},
+                            {"eq": ["headers.Content-Type", "application/json"]},
+                            {"eq": ["content.success", True]},
+                        ],
                     },
-                    'validate': [
-                        {'eq': ['status_code', 201]},
-                        {'eq': ['headers.Content-Type', 'application/json']},
-                        {'eq': ['content.success', True]},
-                        {'eq': ['content.msg', 'user created successfully.']}
-                    ]
-                }
-            ]
-        }]
-        self.tests_mapping = {
-            "testcases": testcases
-        }
+                    {
+                        "name": "/api/users/1000",
+                        "request": {
+                            "url": "http://127.0.0.1:5000/api/users/1000",
+                            "method": "POST",
+                            "headers": {
+                                "Content-Type": "application/json",
+                                "device_sn": "FwgRiO7CNA50DSU",
+                                "token": "$token",
+                            },
+                            "json": {"name": "user1", "password": "123456"},
+                        },
+                        "validate": [
+                            {"eq": ["status_code", 201]},
+                            {"eq": ["headers.Content-Type", "application/json"]},
+                            {"eq": ["content.success", True]},
+                            {"eq": ["content.msg", "user created successfully."]},
+                        ],
+                    },
+                ],
+            }
+        ]
+        self.tests_mapping = {"testcases": testcases}
         self.runner = HttpRunner(failfast=True)
         self.reset_all()
 
@@ -85,10 +90,7 @@ class TestHttpRunner(ApiServerUnittest):
     def test_text_run_times_invalid(self):
         testcases = [
             {
-                "config": {
-                    'name': "post data",
-                    'variables': []
-                },
+                "config": {"name": "post data", "variables": []},
                 "teststeps": [
                     {
                         "name": "post data",
@@ -98,20 +100,16 @@ class TestHttpRunner(ApiServerUnittest):
                             "method": "POST",
                             "headers": {
                                 "User-Agent": "python-requests/2.18.4",
-                                "Content-Type": "application/json"
+                                "Content-Type": "application/json",
                             },
-                            "data": "abc"
+                            "data": "abc",
                         },
-                        "validate": [
-                            {"eq": ["status_code", 200]}
-                        ]
+                        "validate": [{"eq": ["status_code", 200]}],
                     }
-                ]
+                ],
             }
         ]
-        tests_mapping = {
-            "testcases": testcases
-        }
+        tests_mapping = {"testcases": testcases}
         with self.assertRaises(exceptions.ParamsError):
             self.runner.run_tests(tests_mapping)
 
@@ -123,12 +121,9 @@ class TestHttpRunner(ApiServerUnittest):
         testcases = [
             {
                 "config": {
-                    'name': "post data",
-                    'variables': {
-                        "var1": "abc",
-                        "var2": "def"
-                    },
-                    "export": ["status_code", "req_data"]
+                    "name": "post data",
+                    "variables": {"var1": "abc", "var2": "def"},
+                    "export": ["status_code", "req_data"],
                 },
                 "teststeps": [
                     {
@@ -138,24 +133,20 @@ class TestHttpRunner(ApiServerUnittest):
                             "method": "POST",
                             "headers": {
                                 "User-Agent": "python-requests/2.18.4",
-                                "Content-Type": "application/json"
+                                "Content-Type": "application/json",
                             },
-                            "data": "$var1"
+                            "data": "$var1",
                         },
                         "extract": {
                             "status_code": "status_code",
-                            "req_data": "content.data"
+                            "req_data": "content.data",
                         },
-                        "validate": [
-                            {"eq": ["status_code", 200]}
-                        ]
+                        "validate": [{"eq": ["status_code", 200]}],
                     }
-                ]
+                ],
             }
         ]
-        tests_mapping = {
-            "testcases": testcases
-        }
+        tests_mapping = {"testcases": testcases}
         self.runner.run_tests(tests_mapping)
         vars_out = self.runner.get_vars_out()
         self.assertIsInstance(vars_out, list)
@@ -166,7 +157,8 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_save_variables_output_with_parameters(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/testsuites/create_users_with_parameters.yml')
+            os.getcwd(), "tests/testsuites/create_users_with_parameters.yml"
+        )
         self.runner.run(testcase_file_path)
         vars_out = self.runner.get_vars_out()
         self.assertIsInstance(vars_out, list)
@@ -188,7 +180,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["teststeps"]["total"], 10)
         self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
 
-        report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
+        report_save_dir = os.path.join(os.getcwd(), "reports", "demo")
         report.gen_html_report(summary, report_dir=report_save_dir)
         self.assertGreater(len(os.listdir(report_save_dir)), 0)
         shutil.rmtree(report_save_dir)
@@ -200,7 +192,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["teststeps"]["total"], 10)
         self.assertEqual(summary["stat"]["teststeps"]["skipped"], 4)
 
-        report_file = os.path.join(os.getcwd(), 'reports', "demo", "test.html")
+        report_file = os.path.join(os.getcwd(), "reports", "demo", "test.html")
         report.gen_html_report(summary, report_file=report_file)
         report_save_dir = os.path.dirname(report_file)
         self.assertEqual(len(os.listdir(report_save_dir)), 1)
@@ -208,7 +200,7 @@ class TestHttpRunner(ApiServerUnittest):
         shutil.rmtree(report_save_dir)
 
     def test_log_file(self):
-        log_file_path = os.path.join(os.getcwd(), 'reports', "test_log_file.log")
+        log_file_path = os.path.join(os.getcwd(), "reports", "test_log_file.log")
         runner = HttpRunner(failfast=True, log_file=log_file_path)
         runner.run(self.testcase_cli_path)
         self.assertTrue(os.path.isfile(log_file_path))
@@ -223,10 +215,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertIn("records", summary["details"][0])
 
     def test_run_yaml_upload(self):
-        upload_cases_list = [
-            "tests/httpbin/upload.yml",
-            "tests/httpbin/upload.v2.yml"
-        ]
+        upload_cases_list = ["tests/httpbin/upload.yml", "tests/httpbin/upload.v2.yml"]
         for upload_case in upload_cases_list:
             summary = self.runner.run(upload_case)
             self.assertTrue(summary["success"])
@@ -238,10 +227,7 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_post_data(self):
         testcases = [
             {
-                "config": {
-                    'name': "post data",
-                    'variables': []
-                },
+                "config": {"name": "post data", "variables": []},
                 "teststeps": [
                     {
                         "name": "post data",
@@ -250,35 +236,32 @@ class TestHttpRunner(ApiServerUnittest):
                             "method": "POST",
                             "headers": {
                                 "User-Agent": "python-requests/2.18.4",
-                                "Content-Type": "application/json"
+                                "Content-Type": "application/json",
                             },
-                            "data": "abc"
+                            "data": "abc",
                         },
-                        "validate": [
-                            {"eq": ["status_code", 200]}
-                        ]
+                        "validate": [{"eq": ["status_code", 200]}],
                     }
-                ]
+                ],
             }
         ]
-        tests_mapping = {
-            "testcases": testcases
-        }
+        tests_mapping = {"testcases": testcases}
         summary = self.runner.run_tests(tests_mapping)
         self.assertTrue(summary["success"])
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 1)
-        resp_json = json.loads(summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"]["body"])
-        self.assertEqual(
-            resp_json["data"],
-            "abc"
+        resp_json = json.loads(
+            summary["details"][0]["records"][0]["meta_datas"]["data"][0]["response"][
+                "body"
+            ]
         )
+        self.assertEqual(resp_json["data"], "abc")
 
     def test_html_report_repsonse_image(self):
         runner = HttpRunner(failfast=True)
         summary = runner.run("tests/httpbin/load_image.yml")
 
-        report_save_dir = os.path.join(os.getcwd(), 'reports', "demo")
+        report_save_dir = os.path.join(os.getcwd(), "reports", "demo")
         report_path = report.gen_html_report(summary, report_dir=report_save_dir)
         self.assertTrue(os.path.isfile(report_path))
         shutil.rmtree(report_save_dir)
@@ -286,7 +269,9 @@ class TestHttpRunner(ApiServerUnittest):
     def test_testcase_layer_with_api(self):
         summary = self.runner.run("tests/testcases/setup.yml")
         self.assertTrue(summary["success"])
-        self.assertEqual(summary["details"][0]["records"][0]["name"], "get token (setup)")
+        self.assertEqual(
+            summary["details"][0]["records"][0]["name"], "get token (setup)"
+        )
         self.assertEqual(summary["stat"]["testcases"]["total"], 1)
         self.assertEqual(summary["stat"]["teststeps"]["total"], 2)
 
@@ -301,8 +286,7 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertFalse(summary["success"])
 
     def test_run_httprunner_with_hooks(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/httpbin/hooks.yml')
+        testcase_file_path = os.path.join(os.getcwd(), "tests/httpbin/hooks.yml")
         start_time = time.time()
         summary = self.runner.run(testcase_file_path)
         end_time = time.time()
@@ -319,11 +303,9 @@ class TestHttpRunner(ApiServerUnittest):
                         "request": {
                             "url": "{}/headers".format(HTTPBIN_SERVER),
                             "method": "GET",
-                            "data": "abc"
+                            "data": "abc",
                         },
-                        "teardown_hooks": [
-                            "${alter_response($response)}"
-                        ],
+                        "teardown_hooks": ["${alter_response($response)}"],
                         "validate": [
                             {"eq": ["status_code", 500]},
                             {"eq": ["headers.content-type", "html/text"]},
@@ -332,16 +314,16 @@ class TestHttpRunner(ApiServerUnittest):
                             {"eq": ["text.headers.Host", "127.0.0.1:8888"]},
                             {"eq": ["new_attribute", "new_attribute_value"]},
                             {"eq": ["new_attribute_dict", {"key": 123}]},
-                            {"eq": ["new_attribute_dict.key", 123]}
-                        ]
+                            {"eq": ["new_attribute_dict.key", 123]},
+                        ],
                     }
-                ]
+                ],
             }
         ]
 
         tests_mapping = {
             "project_mapping": loader.load_project_data("tests"),
-            "testcases": testcases
+            "testcases": testcases,
         }
         summary = self.runner.run_tests(tests_mapping)
         self.assertTrue(summary["success"])
@@ -349,30 +331,24 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_httprunner_with_teardown_hooks_not_exist_attribute(self):
         testcases = [
             {
-                "config": {
-                    "name": "test teardown hooks"
-                },
+                "config": {"name": "test teardown hooks"},
                 "teststeps": [
                     {
                         "name": "test teardown hooks",
                         "request": {
                             "url": "{}/headers".format(HTTPBIN_SERVER),
                             "method": "GET",
-                            "data": "abc"
+                            "data": "abc",
                         },
-                        "teardown_hooks": [
-                            "${alter_response($response)}"
-                        ],
-                        "validate": [
-                            {"eq": ["attribute_not_exist", "new_attribute"]}
-                        ]
+                        "teardown_hooks": ["${alter_response($response)}"],
+                        "validate": [{"eq": ["attribute_not_exist", "new_attribute"]}],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
             "project_mapping": loader.load_project_data("tests"),
-            "testcases": testcases
+            "testcases": testcases,
         }
         summary = self.runner.run_tests(tests_mapping)
         self.assertFalse(summary["success"])
@@ -381,27 +357,23 @@ class TestHttpRunner(ApiServerUnittest):
     def test_run_httprunner_with_teardown_hooks_error(self):
         testcases = [
             {
-                "config": {
-                    "name": "test teardown hooks"
-                },
+                "config": {"name": "test teardown hooks"},
                 "teststeps": [
                     {
                         "name": "test teardown hooks",
                         "request": {
                             "url": "{}/headers".format(HTTPBIN_SERVER),
                             "method": "GET",
-                            "data": "abc"
+                            "data": "abc",
                         },
-                        "teardown_hooks": [
-                            "${alter_response_error($response)}"
-                        ]
+                        "teardown_hooks": ["${alter_response_error($response)}"],
                     }
-                ]
+                ],
             }
         ]
         tests_mapping = {
             "project_mapping": loader.load_project_data("tests"),
-            "testcases": testcases
+            "testcases": testcases,
         }
         summary = self.runner.run_tests(tests_mapping)
         self.assertFalse(summary["success"])
@@ -478,29 +450,32 @@ class TestHttpRunner(ApiServerUnittest):
             self.assertEqual(summary["stat"]["teststeps"]["total"], 3)
             self.assertEqual(summary["stat"]["teststeps"]["successes"], 3)
 
-
     def test_run_testcase_template_variables(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_variables.yml')
+            os.getcwd(), "tests/data/demo_testcase_variables.yml"
+        )
         summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
 
     def test_run_testcase_template_import_functions(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_functions.yml')
+            os.getcwd(), "tests/data/demo_testcase_functions.yml"
+        )
         summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
 
     def test_run_testcase_layered(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
+            os.getcwd(), "tests/data/demo_testcase_layer.yml"
+        )
         summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 1)
 
     def test_run_testcase_output(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
+            os.getcwd(), "tests/data/demo_testcase_layer.yml"
+        )
         summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
@@ -509,10 +484,9 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_with_variables_mapping(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/data/demo_testcase_layer.yml')
-        variables_mapping = {
-            "app_version": '2.9.7'
-        }
+            os.getcwd(), "tests/data/demo_testcase_layer.yml"
+        )
+        variables_mapping = {"app_version": "2.9.7"}
         summary = self.runner.run(testcase_file_path, mapping=variables_mapping)
         self.assertTrue(summary["success"])
         self.assertIn("token", summary["details"][0]["in_out"]["out"])
@@ -521,7 +495,8 @@ class TestHttpRunner(ApiServerUnittest):
 
     def test_run_testcase_with_parameters(self):
         testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/testsuites/create_users_with_parameters.yml')
+            os.getcwd(), "tests/testsuites/create_users_with_parameters.yml"
+        )
         summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
         self.assertEqual(len(summary["details"]), 3 * 2)
@@ -530,16 +505,13 @@ class TestHttpRunner(ApiServerUnittest):
         self.assertEqual(summary["stat"]["teststeps"]["total"], 3 * 2 * 2)
         self.assertEqual(
             summary["details"][0]["name"],
-            "create user 101 and check result for TESTSUITE_X1."
+            "create user 101 and check result for TESTSUITE_X1.",
         )
         self.assertEqual(
             summary["details"][5]["name"],
-            "create user 103 and check result for TESTSUITE_X2."
+            "create user 103 and check result for TESTSUITE_X2.",
         )
-        self.assertEqual(
-            summary["details"][0]["stat"]["total"],
-            2
-        )
+        self.assertEqual(summary["details"][0]["stat"]["total"], 2)
         records_name_list = [
             summary["details"][i]["records"][1]["meta_datas"][1]["name"]
             for i in range(6)
@@ -552,59 +524,51 @@ class TestHttpRunner(ApiServerUnittest):
                 "create user 102 for TESTSUITE_X1",
                 "create user 102 for TESTSUITE_X2",
                 "create user 103 for TESTSUITE_X1",
-                "create user 103 for TESTSUITE_X2"
-            }
+                "create user 103 for TESTSUITE_X2",
+            },
         )
 
     def test_validate_response_content(self):
-        testcase_file_path = os.path.join(
-            os.getcwd(), 'tests/httpbin/basic.yml')
+        testcase_file_path = os.path.join(os.getcwd(), "tests/httpbin/basic.yml")
         summary = self.runner.run(testcase_file_path)
         self.assertTrue(summary["success"])
 
     def test_html_report_xss(self):
         testcases = [
             {
-                "config": {
-                    'name': "post data"
-                },
+                "config": {"name": "post data"},
                 "teststeps": [
                     {
                         "name": "post data",
                         "request": {
                             "url": "{}/anything".format(HTTPBIN_SERVER),
                             "method": "POST",
-                            "headers": {
-                                "Content-Type": "application/json"
-                            },
+                            "headers": {"Content-Type": "application/json"},
                             "json": {
-                                'success': False,
-                                "person": "<img src=x onerror=alert(1)>"
-                            }
+                                "success": False,
+                                "person": "<img src=x onerror=alert(1)>",
+                            },
                         },
-                        "validate": [
-                            {"eq": ["status_code", 200]}
-                        ]
+                        "validate": [{"eq": ["status_code", 200]}],
                     }
-                ]
+                ],
             }
         ]
-        tests_mapping = {
-            "testcases": testcases
-        }
+        tests_mapping = {"testcases": testcases}
         summary = self.runner.run(tests_mapping)
         report_path = report.gen_html_report(summary)
         with open(report_path) as f:
             content = f.read()
             m = re.findall(
-                re.escape("&#34;person&#34;: &#34;&lt;img src=x onerror=alert(1)&gt;&#34;"),
-                content
+                re.escape(
+                    "&#34;person&#34;: &#34;&lt;img src=x onerror=alert(1)&gt;&#34;"
+                ),
+                content,
             )
             self.assertEqual(len(m), 2)
 
 
 class TestApi(ApiServerUnittest):
-
     def test_testcase_loader(self):
         testcase_path = "tests/testcases/setup.yml"
         tests_mapping = loader.load_cases(testcase_path)
@@ -628,7 +592,9 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(testcase_tests[0]["name"], "get token (setup)")
         self.assertIsInstance(testcase_tests[0]["variables"], dict)
         self.assertIn("api_def", testcase_tests[0])
-        self.assertEqual(testcase_tests[0]["api_def"]["request"]["url"], "/api/get-token")
+        self.assertEqual(
+            testcase_tests[0]["api_def"]["request"]["url"], "/api/get-token"
+        )
 
     def test_testcase_parser(self):
         testcase_path = "tests/testcases/setup.yml"
@@ -696,7 +662,7 @@ class TestApi(ApiServerUnittest):
             "tests/testcases/create_user.yml",
             "tests/testcases/create_user.v2.yml",
             "tests/testcases/create_user.json",
-            "tests/testcases/create_user.v2.json"
+            "tests/testcases/create_user.v2.json",
         ]:
             tests_mapping = loader.load_cases(testcase_path)
             testcases = parser.parse_tests(tests_mapping)
@@ -708,11 +674,10 @@ class TestApi(ApiServerUnittest):
             results = tests_results[0][1]
             self.assertEqual(
                 results.records[0]["name"],
-                "setup and reset all (override) for TESTCASE_CREATE_XXX."
+                "setup and reset all (override) for TESTCASE_CREATE_XXX.",
             )
             self.assertEqual(
-                results.records[1]["name"],
-                "create user and check result."
+                results.records[1]["name"], "create user and check result."
             )
 
     def test_testsuite_loader(self):
@@ -740,11 +705,14 @@ class TestApi(ApiServerUnittest):
         self.assertIn("testcase_def", testcase_tests)
         self.assertEqual(testcase_tests["name"], "create user 1000 and check result.")
         self.assertIsInstance(testcase_tests["testcase_def"], dict)
-        self.assertEqual(testcase_tests["testcase_def"]["config"]["name"], "create user and check result.")
+        self.assertEqual(
+            testcase_tests["testcase_def"]["config"]["name"],
+            "create user and check result.",
+        )
         self.assertEqual(len(testcase_tests["testcase_def"]["teststeps"]), 2)
         self.assertEqual(
             testcase_tests["testcase_def"]["teststeps"][0]["name"],
-            "setup and reset all (override) for $device_sn."
+            "setup and reset all (override) for $device_sn.",
         )
 
     def test_testsuite_parser(self):
@@ -756,14 +724,13 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(parsed_testcases[0]["teststeps"]), 2)
 
         testcase1 = parsed_testcases[0]["teststeps"][0]
-        self.assertIn("setup and reset all (override)", testcase1["config"]["name"].raw_string)
+        self.assertIn(
+            "setup and reset all (override)", testcase1["config"]["name"].raw_string
+        )
         teststeps = testcase1["teststeps"]
         self.assertNotIn("testcase_def", testcase1)
         self.assertEqual(len(teststeps), 2)
-        self.assertEqual(
-            teststeps[0]["request"]["url"],
-            "/api/get-token"
-        )
+        self.assertEqual(teststeps[0]["request"]["url"], "/api/get-token")
 
     def test_testsuite_add_tests(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -775,7 +742,9 @@ class TestApi(ApiServerUnittest):
 
         self.assertEqual(len(test_suite._tests), 2)
         tests = test_suite._tests[0].teststeps
-        self.assertIn("setup and reset all (override)", tests[0]["config"]["name"].raw_string)
+        self.assertIn(
+            "setup and reset all (override)", tests[0]["config"]["name"].raw_string
+        )
 
     def test_testsuite_run_suite(self):
         testcase_path = "tests/testsuites/create_users.yml"
@@ -790,11 +759,5 @@ class TestApi(ApiServerUnittest):
         self.assertEqual(len(tests_results[0][1].records), 2)
 
         results = tests_results[0][1]
-        self.assertIn(
-            "setup and reset all (override)",
-            results.records[0]["name"]
-        )
-        self.assertEqual(
-            results.records[1]["name"],
-            "create user and check result."
-        )
+        self.assertIn("setup and reset all (override)", results.records[0]["name"])
+        self.assertEqual(results.records[1]["name"], "create user and check result.")

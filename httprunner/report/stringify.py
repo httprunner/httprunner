@@ -8,7 +8,7 @@ from httprunner.compat import basestring, bytes, json, numeric_types, JSONDecode
 
 
 def dumps_json(value):
-    """ dumps json value to indented string
+    """dumps json value to indented string
 
     Args:
         value (dict): raw json data
@@ -28,7 +28,7 @@ def detect_encoding(value):
 
 
 def __stringify_request(request_data):
-    """ stringfy HTTP request data
+    """stringfy HTTP request data
 
     Args:
         request_data (dict): HTTP request data in dict.
@@ -84,7 +84,7 @@ def __stringify_request(request_data):
 
 
 def __stringify_response(response_data):
-    """ stringfy HTTP response data
+    """stringfy HTTP response data
 
     Args:
         response_data (dict):
@@ -124,8 +124,7 @@ def __stringify_response(response_data):
                 if key == "body" and "image" in response_data["content_type"]:
                     # display image
                     value = "data:{};base64,{}".format(
-                        response_data["content_type"],
-                        b64encode(value).decode(encoding)
+                        response_data["content_type"], b64encode(value).decode(encoding)
                     )
                 else:
                     value = escape(value.decode(encoding))
@@ -143,7 +142,7 @@ def __stringify_response(response_data):
 
 
 def __expand_meta_datas(meta_datas, meta_datas_expanded):
-    """ expand meta_datas to one level
+    """expand meta_datas to one level
 
     Args:
         meta_datas (dict/list): maybe in nested format
@@ -173,8 +172,7 @@ def __expand_meta_datas(meta_datas, meta_datas_expanded):
 
 
 def __get_total_response_time(meta_datas_expanded):
-    """ caculate total response time of all meta_datas
-    """
+    """caculate total response time of all meta_datas"""
     try:
         response_time = 0
         for meta_data in meta_datas_expanded:
@@ -200,15 +198,14 @@ def __stringify_meta_datas(meta_datas):
 
 
 def stringify_summary(summary):
-    """ stringify summary, in order to dump json file and generate html report.
-    """
+    """stringify summary, in order to dump json file and generate html report."""
     for index, suite_summary in enumerate(summary["details"]):
 
         if not suite_summary.get("name"):
             suite_summary["name"] = "testcase {}".format(index)
 
         for record in suite_summary.get("records"):
-            meta_datas = record['meta_datas']
+            meta_datas = record["meta_datas"]
             __stringify_meta_datas(meta_datas)
             meta_datas_expanded = []
             __expand_meta_datas(meta_datas, meta_datas_expanded)
