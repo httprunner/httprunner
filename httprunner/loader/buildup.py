@@ -3,16 +3,17 @@ import os
 import sys
 
 from httprunner import exceptions, logger, utils
+from httprunner.compat import is_py3
 from httprunner.loader.check import JsonSchemaChecker
 from httprunner.loader.load import (
-    load_module_functions,
-    load_file,
     load_dot_env_file,
+    load_file,
     load_folder_files,
+    load_module_functions,
 )
 from httprunner.loader.locate import (
-    init_project_working_directory,
     get_project_working_directory,
+    init_project_working_directory,
 )
 
 tests_def_mapping = {"api": {}, "testcases": {}}
@@ -31,7 +32,8 @@ def load_debugtalk_functions():
 
     """
     # load debugtalk.py module
-    if sys.modules.get("debugtalk"):
+    if is_py3 and sys.modules.get("debugtalk"):
+        # importlib.reload only works in python 3
         imported_module = importlib.reload(sys.modules["debugtalk"])
     else:
         imported_module = importlib.import_module("debugtalk")
