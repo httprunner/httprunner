@@ -55,7 +55,10 @@ class GAClient(object):
             'ev': value,        # Optional. Event value, must be non-negative integer
         }
         data.update(self.common_params)
-        self.http_client.post(self.report_url, data=data)
+        try:
+            self.http_client.post(self.report_url, data=data, timeout=5)
+        except Exception:   # ProxyError, SSLError, ConnectionError
+            pass
 
     def track_user_timing(self, category, variable, duration):
         data = {
@@ -66,7 +69,10 @@ class GAClient(object):
             'utl': self.label,  # Optional. user timing label, used as version.
         }
         data.update(self.common_params)
-        self.http_client.post(self.report_url, data=data)
+        try:
+            self.http_client.post(self.report_url, data=data, timeout=5)
+        except Exception:   # ProxyError, SSLError, ConnectionError
+            pass
 
 
 ga_client = GAClient("UA-114587036-1")

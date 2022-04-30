@@ -3,6 +3,7 @@
 ## 2.5.9 (2022-04-30)
 
 - fix #1217: reload debugtalk.py if loaded
+- fix #1246: catch exceptions caused by GA report failure
 
 ## 2.5.8 (2022-03-23)
 
