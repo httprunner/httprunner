@@ -142,6 +142,23 @@ func TestGetFilenameWithoutExtension(t *testing.T) {
 	}
 }
 
+func TestMakeRequestURL(t *testing.T) {
+	har := NewHAR("")
+	entry := &Entry{
+		Request: Request{
+			URL: "http://127.0.0.1:8080/api/login",
+		},
+	}
+	step, err := har.prepareTestStep(entry)
+	if !assert.NoError(t, err) {
+		t.Fatal()
+	}
+
+	if !assert.Equal(t, "http://127.0.0.1:8080/api/login", step.Request.URL) {
+		t.Fatal()
+	}
+}
+
 func TestMakeRequestHeaders(t *testing.T) {
 	har := NewHAR("")
 	entry := &Entry{

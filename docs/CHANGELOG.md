@@ -6,6 +6,7 @@
 
 - feat: add builtin function `environ`/`ENV`
 - fix: demo function compatibility
+- fix #1240: losing host port in har2case
 - change: get hrp version from aliyun OSS file when installing
 
 ## v4.0.0-beta (2022-04-24)

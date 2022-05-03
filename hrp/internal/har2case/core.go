@@ -187,7 +187,7 @@ func (s *tStep) makeRequestURL(entry *Entry) error {
 		log.Error().Err(err).Msg("make request url failed")
 		return err
 	}
-	s.Request.URL = fmt.Sprintf("%s://%s", u.Scheme, u.Hostname()+u.Path)
+	s.Request.URL = fmt.Sprintf("%s://%s", u.Scheme, u.Host+u.Path)
 	return nil
 }
 
