@@ -42,11 +42,11 @@ func TeardownHookExample(args string) string {
 }
 
 func GetVersion() string {
-	return "v4.0.0-beta"
+	return fungo.Version
 }
 
 func main() {
-	fungo.Register("get_httprunner_version", GetVersion)
+	fungo.Register("get_version", GetVersion)
 	fungo.Register("sum_ints", SumInts)
 	fungo.Register("sum_two_int", SumTwoInt)
 	fungo.Register("sum_two", SumTwoInt)

@@ -5,8 +5,8 @@ from typing import List
 import funppy
 
 
-def get_httprunner_version():
-    return "v4.0.0-beta"
+def get_version():
+    return funppy.__version__
 
 
 def sleep(n_secs):
@@ -60,7 +60,7 @@ def teardown_hook_example(name):
 
 
 if __name__ == "__main__":
-    funppy.register("get_httprunner_version", get_httprunner_version)
+    funppy.register("get_version", get_version)
     funppy.register("sum", sum)
     funppy.register("sum_ints", sum_ints)
     funppy.register("concatenate", concatenate)

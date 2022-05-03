@@ -24,7 +24,7 @@ teststeps:
             foo2: $foo2
             sum_v: $sum_v
         headers:
-            User-Agent: HttpRunner/${get_httprunner_version()}
+            User-Agent: funplugin/${get_version()}
     extract:
         foo3: "body.args.foo2"
     validate:
@@ -41,7 +41,7 @@ teststeps:
         method: POST
         url: /post
         headers:
-            User-Agent: HttpRunner/${get_httprunner_version()}
+            User-Agent: funplugin/${get_version()}
             Content-Type: "text/plain"
         data: "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
     validate:
@@ -55,7 +55,7 @@ teststeps:
         method: POST
         url: /post
         headers:
-            User-Agent: HttpRunner/${get_httprunner_version()}
+            User-Agent: funplugin/${get_version()}
             Content-Type: "application/x-www-form-urlencoded"
         data: "foo1=$foo1&foo2=$foo2&foo3=$foo3"
     validate:

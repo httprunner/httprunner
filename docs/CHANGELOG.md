@@ -1,13 +1,15 @@
 # Release History
 
-## v4.0.0-beta2 (2022-04-25)
+## v4.0.0 (2022-05-03)
 
 **go version**
 
 - feat: add builtin function `environ`/`ENV`
 - fix: demo function compatibility
 - fix #1240: losing host port in har2case
+- fix: concurrent map write in parameterize
 - change: get hrp version from aliyun OSS file when installing
+- change: report more load testing metrics to prometheus
 
 ## v4.0.0-beta (2022-04-24)
 
