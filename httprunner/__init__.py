@@ -1,4 +1,4 @@
-__version__ = "v4.0.0-beta"
+__version__ = "v4.0.0"
 __description__ = "One-stop solution for HTTP(S) testing."
 
 from httprunner.config import Config
