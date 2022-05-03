@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/hrp/internal/httpstat"
 	"github.com/httprunner/httprunner/hrp/internal/json"
 )
 
@@ -311,6 +312,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}
 
+	// stat HTTP request
+	var httpStat httpstat.Stat
+	if r.HTTPStatOn() {
+		ctx := httpstat.WithHTTPStat(rb.req.Context(), &httpStat)
+		rb.req = rb.req.WithContext(ctx)
+	}
+
 	// do request action
 	start := time.Now()
 	var resp *http.Response
@@ -337,6 +345,14 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		if err := printResponse(resp); err != nil {
 			return stepResult, err
 		}
+	}
+
+	if r.HTTPStatOn() {
+		httpStat.Finish()
+		stepResult.HttpStat = httpStat.Durations()
+		log.Info().
+			Interface("httpstat(ms)", httpStat.Durations()).
+			Msg("HTTP latency statistics")
 	}
 
 	// new response object

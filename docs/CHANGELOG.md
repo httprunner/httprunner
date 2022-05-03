@@ -1,9 +1,10 @@
 # Release History
 
-## v4.0.0 (2022-05-03)
+## v4.0.0 (2022-05-04)
 
 **go version**
 
+- feat: stat HTTP request latencies (DNSLookup, TCP Connection and so on)
 - feat: add builtin function `environ`/`ENV`
 - fix: demo function compatibility
 - fix #1240: losing host port in har2case
