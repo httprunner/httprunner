@@ -54,6 +54,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 type HRPRunner struct {
 	t             *testing.T
 	failfast      bool
+	httpStatOn    bool
 	requestsLogOn bool
 	pluginLogOn   bool
 	saveTests     bool
@@ -97,6 +98,13 @@ func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 func (r *HRPRunner) SetRequestsLogOn() *HRPRunner {
 	log.Info().Msg("[init] SetRequestsLogOn")
 	r.requestsLogOn = true
+	return r
+}
+
+// SetHTTPStatOn turns on HTTP latency stat.
+func (r *HRPRunner) SetHTTPStatOn() *HRPRunner {
+	log.Info().Msg("[init] SetHTTPStatOn")
+	r.httpStatOn = true
 	return r
 }
 
