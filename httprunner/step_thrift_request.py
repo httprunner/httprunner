@@ -189,7 +189,9 @@ class RunThriftRequest(IStep):
 
         return self
 
-    def setup_hook(self, hook: Text, assign_var_name: Text = None) -> "RunThriftRequest":
+    def setup_hook(
+        self, hook: Text, assign_var_name: Text = None
+    ) -> "RunThriftRequest":
         if assign_var_name:
             self.__step.setup_hooks.append({assign_var_name: hook})
         else:
