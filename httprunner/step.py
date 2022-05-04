@@ -8,6 +8,13 @@ from httprunner.step_request import (
     StepRequestValidation,
 )
 from httprunner.step_testcase import StepRefCase
+from httprunner.step_sql_request import (
+    RunSqlRequest,
+    StepSqlRequestValidation,
+    StepSqlRequestExtraction,
+)
+
+from httprunner.step_thrift_request import RunThriftRequest,StepThriftRequestValidation,StepThriftRequestExtraction
 
 
 class Step(object):
@@ -18,6 +25,12 @@ class Step(object):
             StepRequestExtraction,
             RequestWithOptionalArgs,
             StepRefCase,
+            RunSqlRequest,
+            StepSqlRequestValidation,
+            StepSqlRequestExtraction,
+            RunThriftRequest,
+            StepThriftRequestValidation,
+            StepThriftRequestExtraction
         ],
     ):
         self.__step = step
