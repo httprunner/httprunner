@@ -2,6 +2,8 @@ package hrp
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -87,5 +89,89 @@ func TestRunRequestRun(t *testing.T) {
 	}
 	if _, err := stepPOSTData.Run(sessionRunner); err != nil {
 		t.Fatalf("stepPOSTData.Run() error: %v", err)
+	}
+}
+
+func TestRunRequestStatOn(t *testing.T) {
+	testcase := &TestCase{
+		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
+		TestSteps: []IStep{stepGET, stepPOSTData},
+	}
+	runner := NewRunner(t).SetHTTPStatOn()
+	sessionRunner, _ := runner.NewSessionRunner(testcase)
+	if err := sessionRunner.Start(nil); err != nil {
+		t.Fatal()
+	}
+	summary := sessionRunner.GetSummary()
+
+	stat := summary.Records[0].HttpStat
+	if !assert.Greater(t, stat["DNSLookup"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["TCPConnection"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["TLSHandshake"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["NameLookup"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Connect"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Pretransfer"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["StartTransfer"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Total"], int64(10)) {
+		t.Fatal()
+	}
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(2)) {
+		t.Fatal()
+	}
+
+	// reuse connection
+	stat = summary.Records[1].HttpStat
+	if !assert.Equal(t, stat["DNSLookup"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, stat["TCPConnection"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, stat["TLSHandshake"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, stat["ContentTransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, stat["NameLookup"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, stat["Connect"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, stat["Pretransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["StartTransfer"], int64(10)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Total"], int64(10)) {
+		t.Fatal()
+	}
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(2)) {
+		t.Fatal()
 	}
 }
