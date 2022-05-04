@@ -45,6 +45,8 @@ filetype = {version = "^1.0.7", optional = true}
 Brotli = "^1.0.9"
 jinja2 = "^3.0.3"
 toml = "^0.10.2"
+sqlalchemy = "^1.4.36"
+cython = "^0.29.28"
 thriftpy2 = "^0.4.14"
 
 [tool.poetry.extras]
