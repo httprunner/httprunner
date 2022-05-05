@@ -1,14 +1,63 @@
 // Package httpstat traces HTTP latency infomation (DNSLookup, TCP Connection and so on) on any golang HTTP request.
 // It uses `httptrace` package.
-// Forked from https://github.com/tcnksm/go-httpstat
+// Inspired by https://github.com/tcnksm/go-httpstat and https://github.com/davecheney/httpstat
 package httpstat
 
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/http/httptrace"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/rs/zerolog/log"
 )
+
+const (
+	httpsTemplate = "\n" +
+		`  DNS Lookup   TCP Connection   TLS Handshake   Server Processing   Content Transfer` + "\n" +
+		`[%s  |     %s  |    %s  |        %s  |       %s  ]` + "\n" +
+		`            |                |               |                   |                  |` + "\n" +
+		`   namelookup:%s      |               |                   |                  |` + "\n" +
+		`                       connect:%s     |                   |                  |` + "\n" +
+		`                                   pretransfer:%s         |                  |` + "\n" +
+		`                                                     starttransfer:%s        |` + "\n" +
+		`                                                                                total:%s` + "\n\n"
+
+	httpTemplate = "\n" +
+		`   DNS Lookup   TCP Connection   Server Processing   Content Transfer` + "\n" +
+		`[ %s  |     %s  |        %s  |       %s  ]` + "\n" +
+		`             |                |                   |                  |` + "\n" +
+		`    namelookup:%s      |                   |                  |` + "\n" +
+		`                        connect:%s         |                  |` + "\n" +
+		`                                      starttransfer:%s        |` + "\n" +
+		`                                                                 total:%s` + "\n\n"
+)
+
+func fmta(d time.Duration) string {
+	return color.BlueString("%7dms", int(d.Milliseconds()))
+}
+
+func fmtb(d time.Duration) string {
+	return color.MagentaString("%-9s", strconv.Itoa(int(d.Milliseconds()))+"ms")
+}
+
+func grayscale(code color.Attribute) func(string, ...interface{}) string {
+	return color.New(code + 232).SprintfFunc()
+}
+
+func colorize(s string) string {
+	v := strings.Split(s, "\n")
+	v[0] = grayscale(16)(v[0])
+	return strings.Join(v, "\n")
+}
+
+func printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(color.Output, format, a...)
+}
 
 // Stat stores httpstat info.
 type Stat struct {
@@ -61,6 +110,11 @@ func (s *Stat) Finish() {
 	s.Total = s.transferDone.Sub(s.dnsStart)
 }
 
+func (s *Stat) assertSchemaHTTP() bool {
+	// HTTP other than HTTPS
+	return s.dnsStart.IsZero() && s.tcpStart.IsZero()
+}
+
 // Durations returns all durations and timelines of request latencies
 func (s *Stat) Durations() map[string]int64 {
 	return map[string]int64{
@@ -71,10 +125,43 @@ func (s *Stat) Durations() map[string]int64 {
 		"ContentTransfer":  s.ContentTransfer.Milliseconds(),
 		"NameLookup":       s.NameLookup.Milliseconds(),
 		"Connect":          s.Connect.Milliseconds(),
-		"Pretransfer":      s.Connect.Milliseconds(),
+		"Pretransfer":      s.Pretransfer.Milliseconds(),
 		"StartTransfer":    s.StartTransfer.Milliseconds(),
 		"Total":            s.Total.Milliseconds(),
 	}
+}
+
+func (s *Stat) Print() {
+	if s.assertSchemaHTTP() {
+		// http
+		printf(colorize(httpTemplate),
+			fmta(s.DNSLookup),        // dns lookup
+			fmta(s.TCPConnection),    // tcp connection
+			fmta(s.ServerProcessing), // server processing
+			fmta(s.ContentTransfer),  // content transfer
+			fmtb(s.NameLookup),       // namelookup
+			fmtb(s.Connect),          // connect
+			fmtb(s.StartTransfer),    // starttransfer
+			fmtb(s.Total),            // total
+		)
+	} else {
+		// https
+		printf(colorize(httpsTemplate),
+			fmta(s.DNSLookup),        // dns lookup
+			fmta(s.TCPConnection),    // tcp connection
+			fmta(s.TLSHandshake),     // tls handshake
+			fmta(s.ServerProcessing), // server processing
+			fmta(s.ContentTransfer),  // content transfer
+			fmtb(s.NameLookup),       // namelookup
+			fmtb(s.Connect),          // connect
+			fmtb(s.Pretransfer),      // pretransfer
+			fmtb(s.StartTransfer),    // starttransfer
+			fmtb(s.Total),            // total
+		)
+	}
+	log.Info().
+		Interface("httpstat(ms)", s.Durations()).
+		Msg("HTTP latency statistics")
 }
 
 // WithHTTPStat is a wrapper of httptrace.WithClientTrace.
@@ -132,7 +219,7 @@ func WithHTTPStat(ctx context.Context, s *Stat) context.Context {
 
 			// When client doesn't use DialContext or using old (before go1.7) `net`
 			// package, DNS/TCP/TLS hook is not called.
-			if s.dnsStart.IsZero() && s.tcpStart.IsZero() {
+			if s.assertSchemaHTTP() {
 				now := s.serverStart
 				s.dnsStart = now
 				s.dnsDone = now
