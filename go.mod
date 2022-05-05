@@ -5,10 +5,11 @@ go 1.16
 require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.1
-	github.com/httprunner/funplugin v0.4.4
+	github.com/httprunner/funplugin v0.4.5
 	github.com/jinzhu/copier v0.3.2
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12

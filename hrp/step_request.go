@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,10 +16,12 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/hrp/internal/httpstat"
 	"github.com/httprunner/httprunner/hrp/internal/json"
 )
 
@@ -311,6 +314,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}
 
+	// stat HTTP request
+	var httpStat httpstat.Stat
+	if r.HTTPStatOn() {
+		ctx := httpstat.WithHTTPStat(rb.req, &httpStat)
+		rb.req = rb.req.WithContext(ctx)
+	}
+
 	// do request action
 	start := time.Now()
 	var resp *http.Response
@@ -344,6 +354,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
+	}
+
+	if r.HTTPStatOn() {
+		// resp.Body has been ReadAll
+		httpStat.Finish()
+		stepResult.HttpStat = httpStat.Durations()
+		httpStat.Print()
 	}
 
 	// add response object to step variables, could be used in teardown hooks
@@ -408,8 +425,22 @@ func printRequest(req *http.Request) error {
 	return nil
 }
 
+func printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(color.Output, format, a...)
+}
+
 func printResponse(resp *http.Response) error {
 	fmt.Println("==================== response ====================")
+	connectedVia := "plaintext"
+	if resp.TLS != nil {
+		switch resp.TLS.Version {
+		case tls.VersionTLS12:
+			connectedVia = "TLSv1.2"
+		case tls.VersionTLS13:
+			connectedVia = "TLSv1.3"
+		}
+	}
+	printf("%s %s\n", color.CyanString("Connected via"), color.BlueString("%s", connectedVia))
 	respContentType := resp.Header.Get("Content-Type")
 	printBody := shouldPrintBody(respContentType)
 	respDump, err := httputil.DumpResponse(resp, printBody)

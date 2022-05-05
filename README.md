@@ -27,7 +27,7 @@
 
 ## 核心特性
 
-- 网络协议：完整支持 HTTP(S)/1.1 和 HTTP/2，可扩展支持 WebSocket/TCP/RPC 等更多协议
+- 网络协议：完整支持 HTTP(S)/HTTP2/WebSocket，可扩展支持 TCP/UDP/RPC 等更多协议
 - 多格式可选：测试用例支持 YAML/JSON/go test/pytest 格式，并且支持格式互相转换
 - 双执行引擎：同时支持 golang/python 两个执行引擎，兼具 go 的高性能和 [pytest] 的丰富生态
 - 录制 & 生成：可使用 [HAR]/Postman/Swagger/curl 等生成测试用例；基于链式调用的方法提示也可快速编写测试用例
