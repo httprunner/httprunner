@@ -315,7 +315,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	// stat HTTP request
 	var httpStat httpstat.Stat
 	if r.HTTPStatOn() {
-		ctx := httpstat.WithHTTPStat(rb.req.Context(), &httpStat)
+		ctx := httpstat.WithHTTPStat(rb.req, &httpStat)
 		rb.req = rb.req.WithContext(ctx)
 	}
 
@@ -347,17 +347,18 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}
 
-	if r.HTTPStatOn() {
-		httpStat.Finish()
-		stepResult.HttpStat = httpStat.Durations()
-		httpStat.Print()
-	}
-
 	// new response object
 	respObj, err := newHttpResponseObject(r.hrpRunner.t, parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
+	}
+
+	if r.HTTPStatOn() {
+		// resp.Body has been ReadAll
+		httpStat.Finish()
+		stepResult.HttpStat = httpStat.Durations()
+		httpStat.Print()
 	}
 
 	// add response object to step variables, could be used in teardown hooks
