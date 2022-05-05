@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -423,8 +425,22 @@ func printRequest(req *http.Request) error {
 	return nil
 }
 
+func printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(color.Output, format, a...)
+}
+
 func printResponse(resp *http.Response) error {
 	fmt.Println("==================== response ====================")
+	connectedVia := "plaintext"
+	if resp.TLS != nil {
+		switch resp.TLS.Version {
+		case tls.VersionTLS12:
+			connectedVia = "TLSv1.2"
+		case tls.VersionTLS13:
+			connectedVia = "TLSv1.3"
+		}
+	}
+	printf("%s %s\n", color.CyanString("Connected via"), color.BlueString("%s", connectedVia))
 	respContentType := resp.Header.Get("Content-Type")
 	printBody := shouldPrintBody(respContentType)
 	respDump, err := httputil.DumpResponse(resp, printBody)

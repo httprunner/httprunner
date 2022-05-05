@@ -97,6 +97,9 @@ type Stat struct {
 
 	// https or http
 	schema string
+
+	// connected network info
+	network, addr string
 }
 
 // Finish sets the time when reading response is done.
@@ -131,6 +134,14 @@ func (s *Stat) Durations() map[string]int64 {
 }
 
 func (s *Stat) Print() {
+	if s.network != "" && s.addr != "" {
+		printf("\n%s %s: %s\n",
+			color.CyanString("Connected to"),
+			color.YellowString(s.network),
+			color.BlueString(s.addr),
+		)
+	}
+
 	switch s.schema {
 	case "https":
 		printf(colorize(httpsTemplate),
@@ -178,7 +189,10 @@ func WithHTTPStat(req *http.Request, s *Stat) context.Context {
 			s.NameLookup = s.DNSLookup
 		},
 
-		ConnectStart: func(_, _ string) {
+		ConnectStart: func(network, addr string) {
+			s.network = network
+			s.addr = addr
+
 			s.tcpStart = time.Now()
 
 			// When connecting to IP (When no DNS lookup)
