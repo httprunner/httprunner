@@ -105,7 +105,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	summary := sessionRunner.GetSummary()
 
 	stat := summary.Records[0].HttpStat
-	if !assert.Greater(t, stat["DNSLookup"], int64(0)) {
+	if !assert.GreaterOrEqual(t, stat["DNSLookup"], int64(0)) {
 		t.Fatal()
 	}
 	if !assert.Greater(t, stat["TCPConnection"], int64(0)) {
@@ -114,7 +114,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["TLSHandshake"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["ServerProcessing"], int64(10)) {
+	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
 		t.Fatal()
 	}
 	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
@@ -150,7 +150,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Equal(t, stat["TLSHandshake"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["ServerProcessing"], int64(10)) {
+	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, stat["ContentTransfer"], int64(0)) {
