@@ -135,34 +135,31 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["Total"], int64(5)) {
 		t.Fatal()
 	}
-	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(2)) {
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3)) {
 		t.Fatal()
 	}
 
 	// reuse connection
 	stat = summary.Records[1].HttpStat
-	if !assert.Equal(t, stat["DNSLookup"], int64(0)) {
+	if !assert.Equal(t, int64(0), stat["DNSLookup"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, stat["TCPConnection"], int64(0)) {
+	if !assert.Equal(t, int64(0), stat["TCPConnection"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, stat["TLSHandshake"], int64(0)) {
+	if !assert.Equal(t, int64(0), stat["TLSHandshake"]) {
 		t.Fatal()
 	}
 	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, stat["ContentTransfer"], int64(0)) {
+	if !assert.Equal(t, int64(0), stat["NameLookup"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, stat["NameLookup"], int64(0)) {
+	if !assert.Equal(t, int64(0), stat["Connect"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, stat["Connect"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, stat["Pretransfer"], int64(0)) {
+	if !assert.Equal(t, int64(0), stat["Pretransfer"]) {
 		t.Fatal()
 	}
 	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
@@ -171,7 +168,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["Total"], int64(1)) {
 		t.Fatal()
 	}
-	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(2)) {
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3)) {
 		t.Fatal()
 	}
 }
