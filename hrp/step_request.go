@@ -350,9 +350,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	if r.HTTPStatOn() {
 		httpStat.Finish()
 		stepResult.HttpStat = httpStat.Durations()
-		log.Info().
-			Interface("httpstat(ms)", httpStat.Durations()).
-			Msg("HTTP latency statistics")
+		httpStat.Print()
 	}
 
 	// new response object
