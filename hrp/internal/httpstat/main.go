@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"net/http/httptrace"
 	"strconv"
 	"strings"
@@ -93,6 +94,9 @@ type Stat struct {
 
 	// isReused is true when connection is reused (keep-alive)
 	isReused bool
+
+	// https or http
+	schema string
 }
 
 // Finish sets the time when reading response is done.
@@ -108,11 +112,6 @@ func (s *Stat) Finish() {
 
 	s.ContentTransfer = s.transferDone.Sub(s.transferStart)
 	s.Total = s.transferDone.Sub(s.dnsStart)
-}
-
-func (s *Stat) assertSchemaHTTP() bool {
-	// HTTP other than HTTPS
-	return s.dnsStart.IsZero() && s.tcpStart.IsZero()
 }
 
 // Durations returns all durations and timelines of request latencies
@@ -132,20 +131,8 @@ func (s *Stat) Durations() map[string]int64 {
 }
 
 func (s *Stat) Print() {
-	if s.assertSchemaHTTP() {
-		// http
-		printf(colorize(httpTemplate),
-			fmta(s.DNSLookup),        // dns lookup
-			fmta(s.TCPConnection),    // tcp connection
-			fmta(s.ServerProcessing), // server processing
-			fmta(s.ContentTransfer),  // content transfer
-			fmtb(s.NameLookup),       // namelookup
-			fmtb(s.Connect),          // connect
-			fmtb(s.StartTransfer),    // starttransfer
-			fmtb(s.Total),            // total
-		)
-	} else {
-		// https
+	switch s.schema {
+	case "https":
 		printf(colorize(httpsTemplate),
 			fmta(s.DNSLookup),        // dns lookup
 			fmta(s.TCPConnection),    // tcp connection
@@ -158,6 +145,17 @@ func (s *Stat) Print() {
 			fmtb(s.StartTransfer),    // starttransfer
 			fmtb(s.Total),            // total
 		)
+	case "http":
+		printf(colorize(httpTemplate),
+			fmta(s.DNSLookup),        // dns lookup
+			fmta(s.TCPConnection),    // tcp connection
+			fmta(s.ServerProcessing), // server processing
+			fmta(s.ContentTransfer),  // content transfer
+			fmtb(s.NameLookup),       // namelookup
+			fmtb(s.Connect),          // connect
+			fmtb(s.StartTransfer),    // starttransfer
+			fmtb(s.Total),            // total
+		)
 	}
 	log.Info().
 		Interface("httpstat(ms)", s.Durations()).
@@ -166,8 +164,9 @@ func (s *Stat) Print() {
 
 // WithHTTPStat is a wrapper of httptrace.WithClientTrace.
 // It records the time of each httptrace hooks.
-func WithHTTPStat(ctx context.Context, s *Stat) context.Context {
-	return httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
+func WithHTTPStat(req *http.Request, s *Stat) context.Context {
+	s.schema = req.URL.Scheme
+	return httptrace.WithClientTrace(req.Context(), &httptrace.ClientTrace{
 		DNSStart: func(i httptrace.DNSStartInfo) {
 			s.dnsStart = time.Now()
 		},
@@ -176,7 +175,7 @@ func WithHTTPStat(ctx context.Context, s *Stat) context.Context {
 			s.dnsDone = time.Now()
 
 			s.DNSLookup = s.dnsDone.Sub(s.dnsStart)
-			s.NameLookup = s.dnsDone.Sub(s.dnsStart)
+			s.NameLookup = s.DNSLookup
 		},
 
 		ConnectStart: func(_, _ string) {
@@ -215,12 +214,11 @@ func WithHTTPStat(ctx context.Context, s *Stat) context.Context {
 		},
 
 		WroteRequest: func(info httptrace.WroteRequestInfo) {
-			s.serverStart = time.Now()
+			now := time.Now()
+			s.serverStart = now
 
-			// When client doesn't use DialContext or using old (before go1.7) `net`
-			// package, DNS/TCP/TLS hook is not called.
-			if s.assertSchemaHTTP() {
-				now := s.serverStart
+			// When client doesn't use DialContext, DNS/TCP/TLS hook is not called.
+			if s.dnsStart.IsZero() && s.tcpStart.IsZero() {
 				s.dnsStart = now
 				s.dnsDone = now
 				s.tcpStart = now
@@ -229,7 +227,6 @@ func WithHTTPStat(ctx context.Context, s *Stat) context.Context {
 
 			// When connection is re-used, DNS/TCP/TLS hook is not called.
 			if s.isReused {
-				now := s.serverStart
 				s.dnsStart = now
 				s.dnsDone = now
 				s.tcpStart = now
@@ -238,11 +235,12 @@ func WithHTTPStat(ctx context.Context, s *Stat) context.Context {
 				s.tlsDone = now
 			}
 
-			if s.isTLS {
+			if s.isTLS { // https
 				return
 			}
 
-			s.TLSHandshake = s.tcpDone.Sub(s.tcpDone)
+			// http
+			s.TLSHandshake = 0
 			s.Pretransfer = s.Connect
 		},
 

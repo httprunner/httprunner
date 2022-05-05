@@ -120,7 +120,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["NameLookup"], int64(0)) {
+	if !assert.GreaterOrEqual(t, stat["NameLookup"], int64(0)) {
 		t.Fatal()
 	}
 	if !assert.Greater(t, stat["Connect"], int64(0)) {
@@ -132,7 +132,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["Total"], int64(10)) {
+	if !assert.Greater(t, stat["Total"], int64(5)) {
 		t.Fatal()
 	}
 	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(2)) {
@@ -168,7 +168,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["Total"], int64(10)) {
+	if !assert.Greater(t, stat["Total"], int64(1)) {
 		t.Fatal()
 	}
 	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(2)) {
