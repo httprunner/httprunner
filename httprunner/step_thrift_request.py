@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
 import time
 from typing import Text, Union
+
 from loguru import logger
 
 from httprunner import utils
 from httprunner.exceptions import ValidationFailure
-from httprunner.models import IStep, StepResult, TStep, ProtoType, TransType
+from httprunner.models import (
+    IStep,
+    ProtoType,
+    StepResult,
+    TStep,
+    TThriftRequest,
+    TransType,
+)
+from httprunner.response import ThriftResponseObject
 from httprunner.runner import HttpRunner
 from httprunner.step_request import (
-    call_hooks,
     StepRequestExtraction,
     StepRequestValidation,
+    call_hooks,
 )
-from httprunner.models import TThriftRequest
-from httprunner.response import ThriftResponseObject
-
-from httprunner.thrift.thrift_client import ThriftClient
 
 
 def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
@@ -71,6 +76,8 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     if not runner.thrift_client:
         runner.thrift_client = parsed_request_dict["thrift_client"]
     if not runner.thrift_client:
+        from httprunner.thrift.thrift_client import ThriftClient
+
         runner.thrift_client = ThriftClient(
             thrift_file=parsed_request_dict["idl_path"],
             service_name=parsed_request_dict["service_name"],

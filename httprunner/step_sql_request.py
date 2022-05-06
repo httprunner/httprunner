@@ -15,7 +15,6 @@ from httprunner.step_request import (
     StepRequestExtraction,
     StepRequestValidation,
 )
-from httprunner.database.engine import DBEngine
 from httprunner.exceptions import SqlMethodNotSupport
 
 
@@ -52,6 +51,8 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     )
 
     if not runner.db_engine:
+        from httprunner.database.engine import DBEngine
+
         runner.db_engine = DBEngine(
             f'mysql+pymysql://{parsed_request_dict["db_config"]["user"]}:'
             f'{parsed_request_dict["db_config"]["password"]}@{parsed_request_dict["db_config"]["ip"]}:'
