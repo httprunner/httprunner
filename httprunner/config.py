@@ -1,7 +1,7 @@
 import inspect
 from typing import Text
 
-from httprunner.models import TConfig, TConfigThrift
+from httprunner.models import TConfig, TConfigThrift, TConfigDB, ProtoType
 
 
 class ConfigThrift(object):
@@ -21,8 +21,65 @@ class ConfigThrift(object):
         self.__config.thrift.cluster = cluster
         return self
 
-    def target(self, target: Text) -> "ConfigThrift":
-        self.__config.thrift.target = target
+    def service_name(self, service_name: Text) -> "ConfigThrift":
+        self.__config.thrift.service_name = service_name
+        return self
+
+    def method(self, method: Text) -> "ConfigThrift":
+        self.__config.thrift.method = method
+        return self
+
+    def ip(self, service_name_: Text) -> "ConfigThrift":
+        self.__config.thrift.service_name = service_name_
+        return self
+
+    def port(self, port: int) -> "ConfigThrift":
+        self.__config.thrift.port = port
+        return self
+
+    def timeout(self, timeout: int) -> "ConfigThrift":
+        self.__config.thrift.timeout = timeout
+        return self
+
+    def proto_type(self, proto_type: ProtoType) -> "ConfigThrift":
+        self.__config.thrift.proto_type = proto_type
+        return self
+
+    def trans_type(self, trans_type: ProtoType) -> "ConfigThrift":
+        self.__config.thrift.trans_type = trans_type
+        return self
+
+    def struct(self) -> TConfig:
+        return self.__config
+
+
+class ConfigDB(object):
+    def __init__(self, config: TConfig):
+        self.__config = config
+        self.__config.db = TConfigDB()
+
+    def psm(self, psm):
+        self.__config.db.psm = psm
+        return self
+
+    def user(self, user):
+        self.__config.db.user = user
+        return self
+
+    def password(self, password):
+        self.__config.db.password = password
+        return self
+
+    def ip(self, ip):
+        self.__config.db.ip = ip
+        return self
+
+    def port(self, port: int):
+        self.__config.db.port = port
+        return self
+
+    def database(self, database: Text):
+        self.__config.db.database = database
         return self
 
     def struct(self) -> TConfig:
@@ -64,3 +121,6 @@ class Config(object):
 
     def thrift(self) -> ConfigThrift:
         return ConfigThrift(self.__config)
+
+    def db(self) -> ConfigDB:
+        return ConfigDB(self.__config)

@@ -1,14 +1,13 @@
-from typing import Any, Dict, Text
+from typing import Dict, Text, Any
 
 import jmespath
-import requests
 from jmespath.exceptions import JMESPathError
 from loguru import logger
 
 from httprunner import exceptions
-from httprunner.exceptions import ParamsError, ValidationFailure
-from httprunner.models import Validators, VariablesMapping
-from httprunner.parser import Parser, parse_string_value
+from httprunner.exceptions import ValidationFailure, ParamsError
+from httprunner.models import VariablesMapping, Validators
+from httprunner.parser import parse_string_value, Parser
 
 
 def get_uniform_comparator(comparator: Text):
@@ -113,9 +112,9 @@ def uniform_validator(validator):
     }
 
 
-class ResponseObject(object):
-    def __init__(self, resp_obj: requests.Response, parser: Parser):
-        """initialize with a requests.Response object
+class ResponseObjectBase(object):
+    def __init__(self, resp_obj, parser: Parser):
+        """initialize with a response object
 
         Args:
             resp_obj (instance): requests.Response instance
@@ -124,48 +123,6 @@ class ResponseObject(object):
         self.resp_obj = resp_obj
         self.parser = parser
         self.validation_results: Dict = {}
-
-    def __getattr__(self, key):
-        if key in ["json", "content", "body"]:
-            try:
-                value = self.resp_obj.json()
-            except ValueError:
-                value = self.resp_obj.content
-        elif key == "cookies":
-            value = self.resp_obj.cookies.get_dict()
-        else:
-            try:
-                value = getattr(self.resp_obj, key)
-            except AttributeError:
-                err_msg = "ResponseObject does not have attribute: {}".format(key)
-                logger.error(err_msg)
-                raise exceptions.ParamsError(err_msg)
-
-        self.__dict__[key] = value
-        return value
-
-    def _search_jmespath(self, expr: Text) -> Any:
-        resp_obj_meta = {
-            "status_code": self.status_code,
-            "headers": self.headers,
-            "cookies": self.cookies,
-            "body": self.body,
-        }
-        if not expr.startswith(tuple(resp_obj_meta.keys())):
-            return expr
-
-        try:
-            check_value = jmespath.search(expr, resp_obj_meta)
-        except JMESPathError as ex:
-            logger.error(
-                f"failed to search with jmespath\n"
-                f"expression: {expr}\n"
-                f"data: {resp_obj_meta}\n"
-                f"exception: {ex}"
-            )
-            raise
-
-        return check_value
 
     def extract(
         self,
@@ -185,6 +142,19 @@ class ResponseObject(object):
 
         logger.info(f"extract mapping: {extract_mapping}")
         return extract_mapping
+
+    def _search_jmespath(self, expr: Text) -> Any:
+        try:
+            check_value = jmespath.search(expr, self.resp_obj)
+        except JMESPathError as ex:
+            logger.error(
+                f"failed to search with jmespath\n"
+                f"expression: {expr}\n"
+                f"data: {self.resp_obj}\n"
+                f"exception: {ex}"
+            )
+            raise
+        return check_value
 
     def validate(
         self,
@@ -274,3 +244,55 @@ class ResponseObject(object):
         if not validate_pass:
             failures_string = "\n".join([failure for failure in failures])
             raise ValidationFailure(failures_string)
+
+
+class ResponseObject(ResponseObjectBase):
+    def __getattr__(self, key):
+        if key in ["json", "content", "body"]:
+            try:
+                value = self.resp_obj.json()
+            except ValueError:
+                value = self.resp_obj.content
+        elif key == "cookies":
+            value = self.resp_obj.cookies.get_dict()
+        else:
+            try:
+                value = getattr(self.resp_obj, key)
+            except AttributeError:
+                err_msg = "ResponseObject does not have attribute: {}".format(key)
+                logger.error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+
+        self.__dict__[key] = value
+        return value
+
+    def _search_jmespath(self, expr: Text) -> Any:
+        resp_obj_meta = {
+            "status_code": self.status_code,
+            "headers": self.headers,
+            "cookies": self.cookies,
+            "body": self.body,
+        }
+        if not expr.startswith(tuple(resp_obj_meta.keys())):
+            return expr
+
+        try:
+            check_value = jmespath.search(expr, resp_obj_meta)
+        except JMESPathError as ex:
+            logger.error(
+                f"failed to search with jmespath\n"
+                f"expression: {expr}\n"
+                f"data: {resp_obj_meta}\n"
+                f"exception: {ex}"
+            )
+            raise
+
+        return check_value
+
+
+class ThriftResponseObject(ResponseObjectBase):
+    pass
+
+
+class SqlResponseObject(ResponseObjectBase):
+    pass
