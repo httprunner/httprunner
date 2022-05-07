@@ -4,7 +4,12 @@
 
 **go version**
 
-- fix: step request elapsed timming should contain ContentTransfer part
+- fix: step request elapsed timing should contain ContentTransfer part
+
+**python version**
+
+- feat: support new step type with SQL operation
+- feat: support new step type with thrift protocol
 
 ## v4.0.0 (2022-05-05)
 
