@@ -1,18 +1,22 @@
-import platform
 from typing import Union
 
+from httprunner import HttpRunner
 from httprunner.models import StepResult, TRequest, TStep, TestCase
-from httprunner.runner import HttpRunner
 from httprunner.step_request import (
     RequestWithOptionalArgs,
     StepRequestExtraction,
     StepRequestValidation,
 )
-from httprunner.step_testcase import StepRefCase
 from httprunner.step_sql_request import (
     RunSqlRequest,
-    StepSqlRequestValidation,
     StepSqlRequestExtraction,
+    StepSqlRequestValidation,
+)
+from httprunner.step_testcase import StepRefCase
+from httprunner.step_thrift_request import (
+    RunThriftRequest,
+    StepThriftRequestExtraction,
+    StepThriftRequestValidation,
 )
 
 
@@ -27,6 +31,9 @@ class Step(object):
             RunSqlRequest,
             StepSqlRequestValidation,
             StepSqlRequestExtraction,
+            RunThriftRequest,
+            StepThriftRequestValidation,
+            StepThriftRequestExtraction,
         ],
     ):
         self.__step = step
@@ -58,29 +65,3 @@ class Step(object):
 
     def run(self, runner: HttpRunner) -> StepResult:
         return self.__step.run(runner)
-
-
-if platform.system() != "Windows":
-    from httprunner.step_thrift_request import (
-        RunThriftRequest,
-        StepThriftRequestValidation,
-        StepThriftRequestExtraction,
-    )
-
-    class Step(Step):
-        def __init__(
-            self,
-            step: Union[
-                StepRequestValidation,
-                StepRequestExtraction,
-                RequestWithOptionalArgs,
-                StepRefCase,
-                RunSqlRequest,
-                StepSqlRequestValidation,
-                StepSqlRequestExtraction,
-                RunThriftRequest,
-                StepThriftRequestValidation,
-                StepThriftRequestExtraction,
-            ],
-        ):
-            super().__init__(step)
