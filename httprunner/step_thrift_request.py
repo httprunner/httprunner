@@ -1,21 +1,53 @@
 # -*- coding: utf-8 -*-
+import platform
+import sys
 import time
 from typing import Text, Union
+
 from loguru import logger
 
 from httprunner import utils
 from httprunner.exceptions import ValidationFailure
-from httprunner.models import IStep, StepResult, TStep, ProtoType, TransType
+from httprunner.models import (
+    IStep,
+    ProtoType,
+    StepResult,
+    TStep,
+    TThriftRequest,
+    TransType,
+)
+from httprunner.response import ThriftResponseObject
 from httprunner.runner import HttpRunner
 from httprunner.step_request import (
-    call_hooks,
     StepRequestExtraction,
     StepRequestValidation,
+    call_hooks,
 )
-from httprunner.models import TThriftRequest
-from httprunner.response import ThriftResponseObject
 
-from httprunner.thrift.thrift_client import ThriftClient
+try:
+    import thriftpy2
+    from thrift.Thrift import TType
+
+    THRIFT_READY = True
+except ModuleNotFoundError:
+    THRIFT_READY = False
+
+
+def ensure_thrift_ready():
+    assert platform.system() != "Windows", "Sorry,thrift not support Windows for now"
+    if THRIFT_READY:
+        return
+
+    msg = """
+    uploader extension dependencies uninstalled, install first and try again.
+    install with pip:
+    $ pip install cython thriftpy2 thrift
+
+    or you can install httprunner with optional upload dependencies:
+    $ pip install "httprunner[thrift]"
+    """
+    logger.error(msg)
+    sys.exit(1)
 
 
 def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
@@ -34,30 +66,30 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     parsed_request_dict["psm"] = parsed_request_dict["psm"] or config.thrift.psm
     parsed_request_dict["env"] = parsed_request_dict["env"] or config.thrift.env
     parsed_request_dict["cluster"] = (
-        parsed_request_dict["cluster"] or config.thrift.cluster
+            parsed_request_dict["cluster"] or config.thrift.cluster
     )
     parsed_request_dict["idl_path"] = (
-        parsed_request_dict["idl_path"] or config.thrift.idl_path
+            parsed_request_dict["idl_path"] or config.thrift.idl_path
     )
     parsed_request_dict["include_dirs"] = (
-        parsed_request_dict["include_dirs"] or config.thrift.include_dirs
+            parsed_request_dict["include_dirs"] or config.thrift.include_dirs
     )
     parsed_request_dict["method"] = (
-        parsed_request_dict["method"] or config.thrift.method
+            parsed_request_dict["method"] or config.thrift.method
     )
     parsed_request_dict["service_name"] = (
-        parsed_request_dict["service_name"] or config.thrift.service_name
+            parsed_request_dict["service_name"] or config.thrift.service_name
     )
     parsed_request_dict["ip"] = parsed_request_dict["ip"] or config.thrift.ip
     parsed_request_dict["port"] = parsed_request_dict["port"] or config.thrift.port
     parsed_request_dict["proto_type"] = (
-        parsed_request_dict["proto_type"] or config.thrift.proto_type
+            parsed_request_dict["proto_type"] or config.thrift.proto_type
     )
     parsed_request_dict["trans_port"] = (
-        parsed_request_dict["trans_type"] or config.thrift.trans_type
+            parsed_request_dict["trans_type"] or config.thrift.trans_type
     )
     parsed_request_dict["timeout"] = (
-        parsed_request_dict["timeout"] or config.thrift.timeout
+            parsed_request_dict["timeout"] or config.thrift.timeout
     )
     parsed_request_dict["thrift_client"] = parsed_request_dict["thrift_client"]
 
@@ -71,6 +103,8 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     if not runner.thrift_client:
         runner.thrift_client = parsed_request_dict["thrift_client"]
     if not runner.thrift_client:
+        ensure_thrift_ready()
+        from httprunner.thrift.thrift_client import ThriftClient
         runner.thrift_client = ThriftClient(
             thrift_file=parsed_request_dict["idl_path"],
             service_name=parsed_request_dict["service_name"],
@@ -180,7 +214,7 @@ class RunThriftRequest(IStep):
         return self
 
     def teardown_hook(
-        self, hook: Text, assign_var_name: Text = None
+            self, hook: Text, assign_var_name: Text = None
     ) -> "RunThriftRequest":
         if assign_var_name:
             self.__step.teardown_hooks.append({assign_var_name: hook})
@@ -190,7 +224,7 @@ class RunThriftRequest(IStep):
         return self
 
     def setup_hook(
-        self, hook: Text, assign_var_name: Text = None
+            self, hook: Text, assign_var_name: Text = None
     ) -> "RunThriftRequest":
         if assign_var_name:
             self.__step.setup_hooks.append({assign_var_name: hook})
@@ -213,7 +247,7 @@ class RunThriftRequest(IStep):
         return self
 
     def with_thrift_client(
-        self, thrift_client: Union["ThriftClient", str]
+            self, thrift_client: Union["ThriftClient", str]
     ) -> "RunThriftRequest":
         self.__step.thrift_request.thrift_client = thrift_client
         return self
@@ -253,7 +287,7 @@ class RunThriftRequest(IStep):
         return StepThriftRequestValidation(self.__step)
 
     def with_jmespath(
-        self, jmes_path: Text, var_name: Text
+            self, jmes_path: Text, var_name: Text
     ) -> "StepThriftRequestExtraction":
         self.__step.extract[var_name] = jmes_path
         return StepThriftRequestExtraction(self.__step)
