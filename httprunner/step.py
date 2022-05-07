@@ -34,4 +34,4 @@ class Step(object):
             StepThriftRequestExtraction,
         ],
     ):
-        super().__init__(step)
+        self.__step = step
