@@ -1,21 +1,41 @@
 # -*- coding: utf-8 -*-
+import sys
 import time
 from typing import Text
-
 from loguru import logger
 
 from httprunner import utils
+from httprunner.exceptions import SqlMethodNotSupport
 from httprunner.exceptions import ValidationFailure
 from httprunner.models import IStep, StepResult, TStep
-from httprunner.models import TSqlRequest, SqlMethodEnum
+from httprunner.models import SqlMethodEnum, TSqlRequest
 from httprunner.response import SqlResponseObject
 from httprunner.runner import HttpRunner
-from httprunner.step_request import (
-    call_hooks,
-    StepRequestExtraction,
-    StepRequestValidation,
-)
-from httprunner.exceptions import SqlMethodNotSupport
+from httprunner.step_request import (StepRequestExtraction, StepRequestValidation, call_hooks)
+
+try:
+    import sqlalchemy
+    import pymysql
+
+    SQL_READY = True
+except ModuleNotFoundError:
+    SQL_READY = False
+
+
+def ensure_sql_ready():
+    if SQL_READY:
+        return
+
+    msg = """
+    uploader extension dependencies uninstalled, install first and try again.
+    install with pip:
+    $ pip install sqlalchemy pymysql
+
+    or you can install httprunner with optional upload dependencies:
+    $ pip install "httprunner[sql]"
+    """
+    logger.error(msg)
+    sys.exit(1)
 
 
 def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
@@ -51,8 +71,8 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     )
 
     if not runner.db_engine:
+        ensure_sql_ready()
         from httprunner.database.engine import DBEngine
-
         runner.db_engine = DBEngine(
             f'mysql+pymysql://{parsed_request_dict["db_config"]["user"]}:'
             f'{parsed_request_dict["db_config"]["password"]}@{parsed_request_dict["db_config"]["ip"]}:'
