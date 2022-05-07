@@ -1,5 +1,7 @@
 from typing import Union
 
+from httprunner import HttpRunner
+from httprunner.models import StepResult, TRequest, TStep, TestCase
 from httprunner.step_request import (
     RequestWithOptionalArgs,
     StepRequestExtraction,
@@ -35,3 +37,31 @@ class Step(object):
         ],
     ):
         self.__step = step
+
+    @property
+    def request(self) -> TRequest:
+        return self.__step.struct().request
+
+    @property
+    def testcase(self) -> TestCase:
+        return self.__step.struct().testcase
+
+    @property
+    def retry_times(self) -> int:
+        return self.__step.struct().retry_times
+
+    @property
+    def retry_interval(self) -> int:
+        return self.__step.struct().retry_interval
+
+    def struct(self) -> TStep:
+        return self.__step.struct()
+
+    def name(self) -> str:
+        return self.__step.name()
+
+    def type(self) -> str:
+        return self.__step.type()
+
+    def run(self, runner: HttpRunner) -> StepResult:
+        return self.__step.run(runner)
