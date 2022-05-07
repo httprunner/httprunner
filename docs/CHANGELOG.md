@@ -1,5 +1,11 @@
 # Release History
 
+## v4.1.0-alpha (2022-05-07)
+
+**go version**
+
+- fix: step request elapsed timming should contain ContentTransfer part
+
 ## v4.0.0 (2022-05-05)
 
 **go version**

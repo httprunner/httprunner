@@ -329,8 +329,6 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	} else {
 		resp, err = r.hrpRunner.httpClient.Do(rb.req)
 	}
-
-	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
 	}
@@ -356,6 +354,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		return
 	}
 
+	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if r.HTTPStatOn() {
 		// resp.Body has been ReadAll
 		httpStat.Finish()
