@@ -1,13 +1,23 @@
 from typing import Union
 
+from httprunner import HttpRunner
 from httprunner.models import StepResult, TRequest, TStep, TestCase
-from httprunner.runner import HttpRunner
 from httprunner.step_request import (
     RequestWithOptionalArgs,
     StepRequestExtraction,
     StepRequestValidation,
 )
+from httprunner.step_sql_request import (
+    RunSqlRequest,
+    StepSqlRequestExtraction,
+    StepSqlRequestValidation,
+)
 from httprunner.step_testcase import StepRefCase
+from httprunner.step_thrift_request import (
+    RunThriftRequest,
+    StepThriftRequestExtraction,
+    StepThriftRequestValidation,
+)
 
 
 class Step(object):
@@ -18,6 +28,12 @@ class Step(object):
             StepRequestExtraction,
             RequestWithOptionalArgs,
             StepRefCase,
+            RunSqlRequest,
+            StepSqlRequestValidation,
+            StepSqlRequestExtraction,
+            RunThriftRequest,
+            StepThriftRequestValidation,
+            StepThriftRequestExtraction,
         ],
     ):
         self.__step = step
