@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-import platform
+
 import enum
 import json
 
@@ -84,7 +84,6 @@ class ThriftClient(object):
         self.timeout = timeout
         self.proto_type = proto_type
         self.trans_type = trans_type
-        assert platform.system() != "Windows", "thrift not support Windows for now"
         try:
             logger.debug(
                 "init thrift module: thrift_file=%s, module_name=%s",
