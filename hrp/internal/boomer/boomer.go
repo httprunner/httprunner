@@ -170,3 +170,7 @@ func (b *Boomer) GetSpawnDoneChan() chan struct{} {
 func (b *Boomer) GetSpawnCount() int {
 	return b.localRunner.spawnCount
 }
+
+func (b *Boomer) ResetStartTime() {
+	b.localRunner.stats.total.resetStartTime()
+}
