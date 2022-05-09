@@ -12,7 +12,7 @@
 
 > HttpRunner [用户调研问卷][survey] 持续收集中，我们将基于用户反馈动态调整产品特性和需求优先级。
 
-![flow chart](docs/assets/hrp-flow.jpg)
+![flow chart](https://httprunner.com/image/hrp-flow.jpg)
 
 [版本发布日志] | [English]
 
@@ -101,7 +101,7 @@ Use "hrp [command] --help" for more information about a command.
 
 ### 金牌赞助商
 
-[<img src="docs/assets/hogwarts.jpeg" alt="霍格沃兹测试开发学社" width="400">](https://ceshiren.com/)
+[<img src="https://httprunner.com/image/hogwarts.jpeg" alt="霍格沃兹测试开发学社" width="400">](https://ceshiren.com/)
 
 > [霍格沃兹测试开发学社](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=httprunner&url=https://www.testing-studio.com) 。学院课程由一线大厂测试经理与资深测试开发专家参与研发，实战驱动。课程涵盖 web/app 自动化测试、接口测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移&右移、精准测试、测试平台开发、测试管理等内容，帮助测试工程师实现测试开发技术转型。通过优秀的学社制度（奖学金、内推返学费、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。
 
@@ -109,7 +109,7 @@ Use "hrp [command] --help" for more information about a command.
 
 ### 开源服务赞助商
 
-[<img src="docs/assets/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
+[<img src="https://httprunner.com/image/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
 
 HttpRunner is in Sentry Sponsored plan.
 
@@ -117,7 +117,7 @@ HttpRunner is in Sentry Sponsored plan.
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
-<img src="docs/assets/qrcode.jpg" alt="HttpRunner" width="200">
+<img src="https://httprunner.com/image/qrcode.jpg" alt="HttpRunner" width="200">
 
 如果你期望加入 HttpRunner 核心用户群，请填写[用户调研问卷][survey]并留下你的联系方式，作者将拉你进群。
 
