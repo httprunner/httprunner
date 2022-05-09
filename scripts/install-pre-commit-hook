@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+echo "SCRIPT_DIR:, $SCRIPT_DIR"
+# assume the script is always in <repository>/scripts
+pushd "$SCRIPT_DIR/.." >/dev/null
+
+PRE_COMMIT_FILE=.git/hooks/pre-commit
+
+# install pre-commit hook and make it executable
+function install() {
+    go get mvdan.cc/gofumpt
+    go get github.com/incu6us/goimports-reviser/v2@latest
+    cat > $PRE_COMMIT_FILE <<'EOF'
+#!/bin/bash
+
+# What does this script do?
+# 1. gofumpt go files automatically
+# 2. goimports-reviser go files automatically
+# 3. black python files automatically
+
+# make sure gofumpt is installed
+# What does each letter mean in "ACMRTUXB"?
+# Added (A), Copied (C), Deleted (D), Modified (M), Renamed (R), have their type (i.e. regular file, symlink,
+#             submodule, ...) changed (T), are Unmerged (U), are Unknown (X), or have had their pairing Broken (B)
+for file in $(git diff --name-only --cached --diff-filter=ACMRTUXB | grep '.go$')
+do
+    echo "(gofumpt) $file"
+    gofumpt -w "$file"
+    echo "(goimports-reviser) $file"
+    goimports-reviser -file-path "$file" -rm-unused
+    git add "$file"
+done
+
+for file in $(git diff --name-only --cached --diff-filter=ACMRTUXB | grep '.py$')
+do
+    echo "(black) $file"
+    black "$file"
+    git add "$file"
+done
+EOF
+
+    chmod +x $PRE_COMMIT_FILE
+}
+
+if [[ -f $PRE_COMMIT_FILE ]]; then
+    echo "Backing up $PRE_COMMIT_FILE to ${PRE_COMMIT_FILE}.bak"
+    mv $PRE_COMMIT_FILE ${PRE_COMMIT_FILE}.bak
+    install
+else
+    install
+fi
+
+popd >/dev/null

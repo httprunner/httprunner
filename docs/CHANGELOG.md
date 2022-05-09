@@ -1,6 +1,8 @@
 # Release History
 
-## v4.1.0-alpha (2022-05-07)
+## v4.1.0-alpha (2022-05-09)
+
+- feat: add pre-commit-hook to format go/python code
 
 **go version**
 
