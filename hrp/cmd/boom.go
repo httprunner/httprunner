@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/hrp"
-	"github.com/httprunner/httprunner/hrp/internal/boomer"
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 )
 
 // boomCmd represents the boom command

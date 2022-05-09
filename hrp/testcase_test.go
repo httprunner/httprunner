@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -22,9 +22,7 @@ var (
 	demoAPIGETPath                    APIPath      = templatesDir + "/api/get.yml"
 )
 
-var (
-	demoTestCaseWithThinkTimePath TestCasePath = hrpExamplesDir + "/think_time_test.json"
-)
+var demoTestCaseWithThinkTimePath TestCasePath = hrpExamplesDir + "/think_time_test.json"
 
 var demoTestCaseWithPlugin = &TestCase{
 	Config: NewConfig("demo with complex mechanisms").

@@ -20,9 +20,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/httpstat"
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/httpstat"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 type HTTPMethod string

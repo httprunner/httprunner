@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 // ITestCase represents interface for testcases,

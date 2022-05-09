@@ -11,10 +11,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/json"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 const (

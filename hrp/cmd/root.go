@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -33,7 +33,7 @@ Website: https://httprunner.com
 Github: https://github.com/httprunner/httprunner
 Copyright 2017 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		var noColor = false
+		noColor := false
 		if runtime.GOOS == "windows" {
 			noColor = true
 		}

@@ -3,7 +3,7 @@ package hrp
 import (
 	"reflect"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 // NewConfig returns a new constructed testcase config with specified testcase name.
@@ -161,6 +161,4 @@ const (
 	thinkTimeDefaultMultiply = 1
 )
 
-var (
-	thinkTimeDefaultRandom = map[string]float64{"min_percentage": 0.5, "max_percentage": 1.5}
-)
+var thinkTimeDefaultRandom = map[string]float64{"min_percentage": 0.5, "max_percentage": 1.5}

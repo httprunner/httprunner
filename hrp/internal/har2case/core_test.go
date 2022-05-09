@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/httprunner/httprunner/hrp"
+	"github.com/httprunner/httprunner/v4/hrp"
 )
 
 var (
@@ -348,7 +348,8 @@ func TestMakeValidate(t *testing.T) {
 			Check:   "status_code",
 			Expect:  200,
 			Assert:  "equals",
-			Message: "assert response status code"}) {
+			Message: "assert response status code",
+		}) {
 		t.Fatal()
 	}
 
@@ -361,7 +362,8 @@ func TestMakeValidate(t *testing.T) {
 			Check:   "headers.\"Content-Type\"",
 			Expect:  "application/json; charset=utf-8",
 			Assert:  "equals",
-			Message: "assert response header Content-Type"}) {
+			Message: "assert response header Content-Type",
+		}) {
 		t.Fatal()
 	}
 
@@ -374,7 +376,8 @@ func TestMakeValidate(t *testing.T) {
 			Check:   "body.Code",
 			Expect:  float64(200), // TODO
 			Assert:  "equals",
-			Message: "assert response body Code"}) {
+			Message: "assert response body Code",
+		}) {
 		t.Fatal()
 	}
 }

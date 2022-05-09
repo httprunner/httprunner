@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/httprunner/funplugin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/httprunner/hrp/internal/boomer"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {

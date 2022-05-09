@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/hrp"
+	"github.com/httprunner/httprunner/v4/hrp"
 )
 
 func TestCaseConfigVariables(t *testing.T) {

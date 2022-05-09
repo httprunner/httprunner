@@ -7,10 +7,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
-	"github.com/httprunner/httprunner/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func Convert2TestScripts(destType string, paths ...string) error {
