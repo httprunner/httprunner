@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/olekukonko/tablewriter"
-
 	"github.com/rs/zerolog/log"
 )
 
@@ -154,7 +153,7 @@ func (r *runner) reportTestResult() {
 	if err != nil {
 		return
 	}
-	duration := time.Duration(entryTotalOutput.LastRequestTimestamp-entryTotalOutput.StartTime) * time.Second
+	duration := time.Duration(entryTotalOutput.LastRequestTimestamp-entryTotalOutput.StartTime) * time.Millisecond
 	currentTime := time.Now()
 	println(fmt.Sprint("=========================================== Statistics Summary =========================================="))
 	println(fmt.Sprintf("Current time: %s, Users: %v, Duration: %v, Accumulated Transactions: %d Passed, %d Failed",

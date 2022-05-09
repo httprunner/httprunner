@@ -99,6 +99,9 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	parametersIterator := caseRunner.parametersIterator
 	parametersIterator.SetUnlimitedMode()
 
+	// reset start time only once
+	once := sync.Once{}
+
 	return &boomer.Task{
 		Name:   testcase.Config.Name,
 		Weight: testcase.Config.Weight,
@@ -115,6 +118,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
+				// reset start time only once before step
+				once.Do(func() {
+					b.Boomer.ResetStartTime()
+				})
 				stepResult, err := step.Run(sessionRunner)
 				if err != nil {
 					// step failed

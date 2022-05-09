@@ -1,6 +1,7 @@
 package boomer
 
 import (
+	"sync/atomic"
 	"time"
 
 	"github.com/httprunner/httprunner/hrp/internal/json"
@@ -101,8 +102,6 @@ func (s *requestStats) get(name string, method string) (entry *statsEntry) {
 		newEntry := &statsEntry{
 			Name:          name,
 			Method:        method,
-			NumReqsPerSec: make(map[int64]int64),
-			NumFailPerSec: make(map[int64]int64),
 			ResponseTimes: make(map[int64]int64),
 		}
 		s.entries[name+method] = newEntry
@@ -171,10 +170,6 @@ type statsEntry struct {
 	MinResponseTime int64 `json:"min_response_time"`
 	// Maximum response time
 	MaxResponseTime int64 `json:"max_response_time"`
-	// A {second => request_count} dict that holds the number of requests made per second
-	NumReqsPerSec map[int64]int64 `json:"num_reqs_per_sec"`
-	// A (second => failure_count) dict that hold the number of failures per second
-	NumFailPerSec map[int64]int64 `json:"num_fail_per_sec"`
 	// A {response_time => count} dict that holds the response time distribution of all the requests
 	// The keys (the response time in ms) are rounded to store 1, 2, ... 9, 10, 20. .. 90,
 	// 100, 200 .. 900, 1000, 2000 ... 9000, in order to save memory.
@@ -191,17 +186,19 @@ type statsEntry struct {
 	NumNoneRequests int64 `json:"num_none_requests"`
 }
 
+func (s *statsEntry) resetStartTime() {
+	atomic.StoreInt64(&s.StartTime, time.Duration(time.Now().UnixNano()).Milliseconds())
+}
+
 func (s *statsEntry) reset() {
-	s.StartTime = time.Now().Unix()
+	atomic.StoreInt64(&s.StartTime, time.Duration(time.Now().UnixNano()).Milliseconds())
 	s.NumRequests = 0
 	s.NumFailures = 0
 	s.TotalResponseTime = 0
 	s.ResponseTimes = make(map[int64]int64)
 	s.MinResponseTime = 0
 	s.MaxResponseTime = 0
-	s.LastRequestTimestamp = time.Now().Unix()
-	s.NumReqsPerSec = make(map[int64]int64)
-	s.NumFailPerSec = make(map[int64]int64)
+	s.LastRequestTimestamp = time.Duration(time.Now().UnixNano()).Milliseconds()
 	s.TotalContentLength = 0
 }
 
@@ -215,15 +212,7 @@ func (s *statsEntry) log(responseTime int64, contentLength int64) {
 }
 
 func (s *statsEntry) logTimeOfRequest() {
-	key := time.Now().Unix()
-	_, ok := s.NumReqsPerSec[key]
-	if !ok {
-		s.NumReqsPerSec[key] = 1
-	} else {
-		s.NumReqsPerSec[key]++
-	}
-
-	s.LastRequestTimestamp = key
+	s.LastRequestTimestamp = time.Duration(time.Now().UnixNano()).Milliseconds()
 }
 
 func (s *statsEntry) logResponseTime(responseTime int64) {
@@ -267,13 +256,6 @@ func (s *statsEntry) logResponseTime(responseTime int64) {
 
 func (s *statsEntry) logFailures() {
 	s.NumFailures++
-	key := time.Now().Unix()
-	_, ok := s.NumFailPerSec[key]
-	if !ok {
-		s.NumFailPerSec[key] = 1
-	} else {
-		s.NumFailPerSec[key]++
-	}
 }
 
 func (s *statsEntry) serialize() map[string]interface{} {
