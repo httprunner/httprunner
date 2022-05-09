@@ -3,7 +3,7 @@ package hrp
 import (
 	"fmt"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 // IAPI represents interface for api,

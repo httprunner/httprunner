@@ -7,12 +7,12 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 type PluginType string

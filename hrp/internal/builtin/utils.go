@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
-	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 func Dump2JSON(data interface{}, path string) error {
@@ -29,7 +29,7 @@ func Dump2JSON(data interface{}, path string) error {
 	}
 	log.Info().Str("path", path).Msg("dump data to json")
 	file, _ := json.MarshalIndent(data, "", "    ")
-	err = os.WriteFile(path, file, 0644)
+	err = os.WriteFile(path, file, 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump json path failed")
 		return err
@@ -56,7 +56,7 @@ func Dump2YAML(data interface{}, path string) error {
 		return err
 	}
 
-	err = os.WriteFile(path, buffer.Bytes(), 0644)
+	err = os.WriteFile(path, buffer.Bytes(), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump yaml path failed")
 		return err

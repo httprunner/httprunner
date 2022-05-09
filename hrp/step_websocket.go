@@ -3,15 +3,17 @@ package hrp
 import (
 	"bytes"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/json"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"testing"
 	"time"
 	"unsafe"
+
+	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 const (

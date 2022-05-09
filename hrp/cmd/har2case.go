@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/hrp/internal/har2case"
+	"github.com/httprunner/httprunner/v4/hrp/internal/har2case"
 )
 
 // har2caseCmd represents the har2case command

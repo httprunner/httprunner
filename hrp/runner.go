@@ -14,7 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 // Run starts to run API test with default configs.

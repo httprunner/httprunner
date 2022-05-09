@@ -10,7 +10,7 @@ import (
 	"github.com/httprunner/funplugin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 const (

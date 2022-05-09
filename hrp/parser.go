@@ -9,12 +9,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/shared"
 	"github.com/maja42/goval"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func newParser() *Parser {

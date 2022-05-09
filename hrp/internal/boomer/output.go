@@ -14,7 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 // Output is primarily responsible for printing test results to different destinations
@@ -37,8 +37,7 @@ type Output interface {
 }
 
 // ConsoleOutput is the default output for standalone mode.
-type ConsoleOutput struct {
-}
+type ConsoleOutput struct{}
 
 // NewConsoleOutput returns a ConsoleOutput.
 func NewConsoleOutput() *ConsoleOutput {
@@ -102,12 +101,10 @@ func getTotalFailRatio(totalRequests, totalFailures int64) (failRatio float64) {
 
 // OnStart of ConsoleOutput has nothing to do.
 func (o *ConsoleOutput) OnStart() {
-
 }
 
 // OnStop of ConsoleOutput has nothing to do.
 func (o *ConsoleOutput) OnStop() {
-
 }
 
 // OnEvent will print to the console.

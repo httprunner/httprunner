@@ -3,7 +3,7 @@ package boomer
 import (
 	"time"
 
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 type transaction struct {
