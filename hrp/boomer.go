@@ -19,9 +19,6 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	}
 
 	b.hrpRunner = NewRunner(nil)
-	// set client transport for high concurrency load testing
-	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
-
 	return b
 }
 
@@ -30,6 +27,11 @@ type HRPBoomer struct {
 	hrpRunner    *HRPRunner
 	plugins      []funplugin.IPlugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex       // avoid data race
+}
+
+func (b *HRPBoomer) SetClientTransport() {
+	// set client transport for high concurrency load testing
+	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 }
 
 // Run starts to run load test for one or multiple testcases.
