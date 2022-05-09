@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/rs/zerolog/log"
@@ -264,10 +265,9 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 
 	var duration float64
 	if entry.Name == "Total" {
-		duration = float64(entry.LastRequestTimestamp - entry.StartTime)
-		// fix: avoid divide by zero
-		if duration < 1 {
-			duration = 1
+		duration = float64(entry.LastRequestTimestamp-entry.StartTime) / 1e3
+		if duration == 0 {
+			return nil, errors.New("no step specified")
 		}
 	} else {
 		duration = float64(reportStatsInterval / time.Second)
