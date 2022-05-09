@@ -11,7 +11,11 @@ from httprunner.models import IStep, StepResult, TStep
 from httprunner.models import SqlMethodEnum, TSqlRequest
 from httprunner.response import SqlResponseObject
 from httprunner.runner import HttpRunner
-from httprunner.step_request import (StepRequestExtraction, StepRequestValidation, call_hooks)
+from httprunner.step_request import (
+    StepRequestExtraction,
+    StepRequestValidation,
+    call_hooks,
+)
 
 try:
     import sqlalchemy
@@ -73,6 +77,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     if not runner.db_engine:
         ensure_sql_ready()
         from httprunner.database.engine import DBEngine
+
         runner.db_engine = DBEngine(
             f'mysql+pymysql://{parsed_request_dict["db_config"]["user"]}:'
             f'{parsed_request_dict["db_config"]["password"]}@{parsed_request_dict["db_config"]["ip"]}:'
