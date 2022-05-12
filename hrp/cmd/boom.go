@@ -37,7 +37,7 @@ var boomCmd = &cobra.Command{
 			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
 		}
 		if prometheusPushgatewayURL != "" {
-			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(prometheusPushgatewayURL, "hrp"))
+			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(prometheusPushgatewayURL, "hrp", hrpBoomer.GetMode()))
 		}
 		hrpBoomer.SetDisableKeepAlive(disableKeepalive)
 		hrpBoomer.SetDisableCompression(disableCompression)
