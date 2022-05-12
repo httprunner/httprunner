@@ -117,7 +117,7 @@ HttpRunner is in Sentry Sponsored plan.
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
-<img src="https://httprunner.com/image/qrcode.jpg" alt="HttpRunner" width="200">
+<img src="https://httprunner.com/image/qrcode.png" alt="HttpRunner" width="400">
 
 如果你期望加入 HttpRunner 核心用户群，请填写[用户调研问卷][survey]并留下你的联系方式，作者将拉你进群。
 
