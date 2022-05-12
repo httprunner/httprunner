@@ -1,0 +1,346 @@
+{
+	"info": {
+		"_postman_id": "0417a445-b206-4ea2-b1d2-5441afd6c6b9",
+		"name": "postman collection demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "folder1",
+			"item": [
+				{
+					"name": "folder2",
+					"item": [
+						{
+							"name": "Get with params",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://postman-echo.com/:path?k1=v1&k2=v2",
+									"protocol": "https",
+									"host": [
+										"postman-echo",
+										"com"
+									],
+									"path": [
+										":path"
+									],
+									"query": [
+										{
+											"key": "k1",
+											"value": "v1"
+										},
+										{
+											"key": "k2",
+											"value": "v2"
+										},
+										{
+											"key": "k3",
+											"value": "v3",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "path",
+											"value": "get"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Get with params",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "https://postman-echo.com/:path?k1=v1&k2=v2",
+											"protocol": "https",
+											"host": [
+												"postman-echo",
+												"com"
+											],
+											"path": [
+												":path"
+											],
+											"query": [
+												{
+													"key": "k1",
+													"value": "v1"
+												},
+												{
+													"key": "k2",
+													"value": "v2"
+												},
+												{
+													"key": "k3",
+													"value": "v3",
+													"disabled": true
+												}
+											],
+											"variable": [
+												{
+													"key": "path",
+													"value": "get"
+												}
+											]
+										}
+									},
+									"_postman_previewlanguage": "json",
+									"header": null,
+									"cookie": [],
+									"body": "{\n    \"args\": {\n        \"k1\": \"v1\",\n        \"k2\": \"v2\"\n    },\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"PostmanRuntime/7.29.0\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\"\n    },\n    \"url\": \"https://postman-echo.com/get?k1=v1&k2=v2\"\n}"
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "folder3",
+			"item": [
+				{
+					"name": "Post form-data",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "k1",
+									"value": "v1",
+									"type": "text"
+								},
+								{
+									"key": "k2",
+									"value": "v2",
+									"type": "text"
+								},
+								{
+									"key": "k3",
+									"value": "v3",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "https://postman-echo.com/:path",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								":path"
+							],
+							"variable": [
+								{
+									"key": "path",
+									"value": "post"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post x-www-form-urlencoded",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "k1",
+									"value": "v1",
+									"type": "text"
+								},
+								{
+									"key": "k2",
+									"value": "v2",
+									"type": "text"
+								},
+								{
+									"key": "k3",
+									"value": "v3",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "https://postman-echo.com/:path",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								":path"
+							],
+							"variable": [
+								{
+									"key": "path",
+									"value": "post"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post raw json",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"k1\": \"v1\",\n    \"k2\": \"v2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://postman-echo.com/:path",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								":path"
+							],
+							"variable": [
+								{
+									"key": "path",
+									"value": "post"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post raw text",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "have a nice day",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://postman-echo.com/:path",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								":path"
+							],
+							"variable": [
+								{
+									"key": "path",
+									"value": "post"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Get request headers",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "User-Agent",
+						"value": "HttpRunner",
+						"type": "text"
+					},
+					{
+						"key": "User-Name",
+						"value": "bbx",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://postman-echo.com/:path",
+					"protocol": "https",
+					"host": [
+						"postman-echo",
+						"com"
+					],
+					"path": [
+						":path"
+					],
+					"variable": [
+						{
+							"key": "path",
+							"value": "headers"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Get request headers",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "User-Agent",
+								"value": "HttpRunner",
+								"type": "text"
+							},
+							{
+								"key": "User-Name",
+								"value": "bbx",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "https://postman-echo.com/:path",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								":path"
+							],
+							"variable": [
+								{
+									"key": "path",
+									"value": "headers"
+								}
+							]
+						}
+					},
+					"_postman_previewlanguage": "json",
+					"header": null,
+					"cookie": [],
+					"body": "{\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"HttpRunner\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\"\n    }\n}"
+				}
+			]
+		}
+	]
+}
