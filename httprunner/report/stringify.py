@@ -1,5 +1,8 @@
 from base64 import b64encode
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 from jinja2 import escape
 from requests.cookies import RequestsCookieJar
