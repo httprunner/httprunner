@@ -51,7 +51,7 @@
 							},
 							"response": [
 								{
-									"name": "Get with params",
+									"name": "Get with params case1",
 									"originalRequest": {
 										"method": "GET",
 										"header": [],
@@ -88,10 +88,115 @@
 											]
 										}
 									},
+									"status": "OK",
+									"code": 200,
 									"_postman_previewlanguage": "json",
-									"header": null,
+									"header": [
+										{
+											"key": "Date",
+											"value": "Mon, 16 May 2022 12:12:28 GMT"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "508"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"1fc-x4EIPFQzoLX0HenCFPx6HNfG0lc\""
+										},
+										{
+											"key": "Vary",
+											"value": "Accept-Encoding"
+										},
+										{
+											"key": "set-cookie",
+											"value": "sails.sid=s%3AX2aa_Z7gbcUqIWAjlBkytBRmQ4WCvc3D.pX9Qxh8aO9Ict0BL4CrRhdDJmz81UVmwFsV5Nx30Ils; Path=/; HttpOnly"
+										}
+									],
 									"cookie": [],
-									"body": "{\n    \"args\": {\n        \"k1\": \"v1\",\n        \"k2\": \"v2\"\n    },\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"PostmanRuntime/7.29.0\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\"\n    },\n    \"url\": \"https://postman-echo.com/get?k1=v1&k2=v2\"\n}"
+									"body": "{\n    \"args\": {\n        \"k1\": \"v1\",\n        \"k2\": \"v2\"\n    },\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"PostmanRuntime/7.29.0\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\",\n        \"cookie\": \"Cookie_1=c1; Cookie_2=c2; sails.sid=s%3AGX6aS9b_phvUSUk66w7ZBgWuOPI7IIKT.ayEGTaW4U35eAWyPz%2Fh6Q74DonNcbqw3H5Q5Zv%2BfKMY\"\n    },\n    \"url\": \"https://postman-echo.com/get?k1=v1&k2=v2\"\n}"
+								},
+								{
+									"name": "Get with params case2",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "https://postman-echo.com/:path?k1=v1&k3=v3",
+											"protocol": "https",
+											"host": [
+												"postman-echo",
+												"com"
+											],
+											"path": [
+												":path"
+											],
+											"query": [
+												{
+													"key": "k1",
+													"value": "v1"
+												},
+												{
+													"key": "k2",
+													"value": "v2",
+													"disabled": true
+												},
+												{
+													"key": "k3",
+													"value": "v3"
+												}
+											],
+											"variable": [
+												{
+													"key": "path",
+													"value": "get"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Date",
+											"value": "Mon, 16 May 2022 12:14:04 GMT"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "504"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "ETag",
+											"value": "W/\"1f8-tMaKs4xmwr+3su3I8mcgR0p+ucw\""
+										},
+										{
+											"key": "Vary",
+											"value": "Accept-Encoding"
+										},
+										{
+											"key": "set-cookie",
+											"value": "sails.sid=s%3AMNuX_i0KgaP_KuuMpYB8RtCNipCGJWVw.4ETfPHxE81Omqb6Yli%2FezUU8CXyYBcN3%2Bxkx5htwh8Y; Path=/; HttpOnly"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"args\": {\n        \"k1\": \"v1\",\n        \"k3\": \"v3\"\n    },\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"PostmanRuntime/7.29.0\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\",\n        \"cookie\": \"Cookie_1=c1; Cookie_2=c2; sails.sid=s%3AX2aa_Z7gbcUqIWAjlBkytBRmQ4WCvc3D.pX9Qxh8aO9Ict0BL4CrRhdDJmz81UVmwFsV5Nx30Ils\"\n    },\n    \"url\": \"https://postman-echo.com/get?k1=v1&k3=v3\"\n}"
 								}
 							]
 						}
@@ -279,6 +384,11 @@
 						"value": "bbx",
 						"type": "text",
 						"disabled": true
+					},
+					{
+						"key": "Connection",
+						"value": "close",
+						"type": "text"
 					}
 				],
 				"url": {
@@ -301,7 +411,7 @@
 			},
 			"response": [
 				{
-					"name": "Get request headers",
+					"name": "Get request headers case1",
 					"originalRequest": {
 						"method": "GET",
 						"header": [
@@ -315,6 +425,11 @@
 								"value": "bbx",
 								"type": "text",
 								"disabled": true
+							},
+							{
+								"key": "Cookie",
+								"value": "Cookie_1=c1; Cookie_2=c2; sails.sid=s%3AGX6aS9b_phvUSUk66w7ZBgWuOPI7IIKT.ayEGTaW4U35eAWyPz%2Fh6Q74DonNcbqw3H5Q5Zv%2BfKMY",
+								"type": "text"
 							}
 						],
 						"url": {
@@ -335,10 +450,37 @@
 							]
 						}
 					},
+					"status": "OK",
+					"code": 200,
 					"_postman_previewlanguage": "json",
-					"header": null,
+					"header": [
+						{
+							"key": "Date",
+							"value": "Mon, 16 May 2022 12:14:25 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "541"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"21d-ld5UvFTaRM6lihVnvCj6mZm5Of0\""
+						},
+						{
+							"key": "Vary",
+							"value": "Accept-Encoding"
+						}
+					],
 					"cookie": [],
-					"body": "{\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"HttpRunner\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\"\n    }\n}"
+					"body": "{\n    \"headers\": {\n        \"x-forwarded-proto\": \"https\",\n        \"x-forwarded-port\": \"443\",\n        \"host\": \"postman-echo.com\",\n        \"user-agent\": \"HttpRunner\",\n        \"cookie\": \"Cookie_1=c1; Cookie_2=c2; sails.sid=s%3AGX6aS9b_phvUSUk66w7ZBgWuOPI7IIKT.ayEGTaW4U35eAWyPz%2Fh6Q74DonNcbqw3H5Q5Zv%2BfKMY\",\n        \"accept\": \"*/*\",\n        \"accept-encoding\": \"gzip, deflate, br\"\n    }\n}"
 				}
 			]
 		}

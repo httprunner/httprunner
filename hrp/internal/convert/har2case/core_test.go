@@ -1,6 +1,7 @@
 package har2case
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,9 +10,9 @@ import (
 )
 
 var (
-	harPath     = "../../../examples/data/har/demo.har"
-	harPath2    = "../../../examples/data/har/postman-echo.har"
-	profilePath = "../../../examples/data/har/profile.yml"
+	harPath     = "../../../../examples/data/har/demo.har"
+	harPath2    = "../../../../examples/data/har/postman-echo.har"
+	profilePath = "../../../../examples/data/har/profile.yml"
 )
 
 func TestGenJSON(t *testing.T) {
@@ -379,5 +380,34 @@ func TestMakeValidate(t *testing.T) {
 			Message: "assert response body Code",
 		}) {
 		t.Fatal()
+	}
+}
+
+func Test_tStep_makeRequestCookies(t *testing.T) {
+	type fields struct {
+		TStep   hrp.TStep
+		profile map[string]interface{}
+		patch   map[string]interface{}
+	}
+	type args struct {
+		entry *Entry
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &tStep{
+				TStep:   tt.fields.TStep,
+				profile: tt.fields.profile,
+				patch:   tt.fields.patch,
+			}
+			tt.wantErr(t, s.makeRequestCookies(tt.args.entry), fmt.Sprintf("makeRequestCookies(%v)", tt.args.entry))
+		})
 	}
 }
