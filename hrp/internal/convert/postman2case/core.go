@@ -3,7 +3,6 @@ package postman2case
 import (
 	"bytes"
 	"fmt"
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"io"
 	"mime/multipart"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 const (
@@ -33,9 +33,16 @@ const (
 )
 
 const (
-	suffixName    = ".converted"
+	suffixName    = ".converted" // distinguish the converted json(testcase) from the origin json(collection)
 	extensionJSON = ".json"
 	extensionYAML = ".yaml"
+)
+
+const (
+	configProfile = "profile"
+	configPatch   = "patch"
+	keyHeaders    = "headers"
+	keyCookies    = "cookies"
 )
 
 var contentTypeMap = map[string]string{
@@ -54,7 +61,29 @@ func NewCollection(path string) *collection {
 
 type collection struct {
 	path      string
+	profile   map[string]interface{}
+	patch     map[string]interface{}
 	outputDir string
+}
+
+func (c *collection) SetProfile(path string) {
+	log.Info().Str("path", path).Msg("set profile")
+	c.profile = make(map[string]interface{})
+	err := builtin.LoadFile(path, c.profile)
+	if err != nil {
+		log.Warn().Str("path", path).
+			Msg("invalid profile format, ignore!")
+	}
+}
+
+func (c *collection) SetPatch(path string) {
+	log.Info().Str("path", path).Msg("set patch")
+	c.patch = make(map[string]interface{})
+	err := builtin.LoadFile(path, c.patch)
+	if err != nil {
+		log.Warn().Str("path", path).
+			Msg("invalid patch format, ignore!")
+	}
 }
 
 func (c *collection) SetOutputDir(dir string) {
@@ -169,10 +198,12 @@ func (c *collection) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 		Msg("convert teststep")
 
 	step := &tStep{
-		hrp.TStep{
+		TStep: hrp.TStep{
 			Request:    &hrp.Request{},
 			Validators: make([]interface{}, 0),
 		},
+		profile: c.profile,
+		patch:   c.patch,
 	}
 	if err := step.makeRequestName(item); err != nil {
 		return nil, err
@@ -186,13 +217,13 @@ func (c *collection) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 	if err := step.makeRequestParams(item); err != nil {
 		return nil, err
 	}
-	if err := step.makeRequestHeadersAndCookies(item); err != nil {
+	if err := step.makeRequestHeaders(item); err != nil {
+		return nil, err
+	}
+	if err := step.makeRequestCookies(item); err != nil {
 		return nil, err
 	}
 	if err := step.makeRequestBody(item); err != nil {
-		return nil, err
-	}
-	if err := step.makeValidate(item); err != nil {
 		return nil, err
 	}
 	return &step.TStep, nil
@@ -200,6 +231,8 @@ func (c *collection) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 
 type tStep struct {
 	hrp.TStep
+	profile map[string]interface{}
+	patch   map[string]interface{}
 }
 
 // makeRequestName indicates the step name the same as item name
@@ -239,19 +272,87 @@ func (s *tStep) makeRequestParams(item *TItem) error {
 	return nil
 }
 
-func (s *tStep) makeRequestHeadersAndCookies(item *TItem) error {
-	s.Request.Headers = make(map[string]string)
-	for _, field := range item.Request.Headers {
-		if field.Disabled {
-			continue
+func (s *tStep) updateRequestInfo(config string, key string) bool {
+	var m map[string]interface{}
+	switch config {
+	case configProfile:
+		m = s.profile
+	case configPatch:
+		m = s.patch
+	default:
+		return false
+	}
+	iRequestMap, existed := m[key]
+	if existed {
+		requestMap, ok := iRequestMap.(map[string]interface{})
+		if ok {
+			for k, v := range requestMap {
+				switch key {
+				case keyHeaders:
+					s.Request.Headers[k] = fmt.Sprintf("%v", v)
+				case keyCookies:
+					s.Request.Cookies[k] = fmt.Sprintf("%v", v)
+				}
+			}
+			return true
 		}
-		if strings.EqualFold(field.Key, "cookie") {
-			s.Request.Cookies[field.Key] = field.Value
+		log.Warn().Interface(key, iRequestMap).Msgf("%v from %v is not a map, ignore!", key, config)
+	}
+	return false
+}
+
+func (s *tStep) makeRequestHeaders(item *TItem) error {
+	s.Request.Headers = make(map[string]string)
+
+	// override all headers according to the profile
+	if s.updateRequestInfo(configProfile, keyHeaders) {
+		return nil
+	}
+
+	// headers defined in postman collection
+	for _, field := range item.Request.Headers {
+		if field.Disabled || strings.EqualFold(field.Key, "cookie") {
 			continue
 		}
 		s.Request.Headers[field.Key] = field.Value
 	}
+
+	// create or update the headers indicated in the patch
+	s.updateRequestInfo(configPatch, keyHeaders)
 	return nil
+}
+
+func (s *tStep) makeRequestCookies(item *TItem) error {
+	s.Request.Cookies = make(map[string]string)
+
+	// override all cookies according to the profile
+	if s.updateRequestInfo(configProfile, keyCookies) {
+		return nil
+	}
+
+	// cookies defined in postman collection
+	for _, field := range item.Request.Headers {
+		if field.Disabled || !strings.EqualFold(field.Key, "cookie") {
+			continue
+		}
+		s.parseRequestCookiesMap(field.Value)
+	}
+
+	// create or update the cookies indicated in the patch
+	s.updateRequestInfo(configPatch, keyCookies)
+	return nil
+}
+
+func (s *tStep) parseRequestCookiesMap(cookies string) {
+	for _, cookie := range strings.Split(cookies, ";") {
+		cookie = strings.TrimSpace(cookie)
+		index := strings.Index(cookie, "=")
+		if index == -1 {
+			log.Warn().Str("cookie", cookie).Msg("cookie format invalid")
+			continue
+		}
+		s.Request.Cookies[cookie[0:index]] = cookie[index+1:]
+	}
 }
 
 func (s *tStep) makeRequestBody(item *TItem) error {
@@ -267,7 +368,7 @@ func (s *tStep) makeRequestBody(item *TItem) error {
 	case enumBodyUrlEncoded:
 		return s.makeRequestBodyUrlEncoded(item)
 	case enumBodyFile, enumBodyGraphQL:
-		return errors.New("not supported body type")
+		return errors.Errorf("unsupported body type: %v", mode)
 	}
 	return nil
 }

@@ -22,6 +22,13 @@ const (
 	suffixYAML = ".yaml"
 )
 
+const (
+	configProfile = "profile"
+	configPatch   = "patch"
+	keyHeaders    = "headers"
+	keyCookies    = "cookies"
+)
+
 func NewHAR(path string) *har {
 	return &har{
 		path: path,
@@ -33,6 +40,7 @@ type har struct {
 	filterStr  string
 	excludeStr string
 	profile    map[string]interface{}
+	patch      map[string]interface{}
 	outputDir  string
 }
 
@@ -43,6 +51,16 @@ func (h *har) SetProfile(path string) {
 	if err != nil {
 		log.Warn().Str("path", path).
 			Msg("invalid profile format, ignore!")
+	}
+}
+
+func (h *har) SetPatch(path string) {
+	log.Info().Str("path", path).Msg("set patch")
+	h.patch = make(map[string]interface{})
+	err := builtin.LoadFile(path, h.patch)
+	if err != nil {
+		log.Warn().Str("path", path).
+			Msg("invalid patch format, ignore!")
 	}
 }
 
@@ -146,6 +164,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 			Validators: make([]interface{}, 0),
 		},
 		profile: h.profile,
+		patch:   h.patch,
 	}
 	if err := step.makeRequestMethod(entry); err != nil {
 		return nil, err
@@ -174,6 +193,7 @@ func (h *har) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 type tStep struct {
 	hrp.TStep
 	profile map[string]interface{}
+	patch   map[string]interface{}
 }
 
 func (s *tStep) makeRequestMethod(entry *Entry) error {
@@ -199,43 +219,59 @@ func (s *tStep) makeRequestParams(entry *Entry) error {
 	return nil
 }
 
+func (s *tStep) updateRequestInfo(config string, key string) bool {
+	var m map[string]interface{}
+	switch config {
+	case configProfile:
+		m = s.profile
+	case configPatch:
+		m = s.patch
+	default:
+		return false
+	}
+	iRequestMap, existed := m[key]
+	if existed {
+		requestMap, ok := iRequestMap.(map[string]interface{})
+		if ok {
+			for k, v := range requestMap {
+				switch key {
+				case keyHeaders:
+					s.Request.Headers[k] = fmt.Sprintf("%v", v)
+				case keyCookies:
+					s.Request.Cookies[k] = fmt.Sprintf("%v", v)
+				}
+			}
+			return true
+		}
+		log.Warn().Interface(key, iRequestMap).Msgf("%v from %v is not a map, ignore!", key, config)
+	}
+	return false
+}
+
 func (s *tStep) makeRequestCookies(entry *Entry) error {
 	s.Request.Cookies = make(map[string]string)
-	cookies, ok := s.profile["cookies"]
-	if ok {
-		// use cookies from profile
-		cookies, ok := cookies.(map[string]interface{})
-		if ok {
-			for k, v := range cookies {
-				s.Request.Cookies[k] = fmt.Sprintf("%v", v)
-			}
-			return nil
-		}
-		log.Warn().Interface("cookies", cookies).
-			Msg("cookies from profile is not a map, ignore!")
+
+	// override all cookies according to the profile
+	if s.updateRequestInfo(configProfile, keyCookies) {
+		return nil
 	}
 
 	// use cookies from har
 	for _, cookie := range entry.Request.Cookies {
 		s.Request.Cookies[cookie.Name] = cookie.Value
 	}
+
+	// create or update the cookies indicated in the patch
+	s.updateRequestInfo(configPatch, keyCookies)
 	return nil
 }
 
 func (s *tStep) makeRequestHeaders(entry *Entry) error {
 	s.Request.Headers = make(map[string]string)
-	headers, ok := s.profile["headers"]
-	if ok {
-		// use headers from profile
-		cookies, ok := headers.(map[string]interface{})
-		if ok {
-			for k, v := range cookies {
-				s.Request.Headers[k] = fmt.Sprintf("%v", v)
-			}
-			return nil
-		}
-		log.Warn().Interface("headers", headers).
-			Msg("headers from profile is not a map, ignore!")
+
+	// override all headers according to the profile
+	if s.updateRequestInfo(configProfile, keyHeaders) {
+		return nil
 	}
 
 	// use headers from har
@@ -245,6 +281,9 @@ func (s *tStep) makeRequestHeaders(entry *Entry) error {
 		}
 		s.Request.Headers[header.Name] = header.Value
 	}
+
+	// create or update the headers indicated in the patch
+	s.updateRequestInfo(configPatch, keyHeaders)
 	return nil
 }
 

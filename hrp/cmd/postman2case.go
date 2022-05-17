@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/postman2case"
+	"github.com/httprunner/httprunner/v4/hrp/internal/convert/postman2case"
 )
 
 // postman2caseCmd represents the postman2case command
@@ -22,24 +22,34 @@ var postman2caseCmd = &cobra.Command{
 		var outputFiles []string
 		for _, arg := range args {
 			// must choose one
-			if !postman2JSONFlag && !postman2YAMLFlag {
+			if !postman2caseGenJSONFlag && !postman2caseGenYAMLFlag {
 				return errors.New("please select convert format type")
 			}
 			var outputPath string
 			var err error
 
-			postman := postman2case.NewCollection(arg)
+			collection := postman2case.NewCollection(arg)
 
 			// specify output dir
-			if postman2Dir != "" {
-				postman.SetOutputDir(postman2Dir)
+			if postman2caseOutputDir != "" {
+				collection.SetOutputDir(postman2caseOutputDir)
+			}
+
+			// specify profile path
+			if postman2caseProfilePath != "" {
+				collection.SetProfile(postman2caseProfilePath)
+			}
+
+			// specify patch path
+			if postman2casePatchPath != "" {
+				collection.SetPatch(postman2casePatchPath)
 			}
 
 			// generate json/yaml files
-			if genYAMLFlag {
-				outputPath, err = postman.GenYAML()
+			if postman2caseGenYAMLFlag {
+				outputPath, err = collection.GenYAML()
 			} else {
-				outputPath, err = postman.GenJSON() // default
+				outputPath, err = collection.GenJSON() // default
 			}
 			if err != nil {
 				return err
@@ -52,14 +62,18 @@ var postman2caseCmd = &cobra.Command{
 }
 
 var (
-	postman2JSONFlag bool
-	postman2YAMLFlag bool
-	postman2Dir      string
+	postman2caseGenJSONFlag bool
+	postman2caseGenYAMLFlag bool
+	postman2caseOutputDir   string
+	postman2caseProfilePath string
+	postman2casePatchPath   string
 )
 
 func init() {
 	rootCmd.AddCommand(postman2caseCmd)
-	postman2caseCmd.Flags().BoolVarP(&postman2JSONFlag, "to-json", "j", true, "convert to JSON format")
-	postman2caseCmd.Flags().BoolVarP(&postman2YAMLFlag, "to-yaml", "y", false, "convert to YAML format")
-	postman2caseCmd.Flags().StringVarP(&postman2Dir, "output-dir", "d", "", "specify output directory, default to the same dir with postman collection file")
+	postman2caseCmd.Flags().BoolVarP(&postman2caseGenJSONFlag, "to-json", "j", true, "convert to JSON format")
+	postman2caseCmd.Flags().BoolVarP(&postman2caseGenYAMLFlag, "to-yaml", "y", false, "convert to YAML format")
+	postman2caseCmd.Flags().StringVarP(&postman2caseOutputDir, "output-dir", "d", "", "specify output directory, default to the same dir with postman collection file")
+	postman2caseCmd.Flags().StringVarP(&postman2caseProfilePath, "profile", "p", "", "specify profile path to override original headers (except for Content-Type) and cookies")
+	postman2caseCmd.Flags().StringVarP(&postman2casePatchPath, "patch", "r", "", "specify patch path to create or update headers and cookies")
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/convert"
+	"github.com/httprunner/httprunner/v4/hrp/internal/convert/case2script"
 )
 
 var convertCmd = &cobra.Command{
@@ -18,15 +18,16 @@ var convertCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// TODO: integrate har2case, postman2case, etc. in convert command (forward compatibility)
 		if !pytestFlag && !gotestFlag {
 			return errors.New("please specify convertion type")
 		}
 
 		var err error
 		if gotestFlag {
-			err = convert.Convert2TestScripts("gotest", args...)
+			err = case2script.Convert2TestScripts("gotest", args...)
 		} else {
-			err = convert.Convert2TestScripts("pytest", args...)
+			err = case2script.Convert2TestScripts("pytest", args...)
 		}
 		if err != nil {
 			log.Error().Err(err).Msg("convert test scripts failed")
