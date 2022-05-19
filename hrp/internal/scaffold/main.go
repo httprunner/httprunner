@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 type PluginType string
@@ -22,6 +24,12 @@ const (
 	Py     PluginType = "py"
 	Go     PluginType = "go"
 )
+
+type ProjectInfo struct {
+	ProjectName string    `json:"project_name,omitempty" yaml:"project_name,omitempty"`
+	CreateTime  time.Time `json:"create_time,omitempty" yaml:"create_time,omitempty"`
+	Version     string    `json:"hrp_version,omitempty" yaml:"hrp_version,omitempty"`
+}
 
 //go:embed templates/*
 var templatesDir embed.FS
@@ -88,8 +96,17 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		return err
 	}
 
+	projectInfo := &ProjectInfo{
+		ProjectName: projectName,
+		CreateTime:  time.Now(),
+		Version:     version.VERSION,
+	}
+
+	// dump project information to file
+	err := builtin.Dump2JSON(projectInfo, filepath.Join(projectName, "proj.json"))
+
 	// create .gitignore
-	err := CopyFile("templates/gitignore", filepath.Join(projectName, ".gitignore"))
+	err = CopyFile("templates/gitignore", filepath.Join(projectName, ".gitignore"))
 	if err != nil {
 		return err
 	}
