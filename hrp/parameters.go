@@ -12,17 +12,17 @@ import (
 )
 
 type TParamsConfig struct {
-	Strategy   iteratorStrategy            `json:"strategy,omitempty" yaml:"strategy,omitempty"`     // overall strategy
+	PickOrder  iteratorPickOrder           `json:"strategy,omitempty" yaml:"strategy,omitempty"`     // overall pick-order strategy
 	Strategies map[string]iteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
 	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
-type iteratorStrategy string
+type iteratorPickOrder string
 
 const (
-	strategySequential iteratorStrategy = "sequential"
-	strategyRandom     iteratorStrategy = "random"
-	strategyUnique     iteratorStrategy = "unique"
+	strategySequential iteratorPickOrder = "sequential"
+	strategyRandom     iteratorPickOrder = "random"
+	strategyUnique     iteratorPickOrder = "unique"
 )
 
 /*
@@ -32,6 +32,11 @@ const (
 ]
 */
 type Parameters []map[string]interface{}
+
+type iteratorStrategy struct {
+	Name      string            `json:"name,omitempty" yaml:"name,omitempty"`
+	PickOrder iteratorPickOrder `json:"pick_order,omitempty" yaml:"pick_order,omitempty"`
+}
 
 func initParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
 	parameters, err := loadParameters(cfg.Parameters, cfg.Variables)
@@ -65,12 +70,12 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 		// check parameter individual strategy
 		strategy, ok := config.Strategies[paramName]
 		if !ok {
-			// default to overall strategy
-			strategy = config.Strategy
+			// default to overall pick order
+			strategy.PickOrder = config.PickOrder
 		}
 
 		// group parameters by strategy
-		if strategy == strategyRandom {
+		if strategy.PickOrder == strategyRandom {
 			iterator.randomParameterNames = append(iterator.randomParameterNames, paramName)
 		} else {
 			parametersList = append(parametersList, parameters[paramName])
