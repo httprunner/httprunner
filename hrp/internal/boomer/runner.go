@@ -58,12 +58,11 @@ func (l *Loop) increaseFinishedCount() {
 }
 
 type SpawnInfo struct {
+	mutex         sync.RWMutex
 	spawnCount    int64 // target clients to spawn
 	acquiredCount int64 // count acquired of workers
 	spawnRate     float64
 	spawnDone     chan struct{}
-
-	mutex sync.RWMutex
 }
 
 func (s *SpawnInfo) setSpawn(spawnCount int64, spawnRate float64) {
@@ -153,6 +152,9 @@ type runner struct {
 
 	// when this channel is closed, all statistics are reported successfully
 	reportedChan chan bool
+
+	// rebalance spawn
+	rebalance chan bool
 
 	// all running workers(goroutines) will select on this channel.
 	// close this channel will stop all running workers.
@@ -273,12 +275,7 @@ func (r *runner) reportTestResult() {
 }
 
 func (r *runner) startSpawning(spawnCount int64, spawnRate float64, spawnCompleteFunc func()) {
-	r.stopChan = make(chan bool)
-	r.reportedChan = make(chan bool)
 	r.spawn.reset()
-
-	r.spawn.setSpawn(spawnCount, spawnRate)
-
 	atomic.StoreInt32(&r.currentClientsNum, 0)
 
 	go r.spawnWorkers(spawnCount, spawnRate, r.stopChan, spawnCompleteFunc)
@@ -289,6 +286,8 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 		Int64("spawnCount", spawnCount).
 		Float64("spawnRate", spawnRate).
 		Msg("Spawning workers")
+
+	r.spawn.setSpawn(spawnCount, spawnRate)
 
 	r.updateState(StateSpawning)
 	for {
@@ -306,7 +305,7 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 				// loop count per worker
 				var workerLoop *Loop
 				if r.loop != nil {
-					workerLoop = &Loop{loopCount: atomic.LoadInt64(&r.loop.loopCount) / int64(r.spawn.spawnCount)}
+					workerLoop = &Loop{loopCount: atomic.LoadInt64(&r.loop.loopCount) / r.spawn.spawnCount}
 				}
 				atomic.AddInt32(&r.currentClientsNum, 1)
 				go func() {
@@ -343,23 +342,19 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 								atomic.AddInt32(&r.currentClientsNum, -1)
 								return
 							}
-							if !r.isStarted() {
-								atomic.AddInt64(&r.spawn.acquiredCount, -1)
-								atomic.AddInt32(&r.currentClientsNum, -1)
-								return
-							}
 						}
 					}
 				}()
-			} else {
-				if r.getState() == StateSpawning {
-					r.spawn.done()
-					if spawnCompleteFunc != nil {
-						spawnCompleteFunc()
-					}
-					r.updateState(StateRunning)
+			} else if r.getState() == StateSpawning {
+				// spawning compete
+				r.spawn.done()
+				if spawnCompleteFunc != nil {
+					spawnCompleteFunc()
 				}
-				time.Sleep(1 * time.Second)
+				r.updateState(StateRunning)
+			} else {
+				// continue if rebalance
+				<-r.rebalance
 			}
 		}
 	}
@@ -492,6 +487,10 @@ func (r *localRunner) start() {
 		r.rateLimiter.Start()
 	}
 
+	r.stopChan = make(chan bool)
+	r.reportedChan = make(chan bool)
+	r.rebalance = make(chan bool)
+
 	go r.spawnWorkers(r.spawn.spawnCount, r.spawn.spawnRate, r.stopChan, nil)
 
 	// output setup
@@ -525,6 +524,7 @@ func (r *localRunner) start() {
 func (r *localRunner) stop() {
 	if r.runner.isStarted() {
 		r.runner.stop()
+		close(r.rebalance)
 	}
 }
 
@@ -542,8 +542,6 @@ type workerRunner struct {
 	// get testcase from master
 	testCaseBytes chan []byte
 
-	startFlag bool
-
 	ignoreQuit bool
 }
 
@@ -554,10 +552,8 @@ func newWorkerRunner(masterHost string, masterPort int) (r *workerRunner) {
 			spawn: &SpawnInfo{
 				spawnDone: make(chan struct{}),
 			},
-			stopChan:     make(chan bool),
-			reportedChan: make(chan bool),
-			closeChan:    make(chan bool),
-			once:         &sync.Once{},
+			closeChan: make(chan bool),
+			once:      &sync.Once{},
 		},
 		masterHost:     masterHost,
 		masterPort:     masterPort,
@@ -572,7 +568,6 @@ func (r *workerRunner) spawnComplete() {
 	data := make(map[string]int64)
 	data["count"] = r.spawn.getSpawnCount()
 	r.client.sendChannel() <- newGenericMessage("spawning_complete", data, r.nodeID)
-	r.updateState(StateRunning)
 }
 
 func (r *workerRunner) onSpawnMessage(msg *genericMessage) {
@@ -607,6 +602,7 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 		switch msg.Type {
 		case "spawn":
 			r.onSpawnMessage(msg)
+			r.rebalance <- true
 		case "stop":
 			r.stop()
 			log.Info().Msg("Recv stop message from master, all the goroutines are stopped")
@@ -644,7 +640,7 @@ func (r *workerRunner) startListener() {
 	}
 }
 
-// run starts service
+// run worker service
 func (r *workerRunner) run() {
 	r.updateState(StateInit)
 	r.client = newClient(r.masterHost, r.masterPort, r.nodeID)
@@ -694,17 +690,18 @@ func (r *workerRunner) run() {
 	<-r.closeChan
 }
 
+// start load test
 func (r *workerRunner) start() {
-	r.startFlag = true
-	defer func() {
-		r.startFlag = false
-	}()
 	r.stats.clearAll()
 
 	// start rate limiter
 	if r.rateLimitEnabled {
 		r.rateLimiter.Start()
 	}
+
+	r.stopChan = make(chan bool)
+	r.reportedChan = make(chan bool)
+	r.rebalance = make(chan bool)
 
 	r.once.Do(r.outputOnStart)
 
@@ -722,6 +719,7 @@ func (r *workerRunner) start() {
 func (r *workerRunner) stop() {
 	if r.isStarted() {
 		close(r.stopChan)
+		close(r.rebalance)
 		// stop rate limiter
 		if r.rateLimitEnabled {
 			r.rateLimiter.Stop()
@@ -735,9 +733,8 @@ func (r *workerRunner) close() {
 	if r.ignoreQuit {
 		return
 	}
-	for r.startFlag == true {
-		time.Sleep(1 * time.Second)
-	}
+	// waiting report finished
+	time.Sleep(3 * time.Second)
 	close(r.closeChan)
 	var ticker = time.NewTicker(1 * time.Second)
 	if r.client != nil {
@@ -768,8 +765,6 @@ type masterRunner struct {
 	parseTestCasesChan chan bool
 	startFlag          bool
 	testCaseBytes      chan []byte
-
-	mutex sync.Mutex
 }
 
 func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
