@@ -6,7 +6,6 @@ on:
       - master
       - v2
       - v3
-      - v4.1-dev
   pull_request:
 
 env:
