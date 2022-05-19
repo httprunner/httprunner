@@ -107,9 +107,8 @@ func TestLoopCount(t *testing.T) {
 	runner := newLocalRunner(2, 2)
 	runner.loop = &Loop{loopCount: 4}
 	runner.setTasks(tasks)
-	go runner.start()
-	<-runner.stopChan
-	if !assert.Equal(t, runner.loop.loopCount, atomic.LoadInt64(&runner.loop.finishedCount)) {
+	runner.start()
+	if !assert.Equal(t, atomic.LoadInt64(&runner.loop.loopCount), atomic.LoadInt64(&runner.loop.finishedCount)) {
 		t.Fatal()
 	}
 }
@@ -129,8 +128,9 @@ func TestSpawnWorkers(t *testing.T) {
 
 	runner.client = newClient("localhost", 5557, runner.nodeID)
 	runner.setTasks(tasks)
+	runner.stopChan = make(chan bool)
 	go runner.spawnWorkers(10, 10, runner.stopChan, runner.spawnComplete)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 
 	currentClients := atomic.LoadInt32(&runner.currentClientsNum)
 	if currentClients != 10 {
@@ -166,13 +166,14 @@ func TestSpawnWorkersWithManyTasks(t *testing.T) {
 	runner.client = newClient("localhost", 5557, runner.nodeID)
 
 	const numToSpawn int64 = 30
+	runner.stopChan = make(chan bool)
 
-	runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
+	go runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
 	time.Sleep(2 * time.Second)
 
 	currentClients := atomic.LoadInt32(&runner.currentClientsNum)
 
-	assert.Equal(t, numToSpawn, int(currentClients))
+	assert.Equal(t, numToSpawn, int64(currentClients))
 	lock.Lock()
 	hundreds := taskCalls["one hundred"]
 	tens := taskCalls["ten"]
@@ -255,6 +256,7 @@ func TestStop(t *testing.T) {
 	}
 	tasks := []*Task{taskA}
 	runner := newWorkerRunner("localhost", 5557)
+	runner.stopChan = make(chan bool)
 	runner.setTasks(tasks)
 	runner.spawn.setSpawn(10, 10)
 	runner.updateState(StateSpawning)
@@ -358,15 +360,15 @@ func TestOnMessage(t *testing.T) {
 
 	// spawn complete and running
 	time.Sleep(2 * time.Second)
-	if runner.getState() != StateRunning {
-		t.Error("State of runner is not running after spawn, got", runner.getState())
-	}
 	if atomic.LoadInt32(&runner.currentClientsNum) != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", atomic.LoadInt32(&runner.currentClientsNum))
 	}
 	msg = <-runner.client.sendChannel()
 	if msg.Type != "spawning_complete" {
 		t.Error("Runner should send spawning_complete message when spawn completed, got", msg.Type)
+	}
+	if runner.getState() != StateRunning {
+		t.Error("State of runner is not running after spawn, got", runner.getState())
 	}
 
 	// increase goroutines while running
@@ -381,10 +383,6 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	time.Sleep(2 * time.Second)
-	msg = <-runner.client.sendChannel()
-	if msg.Type != "spawning_complete" {
-		t.Error("Runner should send spawning_complete message, got", msg.Type)
-	}
 	if runner.getState() != StateRunning {
 		t.Error("State of runner is not running after spawn, got", runner.getState())
 	}
@@ -402,6 +400,9 @@ func TestOnMessage(t *testing.T) {
 		t.Error("Runner should send client_stopped message, got", msg.Type)
 	}
 
+	time.Sleep(3 * time.Second)
+
+	go runner.start()
 	// spawn again
 	runner.onMessage(newGenericMessage("spawn", map[string]int64{
 		"spawn_count": 10,
@@ -414,12 +415,12 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	// spawn complete and running
-	time.Sleep(2 * time.Second)
-	if runner.getState() != StateRunning {
-		t.Error("State of runner is not running after spawn, got", runner.getState())
-	}
+	time.Sleep(3 * time.Second)
 	if atomic.LoadInt32(&runner.currentClientsNum) != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", atomic.LoadInt32(&runner.currentClientsNum))
+	}
+	if runner.getState() != StateRunning {
+		t.Error("State of runner is not running after spawn, got", runner.getState())
 	}
 	msg = <-runner.client.sendChannel()
 	if msg.Type != "spawning_complete" {
