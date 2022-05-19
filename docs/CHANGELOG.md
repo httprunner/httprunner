@@ -1,13 +1,17 @@
 # Release History
 
-## v4.1.0-alpha (2022-05-09)
+## v4.1.0-beta (2022-05-19)
 
 - feat: add pre-commit-hook to format go/python code
 
 **go version**
 
+- feat: add boomer mode(standalone/master/worker)
 - fix: step request elapsed timing should contain ContentTransfer part
 - fix #1288: unable to go get httprunner v4
+- fix: panic when config didn't exist in testcase file
+- fix: disable keep alive and improve RPS accuracy
+- fix: improve RPS accuracy
 
 **python version**
 
