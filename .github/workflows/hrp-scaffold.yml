@@ -34,10 +34,10 @@ jobs:
       - name: Run generated demo tests
         run: ./output/hrp run demo/testcases/
       - name: Run API test demo in examples
-        run: ./output/hrp run examples/demo-with-py-plugin/testcases/demo_with_funplugin.json
+        run: ./output/hrp run examples/demo-with-py-plugin/testcases/demo.json
       - name: Run load test demo in examples
         run: |
-          ./output/hrp boom examples/demo-with-py-plugin/testcases/demo_with_funplugin.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+          ./output/hrp boom examples/demo-with-py-plugin/testcases/demo.json --spawn-count 10 --spawn-rate 10 --loop-count 10
 
   scaffold-with-go-plugin:
     strategy:
@@ -63,11 +63,11 @@ jobs:
       - name: Run API test demo in examples
         run: |
           go build -o examples/demo-with-go-plugin/debugtalk.bin examples/demo-with-go-plugin/plugin/debugtalk.go
-          ./output/hrp run examples/demo-with-go-plugin/testcases/demo_with_funplugin.json
+          ./output/hrp run examples/demo-with-go-plugin/testcases/demo.json
       - name: Run load test demo in examples
         run: |
           go build -o examples/demo-with-go-plugin/debugtalk.bin examples/demo-with-go-plugin/plugin/debugtalk.go
-          ./output/hrp boom examples/demo-with-go-plugin/testcases/demo_with_funplugin.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+          ./output/hrp boom examples/demo-with-go-plugin/testcases/demo.json --spawn-count 10 --spawn-rate 10 --loop-count 10
 
   scaffold-without-custom-plugin:
     strategy:
@@ -89,9 +89,9 @@ jobs:
       - name: Run start project
         run: ./output/hrp startproject demo --ignore-plugin
       - name: Run generated demo tests
-        run: ./output/hrp run demo/testcases/demo_without_funplugin.json
+        run: ./output/hrp run demo/testcases/requests.json
       - name: Run API test demo in examples
-        run: ./output/hrp run examples/demo-without-plugin/testcases/demo_without_funplugin.json
+        run: ./output/hrp run examples/demo-without-plugin/testcases/requests.json
       - name: Run load test demo in examples
         run: |
-          ./output/hrp boom examples/demo-without-plugin/testcases/demo_without_funplugin.json --spawn-count 10 --spawn-rate 10 --loop-count 10
+          ./output/hrp boom examples/demo-without-plugin/testcases/requests.json --spawn-count 10 --spawn-rate 10 --loop-count 10
