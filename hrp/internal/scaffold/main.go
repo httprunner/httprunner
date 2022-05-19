@@ -102,7 +102,7 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 	// create demo testcases
 	if pluginType == Ignore {
 		err := CopyFile("templates/testcases/demo_without_funplugin.json",
-			filepath.Join(projectName, "testcases", "demo_without_funplugin.json"))
+			filepath.Join(projectName, "testcases", "requests.json"))
 		if err != nil {
 			return err
 		}
@@ -111,17 +111,22 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 	}
 
 	err = CopyFile("templates/testcases/demo_with_funplugin.json",
-		filepath.Join(projectName, "testcases", "demo_with_funplugin.json"))
+		filepath.Join(projectName, "testcases", "demo.json"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_requests.json",
+		filepath.Join(projectName, "testcases", "requests.json"))
 	if err != nil {
 		return err
 	}
 	err = CopyFile("templates/testcases/demo_requests.yml",
-		filepath.Join(projectName, "testcases", "demo_requests.yml"))
+		filepath.Join(projectName, "testcases", "requests.yml"))
 	if err != nil {
 		return err
 	}
 	err = CopyFile("templates/testcases/demo_ref_testcase.yml",
-		filepath.Join(projectName, "testcases", "demo_ref_testcase.yml"))
+		filepath.Join(projectName, "testcases", "ref_testcase.yml"))
 	if err != nil {
 		return err
 	}
