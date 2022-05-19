@@ -20,9 +20,9 @@ type TParamsConfig struct {
 type iteratorPickOrder string
 
 const (
-	strategySequential iteratorPickOrder = "sequential"
-	strategyRandom     iteratorPickOrder = "random"
-	strategyUnique     iteratorPickOrder = "unique"
+	pickOrderSequential iteratorPickOrder = "sequential"
+	pickOrderRandom     iteratorPickOrder = "random"
+	pickOrderUnique     iteratorPickOrder = "unique"
 )
 
 /*
@@ -67,15 +67,15 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 
 	parametersList := make([]Parameters, 0)
 	for paramName := range parameters {
-		// check parameter individual strategy
+		// check parameter individual pick order strategy
 		strategy, ok := config.Strategies[paramName]
 		if !ok {
-			// default to overall pick order
+			// default to overall pick order strategy
 			strategy.PickOrder = config.PickOrder
 		}
 
-		// group parameters by strategy
-		if strategy.PickOrder == strategyRandom {
+		// group parameters by pick order strategy
+		if strategy.PickOrder == pickOrderRandom {
 			iterator.randomParameterNames = append(iterator.randomParameterNames, paramName)
 		} else {
 			parametersList = append(parametersList, parameters[paramName])

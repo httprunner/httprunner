@@ -75,7 +75,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	}
 
 	// locate project root dir by plugin path
-	projectRootDir, err := getProjectRootDirPath(casePath)
+	projectRootDir, err := GetProjectRootDirPath(casePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get project root dir")
 	}
