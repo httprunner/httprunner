@@ -10,8 +10,14 @@
     },
     "parameters_setting": {
       "strategies": {
-        "user_agent": "sequential",
-        "username-password": "random"
+        "user_agent": {
+          "name": "user-identity",
+          "pick_order": "sequential"
+        },
+        "username-password": {
+          "name": "user-info",
+          "pick_order": "random"
+        }
       },
       "limit": 6
     },
