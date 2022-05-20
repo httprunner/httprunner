@@ -129,6 +129,7 @@ func TestSpawnWorkers(t *testing.T) {
 	runner.client = newClient("localhost", 5557, runner.nodeID)
 	runner.setTasks(tasks)
 	runner.stopChan = make(chan bool)
+	runner.rebalance = make(chan bool)
 	go runner.spawnWorkers(10, 10, runner.stopChan, runner.spawnComplete)
 	time.Sleep(2 * time.Second)
 
@@ -167,6 +168,7 @@ func TestSpawnWorkersWithManyTasks(t *testing.T) {
 
 	const numToSpawn int64 = 30
 	runner.stopChan = make(chan bool)
+	runner.rebalance = make(chan bool)
 
 	go runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
 	time.Sleep(2 * time.Second)
@@ -257,6 +259,7 @@ func TestStop(t *testing.T) {
 	tasks := []*Task{taskA}
 	runner := newWorkerRunner("localhost", 5557)
 	runner.stopChan = make(chan bool)
+	runner.rebalance = make(chan bool)
 	runner.setTasks(tasks)
 	runner.spawn.setSpawn(10, 10)
 	runner.updateState(StateSpawning)
@@ -308,6 +311,7 @@ func TestOnQuitMessage(t *testing.T) {
 	runner.updateState(StateRunning)
 	runner.closeChan = make(chan bool)
 	runner.stopChan = make(chan bool)
+	runner.rebalance = make(chan bool)
 	runner.client.shutdownChan = make(chan bool)
 	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
 	<-runner.closeChan
