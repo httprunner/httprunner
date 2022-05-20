@@ -118,7 +118,7 @@ func locateFile(startPath string, destFile string) (string, error) {
 	return locateFile(parentDir, destFile)
 }
 
-func getProjectRootDirPath(path string) (rootDir string, err error) {
+func GetProjectRootDirPath(path string) (rootDir string, err error) {
 	pluginPath, err := locatePlugin(path)
 	if err == nil {
 		rootDir = filepath.Dir(pluginPath)
