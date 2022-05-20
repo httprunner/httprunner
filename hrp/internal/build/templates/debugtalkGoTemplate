@@ -1,0 +1,17 @@
+package main
+
+import (
+{{- range $import := .Imports }}
+    {{ $import -}}
+{{ end }}
+)
+
+{{ range $function := .Functions }}
+{{ $function }}
+{{ end }}
+func main() {
+{{- range $idx, $name := .FunctionNames }}
+    fungo.Register("{{ index $.FunctionSnakeNames $idx }}", {{ $name }})
+{{- end }}
+	fungo.Serve()
+}

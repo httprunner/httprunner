@@ -1,0 +1,15 @@
+{{- range $import := .Imports }}
+{{- $import}}
+{{ end }}
+{{ range $fromImport := .FromImports }}
+{{- $fromImport}}
+{{ end }}
+{{ range $function := .Functions }}
+{{ $function }}
+
+{{ end }}
+if __name__ == "__main__":
+{{- range $mainRegSnake := .FunctionSnakeNames }}
+    funppy.register("{{ $mainRegSnake }}", {{ $mainRegSnake }})
+{{- end }}
+    funppy.serve()
