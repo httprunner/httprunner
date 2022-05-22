@@ -71,7 +71,7 @@ var boomCmd = &cobra.Command{
 			if boomArgs.autoStart {
 				hrpBoomer.SetAutoStart()
 				hrpBoomer.SetExpectWorkers(boomArgs.expectWorkers, boomArgs.expectWorkersMaxWait)
-				hrpBoomer.SetSpawnCount(boomArgs.SpawnCount)
+				hrpBoomer.SetSpawnCount(int64(boomArgs.SpawnCount))
 				hrpBoomer.SetSpawnRate(boomArgs.SpawnRate)
 			}
 			go hrpBoomer.StartServer()

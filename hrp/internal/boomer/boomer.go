@@ -39,9 +39,6 @@ type Boomer struct {
 
 	testcasePath []string
 
-	spawnCount int // target clients to spawn
-	spawnRate  float64
-
 	cpuProfile         string
 	cpuProfileDuration time.Duration
 
@@ -86,8 +83,6 @@ func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
 	return &Boomer{
 		mode:        StandaloneMode,
 		localRunner: newLocalRunner(spawnCount, spawnRate),
-		spawnCount:  spawnCount,
-		spawnRate:   spawnRate,
 	}
 }
 
@@ -161,18 +156,26 @@ func (b *Boomer) GetState() int32 {
 }
 
 // SetSpawnCount sets spawn count
-func (b *Boomer) SetSpawnCount(spawnCount int) {
-	b.spawnCount = spawnCount
-	if b.mode == DistributedMasterMode {
-		b.masterRunner.spawn.setSpawn(int64(spawnCount), -1)
+func (b *Boomer) SetSpawnCount(spawnCount int64) {
+	switch b.mode {
+	case DistributedMasterMode:
+		b.masterRunner.setSpawnCount(spawnCount)
+	case DistributedWorkerMode:
+		b.workerRunner.setSpawnCount(spawnCount)
+	default:
+		b.localRunner.setSpawnCount(spawnCount)
 	}
 }
 
 // SetSpawnRate sets spawn rate
 func (b *Boomer) SetSpawnRate(spawnRate float64) {
-	b.spawnRate = spawnRate
-	if b.mode == DistributedMasterMode {
-		b.masterRunner.spawn.setSpawn(-1, spawnRate)
+	switch b.mode {
+	case DistributedMasterMode:
+		b.masterRunner.setSpawnRate(spawnRate)
+	case DistributedWorkerMode:
+		b.workerRunner.setSpawnRate(spawnRate)
+	default:
+		b.localRunner.setSpawnRate(spawnRate)
 	}
 }
 
@@ -242,11 +245,11 @@ func (b *Boomer) SetLoopCount(loopCount int64) {
 	// total loop count for testcase, it will be evenly distributed to each worker
 	switch b.mode {
 	case DistributedWorkerMode:
-		b.workerRunner.loop = &Loop{loopCount: loopCount * b.workerRunner.spawn.getSpawnCount()}
+		b.workerRunner.loop = &Loop{loopCount: loopCount * b.workerRunner.getSpawnCount()}
 	case DistributedMasterMode:
-		b.masterRunner.loop = &Loop{loopCount: loopCount * b.masterRunner.spawn.getSpawnCount()}
+		b.masterRunner.loop = &Loop{loopCount: loopCount * b.masterRunner.getSpawnCount()}
 	case StandaloneMode:
-		b.localRunner.loop = &Loop{loopCount: loopCount * b.localRunner.spawn.getSpawnCount()}
+		b.localRunner.loop = &Loop{loopCount: loopCount * b.localRunner.getSpawnCount()}
 	}
 }
 
@@ -388,6 +391,9 @@ func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exc
 
 // Start starts to run
 func (b *Boomer) Start(Args map[string]interface{}) error {
+	if b.masterRunner.isStarted() {
+		return errors.New("already started")
+	}
 	spawnCount, ok := Args["spawn_count"]
 	if ok {
 		v, err := strconv.Atoi(spawnCount.(string))
@@ -395,7 +401,7 @@ func (b *Boomer) Start(Args map[string]interface{}) error {
 			log.Error().Err(err).Msg("spawn_count sets error")
 			return err
 		}
-		b.SetSpawnCount(v)
+		b.SetSpawnCount(int64(v))
 	} else {
 		return errors.New("spawn count error")
 	}
@@ -423,6 +429,9 @@ func (b *Boomer) Start(Args map[string]interface{}) error {
 
 // ReBalance starts to rebalance load test
 func (b *Boomer) ReBalance(Args map[string]interface{}) error {
+	if !b.masterRunner.isStarted() {
+		return errors.New("no start")
+	}
 	spawnCount, ok := Args["spawn_count"]
 	if ok {
 		v, err := strconv.Atoi(spawnCount.(string))
@@ -430,7 +439,7 @@ func (b *Boomer) ReBalance(Args map[string]interface{}) error {
 			log.Error().Err(err).Msg("spawn_count sets error")
 			return err
 		}
-		b.SetSpawnCount(v)
+		b.SetSpawnCount(int64(v))
 	}
 	spawnRate, ok := Args["spawn_rate"]
 	if ok {
@@ -441,11 +450,6 @@ func (b *Boomer) ReBalance(Args map[string]interface{}) error {
 		}
 		b.SetSpawnRate(v)
 	}
-	path, ok := Args["path"].(string)
-	if ok {
-		paths := strings.Split(path, ",")
-		b.SetTestCasesPath(paths)
-	}
 	err := b.masterRunner.rebalance()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to rebalance")
@@ -454,12 +458,8 @@ func (b *Boomer) ReBalance(Args map[string]interface{}) error {
 }
 
 // Stop stops to load test
-func (b *Boomer) Stop() {
-	switch b.mode {
-	case DistributedMasterMode:
-		b.masterRunner.stop()
-	default:
-	}
+func (b *Boomer) Stop() error {
+	return b.masterRunner.stop()
 }
 
 // GetWorkersInfo gets workers
@@ -493,22 +493,22 @@ func (b *Boomer) Quit() {
 func (b *Boomer) GetSpawnDoneChan() chan struct{} {
 	switch b.mode {
 	case DistributedWorkerMode:
-		return b.workerRunner.spawn.getSpawnDone()
+		return b.workerRunner.controller.getSpawnDone()
 	case DistributedMasterMode:
-		return b.masterRunner.spawn.getSpawnDone()
+		return b.masterRunner.controller.getSpawnDone()
 	default:
-		return b.localRunner.spawn.getSpawnDone()
+		return b.localRunner.controller.getSpawnDone()
 	}
 }
 
 func (b *Boomer) GetSpawnCount() int {
 	switch b.mode {
 	case DistributedWorkerMode:
-		return int(b.workerRunner.spawn.getSpawnCount())
+		return int(b.workerRunner.getSpawnCount())
 	case DistributedMasterMode:
-		return int(b.masterRunner.spawn.getSpawnCount())
+		return int(b.masterRunner.getSpawnCount())
 	default:
-		return int(b.localRunner.spawn.getSpawnCount())
+		return int(b.localRunner.getSpawnCount())
 	}
 }
 

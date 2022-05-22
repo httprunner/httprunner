@@ -12,11 +12,11 @@ import (
 func TestNewStandaloneBoomer(t *testing.T) {
 	b := NewStandaloneBoomer(100, 10)
 
-	if b.localRunner.spawn.spawnCount != 100 {
+	if b.localRunner.spawnCount != 100 {
 		t.Error("spawnCount should be 100")
 	}
 
-	if b.localRunner.spawn.spawnRate != 10 {
+	if b.localRunner.spawnRate != 10 {
 		t.Error("spawnRate should be 10")
 	}
 }
