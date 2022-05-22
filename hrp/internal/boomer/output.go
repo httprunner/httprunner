@@ -169,7 +169,7 @@ type statsEntryOutput struct {
 }
 
 type dataOutput struct {
-	UserCount            int32                             `json:"user_count"`
+	UserCount            int64                             `json:"user_count"`
 	State                int32                             `json:"state"`
 	TotalStats           *statsEntryOutput                 `json:"stats_total"`
 	TransactionsPassed   int64                             `json:"transactions_passed"`
@@ -186,7 +186,7 @@ type dataOutput struct {
 }
 
 func convertData(data map[string]interface{}) (output *dataOutput, err error) {
-	userCount, ok := data["user_count"].(int32)
+	userCount, ok := data["user_count"].(int64)
 	if !ok {
 		return nil, fmt.Errorf("user_count is not int32")
 	}

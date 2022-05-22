@@ -198,9 +198,16 @@ func (api *apiHandler) Stop(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	api.boomer.Stop()
-	resp := &CommonResponseBody{
-		ServerStatus: EnumAPIResponseSuccess,
+	var resp *CommonResponseBody
+	err := api.boomer.Stop()
+	if err != nil {
+		resp = &CommonResponseBody{
+			ServerStatus: EnumAPIResponseStopError(err.Error()),
+		}
+	} else {
+		resp = &CommonResponseBody{
+			ServerStatus: EnumAPIResponseSuccess,
+		}
 	}
 	body, _ := json.Marshal(resp)
 	writeJSON(w, body, http.StatusOK)
