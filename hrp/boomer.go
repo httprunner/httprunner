@@ -219,13 +219,12 @@ func (b *HRPBoomer) PollTasks() {
 			if len(b.Boomer.GetTasksChan()) > 0 {
 				continue
 			}
-			profile := boomer.BytesToProfile(tasks.Profile)
 			//Todo: 过滤掉已经传输过的task
 			if tasks.Tasks != nil {
 				testCases := b.BytesToTestCases(tasks.Tasks)
-				go b.runTasks(testCases, profile)
+				go b.runTasks(testCases, tasks.Profile)
 			} else {
-				go b.rebalanceTasks(profile)
+				go b.rebalanceTasks(tasks.Profile)
 			}
 
 		case <-b.Boomer.GetCloseChan():

@@ -281,11 +281,7 @@ func TestOnSpawnMessage(t *testing.T) {
 	runner.setTasks([]*Task{taskA})
 	runner.setSpawnCount(100)
 	runner.setSpawnRate(100)
-
-	runner.onSpawnMessage(newGenericMessage("spawn", map[string]int64{
-		"spawn_count": 20,
-		"spawn_rate":  20,
-	}, runner.nodeID))
+	runner.onSpawnMessage(newMessageToWorker("spawn", ProfileToBytes(&Profile{SpawnCount: 20, SpawnRate: 20}), nil, nil))
 
 	if runner.getSpawnCount() != 20 {
 		t.Error("workers should be overwrote by onSpawnMessage, expected: 20, was:", runner.controller.spawnCount)
@@ -344,13 +340,9 @@ func TestOnMessage(t *testing.T) {
 	runner.updateState(StateInit)
 	runner.setTasks(tasks)
 
-	go runner.start()
-
 	// start spawning
-	runner.onMessage(newGenericMessage("spawn", map[string]int64{
-		"spawn_count": 10,
-		"spawn_rate":  10,
-	}, runner.nodeID))
+	runner.onMessage(newMessageToWorker("spawn", ProfileToBytes(&Profile{SpawnCount: 10, SpawnRate: 10}), nil, nil))
+	go runner.start()
 
 	msg := <-runner.client.sendChannel()
 	if msg.Type != "spawning" {
@@ -371,10 +363,8 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	// increase goroutines while running
-	runner.onMessage(newGenericMessage("rebalance", map[string]int64{
-		"spawn_count": 15,
-		"spawn_rate":  15,
-	}, runner.nodeID))
+	runner.onMessage(newMessageToWorker("rebalance", ProfileToBytes(&Profile{SpawnCount: 15, SpawnRate: 15}), nil, nil))
+	runner.rebalance <- true
 
 	time.Sleep(2 * time.Second)
 	if runner.getState() != StateRunning {
@@ -394,14 +384,11 @@ func TestOnMessage(t *testing.T) {
 		t.Error("Runner should send client_stopped message, got", msg.Type)
 	}
 
-	time.Sleep(4 * time.Second)
+	time.Sleep(3 * time.Second)
 
-	go runner.start()
 	// spawn again
-	runner.onMessage(newGenericMessage("spawn", map[string]int64{
-		"spawn_count": 10,
-		"spawn_rate":  10,
-	}, runner.nodeID))
+	runner.onMessage(newMessageToWorker("spawn", ProfileToBytes(&Profile{SpawnCount: 10, SpawnRate: 10}), nil, nil))
+	go runner.start()
 
 	msg = <-runner.client.sendChannel()
 	if msg.Type != "spawning" {
@@ -431,6 +418,7 @@ func TestOnMessage(t *testing.T) {
 		t.Error("Runner should send client_stopped message, got", msg.Type)
 	}
 
+	time.Sleep(3 * time.Second)
 	// quit
 	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
 }

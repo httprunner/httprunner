@@ -176,9 +176,6 @@ type runner struct {
 	controller *Controller
 	loop       *Loop // specify loop count for testcase, count = loopCount * spawnCount
 
-	// when this channel is closed, all statistics are reported successfully
-	reportedChan chan bool
-
 	// rebalance spawn
 	rebalance chan bool
 
@@ -331,7 +328,6 @@ func (r *runner) reset() {
 	r.stats.clearAll()
 	r.rebalance = make(chan bool)
 	r.stopChan = make(chan bool)
-	r.reportedChan = make(chan bool)
 }
 
 func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
@@ -479,9 +475,7 @@ func (r *runner) statsStart() {
 		// report stats
 		case <-ticker.C:
 			r.reportStats()
-			// close reportedChan and return if the last stats is reported successfully
 			if !r.isStarted() {
-				close(r.reportedChan)
 				log.Info().Msg("Quitting statsStart")
 				return
 			}
@@ -546,14 +540,11 @@ func (r *localRunner) start() {
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, nil)
 
 	// start stats report
-	go r.statsStart()
+	r.statsStart()
 
 	// stop
 	<-r.stopChan
 	r.updateState(StateStopped)
-
-	// wait until all stats are reported successfully
-	<-r.reportedChan
 
 	// stop rate limiter
 	if r.rateLimitEnabled {
@@ -621,11 +612,15 @@ func (r *workerRunner) onSpawnMessage(msg *genericMessage) {
 	if msg.Profile == nil {
 		log.Error().Msg("miss profile")
 	}
-	if msg.Tasks == nil {
+	profile := BytesToProfile(msg.Profile)
+	r.setSpawnCount(profile.SpawnCount)
+	r.setSpawnRate(profile.SpawnRate)
+
+	if msg.Tasks == nil && len(r.tasks) == 0 {
 		log.Error().Msg("miss tasks")
 	}
 	r.tasksChan <- &profileMessage{
-		Profile: msg.Profile,
+		Profile: profile,
 		Tasks:   msg.Tasks,
 	}
 	log.Info().Msg("on spawn message successful")
@@ -635,8 +630,12 @@ func (r *workerRunner) onRebalanceMessage(msg *genericMessage) {
 	if msg.Profile == nil {
 		log.Error().Msg("miss profile")
 	}
+	profile := BytesToProfile(msg.Profile)
+	r.setSpawnCount(profile.SpawnCount)
+	r.setSpawnRate(profile.SpawnRate)
+
 	r.tasksChan <- &profileMessage{
-		Profile: msg.Profile,
+		Profile: profile,
 	}
 	log.Info().Msg("on rebalance message successful")
 }
@@ -759,9 +758,7 @@ func (r *workerRunner) start() {
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, r.spawnComplete)
 
 	// start stats report
-	go r.statsStart()
-
-	<-r.reportedChan
+	r.statsStart()
 
 	r.reportTestResult()
 	r.outputOnStop()
