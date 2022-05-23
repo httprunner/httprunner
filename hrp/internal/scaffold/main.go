@@ -104,7 +104,7 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 	}
 
 	projectInfo := &ProjectInfo{
-		ProjectName: projectName,
+		ProjectName: filepath.Base(projectName),
 		ProjectPath: projectPath,
 		CreateTime:  time.Now(),
 		Version:     version.VERSION,
