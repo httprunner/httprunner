@@ -1,15 +1,12 @@
 package boomer
 
 import (
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"math"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -49,6 +46,58 @@ type Boomer struct {
 	disableCompression bool
 }
 
+type Profile struct {
+	SpawnCount               int64         `json:"spawn-count,omitempty" yaml:"spawn-count,omitempty" mapstructure:"spawn-count,omitempty"`
+	SpawnRate                float64       `json:"spawn-rate,omitempty" yaml:"spawn-rate,omitempty" mapstructure:"spawn-rate,omitempty"`
+	MaxRPS                   int64         `json:"max-rps,omitempty" yaml:"max-rps,omitempty" mapstructure:"max-rps,omitempty"`
+	LoopCount                int64         `json:"loop-count,omitempty" yaml:"loop-count,omitempty" mapstructure:"loop-count,omitempty"`
+	RequestIncreaseRate      string        `json:"request-increase-rate,omitempty" yaml:"request-increase-rate,omitempty" mapstructure:"request-increase-rate,omitempty"`
+	MemoryProfile            string        `json:"memory-profile,omitempty" yaml:"memory-profile,omitempty" mapstructure:"memory-profile,omitempty"`
+	MemoryProfileDuration    time.Duration `json:"memory-profile-duration,omitempty" yaml:"memory-profile-duration,omitempty" mapstructure:"memory-profile-duration,omitempty"`
+	CPUProfile               string        `json:"cpu-profile,omitempty" yaml:"cpu-profile,omitempty" mapstructure:"cpu-profile,omitempty"`
+	CPUProfileDuration       time.Duration `json:"cpu-profile-duration,omitempty" yaml:"cpu-profile-duration,omitempty" mapstructure:"cpu-profile-duration,omitempty"`
+	PrometheusPushgatewayURL string        `json:"prometheus-gateway,omitempty" yaml:"prometheus-gateway,omitempty" mapstructure:"prometheus-gateway,omitempty"`
+	DisableConsoleOutput     bool          `json:"disable-console-output,omitempty" yaml:"disable-console-output,omitempty" mapstructure:"disable-console-output,omitempty"`
+	DisableCompression       bool          `json:"disable-compression,omitempty" yaml:"disable-compression,omitempty" mapstructure:"disable-compression,omitempty"`
+	DisableKeepalive         bool          `json:"disable-keepalive,omitempty" yaml:"disable-keepalive,omitempty" mapstructure:"disable-keepalive,omitempty"`
+}
+
+func (b *Boomer) GetProfile() *Profile {
+	switch b.mode {
+	case DistributedMasterMode:
+		return b.masterRunner.profile
+	case DistributedWorkerMode:
+		return b.workerRunner.profile
+	default:
+		return b.localRunner.profile
+	}
+}
+
+func (b *Boomer) SetProfile(profile *Profile) {
+	switch b.mode {
+	case DistributedMasterMode:
+		b.masterRunner.profile = profile
+	case DistributedWorkerMode:
+		b.workerRunner.profile = profile
+	default:
+		b.localRunner.profile = profile
+	}
+}
+
+func (p *Profile) dispatch(workers int64) *Profile {
+	workerProfile := *p
+	if p.SpawnCount > 0 {
+		workerProfile.SpawnCount = p.SpawnCount / workers
+	}
+	if p.SpawnRate > 0 {
+		workerProfile.SpawnRate = p.SpawnRate / float64(workers)
+	}
+	if p.MaxRPS > 0 {
+		workerProfile.MaxRPS = p.MaxRPS / workers
+	}
+	return &workerProfile
+}
+
 // SetMode only accepts boomer.DistributedMasterMode、boomer.DistributedWorkerMode and boomer.StandaloneMode.
 func (b *Boomer) SetMode(mode Mode) {
 	switch mode {
@@ -79,7 +128,7 @@ func (b *Boomer) GetMode() string {
 }
 
 // NewStandaloneBoomer returns a new Boomer, which can run without master.
-func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
+func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *Boomer {
 	return &Boomer{
 		mode:        StandaloneMode,
 		localRunner: newLocalRunner(spawnCount, spawnRate),
@@ -125,10 +174,56 @@ func (b *Boomer) GetTestCaseBytesChan() chan []byte {
 	switch b.mode {
 	case DistributedMasterMode:
 		return b.masterRunner.testCaseBytes
-	case DistributedWorkerMode:
-		return b.workerRunner.testCaseBytes
+	default:
+		return nil
 	}
-	return nil
+}
+
+func ProfileToBytes(profile *Profile) []byte {
+	profileBytes, err := json.Marshal(profile)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to marshal testcases")
+		return nil
+	}
+	return profileBytes
+}
+
+func BytesToProfile(profileBytes []byte) *Profile {
+	var profile *Profile
+	err := json.Unmarshal(profileBytes, &profile)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to unmarshal testcases")
+	}
+	return profile
+}
+
+// GetProfileBytesChan gets profile bytes chan
+func (b *Boomer) GetProfileBytesChan() chan []byte {
+	switch b.mode {
+	case DistributedMasterMode:
+		return b.masterRunner.profileBytes
+	default:
+		return nil
+	}
+}
+
+// GetTasksChan gets profile bytes chan
+func (b *Boomer) GetTasksChan() chan *profileMessage {
+	switch b.mode {
+	case DistributedWorkerMode:
+		return b.workerRunner.tasksChan
+	default:
+		return nil
+	}
+}
+
+func (b *Boomer) GetRebalanceChan() chan bool {
+	switch b.mode {
+	case DistributedWorkerMode:
+		return b.workerRunner.rebalance
+	default:
+		return nil
+	}
 }
 
 func (b *Boomer) SetTestCasesPath(paths []string) {
@@ -390,66 +485,25 @@ func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exc
 }
 
 // Start starts to run
-func (b *Boomer) Start(Args map[string]interface{}) error {
+func (b *Boomer) Start(Args *Profile) error {
 	if b.masterRunner.isStarted() {
 		return errors.New("already started")
 	}
-	spawnCount, ok := Args["spawn_count"]
-	if ok {
-		v, err := strconv.Atoi(spawnCount.(string))
-		if err != nil {
-			log.Error().Err(err).Msg("spawn_count sets error")
-			return err
-		}
-		b.SetSpawnCount(int64(v))
-	} else {
-		return errors.New("spawn count error")
-	}
-	spawnRate, ok := Args["spawn_rate"]
-	if ok {
-		v, err := builtin.Interface2Float64(spawnRate)
-		if err != nil {
-			log.Error().Err(err).Msg("spawn_count sets error")
-			return err
-		}
-		b.SetSpawnRate(v)
-	} else {
-		b.SetSpawnRate(float64(b.GetSpawnCount()))
-	}
-	path, ok := Args["path"].(string)
-	if ok {
-		paths := strings.Split(path, ",")
-		b.SetTestCasesPath(paths)
-	} else {
-		return errors.New("testcase path error")
-	}
+	b.SetSpawnCount(Args.SpawnCount)
+	b.SetSpawnRate(Args.SpawnRate)
+	b.SetProfile(Args)
 	err := b.masterRunner.start()
 	return err
 }
 
 // ReBalance starts to rebalance load test
-func (b *Boomer) ReBalance(Args map[string]interface{}) error {
+func (b *Boomer) ReBalance(Args *Profile) error {
 	if !b.masterRunner.isStarted() {
 		return errors.New("no start")
 	}
-	spawnCount, ok := Args["spawn_count"]
-	if ok {
-		v, err := strconv.Atoi(spawnCount.(string))
-		if err != nil {
-			log.Error().Err(err).Msg("spawn_count sets error")
-			return err
-		}
-		b.SetSpawnCount(int64(v))
-	}
-	spawnRate, ok := Args["spawn_rate"]
-	if ok {
-		v, err := builtin.Interface2Float64(spawnRate)
-		if err != nil {
-			log.Error().Err(err).Msg("spawn_count sets error")
-			return err
-		}
-		b.SetSpawnRate(v)
-	}
+	b.SetSpawnCount(Args.SpawnCount)
+	b.SetSpawnRate(Args.SpawnRate)
+	b.SetProfile(Args)
 	err := b.masterRunner.rebalance()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to rebalance")

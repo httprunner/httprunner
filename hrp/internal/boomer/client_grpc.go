@@ -80,6 +80,9 @@ func (c *grpcClient) connect() (err error) {
 		return err
 	}
 
+	go c.recv()
+	go c.send()
+
 	biStream, err := messager.NewMessageClient(c.config.conn).BidirectionalStreamingMessage(c.config.ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("call bidirectional streaming message err")
@@ -87,19 +90,11 @@ func (c *grpcClient) connect() (err error) {
 	}
 	c.config.setBiStreamClient(biStream)
 	log.Info().Msg(fmt.Sprintf("Boomer is connected to master(%s) press Ctrl+c to quit.\n", addr))
-	go c.recv()
-	go c.send()
 
 	return nil
 }
 
 func (c *grpcClient) reConnect() (err error) {
-	addr := fmt.Sprintf("%v:%v", c.masterHost, c.masterPort)
-	c.config.conn, err = grpc.Dial(addr, grpc.WithInsecure())
-	if err != nil {
-		return
-	}
-
 	biStream, err := messager.NewMessageClient(c.config.conn).BidirectionalStreamingMessage(c.config.ctx)
 	if err != nil {
 		return
@@ -111,7 +106,7 @@ func (c *grpcClient) reConnect() (err error) {
 	//// tell master, I'm ready
 	//log.Info().Msg("send client ready signal")
 	//c.sendChannel() <- newClientReadyMessageToMaster(c.identity)
-	log.Info().Msg(fmt.Sprintf("Boomer is reConnected to master(%s) press Ctrl+c to quit.\n", addr))
+	log.Info().Msg(fmt.Sprintf("Boomer is reConnected to master press Ctrl+c to quit.\n"))
 	return
 }
 
@@ -136,6 +131,7 @@ func (c *grpcClient) recv() {
 			return
 		default:
 			if c.config.getBiStreamClient() == nil {
+				time.Sleep(1 * time.Second)
 				continue
 			}
 			msg, err := c.config.getBiStreamClient().Recv()
@@ -158,10 +154,11 @@ func (c *grpcClient) recv() {
 			}
 
 			c.fromMaster <- &genericMessage{
-				Type:   msg.Type,
-				Data:   msg.Data,
-				NodeID: msg.NodeID,
-				Tasks:  msg.Tasks,
+				Type:    msg.Type,
+				Profile: msg.Profile,
+				Data:    msg.Data,
+				NodeID:  msg.NodeID,
+				Tasks:   msg.Tasks,
 			}
 
 			log.Info().
@@ -204,6 +201,7 @@ func (c *grpcClient) sendMessage(msg *genericMessage) {
 		Interface("data", msg.Data).
 		Msg("send data to server")
 	if c.config.getBiStreamClient() == nil {
+		atomic.AddInt32(&c.failCount, 1)
 		return
 	}
 	err := c.config.getBiStreamClient().Send(&messager.StreamRequest{Type: msg.Type, Data: msg.Data, NodeID: msg.NodeID})

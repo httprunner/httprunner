@@ -10,14 +10,17 @@ const (
 	typeException        = "exception"
 )
 
-type message interface {
+type genericMessage struct {
+	Type    string           `json:"type,omitempty"`
+	Profile []byte           `json:"profile,omitempty"`
+	Data    map[string]int64 `json:"data,omitempty"`
+	NodeID  string           `json:"node_id,omitempty"`
+	Tasks   []byte           `json:"tasks,omitempty"`
 }
 
-type genericMessage struct {
-	Type   string           `json:"type,omitempty"`
-	Data   map[string]int64 `json:"data,omitempty"`
-	NodeID string           `json:"node_id,omitempty"`
-	Tasks  []byte           `json:"tasks,omitempty"`
+type profileMessage struct {
+	Profile []byte `json:"profile,omitempty"`
+	Tasks   []byte `json:"tasks,omitempty"`
 }
 
 func newGenericMessage(t string, data map[string]int64, nodeID string) (msg *genericMessage) {
@@ -35,11 +38,12 @@ func newQuitMessage(nodeID string) (msg *genericMessage) {
 	}
 }
 
-func newSpawnMessageToWorker(t string, data map[string]int64, tasks []byte) (msg *genericMessage) {
+func newMessageToWorker(t string, profile []byte, data map[string]int64, tasks []byte) (msg *genericMessage) {
 	return &genericMessage{
-		Type:  t,
-		Data:  data,
-		Tasks: tasks,
+		Type:    t,
+		Profile: profile,
+		Data:    data,
+		Tasks:   tasks,
 	}
 }
 

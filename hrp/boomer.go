@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func NewStandaloneBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
+func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {
 	b := &HRPBoomer{
 		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		pluginsMutex: new(sync.RWMutex),
@@ -48,6 +48,27 @@ type HRPBoomer struct {
 	hrpRunner    *HRPRunner
 	plugins      []funplugin.IPlugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex       // avoid data race
+}
+
+func (b *HRPBoomer) InitBoomer() {
+	// init output
+	if !b.GetProfile().DisableConsoleOutput {
+		b.AddOutput(boomer.NewConsoleOutput())
+	}
+	if b.GetProfile().PrometheusPushgatewayURL != "" {
+		b.AddOutput(boomer.NewPrometheusPusherOutput(b.GetProfile().PrometheusPushgatewayURL, "hrp", b.GetMode()))
+	}
+	b.SetSpawnCount(b.GetProfile().SpawnCount)
+	b.SetSpawnRate(b.GetProfile().SpawnRate)
+	if b.GetProfile().LoopCount > 0 {
+		b.SetLoopCount(b.GetProfile().LoopCount)
+	}
+	b.SetRateLimiter(b.GetProfile().MaxRPS, b.GetProfile().RequestIncreaseRate)
+	b.SetDisableKeepAlive(b.GetProfile().DisableKeepalive)
+	b.SetDisableCompression(b.GetProfile().DisableCompression)
+	b.SetClientTransport()
+	b.EnableCPUProfile(b.GetProfile().CPUProfile, b.GetProfile().CPUProfileDuration)
+	b.EnableMemoryProfile(b.GetProfile().MemoryProfile, b.GetProfile().MemoryProfileDuration)
 }
 
 func (b *HRPBoomer) SetClientTransport() *HRPBoomer {
@@ -104,7 +125,7 @@ func (b *HRPBoomer) ConvertTestCasesToTasks(testcases ...ITestCase) (taskSlice [
 	return taskSlice
 }
 
-func (b *HRPBoomer) LoopTestCases() {
+func (b *HRPBoomer) PollTestCases() {
 	for {
 		select {
 		case <-b.Boomer.ParseTestCasesChan():
@@ -167,9 +188,7 @@ func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
 }
 
-func (b *HRPBoomer) handleTasks(tcs []byte) {
-	//Todo: 过滤掉已经传输过的task
-	testCases := b.BytesToTestCases(tcs)
+func (b *HRPBoomer) runTasks(testCases []*TCase, profile *boomer.Profile) {
 	var testcases []ITestCase
 	for _, tc := range testCases {
 		tesecase, err := tc.toTestCase()
@@ -178,22 +197,37 @@ func (b *HRPBoomer) handleTasks(tcs []byte) {
 		}
 		testcases = append(testcases, tesecase)
 	}
-	log.Info().Interface("testcases", testcases).Msg("loop tasks successful")
-	if b.Boomer.GetState() == boomer.StateRunning || b.Boomer.GetState() == boomer.StateSpawning {
-		b.Boomer.SetTasks(b.ConvertTestCasesToTasks(testcases...)...)
-	} else {
-		b.Run(testcases...)
-	}
+	b.SetProfile(profile)
+	b.InitBoomer()
+	log.Info().Interface("testcases", testcases).Interface("profile", profile).Msg("run tasks successful")
+	b.Run(testcases...)
 }
 
-func (b *HRPBoomer) LoopTasks() {
+func (b *HRPBoomer) rebalanceTasks(profile *boomer.Profile) {
+	b.SetProfile(profile)
+	b.SetSpawnCount(b.GetProfile().SpawnCount)
+	b.SetSpawnRate(b.GetProfile().SpawnRate)
+	b.GetRebalanceChan() <- true
+	log.Info().Interface("profile", profile).Msg("rebalance tasks successful")
+}
+
+func (b *HRPBoomer) PollTasks() {
 	for {
 		select {
-		case tcs := <-b.Boomer.GetTestCaseBytesChan():
-			if len(b.Boomer.GetTestCaseBytesChan()) > 0 {
+		case tasks := <-b.Boomer.GetTasksChan():
+			// 清理过时测试用例任务
+			if len(b.Boomer.GetTasksChan()) > 0 {
 				continue
 			}
-			go b.handleTasks(tcs)
+			profile := boomer.BytesToProfile(tasks.Profile)
+			//Todo: 过滤掉已经传输过的task
+			if tasks.Tasks != nil {
+				testCases := b.BytesToTestCases(tasks.Tasks)
+				go b.runTasks(testCases, profile)
+			} else {
+				go b.rebalanceTasks(profile)
+			}
+
 		case <-b.Boomer.GetCloseChan():
 			return
 		}

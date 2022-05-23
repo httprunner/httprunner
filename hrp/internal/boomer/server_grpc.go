@@ -312,10 +312,11 @@ func (s *grpcServer) sendMessage(msg *genericMessage) {
 			}
 			err := workerInfo.messenger.Send(
 				&messager.StreamResponse{
-					Type:   msg.Type,
-					Data:   msg.Data,
-					NodeID: workerInfo.ID,
-					Tasks:  msg.Tasks},
+					Type:    msg.Type,
+					Profile: msg.Profile,
+					Data:    msg.Data,
+					NodeID:  workerInfo.ID,
+					Tasks:   msg.Tasks},
 			)
 			switch err {
 			case nil:
