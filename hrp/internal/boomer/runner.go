@@ -270,6 +270,9 @@ func (r *runner) outputOnEvent(data map[string]interface{}) {
 }
 
 func (r *runner) outputOnStop() {
+	defer func() {
+		r.outputs = make([]Output, 0)
+	}()
 	size := len(r.outputs)
 	if size == 0 {
 		return
@@ -332,6 +335,7 @@ func (r *runner) reset() {
 }
 
 func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
+	r.updateState(StateSpawning)
 	log.Info().
 		Int64("spawnCount", spawnCount).
 		Float64("spawnRate", spawnRate).
@@ -339,7 +343,6 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 
 	r.controller.setSpawn(spawnCount, spawnRate)
 
-	r.updateState(StateSpawning)
 	for {
 		select {
 		case <-quit:
@@ -510,14 +513,16 @@ func (r *runner) isStarted() bool {
 
 type localRunner struct {
 	runner
+
+	profile *Profile
 }
 
-func newLocalRunner(spawnCount int, spawnRate float64) *localRunner {
+func newLocalRunner(spawnCount int64, spawnRate float64) *localRunner {
 	return &localRunner{
 		runner: runner{
 			state:      StateInit,
 			stats:      newRequestStats(),
-			spawnCount: int64(spawnCount),
+			spawnCount: spawnCount,
 			spawnRate:  spawnRate,
 			controller: &Controller{},
 			outputs:    make([]Output, 0),
@@ -535,14 +540,13 @@ func (r *localRunner) start() {
 	if r.rateLimitEnabled {
 		r.rateLimiter.Start()
 	}
-
-	r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, nil)
-
 	// output setup
 	r.outputOnStart()
 
+	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, nil)
+
 	// start stats report
-	go r.runner.statsStart()
+	go r.statsStart()
 
 	// stop
 	<-r.stopChan
@@ -582,10 +586,9 @@ type workerRunner struct {
 	masterPort int
 	client     *grpcClient
 
-	// this channel will start worker for spawning.
-	spawnStartChan chan bool
-	// get testcase from master
-	testCaseBytes chan []byte
+	profile *Profile
+
+	tasksChan chan *profileMessage
 
 	ignoreQuit bool
 }
@@ -594,15 +597,15 @@ func newWorkerRunner(masterHost string, masterPort int) (r *workerRunner) {
 	r = &workerRunner{
 		runner: runner{
 			stats:      newRequestStats(),
+			outputs:    make([]Output, 0),
 			controller: &Controller{},
 			closeChan:  make(chan bool),
 			once:       &sync.Once{},
 		},
-		masterHost:     masterHost,
-		masterPort:     masterPort,
-		nodeID:         getNodeID(),
-		spawnStartChan: make(chan bool),
-		testCaseBytes:  make(chan []byte, 10),
+		masterHost: masterHost,
+		masterPort: masterPort,
+		nodeID:     getNodeID(),
+		tasksChan:  make(chan *profileMessage, 10),
 	}
 	return r
 }
@@ -615,30 +618,26 @@ func (r *workerRunner) spawnComplete() {
 
 func (r *workerRunner) onSpawnMessage(msg *genericMessage) {
 	r.client.sendChannel() <- newGenericMessage("spawning", nil, r.nodeID)
-	spawnCount, ok := msg.Data["spawn_count"]
-	if ok {
-		r.setSpawnCount(spawnCount)
+	if msg.Profile == nil {
+		log.Error().Msg("miss profile")
 	}
-	spawnRate, ok := msg.Data["spawn_rate"]
-	if ok {
-		r.setSpawnRate(float64(spawnRate))
+	if msg.Tasks == nil {
+		log.Error().Msg("miss tasks")
 	}
-	if msg.Tasks != nil {
-		r.testCaseBytes <- msg.Tasks
+	r.tasksChan <- &profileMessage{
+		Profile: msg.Profile,
+		Tasks:   msg.Tasks,
 	}
 	log.Info().Msg("on spawn message successful")
 }
 
 func (r *workerRunner) onRebalanceMessage(msg *genericMessage) {
-	spawnCount, ok := msg.Data["spawn_count"]
-	if ok {
-		r.setSpawnCount(spawnCount)
+	if msg.Profile == nil {
+		log.Error().Msg("miss profile")
 	}
-	spawnRate, ok := msg.Data["spawn_rate"]
-	if ok {
-		r.setSpawnRate(float64(spawnRate))
+	r.tasksChan <- &profileMessage{
+		Profile: msg.Profile,
 	}
-	r.rebalance <- true
 	log.Info().Msg("on rebalance message successful")
 }
 
@@ -705,7 +704,6 @@ func (r *workerRunner) run() {
 	err := r.client.connect()
 	if err != nil {
 		log.Printf("Failed to connect to master(%s:%d) with error %v\n", r.masterHost, r.masterPort, err)
-		return
 	}
 
 	// listen to master
@@ -758,7 +756,7 @@ func (r *workerRunner) start() {
 
 	r.once.Do(r.outputOnStart)
 
-	r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, r.spawnComplete)
+	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, r.spawnComplete)
 
 	// start stats report
 	go r.statsStart()
@@ -783,7 +781,7 @@ func (r *workerRunner) close() {
 		return
 	}
 	// waiting report finished
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	close(r.closeChan)
 	var ticker = time.NewTicker(1 * time.Second)
 	if r.client != nil {
@@ -811,8 +809,12 @@ type masterRunner struct {
 	expectWorkers        int
 	expectWorkersMaxWait int
 
+	profile *Profile
+
 	parseTestCasesChan chan bool
 	testCaseBytes      chan []byte
+	// set profile to worker
+	profileBytes chan []byte
 }
 
 func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
@@ -990,20 +992,17 @@ func (r *masterRunner) start() error {
 	if numWorkers == 0 {
 		return errors.New("current workers: 0")
 	}
-	workerSpawnRate := r.getSpawnRate() / float64(numWorkers)
-	workerSpawnCount := r.getSpawnCount() / int64(numWorkers)
 
 	log.Info().Msg("send spawn data to worker")
 	r.updateState(StateSpawning)
-	// waitting to fetch testcase
+	// fetching testcase
 	testcase, err := r.fetchTestCase()
 	if err != nil {
 		return err
 	}
-	r.server.sendChannel() <- newSpawnMessageToWorker("spawn", map[string]int64{
-		"spawn_count": workerSpawnCount,
-		"spawn_rate":  int64(workerSpawnRate),
-	}, testcase)
+	profile := r.profile.dispatch(int64(numWorkers))
+
+	r.server.sendChannel() <- newMessageToWorker("spawn", ProfileToBytes(profile), nil, testcase)
 	println("send spawn data to worker successful")
 	log.Info().Msg("send spawn data to worker successful")
 	return nil
@@ -1014,13 +1013,9 @@ func (r *masterRunner) rebalance() error {
 	if numWorkers == 0 {
 		return errors.New("current workers: 0")
 	}
-	workerSpawnRate := r.getSpawnRate() / float64(numWorkers)
-	workerSpawnCount := r.getSpawnCount() / int64(numWorkers)
+	profile := r.profile.dispatch(int64(numWorkers))
 
-	r.server.sendChannel() <- newSpawnMessageToWorker("rebalance", map[string]int64{
-		"spawn_count": workerSpawnCount,
-		"spawn_rate":  int64(workerSpawnRate),
-	}, nil)
+	r.server.sendChannel() <- newMessageToWorker("rebalance", ProfileToBytes(profile), nil, nil)
 	println("send rebalance data to worker successful")
 	return nil
 }

@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/mitchellh/mapstructure"
 )
 
 const jsonContentType = "application/json; encoding=utf-8"
@@ -43,7 +45,7 @@ func parseBody(r *http.Request) (data map[string]interface{}, err error) {
 		r.Body.Close()
 		return nil, err
 	}
-	err = json.Unmarshal(body, data)
+	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -62,10 +64,10 @@ func writeJSON(w http.ResponseWriter, body []byte, status int) {
 }
 
 type StartRequestBody struct {
-	Worker       string `json:"worker"` // all
-	SpawnCount   int64  `json:"spawn_count"`
-	SpawnRate    int64  `json:"spawn_rate"`
-	TestCasePath string `json:"testcase_path"`
+	boomer.Profile `mapstructure:",squash"`
+	Worker         string                 `json:"worker,omitempty" yaml:"worker,omitempty" mapstructure:"worker"` // all
+	TestCasePath   string                 `json:"testcase-path" yaml:"testcase-path" mapstructure:"testcase-path"`
+	Other          map[string]interface{} `mapstructure:",remain"`
 }
 
 type ServerCode int
@@ -118,10 +120,9 @@ func CustomAPIResponse(errCode ServerCode, errMsg string) ServerStatus {
 }
 
 type RebalanceRequestBody struct {
-	Worker       string `json:"worker"`
-	SpawnCount   int64  `json:"spawn_count"`
-	SpawnRate    int64  `json:"spawn_rate"`
-	TestCasePath string `json:"testcase_path"`
+	boomer.Profile `mapstructure:",squash"`
+	Worker         string                 `json:"worker,omitempty" yaml:"worker,omitempty" mapstructure:"worker"`
+	Other          map[string]interface{} `mapstructure:",remain"`
 }
 
 type StopRequestBody struct {
@@ -167,15 +168,38 @@ func (api *apiHandler) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *apiHandler) Start(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{}
-	args := r.URL.Query()
-	for k, vs := range args {
-		for _, v := range vs {
-			data[k] = v
-		}
-	}
 	var resp *CommonResponseBody
-	err := api.boomer.Start(data)
+	data, err := parseBody(r)
+
+	req := StartRequestBody{
+		Profile: *api.boomer.GetProfile(),
+	}
+	err = mapstructure.Decode(data, &req)
+	if len(req.Other) > 0 {
+		keys := make([]string, 0, len(req.Other))
+		for k := range req.Other {
+			keys = append(keys, k)
+		}
+		resp = &CommonResponseBody{
+			ServerStatus: EnumAPIResponseParamError(fmt.Sprintf("failed to recognize params: %v", keys)),
+		}
+		body, _ := json.Marshal(resp)
+		writeJSON(w, body, http.StatusOK)
+		return
+	}
+	if req.TestCasePath == "" {
+		resp = &CommonResponseBody{
+			ServerStatus: EnumAPIResponseParamError(fmt.Sprint("missing testcases path")),
+		}
+		body, _ := json.Marshal(resp)
+		writeJSON(w, body, http.StatusOK)
+		return
+	}
+	paths := strings.Split(req.TestCasePath, ",")
+	api.boomer.SetTestCasesPath(paths)
+	if err == nil {
+		err = api.boomer.Start(&req.Profile)
+	}
 	if err != nil {
 		resp = &CommonResponseBody{
 			ServerStatus: EnumAPIResponseServerError(err.Error()),
@@ -231,15 +255,28 @@ func (api *apiHandler) Quit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *apiHandler) ReBalance(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{}
-	args := r.URL.Query()
-	for k, vs := range args {
-		for _, v := range vs {
-			data[k] = v
-		}
-	}
 	var resp *CommonResponseBody
-	err := api.boomer.ReBalance(data)
+	data, err := parseBody(r)
+
+	req := RebalanceRequestBody{
+		Profile: *api.boomer.GetProfile(),
+	}
+	err = mapstructure.Decode(data, &req)
+	if len(req.Other) > 0 {
+		keys := make([]string, 0, len(req.Other))
+		for k := range req.Other {
+			keys = append(keys, k)
+		}
+		resp = &CommonResponseBody{
+			ServerStatus: EnumAPIResponseParamError(fmt.Sprintf("failed to recognize params: %v", keys)),
+		}
+		body, _ := json.Marshal(resp)
+		writeJSON(w, body, http.StatusOK)
+		return
+	}
+	if err == nil {
+		err = api.boomer.ReBalance(&req.Profile)
+	}
 	if err != nil {
 		resp = &CommonResponseBody{
 			ServerStatus: EnumAPIResponseParamError(err.Error()),
@@ -267,10 +304,10 @@ func (api *apiHandler) Handler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", methods(api.Index, "GET"))
-	mux.HandleFunc("/start", methods(api.Start, "GET"))
+	mux.HandleFunc("/start", methods(api.Start, "POST"))
 	mux.HandleFunc("/stop", methods(api.Stop, "GET"))
 	mux.HandleFunc("/quit", methods(api.Quit, "GET"))
-	mux.HandleFunc("/rebalance", methods(api.ReBalance, "GET"))
+	mux.HandleFunc("/rebalance", methods(api.ReBalance, "POST"))
 	mux.HandleFunc("/workers", methods(api.GetWorkersInfo, "GET"))
 
 	return mux

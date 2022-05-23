@@ -10,13 +10,14 @@ service Message {
 
 message StreamRequest{
   string type = 1;
-  map<string, bytes> data = 2;
+  map<string, int64> data = 2;
   string NodeID = 3;
 }
 
 message StreamResponse{
   string type = 1;
-  map<string, bytes> data = 2;
-  string NodeID = 3;
-  bytes tasks = 4;
+  bytes profile = 2;
+  map<string, int64> data = 3;
+  string NodeID = 4;
+  bytes tasks = 5;
 }
