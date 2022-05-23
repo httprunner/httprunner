@@ -13,7 +13,7 @@ teststeps:
 -
     name: get with params
     variables:
-        foo1: bar11
+        foo1: ${ENV(USERNAME)}
         foo2: bar21
         sum_v: "${sum_two_int(1, 2)}"
     request:
@@ -29,7 +29,7 @@ teststeps:
         foo3: "body.args.foo2"
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.foo1", "bar11"]
+        - eq: ["body.args.foo1", "debugtalk"]
         - eq: ["body.args.sum_v", "3"]
         - eq: ["body.args.foo2", "bar21"]
 -
