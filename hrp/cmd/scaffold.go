@@ -32,7 +32,7 @@ var scaffoldCmd = &cobra.Command{
 			pluginType = scaffold.Py // default
 		}
 
-		err := scaffold.CreateScaffold(args[0], pluginType, force)
+		err := scaffold.CreateScaffold(args[0], pluginType, empty, force)
 		if err != nil {
 			log.Error().Err(err).Msg("create scaffold project failed")
 			os.Exit(1)
@@ -43,6 +43,7 @@ var scaffoldCmd = &cobra.Command{
 }
 
 var (
+	empty           bool
 	ignorePlugin    bool
 	genPythonPlugin bool
 	genGoPlugin     bool
@@ -55,4 +56,5 @@ func init() {
 	scaffoldCmd.Flags().BoolVar(&genPythonPlugin, "py", true, "generate hashicorp python plugin")
 	scaffoldCmd.Flags().BoolVar(&genGoPlugin, "go", false, "generate hashicorp go plugin")
 	scaffoldCmd.Flags().BoolVar(&ignorePlugin, "ignore-plugin", false, "ignore function plugin")
+	scaffoldCmd.Flags().BoolVar(&empty, "empty", false, "generate empty project")
 }
