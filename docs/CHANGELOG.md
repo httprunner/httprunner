@@ -1,8 +1,12 @@
 # Release History
 
-## v4.1.0 (2022-05-22)
+## v4.1.0 (2022-05-23)
 
 - feat: add `wiki` sub-command to open httprunner website
+
+**go version**
+
+- fix #1309: locate plugin file upward recursively until system root dir
 
 ## v4.1.0-beta (2022-05-21)
 
