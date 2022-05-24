@@ -1,6 +1,6 @@
 ## hrp convert
 
-convert external cases to JSON/YAML/gotest/pytest testcases
+convert to JSON/YAML/gotest/pytest testcases
 
 ```
 hrp convert $path... [flags]

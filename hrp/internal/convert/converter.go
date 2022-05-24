@@ -117,42 +117,46 @@ func NewTCaseConverter(path string) (tCaseConverter *TCaseConverter) {
 	case ".har":
 		caseHAR := new(CaseHar)
 		err = builtin.LoadFile(path, caseHAR)
-		if err == nil && !reflect.DeepEqual(*caseHAR, CaseHar{}) {
+		if err == nil && !reflect.ValueOf(*caseHAR).IsZero() {
 			tCaseConverter.InputType = InputTypeHAR
 			tCaseConverter.CaseHAR = caseHAR
 		}
 	case ".json":
 		tCase := new(hrp.TCase)
 		err = builtin.LoadFile(path, tCase)
-		if err == nil && !reflect.DeepEqual(*tCase, hrp.TCase{}) {
+		if err == nil && !reflect.ValueOf(*tCase).IsZero() {
 			tCaseConverter.InputType = InputTypeJSON
 			tCaseConverter.TCase = tCase
 			break
 		}
 		casePostman := new(CasePostman)
 		err = builtin.LoadFile(path, casePostman)
-		if err == nil && !reflect.DeepEqual(*casePostman, CasePostman{}) {
+		// deal with postman field name conflict with swagger
+		descriptionBackup := casePostman.Info.Description
+		casePostman.Info.Description = ""
+		if err == nil && !reflect.ValueOf(*casePostman).IsZero() {
 			tCaseConverter.InputType = InputTypePostman
+			casePostman.Info.Description = descriptionBackup
 			tCaseConverter.CasePostman = casePostman
 			break
 		}
 		caseSwagger := new(spec.Swagger)
 		err = builtin.LoadFile(path, caseSwagger)
-		if err == nil && !reflect.DeepEqual(*caseSwagger, spec.Swagger{}) {
+		if err == nil && !reflect.ValueOf(*caseSwagger).IsZero() {
 			tCaseConverter.InputType = InputTypeSwagger
 			tCaseConverter.CaseSwagger = caseSwagger
 		}
 	case ".yaml", ".yml":
 		tCase := new(hrp.TCase)
 		err = builtin.LoadFile(path, tCase)
-		if err == nil && !reflect.DeepEqual(*tCase, hrp.TCase{}) {
+		if err == nil && !reflect.ValueOf(*tCase).IsZero() {
 			tCaseConverter.InputType = InputTypeYAML
 			tCaseConverter.TCase = tCase
 			break
 		}
 		caseSwagger := new(spec.Swagger)
 		err = builtin.LoadFile(path, caseSwagger)
-		if err == nil && !reflect.DeepEqual(*caseSwagger, spec.Swagger{}) {
+		if err == nil && !reflect.ValueOf(*caseSwagger).IsZero() {
 			tCaseConverter.InputType = InputTypeSwagger
 			tCaseConverter.CaseSwagger = caseSwagger
 		}
@@ -243,13 +247,14 @@ type ICaseConverter interface {
 	ToPyTest() (string, error)
 }
 
-func LoadConverters(outputType OutputType, outputDir, profilePath string, args []string) []ICaseConverter {
+func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 	// report event
 	sdk.SendEvent(sdk.EventTracking{
 		Category: "ConvertTests",
 		Action:   fmt.Sprintf("hrp convert --to-%s", outputType.String()),
 	})
 
+	// identify input and load converters
 	var iCaseConverters []ICaseConverter
 	for _, arg := range args {
 		tCaseConverter := NewTCaseConverter(arg)
@@ -279,10 +284,8 @@ func LoadConverters(outputType OutputType, outputDir, profilePath string, args [
 				Msg("unknown case type, ignore!")
 		}
 	}
-	return iCaseConverters
-}
 
-func Run(iCaseConverters []ICaseConverter) {
+	// start converting
 	var outputFiles []string
 	var err error
 	for _, iCaseConverter := range iCaseConverters {

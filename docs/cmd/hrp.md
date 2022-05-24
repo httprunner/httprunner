@@ -30,7 +30,7 @@ Copyright 2017 debugtalk
 ### SEE ALSO
 
 * [hrp boom](hrp_boom.md)	 - run load test with boomer
-* [hrp convert](hrp_convert.md)	 - convert external cases to JSON/YAML/gotest/pytest testcases
+* [hrp convert](hrp_convert.md)	 - convert to JSON/YAML/gotest/pytest testcases
 * [hrp har2case](hrp_har2case.md)	 - convert HAR to json/yaml testcase files
 * [hrp pytest](hrp_pytest.md)	 - run API test with pytest
 * [hrp run](hrp_run.md)	 - run API test with go engine

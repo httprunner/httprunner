@@ -193,17 +193,17 @@ func convertValidatorCompat2GoEngine(Validators []interface{}) (err error) {
 		}
 		validatorMap := iValidator.(map[string]interface{})
 		validator := Validator{}
-		_, checkExisted := validatorMap["check"]
-		_, assertExisted := validatorMap["assert"]
-		_, expectExisted := validatorMap["expect"]
+		iCheck, checkExisted := validatorMap["check"]
+		iAssert, assertExisted := validatorMap["assert"]
+		iExpect, expectExisted := validatorMap["expect"]
 		// validator check priority: Golang > Python engine style
 		if checkExisted && assertExisted && expectExisted {
 			// Golang engine style
-			validator.Check = validatorMap["check"].(string)
-			validator.Assert = validatorMap["assert"].(string)
-			validator.Expect = validatorMap["expect"]
-			if msg, existed := validatorMap["msg"]; existed {
-				validator.Message = msg.(string)
+			validator.Check = iCheck.(string)
+			validator.Assert = iAssert.(string)
+			validator.Expect = iExpect
+			if iMsg, msgExisted := validatorMap["msg"]; msgExisted {
+				validator.Message = iMsg.(string)
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
@@ -212,13 +212,16 @@ func convertValidatorCompat2GoEngine(Validators []interface{}) (err error) {
 		if len(validatorMap) == 1 {
 			// Python engine style
 			for assertMethod, iValidatorContent := range validatorMap {
-				checkAndExpect := iValidatorContent.([]interface{})
-				if len(checkAndExpect) != 2 {
+				validatorContent := iValidatorContent.([]interface{})
+				if len(validatorContent) > 3 {
 					return fmt.Errorf("unexpected validator format: %v", validatorMap)
 				}
-				validator.Check = checkAndExpect[0].(string)
+				validator.Check = validatorContent[0].(string)
 				validator.Assert = assertMethod
-				validator.Expect = checkAndExpect[1]
+				validator.Expect = validatorContent[1]
+				if len(validatorContent) == 3 {
+					validator.Message = validatorContent[2].(string)
+				}
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
@@ -294,23 +297,26 @@ func convertValidatorCompat2PyEngine(Validators []interface{}) (err error) {
 		if len(validatorMap) == 1 {
 			// Python engine style
 			for _, iValidatorContent := range validatorMap {
-				checkAndExpect := iValidatorContent.([]interface{})
-				if len(checkAndExpect) != 2 {
+				validatorContent := iValidatorContent.([]interface{})
+				if len(validatorContent) > 3 {
 					return fmt.Errorf("unexpected validator format: %v", validatorMap)
 				}
 			}
 			continue
 		}
-		_, checkExisted := validatorMap["check"]
-		_, assertExisted := validatorMap["assert"]
-		_, expectExisted := validatorMap["expect"]
+		iCheck, checkExisted := validatorMap["check"]
+		iAssert, assertExisted := validatorMap["assert"]
+		iExpect, expectExisted := validatorMap["expect"]
 		if checkExisted && assertExisted && expectExisted {
 			// Golang engine style
-			var iValidatorContent []interface{}
-			iValidatorContent = append(iValidatorContent, validatorMap["check"])
-			iValidatorContent = append(iValidatorContent, validatorMap["expect"])
+			var validatorContent []interface{}
+			validatorContent = append(validatorContent, iCheck)
+			validatorContent = append(validatorContent, iExpect)
+			if iMsg, msgExisted := validatorMap["msg"]; msgExisted {
+				validatorContent = append(validatorContent, iMsg)
+			}
 			newValidatorMap := make(map[string]interface{})
-			newValidatorMap[validatorMap["assert"].(string)] = iValidatorContent
+			newValidatorMap[iAssert.(string)] = validatorContent
 			Validators[i] = newValidatorMap
 			continue
 		}

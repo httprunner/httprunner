@@ -3,10 +3,9 @@ package cmd
 import (
 	"errors"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/convert/har2case"
+	"github.com/httprunner/httprunner/v4/hrp/internal/convert"
 )
 
 // har2caseCmd represents the har2case command
@@ -19,39 +18,20 @@ var har2caseCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var outputFiles []string
-		for _, arg := range args {
-			// must choose one
-			if !har2caseGenYAMLFlag && !har2caseGenJSONFlag {
-				return errors.New("please select convert format type")
-			}
-			var outputPath string
-			var err error
-
-			har := har2case.NewHAR(arg)
-
-			// specify output dir
-			if har2caseOutputDir != "" {
-				har.SetOutputDir(har2caseOutputDir)
-			}
-
-			// specify profile
-			if har2caseProfilePath != "" {
-				har.SetProfile(har2caseProfilePath)
-			}
-
-			// generate json/yaml files
-			if har2caseGenYAMLFlag {
-				outputPath, err = har.GenYAML()
-			} else {
-				outputPath, err = har.GenJSON() // default
-			}
-			if err != nil {
-				return err
-			}
-			outputFiles = append(outputFiles, outputPath)
+		var flagCount int
+		var har2caseOutputType convert.OutputType
+		if har2caseGenJSONFlag {
+			flagCount++
 		}
-		log.Info().Strs("output", outputFiles).Msg("convert testcase success")
+		if har2caseGenYAMLFlag {
+			flagCount++
+			har2caseOutputType = convert.OutputTypeYAML
+		}
+		if flagCount > 1 {
+			return errors.New("please specify at most one conversion flag")
+
+		}
+		convert.Run(har2caseOutputType, har2caseOutputDir, har2caseProfilePath, args)
 		return nil
 	},
 }
@@ -65,7 +45,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(har2caseCmd)
-	har2caseCmd.Flags().BoolVarP(&har2caseGenJSONFlag, "to-json", "j", true, "convert to JSON format")
+	har2caseCmd.Flags().BoolVarP(&har2caseGenJSONFlag, "to-json", "j", false, "convert to JSON format (default)")
 	har2caseCmd.Flags().BoolVarP(&har2caseGenYAMLFlag, "to-yaml", "y", false, "convert to YAML format")
 	har2caseCmd.Flags().StringVarP(&har2caseOutputDir, "output-dir", "d", "", "specify output directory, default to the same dir with har file")
 	har2caseCmd.Flags().StringVarP(&har2caseProfilePath, "profile", "p", "", "specify profile path to override headers and cookies")
