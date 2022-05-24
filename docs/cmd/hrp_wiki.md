@@ -1,15 +1,15 @@
-## hrp pytest
+## hrp wiki
 
-run API test with pytest
+visit https://httprunner.com
 
 ```
-hrp pytest $path ... [flags]
+hrp wiki [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for pytest
+  -h, --help   help for wiki
 ```
 
 ### SEE ALSO

@@ -289,7 +289,11 @@ func (r *testCaseRunner) parseConfig() error {
 
 	// merge config environment variables with base_url
 	// priority: env base_url > base_url
-	r.parsedConfig.Env = cfg.Env
+	if cfg.Env != nil {
+		r.parsedConfig.Env = cfg.Env
+	} else {
+		r.parsedConfig.Env = make(map[string]string)
+	}
 	if value, ok := r.parsedConfig.Env["base_url"]; !ok || value == "" {
 		r.parsedConfig.Env["base_url"] = r.parsedConfig.BaseURL
 	}
