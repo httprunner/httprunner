@@ -307,7 +307,7 @@ class MyJSONEncoder(json.JSONEncoder):
         chunks = self.iterencode(o, _one_shot=True)
         if not isinstance(chunks, (list, tuple)):
             chunks = list(chunks)
-        # add by braver(braver@bytedance.com)
+        # add by braver
         # todo: fix 'utf8' codec can't decode byte 0x91 in position 3: invalid start byte"
         if self.skip_nonutf8_value:  # 缺省为false
             tmp_chunks = []
@@ -324,7 +324,7 @@ class MyJSONEncoder(json.JSONEncoder):
 
 class ThriftJSONEncoder(json.JSONEncoder):
     """
-    add by braver(Braver@bytedance.com)
+    add by braver
     """
 
     def __init__(
@@ -377,7 +377,7 @@ class ThriftJSONEncoder(json.JSONEncoder):
         chunks = self.iterencode(o, _one_shot=True)
         if not isinstance(chunks, (list, tuple)):
             chunks = list(chunks)
-        # add by braver(braver@bytedance.com)
+        # add by braver
         # todo: fix 'utf8' codec can't decode byte 0x91 in position 3: invalid start byte"
         if self.skip_nonutf8_value:  # 缺省为false
             tmp_chunks = []
