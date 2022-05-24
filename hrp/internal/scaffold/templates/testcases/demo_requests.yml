@@ -5,7 +5,6 @@ config:
         foo2: config_bar2
         expect_foo1: config_bar1
         expect_foo2: config_bar2
-    base_url: "https://postman-echo.com"
     verify: False
     export: ["foo3"]
 
@@ -18,7 +17,7 @@ teststeps:
         sum_v: "${sum_two_int(1, 2)}"
     request:
         method: GET
-        url: /get
+        url: $base_url/get
         params:
             foo1: $foo1
             foo2: $foo2
@@ -39,7 +38,7 @@ teststeps:
         foo3: "bar32"
     request:
         method: POST
-        url: /post
+        url: $base_url/post
         headers:
             User-Agent: funplugin/${get_version()}
             Content-Type: "text/plain"
@@ -53,7 +52,7 @@ teststeps:
         foo2: bar23
     request:
         method: POST
-        url: /post
+        url: $base_url/post
         headers:
             User-Agent: funplugin/${get_version()}
             Content-Type: "application/x-www-form-urlencoded"
