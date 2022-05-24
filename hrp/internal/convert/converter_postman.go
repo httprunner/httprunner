@@ -1,4 +1,4 @@
-package postman2case
+package convert
 
 import (
 	"bytes"
@@ -19,6 +19,83 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
+// ==================== model definition starts here ====================
+
+/*
+Postman Collection format reference:
+https://schema.postman.com/json/collection/v2.0.0/collection.json
+https://schema.postman.com/json/collection/v2.1.0/collection.json
+*/
+
+// CasePostman represents the postman exported file
+type CasePostman struct {
+	Info  TInfo   `json:"info"`
+	Items []TItem `json:"item"`
+}
+
+// TInfo gives information about the collection
+type TInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Schema      string `json:"schema"`
+}
+
+// TItem contains the detail information of request and expected responses
+// item could be defined recursively
+type TItem struct {
+	Items     []TItem     `json:"item"`
+	Name      string      `json:"name"`
+	Request   TRequest    `json:"request"`
+	Responses []TResponse `json:"response"`
+}
+
+type TRequest struct {
+	Method      string   `json:"method"`
+	Headers     []TField `json:"header"`
+	Body        TBody    `json:"body"`
+	URL         TUrl     `json:"url"`
+	Description string   `json:"description"`
+}
+
+type TResponse struct {
+	Name            string   `json:"name"`
+	OriginalRequest TRequest `json:"originalRequest"`
+	Status          string   `json:"status"`
+	Code            int      `json:"code"`
+	Headers         []TField `json:"headers"`
+	Body            string   `json:"body"`
+}
+
+type TUrl struct {
+	Raw         string   `json:"raw"`
+	Protocol    string   `json:"protocol"`
+	Path        []string `json:"path"`
+	Description string   `json:"description"`
+	Query       []TField `json:"query"`
+	Variable    []TField `json:"variable"`
+}
+
+type TField struct {
+	Key         string `json:"key"`
+	Value       string `json:"value"`
+	Src         string `json:"src"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
+	Disabled    bool   `json:"disabled"`
+	Enable      bool   `json:"enable"`
+}
+
+type TBody struct {
+	Mode       string      `json:"mode"`
+	FormData   []TField    `json:"formdata"`
+	URLEncoded []TField    `json:"urlencoded"`
+	Raw        string      `json:"raw"`
+	Disabled   bool        `json:"disabled"`
+	Options    interface{} `json:"options"`
+}
+
+// ==================== model definition ends here ====================
+
 const (
 	enumBodyRaw        = "raw"
 	enumBodyUrlEncoded = "urlencoded"
@@ -32,19 +109,6 @@ const (
 	enumFieldTypeFile = "file"
 )
 
-const (
-	suffixName    = ".converted" // distinguish the converted json(testcase) from the origin json(collection)
-	extensionJSON = ".json"
-	extensionYAML = ".yaml"
-)
-
-const (
-	configProfile = "profile"
-	configPatch   = "patch"
-	keyHeaders    = "headers"
-	keyCookies    = "cookies"
-)
-
 var contentTypeMap = map[string]string{
 	"text":       "text/plain",
 	"javascript": "application/javascript",
@@ -53,119 +117,131 @@ var contentTypeMap = map[string]string{
 	"xml":        "application/xml",
 }
 
-func NewCollection(path string) *collection {
-	return &collection{
-		path: path,
+func NewConverterPostman(converter *TCaseConverter) *ConverterPostman {
+	return &ConverterPostman{
+		converter: converter,
 	}
 }
 
-type collection struct {
-	path      string
-	profile   map[string]interface{}
-	patch     map[string]interface{}
-	outputDir string
+type ConverterPostman struct {
+	converter *TCaseConverter
 }
 
-func (c *collection) SetProfile(path string) {
-	log.Info().Str("path", path).Msg("set profile")
-	c.profile = make(map[string]interface{})
-	err := builtin.LoadFile(path, c.profile)
-	if err != nil {
-		log.Warn().Str("path", path).
-			Msg("invalid profile format, ignore!")
-	}
+func (c *ConverterPostman) Struct() *TCaseConverter {
+	return c.converter
 }
 
-func (c *collection) SetPatch(path string) {
-	log.Info().Str("path", path).Msg("set patch")
-	c.patch = make(map[string]interface{})
-	err := builtin.LoadFile(path, c.patch)
-	if err != nil {
-		log.Warn().Str("path", path).
-			Msg("invalid patch format, ignore!")
-	}
-}
-
-func (c *collection) SetOutputDir(dir string) {
-	log.Info().Str("dir", dir).Msg("set output directory")
-	c.outputDir = dir
-}
-
-func (c *collection) GenJSON() (jsonPath string, err error) {
+func (c *ConverterPostman) ToJSON() (string, error) {
 	testCase, err := c.makeTestCase()
 	if err != nil {
 		return "", err
 	}
-	jsonPath = c.genOutputPath(extensionJSON)
+	jsonPath := c.converter.genOutputPath(suffixJSON)
 	err = builtin.Dump2JSON(testCase, jsonPath)
-	return
+	if err != nil {
+		return "", err
+	}
+	return jsonPath, nil
 }
 
-func (c *collection) GenYAML() (yamlPath string, err error) {
+func (c *ConverterPostman) ToJSONTemp() (string, error) {
+	testCase, err := c.makeTestCaseTemp()
+	if err != nil {
+		return "", err
+	}
+	jsonPath := c.converter.genOutputPath(suffixJSON)
+	err = builtin.Dump2JSON(testCase, jsonPath)
+	if err != nil {
+		return "", err
+	}
+	return jsonPath, nil
+}
+
+func (c *ConverterPostman) ToYAML() (string, error) {
 	testCase, err := c.makeTestCase()
 	if err != nil {
 		return "", err
 	}
-	yamlPath = c.genOutputPath(extensionYAML)
+	yamlPath := c.converter.genOutputPath(suffixYAML)
 	err = builtin.Dump2YAML(testCase, yamlPath)
-	return
-}
-
-func (c *collection) genOutputPath(suffix string) string {
-	file := getFilenameWithoutExtension(c.path) + suffix
-	if c.outputDir != "" {
-		return filepath.Join(c.outputDir, file)
-	} else {
-		return filepath.Join(filepath.Dir(c.path), file)
+	if err != nil {
+		return "", err
 	}
+	return yamlPath, nil
 }
 
-func getFilenameWithoutExtension(path string) string {
-	base := filepath.Base(path)
-	ext := filepath.Ext(base)
-	return base[0:len(base)-len(ext)] + suffixName
+func (c *ConverterPostman) ToGoTest() (string, error) {
+	//TODO implement me
+	return "", errors.New("convert from postman to gotest scripts is not supported yet")
 }
 
-func (c *collection) makeTestCase() (*hrp.TCase, error) {
-	tCollection, err := c.load()
+func (c *ConverterPostman) ToPyTest() (string, error) {
+	return convertToPyTest(c)
+}
+
+func (c *ConverterPostman) makeTestCase() (*hrp.TCase, error) {
+	casePostman, err := c.load()
 	if err != nil {
 		return nil, err
 	}
-	teststeps, err := c.prepareTestSteps(tCollection)
+	teststeps, err := c.prepareTestSteps(casePostman)
 	if err != nil {
 		return nil, err
 	}
 	tCase := &hrp.TCase{
-		Config:    c.prepareConfig(tCollection),
+		Config:    c.prepareConfig(casePostman),
 		TestSteps: teststeps,
+	}
+	err = tCase.MakeCompat2GoEngine()
+	if err != nil {
+		return nil, err
 	}
 	return tCase, nil
 }
 
-func (c *collection) load() (*TCollection, error) {
-	collection := &TCollection{}
-	err := builtin.LoadFile(c.path, collection)
+func (c *ConverterPostman) makeTestCaseTemp() (*hrp.TCase, error) {
+	casePostman, err := c.load()
 	if err != nil {
-		return nil, errors.Wrap(err, "load postman collection failed")
+		return nil, err
 	}
-	return collection, nil
+	teststeps, err := c.prepareTestSteps(casePostman)
+	if err != nil {
+		return nil, err
+	}
+	tCase := &hrp.TCase{
+		Config:    c.prepareConfig(casePostman),
+		TestSteps: teststeps,
+	}
+	err = tCase.MakeCompat2PyEngine()
+	if err != nil {
+		return nil, err
+	}
+	return tCase, nil
 }
 
-func (c *collection) prepareConfig(tCollection *TCollection) *hrp.TConfig {
-	return hrp.NewConfig(tCollection.Info.Name).
+func (c *ConverterPostman) load() (*CasePostman, error) {
+	casePostman := c.converter.CasePostman
+	if casePostman == nil {
+		return nil, errors.New("empty postman case occurs")
+	}
+	return casePostman, nil
+}
+
+func (c *ConverterPostman) prepareConfig(casePostman *CasePostman) *hrp.TConfig {
+	return hrp.NewConfig(casePostman.Info.Name).
 		SetVerifySSL(false)
 }
 
-func (c *collection) prepareTestSteps(tCollection *TCollection) ([]*hrp.TStep, error) {
+func (c *ConverterPostman) prepareTestSteps(casePostman *CasePostman) ([]*hrp.TStep, error) {
 	// recursively convert collection items into a list
 	var itemList []TItem
-	for _, item := range tCollection.Items {
+	for _, item := range casePostman.Items {
 		extractItemList(item, &itemList)
 	}
 
 	var steps []*hrp.TStep
 	for _, item := range itemList {
-		step, err := c.prepareTestStep(&item)
+		step, err := c.prepareTestStep(&item, steps)
 		if err != nil {
 			return nil, err
 		}
@@ -191,19 +267,18 @@ func extractItemList(item TItem, itemList *[]TItem) {
 	}
 }
 
-func (c *collection) prepareTestStep(item *TItem) (*hrp.TStep, error) {
+func (c *ConverterPostman) prepareTestStep(item *TItem, steps []*hrp.TStep) (*hrp.TStep, error) {
 	log.Info().
 		Str("method", item.Request.Method).
 		Str("url", item.Request.URL.Raw).
 		Msg("convert teststep")
 
-	step := &tStep{
+	step := &stepFromPostman{
 		TStep: hrp.TStep{
 			Request:    &hrp.Request{},
 			Validators: make([]interface{}, 0),
 		},
-		profile: c.profile,
-		patch:   c.patch,
+		profile: c.converter.Profile,
 	}
 	if err := step.makeRequestName(item); err != nil {
 		return nil, err
@@ -223,30 +298,29 @@ func (c *collection) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 	if err := step.makeRequestCookies(item); err != nil {
 		return nil, err
 	}
-	if err := step.makeRequestBody(item); err != nil {
+	if err := step.makeRequestBody(item, steps); err != nil {
 		return nil, err
 	}
 	return &step.TStep, nil
 }
 
-type tStep struct {
+type stepFromPostman struct {
 	hrp.TStep
-	profile map[string]interface{}
-	patch   map[string]interface{}
+	profile *Profile
 }
 
 // makeRequestName indicates the step name the same as item name
-func (s *tStep) makeRequestName(item *TItem) error {
+func (s *stepFromPostman) makeRequestName(item *TItem) error {
 	s.Name = item.Name
 	return nil
 }
 
-func (s *tStep) makeRequestMethod(item *TItem) error {
+func (s *stepFromPostman) makeRequestMethod(item *TItem) error {
 	s.Request.Method = hrp.HTTPMethod(item.Request.Method)
 	return nil
 }
 
-func (s *tStep) makeRequestURL(item *TItem) error {
+func (s *stepFromPostman) makeRequestURL(item *TItem) error {
 	rawUrl := item.Request.URL.Raw
 	// parse path variables like ":path" in https://postman-echo.com/:path?k1=v1&k2=v2
 	for _, field := range item.Request.URL.Variable {
@@ -261,7 +335,7 @@ func (s *tStep) makeRequestURL(item *TItem) error {
 	return nil
 }
 
-func (s *tStep) makeRequestParams(item *TItem) error {
+func (s *stepFromPostman) makeRequestParams(item *TItem) error {
 	s.Request.Params = make(map[string]interface{})
 	for _, field := range item.Request.URL.Query {
 		if field.Disabled {
@@ -272,44 +346,9 @@ func (s *tStep) makeRequestParams(item *TItem) error {
 	return nil
 }
 
-func (s *tStep) updateRequestInfo(config string, key string) bool {
-	var m map[string]interface{}
-	switch config {
-	case configProfile:
-		m = s.profile
-	case configPatch:
-		m = s.patch
-	default:
-		return false
-	}
-	iRequestMap, existed := m[key]
-	if existed {
-		requestMap, ok := iRequestMap.(map[string]interface{})
-		if ok {
-			for k, v := range requestMap {
-				switch key {
-				case keyHeaders:
-					s.Request.Headers[k] = fmt.Sprintf("%v", v)
-				case keyCookies:
-					s.Request.Cookies[k] = fmt.Sprintf("%v", v)
-				}
-			}
-			return true
-		}
-		log.Warn().Interface(key, iRequestMap).Msgf("%v from %v is not a map, ignore!", key, config)
-	}
-	return false
-}
-
-func (s *tStep) makeRequestHeaders(item *TItem) error {
-	s.Request.Headers = make(map[string]string)
-
-	// override all headers according to the profile
-	if s.updateRequestInfo(configProfile, keyHeaders) {
-		return nil
-	}
-
+func (s *stepFromPostman) makeRequestHeaders(item *TItem) error {
 	// headers defined in postman collection
+	s.Request.Headers = make(map[string]string)
 	for _, field := range item.Request.Headers {
 		if field.Disabled || strings.EqualFold(field.Key, "cookie") {
 			continue
@@ -317,20 +356,23 @@ func (s *tStep) makeRequestHeaders(item *TItem) error {
 		s.Request.Headers[field.Key] = field.Value
 	}
 
-	// create or update the headers indicated in the patch
-	s.updateRequestInfo(configPatch, keyHeaders)
+	if s.profile == nil {
+		return nil
+	}
+	// override all headers according to the profile
+	if s.profile.Override {
+		s.Request.Headers = make(map[string]string)
+	}
+	// create or update the headers according to the profile
+	for k, v := range s.profile.Headers {
+		s.Request.Headers[k] = v
+	}
 	return nil
 }
 
-func (s *tStep) makeRequestCookies(item *TItem) error {
-	s.Request.Cookies = make(map[string]string)
-
-	// override all cookies according to the profile
-	if s.updateRequestInfo(configProfile, keyCookies) {
-		return nil
-	}
-
+func (s *stepFromPostman) makeRequestCookies(item *TItem) error {
 	// cookies defined in postman collection
+	s.Request.Cookies = make(map[string]string)
 	for _, field := range item.Request.Headers {
 		if field.Disabled || !strings.EqualFold(field.Key, "cookie") {
 			continue
@@ -338,12 +380,21 @@ func (s *tStep) makeRequestCookies(item *TItem) error {
 		s.parseRequestCookiesMap(field.Value)
 	}
 
-	// create or update the cookies indicated in the patch
-	s.updateRequestInfo(configPatch, keyCookies)
+	if s.profile == nil {
+		return nil
+	}
+	// override all cookies according to the profile
+	if s.profile.Override {
+		s.Request.Cookies = make(map[string]string)
+	}
+	// create or update the cookies according to the profile
+	for k, v := range s.profile.Cookies {
+		s.Request.Cookies[k] = v
+	}
 	return nil
 }
 
-func (s *tStep) parseRequestCookiesMap(cookies string) {
+func (s *stepFromPostman) parseRequestCookiesMap(cookies string) {
 	for _, cookie := range strings.Split(cookies, ";") {
 		cookie = strings.TrimSpace(cookie)
 		index := strings.Index(cookie, "=")
@@ -351,11 +402,11 @@ func (s *tStep) parseRequestCookiesMap(cookies string) {
 			log.Warn().Str("cookie", cookie).Msg("cookie format invalid")
 			continue
 		}
-		s.Request.Cookies[cookie[0:index]] = cookie[index+1:]
+		s.Request.Cookies[cookie[:index]] = cookie[index+1:]
 	}
 }
 
-func (s *tStep) makeRequestBody(item *TItem) error {
+func (s *stepFromPostman) makeRequestBody(item *TItem, steps []*hrp.TStep) error {
 	mode := item.Request.Body.Mode
 	if mode == "" {
 		return nil
@@ -364,7 +415,7 @@ func (s *tStep) makeRequestBody(item *TItem) error {
 	case enumBodyRaw:
 		return s.makeRequestBodyRaw(item)
 	case enumBodyFormData:
-		return s.makeRequestBodyFormData(item)
+		return s.makeRequestBodyFormData(item, steps)
 	case enumBodyUrlEncoded:
 		return s.makeRequestBodyUrlEncoded(item)
 	case enumBodyFile, enumBodyGraphQL:
@@ -373,7 +424,7 @@ func (s *tStep) makeRequestBody(item *TItem) error {
 	return nil
 }
 
-func (s *tStep) makeRequestBodyRaw(item *TItem) (err error) {
+func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 	defer func() {
 		if p := recover(); p != nil {
 			err = fmt.Errorf("make request body raw failed: %v", p)
@@ -401,7 +452,7 @@ func (s *tStep) makeRequestBodyRaw(item *TItem) (err error) {
 	return
 }
 
-func (s *tStep) makeRequestBodyFormData(item *TItem) (err error) {
+func (s *stepFromPostman) makeRequestBodyFormData(item *TItem, steps []*hrp.TStep) (err error) {
 	defer func() {
 		if err != nil {
 			err = errors.Wrap(err, "make request body form-data failed")
@@ -446,7 +497,7 @@ func writeFormDataFile(writer *multipart.Writer, field *TField) error {
 	return err
 }
 
-func (s *tStep) makeRequestBodyUrlEncoded(item *TItem) error {
+func (s *stepFromPostman) makeRequestBodyUrlEncoded(item *TItem) error {
 	payloadMap := make(map[string]string)
 	for _, field := range item.Request.Body.URLEncoded {
 		if field.Disabled {
@@ -460,6 +511,6 @@ func (s *tStep) makeRequestBodyUrlEncoded(item *TItem) error {
 }
 
 // TODO makeValidate from example response
-func (s *tStep) makeValidate(item *TItem) error {
+func (s *stepFromPostman) makeValidate(item *TItem) error {
 	return nil
 }

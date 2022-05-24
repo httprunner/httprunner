@@ -9,6 +9,7 @@
 - fix: step request elapsed timing should contain ContentTransfer part
 - fix #1288: unable to go get httprunner v4
 - feat: support converting Postman collection to HttpRunner testcase
+- refactor: improve the extensibility of `hrp convert` using interface `ICaseConverter`
 
 **python version**
 

@@ -1,4 +1,4 @@
-package postman2case
+package convert
 
 import (
 	"testing"
@@ -7,13 +7,15 @@ import (
 )
 
 var (
-	collectionPath = "../../../../examples/data/postman2case/demo.json"
-	profilePath    = "../../../../examples/data/postman2case/profile.yml"
-	patchPath      = "../../../../examples/data/postman2case/patch.yml"
+	collectionPath                = "../../../examples/data/postman2case/demo.json"
+	collectionProfileOverridePath = "../../../examples/data/postman2case/profile_override.yml"
+	collectionProfilePath         = "../../../examples/data/postman2case/profile.yml"
 )
 
-func TestGenJSON(t *testing.T) {
-	jsonPath, err := NewCollection(collectionPath).GenJSON()
+var converterPostman = NewConverterPostman(NewTCaseConverter(collectionPath))
+
+func TestPostman2JSON(t *testing.T) {
+	jsonPath, err := converterPostman.ToJSON()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -22,8 +24,8 @@ func TestGenJSON(t *testing.T) {
 	}
 }
 
-func TestGenYAML(t *testing.T) {
-	yamlPath, err := NewCollection(collectionPath).GenYAML()
+func TestPostman2YAML(t *testing.T) {
+	yamlPath, err := converterPostman.ToYAML()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -33,17 +35,17 @@ func TestGenYAML(t *testing.T) {
 }
 
 func TestLoadCollection(t *testing.T) {
-	tCollection, err := NewCollection(collectionPath).load()
+	casePostman, err := converterPostman.load()
 	if !assert.NoError(t, err) {
 		t.Fatal(err)
 	}
-	if !assert.Equal(t, "postman collection demo", tCollection.Info.Name) {
+	if !assert.Equal(t, "postman collection demo", casePostman.Info.Name) {
 		t.Fatal()
 	}
 }
 
-func TestMakeTestCase(t *testing.T) {
-	tCase, err := NewCollection(collectionPath).makeTestCase()
+func TestMakeTestCaseFromCollection(t *testing.T) {
+	tCase, err := converterPostman.makeTestCase()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -107,9 +109,10 @@ func TestMakeTestCase(t *testing.T) {
 	}
 }
 
-func TestMakeTestCaseWithProfile(t *testing.T) {
-	c := NewCollection(collectionPath)
-	c.SetProfile(profilePath)
+func TestMakeTestCaseWithProfileOverride(t *testing.T) {
+	tCaseConverter := NewTCaseConverter(collectionPath)
+	tCaseConverter.SetProfile(collectionProfileOverridePath)
+	c := NewConverterPostman(tCaseConverter)
 	tCase, err := c.makeTestCase()
 	if !assert.NoError(t, err) {
 		t.Fatal()
@@ -133,22 +136,23 @@ func TestMakeTestCaseWithProfile(t *testing.T) {
 	}
 }
 
-func TestMakeTestCaseWithPatch(t *testing.T) {
-	c := NewCollection(collectionPath)
-	c.SetPatch(patchPath)
+func TestMakeTestCaseWithProfile(t *testing.T) {
+	tCaseConverter := NewTCaseConverter(collectionPath)
+	tCaseConverter.SetProfile(collectionProfilePath)
+	c := NewConverterPostman(tCaseConverter)
 	tCase, err := c.makeTestCase()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
-	// create cookies Cookie1 indicated in patch
+	// create cookies Cookie1 indicated in profile
 	if !assert.Equal(t, "this cookie will be created or updated", tCase.TestSteps[0].Request.Cookies["Cookie1"]) {
 		t.Fatal()
 	}
-	// update header User-Agent indicated in patch
+	// update header User-Agent indicated in profile
 	if !assert.Equal(t, "this header will be created or updated", tCase.TestSteps[5].Request.Headers["User-Agent"]) {
 		t.Fatal()
 	}
-	// pass header Connection which is not indicated in patch
+	// pass header Connection which is not indicated in profile
 	if !assert.Equal(t, "close", tCase.TestSteps[5].Request.Headers["Connection"]) {
 		t.Fatal()
 	}

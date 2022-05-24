@@ -1,4 +1,4 @@
-package har2case
+package convert
 
 import (
 	"testing"
@@ -9,13 +9,16 @@ import (
 )
 
 var (
-	harPath     = "../../../../examples/data/har/demo.har"
-	harPath2    = "../../../../examples/data/har/postman-echo.har"
-	profilePath = "../../../../examples/data/har/profile_override.yml"
+	harPath                = "../../../examples/data/har/demo.har"
+	harPath2               = "../../../examples/data/har/postman-echo.har"
+	harProfileOverridePath = "../../../examples/data/har/profile_override.yml"
 )
 
-func TestGenJSON(t *testing.T) {
-	jsonPath, err := NewHAR(harPath).GenJSON()
+var converterHAR = NewConverterHAR(NewTCaseConverter(harPath))
+var converterHAR2 = NewConverterHAR(NewTCaseConverter(harPath2))
+
+func TestHAR2JSON(t *testing.T) {
+	jsonPath, err := converterHAR.ToJSON()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -24,8 +27,8 @@ func TestGenJSON(t *testing.T) {
 	}
 }
 
-func TestGenYAML(t *testing.T) {
-	yamlPath, err := NewHAR(harPath2).GenYAML()
+func TestHAR2YAML(t *testing.T) {
+	yamlPath, err := converterHAR2.ToYAML()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -35,8 +38,7 @@ func TestGenYAML(t *testing.T) {
 }
 
 func TestLoadHAR(t *testing.T) {
-	har := NewHAR(harPath)
-	h, err := har.load()
+	h, err := converterHAR.load()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -49,28 +51,28 @@ func TestLoadHAR(t *testing.T) {
 }
 
 func TestLoadHARWithProfile(t *testing.T) {
-	har := NewHAR(harPath)
-	har.SetProfile(profilePath)
-	_, err := har.load()
+	tCaseConverter := NewTCaseConverter(harPath)
+	tCaseConverter.SetProfile(harProfileOverridePath)
+	h := NewConverterHAR(tCaseConverter)
+	_, err := h.load()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 
 	if !assert.Equal(t,
-		map[string]interface{}{"Content-Type": "application/x-www-form-urlencoded"},
-		har.profile["headers"]) {
+		map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		h.converter.Profile.Headers) {
 		t.Fatal()
 	}
 	if !assert.Equal(t,
-		map[string]interface{}{"UserName": "debugtalk"},
-		har.profile["cookies"]) {
+		map[string]string{"UserName": "debugtalk"},
+		h.converter.Profile.Cookies) {
 		t.Fatal()
 	}
 }
 
-func TestMakeTestCase(t *testing.T) {
-	har := NewHAR(harPath)
-	tCase, err := har.makeTestCase()
+func TestMakeTestCaseFromHAR(t *testing.T) {
+	tCase, err := converterHAR.makeTestCase()
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -135,21 +137,13 @@ func TestMakeTestCase(t *testing.T) {
 	}
 }
 
-func TestGetFilenameWithoutExtension(t *testing.T) {
-	filename := getFilenameWithoutExtension(harPath2)
-	if !assert.Equal(t, "postman-echo", filename) {
-		t.Fatal()
-	}
-}
-
 func TestMakeRequestURL(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Request: Request{
 			URL: "http://127.0.0.1:8080/api/login",
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -160,7 +154,6 @@ func TestMakeRequestURL(t *testing.T) {
 }
 
 func TestMakeRequestHeaders(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -169,7 +162,7 @@ func TestMakeRequestHeaders(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -181,9 +174,10 @@ func TestMakeRequestHeaders(t *testing.T) {
 	}
 }
 
-func TestMakeRequestHeadersWithProfile(t *testing.T) {
-	har := NewHAR("")
-	har.SetProfile(profilePath)
+func TestMakeRequestHeadersWithProfileOverride(t *testing.T) {
+	tCaseConverter := NewTCaseConverter(harPath)
+	tCaseConverter.SetProfile(harProfileOverridePath)
+	h := NewConverterHAR(tCaseConverter)
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -192,7 +186,7 @@ func TestMakeRequestHeadersWithProfile(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := h.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -205,7 +199,6 @@ func TestMakeRequestHeadersWithProfile(t *testing.T) {
 }
 
 func TestMakeRequestCookies(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -215,7 +208,7 @@ func TestMakeRequestCookies(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -228,9 +221,10 @@ func TestMakeRequestCookies(t *testing.T) {
 	}
 }
 
-func TestMakeRequestCookiesWithProfile(t *testing.T) {
-	har := NewHAR("")
-	har.SetProfile(profilePath)
+func TestMakeRequestCookiesWithProfileOverride(t *testing.T) {
+	tCaseConverter := NewTCaseConverter(harPath)
+	tCaseConverter.SetProfile(harProfileOverridePath)
+	h := NewConverterHAR(tCaseConverter)
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -240,7 +234,7 @@ func TestMakeRequestCookiesWithProfile(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := h.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -253,7 +247,6 @@ func TestMakeRequestCookiesWithProfile(t *testing.T) {
 }
 
 func TestMakeRequestDataParams(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -266,7 +259,7 @@ func TestMakeRequestDataParams(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -277,7 +270,6 @@ func TestMakeRequestDataParams(t *testing.T) {
 }
 
 func TestMakeRequestDataJSON(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -287,7 +279,7 @@ func TestMakeRequestDataJSON(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -298,7 +290,6 @@ func TestMakeRequestDataJSON(t *testing.T) {
 }
 
 func TestMakeRequestDataTextEmpty(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Request: Request{
 			Method: "POST",
@@ -308,7 +299,7 @@ func TestMakeRequestDataTextEmpty(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -319,7 +310,6 @@ func TestMakeRequestDataTextEmpty(t *testing.T) {
 }
 
 func TestMakeValidate(t *testing.T) {
-	har := NewHAR("")
 	entry := &Entry{
 		Response: Response{
 			Status: 200,
@@ -335,7 +325,7 @@ func TestMakeValidate(t *testing.T) {
 			},
 		},
 	}
-	step, err := har.prepareTestStep(entry)
+	step, err := converterHAR.prepareTestStep(entry)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
