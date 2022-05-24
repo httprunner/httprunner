@@ -64,7 +64,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		return nil, errors.New("incorrect testcase file format, expected config in file")
 	}
 
-	err = tc.makeCompat()
+	err = tc.MakeCompat2GoEngine()
 	if err != nil {
 		return nil, err
 	}
@@ -154,27 +154,28 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// makeCompat converts TCase to compatible testcase
-func (tc *TCase) makeCompat() error {
-	var err error
+// MakeCompat2GoEngine converts TCase compatible with Golang engine style
+func (tc *TCase) MakeCompat2GoEngine() (err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("convert compat testcase error: %v", p)
+			err = fmt.Errorf("[MakeCompat2GoEngine] convert compat testcase error: %v", p)
 		}
 	}()
 	for _, step := range tc.TestSteps {
-		// 1. deal with request body compatible with HttpRunner
+		// 1. deal with request body compatibility
 		if step.Request != nil && step.Request.Body == nil {
 			if step.Request.Json != nil {
 				step.Request.Headers["Content-Type"] = "application/json; charset=utf-8"
 				step.Request.Body = step.Request.Json
+				step.Request.Json = nil
 			} else if step.Request.Data != nil {
 				step.Request.Body = step.Request.Data
+				step.Request.Data = nil
 			}
 		}
 
-		// 2. deal with validators compatible with HttpRunner
-		err = convertCompatValidator(step.Validators)
+		// 2. deal with validators compatibility
+		err = convertValidatorCompat2GoEngine(step.Validators)
 		if err != nil {
 			return err
 		}
@@ -185,16 +186,19 @@ func (tc *TCase) makeCompat() error {
 	return nil
 }
 
-func convertCompatValidator(Validators []interface{}) (err error) {
+func convertValidatorCompat2GoEngine(Validators []interface{}) (err error) {
 	for i, iValidator := range Validators {
+		if _, ok := iValidator.(Validator); ok {
+			continue
+		}
 		validatorMap := iValidator.(map[string]interface{})
 		validator := Validator{}
 		_, checkExisted := validatorMap["check"]
 		_, assertExisted := validatorMap["assert"]
 		_, expectExisted := validatorMap["expect"]
-		// check priority: HRP > HttpRunner
+		// validator check priority: Golang > Python engine style
 		if checkExisted && assertExisted && expectExisted {
-			// HRP validator format
+			// Golang engine style
 			validator.Check = validatorMap["check"].(string)
 			validator.Assert = validatorMap["assert"].(string)
 			validator.Expect = validatorMap["expect"]
@@ -203,8 +207,10 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
-		} else if len(validatorMap) == 1 {
-			// HttpRunner validator format
+			continue
+		}
+		if len(validatorMap) == 1 {
+			// Python engine style
 			for assertMethod, iValidatorContent := range validatorMap {
 				checkAndExpect := iValidatorContent.([]interface{})
 				if len(checkAndExpect) != 2 {
@@ -216,9 +222,9 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
-		} else {
-			return fmt.Errorf("unexpected validator format: %v", validatorMap)
+			continue
 		}
+		return fmt.Errorf("unexpected validator format: %v", validatorMap)
 	}
 	return nil
 }
@@ -244,6 +250,74 @@ func convertCheckExpr(checkExpr string) string {
 	return strings.Join(checkItems, ".")
 }
 
+// MakeCompat2PyEngine converts TCase compatible with Python engine style
+func (tc *TCase) MakeCompat2PyEngine() (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("[MakeCompat2PyEngine] convert compat testcase error: %v", p)
+		}
+	}()
+	for _, step := range tc.TestSteps {
+		// 1. deal with request body compatibility
+		if step.Request != nil && step.Request.Body != nil {
+			if strings.HasPrefix(step.Request.Headers["Content-Type"], "application/json") {
+				step.Request.Json = step.Request.Body
+				step.Request.Body = nil
+				continue
+			}
+			step.Request.Data = step.Request.Body
+			step.Request.Body = nil
+		}
+
+		// 2. deal with validators compatibility
+		err = convertValidatorCompat2PyEngine(step.Validators)
+		if err != nil {
+			return err
+		}
+	}
+	return
+}
+
+func convertValidatorCompat2PyEngine(Validators []interface{}) (err error) {
+	for i, iValidator := range Validators {
+		if v, ok := iValidator.(Validator); ok {
+			var iValidatorContent []interface{}
+			iValidatorContent = append(iValidatorContent, v.Check)
+			iValidatorContent = append(iValidatorContent, v.Expect)
+			newValidatorMap := make(map[string]interface{})
+			newValidatorMap[v.Assert] = iValidatorContent
+			Validators[i] = newValidatorMap
+			continue
+		}
+		validatorMap := iValidator.(map[string]interface{})
+		// validator check priority: Python > Golang engine style
+		if len(validatorMap) == 1 {
+			// Python engine style
+			for _, iValidatorContent := range validatorMap {
+				checkAndExpect := iValidatorContent.([]interface{})
+				if len(checkAndExpect) != 2 {
+					return fmt.Errorf("unexpected validator format: %v", validatorMap)
+				}
+			}
+			continue
+		}
+		_, checkExisted := validatorMap["check"]
+		_, assertExisted := validatorMap["assert"]
+		_, expectExisted := validatorMap["expect"]
+		if checkExisted && assertExisted && expectExisted {
+			// Golang engine style
+			var iValidatorContent []interface{}
+			iValidatorContent = append(iValidatorContent, validatorMap["check"])
+			iValidatorContent = append(iValidatorContent, validatorMap["expect"])
+			newValidatorMap := make(map[string]interface{})
+			newValidatorMap[validatorMap["assert"].(string)] = iValidatorContent
+			Validators[i] = newValidatorMap
+			continue
+		}
+		return fmt.Errorf("unexpected validator format: %v", validatorMap)
+	}
+	return
+}
 func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 	testCases := make([]*TestCase, 0)
 

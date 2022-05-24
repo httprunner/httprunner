@@ -1,4 +1,4 @@
 headers:
-  Header1: "all original headers will be overridden"
+  User-Agent: "this header will be created or updated"
 cookies:
-  Cookie1: "all original cookies will be overridden"
+  Cookie1: "this cookie will be created or updated"
