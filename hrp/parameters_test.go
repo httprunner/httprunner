@@ -137,25 +137,25 @@ func TestInitParametersIteratorCount(t *testing.T) {
 			},
 			6, // 3 * 2 * 1
 		},
-		// default equals to set overall parameters strategy to "sequential"
+		// default equals to set overall parameters pick-order to "sequential"
 		{
 			&TConfig{
 				Parameters: configParameters,
 				ParametersSetting: &TParamsConfig{
-					Strategy: "sequential",
+					PickOrder: "sequential",
 				},
 			},
 			6, // 3 * 2 * 1
 		},
-		// default equals to set each individual parameters strategy to "sequential"
+		// default equals to set each individual parameters pick-order to "sequential"
 		{
 			&TConfig{
 				Parameters: configParameters,
 				ParametersSetting: &TParamsConfig{
 					Strategies: map[string]iteratorStrategy{
-						"username-password": "sequential",
-						"user_agent":        "sequential",
-						"app_version":       "sequential",
+						"username-password": {Name: "user-info", PickOrder: "sequential"},
+						"user_agent":        {Name: "user-identity", PickOrder: "sequential"},
+						"app_version":       {Name: "app-version", PickOrder: "sequential"},
 					},
 				},
 			},
@@ -166,33 +166,33 @@ func TestInitParametersIteratorCount(t *testing.T) {
 				Parameters: configParameters,
 				ParametersSetting: &TParamsConfig{
 					Strategies: map[string]iteratorStrategy{
-						"user_agent":  "sequential",
-						"app_version": "sequential",
+						"user_agent":  {Name: "user-identity", PickOrder: "sequential"},
+						"app_version": {Name: "app-version", PickOrder: "sequential"},
 					},
 				},
 			},
 			6, // 3 * 2 * 1
 		},
 
-		// set overall parameters overall strategy to "random"
+		// set overall parameters overall pick-order to "random"
 		// each random parameters only select one item
 		{
 			&TConfig{
 				Parameters: configParameters,
 				ParametersSetting: &TParamsConfig{
-					Strategy: "random",
+					PickOrder: "random",
 				},
 			},
 			1, // 1 * 1 * 1
 		},
-		// set some individual parameters strategy to "random"
+		// set some individual parameters pick-order to "random"
 		// this will override overall strategy
 		{
 			&TConfig{
 				Parameters: configParameters,
 				ParametersSetting: &TParamsConfig{
 					Strategies: map[string]iteratorStrategy{
-						"user_agent": "random",
+						"user_agent": {Name: "user-identity", PickOrder: "random"},
 					},
 				},
 			},
@@ -203,7 +203,7 @@ func TestInitParametersIteratorCount(t *testing.T) {
 				Parameters: configParameters,
 				ParametersSetting: &TParamsConfig{
 					Strategies: map[string]iteratorStrategy{
-						"username-password": "random",
+						"username-password": {Name: "user-info", PickOrder: "random"},
 					},
 				},
 			},
@@ -349,7 +349,7 @@ func TestInitParametersIteratorContent(t *testing.T) {
 				ParametersSetting: &TParamsConfig{
 					Limit: 5, // limit could also be greater than total
 					Strategies: map[string]iteratorStrategy{
-						"username-password": "random",
+						"username-password": {Name: "user-info", PickOrder: "random"},
 					},
 				},
 			},

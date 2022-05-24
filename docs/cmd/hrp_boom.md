@@ -31,6 +31,7 @@ hrp boom [flags]
       --max-rps int                     Max RPS that boomer can generate, disabled by default.
       --mem-profile string              Enable memory profiling.
       --mem-profile-duration duration   Memory profile duration. (default 30s)
+      --profile string                  profile for load testing
       --prometheus-gateway string       Prometheus Pushgateway url.
       --request-increase-rate string    Request increase rate, disabled by default. (default "-1")
       --spawn-count int                 The number of users to spawn for load testing (default 1)

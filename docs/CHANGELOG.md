@@ -1,15 +1,28 @@
 # Release History
 
-## v4.1.0-alpha (2022-05-09)
+## v4.1.0 (2022-05-23)
+
+- feat: add `wiki` sub-command to open httprunner website
+
+**go version**
+
+- fix #1309: locate plugin file upward recursively until system root dir
+- feat: support converting Postman collection to HttpRunner testcase
+- refactor: improve the extensibility of `hrp convert` using interface `ICaseConverter`
+
+## v4.1.0-beta (2022-05-21)
 
 - feat: add pre-commit-hook to format go/python code
 
 **go version**
 
+- feat: add boomer mode(standalone/master/worker)
+- feat: support load testing with specified `--profile` configuration file
 - fix: step request elapsed timing should contain ContentTransfer part
 - fix #1288: unable to go get httprunner v4
-- feat: support converting Postman collection to HttpRunner testcase
-- refactor: improve the extensibility of `hrp convert` using interface `ICaseConverter`
+- fix: panic when config didn't exist in testcase file
+- fix: disable keep alive and improve RPS accuracy
+- fix: improve RPS accuracy
 
 **python version**
 

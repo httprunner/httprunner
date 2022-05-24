@@ -207,7 +207,7 @@ func TestLoadTestCases(t *testing.T) {
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, len(testCases), 3) {
+	if !assert.Equal(t, 4, len(testCases)) {
 		t.Fatal()
 	}
 
@@ -217,7 +217,7 @@ func TestLoadTestCases(t *testing.T) {
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, len(testCases), 3) {
+	if !assert.Equal(t, len(testCases), 4) {
 		t.Fatal()
 	}
 
