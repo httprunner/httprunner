@@ -13,7 +13,7 @@ teststeps:
     variables:
         foo1: testcase_ref_bar1
         expect_foo1: testcase_ref_bar1
-    testcase: testcases/demo_requests.yml
+    testcase: testcases/requests.yml
     export:
         - foo3
 -

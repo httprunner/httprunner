@@ -58,8 +58,8 @@ github.com/hashicorp/go-plugin v1.4.3 h1:DXmvivbWD5qdiBts9TpBC7BYL1Aia5sxbRgQB+v
 github.com/hashicorp/go-plugin v1.4.3/go.mod h1:5fGEH17QVwTTcR0zV7yhDPLLmFX9YSZ38b18Udy6vYQ=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS4/qyk21ZsHyb6Mxv/jykxvNTkU4M=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
-github.com/httprunner/funplugin v0.4.5 h1:2KCj5AZZA22OER6TN5P/PSBYFMiKpgTmCRbDmHB1tos=
-github.com/httprunner/funplugin v0.4.5/go.mod h1:vPyeJIfbpGe0epZZtAV0wCn16gLY9+imSw/zfxq0Lcc=
+github.com/httprunner/funplugin v0.4.6 h1:wwpjzo3G9a5BCXBkHs845w4ifKaCtVa/yQjREQjQOgo=
+github.com/httprunner/funplugin v0.4.6/go.mod h1:vPyeJIfbpGe0epZZtAV0wCn16gLY9+imSw/zfxq0Lcc=
 github.com/jhump/protoreflect v1.6.0/go.mod h1:eaTn3RZAmMBcV0fifFvlm6VHNz3wSkYyXYWUh7ymB74=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=

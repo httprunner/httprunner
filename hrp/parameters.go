@@ -12,17 +12,17 @@ import (
 )
 
 type TParamsConfig struct {
-	Strategy   iteratorStrategy            `json:"strategy,omitempty" yaml:"strategy,omitempty"`     // overall strategy
+	PickOrder  iteratorPickOrder           `json:"strategy,omitempty" yaml:"strategy,omitempty"`     // overall pick-order strategy
 	Strategies map[string]iteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
 	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
-type iteratorStrategy string
+type iteratorPickOrder string
 
 const (
-	strategySequential iteratorStrategy = "sequential"
-	strategyRandom     iteratorStrategy = "random"
-	strategyUnique     iteratorStrategy = "unique"
+	pickOrderSequential iteratorPickOrder = "sequential"
+	pickOrderRandom     iteratorPickOrder = "random"
+	pickOrderUnique     iteratorPickOrder = "unique"
 )
 
 /*
@@ -32,6 +32,11 @@ const (
 ]
 */
 type Parameters []map[string]interface{}
+
+type iteratorStrategy struct {
+	Name      string            `json:"name,omitempty" yaml:"name,omitempty"`
+	PickOrder iteratorPickOrder `json:"pick_order,omitempty" yaml:"pick_order,omitempty"`
+}
 
 func initParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
 	parameters, err := loadParameters(cfg.Parameters, cfg.Variables)
@@ -62,15 +67,15 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 
 	parametersList := make([]Parameters, 0)
 	for paramName := range parameters {
-		// check parameter individual strategy
+		// check parameter individual pick order strategy
 		strategy, ok := config.Strategies[paramName]
 		if !ok {
-			// default to overall strategy
-			strategy = config.Strategy
+			// default to overall pick order strategy
+			strategy.PickOrder = config.PickOrder
 		}
 
-		// group parameters by strategy
-		if strategy == strategyRandom {
+		// group parameters by pick order strategy
+		if strategy.PickOrder == pickOrderRandom {
 			iterator.randomParameterNames = append(iterator.randomParameterNames, paramName)
 		} else {
 			parametersList = append(parametersList, parameters[paramName])

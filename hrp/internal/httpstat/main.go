@@ -39,11 +39,11 @@ const (
 )
 
 func fmta(d time.Duration) string {
-	return color.BlueString("%7dms", int(d.Milliseconds()))
+	return color.YellowString("%7dms", int(d.Milliseconds()))
 }
 
 func fmtb(d time.Duration) string {
-	return color.MagentaString("%-9s", strconv.Itoa(int(d.Milliseconds()))+"ms")
+	return color.RedString("%-9s", strconv.Itoa(int(d.Milliseconds()))+"ms")
 }
 
 func grayscale(code color.Attribute) func(string, ...interface{}) string {
@@ -137,7 +137,7 @@ func (s *Stat) Print() {
 	if s.network != "" && s.addr != "" {
 		printf("\n%s %s: %s\n",
 			color.CyanString("Connected to"),
-			color.YellowString(s.network),
+			color.MagentaString(s.network),
 			color.BlueString(s.addr),
 		)
 	}

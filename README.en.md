@@ -12,7 +12,7 @@
 
 > HttpRunner [用户调研问卷][survey] 持续收集中，我们将基于用户反馈动态调整产品特性和需求优先级。
 
-![flow chart](docs/assets/hrp-flow.jpg)
+![flow chart](https://httprunner.com/image/hrp-flow.jpg)
 
 [CHANGELOG] | [中文]
 

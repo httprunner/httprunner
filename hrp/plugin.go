@@ -78,11 +78,11 @@ func locatePlugin(path string) (pluginPath string, err error) {
 		return
 	}
 
+	log.Warn().Err(err).Str("path", path).Msg("plugin file not found")
 	return "", fmt.Errorf("plugin file not found")
 }
 
-// locateFile searches destFile upward recursively until current
-// working directory or system root dir.
+// locateFile searches destFile upward recursively until system root dir
 func locateFile(startPath string, destFile string) (string, error) {
 	stat, err := os.Stat(startPath)
 	if os.IsNotExist(err) {
@@ -103,12 +103,6 @@ func locateFile(startPath string, destFile string) (string, error) {
 		return pluginPath, nil
 	}
 
-	// current working directory
-	cwd, _ := os.Getwd()
-	if startDir == cwd {
-		return "", fmt.Errorf("searched to CWD, plugin file not found")
-	}
-
 	// system root dir
 	parentDir, _ := filepath.Abs(filepath.Dir(startDir))
 	if parentDir == startDir {
@@ -118,7 +112,7 @@ func locateFile(startPath string, destFile string) (string, error) {
 	return locateFile(parentDir, destFile)
 }
 
-func getProjectRootDirPath(path string) (rootDir string, err error) {
+func GetProjectRootDirPath(path string) (rootDir string, err error) {
 	pluginPath, err := locatePlugin(path)
 	if err == nil {
 		rootDir = filepath.Dir(pluginPath)
