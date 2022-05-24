@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	collectionPath                = "../../../examples/data/postman2case/demo.json"
-	collectionProfileOverridePath = "../../../examples/data/postman2case/profile_override.yml"
-	collectionProfilePath         = "../../../examples/data/postman2case/profile.yml"
+	collectionPath                = "../../../examples/data/postman/postman_collection.json"
+	collectionProfileOverridePath = "../../../examples/data/postman/profile_override.yml"
+	collectionProfilePath         = "../../../examples/data/postman/profile.yml"
 )
 
 var converterPostman = NewConverterPostman(NewTCaseConverter(collectionPath))

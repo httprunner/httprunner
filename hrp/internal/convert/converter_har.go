@@ -3,7 +3,6 @@ package convert
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"net/url"
 	"sort"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 

@@ -10,7 +10,7 @@ import (
 
 var convertCmd = &cobra.Command{
 	Use:   "convert $path...",
-	Short: "convert external cases to JSON/YAML/gotest/pytest testcases",
+	Short: "convert to JSON/YAML/gotest/pytest testcases",
 	Args:  cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
@@ -36,8 +36,7 @@ var convertCmd = &cobra.Command{
 		if flagCount > 1 {
 			return errors.New("please specify at most one conversion flag")
 		}
-		iCaseConverters := convert.LoadConverters(outputType, outputDir, profilePath, args)
-		convert.Run(iCaseConverters)
+		convert.Run(outputType, outputDir, profilePath, args)
 		return nil
 	},
 }

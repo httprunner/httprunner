@@ -286,7 +286,7 @@ func LoadFile(path string, structObj interface{}) (err error) {
 		return errors.Wrap(err, "read file failed")
 	}
 	// remove BOM at the beginning of file
-	file = bytes.Trim(file, "\xef\xbb\xbf")
+	file = bytes.TrimLeft(file, "\xef\xbb\xbf")
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json", ".har":
