@@ -314,8 +314,7 @@ func parseEnvContent(file []byte, obj interface{}) error {
 		var kv []string
 		if strings.Contains(line, "=") {
 			kv = strings.SplitN(line, "=", 2)
-		}
-		if strings.Contains(line, ":") {
+		} else if strings.Contains(line, ":") {
 			kv = strings.SplitN(line, ":", 2)
 		}
 		if len(kv) != 2 {

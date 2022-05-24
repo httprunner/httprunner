@@ -20,10 +20,10 @@ func NewConfig(name string) *TConfig {
 type TConfig struct {
 	Name              string                 `json:"name" yaml:"name"` // required
 	Verify            bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
-	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`
-	Headers           map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Env               map[string]string      `json:"env,omitempty" yaml:"env,omitempty"`
-	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`   // deprecated in v4.1, moved to env
+	Headers           map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`     // public request headers
+	Env               map[string]string      `json:"env,omitempty" yaml:"env,omitempty"`             // environment variables
+	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"` // global variables
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
