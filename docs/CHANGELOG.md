@@ -1,6 +1,6 @@
 # Release History
 
-## v4.1.0 (2022-05-24)
+## v4.1.0 (2022-05-25)
 
 - feat: add `wiki` sub-command to open httprunner website
 

@@ -91,11 +91,11 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 
 		// override testcase config env with variables loaded from .env file
 		// priority: .env file > testcase config env
-		if testCase.Config.Env == nil {
-			testCase.Config.Env = make(map[string]string)
+		if testCase.Config.Environs == nil {
+			testCase.Config.Environs = make(map[string]string)
 		}
 		for key, value := range envVars {
-			testCase.Config.Env[key] = value
+			testCase.Config.Environs[key] = value
 		}
 	}
 
