@@ -1,12 +1,14 @@
 # Release History
 
-## v4.1.0 (2022-05-23)
+## v4.1.0 (2022-05-25)
 
 - feat: add `wiki` sub-command to open httprunner website
 
 **go version**
 
+- fix #1308: load `.env` file as environment variables
 - fix #1309: locate plugin file upward recursively until system root dir
+- refactor: move base_url to config env
 - feat: support converting Postman collection to HttpRunner testcase
 - refactor: improve the extensibility of `hrp convert` using interface `ICaseConverter`
 

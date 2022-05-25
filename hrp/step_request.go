@@ -145,7 +145,8 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 		log.Error().Err(err).Msg("parse request url failed")
 		return err
 	}
-	rawUrl := buildURL(r.config.BaseURL, convertString(requestUrl))
+	baseURL := stepVariables["base_url"].(string)
+	rawUrl := buildURL(baseURL, convertString(requestUrl))
 
 	// prepare request params
 	var queryParams url.Values

@@ -80,6 +80,25 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		return nil, errors.Wrap(err, "failed to get project root dir")
 	}
 
+	// load .env file
+	dotEnvPath := filepath.Join(projectRootDir, ".env")
+	if builtin.IsFilePathExists(dotEnvPath) {
+		envVars := make(map[string]string)
+		err = builtin.LoadFile(dotEnvPath, envVars)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load .env file")
+		}
+
+		// override testcase config env with variables loaded from .env file
+		// priority: .env file > testcase config env
+		if testCase.Config.Environs == nil {
+			testCase.Config.Environs = make(map[string]string)
+		}
+		for key, value := range envVars {
+			testCase.Config.Environs[key] = value
+		}
+	}
+
 	for _, step := range tc.TestSteps {
 		if step.API != nil {
 			apiPath, ok := step.API.(string)

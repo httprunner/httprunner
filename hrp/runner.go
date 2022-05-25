@@ -287,6 +287,25 @@ func (r *testCaseRunner) parseConfig() error {
 	}
 	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
 
+	// merge config environment variables with base_url
+	// priority: env base_url > base_url
+	if cfg.Environs != nil {
+		r.parsedConfig.Environs = cfg.Environs
+	} else {
+		r.parsedConfig.Environs = make(map[string]string)
+	}
+	if value, ok := r.parsedConfig.Environs["base_url"]; !ok || value == "" {
+		if r.parsedConfig.BaseURL != "" {
+			r.parsedConfig.Environs["base_url"] = r.parsedConfig.BaseURL
+		}
+	}
+
+	// merge config variables with environment variables
+	// priority: env > config variables
+	for k, v := range r.parsedConfig.Environs {
+		r.parsedConfig.Variables[k] = v
+	}
+
 	// ensure correction of think time config
 	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
 
