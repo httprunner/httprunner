@@ -29,7 +29,6 @@ var har2caseCmd = &cobra.Command{
 		}
 		if flagCount > 1 {
 			return errors.New("please specify at most one conversion flag")
-
 		}
 		convert.Run(har2caseOutputType, har2caseOutputDir, har2caseProfilePath, args)
 		return nil

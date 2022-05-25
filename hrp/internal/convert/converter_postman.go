@@ -427,14 +427,19 @@ func (s *stepFromPostman) makeRequestBody(item *TItem, steps []*hrp.TStep) error
 func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("make request body raw failed: %v", p)
+			err = fmt.Errorf("make request body (raw) failed: %v", p)
 		}
 	}()
 
-	// extract language type
+	// extract language type, default languageType: text
+	languageType := "text"
 	iOptions := item.Request.Body.Options
-	iLanguage := iOptions.(map[string]interface{})["raw"]
-	languageType := iLanguage.(map[string]interface{})["language"].(string)
+	if iOptions != nil {
+		iLanguage := iOptions.(map[string]interface{})["raw"]
+		if iLanguage != nil {
+			languageType = iLanguage.(map[string]interface{})["language"].(string)
+		}
+	}
 
 	// make request body and indicate Content-Type
 	rawBody := item.Request.Body.Raw
@@ -442,7 +447,7 @@ func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 		var iBody interface{}
 		err = json.Unmarshal([]byte(rawBody), &iBody)
 		if err != nil {
-			return errors.Wrap(err, "make request body raw failed")
+			return errors.Wrap(err, "make request body (raw -> json) failed")
 		}
 		s.Request.Body = iBody
 	} else {
