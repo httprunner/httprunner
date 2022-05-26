@@ -179,12 +179,13 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		}()
 
 		for it := sessionRunner.parametersIterator; it.HasNext(); {
-			if err = sessionRunner.Start(it.Next()); err != nil {
-				log.Error().Err(err).Msg("[Run] run testcase failed")
-				return err
-			}
+			err = sessionRunner.Start(it.Next())
 			caseSummary := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
+			if err != nil {
+				log.Error().Err(err).Msg("[Run] run testcase failed")
+				break
+			}
 		}
 	}
 	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
