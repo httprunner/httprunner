@@ -64,7 +64,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		return nil, errors.New("incorrect testcase file format, expected config in file")
 	}
 
-	err = tc.MakeCompat2GoEngine()
+	err = tc.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
@@ -173,11 +173,11 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// MakeCompat2GoEngine converts TCase compatible with Golang engine style
-func (tc *TCase) MakeCompat2GoEngine() (err error) {
+// MakeCompat converts TCase compatible with Golang engine style
+func (tc *TCase) MakeCompat() (err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("[MakeCompat2GoEngine] convert compat testcase error: %v", p)
+			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
 		}
 	}()
 	for _, step := range tc.TestSteps {
@@ -194,7 +194,7 @@ func (tc *TCase) MakeCompat2GoEngine() (err error) {
 		}
 
 		// 2. deal with validators compatibility
-		err = convertValidatorCompat2GoEngine(step.Validators)
+		err = convertCompatValidator(step.Validators)
 		if err != nil {
 			return err
 		}
@@ -205,7 +205,7 @@ func (tc *TCase) MakeCompat2GoEngine() (err error) {
 	return nil
 }
 
-func convertValidatorCompat2GoEngine(Validators []interface{}) (err error) {
+func convertCompatValidator(Validators []interface{}) (err error) {
 	for i, iValidator := range Validators {
 		if _, ok := iValidator.(Validator); ok {
 			continue
@@ -272,77 +272,6 @@ func convertCheckExpr(checkExpr string) string {
 	return strings.Join(checkItems, ".")
 }
 
-// MakeCompat2PyEngine converts TCase compatible with Python engine style
-func (tc *TCase) MakeCompat2PyEngine() (err error) {
-	defer func() {
-		if p := recover(); p != nil {
-			err = fmt.Errorf("[MakeCompat2PyEngine] convert compat testcase error: %v", p)
-		}
-	}()
-	for _, step := range tc.TestSteps {
-		// 1. deal with request body compatibility
-		if step.Request != nil && step.Request.Body != nil {
-			if strings.HasPrefix(step.Request.Headers["Content-Type"], "application/json") {
-				step.Request.Json = step.Request.Body
-				step.Request.Body = nil
-				continue
-			}
-			step.Request.Data = step.Request.Body
-			step.Request.Body = nil
-		}
-
-		// 2. deal with validators compatibility
-		err = convertValidatorCompat2PyEngine(step.Validators)
-		if err != nil {
-			return err
-		}
-	}
-	return
-}
-
-func convertValidatorCompat2PyEngine(Validators []interface{}) (err error) {
-	for i, iValidator := range Validators {
-		if v, ok := iValidator.(Validator); ok {
-			var iValidatorContent []interface{}
-			iValidatorContent = append(iValidatorContent, v.Check)
-			iValidatorContent = append(iValidatorContent, v.Expect)
-			newValidatorMap := make(map[string]interface{})
-			newValidatorMap[v.Assert] = iValidatorContent
-			Validators[i] = newValidatorMap
-			continue
-		}
-		validatorMap := iValidator.(map[string]interface{})
-		// validator check priority: Python > Golang engine style
-		if len(validatorMap) == 1 {
-			// Python engine style
-			for _, iValidatorContent := range validatorMap {
-				validatorContent := iValidatorContent.([]interface{})
-				if len(validatorContent) > 3 {
-					return fmt.Errorf("unexpected validator format: %v", validatorMap)
-				}
-			}
-			continue
-		}
-		iCheck, checkExisted := validatorMap["check"]
-		iAssert, assertExisted := validatorMap["assert"]
-		iExpect, expectExisted := validatorMap["expect"]
-		if checkExisted && assertExisted && expectExisted {
-			// Golang engine style
-			var validatorContent []interface{}
-			validatorContent = append(validatorContent, iCheck)
-			validatorContent = append(validatorContent, iExpect)
-			if iMsg, msgExisted := validatorMap["msg"]; msgExisted {
-				validatorContent = append(validatorContent, iMsg)
-			}
-			newValidatorMap := make(map[string]interface{})
-			newValidatorMap[iAssert.(string)] = validatorContent
-			Validators[i] = newValidatorMap
-			continue
-		}
-		return fmt.Errorf("unexpected validator format: %v", validatorMap)
-	}
-	return
-}
 func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 	testCases := make([]*TestCase, 0)
 

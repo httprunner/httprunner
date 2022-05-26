@@ -384,19 +384,6 @@ func (c *ConverterHAR) ToJSON() (string, error) {
 	return jsonPath, nil
 }
 
-func (c *ConverterHAR) ToJSONTemp() (string, error) {
-	tCase, err := c.makeTestCaseTemp()
-	if err != nil {
-		return "", err
-	}
-	jsonPath := c.converter.genOutputPath(suffixJSON)
-	err = builtin.Dump2JSON(tCase, jsonPath)
-	if err != nil {
-		return "", err
-	}
-	return jsonPath, nil
-}
-
 func (c *ConverterHAR) ToYAML() (string, error) {
 	tCase, err := c.makeTestCase()
 	if err != nil {
@@ -429,24 +416,7 @@ func (c *ConverterHAR) makeTestCase() (*hrp.TCase, error) {
 		Config:    c.prepareConfig(),
 		TestSteps: teststeps,
 	}
-	err = tCase.MakeCompat2GoEngine()
-	if err != nil {
-		return nil, err
-	}
-	return tCase, nil
-}
-
-func (c *ConverterHAR) makeTestCaseTemp() (*hrp.TCase, error) {
-	teststeps, err := c.prepareTestSteps()
-	if err != nil {
-		return nil, err
-	}
-
-	tCase := &hrp.TCase{
-		Config:    c.prepareConfig(),
-		TestSteps: teststeps,
-	}
-	err = tCase.MakeCompat2PyEngine()
+	err = tCase.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
