@@ -76,7 +76,7 @@
                     "User-Agent": "funplugin/${get_version()}",
                     "Content-Type": "text/plain"
                 },
-                "data": "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
+                "body": "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
             },
             "validate": [
                 {
@@ -105,7 +105,7 @@
                     "User-Agent": "funplugin/${get_version()}",
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
-                "data": "foo1=$foo1&foo2=$foo2&foo3=$foo3"
+                "body": "foo1=$foo1&foo2=$foo2&foo3=$foo3"
             },
             "validate": [
                 {
