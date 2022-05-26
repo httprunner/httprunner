@@ -9,7 +9,7 @@
 
 {{ end }}
 if __name__ == "__main__":
-{{- range $mainRegSnake := .FunctionSnakeNames }}
-    funppy.register("{{ $mainRegSnake }}", {{ $mainRegSnake }})
+{{- range $functionName := .FunctionNames }}
+    funppy.register("{{ $functionName }}", {{ $functionName }})
 {{- end }}
     funppy.serve()
