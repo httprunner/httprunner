@@ -24,7 +24,9 @@ var scaffoldCmd = &cobra.Command{
 		}
 
 		var pluginType scaffold.PluginType
-		if ignorePlugin {
+		if empty {
+			pluginType = scaffold.Empty
+		} else if ignorePlugin {
 			pluginType = scaffold.Ignore
 		} else if genGoPlugin {
 			pluginType = scaffold.Go
@@ -32,7 +34,7 @@ var scaffoldCmd = &cobra.Command{
 			pluginType = scaffold.Py // default
 		}
 
-		err := scaffold.CreateScaffold(args[0], pluginType, empty, force)
+		err := scaffold.CreateScaffold(args[0], pluginType, force)
 		if err != nil {
 			log.Error().Err(err).Msg("create scaffold project failed")
 			os.Exit(1)

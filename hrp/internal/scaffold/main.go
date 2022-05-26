@@ -20,6 +20,7 @@ import (
 type PluginType string
 
 const (
+	Empty  PluginType = "empty"
 	Ignore PluginType = "ignore"
 	Py     PluginType = "py"
 	Go     PluginType = "go"
@@ -51,7 +52,7 @@ func CopyFile(templateFile, targetFile string) error {
 	return nil
 }
 
-func CreateScaffold(projectName string, pluginType PluginType, empty bool, force bool) error {
+func CreateScaffold(projectName string, pluginType PluginType, force bool) error {
 	// report event
 	sdk.SendEvent(sdk.EventTracking{
 		Category: "Scaffold",
@@ -128,13 +129,14 @@ func CreateScaffold(projectName string, pluginType PluginType, empty bool, force
 	}
 
 	// create project testcases
-	if empty {
+	if pluginType == Empty {
 		// create empty project
 		err := CopyFile("templates/testcases/demo_empty_request.json",
 			filepath.Join(projectName, "testcases", "requests.json"))
 		if err != nil {
 			return err
 		}
+		return nil
 	} else if pluginType == Ignore {
 		// create project without funplugin
 		err := CopyFile("templates/testcases/demo_without_funplugin.json",
@@ -142,34 +144,32 @@ func CreateScaffold(projectName string, pluginType PluginType, empty bool, force
 		if err != nil {
 			return err
 		}
-	} else {
-		// create project with funplugin
-		err = CopyFile("templates/testcases/demo_with_funplugin.json",
-			filepath.Join(projectName, "testcases", "demo.json"))
-		if err != nil {
-			return err
-		}
-		err = CopyFile("templates/testcases/demo_requests.json",
-			filepath.Join(projectName, "testcases", "requests.json"))
-		if err != nil {
-			return err
-		}
-		err = CopyFile("templates/testcases/demo_requests.yml",
-			filepath.Join(projectName, "testcases", "requests.yml"))
-		if err != nil {
-			return err
-		}
-		err = CopyFile("templates/testcases/demo_ref_testcase.yml",
-			filepath.Join(projectName, "testcases", "ref_testcase.yml"))
-		if err != nil {
-			return err
-		}
-	}
-
-	if pluginType == Ignore {
 		log.Info().Msg("skip creating function plugin")
 		return nil
 	}
+
+	// create project with funplugin
+	err = CopyFile("templates/testcases/demo_with_funplugin.json",
+		filepath.Join(projectName, "testcases", "demo.json"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_requests.json",
+		filepath.Join(projectName, "testcases", "requests.json"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_requests.yml",
+		filepath.Join(projectName, "testcases", "requests.yml"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_ref_testcase.yml",
+		filepath.Join(projectName, "testcases", "ref_testcase.yml"))
+	if err != nil {
+		return err
+	}
+
 	// create debugtalk function plugin
 	switch pluginType {
 	case Py:
