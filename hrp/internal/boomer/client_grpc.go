@@ -74,12 +74,12 @@ func newClient(masterHost string, masterPort int, identity string) (client *grpc
 
 func (c *grpcClient) connect() (err error) {
 	addr := fmt.Sprintf("%v:%v", c.masterHost, c.masterPort)
-	c.config.conn, err = grpc.Dial(addr, grpc.WithInsecure())
+	c.config.conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)))
 	if err != nil {
 		log.Error().Err(err).Msg("failed to connect")
 		return err
 	}
-
+	grpc.MaxCallRecvMsgSize(32 * 10e9)
 	go c.recv()
 	go c.send()
 

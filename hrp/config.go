@@ -32,7 +32,8 @@ type TConfig struct {
 	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
-	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
+	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
+	PluginSetting     *PluginConfig          `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
 }
 
 // WithVariables sets variables for current testcase.
@@ -172,3 +173,9 @@ const (
 )
 
 var thinkTimeDefaultRandom = map[string]float64{"min_percentage": 0.5, "max_percentage": 1.5}
+
+type PluginConfig struct {
+	Path    string
+	Type    string // bin、so、py
+	Content []byte
+}

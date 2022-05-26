@@ -1,7 +1,11 @@
 package hrp
 
 import (
+	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -194,7 +198,30 @@ func (b *HRPBoomer) runTasks(testCases []*TCase, profile *boomer.Profile) {
 		tesecase, err := tc.toTestCase()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to load testcases")
+			return
 		}
+		// create temp dir to save testcase
+		tempDir, err := ioutil.TempDir("", "hrp_testcases")
+		if err != nil {
+			log.Error().Err(err).Msg("failed to save testcases")
+			return
+		}
+
+		tesecase.Config.Path = filepath.Join(tempDir, "test-case.json")
+		if tesecase.Config.PluginSetting != nil {
+			tesecase.Config.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", tesecase.Config.PluginSetting.Type))
+			err = builtin.Bytes2File(tesecase.Config.PluginSetting.Content, tesecase.Config.PluginSetting.Path)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to save plugin file")
+				return
+			}
+		}
+		err = builtin.Dump2JSON(tesecase, tesecase.Config.Path)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to dump testcases")
+			return
+		}
+
 		testcases = append(testcases, tesecase)
 	}
 	b.SetProfile(profile)
