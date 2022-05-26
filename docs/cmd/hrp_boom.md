@@ -27,9 +27,10 @@ hrp boom [flags]
       --disable-compression             Disable compression
       --disable-console-output          Disable console output.
       --disable-keepalive               Disable keepalive
-      --expect-workers int              How many workers master should expect to connect before starting the test (only when --autostart is used (default 1)
+      --expect-workers int              How many workers master should expect to connect before starting the test (only when --autostart is used) (default 1)
       --expect-workers-max-wait int     How many workers master should expect to connect before starting the test (only when --autostart is used
   -h, --help                            help for boom
+      --ignore-quit                     ignores quit from master (only when --worker is used)
       --loop-count int                  The specify running cycles for load testing (default -1)
       --master                          master of distributed testing
       --master-bind-host string         Interfaces (hostname, ip) that hrp master should bind to. Only used when running with --master. Defaults to * (all available interfaces). (default "127.0.0.1")

@@ -151,9 +151,9 @@ func (c *Controller) increaseFinishedCount() {
 func (c *Controller) reset() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	c.spawnCount = 0
+	atomic.StoreInt64(&c.spawnCount, 0)
 	c.spawnRate = 0
-	c.currentClientsNum = 0
+	atomic.StoreInt64(&c.currentClientsNum, 0)
 	c.spawnDone = make(chan struct{})
 	c.tasks = []*Task{}
 	c.once = sync.Once{}
@@ -490,6 +490,7 @@ func (r *runner) stop() {
 	if r.rateLimitEnabled {
 		r.rateLimiter.Stop()
 	}
+	r.updateState(StateStopped)
 }
 
 func (r *runner) getState() int32 {
@@ -581,6 +582,7 @@ type workerRunner struct {
 
 	tasksChan chan *profileMessage
 
+	mutex      sync.Mutex
 	ignoreQuit bool
 }
 
@@ -597,6 +599,7 @@ func newWorkerRunner(masterHost string, masterPort int) (r *workerRunner) {
 		masterPort: masterPort,
 		nodeID:     getNodeID(),
 		tasksChan:  make(chan *profileMessage, 10),
+		mutex:      sync.Mutex{},
 	}
 	return r
 }
@@ -746,6 +749,8 @@ func (r *workerRunner) run() {
 
 // start load test
 func (r *workerRunner) start() {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	r.reset()
 
 	// start rate limiter
@@ -768,7 +773,6 @@ func (r *workerRunner) stop() {
 	if r.isStarted() {
 		r.runner.stop()
 		close(r.rebalance)
-		r.updateState(StateStopped)
 	}
 }
 
