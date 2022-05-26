@@ -241,7 +241,6 @@ func (c *TCaseConverter) ToGoTest() (string, error) {
 type ICaseConverter interface {
 	Struct() *TCaseConverter
 	ToJSON() (string, error)
-	ToJSONTemp() (string, error)
 	ToYAML() (string, error)
 	ToGoTest() (string, error)
 	ToPyTest() (string, error)
@@ -345,8 +344,8 @@ func makeTestCaseFromJSONYAML(iCaseConverter ICaseConverter) (*hrp.TCase, error)
 }
 
 func convertToPyTest(iCaseConverter ICaseConverter) (string, error) {
-	// convert to temporary json testcase compatible with python engine style
-	jsonPath, err := iCaseConverter.ToJSONTemp()
+	// convert to temporary json testcase
+	jsonPath, err := iCaseConverter.ToJSON()
 	inputType := iCaseConverter.Struct().InputType
 	if err != nil {
 		return "", errors.Wrapf(err, "(%s -> pytest step 1) failed to convert to temporary json testcase", inputType.String())

@@ -47,7 +47,7 @@ func (path *APIPath) ToAPI() (*API, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = convertValidatorCompat2GoEngine(api.Validators)
+	err = convertCompatValidator(api.Validators)
 	convertExtract(api.Extract)
 	return api, err
 }

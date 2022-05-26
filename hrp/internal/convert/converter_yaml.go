@@ -34,19 +34,6 @@ func (c *ConverterYAML) ToJSON() (string, error) {
 	return jsonPath, nil
 }
 
-func (c *ConverterYAML) ToJSONTemp() (string, error) {
-	testCase, err := c.makeTestCaseTemp()
-	if err != nil {
-		return "", err
-	}
-	jsonPath := c.converter.genOutputPath(suffixJSON)
-	err = builtin.Dump2JSON(testCase, jsonPath)
-	if err != nil {
-		return "", err
-	}
-	return jsonPath, nil
-}
-
 func (c *ConverterYAML) ToYAML() (string, error) {
 	testCase, err := c.makeTestCase()
 	if err != nil {
@@ -74,19 +61,7 @@ func (c *ConverterYAML) makeTestCase() (*hrp.TCase, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = tCase.MakeCompat2GoEngine()
-	if err != nil {
-		return nil, err
-	}
-	return tCase, nil
-}
-
-func (c *ConverterYAML) makeTestCaseTemp() (*hrp.TCase, error) {
-	tCase, err := makeTestCaseFromJSONYAML(c)
-	if err != nil {
-		return nil, err
-	}
-	err = tCase.MakeCompat2PyEngine()
+	err = tCase.MakeCompat()
 	if err != nil {
 		return nil, err
 	}

@@ -144,19 +144,6 @@ func (c *ConverterPostman) ToJSON() (string, error) {
 	return jsonPath, nil
 }
 
-func (c *ConverterPostman) ToJSONTemp() (string, error) {
-	testCase, err := c.makeTestCaseTemp()
-	if err != nil {
-		return "", err
-	}
-	jsonPath := c.converter.genOutputPath(suffixJSON)
-	err = builtin.Dump2JSON(testCase, jsonPath)
-	if err != nil {
-		return "", err
-	}
-	return jsonPath, nil
-}
-
 func (c *ConverterPostman) ToYAML() (string, error) {
 	testCase, err := c.makeTestCase()
 	if err != nil {
@@ -192,27 +179,7 @@ func (c *ConverterPostman) makeTestCase() (*hrp.TCase, error) {
 		Config:    c.prepareConfig(casePostman),
 		TestSteps: teststeps,
 	}
-	err = tCase.MakeCompat2GoEngine()
-	if err != nil {
-		return nil, err
-	}
-	return tCase, nil
-}
-
-func (c *ConverterPostman) makeTestCaseTemp() (*hrp.TCase, error) {
-	casePostman, err := c.load()
-	if err != nil {
-		return nil, err
-	}
-	teststeps, err := c.prepareTestSteps(casePostman)
-	if err != nil {
-		return nil, err
-	}
-	tCase := &hrp.TCase{
-		Config:    c.prepareConfig(casePostman),
-		TestSteps: teststeps,
-	}
-	err = tCase.MakeCompat2PyEngine()
+	err = tCase.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
