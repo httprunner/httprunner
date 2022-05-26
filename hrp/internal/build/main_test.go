@@ -17,7 +17,7 @@ func TestRun(t *testing.T) {
 		t.Fatal()
 	}
 
-	err = Run("examples/debugtalk_no_funppy.py", "./debugtalk_gen.py")
+	err = Run("examples/debugtalk_no_funppy.py", "./debugtalk.py")
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
