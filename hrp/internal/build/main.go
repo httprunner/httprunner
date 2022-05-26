@@ -23,8 +23,9 @@ const (
 	funppy                  = `import funppy`
 	fungo                   = `"github.com/httprunner/funplugin/fungo"`
 	regexPythonFunctionName = `def ([a-zA-Z_]\w*)\(.*\)`
-	regexGoImport           = `import\s*\(\n([\s\S]*)\n\)`
-	regexGoFunctionName     = `func ([a-zA-Z_]\w*)\(.*\)`
+	regexGoImports          = `import\s*\(\n([\s\S]*)\n\)`
+	regexGoImport           = `import\s*(\"[\s\S]*\")\n`
+	regexGoFunctionName     = `func ([A-Z][a-zA-Z_]\w*)\(.*\)`
 	regexGoFunctionContent  = `func [\s\S]*?\n}\n`
 )
 
@@ -35,17 +36,17 @@ var pyTemplate string
 var goTemplate string
 
 type TemplateContent struct {
-	Fun                string   // funplugin package
-	Regexps            *Regexps // match import/function
-	Imports            []string // python/go import
-	FromImports        []string // python from...import...
-	Functions          []string // python/go function
-	FunctionNames      []string // function name set by user
-	FunctionSnakeNames []string // function snake name converts by function name for registering plugin
+	Fun           string   // funplugin package
+	Regexps       *Regexps // match import/function
+	Imports       []string // python/go import
+	FromImports   []string // python from...import...
+	Functions     []string // python/go function
+	FunctionNames []string // function name set by user
 }
 
 type Regexps struct {
 	Import          *regexp.Regexp
+	Imports         *regexp.Regexp
 	FunctionName    *regexp.Regexp
 	FunctionContent *regexp.Regexp // including function define and body
 }
@@ -65,11 +66,14 @@ func (t *TemplateContent) parseGoContent(path string) error {
 	if len(importSlice) != 0 {
 		imports := strings.Replace(importSlice[0][1], "\t", "", -1)
 		for _, elem := range strings.Split(imports, "\n") {
-			t.Imports = append(t.Imports, elem)
+			t.Imports = append(t.Imports, strings.TrimSpace(elem))
 		}
-	} else {
-		if strings.Contains(originalContent, "\nimport ") {
-			return errors.New(`import style error, expected import ( ... )`)
+	}
+	// parse import
+	importSlice = t.Regexps.Imports.FindAllStringSubmatch(originalContent, -1)
+	if len(importSlice) != 0 {
+		for _, elem := range importSlice {
+			t.Imports = append(t.Imports, strings.TrimSpace(elem[1]))
 		}
 	}
 	// import fungo package
@@ -85,7 +89,6 @@ func (t *TemplateContent) parseGoContent(path string) error {
 			continue
 		}
 		t.FunctionNames = append(t.FunctionNames, name)
-		t.FunctionSnakeNames = append(t.FunctionSnakeNames, convertSnakeName(name))
 	}
 
 	// parse function content
@@ -135,7 +138,6 @@ func (t *TemplateContent) parsePyContent(path string) error {
 					continue
 				}
 				t.FunctionNames = append(t.FunctionNames, functionNameSlice[0][1])
-				t.FunctionSnakeNames = append(t.FunctionSnakeNames, convertSnakeName(functionNameSlice[0][1]))
 			}
 			content += line + "\n"
 		}
@@ -174,16 +176,16 @@ func (t *TemplateContent) genDebugTalk(path string, templ string) error {
 }
 
 // buildGo builds debugtalk.go to debugtalk.bin
-func buildGo(path string) error {
+func buildGo(path string, output string) error {
 	templateContent := &TemplateContent{
 		Fun: fungo,
 		Regexps: &Regexps{
 			Import:          regexp.MustCompile(regexGoImport),
+			Imports:         regexp.MustCompile(regexGoImports),
 			FunctionName:    regexp.MustCompile(regexGoFunctionName),
 			FunctionContent: regexp.MustCompile(regexGoFunctionContent),
 		},
 	}
-	dir, _ := filepath.Split(path)
 
 	// create temp dir for building
 	tempDir, err := ioutil.TempDir("", "hrp_build")
@@ -224,7 +226,13 @@ func buildGo(path string) error {
 		return err
 	}
 
-	outputPath, err := filepath.Abs(filepath.Join(dir, "../debugtalk.bin"))
+	if output == "" {
+		dir, _ := os.Getwd()
+		output = filepath.Join(dir, "debugtalk.bin")
+	} else if builtin.IsFolderPathExists(output) {
+		output = filepath.Join(output, "debugtalk.bin")
+	}
+	outputPath, err := filepath.Abs(output)
 	if err != nil {
 		return err
 	}
@@ -238,7 +246,7 @@ func buildGo(path string) error {
 }
 
 // buildPy completes funppy information in debugtalk.py
-func buildPy(path string) error {
+func buildPy(path string, output string) error {
 	templateContent := &TemplateContent{
 		Fun: funppy,
 		Regexps: &Regexps{
@@ -251,8 +259,13 @@ func buildPy(path string) error {
 	}
 
 	// generate debugtalk.py
-	dir, _ := filepath.Split(path)
-	err = templateContent.genDebugTalk(filepath.Join(dir, "../debugtalk.py"), pyTemplate)
+	if output == "" {
+		dir, _ := os.Getwd()
+		output = filepath.Join(dir, "debugtalk.py")
+	} else if builtin.IsFolderPathExists(output) {
+		output = filepath.Join(output, "debugtalk.py")
+	}
+	err = templateContent.genDebugTalk(output, pyTemplate)
 	if err != nil {
 		return err
 	}
@@ -266,39 +279,19 @@ func buildPy(path string) error {
 	return nil
 }
 
-func Run(args []string) (err error) {
-	for _, arg := range args {
-		ext := filepath.Ext(arg)
-		switch ext {
-		case ".py":
-			err = buildPy(arg)
-		case ".go":
-			err = buildGo(arg)
-		default:
-			return errors.New("type error, expected .py or .go")
-		}
-		if err != nil {
-			log.Error().Err(err).Msg(fmt.Sprintf("failed to build %s", arg))
-			os.Exit(1)
-		}
+func Run(arg string, output string) (err error) {
+	ext := filepath.Ext(arg)
+	switch ext {
+	case ".py":
+		err = buildPy(arg, output)
+	case ".go":
+		err = buildGo(arg, output)
+	default:
+		return errors.New("type error, expected .py or .go")
+	}
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to build %s", arg))
+		os.Exit(1)
 	}
 	return nil
-}
-
-// convertSnakeName converts name to snake name
-func convertSnakeName(originalName string) string {
-	snakeName := make([]byte, 0, len(originalName)*2)
-	flag := false
-	num := len(originalName)
-	for i := 0; i < num; i++ {
-		ch := originalName[i]
-		if i > 0 && ch >= 'A' && ch <= 'Z' && flag {
-			snakeName = append(snakeName, '_')
-		}
-		if ch != '_' {
-			flag = true
-		}
-		snakeName = append(snakeName, ch)
-	}
-	return strings.ToLower(string(snakeName))
 }
