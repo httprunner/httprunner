@@ -1,6 +1,22 @@
-package har2case
+package convert
 
-import "time"
+import (
+	"encoding/base64"
+	"fmt"
+	"net/url"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+)
+
+// ==================== model definition starts here ====================
 
 /*
 HTTP Archive (HAR) format
@@ -8,8 +24,8 @@ https://w3c.github.io/web-performance/specs/HAR/Overview.html
 this file is copied from https://github.com/mrichman/hargo/blob/master/types.go
 */
 
-// Har is a container type for deserialization
-type Har struct {
+// CaseHar is a container type for deserialization
+type CaseHar struct {
 	Log Log `json:"log"`
 }
 
@@ -337,4 +353,334 @@ type TestResult struct {
 	Latency   int       `json:"latency"` // milliseconds
 	Method    string    `json:"method"`
 	HarFile   string    `json:"harfile"`
+}
+
+// ==================== model definition ends here ====================
+
+func NewConverterHAR(converter *TCaseConverter) *ConverterHAR {
+	return &ConverterHAR{
+		converter: converter,
+	}
+}
+
+type ConverterHAR struct {
+	converter *TCaseConverter
+}
+
+func (c *ConverterHAR) Struct() *TCaseConverter {
+	return c.converter
+}
+
+func (c *ConverterHAR) ToJSON() (string, error) {
+	tCase, err := c.makeTestCase()
+	if err != nil {
+		return "", err
+	}
+	jsonPath := c.converter.genOutputPath(suffixJSON)
+	err = builtin.Dump2JSON(tCase, jsonPath)
+	if err != nil {
+		return "", err
+	}
+	return jsonPath, nil
+}
+
+func (c *ConverterHAR) ToYAML() (string, error) {
+	tCase, err := c.makeTestCase()
+	if err != nil {
+		return "", err
+	}
+	yamlPath := c.converter.genOutputPath(suffixYAML)
+	err = builtin.Dump2YAML(tCase, yamlPath)
+	if err != nil {
+		return "", err
+	}
+	return yamlPath, nil
+}
+
+func (c *ConverterHAR) ToGoTest() (string, error) {
+	//TODO implement me
+	return "", errors.New("convert from har to gotest scripts is not supported yet")
+}
+
+func (c *ConverterHAR) ToPyTest() (string, error) {
+	return convertToPyTest(c)
+}
+
+func (c *ConverterHAR) makeTestCase() (*hrp.TCase, error) {
+	teststeps, err := c.prepareTestSteps()
+	if err != nil {
+		return nil, err
+	}
+
+	tCase := &hrp.TCase{
+		Config:    c.prepareConfig(),
+		TestSteps: teststeps,
+	}
+	err = tCase.MakeCompat()
+	if err != nil {
+		return nil, err
+	}
+	return tCase, nil
+}
+
+func (c *ConverterHAR) load() (*CaseHar, error) {
+	har := c.converter.CaseHAR
+	if har == nil {
+		return nil, errors.New("empty har case occurs")
+	}
+	return har, nil
+}
+
+func (c *ConverterHAR) prepareConfig() *hrp.TConfig {
+	return hrp.NewConfig("testcase description").
+		SetVerifySSL(false)
+}
+
+func (c *ConverterHAR) prepareTestSteps() ([]*hrp.TStep, error) {
+	har, err := c.load()
+	if err != nil {
+		return nil, err
+	}
+
+	var steps []*hrp.TStep
+	for _, entry := range har.Log.Entries {
+		step, err := c.prepareTestStep(&entry)
+		if err != nil {
+			return nil, err
+		}
+		steps = append(steps, step)
+	}
+
+	return steps, nil
+}
+
+func (c *ConverterHAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
+	log.Info().
+		Str("method", entry.Request.Method).
+		Str("url", entry.Request.URL).
+		Msg("convert teststep")
+
+	step := &stepFromHAR{
+		TStep: hrp.TStep{
+			Request:    &hrp.Request{},
+			Validators: make([]interface{}, 0),
+		},
+		profile: c.converter.Profile,
+	}
+	if err := step.makeRequestMethod(entry); err != nil {
+		return nil, err
+	}
+	if err := step.makeRequestURL(entry); err != nil {
+		return nil, err
+	}
+	if err := step.makeRequestParams(entry); err != nil {
+		return nil, err
+	}
+	if err := step.makeRequestCookies(entry); err != nil {
+		return nil, err
+	}
+	if err := step.makeRequestHeaders(entry); err != nil {
+		return nil, err
+	}
+	if err := step.makeRequestBody(entry); err != nil {
+		return nil, err
+	}
+	if err := step.makeValidate(entry); err != nil {
+		return nil, err
+	}
+	return &step.TStep, nil
+}
+
+type stepFromHAR struct {
+	hrp.TStep
+	profile *Profile
+}
+
+func (s *stepFromHAR) makeRequestMethod(entry *Entry) error {
+	s.Request.Method = hrp.HTTPMethod(entry.Request.Method)
+	return nil
+}
+
+func (s *stepFromHAR) makeRequestURL(entry *Entry) error {
+	u, err := url.Parse(entry.Request.URL)
+	if err != nil {
+		log.Error().Err(err).Msg("make request url failed")
+		return err
+	}
+	s.Request.URL = fmt.Sprintf("%s://%s", u.Scheme, u.Host+u.Path)
+	return nil
+}
+
+func (s *stepFromHAR) makeRequestParams(entry *Entry) error {
+	s.Request.Params = make(map[string]interface{})
+	for _, param := range entry.Request.QueryString {
+		s.Request.Params[param.Name] = param.Value
+	}
+	return nil
+}
+
+func (s *stepFromHAR) makeRequestCookies(entry *Entry) error {
+	// use cookies from har
+	s.Request.Cookies = make(map[string]string)
+	for _, cookie := range entry.Request.Cookies {
+		s.Request.Cookies[cookie.Name] = cookie.Value
+	}
+
+	if s.profile == nil {
+		return nil
+	}
+	// override all cookies according to the profile
+	if s.profile.Override {
+		s.Request.Cookies = make(map[string]string)
+	}
+	// create or update the cookies according to the profile
+	for k, v := range s.profile.Cookies {
+		s.Request.Cookies[k] = v
+	}
+	return nil
+}
+
+func (s *stepFromHAR) makeRequestHeaders(entry *Entry) error {
+	// use headers from har
+	s.Request.Headers = make(map[string]string)
+	for _, header := range entry.Request.Headers {
+		if strings.EqualFold(header.Name, "cookie") {
+			continue
+		}
+		s.Request.Headers[header.Name] = header.Value
+	}
+
+	if s.profile == nil {
+		return nil
+	}
+	// override all headers according to the profile
+	if s.profile.Override {
+		s.Request.Headers = make(map[string]string)
+	}
+	// create or update the headers according to the profile
+	for k, v := range s.profile.Headers {
+		s.Request.Headers[k] = v
+	}
+	return nil
+}
+
+func (s *stepFromHAR) makeRequestBody(entry *Entry) error {
+	mimeType := entry.Request.PostData.MimeType
+	if mimeType == "" {
+		// GET/HEAD/DELETE without body
+		return nil
+	}
+
+	// POST/PUT with body
+	if strings.HasPrefix(mimeType, "application/json") {
+		// post json
+		var body interface{}
+		if entry.Request.PostData.Text == "" {
+			body = nil
+		} else {
+			err := json.Unmarshal([]byte(entry.Request.PostData.Text), &body)
+			if err != nil {
+				log.Error().Err(err).Msg("make request body failed")
+				return err
+			}
+		}
+		s.Request.Body = body
+	} else if strings.HasPrefix(mimeType, "application/x-www-form-urlencoded") {
+		// post form
+		var paramsList []string
+		for _, param := range entry.Request.PostData.Params {
+			paramsList = append(paramsList, fmt.Sprintf("%s=%s", param.Name, param.Value))
+		}
+		s.Request.Body = strings.Join(paramsList, "&")
+	} else if strings.HasPrefix(mimeType, "text/plain") {
+		// post raw data
+		s.Request.Body = entry.Request.PostData.Text
+	} else {
+		// TODO
+		log.Error().Msgf("makeRequestBody: Not implemented for mimeType %s", mimeType)
+	}
+	return nil
+}
+
+func (s *stepFromHAR) makeValidate(entry *Entry) error {
+	// make validator for response status code
+	s.Validators = append(s.Validators, hrp.Validator{
+		Check:   "status_code",
+		Assert:  "equals",
+		Expect:  entry.Response.Status,
+		Message: "assert response status code",
+	})
+
+	// make validators for response headers
+	for _, header := range entry.Response.Headers {
+		// assert Content-Type
+		if strings.EqualFold(header.Name, "Content-Type") {
+			s.Validators = append(s.Validators, hrp.Validator{
+				Check:   "headers.\"Content-Type\"",
+				Assert:  "equals",
+				Expect:  header.Value,
+				Message: "assert response header Content-Type",
+			})
+		}
+	}
+
+	// make validators for response body
+	respBody := entry.Response.Content
+	if respBody.Text == "" {
+		// response body is empty
+		return nil
+	}
+	if strings.HasPrefix(respBody.MimeType, "application/json") {
+		var data []byte
+		var err error
+		// response body is json
+		if respBody.Encoding == "base64" {
+			// decode base64 text
+			data, err = base64.StdEncoding.DecodeString(respBody.Text)
+			if err != nil {
+				return errors.Wrap(err, "decode base64 error")
+			}
+		} else if respBody.Encoding == "" {
+			// no encoding
+			data = []byte(respBody.Text)
+		} else {
+			// other encoding type
+			return nil
+		}
+		// convert to json
+		var body interface{}
+		if err = json.Unmarshal(data, &body); err != nil {
+			return errors.Wrap(err, "json.Unmarshal body error")
+		}
+		jsonBody, ok := body.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("response body is not json, not matched with MimeType")
+		}
+
+		// response body is json
+		keys := make([]string, 0, len(jsonBody))
+		for k := range jsonBody {
+			keys = append(keys, k)
+		}
+		// sort map keys to keep validators in stable order
+		sort.Strings(keys)
+		for _, key := range keys {
+			value := jsonBody[key]
+			switch v := value.(type) {
+			case map[string]interface{}:
+				continue
+			case []interface{}:
+				continue
+			default:
+				s.Validators = append(s.Validators, hrp.Validator{
+					Check:   fmt.Sprintf("body.%s", key),
+					Assert:  "equals",
+					Expect:  v,
+					Message: fmt.Sprintf("assert response body %s", key),
+				})
+			}
+		}
+	}
+
+	return nil
 }

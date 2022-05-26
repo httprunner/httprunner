@@ -285,7 +285,8 @@ func LoadFile(path string, structObj interface{}) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "read file failed")
 	}
-
+	// remove BOM at the beginning of file
+	file = bytes.TrimLeft(file, "\xef\xbb\xbf")
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json", ".har":
@@ -382,4 +383,10 @@ func readFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return file, nil
+}
+
+func GetOutputNameWithoutExtension(path string) string {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	return base[0:len(base)-len(ext)] + "_test"
 }

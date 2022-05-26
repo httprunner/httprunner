@@ -1,6 +1,6 @@
 ## hrp convert
 
-convert JSON/YAML testcases to pytest/gotest scripts
+convert to JSON/YAML/gotest/pytest testcases
 
 ```
 hrp convert $path... [flags]
@@ -9,9 +9,13 @@ hrp convert $path... [flags]
 ### Options
 
 ```
-      --gotest   convert to gotest scripts (TODO)
-  -h, --help     help for convert
-      --pytest   convert to pytest scripts (default true)
+  -h, --help                help for convert
+  -d, --output-dir string   specify output directory, default to the same dir with har file
+  -p, --profile string      specify profile path to override headers (except for auto-generated headers) and cookies
+      --to-gotest           convert to gotest scripts (TODO)
+      --to-json             convert to JSON scripts (default)
+      --to-pytest           convert to pytest scripts
+      --to-yaml             convert to YAML scripts
 ```
 
 ### SEE ALSO

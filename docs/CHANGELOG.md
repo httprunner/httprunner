@@ -9,6 +9,8 @@
 - fix #1308: load `.env` file as environment variables
 - fix #1309: locate plugin file upward recursively until system root dir
 - refactor: move base_url to config env
+- feat: support converting Postman collection to HttpRunner testcase
+- refactor: improve the extensibility of `hrp convert` using interface `ICaseConverter`
 
 ## v4.1.0-beta (2022-05-21)
 
