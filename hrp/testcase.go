@@ -64,7 +64,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		return nil, errors.New("incorrect testcase file format, expected config in file")
 	}
 
-	err = tc.makeCompat()
+	err = tc.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
@@ -173,26 +173,27 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// makeCompat converts TCase to compatible testcase
-func (tc *TCase) makeCompat() error {
-	var err error
+// MakeCompat converts TCase compatible with Golang engine style
+func (tc *TCase) MakeCompat() (err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("convert compat testcase error: %v", p)
+			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
 		}
 	}()
 	for _, step := range tc.TestSteps {
-		// 1. deal with request body compatible with HttpRunner
+		// 1. deal with request body compatibility
 		if step.Request != nil && step.Request.Body == nil {
 			if step.Request.Json != nil {
 				step.Request.Headers["Content-Type"] = "application/json; charset=utf-8"
 				step.Request.Body = step.Request.Json
+				step.Request.Json = nil
 			} else if step.Request.Data != nil {
 				step.Request.Body = step.Request.Data
+				step.Request.Data = nil
 			}
 		}
 
-		// 2. deal with validators compatible with HttpRunner
+		// 2. deal with validators compatibility
 		err = convertCompatValidator(step.Validators)
 		if err != nil {
 			return err
@@ -206,38 +207,46 @@ func (tc *TCase) makeCompat() error {
 
 func convertCompatValidator(Validators []interface{}) (err error) {
 	for i, iValidator := range Validators {
+		if _, ok := iValidator.(Validator); ok {
+			continue
+		}
 		validatorMap := iValidator.(map[string]interface{})
 		validator := Validator{}
-		_, checkExisted := validatorMap["check"]
-		_, assertExisted := validatorMap["assert"]
-		_, expectExisted := validatorMap["expect"]
-		// check priority: HRP > HttpRunner
+		iCheck, checkExisted := validatorMap["check"]
+		iAssert, assertExisted := validatorMap["assert"]
+		iExpect, expectExisted := validatorMap["expect"]
+		// validator check priority: Golang > Python engine style
 		if checkExisted && assertExisted && expectExisted {
-			// HRP validator format
-			validator.Check = validatorMap["check"].(string)
-			validator.Assert = validatorMap["assert"].(string)
-			validator.Expect = validatorMap["expect"]
-			if msg, existed := validatorMap["msg"]; existed {
-				validator.Message = msg.(string)
+			// Golang engine style
+			validator.Check = iCheck.(string)
+			validator.Assert = iAssert.(string)
+			validator.Expect = iExpect
+			if iMsg, msgExisted := validatorMap["msg"]; msgExisted {
+				validator.Message = iMsg.(string)
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
-		} else if len(validatorMap) == 1 {
-			// HttpRunner validator format
+			continue
+		}
+		if len(validatorMap) == 1 {
+			// Python engine style
 			for assertMethod, iValidatorContent := range validatorMap {
-				checkAndExpect := iValidatorContent.([]interface{})
-				if len(checkAndExpect) != 2 {
+				validatorContent := iValidatorContent.([]interface{})
+				if len(validatorContent) > 3 {
 					return fmt.Errorf("unexpected validator format: %v", validatorMap)
 				}
-				validator.Check = checkAndExpect[0].(string)
+				validator.Check = validatorContent[0].(string)
 				validator.Assert = assertMethod
-				validator.Expect = checkAndExpect[1]
+				validator.Expect = validatorContent[1]
+				if len(validatorContent) == 3 {
+					validator.Message = validatorContent[2].(string)
+				}
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
-		} else {
-			return fmt.Errorf("unexpected validator format: %v", validatorMap)
+			continue
 		}
+		return fmt.Errorf("unexpected validator format: %v", validatorMap)
 	}
 	return nil
 }
