@@ -261,9 +261,9 @@ func buildPy(path string, output string) error {
 	// generate debugtalk.py
 	if output == "" {
 		dir, _ := os.Getwd()
-		output = filepath.Join(dir, "debugtalk.py")
+		output = filepath.Join(dir, "debugtalk_gen.py")
 	} else if builtin.IsFolderPathExists(output) {
-		output = filepath.Join(output, "debugtalk.py")
+		output = filepath.Join(output, "debugtalk_gen.py")
 	}
 	err = templateContent.genDebugTalk(output, pyTemplate)
 	if err != nil {
