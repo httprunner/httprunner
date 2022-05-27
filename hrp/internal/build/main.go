@@ -23,10 +23,10 @@ const (
 	funppy                  = `import funppy`
 	fungo                   = `"github.com/httprunner/funplugin/fungo"`
 	regexPythonFunctionName = `def ([a-zA-Z_]\w*)\(.*\)`
-	regexGoImports          = `import\s*\(\n([\s\S]*)\n\)`
-	regexGoImport           = `import\s*(\"[\s\S]*\")\n`
+	regexGoImports          = `import \(([\s\S]*?)\)`
+	regexGoImport           = `import (\"[\s\S]*\")`
 	regexGoFunctionName     = `func ([A-Z][a-zA-Z_]\w*)\(.*\)`
-	regexGoFunctionContent  = `func [\s\S]*?\n}\n`
+	regexGoFunctionContent  = `func [\s\S]*?\n}`
 )
 
 //go:embed templates/debugtalkPythonTemplate

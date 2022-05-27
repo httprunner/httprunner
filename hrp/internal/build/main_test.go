@@ -1,30 +1,21 @@
 package build
 
 import (
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"regexp"
 	"testing"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRun(t *testing.T) {
-	err := Run("../../../examples/demo-with-no-fungo/plugin/debugtalk.go", "")
+	err := Run("plugin/debugtalk.go", "./debugtalk_gen.bin")
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
-	err = Run("../../../examples/demo-with-no-funppy/debugtalk.py", "")
-	if !assert.Nil(t, err) {
-		t.Fatal()
-	}
-
-	err = Run("../../../examples/demo-with-no-fungo/plugin/debugtalk.go", "./debugtalk_gen.bin")
-	if !assert.Nil(t, err) {
-		t.Fatal()
-	}
-
-	err = Run("../../../examples/demo-with-no-funppy/debugtalk.py", "./debugtalk_gen.py")
+	err = Run("plugin/debugtalk.py", "./debugtalk_gen.py")
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}

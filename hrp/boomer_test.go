@@ -25,7 +25,7 @@ func TestBoomerStandaloneRun(t *testing.T) {
 			NewStep("TestCase3").CallRefCase(&TestCase{Config: NewConfig("TestCase3")}),
 		},
 	}
-	testcase2 := &demoTestCaseWithGoPluginJSONPath
+	testcase2 := &demoTestCaseWithPluginJSONPath
 
 	b := NewBoomer(2, 1)
 	go b.Run(testcase1, testcase2)

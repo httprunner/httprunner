@@ -3,9 +3,9 @@
         "name": "demo with complex mechanisms",
         "base_url": "https://postman-echo.com",
         "variables": {
-            "a": "${Sum(10, 2.3)}",
+            "a": "${sum(10, 2.3)}",
             "b": 3.45,
-            "n": "${SumInts(1, 2, 2)}",
+            "n": "${sum_ints(1, 2, 2)}",
             "varFoo1": "${gen_random_string($n)}",
             "varFoo2": "${max($a, $b)}"
         }
@@ -38,10 +38,10 @@
                 "varFoo2": "${max($a, $b)}"
             },
             "setup_hooks": [
-                "${SetupHookExample($name)}"
+                "${setup_hook_example($name)}"
             ],
             "teardown_hooks": [
-                "${TeardownHookExample($name)}"
+                "${teardown_hook_example($name)}"
             ],
             "extract": {
                 "varFoo1": "body.args.foo1"

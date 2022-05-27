@@ -1,12 +1,8 @@
-package main
+package noplugin
 
 import (
 	"fmt"
 )
-
-func init() {
-	fmt.Println("init")
-}
 
 func SumTwoInt(a, b int) int {
 	return a + b
@@ -41,4 +37,8 @@ func SetupHookExample(args string) string {
 
 func TeardownHookExample(args string) string {
 	return fmt.Sprintf("step name: %v, teardown...", args)
+}
+
+func GetVersion() string {
+	return "v0.4"
 }
