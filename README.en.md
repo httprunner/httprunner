@@ -108,7 +108,6 @@ Use "hrp [command] --help" for more information about a command.
 
 <a href="https://httprunner.com/docs/cases/dji-ibg"><img src="https://httprunner.com/image/logo/dji.jpeg" title="大疆 - 基于 HttpRunner 构建完整的自动化测试体系" width="60"></a>
 <a href="https://httprunner.com/docs/cases/bytedance-feishu"><img src="https://httprunner.com/image/logo/feishu.jpeg" title="飞书 - 使用 HttpRunner 替换已有测试平台的执行引擎" width="60"></a>
-<a href="https://httprunner.com/docs/cases/bytedance-douyin"><img src="https://httprunner.com/image/logo/douyin.jpg" title="抖音 - 使用 HttpRunner 实现开放平台动态加速效果评估" width="60"></a>
 
 ## Subscribe
 
