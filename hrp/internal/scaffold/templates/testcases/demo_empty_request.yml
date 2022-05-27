@@ -10,7 +10,4 @@ teststeps:
       method: GET
       url: "https://"
     validate:
-      - check: status_code
-        assert: equal
-        expect: 200
-        msg: check status_code
+      - eq: ["status_code", 200]
