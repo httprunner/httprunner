@@ -5,6 +5,7 @@ config:
         foo2: config_bar2
         expect_foo1: config_bar1
         expect_foo2: config_bar2
+    base_url: "https://postman-echo.com"
     verify: False
     export: ["foo3"]
 
@@ -12,23 +13,23 @@ teststeps:
 -
     name: get with params
     variables:
-        foo1: ${ENV(USERNAME)}
+        foo1: bar11
         foo2: bar21
-        sum_v: "${SumTwoInt(1, 2)}"
+        sum_v: "${sum_two_int(1, 2)}"
     request:
         method: GET
-        url: $base_url/get
+        url: /get
         params:
             foo1: $foo1
             foo2: $foo2
             sum_v: $sum_v
         headers:
-            User-Agent: funplugin/${GetVersion()}
+            User-Agent: funplugin/${get_version()}
     extract:
         foo3: "body.args.foo2"
     validate:
         - eq: ["status_code", 200]
-        - eq: ["body.args.foo1", "debugtalk"]
+        - eq: ["body.args.foo1", "bar11"]
         - eq: ["body.args.sum_v", "3"]
         - eq: ["body.args.foo2", "bar21"]
 -
@@ -38,11 +39,11 @@ teststeps:
         foo3: "bar32"
     request:
         method: POST
-        url: $base_url/post
+        url: /post
         headers:
-            User-Agent: funplugin/${GetVersion()}
+            User-Agent: funplugin/${get_version()}
             Content-Type: "text/plain"
-        body: "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
+        data: "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
     validate:
         - eq: ["status_code", 200]
         - eq: ["body.data", "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar32."]
@@ -52,11 +53,11 @@ teststeps:
         foo2: bar23
     request:
         method: POST
-        url: $base_url/post
+        url: /post
         headers:
-            User-Agent: funplugin/${GetVersion()}
+            User-Agent: funplugin/${get_version()}
             Content-Type: "application/x-www-form-urlencoded"
-        body: "foo1=$foo1&foo2=$foo2&foo3=$foo3"
+        data: "foo1=$foo1&foo2=$foo2&foo3=$foo3"
     validate:
         - eq: ["status_code", 200]
         - eq: ["body.form.foo1", "$expect_foo1"]

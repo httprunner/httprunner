@@ -15,6 +15,7 @@ const (
 
 var (
 	demoTestCaseWithPluginJSONPath    TestCasePath = templatesDir + "testcases/demo_with_funplugin.json"
+	demoTestCaseWithGoPluginJSONPath  TestCasePath = templatesDir + "testcases/demo_go_with_funplugin.json"
 	demoTestCaseWithPluginYAMLPath    TestCasePath = templatesDir + "testcases/demo_with_funplugin.yaml"
 	demoTestCaseWithoutPluginJSONPath TestCasePath = templatesDir + "testcases/demo_without_funplugin.json"
 	demoTestCaseWithoutPluginYAMLPath TestCasePath = templatesDir + "testcases/demo_without_funplugin.yaml"

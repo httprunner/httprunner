@@ -62,7 +62,7 @@ func (t *TemplateContent) parseGoContent(path string) error {
 	originalContent := string(content)
 
 	// parse imports
-	importSlice := t.Regexps.Import.FindAllStringSubmatch(originalContent, -1)
+	importSlice := t.Regexps.Imports.FindAllStringSubmatch(originalContent, -1)
 	if len(importSlice) != 0 {
 		imports := strings.Replace(importSlice[0][1], "\t", "", -1)
 		for _, elem := range strings.Split(imports, "\n") {
@@ -70,7 +70,7 @@ func (t *TemplateContent) parseGoContent(path string) error {
 		}
 	}
 	// parse import
-	importSlice = t.Regexps.Imports.FindAllStringSubmatch(originalContent, -1)
+	importSlice = t.Regexps.Import.FindAllStringSubmatch(originalContent, -1)
 	if len(importSlice) != 0 {
 		for _, elem := range importSlice {
 			t.Imports = append(t.Imports, strings.TrimSpace(elem[1]))
