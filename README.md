@@ -97,6 +97,12 @@ Flags:
 Use "hrp [command] --help" for more information about a command.
 ```
 
+## 用户案例
+
+<a href="https://httprunner.com/docs/cases/dji-ibg"><img src="https://httprunner.com/image/logo/dji.jpeg" title="大疆" link="" width="60"></a>
+<a href="https://httprunner.com/docs/cases/bytedance-feishu"><img src="https://httprunner.com/image/logo/feishu.jpeg" title="飞书" width="60"></a>
+<a href="https://httprunner.com/docs/cases/bytedance-douyin"><img src="https://httprunner.com/image/logo/douyin.jpg" title="抖音" width="60"></a>
+
 ## 赞助商
 
 ### 金牌赞助商
