@@ -104,6 +104,12 @@ Flags:
 Use "hrp [command] --help" for more information about a command.
 ```
 
+## User Cases
+
+<a href="https://httprunner.com/docs/cases/dji-ibg"><img src="https://httprunner.com/image/logo/dji.jpeg" title="大疆" link="" width="60"></a>
+<a href="https://httprunner.com/docs/cases/bytedance-feishu"><img src="https://httprunner.com/image/logo/feishu.jpeg" title="飞书" width="60"></a>
+<a href="https://httprunner.com/docs/cases/bytedance-douyin"><img src="https://httprunner.com/image/logo/douyin.jpg" title="抖音" width="60"></a>
+
 ## Subscribe
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
