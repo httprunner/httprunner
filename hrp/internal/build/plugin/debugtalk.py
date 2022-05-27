@@ -4,7 +4,7 @@ from typing import List
 
 
 def get_version():
-    return "httprunner v4.0"
+    return "v0.4"
 
 
 def sleep(n_secs):

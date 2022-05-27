@@ -46,12 +46,12 @@ func GetVersion() string {
 }
 
 func main() {
-	fungo.Register("GetVersion", GetVersion)
-	fungo.Register("SumInts", SumInts)
-	fungo.Register("SumTwoInt", SumTwoInt)
-	fungo.Register("SumTwoInt", SumTwoInt)
-	fungo.Register("Sum", Sum)
-	fungo.Register("SetupHookExample", SetupHookExample)
-	fungo.Register("TeardownHookExample", TeardownHookExample)
+	fungo.Register("get_version", GetVersion)
+	fungo.Register("sum_ints", SumInts)
+	fungo.Register("sum_two_int", SumTwoInt)
+	fungo.Register("sum_two", SumTwoInt)
+	fungo.Register("sum", Sum)
+	fungo.Register("setup_hook_example", SetupHookExample)
+	fungo.Register("teardown_hook_example", TeardownHookExample)
 	fungo.Serve()
 }

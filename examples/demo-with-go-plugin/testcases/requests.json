@@ -19,7 +19,7 @@
             "variables": {
                 "foo1": "${ENV(USERNAME)}",
                 "foo2": "bar21",
-                "sum_v": "${SumTwoInt(1, 2)}"
+                "sum_v": "${sum_two_int(1, 2)}"
             },
             "request": {
                 "method": "GET",
@@ -30,7 +30,7 @@
                     "sum_v": "$sum_v"
                 },
                 "headers": {
-                    "User-Agent": "funplugin/${GetVersion()}"
+                    "User-Agent": "funplugin/${get_version()}"
                 }
             },
             "extract": {
@@ -73,7 +73,7 @@
                 "method": "POST",
                 "url": "/post",
                 "headers": {
-                    "User-Agent": "funplugin/${GetVersion()}",
+                    "User-Agent": "funplugin/${get_version()}",
                     "Content-Type": "text/plain"
                 },
                 "body": "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
@@ -102,7 +102,7 @@
                 "method": "POST",
                 "url": "/post",
                 "headers": {
-                    "User-Agent": "funplugin/${GetVersion()}",
+                    "User-Agent": "funplugin/${get_version()}",
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
                 "body": "foo1=$foo1&foo2=$foo2&foo3=$foo3"

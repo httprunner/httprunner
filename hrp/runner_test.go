@@ -12,18 +12,9 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/scaffold"
 )
 
-func buildHashicorpGoPluginWithNoFungo() {
-	log.Info().Msg("[init] build hashicorp go plugin")
-	err := build.Run(templatesDir+"noplugin/debugtalk.go", templatesDir+"debugtalk.bin")
-	if err != nil {
-		log.Error().Err(err).Msg("build hashicorp go plugin failed")
-		os.Exit(1)
-	}
-}
-
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
-	err := build.Run(templatesDir+"noplugin/debugtalk.go", templatesDir+"debugtalk.bin")
+	err := build.Run(templatesDir+"plugin/debugtalk.go", templatesDir+"debugtalk.bin")
 	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
 		os.Exit(1)
@@ -38,7 +29,7 @@ func removeHashicorpGoPlugin() {
 func buildHashicorpPyPlugin() {
 	log.Info().Msg("[init] prepare hashicorp python plugin")
 	pluginFile := templatesDir + "debugtalk.py"
-	err := scaffold.CopyFile("templates/noplugin/debugtalk.py", pluginFile)
+	err := scaffold.CopyFile("templates/plugin/debugtalk.py", pluginFile)
 	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp python plugin failed")
 		os.Exit(1)
@@ -55,6 +46,17 @@ func TestRunCaseWithGoPlugin(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
+	assertRunTestCases(t)
+}
+
+func TestRunCaseWithPythonPlugin(t *testing.T) {
+	buildHashicorpPyPlugin()
+	defer removeHashicorpPyPlugin()
+
+	assertRunTestCases(t)
+}
+
+func assertRunTestCases(t *testing.T) {
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetBaseURL("http://httpbin.org"),
@@ -81,7 +83,7 @@ func TestRunCaseWithGoPlugin(t *testing.T) {
 					},
 				},
 			),
-			NewStep("testcase1-step4").CallRefCase(&demoTestCaseWithGoPluginJSONPath),
+			NewStep("testcase1-step4").CallRefCase(&demoTestCaseWithPluginJSONPath),
 		},
 	}
 	testcase2 := &TestCase{
@@ -91,18 +93,6 @@ func TestRunCaseWithGoPlugin(t *testing.T) {
 	r := NewRunner(t)
 	r.SetPluginLogOn()
 	err := r.Run(testcase1, testcase2)
-	if err != nil {
-		t.Fatalf("run testcase error: %v", err)
-	}
-}
-
-func TestRunCaseWithPythonPlugin(t *testing.T) {
-	buildHashicorpPyPlugin()
-	defer removeHashicorpPyPlugin()
-
-	r := NewRunner(t)
-	r.SetPluginLogOn()
-	err := r.Run(&demoTestCaseWithPluginJSONPath)
 	if err != nil {
 		t.Fatalf("run testcase error: %v", err)
 	}
@@ -170,15 +160,15 @@ func TestRunCaseWithPluginJSON(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	err := NewRunner(nil).Run(&demoTestCaseWithGoPluginJSONPath) // hrp.Run(testCase)
+	err := NewRunner(nil).Run(&demoTestCaseWithPluginJSONPath) // hrp.Run(testCase)
 	if err != nil {
 		t.Fatal()
 	}
 }
 
 func TestRunCaseWithPluginYAML(t *testing.T) {
-	buildHashicorpPyPlugin()
-	defer removeHashicorpPyPlugin()
+	buildHashicorpGoPlugin()
+	defer removeHashicorpGoPlugin()
 
 	err := NewRunner(nil).Run(&demoTestCaseWithPluginYAMLPath) // hrp.Run(testCase)
 	if err != nil {
