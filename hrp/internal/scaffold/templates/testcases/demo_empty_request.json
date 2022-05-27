@@ -1,0 +1,25 @@
+{
+    "config": {
+        "name": "request methods testcase: empty testcase",
+        "variables": null,
+        "verify": false
+    },
+    "teststeps": [
+        {
+            "name": "",
+            "variables": null,
+            "request": {
+                "method": "GET",
+                "url": "https://"
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equal",
+                    "expect": 200,
+                    "msg": "check status_code"
+                }
+            ]
+        }
+    ]
+}

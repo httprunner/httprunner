@@ -17,6 +17,7 @@ const (
 	goPluginFile          = "debugtalk.so"  // built from go plugin
 	hashicorpGoPluginFile = "debugtalk.bin" // built from hashicorp go plugin
 	hashicorpPyPluginFile = "debugtalk.py"  // used for hashicorp python plugin
+	projectInfoFile       = "proj.json"     // used for ensuring root project
 )
 
 func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, pluginDir string, err error) {
@@ -118,9 +119,15 @@ func GetProjectRootDirPath(path string) (rootDir string, err error) {
 		rootDir = filepath.Dir(pluginPath)
 		return
 	}
+	// fix: no debugtalk file in project but having proj.json created by startpeoject
+	projPath, err := locateFile(path, projectInfoFile)
+	if err == nil {
+		rootDir = filepath.Dir(projPath)
+		return
+	}
 
 	// failed to locate project root dir
-	// maybe project plugin debugtalk.xx is not exist
+	// maybe project plugin debugtalk.xx and proj.json are not exist
 	// use current dir instead
 	return os.Getwd()
 }

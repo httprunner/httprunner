@@ -20,6 +20,7 @@ import (
 type PluginType string
 
 const (
+	Empty  PluginType = "empty"
 	Ignore PluginType = "ignore"
 	Py     PluginType = "py"
 	Go     PluginType = "go"
@@ -127,8 +128,17 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		return err
 	}
 
-	// create demo testcases
-	if pluginType == Ignore {
+	// create project testcases
+	if pluginType == Empty {
+		// create empty project
+		err := CopyFile("templates/testcases/demo_empty_request.json",
+			filepath.Join(projectName, "testcases", "requests.json"))
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if pluginType == Ignore {
+		// create project without funplugin
 		err := CopyFile("templates/testcases/demo_without_funplugin.json",
 			filepath.Join(projectName, "testcases", "requests.json"))
 		if err != nil {
@@ -138,6 +148,7 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		return nil
 	}
 
+	// create project with funplugin
 	err = CopyFile("templates/testcases/demo_with_funplugin.json",
 		filepath.Join(projectName, "testcases", "demo.json"))
 	if err != nil {
