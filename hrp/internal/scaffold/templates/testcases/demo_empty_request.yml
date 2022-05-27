@@ -1,0 +1,13 @@
+config:
+  name: "request methods testcase: empty testcase"
+  variables:
+  verify: False
+
+teststeps:
+  - name:
+    variables:
+    request:
+      method: GET
+      url: "https://"
+    validate:
+      - eq: ["status_code", 200]
