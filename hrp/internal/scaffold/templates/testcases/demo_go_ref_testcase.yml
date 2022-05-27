@@ -26,7 +26,7 @@ teststeps:
         headers:
             User-Agent: funplugin/${GetVersion()}
             Content-Type: "application/x-www-form-urlencoded"
-        body: "foo1=$foo1&foo2=$foo3"
+        data: "foo1=$foo1&foo2=$foo3"
     validate:
         - eq: ["status_code", 200]
         - eq: ["body.form.foo1", "bar1"]

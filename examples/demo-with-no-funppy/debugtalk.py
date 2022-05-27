@@ -3,6 +3,10 @@ import time
 from typing import List
 
 
+def get_version():
+    return "httprunner v4.0"
+
+
 def sleep(n_secs):
     time.sleep(n_secs)
 

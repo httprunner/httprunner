@@ -6,8 +6,8 @@
             "a": "${Sum(10, 2.3)}",
             "b": 3.45,
             "n": "${SumInts(1, 2, 2)}",
-            "varFoo1": "${gen_random_string($n)}",
-            "varFoo2": "${max($a, $b)}"
+            "varFoo1": "${GenRandomString($n)}",
+            "varFoo2": "${Max($a, $b)}"
         }
     },
     "teststeps": [
@@ -35,7 +35,7 @@
                 "b": 34.5,
                 "n": 3,
                 "name": "get with params",
-                "varFoo2": "${max($a, $b)}"
+                "varFoo2": "${Max($a, $b)}"
             },
             "setup_hooks": [
                 "${SetupHookExample($name)}"
@@ -92,7 +92,7 @@
                 "url": "/post",
                 "body": {
                     "foo1": "$varFoo1",
-                    "foo2": "${max($a, $b)}"
+                    "foo2": "${Max($a, $b)}"
                 }
             },
             "validate": [
@@ -126,8 +126,8 @@
                 },
                 "body": {
                     "foo1": "$varFoo1",
-                    "foo2": "${max($a, $b)}",
-                    "time": "${get_timestamp()}"
+                    "foo2": "${Max($a, $b)}",
+                    "time": "${GetTimestamp()}"
                 }
             },
             "extract": {

@@ -2,9 +2,11 @@ package hrp
 
 import (
 	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/internal/build"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/httprunner/funplugin"
@@ -31,6 +33,21 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, pluginDir st
 	}
 	// TODO: move pluginDir to funplugin
 	pluginDir = filepath.Dir(pluginPath)
+
+	// compatible the format of debugtalk.py with v2/v3
+	ext := filepath.Ext(pluginPath)
+	if ext == ".py" {
+		// skip if only debugtalk_gen.py exists
+		if !strings.HasSuffix(pluginPath, "debugtalk_gen.py") {
+			genPyPluginPath := filepath.Join(pluginDir, "debugtalk_gen.py")
+			err = build.Run(pluginPath, genPyPluginPath)
+			if err != nil {
+				log.Error().Err(err).Msgf(fmt.Sprintf("failed to build %s", pluginPath))
+				return
+			}
+			pluginPath = genPyPluginPath
+		}
+	}
 
 	// found plugin file
 	plugin, err = funplugin.Init(pluginPath, funplugin.WithLogOn(logOn))
@@ -62,19 +79,19 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, pluginDir st
 }
 
 func locatePlugin(path string) (pluginPath string, err error) {
-	// priority: hashicorp plugin (debugtalk.bin > debugtalk_gen.py > debugtalk.py) > go plugin (debugtalk.so)
+	// priority: hashicorp plugin (debugtalk.bin > debugtalk.py > debugtalk_gen.py) > go plugin (debugtalk.so)
 
 	pluginPath, err = locateFile(path, hashicorpGoPluginFile)
 	if err == nil {
 		return
 	}
 
-	pluginPath, err = locateFile(path, hashicorpPyPluginFile)
+	pluginPath, err = locateFile(path, debugtalkPyFile)
 	if err == nil {
 		return
 	}
 
-	pluginPath, err = locateFile(path, debugtalkPyFile)
+	pluginPath, err = locateFile(path, hashicorpPyPluginFile)
 	if err == nil {
 		return
 	}
