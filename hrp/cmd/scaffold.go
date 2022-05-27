@@ -24,7 +24,9 @@ var scaffoldCmd = &cobra.Command{
 		}
 
 		var pluginType scaffold.PluginType
-		if ignorePlugin {
+		if empty {
+			pluginType = scaffold.Empty
+		} else if ignorePlugin {
 			pluginType = scaffold.Ignore
 		} else if genGoPlugin {
 			pluginType = scaffold.Go
@@ -43,6 +45,7 @@ var scaffoldCmd = &cobra.Command{
 }
 
 var (
+	empty           bool
 	ignorePlugin    bool
 	genPythonPlugin bool
 	genGoPlugin     bool
@@ -55,4 +58,5 @@ func init() {
 	scaffoldCmd.Flags().BoolVar(&genPythonPlugin, "py", true, "generate hashicorp python plugin")
 	scaffoldCmd.Flags().BoolVar(&genGoPlugin, "go", false, "generate hashicorp go plugin")
 	scaffoldCmd.Flags().BoolVar(&ignorePlugin, "ignore-plugin", false, "ignore function plugin")
+	scaffoldCmd.Flags().BoolVar(&empty, "empty", false, "generate empty project")
 }

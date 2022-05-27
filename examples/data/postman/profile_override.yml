@@ -1,0 +1,5 @@
+override: true
+headers:
+  Header1: "all original headers will be overridden"
+cookies:
+  Cookie1: "all original cookies will be overridden"
