@@ -28,15 +28,6 @@ teststeps:
             Content-Type: "application/x-www-form-urlencoded"
         body: "foo1=$foo1&foo2=$foo3"
     validate:
-        - check: status_code
-          assert: equal
-          expect: 200
-          msg: check status_code
-        - check: body.form.foo1
-          assert: equal
-          expect: bar1
-          msg: check body.form.foo1
-        - check: body.form.foo2
-          assert: equal
-          expect: bar21
-          msg: check body.form.foo2
+        - eq: ["status_code", 200]
+        - eq: ["body.form.foo1", "bar1"]
+        - eq: ["body.form.foo2", "bar21"]
