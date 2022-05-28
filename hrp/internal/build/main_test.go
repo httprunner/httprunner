@@ -15,13 +15,13 @@ func TestRun(t *testing.T) {
 		t.Fatal()
 	}
 
-	genDebugTalkPy := "../scaffold/templates/plugin/debugtalk_gen.py"
-	err = Run("../scaffold/templates/plugin/debugtalk.py", genDebugTalkPy)
+	genDebugTalkPyPath := "../scaffold/templates/plugin/" + genDebugTalkPy
+	err = Run("../scaffold/templates/plugin/debugtalk.py", genDebugTalkPyPath)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
-	contentBytes, err := builtin.ReadFile(genDebugTalkPy)
+	contentBytes, err := builtin.ReadFile(genDebugTalkPyPath)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}

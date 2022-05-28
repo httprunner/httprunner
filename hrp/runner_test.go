@@ -38,8 +38,8 @@ func buildHashicorpPyPlugin() {
 
 func removeHashicorpPyPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp python plugin")
-	// on v4.1^, running case will generate debugtalk_gen.py used by python plugin
-	os.Remove(templatesDir + "debugtalk_gen.py")
+	// on v4.1^, running case will generate .debugtalk_gen.py used by python plugin
+	os.Remove(templatesDir + hashicorpPyPluginFile)
 }
 
 func TestRunCaseWithGoPlugin(t *testing.T) {

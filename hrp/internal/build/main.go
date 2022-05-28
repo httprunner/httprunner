@@ -32,7 +32,7 @@ const (
 
 const (
 	genDebugTalkGo = "debugtalk_gen.go"
-	genDebugTalkPy = "debugtalk_gen.py"
+	genDebugTalkPy = ".debugtalk_gen.py"
 )
 
 //go:embed templates/debugtalkPythonTemplate
