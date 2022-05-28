@@ -281,7 +281,7 @@ var ErrUnsupportedFileExt = fmt.Errorf("unsupported file extension")
 // LoadFile loads file content with file extension and assigns to structObj
 func LoadFile(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
-	file, err := readFile(path)
+	file, err := ReadFile(path)
 	if err != nil {
 		return errors.Wrap(err, "read file failed")
 	}
@@ -335,7 +335,7 @@ func parseEnvContent(file []byte, obj interface{}) error {
 
 func loadFromCSV(path string) []map[string]interface{} {
 	log.Info().Str("path", path).Msg("load csv file")
-	file, err := readFile(path)
+	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read csv file failed")
 		os.Exit(1)
@@ -361,7 +361,7 @@ func loadFromCSV(path string) []map[string]interface{} {
 
 func loadMessage(path string) []byte {
 	log.Info().Str("path", path).Msg("load message file")
-	file, err := readFile(path)
+	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read message file failed")
 		os.Exit(1)
@@ -369,7 +369,7 @@ func loadMessage(path string) []byte {
 	return file
 }
 
-func readFile(path string) ([]byte, error) {
+func ReadFile(path string) ([]byte, error) {
 	var err error
 	path, err = filepath.Abs(path)
 	if err != nil {
