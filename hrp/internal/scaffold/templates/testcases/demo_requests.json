@@ -7,6 +7,9 @@
             "expect_foo1": "config_bar1",
             "expect_foo2": "config_bar2"
         },
+        "headers": {
+            "User-Agent": "funplugin/${get_version()}"
+        },
         "base_url": "https://postman-echo.com",
         "verify": false,
         "export": [
@@ -28,9 +31,6 @@
                     "foo1": "$foo1",
                     "foo2": "$foo2",
                     "sum_v": "$sum_v"
-                },
-                "headers": {
-                    "User-Agent": "funplugin/${get_version()}"
                 }
             },
             "extract": {
@@ -73,7 +73,6 @@
                 "method": "POST",
                 "url": "/post",
                 "headers": {
-                    "User-Agent": "funplugin/${get_version()}",
                     "Content-Type": "text/plain"
                 },
                 "body": "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
@@ -102,7 +101,6 @@
                 "method": "POST",
                 "url": "/post",
                 "headers": {
-                    "User-Agent": "funplugin/${get_version()}",
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
                 "body": "foo1=$foo1&foo2=$foo2&foo3=$foo3"
