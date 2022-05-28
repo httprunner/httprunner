@@ -23,7 +23,7 @@ func TestGenDemoExamples(t *testing.T) {
 		t.Fatal()
 	}
 
-	dir = "../../../examples/empty-demo-without-plugin"
+	dir = "../../../examples/demo-empty-project"
 	err = CreateScaffold(dir, Empty, true)
 	if err != nil {
 		t.Fatal()
