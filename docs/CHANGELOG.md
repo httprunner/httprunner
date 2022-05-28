@@ -1,6 +1,6 @@
 # Release History
 
-## v4.1.0 (2022-05-28)
+## v4.1.0 (2022-05-29)
 
 - feat: add `wiki` sub-command to open httprunner website
 - feat: add `build` sub-command for function plugin
