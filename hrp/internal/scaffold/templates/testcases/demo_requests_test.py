@@ -30,7 +30,7 @@ class TestCaseDemoRequests(HttpRunner):
             )
             .get("/get")
             .with_params(**{"foo1": "$foo1", "foo2": "$foo2", "sum_v": "$sum_v"})
-            .with_headers(**{"User-Agent": "funplugin/${get_version()}"})
+            .with_headers(**{"User-Agent": "${get_user_agent()}"})
             .extract()
             .with_jmespath("body.args.foo2", "foo3")
             .validate()
@@ -45,7 +45,7 @@ class TestCaseDemoRequests(HttpRunner):
             .post("/post")
             .with_headers(
                 **{
-                    "User-Agent": "funplugin/${get_version()}",
+                    "User-Agent": "${get_user_agent()}",
                     "Content-Type": "text/plain",
                 }
             )
@@ -65,7 +65,7 @@ class TestCaseDemoRequests(HttpRunner):
             .post("/post")
             .with_headers(
                 **{
-                    "User-Agent": "funplugin/${get_version()}",
+                    "User-Agent": "${get_user_agent()}",
                     "Content-Type": "application/x-www-form-urlencoded",
                 }
             )

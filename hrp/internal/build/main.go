@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,6 +28,11 @@ const (
 	regexGoImport           = `import (\"[\s\S]*\")`
 	regexGoFunctionName     = `func ([A-Z][a-zA-Z_]\w*)\(.*\)`
 	regexGoFunctionContent  = `func [\s\S]*?\n}`
+)
+
+const (
+	genDebugTalkGo = "debugtalk_gen.go"
+	genDebugTalkPy = "debugtalk_gen.py"
 )
 
 //go:embed templates/debugtalkPythonTemplate
@@ -55,7 +59,7 @@ type Regexps struct {
 }
 
 func (t *TemplateContent) parseGoContent(path string) error {
-	log.Info().Msg(fmt.Sprintf("start to parse %v", path))
+	log.Info().Str("path", path).Msg("start to parse debugtalk.go")
 
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -108,7 +112,7 @@ func (t *TemplateContent) parseGoContent(path string) error {
 func (t *TemplateContent) parsePyContent(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
-		fmt.Printf("Error: %s\n", err)
+		log.Error().Err(err).Str("path", path).Msg("failed to open file")
 		return err
 	}
 	defer file.Close()
@@ -191,36 +195,32 @@ func buildGo(path string, output string) error {
 		},
 	}
 
-	// create temp dir for building
-	tempDir, err := ioutil.TempDir("", "hrp_build")
-	if err != nil {
-		return err
-	}
+	pluginDir := filepath.Dir(path)
 
 	// check go sdk in tempDir
-	if err := builtin.ExecCommandInDir(exec.Command("go", "version"), tempDir); err != nil {
+	if err := builtin.ExecCommandInDir(exec.Command("go", "version"), pluginDir); err != nil {
 		return errors.Wrap(err, "go sdk not installed")
 	}
 
-	// create pluginDir
-	pluginDir := filepath.Join(tempDir, "plugin")
-	if err := builtin.CreateFolder(pluginDir); err != nil {
-		return err
-	}
 	// parse debugtalk.go in pluginDir
-	err = templateContent.parseGoContent(path)
-	if err != nil {
-		return err
-	}
-	// generate debugtalk.go in pluginDir
-	err = templateContent.genDebugTalk(filepath.Join(pluginDir, "debugtalk.go"), goTemplate)
+	err := templateContent.parseGoContent(path)
 	if err != nil {
 		return err
 	}
 
-	// create go mod
-	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
+	// generate debugtalk.go in pluginDir
+	err = templateContent.genDebugTalk(filepath.Join(pluginDir, genDebugTalkGo), goTemplate)
+	if err != nil {
 		return err
+	}
+
+	// create go mod if not exists
+	goModFile := filepath.Join(pluginDir, "go.mod")
+	if !builtin.IsFilePathExists(goModFile) {
+		err = builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir)
+		if err != nil {
+			return err
+		}
 	}
 
 	// download plugin dependency
@@ -242,10 +242,11 @@ func buildGo(path string, output string) error {
 	}
 
 	// build plugin debugtalk.bin
-	if err := builtin.ExecCommandInDir(exec.Command("go", "build", "-o", outputPath, "debugtalk.go"), pluginDir); err != nil {
+	cmd := exec.Command("go", "build", "-o", outputPath, genDebugTalkGo, filepath.Base(path))
+	if err := builtin.ExecCommandInDir(cmd, pluginDir); err != nil {
 		return err
 	}
-	log.Info().Msg(fmt.Sprintf("build %s to %s successfully", path, outputPath))
+	log.Info().Str("output", outputPath).Str("plugin", path).Msg("build plugin successfully")
 	return nil
 }
 
@@ -266,9 +267,9 @@ func buildPy(path string, output string) error {
 	// generate debugtalk.py
 	if output == "" {
 		dir, _ := os.Getwd()
-		output = filepath.Join(dir, "debugtalk_gen.py")
+		output = filepath.Join(dir, genDebugTalkPy)
 	} else if builtin.IsFolderPathExists(output) {
-		output = filepath.Join(output, "debugtalk_gen.py")
+		output = filepath.Join(output, genDebugTalkPy)
 	}
 	err = templateContent.genDebugTalk(output, pyTemplate)
 	if err != nil {
@@ -295,7 +296,7 @@ func Run(arg string, output string) (err error) {
 		return errors.New("type error, expected .py or .go")
 	}
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("failed to build %s", arg))
+		log.Error().Err(err).Str("arg", arg).Msg("build plugin failed")
 		os.Exit(1)
 	}
 	return nil

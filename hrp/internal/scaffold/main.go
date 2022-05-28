@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -196,24 +195,7 @@ func createGoPlugin(projectName string) error {
 	err := CopyFile("templates/plugin/debugtalk.go",
 		filepath.Join(projectName, "plugin", "debugtalk.go"))
 	if err != nil {
-		return err
-	}
-
-	// create go mod
-	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
-		return err
-	}
-
-	// download plugin dependency
-	// funplugin version should be locked
-	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
-	if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
-		return err
-	}
-
-	// build plugin debugtalk.bin
-	if err := builtin.ExecCommandInDir(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
-		return err
+		return errors.Wrap(err, "copy debugtalk.go failed")
 	}
 
 	return nil
