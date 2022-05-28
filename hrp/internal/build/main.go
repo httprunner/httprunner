@@ -14,9 +14,11 @@ import (
 	"text/template"
 
 	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 const (
@@ -36,6 +38,7 @@ var pyTemplate string
 var goTemplate string
 
 type TemplateContent struct {
+	Version       string   // hrp version
 	Fun           string   // funplugin package
 	Regexps       *Regexps // match import/function
 	Imports       []string // python/go import
@@ -178,7 +181,8 @@ func (t *TemplateContent) genDebugTalk(path string, templ string) error {
 // buildGo builds debugtalk.go to debugtalk.bin
 func buildGo(path string, output string) error {
 	templateContent := &TemplateContent{
-		Fun: fungo,
+		Version: version.VERSION,
+		Fun:     fungo,
 		Regexps: &Regexps{
 			Import:          regexp.MustCompile(regexGoImport),
 			Imports:         regexp.MustCompile(regexGoImports),
@@ -248,7 +252,8 @@ func buildGo(path string, output string) error {
 // buildPy completes funppy information in debugtalk.py
 func buildPy(path string, output string) error {
 	templateContent := &TemplateContent{
-		Fun: funppy,
+		Version: version.VERSION,
+		Fun:     funppy,
 		Regexps: &Regexps{
 			FunctionName: regexp.MustCompile(regexPythonFunctionName),
 		},
