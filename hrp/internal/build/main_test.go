@@ -4,23 +4,24 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func TestRun(t *testing.T) {
-	err := Run("plugin/debugtalk.go", "./debugtalk_gen.bin")
+	err := Run("../scaffold/templates/plugin/debugtalk.go", "./debugtalk.bin")
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
-	err = Run("plugin/debugtalk.py", "./debugtalk_gen.py")
+	genDebugTalkPy := "../scaffold/templates/plugin/debugtalk_gen.py"
+	err = Run("../scaffold/templates/plugin/debugtalk.py", genDebugTalkPy)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
-	contentBytes, err := builtin.ReadFile("./debugtalk_gen.py")
+	contentBytes, err := builtin.ReadFile(genDebugTalkPy)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}

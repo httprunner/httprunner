@@ -43,7 +43,7 @@ class TestCaseDemoRefTestcase(HttpRunner):
             .post("/post")
             .with_headers(
                 **{
-                    "User-Agent": "funplugin/${get_version()}",
+                    "User-Agent": "${get_user_agent()}",
                     "Content-Type": "application/x-www-form-urlencoded",
                 }
             )

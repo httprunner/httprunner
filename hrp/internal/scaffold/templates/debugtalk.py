@@ -3,8 +3,8 @@ import time
 from typing import List
 
 
-def get_version():
-    return "v0.4"
+def get_user_agent():
+    return "hrp/funppy"
 
 
 def sleep(n_secs):

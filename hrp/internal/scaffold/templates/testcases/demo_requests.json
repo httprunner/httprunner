@@ -8,7 +8,7 @@
             "expect_foo2": "config_bar2"
         },
         "headers": {
-            "User-Agent": "funplugin/${get_version()}"
+            "User-Agent": "${get_user_agent()}"
         },
         "base_url": "https://postman-echo.com",
         "verify": false,
