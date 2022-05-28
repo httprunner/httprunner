@@ -8,14 +8,13 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/build"
 	"github.com/httprunner/httprunner/v4/hrp/internal/scaffold"
 )
 
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
-	err := builtin.ExecCommand("go", "build",
-		"-o", templatesDir+"debugtalk.bin", templatesDir+"plugin/debugtalk.go")
+	err := build.Run(templatesDir+"plugin/debugtalk.go", templatesDir+"debugtalk.bin")
 	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
 		os.Exit(1)
@@ -39,7 +38,8 @@ func buildHashicorpPyPlugin() {
 
 func removeHashicorpPyPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp python plugin")
-	os.Remove(templatesDir + "debugtalk.py")
+	// on v4.1^, running case will generate debugtalk_gen.py used by python plugin
+	os.Remove(templatesDir + "debugtalk_gen.py")
 }
 
 func TestRunCaseWithGoPlugin(t *testing.T) {
