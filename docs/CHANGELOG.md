@@ -1,16 +1,20 @@
 # Release History
 
-## v4.1.0 (2022-05-25)
+## v4.1.0 (2022-05-28)
 
 - feat: add `wiki` sub-command to open httprunner website
+- feat: add `build` sub-command for function plugin
 
 **go version**
 
+- feat #1268: convert postman collection to HttpRunner testcase
+- feat #1291: run testcases in v2/v3 JSON/YAML format with hrp run/boom command
+- feat #1280: support creating empty scaffold project
 - fix #1308: load `.env` file as environment variables
 - fix #1309: locate plugin file upward recursively until system root dir
-- refactor: move base_url to config env
-- feat: support converting Postman collection to HttpRunner testcase
-- refactor: improve the extensibility of `hrp convert` using interface `ICaseConverter`
+- fix #1315: failed to generate a report in failfast mode
+- refactor: move base_url to config `environs`
+- refactor: implement testcase conversions with `hrp convert`
 
 ## v4.1.0-beta (2022-05-21)
 
