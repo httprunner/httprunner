@@ -9,8 +9,9 @@ import (
 {{ range $function := .Functions }}
 {{ $function }}
 {{ end }}
+
 func main() {
-{{- range $idx, $functionName := .FunctionNames }}
+{{- range $functionName := .FunctionNames }}
     fungo.Register("{{ $functionName }}", {{ $functionName }})
 {{- end }}
 	fungo.Serve()
