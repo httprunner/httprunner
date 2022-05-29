@@ -166,6 +166,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		return err
 	}
 
+	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
 		sessionRunner, err := r.NewSessionRunner(testcase)
@@ -185,6 +186,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			s.appendCaseSummary(caseSummary)
 			if err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
+				runErr = err
 				break
 			}
 		}
@@ -206,7 +208,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			return err
 		}
 	}
-	return nil
+
+	return runErr
 }
 
 // NewSessionRunner creates a new session runner for testcase.
@@ -236,8 +239,10 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
-	runner.parser.plugin = plugin
-	runner.rootDir = filepath.Dir(plugin.Path())
+	if plugin != nil {
+		runner.parser.plugin = plugin
+		runner.rootDir = filepath.Dir(plugin.Path())
+	}
 
 	// parse testcase config
 	if err := runner.parseConfig(); err != nil {

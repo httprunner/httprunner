@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/build"
+	"github.com/httprunner/httprunner/v4/hrp"
 )
 
 var buildCmd = &cobra.Command{
@@ -17,7 +17,7 @@ var buildCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return build.Run(args[0], output)
+		return hrp.BuildPlugin(args[0], output)
 	},
 }
 

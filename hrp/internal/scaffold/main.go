@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
@@ -193,7 +194,7 @@ func createGoPlugin(projectName string) error {
 		return err
 	}
 	err := CopyFile("templates/plugin/debugtalk.go",
-		filepath.Join(projectName, "plugin", "debugtalk.go"))
+		filepath.Join(projectName, "plugin", hrp.PluginGoSourceFile))
 	if err != nil {
 		return errors.Wrap(err, "copy debugtalk.go failed")
 	}
@@ -205,7 +206,7 @@ func createPythonPlugin(projectName string) error {
 	log.Info().Msg("start to create hashicorp python plugin")
 
 	// create debugtalk.py
-	pluginFile := filepath.Join(projectName, "debugtalk.py")
+	pluginFile := filepath.Join(projectName, hrp.PluginPySourceFile)
 	err := CopyFile("templates/plugin/debugtalk.py", pluginFile)
 	if err != nil {
 		return errors.Wrap(err, "copy file failed")
