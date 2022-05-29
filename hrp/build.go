@@ -30,10 +30,10 @@ const (
 	regexGoFunctionContent  = `func [\s\S]*?\n}`
 )
 
-//go:embed internal/scaffold/templates/build/debugtalkPythonTemplate
+//go:embed internal/scaffold/templates/plugin/debugtalkPythonTemplate
 var pyTemplate string
 
-//go:embed internal/scaffold/templates/build/debugtalkGoTemplate
+//go:embed internal/scaffold/templates/plugin/debugtalkGoTemplate
 var goTemplate string
 
 type TemplateContent struct {
