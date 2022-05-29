@@ -1,4 +1,4 @@
-package build
+package hrp
 
 import (
 	"bufio"
@@ -30,15 +30,10 @@ const (
 	regexGoFunctionContent  = `func [\s\S]*?\n}`
 )
 
-const (
-	genDebugTalkGo = "debugtalk_gen.go"
-	genDebugTalkPy = ".debugtalk_gen.py"
-)
-
-//go:embed templates/debugtalkPythonTemplate
+//go:embed internal/scaffold/templates/build/debugtalkPythonTemplate
 var pyTemplate string
 
-//go:embed templates/debugtalkGoTemplate
+//go:embed internal/scaffold/templates/build/debugtalkGoTemplate
 var goTemplate string
 
 type TemplateContent struct {
@@ -209,7 +204,7 @@ func buildGo(path string, output string) error {
 	}
 
 	// generate debugtalk.go in pluginDir
-	err = templateContent.genDebugTalk(filepath.Join(pluginDir, genDebugTalkGo), goTemplate)
+	err = templateContent.genDebugTalk(filepath.Join(pluginDir, PluginGoSourceGenFile), goTemplate)
 	if err != nil {
 		return err
 	}
@@ -232,9 +227,9 @@ func buildGo(path string, output string) error {
 
 	if output == "" {
 		dir, _ := os.Getwd()
-		output = filepath.Join(dir, "debugtalk.bin")
+		output = filepath.Join(dir, PluginHashicorpGoBuiltFile)
 	} else if builtin.IsFolderPathExists(output) {
-		output = filepath.Join(output, "debugtalk.bin")
+		output = filepath.Join(output, PluginHashicorpGoBuiltFile)
 	}
 	outputPath, err := filepath.Abs(output)
 	if err != nil {
@@ -242,7 +237,7 @@ func buildGo(path string, output string) error {
 	}
 
 	// build plugin debugtalk.bin
-	cmd := exec.Command("go", "build", "-o", outputPath, genDebugTalkGo, filepath.Base(path))
+	cmd := exec.Command("go", "build", "-o", outputPath, PluginGoSourceGenFile, filepath.Base(path))
 	if err := builtin.ExecCommandInDir(cmd, pluginDir); err != nil {
 		return err
 	}
@@ -267,9 +262,9 @@ func buildPy(path string, output string) error {
 	// generate debugtalk.py
 	if output == "" {
 		dir, _ := os.Getwd()
-		output = filepath.Join(dir, genDebugTalkPy)
+		output = filepath.Join(dir, PluginPySourceGenFile)
 	} else if builtin.IsFolderPathExists(output) {
-		output = filepath.Join(output, genDebugTalkPy)
+		output = filepath.Join(output, PluginPySourceGenFile)
 	}
 	err = templateContent.genDebugTalk(output, pyTemplate)
 	if err != nil {
@@ -285,18 +280,18 @@ func buildPy(path string, output string) error {
 	return nil
 }
 
-func Run(arg string, output string) (err error) {
-	ext := filepath.Ext(arg)
+func BuildPlugin(path string, output string) (err error) {
+	ext := filepath.Ext(path)
 	switch ext {
 	case ".py":
-		err = buildPy(arg, output)
+		err = buildPy(path, output)
 	case ".go":
-		err = buildGo(arg, output)
+		err = buildGo(path, output)
 	default:
 		return errors.New("type error, expected .py or .go")
 	}
 	if err != nil {
-		log.Error().Err(err).Str("arg", arg).Msg("build plugin failed")
+		log.Error().Err(err).Str("arg", path).Msg("build plugin failed")
 		os.Exit(1)
 	}
 	return nil

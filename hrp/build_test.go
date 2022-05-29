@@ -1,6 +1,7 @@
-package build
+package hrp
 
 import (
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -10,13 +11,13 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	err := Run("../scaffold/templates/plugin/debugtalk.go", "./debugtalk.bin")
+	err := BuildPlugin(tmpl("plugin/debugtalk.go"), "./debugtalk.bin")
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
-	genDebugTalkPyPath := "../scaffold/templates/plugin/" + genDebugTalkPy
-	err = Run("../scaffold/templates/plugin/debugtalk.py", genDebugTalkPyPath)
+	genDebugTalkPyPath := filepath.Join(tmpl("plugin/"), PluginPySourceGenFile)
+	err = BuildPlugin(tmpl("plugin/debugtalk.py"), genDebugTalkPyPath)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
