@@ -209,15 +209,6 @@ func buildGo(path string, output string) error {
 		return err
 	}
 
-	// create go mod if not exists
-	goModFile := filepath.Join(pluginDir, "go.mod")
-	if !builtin.IsFilePathExists(goModFile) {
-		err = builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir)
-		if err != nil {
-			return err
-		}
-	}
-
 	// download plugin dependency
 	// funplugin version should be locked
 	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
