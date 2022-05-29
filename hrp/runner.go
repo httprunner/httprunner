@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -231,12 +232,12 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	}
 
 	// init parser plugin
-	plugin, pluginDir, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
+	plugin, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
 	runner.parser.plugin = plugin
-	runner.rootDir = pluginDir
+	runner.rootDir = filepath.Dir(plugin.Path())
 
 	// parse testcase config
 	if err := runner.parseConfig(); err != nil {
