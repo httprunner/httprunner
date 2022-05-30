@@ -118,7 +118,7 @@ func TestMakeTestCaseFromHAR(t *testing.T) {
 	if !assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.TestSteps[1].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "foo1=HDnY8&foo2=12.3", tCase.TestSteps[2].Request.Body) {
+	if !assert.Equal(t, map[string]string{"foo1": "HDnY8", "foo2": "12.3"}, tCase.TestSteps[2].Request.Body) {
 		t.Fatal()
 	}
 
@@ -264,7 +264,7 @@ func TestMakeRequestDataParams(t *testing.T) {
 		t.Fatal()
 	}
 
-	if !assert.Equal(t, "a=1&b=2", step.Request.Body) {
+	if !assert.Equal(t, map[string]string{"a": "1", "b": "2"}, step.Request.Body) {
 		t.Fatal()
 	}
 }
