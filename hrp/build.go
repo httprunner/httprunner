@@ -12,10 +12,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
@@ -209,10 +209,22 @@ func buildGo(path string, output string) error {
 		return err
 	}
 
-	// download plugin dependency
-	// funplugin version should be locked
-	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
-	if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
+	if !builtin.IsFilePathExists(filepath.Join(pluginDir, "go.mod")) {
+		// create go mod
+		if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "main"), pluginDir); err != nil {
+			return err
+		}
+
+		// download plugin dependency
+		// funplugin version should be locked
+		funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
+		if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
+			return err
+		}
+	}
+
+	// add missing and remove unused modules
+	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "tidy"), pluginDir); err != nil {
 		return err
 	}
 
