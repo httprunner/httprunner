@@ -2,7 +2,9 @@
 
 ## v4.1.1 (2022-05-31)
 - fix: failed to build debugtalk.go without go.mod
-- fix: avoid to escape from html special characters like '&'
+- fix: avoid to escape from html special characters like '&' in converted JSON testcase
+- fix: display the full step name when referencing testcase in html report
+- fix: failed to regenerate debugtalk_gen.go and .debugtalk_gen.py correctly
 
 ## v4.1.0 (2022-05-29)
 
