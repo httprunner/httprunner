@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/httprunner/funplugin"
@@ -32,6 +33,17 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	pluginPath, err := locatePlugin(path)
 	if err != nil {
 		return nil, nil
+	}
+
+	if strings.HasSuffix(pluginPath, ".py") {
+		// register funppy plugin
+		genPyPluginPath := filepath.Join(filepath.Dir(pluginPath), PluginPySourceGenFile)
+		err = BuildPlugin(pluginPath, genPyPluginPath)
+		if err != nil {
+			log.Error().Err(err).Str("path", pluginPath).Msg("build plugin failed")
+			return nil, nil
+		}
+		pluginPath = genPyPluginPath
 	}
 
 	// found plugin file
@@ -73,14 +85,7 @@ func locatePlugin(path string) (pluginPath string, err error) {
 
 	pluginPath, err = locateFile(path, PluginPySourceFile)
 	if err == nil {
-		// register funppy plugin
-		genPyPluginPath := filepath.Join(filepath.Dir(pluginPath), PluginPySourceGenFile)
-		err = BuildPlugin(pluginPath, genPyPluginPath)
-		if err != nil {
-			log.Error().Err(err).Str("path", pluginPath).Msg("build plugin failed")
-			return
-		}
-		return genPyPluginPath, nil
+		return
 	}
 
 	pluginPath, err = locateFile(path, PluginGoBuiltFile)
