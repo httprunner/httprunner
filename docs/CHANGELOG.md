@@ -1,5 +1,9 @@
 # Release History
 
+## v4.1.1 (2022-05-31)
+- fix: failed to build debugtalk.go without go.mod
+- fix: avoid to escape from html special characters like '&'
+
 ## v4.1.0 (2022-05-29)
 
 - feat: add `wiki` sub-command to open httprunner website
