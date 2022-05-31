@@ -28,8 +28,19 @@ func Dump2JSON(data interface{}, path string) error {
 		return err
 	}
 	log.Info().Str("path", path).Msg("dump data to json")
-	file, _ := json.MarshalIndent(data, "", "    ")
-	err = os.WriteFile(path, file, 0o644)
+
+	// init json encoder
+	buffer := new(bytes.Buffer)
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+
+	err = encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(path, buffer.Bytes(), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump json path failed")
 		return err
