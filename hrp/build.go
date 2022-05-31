@@ -155,7 +155,7 @@ func (t *TemplateContent) parsePyContent(path string) error {
 }
 
 func (t *TemplateContent) genDebugTalk(path string, templ string) error {
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0o666)
+	file, err := os.Create(path)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
 		return err
@@ -262,7 +262,7 @@ func buildPy(path string, output string) error {
 		return err
 	}
 
-	// generate debugtalk.py
+	// generate .debugtalk_gen.py
 	if output == "" {
 		dir, _ := os.Getwd()
 		output = filepath.Join(dir, PluginPySourceGenFile)
@@ -270,17 +270,7 @@ func buildPy(path string, output string) error {
 		output = filepath.Join(output, PluginPySourceGenFile)
 	}
 	err = templateContent.genDebugTalk(output, pyTemplate)
-	if err != nil {
-		return err
-	}
-
-	// ensure funppy in .env
-	_, err = builtin.EnsurePython3Venv("funppy")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func BuildPlugin(path string, output string) (err error) {
