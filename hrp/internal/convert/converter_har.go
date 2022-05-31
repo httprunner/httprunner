@@ -587,11 +587,11 @@ func (s *stepFromHAR) makeRequestBody(entry *Entry) error {
 		s.Request.Body = body
 	} else if strings.HasPrefix(mimeType, "application/x-www-form-urlencoded") {
 		// post form
-		var paramsList []string
+		paramsMap := make(map[string]string)
 		for _, param := range entry.Request.PostData.Params {
-			paramsList = append(paramsList, fmt.Sprintf("%s=%s", param.Name, param.Value))
+			paramsMap[param.Name] = param.Value
 		}
-		s.Request.Body = strings.Join(paramsList, "&")
+		s.Request.Body = paramsMap
 	} else if strings.HasPrefix(mimeType, "text/plain") {
 		// post raw data
 		s.Request.Body = entry.Request.PostData.Text
