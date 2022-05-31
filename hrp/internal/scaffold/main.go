@@ -28,7 +28,6 @@ const (
 
 type ProjectInfo struct {
 	ProjectName string    `json:"project_name,omitempty" yaml:"project_name,omitempty"`
-	ProjectPath string    `json:"project_path,omitempty" yaml:"project_path,omitempty"`
 	CreateTime  time.Time `json:"create_time,omitempty" yaml:"create_time,omitempty"`
 	Version     string    `json:"hrp_version,omitempty" yaml:"hrp_version,omitempty"`
 }
@@ -78,12 +77,6 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		os.RemoveAll(projectName)
 	}
 
-	// get project abs path
-	projectPath, err := filepath.Abs(projectName)
-	if err != nil {
-		projectPath = projectName
-	}
-
 	// create project folders
 	if err := builtin.CreateFolder(projectName); err != nil {
 		return err
@@ -106,13 +99,12 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 
 	projectInfo := &ProjectInfo{
 		ProjectName: filepath.Base(projectName),
-		ProjectPath: projectPath,
 		CreateTime:  time.Now(),
 		Version:     version.VERSION,
 	}
 
 	// dump project information to file
-	err = builtin.Dump2JSON(projectInfo, filepath.Join(projectName, "proj.json"))
+	err := builtin.Dump2JSON(projectInfo, filepath.Join(projectName, "proj.json"))
 	if err != nil {
 		return err
 	}
