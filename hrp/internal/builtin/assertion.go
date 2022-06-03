@@ -45,6 +45,7 @@ var Assertions = map[string]func(t assert.TestingT, actual interface{}, expected
 	"contained_by":             ContainedBy,
 	"str_eq":                   StringEqual,
 	"string_equals":            StringEqual,
+	"equal_fold":               EqualFold,
 	"regex_match":              RegexMatch,
 }
 
@@ -157,6 +158,12 @@ func ContainedBy(t assert.TestingT, actual, expected interface{}, msgAndArgs ...
 }
 
 func StringEqual(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
+	a := fmt.Sprintf("%v", actual)
+	e := fmt.Sprintf("%v", expected)
+	return assert.True(t, a == e, msgAndArgs)
+}
+
+func EqualFold(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	if !assert.IsType(t, "string", actual, msgAndArgs) {
 		return false
 	}

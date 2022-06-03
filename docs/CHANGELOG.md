@@ -1,6 +1,11 @@
 # Release History
 
+## v4.1.2 (2022-06-03)
+
+- fix #1331: use `str_eq` to assert string and digit equality
+
 ## v4.1.1 (2022-05-31)
+
 - fix: failed to build debugtalk.go without go.mod
 - fix: avoid to escape from html special characters like '&' in converted JSON testcase
 - fix: display the full step name when referencing testcase in html report

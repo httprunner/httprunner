@@ -1065,6 +1065,17 @@ func (s *StepRequestValidation) AssertStringEqual(jmesPath string, expected inte
 	return s
 }
 
+func (s *StepRequestValidation) AssertEqualFold(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "equal_fold",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepRequestValidation) AssertLengthLessOrEquals(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
 	v := Validator{
 		Check:   jmesPath,
