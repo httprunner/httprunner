@@ -36,26 +36,6 @@ function get_arch() {
     echo "$arch"
 }
 
-function get_pkg_suffix() {
-    os=$1
-    if [ "$os" == "windows" ]; then
-        echo ".zip"
-    else
-        echo ".tar.gz"
-    fi
-}
-
-function extract_pkg() {
-    pkg=$1
-    if [[ $pkg == *.zip ]]; then # windows
-        echo "$ unzip -o $pkg -d ."
-        unzip -o $pkg -d .
-    else
-        echo "$ tar -xzf $pkg"
-        tar -xzf "$pkg"
-    fi
-}
-
 function main() {
     echoInfo "Detect target hrp package..."
     version=$(get_latest_version)
@@ -69,7 +49,7 @@ function main() {
     echo "Current OS: $os"
     arch=$(get_arch)
     echo "Current ARCH: $arch"
-    pkg_suffix=$(get_pkg_suffix $os)
+    pkg_suffix=".tar.gz"
     pkg="hrp-$version-$os-$arch$pkg_suffix"
 
     # download from aliyun OSS
@@ -98,7 +78,8 @@ function main() {
     echo
 
     echoInfo "Extracting..."
-    extract_pkg "$pkg"
+    echo "$ tar -xzf $pkg"
+    tar -xzf "$pkg"
     echo "$ ls -lh"
     ls -lh
     echo
