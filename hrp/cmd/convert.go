@@ -57,5 +57,5 @@ func init() {
 	convertCmd.Flags().BoolVar(&toJSONFlag, "to-json", false, "convert to JSON scripts (default)")
 	convertCmd.Flags().BoolVar(&toYAMLFlag, "to-yaml", false, "convert to YAML scripts")
 	convertCmd.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory, default to the same dir with har file")
-	convertCmd.Flags().StringVarP(&profilePath, "profile", "p", "", "specify profile path to override headers (except for auto-generated headers) and cookies")
+	convertCmd.Flags().StringVarP(&profilePath, "profile", "p", "", "specify profile path to override headers and cookies")
 }
