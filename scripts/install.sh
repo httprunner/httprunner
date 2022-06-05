@@ -91,8 +91,13 @@ function main() {
     echo
 
     echoInfo "Extracting..."
-    echo "$ tar -xzf $pkg"
-    tar -xzf "$pkg"
+    if [[ $os == windows ]]; then # windows
+        echo "$ unzip -o $pkg -d ."
+        unzip -o $pkg -d .
+    else
+        echo "$ tar -xzf $pkg"
+        tar -xzf "$pkg"
+    fi
     echo "$ ls -lh"
     ls -lh
     echo
