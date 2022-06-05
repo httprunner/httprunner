@@ -3,6 +3,7 @@
 ## v4.1.2 (2022-06-03)
 
 - fix #1331: use `str_eq` to assert string and digit equality
+- fix #1336: extract package with tar in Windows
 
 ## v4.1.1 (2022-05-31)
 
