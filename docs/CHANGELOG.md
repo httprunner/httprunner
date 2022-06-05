@@ -3,7 +3,7 @@
 ## v4.1.2 (2022-06-05)
 
 - fix #1331: use `str_eq` to assert string and digit equality
-- fix #1336: extract package with tar in Windows
+- fix #1336: extract package in Windows
 - fix: install package on MinGW64
 - change: remove `hrp har2case`, replace with `hrp convert`
 
