@@ -78,12 +78,13 @@ function main() {
     echo "Download url: $url"
     echo
 
-    echoInfo "Created temp dir..."
-    echo "$ mktemp -d -t hrp.XXXX"
-    tmp_dir=$(mktemp -d -t hrp.XXXX)
-    echo "$tmp_dir"
-    cd "$tmp_dir"
-    echo
+	if [[ $os != windows ]]; then # windows
+	    echoInfo "Created temp dir..."
+	    echo "$ mktemp -d -t hrp.XXXX"
+	    tmp_dir=$(mktemp -d -t hrp.XXXX)
+	    echo "$tmp_dir"
+	    cd "$tmp_dir"
+	fi
 
     echoInfo "Downloading..."
     echo "$ curl -kL $url -o $pkg"
@@ -103,16 +104,20 @@ function main() {
     echo
 
     echoInfo "Installing..."
-    if hrp -v > /dev/null && [ $(command -v hrp) != "./hrp" ]; then
-        echoWarn "$(hrp -v) exists, remove first !!!"
-        echo "$ rm -rf $(command -v hrp)"
-        rm -rf "$(command -v hrp)"
+    if [[ $os != windows ]]; then # windows
+        if hrp -v > /dev/null && [ $(command -v hrp) != "./hrp" ]; then
+            echoWarn "$(hrp -v) exists, remove first !!!"
+            echo "$ rm -rf $(command -v hrp)"
+            rm -rf "$(command -v hrp)"
+        fi
+        echo "$ chmod +x hrp && mv hrp /usr/local/bin/"
+        chmod +x hrp
+        mv hrp /usr/local/bin/
+        echo
+    else
+        echo "$ chmod +x hrp.exe"
+        chmod +x hrp.exe
     fi
-
-    echo "$ chmod +x hrp && mv hrp /usr/local/bin/"
-    chmod +x hrp
-    mv hrp /usr/local/bin/
-    echo
 
     echoInfo "Check installation..."
     echo "$ command -v hrp"
