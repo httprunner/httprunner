@@ -4,6 +4,7 @@
 
 - fix #1331: use `str_eq` to assert string and digit equality
 - fix #1336: extract package with tar in Windows
+- fix: install package on MinGW64
 
 ## v4.1.1 (2022-05-31)
 

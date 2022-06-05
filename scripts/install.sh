@@ -44,24 +44,37 @@ function main() {
         echo "$version"
         exit 1
     fi
+    echo "Latest version: $version"
 
     os=$(get_os)
     echo "Current OS: $os"
+    if [[ $os == mingw* ]]; then
+        echoWarn "Current OS is MinGW, try to use windows package"
+        os="windows"
+    fi
+
     arch=$(get_arch)
     echo "Current ARCH: $arch"
     pkg_suffix=".tar.gz"
     pkg="hrp-$version-$os-$arch$pkg_suffix"
+    echo "Download package: $pkg"
 
-    # download from aliyun OSS
-    url="https://httprunner.oss-cn-beijing.aliyuncs.com/$pkg"
-    if ! curl --output /dev/null --silent --head --fail "$url"; then
-        # aliyun OSS url is invalid, try to download from github
-        version=$(get_latest_version)
-        pkg="hrp-$version-$os-$arch$pkg_suffix"
-        url="https://github.com/httprunner/httprunner/releases/download/$version/$pkg"
+    # download from aliyun OSS or github packages
+    aliyun_oss_url="https://httprunner.oss-cn-beijing.aliyuncs.com/$pkg"
+    github_url="https://github.com/httprunner/httprunner/releases/download/$version/$pkg"
+    valid_flag=false
+    for url in "$aliyun_oss_url" "$github_url"; do
+        if curl --output /dev/null --silent --head --fail "$url"; then
+            valid_flag=true
+            break
+        fi
+        echoWarn "Invalid download url: $url"
+    done
+
+    if [[ "$valid_flag" == false ]]; then
+        echoError "No available download url found, exit!"
+        exit 1
     fi
-
-    echo "Latest version: $version"
     echo "Download url: $url"
     echo
 
