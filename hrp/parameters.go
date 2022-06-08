@@ -12,7 +12,7 @@ import (
 )
 
 type TParamsConfig struct {
-	PickOrder  iteratorPickOrder           `json:"strategy,omitempty" yaml:"strategy,omitempty"`     // overall pick-order strategy
+	PickOrder  iteratorPickOrder           `json:"pick_order,omitempty" yaml:"pick_order,omitempty"` // overall pick-order strategy
 	Strategies map[string]iteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
 	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
@@ -69,7 +69,7 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 	for paramName := range parameters {
 		// check parameter individual pick order strategy
 		strategy, ok := config.Strategies[paramName]
-		if !ok {
+		if !ok || strategy.PickOrder == "" {
 			// default to overall pick order strategy
 			strategy.PickOrder = config.PickOrder
 		}
