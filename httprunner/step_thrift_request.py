@@ -6,7 +6,7 @@ from loguru import logger
 from httprunner import utils
 from httprunner.exceptions import ValidationFailure
 from httprunner.models import IStep, StepResult, TStep, ProtoType, TransType
-from httprunner.runner import HttpRunner
+from httprunner.runner import HttpRunner, USE_ALLURE
 from httprunner.step_request import (
     call_hooks,
     StepRequestExtraction,
@@ -86,12 +86,32 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     if step.setup_hooks:
         call_hooks(runner, step.setup_hooks, step.variables, "setup request")
 
+    # log request
+    thrift_request_print = "====== thrift request details ======\n"
+    thrift_request_print += f"psm: {psm}\n"
+    for k, v in parsed_request_dict.items():
+        v = utils.omit_long_data(v)
+        thrift_request_print += f"{k}: {repr(v)}\n"
+    thrift_request_print += "\n"
+    if USE_ALLURE:
+        import allure
+        allure.attach(thrift_request_print, name="thrift request details", attachment_type=allure.attachment_type.TEXT)
+
     # thrift request
     resp = runner.thrift_client.send_request(
         parsed_request_dict["params"], parsed_request_dict["method"]
     )
     resp_obj = ThriftResponseObject(resp, parser=runner.parser)
     step.variables["thrift_response"] = resp_obj
+
+    # log response
+    thrift_response_print = "====== thrift response details ======\n"
+    for k, v in resp.items():
+        v = utils.omit_long_data(v)
+        thrift_response_print += f"{k}: {repr(v)}\n"
+    if USE_ALLURE:
+        import allure
+        allure.attach(thrift_request_print, name="thrift response details", attachment_type=allure.attachment_type.TEXT)
 
     # teardown hooks
     if step.teardown_hooks:
@@ -101,21 +121,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         err_msg = "\n{} THRIFT DETAILED REQUEST & RESPONSE {}\n".format(
             "*" * 32, "*" * 32
         )
-
-        # log request
-        err_msg += "====== thrift request details ======\n"
-        err_msg += f"psm: {psm}\n"
-        for k, v in parsed_request_dict.items():
-            v = utils.omit_long_data(v)
-            err_msg += f"{k}: {repr(v)}\n"
-
-        err_msg += "\n"
-
-        # log response
-        err_msg += "====== thrift response details ======\n"
-        for k, v in resp.items():
-            v = utils.omit_long_data(v)
-            err_msg += f"{k}: {repr(v)}\n"
+        err_msg += thrift_request_print + thrift_response_print
         logger.error(err_msg)
 
     # extract

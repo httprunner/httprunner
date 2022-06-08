@@ -17,7 +17,7 @@ from httprunner.models import (
 )
 from httprunner.parser import build_url
 from httprunner.response import ResponseObject
-from httprunner.runner import HttpRunner
+from httprunner.runner import HttpRunner, USE_ALLURE
 
 
 def call_hooks(
@@ -99,8 +99,32 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     parsed_request_dict["verify"] = config.verify
     parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
 
+    # log request
+    request_print = "====== request details ======\n"
+    request_print += f"url: {url}\n"
+    request_print += f"method: {method}\n"
+    headers = parsed_request_dict.pop("headers", {})
+    request_print += f"headers: {headers}\n"
+    for k, v in parsed_request_dict.items():
+        v = utils.omit_long_data(v)
+        request_print += f"{k}: {repr(v)}\n"
+    request_print += "\n"
+
     # request
+    if USE_ALLURE:
+        import allure
+        allure.attach(request_print, name="request details", attachment_type=allure.attachment_type.TEXT)
     resp = runner.session.request(method, url, **parsed_request_dict)
+
+    # log response
+    response_print = "====== response details ======\n"
+    response_print += f"status_code: {resp.status_code}\n"
+    response_print += f"headers: {resp.headers}\n"
+    response_print += f"body: {repr(resp.text)}\n"
+
+    if USE_ALLURE:
+        import allure
+        allure.attach(response_print, name="response details", attachment_type=allure.attachment_type.TEXT)
     resp_obj = ResponseObject(resp, runner.parser)
     step.variables["response"] = resp_obj
 
@@ -110,24 +134,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     def log_req_resp_details():
         err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
-
-        # log request
-        err_msg += "====== request details ======\n"
-        err_msg += f"url: {url}\n"
-        err_msg += f"method: {method}\n"
-        headers = parsed_request_dict.pop("headers", {})
-        err_msg += f"headers: {headers}\n"
-        for k, v in parsed_request_dict.items():
-            v = utils.omit_long_data(v)
-            err_msg += f"{k}: {repr(v)}\n"
-
-        err_msg += "\n"
-
-        # log response
-        err_msg += "====== response details ======\n"
-        err_msg += f"status_code: {resp.status_code}\n"
-        err_msg += f"headers: {resp.headers}\n"
-        err_msg += f"body: {repr(resp.text)}\n"
+        err_msg += request_print + response_print
         logger.error(err_msg)
 
     # extract
