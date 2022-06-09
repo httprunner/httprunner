@@ -44,6 +44,7 @@ type TemplateContent struct {
 	FromImports   []string // python from...import...
 	Functions     []string // python/go function
 	FunctionNames []string // function name set by user
+	Packages      []string // python packages
 }
 
 type Regexps struct {
@@ -127,8 +128,15 @@ func (t *TemplateContent) parsePyContent(path string) error {
 
 		if strings.HasPrefix(line, "import") {
 			t.Imports = append(t.Imports, strings.Trim(line, " "))
+			// e.g. import module as md
+			// import package.module
+			t.Packages = append(t.Packages, strings.Split(strings.Split(line, " ")[1], ".")[0])
 		} else if strings.HasPrefix(line, "from") {
 			t.FromImports = append(t.FromImports, strings.Trim(line, " "))
+			// e.g. from package.module import function
+			// from module import function
+			// from package import module
+			t.Packages = append(t.Packages, strings.Split(strings.Split(line, " ")[1], ".")[0])
 		} else {
 			// no parse content at under of `if __name__ == "__main__"`
 			if strings.HasPrefix(line, "if __name__") {
@@ -257,7 +265,20 @@ func buildPy(path string, output string) error {
 			FunctionName: regexp.MustCompile(regexPythonFunctionName),
 		},
 	}
+
 	err := templateContent.parsePyContent(path)
+	if err != nil {
+		return err
+	}
+
+	// ensure installation of packages
+	_, err = builtin.EnsurePython3Venv(templateContent.Packages...)
+	if err != nil {
+		return err
+	}
+
+	// check the syntax of debugtalk.py
+	err = builtin.CheckPythonScriptSyntax(path)
 	if err != nil {
 		return err
 	}
