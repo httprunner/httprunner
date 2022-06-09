@@ -7,13 +7,14 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/hrp/internal/scaffold"
+	"github.com/httprunner/httprunner/v4/hrp/internal/scaffold"
 )
 
 var scaffoldCmd = &cobra.Command{
-	Use:   "startproject $project_name",
-	Short: "create a scaffold project",
-	Args:  cobra.ExactValidArgs(1),
+	Use:     "startproject $project_name",
+	Aliases: []string{"scaffold"},
+	Short:   "create a scaffold project",
+	Args:    cobra.ExactValidArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
 	},
@@ -23,7 +24,9 @@ var scaffoldCmd = &cobra.Command{
 		}
 
 		var pluginType scaffold.PluginType
-		if ignorePlugin {
+		if empty {
+			pluginType = scaffold.Empty
+		} else if ignorePlugin {
 			pluginType = scaffold.Ignore
 		} else if genGoPlugin {
 			pluginType = scaffold.Go
@@ -42,6 +45,7 @@ var scaffoldCmd = &cobra.Command{
 }
 
 var (
+	empty           bool
 	ignorePlugin    bool
 	genPythonPlugin bool
 	genGoPlugin     bool
@@ -54,4 +58,5 @@ func init() {
 	scaffoldCmd.Flags().BoolVar(&genPythonPlugin, "py", true, "generate hashicorp python plugin")
 	scaffoldCmd.Flags().BoolVar(&genGoPlugin, "go", false, "generate hashicorp go plugin")
 	scaffoldCmd.Flags().BoolVar(&ignorePlugin, "ignore-plugin", false, "ignore function plugin")
+	scaffoldCmd.Flags().BoolVar(&empty, "empty", false, "generate empty project")
 }

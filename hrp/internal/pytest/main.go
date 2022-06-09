@@ -3,9 +3,9 @@ package pytest
 import (
 	"fmt"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
-	"github.com/httprunner/httprunner/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func RunPytest(args []string) error {

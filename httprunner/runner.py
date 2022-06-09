@@ -226,6 +226,8 @@ class SessionRunner(object):
                 self.__run_step(step)
         finally:
             logger.info(f"generate testcase log: {self.__log_path}")
+            if USE_ALLURE:
+                allure.attach.file(self.__log_path, name='all log', attachment_type=allure.attachment_type.TEXT)
 
         self.__duration = time.time() - self.__start_at
         return self

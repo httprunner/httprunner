@@ -42,6 +42,10 @@ func (r *SessionRunner) GetConfig() *TConfig {
 	return r.parsedConfig
 }
 
+func (r *SessionRunner) HTTPStatOn() bool {
+	return r.hrpRunner.httpStatOn
+}
+
 func (r *SessionRunner) LogOn() bool {
 	return r.hrpRunner.requestsLogOn
 }

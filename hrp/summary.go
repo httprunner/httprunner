@@ -10,9 +10,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/version"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func newOutSummary() *Summary {
@@ -72,7 +73,7 @@ func (s *Summary) genHTMLReport() error {
 	}
 
 	reportPath := filepath.Join(reportsDir, fmt.Sprintf("report-%v.html", s.Time.StartAt.Unix()))
-	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
 		return err

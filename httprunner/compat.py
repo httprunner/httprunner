@@ -1,5 +1,5 @@
 """
-This module handles compatibility issues between testcase format v2 and v3.
+This module handles compatibility issues between testcase format v2, v3 and v4.
 """
 import os
 import sys
@@ -14,9 +14,8 @@ from httprunner.utils import sort_dict_by_custom_order
 
 
 def convert_variables(
-    raw_variables: Union[Dict, Text], test_path: Text
+        raw_variables: Union[Dict, Text], test_path: Text
 ) -> Dict[Text, Any]:
-
     if isinstance(raw_variables, Dict):
         return raw_variables
 
@@ -31,6 +30,18 @@ def convert_variables(
         raise exceptions.TestCaseFormatError(
             f"Invalid variables format: {raw_variables}"
         )
+
+
+def _convert_request(request: Dict) -> Dict:
+    if "body" in request:
+        content_type = ""
+        if "headers" in request and "Content-Type" in request["headers"]:
+            content_type = request["headers"]["Content-Type"]
+        if content_type.startswith("application/json"):
+            request["json"] = request.pop("body")
+        else:
+            request["data"] = request.pop("body")
+    return _sort_request_by_custom_order(request)
 
 
 def _convert_jmespath(raw: Text) -> Text:
@@ -153,6 +164,9 @@ def _ensure_step_attachment(step: Dict) -> Dict:
         "name": step["name"],
     }
 
+    if "request" in step:
+        test_dict["request"] = _convert_request(step["request"])
+
     if "variables" in step:
         test_dict["variables"] = step["variables"]
 
@@ -181,11 +195,11 @@ def _ensure_step_attachment(step: Dict) -> Dict:
     return test_dict
 
 
-def ensure_testcase_v3_api(api_content: Dict) -> Dict:
-    logger.info("convert api in v2 to testcase format v3")
+def ensure_testcase_v4_api(api_content: Dict) -> Dict:
+    logger.info("convert api in v2/v3 to testcase format v4")
 
     teststep = {
-        "request": _sort_request_by_custom_order(api_content["request"]),
+        "request": _convert_request(api_content["request"]),
     }
     teststep.update(_ensure_step_attachment(api_content))
 
@@ -202,8 +216,8 @@ def ensure_testcase_v3_api(api_content: Dict) -> Dict:
     }
 
 
-def ensure_testcase_v3(test_content: Dict) -> Dict:
-    logger.info("ensure compatibility with testcase format v2")
+def ensure_testcase_v4(test_content: Dict) -> Dict:
+    logger.info("ensure compatibility with testcase format v2/v3")
 
     v3_content = {"config": test_content["config"], "teststeps": []}
 
@@ -221,7 +235,7 @@ def ensure_testcase_v3(test_content: Dict) -> Dict:
         teststep = {}
 
         if "request" in step:
-            teststep["request"] = _sort_request_by_custom_order(step.pop("request"))
+            pass
         elif "api" in step:
             teststep["testcase"] = step.pop("api")
         elif "testcase" in step:

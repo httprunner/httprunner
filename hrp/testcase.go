@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 // ITestCase represents interface for testcases,
@@ -59,8 +60,11 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	if err != nil {
 		return nil, err
 	}
+	if tc.Config == nil {
+		return nil, errors.New("incorrect testcase file format, expected config in file")
+	}
 
-	err = tc.makeCompat()
+	err = tc.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +75,28 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	}
 
 	// locate project root dir by plugin path
-	projectRootDir, err := getProjectRootDirPath(casePath)
+	projectRootDir, err := GetProjectRootDirPath(casePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get project root dir")
+	}
+
+	// load .env file
+	dotEnvPath := filepath.Join(projectRootDir, ".env")
+	if builtin.IsFilePathExists(dotEnvPath) {
+		envVars := make(map[string]string)
+		err = builtin.LoadFile(dotEnvPath, envVars)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load .env file")
+		}
+
+		// override testcase config env with variables loaded from .env file
+		// priority: .env file > testcase config env
+		if testCase.Config.Environs == nil {
+			testCase.Config.Environs = make(map[string]string)
+		}
+		for key, value := range envVars {
+			testCase.Config.Environs[key] = value
+		}
 	}
 
 	for _, step := range tc.TestSteps {
@@ -150,26 +173,27 @@ type TCase struct {
 	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
 }
 
-// makeCompat converts TCase to compatible testcase
-func (tc *TCase) makeCompat() error {
-	var err error
+// MakeCompat converts TCase compatible with Golang engine style
+func (tc *TCase) MakeCompat() (err error) {
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("convert compat testcase error: %v", p)
+			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
 		}
 	}()
 	for _, step := range tc.TestSteps {
-		// 1. deal with request body compatible with HttpRunner
+		// 1. deal with request body compatibility
 		if step.Request != nil && step.Request.Body == nil {
 			if step.Request.Json != nil {
 				step.Request.Headers["Content-Type"] = "application/json; charset=utf-8"
 				step.Request.Body = step.Request.Json
+				step.Request.Json = nil
 			} else if step.Request.Data != nil {
 				step.Request.Body = step.Request.Data
+				step.Request.Data = nil
 			}
 		}
 
-		// 2. deal with validators compatible with HttpRunner
+		// 2. deal with validators compatibility
 		err = convertCompatValidator(step.Validators)
 		if err != nil {
 			return err
@@ -183,38 +207,46 @@ func (tc *TCase) makeCompat() error {
 
 func convertCompatValidator(Validators []interface{}) (err error) {
 	for i, iValidator := range Validators {
+		if _, ok := iValidator.(Validator); ok {
+			continue
+		}
 		validatorMap := iValidator.(map[string]interface{})
 		validator := Validator{}
-		_, checkExisted := validatorMap["check"]
-		_, assertExisted := validatorMap["assert"]
-		_, expectExisted := validatorMap["expect"]
-		// check priority: HRP > HttpRunner
+		iCheck, checkExisted := validatorMap["check"]
+		iAssert, assertExisted := validatorMap["assert"]
+		iExpect, expectExisted := validatorMap["expect"]
+		// validator check priority: Golang > Python engine style
 		if checkExisted && assertExisted && expectExisted {
-			// HRP validator format
-			validator.Check = validatorMap["check"].(string)
-			validator.Assert = validatorMap["assert"].(string)
-			validator.Expect = validatorMap["expect"]
-			if msg, existed := validatorMap["msg"]; existed {
-				validator.Message = msg.(string)
+			// Golang engine style
+			validator.Check = iCheck.(string)
+			validator.Assert = iAssert.(string)
+			validator.Expect = iExpect
+			if iMsg, msgExisted := validatorMap["msg"]; msgExisted {
+				validator.Message = iMsg.(string)
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
-		} else if len(validatorMap) == 1 {
-			// HttpRunner validator format
+			continue
+		}
+		if len(validatorMap) == 1 {
+			// Python engine style
 			for assertMethod, iValidatorContent := range validatorMap {
-				checkAndExpect := iValidatorContent.([]interface{})
-				if len(checkAndExpect) != 2 {
+				validatorContent := iValidatorContent.([]interface{})
+				if len(validatorContent) > 3 {
 					return fmt.Errorf("unexpected validator format: %v", validatorMap)
 				}
-				validator.Check = checkAndExpect[0].(string)
+				validator.Check = validatorContent[0].(string)
 				validator.Assert = assertMethod
-				validator.Expect = checkAndExpect[1]
+				validator.Expect = validatorContent[1]
+				if len(validatorContent) == 3 {
+					validator.Message = validatorContent[2].(string)
+				}
 			}
 			validator.Check = convertCheckExpr(validator.Check)
 			Validators[i] = validator
-		} else {
-			return fmt.Errorf("unexpected validator format: %v", validatorMap)
+			continue
 		}
+		return fmt.Errorf("unexpected validator format: %v", validatorMap)
 	}
 	return nil
 }
@@ -283,8 +315,8 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 			testCasePath := TestCasePath(path)
 			tc, err := testCasePath.ToTestCase()
 			if err != nil {
-				log.Error().Err(err).Str("path", path).Msg("load testcase failed")
-				return errors.Wrap(err, "load testcase failed")
+				log.Warn().Err(err).Str("path", path).Msg("load testcase failed")
+				return nil
 			}
 			testCases = append(testCases, tc)
 			return nil

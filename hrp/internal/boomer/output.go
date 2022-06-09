@@ -10,11 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 // Output is primarily responsible for printing test results to different destinations
@@ -37,8 +38,7 @@ type Output interface {
 }
 
 // ConsoleOutput is the default output for standalone mode.
-type ConsoleOutput struct {
-}
+type ConsoleOutput struct{}
 
 // NewConsoleOutput returns a ConsoleOutput.
 func NewConsoleOutput() *ConsoleOutput {
@@ -102,12 +102,10 @@ func getTotalFailRatio(totalRequests, totalFailures int64) (failRatio float64) {
 
 // OnStart of ConsoleOutput has nothing to do.
 func (o *ConsoleOutput) OnStart() {
-
 }
 
 // OnStop of ConsoleOutput has nothing to do.
 func (o *ConsoleOutput) OnStop() {
-
 }
 
 // OnEvent will print to the console.
@@ -264,10 +262,9 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 
 	var duration float64
 	if entry.Name == "Total" {
-		duration = float64(entry.LastRequestTimestamp - entry.StartTime)
-		// fix: avoid divide by zero
-		if duration < 1 {
-			duration = 1
+		duration = float64(entry.LastRequestTimestamp-entry.StartTime) / 1e3
+		if duration == 0 {
+			return nil, errors.New("no step specified")
 		}
 	} else {
 		duration = float64(reportStatsInterval / time.Second)
@@ -474,10 +471,12 @@ var (
 )
 
 // NewPrometheusPusherOutput returns a PrometheusPusherOutput.
-func NewPrometheusPusherOutput(gatewayURL, jobName string) *PrometheusPusherOutput {
+func NewPrometheusPusherOutput(gatewayURL, jobName string, mode string) *PrometheusPusherOutput {
 	nodeUUID, _ := uuid.NewUUID()
 	return &PrometheusPusherOutput{
-		pusher: push.New(gatewayURL, jobName).Grouping("instance", nodeUUID.String()),
+		pusher: push.New(gatewayURL, jobName).
+			Grouping("instance", nodeUUID.String()).
+			Grouping("mode", mode),
 	}
 }
 

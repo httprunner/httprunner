@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/hrp/internal/pytest"
+	"github.com/httprunner/httprunner/v4/hrp/internal/pytest"
 )
 
 var pytestCmd = &cobra.Command{

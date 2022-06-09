@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/httprunner/funplugin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/httprunner/hrp/internal/boomer"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
@@ -19,9 +19,6 @@ func NewBoomer(spawnCount int, spawnRate float64) *HRPBoomer {
 	}
 
 	b.hrpRunner = NewRunner(nil)
-	// set client transport for high concurrency load testing
-	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
-
 	return b
 }
 
@@ -30,6 +27,11 @@ type HRPBoomer struct {
 	hrpRunner    *HRPRunner
 	plugins      []funplugin.IPlugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex       // avoid data race
+}
+
+func (b *HRPBoomer) SetClientTransport() {
+	// set client transport for high concurrency load testing
+	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 }
 
 // Run starts to run load test for one or multiple testcases.
@@ -97,6 +99,9 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	parametersIterator := caseRunner.parametersIterator
 	parametersIterator.SetUnlimitedMode()
 
+	// reset start time only once
+	once := sync.Once{}
+
 	return &boomer.Task{
 		Name:   testcase.Config.Name,
 		Weight: testcase.Config.Weight,
@@ -113,6 +118,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
+				// reset start time only once before step
+				once.Do(func() {
+					b.Boomer.ResetStartTime()
+				})
 				stepResult, err := step.Run(sessionRunner)
 				if err != nil {
 					// step failed
