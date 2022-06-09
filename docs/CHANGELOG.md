@@ -1,9 +1,59 @@
 # Release History
 
-## v4.0.0-beta2 (2022-05-03)
+## v4.1.2 (2022-06-05)
+
+- fix #1331: use `str_eq` to assert string and digit equality
+- fix #1336: extract package in Windows
+- fix: install package on MinGW64
+- change: remove `hrp har2case`, replace with `hrp convert`
+
+## v4.1.1 (2022-05-31)
+
+- fix: failed to build debugtalk.go without go.mod
+- fix: avoid to escape from html special characters like '&' in converted JSON testcase
+- fix: display the full step name when referencing testcase in html report
+- fix: failed to regenerate debugtalk_gen.go and .debugtalk_gen.py correctly
+
+## v4.1.0 (2022-05-29)
+
+- feat: add `wiki` sub-command to open httprunner website
+- feat: add `build` sub-command for function plugin
 
 **go version**
 
+- feat #1268: convert postman collection to HttpRunner testcase
+- feat #1291: run testcases in v2/v3 JSON/YAML format with hrp run/boom command
+- feat #1280: support creating empty scaffold project
+- fix #1308: load `.env` file as environment variables
+- fix #1309: locate plugin file upward recursively until system root dir
+- fix #1315: failed to generate a report in failfast mode
+- refactor: move base_url to config `environs`
+- refactor: implement testcase conversions with `hrp convert`
+
+## v4.1.0-beta (2022-05-21)
+
+- feat: add pre-commit-hook to format go/python code
+
+**go version**
+
+- feat: add boomer mode(standalone/master/worker)
+- feat: support load testing with specified `--profile` configuration file
+- fix: step request elapsed timing should contain ContentTransfer part
+- fix #1288: unable to go get httprunner v4
+- fix: panic when config didn't exist in testcase file
+- fix: disable keep alive and improve RPS accuracy
+- fix: improve RPS accuracy
+
+**python version**
+
+- feat: support new step type with SQL operation
+- feat: support new step type with thrift protocol
+
+## v4.0.0 (2022-05-05)
+
+**go version**
+
+- feat: stat HTTP request latencies (DNSLookup, TCP Connection and so on)
 - feat: add builtin function `environ`/`ENV`
 - fix: demo function compatibility
 - fix #1240: losing host port in har2case

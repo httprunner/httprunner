@@ -9,12 +9,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/shared"
 	"github.com/maja42/goval"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func newParser() *Parser {
@@ -252,8 +252,14 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 // only support return at most one result value
 func (p *Parser) CallFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// call with plugin function
-	if p.plugin != nil && p.plugin.Has(funcName) {
-		return p.plugin.Call(funcName, arguments...)
+	if p.plugin != nil {
+		if p.plugin.Has(funcName) {
+			return p.plugin.Call(funcName, arguments...)
+		}
+		commonName := shared.ConvertCommonName(funcName)
+		if p.plugin.Has(commonName) {
+			return p.plugin.Call(commonName, arguments...)
+		}
 	}
 
 	// get builtin function

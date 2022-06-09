@@ -2,11 +2,9 @@ import logging
 import time
 from typing import List
 
-import funppy
 
-
-def get_version():
-    return funppy.__version__
+def get_user_agent():
+    return "hrp/funppy"
 
 
 def sleep(n_secs):
@@ -57,17 +55,3 @@ def setup_hook_example(name):
 def teardown_hook_example(name):
     logging.warning("teardown_hook_example")
     return f"teardown_hook_example: {name}"
-
-
-if __name__ == "__main__":
-    funppy.register("get_version", get_version)
-    funppy.register("sum", sum)
-    funppy.register("sum_ints", sum_ints)
-    funppy.register("concatenate", concatenate)
-    funppy.register("sum_two_int", sum_two_int)
-    funppy.register("sum_two", sum_two_int)
-    funppy.register("sum_two_string", sum_two_string)
-    funppy.register("sum_strings", sum_strings)
-    funppy.register("setup_hook_example", setup_hook_example)
-    funppy.register("teardown_hook_example", teardown_hook_example)
-    funppy.serve()

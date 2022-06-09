@@ -7,11 +7,26 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+)
+
+// Mode is the running mode of boomer, both standalone and distributed are supported.
+type Mode int
+
+const (
+	// DistributedMasterMode requires being connected by each worker.
+	DistributedMasterMode Mode = iota
+	// DistributedWorkerMode requires connecting to a master.
+	DistributedWorkerMode
+	// StandaloneMode will run without a master.
+	StandaloneMode
 )
 
 // A Boomer is used to run tasks.
 type Boomer struct {
+	mode Mode
+
 	localRunner *localRunner
 
 	cpuProfile         string
@@ -24,9 +39,39 @@ type Boomer struct {
 	disableCompression bool
 }
 
+// SetMode only accepts boomer.DistributedMasterMode、boomer.DistributedWorkerMode and boomer.StandaloneMode.
+func (b *Boomer) SetMode(mode Mode) {
+	switch mode {
+	case DistributedMasterMode:
+		b.mode = DistributedMasterMode
+	case DistributedWorkerMode:
+		b.mode = DistributedWorkerMode
+	case StandaloneMode:
+		b.mode = StandaloneMode
+	default:
+		log.Error().Err(errors.New("Invalid mode, ignored!"))
+	}
+}
+
+// GetMode returns boomer operating mode
+func (b *Boomer) GetMode() string {
+	switch b.mode {
+	case DistributedMasterMode:
+		return "master"
+	case DistributedWorkerMode:
+		return "worker"
+	case StandaloneMode:
+		return "standalone"
+	default:
+		log.Error().Err(errors.New("Invalid mode, ignored!"))
+		return ""
+	}
+}
+
 // NewStandaloneBoomer returns a new Boomer, which can run without master.
 func NewStandaloneBoomer(spawnCount int, spawnRate float64) *Boomer {
 	return &Boomer{
+		mode:        StandaloneMode,
 		localRunner: newLocalRunner(spawnCount, spawnRate),
 	}
 }
@@ -169,4 +214,8 @@ func (b *Boomer) GetSpawnDoneChan() chan struct{} {
 
 func (b *Boomer) GetSpawnCount() int {
 	return b.localRunner.spawnCount
+}
+
+func (b *Boomer) ResetStartTime() {
+	b.localRunner.stats.total.resetStartTime()
 }

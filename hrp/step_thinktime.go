@@ -3,8 +3,9 @@ package hrp
 import (
 	"time"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 type ThinkTime struct {
