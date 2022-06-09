@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
-	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 func Dump2JSON(data interface{}, path string) error {
@@ -28,8 +28,19 @@ func Dump2JSON(data interface{}, path string) error {
 		return err
 	}
 	log.Info().Str("path", path).Msg("dump data to json")
-	file, _ := json.MarshalIndent(data, "", "    ")
-	err = os.WriteFile(path, file, 0644)
+
+	// init json encoder
+	buffer := new(bytes.Buffer)
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+
+	err = encoder.Encode(data)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(path, buffer.Bytes(), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump json path failed")
 		return err
@@ -56,7 +67,7 @@ func Dump2YAML(data interface{}, path string) error {
 		return err
 	}
 
-	err = os.WriteFile(path, buffer.Bytes(), 0644)
+	err = os.WriteFile(path, buffer.Bytes(), 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("dump yaml path failed")
 		return err
@@ -86,7 +97,7 @@ func EnsurePython3Venv(packages ...string) (string, error) {
 	venvDir := filepath.Join(home, ".hrp", "venv")
 	python3, err := shared.EnsurePython3Venv(venvDir, packages...)
 	if err != nil {
-		return "", errors.Wrap(err, "ensure python venv failed")
+		return "", errors.Wrap(err, "ensure python3 venv failed")
 	}
 
 	return python3, nil
@@ -281,11 +292,12 @@ var ErrUnsupportedFileExt = fmt.Errorf("unsupported file extension")
 // LoadFile loads file content with file extension and assigns to structObj
 func LoadFile(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
-	file, err := readFile(path)
+	file, err := ReadFile(path)
 	if err != nil {
 		return errors.Wrap(err, "read file failed")
 	}
-
+	// remove BOM at the beginning of file
+	file = bytes.TrimLeft(file, "\xef\xbb\xbf")
 	ext := filepath.Ext(path)
 	switch ext {
 	case ".json", ".har":
@@ -294,15 +306,47 @@ func LoadFile(path string, structObj interface{}) (err error) {
 		err = decoder.Decode(structObj)
 	case ".yaml", ".yml":
 		err = yaml.Unmarshal(file, structObj)
+	case ".env":
+		err = parseEnvContent(file, structObj)
 	default:
 		err = ErrUnsupportedFileExt
 	}
 	return err
 }
 
+func parseEnvContent(file []byte, obj interface{}) error {
+	envMap := obj.(map[string]string)
+	lines := strings.Split(string(file), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			// empty line or comment line
+			continue
+		}
+		var kv []string
+		if strings.Contains(line, "=") {
+			kv = strings.SplitN(line, "=", 2)
+		} else if strings.Contains(line, ":") {
+			kv = strings.SplitN(line, ":", 2)
+		}
+		if len(kv) != 2 {
+			return errors.New(".env format error")
+		}
+
+		key := strings.TrimSpace(kv[0])
+		value := strings.TrimSpace(kv[1])
+		envMap[key] = value
+
+		// set env
+		log.Info().Str("key", key).Msg("set env")
+		os.Setenv(key, value)
+	}
+	return nil
+}
+
 func loadFromCSV(path string) []map[string]interface{} {
 	log.Info().Str("path", path).Msg("load csv file")
-	file, err := readFile(path)
+	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read csv file failed")
 		os.Exit(1)
@@ -328,7 +372,7 @@ func loadFromCSV(path string) []map[string]interface{} {
 
 func loadMessage(path string) []byte {
 	log.Info().Str("path", path).Msg("load message file")
-	file, err := readFile(path)
+	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read message file failed")
 		os.Exit(1)
@@ -336,7 +380,7 @@ func loadMessage(path string) []byte {
 	return file
 }
 
-func readFile(path string) ([]byte, error) {
+func ReadFile(path string) ([]byte, error) {
 	var err error
 	path, err = filepath.Abs(path)
 	if err != nil {
@@ -350,4 +394,10 @@ func readFile(path string) ([]byte, error) {
 		return nil, err
 	}
 	return file, nil
+}
+
+func GetOutputNameWithoutExtension(path string) string {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	return base[0:len(base)-len(ext)] + "_test"
 }

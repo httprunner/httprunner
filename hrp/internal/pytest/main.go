@@ -1,8 +1,11 @@
 package pytest
 
 import (
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"fmt"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func RunPytest(args []string) error {
@@ -11,7 +14,8 @@ func RunPytest(args []string) error {
 		Action:   "hrp pytest",
 	})
 
-	python3, err := builtin.EnsurePython3Venv("httprunner")
+	httprunner := fmt.Sprintf("httprunner>=%s", version.HttpRunnerMinVersion)
+	python3, err := builtin.EnsurePython3Venv(httprunner)
 	if err != nil {
 		return err
 	}

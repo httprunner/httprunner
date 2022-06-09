@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/httprunner/funplugin/fungo"
 )
 
 func SumTwoInt(a, b int) int {
@@ -41,17 +39,6 @@ func TeardownHookExample(args string) string {
 	return fmt.Sprintf("step name: %v, teardown...", args)
 }
 
-func GetVersion() string {
-	return "v4.0.0-beta"
-}
-
-func main() {
-	fungo.Register("get_httprunner_version", GetVersion)
-	fungo.Register("sum_ints", SumInts)
-	fungo.Register("sum_two_int", SumTwoInt)
-	fungo.Register("sum_two", SumTwoInt)
-	fungo.Register("sum", Sum)
-	fungo.Register("setup_hook_example", SetupHookExample)
-	fungo.Register("teardown_hook_example", TeardownHookExample)
-	fungo.Serve()
+func GetUserAgent() string {
+	return "hrp/fungo"
 }

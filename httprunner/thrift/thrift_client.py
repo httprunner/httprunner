@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+
 import enum
 import json
 
-from loguru import logger
 import thriftpy2
+from loguru import logger
 from thriftpy2.protocol import (
     TBinaryProtocolFactory,
     TCompactProtocolFactory,
@@ -18,23 +19,22 @@ from thriftpy2.transport import (
     TCyFramedTransportFactory,
     TFramedTransportFactory,
 )
-from thriftpy2.utils import deserialize
 
-from httprunner.thrift.data_convertor import json2thrift, thrift2json, thrift2dict
+from httprunner.thrift.data_convertor import json2thrift, thrift2dict
 
 
 class ProtoType(enum.Enum):
-    pBinary = 1
-    pCyBinary = 2
-    pCompact = 3
-    pJson = 4
+    Binary = 1
+    CyBinary = 2
+    Compact = 3
+    Json = 4
 
 
 class TransType(enum.Enum):
-    tBuffered = 1
-    tCyBuffered = 2
-    tFramed = 3
-    tCyFramed = 4
+    Buffered = 1
+    CyBuffered = 2
+    Framed = 3
+    CyFramed = 4
 
 
 class RequestFormat(enum.Enum):
@@ -43,24 +43,24 @@ class RequestFormat(enum.Enum):
 
 
 def get_proto_factory(proto_type):
-    if proto_type == ProtoType.pBinary:
+    if proto_type == ProtoType.Binary:
         return TBinaryProtocolFactory()
-    if proto_type == ProtoType.pCyBinary:
+    if proto_type == ProtoType.CyBinary:
         return TCyBinaryProtocolFactory()
-    if proto_type == ProtoType.pCompact:
+    if proto_type == ProtoType.Compact:
         return TCompactProtocolFactory()
-    if proto_type == ProtoType.pJson:
+    if proto_type == ProtoType.Json:
         return TJSONProtocolFactory()
 
 
 def get_trans_factory(trans_type):
-    if trans_type == TransType.tBuffered:
+    if trans_type == TransType.Buffered:
         return TBufferedTransportFactory()
-    if trans_type == TransType.tCyBuffered:
+    if trans_type == TransType.CyBuffered:
         return TCyBufferedTransportFactory()
-    if trans_type == TransType.tFramed:
+    if trans_type == TransType.Framed:
         return TFramedTransportFactory()
-    if trans_type == TransType.tCyFramed:
+    if trans_type == TransType.CyFramed:
         return TCyFramedTransportFactory()
 
 
@@ -73,8 +73,8 @@ class ThriftClient(object):
         port,
         include_dirs=None,
         timeout=3000,
-        proto_type=ProtoType.pCyBinary,
-        trans_type=TransType.tCyBuffered,
+        proto_type=ProtoType.CyBinary,
+        trans_type=TransType.CyBuffered,
     ):
         self.thrift_file = thrift_file
         self.include_dirs = include_dirs

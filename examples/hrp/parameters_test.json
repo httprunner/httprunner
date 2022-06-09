@@ -9,9 +9,15 @@
       "username-password": "${parameterize($file)}"
     },
     "parameters_setting": {
+      "pick_order": "random",
       "strategies": {
-        "user_agent": "sequential",
-        "username-password": "random"
+        "user_agent": {
+          "name": "user-identity",
+          "pick_order": "sequential"
+        },
+        "username-password": {
+          "name": "user-info"
+        }
       },
       "limit": 6
     },

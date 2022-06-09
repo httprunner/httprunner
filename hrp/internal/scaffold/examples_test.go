@@ -22,4 +22,10 @@ func TestGenDemoExamples(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
+
+	dir = "../../../examples/demo-empty-project"
+	err = CreateScaffold(dir, Empty, true)
+	if err != nil {
+		t.Fatal()
+	}
 }

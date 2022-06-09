@@ -18,6 +18,11 @@ build: ## build hrp cli tool
 	@echo "[info] build hrp cli tool"
 	@. scripts/build.sh
 
+.PHONY: install-hooks
+install-hooks: ## install git hooks
+	@find scripts -name "install-*-hook" | awk -F'-' '{s=$$2;for(i=3;i<NF;i++){s=s"-"$$i;}print s;}' | while read f; do bash "scripts/install-$$f-hook"; done
+	@echo "[OK] install all hooks"
+
 .PHONY: help
 help: ## print make commands
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \

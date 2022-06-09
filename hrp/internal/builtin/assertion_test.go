@@ -163,12 +163,33 @@ func TestStringEqual(t *testing.T) {
 		expected interface{}
 	}{
 		{"abcd", "abcd"},
+		{"0", 0},
+		{"123", 123},
+		// {"123.0", 123.0}, // FIXME
+		{"12.3", 12.3},
+		{"-12.3", -12.3},
+		{"-123", -123},
+	}
+
+	for _, data := range testData {
+		if !assert.True(t, StringEqual(t, data.raw, data.expected)) {
+			t.Fatal()
+		}
+	}
+}
+
+func TestEqualFold(t *testing.T) {
+	testData := []struct {
+		raw      interface{}
+		expected interface{}
+	}{
+		{"abcd", "abcd"},
 		{"abcd", "ABCD"},
 		{"ABcd", "abCD"},
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, StringEqual(t, data.raw, data.expected)) {
+		if !assert.True(t, EqualFold(t, data.raw, data.expected)) {
 			t.Fatal()
 		}
 	}

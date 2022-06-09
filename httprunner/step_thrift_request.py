@@ -1,21 +1,52 @@
 # -*- coding: utf-8 -*-
+import platform
+import sys
 import time
 from typing import Text, Union
 from loguru import logger
 
 from httprunner import utils
 from httprunner.exceptions import ValidationFailure
-from httprunner.models import IStep, StepResult, TStep, ProtoType, TransType
+from httprunner.models import (
+    IStep,
+    ProtoType,
+    StepResult,
+    TStep,
+    TThriftRequest,
+    TransType,
+)
+from httprunner.response import ThriftResponseObject
 from httprunner.runner import HttpRunner, USE_ALLURE
 from httprunner.step_request import (
     call_hooks,
     StepRequestExtraction,
     StepRequestValidation,
 )
-from httprunner.models import TThriftRequest
-from httprunner.response import ThriftResponseObject
 
-from httprunner.thrift.thrift_client import ThriftClient
+try:
+    import thriftpy2
+    from thrift.Thrift import TType
+
+    THRIFT_READY = True
+except ModuleNotFoundError:
+    THRIFT_READY = False
+
+
+def ensure_thrift_ready():
+    assert platform.system() != "Windows", "Sorry,thrift not support Windows for now"
+    if THRIFT_READY:
+        return
+
+    msg = """
+    uploader extension dependencies uninstalled, install first and try again.
+    install with pip:
+    $ pip install cython thriftpy2 thrift
+
+    or you can install httprunner with optional upload dependencies:
+    $ pip install "httprunner[thrift]"
+    """
+    logger.error(msg)
+    sys.exit(1)
 
 
 def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
@@ -71,6 +102,9 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     if not runner.thrift_client:
         runner.thrift_client = parsed_request_dict["thrift_client"]
     if not runner.thrift_client:
+        ensure_thrift_ready()
+        from httprunner.thrift.thrift_client import ThriftClient
+
         runner.thrift_client = ThriftClient(
             thrift_file=parsed_request_dict["idl_path"],
             service_name=parsed_request_dict["service_name"],
@@ -195,7 +229,9 @@ class RunThriftRequest(IStep):
 
         return self
 
-    def setup_hook(self, hook: Text, assign_var_name: Text = None) -> "RunTestCase":
+    def setup_hook(
+        self, hook: Text, assign_var_name: Text = None
+    ) -> "RunThriftRequest":
         if assign_var_name:
             self.__step.setup_hooks.append({assign_var_name: hook})
         else:

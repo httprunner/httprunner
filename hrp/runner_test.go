@@ -1,21 +1,18 @@
 package hrp
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/scaffold"
 )
 
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
-	err := builtin.ExecCommand("go", "build",
-		"-o", templatesDir+"debugtalk.bin", templatesDir+"plugin/debugtalk.go")
+	err := BuildPlugin(tmpl("plugin/debugtalk.go"), tmpl("debugtalk.bin"))
 	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
 		os.Exit(1)
@@ -24,22 +21,24 @@ func buildHashicorpGoPlugin() {
 
 func removeHashicorpGoPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp go plugin")
-	os.Remove(templatesDir + "debugtalk.bin")
+	os.Remove(tmpl("debugtalk.bin"))
 }
 
 func buildHashicorpPyPlugin() {
 	log.Info().Msg("[init] prepare hashicorp python plugin")
-	pluginFile := templatesDir + "debugtalk.py"
-	err := scaffold.CopyFile("templates/plugin/debugtalk.py", pluginFile)
+	src, _ := ioutil.ReadFile(tmpl("plugin/debugtalk.py"))
+	err := ioutil.WriteFile(tmpl("debugtalk.py"), src, 0o644)
 	if err != nil {
-		log.Error().Err(err).Msg("build hashicorp python plugin failed")
+		log.Error().Err(err).Msg("copy hashicorp python plugin failed")
 		os.Exit(1)
 	}
 }
 
 func removeHashicorpPyPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp python plugin")
-	os.Remove(templatesDir + "debugtalk.py")
+	// on v4.1^, running case will generate .debugtalk_gen.py used by python plugin
+	os.Remove(tmpl(PluginPySourceFile))
+	os.Remove(tmpl(PluginPySourceGenFile))
 }
 
 func TestRunCaseWithGoPlugin(t *testing.T) {
@@ -57,6 +56,7 @@ func TestRunCaseWithPythonPlugin(t *testing.T) {
 }
 
 func assertRunTestCases(t *testing.T) {
+	refCase := TestCasePath(demoTestCaseWithPluginJSONPath)
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetBaseURL("http://httpbin.org"),
@@ -83,7 +83,7 @@ func assertRunTestCases(t *testing.T) {
 					},
 				},
 			),
-			NewStep("testcase1-step4").CallRefCase(&demoTestCaseWithPluginJSONPath),
+			NewStep("testcase1-step4").CallRefCase(&refCase),
 		},
 	}
 	testcase2 := &TestCase{
@@ -160,7 +160,8 @@ func TestRunCaseWithPluginJSON(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	err := NewRunner(nil).Run(&demoTestCaseWithPluginJSONPath) // hrp.Run(testCase)
+	testCase := TestCasePath(demoTestCaseWithPluginJSONPath)
+	err := NewRunner(nil).Run(&testCase) // hrp.Run(testCase)
 	if err != nil {
 		t.Fatal()
 	}
@@ -170,7 +171,8 @@ func TestRunCaseWithPluginYAML(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	err := NewRunner(nil).Run(&demoTestCaseWithPluginYAMLPath) // hrp.Run(testCase)
+	testCase := TestCasePath(demoTestCaseWithPluginYAMLPath)
+	err := NewRunner(nil).Run(&testCase) // hrp.Run(testCase)
 	if err != nil {
 		t.Fatal()
 	}
@@ -180,16 +182,18 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	err := NewRunner(nil).Run(&demoTestCaseWithRefAPIPath)
+	testCase := TestCasePath(demoTestCaseWithRefAPIPath)
+	err := NewRunner(nil).Run(&testCase)
 	if err != nil {
 		t.Fatal()
 	}
 
+	refAPI := APIPath(demoAPIGETPath)
 	testcase := &TestCase{
 		Config: NewConfig("TestCase").
 			SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{
-			NewStep("run referenced api").CallRefAPI(&demoAPIGETPath),
+			NewStep("run referenced api").CallRefAPI(&refAPI),
 		},
 	}
 
@@ -207,7 +211,7 @@ func TestLoadTestCases(t *testing.T) {
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, len(testCases), 3) {
+	if !assert.Equal(t, 4, len(testCases)) {
 		t.Fatal()
 	}
 
@@ -217,12 +221,12 @@ func TestLoadTestCases(t *testing.T) {
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, len(testCases), 3) {
+	if !assert.Equal(t, len(testCases), 4) {
 		t.Fatal()
 	}
 
 	// load test cases from single file path
-	tc = demoTestCaseWithPluginJSONPath
+	tc = TestCasePath(demoTestCaseWithPluginJSONPath)
 	testCases, err = LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()

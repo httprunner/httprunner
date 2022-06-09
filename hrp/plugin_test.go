@@ -8,36 +8,36 @@ import (
 
 func TestLocateFile(t *testing.T) {
 	// specify target file path
-	_, err := locateFile(templatesDir+"plugin/debugtalk.go", "debugtalk.go")
+	_, err := locateFile(tmpl("plugin/debugtalk.go"), PluginGoSourceFile)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
 	// specify path with the same dir
-	_, err = locateFile(templatesDir+"plugin/debugtalk.py", "debugtalk.go")
+	_, err = locateFile(tmpl("plugin/debugtalk.py"), PluginGoSourceFile)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
 	// specify target file path dir
-	_, err = locateFile(templatesDir+"plugin/", "debugtalk.go")
+	_, err = locateFile(tmpl("plugin/"), PluginGoSourceFile)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
 
 	// specify wrong path
-	_, err = locateFile(".", "debugtalk.go")
+	_, err = locateFile(".", PluginGoSourceFile)
 	if !assert.Error(t, err) {
 		t.Fatal()
 	}
-	_, err = locateFile("/abc", "debugtalk.go")
+	_, err = locateFile("/abc", PluginGoSourceFile)
 	if !assert.Error(t, err) {
 		t.Fatal()
 	}
 }
 
 func TestLocatePythonPlugin(t *testing.T) {
-	_, err := locatePlugin(templatesDir + "plugin/debugtalk.py")
+	_, err := locatePlugin(tmpl("plugin/debugtalk.py"))
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -47,7 +47,7 @@ func TestLocateGoPlugin(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	_, err := locatePlugin(templatesDir + "debugtalk.bin")
+	_, err := locatePlugin(tmpl("debugtalk.bin"))
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}

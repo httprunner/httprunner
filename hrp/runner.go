@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 // Run starts to run API test with default configs.
@@ -54,6 +55,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 type HRPRunner struct {
 	t             *testing.T
 	failfast      bool
+	httpStatOn    bool
 	requestsLogOn bool
 	pluginLogOn   bool
 	saveTests     bool
@@ -97,6 +99,13 @@ func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 func (r *HRPRunner) SetRequestsLogOn() *HRPRunner {
 	log.Info().Msg("[init] SetRequestsLogOn")
 	r.requestsLogOn = true
+	return r
+}
+
+// SetHTTPStatOn turns on HTTP latency stat.
+func (r *HRPRunner) SetHTTPStatOn() *HRPRunner {
+	log.Info().Msg("[init] SetHTTPStatOn")
+	r.httpStatOn = true
 	return r
 }
 
@@ -157,6 +166,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		return err
 	}
 
+	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
 		sessionRunner, err := r.NewSessionRunner(testcase)
@@ -171,12 +181,14 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		}()
 
 		for it := sessionRunner.parametersIterator; it.HasNext(); {
-			if err = sessionRunner.Start(it.Next()); err != nil {
-				log.Error().Err(err).Msg("[Run] run testcase failed")
-				return err
-			}
+			err = sessionRunner.Start(it.Next())
 			caseSummary := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
+			if err != nil {
+				log.Error().Err(err).Msg("[Run] run testcase failed")
+				runErr = err
+				break
+			}
 		}
 	}
 	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
@@ -196,7 +208,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			return err
 		}
 	}
-	return nil
+
+	return runErr
 }
 
 // NewSessionRunner creates a new session runner for testcase.
@@ -222,12 +235,14 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	}
 
 	// init parser plugin
-	plugin, pluginDir, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
+	plugin, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
-	runner.parser.plugin = plugin
-	runner.rootDir = pluginDir
+	if plugin != nil {
+		runner.parser.plugin = plugin
+		runner.rootDir = filepath.Dir(plugin.Path())
+	}
 
 	// parse testcase config
 	if err := runner.parseConfig(); err != nil {
@@ -278,6 +293,25 @@ func (r *testCaseRunner) parseConfig() error {
 		return errors.Wrap(err, "parse config base url failed")
 	}
 	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
+
+	// merge config environment variables with base_url
+	// priority: env base_url > base_url
+	if cfg.Environs != nil {
+		r.parsedConfig.Environs = cfg.Environs
+	} else {
+		r.parsedConfig.Environs = make(map[string]string)
+	}
+	if value, ok := r.parsedConfig.Environs["base_url"]; !ok || value == "" {
+		if r.parsedConfig.BaseURL != "" {
+			r.parsedConfig.Environs["base_url"] = r.parsedConfig.BaseURL
+		}
+	}
+
+	// merge config variables with environment variables
+	// priority: env > config variables
+	for k, v := range r.parsedConfig.Environs {
+		r.parsedConfig.Variables[k] = v
+	}
 
 	// ensure correction of think time config
 	r.parsedConfig.ThinkTimeSetting.checkThinkTime()

@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 var fieldTags = []string{"proto", "status_code", "headers", "cookies", "body", textExtractorSubRegexp}
@@ -268,7 +268,7 @@ func (v *responseObject) searchRegexp(expr string) interface{} {
 	}
 	match := regexpCompile.FindStringSubmatch(bodyStr)
 	if len(match) > 1 {
-		return match[1] //return first matched result in parentheses
+		return match[1] // return first matched result in parentheses
 	}
 	log.Error().Str("expr", expr).Msg("search regexp failed")
 	return expr

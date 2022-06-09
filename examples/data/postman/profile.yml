@@ -1,0 +1,4 @@
+headers:
+  User-Agent: "this header will be created or updated"
+cookies:
+  Cookie1: "this cookie will be created or updated"
