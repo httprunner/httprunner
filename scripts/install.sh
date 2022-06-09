@@ -78,26 +78,40 @@ function main() {
     echo "Download url: $url"
     echo
 
-    echoInfo "Created temp dir..."
-    echo "$ mktemp -d -t hrp.XXXX"
-    tmp_dir=$(mktemp -d -t hrp.XXXX)
-    echo "$tmp_dir"
-    cd "$tmp_dir"
-    echo
-
     echoInfo "Downloading..."
     echo "$ curl -kL $url -o $pkg"
     curl -kL $url -o "$pkg"
     echo
 
-    echoInfo "Extracting..."
+    # for windows, only extract package to current directory
     if [[ $os == windows ]]; then # windows
+        # extract to current directory
+        echoInfo "Extracting..."
         echo "$ unzip -o $pkg -d ."
         unzip -o $pkg -d .
-    else
-        echo "$ tar -xzf $pkg"
-        tar -xzf "$pkg"
+
+        echo "$ hrp.exe -v"
+        hrp.exe -v
+        echo "$ hrp.exe -h"
+        hrp.exe -h
+        exit 0
     fi
+
+    # for linux or darwin, install hrp to /usr/local/bin
+    # extract to temp directory
+    echoInfo "Created temp dir..."
+    echo "$ mktemp -d -t hrp.XXXX"
+    tmp_dir=$(mktemp -d -t hrp.XXXX)
+    echo "$tmp_dir"
+    echo "$ mv $pkg $tmp_dir && cd $tmp_dir"
+    mv $pkg $tmp_dir
+    cd "$tmp_dir"
+    echo
+
+    echoInfo "Extracting..."
+    echo "$ tar -xzf $pkg"
+    tar -xzf "$pkg"
+
     echo "$ ls -lh"
     ls -lh
     echo
