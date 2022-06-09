@@ -10,7 +10,7 @@ from httprunner.exceptions import ValidationFailure
 from httprunner.models import IStep, StepResult, TStep
 from httprunner.models import SqlMethodEnum, TSqlRequest
 from httprunner.response import SqlResponseObject
-from httprunner.runner import HttpRunner
+from httprunner.runner import HttpRunner, USE_ALLURE
 from httprunner.step_request import (
     StepRequestExtraction,
     StepRequestValidation,
@@ -94,6 +94,18 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     if step.setup_hooks:
         call_hooks(runner, step.setup_hooks, step.variables, "setup request")
 
+    # log request
+    sql_request_print = "====== sql request details ======\n"
+    sql_request_print += f"sql: {step.sql_request.sql}\n"
+    for k, v in parsed_request_dict.items():
+        v = utils.omit_long_data(v)
+        sql_request_print += f"{k}: {repr(v)}\n"
+
+    sql_request_print += "\n"
+
+    if USE_ALLURE:
+        import allure
+        allure.attach(sql_request_print, name="sql request details", attachment_type=allure.attachment_type.TEXT)
     logger.info(f"Executing SQL: {parsed_request_dict['sql']}")
     if step.sql_request.method == SqlMethodEnum.FETCHONE:
         sql_resp = runner.db_engine.fetchone(parsed_request_dict["sql"])
@@ -113,6 +125,16 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
         raise SqlMethodNotSupport(
             f"step.sql_request.method {parsed_request_dict['method']} not support"
         )
+    # log response
+    sql_response_print = "====== sql response details ======\n"
+    for k, v in sql_resp.items():
+        v = utils.omit_long_data(v)
+        sql_response_print += f"{k}: {repr(v)}\n"
+
+    if USE_ALLURE:
+        import allure
+        allure.attach(sql_request_print, name="sql response details", attachment_type=allure.attachment_type.TEXT)
+
     resp_obj = SqlResponseObject(sql_resp, parser=runner.parser)
     step.variables["sql_response"] = resp_obj
 
@@ -122,21 +144,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     def log_sql_req_resp_details():
         err_msg = "\n{} SQL DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
-
-        # log request
-        err_msg += "====== sql request details ======\n"
-        err_msg += f"sql: {step.sql_request.sql}\n"
-        for k, v in parsed_request_dict.items():
-            v = utils.omit_long_data(v)
-            err_msg += f"{k}: {repr(v)}\n"
-
-        err_msg += "\n"
-
-        # log response
-        err_msg += "====== sql response details ======\n"
-        for k, v in sql_resp.items():
-            v = utils.omit_long_data(v)
-            err_msg += f"{k}: {repr(v)}\n"
+        err_msg += sql_request_print + sql_response_print
         logger.error(err_msg)
 
     # extract
