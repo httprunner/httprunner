@@ -8,16 +8,14 @@
             "app_version": "2.8.6"
         },
         "base_url": "https://postman-echo.com",
-        "herader": [
-            {
-                "Accept": "*/*",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "Host": "postman-echo.com",
-                "User-Agent": "PostmanRuntime/7.28.4"
-            }
-        ],
+        "headers": {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Host": "postman-echo.com",
+            "User-Agent": "PostmanRuntime/7.28.4"
+        },
         "verify": false,
         "export": [
             "session_token"
@@ -48,16 +46,16 @@
             },
             "validate": [
                 {
-                    "eq": [
-                        "status_code",
-                        200
-                    ]
+                    "check": "status_code",
+                    "assert": "equal",
+                    "expect": 200,
+                    "msg": "check status_code"
                 },
                 {
-                    "eq": [
-                        "body.headers.postman-token",
-                        "ea19464c-ddd4-4724-abe9-5e2b254c2723"
-                    ]
+                    "check": "body.headers.postman-token",
+                    "assert": "equal",
+                    "expect": "ea19464c-ddd4-4724-abe9-5e2b254c2723",
+                    "msg": "check body.headers.postman-token"
                 }
             ]
         },

@@ -91,9 +91,11 @@ class SessionRunner(object):
 
     def with_thrift_client(self, thrift_client) -> "SessionRunner":
         self.thrift_client = thrift_client
+        return self
 
-    def with_db_engine(self, db_engine):
+    def with_db_engine(self, db_engine) -> "SessionRunner":
         self.db_engine = db_engine
+        return self
 
     def __parse_config(self, param: Dict = None) -> None:
         # parse config variables

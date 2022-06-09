@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,11 +16,13 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/httpstat"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 type HTTPMethod string
@@ -142,7 +145,11 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 		log.Error().Err(err).Msg("parse request url failed")
 		return err
 	}
-	rawUrl := buildURL(r.config.BaseURL, convertString(requestUrl))
+	var baseURL string
+	if stepVariables["base_url"] != nil {
+		baseURL = stepVariables["base_url"].(string)
+	}
+	rawUrl := buildURL(baseURL, convertString(requestUrl))
 
 	// prepare request params
 	var queryParams url.Values
@@ -311,6 +318,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}
 
+	// stat HTTP request
+	var httpStat httpstat.Stat
+	if r.HTTPStatOn() {
+		ctx := httpstat.WithHTTPStat(rb.req, &httpStat)
+		rb.req = rb.req.WithContext(ctx)
+	}
+
 	// do request action
 	start := time.Now()
 	var resp *http.Response
@@ -319,8 +333,6 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	} else {
 		resp, err = r.hrpRunner.httpClient.Do(rb.req)
 	}
-
-	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
 	}
@@ -344,6 +356,14 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
+	}
+
+	stepResult.Elapsed = time.Since(start).Milliseconds()
+	if r.HTTPStatOn() {
+		// resp.Body has been ReadAll
+		httpStat.Finish()
+		stepResult.HttpStat = httpStat.Durations()
+		httpStat.Print()
 	}
 
 	// add response object to step variables, could be used in teardown hooks
@@ -408,8 +428,22 @@ func printRequest(req *http.Request) error {
 	return nil
 }
 
+func printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(color.Output, format, a...)
+}
+
 func printResponse(resp *http.Response) error {
 	fmt.Println("==================== response ====================")
+	connectedVia := "plaintext"
+	if resp.TLS != nil {
+		switch resp.TLS.Version {
+		case tls.VersionTLS12:
+			connectedVia = "TLSv1.2"
+		case tls.VersionTLS13:
+			connectedVia = "TLSv1.3"
+		}
+	}
+	printf("%s %s\n", color.CyanString("Connected via"), color.BlueString("%s", connectedVia))
 	respContentType := resp.Header.Get("Content-Type")
 	printBody := shouldPrintBody(respContentType)
 	respDump, err := httputil.DumpResponse(resp, printBody)
@@ -1024,6 +1058,17 @@ func (s *StepRequestValidation) AssertStringEqual(jmesPath string, expected inte
 	v := Validator{
 		Check:   jmesPath,
 		Assert:  "string_equals",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepRequestValidation) AssertEqualFold(jmesPath string, expected interface{}, msg string) *StepRequestValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "equal_fold",
 		Expect:  expected,
 		Message: msg,
 	}

@@ -12,7 +12,7 @@
 
 > HttpRunner [用户调研问卷][survey] 持续收集中，我们将基于用户反馈动态调整产品特性和需求优先级。
 
-![flow chart](docs/assets/hrp-flow.jpg)
+![flow chart](https://httprunner.com/image/hrp-flow.jpg)
 
 [CHANGELOG] | [中文]
 
@@ -60,8 +60,6 @@ You can install HttpRunner via one curl command.
 
 ```bash
 $ bash -c "$(curl -ksSL https://httprunner.com/script/install.sh)"
-# backup
-$ bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
 ```
 
 Then you will get a `hrp` CLI tool.
@@ -106,13 +104,18 @@ Flags:
 Use "hrp [command] --help" for more information about a command.
 ```
 
+## User Cases
+
+<a href="https://httprunner.com/docs/cases/dji-ibg"><img src="https://httprunner.com/image/logo/dji.jpeg" title="大疆 - 基于 HttpRunner 构建完整的自动化测试体系" width="60"></a>
+<a href="https://httprunner.com/docs/cases/bytedance-feishu"><img src="https://httprunner.com/image/logo/feishu.jpeg" title="飞书 - 使用 HttpRunner 替换已有测试平台的执行引擎" width="60"></a>
+
 ## Subscribe
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
-<img src="docs/assets/qrcode.jpg" alt="HttpRunner" width="200">
+<img src="https://httprunner.com/image/qrcode.png" alt="HttpRunner" width="400">
 
-如果你期望加入 HttpRunner 核心用户群，请填写[用户调研问卷][survey]并留下你的联系方式，作者将拉你进群。
+如果你期望加入 HttpRunner 用户群，请看这里：[HttpRunner v4 用户交流群，它来啦！](https://httprunner.com/blog/join-chat-group)
 
 [HttpRunner]: https://github.com/httprunner/httprunner
 [boomer]: https://github.com/myzhan/boomer

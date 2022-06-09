@@ -29,17 +29,17 @@ class MethodEnum(Text, Enum):
 
 
 class ProtoType(Enum):
-    pBinary = 1
-    pCyBinary = 2
-    pCompact = 3
-    pJson = 4
+    Binary = 1
+    CyBinary = 2
+    Compact = 3
+    Json = 4
 
 
 class TransType(Enum):
-    tBuffered = 1
-    tCyBuffered = 2
-    tFramed = 3
-    tCyFramed = 4
+    Buffered = 1
+    CyBuffered = 2
+    Framed = 3
+    CyFramed = 4
 
 
 # configs for thrift rpc
@@ -56,8 +56,8 @@ class TConfigThrift(BaseModel):
     ip: Text = "127.0.0.1"
     port: int = 9000
     service_name: Text = None
-    proto_type: ProtoType = ProtoType.pBinary
-    trans_type: TransType = TransType.tBuffered
+    proto_type: ProtoType = ProtoType.Binary
+    trans_type: TransType = TransType.Buffered
 
 
 # configs for db

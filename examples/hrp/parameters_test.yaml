@@ -4,9 +4,13 @@ config:
     user_agent: [ "iOS/10.1", "iOS/10.2" ]
     username-password: ${parameterize($file)}
   parameters_setting:
+    pick_order: "random"
     strategies:
-      user_agent: "sequential"
-      username-password: "random"
+      user_agent:
+        name: "user-identity"
+        pick_order: "sequential"
+      username-password:
+        name: "user-info"
     limit: 6
   variables:
     app_version: v1

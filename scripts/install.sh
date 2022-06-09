@@ -1,8 +1,6 @@
 #!/bin/bash
 # install hrp with one shell command
-# bash -c "$(curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/install.sh)"
-
-LATEST_VERSION="v4.0.0-beta"
+# bash -c "$(curl -ksSL https://httprunner.com/script/install.sh)"
 
 set -e
 
@@ -22,8 +20,7 @@ function echoWarn() {
 export -f echoError
 
 function get_latest_version() {
-    #   <title>Release v0.4.0 · httprunner/hrp · GitHub</title>
-    curl -sL https://github.com/httprunner/httprunner/releases/latest | grep '<title>Release' | cut -d" " -f4
+    curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/VERSION
 }
 
 function get_os() {
@@ -39,46 +36,45 @@ function get_arch() {
     echo "$arch"
 }
 
-function get_pkg_suffix() {
-    os=$1
-    if [ "$os" == "windows" ]; then
-        echo ".zip"
-    else
-        echo ".tar.gz"
-    fi
-}
-
-function extract_pkg() {
-    pkg=$1
-    if [[ $pkg == *.zip ]]; then # windows
-        echo "$ unzip -o $pkg -d ."
-        unzip -o $pkg -d .
-    else
-        echo "$ tar -xzf $pkg"
-        tar -xzf "$pkg"
-    fi
-}
-
 function main() {
     echoInfo "Detect target hrp package..."
-    version=$LATEST_VERSION
+    version=$(get_latest_version)
+    if [[ $version != v* ]]; then
+        echo "get hrp latest version failed:"
+        echo "$version"
+        exit 1
+    fi
+    echo "Latest version: $version"
+
     os=$(get_os)
     echo "Current OS: $os"
-    arch=$(get_arch)
-    echo "Current ARCH: $arch"
-    pkg_suffix=$(get_pkg_suffix $os)
-    pkg="hrp-$version-$os-$arch$pkg_suffix"
-
-    # download from aliyun OSS
-    url="https://httprunner.oss-cn-beijing.aliyuncs.com/$pkg"
-    if ! curl --output /dev/null --silent --head --fail "$url"; then
-        # aliyun OSS url is invalid, try to download from github
-        version=$(get_latest_version)
-        pkg="hrp-$version-$os-$arch$pkg_suffix"
-        url="https://github.com/httprunner/httprunner/releases/download/$version/$pkg"
+    if [[ $os == mingw* ]]; then
+        echoWarn "Current OS is MinGW, try to use windows package"
+        os="windows"
     fi
 
-    echo "Latest version: $version"
+    arch=$(get_arch)
+    echo "Current ARCH: $arch"
+    pkg_suffix=".tar.gz"
+    pkg="hrp-$version-$os-$arch$pkg_suffix"
+    echo "Download package: $pkg"
+
+    # download from aliyun OSS or github packages
+    aliyun_oss_url="https://httprunner.oss-cn-beijing.aliyuncs.com/$pkg"
+    github_url="https://github.com/httprunner/httprunner/releases/download/$version/$pkg"
+    valid_flag=false
+    for url in "$aliyun_oss_url" "$github_url"; do
+        if curl --output /dev/null --silent --head --fail "$url"; then
+            valid_flag=true
+            break
+        fi
+        echoWarn "Invalid download url: $url"
+    done
+
+    if [[ "$valid_flag" == false ]]; then
+        echoError "No available download url found, exit!"
+        exit 1
+    fi
     echo "Download url: $url"
     echo
 
@@ -95,7 +91,13 @@ function main() {
     echo
 
     echoInfo "Extracting..."
-    extract_pkg "$pkg"
+    if [[ $os == windows ]]; then # windows
+        echo "$ unzip -o $pkg -d ."
+        unzip -o $pkg -d .
+    else
+        echo "$ tar -xzf $pkg"
+        tar -xzf "$pkg"
+    fi
     echo "$ ls -lh"
     ls -lh
     echo

@@ -1,30 +1,33 @@
 package hrp
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
-	templatesDir   = "internal/scaffold/templates/"
 	hrpExamplesDir = "../examples/hrp"
 )
 
-var (
-	demoTestCaseWithPluginJSONPath    TestCasePath = templatesDir + "testcases/demo_with_funplugin.json"
-	demoTestCaseWithPluginYAMLPath    TestCasePath = templatesDir + "testcases/demo_with_funplugin.yaml"
-	demoTestCaseWithoutPluginJSONPath TestCasePath = templatesDir + "testcases/demo_without_funplugin.json"
-	demoTestCaseWithoutPluginYAMLPath TestCasePath = templatesDir + "testcases/demo_without_funplugin.yaml"
-	demoTestCaseWithRefAPIPath        TestCasePath = templatesDir + "testcases/demo_ref_api.json"
-	demoAPIGETPath                    APIPath      = templatesDir + "/api/get.yml"
-)
+// tmpl returns template file path
+func tmpl(relativePath string) string {
+	return filepath.Join("internal/scaffold/templates/", relativePath)
+}
 
 var (
-	demoTestCaseWithThinkTimePath TestCasePath = hrpExamplesDir + "/think_time_test.json"
+	demoTestCaseWithPluginJSONPath    = tmpl("testcases/demo_with_funplugin.json")
+	demoTestCaseWithPluginYAMLPath    = tmpl("testcases/demo_with_funplugin.yaml")
+	demoTestCaseWithoutPluginJSONPath = tmpl("testcases/demo_without_funplugin.json")
+	demoTestCaseWithoutPluginYAMLPath = tmpl("testcases/demo_without_funplugin.yaml")
+	demoTestCaseWithRefAPIPath        = tmpl("testcases/demo_ref_api.json")
+	demoAPIGETPath                    = tmpl("/api/get.yml")
 )
+
+var demoTestCaseWithThinkTimePath TestCasePath = hrpExamplesDir + "/think_time_test.json"
 
 var demoTestCaseWithPlugin = &TestCase{
 	Config: NewConfig("demo with complex mechanisms").
@@ -154,21 +157,21 @@ var demoTestCaseWithoutPlugin = &TestCase{
 
 func TestGenDemoTestCase(t *testing.T) {
 	tCase := demoTestCaseWithPlugin.ToTCase()
-	err := builtin.Dump2JSON(tCase, demoTestCaseWithPluginJSONPath.GetPath())
+	err := builtin.Dump2JSON(tCase, demoTestCaseWithPluginJSONPath)
 	if err != nil {
 		t.Fatal()
 	}
-	err = builtin.Dump2YAML(tCase, demoTestCaseWithPluginYAMLPath.GetPath())
+	err = builtin.Dump2YAML(tCase, demoTestCaseWithPluginYAMLPath)
 	if err != nil {
 		t.Fatal()
 	}
 
 	tCase = demoTestCaseWithoutPlugin.ToTCase()
-	err = builtin.Dump2JSON(tCase, demoTestCaseWithoutPluginJSONPath.GetPath())
+	err = builtin.Dump2JSON(tCase, demoTestCaseWithoutPluginJSONPath)
 	if err != nil {
 		t.Fatal()
 	}
-	err = builtin.Dump2YAML(tCase, demoTestCaseWithoutPluginYAMLPath.GetPath())
+	err = builtin.Dump2YAML(tCase, demoTestCaseWithoutPluginYAMLPath)
 	if err != nil {
 		t.Fatal()
 	}
@@ -177,11 +180,11 @@ func TestGenDemoTestCase(t *testing.T) {
 func TestLoadCase(t *testing.T) {
 	tcJSON := &TCase{}
 	tcYAML := &TCase{}
-	err := builtin.LoadFile(demoTestCaseWithPluginJSONPath.GetPath(), tcJSON)
+	err := builtin.LoadFile(demoTestCaseWithPluginJSONPath, tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
-	err = builtin.LoadFile(demoTestCaseWithPluginYAMLPath.GetPath(), tcYAML)
+	err = builtin.LoadFile(demoTestCaseWithPluginYAMLPath, tcYAML)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}

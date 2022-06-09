@@ -6,22 +6,31 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/shared"
-	"github.com/httprunner/httprunner/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 type PluginType string
 
 const (
+	Empty  PluginType = "empty"
 	Ignore PluginType = "ignore"
 	Py     PluginType = "py"
 	Go     PluginType = "go"
 )
+
+type ProjectInfo struct {
+	ProjectName string    `json:"project_name,omitempty" yaml:"project_name,omitempty"`
+	CreateTime  time.Time `json:"create_time,omitempty" yaml:"create_time,omitempty"`
+	Version     string    `json:"hrp_version,omitempty" yaml:"hrp_version,omitempty"`
+}
 
 //go:embed templates/*
 var templatesDir embed.FS
@@ -88,8 +97,20 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		return err
 	}
 
+	projectInfo := &ProjectInfo{
+		ProjectName: filepath.Base(projectName),
+		CreateTime:  time.Now(),
+		Version:     version.VERSION,
+	}
+
+	// dump project information to file
+	err := builtin.Dump2JSON(projectInfo, filepath.Join(projectName, "proj.json"))
+	if err != nil {
+		return err
+	}
+
 	// create .gitignore
-	err := CopyFile("templates/gitignore", filepath.Join(projectName, ".gitignore"))
+	err = CopyFile("templates/gitignore", filepath.Join(projectName, ".gitignore"))
 	if err != nil {
 		return err
 	}
@@ -99,10 +120,19 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		return err
 	}
 
-	// create demo testcases
-	if pluginType == Ignore {
+	// create project testcases
+	if pluginType == Empty {
+		// create empty project
+		err := CopyFile("templates/testcases/demo_empty_request.json",
+			filepath.Join(projectName, "testcases", "requests.json"))
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if pluginType == Ignore {
+		// create project without funplugin
 		err := CopyFile("templates/testcases/demo_without_funplugin.json",
-			filepath.Join(projectName, "testcases", "demo_without_funplugin.json"))
+			filepath.Join(projectName, "testcases", "requests.json"))
 		if err != nil {
 			return err
 		}
@@ -110,18 +140,24 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 		return nil
 	}
 
+	// create project with funplugin
 	err = CopyFile("templates/testcases/demo_with_funplugin.json",
-		filepath.Join(projectName, "testcases", "demo_with_funplugin.json"))
+		filepath.Join(projectName, "testcases", "demo.json"))
+	if err != nil {
+		return err
+	}
+	err = CopyFile("templates/testcases/demo_requests.json",
+		filepath.Join(projectName, "testcases", "requests.json"))
 	if err != nil {
 		return err
 	}
 	err = CopyFile("templates/testcases/demo_requests.yml",
-		filepath.Join(projectName, "testcases", "demo_requests.yml"))
+		filepath.Join(projectName, "testcases", "requests.yml"))
 	if err != nil {
 		return err
 	}
 	err = CopyFile("templates/testcases/demo_ref_testcase.yml",
-		filepath.Join(projectName, "testcases", "demo_ref_testcase.yml"))
+		filepath.Join(projectName, "testcases", "ref_testcase.yml"))
 	if err != nil {
 		return err
 	}
@@ -150,26 +186,9 @@ func createGoPlugin(projectName string) error {
 		return err
 	}
 	err := CopyFile("templates/plugin/debugtalk.go",
-		filepath.Join(projectName, "plugin", "debugtalk.go"))
+		filepath.Join(projectName, "plugin", hrp.PluginGoSourceFile))
 	if err != nil {
-		return err
-	}
-
-	// create go mod
-	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "plugin"), pluginDir); err != nil {
-		return err
-	}
-
-	// download plugin dependency
-	// funplugin version should be locked
-	funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
-	if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
-		return err
-	}
-
-	// build plugin debugtalk.bin
-	if err := builtin.ExecCommandInDir(exec.Command("go", "build", "-o", filepath.Join("..", "debugtalk.bin"), "debugtalk.go"), pluginDir); err != nil {
-		return err
+		return errors.Wrap(err, "copy debugtalk.go failed")
 	}
 
 	return nil
@@ -179,13 +198,13 @@ func createPythonPlugin(projectName string) error {
 	log.Info().Msg("start to create hashicorp python plugin")
 
 	// create debugtalk.py
-	pluginFile := filepath.Join(projectName, "debugtalk.py")
+	pluginFile := filepath.Join(projectName, hrp.PluginPySourceFile)
 	err := CopyFile("templates/plugin/debugtalk.py", pluginFile)
 	if err != nil {
 		return errors.Wrap(err, "copy file failed")
 	}
 
-	_, err = builtin.EnsurePython3Venv(fmt.Sprintf("funppy==%s", shared.Version))
+	_, err = builtin.EnsurePython3Venv("funppy")
 	if err != nil {
 		return err
 	}

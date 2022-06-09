@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -88,6 +89,10 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 		return stepResult, err
 	}
 	summary := sessionRunner.GetSummary()
+	// update step names
+	for _, record := range summary.Records {
+		record.Name = fmt.Sprintf("%s - %s", stepResult.Name, record.Name)
+	}
 	stepResult.Data = summary.Records
 	// export testcase export variables
 	stepResult.ExportVars = summary.InOut.ExportVars

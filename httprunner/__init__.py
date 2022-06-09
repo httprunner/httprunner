@@ -1,21 +1,22 @@
-__version__ = "4.0.0-beta"
+__version__ = "v4.1.2"
 __description__ = "One-stop solution for HTTP(S) testing."
+
 
 from httprunner.config import Config
 from httprunner.parser import parse_parameters as Parameters
 from httprunner.runner import HttpRunner
 from httprunner.step import Step
 from httprunner.step_request import RunRequest
-from httprunner.step_testcase import RunTestCase
 from httprunner.step_sql_request import (
     RunSqlRequest,
-    StepSqlRequestValidation,
     StepSqlRequestExtraction,
+    StepSqlRequestValidation,
 )
+from httprunner.step_testcase import RunTestCase
 from httprunner.step_thrift_request import (
     RunThriftRequest,
-    StepThriftRequestValidation,
     StepThriftRequestExtraction,
+    StepThriftRequestValidation,
 )
 
 __all__ = [
@@ -28,9 +29,9 @@ __all__ = [
     "RunSqlRequest",
     "StepSqlRequestValidation",
     "StepSqlRequestExtraction",
+    "RunTestCase",
+    "Parameters",
     "RunThriftRequest",
     "StepThriftRequestValidation",
     "StepThriftRequestExtraction",
-    "RunTestCase",
-    "Parameters",
 ]
