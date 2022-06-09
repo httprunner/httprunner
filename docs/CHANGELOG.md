@@ -1,11 +1,22 @@
 # Release History
 
-## v4.1.2 (2022-06-05)
+## v4.1.2 (2022-06-09)
+
+- feat: add Dockerfile
+- fix #1336: extract package in Windows
+- fix: install package on MinGW64 and Windows
+
+**go version**
 
 - fix #1331: use `str_eq` to assert string and digit equality
-- fix #1336: extract package in Windows
-- fix: install package on MinGW64
+- fix: load overall `pick_order` strategy in parameters_setting
+- fix: ensure all dependencies in debugtalk.py are installed
+- fix: select parameters with `random` strategy
 - change: remove `hrp har2case`, replace with `hrp convert`
+
+**python version**
+
+- feat #1316: add running log and request & response details in allure report
 
 ## v4.1.1 (2022-05-31)
 
