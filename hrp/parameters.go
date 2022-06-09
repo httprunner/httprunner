@@ -163,7 +163,7 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 
 	// merge with random parameters
 	for _, paramName := range iter.randomParameterNames {
-		randSource := rand.New(rand.NewSource(time.Now().Unix()))
+		randSource := rand.New(rand.NewSource(time.Now().UnixNano()))
 		randIndex := randSource.Intn(len(iter.data[paramName]))
 		for k, v := range iter.data[paramName][randIndex] {
 			selectedParameters[k] = v
