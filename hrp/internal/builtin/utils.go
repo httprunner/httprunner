@@ -103,6 +103,11 @@ func EnsurePython3Venv(packages ...string) (string, error) {
 	return python3, nil
 }
 
+func CheckPythonScriptSyntax(path string) error {
+	err := ExecCommand("python3", "-m", "py_compile", path)
+	return err
+}
+
 func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
 	log.Info().Str("cmd", cmd.String()).Str("dir", dir).Msg("exec command")
 	cmd.Dir = dir
