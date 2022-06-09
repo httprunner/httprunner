@@ -103,7 +103,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     request_print = "====== request details ======\n"
     request_print += f"url: {url}\n"
     request_print += f"method: {method}\n"
-    headers = parsed_request_dict.pop("headers", {})
+    headers = parsed_request_dict.get("headers", {})
     request_print += f"headers: {headers}\n"
     for k, v in parsed_request_dict.items():
         v = utils.omit_long_data(v)
