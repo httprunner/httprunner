@@ -67,7 +67,8 @@ def call_hooks(
 
 def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
-    logger.info("-->step start %s" % step.variables)
+    step.variables = runner.merge_step_variables(step.variables)
+
     step_start_variables = step.variables
     step_result = StepResult(
         name=step.name,
@@ -75,7 +76,6 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     )
     start_time = time.time()
 
-    step.variables = runner.merge_step_variables(step.variables)
 
     # parse
     functions = runner.parser.functions_mapping
@@ -153,7 +153,6 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data = runner.session.data
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
-        logger.info("-->step end %s" % step.variables)
         step.variables.clear()
         step.variables = step_start_variables
 
