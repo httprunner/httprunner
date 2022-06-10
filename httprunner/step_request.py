@@ -67,13 +67,13 @@ def call_hooks(
 
 def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
-    step.variables = runner.merge_step_variables(step.variables)
-
     step_start_variables = step.variables
+
     step_result = StepResult(
         name=step.name,
         success=False,
     )
+    step.variables = runner.merge_step_variables(step.variables)
     start_time = time.time()
 
 
