@@ -173,6 +173,8 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data = runner.session.data
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
+        step.variables.clear()
+
         # save step data
         step_result.data = session_data
         step_result.elapsed = time.time() - start_time
