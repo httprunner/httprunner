@@ -67,6 +67,8 @@ def call_hooks(
 
 def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
+    logger.info("-->step start %s" % step.variables)
+    step_start_variables = step.variables
     step_result = StepResult(
         name=step.name,
         success=False,
@@ -137,6 +139,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     variables_mapping = step.variables
     variables_mapping.update(extract_mapping)
+    step_start_variables.update(extract_mapping)
 
     # validate
     validators = step.validators
@@ -150,7 +153,9 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data = runner.session.data
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
+        logger.info("-->step end %s" % step.variables)
         step.variables.clear()
+        step.variables = step_start_variables
 
         # save step data
         step_result.data = session_data

@@ -52,6 +52,7 @@ def ensure_thrift_ready():
 
 def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep:thrift request"""
+    step_start_variables = step.variables
     start_time = time.time()
 
     step_result = StepResult(
@@ -174,6 +175,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
         step.variables.clear()
+        step.variables = step_start_variables
 
         # save step data
         step_result.data = session_data
