@@ -1,4 +1,4 @@
-__version__ = "v4.1.2"
+__version__ = "v4.1.3"
 __description__ = "One-stop solution for HTTP(S) testing."
 
 
