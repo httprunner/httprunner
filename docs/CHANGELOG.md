@@ -2,7 +2,7 @@
 
 ## v4.1.3 (2022-06-12)
 
-
+- fix: pip upgrade httprunner when installing hrp
 
 ## v4.1.2 (2022-06-09)
 
