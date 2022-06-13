@@ -11,6 +11,7 @@ import (
 	"github.com/httprunner/funplugin"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -25,7 +26,7 @@ const (
 
 const projectInfoFile = "proj.json" // used for ensuring root project
 
-func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
+func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	// plugin file not found
 	if path == "" {
 		return nil, nil
@@ -34,6 +35,8 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	if err != nil {
 		return nil, nil
 	}
+
+	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
 
 	if strings.HasSuffix(pluginPath, ".py") {
 		// register funppy plugin
@@ -44,10 +47,21 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 			return nil, nil
 		}
 		pluginPath = genPyPluginPath
+
+		// priority: specified > projectDir/.venv > $HOME/.hrp/venv
+		if venv == "" && builtin.IsFolderPathExists(filepath.Join(filepath.Dir(pluginPath), ".venv")) {
+			venv = filepath.Join(filepath.Dir(pluginPath), ".venv")
+		}
+		err = builtin.PrepareVenv(venv)
+		if err != nil {
+			log.Error().Err(err).Msg("prepare python3 venv failed")
+			return
+		}
+		pluginOptions = append(pluginOptions, funplugin.WithPython3(builtin.Python3Executable))
 	}
 
 	// found plugin file
-	plugin, err = funplugin.Init(pluginPath, funplugin.WithLogOn(logOn))
+	plugin, err = funplugin.Init(pluginPath, pluginOptions...)
 	if err != nil {
 		log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
 		return

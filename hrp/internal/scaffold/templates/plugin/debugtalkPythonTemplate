@@ -12,6 +12,7 @@
 {{ end }}
 
 if __name__ == "__main__":
+    import funppy
 {{- range $functionName := .FunctionNames }}
     funppy.register("{{ $functionName }}", {{ $functionName }})
 {{- end }}

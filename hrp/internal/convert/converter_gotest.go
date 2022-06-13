@@ -48,12 +48,7 @@ func convert2GoTestScripts(paths ...string) error {
 	}
 
 	// format pytest scripts with black
-	python3, err := builtin.EnsurePython3Venv("black")
-	if err != nil {
-		return err
-	}
-	args := append([]string{"-m", "black"}, pytestPaths...)
-	return builtin.ExecCommand(python3, args...)
+	return builtin.ExecPython3Command("black", pytestPaths...)
 }
 
 //go:embed testcase.tmpl

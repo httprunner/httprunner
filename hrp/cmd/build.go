@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var buildCmd = &cobra.Command{
@@ -17,6 +19,11 @@ var buildCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		err := builtin.PrepareVenv(venv)
+		if err != nil {
+			log.Error().Err(err).Msg("prepare python3 venv failed")
+			return err
+		}
 		return hrp.BuildPlugin(args[0], output)
 	},
 }

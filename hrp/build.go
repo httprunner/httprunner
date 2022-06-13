@@ -12,16 +12,15 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 const (
-	funppy                  = `import funppy`
 	fungo                   = `"github.com/httprunner/funplugin/fungo"`
 	regexPythonFunctionName = `def ([a-zA-Z_]\w*)\(.*\)`
 	regexGoImports          = `import \(([\s\S]*?)\)`
@@ -38,7 +37,6 @@ var goTemplate string
 
 type TemplateContent struct {
 	Version       string   // hrp version
-	Fun           string   // funplugin package
 	Regexps       *Regexps // match import/function
 	Imports       []string // python/go import
 	FromImports   []string // python from...import...
@@ -81,7 +79,7 @@ func (t *TemplateContent) parseGoContent(path string) error {
 	}
 	// import fungo package
 	if !builtin.Contains(t.Imports, fungo) {
-		t.Imports = append(t.Imports, t.Fun)
+		t.Imports = append(t.Imports, fungo)
 	}
 
 	// parse function name
@@ -155,15 +153,11 @@ func (t *TemplateContent) parsePyContent(path string) error {
 	// function content
 	t.Functions = append(t.Functions, strings.Trim(content, "\n"))
 
-	// import funppy
-	if !builtin.Contains(t.Imports, t.Fun) {
-		t.Imports = append(t.Imports, t.Fun)
-	}
 	return nil
 }
 
-func (t *TemplateContent) genDebugTalk(path string, templ string) error {
-	file, err := os.Create(path)
+func (t *TemplateContent) genDebugTalk(output string, templ string) error {
+	file, err := os.Create(output)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
 		return err
@@ -178,9 +172,9 @@ func (t *TemplateContent) genDebugTalk(path string, templ string) error {
 	}
 	err = writer.Flush()
 	if err == nil {
-		log.Info().Str("path", path).Msg("generate debugtalk success")
+		log.Info().Str("output", output).Msg("generate debugtalk success")
 	} else {
-		log.Error().Str("path", path).Msg("generate debugtalk failed")
+		log.Error().Str("output", output).Msg("generate debugtalk failed")
 	}
 	return err
 }
@@ -189,7 +183,6 @@ func (t *TemplateContent) genDebugTalk(path string, templ string) error {
 func buildGo(path string, output string) error {
 	templateContent := &TemplateContent{
 		Version: version.VERSION,
-		Fun:     fungo,
 		Regexps: &Regexps{
 			Import:          regexp.MustCompile(regexGoImport),
 			Imports:         regexp.MustCompile(regexGoImports),
@@ -260,19 +253,12 @@ func buildGo(path string, output string) error {
 func buildPy(path string, output string) error {
 	templateContent := &TemplateContent{
 		Version: version.VERSION,
-		Fun:     funppy,
 		Regexps: &Regexps{
 			FunctionName: regexp.MustCompile(regexPythonFunctionName),
 		},
 	}
 
 	err := templateContent.parsePyContent(path)
-	if err != nil {
-		return err
-	}
-
-	// ensure installation of packages
-	_, err = builtin.EnsurePython3Venv(templateContent.Packages...)
 	if err != nil {
 		return err
 	}
