@@ -1,3 +1,4 @@
+import copy
 import time
 from typing import Any, Dict, List, Text, Union
 
@@ -67,13 +68,11 @@ def call_hooks(
 
 def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
-    step_start_variables = step.variables
-
     step_result = StepResult(
         name=step.name,
         success=False,
     )
-    step.variables = runner.merge_step_variables(step.variables)
+    step_variables = runner.merge_step_variables(step.variables)
     start_time = time.time()
 
 
@@ -82,16 +81,16 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     prepare_upload_step(step, functions)
     request_dict = step.request.dict()
     request_dict.pop("upload", None)
-    parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
+    parsed_request_dict = runner.parser.parse_data(request_dict, step_variables)
     parsed_request_dict["headers"].setdefault(
         "HRUN-Request-ID",
         f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}",
     )
-    step.variables["request"] = parsed_request_dict
+    step_variables["request"] = parsed_request_dict
 
     # setup hooks
     if step.setup_hooks:
-        call_hooks(runner, step.setup_hooks, step.variables, "setup request")
+        call_hooks(runner, step.setup_hooks, step_variables, "setup request")
 
     # prepare arguments
     config = runner.get_config()
@@ -104,11 +103,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     # request
     resp = runner.session.request(method, url, **parsed_request_dict)
     resp_obj = ResponseObject(resp, runner.parser)
-    step.variables["response"] = resp_obj
+    step_variables["response"] = resp_obj
 
     # teardown hooks
     if step.teardown_hooks:
-        call_hooks(runner, step.teardown_hooks, step.variables, "teardown request")
+        call_hooks(runner, step.teardown_hooks, step_variables, "teardown request")
 
     def log_req_resp_details():
         err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
@@ -134,12 +133,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     # extract
     extractors = step.extract
-    extract_mapping = resp_obj.extract(extractors, step.variables)
+    extract_mapping = resp_obj.extract(extractors, step_variables)
     step_result.export_vars = extract_mapping
 
-    variables_mapping = step.variables
+    variables_mapping = step_variables
     variables_mapping.update(extract_mapping)
-    step_start_variables.update(extract_mapping)
 
     # validate
     validators = step.validators
@@ -153,8 +151,6 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data = runner.session.data
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
-        step.variables.clear()
-        step.variables = step_start_variables
 
         # save step data
         step_result.data = session_data
