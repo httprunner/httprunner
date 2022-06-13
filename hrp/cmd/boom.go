@@ -54,6 +54,9 @@ var boomCmd = &cobra.Command{
 		hrpBoomer.SetDisableKeepAlive(boomArgs.DisableKeepalive)
 		hrpBoomer.SetDisableCompression(boomArgs.DisableCompression)
 		hrpBoomer.SetClientTransport()
+		if venv != "" {
+			hrpBoomer.SetPython3Venv(venv)
+		}
 		hrpBoomer.EnableCPUProfile(boomArgs.CPUProfile, boomArgs.CPUProfileDuration)
 		hrpBoomer.EnableMemoryProfile(boomArgs.MemoryProfile, boomArgs.MemoryProfileDuration)
 		hrpBoomer.EnableGracefulQuit()

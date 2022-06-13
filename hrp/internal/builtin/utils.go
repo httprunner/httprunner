@@ -13,12 +13,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/httprunner/funplugin/shared"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func Dump2JSON(data interface{}, path string) error {
@@ -88,24 +89,104 @@ func FormatResponse(raw interface{}) interface{} {
 	return formattedResponse
 }
 
-func EnsurePython3Venv(packages ...string) (string, error) {
-	// create python venv
+var Python3Executable string = "python3" // system default python3
+
+func PrepareVenv(venv string) error {
+	defer func() {
+		log.Info().Str("Python3Executable", Python3Executable).Msg("set python3 executable path")
+	}()
+
+	// specify python3 venv
+	if venv != "" {
+		Python3Executable = getPython3Executable(venv)
+		return nil
+	}
+
+	// not specify python3 venv, create default venv
+	python3, err := createDefaultPython3Venv()
+	if err != nil {
+		return errors.Wrap(err, "create default python3 venv failed")
+	}
+	Python3Executable = python3
+
+	return nil
+}
+
+// create default python3 venv located in $HOME/.hrp/venv
+func createDefaultPython3Venv() (string, error) {
+	log.Info().Msg("create default python3 venv at $HOME/.hrp/venv")
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", errors.Wrap(err, "get user home dir failed")
 	}
-	venvDir := filepath.Join(home, ".hrp", "venv")
-	python3, err := shared.EnsurePython3Venv(venvDir, packages...)
-	if err != nil {
-		return "", errors.Wrap(err, "ensure python3 venv failed")
+	venv := filepath.Join(home, ".hrp", "venv")
+	packages := []string{
+		fmt.Sprintf("funppy==%s", fungo.Version),
+		fmt.Sprintf("httprunner==%s", version.VERSION),
+	}
+	return EnsurePython3Venv(venv, packages...)
+}
+
+func ExecPython3Command(cmdName string, args ...string) error {
+	args = append([]string{"-m", cmdName}, args...)
+	return ExecCommand(Python3Executable, args...)
+}
+
+func InstallPythonPackage(python3 string, pkg string) (err error) {
+	var pkgName string
+	if strings.Contains(pkg, "==") {
+		// funppy==0.4.2
+		pkgInfo := strings.Split(pkg, "==")
+		pkgName = pkgInfo[0]
+	} else if strings.Contains(pkg, ">=") {
+		// httprunner>=4.0.0-beta
+		pkgInfo := strings.Split(pkg, ">=")
+		pkgName = pkgInfo[0]
+	} else {
+		pkgName = pkg
 	}
 
-	return python3, nil
+	defer func() {
+		if err == nil {
+			// check package version
+			if out, err := exec.Command(
+				python3, "-c", fmt.Sprintf("import %s; print(%s.__version__)", pkgName, pkgName),
+			).Output(); err == nil {
+				log.Info().
+					Str("name", pkgName).
+					Str("version", strings.TrimSpace(string(out))).
+					Msg("python package is ready")
+			}
+		}
+	}()
+
+	// check if package installed
+	err = exec.Command(python3, "-c", fmt.Sprintf("import %s", pkgName)).Run()
+	if err == nil {
+		return nil
+	}
+
+	// check if pip available
+	err = ExecCommand(python3, "-m", "pip", "--version")
+	if err != nil {
+		log.Warn().Msg("pip is not available")
+		return errors.Wrap(err, "pip is not available")
+	}
+
+	log.Info().Str("package", pkg).Msg("installing python package")
+
+	// install package
+	err = ExecCommand(python3, "-m", "pip", "install", "--upgrade", pkg,
+		"--quiet", "--disable-pip-version-check")
+	if err != nil {
+		return errors.Wrap(err, "pip install package failed")
+	}
+
+	return nil
 }
 
 func CheckPythonScriptSyntax(path string) error {
-	err := ExecCommand("python3", "-m", "py_compile", path)
-	return err
+	return ExecCommand("python3", "-m", "py_compile", path)
 }
 
 func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
@@ -123,30 +204,6 @@ func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
 	}
 
 	return nil
-}
-
-func ExecCommand(cmdName string, args ...string) error {
-	cmd := exec.Command(cmdName, args...)
-	log.Info().Str("cmd", cmd.String()).Msg("exec command")
-
-	// print output with colors
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// add cmd dir path to PATH
-	PATH := fmt.Sprintf("%s:%s", filepath.Dir(cmdName), os.Getenv("PATH"))
-	if err := os.Setenv("PATH", PATH); err != nil {
-		log.Error().Err(err).Msg("failed to add cmd dir path to $PATH")
-		return err
-	}
-
-	err := cmd.Run()
-	if err != nil {
-		log.Error().Err(err).Msg("exec command failed")
-		return err
-	}
-
-	return err
 }
 
 func CreateFolder(folderPath string) error {

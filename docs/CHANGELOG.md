@@ -1,7 +1,10 @@
 # Release History
 
-## v4.1.3 (2022-06-12)
+## v4.1.3 (2022-06-13)
 
+**go version**
+
+- feat #1342: support specify custom python3 venv
 - fix: pip upgrade httprunner when installing hrp
 
 ## v4.1.2 (2022-06-09)

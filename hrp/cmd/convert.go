@@ -3,8 +3,10 @@ package cmd
 import (
 	"errors"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/convert"
 )
 
@@ -32,6 +34,12 @@ var convertCmd = &cobra.Command{
 		if toPyTestFlag {
 			flagCount++
 			outputType = convert.OutputTypePyTest
+
+			err := builtin.PrepareVenv(venv)
+			if err != nil {
+				log.Error().Err(err).Msg("prepare python3 venv failed")
+				return err
+			}
 		}
 		if flagCount > 1 {
 			return errors.New("please specify at most one conversion flag")
