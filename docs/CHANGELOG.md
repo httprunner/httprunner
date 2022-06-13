@@ -6,12 +6,13 @@
 
 - feat #1342: support specify custom python3 venv
 - feat: support python3 venv priority, specified > projectDir/.venv > $HOME/.hrp/venv
-- refactor: build plugin mechanism
+- feat: assert python3 package is ready with specified version
+- refactor: build plugin mechanism, cancel automatic installation of dependencies
 - fix: pip upgrade httprunner when installing hrp
 
 **python version**
 
-fix: unexpected changes in step variables
+- fix: unexpected changes in step variables
 
 ## v4.1.2 (2022-06-09)
 

@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
@@ -57,6 +58,13 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 			log.Error().Err(err).Msg("prepare python3 venv failed")
 			return
 		}
+		// check if funppy is ready in python3 venv
+		err = builtin.AssertPythonPackage(builtin.Python3Executable, "funppy", fungo.Version)
+		if err != nil {
+			log.Error().Err(err).Str("venv", venv).Msg("python package funppy is not ready")
+			os.Exit(1)
+		}
+
 		pluginOptions = append(pluginOptions, funplugin.WithPython3(builtin.Python3Executable))
 	}
 
