@@ -5,6 +5,8 @@
 **go version**
 
 - feat #1342: support specify custom python3 venv
+- feat: support python3 venv priority, specified > projectDir/.venv > $HOME/.hrp/venv
+- refactor: build plugin mechanism
 - fix: pip upgrade httprunner when installing hrp
 
 ## v4.1.2 (2022-06-09)
