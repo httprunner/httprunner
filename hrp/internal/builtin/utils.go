@@ -104,7 +104,17 @@ func PrepareVenv(venv string) error {
 	}
 
 	// not specify python3 venv, create default venv
-	python3, err := createDefaultPython3Venv()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "get user home dir failed")
+	}
+	venv = filepath.Join(home, ".hrp", "venv")
+	log.Info().Str("venv", venv).Msg("create default python3 venv")
+	packages := []string{
+		fmt.Sprintf("funppy==%s", fungo.Version),
+		fmt.Sprintf("httprunner==%s", version.VERSION),
+	}
+	python3, err := EnsurePython3Venv(venv, packages...)
 	if err != nil {
 		return errors.Wrap(err, "create default python3 venv failed")
 	}
@@ -113,56 +123,50 @@ func PrepareVenv(venv string) error {
 	return nil
 }
 
-// create default python3 venv located in $HOME/.hrp/venv
-func createDefaultPython3Venv() (string, error) {
-	log.Info().Msg("create default python3 venv at $HOME/.hrp/venv")
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.Wrap(err, "get user home dir failed")
-	}
-	venv := filepath.Join(home, ".hrp", "venv")
-	packages := []string{
-		fmt.Sprintf("funppy==%s", fungo.Version),
-		fmt.Sprintf("httprunner==%s", version.VERSION),
-	}
-	return EnsurePython3Venv(venv, packages...)
-}
-
 func ExecPython3Command(cmdName string, args ...string) error {
 	args = append([]string{"-m", cmdName}, args...)
 	return ExecCommand(Python3Executable, args...)
 }
 
+func AssertPythonPackage(python3 string, pkgName, pkgVersion string) error {
+	out, err := exec.Command(
+		python3, "-c", fmt.Sprintf("import %s; print(%s.__version__)", pkgName, pkgName),
+	).Output()
+	if err != nil {
+		return fmt.Errorf("python package %s not found", pkgName)
+	}
+
+	// do not check version if pkgVersion is empty
+	if pkgVersion == "" {
+		log.Info().Str("name", pkgName).Msg("python package is ready")
+		return nil
+	}
+
+	// check package version equality
+	version := strings.TrimSpace(string(out))
+	if fmt.Sprintf("v%s", version) != pkgVersion {
+		return fmt.Errorf("python package %s version %s not matched, please upgrade to %s",
+			pkgName, version, pkgVersion)
+	}
+
+	log.Info().Str("name", pkgName).Str("version", pkgVersion).Msg("python package is ready")
+	return nil
+}
+
 func InstallPythonPackage(python3 string, pkg string) (err error) {
-	var pkgName string
+	var pkgName, pkgVersion string
 	if strings.Contains(pkg, "==") {
-		// funppy==0.4.2
+		// funppy==0.5.0
 		pkgInfo := strings.Split(pkg, "==")
 		pkgName = pkgInfo[0]
-	} else if strings.Contains(pkg, ">=") {
-		// httprunner>=4.0.0-beta
-		pkgInfo := strings.Split(pkg, ">=")
-		pkgName = pkgInfo[0]
+		pkgVersion = pkgInfo[1]
 	} else {
+		// funppy
 		pkgName = pkg
 	}
 
-	defer func() {
-		if err == nil {
-			// check package version
-			if out, err := exec.Command(
-				python3, "-c", fmt.Sprintf("import %s; print(%s.__version__)", pkgName, pkgName),
-			).Output(); err == nil {
-				log.Info().
-					Str("name", pkgName).
-					Str("version", strings.TrimSpace(string(out))).
-					Msg("python package is ready")
-			}
-		}
-	}()
-
-	// check if package installed
-	err = exec.Command(python3, "-c", fmt.Sprintf("import %s", pkgName)).Run()
+	// check if package installed and version matched
+	err = AssertPythonPackage(python3, pkgName, pkgVersion)
 	if err == nil {
 		return nil
 	}
@@ -183,7 +187,7 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 		return errors.Wrap(err, "pip install package failed")
 	}
 
-	return nil
+	return AssertPythonPackage(python3, pkgName, pkgVersion)
 }
 
 func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
