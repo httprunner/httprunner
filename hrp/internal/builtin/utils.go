@@ -92,13 +92,14 @@ func FormatResponse(raw interface{}) interface{} {
 var Python3Executable string = "python3" // system default python3
 
 func PrepareVenv(venv string) error {
-	defer func() {
-		log.Info().Str("Python3Executable", Python3Executable).Msg("set python3 executable path")
-	}()
-
 	// specify python3 venv
 	if venv != "" {
-		Python3Executable = getPython3Executable(venv)
+		python3 := getPython3Executable(venv)
+		if !IsFilePathExists(python3) {
+			return errors.New("specified python3 venv is invalid")
+		}
+		Python3Executable = python3
+		log.Info().Str("Python3Executable", Python3Executable).Msg("set python3 executable path")
 		return nil
 	}
 
@@ -108,7 +109,7 @@ func PrepareVenv(venv string) error {
 		return errors.Wrap(err, "create default python3 venv failed")
 	}
 	Python3Executable = python3
-
+	log.Info().Str("Python3Executable", Python3Executable).Msg("set python3 executable path")
 	return nil
 }
 

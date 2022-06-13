@@ -9,6 +9,10 @@
 - refactor: build plugin mechanism
 - fix: pip upgrade httprunner when installing hrp
 
+**python version**
+
+fix: unexpected changes in step variables
+
 ## v4.1.2 (2022-06-09)
 
 - feat: add Dockerfile
