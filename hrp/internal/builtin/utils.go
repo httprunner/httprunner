@@ -185,10 +185,6 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 	return nil
 }
 
-func CheckPythonScriptSyntax(path string) error {
-	return ExecCommand("python3", "-m", "py_compile", path)
-}
-
 func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
 	log.Info().Str("cmd", cmd.String()).Str("dir", dir).Msg("exec command")
 	cmd.Dir = dir
