@@ -57,10 +57,10 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         name=step.name,
         success=False,
     )
-    step.variables = runner.merge_step_variables(step.variables)
+    step_variables = runner.merge_step_variables(step.variables)
     # parse
     request_dict = step.thrift_request.dict()
-    parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
+    parsed_request_dict = runner.parser.parse_data(request_dict, step_variables)
     config = runner.get_config()
     parsed_request_dict["psm"] = parsed_request_dict["psm"] or config.thrift.psm
     parsed_request_dict["env"] = parsed_request_dict["env"] or config.thrift.env
@@ -96,7 +96,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     #     "HRUN-Request-ID",
     #     f"HRUN-{self.__case_id}-{str(int(time.time() * 1000))[-6:]}",
     # )
-    step.variables["thrift_request"] = parsed_request_dict
+    step_variables["thrift_request"] = parsed_request_dict
 
     psm = parsed_request_dict["psm"]
     if not runner.thrift_client:
@@ -118,7 +118,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     # setup hooks
     if step.setup_hooks:
-        call_hooks(runner, step.setup_hooks, step.variables, "setup request")
+        call_hooks(runner, step.setup_hooks, step_variables, "setup request")
 
     # log request
     thrift_request_print = "====== thrift request details ======\n"
@@ -136,7 +136,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         parsed_request_dict["params"], parsed_request_dict["method"]
     )
     resp_obj = ThriftResponseObject(resp, parser=runner.parser)
-    step.variables["thrift_response"] = resp_obj
+    step_variables["thrift_response"] = resp_obj
 
     # log response
     thrift_response_print = "====== thrift response details ======\n"
@@ -149,7 +149,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     # teardown hooks
     if step.teardown_hooks:
-        call_hooks(runner, step.teardown_hooks, step.variables, "teardown request")
+        call_hooks(runner, step.teardown_hooks, step_variables, "teardown request")
 
     def log_thrift_req_resp_details():
         err_msg = "\n{} THRIFT DETAILED REQUEST & RESPONSE {}\n".format(
@@ -163,7 +163,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     extract_mapping = resp_obj.extract(extractors)
     step_result.export_vars = extract_mapping
 
-    variables_mapping = step.variables
+    variables_mapping = step_variables
     variables_mapping.update(extract_mapping)
 
     # validate
@@ -178,6 +178,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data = runner.session.data
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
+
         # save step data
         step_result.data = session_data
         step_result.elapsed = time.time() - start_time

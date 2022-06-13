@@ -50,10 +50,10 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
         name=step.name,
         success=False,
     )
-    step.variables = runner.merge_step_variables(step.variables)
+    step_variables = runner.merge_step_variables(step.variables)
     # parse
     request_dict = step.sql_request.dict()
-    parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
+    parsed_request_dict = runner.parser.parse_data(request_dict, step_variables)
     config = runner.get_config()
     parsed_request_dict["db_config"]["psm"] = (
         parsed_request_dict["db_config"]["psm"] or config.db.psm
@@ -92,7 +92,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     # setup hooks
     if step.setup_hooks:
-        call_hooks(runner, step.setup_hooks, step.variables, "setup request")
+        call_hooks(runner, step.setup_hooks, step_variables, "setup request")
 
     # log request
     sql_request_print = "====== sql request details ======\n"
@@ -136,11 +136,11 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
         allure.attach(sql_request_print, name="sql response details", attachment_type=allure.attachment_type.TEXT)
 
     resp_obj = SqlResponseObject(sql_resp, parser=runner.parser)
-    step.variables["sql_response"] = resp_obj
+    step_variables["sql_response"] = resp_obj
 
     # teardown hooks
     if step.teardown_hooks:
-        call_hooks(runner, step.teardown_hooks, step.variables, "teardown request")
+        call_hooks(runner, step.teardown_hooks, step_variables, "teardown request")
 
     def log_sql_req_resp_details():
         err_msg = "\n{} SQL DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
@@ -152,7 +152,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
     extract_mapping = resp_obj.extract(extractors)
     step_result.export_vars = extract_mapping
 
-    variables_mapping = step.variables
+    variables_mapping = step_variables
     variables_mapping.update(extract_mapping)
 
     # validate
@@ -167,6 +167,7 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
         session_data = runner.session.data
         session_data.success = step_result.success
         session_data.validators = resp_obj.validation_results
+
         # save step data
         step_result.data = session_data
         step_result.elapsed = time.time() - start_time

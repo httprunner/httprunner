@@ -1,3 +1,4 @@
+import copy
 import time
 from typing import Any, Dict, List, Text, Union
 
@@ -73,23 +74,23 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     )
     start_time = time.time()
 
-    step.variables = runner.merge_step_variables(step.variables)
-
     # parse
     functions = runner.parser.functions_mapping
     prepare_upload_step(step, functions)
+    # step_variables should be defined after prepare_upload_step
+    step_variables = runner.merge_step_variables(step.variables)
     request_dict = step.request.dict()
     request_dict.pop("upload", None)
-    parsed_request_dict = runner.parser.parse_data(request_dict, step.variables)
+    parsed_request_dict = runner.parser.parse_data(request_dict, step_variables)
     parsed_request_dict["headers"].setdefault(
         "HRUN-Request-ID",
         f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}",
     )
-    step.variables["request"] = parsed_request_dict
+    step_variables["request"] = parsed_request_dict
 
     # setup hooks
     if step.setup_hooks:
-        call_hooks(runner, step.setup_hooks, step.variables, "setup request")
+        call_hooks(runner, step.setup_hooks, step_variables, "setup request")
 
     # prepare arguments
     config = runner.get_config()
@@ -126,11 +127,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         import allure
         allure.attach(response_print, name="response details", attachment_type=allure.attachment_type.TEXT)
     resp_obj = ResponseObject(resp, runner.parser)
-    step.variables["response"] = resp_obj
+    step_variables["response"] = resp_obj
 
     # teardown hooks
     if step.teardown_hooks:
-        call_hooks(runner, step.teardown_hooks, step.variables, "teardown request")
+        call_hooks(runner, step.teardown_hooks, step_variables, "teardown request")
 
     def log_req_resp_details():
         err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
@@ -139,10 +140,10 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     # extract
     extractors = step.extract
-    extract_mapping = resp_obj.extract(extractors, step.variables)
+    extract_mapping = resp_obj.extract(extractors, step_variables)
     step_result.export_vars = extract_mapping
 
-    variables_mapping = step.variables
+    variables_mapping = step_variables
     variables_mapping.update(extract_mapping)
 
     # validate
