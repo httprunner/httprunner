@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/pytest"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 var pytestCmd = &cobra.Command{
@@ -17,9 +20,12 @@ var pytestCmd = &cobra.Command{
 	},
 	DisableFlagParsing: true, // allow to pass any args to pytest
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := builtin.PrepareVenv(venv)
+		packages := []string{
+			fmt.Sprintf("httprunner==%s", version.VERSION),
+		}
+		_, err := builtin.EnsurePython3Venv(venv, packages...)
 		if err != nil {
-			log.Error().Err(err).Msg("prepare python3 venv failed")
+			log.Error().Err(err).Msg("python3 venv is not ready")
 			return err
 		}
 		return pytest.RunPytest(args)

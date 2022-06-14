@@ -13,13 +13,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/httprunner/funplugin/fungo"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func Dump2JSON(data interface{}, path string) error {
@@ -89,43 +87,31 @@ func FormatResponse(raw interface{}) interface{} {
 	return formattedResponse
 }
 
-var Python3Executable string = "python3" // system default python3
+var python3Executable string = "python3" // system default python3
 
-func PrepareVenv(venv string) error {
-	// specify python3 venv
-	if venv != "" {
-		python3 := getPython3Executable(venv)
-		if !IsFilePathExists(python3) {
-			return errors.New("specified python3 venv is invalid")
+// EnsurePython3Venv ensures python3 venv with specified packages
+// venv should be directory path of target venv
+func EnsurePython3Venv(venv string, packages ...string) (python3 string, err error) {
+	// priority: specified > $HOME/.hrp/venv
+	if venv == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", errors.Wrap(err, "get user home dir failed")
 		}
-		Python3Executable = python3
-		log.Info().Str("Python3Executable", Python3Executable).Msg("set python3 executable path")
-		return nil
+		venv = filepath.Join(home, ".hrp", "venv")
 	}
-
-	// not specify python3 venv, create default venv
-	home, err := os.UserHomeDir()
+	python3, err = ensurePython3Venv(venv, packages...)
 	if err != nil {
-		return errors.Wrap(err, "get user home dir failed")
+		return "", errors.Wrap(err, "prepare python3 venv failed")
 	}
-	venv = filepath.Join(home, ".hrp", "venv")
-	log.Info().Str("venv", venv).Msg("create default python3 venv")
-	packages := []string{
-		fmt.Sprintf("funppy==%s", fungo.Version),
-		fmt.Sprintf("httprunner==%s", version.VERSION),
-	}
-	python3, err := EnsurePython3Venv(venv, packages...)
-	if err != nil {
-		return errors.Wrap(err, "create default python3 venv failed")
-	}
-	Python3Executable = python3
-	log.Info().Str("Python3Executable", Python3Executable).Msg("set python3 executable path")
-	return nil
+	python3Executable = python3
+	log.Info().Str("Python3Executable", python3Executable).Msg("set python3 executable path")
+	return python3, nil
 }
 
 func ExecPython3Command(cmdName string, args ...string) error {
 	args = append([]string{"-m", cmdName}, args...)
-	return ExecCommand(Python3Executable, args...)
+	return ExecCommand(python3Executable, args...)
 }
 
 func AssertPythonPackage(python3 string, pkgName, pkgVersion string) error {
@@ -144,7 +130,7 @@ func AssertPythonPackage(python3 string, pkgName, pkgVersion string) error {
 
 	// check package version equality
 	version := strings.TrimSpace(string(out))
-	if fmt.Sprintf("v%s", version) != pkgVersion {
+	if strings.TrimLeft(version, "v") != strings.TrimLeft(pkgVersion, "v") {
 		return fmt.Errorf("python package %s version %s not matched, please upgrade to %s",
 			pkgName, version, pkgVersion)
 	}

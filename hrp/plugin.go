@@ -49,20 +49,17 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		}
 		pluginPath = genPyPluginPath
 
-		// priority: specified > $HOME/.hrp/venv
-		err = builtin.PrepareVenv(venv)
-		if err != nil {
-			log.Error().Err(err).Msg("prepare python3 venv failed")
-			return
+		packages := []string{
+			fmt.Sprintf("funppy==%s", fungo.Version),
 		}
-		// check if funppy is ready in python3 venv
-		err = builtin.AssertPythonPackage(builtin.Python3Executable, "funppy", fungo.Version)
+		python3, err := builtin.EnsurePython3Venv(venv, packages...)
 		if err != nil {
-			log.Error().Err(err).Str("venv", venv).Msg("python package funppy is not ready")
-			os.Exit(1)
+			log.Error().Err(err).
+				Interface("packages", packages).
+				Msg("python3 venv is not ready")
+			return nil, err
 		}
-
-		pluginOptions = append(pluginOptions, funplugin.WithPython3(builtin.Python3Executable))
+		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
 	}
 
 	// found plugin file

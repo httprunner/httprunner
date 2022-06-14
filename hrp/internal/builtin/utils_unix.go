@@ -1,3 +1,4 @@
+//go:build darwin || linux
 // +build darwin linux
 
 package builtin
@@ -16,10 +17,8 @@ func getPython3Executable(venvDir string) string {
 	return filepath.Join(venvDir, "bin", "python3")
 }
 
-// EnsurePython3Venv ensures python3 venv for hashicorp python plugin
-// venvDir should be directory path of target venv
-func EnsurePython3Venv(venvDir string, packages ...string) (python3 string, err error) {
-	python3 = getPython3Executable(venvDir)
+func ensurePython3Venv(venv string, packages ...string) (python3 string, err error) {
+	python3 = getPython3Executable(venv)
 
 	log.Info().
 		Str("python3", python3).
@@ -35,15 +34,15 @@ func EnsurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 		}
 
 		// check if .venv exists
-		if _, err := os.Stat(venvDir); err == nil {
+		if _, err := os.Stat(venv); err == nil {
 			// .venv exists, remove first
-			if err := ExecCommand("rm", "-rf", venvDir); err != nil {
+			if err := ExecCommand("rm", "-rf", venv); err != nil {
 				return "", errors.Wrap(err, "remove existed venv failed")
 			}
 		}
 
 		// create python3 .venv
-		if err := ExecCommand("python3", "-m", "venv", venvDir); err != nil {
+		if err := ExecCommand("python3", "-m", "venv", venv); err != nil {
 			return "", errors.Wrap(err, "create python3 venv failed")
 		}
 	}
