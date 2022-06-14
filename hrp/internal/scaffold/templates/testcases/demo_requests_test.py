@@ -26,7 +26,7 @@ class TestCaseDemoRequests(HttpRunner):
         Step(
             RunRequest("get with params")
             .with_variables(
-                **{"foo1": "bar11", "foo2": "bar21", "sum_v": "${sum_two_int(1, 2)}"}
+                **{"foo1": "bar11", "foo2": "bar21", "sum_v": "${sum_two_int(10000000, 20000000)}"}
             )
             .get("/get")
             .with_params(**{"foo1": "$foo1", "foo2": "$foo2", "sum_v": "$sum_v"})
@@ -36,7 +36,7 @@ class TestCaseDemoRequests(HttpRunner):
             .validate()
             .assert_equal("status_code", 200)
             .assert_equal("body.args.foo1", "bar11")
-            .assert_equal("body.args.sum_v", "3")
+            .assert_equal("body.args.sum_v", "30000000")
             .assert_equal("body.args.foo2", "bar21")
         ),
         Step(

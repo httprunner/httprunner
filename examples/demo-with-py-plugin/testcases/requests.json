@@ -22,7 +22,7 @@
             "variables": {
                 "foo1": "${ENV(USERNAME)}",
                 "foo2": "bar21",
-                "sum_v": "${sum_two_int(1, 2)}"
+                "sum_v": "${sum_two_int(10000000, 20000000)}"
             },
             "request": {
                 "method": "GET",
@@ -52,7 +52,7 @@
                 {
                     "check": "body.args.sum_v",
                     "assert": "equal",
-                    "expect": "3",
+                    "expect": "30000000",
                     "msg": "check body.args.sum_v"
                 },
                 {

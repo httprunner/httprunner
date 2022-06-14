@@ -8,6 +8,7 @@
 - feat: assert python3 package is ready with specified version
 - refactor: build plugin mechanism, cancel automatic installation of dependencies
 - fix: pip upgrade httprunner when installing hrp
+- fix #1352: avoid conversion to exponential notation
 
 **python version**
 

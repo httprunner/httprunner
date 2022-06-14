@@ -125,7 +125,7 @@ func (r *requestBuilder) prepareHeaders(stepVariables map[string]interface{}) er
 		}
 		r.req.AddCookie(&http.Cookie{
 			Name:  cookieName,
-			Value: fmt.Sprintf("%v", value),
+			Value: convertString(value),
 		})
 	}
 
@@ -163,7 +163,7 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 		if len(parsedParams) > 0 {
 			queryParams = make(url.Values)
 			for k, v := range parsedParams {
-				queryParams.Add(k, fmt.Sprint(v))
+				queryParams.Add(k, convertString(v))
 			}
 		}
 	}
@@ -217,7 +217,7 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 			// post form data
 			formData := make(url.Values)
 			for k, v := range vv {
-				formData.Add(k, fmt.Sprint(v))
+				formData.Add(k, convertString(v))
 			}
 			dataBytes = []byte(formData.Encode())
 		} else {
