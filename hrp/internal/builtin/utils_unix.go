@@ -62,6 +62,15 @@ func ExecCommand(cmdName string, args ...string) error {
 	cmd := exec.Command(cmdName, args...)
 	log.Info().Str("cmd", cmd.String()).Msg("exec command")
 
+	// add cmd dir path to $PATH
+	if cmdDir := filepath.Dir(cmdName); cmdDir != "" {
+		PATH := fmt.Sprintf("%s:%s", cmdDir, os.Getenv("PATH"))
+		if err := os.Setenv("PATH", PATH); err != nil {
+			log.Error().Err(err).Msg("set env $PATH failed")
+			return err
+		}
+	}
+
 	// print output with colors
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
