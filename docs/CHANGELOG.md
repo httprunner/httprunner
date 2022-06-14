@@ -5,9 +5,8 @@
 **go version**
 
 - feat #1342: support specify custom python3 venv, priority is greater than $HOME/.hrp/venv
-- feat: assert python3 package is ready with specified version
+- feat: assert python3 package installed and version matched
 - refactor: build plugin mechanism, cancel automatic installation of dependencies
-- fix: pip upgrade httprunner when installing hrp
 - fix #1352: avoid conversion to exponential notation
 
 **python version**

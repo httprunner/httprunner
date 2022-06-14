@@ -18,9 +18,7 @@ func getPython3Executable(venvDir string) string {
 	return filepath.Join(venvDir, "Scripts", "python3.exe")
 }
 
-// EnsurePython3Venv ensures python3 venv for hashicorp python plugin
-// venvDir should be directory path of target venv
-func EnsurePython3Venv(venvDir string, packages ...string) (python3 string, err error) {
+func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err error) {
 	python3 = getPython3Executable(venvDir)
 	log.Info().
 		Str("python3", python3).
