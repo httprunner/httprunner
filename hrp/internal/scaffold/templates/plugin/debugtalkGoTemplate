@@ -2,12 +2,12 @@
 package main
 
 import (
-    "github.com/httprunner/funplugin/fungo"
+	"github.com/httprunner/funplugin/fungo"
 )
 
 func main() {
 {{- range $functionName := .FunctionNames }}
-    fungo.Register("{{ $functionName }}", {{ $functionName }})
+	fungo.Register("{{ $functionName }}", {{ $functionName }})
 {{- end }}
 	fungo.Serve()
 }

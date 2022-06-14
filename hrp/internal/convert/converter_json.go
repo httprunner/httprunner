@@ -1,13 +1,10 @@
 package convert
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 func NewConverterJSON(converter *TCaseConverter) *ConverterJSON {
@@ -51,7 +48,7 @@ func (c *ConverterJSON) ToYAML() (string, error) {
 }
 
 func (c *ConverterJSON) ToGoTest() (string, error) {
-	//TODO implement me
+	// TODO implement me
 	return "", errors.New("convert from json testcase to gotest scripts is not supported yet")
 }
 
@@ -60,13 +57,8 @@ func (c *ConverterJSON) ToPyTest() (string, error) {
 }
 
 func (c *ConverterJSON) MakePyTestScript() (string, error) {
-	httprunner := fmt.Sprintf("httprunner>=%s", version.HttpRunnerMinVersion)
-	python3, err := builtin.EnsurePython3Venv(httprunner)
-	if err != nil {
-		return "", err
-	}
-	args := append([]string{"-m", "httprunner", "make"}, c.converter.InputPath)
-	err = builtin.ExecCommand(python3, args...)
+	args := append([]string{"make"}, c.converter.InputPath)
+	err := builtin.ExecPython3Command("httprunner", args...)
 	if err != nil {
 		return "", err
 	}

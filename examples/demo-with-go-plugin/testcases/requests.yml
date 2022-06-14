@@ -16,7 +16,7 @@ teststeps:
     variables:
         foo1: ${ENV(USERNAME)}
         foo2: bar21
-        sum_v: "${sum_two_int(1, 2)}"
+        sum_v: "${sum_two_int(10000000, 20000000)}"
     request:
         method: GET
         url: $base_url/get
@@ -29,7 +29,7 @@ teststeps:
     validate:
         - eq: ["status_code", 200]
         - eq: ["body.args.foo1", "debugtalk"]
-        - eq: ["body.args.sum_v", "3"]
+        - eq: ["body.args.sum_v", "30000000"]
         - eq: ["body.args.foo2", "bar21"]
 -
     name: post raw text

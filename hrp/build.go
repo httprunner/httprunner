@@ -4,30 +4,19 @@ import (
 	"bufio"
 	_ "embed"
 	"fmt"
-	"io"
+	"html/template"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"text/template"
 
+	"github.com/httprunner/funplugin/shared"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/shared"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
-)
-
-const (
-	funppy                  = `import funppy`
-	fungo                   = `"github.com/httprunner/funplugin/fungo"`
-	regexPythonFunctionName = `def ([a-zA-Z_]\w*)\(.*\)`
-	regexGoImports          = `import \(([\s\S]*?)\)`
-	regexGoImport           = `import (\"[\s\S]*\")`
-	regexGoFunctionName     = `func ([A-Z][a-zA-Z_]\w*)\(.*\)`
-	regexGoFunctionContent  = `func [\s\S]*?\n}`
 )
 
 //go:embed internal/scaffold/templates/plugin/debugtalkPythonTemplate
@@ -36,185 +25,89 @@ var pyTemplate string
 //go:embed internal/scaffold/templates/plugin/debugtalkGoTemplate
 var goTemplate string
 
-type TemplateContent struct {
+// regex for finding all function names
+var (
+	regexPyFunctionName = regexp.MustCompile(`def ([a-zA-Z_]\w*)\(.*\)`)
+	regexGoFunctionName = regexp.MustCompile(`func ([A-Z][a-zA-Z_]\w*)\(.*\)`)
+)
+
+type pluginTemplateContent struct {
 	Version       string   // hrp version
-	Fun           string   // funplugin package
-	Regexps       *Regexps // match import/function
-	Imports       []string // python/go import
-	FromImports   []string // python from...import...
-	Functions     []string // python/go function
-	FunctionNames []string // function name set by user
-	Packages      []string // python packages
+	FunctionNames []string // function names
 }
 
-type Regexps struct {
-	Import          *regexp.Regexp
-	Imports         *regexp.Regexp
-	FunctionName    *regexp.Regexp
-	FunctionContent *regexp.Regexp // including function define and body
-}
-
-func (t *TemplateContent) parseGoContent(path string) error {
-	log.Info().Str("path", path).Msg("start to parse debugtalk.go")
+func findAllFunctionNames(t *regexp.Regexp, path string) (functionNames []string, err error) {
+	log.Info().Str("path", path).Msg("find all function names from plugin file")
 
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read file")
-		return err
-	}
-	originalContent := string(content)
-
-	// parse imports
-	importSlice := t.Regexps.Imports.FindAllStringSubmatch(originalContent, -1)
-	if len(importSlice) != 0 {
-		imports := strings.Replace(importSlice[0][1], "\t", "", -1)
-		for _, elem := range strings.Split(imports, "\n") {
-			t.Imports = append(t.Imports, strings.TrimSpace(elem))
-		}
-	}
-	// parse import
-	importSlice = t.Regexps.Import.FindAllStringSubmatch(originalContent, -1)
-	if len(importSlice) != 0 {
-		for _, elem := range importSlice {
-			t.Imports = append(t.Imports, strings.TrimSpace(elem[1]))
-		}
-	}
-	// import fungo package
-	if !builtin.Contains(t.Imports, fungo) {
-		t.Imports = append(t.Imports, t.Fun)
+		return nil, errors.Wrap(err, "read file failed")
 	}
 
-	// parse function name
-	functionNameSlice := t.Regexps.FunctionName.FindAllStringSubmatch(originalContent, -1)
+	// find all function names
+	functionNameSlice := t.FindAllStringSubmatch(string(content), -1)
 	for _, elem := range functionNameSlice {
 		name := strings.Trim(elem[1], " ")
-		if name == "main" {
-			continue
-		}
-		t.FunctionNames = append(t.FunctionNames, name)
+		functionNames = append(functionNames, name)
 	}
 
-	// parse function content
-	functionContentSlice := t.Regexps.FunctionContent.FindAllStringSubmatch(originalContent, -1)
-	for _, f := range functionContentSlice {
-		if strings.Contains(f[0], "func main") {
-			continue
-		}
-		t.Functions = append(t.Functions, strings.Trim(f[0], "\n"))
-	}
-	return nil
+	return
 }
 
-func (t *TemplateContent) parsePyContent(path string) error {
-	file, err := os.Open(path)
+func generate(data *pluginTemplateContent, tmpl, output string) error {
+	file, err := os.Create(output)
 	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("failed to open file")
+		log.Error().Err(err).Msg("open output file failed")
 		return err
 	}
 	defer file.Close()
 
-	r := bufio.NewReader(file)
-
-	// record content excluding import and main
-	content := ""
-
-	// parse python content line by line
-	for {
-		l, _, err := r.ReadLine()
-		if err == io.EOF {
-			break
-		}
-		line := string(l)
-
-		if strings.HasPrefix(line, "import") {
-			t.Imports = append(t.Imports, strings.Trim(line, " "))
-			// e.g. import module as md
-			// import package.module
-			t.Packages = append(t.Packages, strings.Split(strings.Split(line, " ")[1], ".")[0])
-		} else if strings.HasPrefix(line, "from") {
-			t.FromImports = append(t.FromImports, strings.Trim(line, " "))
-			// e.g. from package.module import function
-			// from module import function
-			// from package import module
-			t.Packages = append(t.Packages, strings.Split(strings.Split(line, " ")[1], ".")[0])
-		} else {
-			// no parse content at under of `if __name__ == "__main__"`
-			if strings.HasPrefix(line, "if __name__") {
-				break
-			}
-			if strings.HasPrefix(line, "def") {
-				functionNameSlice := t.Regexps.FunctionName.FindAllStringSubmatch(line, -1)
-				if len(functionNameSlice) == 0 {
-					continue
-				}
-				t.FunctionNames = append(t.FunctionNames, functionNameSlice[0][1])
-			}
-			content += line + "\n"
-		}
-	}
-	// function content
-	t.Functions = append(t.Functions, strings.Trim(content, "\n"))
-
-	// import funppy
-	if !builtin.Contains(t.Imports, t.Fun) {
-		t.Imports = append(t.Imports, t.Fun)
-	}
-	return nil
-}
-
-func (t *TemplateContent) genDebugTalk(path string, templ string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		log.Error().Err(err).Msg("open file failed")
-		return err
-	}
-	defer file.Close()
 	writer := bufio.NewWriter(file)
-	tmpl := template.Must(template.New("debugtalk").Parse(templ))
-	err = tmpl.Execute(writer, t)
+	err = template.Must(template.New("debugtalk").Parse(tmpl)).Execute(writer, data)
 	if err != nil {
-		log.Error().Err(err).Msg("execute applies a parsed template to the specified data object failed")
+		log.Error().Err(err).Msg("execute template parsing failed")
 		return err
 	}
+
 	err = writer.Flush()
 	if err == nil {
-		log.Info().Str("path", path).Msg("generate debugtalk success")
+		log.Info().Str("output", output).Msg("generate debugtalk success")
 	} else {
-		log.Error().Str("path", path).Msg("generate debugtalk failed")
+		log.Error().Str("output", output).Msg("generate debugtalk failed")
 	}
 	return err
 }
 
 // buildGo builds debugtalk.go to debugtalk.bin
 func buildGo(path string, output string) error {
-	templateContent := &TemplateContent{
-		Version: version.VERSION,
-		Fun:     fungo,
-		Regexps: &Regexps{
-			Import:          regexp.MustCompile(regexGoImport),
-			Imports:         regexp.MustCompile(regexGoImports),
-			FunctionName:    regexp.MustCompile(regexGoFunctionName),
-			FunctionContent: regexp.MustCompile(regexGoFunctionContent),
-		},
+	functionNames, err := findAllFunctionNames(regexGoFunctionName, path)
+	if err != nil {
+		return errors.Wrap(err, "find all function names failed")
+	}
+	// filter main and init function
+	var filteredFunctionNames []string
+	for _, name := range functionNames {
+		if name == "main" || name == "init" {
+			continue
+		}
+		filteredFunctionNames = append(filteredFunctionNames, name)
+	}
+
+	templateContent := &pluginTemplateContent{
+		Version:       version.VERSION,
+		FunctionNames: filteredFunctionNames,
 	}
 
 	pluginDir := filepath.Dir(path)
+	err = generate(templateContent, goTemplate, filepath.Join(pluginDir, PluginGoSourceGenFile))
+	if err != nil {
+		return errors.Wrap(err, "generate hashicorp plugin failed")
+	}
 
 	// check go sdk in tempDir
 	if err := builtin.ExecCommandInDir(exec.Command("go", "version"), pluginDir); err != nil {
 		return errors.Wrap(err, "go sdk not installed")
-	}
-
-	// parse debugtalk.go in pluginDir
-	err := templateContent.parseGoContent(path)
-	if err != nil {
-		return err
-	}
-
-	// generate debugtalk.go in pluginDir
-	err = templateContent.genDebugTalk(filepath.Join(pluginDir, PluginGoSourceGenFile), goTemplate)
-	if err != nil {
-		return err
 	}
 
 	if !builtin.IsFilePathExists(filepath.Join(pluginDir, "go.mod")) {
@@ -227,71 +120,66 @@ func buildGo(path string, output string) error {
 		// funplugin version should be locked
 		funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
 		if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
-			return err
+			return errors.Wrap(err, "go get funplugin failed")
 		}
 	}
 
 	// add missing and remove unused modules
 	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "tidy"), pluginDir); err != nil {
-		return err
+		return errors.Wrap(err, "go mod tidy failed")
 	}
 
+	// specify output file path
 	if output == "" {
 		dir, _ := os.Getwd()
 		output = filepath.Join(dir, PluginHashicorpGoBuiltFile)
 	} else if builtin.IsFolderPathExists(output) {
 		output = filepath.Join(output, PluginHashicorpGoBuiltFile)
 	}
-	outputPath, err := filepath.Abs(output)
-	if err != nil {
-		return err
-	}
+	outputPath, _ := filepath.Abs(output)
 
-	// build plugin debugtalk.bin
+	// build go plugin to debugtalk.bin
 	cmd := exec.Command("go", "build", "-o", outputPath, PluginGoSourceGenFile, filepath.Base(path))
 	if err := builtin.ExecCommandInDir(cmd, pluginDir); err != nil {
-		return err
+		return errors.Wrap(err, "go build plugin failed")
 	}
-	log.Info().Str("output", outputPath).Str("plugin", path).Msg("build plugin successfully")
+	log.Info().Str("output", outputPath).Str("plugin", path).Msg("build go plugin successfully")
 	return nil
 }
 
 // buildPy completes funppy information in debugtalk.py
 func buildPy(path string, output string) error {
-	templateContent := &TemplateContent{
-		Version: version.VERSION,
-		Fun:     funppy,
-		Regexps: &Regexps{
-			FunctionName: regexp.MustCompile(regexPythonFunctionName),
-		},
-	}
-
-	err := templateContent.parsePyContent(path)
-	if err != nil {
-		return err
-	}
-
-	// ensure installation of packages
-	_, err = builtin.EnsurePython3Venv(templateContent.Packages...)
-	if err != nil {
-		return err
-	}
-
 	// check the syntax of debugtalk.py
-	err = builtin.CheckPythonScriptSyntax(path)
+	err := builtin.ExecCommand("python3", "-m", "py_compile", path)
+	if err != nil {
+		return errors.Wrap(err, "python plugin syntax invalid")
+	}
+
+	functionNames, err := findAllFunctionNames(regexPyFunctionName, path)
 	if err != nil {
 		return err
 	}
+	templateContent := &pluginTemplateContent{
+		Version:       version.VERSION,
+		FunctionNames: functionNames,
+	}
 
-	// generate .debugtalk_gen.py
+	// specify output file path
 	if output == "" {
 		dir, _ := os.Getwd()
 		output = filepath.Join(dir, PluginPySourceGenFile)
 	} else if builtin.IsFolderPathExists(output) {
 		output = filepath.Join(output, PluginPySourceGenFile)
 	}
-	err = templateContent.genDebugTalk(output, pyTemplate)
-	return err
+
+	// generate .debugtalk_gen.py
+	err = generate(templateContent, pyTemplate, output)
+	if err != nil {
+		return err
+	}
+
+	log.Info().Str("output", output).Str("plugin", path).Msg("build python plugin successfully")
+	return nil
 }
 
 func BuildPlugin(path string, output string) (err error) {
@@ -305,7 +193,7 @@ func BuildPlugin(path string, output string) (err error) {
 		return errors.New("type error, expected .py or .go")
 	}
 	if err != nil {
-		log.Error().Err(err).Str("arg", path).Msg("build plugin failed")
+		log.Error().Err(err).Str("path", path).Msg("build plugin failed")
 		os.Exit(1)
 	}
 	return nil

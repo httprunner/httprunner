@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -51,7 +52,7 @@ func CopyFile(templateFile, targetFile string) error {
 	return nil
 }
 
-func CreateScaffold(projectName string, pluginType PluginType, force bool) error {
+func CreateScaffold(projectName string, pluginType PluginType, venv string, force bool) error {
 	// report event
 	sdk.SendEvent(sdk.EventTracking{
 		Category: "Scaffold",
@@ -165,7 +166,7 @@ func CreateScaffold(projectName string, pluginType PluginType, force bool) error
 	// create debugtalk function plugin
 	switch pluginType {
 	case Py:
-		return createPythonPlugin(projectName)
+		return createPythonPlugin(projectName, venv)
 	case Go:
 		return createGoPlugin(projectName)
 	}
@@ -194,7 +195,7 @@ func createGoPlugin(projectName string) error {
 	return nil
 }
 
-func createPythonPlugin(projectName string) error {
+func createPythonPlugin(projectName, venv string) error {
 	log.Info().Msg("start to create hashicorp python plugin")
 
 	// create debugtalk.py
@@ -204,7 +205,11 @@ func createPythonPlugin(projectName string) error {
 		return errors.Wrap(err, "copy file failed")
 	}
 
-	_, err = builtin.EnsurePython3Venv("funppy")
+	packages := []string{
+		fmt.Sprintf("funppy==%s", fungo.Version),
+		fmt.Sprintf("httprunner==%s", version.VERSION),
+	}
+	_, err = builtin.EnsurePython3Venv(venv, packages...)
 	if err != nil {
 		return err
 	}

@@ -29,9 +29,16 @@ type HRPBoomer struct {
 	pluginsMutex *sync.RWMutex       // avoid data race
 }
 
-func (b *HRPBoomer) SetClientTransport() {
+func (b *HRPBoomer) SetClientTransport() *HRPBoomer {
 	// set client transport for high concurrency load testing
 	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
+	return b
+}
+
+// SetPython3Venv specifies python3 venv.
+func (b *HRPBoomer) SetPython3Venv(venv string) *HRPBoomer {
+	b.hrpRunner.SetPython3Venv(venv)
+	return b
 }
 
 // Run starts to run load test for one or multiple testcases.
