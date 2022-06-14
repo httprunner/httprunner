@@ -205,14 +205,6 @@ func createPythonPlugin(projectName, venv string) error {
 		return errors.Wrap(err, "copy file failed")
 	}
 
-	if venv == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return errors.Wrap(err, "get user home dir failed")
-		}
-		venv = filepath.Join(home, ".hrp", "venv")
-	}
-	log.Info().Str("venv", venv).Msg("create python3 venv")
 	packages := []string{
 		fmt.Sprintf("funppy==%s", fungo.Version),
 		fmt.Sprintf("httprunner==%s", version.VERSION),

@@ -1,6 +1,7 @@
 package scaffold
 
 import (
+	"path/filepath"
 	"testing"
 )
 
@@ -12,7 +13,8 @@ func TestGenDemoExamples(t *testing.T) {
 	}
 
 	dir = "../../../examples/demo-with-py-plugin"
-	err = CreateScaffold(dir, Py, "", true)
+	venv := filepath.Join(dir, ".venv")
+	err = CreateScaffold(dir, Py, venv, true)
 	if err != nil {
 		t.Fatal()
 	}
