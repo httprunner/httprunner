@@ -167,8 +167,12 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 	log.Info().Str("pkgName", pkgName).Str("pkgVersion", pkgVersion).Msg("installing python package")
 
 	// install package
+	pypiIndexURL := os.Getenv("PYPI_INDEX_URL")
+	if pypiIndexURL == "" {
+		pypiIndexURL = "https://pypi.org/simple" // default
+	}
 	err = ExecCommand(python3, "-m", "pip", "install", "--upgrade", pkg,
-		"--index-url", "https://pypi.org/simple",
+		"--index-url", pypiIndexURL,
 		"--quiet", "--disable-pip-version-check")
 	if err != nil {
 		return errors.Wrap(err, "pip install package failed")
