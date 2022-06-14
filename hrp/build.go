@@ -35,7 +35,7 @@ var (
 	regexGoFunctionName = regexFunctions{regexp.MustCompile(`(?m)^func ([a-zA-Z_]\w*)\(.*\)`)}
 )
 
-func (r *regexFunctions) findAllFunctionNames(content string) []string {
+func (r *regexFunctions) findAllFunctionNames(content string) ([]string, error) {
 	var functionNames []string
 	// find all function names
 	functionNameSlice := r.FindAllStringSubmatch(content, -1)
@@ -56,7 +56,11 @@ func (r *regexFunctions) findAllFunctionNames(content string) []string {
 	} else if r == &regexGoFunctionName {
 		// filter main and init function
 		for _, name := range functionNames {
-			if name == "main" || name == "init" {
+			if name == "main" {
+				log.Warn().Msg("plugin debugtalk.go should not define main() function !!!")
+				return nil, errors.New("debugtalk.go should not contain main() function")
+			}
+			if name == "init" {
 				continue
 			}
 			filteredFunctionNames = append(filteredFunctionNames, name)
@@ -64,7 +68,7 @@ func (r *regexFunctions) findAllFunctionNames(content string) []string {
 	}
 
 	log.Info().Strs("functionNames", filteredFunctionNames).Msg("find all function names")
-	return filteredFunctionNames
+	return filteredFunctionNames, nil
 }
 
 type pluginTemplate struct {
@@ -167,14 +171,19 @@ func (pt *pluginTemplate) generateGo(output string) error {
 
 // buildGo builds debugtalk.go to debugtalk.bin
 func buildGo(path string, output string) error {
+	log.Info().Str("path", path).Str("output", output).Msg("start to build go plugin")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read file")
 		return errors.Wrap(err, "read file failed")
 	}
-	functionNames := regexGoFunctionName.findAllFunctionNames(string(content))
+	functionNames, err := regexGoFunctionName.findAllFunctionNames(string(content))
+	if err != nil {
+		return err
+	}
 
 	templateContent := &pluginTemplate{
+		path:          path,
 		Version:       version.VERSION,
 		FunctionNames: functionNames,
 	}
@@ -183,6 +192,7 @@ func buildGo(path string, output string) error {
 
 // buildPy completes funppy information in debugtalk.py
 func buildPy(path string, output string) error {
+	log.Info().Str("path", path).Str("output", output).Msg("start to prepare python plugin")
 	// check the syntax of debugtalk.py
 	err := builtin.ExecCommand("python3", "-m", "py_compile", path)
 	if err != nil {
@@ -194,7 +204,10 @@ func buildPy(path string, output string) error {
 		log.Error().Err(err).Msg("failed to read file")
 		return errors.Wrap(err, "read file failed")
 	}
-	functionNames := regexPyFunctionName.findAllFunctionNames(string(content))
+	functionNames, err := regexPyFunctionName.findAllFunctionNames(string(content))
+	if err != nil {
+		return err
+	}
 
 	templateContent := &pluginTemplate{
 		path:          path,
