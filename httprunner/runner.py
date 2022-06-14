@@ -55,7 +55,7 @@ class SessionRunner(object):
     def __init(self):
         init_logger()
         self.__config = self.config.struct()
-        self.__session_variables = {}
+        self.__session_variables = self.__session_variables or {}
         self.__start_at = 0
         self.__duration = 0
 
