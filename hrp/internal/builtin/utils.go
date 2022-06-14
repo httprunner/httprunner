@@ -168,6 +168,7 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 
 	// install package
 	err = ExecCommand(python3, "-m", "pip", "install", "--upgrade", pkg,
+		"--index-url", "https://pypi.org/simple",
 		"--quiet", "--disable-pip-version-check")
 	if err != nil {
 		return errors.Wrap(err, "pip install package failed")
