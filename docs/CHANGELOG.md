@@ -3,6 +3,7 @@
 ## v4.1.4 (2022-06-14)
 
 - feat: config pypi index url by setting environment `PYPI_INDEX_URL`
+- fix: filter commented out functions when generating plugin file
 
 ## v4.1.3 (2022-06-14)
 

@@ -42,3 +42,87 @@ func TestRun(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestFindAllPythonFunctionNames(t *testing.T) {
+	content := `
+def test_1():	# exported function
+    pass
+
+def _test_2():	# exported function
+    pass
+
+def __test_3():	# private function
+    pass
+
+# def test_4():	# commented out function
+#    pass
+
+def Test5():	# exported function
+    pass
+`
+	names := regexPyFunctionName.findAllFunctionNames(content)
+	if !assert.Contains(t, names, "test_1") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "Test5") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "_test_2") {
+		t.FailNow()
+	}
+	if !assert.NotContains(t, names, "__test_3") {
+		t.FailNow()
+	}
+	// commented out function
+	if !assert.NotContains(t, names, "test_4") {
+		t.FailNow()
+	}
+}
+
+func TestFindAllGoFunctionNames(t *testing.T) {
+	content := `
+func Test1() {	// exported function
+	return
+}
+
+func testFunc2() {	// exported function
+	return
+}
+
+func main() {	// private function
+	return
+}
+
+func init() {	// private function
+	return
+}
+
+func _Test3() { // exported function
+	return
+}
+
+// func Test4() {	// commented out function
+// 	return
+// }
+`
+	names := regexGoFunctionName.findAllFunctionNames(content)
+	if !assert.Contains(t, names, "Test1") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "testFunc2") {
+		t.FailNow()
+	}
+	if !assert.NotContains(t, names, "main") {
+		t.FailNow()
+	}
+	if !assert.NotContains(t, names, "init") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "_Test3") {
+		t.FailNow()
+	}
+	// commented out function
+	if !assert.NotContains(t, names, "Test4") {
+		t.FailNow()
+	}
+}
