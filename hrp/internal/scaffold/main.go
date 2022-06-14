@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/fungo"
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
@@ -206,7 +206,11 @@ func createPythonPlugin(projectName, venv string) error {
 	}
 
 	if venv == "" {
-		venv = filepath.Join(projectName, ".venv")
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return errors.Wrap(err, "get user home dir failed")
+		}
+		venv = filepath.Join(home, ".hrp", "venv")
 	}
 	log.Info().Str("venv", venv).Msg("create python3 venv")
 	packages := []string{

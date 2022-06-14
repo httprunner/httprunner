@@ -1,11 +1,10 @@
 # Release History
 
-## v4.1.3 (2022-06-13)
+## v4.1.3 (2022-06-14)
 
 **go version**
 
-- feat #1342: support specify custom python3 venv
-- feat: support python3 venv priority, specified > projectDir/.venv > $HOME/.hrp/venv
+- feat #1342: support specify custom python3 venv, priority is greater than $HOME/.hrp/venv
 - feat: assert python3 package is ready with specified version
 - refactor: build plugin mechanism, cancel automatic installation of dependencies
 - fix: pip upgrade httprunner when installing hrp
