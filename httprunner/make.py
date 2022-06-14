@@ -52,7 +52,7 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 class {{ class_name }}(HttpRunner):
     {% if parameters and skip %}
     @pytest.mark.parametrize("param", Parameters({{parameters}}))
-    @pytest.mark.skip({{ reason }})
+    @pytest.mark.skip(reason={{ reason }})
     def test_start(self, param):
         super().test_start(param)
 
@@ -62,7 +62,7 @@ class {{ class_name }}(HttpRunner):
         super().test_start(param)
 
     {% elif skip %}
-    @pytest.mark.skip({{ reason }})
+    @pytest.mark.skip(reason={{ reason }})
     def test_start(self):
         super().test_start()
 
