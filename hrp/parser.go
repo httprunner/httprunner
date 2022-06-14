@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/httprunner/funplugin"
@@ -66,13 +67,15 @@ func (p *Parser) ParseHeaders(rawHeaders map[string]string, variablesMapping map
 }
 
 func convertString(raw interface{}) string {
-	if value, ok := raw.(string); ok {
-		return value
-	} else {
-		// raw is not string, e.g. int, float, etc.
-		// convert to string
-		return fmt.Sprintf("%v", raw)
+	if str, ok := raw.(string); ok {
+		return str
 	}
+	if float, ok := raw.(float64); ok {
+		// f: avoid conversion to exponential notation
+		return strconv.FormatFloat(float, 'f', -1, 64)
+	}
+	// convert to string
+	return fmt.Sprintf("%v", raw)
 }
 
 func (p *Parser) Parse(raw interface{}, variablesMapping map[string]interface{}) (interface{}, error) {
@@ -203,7 +206,7 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 
 			// raw_string contains one or many functions, e.g. "abc${add_one(3)}def"
 			matchStartPosition += len(funcMatched[0])
-			parsedString += fmt.Sprintf("%v", result)
+			parsedString += convertString(result)
 			remainedString = raw[matchStartPosition:]
 			log.Debug().
 				Str("parsedString", parsedString).
@@ -232,7 +235,7 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			}
 
 			matchStartPosition += len(varMatched[0])
-			parsedString += fmt.Sprintf("%v", varValue)
+			parsedString += convertString(varValue)
 			remainedString = raw[matchStartPosition:]
 			log.Debug().
 				Str("parsedString", parsedString).
