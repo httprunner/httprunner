@@ -1,5 +1,9 @@
 # Release History
 
+## v4.1.4 (2022-06-14)
+
+- feat: config pypi index url by setting environment `PYPI_INDEX_URL`
+
 ## v4.1.3 (2022-06-14)
 
 **go version**
