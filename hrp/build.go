@@ -26,36 +26,54 @@ var pyTemplate string
 var goTemplate string
 
 // regex for finding all function names
-var (
-	regexPyFunctionName = regexp.MustCompile(`def ([a-zA-Z_]\w*)\(.*\)`)
-	regexGoFunctionName = regexp.MustCompile(`func ([A-Z][a-zA-Z_]\w*)\(.*\)`)
-)
-
-type pluginTemplateContent struct {
-	Version       string   // hrp version
-	FunctionNames []string // function names
+type regexFunctions struct {
+	*regexp.Regexp
 }
 
-func findAllFunctionNames(t *regexp.Regexp, path string) (functionNames []string, err error) {
-	log.Info().Str("path", path).Msg("find all function names from plugin file")
+var (
+	regexPyFunctionName = regexFunctions{regexp.MustCompile(`(?m)^def ([a-zA-Z_]\w*)\(.*\)`)}
+	regexGoFunctionName = regexFunctions{regexp.MustCompile(`(?m)^func ([a-zA-Z_]\w*)\(.*\)`)}
+)
 
-	content, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read file")
-		return nil, errors.Wrap(err, "read file failed")
-	}
-
+func (r *regexFunctions) findAllFunctionNames(content string) []string {
+	var functionNames []string
 	// find all function names
-	functionNameSlice := t.FindAllStringSubmatch(string(content), -1)
+	functionNameSlice := r.FindAllStringSubmatch(content, -1)
 	for _, elem := range functionNameSlice {
 		name := strings.Trim(elem[1], " ")
 		functionNames = append(functionNames, name)
 	}
 
-	return
+	var filteredFunctionNames []string
+	if r == &regexPyFunctionName {
+		// filter private functions
+		for _, name := range functionNames {
+			if strings.HasPrefix(name, "__") {
+				continue
+			}
+			filteredFunctionNames = append(filteredFunctionNames, name)
+		}
+	} else if r == &regexGoFunctionName {
+		// filter main and init function
+		for _, name := range functionNames {
+			if name == "main" || name == "init" {
+				continue
+			}
+			filteredFunctionNames = append(filteredFunctionNames, name)
+		}
+	}
+
+	log.Info().Strs("functionNames", filteredFunctionNames).Msg("find all function names")
+	return filteredFunctionNames
 }
 
-func generate(data *pluginTemplateContent, tmpl, output string) error {
+type pluginTemplate struct {
+	path          string   // file path
+	Version       string   // hrp version
+	FunctionNames []string // function names
+}
+
+func (pt *pluginTemplate) generate(tmpl, output string) error {
 	file, err := os.Create(output)
 	if err != nil {
 		log.Error().Err(err).Msg("open output file failed")
@@ -64,7 +82,7 @@ func generate(data *pluginTemplateContent, tmpl, output string) error {
 	defer file.Close()
 
 	writer := bufio.NewWriter(file)
-	err = template.Must(template.New("debugtalk").Parse(tmpl)).Execute(writer, data)
+	err = template.Must(template.New("debugtalk").Parse(tmpl)).Execute(writer, pt)
 	if err != nil {
 		log.Error().Err(err).Msg("execute template parsing failed")
 		return err
@@ -79,28 +97,28 @@ func generate(data *pluginTemplateContent, tmpl, output string) error {
 	return err
 }
 
-// buildGo builds debugtalk.go to debugtalk.bin
-func buildGo(path string, output string) error {
-	functionNames, err := findAllFunctionNames(regexGoFunctionName, path)
+func (pt *pluginTemplate) generatePy(output string) error {
+	// specify output file path
+	if output == "" {
+		dir, _ := os.Getwd()
+		output = filepath.Join(dir, PluginPySourceGenFile)
+	} else if builtin.IsFolderPathExists(output) {
+		output = filepath.Join(output, PluginPySourceGenFile)
+	}
+
+	// generate .debugtalk_gen.py
+	err := pt.generate(pyTemplate, output)
 	if err != nil {
-		return errors.Wrap(err, "find all function names failed")
-	}
-	// filter main and init function
-	var filteredFunctionNames []string
-	for _, name := range functionNames {
-		if name == "main" || name == "init" {
-			continue
-		}
-		filteredFunctionNames = append(filteredFunctionNames, name)
+		return err
 	}
 
-	templateContent := &pluginTemplateContent{
-		Version:       version.VERSION,
-		FunctionNames: filteredFunctionNames,
-	}
+	log.Info().Str("output", output).Str("plugin", pt.path).Msg("build python plugin successfully")
+	return nil
+}
 
-	pluginDir := filepath.Dir(path)
-	err = generate(templateContent, goTemplate, filepath.Join(pluginDir, PluginGoSourceGenFile))
+func (pt *pluginTemplate) generateGo(output string) error {
+	pluginDir := filepath.Dir(pt.path)
+	err := pt.generate(goTemplate, filepath.Join(pluginDir, PluginGoSourceGenFile))
 	if err != nil {
 		return errors.Wrap(err, "generate hashicorp plugin failed")
 	}
@@ -139,12 +157,28 @@ func buildGo(path string, output string) error {
 	outputPath, _ := filepath.Abs(output)
 
 	// build go plugin to debugtalk.bin
-	cmd := exec.Command("go", "build", "-o", outputPath, PluginGoSourceGenFile, filepath.Base(path))
+	cmd := exec.Command("go", "build", "-o", outputPath, PluginGoSourceGenFile, filepath.Base(pt.path))
 	if err := builtin.ExecCommandInDir(cmd, pluginDir); err != nil {
 		return errors.Wrap(err, "go build plugin failed")
 	}
-	log.Info().Str("output", outputPath).Str("plugin", path).Msg("build go plugin successfully")
+	log.Info().Str("output", outputPath).Str("plugin", pt.path).Msg("build go plugin successfully")
 	return nil
+}
+
+// buildGo builds debugtalk.go to debugtalk.bin
+func buildGo(path string, output string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read file")
+		return errors.Wrap(err, "read file failed")
+	}
+	functionNames := regexGoFunctionName.findAllFunctionNames(string(content))
+
+	templateContent := &pluginTemplate{
+		Version:       version.VERSION,
+		FunctionNames: functionNames,
+	}
+	return templateContent.generateGo(output)
 }
 
 // buildPy completes funppy information in debugtalk.py
@@ -155,31 +189,19 @@ func buildPy(path string, output string) error {
 		return errors.Wrap(err, "python plugin syntax invalid")
 	}
 
-	functionNames, err := findAllFunctionNames(regexPyFunctionName, path)
+	content, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		log.Error().Err(err).Msg("failed to read file")
+		return errors.Wrap(err, "read file failed")
 	}
-	templateContent := &pluginTemplateContent{
+	functionNames := regexPyFunctionName.findAllFunctionNames(string(content))
+
+	templateContent := &pluginTemplate{
+		path:          path,
 		Version:       version.VERSION,
 		FunctionNames: functionNames,
 	}
-
-	// specify output file path
-	if output == "" {
-		dir, _ := os.Getwd()
-		output = filepath.Join(dir, PluginPySourceGenFile)
-	} else if builtin.IsFolderPathExists(output) {
-		output = filepath.Join(output, PluginPySourceGenFile)
-	}
-
-	// generate .debugtalk_gen.py
-	err = generate(templateContent, pyTemplate, output)
-	if err != nil {
-		return err
-	}
-
-	log.Info().Str("output", output).Str("plugin", path).Msg("build python plugin successfully")
-	return nil
+	return templateContent.generatePy(output)
 }
 
 func BuildPlugin(path string, output string) (err error) {
