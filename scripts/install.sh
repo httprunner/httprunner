@@ -135,6 +135,13 @@ function main() {
     hrp -v
     echo "$ hrp -h"
     hrp -h
+    echo
+
+    if [[ -f $HOME/.hrp/venv/bin/pip3 ]]; then
+        echoInfo "Upgrade httprunner..."
+        echo "$ $HOME/.hrp/venv/bin/pip3 install --upgrade httprunner==$version --index-url https://pypi.org/simple"
+        $HOME/.hrp/venv/bin/pip3 install --upgrade httprunner==$version --index-url https://pypi.org/simple
+    fi
 }
 
 main

@@ -58,6 +58,7 @@ type HRPRunner struct {
 	httpStatOn    bool
 	requestsLogOn bool
 	pluginLogOn   bool
+	venv          string
 	saveTests     bool
 	genHTMLReport bool
 	httpClient    *http.Client
@@ -113,6 +114,13 @@ func (r *HRPRunner) SetHTTPStatOn() *HRPRunner {
 func (r *HRPRunner) SetPluginLogOn() *HRPRunner {
 	log.Info().Msg("[init] SetPluginLogOn")
 	r.pluginLogOn = true
+	return r
+}
+
+// SetPython3Venv specifies python3 venv.
+func (r *HRPRunner) SetPython3Venv(venv string) *HRPRunner {
+	log.Info().Str("venv", venv).Msg("[init] SetPython3Venv")
+	r.venv = venv
 	return r
 }
 
@@ -235,7 +243,7 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	}
 
 	// init parser plugin
-	plugin, err := initPlugin(testcase.Config.Path, r.pluginLogOn)
+	plugin, err := initPlugin(testcase.Config.Path, r.venv, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}

@@ -9,8 +9,10 @@ import (
 	"syscall"
 
 	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -25,7 +27,7 @@ const (
 
 const projectInfoFile = "proj.json" // used for ensuring root project
 
-func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
+func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	// plugin file not found
 	if path == "" {
 		return nil, nil
@@ -34,6 +36,8 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	if err != nil {
 		return nil, nil
 	}
+
+	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
 
 	if strings.HasSuffix(pluginPath, ".py") {
 		// register funppy plugin
@@ -44,10 +48,22 @@ func initPlugin(path string, logOn bool) (plugin funplugin.IPlugin, err error) {
 			return nil, nil
 		}
 		pluginPath = genPyPluginPath
+
+		packages := []string{
+			fmt.Sprintf("funppy==%s", fungo.Version),
+		}
+		python3, err := builtin.EnsurePython3Venv(venv, packages...)
+		if err != nil {
+			log.Error().Err(err).
+				Interface("packages", packages).
+				Msg("python3 venv is not ready")
+			return nil, err
+		}
+		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
 	}
 
 	// found plugin file
-	plugin, err = funplugin.Init(pluginPath, funplugin.WithLogOn(logOn))
+	plugin, err = funplugin.Init(pluginPath, pluginOptions...)
 	if err != nil {
 		log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
 		return

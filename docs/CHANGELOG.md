@@ -1,5 +1,18 @@
 # Release History
 
+## v4.1.3 (2022-06-14)
+
+**go version**
+
+- feat #1342: support specify custom python3 venv, priority is greater than $HOME/.hrp/venv
+- feat: assert python3 package installed and version matched
+- refactor: build plugin mechanism, cancel automatic installation of dependencies
+- fix #1352: avoid conversion to exponential notation
+
+**python version**
+
+- fix: unexpected changes in step variables
+
 ## v4.1.2 (2022-06-09)
 
 - feat: add Dockerfile

@@ -41,6 +41,9 @@ var runCmd = &cobra.Command{
 		if pluginLogOn {
 			runner.SetPluginLogOn()
 		}
+		if venv != "" {
+			runner.SetPython3Venv(venv)
+		}
 		if proxyUrl != "" {
 			runner.SetProxyUrl(proxyUrl)
 		}
