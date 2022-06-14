@@ -49,10 +49,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		}
 		pluginPath = genPyPluginPath
 
-		// priority: specified > projectDir/.venv > $HOME/.hrp/venv
-		if venv == "" && builtin.IsFolderPathExists(filepath.Join(filepath.Dir(pluginPath), ".venv")) {
-			venv = filepath.Join(filepath.Dir(pluginPath), ".venv")
-		}
+		// priority: specified > $HOME/.hrp/venv
 		err = builtin.PrepareVenv(venv)
 		if err != nil {
 			log.Error().Err(err).Msg("prepare python3 venv failed")

@@ -178,7 +178,7 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 		return errors.Wrap(err, "pip is not available")
 	}
 
-	log.Info().Str("package", pkg).Msg("installing python package")
+	log.Info().Str("pkgName", pkgName).Str("pkgVersion", pkgVersion).Msg("installing python package")
 
 	// install package
 	err = ExecCommand(python3, "-m", "pip", "install", "--upgrade", pkg,
