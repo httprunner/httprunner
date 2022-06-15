@@ -221,10 +221,10 @@ def make_config_chain_style(config: Dict) -> Text:
 def make_config_skip(config: Dict) -> Text:
     if "skip" in config:
         if config["skip"]:
-            config_chain_style = config["skip"]
+            config_skip = config["skip"]
         else:
-            config_chain_style = '"skip unconditionally"'
-    return config_chain_style
+            config_skip = '"skip unconditionally"'
+        return config_skip
 
 
 def make_request_chain_style(request: Dict) -> Text:
@@ -438,12 +438,11 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         "config_chain_style": make_config_chain_style(config),
         "parameters": config.get("parameters"),
         "skip": make_config_skip(config),
-        "reason": str(make_config_skip(config)),
+        "reason": make_config_skip(config),
         "teststeps_chain_style": [
             make_teststep_chain_style(step) for step in teststeps
         ],
     }
-    logger.info(make_config_skip(config))
     content = __TEMPLATE__.render(data)
 
     # ensure new file's directory exists
