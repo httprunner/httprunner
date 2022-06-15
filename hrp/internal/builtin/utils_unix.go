@@ -38,7 +38,7 @@ func ensurePython3Venv(venv string, packages ...string) (python3 string, err err
 		Msg("ensure python3 venv")
 
 	// check if python3 venv is available
-	if isPython3(python3) {
+	if !isPython3(python3) {
 		// python3 venv not available, create one
 		// check if system python3 is available
 		if err := ExecCommand("python3", "--version"); err != nil {
