@@ -8,10 +8,22 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
+
+func isPython3(python string) bool {
+	out, err := exec.Command(python, "--version").Output()
+	if err != nil {
+		return false
+	}
+	if strings.HasPrefix(string(out), "Python 3") {
+		return true
+	}
+	return false
+}
 
 func getPython3Executable(venvDir string) string {
 	return filepath.Join(venvDir, "bin", "python3")
@@ -26,7 +38,7 @@ func ensurePython3Venv(venv string, packages ...string) (python3 string, err err
 		Msg("ensure python3 venv")
 
 	// check if python3 venv is available
-	if err := exec.Command(python3, "--version").Run(); err != nil {
+	if isPython3(python3) {
 		// python3 venv not available, create one
 		// check if system python3 is available
 		if err := ExecCommand("python3", "--version"); err != nil {

@@ -14,8 +14,30 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func init() {
+	// use python instead of python3 if python3 is not available
+	if !isPython3(python3Executable) {
+		python3Executable = "python"
+	}
+}
+
+func isPython3(python string) bool {
+	out, err := exec.Command("cmd", "/c", python, "--version").Output()
+	if err != nil {
+		return false
+	}
+	if strings.HasPrefix(string(out), "Python 3") {
+		return true
+	}
+	return false
+}
+
 func getPython3Executable(venvDir string) string {
-	return filepath.Join(venvDir, "Scripts", "python3.exe")
+	python := filepath.Join(venvDir, "Scripts", "python3.exe")
+	if isPython3(python) {
+		return python
+	}
+	return filepath.Join(venvDir, "Scripts", "python.exe")
 }
 
 func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err error) {
@@ -28,11 +50,12 @@ func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 	systemPython := "python3"
 
 	// check if python3 venv is available
-	if err := exec.Command("cmd", "/c", python3, "--version").Run(); err != nil {
+	if !isPython3(python3) {
 		// python3 venv not available, create one
 		// check if system python3 is available
-		if err := ExecCommand(systemPython, "--version"); err != nil {
-			if err := ExecCommand("python", "--version"); err != nil {
+		log.Warn().Str("pythonPath", python3).Msg("python3 venv is not available, try to check system python3")
+		if !isPython3(systemPython) {
+			if !isPython3("python") {
 				return "", errors.Wrap(err, "python3 not found")
 			}
 			systemPython = "python"
