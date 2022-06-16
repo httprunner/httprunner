@@ -38,7 +38,6 @@ class DBEngine(object):
 
     def _fetch(self, query, size=-1, commit=True):
         result = self.session.execute(query)
-        # self.session.commit() if commit else 0
         if query.upper()[:6] == "SELECT":
             if size < 0:
                 al = result.fetchall()
