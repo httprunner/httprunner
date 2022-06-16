@@ -36,8 +36,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__){% for _ in range(diff_levels) %}.parent{% endfor %}))
 {% endif %}
 
-{% if parameters %}
+{% if parameters or skip %}
 import pytest
+{% endif %}
+
+{% if parameters %}
 from httprunner import Parameters
 {% endif %}
 
@@ -47,11 +50,22 @@ from httprunner import HttpRunner, Config, Step, RunRequest, RunTestCase
 {% endfor %}
 
 class {{ class_name }}(HttpRunner):
+    {% if parameters and skip %}
+    @pytest.mark.parametrize("param", Parameters({{parameters}}))
+    @pytest.mark.skip(reason={{ skip }})
+    def test_start(self, param):
+        super().test_start(param)
 
-    {% if parameters %}
+    {% elif parameters %}
     @pytest.mark.parametrize("param", Parameters({{parameters}}))
     def test_start(self, param):
         super().test_start(param)
+
+    {% elif skip %}
+    @pytest.mark.skip(reason={{ skip }})
+    def test_start(self):
+        super().test_start()
+
     {% endif %}
 
     config = {{ config_chain_style }}
@@ -202,6 +216,15 @@ def make_config_chain_style(config: Dict) -> Text:
         config_chain_style += f'.locust_weight({config["weight"]})'
 
     return config_chain_style
+
+
+def make_config_skip(config: Dict) -> Text:
+    if "skip" in config:
+        if config["skip"]:
+            config_chain_style = config["skip"]
+        else:
+            config_chain_style = '"skip unconditionally"'
+        return config_chain_style
 
 
 def make_request_chain_style(request: Dict) -> Text:
@@ -414,10 +437,12 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
         "imports_list": imports_list,
         "config_chain_style": make_config_chain_style(config),
         "parameters": config.get("parameters"),
+        "skip": make_config_skip(config),
         "teststeps_chain_style": [
             make_teststep_chain_style(step) for step in teststeps
         ],
     }
+    logger.info(make_config_skip(config))
     content = __TEMPLATE__.render(data)
 
     # ensure new file's directory exists
