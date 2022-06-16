@@ -43,7 +43,7 @@ sys.path.insert(0, str(Path(__file__){% for _ in range(diff_levels) %}.parent{% 
 {% endif %}
 
 {% if parameters or skip %}
-import pytes
+import pytest
 {% endif %}
 
 {% if parameters %}
