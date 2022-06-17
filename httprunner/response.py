@@ -56,11 +56,10 @@ def uniform_validator(validator):
         validator (dict): validator maybe in two formats:
 
             format1: this is kept for compatibility with the previous versions.
-                {"check": "status_code", "comparator": "eq", "expect": 201}
-                {"check": "$resp_body_success", "comparator": "eq", "expect": True}
-            format2: recommended new version, {assert: [check_item, expected_value]}
-                {'eq': ['status_code', 201]}
-                {'eq': ['$resp_body_success', True]}
+                {"check": "status_code", "comparator": "eq", "expect": 201, "message": "test"}
+                {"check": "status_code", "assert": "eq", "expect": 201, "msg": "test"}
+            format2: recommended new version, {assert: [check_item, expected_value, msg]}
+                {'eq': ['status_code', 201, "test"]}
 
     Returns
         dict: validator info
@@ -68,7 +67,8 @@ def uniform_validator(validator):
             {
                 "check": "status_code",
                 "expect": 201,
-                "assert": "equals"
+                "assert": "equal",
+                "message": "test
             }
 
     """
@@ -79,8 +79,16 @@ def uniform_validator(validator):
         # format1
         check_item = validator["check"]
         expect_value = validator["expect"]
-        message = validator.get("message", "")
-        comparator = validator.get("comparator", "eq")
+
+        if "assert" in validator:
+            comparator = validator.get("assert")
+        else:
+            comparator = validator.get("comparator", "eq")
+
+        if "msg" in validator:
+            message = validator.get("msg")
+        else:
+            message = validator.get("message", "")
 
     elif len(validator) == 1:
         # format2
