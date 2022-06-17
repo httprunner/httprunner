@@ -9,7 +9,8 @@ from examples.postman_echo.request_methods.request_with_functions_test import (
 
 class TestRunTestCase(unittest.TestCase):
     def setUp(self):
-        self.runner = HttpRunner()
+        self.runner = TestCaseRequestWithFunctions()
+        self.runner.test_start()
 
     def test_run_testcase_by_path(self):
 
