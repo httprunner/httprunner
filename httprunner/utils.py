@@ -323,7 +323,11 @@ def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
 LOGGER_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level}</level> | <level>{message}</level>"
 
 
-def init_logger():
+def init_logger(level: str):
+    level = level.upper()
+    if level not in ["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+        level = "INFO"  # default
+
     # set log level to INFO
     logger.remove()
-    logger.add(sys.stderr, format=LOGGER_FORMAT, level="INFO")
+    logger.add(sys.stdout, format=LOGGER_FORMAT, level=level)

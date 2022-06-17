@@ -14,7 +14,7 @@
 **python version**
 
 - feat: support skip for pytest
-- feat: print request and response details when running API cases
+- feat: print request and response details in DEBUG level when running API cases
 - fix: support None/dict/list format when printing sql response
 
 ## v4.1.3 (2022-06-14)
