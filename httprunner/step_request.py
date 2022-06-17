@@ -1,7 +1,8 @@
-import copy
+import json
 import time
 from typing import Any, Dict, List, Text, Union
 
+import requests
 from loguru import logger
 
 from httprunner import utils
@@ -18,7 +19,7 @@ from httprunner.models import (
 )
 from httprunner.parser import build_url
 from httprunner.response import ResponseObject
-from httprunner.runner import HttpRunner, USE_ALLURE
+from httprunner.runner import USE_ALLURE, HttpRunner
 
 
 def call_hooks(
@@ -66,6 +67,16 @@ def call_hooks(
             logger.error(f"Invalid hook format: {hook}")
 
 
+def pretty_format(v) -> str:
+    if isinstance(v, dict):
+        return json.dumps(v, indent=4, ensure_ascii=False)
+
+    if isinstance(v, requests.structures.CaseInsensitiveDict):
+        return json.dumps(dict(v.items()), indent=4, ensure_ascii=False)
+
+    return repr(utils.omit_long_data(v))
+
+
 def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
     step_result = StepResult(
@@ -104,39 +115,46 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     request_print = "====== request details ======\n"
     request_print += f"url: {url}\n"
     request_print += f"method: {method}\n"
-    headers = parsed_request_dict.get("headers", {})
-    request_print += f"headers: {headers}\n"
     for k, v in parsed_request_dict.items():
-        v = utils.omit_long_data(v)
-        request_print += f"{k}: {repr(v)}\n"
-    request_print += "\n"
+        request_print += f"{k}: {pretty_format(v)}\n"
 
-    # request
+    print(request_print)
     if USE_ALLURE:
         import allure
-        allure.attach(request_print, name="request details", attachment_type=allure.attachment_type.TEXT)
+
+        allure.attach(
+            request_print,
+            name="request details",
+            attachment_type=allure.attachment_type.TEXT,
+        )
     resp = runner.session.request(method, url, **parsed_request_dict)
 
     # log response
     response_print = "====== response details ======\n"
     response_print += f"status_code: {resp.status_code}\n"
-    response_print += f"headers: {resp.headers}\n"
-    response_print += f"body: {repr(resp.text)}\n"
+    response_print += f"headers: {pretty_format(resp.headers)}\n"
 
+    try:
+        resp_body = resp.json()
+    except requests.exceptions.JSONDecodeError:
+        resp_body = resp.content
+
+    response_print += f"body: {pretty_format(resp_body)}\n"
+    print(response_print)
     if USE_ALLURE:
         import allure
-        allure.attach(response_print, name="response details", attachment_type=allure.attachment_type.TEXT)
+
+        allure.attach(
+            response_print,
+            name="response details",
+            attachment_type=allure.attachment_type.TEXT,
+        )
     resp_obj = ResponseObject(resp, runner.parser)
     step_variables["response"] = resp_obj
 
     # teardown hooks
     if step.teardown_hooks:
         call_hooks(runner, step.teardown_hooks, step_variables, "teardown request")
-
-    def log_req_resp_details():
-        err_msg = "\n{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
-        err_msg += request_print + response_print
-        logger.error(err_msg)
 
     # extract
     extractors = step.extract
@@ -152,7 +170,6 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         resp_obj.validate(validators, variables_mapping)
         step_result.success = True
     except ValidationFailure:
-        log_req_resp_details()
         raise
     finally:
         session_data = runner.session.data
