@@ -56,8 +56,6 @@ def main_run(extra_args) -> enum.IntEnum:
 
 def main():
     """API test: parse command line options and run commands."""
-    init_logger()
-
     parser = argparse.ArgumentParser(description=__description__)
     parser.add_argument(
         "-V", "--version", dest="version", action="store_true", help="show version"
@@ -102,6 +100,19 @@ def main():
     if args.version:
         print(f"{__version__}")
         sys.exit(0)
+
+    # set log level
+    try:
+        index = extra_args.index("--log-level")
+        if index < len(extra_args) - 1:
+            level = extra_args[index + 1]
+        else:
+            # not specify log level value
+            level = "INFO"  # default
+    except ValueError:
+        level = "INFO"  # default
+
+    init_logger(level)
 
     if sys.argv[1] == "run":
         sys.exit(main_run(extra_args))

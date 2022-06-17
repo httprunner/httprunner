@@ -27,7 +27,7 @@ from httprunner.models import (
     VariablesMapping,
 )
 from httprunner.parser import Parser
-from httprunner.utils import LOGGER_FORMAT, init_logger, merge_variables
+from httprunner.utils import LOGGER_FORMAT, merge_variables
 
 
 class SessionRunner(object):
@@ -54,7 +54,6 @@ class SessionRunner(object):
     __log_path: Text = ""
 
     def __init(self):
-        init_logger()
         self.__config = self.config.struct()
         self.__session_variables = self.__session_variables or {}
         self.__start_at = 0

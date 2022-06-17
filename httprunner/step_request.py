@@ -118,7 +118,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     for k, v in parsed_request_dict.items():
         request_print += f"{k}: {pretty_format(v)}\n"
 
-    logger.info(request_print)
+    logger.debug(request_print)
     if ALLURE is not None:
         ALLURE.attach(
             request_print,
@@ -138,7 +138,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         resp_body = resp.content
 
     response_print += f"body: {pretty_format(resp_body)}\n"
-    logger.info(response_print)
+    logger.debug(response_print)
     if ALLURE is not None:
         ALLURE.attach(
             response_print,
