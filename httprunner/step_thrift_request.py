@@ -3,6 +3,7 @@ import platform
 import sys
 import time
 from typing import Text, Union
+
 from loguru import logger
 
 from httprunner import utils
@@ -11,20 +12,21 @@ from httprunner.models import (
     IStep,
     ProtoType,
     StepResult,
+    TransType,
     TStep,
     TThriftRequest,
-    TransType,
 )
 from httprunner.response import ThriftResponseObject
-from httprunner.runner import HttpRunner, USE_ALLURE
+from httprunner.runner import ALLURE, HttpRunner
 from httprunner.step_request import (
-    call_hooks,
     StepRequestExtraction,
     StepRequestValidation,
+    call_hooks,
 )
 
 try:
     import thriftpy2
+
     from thrift.Thrift import TType
 
     THRIFT_READY = True
@@ -127,9 +129,12 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
         v = utils.omit_long_data(v)
         thrift_request_print += f"{k}: {repr(v)}\n"
     thrift_request_print += "\n"
-    if USE_ALLURE:
-        import allure
-        allure.attach(thrift_request_print, name="thrift request details", attachment_type=allure.attachment_type.TEXT)
+    if ALLURE is not None:
+        ALLURE.attach(
+            thrift_request_print,
+            name="thrift request details",
+            attachment_type=ALLURE.attachment_type.TEXT,
+        )
 
     # thrift request
     resp = runner.thrift_client.send_request(
@@ -143,9 +148,12 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
     for k, v in resp.items():
         v = utils.omit_long_data(v)
         thrift_response_print += f"{k}: {repr(v)}\n"
-    if USE_ALLURE:
-        import allure
-        allure.attach(thrift_request_print, name="thrift response details", attachment_type=allure.attachment_type.TEXT)
+    if ALLURE is not None:
+        ALLURE.attach(
+            thrift_request_print,
+            name="thrift response details",
+            attachment_type=ALLURE.attachment_type.TEXT,
+        )
 
     # teardown hooks
     if step.teardown_hooks:
