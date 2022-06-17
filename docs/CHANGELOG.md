@@ -1,15 +1,18 @@
 # Release History
 
-## v4.1.4 (2022-06-16)
+## v4.1.4 (2022-06-17)
 
 **go version**
 
 - feat: config pypi index url by setting environment `PYPI_INDEX_URL`
 - fix: filter commented out functions when generating plugin file
+- fix: failed to use parameters in referenced testcase
+- fix: failed to run testcase if python3 is not available on windows
 
 **python version**
 
 - feat: support skip for pytest
+- fix: support None/dict/list format when printing sql response
 
 ## v4.1.3 (2022-06-14)
 
