@@ -3,7 +3,7 @@ import unittest
 import requests
 
 from httprunner.parser import Parser
-from httprunner.response import ResponseObject
+from httprunner.response import ResponseObject, uniform_validator
 
 
 class TestResponse(unittest.TestCase):
@@ -67,3 +67,23 @@ class TestResponse(unittest.TestCase):
             ],
             variables_mapping=variables_mapping,
         )
+
+    def test_uniform_validator(self):
+        validators = [
+            {
+                "check": "status_code",
+                "comparator": "eq",
+                "expect": 201,
+                "message": "test",
+            },
+            {"check": "status_code", "assert": "eq", "expect": 201, "msg": "test"},
+            {"eq": ["status_code", 201, "test"]},
+        ]
+        expected = {
+            "check": "status_code",
+            "assert": "equal",
+            "expect": 201,
+            "message": "test",
+        }
+        for validator in validators:
+            self.assertEqual(uniform_validator(validator), expected)
