@@ -19,7 +19,7 @@ from httprunner.models import (
 )
 from httprunner.parser import build_url
 from httprunner.response import ResponseObject
-from httprunner.runner import USE_ALLURE, HttpRunner
+from httprunner.runner import ALLURE, HttpRunner
 
 
 def call_hooks(
@@ -119,13 +119,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
         request_print += f"{k}: {pretty_format(v)}\n"
 
     print(request_print)
-    if USE_ALLURE:
-        import allure
-
-        allure.attach(
+    if ALLURE is not None:
+        ALLURE.attach(
             request_print,
             name="request details",
-            attachment_type=allure.attachment_type.TEXT,
+            attachment_type=ALLURE.attachment_type.TEXT,
         )
     resp = runner.session.request(method, url, **parsed_request_dict)
 
@@ -141,13 +139,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     response_print += f"body: {pretty_format(resp_body)}\n"
     print(response_print)
-    if USE_ALLURE:
-        import allure
-
-        allure.attach(
+    if ALLURE is not None:
+        ALLURE.attach(
             response_print,
             name="response details",
-            attachment_type=allure.attachment_type.TEXT,
+            attachment_type=ALLURE.attachment_type.TEXT,
         )
     resp_obj = ResponseObject(resp, runner.parser)
     step_variables["response"] = resp_obj

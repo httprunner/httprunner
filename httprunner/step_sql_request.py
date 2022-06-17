@@ -2,15 +2,14 @@
 import sys
 import time
 from typing import Text
+
 from loguru import logger
 
 from httprunner import utils
-from httprunner.exceptions import SqlMethodNotSupport
-from httprunner.exceptions import ValidationFailure
-from httprunner.models import IStep, StepResult, TStep
-from httprunner.models import SqlMethodEnum, TSqlRequest
+from httprunner.exceptions import SqlMethodNotSupport, ValidationFailure
+from httprunner.models import IStep, SqlMethodEnum, StepResult, TSqlRequest, TStep
 from httprunner.response import SqlResponseObject
-from httprunner.runner import HttpRunner, USE_ALLURE
+from httprunner.runner import ALLURE, HttpRunner
 from httprunner.step_request import (
     StepRequestExtraction,
     StepRequestValidation,
@@ -18,8 +17,8 @@ from httprunner.step_request import (
 )
 
 try:
-    import sqlalchemy
     import pymysql
+    import sqlalchemy
 
     SQL_READY = True
 except ModuleNotFoundError:
@@ -103,13 +102,11 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     sql_request_print += "\n"
 
-    if USE_ALLURE:
-        import allure
-
-        allure.attach(
+    if ALLURE is not None:
+        ALLURE.attach(
             sql_request_print,
             name="sql request details",
-            attachment_type=allure.attachment_type.TEXT,
+            attachment_type=ALLURE.attachment_type.TEXT,
         )
     logger.info(f"Executing SQL: {parsed_request_dict['sql']}")
     if step.sql_request.method == SqlMethodEnum.FETCHONE:
@@ -147,13 +144,11 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
             sql_response_print += "-" * 34 + "\n"
     elif sql_resp is None:
         sql_response_print += "None\n"
-    if USE_ALLURE:
-        import allure
-
-        allure.attach(
+    if ALLURE is not None:
+        ALLURE.attach(
             sql_response_print,
             name="sql response details",
-            attachment_type=allure.attachment_type.TEXT,
+            attachment_type=ALLURE.attachment_type.TEXT,
         )
 
     resp_obj = SqlResponseObject(sql_resp, parser=runner.parser)

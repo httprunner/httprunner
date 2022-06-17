@@ -7,9 +7,9 @@ from typing import Dict, List, Text
 try:
     import allure
 
-    USE_ALLURE = True
+    ALLURE = allure
 except ModuleNotFoundError:
-    USE_ALLURE = False
+    ALLURE = None
 
 from loguru import logger
 
@@ -178,8 +178,8 @@ class SessionRunner(object):
         # run step
         for i in range(step.retry_times + 1):
             try:
-                if USE_ALLURE:
-                    with allure.step(f"step: {step.name()}"):
+                if ALLURE is not None:
+                    with ALLURE.step(f"step: {step.name()}"):
                         step_result: StepResult = step.run(self)
                 else:
                     step_result: StepResult = step.run(self)
@@ -209,10 +209,10 @@ class SessionRunner(object):
         self.__init()
         self.__parse_config(param)
 
-        if USE_ALLURE:
+        if ALLURE is not None:
             # update allure report meta
-            allure.dynamic.title(self.__config.name)
-            allure.dynamic.description(f"TestCase ID: {self.case_id}")
+            ALLURE.dynamic.title(self.__config.name)
+            ALLURE.dynamic.description(f"TestCase ID: {self.case_id}")
 
         logger.info(
             f"Start to run testcase: {self.__config.name}, TestCase ID: {self.case_id}"
@@ -226,11 +226,11 @@ class SessionRunner(object):
                 self.__run_step(step)
         finally:
             logger.info(f"generate testcase log: {self.__log_path}")
-            if USE_ALLURE:
-                allure.attach.file(
+            if ALLURE is not None:
+                ALLURE.attach.file(
                     self.__log_path,
                     name="all log",
-                    attachment_type=allure.attachment_type.TEXT,
+                    attachment_type=ALLURE.attachment_type.TEXT,
                 )
 
         self.__duration = time.time() - self.__start_at
