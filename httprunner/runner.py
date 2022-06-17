@@ -46,7 +46,7 @@ class SessionRunner(object):
     __export: List[Text] = []
     __step_results: List[StepResult] = []
     __session_variables: VariablesMapping = {}
-    __is_reference: bool = False
+    __is_referenced: bool = False
     # time
     __start_at: float = 0
     __duration: float = 0
@@ -58,7 +58,7 @@ class SessionRunner(object):
         self.__session_variables = self.__session_variables or {}
         self.__start_at = 0
         self.__duration = 0
-        self.__is_reference = self.__is_reference or False
+        self.__is_referenced = self.__is_referenced or False
 
         self.__project_meta = self.__project_meta or load_project_meta(
             self.__config.path
@@ -78,8 +78,8 @@ class SessionRunner(object):
     def get_config(self) -> TConfig:
         return self.__config
 
-    def set_references(self) -> "SessionRunner":
-        self.__is_reference = True
+    def set_referenced(self) -> "SessionRunner":
+        self.__is_referenced = True
         return self
 
     def with_case_id(self, case_id: Text) -> "SessionRunner":
@@ -214,7 +214,7 @@ class SessionRunner(object):
         self.__init()
         self.__parse_config(param)
 
-        if ALLURE is not None and not self.__is_reference:
+        if ALLURE is not None and not self.__is_referenced:
             # update allure report meta
             ALLURE.dynamic.title(self.__config.name)
             ALLURE.dynamic.description(f"TestCase ID: {self.case_id}")
