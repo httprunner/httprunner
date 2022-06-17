@@ -97,11 +97,11 @@ func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
 	extendWithAPI(s.step, api)
 
 	stepResult, err := runStepRequest(r, s.step)
+	stepResult.StepType = stepTypeAPI
 	if err != nil {
 		r.summary.Success = false
-		return nil, err
+		return stepResult, err
 	}
-	stepResult.StepType = stepTypeAPI
 	return stepResult, nil
 }
 
