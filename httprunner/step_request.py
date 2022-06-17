@@ -118,7 +118,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     for k, v in parsed_request_dict.items():
         request_print += f"{k}: {pretty_format(v)}\n"
 
-    print(request_print)
+    logger.info(request_print)
     if ALLURE is not None:
         ALLURE.attach(
             request_print,
@@ -134,11 +134,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     try:
         resp_body = resp.json()
-    except requests.exceptions.JSONDecodeError:
+    except (requests.exceptions.JSONDecodeError, json.decoder.JSONDecodeError):
         resp_body = resp.content
 
     response_print += f"body: {pretty_format(resp_body)}\n"
-    print(response_print)
+    logger.info(response_print)
     if ALLURE is not None:
         ALLURE.attach(
             response_print,
