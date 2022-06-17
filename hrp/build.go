@@ -194,7 +194,7 @@ func buildGo(path string, output string) error {
 func buildPy(path string, output string) error {
 	log.Info().Str("path", path).Str("output", output).Msg("start to prepare python plugin")
 	// check the syntax of debugtalk.py
-	err := builtin.ExecCommand("python3", "-m", "py_compile", path)
+	err := builtin.ExecPython3Command("py_compile", path)
 	if err != nil {
 		return errors.Wrap(err, "python plugin syntax invalid")
 	}
