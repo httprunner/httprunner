@@ -105,7 +105,12 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     if USE_ALLURE:
         import allure
-        allure.attach(sql_request_print, name="sql request details", attachment_type=allure.attachment_type.TEXT)
+
+        allure.attach(
+            sql_request_print,
+            name="sql request details",
+            attachment_type=allure.attachment_type.TEXT,
+        )
     logger.info(f"Executing SQL: {parsed_request_dict['sql']}")
     if step.sql_request.method == SqlMethodEnum.FETCHONE:
         sql_resp = runner.db_engine.fetchone(parsed_request_dict["sql"])
@@ -125,15 +130,31 @@ def run_step_sql_request(runner: HttpRunner, step: TStep) -> StepResult:
         raise SqlMethodNotSupport(
             f"step.sql_request.method {parsed_request_dict['method']} not support"
         )
+
     # log response
     sql_response_print = "====== sql response details ======\n"
-    for k, v in sql_resp.items():
-        v = utils.omit_long_data(v)
-        sql_response_print += f"{k}: {repr(v)}\n"
-
+    if isinstance(sql_resp, dict):
+        for k, v in sql_resp.items():
+            v = utils.omit_long_data(v)
+            sql_response_print += f"{k}: {repr(v)}\n"
+    elif isinstance(sql_resp, list):
+        sql_response_print += f"count: {len(sql_resp)}\n"
+        sql_response_print += "-" * 34 + "\n"
+        for el in sql_resp:
+            for k, v in el.items():
+                v = utils.omit_long_data(v)
+                sql_response_print += f"{k}: {repr(v)}\n"
+            sql_response_print += "-" * 34 + "\n"
+    elif sql_resp is None:
+        sql_response_print += "None\n"
     if USE_ALLURE:
         import allure
-        allure.attach(sql_request_print, name="sql response details", attachment_type=allure.attachment_type.TEXT)
+
+        allure.attach(
+            sql_response_print,
+            name="sql response details",
+            attachment_type=allure.attachment_type.TEXT,
+        )
 
     resp_obj = SqlResponseObject(sql_resp, parser=runner.parser)
     step_variables["sql_response"] = resp_obj

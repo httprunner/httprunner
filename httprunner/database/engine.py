@@ -13,7 +13,7 @@ class DBEngine(object):
 
         """
         engine = create_engine(db_uri)
-        self.session = sessionmaker(bind=engine)()
+        self.session = sessionmaker(bind=engine, autocommit=True)()
 
     @staticmethod
     def value_decode(row: dict):
@@ -38,11 +38,12 @@ class DBEngine(object):
 
     def _fetch(self, query, size=-1, commit=True):
         result = self.session.execute(query)
-        self.session.commit() if commit else 0
         if query.upper()[:6] == "SELECT":
             if size < 0:
                 al = result.fetchall()
                 al = [dict(el) for el in al]
+                for el in al:
+                    self.value_decode(el)
                 return al or None
             elif size == 1:
                 on = dict(result.fetchone())
@@ -51,6 +52,8 @@ class DBEngine(object):
             else:
                 mny = result.fetchmany(size)
                 mny = [dict(el) for el in mny]
+                for el in mny:
+                    self.value_decode(el)
                 return mny or None
         elif query.upper()[:6] in ("UPDATE", "DELETE", "INSERT"):
             return {"rowcount": result.rowcount}
@@ -75,4 +78,7 @@ class DBEngine(object):
 
 
 if __name__ == "__main__":
-    db = DBEngine(f"mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")
+    # db = DBEngine(f"mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")
+    db = DBEngine(f"sqlite:////Users/bytedance/HttpRunner/examples/data/sqlite.db")
+    print(db.fetchmany("select* from student", 5))
+    print(db.fetchmany("select* from student", 5))
