@@ -13,6 +13,10 @@ teststeps:
             foo1: bar1
             foo2: bar2
         headers:
+            :authority: postman-echo.com
+            :method: POST
+            :path: /get
+            :schema: https
             User-Agent: HttpRunner/3.0
     validate:
         - eq: ["status_code", 200]

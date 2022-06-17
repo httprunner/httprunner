@@ -93,10 +93,17 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     request_dict = step.request.dict()
     request_dict.pop("upload", None)
     parsed_request_dict = runner.parser.parse_data(request_dict, step_variables)
-    parsed_request_dict["headers"].setdefault(
-        "HRUN-Request-ID",
-        f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}",
-    )
+
+    request_headers = parsed_request_dict.pop("headers", {})
+    # omit pseudo header names for HTTP/1, e.g. :authority, :method, :path, :scheme
+    request_headers = {
+        key: request_headers[key] for key in request_headers if not key.startswith(":")
+    }
+    request_headers[
+        "HRUN-Request-ID"
+    ] = f"HRUN-{runner.case_id}-{str(int(time.time() * 1000))[-6:]}"
+    parsed_request_dict["headers"] = request_headers
+
     step_variables["request"] = parsed_request_dict
 
     # setup hooks
