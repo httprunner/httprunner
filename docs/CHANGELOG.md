@@ -8,6 +8,8 @@
 - fix: filter commented out functions when generating plugin file
 - fix: failed to use parameters in referenced testcase
 - fix: failed to run testcase if python3 is not available on windows
+- fix: panic occurred when running API step failed
+- fix: step name overrides referenced testcase name
 
 **python version**
 
