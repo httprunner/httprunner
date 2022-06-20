@@ -57,6 +57,7 @@ def run_step_thrift_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     step_result = StepResult(
         name=step.name,
+        step_type="thrift",
         success=False,
     )
     step_variables = runner.merge_step_variables(step.variables)

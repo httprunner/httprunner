@@ -10,7 +10,7 @@ from httprunner.step_request import call_hooks
 
 def run_step_testcase(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: referenced testcase"""
-    step_result = StepResult(name=step.name)
+    step_result = StepResult(name=step.name, step_type="testcase")
     step_variables = runner.merge_step_variables(step.variables)
     step_export = step.export
 
