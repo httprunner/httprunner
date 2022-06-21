@@ -47,7 +47,11 @@ func (path *APIPath) ToAPI() (*API, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 1. deal with request body compatibility
+	convertCompatRequestBody(api.Request)
+	// 2. deal with validators compatibility
 	err = convertCompatValidator(api.Validators)
+	// 3. deal with extract expr including hyphen
 	convertExtract(api.Extract)
 	return api, err
 }
