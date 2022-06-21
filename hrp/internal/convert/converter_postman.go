@@ -1,13 +1,8 @@
 package convert
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/url"
-	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -158,7 +153,7 @@ func (c *ConverterPostman) ToYAML() (string, error) {
 }
 
 func (c *ConverterPostman) ToGoTest() (string, error) {
-	//TODO implement me
+	// TODO implement me
 	return "", errors.New("convert from postman to gotest scripts is not supported yet")
 }
 
@@ -208,7 +203,7 @@ func (c *ConverterPostman) prepareTestSteps(casePostman *CasePostman) ([]*hrp.TS
 
 	var steps []*hrp.TStep
 	for _, item := range itemList {
-		step, err := c.prepareTestStep(&item, steps)
+		step, err := c.prepareTestStep(&item)
 		if err != nil {
 			return nil, err
 		}
@@ -234,7 +229,7 @@ func extractItemList(item TItem, itemList *[]TItem) {
 	}
 }
 
-func (c *ConverterPostman) prepareTestStep(item *TItem, steps []*hrp.TStep) (*hrp.TStep, error) {
+func (c *ConverterPostman) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 	log.Info().
 		Str("method", item.Request.Method).
 		Str("url", item.Request.URL.Raw).
@@ -265,7 +260,7 @@ func (c *ConverterPostman) prepareTestStep(item *TItem, steps []*hrp.TStep) (*hr
 	if err := step.makeRequestCookies(item); err != nil {
 		return nil, err
 	}
-	if err := step.makeRequestBody(item, steps); err != nil {
+	if err := step.makeRequestBody(item); err != nil {
 		return nil, err
 	}
 	return &step.TStep, nil
@@ -373,7 +368,7 @@ func (s *stepFromPostman) parseRequestCookiesMap(cookies string) {
 	}
 }
 
-func (s *stepFromPostman) makeRequestBody(item *TItem, steps []*hrp.TStep) error {
+func (s *stepFromPostman) makeRequestBody(item *TItem) error {
 	mode := item.Request.Body.Mode
 	if mode == "" {
 		return nil
@@ -382,7 +377,7 @@ func (s *stepFromPostman) makeRequestBody(item *TItem, steps []*hrp.TStep) error
 	case enumBodyRaw:
 		return s.makeRequestBodyRaw(item)
 	case enumBodyFormData:
-		return s.makeRequestBodyFormData(item, steps)
+		return s.makeRequestBodyFormData(item)
 	case enumBodyUrlEncoded:
 		return s.makeRequestBodyUrlEncoded(item)
 	case enumBodyFile, enumBodyGraphQL:
@@ -424,49 +419,22 @@ func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 	return
 }
 
-func (s *stepFromPostman) makeRequestBodyFormData(item *TItem, steps []*hrp.TStep) (err error) {
-	defer func() {
-		if err != nil {
-			err = errors.Wrap(err, "make request body form-data failed")
-		}
-	}()
-	payload := &bytes.Buffer{}
-	writer := multipart.NewWriter(payload)
+func (s *stepFromPostman) makeRequestBodyFormData(item *TItem) error {
+	s.Request.Upload = make(map[string]interface{})
 	for _, field := range item.Request.Body.FormData {
 		if field.Disabled {
 			continue
 		}
 		// form data could be text or file
 		if field.Type == enumFieldTypeText {
-			err = writer.WriteField(field.Key, field.Value)
-			if err != nil {
-				return
-			}
+			s.Request.Upload[field.Key] = field.Value
 		} else if field.Type == enumFieldTypeFile {
-			err = writeFormDataFile(writer, &field)
-			if err != nil {
-				return
-			}
+			s.Request.Upload[field.Key] = field.Src
+		} else {
+			return errors.Errorf("make request body form data failed: unexpect field type: %v", field.Type)
 		}
 	}
-	err = writer.Close()
-	s.Request.Body = payload.String()
-	s.Request.Headers["Content-Type"] = writer.FormDataContentType()
-	return
-}
-
-func writeFormDataFile(writer *multipart.Writer, field *TField) error {
-	file, err := os.Open(field.Src)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	formFile, err := writer.CreateFormFile(field.Key, filepath.Base(field.Src))
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(formFile, file)
-	return err
+	return nil
 }
 
 func (s *stepFromPostman) makeRequestBodyUrlEncoded(item *TItem) error {
@@ -482,7 +450,7 @@ func (s *stepFromPostman) makeRequestBodyUrlEncoded(item *TItem) error {
 	return nil
 }
 
-// TODO makeValidate from example response
+// TODO makeValidate from test scripts
 func (s *stepFromPostman) makeValidate(item *TItem) error {
 	return nil
 }
