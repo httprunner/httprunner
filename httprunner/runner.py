@@ -67,7 +67,7 @@ class SessionRunner(object):
         self.root_dir = self.root_dir or self.__project_meta.RootDir
         self.__log_path = os.path.join(self.root_dir, "logs", f"{self.case_id}.run.log")
 
-        self.__step_results.clear()
+        self.__step_results = self.__step_results or []
         self.session = self.session or HttpSession()
         self.parser = self.parser or Parser(self.__project_meta.functions)
 

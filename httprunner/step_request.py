@@ -81,6 +81,7 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     """run teststep: request"""
     step_result = StepResult(
         name=step.name,
+        step_type="request",
         success=False,
     )
     start_time = time.time()

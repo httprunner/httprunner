@@ -182,16 +182,7 @@ func (tc *TCase) MakeCompat() (err error) {
 	}()
 	for _, step := range tc.TestSteps {
 		// 1. deal with request body compatibility
-		if step.Request != nil && step.Request.Body == nil {
-			if step.Request.Json != nil {
-				step.Request.Headers["Content-Type"] = "application/json; charset=utf-8"
-				step.Request.Body = step.Request.Json
-				step.Request.Json = nil
-			} else if step.Request.Data != nil {
-				step.Request.Body = step.Request.Data
-				step.Request.Data = nil
-			}
-		}
+		convertCompatRequestBody(step.Request)
 
 		// 2. deal with validators compatibility
 		err = convertCompatValidator(step.Validators)
@@ -203,6 +194,19 @@ func (tc *TCase) MakeCompat() (err error) {
 		convertExtract(step.Extract)
 	}
 	return nil
+}
+
+func convertCompatRequestBody(request *Request) {
+	if request != nil && request.Body == nil {
+		if request.Json != nil {
+			request.Headers["Content-Type"] = "application/json; charset=utf-8"
+			request.Body = request.Json
+			request.Json = nil
+		} else if request.Data != nil {
+			request.Body = request.Data
+			request.Data = nil
+		}
+	}
 }
 
 func convertCompatValidator(Validators []interface{}) (err error) {
