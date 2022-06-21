@@ -6,6 +6,8 @@
 
 - change: set http request timeout default to 120s
 - fix: insert response cookies into request for redirect requests
+- feat: support uploading file by multipart/form-data
+- fix: failed to convert postman collection containing multipart/form-data requests to pytest
 
 ## v4.1.4 (2022-06-17)
 
