@@ -4,7 +4,7 @@
 
 **go version**
 
-- change: set http request timeout to 120s
+- change: set http request timeout default to 120s
 
 ## v4.1.4 (2022-06-17)
 

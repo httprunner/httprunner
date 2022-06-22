@@ -34,15 +34,33 @@ func TestSearchJmespath(t *testing.T) {
 }
 
 func TestSearchRegexp(t *testing.T) {
-	testText := `hrp aims to be a one-stop solution for HTTP(S) testing, covering API testing, load testing and digital experience monitoring (DEM).`
+	testText := `
+	<ul class="nav navbar-nav navbar-right">
+	<li><a href="/order/addToCart" style="color: white"><i class="fa fa-shopping-cart fa-2x"></i><span class="badge">0</span></a></li>
+	<li class="dropdown">
+	  <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="color: white">
+		Leo   <i class="fa fa-cog fa-2x"></i><span class="caret"></span></a>
+	  <ul class="dropdown-menu">
+		<li><a href="/user/changePassword">Change Password</a></li>
+		<li><a href="/user/addAddress">Shipping</a></li>
+		<li><a href="/user/addCard">Payment</a></li>
+		<li><a href="/order/orderHistory">Order History</a></li>
+		<li><a href="/user/signOut">Sign Out</a></li>
+	  </ul>
+	</li>
+
+	<li>&nbsp;&nbsp;&nbsp;</li>
+	<li><a href="/user/signOut" style="color: white"><i class="fa fa-sign-out fa-2x"></i>
+	  Sign Out</a></li>
+  </ul>
+`
 	testData := []struct {
 		raw      string
 		expected string
 	}{
-		{"covering (.*) testing,", "API"},
-		{" (.*) to", "aims"},
-		{"^(.*) aims", "hrp"},
-		{".* (.*?)$", "(DEM)."},
+		{"/user/signOut\">(.*)</a></li>", "Sign Out"},
+		{"<li><a href=\"/user/(.*)\" style", "signOut"},
+		{"		(.*)   <i class=\"fa fa-cog fa-2x\"></i>", "Leo"},
 	}
 	// new response object
 	resp := http.Response{}
