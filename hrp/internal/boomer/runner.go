@@ -256,7 +256,10 @@ func (r *runner) setTasks(t []*Task) {
 
 func (r *runner) getTask() *Task {
 	tasksCount := len(r.tasks)
-	if tasksCount == 1 {
+	if tasksCount == 0 {
+		log.Error().Msg("no valid testcase found")
+		os.Exit(1)
+	} else if tasksCount == 1 {
 		// Fast path
 		return r.tasks[0]
 	}
@@ -326,7 +329,7 @@ func (r *localRunner) start() {
 
 	// start running
 	go func() {
-		var ticker = time.NewTicker(reportStatsInterval)
+		ticker := time.NewTicker(reportStatsInterval)
 		for {
 			select {
 			// record stats
