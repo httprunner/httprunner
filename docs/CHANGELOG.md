@@ -1,5 +1,11 @@
 # Release History
 
+## v4.1.5 (2022-06-22)
+
+**go version**
+
+- change: set http request timeout to 120s
+
 ## v4.1.4 (2022-06-17)
 
 **go version**

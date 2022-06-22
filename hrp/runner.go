@@ -37,13 +37,13 @@ func NewRunner(t *testing.T) *HRPRunner {
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
-			Timeout: 30 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 		http2Client: &http.Client{
 			Transport: &http2.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
-			Timeout: 30 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 		// use default handshake timeout (no timeout limit) here, enable timeout at step level
 		wsDialer: &websocket.Dialer{
