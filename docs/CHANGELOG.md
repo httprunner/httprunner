@@ -5,6 +5,7 @@
 **go version**
 
 - change: set http request timeout default to 120s
+- fix: insert response cookies into request for redirect requests
 
 ## v4.1.4 (2022-06-17)
 

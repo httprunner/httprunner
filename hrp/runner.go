@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"path/filepath"
 	"testing"
@@ -29,6 +30,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 	if t == nil {
 		t = &testing.T{}
 	}
+	jar, _ := cookiejar.New(nil)
 	return &HRPRunner{
 		t:             t,
 		failfast:      true, // default to failfast
@@ -37,6 +39,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
+			Jar:     jar, // insert response cookies into request
 			Timeout: 120 * time.Second,
 		},
 		http2Client: &http.Client{
