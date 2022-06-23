@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -23,7 +24,10 @@ var boomCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		boomer.SetUlimit(10240) // ulimit -n 10240
-		setLogLevel("WARN")     // disable info logs for load testing
+		if !strings.EqualFold(logLevel, "DEBUG") {
+			logLevel = "WARN" // disable info logs for load testing
+		}
+		setLogLevel(logLevel)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var paths []hrp.ITestCase
