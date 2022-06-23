@@ -29,14 +29,14 @@ class ApiResponse(Response):
 def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     """get request and response info from Response() object."""
 
-    def log_print(req_or_resp, r_type):
-        msg = f"\n================== {r_type} details ==================\n"
-        for key, value in req_or_resp.dict().items():
-            if isinstance(value, dict) or isinstance(value, list):
-                value = json.dumps(value, indent=4, ensure_ascii=False)
-
-            msg += "{:<8} : {}\n".format(key, value)
-        logger.debug(msg)
+    # def log_print(req_or_resp, r_type):
+    #     msg = f"\n================== {r_type} details ==================\n"
+    #     for key, value in req_or_resp.dict().items():
+    #         if isinstance(value, dict) or isinstance(value, list):
+    #             value = json.dumps(value, indent=4, ensure_ascii=False)
+    #
+    #         msg += "{:<8} : {}\n".format(key, value)
+    #     logger.debug(msg)
 
     # record actual request info
     request_headers = dict(resp_obj.request.headers)
@@ -70,7 +70,7 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     )
 
     # log request details in debug mode
-    log_print(request_data, "request")
+    # log_print(request_data, "request")
 
     # record response info
     resp_headers = dict(resp_obj.headers)
@@ -99,7 +99,7 @@ def get_req_resp_record(resp_obj: Response) -> ReqRespData:
     )
 
     # log response details in debug mode
-    log_print(response_data, "response")
+    # log_print(response_data, "response")
 
     req_resp_data = ReqRespData(request=request_data, response=response_data)
     return req_resp_data

@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import uuid
 from datetime import datetime
@@ -27,7 +28,7 @@ from httprunner.models import (
     VariablesMapping,
 )
 from httprunner.parser import Parser
-from httprunner.utils import LOGGER_FORMAT, merge_variables
+from httprunner.utils import LOGGER_FORMAT, init_logger, merge_variables
 
 
 class SessionRunner(object):
@@ -54,6 +55,7 @@ class SessionRunner(object):
     __log_path: Text = ""
 
     def __init(self):
+        init_logger('DEBUG')
         self.__config = self.config.struct()
         self.__session_variables = self.__session_variables or {}
         self.__start_at = 0
@@ -219,11 +221,11 @@ class SessionRunner(object):
             ALLURE.dynamic.title(self.__config.name)
             ALLURE.dynamic.description(f"TestCase ID: {self.case_id}")
 
+        logger.add(self.__log_path, format=LOGGER_FORMAT, level="DEBUG")
         logger.info(
             f"Start to run testcase: {self.__config.name}, TestCase ID: {self.case_id}"
         )
 
-        logger.add(self.__log_path, format=LOGGER_FORMAT, level="DEBUG")
         self.__start_at = time.time()
         try:
             # run step in sequential order
