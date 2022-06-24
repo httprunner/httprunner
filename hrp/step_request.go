@@ -52,6 +52,7 @@ type Request struct {
 	Timeout        float32                `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 	AllowRedirects bool                   `json:"allow_redirects,omitempty" yaml:"allow_redirects,omitempty"`
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
+	Upload         map[string]interface{} `json:"upload,omitempty" yaml:"upload,omitempty"`
 }
 
 func newRequestBuilder(parser *Parser, config *TConfig, stepRequest *Request) *requestBuilder {
@@ -246,6 +247,8 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 		dataBytes = vv
 	case bytes.Buffer:
 		dataBytes = vv.Bytes()
+	case *builtin.TFormWriter:
+		dataBytes = vv.Payload.Bytes()
 	default: // unexpected body type
 		return errors.New("unexpected request body type")
 	}
@@ -254,6 +257,27 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 	r.req.ContentLength = int64(len(dataBytes))
 
 	return nil
+}
+
+func prepareUpload(parser *Parser, step *TStep) (err error) {
+	if step.Request.Upload == nil {
+		return
+	}
+	step.Request.Upload, err = parser.ParseVariables(step.Request.Upload)
+	if err != nil {
+		return
+	}
+	if step.Variables == nil {
+		step.Variables = make(map[string]interface{})
+	}
+	step.Variables["m_upload"] = step.Request.Upload
+	step.Variables["m_encoder"] = fmt.Sprintf("${multipart_encoder($m_upload)}")
+	if step.Request.Headers == nil {
+		step.Request.Headers = make(map[string]string)
+	}
+	step.Request.Headers["Content-Type"] = "${multipart_content_type($m_encoder)}"
+	step.Request.Body = "$m_encoder"
+	return
 }
 
 func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
@@ -270,6 +294,11 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 			stepResult.Attachment = err.Error()
 		}
 	}()
+
+	err = prepareUpload(r.parser, step)
+	if err != nil {
+		return
+	}
 
 	// override step variables
 	stepVariables, err := r.MergeStepVariables(step.Variables)
@@ -775,6 +804,12 @@ func (s *StepRequestWithOptionalArgs) WithCookies(cookies map[string]string) *St
 // WithBody sets HTTP request body for current step.
 func (s *StepRequestWithOptionalArgs) WithBody(body interface{}) *StepRequestWithOptionalArgs {
 	s.step.Request.Body = body
+	return s
+}
+
+// WithUpload sets HTTP request body for uploading file(s).
+func (s *StepRequestWithOptionalArgs) WithUpload(upload map[string]interface{}) *StepRequestWithOptionalArgs {
+	s.step.Request.Upload = upload
 	return s
 }
 
