@@ -1,7 +1,8 @@
+import copy
 import inspect
 from typing import Text
 
-from httprunner.models import TConfig, TConfigThrift, TConfigDB, ProtoType
+from httprunner.models import TConfig, TConfigThrift, TConfigDB, ProtoType, VariablesMapping
 
 
 class ConfigThrift(object):
@@ -89,6 +90,9 @@ class ConfigDB(object):
 class Config(object):
     def __init__(self, name: Text) -> None:
         caller_frame = inspect.stack()[1]
+        self.__name: Text = name
+        self.__base_url: Text = ""
+        self.__variables: VariablesMapping = {}
         self.__config = TConfig(name=name, path=caller_frame.filename)
 
     @property
@@ -100,11 +104,11 @@ class Config(object):
         return self.__config.path
 
     def variables(self, **variables) -> "Config":
-        self.__config.variables.update(variables)
+        self.__variables.update(variables)
         return self
 
     def base_url(self, base_url: Text) -> "Config":
-        self.__config.base_url = base_url
+        self.__base_url = base_url
         return self
 
     def verify(self, verify: bool) -> "Config":
@@ -117,10 +121,18 @@ class Config(object):
         return self
 
     def struct(self) -> TConfig:
+        self.__init()
         return self.__config
 
     def thrift(self) -> ConfigThrift:
+        self.__init()
         return ConfigThrift(self.__config)
 
     def db(self) -> ConfigDB:
+        self.__init()
         return ConfigDB(self.__config)
+
+    def __init(self) -> None:
+        self.__config.name = self.__name
+        self.__config.base_url = self.__base_url
+        self.__config.variables = copy.copy(self.__variables)
