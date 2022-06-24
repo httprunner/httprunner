@@ -1,6 +1,6 @@
 # Release History
 
-## v4.1.5 (2022-06-26)
+## v4.1.5 (2022-06-27)
 
 **go version**
 
@@ -12,6 +12,8 @@
 - fix: failed to load json/data content in api reference
 - fix: failed to convert postman collection containing multipart/form-data requests to pytest
 - fix: only get the first parameter in referenced testcase
+- fix: support variable reference during extraction
+- fix: simplify jmespath compatibility conversion
 
 **python version**
 
