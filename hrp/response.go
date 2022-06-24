@@ -123,24 +123,35 @@ type responseObject struct {
 
 const textExtractorSubRegexp string = `(.*)`
 
-func (v *responseObject) searchField(value string) interface{} {
-	var result interface{}
-	if strings.Contains(value, textExtractorSubRegexp) {
-		result = v.searchRegexp(value)
-	} else {
-		result = v.searchJmespath(value)
+func (v *responseObject) searchField(field string, variablesMapping map[string]interface{}) interface{} {
+	var result interface{} = field
+	if strings.Contains(field, "$") {
+		// parse reference variables in field before search
+		var err error
+		result, err = v.parser.Parse(field, variablesMapping)
+		if err != nil {
+			log.Error().Str("filed name", field).Err(err).Msg("fail to parse field before search")
+		}
+	}
+	// search field using jmespath or regex if parsed field is still string and contains specified fieldTags
+	if parsedField, ok := result.(string); ok && checkSearchField(parsedField) {
+		if strings.Contains(field, textExtractorSubRegexp) {
+			result = v.searchRegexp(parsedField)
+		} else {
+			result = v.searchJmespath(parsedField)
+		}
 	}
 	return result
 }
 
-func (v *responseObject) Extract(extractors map[string]string) map[string]interface{} {
+func (v *responseObject) Extract(extractors map[string]string, variablesMapping map[string]interface{}) map[string]interface{} {
 	if extractors == nil {
 		return nil
 	}
 
 	extractMapping := make(map[string]interface{})
 	for key, value := range extractors {
-		extractedValue := v.searchField(value)
+		extractedValue := v.searchField(value, variablesMapping)
 		log.Info().Str("from", value).Interface("value", extractedValue).Msg("extract value")
 		log.Info().Str("variable", key).Interface("value", extractedValue).Msg("set variable")
 		extractMapping[key] = extractedValue
@@ -157,19 +168,7 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		}
 		// parse check value
 		checkItem := validator.Check
-		var checkValue interface{}
-		if strings.Contains(checkItem, "$") {
-			// parse reference variables in checkItem
-			checkValue, err = v.parser.Parse(checkItem, variablesMapping)
-			if err != nil {
-				return err
-			}
-		} else {
-			checkValue = checkItem
-		}
-		if searchCheckValue, ok := checkValue.(string); ok && checkSearchField(searchCheckValue) {
-			checkValue = v.searchField(searchCheckValue)
-		}
+		checkValue := v.searchField(checkItem, variablesMapping)
 
 		// get assert method
 		assertMethod := validator.Assert
