@@ -143,6 +143,13 @@ func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 	return r
 }
 
+// SetTimeout configures global timeout in seconds.
+func (r *HRPRunner) SetTimeout(timeout time.Duration) *HRPRunner {
+	log.Info().Float64("timeout(seconds)", timeout.Seconds()).Msg("[init] SetTimeout")
+	r.httpClient.Timeout = timeout
+	return r
+}
+
 // SetSaveTests configures whether to save summary of tests.
 func (r *HRPRunner) SetSaveTests(saveTests bool) *HRPRunner {
 	log.Info().Bool("saveTests", saveTests).Msg("[init] SetSaveTests")
@@ -258,6 +265,12 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	// parse testcase config
 	if err := runner.parseConfig(); err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
+	}
+
+	// set testcase timeout in seconds
+	if runner.testCase.Config.Timeout != 0 {
+		timeout := time.Duration(runner.testCase.Config.Timeout*1000) * time.Millisecond
+		runner.hrpRunner.SetTimeout(timeout)
 	}
 
 	return runner, nil

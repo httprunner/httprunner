@@ -1,9 +1,10 @@
 # Release History
 
-## v4.1.5 (2022-06-22)
+## v4.1.5 (2022-06-26)
 
 **go version**
 
+- feat: support setting global testcase timeout and step timeout
 - change: set http request timeout default to 120s
 - fix: insert response cookies into request for redirect requests
 

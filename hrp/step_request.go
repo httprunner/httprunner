@@ -49,7 +49,7 @@ type Request struct {
 	Body           interface{}            `json:"body,omitempty" yaml:"body,omitempty"`
 	Json           interface{}            `json:"json,omitempty" yaml:"json,omitempty"`
 	Data           interface{}            `json:"data,omitempty" yaml:"data,omitempty"`
-	Timeout        float32                `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Timeout        float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // timeout in seconds
 	AllowRedirects bool                   `json:"allow_redirects,omitempty" yaml:"allow_redirects,omitempty"`
 	Verify         bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
 }
@@ -325,14 +325,22 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		rb.req = rb.req.WithContext(ctx)
 	}
 
+	// select HTTP client
+	var client *http.Client
+	if step.Request.HTTP2 {
+		client = r.hrpRunner.http2Client
+	} else {
+		client = r.hrpRunner.httpClient
+	}
+
+	// set step timeout
+	if step.Request.Timeout != 0 {
+		client.Timeout = time.Duration(step.Request.Timeout*1000) * time.Millisecond
+	}
+
 	// do request action
 	start := time.Now()
-	var resp *http.Response
-	if step.Request.HTTP2 {
-		resp, err = r.hrpRunner.http2Client.Do(rb.req)
-	} else {
-		resp, err = r.hrpRunner.httpClient.Do(rb.req)
-	}
+	resp, err := client.Do(rb.req)
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
 	}
@@ -726,30 +734,35 @@ type StepRequestWithOptionalArgs struct {
 
 // SetVerify sets whether to verify SSL for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetVerify(verify bool) *StepRequestWithOptionalArgs {
+	log.Info().Bool("verify", verify).Msg("set step request verify")
 	s.step.Request.Verify = verify
 	return s
 }
 
 // SetTimeout sets timeout for current HTTP request.
-func (s *StepRequestWithOptionalArgs) SetTimeout(timeout float32) *StepRequestWithOptionalArgs {
-	s.step.Request.Timeout = timeout
+func (s *StepRequestWithOptionalArgs) SetTimeout(timeout time.Duration) *StepRequestWithOptionalArgs {
+	log.Info().Float64("timeout(seconds)", timeout.Seconds()).Msg("set step request timeout")
+	s.step.Request.Timeout = timeout.Seconds()
 	return s
 }
 
 // SetProxies sets proxies for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetProxies(proxies map[string]string) *StepRequestWithOptionalArgs {
+	log.Info().Interface("proxies", proxies).Msg("set step request proxies")
 	// TODO
 	return s
 }
 
 // SetAllowRedirects sets whether to allow redirects for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *StepRequestWithOptionalArgs {
+	log.Info().Bool("allowRedirects", allowRedirects).Msg("set step request allowRedirects")
 	s.step.Request.AllowRedirects = allowRedirects
 	return s
 }
 
 // SetAuth sets auth for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetAuth(auth map[string]string) *StepRequestWithOptionalArgs {
+	log.Info().Interface("auth", auth).Msg("set step request auth")
 	// TODO
 	return s
 }
