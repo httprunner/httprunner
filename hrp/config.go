@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
@@ -28,6 +29,7 @@ type TConfig struct {
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
+	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
@@ -66,6 +68,12 @@ func (c *TConfig) WithParameters(parameters map[string]interface{}) *TConfig {
 // SetThinkTime sets think time config for current testcase.
 func (c *TConfig) SetThinkTime(strategy thinkTimeStrategy, cfg interface{}, limit float64) *TConfig {
 	c.ThinkTimeSetting = &ThinkTimeConfig{strategy, cfg, limit}
+	return c
+}
+
+// SetTimeout sets testcase timeout in seconds.
+func (c *TConfig) SetTimeout(timeout time.Duration) *TConfig {
+	c.Timeout = timeout.Seconds()
 	return c
 }
 

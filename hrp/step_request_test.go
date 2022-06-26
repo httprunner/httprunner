@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -170,5 +171,60 @@ func TestRunRequestStatOn(t *testing.T) {
 	}
 	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3)) {
 		t.Fatal()
+	}
+}
+
+func TestRunCaseWithTimeout(t *testing.T) {
+	r := NewRunner(t)
+
+	// global timeout
+	testcase1 := &TestCase{
+		Config: NewConfig("TestCase1").
+			SetTimeout(2 * time.Second). // set global timeout to 2s
+			SetBaseURL("http://httpbin.org"),
+		TestSteps: []IStep{
+			NewStep("step1").
+				GET("/delay/1").
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+		},
+	}
+	err := r.Run(testcase1)
+	if !assert.NoError(t, err) { // assert no error
+		t.FailNow()
+	}
+
+	testcase2 := &TestCase{
+		Config: NewConfig("TestCase2").
+			SetTimeout(2 * time.Second). // set global timeout to 2s
+			SetBaseURL("http://httpbin.org"),
+		TestSteps: []IStep{
+			NewStep("step1").
+				GET("/delay/3").
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+		},
+	}
+	err = r.Run(testcase2)
+	if !assert.Error(t, err) { // assert error
+		t.FailNow()
+	}
+
+	// step timeout
+	testcase3 := &TestCase{
+		Config: NewConfig("TestCase3").
+			SetTimeout(2 * time.Second).
+			SetBaseURL("http://httpbin.org"),
+		TestSteps: []IStep{
+			NewStep("step2").
+				GET("/delay/3").
+				SetTimeout(4*time.Second). // set step timeout to 4s
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+		},
+	}
+	err = r.Run(testcase3)
+	if !assert.NoError(t, err) {
+		t.FailNow()
 	}
 }
