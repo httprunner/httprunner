@@ -4,9 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"path/filepath"
-	"reflect"
 
-	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
+// target testcase format extensions
 const (
 	suffixJSON   = ".json"
 	suffixYAML   = ".yaml"
@@ -83,15 +82,11 @@ func (outputType OutputType) String() string {
 
 // TCaseConverter holds the common properties of case converter
 type TCaseConverter struct {
-	InputPath   string
-	OutputDir   string
-	Profile     *Profile
-	InputType   InputType
-	OutputType  OutputType
-	CaseHAR     *CaseHar
-	CasePostman *CasePostman
-	CaseSwagger *spec.Swagger
-	TCase       *hrp.TCase
+	InputPath  string
+	OutputDir  string
+	InputType  InputType
+	OutputType OutputType
+	TCase      *hrp.TCase
 }
 
 // Profile is used to override or update(create if not existed) original headers and cookies
@@ -101,102 +96,64 @@ type Profile struct {
 	Cookies  map[string]string `json:"cookies" yaml:"cookies"`
 }
 
-func NewTCaseConverter(path string) (tCaseConverter *TCaseConverter) {
-	tCaseConverter = &TCaseConverter{
-		InputPath: path,
-		InputType: InputTypeUnknown,
-	}
+// LoadTCase loads source file and convert to TCase type
+func LoadTCase(path string) (*hrp.TCase, error) {
 	extName := filepath.Ext(path)
 	if extName == "" {
-		log.Warn().Msg("extension name should be specified")
-		return
+		return nil, errors.New("file extension is not specified")
 	}
-	var err error
 	switch extName {
 	case ".har":
-		caseHAR := new(CaseHar)
-		err = builtin.LoadFile(path, caseHAR)
-		if err == nil && !reflect.ValueOf(*caseHAR).IsZero() {
-			tCaseConverter.InputType = InputTypeHAR
-			tCaseConverter.CaseHAR = caseHAR
+		tCase, err := LoadHARCase(path)
+		if err != nil {
+			return nil, err
 		}
+		return tCase, nil
 	case ".json":
-		tCase := new(hrp.TCase)
-		err = builtin.LoadFile(path, tCase)
-		if err == nil && !reflect.ValueOf(*tCase).IsZero() {
-			tCaseConverter.InputType = InputTypeJSON
-			tCaseConverter.TCase = tCase
-			break
+		// priority: hrp JSON case > postman > swagger
+		// check if hrp JSON case
+		tCase, err := LoadJSONCase(path)
+		if err == nil {
+			return tCase, nil
 		}
-		casePostman := new(CasePostman)
-		err = builtin.LoadFile(path, casePostman)
-		// deal with postman field name conflict with swagger
-		descriptionBackup := casePostman.Info.Description
-		casePostman.Info.Description = ""
-		if err == nil && !reflect.ValueOf(*casePostman).IsZero() {
-			tCaseConverter.InputType = InputTypePostman
-			casePostman.Info.Description = descriptionBackup
-			tCaseConverter.CasePostman = casePostman
-			break
+
+		// check if postman format
+		casePostman, err := LoadPostmanCase(path)
+		if err == nil {
+			return casePostman, nil
 		}
-		caseSwagger := new(spec.Swagger)
-		err = builtin.LoadFile(path, caseSwagger)
-		if err == nil && !reflect.ValueOf(*caseSwagger).IsZero() {
-			tCaseConverter.InputType = InputTypeSwagger
-			tCaseConverter.CaseSwagger = caseSwagger
+
+		// check if swagger format
+		caseSwagger, err := LoadSwaggerCase(path)
+		if err == nil {
+			return caseSwagger, nil
 		}
+
+		return nil, errors.New("unexpected JSON format")
 	case ".yaml", ".yml":
-		tCase := new(hrp.TCase)
-		err = builtin.LoadFile(path, tCase)
-		if err == nil && !reflect.ValueOf(*tCase).IsZero() {
-			tCaseConverter.InputType = InputTypeYAML
-			tCaseConverter.TCase = tCase
-			break
+		// priority: hrp YAML case > swagger
+		// check if hrp YAML case
+		tCase, err := NewYAMLCase(path)
+		if err == nil {
+			return tCase, nil
 		}
-		caseSwagger := new(spec.Swagger)
-		err = builtin.LoadFile(path, caseSwagger)
-		if err == nil && !reflect.ValueOf(*caseSwagger).IsZero() {
-			tCaseConverter.InputType = InputTypeSwagger
-			tCaseConverter.CaseSwagger = caseSwagger
+
+		// check if swagger format
+		caseSwagger, err := LoadSwaggerCase(path)
+		if err == nil {
+			return caseSwagger, nil
 		}
+
+		return nil, errors.New("unexpected YAML format")
 	case ".go": // TODO
-		tCaseConverter.InputType = InputTypeGoTest
+		return nil, errors.New("convert gotest is not implemented")
 	case ".py": // TODO
-		tCaseConverter.InputType = InputTypePyTest
+		return nil, errors.New("convert pytest is not implemented")
 	case ".jmx": // TODO
-		tCaseConverter.InputType = InputTypeJMeter
-	default:
-		log.Warn().
-			Str("input path", tCaseConverter.InputPath).
-			Msgf("unsupported file type: %v", extName)
+		return nil, errors.New("convert JMeter jmx is not implemented")
 	}
-	if tCaseConverter.InputType != InputTypeUnknown {
-		log.Info().
-			Str("input path", tCaseConverter.InputPath).
-			Msgf("load case as: %s", tCaseConverter.InputType.String())
-	} else {
-		log.Error().Err(err).
-			Str("input path", tCaseConverter.InputPath).
-			Msgf("failed to load case")
-	}
-	return
-}
 
-func (c *TCaseConverter) SetProfile(path string) {
-	log.Info().Str("input path", c.InputPath).Str("profile", path).Msg("set profile")
-	profile := new(Profile)
-	err := builtin.LoadFile(path, profile)
-	if err != nil {
-		log.Warn().Str("path", path).
-			Msg("failed to load profile, ignore!")
-		return
-	}
-	c.Profile = profile
-}
-
-func (c *TCaseConverter) SetOutputDir(dir string) {
-	log.Info().Str("input path", c.InputPath).Str("output directory", dir).Msg("set output directory")
-	c.OutputDir = dir
+	return nil, fmt.Errorf("unsupported file type: %v", extName)
 }
 
 func (c *TCaseConverter) genOutputPath(suffix string) string {
@@ -209,40 +166,39 @@ func (c *TCaseConverter) genOutputPath(suffix string) string {
 	// TODO avoid outFileFullName conflict?
 }
 
+// convert TCase to pytest case
 func (c *TCaseConverter) ToPyTest() (string, error) {
-	script := convertConfig(c.TCase.Config)
-	println(script)
-	return script, nil
+	args := append([]string{"make"}, c.InputPath)
+	err := builtin.ExecPython3Command("httprunner", args...)
+	if err != nil {
+		return "", err
+	}
+	return c.genOutputPath(suffixPyTest), nil
 }
 
-func convertConfig(config *hrp.TConfig) string {
-	script := fmt.Sprintf("Config('%s')", config.Name)
-
-	if config.Variables != nil {
-		script += fmt.Sprintf(".variables(**{%v})", config.Variables)
-	}
-	if config.BaseURL != "" {
-		script += fmt.Sprintf(".base_url('%s')", config.BaseURL)
-	}
-	if config.Export != nil {
-		script += fmt.Sprintf(".export(*%v)", config.Export)
-	}
-	script += fmt.Sprintf(".verify(%v)", config.Verify)
-
-	return script
-}
-
+// TODO: convert TCase to gotest case
 func (c *TCaseConverter) ToGoTest() (string, error) {
 	return "", nil
 }
 
-// ICaseConverter represents all kinds of case converters which could convert case into JSON/YAML/gotest/pytest format
-type ICaseConverter interface {
-	Struct() *TCaseConverter
-	ToJSON() (string, error)
-	ToYAML() (string, error)
-	ToGoTest() (string, error)
-	ToPyTest() (string, error)
+// convert TCase to JSON case
+func (c *TCaseConverter) ToJSON() (string, error) {
+	jsonPath := c.genOutputPath(suffixJSON)
+	err := builtin.Dump2JSON(c.TCase, jsonPath)
+	if err != nil {
+		return "", err
+	}
+	return jsonPath, nil
+}
+
+// convert TCase to YAML case
+func (c *TCaseConverter) ToYAML() (string, error) {
+	yamlPath := c.genOutputPath(suffixYAML)
+	err := builtin.Dump2YAML(c.TCase, yamlPath)
+	if err != nil {
+		return "", err
+	}
+	return yamlPath, nil
 }
 
 func Run(outputType OutputType, outputDir, profilePath string, args []string) {
@@ -252,57 +208,40 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 		Action:   fmt.Sprintf("hrp convert --to-%s", outputType.String()),
 	})
 
-	// identify input and load converters
-	var iCaseConverters []ICaseConverter
-	for _, arg := range args {
-		tCaseConverter := NewTCaseConverter(arg)
-		tCaseConverter.OutputType = outputType
-		if outputDir != "" {
-			tCaseConverter.SetOutputDir(outputDir)
-		}
-		if profilePath != "" {
-			tCaseConverter.SetProfile(profilePath)
-		}
-		switch tCaseConverter.InputType {
-		case InputTypeHAR:
-			iCaseConverters = append(iCaseConverters, NewConverterHAR(tCaseConverter))
-		case InputTypePostman:
-			iCaseConverters = append(iCaseConverters, NewConverterPostman(tCaseConverter))
-		case InputTypeJSON:
-			iCaseConverters = append(iCaseConverters, NewConverterJSON(tCaseConverter))
-		case InputTypeYAML:
-			iCaseConverters = append(iCaseConverters, NewConverterYAML(tCaseConverter))
-		case InputTypeSwagger, InputTypeJMeter, InputTypeGoTest, InputTypePyTest:
-			log.Warn().
-				Str("input path", tCaseConverter.InputPath).
-				Msg("case type not supported yet, ignore!")
-		default:
-			log.Warn().
-				Str("input path", tCaseConverter.InputPath).
-				Msg("unknown case type, ignore!")
-		}
-	}
-
-	// start converting
 	var outputFiles []string
-	var err error
-	for _, iCaseConverter := range iCaseConverters {
-		log.Info().Str("input path", iCaseConverter.Struct().InputPath).Msg("start converting")
+	for _, path := range args {
+		// loads source file in support types and convert to TCase format
+		tCase, err := LoadTCase(path)
+		if err != nil {
+			log.Warn().Err(err).Str("path", path).Msg("construct case loader failed")
+			continue
+		}
+
+		caseConverter := TCaseConverter{
+			OutputDir:  outputDir,
+			OutputType: outputType,
+			TCase:      tCase,
+		}
+
+		// override TCase with profile
+		caseConverter.overrideWithProfile(profilePath)
+
+		// convert TCase format to target case format
 		var outputFile string
-		switch iCaseConverter.Struct().OutputType {
+		switch outputType {
 		case OutputTypeYAML:
-			outputFile, err = iCaseConverter.ToYAML()
+			outputFile, err = caseConverter.ToYAML()
 		case OutputTypeGoTest:
-			outputFile, err = iCaseConverter.ToGoTest()
+			outputFile, err = caseConverter.ToGoTest()
 		case OutputTypePyTest:
-			outputFile, err = iCaseConverter.ToPyTest()
+			outputFile, err = caseConverter.ToPyTest()
 		default:
-			outputFile, err = iCaseConverter.ToJSON()
+			outputFile, err = caseConverter.ToJSON()
 		}
 		if err != nil {
 			log.Error().Err(err).
-				Str("input path", iCaseConverter.Struct().InputPath).
-				Msg("error occurs during converting")
+				Str("source path", path).
+				Msg("convert case failed")
 			continue
 		}
 		outputFiles = append(outputFiles, outputFile)
@@ -310,16 +249,17 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 	log.Info().Strs("output files", outputFiles).Msg("conversion completed")
 }
 
-func makeTestCaseFromJSONYAML(iCaseConverter ICaseConverter) (*hrp.TCase, error) {
-	tCase := iCaseConverter.Struct().TCase
-	if tCase == nil {
-		return nil, errors.Errorf("empty json/yaml testcase occurs")
+func (c *TCaseConverter) overrideWithProfile(path string) error {
+	log.Info().Str("path", path).Msg("load profile")
+	profile := new(Profile)
+	err := builtin.LoadFile(path, profile)
+	if err != nil {
+		log.Warn().Str("path", path).
+			Msg("failed to load profile, ignore!")
+		return err
 	}
-	profile := iCaseConverter.Struct().Profile
-	if profile == nil {
-		return tCase, nil
-	}
-	for _, step := range tCase.TestSteps {
+
+	for _, step := range c.TCase.TestSteps {
 		// override original headers and cookies
 		if profile.Override {
 			step.Request.Headers = make(map[string]string)
@@ -339,5 +279,5 @@ func makeTestCaseFromJSONYAML(iCaseConverter ICaseConverter) (*hrp.TCase, error)
 			step.Request.Cookies[k] = v
 		}
 	}
-	return tCase, nil
+	return nil
 }

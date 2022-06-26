@@ -12,30 +12,8 @@ var (
 	collectionProfilePath         = "../../../examples/data/postman/profile.yml"
 )
 
-var converterPostman = NewConverterPostman(NewTCaseConverter(collectionPath))
-
-func TestPostman2JSON(t *testing.T) {
-	jsonPath, err := converterPostman.ToJSON()
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.NotEmpty(t, jsonPath) {
-		t.Fatal()
-	}
-}
-
-func TestPostman2YAML(t *testing.T) {
-	yamlPath, err := converterPostman.ToYAML()
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.NotEmpty(t, yamlPath) {
-		t.Fatal()
-	}
-}
-
 func TestLoadCollection(t *testing.T) {
-	casePostman, err := converterPostman.load()
+	casePostman, err := loadCasePostman(collectionPath)
 	if !assert.NoError(t, err) {
 		t.Fatal(err)
 	}
@@ -45,7 +23,7 @@ func TestLoadCollection(t *testing.T) {
 }
 
 func TestMakeTestCaseFromCollection(t *testing.T) {
-	tCase, err := converterPostman.makeTestCase()
+	tCase, err := LoadPostmanCase(collectionPath)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -99,52 +77,6 @@ func TestMakeTestCaseFromCollection(t *testing.T) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, nil, tCase.TestSteps[5].Request.Body) {
-		t.Fatal()
-	}
-}
-
-func TestMakeTestCaseWithProfileOverride(t *testing.T) {
-	tCaseConverter := NewTCaseConverter(collectionPath)
-	tCaseConverter.SetProfile(collectionProfileOverridePath)
-	c := NewConverterPostman(tCaseConverter)
-	tCase, err := c.makeTestCase()
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	for _, step := range tCase.TestSteps {
-		if step.Request.Method == "GET" && !assert.Len(t, step.Request.Headers, 1) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, "all original headers will be overridden", step.Request.Headers["Header1"]) {
-			t.Fatal()
-		}
-		if !assert.Len(t, step.Request.Cookies, 1) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, "all original cookies will be overridden", step.Request.Cookies["Cookie1"]) {
-			t.Fatal()
-		}
-	}
-}
-
-func TestMakeTestCaseWithProfile(t *testing.T) {
-	tCaseConverter := NewTCaseConverter(collectionPath)
-	tCaseConverter.SetProfile(collectionProfilePath)
-	c := NewConverterPostman(tCaseConverter)
-	tCase, err := c.makeTestCase()
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	// create cookies Cookie1 indicated in profile
-	if !assert.Equal(t, "this cookie will be created or updated", tCase.TestSteps[0].Request.Cookies["Cookie1"]) {
-		t.Fatal()
-	}
-	// update header User-Agent indicated in profile
-	if !assert.Equal(t, "this header will be created or updated", tCase.TestSteps[5].Request.Headers["User-Agent"]) {
-		t.Fatal()
-	}
-	// pass header Connection which is not indicated in profile
-	if !assert.Equal(t, "close", tCase.TestSteps[5].Request.Headers["Connection"]) {
 		t.Fatal()
 	}
 }
