@@ -71,11 +71,8 @@ func TestMakeTestCaseFromCollection(t *testing.T) {
 	if !assert.Equal(t, "v1", tCase.TestSteps[0].Request.Params["k1"]) {
 		t.Fatal()
 	}
-	// check cookies (pass, postman collection doesn't contains cookies)
+	// check cookies (pass, postman collection doesn't contain cookies)
 	// check headers
-	if !assert.Contains(t, tCase.TestSteps[1].Request.Headers["Content-Type"], "multipart/form-data") {
-		t.Fatal()
-	}
 	if !assert.Equal(t, "application/x-www-form-urlencoded", tCase.TestSteps[2].Request.Headers["Content-Type"]) {
 		t.Fatal()
 	}
@@ -90,9 +87,6 @@ func TestMakeTestCaseFromCollection(t *testing.T) {
 	}
 	// check body
 	if !assert.Equal(t, nil, tCase.TestSteps[0].Request.Body) {
-		t.Fatal()
-	}
-	if !assert.NotEmpty(t, tCase.TestSteps[1].Request.Body) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, map[string]string{"k1": "v1", "k2": "v2"}, tCase.TestSteps[2].Request.Body) {
@@ -119,9 +113,6 @@ func TestMakeTestCaseWithProfileOverride(t *testing.T) {
 	}
 	for _, step := range tCase.TestSteps {
 		if step.Request.Method == "GET" && !assert.Len(t, step.Request.Headers, 1) {
-			t.Fatal()
-		}
-		if step.Request.Method == "POST" && !assert.Len(t, step.Request.Headers, 2) {
 			t.Fatal()
 		}
 		if !assert.Equal(t, "all original headers will be overridden", step.Request.Headers["Header1"]) {
