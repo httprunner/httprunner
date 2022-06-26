@@ -5,10 +5,12 @@
 **go version**
 
 - feat: support setting global testcase timeout and step timeout
+- feat: support uploading file by multipart/form-data
 - change: set http request timeout default to 120s
 - fix: insert response cookies into request for redirect requests
 - fix: support log debug level for load testing
 - fix: failed to load json/data content in api reference
+- fix: failed to convert postman collection containing multipart/form-data requests to pytest
 
 ## v4.1.4 (2022-06-17)
 

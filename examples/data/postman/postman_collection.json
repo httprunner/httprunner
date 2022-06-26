@@ -230,6 +230,16 @@
 									"value": "v3",
 									"type": "text",
 									"disabled": true
+								},
+								{
+									"key": "intro_key",
+									"type": "file",
+									"src": "intro.txt"
+								},
+								{
+									"key": "logo_key",
+									"type": "file",
+									"src": "logo.jpeg"
 								}
 							]
 						},
