@@ -112,66 +112,37 @@ var contentTypeMap = map[string]string{
 	"xml":        "application/xml",
 }
 
-func NewConverterPostman(converter *TCaseConverter) *ConverterPostman {
-	return &ConverterPostman{
-		converter: converter,
-	}
-}
-
-type ConverterPostman struct {
-	converter *TCaseConverter
-}
-
-func (c *ConverterPostman) Struct() *TCaseConverter {
-	return c.converter
-}
-
-func (c *ConverterPostman) ToJSON() (string, error) {
-	testCase, err := c.makeTestCase()
-	if err != nil {
-		return "", err
-	}
-	jsonPath := c.converter.genOutputPath(suffixJSON)
-	err = builtin.Dump2JSON(testCase, jsonPath)
-	if err != nil {
-		return "", err
-	}
-	return jsonPath, nil
-}
-
-func (c *ConverterPostman) ToYAML() (string, error) {
-	testCase, err := c.makeTestCase()
-	if err != nil {
-		return "", err
-	}
-	yamlPath := c.converter.genOutputPath(suffixYAML)
-	err = builtin.Dump2YAML(testCase, yamlPath)
-	if err != nil {
-		return "", err
-	}
-	return yamlPath, nil
-}
-
-func (c *ConverterPostman) ToGoTest() (string, error) {
-	// TODO implement me
-	return "", errors.New("convert from postman to gotest scripts is not supported yet")
-}
-
-func (c *ConverterPostman) ToPyTest() (string, error) {
-	return convertToPyTest(c)
-}
-
-func (c *ConverterPostman) makeTestCase() (*hrp.TCase, error) {
-	casePostman, err := c.load()
+func LoadPostmanCase(path string) (*hrp.TCase, error) {
+	// load postman file
+	casePostman, err := loadCasePostman(path)
 	if err != nil {
 		return nil, err
 	}
-	teststeps, err := c.prepareTestSteps(casePostman)
+
+	// convert to TCase format
+	return casePostman.ToTCase()
+}
+
+func loadCasePostman(path string) (*CasePostman, error) {
+	casePostman := new(CasePostman)
+	err := builtin.LoadFile(path, casePostman)
+	if err != nil {
+		return nil, errors.Wrap(err, "load postman file failed")
+	}
+	if reflect.ValueOf(*casePostman).IsZero() {
+		return nil, errors.New("invalid postman file")
+	}
+
+	return casePostman, nil
+}
+
+func (c *CasePostman) ToTCase() (*hrp.TCase, error) {
+	teststeps, err := c.prepareTestSteps()
 	if err != nil {
 		return nil, err
 	}
 	tCase := &hrp.TCase{
-		Config:    c.prepareConfig(casePostman),
+		Config:    c.prepareConfig(),
 		TestSteps: teststeps,
 	}
 	err = tCase.MakeCompat()
@@ -181,23 +152,15 @@ func (c *ConverterPostman) makeTestCase() (*hrp.TCase, error) {
 	return tCase, nil
 }
 
-func (c *ConverterPostman) load() (*CasePostman, error) {
-	casePostman := c.converter.CasePostman
-	if casePostman == nil {
-		return nil, errors.New("empty postman case occurs")
-	}
-	return casePostman, nil
-}
-
-func (c *ConverterPostman) prepareConfig(casePostman *CasePostman) *hrp.TConfig {
-	return hrp.NewConfig(casePostman.Info.Name).
+func (c *CasePostman) prepareConfig() *hrp.TConfig {
+	return hrp.NewConfig(c.Info.Name).
 		SetVerifySSL(false)
 }
 
-func (c *ConverterPostman) prepareTestSteps(casePostman *CasePostman) ([]*hrp.TStep, error) {
+func (c *CasePostman) prepareTestSteps() ([]*hrp.TStep, error) {
 	// recursively convert collection items into a list
 	var itemList []TItem
-	for _, item := range casePostman.Items {
+	for _, item := range c.Items {
 		extractItemList(item, &itemList)
 	}
 
@@ -229,7 +192,7 @@ func extractItemList(item TItem, itemList *[]TItem) {
 	}
 }
 
-func (c *ConverterPostman) prepareTestStep(item *TItem) (*hrp.TStep, error) {
+func (c *CasePostman) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 	log.Info().
 		Str("method", item.Request.Method).
 		Str("url", item.Request.URL.Raw).
@@ -240,7 +203,6 @@ func (c *ConverterPostman) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 			Request:    &hrp.Request{},
 			Validators: make([]interface{}, 0),
 		},
-		profile: c.converter.Profile,
 	}
 	if err := step.makeRequestName(item); err != nil {
 		return nil, err
@@ -268,7 +230,6 @@ func (c *ConverterPostman) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 
 type stepFromPostman struct {
 	hrp.TStep
-	profile *Profile
 }
 
 // makeRequestName indicates the step name the same as item name
@@ -317,18 +278,6 @@ func (s *stepFromPostman) makeRequestHeaders(item *TItem) error {
 		}
 		s.Request.Headers[field.Key] = field.Value
 	}
-
-	if s.profile == nil {
-		return nil
-	}
-	// override all headers according to the profile
-	if s.profile.Override {
-		s.Request.Headers = make(map[string]string)
-	}
-	// create or update the headers according to the profile
-	for k, v := range s.profile.Headers {
-		s.Request.Headers[k] = v
-	}
 	return nil
 }
 
@@ -340,18 +289,6 @@ func (s *stepFromPostman) makeRequestCookies(item *TItem) error {
 			continue
 		}
 		s.parseRequestCookiesMap(field.Value)
-	}
-
-	if s.profile == nil {
-		return nil
-	}
-	// override all cookies according to the profile
-	if s.profile.Override {
-		s.Request.Cookies = make(map[string]string)
-	}
-	// create or update the cookies according to the profile
-	for k, v := range s.profile.Cookies {
-		s.Request.Cookies[k] = v
 	}
 	return nil
 }
