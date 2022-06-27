@@ -52,7 +52,7 @@
                     "msg": "check status_code"
                 },
                 {
-                    "check": "body.headers.postman-token",
+                    "check": "body.headers.\"postman-token\"",
                     "assert": "equal",
                     "expect": "ea19464c-ddd4-4724-abe9-5e2b254c2723",
                     "msg": "check body.headers.postman-token"
