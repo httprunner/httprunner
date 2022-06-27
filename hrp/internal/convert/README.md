@@ -30,14 +30,18 @@ Global Flags:
 1. `--to-json / --to-yaml / --to-gotest / --to-pytest` 用于将输入转化为对应形态的测试用例，四个选项中最多只能指定一个，如果不指定则默认会将输入转化为 JSON 形态的测试用例
 2. `--output-dir` 后接测试用例的期望输出目录的路径，用于将转换生成的测试用例输出到对应的文件夹
 3. `--profile` 后接 profile 配置文件的路径，目前支持替换（不存在则会创建）或者覆盖输入的外部脚本/测试用例中的 `Headers` 和 `Cookies` 信息，profile 文件的后缀可以为 `json/yaml/yml`，下面给出两类 profile 配置文件的示例：
+
 - 根据 profile 替换指定的 `Headers` 和 `Cookies` 信息
+
 ```yaml
 headers:
   Header1: "this header will be created or updated"
 cookies:
   Cookie1: "this cookie will be created or updated"
 ```
+
 - 根据 profile 覆盖原有的 `Headers` 和 `Cookies` 信息
+
 ```yaml
 override: true
 headers:
