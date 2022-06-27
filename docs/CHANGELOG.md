@@ -18,6 +18,7 @@
 
 **python version**
 
+- fix: failed to parse variable referenced in upload
 - refactor: make pytest testcases
 
 ## v4.1.4 (2022-06-17)
