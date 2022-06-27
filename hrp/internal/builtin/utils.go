@@ -450,8 +450,8 @@ func ReadFile(path string) ([]byte, error) {
 	return file, nil
 }
 
-func GetOutputNameWithoutExtension(path string) string {
+func GetFileNameWithoutExtension(path string) string {
 	base := filepath.Base(path)
 	ext := filepath.Ext(base)
-	return base[0:len(base)-len(ext)] + "_test"
+	return base[0 : len(base)-len(ext)]
 }

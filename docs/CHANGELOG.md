@@ -14,6 +14,7 @@
 - fix: only get the first parameter in referenced testcase
 - fix: support variable reference during extraction
 - fix: simplify jmespath compatibility conversion
+- refactor: simplify testcase converter
 
 **python version**
 
