@@ -365,7 +365,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 
 		// extract variables from response
 		extractors := step.Extract
-		extractMapping := respObj.Extract(extractors)
+		extractMapping := respObj.Extract(extractors, stepVariables)
 		stepResult.ExportVars = extractMapping
 
 		// override step variables with extracted variables

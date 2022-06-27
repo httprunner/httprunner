@@ -14,7 +14,7 @@ from httprunner.utils import sort_dict_by_custom_order
 
 
 def convert_variables(
-        raw_variables: Union[Dict, Text], test_path: Text
+    raw_variables: Union[Dict, Text], test_path: Text
 ) -> Dict[Text, Any]:
     if isinstance(raw_variables, Dict):
         return raw_variables
@@ -54,24 +54,13 @@ def _convert_jmespath(raw: Text) -> Text:
     elif raw.startswith("json"):
         raw = f"body{raw[len('json'):]}"
 
-    raw_list = []
-    for item in raw.split("."):
+    raw_list = raw.split(".")
+    for i, item in enumerate(raw_list):
+        item = item.strip('"')
         if item.lower().startswith("content-") or item.lower() in ["user-agent"]:
             # add quotes for some field in white list
             # e.g. headers.Content-Type => headers."Content-Type"
-            item = item.strip('"')
-            raw_list.append(f'"{item}"')
-        elif item.isdigit():
-            # convert lst.0.name to lst[0].name
-            if len(raw_list) == 0:
-                logger.error(f"Invalid jmespath: {raw}")
-                sys.exit(1)
-
-            last_item = raw_list.pop()
-            item = f"{last_item}[{item}]"
-            raw_list.append(item)
-        else:
-            raw_list.append(item)
+            raw_list[i] = f'"{item}"'
 
     return ".".join(raw_list)
 
