@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -357,56 +358,31 @@ type TestResult struct {
 
 // ==================== model definition ends here ====================
 
-func NewConverterHAR(converter *TCaseConverter) *ConverterHAR {
-	return &ConverterHAR{
-		converter: converter,
-	}
-}
-
-type ConverterHAR struct {
-	converter *TCaseConverter
-}
-
-func (c *ConverterHAR) Struct() *TCaseConverter {
-	return c.converter
-}
-
-func (c *ConverterHAR) ToJSON() (string, error) {
-	tCase, err := c.makeTestCase()
+func LoadHARCase(path string) (*hrp.TCase, error) {
+	// load har file
+	caseHAR, err := loadCaseHAR(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	jsonPath := c.converter.genOutputPath(suffixJSON)
-	err = builtin.Dump2JSON(tCase, jsonPath)
+
+	// convert to TCase format
+	return caseHAR.ToTCase()
+}
+
+func loadCaseHAR(path string) (*CaseHar, error) {
+	caseHAR := new(CaseHar)
+	err := builtin.LoadFile(path, caseHAR)
 	if err != nil {
-		return "", err
+		return nil, errors.Wrap(err, "load har file failed")
 	}
-	return jsonPath, nil
-}
-
-func (c *ConverterHAR) ToYAML() (string, error) {
-	tCase, err := c.makeTestCase()
-	if err != nil {
-		return "", err
+	if reflect.ValueOf(*caseHAR).IsZero() {
+		return nil, errors.New("invalid har file")
 	}
-	yamlPath := c.converter.genOutputPath(suffixYAML)
-	err = builtin.Dump2YAML(tCase, yamlPath)
-	if err != nil {
-		return "", err
-	}
-	return yamlPath, nil
+	return caseHAR, nil
 }
 
-func (c *ConverterHAR) ToGoTest() (string, error) {
-	//TODO implement me
-	return "", errors.New("convert from har to gotest scripts is not supported yet")
-}
-
-func (c *ConverterHAR) ToPyTest() (string, error) {
-	return convertToPyTest(c)
-}
-
-func (c *ConverterHAR) makeTestCase() (*hrp.TCase, error) {
+// convert CaseHar to TCase format
+func (c *CaseHar) ToTCase() (*hrp.TCase, error) {
 	teststeps, err := c.prepareTestSteps()
 	if err != nil {
 		return nil, err
@@ -423,27 +399,14 @@ func (c *ConverterHAR) makeTestCase() (*hrp.TCase, error) {
 	return tCase, nil
 }
 
-func (c *ConverterHAR) load() (*CaseHar, error) {
-	har := c.converter.CaseHAR
-	if har == nil {
-		return nil, errors.New("empty har case occurs")
-	}
-	return har, nil
-}
-
-func (c *ConverterHAR) prepareConfig() *hrp.TConfig {
+func (c *CaseHar) prepareConfig() *hrp.TConfig {
 	return hrp.NewConfig("testcase description").
 		SetVerifySSL(false)
 }
 
-func (c *ConverterHAR) prepareTestSteps() ([]*hrp.TStep, error) {
-	har, err := c.load()
-	if err != nil {
-		return nil, err
-	}
-
+func (c *CaseHar) prepareTestSteps() ([]*hrp.TStep, error) {
 	var steps []*hrp.TStep
-	for _, entry := range har.Log.Entries {
+	for _, entry := range c.Log.Entries {
 		step, err := c.prepareTestStep(&entry)
 		if err != nil {
 			return nil, err
@@ -454,7 +417,7 @@ func (c *ConverterHAR) prepareTestSteps() ([]*hrp.TStep, error) {
 	return steps, nil
 }
 
-func (c *ConverterHAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
+func (c *CaseHar) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 	log.Info().
 		Str("method", entry.Request.Method).
 		Str("url", entry.Request.URL).
@@ -465,7 +428,6 @@ func (c *ConverterHAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 			Request:    &hrp.Request{},
 			Validators: make([]interface{}, 0),
 		},
-		profile: c.converter.Profile,
 	}
 	if err := step.makeRequestMethod(entry); err != nil {
 		return nil, err
@@ -493,7 +455,6 @@ func (c *ConverterHAR) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 
 type stepFromHAR struct {
 	hrp.TStep
-	profile *Profile
 }
 
 func (s *stepFromHAR) makeRequestMethod(entry *Entry) error {
@@ -525,18 +486,6 @@ func (s *stepFromHAR) makeRequestCookies(entry *Entry) error {
 	for _, cookie := range entry.Request.Cookies {
 		s.Request.Cookies[cookie.Name] = cookie.Value
 	}
-
-	if s.profile == nil {
-		return nil
-	}
-	// override all cookies according to the profile
-	if s.profile.Override {
-		s.Request.Cookies = make(map[string]string)
-	}
-	// create or update the cookies according to the profile
-	for k, v := range s.profile.Cookies {
-		s.Request.Cookies[k] = v
-	}
 	return nil
 }
 
@@ -548,18 +497,6 @@ func (s *stepFromHAR) makeRequestHeaders(entry *Entry) error {
 			continue
 		}
 		s.Request.Headers[header.Name] = header.Value
-	}
-
-	if s.profile == nil {
-		return nil
-	}
-	// override all headers according to the profile
-	if s.profile.Override {
-		s.Request.Headers = make(map[string]string)
-	}
-	// create or update the headers according to the profile
-	for k, v := range s.profile.Headers {
-		s.Request.Headers[k] = v
 	}
 	return nil
 }
