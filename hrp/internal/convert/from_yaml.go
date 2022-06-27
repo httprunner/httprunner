@@ -20,7 +20,6 @@ func NewYAMLCase(path string) (*hrp.TCase, error) {
 		return nil, errors.New("invalid yaml file")
 	}
 
-	// convert json case to TCase
 	err = caseJSON.MakeCompat()
 	if err != nil {
 		return nil, err

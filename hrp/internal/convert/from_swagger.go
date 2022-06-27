@@ -21,6 +21,6 @@ func LoadSwaggerCase(path string) (*hrp.TCase, error) {
 		return nil, errors.New("invalid swagger file")
 	}
 
-	// convert swagger to TCase
+	// TODO: convert swagger to TCase
 	return nil, nil
 }

@@ -62,14 +62,13 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 		// loads source file and convert to TCase format
 		tCase, err := LoadTCase(path)
 		if err != nil {
-			log.Warn().Err(err).Str("path", path).Msg("construct case loader failed")
+			log.Warn().Err(err).Str("path", path).Msg("convert source file failed")
 			continue
 		}
 
 		caseConverter := &TCaseConverter{
 			SourcePath: path,
 			OutputDir:  outputDir,
-			OutputType: outputType,
 			TCase:      tCase,
 		}
 
@@ -165,7 +164,6 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 type TCaseConverter struct {
 	SourcePath string
 	OutputDir  string
-	OutputType OutputType
 	TCase      *hrp.TCase
 }
 
