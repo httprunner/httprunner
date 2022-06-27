@@ -168,7 +168,7 @@ type TCaseConverter struct {
 }
 
 func (c *TCaseConverter) genOutputPath(suffix string) string {
-	outFileFullName := builtin.GetOutputNameWithoutExtension(c.SourcePath) + suffix
+	outFileFullName := builtin.GetFileNameWithoutExtension(c.SourcePath) + "_test" + suffix
 	if c.OutputDir != "" {
 		return filepath.Join(c.OutputDir, outFileFullName)
 	} else {
@@ -179,8 +179,13 @@ func (c *TCaseConverter) genOutputPath(suffix string) string {
 
 // convert TCase to pytest case
 func (c *TCaseConverter) ToPyTest() (string, error) {
-	args := append([]string{"make"}, c.SourcePath)
-	err := builtin.ExecPython3Command("httprunner", args...)
+	jsonPath, err := c.ToJSON()
+	if err != nil {
+		return "", errors.Wrap(err, "convert to JSON case failed")
+	}
+
+	args := append([]string{"make"}, jsonPath)
+	err = builtin.ExecPython3Command("httprunner", args...)
 	if err != nil {
 		return "", err
 	}
