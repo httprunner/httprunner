@@ -17,7 +17,7 @@ from httprunner.models import (
     TStep,
     VariablesMapping,
 )
-from httprunner.parser import build_url
+from httprunner.parser import build_url, parse_variables_mapping
 from httprunner.response import ResponseObject
 from httprunner.runner import ALLURE, HttpRunner
 
@@ -88,9 +88,11 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
 
     # parse
     functions = runner.parser.functions_mapping
-    prepare_upload_step(step, functions)
-    # step_variables should be defined after prepare_upload_step
     step_variables = runner.merge_step_variables(step.variables)
+    prepare_upload_step(step, step_variables, functions)
+    # parse variables
+    step_variables = parse_variables_mapping(step_variables, functions)
+
     request_dict = step.request.dict()
     request_dict.pop("upload", None)
     parsed_request_dict = runner.parser.parse_data(request_dict, step_variables)
