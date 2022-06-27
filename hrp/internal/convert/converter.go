@@ -21,43 +21,6 @@ const (
 	suffixPyTest = ".py"
 )
 
-type InputType int
-
-const (
-	InputTypeUnknown InputType = iota // default input type: unknown
-	InputTypeHAR
-	InputTypePostman
-	InputTypeSwagger
-	InputTypeJMeter
-	InputTypeJSON
-	InputTypeYAML
-	InputTypeGoTest
-	InputTypePyTest
-)
-
-func (inputType InputType) String() string {
-	switch inputType {
-	case InputTypeHAR:
-		return "har"
-	case InputTypePostman:
-		return "postman"
-	case InputTypeSwagger:
-		return "swagger"
-	case InputTypeJMeter:
-		return "jmeter"
-	case InputTypeJSON:
-		return "json testcase"
-	case InputTypeYAML:
-		return "yaml testcase"
-	case InputTypeGoTest:
-		return "gotest script"
-	case InputTypePyTest:
-		return "pytest script"
-	default:
-		return "unknown"
-	}
-}
-
 type OutputType int
 
 const (
@@ -80,20 +43,62 @@ func (outputType OutputType) String() string {
 	}
 }
 
-// TCaseConverter holds the common properties of case converter
-type TCaseConverter struct {
-	InputPath  string
-	OutputDir  string
-	InputType  InputType
-	OutputType OutputType
-	TCase      *hrp.TCase
-}
-
 // Profile is used to override or update(create if not existed) original headers and cookies
 type Profile struct {
 	Override bool              `json:"override" yaml:"override"`
 	Headers  map[string]string `json:"headers" yaml:"headers"`
 	Cookies  map[string]string `json:"cookies" yaml:"cookies"`
+}
+
+func Run(outputType OutputType, outputDir, profilePath string, args []string) {
+	// report event
+	sdk.SendEvent(sdk.EventTracking{
+		Category: "ConvertTests",
+		Action:   fmt.Sprintf("hrp convert --to-%s", outputType.String()),
+	})
+
+	var outputFiles []string
+	for _, path := range args {
+		// loads source file and convert to TCase format
+		tCase, err := LoadTCase(path)
+		if err != nil {
+			log.Warn().Err(err).Str("path", path).Msg("construct case loader failed")
+			continue
+		}
+
+		caseConverter := &TCaseConverter{
+			SourcePath: path,
+			OutputDir:  outputDir,
+			OutputType: outputType,
+			TCase:      tCase,
+		}
+
+		// override TCase with profile
+		if profilePath != "" {
+			caseConverter.overrideWithProfile(profilePath)
+		}
+
+		// convert TCase format to target case format
+		var outputFile string
+		switch outputType {
+		case OutputTypeYAML:
+			outputFile, err = caseConverter.ToYAML()
+		case OutputTypeGoTest:
+			outputFile, err = caseConverter.ToGoTest()
+		case OutputTypePyTest:
+			outputFile, err = caseConverter.ToPyTest()
+		default:
+			outputFile, err = caseConverter.ToJSON()
+		}
+		if err != nil {
+			log.Error().Err(err).
+				Str("source path", path).
+				Msg("convert case failed")
+			continue
+		}
+		outputFiles = append(outputFiles, outputFile)
+	}
+	log.Info().Strs("output files", outputFiles).Msg("conversion completed")
 }
 
 // LoadTCase loads source file and convert to TCase type
@@ -156,19 +161,27 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 	return nil, fmt.Errorf("unsupported file type: %v", extName)
 }
 
+// TCaseConverter holds the common properties of case converter
+type TCaseConverter struct {
+	SourcePath string
+	OutputDir  string
+	OutputType OutputType
+	TCase      *hrp.TCase
+}
+
 func (c *TCaseConverter) genOutputPath(suffix string) string {
-	outFileFullName := builtin.GetOutputNameWithoutExtension(c.InputPath) + suffix
+	outFileFullName := builtin.GetOutputNameWithoutExtension(c.SourcePath) + suffix
 	if c.OutputDir != "" {
 		return filepath.Join(c.OutputDir, outFileFullName)
 	} else {
-		return filepath.Join(filepath.Dir(c.InputPath), outFileFullName)
+		return filepath.Join(filepath.Dir(c.SourcePath), outFileFullName)
 	}
 	// TODO avoid outFileFullName conflict?
 }
 
 // convert TCase to pytest case
 func (c *TCaseConverter) ToPyTest() (string, error) {
-	args := append([]string{"make"}, c.InputPath)
+	args := append([]string{"make"}, c.SourcePath)
 	err := builtin.ExecPython3Command("httprunner", args...)
 	if err != nil {
 		return "", err
@@ -201,54 +214,6 @@ func (c *TCaseConverter) ToYAML() (string, error) {
 	return yamlPath, nil
 }
 
-func Run(outputType OutputType, outputDir, profilePath string, args []string) {
-	// report event
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "ConvertTests",
-		Action:   fmt.Sprintf("hrp convert --to-%s", outputType.String()),
-	})
-
-	var outputFiles []string
-	for _, path := range args {
-		// loads source file in support types and convert to TCase format
-		tCase, err := LoadTCase(path)
-		if err != nil {
-			log.Warn().Err(err).Str("path", path).Msg("construct case loader failed")
-			continue
-		}
-
-		caseConverter := TCaseConverter{
-			OutputDir:  outputDir,
-			OutputType: outputType,
-			TCase:      tCase,
-		}
-
-		// override TCase with profile
-		caseConverter.overrideWithProfile(profilePath)
-
-		// convert TCase format to target case format
-		var outputFile string
-		switch outputType {
-		case OutputTypeYAML:
-			outputFile, err = caseConverter.ToYAML()
-		case OutputTypeGoTest:
-			outputFile, err = caseConverter.ToGoTest()
-		case OutputTypePyTest:
-			outputFile, err = caseConverter.ToPyTest()
-		default:
-			outputFile, err = caseConverter.ToJSON()
-		}
-		if err != nil {
-			log.Error().Err(err).
-				Str("source path", path).
-				Msg("convert case failed")
-			continue
-		}
-		outputFiles = append(outputFiles, outputFile)
-	}
-	log.Info().Strs("output files", outputFiles).Msg("conversion completed")
-}
-
 func (c *TCaseConverter) overrideWithProfile(path string) error {
 	log.Info().Str("path", path).Msg("load profile")
 	profile := new(Profile)
@@ -259,6 +224,7 @@ func (c *TCaseConverter) overrideWithProfile(path string) error {
 		return err
 	}
 
+	log.Info().Interface("profile", profile).Msg("override with profile")
 	for _, step := range c.TCase.TestSteps {
 		// override original headers and cookies
 		if profile.Override {

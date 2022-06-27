@@ -6,11 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	collectionPath                = "../../../examples/data/postman/postman_collection.json"
-	collectionProfileOverridePath = "../../../examples/data/postman/profile_override.yml"
-	collectionProfilePath         = "../../../examples/data/postman/profile.yml"
-)
+var collectionPath = "../../../examples/data/postman/postman_collection.json"
 
 func TestLoadCollection(t *testing.T) {
 	casePostman, err := loadCasePostman(collectionPath)

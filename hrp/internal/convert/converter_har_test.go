@@ -8,11 +8,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 )
 
-var (
-	harPath                = "../../../examples/data/har/demo.har"
-	harPath2               = "../../../examples/data/har/postman-echo.har"
-	harProfileOverridePath = "../../../examples/data/har/profile_override.yml"
-)
+var harPath = "../../../examples/data/har/demo.har"
 
 var caseHar *CaseHar
 
