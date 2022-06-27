@@ -1,8 +1,6 @@
 package convert
 
 import (
-	"reflect"
-
 	"github.com/pkg/errors"
 
 	"github.com/httprunner/httprunner/v4/hrp"
@@ -16,8 +14,9 @@ func LoadJSONCase(path string) (*hrp.TCase, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "load json file failed")
 	}
-	if reflect.ValueOf(*caseJSON).IsZero() {
-		return nil, errors.New("invalid json file")
+
+	if caseJSON.TestSteps == nil {
+		return nil, errors.New("invalid json case file, missing teststeps")
 	}
 
 	err = caseJSON.MakeCompat()

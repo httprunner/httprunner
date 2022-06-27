@@ -129,8 +129,8 @@ func loadCasePostman(path string) (*CasePostman, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "load postman file failed")
 	}
-	if reflect.ValueOf(*casePostman).IsZero() {
-		return nil, errors.New("invalid postman file")
+	if casePostman.Items == nil {
+		return nil, errors.New("invalid postman case file, missing items")
 	}
 
 	return casePostman, nil

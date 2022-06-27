@@ -1,8 +1,6 @@
 package convert
 
 import (
-	"reflect"
-
 	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
 
@@ -17,8 +15,8 @@ func LoadSwaggerCase(path string) (*hrp.TCase, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "load swagger file failed")
 	}
-	if reflect.ValueOf(*caseSwagger).IsZero() {
-		return nil, errors.New("invalid swagger file")
+	if caseSwagger.Definitions == nil {
+		return nil, errors.New("invalid swagger case file, missing definitions")
 	}
 
 	// TODO: convert swagger to TCase
