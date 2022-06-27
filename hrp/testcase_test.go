@@ -210,21 +210,20 @@ func TestConvertCheckExpr(t *testing.T) {
 	}{
 		// normal check expression
 		{"a.b.c", "a.b.c"},
-		{"headers.\"Content-Type\"", "headers.\"Content-Type\""},
+		{"a.\"b-c\".d", "a.\"b-c\".d"},
+		{"a.b-c.d", "a.b-c.d"},
+		{"body.args.a[-1]", "body.args.a[-1]"},
 		// check expression using regex
 		{"covering (.*) testing,", "covering (.*) testing,"},
 		{" (.*) a-b-c", " (.*) a-b-c"},
 		// abnormal check expression
-		{"-", "\"-\""},
-		{"b-c", "\"b-c\""},
-		{"a.b-c.d", "a.\"b-c\".d"},
-		{"a-b.c-d", "\"a-b\".\"c-d\""},
-		{"\"a-b\".c-d", "\"a-b\".\"c-d\""},
 		{"headers.Content-Type", "headers.\"Content-Type\""},
-		{"body.I-am-a-Key.name", "body.\"I-am-a-Key\".name"},
+		{"headers.\"Content-Type", "headers.\"Content-Type\""},
+		{"headers.Content-Type\"", "headers.\"Content-Type\""},
+		{"headers.User-Agent", "headers.\"User-Agent\""},
 	}
 	for _, expr := range exprs {
-		if !assert.Equal(t, convertCheckExpr(expr.before), expr.after) {
+		if !assert.Equal(t, expr.after, convertJmespathExpr(expr.before)) {
 			t.Fatal()
 		}
 	}

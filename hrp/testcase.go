@@ -199,6 +199,9 @@ func (tc *TCase) MakeCompat() (err error) {
 func convertCompatRequestBody(request *Request) {
 	if request != nil && request.Body == nil {
 		if request.Json != nil {
+			if request.Headers == nil {
+				request.Headers = make(map[string]string)
+			}
 			request.Headers["Content-Type"] = "application/json; charset=utf-8"
 			request.Body = request.Json
 			request.Json = nil
@@ -228,7 +231,7 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			if iMsg, msgExisted := validatorMap["msg"]; msgExisted {
 				validator.Message = iMsg.(string)
 			}
-			validator.Check = convertCheckExpr(validator.Check)
+			validator.Check = convertJmespathExpr(validator.Check)
 			Validators[i] = validator
 			continue
 		}
@@ -246,7 +249,7 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 					validator.Message = validatorContent[2].(string)
 				}
 			}
-			validator.Check = convertCheckExpr(validator.Check)
+			validator.Check = convertJmespathExpr(validator.Check)
 			Validators[i] = validator
 			continue
 		}
@@ -258,18 +261,20 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 // convertExtract deals with extract expr including hyphen
 func convertExtract(extract map[string]string) {
 	for key, value := range extract {
-		extract[key] = convertCheckExpr(value)
+		extract[key] = convertJmespathExpr(value)
 	}
 }
 
-// convertCheckExpr deals with check expression including hyphen
-func convertCheckExpr(checkExpr string) string {
+// convertJmespathExpr deals with limited jmespath expression conversion
+func convertJmespathExpr(checkExpr string) string {
 	if strings.Contains(checkExpr, textExtractorSubRegexp) {
 		return checkExpr
 	}
 	checkItems := strings.Split(checkExpr, ".")
 	for i, checkItem := range checkItems {
-		if strings.Contains(checkItem, "-") && !strings.Contains(checkItem, "\"") {
+		checkItem = strings.Trim(checkItem, "\"")
+		lowerItem := strings.ToLower(checkItem)
+		if strings.HasPrefix(lowerItem, "content-") || lowerItem == "user-agent" {
 			checkItems[i] = fmt.Sprintf("\"%s\"", checkItem)
 		}
 	}
