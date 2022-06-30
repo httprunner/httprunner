@@ -20,7 +20,7 @@ config:
   verify: False
 
 teststeps:
-  - name: get with params
+  - name: "get with user: $username"
     variables:
       foo1: $username
       foo2: $password
