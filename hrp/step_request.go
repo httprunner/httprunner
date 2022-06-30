@@ -259,24 +259,31 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 	return nil
 }
 
-func prepareUpload(parser *Parser, step *TStep) (err error) {
-	if step.Request.Upload == nil {
-		return
-	}
-	step.Request.Upload, err = parser.ParseVariables(step.Request.Upload)
-	if err != nil {
-		return
-	}
-	if step.Variables == nil {
-		step.Variables = make(map[string]interface{})
-	}
-	step.Variables["m_upload"] = step.Request.Upload
-	step.Variables["m_encoder"] = fmt.Sprintf("${multipart_encoder($m_upload)}")
+func initUpload(step *TStep) {
 	if step.Request.Headers == nil {
 		step.Request.Headers = make(map[string]string)
 	}
 	step.Request.Headers["Content-Type"] = "${multipart_content_type($m_encoder)}"
 	step.Request.Body = "$m_encoder"
+}
+
+func prepareUpload(parser *Parser, step *TStep, stepVariables map[string]interface{}) (err error) {
+	if step.Request.Upload == nil {
+		return
+	}
+	uploadSlice := map[string]interface{}{}
+	for key, value := range step.Request.Upload {
+		uploadSlice[key], err = parser.Parse(value, stepVariables)
+		if err != nil {
+			return
+		}
+	}
+	stepVariables["m_upload"] = uploadSlice
+	mEncoder, err := parser.Parse("${multipart_encoder($m_upload)}", stepVariables)
+	if err != nil {
+		return
+	}
+	stepVariables["m_encoder"] = mEncoder
 	return
 }
 
@@ -295,13 +302,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}()
 
-	err = prepareUpload(r.parser, step)
+	// override step variables
+	stepVariables, err := r.MergeStepVariables(step.Variables)
 	if err != nil {
 		return
 	}
 
-	// override step variables
-	stepVariables, err := r.MergeStepVariables(step.Variables)
+	err = prepareUpload(r.parser, step, stepVariables)
 	if err != nil {
 		return
 	}
@@ -822,6 +829,8 @@ func (s *StepRequestWithOptionalArgs) WithBody(body interface{}) *StepRequestWit
 
 // WithUpload sets HTTP request body for uploading file(s).
 func (s *StepRequestWithOptionalArgs) WithUpload(upload map[string]interface{}) *StepRequestWithOptionalArgs {
+	// init upload
+	initUpload(s.step)
 	s.step.Request.Upload = upload
 	return s
 }
