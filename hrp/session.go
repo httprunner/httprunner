@@ -64,6 +64,19 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
+		skipIf := step.Struct().SkipIf
+		if len(skipIf) > 0 {
+			skipifK := "skip_if"
+			variables, err := r.MergeStepVariables(map[string]interface{}{skipifK: skipIf})
+			if err != nil {
+				return err
+			}
+			if v1, ok := variables[skipifK].(bool); ok && v1 {
+				log.Info().Str("step", step.Name()).
+					Str("type", string(step.Type())).Msg("run step skip")
+				return nil
+			}
+		}
 		log.Info().Str("step", step.Name()).
 			Str("type", string(step.Type())).Msg("run step start")
 
