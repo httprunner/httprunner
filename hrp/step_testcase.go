@@ -44,12 +44,19 @@ func (s *StepTestCaseWithOptionalArgs) Struct() *TStep {
 	return s.step
 }
 
-func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
-	stepResult := &StepResult{
+func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
+	stepResult = &StepResult{
 		Name:     s.step.Name,
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
+
+	defer func() {
+		// update testcase summary
+		if err != nil {
+			stepResult.Attachment = err.Error()
+		}
+	}()
 
 	stepVariables, err := r.MergeStepVariables(s.step.Variables)
 	if err != nil {
@@ -82,12 +89,10 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	start := time.Now()
 	// run referenced testcase with step variables
 	err = sessionRunner.Start(stepVariables)
-	stepResult.Elapsed = time.Since(start).Milliseconds()
-	if err != nil {
-		stepResult.Attachment = err.Error()
-		r.summary.Success = false
-		return stepResult, err
+	if err == nil {
+		stepResult.Success = true
 	}
+	stepResult.Elapsed = time.Since(start).Milliseconds()
 	summary := sessionRunner.GetSummary()
 	// update step names
 	for _, record := range summary.Records {
@@ -96,7 +101,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	stepResult.Data = summary.Records
 	// export testcase export variables
 	stepResult.ExportVars = summary.InOut.ExportVars
-	stepResult.Success = true
 
 	// merge testcase summary
 	r.summary.Records = append(r.summary.Records, summary.Records...)
@@ -104,5 +108,5 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error
 	r.summary.Stat.Successes += summary.Stat.Successes
 	r.summary.Stat.Failures += summary.Stat.Failures
 
-	return stepResult, nil
+	return stepResult, err
 }
