@@ -136,7 +136,20 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					b.Boomer.ResetStartTime()
 				})
 				stepResult, err := step.Run(sessionRunner)
+				// update step result name with parsed step name
 				stepResult.Name = stepName
+				// record requests result of the step if step type is testcase
+				if stepResult.StepType == stepTypeTestCase && stepResult.Data != nil {
+					// record requests of testcase step
+					for _, result := range stepResult.Data.([]*StepResult) {
+						if result.Success {
+							b.RecordSuccess(string(result.StepType), result.Name, result.Elapsed, result.ContentSize)
+						} else {
+							b.RecordFailure(string(result.StepType), result.Name, result.Elapsed, result.Attachment)
+						}
+					}
+				}
+				// record step failure
 				if err != nil {
 					// step failed
 					var elapsed int64
@@ -157,7 +170,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					continue
 				}
 
-				// step success
+				// record step success
 				if stepResult.StepType == stepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
