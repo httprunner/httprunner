@@ -74,6 +74,17 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			if v1, ok := variables[skipifK].(bool); ok && v1 {
 				log.Info().Str("step", step.Name()).
 					Str("type", string(step.Type())).Msg("run step skip")
+				//TODO add skip result
+				//stepResult := &StepResult{
+				//	Name:        step.Name(),
+				//	StepType:    stepTypeRequest,
+				//	Success:     false,
+				//	ContentSize: 0,
+				//}
+				//// update summary
+				//r.summary.Records = append(r.summary.Records, stepResult)
+				//r.summary.Stat.Total += 1
+				//r.summary.Stat.Skips += 1
 				continue
 			}
 		}
