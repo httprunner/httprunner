@@ -74,7 +74,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			if v1, ok := variables[skipifK].(bool); ok && v1 {
 				log.Info().Str("step", step.Name()).
 					Str("type", string(step.Type())).Msg("run step skip")
-				return nil
+				continue
 			}
 		}
 		log.Info().Str("step", step.Name()).
