@@ -1,5 +1,14 @@
 # Release History
 
+## v4.1.6 (2022-07-04)
+
+**go version**
+
+- fix: step name with parameterize mechanism
+- fix: error of concurrent map writes occurred while uploading in boom mode
+- fix: record all requests of testcase reference in boom mode
+- fix: failed to record the step of occurring error in the html report
+
 ## v4.1.5 (2022-06-27)
 
 **go version**

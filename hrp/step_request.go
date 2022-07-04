@@ -271,14 +271,11 @@ func prepareUpload(parser *Parser, step *TStep, stepVariables map[string]interfa
 	if step.Request.Upload == nil {
 		return
 	}
-	uploadSlice := map[string]interface{}{}
-	for key, value := range step.Request.Upload {
-		uploadSlice[key], err = parser.Parse(value, stepVariables)
-		if err != nil {
-			return
-		}
+	uploadMap, err := parser.Parse(step.Request.Upload, stepVariables)
+	if err != nil {
+		return
 	}
-	stepVariables["m_upload"] = uploadSlice
+	stepVariables["m_upload"] = uploadMap
 	mEncoder, err := parser.Parse("${multipart_encoder($m_upload)}", stepVariables)
 	if err != nil {
 		return
