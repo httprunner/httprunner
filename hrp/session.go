@@ -64,10 +64,17 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
-		log.Info().Str("step", step.Name()).
+		// parse step name
+		parsedName, err := r.parser.ParseString(step.Name(), r.sessionVariables)
+		if err != nil {
+			parsedName = step.Name()
+		}
+		stepName := convertString(parsedName)
+		log.Info().Str("step", stepName).
 			Str("type", string(step.Type())).Msg("run step start")
 
 		stepResult, err := step.Run(r)
+		stepResult.Name = stepName
 		if err != nil {
 			log.Error().
 				Str("step", stepResult.Name).

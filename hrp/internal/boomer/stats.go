@@ -74,12 +74,16 @@ func (s *requestStats) logTransaction(name string, success bool, responseTime in
 }
 
 func (s *requestStats) logRequest(method, name string, responseTime int64, contentLength int64) {
-	s.total.log(responseTime, contentLength)
+	if method != "testcase" {
+		s.total.log(responseTime, contentLength)
+	}
 	s.get(name, method).log(responseTime, contentLength)
 }
 
 func (s *requestStats) logError(method, name, err string) {
-	s.total.logFailures()
+	if method != "testcase" {
+		s.total.logFailures()
+	}
 	s.get(name, method).logFailures()
 
 	// store error in errors map
