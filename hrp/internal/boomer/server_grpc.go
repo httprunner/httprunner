@@ -35,10 +35,10 @@ func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_Bidirect
 	}
 	wn := &WorkerNode{messenger: srv, ID: req.NodeID, Heartbeat: 3}
 	s.clients.Store(req.NodeID, wn)
-	println(fmt.Sprintf("worker(%v) joined, current worker count: %v", req.NodeID, s.getClientsLength()))
+	log.Warn().Str("worker id", req.NodeID).Msg("worker joined")
 	<-s.disconnectedChannel()
 	s.clients.Delete(req.NodeID)
-	println(fmt.Sprintf("worker(%v) quited, current worker count: %v", req.NodeID, s.getClientsLength()))
+	log.Warn().Str("worker id", req.NodeID).Msg("worker quited")
 	return nil
 }
 
