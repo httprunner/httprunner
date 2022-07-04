@@ -26,6 +26,26 @@ const (
 	StateMissing             // missing
 )
 
+func getStateName(state int32) (stateName string) {
+	switch state {
+	case StateInit:
+		stateName = "initializing"
+	case StateSpawning:
+		stateName = "spawning"
+	case StateRunning:
+		stateName = "running"
+	case StateStopping:
+		stateName = "stopping"
+	case StateStopped:
+		stateName = "stopped"
+	case StateQuitting:
+		stateName = "quitting"
+	case StateMissing:
+		stateName = "stopped"
+	}
+	return
+}
+
 const (
 	reportStatsInterval = 3 * time.Second
 	heartbeatInterval   = 1 * time.Second
@@ -839,12 +859,13 @@ func (r *masterRunner) setExpectWorkers(expectWorkers int, expectWorkersMaxWait 
 
 func (r *masterRunner) heartbeatWorker() {
 	log.Info().Msg("heartbeatWorker, listen and record heartbeat from worker")
-	var ticker = time.NewTicker(heartbeatInterval)
+	var heartBeatTicker = time.NewTicker(heartbeatInterval)
+	var reportTicker = time.NewTicker(heartbeatLiveness)
 	for {
 		select {
 		case <-r.closeChan:
 			return
-		case <-ticker.C:
+		case <-heartBeatTicker.C:
 			r.server.clients.Range(func(key, value interface{}) bool {
 				workerInfo, ok := value.(*WorkerNode)
 				if !ok {
@@ -863,6 +884,8 @@ func (r *masterRunner) heartbeatWorker() {
 				}
 				return true
 			})
+		case <-reportTicker.C:
+			r.reportStats()
 		}
 	}
 }
@@ -889,7 +912,7 @@ func (r *masterRunner) clientListener() {
 				}
 				workerInfo.setState(StateInit)
 				if r.getState() == StateRunning {
-					println(fmt.Sprintf("worker(%s) joined, ready to rebalance the load of each worker", workerInfo.ID))
+					log.Warn().Str("worker id", workerInfo.ID).Msg("worker joined, ready to rebalance the load of each worker")
 					err := r.rebalance()
 					if err != nil {
 						log.Error().Err(err).Msg("failed to rebalance")
@@ -916,7 +939,7 @@ func (r *masterRunner) clientListener() {
 			case typeSpawningComplete:
 				workerInfo.setState(StateRunning)
 				if r.server.getWorkersLengthByState(StateRunning) == r.server.getClientsLength() {
-					println(fmt.Sprintf("all(%v) workers spawn done, setting state as running", r.server.getClientsLength()))
+					log.Warn().Msg("all workers spawn done, setting state as running")
 					r.updateState(StateRunning)
 				}
 			case typeQuit:
@@ -926,7 +949,7 @@ func (r *masterRunner) clientListener() {
 				workerInfo.setState(StateQuitting)
 				if r.isStarted() {
 					if r.server.getClientsLength() > 0 {
-						println(fmt.Sprintf("worker(%s) quited, ready to rebalance the load of each worker", workerInfo.ID))
+						log.Warn().Str("worker id", workerInfo.ID).Msg("worker quited, ready to rebalance the load of each worker")
 						err := r.rebalance()
 						if err != nil {
 							log.Error().Err(err).Msg("failed to rebalance")
@@ -1004,8 +1027,7 @@ func (r *masterRunner) start() error {
 	profile := r.profile.dispatch(int64(numWorkers))
 
 	r.server.sendChannel() <- newMessageToWorker("spawn", ProfileToBytes(profile), nil, testcase)
-	println("send spawn data to worker successful")
-	log.Info().Msg("send spawn data to worker successful")
+	log.Warn().Interface("profile", profile).Msg("send spawn data to worker successful")
 	return nil
 }
 
@@ -1017,7 +1039,7 @@ func (r *masterRunner) rebalance() error {
 	profile := r.profile.dispatch(int64(numWorkers))
 
 	r.server.sendChannel() <- newMessageToWorker("rebalance", ProfileToBytes(profile), nil, nil)
-	println("send rebalance data to worker successful")
+	log.Warn().Msg("send rebalance data to worker successful")
 	return nil
 }
 
@@ -1060,4 +1082,28 @@ func (r *masterRunner) close() {
 	r.server.wg.Wait()
 	close(r.closeChan)
 	r.server.close()
+}
+
+func (r *masterRunner) reportStats() {
+	currentTime := time.Now()
+	println()
+	println("===================== HttpRunner Master for Distributed Load Testing ===================== ")
+	println(fmt.Sprintf("Current time: %s, State: %v, Current Valid Workers: %v, Target Users: %v",
+		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getClientsLength(), r.getSpawnCount()))
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Worker ID", "State", "Current Users", "CPU Usage", "CPU Warning Emitted", "Memory Usage", "Heartbeat"})
+
+	for _, worker := range r.server.getAllWorkers() {
+		row := make([]string, 7)
+		row[0] = worker.ID
+		row[1] = fmt.Sprintf("%v", getStateName(worker.getState()))
+		row[2] = fmt.Sprintf("%v", worker.getSpawnCount())
+		row[3] = fmt.Sprintf("%v", worker.getCPUUsage())
+		row[4] = fmt.Sprintf("%v", worker.getCPUWarningEmitted())
+		row[5] = fmt.Sprintf("%v", worker.getMemoryUsage())
+		row[6] = fmt.Sprintf("%v", worker.getHeartbeat())
+		table.Append(row)
+	}
+	table.Render()
+	println()
 }

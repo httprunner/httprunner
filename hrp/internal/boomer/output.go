@@ -116,19 +116,7 @@ func (o *ConsoleOutput) OnEvent(data map[string]interface{}) {
 		return
 	}
 
-	var state string
-	switch output.State {
-	case StateInit:
-		state = "initializing"
-	case StateSpawning:
-		state = "spawning"
-	case StateRunning:
-		state = "running"
-	case StateQuitting:
-		state = "quitting"
-	case StateStopped:
-		state = "stopped"
-	}
+	state := getStateName(output.State)
 
 	currentTime := time.Now()
 	println(fmt.Sprintf("Current time: %s, Users: %d, State: %s, Total RPS: %.1f, Total Average Response Time: %.1fms, Total Fail Ratio: %.1f%%",
