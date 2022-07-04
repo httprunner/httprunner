@@ -60,13 +60,16 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	if err != nil {
 		return nil, err
 	}
-	if tc.Config == nil {
-		tc.Config = &TConfig{Name: "testcase name"}
+	if tc.TestSteps == nil {
+		return nil, errors.New("invalid testcase format, missing teststeps!")
 	}
 
 	err = tc.MakeCompat()
 	if err != nil {
 		return nil, err
+	}
+	if tc.Config == nil {
+		tc.Config = &TConfig{Name: "please input testcase name"}
 	}
 	tc.Config.Path = casePath
 
