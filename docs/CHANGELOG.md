@@ -4,10 +4,10 @@
 
 **go version**
 
-- fix: step name with parameterize mechanism
-- fix: error of concurrent map writes occurred while uploading in boom mode
-- fix: record all requests of testcase reference in boom mode
-- fix: failed to record the step of occurring error in the html report
+- fix: support parameterize for step name
+- fix: concurrent map writes error when uploading in boom mode
+- fix: record all requests of referenced testcases in boom mode
+- fix: failed to record the step error in html report
 
 ## v4.1.5 (2022-06-27)
 
