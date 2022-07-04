@@ -281,7 +281,7 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 		timeout := time.Duration(runner.testCase.Config.Timeout*1000) * time.Millisecond
 		runner.hrpRunner.SetTimeout(timeout)
 	}
-	if plugin.Path() != "" {
+	if plugin != nil {
 		pluginContent, err := builtin.ReadFile(plugin.Path())
 		if err != nil {
 			return nil, err

@@ -289,6 +289,9 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	// reset start time only once
 	once := sync.Once{}
 
+	// update session variables mutex
+	mutex := sync.Mutex{}
+
 	return &boomer.Task{
 		Name:   testcase.Config.Name,
 		Weight: testcase.Config.Weight,
@@ -299,9 +302,11 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			// init session runner
 			sessionRunner := caseRunner.newSession()
 
+			mutex.Lock()
 			if parametersIterator.HasNext() {
 				sessionRunner.updateSessionVariables(parametersIterator.Next())
 			}
+			mutex.Unlock()
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
