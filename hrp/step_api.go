@@ -117,6 +117,10 @@ func extendWithAPI(testStep *TStep, overriddenStep *API) {
 	}
 	// merge & override request
 	testStep.Request = overriddenStep.Request
+	// init upload
+	if testStep.Request.Upload != nil {
+		initUpload(testStep)
+	}
 	// merge & override variables
 	testStep.Variables = mergeVariables(testStep.Variables, overriddenStep.Variables)
 	// merge & override extractors

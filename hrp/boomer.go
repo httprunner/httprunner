@@ -125,18 +125,38 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
+				// parse step name
+				parsedName, err := sessionRunner.parser.ParseString(step.Name(), sessionRunner.sessionVariables)
+				if err != nil {
+					parsedName = step.Name()
+				}
+				stepName := convertString(parsedName)
 				// reset start time only once before step
 				once.Do(func() {
 					b.Boomer.ResetStartTime()
 				})
 				stepResult, err := step.Run(sessionRunner)
+				// update step result name with parsed step name
+				stepResult.Name = stepName
+				// record requests result of the step if step type is testcase
+				if stepResult.StepType == stepTypeTestCase && stepResult.Data != nil {
+					// record requests of testcase step
+					for _, result := range stepResult.Data.([]*StepResult) {
+						if result.Success {
+							b.RecordSuccess(string(result.StepType), result.Name, result.Elapsed, result.ContentSize)
+						} else {
+							b.RecordFailure(string(result.StepType), result.Name, result.Elapsed, result.Attachment)
+						}
+					}
+				}
+				// record step failure
 				if err != nil {
 					// step failed
 					var elapsed int64
 					if stepResult != nil {
 						elapsed = stepResult.Elapsed
 					}
-					b.RecordFailure(string(step.Type()), step.Name(), elapsed, err.Error())
+					b.RecordFailure(string(step.Type()), stepResult.Name, elapsed, err.Error())
 
 					// update flag
 					testcaseSuccess = false
@@ -150,7 +170,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					continue
 				}
 
-				// step success
+				// record step success
 				if stepResult.StepType == stepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
@@ -165,7 +185,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					// no record required
 				} else {
 					// request or testcase step
-					b.RecordSuccess(string(step.Type()), step.Name(), stepResult.Elapsed, stepResult.ContentSize)
+					b.RecordSuccess(string(step.Type()), stepResult.Name, stepResult.Elapsed, stepResult.ContentSize)
 					// update extracted variables
 					for k, v := range stepResult.ExportVars {
 						sessionRunner.sessionVariables[k] = v
