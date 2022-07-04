@@ -61,7 +61,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		return nil, err
 	}
 	if tc.Config == nil {
-		return nil, errors.New("incorrect testcase file format, expected config in file")
+		tc.Config = &TConfig{Name: "testcase name"}
 	}
 
 	err = tc.MakeCompat()
