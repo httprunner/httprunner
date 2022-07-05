@@ -378,9 +378,6 @@ func (b *Boomer) EnableGracefulQuit() {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-c
-		if b.mode == DistributedWorkerMode {
-			b.workerRunner.ignoreQuit = false
-		}
 		b.Quit()
 	}()
 }
@@ -536,6 +533,7 @@ func (b *Boomer) GetCloseChan() chan bool {
 func (b *Boomer) Quit() {
 	switch b.mode {
 	case DistributedWorkerMode:
+		b.workerRunner.stop()
 		b.workerRunner.close()
 	case DistributedMasterMode:
 		b.masterRunner.close()

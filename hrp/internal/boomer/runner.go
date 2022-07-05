@@ -620,6 +620,7 @@ func newWorkerRunner(masterHost string, masterPort int) (r *workerRunner) {
 		nodeID:     getNodeID(),
 		tasksChan:  make(chan *profileMessage, 10),
 		mutex:      sync.Mutex{},
+		ignoreQuit: false,
 	}
 	return r
 }
@@ -686,6 +687,10 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 			log.Info().Msg("Recv stop message from master, all the goroutines are stopped")
 			r.client.sendChannel() <- newGenericMessage("client_stopped", nil, r.nodeID)
 		case "quit":
+			r.stop()
+			if r.ignoreQuit {
+				break
+			}
 			r.close()
 			log.Info().Msg("Recv quit message from master, all the goroutines are stopped")
 		}
@@ -797,10 +802,6 @@ func (r *workerRunner) stop() {
 }
 
 func (r *workerRunner) close() {
-	r.stop()
-	if r.ignoreQuit {
-		return
-	}
 	// waiting report finished
 	time.Sleep(1 * time.Second)
 	close(r.closeChan)
