@@ -3,7 +3,10 @@ package convert
 import (
 	_ "embed"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -58,18 +61,18 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 	})
 
 	var outputFiles []string
-	for _, path := range args {
+	for _, inputSample := range args {
 		// loads source file and convert to TCase format
-		tCase, err := LoadTCase(path)
+		tCase, err := LoadTCase(inputSample)
 		if err != nil {
-			log.Warn().Err(err).Str("path", path).Msg("convert source file failed")
+			log.Warn().Err(err).Str("input sample", inputSample).Msg("convert input sample failed")
 			continue
 		}
 
 		caseConverter := &TCaseConverter{
-			SourcePath: path,
-			OutputDir:  outputDir,
-			TCase:      tCase,
+			InputSample: inputSample,
+			OutputDir:   outputDir,
+			TCase:       tCase,
 		}
 
 		// override TCase with profile
@@ -91,7 +94,7 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 		}
 		if err != nil {
 			log.Error().Err(err).
-				Str("source path", path).
+				Str("input sample", caseConverter.InputSample).
 				Msg("convert case failed")
 			continue
 		}
@@ -102,6 +105,14 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 
 // LoadTCase loads source file and convert to TCase type
 func LoadTCase(path string) (*hrp.TCase, error) {
+	if strings.HasPrefix(path, "curl") {
+		// 'path' contains curl command
+		curlCase, err := LoadCurlCase(path)
+		if err != nil {
+			return nil, err
+		}
+		return curlCase, nil
+	}
 	extName := filepath.Ext(path)
 	if extName == "" {
 		return nil, errors.New("file extension is not specified")
@@ -155,6 +166,12 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 		return nil, errors.New("convert pytest is not implemented")
 	case ".jmx": // TODO
 		return nil, errors.New("convert JMeter jmx is not implemented")
+	case ".txt":
+		curlCase, err := LoadCurlCase(path)
+		if err != nil {
+			return nil, err
+		}
+		return curlCase, nil
 	}
 
 	return nil, fmt.Errorf("unsupported file type: %v", extName)
@@ -162,17 +179,31 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 
 // TCaseConverter holds the common properties of case converter
 type TCaseConverter struct {
-	SourcePath string
-	OutputDir  string
-	TCase      *hrp.TCase
+	InputSample string
+	OutputDir   string
+	TCase       *hrp.TCase
 }
 
 func (c *TCaseConverter) genOutputPath(suffix string) string {
-	outFileFullName := builtin.GetFileNameWithoutExtension(c.SourcePath) + "_test" + suffix
+	var outFileFullName string
+	if curlCmd := strings.TrimSpace(c.InputSample); strings.HasPrefix(curlCmd, "curl") {
+		outFileFullName = fmt.Sprintf("curl_%v_test_%v", time.Now().Format("20060102150405"), suffix)
+		if c.OutputDir != "" {
+			return filepath.Join(c.OutputDir, outFileFullName)
+		} else {
+			curWorkDir, err := os.Getwd()
+			if err != nil {
+				log.Error().Err(err).Msg("get current working direction failed")
+				os.Exit(1)
+			}
+			return filepath.Join(curWorkDir, outFileFullName)
+		}
+	}
+	outFileFullName = builtin.GetFileNameWithoutExtension(c.InputSample) + "_test" + suffix
 	if c.OutputDir != "" {
 		return filepath.Join(c.OutputDir, outFileFullName)
 	} else {
-		return filepath.Join(filepath.Dir(c.SourcePath), outFileFullName)
+		return filepath.Join(filepath.Dir(c.InputSample), outFileFullName)
 	}
 	// TODO avoid outFileFullName conflict?
 }

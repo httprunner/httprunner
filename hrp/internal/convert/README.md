@@ -73,7 +73,7 @@ cookies:
 |  Postman  |  ✅   |  ✅   |   ❌    |   ✅    |
 |  JMeter   |  ❌   |  ❌   |   ❌    |   ❌    |
 |  Swagger  |  ❌   |  ❌   |   ❌    |   ❌    |
-|   curl    |  ❌   |  ❌   |   ❌    |   ❌    |
+|   curl    |  ✅   |  ✅   |   ❌    |   ✅    |
 | Apache ab |  ❌   |  ❌   |   ❌    |   ❌    |
 |   JSON    |  ✅   |  ✅   |   ❌    |   ✅    |
 |   YAML    |  ✅   |  ✅   |   ❌    |   ✅    |
