@@ -27,6 +27,8 @@ const (
 
 const projectInfoFile = "proj.json" // used for ensuring root project
 
+var pluginMap = map[string]funplugin.IPlugin{} // used for reusing plugin instance
+
 func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	// plugin file not found
 	if path == "" {
@@ -35,6 +37,11 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	pluginPath, err := locatePlugin(path)
 	if err != nil {
 		return nil, nil
+	}
+
+	// reuse plugin instance if it already initialized
+	if p, ok := pluginMap[pluginPath]; ok {
+		return p, nil
 	}
 
 	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
@@ -68,6 +75,9 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
 		return
 	}
+
+	// add plugin instance to plugin map
+	pluginMap[pluginPath] = plugin
 
 	// catch Interrupt and SIGTERM signals to ensure plugin quitted
 	c := make(chan os.Signal)
