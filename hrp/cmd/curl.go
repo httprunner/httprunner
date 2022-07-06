@@ -14,7 +14,7 @@ import (
 
 var runCurlCmd = &cobra.Command{
 	Use:   "curl URLs",
-	Short: "run API test with go engine using converted curl testcase",
+	Short: "run API test with go engine by curl command",
 	Args:  cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
@@ -29,7 +29,7 @@ var runCurlCmd = &cobra.Command{
 
 var boomCurlCmd = &cobra.Command{
 	Use:   "curl URLs",
-	Short: "run load test with boomer using converted curl testcase",
+	Short: "run load test with boomer by curl command",
 	Args:  cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		boomer.SetUlimit(10240) // ulimit -n 10240
@@ -46,7 +46,7 @@ var boomCurlCmd = &cobra.Command{
 
 var convertCurlCmd = &cobra.Command{
 	Use:   "curl URLs",
-	Short: "convert curl command(s) to httprunner testcase",
+	Short: "convert curl command to httprunner testcase",
 	Args:  cobra.MinimumNArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
@@ -97,10 +97,12 @@ func makeCurlTestCase(args []string) *hrp.TestCase {
 	}
 	casePath, err := os.Getwd()
 	if err != nil {
+		casePath = ""
+		log.Error().Err(err).Msg("get working directory failed")
 	}
 	testCase, err := tCase.ToTestCase(casePath)
 	if err != nil {
-		log.Error().Err(err).Msg("convert testcase failed")
+		log.Error().Err(err).Msg("convert testcase to failed")
 		os.Exit(1)
 	}
 	return testCase
