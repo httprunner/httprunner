@@ -492,12 +492,11 @@ func GetFileNameWithoutExtension(path string) string {
 }
 
 func Bytes2File(data []byte, filename string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
 	defer file.Close()
-
+	if err != nil {
+		log.Error().Err(err).Msg("failed to generate file")
+	}
 	count, err := file.Write(data)
 	if err != nil {
 		return err
