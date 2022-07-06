@@ -1089,7 +1089,7 @@ func (r *masterRunner) reportStats() {
 	currentTime := time.Now()
 	println()
 	println("===================== HttpRunner Master for Distributed Load Testing ===================== ")
-	println(fmt.Sprintf("Current time: %s, State: %v, Current Valid Workers: %v, Target Users: %v",
+	println(fmt.Sprintf("Current time: %s, State: %v, Current Available Workers: %v, Target Users: %v",
 		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getClientsLength(), r.getSpawnCount()))
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Worker ID", "State", "Current Users", "CPU Usage", "CPU Warning Emitted", "Memory Usage", "Heartbeat"})

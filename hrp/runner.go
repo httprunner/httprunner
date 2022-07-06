@@ -281,14 +281,17 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 		timeout := time.Duration(runner.testCase.Config.Timeout*1000) * time.Millisecond
 		runner.hrpRunner.SetTimeout(timeout)
 	}
+
+	// load plugin info to testcase config
 	if plugin != nil {
-		pluginContent, err := builtin.ReadFile(plugin.Path())
+		pluginPath, _ := locatePlugin(testcase.Config.Path)
+		pluginContent, err := builtin.ReadFile(pluginPath)
 		if err != nil {
 			return nil, err
 		}
 		tp := strings.Split(plugin.Path(), ".")
 		runner.parsedConfig.PluginSetting = &PluginConfig{
-			Path:    plugin.Path(),
+			Path:    pluginPath,
 			Content: pluginContent,
 			Type:    tp[len(tp)-1],
 		}
