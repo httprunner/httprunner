@@ -92,9 +92,9 @@ func init() {
 	}
 }
 
-func LoadCurlCase(inputSample string) (*hrp.TCase, error) {
-	var err error
-	cmds, err := builtin.ReadCmdLines(inputSample)
+// LoadCurlCase loads testcase from one or more curl commands in .txt file
+func LoadCurlCase(path string) (*hrp.TCase, error) {
+	cmds, err := builtin.ReadCmdLines(path)
 	if err != nil {
 		return nil, err
 	}
@@ -102,21 +102,43 @@ func LoadCurlCase(inputSample string) (*hrp.TCase, error) {
 		Config: &hrp.TConfig{Name: "testcase converted from curl command"},
 	}
 	for _, cmd := range cmds {
-		caseCurl, err := loadCaseCurl(cmd)
+		tSteps, err := LoadCurlSteps(cmd)
 		if err != nil {
 			return nil, err
 		}
-		tStep, err := caseCurl.toTStep()
-		if err != nil {
-			return nil, err
-		}
-		tCase.TestSteps = append(tCase.TestSteps, tStep)
+		tCase.TestSteps = append(tCase.TestSteps, tSteps...)
 	}
 	err = tCase.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
 	return tCase, nil
+}
+
+// LoadSingleCurlCase one testcase from one curl command
+func LoadSingleCurlCase(cmd string) (*hrp.TCase, error) {
+	tSteps, err := LoadCurlSteps(cmd)
+	if err != nil {
+		return nil, err
+	}
+	tCase := &hrp.TCase{
+		Config:    &hrp.TConfig{Name: "testcase converted from curl command"},
+		TestSteps: tSteps,
+	}
+	err = tCase.MakeCompat()
+	if err != nil {
+		return nil, err
+	}
+	return tCase, nil
+}
+
+// LoadCurlSteps loads one teststep from one curl command
+func LoadCurlSteps(cmd string) ([]*hrp.TStep, error) {
+	caseCurl, err := loadCaseCurl(cmd)
+	if err != nil {
+		return nil, err
+	}
+	return caseCurl.toTSteps()
 }
 
 func loadCaseCurl(cmd string) (CaseCurl, error) {
@@ -146,15 +168,6 @@ func parseCaseCurl(cmd string) (CaseCurl, error) {
 		return nil, err
 	}
 
-	// deal with \n in the command string
-	//var cmdWords []string
-	//for _, w := range rawCmd {
-	//	if w == "\n" {
-	//		continue
-	//	}
-	//	cmdWords = append(cmdWords, strings.Trim(w, "\n))
-	//}
-
 	// parse the command string to map
 	res := make(CaseCurl)
 	var i int
@@ -165,7 +178,7 @@ func parseCaseCurl(cmd string) (CaseCurl, error) {
 	for i < len(cmdWords) {
 		if !strings.HasPrefix(cmdWords[i], "-") {
 			// save target url
-			res.Set(targetUrlKey, cmdWords[i])
+			res.Add(targetUrlKey, cmdWords[i])
 			i++
 			continue
 		}
@@ -185,17 +198,17 @@ func parseCaseCurl(cmd string) (CaseCurl, error) {
 
 type CaseCurl map[string][]string
 
-// GetFirst gets the first value associated with the given key.
-// If there are no values associated with the key, GetFirst returns the empty string.
-func (c CaseCurl) GetFirst(key string) string {
+// GetByIndex gets the value by index associated with the given key.
+// If there are no value by index associated with the key, GetByIndex returns the empty string.
+func (c CaseCurl) GetByIndex(key string, index int) string {
 	if c == nil {
 		return ""
 	}
 	vs := c[key]
-	if len(vs) == 0 {
-		return ""
+	if index >= 0 && index < len(vs) {
+		return vs[index]
 	}
-	return vs[0]
+	return ""
 }
 
 func (c CaseCurl) Set(key, value string) {
@@ -213,19 +226,6 @@ func (c CaseCurl) HaveKey(key string) bool {
 	}
 	_, ok := c[key]
 	return ok
-}
-
-// HaveKeyWithPrefix checks key with prefix existed or not
-func (c CaseCurl) HaveKeyWithPrefix(prefix string) bool {
-	if c == nil {
-		return false
-	}
-	for k := range c {
-		if strings.HasPrefix(k, prefix) {
-			return true
-		}
-	}
-	return false
 }
 
 func (c CaseCurl) toAlias() error {
@@ -258,53 +258,42 @@ func (c CaseCurl) checkOptions() error {
 	return nil
 }
 
-func (c CaseCurl) ToTCase() (*hrp.TCase, error) {
-	testSteps, err := c.toTStep()
-	if err != nil {
-		return nil, err
-	}
-	tCase := &hrp.TCase{
-		Config:    &hrp.TConfig{Name: "testcase converted from curl command"},
-		TestSteps: []*hrp.TStep{testSteps},
-	}
-	err = tCase.MakeCompat()
-	if err != nil {
-		return nil, err
-	}
-	return tCase, nil
-}
+func (c CaseCurl) toTSteps() ([]*hrp.TStep, error) {
+	var tSteps []*hrp.TStep
+	for _, rawUrl := range c[targetUrlKey] {
+		log.Info().
+			Str("url", rawUrl).
+			Msg("convert test steps")
 
-func (c CaseCurl) toTStep() (*hrp.TStep, error) {
-	log.Info().
-		Str("cmd", c.GetFirst(originCmdKey)).
-		Msg("convert teststep")
-	step := &stepFromCurl{
-		TStep: &hrp.TStep{
-			Request: &hrp.Request{},
-		},
+		step := &stepFromCurl{
+			TStep: &hrp.TStep{
+				Request: &hrp.Request{},
+			},
+		}
+		if err := step.makeRequestName(c); err != nil {
+			return nil, err
+		}
+		if err := step.makeRequestMethod(c); err != nil {
+			return nil, err
+		}
+		if err := step.makeRequestURL(rawUrl); err != nil {
+			return nil, err
+		}
+		if err := step.makeRequestParams(rawUrl); err != nil {
+			return nil, err
+		}
+		if err := step.makeRequestHeaders(c); err != nil {
+			return nil, err
+		}
+		if err := step.makeRequestCookies(c); err != nil {
+			return nil, err
+		}
+		if err := step.makeRequestBody(c); err != nil {
+			return nil, err
+		}
+		tSteps = append(tSteps, step.TStep)
 	}
-	if err := step.makeRequestName(c); err != nil {
-		return nil, err
-	}
-	if err := step.makeRequestMethod(c); err != nil {
-		return nil, err
-	}
-	if err := step.makeRequestURL(c); err != nil {
-		return nil, err
-	}
-	if err := step.makeRequestParams(c); err != nil {
-		return nil, err
-	}
-	if err := step.makeRequestHeaders(c); err != nil {
-		return nil, err
-	}
-	if err := step.makeRequestCookies(c); err != nil {
-		return nil, err
-	}
-	if err := step.makeRequestBody(c); err != nil {
-		return nil, err
-	}
-	return step.TStep, nil
+	return tSteps, nil
 }
 
 type stepFromCurl struct {
@@ -312,7 +301,7 @@ type stepFromCurl struct {
 }
 
 func (s *stepFromCurl) makeRequestName(c CaseCurl) error {
-	s.Name = c.GetFirst(originCmdKey)
+	s.Name = c.GetByIndex(originCmdKey, 0)
 	return nil
 }
 
@@ -326,16 +315,12 @@ func (s *stepFromCurl) makeRequestMethod(c CaseCurl) error {
 		s.Request.Method = http.MethodHead
 	}
 	if c.HaveKey("--request") {
-		s.Request.Method = hrp.HTTPMethod(strings.ToUpper(c.GetFirst("--request")))
+		s.Request.Method = hrp.HTTPMethod(strings.ToUpper(c.GetByIndex("--request", 0)))
 	}
 	return nil
 }
 
-func (s *stepFromCurl) makeRequestURL(c CaseCurl) error {
-	rawUrl := c.GetFirst(targetUrlKey)
-	if rawUrl == "" {
-		return errors.New("URL not found")
-	}
+func (s *stepFromCurl) makeRequestURL(rawUrl string) error {
 	u, err := url.Parse(rawUrl)
 	if err != nil {
 		return errors.Wrap(err, "parse URL error")
@@ -348,9 +333,8 @@ func (s *stepFromCurl) makeRequestURL(c CaseCurl) error {
 	return nil
 }
 
-func (s *stepFromCurl) makeRequestParams(c CaseCurl) error {
+func (s *stepFromCurl) makeRequestParams(rawUrl string) error {
 	s.Request.Params = make(map[string]interface{})
-	rawUrl := c.GetFirst(targetUrlKey)
 	u, err := url.Parse(rawUrl)
 	if err != nil {
 		return errors.Wrap(err, "parse URL error")
