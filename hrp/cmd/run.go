@@ -26,27 +26,7 @@ var runCmd = &cobra.Command{
 			path := hrp.TestCasePath(arg)
 			paths = append(paths, &path)
 		}
-		runner := hrp.NewRunner(nil).
-			SetFailfast(!continueOnFailure).
-			SetSaveTests(saveTests)
-		if genHTMLReport {
-			runner.GenHTMLReport()
-		}
-		if !requestsLogOff {
-			runner.SetRequestsLogOn()
-		}
-		if httpStatOn {
-			runner.SetHTTPStatOn()
-		}
-		if pluginLogOn {
-			runner.SetPluginLogOn()
-		}
-		if venv != "" {
-			runner.SetPython3Venv(venv)
-		}
-		if proxyUrl != "" {
-			runner.SetProxyUrl(proxyUrl)
-		}
+		runner := makeHRPRunner()
 		err := runner.Run(paths...)
 		if err != nil {
 			os.Exit(1)
@@ -73,4 +53,29 @@ func init() {
 	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
 	runCmd.Flags().BoolVarP(&saveTests, "save-tests", "s", false, "save tests summary")
 	runCmd.Flags().BoolVarP(&genHTMLReport, "gen-html-report", "g", false, "generate html report")
+}
+
+func makeHRPRunner() *hrp.HRPRunner {
+	runner := hrp.NewRunner(nil).
+		SetFailfast(!continueOnFailure).
+		SetSaveTests(saveTests)
+	if genHTMLReport {
+		runner.GenHTMLReport()
+	}
+	if !requestsLogOff {
+		runner.SetRequestsLogOn()
+	}
+	if httpStatOn {
+		runner.SetHTTPStatOn()
+	}
+	if pluginLogOn {
+		runner.SetPluginLogOn()
+	}
+	if venv != "" {
+		runner.SetPython3Venv(venv)
+	}
+	if proxyUrl != "" {
+		runner.SetProxyUrl(proxyUrl)
+	}
+	return runner
 }

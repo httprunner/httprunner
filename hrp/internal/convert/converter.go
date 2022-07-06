@@ -105,9 +105,9 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 
 // LoadTCase loads source file and convert to TCase type
 func LoadTCase(path string) (*hrp.TCase, error) {
-	if strings.HasPrefix(path, "curl") {
+	if strings.HasPrefix(path, "curl ") {
 		// 'path' contains curl command
-		curlCase, err := LoadCurlCase(path)
+		curlCase, err := LoadSingleCurlCase(path)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +187,7 @@ type TCaseConverter struct {
 func (c *TCaseConverter) genOutputPath(suffix string) string {
 	var outFileFullName string
 	if curlCmd := strings.TrimSpace(c.InputSample); strings.HasPrefix(curlCmd, "curl") {
-		outFileFullName = fmt.Sprintf("curl_%v_test_%v", time.Now().Format("20060102150405"), suffix)
+		outFileFullName = fmt.Sprintf("curl_%v_test%v", time.Now().Format("20060102150405"), suffix)
 		if c.OutputDir != "" {
 			return filepath.Join(c.OutputDir, outFileFullName)
 		} else {
