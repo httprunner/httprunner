@@ -5,17 +5,92 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/data"
 	"github.com/httprunner/httprunner/v4/hrp/internal/grpc/messager"
 	"github.com/rs/zerolog/log"
 )
+
+var (
+	errMissingMetadata = status.Errorf(codes.InvalidArgument, "missing metadata")
+	errInvalidToken    = status.Errorf(codes.Unauthenticated, "invalid token")
+)
+
+// valid validates the authorization.
+func valid(authorization []string) bool {
+	if len(authorization) < 1 {
+		return false
+	}
+	token := strings.TrimPrefix(authorization[0], "Bearer ")
+	// Perform the token validation here. For the sake of this example, the code
+	// here forgoes any of the usual OAuth2 token validation and instead checks
+	// for a token matching an arbitrary string.
+	return token == "httprunner-secret-token"
+}
+
+func serverUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	// authentication (token verification)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, errMissingMetadata
+	}
+	if !valid(md["authorization"]) {
+		return nil, errInvalidToken
+	}
+	m, err := handler(ctx, req)
+	if err != nil {
+		logger("RPC failed with error %v", err)
+	}
+	return m, err
+}
+
+// serverWrappedStream wraps around the embedded grpc.ServerStream, and intercepts the RecvMsg and
+// SendMsg method call.
+type serverWrappedStream struct {
+	grpc.ServerStream
+}
+
+func (w *serverWrappedStream) RecvMsg(m interface{}) error {
+	logger("Receive a message (Type: %T) at %s", m, time.Now().Format(time.RFC3339))
+	return w.ServerStream.RecvMsg(m)
+}
+
+func (w *serverWrappedStream) SendMsg(m interface{}) error {
+	logger("Send a message (Type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ServerStream.SendMsg(m)
+}
+
+func newServerWrappedStream(s grpc.ServerStream) grpc.ServerStream {
+	return &serverWrappedStream{s}
+}
+
+func serverStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	// authentication (token verification)
+	md, ok := metadata.FromIncomingContext(ss.Context())
+	if !ok {
+		return errMissingMetadata
+	}
+	if !valid(md["authorization"]) {
+		return errInvalidToken
+	}
+
+	err := handler(srv, newServerWrappedStream(ss))
+	if err != nil {
+		logger("RPC failed with error %v", err)
+	}
+	return err
+}
 
 func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_BidirectionalStreamingMessageServer) error {
 	s.wg.Add(1)
@@ -158,13 +233,24 @@ func newServer(masterHost string, masterPort int) (server *grpcServer) {
 
 func (s *grpcServer) start() (err error) {
 	addr := fmt.Sprintf("%v:%v", s.masterHost, s.masterPort)
+	// Create tls based credential.
+	creds, err := credentials.NewServerTLSFromFile(data.Path("x509/server_cert.pem"), data.Path("x509/server_key.pem"))
+	if err != nil {
+		log.Fatal().Msg(fmt.Sprintf("failed to load key pair: %s", err))
+	}
+	opts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(serverUnaryInterceptor),
+		grpc.StreamInterceptor(serverStreamInterceptor),
+		// Enable TLS for all incoming connections.
+		grpc.Creds(creds),
+	}
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to listen")
 		return
 	}
 	// create gRPC server
-	serv := grpc.NewServer()
+	serv := grpc.NewServer(opts...)
 	// register message server
 	messager.RegisterMessageServer(serv, s)
 	reflection.Register(serv)

@@ -8,9 +8,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/oauth2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/oauth"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/data"
 	"github.com/httprunner/httprunner/v4/hrp/internal/grpc/messager"
 	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc"
 )
 
 type grpcClient struct {
@@ -31,12 +36,84 @@ type grpcClient struct {
 }
 
 type grpcClientConfig struct {
-	ctx      context.Context
-	cancel   context.CancelFunc // use cancel() to stop client
-	conn     *grpc.ClientConn
-	biStream messager.Message_BidirectionalStreamingMessageClient
+	// ctx is used for the lifetime of the stream that may need to be canceled
+	// on client shutdown.
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+	conn      *grpc.ClientConn
+	biStream  messager.Message_BidirectionalStreamingMessageClient
 
 	mutex sync.RWMutex
+}
+
+const token = "httprunner-secret-token"
+
+func logger(format string, a ...interface{}) {
+	log.Logger.Log().Msg(fmt.Sprintf(format, a...))
+}
+
+// unaryInterceptor is an example unary interceptor.
+func unaryInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	var credsConfigured bool
+	for _, o := range opts {
+		_, ok := o.(grpc.PerRPCCredsCallOption)
+		if ok {
+			credsConfigured = true
+			break
+		}
+	}
+	if !credsConfigured {
+		opts = append(opts, grpc.PerRPCCredentials(oauth.NewOauthAccess(&oauth2.Token{
+			AccessToken: token,
+		})))
+	}
+	start := time.Now()
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	end := time.Now()
+	logger("RPC: %s, start time: %s, end time: %s, err: %v", method, start.Format("Basic"), end.Format(time.RFC3339), err)
+	return err
+}
+
+// wrappedStream  wraps around the embedded grpc.ClientStream, and intercepts the RecvMsg and
+// SendMsg method call.
+type wrappedStream struct {
+	grpc.ClientStream
+}
+
+func (w *wrappedStream) RecvMsg(m interface{}) error {
+	logger("Receive a message (Type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ClientStream.RecvMsg(m)
+}
+
+func (w *wrappedStream) SendMsg(m interface{}) error {
+	logger("Send a message (Type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ClientStream.SendMsg(m)
+}
+
+func newWrappedStream(s grpc.ClientStream) grpc.ClientStream {
+	return &wrappedStream{s}
+}
+
+// streamInterceptor is an example stream interceptor.
+func streamInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	var credsConfigured bool
+	for _, o := range opts {
+		_, ok := o.(*grpc.PerRPCCredsCallOption)
+		if ok {
+			credsConfigured = true
+			break
+		}
+	}
+	if !credsConfigured {
+		opts = append(opts, grpc.PerRPCCredentials(oauth.NewOauthAccess(&oauth2.Token{
+			AccessToken: token,
+		})))
+	}
+	s, err := streamer(ctx, desc, cc, method, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return newWrappedStream(s), nil
 }
 
 func (c *grpcClientConfig) getBiStreamClient() messager.Message_BidirectionalStreamingMessageClient {
@@ -64,9 +141,9 @@ func newClient(masterHost string, masterPort int, identity string) (client *grpc
 		disconnectedFromMaster: make(chan bool),
 		shutdownChan:           make(chan bool),
 		config: &grpcClientConfig{
-			ctx:    ctx,
-			cancel: cancel,
-			mutex:  sync.RWMutex{},
+			ctx:       ctx,
+			ctxCancel: cancel,
+			mutex:     sync.RWMutex{},
 		},
 	}
 	return client
@@ -74,7 +151,20 @@ func newClient(masterHost string, masterPort int, identity string) (client *grpc
 
 func (c *grpcClient) connect() (err error) {
 	addr := fmt.Sprintf("%v:%v", c.masterHost, c.masterPort)
-	c.config.conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024*1024*1024)))
+	// Create tls based credential.
+	creds, err := credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
+	if err != nil {
+		log.Fatal().Msg(fmt.Sprintf("failed to load credentials: %v", err))
+	}
+	opts := []grpc.DialOption{
+		// oauth.NewOauthAccess requires the configuration of transport
+		// credentials.
+		grpc.WithTransportCredentials(creds),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024 * 1024 * 1024)),
+		grpc.WithUnaryInterceptor(unaryInterceptor),
+		grpc.WithStreamInterceptor(streamInterceptor),
+	}
+	c.config.conn, err = grpc.Dial(addr, opts...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to connect")
 		return err
@@ -112,7 +202,7 @@ func (c *grpcClient) reConnect() (err error) {
 
 func (c *grpcClient) close() {
 	close(c.shutdownChan)
-	c.config.cancel()
+	c.config.ctxCancel()
 	if c.config.conn != nil {
 		c.config.conn.Close()
 	}
