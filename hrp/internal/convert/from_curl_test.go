@@ -66,8 +66,8 @@ func TestLoadCurlCase(t *testing.T) {
 	// curl -F "dummyName=dummyFile" -F file1=@file1.txt -F file2=@file2.txt https://httpbin.org/post
 	if !assert.Equal(t, map[string]interface{}{
 		"dummyName": "dummyFile",
-		"file1":     "@file1.txt",
-		"file2":     "@file2.txt",
+		"file1":     "file1.txt",
+		"file2":     "file2.txt",
 	}, tCase.TestSteps[3].Request.Upload) {
 		t.Fatal()
 	}
