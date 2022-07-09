@@ -2,6 +2,8 @@ package hrp
 
 import (
 	"fmt"
+	"github.com/jinzhu/copier"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
@@ -95,18 +97,24 @@ func (s *StepAPIWithOptionalArgs) Struct() *TStep {
 	return s.step
 }
 
-func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
+func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
+	defer func() {
+		if err != nil {
+			r.summary.Success = false
+		}
+		stepResult.StepType = stepTypeAPI
+	}()
 	// extend request with referenced API
 	api, _ := s.step.API.(*API)
-	extendWithAPI(s.step, api)
-
-	stepResult, err := runStepRequest(r, s.step)
-	stepResult.StepType = stepTypeAPI
-	if err != nil {
-		r.summary.Success = false
-		return stepResult, err
+	step := &TStep{}
+	// deep copy step to avoid data racing
+	if err = copier.Copy(step, s.step); err != nil {
+		log.Error().Err(err).Msg("copy step failed")
+		return
 	}
-	return stepResult, nil
+	extendWithAPI(step, api)
+	stepResult, err = runStepRequest(r, step)
+	return
 }
 
 // extend teststep with api, teststep will merge and override referenced api
