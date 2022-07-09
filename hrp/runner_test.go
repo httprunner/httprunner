@@ -3,6 +3,7 @@ package hrp
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -22,6 +23,8 @@ func buildHashicorpGoPlugin() {
 func removeHashicorpGoPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp go plugin")
 	os.Remove(tmpl("debugtalk.bin"))
+	pluginPath, _ := filepath.Abs(tmpl("debugtalk.bin"))
+	delete(pluginMap, pluginPath)
 }
 
 func buildHashicorpPyPlugin() {
