@@ -504,3 +504,25 @@ func Bytes2File(data []byte, filename string) error {
 	log.Info().Msg(fmt.Sprintf("write file %s len: %d \n", filename, count))
 	return nil
 }
+
+func SplitInteger(m, n int) (ints []int) {
+	quotient := m / n
+	remainder := m % n
+	if remainder >= 0 {
+		for i := 0; i < n-remainder; i++ {
+			ints = append(ints, quotient)
+		}
+		for i := 0; i < remainder; i++ {
+			ints = append(ints, quotient+1)
+		}
+		return
+	} else if remainder < 0 {
+		for i := 0; i < -remainder; i++ {
+			ints = append(ints, quotient-1)
+		}
+		for i := 0; i < n+remainder; i++ {
+			ints = append(ints, quotient)
+		}
+	}
+	return
+}

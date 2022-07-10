@@ -3,7 +3,6 @@ package boomer
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"strings"
 	"sync"
@@ -17,105 +16,10 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/data"
-	"github.com/httprunner/httprunner/v4/hrp/internal/grpc/messager"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/data"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
 	"github.com/rs/zerolog/log"
 )
-
-var (
-	errMissingMetadata = status.Errorf(codes.InvalidArgument, "missing metadata")
-	errInvalidToken    = status.Errorf(codes.Unauthenticated, "invalid token")
-)
-
-// valid validates the authorization.
-func valid(authorization []string) bool {
-	if len(authorization) < 1 {
-		return false
-	}
-	token := strings.TrimPrefix(authorization[0], "Bearer ")
-	// Perform the token validation here. For the sake of this example, the code
-	// here forgoes any of the usual OAuth2 token validation and instead checks
-	// for a token matching an arbitrary string.
-	return token == "httprunner-secret-token"
-}
-
-func serverUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	// authentication (token verification)
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, errMissingMetadata
-	}
-	if !valid(md["authorization"]) {
-		return nil, errInvalidToken
-	}
-	m, err := handler(ctx, req)
-	if err != nil {
-		logger("RPC failed with error %v", err)
-	}
-	return m, err
-}
-
-// serverWrappedStream wraps around the embedded grpc.ServerStream, and intercepts the RecvMsg and
-// SendMsg method call.
-type serverWrappedStream struct {
-	grpc.ServerStream
-}
-
-func (w *serverWrappedStream) RecvMsg(m interface{}) error {
-	logger("Receive a message (Type: %T) at %s", m, time.Now().Format(time.RFC3339))
-	return w.ServerStream.RecvMsg(m)
-}
-
-func (w *serverWrappedStream) SendMsg(m interface{}) error {
-	logger("Send a message (Type: %T) at %v", m, time.Now().Format(time.RFC3339))
-	return w.ServerStream.SendMsg(m)
-}
-
-func newServerWrappedStream(s grpc.ServerStream) grpc.ServerStream {
-	return &serverWrappedStream{s}
-}
-
-func serverStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	// authentication (token verification)
-	md, ok := metadata.FromIncomingContext(ss.Context())
-	if !ok {
-		return errMissingMetadata
-	}
-	if !valid(md["authorization"]) {
-		return errInvalidToken
-	}
-
-	err := handler(srv, newServerWrappedStream(ss))
-	if err != nil {
-		logger("RPC failed with error %v", err)
-	}
-	return err
-}
-
-func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_BidirectionalStreamingMessageServer) error {
-	s.wg.Add(1)
-	defer s.wg.Done()
-	req, err := srv.Recv()
-	switch err {
-	case nil:
-		break
-	case io.EOF:
-		return nil
-	default:
-		if err.Error() == status.Error(codes.Canceled, context.Canceled.Error()).Error() {
-			return nil
-		}
-		log.Error().Err(err).Msg("failed to get stream from client")
-		return err
-	}
-	wn := &WorkerNode{messenger: srv, ID: req.NodeID, Heartbeat: 3}
-	s.clients.Store(req.NodeID, wn)
-	log.Warn().Str("worker id", req.NodeID).Msg("worker joined")
-	<-s.disconnectedChannel()
-	s.clients.Delete(req.NodeID)
-	log.Warn().Str("worker id", req.NodeID).Msg("worker quited")
-	return nil
-}
 
 type WorkerNode struct {
 	ID                string  `json:"id"`
@@ -125,8 +29,14 @@ type WorkerNode struct {
 	CPUUsage          float64 `json:"cpu_usage"`
 	CPUWarningEmitted bool    `json:"cpu_warning_emitted"`
 	MemoryUsage       float64 `json:"memory_usage"`
-	messenger         messager.Message_BidirectionalStreamingMessageServer
+	stream            chan *messager.StreamResponse
 	mutex             sync.RWMutex
+	disconnectedChan  chan bool
+}
+
+func newWorkerNode(id string) *WorkerNode {
+	stream := make(chan *messager.StreamResponse, 100)
+	return &WorkerNode{State: StateInit, ID: id, Heartbeat: 3, stream: stream, disconnectedChan: make(chan bool)}
 }
 
 func (w *WorkerNode) getState() int32 {
@@ -189,6 +99,18 @@ func (w *WorkerNode) getMemoryUsage() float64 {
 	return w.MemoryUsage
 }
 
+func (w *WorkerNode) setStream(stream chan *messager.StreamResponse) {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	w.stream = stream
+}
+
+func (w *WorkerNode) getStream() chan *messager.StreamResponse {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	return w.stream
+}
+
 func (w *WorkerNode) getWorkerInfo() WorkerNode {
 	w.mutex.RLock()
 	defer w.mutex.RUnlock()
@@ -208,25 +130,95 @@ type grpcServer struct {
 	masterHost string
 	masterPort int
 	server     *grpc.Server
+	secure     bool
 	clients    *sync.Map
 
-	fromWorker           chan *genericMessage
-	toWorker             chan *genericMessage
-	disconnectedToWorker chan bool
-	shutdownChan         chan bool
-	wg                   sync.WaitGroup
+	fromWorker       chan *genericMessage
+	disconnectedChan chan bool
+	shutdownChan     chan bool
+	wg               *sync.WaitGroup
+}
+
+var (
+	errMissingMetadata = status.Errorf(codes.InvalidArgument, "missing metadata")
+	errInvalidToken    = status.Errorf(codes.Unauthenticated, "invalid token")
+)
+
+func logger(format string, a ...interface{}) {
+	log.Info().Msg(fmt.Sprintf(format, a...))
+}
+
+// valid validates the authorization.
+func valid(authorization []string) bool {
+	if len(authorization) < 1 {
+		return false
+	}
+	token := strings.TrimPrefix(authorization[0], "Bearer ")
+	return token == "httprunner-secret-token"
+}
+
+func serverUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	// authentication (token verification)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, errMissingMetadata
+	}
+	if !valid(md["authorization"]) {
+		return nil, errInvalidToken
+	}
+	m, err := handler(ctx, req)
+	if err != nil {
+		logger("RPC failed with error %v", err)
+	}
+	return m, err
+}
+
+// serverWrappedStream wraps around the embedded grpc.ServerStream, and intercepts the RecvMsg and
+// SendMsg method call.
+type serverWrappedStream struct {
+	grpc.ServerStream
+}
+
+func (w *serverWrappedStream) RecvMsg(m interface{}) error {
+	logger("Receive a message (Type: %T) at %s", m, time.Now().Format(time.RFC3339))
+	return w.ServerStream.RecvMsg(m)
+}
+
+func (w *serverWrappedStream) SendMsg(m interface{}) error {
+	logger("Send a message (Type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ServerStream.SendMsg(m)
+}
+
+func newServerWrappedStream(s grpc.ServerStream) grpc.ServerStream {
+	return &serverWrappedStream{s}
+}
+
+func serverStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	// authentication (token verification)
+	md, ok := metadata.FromIncomingContext(ss.Context())
+	if !ok {
+		return errMissingMetadata
+	}
+	if !valid(md["authorization"]) {
+		return errInvalidToken
+	}
+
+	err := handler(srv, newServerWrappedStream(ss))
+	if err != nil {
+		logger("RPC failed with error %v", err)
+	}
+	return err
 }
 
 func newServer(masterHost string, masterPort int) (server *grpcServer) {
 	log.Info().Msg("Boomer is built with grpc support.")
 	server = &grpcServer{
-		masterHost:           masterHost,
-		masterPort:           masterPort,
-		clients:              &sync.Map{},
-		fromWorker:           make(chan *genericMessage, 100),
-		toWorker:             make(chan *genericMessage, 100),
-		disconnectedToWorker: make(chan bool),
-		shutdownChan:         make(chan bool),
+		masterHost:       masterHost,
+		masterPort:       masterPort,
+		clients:          &sync.Map{},
+		fromWorker:       make(chan *genericMessage, 100),
+		disconnectedChan: make(chan bool),
+		shutdownChan:     make(chan bool),
 	}
 	return server
 }
@@ -250,23 +242,177 @@ func (s *grpcServer) start() (err error) {
 		return
 	}
 	// create gRPC server
-	serv := grpc.NewServer(opts...)
+	s.server = grpc.NewServer(opts...)
 	// register message server
-	messager.RegisterMessageServer(serv, s)
-	reflection.Register(serv)
+	messager.RegisterMessageServer(s.server, s)
+	reflection.Register(s.server)
 	// start grpc server
 	go func() {
-		err = serv.Serve(lis)
+		err = s.server.Serve(lis)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to serve")
 			return
 		}
 	}()
-
-	go s.recv()
-	go s.send()
-
 	return nil
+}
+
+func (s *grpcServer) Register(_ context.Context, req *messager.RegisterRequest) (*messager.RegisterResponse, error) {
+	// store worker information
+	wn := newWorkerNode(req.NodeID)
+	s.clients.Store(req.NodeID, wn)
+	log.Warn().Str("worker id", req.NodeID).Msg("worker joined")
+	return &messager.RegisterResponse{Code: "0", Message: "register successfully"}, nil
+}
+
+func (s *grpcServer) SignOut(_ context.Context, req *messager.SignOutRequest) (*messager.SignOutResponse, error) {
+	// delete worker information
+	s.clients.Delete(req.NodeID)
+	log.Warn().Str("worker id", req.NodeID).Msg("worker quited")
+	return &messager.SignOutResponse{Code: "0", Message: "sign out successfully"}, nil
+}
+
+func (s *grpcServer) valid(token string) (isValid bool) {
+	s.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.ID == token {
+				isValid = true
+			}
+		}
+		return true
+	})
+	return
+}
+
+func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_BidirectionalStreamingMessageServer) error {
+	token, ok := extractToken(srv.Context())
+	if !ok {
+		return status.Error(codes.Unauthenticated, "missing token header")
+	}
+
+	ok = s.valid(token)
+	if !ok {
+		return status.Error(codes.Unauthenticated, "invalid token")
+	}
+
+	go s.sendMsg(srv, token)
+FOR:
+	for {
+		msg, err := srv.Recv()
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.OK:
+				s.fromWorker <- newGenericMessage(msg.Type, msg.Data, msg.NodeID)
+				log.Info().
+					Str("nodeID", msg.NodeID).
+					Str("type", msg.Type).
+					Interface("data", msg.Data).
+					Msg("receive data from worker")
+			case codes.Unavailable, codes.Canceled, codes.DeadlineExceeded:
+				s.fromWorker <- newQuitMessage(token)
+				break FOR
+			default:
+				log.Error().Err(err).Msg("failed to get stream from client")
+				break FOR
+			}
+		}
+	}
+	// disconnected to worker
+	select {
+	case <-srv.Context().Done():
+		return srv.Context().Err()
+	case <-s.disconnectedChan:
+	}
+	log.Warn().Str("worker id", token).Msg("worker quited")
+	return nil
+}
+
+func (s *grpcServer) sendMsg(srv messager.Message_BidirectionalStreamingMessageServer, id string) {
+	stream := s.getWorkersByID(id).getStream()
+	for {
+		select {
+		case <-srv.Context().Done():
+			return
+		case res := <-stream:
+			if s, ok := status.FromError(srv.Send(res)); ok {
+				switch s.Code() {
+				case codes.OK:
+					log.Info().
+						Str("nodeID", res.NodeID).
+						Str("type", res.Type).
+						Interface("data", res.Data).
+						Interface("profile", res.Profile).
+						Msg("send data to worker")
+				case codes.Unavailable, codes.Canceled, codes.DeadlineExceeded:
+					log.Warn().Msg(fmt.Sprintf("client (%s) terminated connection", id))
+					return
+				default:
+					log.Warn().Msg(fmt.Sprintf("failed to send to client (%s): %v", id, s.Err()))
+					return
+				}
+			}
+		}
+	}
+}
+
+func (s *grpcServer) sendBroadcasts(msg *genericMessage) {
+	s.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
+				return true
+			}
+			workerInfo.getStream() <- &messager.StreamResponse{
+				Type:    msg.Type,
+				Profile: msg.Profile,
+				Data:    msg.Data,
+				NodeID:  workerInfo.ID,
+				Tasks:   msg.Tasks,
+			}
+		}
+		return true
+	})
+}
+
+func (s *grpcServer) stopServer(ctx context.Context) {
+	ch := make(chan struct{})
+	go func() {
+		defer close(ch)
+		// close listeners to stop accepting new connections,
+		// will block on any existing transports
+		s.server.GracefulStop()
+	}()
+
+	// wait until all pending RPCs are finished
+	select {
+	case <-ch:
+	case <-ctx.Done():
+		// took too long, manually close open transports
+		// e.g. watch streams
+		s.server.Stop()
+
+		// concurrent GracefulStop should be interrupted
+		<-ch
+	}
+}
+
+func (s *grpcServer) close() {
+	// close client requests with request timeout
+	timeout := 2 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	s.stopServer(ctx)
+	cancel()
+}
+
+func (s *grpcServer) recvChannel() chan *genericMessage {
+	return s.fromWorker
+}
+
+func (s *grpcServer) shutdownChannel() chan bool {
+	return s.shutdownChan
+}
+
+func (s *grpcServer) disconnectedChannel() chan bool {
+	return s.disconnectedChan
 }
 
 func (s *grpcServer) getWorkersByState(state int32) (wns []*WorkerNode) {
@@ -279,6 +425,18 @@ func (s *grpcServer) getWorkersByState(state int32) (wns []*WorkerNode) {
 		return true
 	})
 	return wns
+}
+
+func (s *grpcServer) getWorkersByID(id string) (wn *WorkerNode) {
+	s.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.ID == id {
+				wn = workerInfo
+			}
+		}
+		return true
+	})
+	return wn
 }
 
 func (s *grpcServer) getWorkersLengthByState(state int32) (l int) {
@@ -317,114 +475,4 @@ func (s *grpcServer) getClientsLength() (l int) {
 		return true
 	})
 	return
-}
-
-func (s *grpcServer) close() {
-	close(s.shutdownChan)
-}
-
-func (s *grpcServer) recvChannel() chan *genericMessage {
-	return s.fromWorker
-}
-
-func (s *grpcServer) shutdownChannel() chan bool {
-	return s.shutdownChan
-}
-
-func (s *grpcServer) recv() {
-	for {
-		select {
-		case <-s.shutdownChan:
-			return
-		default:
-			s.clients.Range(func(key, value interface{}) bool {
-				if workerInfo, ok := value.(*WorkerNode); ok {
-					if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
-						return true
-					}
-					msg, err := workerInfo.messenger.Recv()
-					switch err {
-					case nil:
-						if msg == nil {
-							return true
-						}
-						s.fromWorker <- newGenericMessage(msg.Type, msg.Data, msg.NodeID)
-						log.Info().
-							Str("nodeID", msg.NodeID).
-							Str("type", msg.Type).
-							Interface("data", msg.Data).
-							Msg("receive data from worker")
-					case io.EOF:
-						s.fromWorker <- newQuitMessage(workerInfo.ID)
-					default:
-						if err.Error() == status.Error(codes.Canceled, context.Canceled.Error()).Error() {
-							s.fromWorker <- newQuitMessage(workerInfo.ID)
-							return true
-						}
-						log.Error().Err(err).Msg("failed to get stream from client")
-					}
-				}
-				return true
-			})
-		}
-	}
-}
-
-func (s *grpcServer) sendChannel() chan *genericMessage {
-	return s.toWorker
-}
-
-func (s *grpcServer) send() {
-	for {
-		select {
-		case <-s.shutdownChan:
-			return
-		case msg := <-s.toWorker:
-			s.sendMessage(msg)
-
-			// We may send genericMessage to Worker.
-			if msg.Type == "quit" {
-				close(s.disconnectedToWorker)
-			}
-		}
-	}
-}
-
-func (s *grpcServer) sendMessage(msg *genericMessage) {
-	s.clients.Range(func(key, value interface{}) bool {
-		if workerInfo, ok := value.(*WorkerNode); ok {
-			if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
-				return true
-			}
-			err := workerInfo.messenger.Send(
-				&messager.StreamResponse{
-					Type:    msg.Type,
-					Profile: msg.Profile,
-					Data:    msg.Data,
-					NodeID:  workerInfo.ID,
-					Tasks:   msg.Tasks},
-			)
-			switch err {
-			case nil:
-				break
-			case io.EOF:
-				fallthrough
-			default:
-				s.fromWorker <- newQuitMessage(workerInfo.ID)
-				log.Error().Err(err).Msg("failed to send message")
-				return true
-			}
-			log.Info().
-				Str("nodeID", workerInfo.ID).
-				Str("type", msg.Type).
-				Interface("data", msg.Data).
-				Int32("state", workerInfo.getState()).
-				Msg("send data to worker")
-		}
-		return true
-	})
-}
-
-func (s *grpcServer) disconnectedChannel() chan bool {
-	return s.disconnectedToWorker
 }

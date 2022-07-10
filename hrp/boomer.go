@@ -3,6 +3,7 @@ package hrp
 import (
 	"fmt"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"golang.org/x/net/context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -98,12 +99,12 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	// report execution timing event
 	defer sdk.SendEvent(event.StartTiming("execution"))
 
-	taskSlice := b.ConvertTestCasesToTasks(testcases...)
+	taskSlice := b.ConvertTestCasesToBoomerTasks(testcases...)
 
 	b.Boomer.Run(taskSlice...)
 }
 
-func (b *HRPBoomer) ConvertTestCasesToTasks(testcases ...ITestCase) (taskSlice []*boomer.Task) {
+func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskSlice []*boomer.Task) {
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
@@ -129,25 +130,8 @@ func (b *HRPBoomer) ConvertTestCasesToTasks(testcases ...ITestCase) (taskSlice [
 	return taskSlice
 }
 
-func (b *HRPBoomer) PollTestCases() {
-	for {
-		select {
-		case <-b.Boomer.ParseTestCasesChan():
-			var tcs []ITestCase
-			for _, tc := range b.GetTestCasesPath() {
-				tcp := TestCasePath(tc)
-				tcs = append(tcs, &tcp)
-			}
-			b.GetTestCaseBytesChan() <- b.TestCasesToBytes(tcs...)
-			log.Info().Msg("put testcase successful")
-		case <-b.Boomer.GetCloseChan():
-			return
-		}
-	}
-}
-
-func (b *HRPBoomer) OutTestCases(testCases []*TestCase) []*TCase {
-	var outTestCases []*TCase
+func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TCase {
+	var parsedTestCases []*TCase
 	for _, tc := range testCases {
 		caseRunner, err := b.hrpRunner.newCaseRunner(tc)
 		if err != nil {
@@ -155,12 +139,12 @@ func (b *HRPBoomer) OutTestCases(testCases []*TestCase) []*TCase {
 			os.Exit(1)
 		}
 		caseRunner.parsedConfig.Parameters = caseRunner.parametersIterator.outParameters()
-		outTestCases = append(outTestCases, &TCase{
+		parsedTestCases = append(parsedTestCases, &TCase{
 			Config:    caseRunner.parsedConfig,
 			TestSteps: caseRunner.testCase.ToTCase().TestSteps,
 		})
 	}
-	return outTestCases
+	return parsedTestCases
 }
 
 func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
@@ -170,7 +154,7 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(1)
 	}
-	tcs := b.OutTestCases(testCases)
+	tcs := b.ParseTestCases(testCases)
 	testCasesBytes, err := json.Marshal(tcs)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal testcases")
@@ -192,7 +176,7 @@ func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
 }
 
-func (b *HRPBoomer) runTasks(testCases []*TCase, profile *boomer.Profile) {
+func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
 	var testcases []ITestCase
 	for _, tc := range testCases {
 		tesecase, err := tc.toTestCase()
@@ -230,7 +214,7 @@ func (b *HRPBoomer) runTasks(testCases []*TCase, profile *boomer.Profile) {
 	b.Run(testcases...)
 }
 
-func (b *HRPBoomer) rebalanceTasks(profile *boomer.Profile) {
+func (b *HRPBoomer) rebalanceBoomer(profile *boomer.Profile) {
 	b.SetProfile(profile)
 	b.SetSpawnCount(b.GetProfile().SpawnCount)
 	b.SetSpawnRate(b.GetProfile().SpawnRate)
@@ -241,20 +225,39 @@ func (b *HRPBoomer) rebalanceTasks(profile *boomer.Profile) {
 func (b *HRPBoomer) PollTasks() {
 	for {
 		select {
-		case tasks := <-b.Boomer.GetTasksChan():
+		case task := <-b.Boomer.GetTasksChan():
 			// 清理过时测试用例任务
 			if len(b.Boomer.GetTasksChan()) > 0 {
 				continue
 			}
 			//Todo: 过滤掉已经传输过的task
-			if tasks.Tasks != nil {
-				testCases := b.BytesToTestCases(tasks.Tasks)
-				go b.runTasks(testCases, tasks.Profile)
+			if task.TestCases != nil {
+				testCases := b.BytesToTestCases(task.TestCases)
+				go b.runTestCases(testCases, task.Profile)
 			} else {
-				go b.rebalanceTasks(tasks.Profile)
+				go b.rebalanceBoomer(task.Profile)
 			}
 
 		case <-b.Boomer.GetCloseChan():
+			return
+		}
+	}
+}
+
+func (b *HRPBoomer) PollTestCases(ctx context.Context) {
+	for {
+		select {
+		case <-b.Boomer.ParseTestCasesChan():
+			var tcs []ITestCase
+			for _, tc := range b.GetTestCasesPath() {
+				tcp := TestCasePath(tc)
+				tcs = append(tcs, &tcp)
+			}
+			b.TestCaseBytesChan() <- b.TestCasesToBytes(tcs...)
+			log.Info().Msg("put testcase successful")
+		case <-b.Boomer.GetCloseChan():
+			return
+		case <-ctx.Done():
 			return
 		}
 	}

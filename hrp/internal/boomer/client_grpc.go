@@ -3,7 +3,6 @@ package boomer
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,27 +11,30 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
+	"google.golang.org/grpc/metadata"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/data"
-	"github.com/httprunner/httprunner/v4/hrp/internal/grpc/messager"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/data"
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 type grpcClient struct {
+	messager.MessageClient
 	masterHost string
 	masterPort int
 	identity   string // nodeID
 
 	config *grpcClientConfig
 
-	fromMaster             chan *genericMessage
-	toMaster               chan *genericMessage
-	disconnectedFromMaster chan bool
-	shutdownChan           chan bool
+	fromMaster       chan *genericMessage
+	toMaster         chan *genericMessage
+	disconnectedChan chan bool
+	shutdownChan     chan bool
 
 	failCount int32
 
-	wg sync.WaitGroup
+	wg *sync.WaitGroup
 }
 
 type grpcClientConfig struct {
@@ -47,10 +49,6 @@ type grpcClientConfig struct {
 }
 
 const token = "httprunner-secret-token"
-
-func logger(format string, a ...interface{}) {
-	log.Logger.Log().Msg(fmt.Sprintf(format, a...))
-}
 
 // unaryInterceptor is an example unary interceptor.
 func unaryInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -94,6 +92,15 @@ func newWrappedStream(s grpc.ClientStream) grpc.ClientStream {
 	return &wrappedStream{s}
 }
 
+func extractToken(ctx context.Context) (tkn string, ok bool) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok || len(md[token]) == 0 {
+		return "", false
+	}
+
+	return md[token][0], true
+}
+
 // streamInterceptor is an example stream interceptor.
 func streamInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 	var credsConfigured bool
@@ -133,26 +140,27 @@ func newClient(masterHost string, masterPort int, identity string) (client *grpc
 	// Initiate the stream with a context that supports cancellation.
 	ctx, cancel := context.WithCancel(context.Background())
 	client = &grpcClient{
-		masterHost:             masterHost,
-		masterPort:             masterPort,
-		identity:               identity,
-		fromMaster:             make(chan *genericMessage, 100),
-		toMaster:               make(chan *genericMessage, 100),
-		disconnectedFromMaster: make(chan bool),
-		shutdownChan:           make(chan bool),
+		masterHost:       masterHost,
+		masterPort:       masterPort,
+		identity:         identity,
+		fromMaster:       make(chan *genericMessage, 100),
+		toMaster:         make(chan *genericMessage, 100),
+		disconnectedChan: make(chan bool),
+		shutdownChan:     make(chan bool),
 		config: &grpcClientConfig{
 			ctx:       ctx,
 			ctxCancel: cancel,
 			mutex:     sync.RWMutex{},
 		},
+		wg: &sync.WaitGroup{},
 	}
 	return client
 }
 
-func (c *grpcClient) connect() (err error) {
+func (c *grpcClient) start() (err error) {
 	addr := fmt.Sprintf("%v:%v", c.masterHost, c.masterPort)
 	// Create tls based credential.
-	creds, err := credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "x.test.example.com")
+	creds, err := credentials.NewClientTLSFromFile(data.Path("x509/ca_cert.pem"), "www.httprunner.com")
 	if err != nil {
 		log.Fatal().Msg(fmt.Sprintf("failed to load credentials: %v", err))
 	}
@@ -160,7 +168,7 @@ func (c *grpcClient) connect() (err error) {
 		// oauth.NewOauthAccess requires the configuration of transport
 		// credentials.
 		grpc.WithTransportCredentials(creds),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024 * 1024 * 1024)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(32 * 10e9)),
 		grpc.WithUnaryInterceptor(unaryInterceptor),
 		grpc.WithStreamInterceptor(streamInterceptor),
 	}
@@ -169,43 +177,47 @@ func (c *grpcClient) connect() (err error) {
 		log.Error().Err(err).Msg("failed to connect")
 		return err
 	}
-	grpc.MaxCallRecvMsgSize(32 * 10e9)
-	go c.recv()
-	go c.send()
-
-	biStream, err := messager.NewMessageClient(c.config.conn).BidirectionalStreamingMessage(c.config.ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("call bidirectional streaming message err")
-		return err
-	}
-	c.config.setBiStreamClient(biStream)
-	log.Info().Msg(fmt.Sprintf("Boomer is connected to master(%s) press Ctrl+c to quit.\n", addr))
-
+	c.MessageClient = messager.NewMessageClient(c.config.conn)
 	return nil
 }
 
-func (c *grpcClient) reConnect() (err error) {
-	biStream, err := messager.NewMessageClient(c.config.conn).BidirectionalStreamingMessage(c.config.ctx)
+func (c *grpcClient) register(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	res, err := c.Register(ctx, &messager.RegisterRequest{NodeID: c.identity})
 	if err != nil {
-		return
+		return err
 	}
-	c.config.setBiStreamClient(biStream)
-
-	// register worker information to master
-	c.sendChannel() <- newGenericMessage("register", nil, c.identity)
-	//// tell master, I'm ready
-	//log.Info().Msg("send client ready signal")
-	//c.sendChannel() <- newClientReadyMessageToMaster(c.identity)
-	log.Info().Msg(fmt.Sprintf("Boomer is reConnected to master press Ctrl+c to quit.\n"))
-	return
+	if res.Code != "0" {
+		return errors.New(res.Message)
+	}
+	return nil
 }
 
-func (c *grpcClient) close() {
-	close(c.shutdownChan)
-	c.config.ctxCancel()
-	if c.config.conn != nil {
-		c.config.conn.Close()
+func (c *grpcClient) signOut(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	res, err := c.SignOut(ctx, &messager.SignOutRequest{NodeID: c.identity})
+	if err != nil {
+		return err
 	}
+	if res.Code != "0" {
+		return errors.New(res.Message)
+	}
+	return nil
+}
+
+func (c *grpcClient) newBiStreamClient() (err error) {
+	md := metadata.New(map[string]string{token: c.identity})
+	ctx := metadata.NewOutgoingContext(c.config.ctx, md)
+	biStream, err := c.BidirectionalStreamingMessage(ctx)
+	if err != nil {
+		return err
+	}
+	c.config.setBiStreamClient(biStream)
+	println("successful to establish bidirectional stream with master, press Ctrl+c to quit.\n")
+	return nil
 }
 
 func (c *grpcClient) recvChannel() chan *genericMessage {
@@ -213,8 +225,6 @@ func (c *grpcClient) recvChannel() chan *genericMessage {
 }
 
 func (c *grpcClient) recv() {
-	c.wg.Add(1)
-	defer c.wg.Done()
 	for {
 		select {
 		case <-c.shutdownChan:
@@ -235,7 +245,7 @@ func (c *grpcClient) recv() {
 			}
 
 			if msg.NodeID != c.identity {
-				log.Warn().
+				log.Info().
 					Str("nodeID", msg.NodeID).
 					Str("type", msg.Type).
 					Interface("data", msg.Data).
@@ -266,8 +276,6 @@ func (c *grpcClient) sendChannel() chan *genericMessage {
 }
 
 func (c *grpcClient) send() {
-	c.wg.Add(1)
-	defer c.wg.Done()
 	for {
 		select {
 		case <-c.shutdownChan:
@@ -278,7 +286,7 @@ func (c *grpcClient) send() {
 			// We may send genericMessage to master.
 			switch msg.Type {
 			case "quit":
-				c.disconnectedFromMaster <- true
+				c.disconnectedChan <- true
 			}
 		}
 	}
@@ -298,9 +306,6 @@ func (c *grpcClient) sendMessage(msg *genericMessage) {
 	switch err {
 	case nil:
 		atomic.StoreInt32(&c.failCount, 0)
-		break
-	case io.EOF:
-		fallthrough
 	default:
 		//log.Error().Err(err).Interface("genericMessage", *msg).Msg("failed to send message")
 		atomic.AddInt32(&c.failCount, 1)
@@ -308,5 +313,13 @@ func (c *grpcClient) sendMessage(msg *genericMessage) {
 }
 
 func (c *grpcClient) disconnectedChannel() chan bool {
-	return c.disconnectedFromMaster
+	return c.disconnectedChan
+}
+
+func (c *grpcClient) close() {
+	close(c.shutdownChan)
+	c.config.ctxCancel()
+	if c.config.conn != nil {
+		c.config.conn.Close()
+	}
 }

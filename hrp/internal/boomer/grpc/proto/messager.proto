@@ -5,6 +5,8 @@ package message;
 option go_package = "grpc/messager";
 
 service Message {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc SignOut(SignOutRequest) returns (SignOutResponse) {}
   rpc BidirectionalStreamingMessage(stream StreamRequest) returns (stream StreamResponse){};
 }
 
@@ -20,4 +22,22 @@ message StreamResponse{
   map<string, int64> data = 3;
   string NodeID = 4;
   bytes tasks = 5;
+}
+
+message RegisterRequest{
+  string NodeID = 1;
+}
+
+message RegisterResponse{
+  string code = 1;
+  string message = 2;
+}
+
+message SignOutRequest{
+  string NodeID = 1;
+}
+
+message SignOutResponse{
+  string code = 1;
+  string message = 2;
 }

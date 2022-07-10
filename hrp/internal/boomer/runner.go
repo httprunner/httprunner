@@ -10,6 +10,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/jinzhu/copier"
+
 	"github.com/go-errors/errors"
 
 	"github.com/olekukonko/tablewriter"
@@ -203,8 +207,20 @@ type runner struct {
 	// close this channel will stop all running workers.
 	stopChan chan bool
 
+	stoppingChan chan bool
+
+	doneChan chan bool
+
+	reportChan chan bool
+
 	// close this channel will stop all goroutines used in runner.
 	closeChan chan bool
+
+	// wgMu blocks concurrent waitgroup mutation while server stopping
+	wgMu sync.RWMutex
+	// wg is used to wait for the goroutines that depends on the server state
+	// to exit when stopping the server.
+	wg sync.WaitGroup
 
 	outputs []Output
 
@@ -343,11 +359,12 @@ func (r *runner) reportTestResult() {
 }
 
 func (r *runner) reset() {
-	r.updateState(StateInit)
 	r.controller.reset()
 	r.stats.clearAll()
 	r.rebalance = make(chan bool)
-	r.stopChan = make(chan bool)
+	r.stoppingChan = make(chan bool)
+	r.doneChan = make(chan bool)
+	r.reportChan = make(chan bool)
 }
 
 func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
@@ -376,7 +393,7 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 				if r.loop != nil {
 					workerLoop = &Loop{loopCount: atomic.LoadInt64(&r.loop.loopCount) / r.controller.spawnCount}
 				}
-				go func() {
+				r.goAttach(func() {
 					for {
 						select {
 						case <-quit:
@@ -402,8 +419,7 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 								// finished count of single worker
 								workerLoop.increaseFinishedCount()
 								if r.loop.isFinished() {
-									r.stop()
-									close(r.rebalance)
+									go r.stop()
 								}
 							}
 							if r.controller.erase() {
@@ -411,7 +427,7 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 							}
 						}
 					}
-				}()
+				})
 				continue
 			}
 
@@ -431,6 +447,27 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 			}
 		}
 	}
+}
+
+// goAttach creates a goroutine on a given function and tracks it using
+// the runner waitgroup.
+// The passed function should interrupt on r.StoppingNotify().
+func (r *runner) goAttach(f func()) {
+	r.wgMu.RLock() // this blocks with ongoing close(s.stopping)
+	defer r.wgMu.RUnlock()
+	select {
+	case <-r.stoppingChan:
+		log.Warn().Msg("server has stopped; skipping GoAttach")
+		return
+	default:
+	}
+
+	// now safe to add since waitgroup wait has not started yet
+	r.wg.Add(1)
+	go func() {
+		defer r.wg.Done()
+		f()
+	}()
 }
 
 // setTasks will set the runner's task list AND the total task weight
@@ -496,6 +533,7 @@ func (r *runner) statsStart() {
 		case <-ticker.C:
 			r.reportStats()
 			if !r.isStarted() {
+				close(r.reportChan)
 				log.Info().Msg("Quitting statsStart")
 				return
 			}
@@ -506,12 +544,48 @@ func (r *runner) statsStart() {
 func (r *runner) stop() {
 	// stop previous goroutines without blocking
 	// those goroutines will exit when r.safeRun returns
-	close(r.stopChan)
+	r.Stop()
 	if r.rateLimitEnabled {
 		r.rateLimiter.Stop()
 	}
 	r.updateState(StateStopped)
 }
+
+// HardStop stops the server without coordination with other members in the cluster.
+func (r *runner) hardStop() {
+	select {
+	case r.stopChan <- true:
+	case <-r.doneChan:
+		return
+	}
+	<-r.doneChan
+}
+
+// Stop stops the server gracefully, and shuts down the running goroutine.
+// Stop should be called after a Start(s), otherwise it will block forever.
+// When stopping leader, Stop transfers its leadership to one of its peers
+// before stopping the server.
+// Stop terminates the Server and performs any necessary finalization.
+// Do and Process cannot be called after Stop has been invoked.
+func (r *runner) Stop() {
+	r.hardStop()
+}
+
+// StopNotify returns a channel that receives a empty struct
+// when the server is stopped.
+func (r *runner) StopNotify() <-chan bool { return r.stopChan }
+
+// DoneNotify returns a channel that receives a empty struct
+// when the server is stopped.
+func (r *runner) DoneNotify() <-chan bool { return r.doneChan }
+
+// StoppingNotify returns a channel that receives a empty struct
+// when the server is being stopped.
+func (r *runner) StoppingNotify() <-chan bool { return r.stoppingChan }
+
+// RebalanceNotify returns a channel that receives a empty struct
+// when the server is being stopped.
+func (r *runner) RebalanceNotify() <-chan bool { return r.rebalance }
 
 func (r *runner) getState() int32 {
 	return atomic.LoadInt32(&r.state)
@@ -541,13 +615,17 @@ func newLocalRunner(spawnCount int64, spawnRate float64) *localRunner {
 			spawnRate:  spawnRate,
 			controller: &Controller{},
 			outputs:    make([]Output, 0),
+			stopChan:   make(chan bool),
 			closeChan:  make(chan bool),
 			once:       &sync.Once{},
+			wg:         sync.WaitGroup{},
+			wgMu:       sync.RWMutex{},
 		},
 	}
 }
 
 func (r *localRunner) start() {
+	r.updateState(StateInit)
 	// init localRunner
 	r.reset()
 
@@ -558,34 +636,40 @@ func (r *localRunner) start() {
 	// output setup
 	r.outputOnStart()
 
-	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, nil)
+	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, nil)
+
+	defer func() {
+		r.wgMu.Lock() // block concurrent waitgroup adds in GoAttach while stopping
+		close(r.stoppingChan)
+		close(r.rebalance)
+		r.wgMu.Unlock()
+
+		// wait for goroutines before closing
+		r.wg.Wait()
+
+		r.updateState(StateStopping)
+
+		<-r.reportChan
+
+		// report test result
+		r.reportTestResult()
+
+		// output teardown
+		r.outputOnStop()
+
+		close(r.doneChan)
+		r.updateState(StateQuitting)
+	}()
 
 	// start stats report
-	r.statsStart()
+	go r.statsStart()
 
-	// stop
 	<-r.stopChan
-	r.updateState(StateStopped)
-
-	// stop rate limiter
-	if r.rateLimitEnabled {
-		r.rateLimiter.Stop()
-	}
-
-	// report test result
-	r.reportTestResult()
-
-	// output teardown
-	r.outputOnStop()
-
-	r.updateState(StateQuitting)
-	return
 }
 
 func (r *localRunner) stop() {
 	if r.runner.isStarted() {
 		r.runner.stop()
-		close(r.rebalance)
 	}
 }
 
@@ -600,7 +684,7 @@ type workerRunner struct {
 
 	profile *Profile
 
-	tasksChan chan *profileMessage
+	tasksChan chan *task
 
 	mutex      sync.Mutex
 	ignoreQuit bool
@@ -612,13 +696,14 @@ func newWorkerRunner(masterHost string, masterPort int) (r *workerRunner) {
 			stats:      newRequestStats(),
 			outputs:    make([]Output, 0),
 			controller: &Controller{},
+			stopChan:   make(chan bool),
 			closeChan:  make(chan bool),
 			once:       &sync.Once{},
 		},
 		masterHost: masterHost,
 		masterPort: masterPort,
 		nodeID:     getNodeID(),
-		tasksChan:  make(chan *profileMessage, 10),
+		tasksChan:  make(chan *task, 10),
 		mutex:      sync.Mutex{},
 		ignoreQuit: false,
 	}
@@ -643,9 +728,9 @@ func (r *workerRunner) onSpawnMessage(msg *genericMessage) {
 	if msg.Tasks == nil && len(r.tasks) == 0 {
 		log.Error().Msg("miss tasks")
 	}
-	r.tasksChan <- &profileMessage{
-		Profile: profile,
-		Tasks:   msg.Tasks,
+	r.tasksChan <- &task{
+		Profile:   profile,
+		TestCases: msg.Tasks,
 	}
 	log.Info().Msg("on spawn message successful")
 }
@@ -658,7 +743,7 @@ func (r *workerRunner) onRebalanceMessage(msg *genericMessage) {
 	r.setSpawnCount(profile.SpawnCount)
 	r.setSpawnRate(profile.SpawnRate)
 
-	r.tasksChan <- &profileMessage{
+	r.tasksChan <- &task{
 		Profile: profile,
 	}
 	log.Info().Msg("on rebalance message successful")
@@ -672,6 +757,9 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 		case "spawn":
 			r.onSpawnMessage(msg)
 		case "quit":
+			if r.ignoreQuit {
+				break
+			}
 			r.close()
 		}
 	case StateSpawning:
@@ -698,8 +786,10 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 		switch msg.Type {
 		case "spawn":
 			r.onSpawnMessage(msg)
-			go r.start()
 		case "quit":
+			if r.ignoreQuit {
+				break
+			}
 			r.close()
 		}
 	}
@@ -725,57 +815,88 @@ func (r *workerRunner) startListener() {
 
 // run worker service
 func (r *workerRunner) run() {
+	println("\n========================= HttpRunner Worker for Distributed Load Testing ========================= ")
 	r.updateState(StateInit)
 	r.client = newClient(r.masterHost, r.masterPort, r.nodeID)
-
-	err := r.client.connect()
+	println(fmt.Sprintf("ready to connect master to %s:%d", r.masterHost, r.masterPort))
+	err := r.client.start()
 	if err != nil {
-		log.Printf("Failed to connect to master(%s:%d) with error %v\n", r.masterHost, r.masterPort, err)
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to connect to master(%s:%d) with error %v\n", r.masterHost, r.masterPort))
 	}
+
+	if err = r.client.register(r.client.config.ctx); err != nil {
+		log.Error().Err(err).Msg("failed to register")
+	}
+
+	err = r.client.newBiStreamClient()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to establish bidirectional stream, waiting master launched")
+	}
+
+	go r.client.recv()
+	go r.client.send()
+
+	defer func() {
+		r.wg.Wait()
+
+		var ticker = time.NewTicker(1 * time.Second)
+		if r.client != nil {
+			// waitting for quit message is sent to master
+			select {
+			case <-r.client.disconnectedChannel():
+			case <-ticker.C:
+				log.Warn().Msg("Timeout waiting for sending quit message to master, boomer will quit any way.")
+			}
+
+			if err = r.client.signOut(r.client.config.ctx); err != nil {
+				log.Error().Err(err).Msg("failed to sign out")
+			}
+			r.client.close()
+		}
+	}()
 
 	// listen to master
 	go r.startListener()
 
-	// register worker information to master
-	r.client.sendChannel() <- newGenericMessage("register", nil, r.nodeID)
 	// tell master, I'm ready
 	log.Info().Msg("send client ready signal")
 	r.client.sendChannel() <- newClientReadyMessageToMaster(r.nodeID)
 
 	// heartbeat
 	// See: https://github.com/locustio/locust/commit/a8c0d7d8c588f3980303358298870f2ea394ab93
-	go func() {
-		var ticker = time.NewTicker(heartbeatInterval)
-		for {
-			select {
-			case <-ticker.C:
-				if atomic.LoadInt32(&r.client.failCount) > 2 {
-					r.updateState(StateMissing)
-				}
-				if r.getState() == StateMissing {
-					if r.client.reConnect() == nil {
-						r.updateState(StateInit)
-					}
-				}
-				CPUUsage := GetCurrentCPUUsage()
-				data := map[string]int64{
-					"state":             int64(r.getState()),
-					"current_cpu_usage": int64(CPUUsage),
-					"spawn_count":       r.controller.getCurrentClientsNum(),
-				}
-				r.client.sendChannel() <- newGenericMessage("heartbeat", data, r.nodeID)
-			case <-r.closeChan:
-				return
+	var ticker = time.NewTicker(heartbeatInterval)
+	for {
+		select {
+		case <-ticker.C:
+			if atomic.LoadInt32(&r.client.failCount) > 2 {
+				r.updateState(StateMissing)
 			}
+			if r.getState() == StateMissing {
+				err = r.client.register(r.client.config.ctx)
+				if err != nil {
+					continue
+				}
+				if r.client.newBiStreamClient() == nil {
+					r.updateState(StateInit)
+				}
+			}
+			CPUUsage := GetCurrentCPUUsage()
+			data := map[string]int64{
+				"state":             int64(r.getState()),
+				"current_cpu_usage": int64(CPUUsage),
+				"spawn_count":       r.controller.getCurrentClientsNum(),
+			}
+			r.client.sendChannel() <- newGenericMessage("heartbeat", data, r.nodeID)
+		case <-r.closeChan:
+			return
 		}
-	}()
-	<-r.closeChan
+	}
 }
 
-// start load test
 func (r *workerRunner) start() {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
+	r.updateState(StateInit)
 	r.reset()
 
 	// start rate limiter
@@ -785,38 +906,42 @@ func (r *workerRunner) start() {
 
 	r.once.Do(r.outputOnStart)
 
-	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stopChan, r.spawnComplete)
+	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, r.spawnComplete)
+
+	defer func() {
+		r.wgMu.Lock() // block concurrent waitgroup adds in GoAttach while stopping
+		close(r.stoppingChan)
+		close(r.rebalance)
+		r.wgMu.Unlock()
+
+		// wait for goroutines before closing
+		r.wg.Wait()
+
+		r.updateState(StateStopping)
+
+		<-r.reportChan
+
+		r.reportTestResult()
+		r.outputOnStop()
+
+		close(r.doneChan)
+	}()
 
 	// start stats report
-	r.statsStart()
+	go r.statsStart()
 
-	r.reportTestResult()
-	r.outputOnStop()
+	<-r.stopChan
 }
 
 func (r *workerRunner) stop() {
 	if r.isStarted() {
 		r.runner.stop()
-		close(r.rebalance)
 	}
 }
 
 func (r *workerRunner) close() {
-	// waiting report finished
-	time.Sleep(1 * time.Second)
+	r.onQuiting()
 	close(r.closeChan)
-	var ticker = time.NewTicker(1 * time.Second)
-	if r.client != nil {
-		// waitting for quit message is sent to master
-		select {
-		case <-r.client.disconnectedChannel():
-			break
-		case <-ticker.C:
-			log.Warn().Msg("Timeout waiting for sending quit message to master, boomer will quit any way.")
-			r.onQuiting()
-		}
-		r.client.close()
-	}
 }
 
 // masterRunner controls worker to spawn goroutines and collect stats.
@@ -835,15 +960,18 @@ type masterRunner struct {
 
 	parseTestCasesChan chan bool
 	testCaseBytes      chan []byte
-	// set profile to worker
-	profileBytes chan []byte
+	tcb                []byte
 }
 
 func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
 	return &masterRunner{
 		runner: runner{
-			state:     StateInit,
-			closeChan: make(chan bool),
+			state:        StateInit,
+			stoppingChan: make(chan bool),
+			doneChan:     make(chan bool),
+			closeChan:    make(chan bool),
+			wg:           sync.WaitGroup{},
+			wgMu:         sync.RWMutex{},
 		},
 		masterBindHost:     masterBindHost,
 		masterBindPort:     masterBindPort,
@@ -908,9 +1036,6 @@ func (r *masterRunner) clientListener() {
 			}
 			switch msg.Type {
 			case typeClientReady:
-				if workerInfo.getState() == StateInit {
-					break
-				}
 				workerInfo.setState(StateInit)
 				if r.getState() == StateRunning {
 					log.Warn().Str("worker id", workerInfo.ID).Msg("worker joined, ready to rebalance the load of each worker")
@@ -975,40 +1100,52 @@ func (r *masterRunner) run() {
 		return
 	}
 
-	// listen and deal message from worker
-	go r.clientListener()
-	// listen and record heartbeat from worker
-	go r.heartbeatWorker()
+	defer func() {
+		r.wgMu.Lock() // block concurrent waitgroup adds in GoAttach while stopping
+		close(r.stoppingChan)
+		r.wgMu.Unlock()
+
+		r.wg.Wait()
+
+		r.server.close()
+
+		close(r.doneChan)
+	}()
 
 	if r.autoStart {
-		log.Info().Msg("auto start, waiting expected workers joined")
-		var ticker = time.NewTicker(1 * time.Second)
-		var tickerMaxWait = time.NewTicker(time.Duration(r.expectWorkersMaxWait) * time.Second)
-	FOR:
-		for {
-			select {
-			case <-r.closeChan:
-				return
-			case <-ticker.C:
-				c := r.server.getClientsLength()
-				log.Info().Msg(fmt.Sprintf("expected worker number: %v, current worker count: %v", r.expectWorkers, c))
-				if c >= r.expectWorkers {
-					go func() {
+		r.goAttach(func() {
+			log.Info().Msg("auto start, waiting expected workers joined")
+			var ticker = time.NewTicker(1 * time.Second)
+			var tickerMaxWait = time.NewTicker(time.Duration(r.expectWorkersMaxWait) * time.Second)
+			for {
+				select {
+				case <-r.closeChan:
+					return
+				case <-ticker.C:
+					c := r.server.getClientsLength()
+					log.Info().Msg(fmt.Sprintf("expected worker number: %v, current worker count: %v", r.expectWorkers, c))
+					if c >= r.expectWorkers {
 						err = r.start()
 						if err != nil {
 							log.Error().Err(err).Msg("failed to run")
 							os.Exit(1)
 						}
-					}()
-					break FOR
+						return
+					}
+				case <-tickerMaxWait.C:
+					log.Warn().Msg("reached max wait time, quiting")
+					r.onQuiting()
+					os.Exit(1)
 				}
-			case <-tickerMaxWait.C:
-				log.Warn().Msg("reached max wait time, quiting")
-				r.onQuiting()
-				os.Exit(1)
 			}
-		}
+		})
 	}
+
+	// listen and deal message from worker
+	r.goAttach(r.clientListener)
+
+	// listen and record heartbeat from worker
+	r.heartbeatWorker()
 	<-r.closeChan
 }
 
@@ -1018,17 +1155,48 @@ func (r *masterRunner) start() error {
 		return errors.New("current workers: 0")
 	}
 
-	log.Info().Msg("send spawn data to worker")
-	r.updateState(StateSpawning)
 	// fetching testcase
 	testcase, err := r.fetchTestCase()
 	if err != nil {
 		return err
 	}
-	profile := r.profile.dispatch(int64(numWorkers))
 
-	r.server.sendChannel() <- newMessageToWorker("spawn", ProfileToBytes(profile), nil, testcase)
-	log.Warn().Interface("profile", profile).Msg("send spawn data to worker successful")
+	workerProfile := &Profile{}
+	if err := copier.Copy(workerProfile, r.profile); err != nil {
+		log.Error().Err(err).Msg("copy workerProfile failed")
+		return err
+	}
+	cur := 0
+	ints := builtin.SplitInteger(int(r.profile.SpawnCount), numWorkers)
+	log.Info().Msg("send spawn data to worker")
+	r.updateState(StateSpawning)
+	r.server.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
+				return true
+			}
+			if workerProfile.SpawnCount > 0 {
+				workerProfile.SpawnCount = int64(ints[cur])
+			}
+			if workerProfile.SpawnRate > 0 {
+				workerProfile.SpawnRate = workerProfile.SpawnRate / float64(numWorkers)
+			}
+			if workerProfile.MaxRPS > 0 {
+				workerProfile.MaxRPS = workerProfile.MaxRPS / int64(numWorkers)
+			}
+			workerInfo.getStream() <- &messager.StreamResponse{
+				Type:    "spawn",
+				Profile: ProfileToBytes(workerProfile),
+				Data:    map[string]int64{},
+				NodeID:  workerInfo.ID,
+				Tasks:   testcase,
+			}
+			cur++
+		}
+		return true
+	})
+
+	log.Warn().Interface("profile", r.profile).Msg("send spawn data to worker successful")
 	return nil
 }
 
@@ -1037,9 +1205,49 @@ func (r *masterRunner) rebalance() error {
 	if numWorkers == 0 {
 		return errors.New("current workers: 0")
 	}
-	profile := r.profile.dispatch(int64(numWorkers))
+	workerProfile := &Profile{}
+	if err := copier.Copy(workerProfile, r.profile); err != nil {
+		log.Error().Err(err).Msg("copy workerProfile failed")
+		return err
+	}
+	cur := 0
+	ints := builtin.SplitInteger(int(r.profile.SpawnCount), numWorkers)
+	log.Info().Msg("send spawn data to worker")
+	r.server.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
+				return true
+			}
+			if workerProfile.SpawnCount > 0 {
+				workerProfile.SpawnCount = int64(ints[cur])
+			}
+			if workerProfile.SpawnRate > 0 {
+				workerProfile.SpawnRate = workerProfile.SpawnRate / float64(numWorkers)
+			}
+			if workerProfile.MaxRPS > 0 {
+				workerProfile.MaxRPS = workerProfile.MaxRPS / int64(numWorkers)
+			}
+			if workerInfo.getState() == StateInit {
+				workerInfo.getStream() <- &messager.StreamResponse{
+					Type:    "spawn",
+					Profile: ProfileToBytes(workerProfile),
+					Data:    map[string]int64{},
+					NodeID:  workerInfo.ID,
+					Tasks:   r.tcb,
+				}
+			} else {
+				workerInfo.getStream() <- &messager.StreamResponse{
+					Type:    "rebalance",
+					Profile: ProfileToBytes(workerProfile),
+					Data:    map[string]int64{},
+					NodeID:  workerInfo.ID,
+				}
+			}
+			cur++
+		}
+		return true
+	})
 
-	r.server.sendChannel() <- newMessageToWorker("rebalance", ProfileToBytes(profile), nil, nil)
 	log.Warn().Msg("send rebalance data to worker successful")
 	return nil
 }
@@ -1054,6 +1262,7 @@ func (r *masterRunner) fetchTestCase() ([]byte, error) {
 	case <-ticker.C:
 		return nil, errors.New("parse testcases timeout")
 	case tcb := <-r.testCaseBytes:
+		r.tcb = tcb
 		return tcb, nil
 	}
 }
@@ -1061,8 +1270,7 @@ func (r *masterRunner) fetchTestCase() ([]byte, error) {
 func (r *masterRunner) stop() error {
 	if r.isStarted() {
 		r.updateState(StateStopping)
-		r.server.sendChannel() <- &genericMessage{Type: "stop", Data: map[string]int64{}}
-		r.updateState(StateStopped)
+		r.server.sendBroadcasts(&genericMessage{Type: "stop", Data: map[string]int64{}})
 		return nil
 	} else {
 		return errors.New("already stopped")
@@ -1071,24 +1279,22 @@ func (r *masterRunner) stop() error {
 
 func (r *masterRunner) onQuiting() {
 	if r.getState() != StateQuitting {
-		r.server.sendChannel() <- &genericMessage{
+		r.server.sendBroadcasts(&genericMessage{
 			Type: "quit",
-		}
+		})
 	}
 	r.updateState(StateQuitting)
 }
 
 func (r *masterRunner) close() {
 	r.onQuiting()
-	r.server.wg.Wait()
 	close(r.closeChan)
-	r.server.close()
 }
 
 func (r *masterRunner) reportStats() {
 	currentTime := time.Now()
 	println()
-	println("===================== HttpRunner Master for Distributed Load Testing ===================== ")
+	println("========================= HttpRunner Master for Distributed Load Testing ========================= ")
 	println(fmt.Sprintf("Current time: %s, State: %v, Current Available Workers: %v, Target Users: %v",
 		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getClientsLength(), r.getSpawnCount()))
 	table := tablewriter.NewWriter(os.Stdout)

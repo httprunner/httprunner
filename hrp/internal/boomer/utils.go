@@ -94,12 +94,12 @@ func GetCurrentCPUUsage() float64 {
 	currentPid := os.Getpid()
 	p, err := process.NewProcess(int32(currentPid))
 	if err != nil {
-		log.Printf("Fail to get CPU percent, %v\n", err)
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
 		return 0.0
 	}
 	percent, err := p.CPUPercent()
 	if err != nil {
-		log.Printf("Fail to get CPU percent, %v\n", err)
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
 		return 0.0
 	}
 	return percent / float64(runtime.NumCPU())
