@@ -18,9 +18,9 @@ type genericMessage struct {
 	Tasks   []byte           `json:"tasks,omitempty"`
 }
 
-type profileMessage struct {
-	Profile *Profile `json:"profile,omitempty"`
-	Tasks   []byte   `json:"tasks,omitempty"`
+type task struct {
+	Profile   *Profile `json:"profile,omitempty"`
+	TestCases []byte   `json:"testcases,omitempty"`
 }
 
 func newGenericMessage(t string, data map[string]int64, nodeID string) (msg *genericMessage) {

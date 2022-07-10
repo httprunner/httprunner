@@ -2,6 +2,7 @@ package boomer
 
 import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"golang.org/x/net/context"
 	"math"
 	"os"
 	"os/signal"
@@ -84,20 +85,6 @@ func (b *Boomer) SetProfile(profile *Profile) {
 	}
 }
 
-func (p *Profile) dispatch(workers int64) *Profile {
-	workerProfile := *p
-	if p.SpawnCount > 0 {
-		workerProfile.SpawnCount = p.SpawnCount / workers
-	}
-	if p.SpawnRate > 0 {
-		workerProfile.SpawnRate = p.SpawnRate / float64(workers)
-	}
-	if p.MaxRPS > 0 {
-		workerProfile.MaxRPS = p.MaxRPS / workers
-	}
-	return &workerProfile
-}
-
 // SetMode only accepts boomer.DistributedMasterMode、boomer.DistributedWorkerMode and boomer.StandaloneMode.
 func (b *Boomer) SetMode(mode Mode) {
 	switch mode {
@@ -169,14 +156,9 @@ func (b *Boomer) RunWorker() {
 	b.workerRunner.run()
 }
 
-// GetTestCaseBytesChan gets test case bytes chan
-func (b *Boomer) GetTestCaseBytesChan() chan []byte {
-	switch b.mode {
-	case DistributedMasterMode:
-		return b.masterRunner.testCaseBytes
-	default:
-		return nil
-	}
+// TestCaseBytesChan gets test case bytes chan
+func (b *Boomer) TestCaseBytesChan() chan []byte {
+	return b.masterRunner.testCaseBytes
 }
 
 func ProfileToBytes(profile *Profile) []byte {
@@ -197,18 +179,8 @@ func BytesToProfile(profileBytes []byte) *Profile {
 	return profile
 }
 
-// GetProfileBytesChan gets profile bytes chan
-func (b *Boomer) GetProfileBytesChan() chan []byte {
-	switch b.mode {
-	case DistributedMasterMode:
-		return b.masterRunner.profileBytes
-	default:
-		return nil
-	}
-}
-
-// GetTasksChan gets profile bytes chan
-func (b *Boomer) GetTasksChan() chan *profileMessage {
+// GetTasksChan getsTasks chan
+func (b *Boomer) GetTasksChan() chan *task {
 	switch b.mode {
 	case DistributedWorkerMode:
 		return b.workerRunner.tasksChan
@@ -373,13 +345,16 @@ func (b *Boomer) EnableMemoryProfile(memoryProfile string, duration time.Duratio
 }
 
 // EnableGracefulQuit catch SIGINT and SIGTERM signals to quit gracefully
-func (b *Boomer) EnableGracefulQuit() {
+func (b *Boomer) EnableGracefulQuit(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-c
 		b.Quit()
+		cancel()
 	}()
+	return ctx
 }
 
 // Run accepts a slice of Task and connects to the locust master.

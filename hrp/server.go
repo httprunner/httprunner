@@ -63,13 +63,6 @@ func writeJSON(w http.ResponseWriter, body []byte, status int) {
 	writeResponse(w, status, jsonContentType, body)
 }
 
-type StartRequestBody struct {
-	boomer.Profile `mapstructure:",squash"`
-	Worker         string                 `json:"worker,omitempty" yaml:"worker,omitempty" mapstructure:"worker"` // all
-	TestCasePath   string                 `json:"testcase-path" yaml:"testcase-path" mapstructure:"testcase-path"`
-	Other          map[string]interface{} `mapstructure:",remain"`
-}
-
 type ServerCode int
 
 // server response code
@@ -117,6 +110,13 @@ func CustomAPIResponse(errCode ServerCode, errMsg string) ServerStatus {
 		Code:    errCode,
 		Message: errMsg,
 	}
+}
+
+type StartRequestBody struct {
+	boomer.Profile `mapstructure:",squash"`
+	Worker         string                 `json:"worker,omitempty" yaml:"worker,omitempty" mapstructure:"worker"` // all
+	TestCasePath   string                 `json:"testcase-path" yaml:"testcase-path" mapstructure:"testcase-path"`
+	Other          map[string]interface{} `mapstructure:",remain"`
 }
 
 type RebalanceRequestBody struct {

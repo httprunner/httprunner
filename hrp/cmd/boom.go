@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"golang.org/x/net/context"
 	"os"
 	"strings"
 	"time"
@@ -55,7 +56,7 @@ var boomCmd = &cobra.Command{
 			hrpBoomer = hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
 		}
 		hrpBoomer.SetProfile(&boomArgs.Profile)
-		hrpBoomer.EnableGracefulQuit()
+		ctx := hrpBoomer.EnableGracefulQuit(context.Background())
 
 		// run boomer
 		switch hrpBoomer.GetMode() {
@@ -67,15 +68,20 @@ var boomCmd = &cobra.Command{
 				hrpBoomer.SetSpawnCount(boomArgs.SpawnCount)
 				hrpBoomer.SetSpawnRate(boomArgs.SpawnRate)
 			}
-			go hrpBoomer.StartServer()
-			go hrpBoomer.RunMaster()
-			hrpBoomer.PollTestCases()
+			if boomArgs.autoStart {
+				hrpBoomer.InitBoomer()
+			} else {
+				go hrpBoomer.StartServer()
+			}
+			go hrpBoomer.PollTestCases(ctx)
+			hrpBoomer.RunMaster()
 		case "worker":
 			if boomArgs.ignoreQuit {
 				hrpBoomer.SetIgnoreQuit()
 			}
-			go hrpBoomer.RunWorker()
-			hrpBoomer.PollTasks()
+			go hrpBoomer.PollTasks()
+			hrpBoomer.RunWorker()
+			time.Sleep(3 * time.Second)
 		case "standalone":
 			if venv != "" {
 				hrpBoomer.SetPython3Venv(venv)

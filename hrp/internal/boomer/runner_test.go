@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -110,6 +111,32 @@ func TestLoopCount(t *testing.T) {
 	runner.start()
 	if !assert.Equal(t, atomic.LoadInt64(&runner.loop.loopCount), atomic.LoadInt64(&runner.loop.finishedCount)) {
 		t.Fatal()
+	}
+}
+
+func TestStopNotify(t *testing.T) {
+	r := &localRunner{
+		runner: runner{
+			stopChan: make(chan bool),
+			doneChan: make(chan bool),
+		},
+	}
+	go func() {
+		<-r.stopChan
+		close(r.doneChan)
+	}()
+
+	notifier := r.DoneNotify()
+	select {
+	case <-notifier:
+		t.Fatalf("received unexpected stop notification")
+	default:
+	}
+	r.Stop()
+	select {
+	case <-notifier:
+	default:
+		t.Fatalf("cannot receive stop notification")
 	}
 }
 
@@ -239,7 +266,8 @@ func TestSpawnAndStop(t *testing.T) {
 	if msg.Type != "spawning_complete" {
 		t.Error("Runner should send spawning_complete message when spawning completed, got", msg.Type)
 	}
-	runner.stop()
+	go runner.stop()
+	close(runner.doneChan)
 
 	runner.onQuiting()
 	msg = <-runner.client.sendChannel()
@@ -260,10 +288,11 @@ func TestStop(t *testing.T) {
 	runner.reset()
 	runner.updateState(StateSpawning)
 
-	runner.stop()
-
+	go runner.stop()
+	close(runner.doneChan)
+	time.Sleep(1 * time.Second)
 	if runner.getState() != StateStopped {
-		t.Error("Expected runner state to be 5, was", runner.getState())
+		t.Error("Expected runner state to be 5, was", getStateName(runner.getState()))
 	}
 }
 
@@ -305,7 +334,8 @@ func TestOnQuitMessage(t *testing.T) {
 	runner.reset()
 	runner.closeChan = make(chan bool)
 	runner.client.shutdownChan = make(chan bool)
-	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
+	go runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
+	close(runner.doneChan)
 	<-runner.closeChan
 	if runner.getState() != StateQuitting {
 		t.Error("Runner's state should be StateQuitting")
@@ -359,7 +389,7 @@ func TestOnMessage(t *testing.T) {
 		t.Error("Runner should send spawning_complete message when spawn completed, got", msg.Type)
 	}
 	if runner.getState() != StateRunning {
-		t.Error("State of runner is not running after spawn, got", runner.getState())
+		t.Error("State of runner is not running after spawn, got", getStateName(runner.getState()))
 	}
 
 	// increase goroutines while running
@@ -368,7 +398,7 @@ func TestOnMessage(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 	if runner.getState() != StateRunning {
-		t.Error("State of runner is not running after spawn, got", runner.getState())
+		t.Error("State of runner is not running after spawn, got", getStateName(runner.getState()))
 	}
 	if runner.controller.getCurrentClientsNum() != 15 {
 		t.Error("Number of goroutines mismatches, expected: 15, current count:", runner.controller.getCurrentClientsNum())
@@ -377,7 +407,7 @@ func TestOnMessage(t *testing.T) {
 	// stop all the workers
 	runner.onMessage(newGenericMessage("stop", nil, runner.nodeID))
 	if runner.getState() != StateStopped {
-		t.Error("State of runner is not stopped, got", runner.getState())
+		t.Error("State of runner is not stopped, got", getStateName(runner.getState()))
 	}
 	msg = <-runner.client.sendChannel()
 	if msg.Type != "client_stopped" {
@@ -401,7 +431,7 @@ func TestOnMessage(t *testing.T) {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", runner.controller.getCurrentClientsNum())
 	}
 	if runner.getState() != StateRunning {
-		t.Error("State of runner is not running after spawn, got", runner.getState())
+		t.Error("State of runner is not running after spawn, got", getStateName(runner.getState()))
 	}
 	msg = <-runner.client.sendChannel()
 	if msg.Type != "spawning_complete" {
@@ -411,7 +441,7 @@ func TestOnMessage(t *testing.T) {
 	// stop all the workers
 	runner.onMessage(newGenericMessage("stop", nil, runner.nodeID))
 	if runner.getState() != StateStopped {
-		t.Error("State of runner is not stopped, got", runner.getState())
+		t.Error("State of runner is not stopped, got", getStateName(runner.getState()))
 	}
 	msg = <-runner.client.sendChannel()
 	if msg.Type != "client_stopped" {
@@ -430,8 +460,8 @@ func TestClientListener(t *testing.T) {
 	runner.setSpawnCount(10)
 	runner.setSpawnRate(10)
 	go runner.clientListener()
-	runner.server.clients.Store("testID1", &WorkerNode{ID: "testID1", Heartbeat: 3})
-	runner.server.clients.Store("testID2", &WorkerNode{ID: "testID2", Heartbeat: 3})
+	runner.server.clients.Store("testID1", &WorkerNode{ID: "testID1", Heartbeat: 3, stream: make(chan *messager.StreamResponse, 10)})
+	runner.server.clients.Store("testID2", &WorkerNode{ID: "testID2", Heartbeat: 3, stream: make(chan *messager.StreamResponse, 10)})
 	runner.server.recvChannel() <- &genericMessage{
 		Type:   typeClientReady,
 		NodeID: "testID1",
@@ -470,7 +500,7 @@ func TestClientListener(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 	if runner.getState() != StateStopped {
-		t.Error("State of master runner is not stopped, got", runner.getState())
+		t.Error("State of master runner is not stopped, got", getStateName(runner.getState()))
 	}
 }
 
@@ -480,8 +510,8 @@ func TestHeartbeatWorker(t *testing.T) {
 	runner.updateState(StateInit)
 	runner.setSpawnCount(10)
 	runner.setSpawnRate(10)
-	runner.server.clients.Store("testID1", &WorkerNode{ID: "testID1", Heartbeat: 1, State: StateInit})
-	runner.server.clients.Store("testID2", &WorkerNode{ID: "testID2", Heartbeat: 1, State: StateInit})
+	runner.server.clients.Store("testID1", &WorkerNode{ID: "testID1", Heartbeat: 1, State: StateInit, stream: make(chan *messager.StreamResponse, 10)})
+	runner.server.clients.Store("testID2", &WorkerNode{ID: "testID2", Heartbeat: 1, State: StateInit, stream: make(chan *messager.StreamResponse, 10)})
 	go runner.clientListener()
 	go runner.heartbeatWorker()
 	time.Sleep(3 * time.Second)
