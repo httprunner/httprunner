@@ -1,17 +1,25 @@
 # Release History
 
+## v4.2.0 (2022-07-22)
+
+**go version**
+
+- feat: support multi-machine collaborative distributed load testing
+
 ## v4.1.7 (2022-07-18)
 
 **go version**
 
-- fix: using `@FILEPATH` to indicate the path of the file 
 - feat: support indicating type and filename when uploading file
 - feat: support to infer MIME type of the file automatically
 - feat: support omitting websocket url if not necessary
 - feat: support multiple websocket connections each session
-- fix: optimize websocket step initialization
 - feat: support convert curl command(s) to testcase(s)
 - feat: support run curl as subcommand of run/boom/convert
+- fix: optimize websocket step initialization
+- fix: using `@FILEPATH` to indicate the path of the file
+- fix: reuse plugin instance if it already initialized
+- fix: deep copy api step to avoid data racing
 
 ## v4.1.6 (2022-07-04)
 
@@ -276,7 +284,8 @@
 - feat: implement `transaction` mechanism for load test
 - feat: continue running next step when failure occurs with `--continue-on-failure` flag, default to failfast
 - feat: report GA events with version
-- feat: run load test with the given limit and burst as rate limiter, use `--spawn-count`, `--spawn-rate` and `--request-increase-rate` flag
+- feat: run load test with the given limit and burst as rate limiter, use `--spawn-count`, `--spawn-rate`
+  and `--request-increase-rate` flag
 - feat: report runner state to prometheus
 - refactor: fork [boomer] as submodule initially and made a lot of changes
 - change: update API models
@@ -330,7 +339,8 @@
 
 ## 3.1.8 (2022-03-22)
 
-- feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json configuration file
+- feat: add `--profile` flag for har2case to support overwrite headers/cookies with specified yaml/json configuration
+  file
 - feat: support variable and function in response extract expression
 - fix: keep negative index in jmespath unchanged when converting pytest files, e.g. body.users[-1]
 - fix: variable should not start with digit
@@ -462,9 +472,9 @@
 **Changed**
 
 - change: override variables
-    (1) testcase: session variables > step variables > config variables
-    (2) testsuite: testcase variables > config variables
-    (3) testsuite testcase variables > testcase config variables
+  (1) testcase: session variables > step variables > config variables
+  (2) testsuite: testcase variables > config variables
+  (3) testsuite testcase variables > testcase config variables
 
 **Fixed**
 
@@ -648,17 +658,31 @@ reference: [v2-changelog]
 
 
 [hrp]: https://github.com/httprunner/hrp
+
 [hashicorp/go-plugin]: https://github.com/hashicorp/go-plugin
+
 [go plugin]: https://pkg.go.dev/plugin
+
 [docs repo]: https://github.com/httprunner/httprunner.github.io
+
 [zerolog]: https://github.com/rs/zerolog
+
 [jmespath]: https://jmespath.org/
+
 [mkdocs]: https://www.mkdocs.org/
+
 [github-actions]: https://github.com/httprunner/hrp/actions
+
 [boomer]: github.com/myzhan/boomer
+
 [sentry sdk]: https://github.com/getsentry/sentry-go
+
 [pushgateway]: https://github.com/prometheus/pushgateway
+
 [locust]: https://locust.io/
+
 [black]: https://github.com/psf/black
+
 [loguru]: https://github.com/Delgan/loguru
+
 [v2-changelog]: https://github.com/httprunner/httprunner/blob/v2/docs/CHANGELOG.md

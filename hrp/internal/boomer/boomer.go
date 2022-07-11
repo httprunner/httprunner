@@ -461,6 +461,9 @@ func (b *Boomer) Start(Args *Profile) error {
 	if b.masterRunner.isStarted() {
 		return errors.New("already started")
 	}
+	if b.masterRunner.getState() == StateStopping {
+		return errors.New("Please wait for all workers to finish")
+	}
 	b.SetSpawnCount(Args.SpawnCount)
 	b.SetSpawnRate(Args.SpawnRate)
 	b.SetProfile(Args)

@@ -21,7 +21,7 @@ hrp boom [flags]
 ### Options
 
 ```
-      --autostart                       Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and run time
+      --autostart                       Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and increase rate
       --cpu-profile string              Enable CPU profiling.
       --cpu-profile-duration duration   CPU profile duration. (default 30s)
       --disable-compression             Disable compression
@@ -36,6 +36,7 @@ hrp boom [flags]
       --master-bind-host string         Interfaces (hostname, ip) that hrp master should bind to. Only used when running with --master. Defaults to * (all available interfaces). (default "127.0.0.1")
       --master-bind-port int            Port that hrp master should bind to. Only used when running with --master. Defaults to 5557. (default 5557)
       --master-host string              Host or IP address of hrp master for distributed load testing. (default "127.0.0.1")
+      --master-http-address string      Interfaces (ip:port) that hrp master should control by user. Only used when running with --master. Defaults to *:9771. (default ":9771")
       --master-port int                 The port to connect to that is used by the hrp master for distributed load testing. (default 5557)
       --max-rps int                     Max RPS that boomer can generate, disabled by default.
       --mem-profile string              Enable memory profiling.
