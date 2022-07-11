@@ -49,6 +49,22 @@ func TestBuildURL(t *testing.T) {
 	if !assert.Equal(t, url, "https://httpbin.org/get") {
 		t.Fatal()
 	}
+
+	// websocket url
+	url = buildURL("wss://ws.postman-echo.com/raw", "")
+	if !assert.Equal(t, url, "wss://ws.postman-echo.com/raw") {
+		t.Fatal()
+	}
+
+	url = buildURL("wss://ws.postman-echo.com", "/raw")
+	if !assert.Equal(t, url, "wss://ws.postman-echo.com/raw") {
+		t.Fatal()
+	}
+
+	url = buildURL("wss://ws.postman-echo.com/raw", "ws://echo.websocket.events")
+	if !assert.Equal(t, url, "ws://echo.websocket.events") {
+		t.Fatal()
+	}
 }
 
 func TestRegexCompileVariable(t *testing.T) {
