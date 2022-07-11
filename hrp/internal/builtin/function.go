@@ -8,8 +8,11 @@ import (
 	"math"
 	"math/rand"
 	"mime/multipart"
+	"net/textproto"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,6 +32,15 @@ var Functions = map[string]interface{}{
 	"load_ws_message":        loadMessage,
 	"multipart_encoder":      multipartEncoder,
 	"multipart_content_type": multipartContentType,
+}
+
+// upload file path must starts with @, like @\"PATH\" or @PATH
+var regexUploadFilePath = regexp.MustCompile(`^@(.*)`)
+
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
 }
 
 func init() {
@@ -60,57 +72,140 @@ func MD5(str string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-type TFormWriter struct {
+type TFormDataWriter struct {
 	Writer  *multipart.Writer
 	Payload *bytes.Buffer
 }
 
-func multipartEncoder(formMap map[string]interface{}) *TFormWriter {
-	payload := &bytes.Buffer{}
-	writer := multipart.NewWriter(payload)
-	for formKey, formValue := range formMap {
-		formValueString := fmt.Sprintf("%v", formValue)
-		if err := writeFormDataFile(writer, formKey, formValueString); err == nil {
-			// form value is a file path
-			continue
-		}
-		// form value is not a file path, write as raw string
-		if err := writer.WriteField(formKey, formValueString); err != nil {
-			log.Info().Err(err).Msgf("failed to write field: %v=%v, ignore", formKey, formValue)
-		}
+func (w *TFormDataWriter) writeCustomField(formKey, formValue, formType, formFileName string) error {
+	if w.Writer == nil {
+		return errors.New("form-data writer not initialized")
 	}
-	if err := writer.Close(); err != nil {
+	h := make(textproto.MIMEHeader)
+	// field doesn't have Content-Type by default
+	if formType != "" {
+		h.Set("Content-Type", formType)
 	}
-	return &TFormWriter{
-		Writer:  writer,
-		Payload: payload,
+	// field doesn't have filename in Content-Disposition by default
+	if formFileName == "" {
+		h.Set("Content-Disposition",
+			fmt.Sprintf(`form-data; name="%s"`, escapeQuotes(formKey)))
+	} else {
+		h.Set("Content-Disposition",
+			fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+				escapeQuotes(formKey), escapeQuotes(formFileName)))
 	}
+	part, err := w.Writer.CreatePart(h)
+	if err != nil {
+		return err
+	}
+
+	_, err = part.Write([]byte(formValue))
+	return err
 }
 
-func writeFormDataFile(writer *multipart.Writer, fName, fPath string) error {
-	var err error
-	fPath, err = filepath.Abs(fPath)
+func (w *TFormDataWriter) writeCustomFile(formKey, formValue, formType, formFileName string) error {
+	if w.Writer == nil {
+		return errors.New("form-data writer not initialized")
+	}
+	fPath, err := filepath.Abs(formValue)
 	if err != nil {
 		log.Error().Err(err).Str("path", fPath).Msg("convert absolute path failed")
 		return err
-	}
-	if !IsFilePathExists(fPath) {
-		return errors.Errorf("file %v not existed", fPath)
 	}
 	file, err := os.ReadFile(fPath)
 	if err != nil {
 		log.Error().Err(err).Str("path", fPath).Msg("read file failed")
 		return err
 	}
-	formFile, err := writer.CreateFormFile(fName, filepath.Base(fPath))
+
+	if formType == "" {
+		formType = "application/octet-stream"
+	}
+	if formFileName == "" {
+		formFileName = filepath.Base(formValue)
+	}
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Type", formType)
+	h.Set("Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+			escapeQuotes(formKey), escapeQuotes(formFileName)))
+	part, err := w.Writer.CreatePart(h)
 	if err != nil {
 		return err
 	}
-	_, err = formFile.Write(file)
+
+	_, err = part.Write(file)
 	return err
 }
 
-func multipartContentType(w *TFormWriter) string {
+func multipartEncoder(formMap map[string]interface{}) *TFormDataWriter {
+	payload := &bytes.Buffer{}
+	writer := multipart.NewWriter(payload)
+	tFormWriter := &TFormDataWriter{
+		Writer:  writer,
+		Payload: payload,
+	}
+	// e.g. formMap: {"file": "@\"$upload_file\";type=text/foo"}
+	for formKey, formData := range formMap {
+		formDataString := fmt.Sprintf("%v", formData)
+		formItems := strings.Split(formDataString, ";")
+		var isFilePath bool
+		var formValue, formType, formFileName string
+		for _, formItem := range formItems {
+			if formItem == "" {
+				continue
+			}
+			equalSignIndex := strings.Index(formItem, "=")
+			// parse form value, e.g. @\"$upload_file\"
+			if equalSignIndex == -1 {
+				matchRes := regexUploadFilePath.FindStringSubmatch(formItem)
+				if len(matchRes) > 1 {
+					// formItem started with @, regarded as File path
+					isFilePath = true
+					formValue = strings.Trim(matchRes[1], "\"")
+				} else {
+					// formItem is not a valid File path, regarded as Text instead
+					formValue = strings.TrimSuffix(strings.TrimPrefix(formItem, "\""), "\"")
+				}
+				continue
+			}
+			// parse form option, e.g. type=text/plain
+			leftPart := strings.TrimSpace(formItem[:equalSignIndex])
+			var rightPart string
+			if equalSignIndex < len(formItem)-1 {
+				rightPart = strings.TrimSpace(formItem[equalSignIndex+1:])
+			}
+			if (strings.ToLower(leftPart) != "type" && strings.ToLower(leftPart) != "filename") || rightPart == "" {
+				formOption := fmt.Sprintf("%s=%s", leftPart, rightPart)
+				log.Warn().Msgf("invalid form option: %v, ignore", formOption)
+				continue
+			}
+			if strings.ToLower(leftPart) == "type" {
+				formType = rightPart
+			}
+			if strings.ToLower(leftPart) == "filename" {
+				formFileName = rightPart
+			}
+		}
+		if isFilePath {
+			if err := tFormWriter.writeCustomFile(formKey, formValue, formType, formFileName); err != nil {
+				log.Error().Err(err).Msgf("failed to write file: %v=@\"%v\", exit", formKey, formValue)
+				os.Exit(1)
+			}
+			continue
+		}
+		if err := tFormWriter.writeCustomField(formKey, formValue, formType, formFileName); err != nil {
+			log.Error().Err(err).Msgf("failed to write text: %v=%v, ignore", formKey, formValue)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		log.Error().Err(err).Msg("failed to close form-data writer")
+	}
+	return tFormWriter
+}
+
+func multipartContentType(w *TFormDataWriter) string {
 	if w.Writer == nil {
 		return ""
 	}

@@ -1,5 +1,12 @@
 # Release History
 
+## v4.1.7 (2022-07-11)
+
+**go version**
+
+- feat: support indicating type and filename when uploading file
+
+
 ## v4.1.6 (2022-07-04)
 
 **go version**
