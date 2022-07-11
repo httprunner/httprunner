@@ -216,7 +216,7 @@ func (c *grpcClient) newBiStreamClient() (err error) {
 		return err
 	}
 	c.config.setBiStreamClient(biStream)
-	println("successful to establish bidirectional stream with master, press Ctrl+c to quit.\n")
+	println("successful to establish bidirectional stream with master, press Ctrl+c to quit.")
 	return nil
 }
 

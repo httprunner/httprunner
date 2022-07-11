@@ -163,7 +163,7 @@ func (api *apiHandler) Index(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}
-	w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' camo.githubusercontent.com")
+	w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' www.httprunner.com")
 	fmt.Fprintf(w, "Welcome to httprunner page!")
 }
 
@@ -315,23 +315,26 @@ func (api *apiHandler) Handler() http.Handler {
 
 func (apiHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
 
-func (b *HRPBoomer) StartServer() {
+func (b *HRPBoomer) StartServer(ctx context.Context, addr string) {
 	h := b.NewAPIHandler()
 	mux := h.Handler()
 
 	server := &http.Server{
-		Addr:    ":9771",
+		Addr:    addr,
 		Handler: mux,
 	}
 
 	go func() {
-		<-b.GetCloseChan()
+		select {
+		case <-ctx.Done():
+		case <-b.GetCloseChan():
+		}
 		if err := server.Shutdown(context.Background()); err != nil {
 			log.Fatal("shutdown server:", err)
 		}
 	}()
 
-	log.Println("Starting HTTP server...")
+	log.Println(fmt.Sprintf("starting HTTP server (%v), please use the API to control master", server.Addr))
 	err := server.ListenAndServe()
 	if err != nil {
 		if err == http.ErrServerClosed {

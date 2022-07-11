@@ -71,7 +71,7 @@ var boomCmd = &cobra.Command{
 			if boomArgs.autoStart {
 				hrpBoomer.InitBoomer()
 			} else {
-				go hrpBoomer.StartServer()
+				go hrpBoomer.StartServer(ctx, boomArgs.masterHttpAddress)
 			}
 			go hrpBoomer.PollTestCases(ctx)
 			hrpBoomer.RunMaster()
@@ -79,9 +79,8 @@ var boomCmd = &cobra.Command{
 			if boomArgs.ignoreQuit {
 				hrpBoomer.SetIgnoreQuit()
 			}
-			go hrpBoomer.PollTasks()
+			go hrpBoomer.PollTasks(ctx)
 			hrpBoomer.RunWorker()
-			time.Sleep(3 * time.Second)
 		case "standalone":
 			if venv != "" {
 				hrpBoomer.SetPython3Venv(venv)
@@ -102,6 +101,7 @@ type BoomArgs struct {
 	masterPort           int
 	masterBindHost       string
 	masterBindPort       int
+	masterHttpAddress    string
 	autoStart            bool
 	expectWorkers        int
 	expectWorkersMaxWait int
@@ -129,11 +129,12 @@ func init() {
 	boomCmd.Flags().BoolVar(&boomArgs.master, "master", false, "master of distributed testing")
 	boomCmd.Flags().StringVar(&boomArgs.masterBindHost, "master-bind-host", "127.0.0.1", "Interfaces (hostname, ip) that hrp master should bind to. Only used when running with --master. Defaults to * (all available interfaces).")
 	boomCmd.Flags().IntVar(&boomArgs.masterBindPort, "master-bind-port", 5557, "Port that hrp master should bind to. Only used when running with --master. Defaults to 5557.")
+	boomCmd.Flags().StringVar(&boomArgs.masterHttpAddress, "master-http-address", ":9771", "Interfaces (ip:port) that hrp master should control by user. Only used when running with --master. Defaults to *:9771.")
 	boomCmd.Flags().BoolVar(&boomArgs.worker, "worker", false, "worker of distributed testing")
 	boomCmd.Flags().BoolVar(&boomArgs.ignoreQuit, "ignore-quit", false, "ignores quit from master (only when --worker is used)")
 	boomCmd.Flags().StringVar(&boomArgs.masterHost, "master-host", "127.0.0.1", "Host or IP address of hrp master for distributed load testing.")
 	boomCmd.Flags().IntVar(&boomArgs.masterPort, "master-port", 5557, "The port to connect to that is used by the hrp master for distributed load testing.")
-	boomCmd.Flags().BoolVar(&boomArgs.autoStart, "autostart", false, "Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and run time")
+	boomCmd.Flags().BoolVar(&boomArgs.autoStart, "autostart", false, "Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and increase rate")
 	boomCmd.Flags().IntVar(&boomArgs.expectWorkers, "expect-workers", 1, "How many workers master should expect to connect before starting the test (only when --autostart is used)")
 	boomCmd.Flags().IntVar(&boomArgs.expectWorkersMaxWait, "expect-workers-max-wait", 0, "How many workers master should expect to connect before starting the test (only when --autostart is used")
 }

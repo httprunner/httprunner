@@ -10,12 +10,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/go-errors/errors"
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/jinzhu/copier"
-
-	"github.com/go-errors/errors"
-
 	"github.com/olekukonko/tablewriter"
 	"github.com/rs/zerolog/log"
 )
@@ -200,15 +198,15 @@ type runner struct {
 	controller *Controller
 	loop       *Loop // specify loop count for testcase, count = loopCount * spawnCount
 
-	// rebalance spawn
+	// dynamically balance boomer running parameters
 	rebalance chan bool
 
-	// all running workers(goroutines) will select on this channel.
-	// close this channel will stop all running workers.
+	// stop signals the run goroutine should shutdown.
 	stopChan chan bool
-
+	// all running workers(goroutines) will select on this channel.
+	// stopping is closed by run goroutine on shutdown.
 	stoppingChan chan bool
-
+	// done is closed when all goroutines from start() complete.
 	doneChan chan bool
 
 	reportChan chan bool
@@ -216,10 +214,10 @@ type runner struct {
 	// close this channel will stop all goroutines used in runner.
 	closeChan chan bool
 
-	// wgMu blocks concurrent waitgroup mutation while server stopping
+	// wgMu blocks concurrent waitgroup mutation while boomer stopping
 	wgMu sync.RWMutex
-	// wg is used to wait for the goroutines that depends on the server state
-	// to exit when stopping the server.
+	// wg is used to wait for all running workers(goroutines) that depends on the boomer state
+	// to exit when stopping the boomer.
 	wg sync.WaitGroup
 
 	outputs []Output
@@ -544,15 +542,20 @@ func (r *runner) statsStart() {
 func (r *runner) stop() {
 	// stop previous goroutines without blocking
 	// those goroutines will exit when r.safeRun returns
-	r.Stop()
+	r.gracefulStop()
 	if r.rateLimitEnabled {
 		r.rateLimiter.Stop()
 	}
 	r.updateState(StateStopped)
 }
 
-// HardStop stops the server without coordination with other members in the cluster.
-func (r *runner) hardStop() {
+// gracefulStop stops the boomer gracefully, and shuts down the running goroutine.
+// gracefulStop should be called after a start(), otherwise it will block forever.
+// When stopping leader, Stop transfers its leadership to one of its peers
+// before stopping the boomer.
+// gracefulStop terminates the boomer and performs any necessary finalization.
+// Do and Process cannot be called after Stop has been invoked.
+func (r *runner) gracefulStop() {
 	select {
 	case r.stopChan <- true:
 	case <-r.doneChan:
@@ -561,30 +564,16 @@ func (r *runner) hardStop() {
 	<-r.doneChan
 }
 
-// Stop stops the server gracefully, and shuts down the running goroutine.
-// Stop should be called after a Start(s), otherwise it will block forever.
-// When stopping leader, Stop transfers its leadership to one of its peers
-// before stopping the server.
-// Stop terminates the Server and performs any necessary finalization.
-// Do and Process cannot be called after Stop has been invoked.
-func (r *runner) Stop() {
-	r.hardStop()
-}
+// StopNotify returns a channel that receives a bool type value
+// when the runner is stopped.
+func (r *runner) StopNotify() <-chan bool { return r.doneChan }
 
-// StopNotify returns a channel that receives a empty struct
-// when the server is stopped.
-func (r *runner) StopNotify() <-chan bool { return r.stopChan }
-
-// DoneNotify returns a channel that receives a empty struct
-// when the server is stopped.
-func (r *runner) DoneNotify() <-chan bool { return r.doneChan }
-
-// StoppingNotify returns a channel that receives a empty struct
-// when the server is being stopped.
+// StoppingNotify returns a channel that receives a bool type value
+// when the runner is being stopped.
 func (r *runner) StoppingNotify() <-chan bool { return r.stoppingChan }
 
-// RebalanceNotify returns a channel that receives a empty struct
-// when the server is being stopped.
+// RebalanceNotify returns a channel that receives a bool type value
+// when the runner is being rebalance.
 func (r *runner) RebalanceNotify() <-chan bool { return r.rebalance }
 
 func (r *runner) getState() int32 {
@@ -758,6 +747,7 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 			r.onSpawnMessage(msg)
 		case "quit":
 			if r.ignoreQuit {
+				log.Warn().Msg("master already quit, waiting to reconnect master.")
 				break
 			}
 			r.close()
@@ -777,6 +767,7 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 		case "quit":
 			r.stop()
 			if r.ignoreQuit {
+				log.Warn().Msg("master already quit, waiting to reconnect master.")
 				break
 			}
 			r.close()
@@ -788,6 +779,7 @@ func (r *workerRunner) onMessage(msg *genericMessage) {
 			r.onSpawnMessage(msg)
 		case "quit":
 			if r.ignoreQuit {
+				log.Warn().Msg("master already quit, waiting to reconnect master.")
 				break
 			}
 			r.close()
@@ -815,13 +807,13 @@ func (r *workerRunner) startListener() {
 
 // run worker service
 func (r *workerRunner) run() {
-	println("\n========================= HttpRunner Worker for Distributed Load Testing ========================= ")
+	println("==================== HttpRunner Worker for Distributed Load Testing ==================== ")
 	r.updateState(StateInit)
 	r.client = newClient(r.masterHost, r.masterPort, r.nodeID)
 	println(fmt.Sprintf("ready to connect master to %s:%d", r.masterHost, r.masterPort))
 	err := r.client.start()
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("failed to connect to master(%s:%d) with error %v\n", r.masterHost, r.masterPort))
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to connect to master(%s:%d)", r.masterHost, r.masterPort))
 	}
 
 	if err = r.client.register(r.client.config.ctx); err != nil {
@@ -904,7 +896,7 @@ func (r *workerRunner) start() {
 		r.rateLimiter.Start()
 	}
 
-	r.once.Do(r.outputOnStart)
+	r.outputOnStart()
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, r.spawnComplete)
 

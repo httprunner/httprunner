@@ -208,6 +208,7 @@ func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
 
 		testcases = append(testcases, tesecase)
 	}
+
 	b.SetProfile(profile)
 	b.InitBoomer()
 	log.Info().Interface("testcases", testcases).Interface("profile", profile).Msg("run tasks successful")
@@ -222,7 +223,7 @@ func (b *HRPBoomer) rebalanceBoomer(profile *boomer.Profile) {
 	log.Info().Interface("profile", profile).Msg("rebalance tasks successful")
 }
 
-func (b *HRPBoomer) PollTasks() {
+func (b *HRPBoomer) PollTasks(ctx context.Context) {
 	for {
 		select {
 		case task := <-b.Boomer.GetTasksChan():
@@ -239,6 +240,8 @@ func (b *HRPBoomer) PollTasks() {
 			}
 
 		case <-b.Boomer.GetCloseChan():
+			return
+		case <-ctx.Done():
 			return
 		}
 	}
