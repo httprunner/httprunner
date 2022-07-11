@@ -43,7 +43,7 @@ func getStateName(state int32) (stateName string) {
 	case StateQuitting:
 		stateName = "quitting"
 	case StateMissing:
-		stateName = "stopped"
+		stateName = "missing"
 	}
 	return
 }
@@ -840,9 +840,12 @@ func (r *workerRunner) run() {
 				log.Warn().Msg("Timeout waiting for sending quit message to master, boomer will quit any way.")
 			}
 
-			if err = r.client.signOut(r.client.config.ctx); err != nil {
-				log.Error().Err(err).Msg("failed to sign out")
+			if r.getState() != StateMissing {
+				if err = r.client.signOut(r.client.config.ctx); err != nil {
+					log.Error().Err(err).Msg("failed to sign out")
+				}
 			}
+
 			r.client.close()
 		}
 	}()

@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"golang.org/x/net/context"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
@@ -39,7 +39,7 @@ var boomCmd = &cobra.Command{
 
 		// if set profile, the priority is higher than the other commands
 		if boomArgs.profile != "" {
-			err := builtin.LoadFile(boomArgs.profile, &boomArgs.profile)
+			err := builtin.LoadFile(boomArgs.profile, &boomArgs.Profile)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load profile")
 				os.Exit(1)
@@ -134,9 +134,9 @@ func init() {
 	boomCmd.Flags().BoolVar(&boomArgs.ignoreQuit, "ignore-quit", false, "ignores quit from master (only when --worker is used)")
 	boomCmd.Flags().StringVar(&boomArgs.masterHost, "master-host", "127.0.0.1", "Host or IP address of hrp master for distributed load testing.")
 	boomCmd.Flags().IntVar(&boomArgs.masterPort, "master-port", 5557, "The port to connect to that is used by the hrp master for distributed load testing.")
-	boomCmd.Flags().BoolVar(&boomArgs.autoStart, "autostart", false, "Starts the test immediately (without disabling the web UI). Use --spawn-count and --spawn-rate to control user count and increase rate")
+	boomCmd.Flags().BoolVar(&boomArgs.autoStart, "auto-start", false, "Starts the test immediately. Use --spawn-count and --spawn-rate to control user count and increase rate")
 	boomCmd.Flags().IntVar(&boomArgs.expectWorkers, "expect-workers", 1, "How many workers master should expect to connect before starting the test (only when --autostart is used)")
-	boomCmd.Flags().IntVar(&boomArgs.expectWorkersMaxWait, "expect-workers-max-wait", 0, "How many workers master should expect to connect before starting the test (only when --autostart is used")
+	boomCmd.Flags().IntVar(&boomArgs.expectWorkersMaxWait, "expect-workers-max-wait", 120, "How many workers master should expect to connect before starting the test (only when --autostart is used")
 }
 
 func makeHRPBoomer() *hrp.HRPBoomer {
