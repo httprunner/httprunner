@@ -247,7 +247,7 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 		dataBytes = vv
 	case bytes.Buffer:
 		dataBytes = vv.Bytes()
-	case *builtin.TFormWriter:
+	case *builtin.TFormDataWriter:
 		dataBytes = vv.Payload.Bytes()
 	default: // unexpected body type
 		return errors.New("unexpected request body type")

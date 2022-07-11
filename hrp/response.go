@@ -130,7 +130,7 @@ func (v *responseObject) searchField(field string, variablesMapping map[string]i
 		var err error
 		result, err = v.parser.Parse(field, variablesMapping)
 		if err != nil {
-			log.Error().Str("filed name", field).Err(err).Msg("fail to parse field before search")
+			log.Error().Str("field name", field).Err(err).Msg("fail to parse field before search")
 		}
 	}
 	// search field using jmespath or regex if parsed field is still string and contains specified fieldTags
