@@ -392,7 +392,7 @@ var (
 	gaugeState = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "state",
-			Help: "The current runner state, 1=initializing, 2=spawning, 3=running, 4=quitting, 5=stopped",
+			Help: "The current runner state, 1=initializing, 2=spawning, 3=running, 4=stopping, 5=stopped, 6=quitting, 7=missing",
 		},
 	)
 	gaugeDuration = prometheus.NewGauge(

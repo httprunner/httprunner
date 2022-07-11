@@ -196,7 +196,7 @@ func TestSpawnWorkersWithManyTasks(t *testing.T) {
 	const numToSpawn int64 = 30
 
 	go runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	currentClients := runner.controller.getCurrentClientsNum()
 
