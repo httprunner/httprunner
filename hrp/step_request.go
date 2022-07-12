@@ -268,7 +268,7 @@ func initUpload(step *TStep) {
 }
 
 func prepareUpload(parser *Parser, step *TStep, stepVariables map[string]interface{}) (err error) {
-	if step.Request.Upload == nil {
+	if len(step.Request.Upload) == 0 {
 		return
 	}
 	uploadMap, err := parser.Parse(step.Request.Upload, stepVariables)

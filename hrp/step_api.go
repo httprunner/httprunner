@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"fmt"
+
 	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
 
@@ -126,7 +127,7 @@ func extendWithAPI(testStep *TStep, overriddenStep *API) {
 	// merge & override request
 	testStep.Request = overriddenStep.Request
 	// init upload
-	if testStep.Request.Upload != nil {
+	if len(testStep.Request.Upload) != 0 {
 		initUpload(testStep)
 	}
 	// merge & override variables

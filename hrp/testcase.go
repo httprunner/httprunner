@@ -148,7 +148,7 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 			})
 		} else if step.Request != nil {
 			// init upload
-			if step.Request.Upload != nil {
+			if len(step.Request.Upload) != 0 {
 				initUpload(step)
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
