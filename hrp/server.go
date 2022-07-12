@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -52,15 +53,11 @@ func parseBody(r *http.Request) (data map[string]interface{}, err error) {
 	return data, nil
 }
 
-func writeResponse(w http.ResponseWriter, status int, contentType string, body []byte) {
-	w.Header().Set("Content-Type", contentType)
+func writeJSON(w http.ResponseWriter, body []byte, status int) {
+	w.Header().Set("Content-Type", jsonContentType)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(body)))
 	w.WriteHeader(status)
 	w.Write(body)
-}
-
-func writeJSON(w http.ResponseWriter, body []byte, status int) {
-	writeResponse(w, status, jsonContentType, body)
 }
 
 type ServerCode int
@@ -169,48 +166,100 @@ func (api *apiHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 func (api *apiHandler) Start(w http.ResponseWriter, r *http.Request) {
 	var resp *CommonResponseBody
-	data, err := parseBody(r)
+	var err error
+	defer func() {
+		if err != nil {
+			resp = &CommonResponseBody{
+				ServerStatus: EnumAPIResponseServerError(err.Error()),
+			}
+		} else {
+			resp = &CommonResponseBody{
+				ServerStatus: EnumAPIResponseSuccess,
+			}
+		}
+		body, _ := json.Marshal(resp)
+		writeJSON(w, body, http.StatusOK)
+	}()
 
+	// parse body
+	data, err := parseBody(r)
+	if err != nil {
+		return
+	}
 	req := StartRequestBody{
 		Profile: *api.boomer.GetProfile(),
 	}
 	err = mapstructure.Decode(data, &req)
+	if err != nil {
+		return
+	}
+
+	// recognize invalid parameters
 	if len(req.Other) > 0 {
 		keys := make([]string, 0, len(req.Other))
 		for k := range req.Other {
 			keys = append(keys, k)
 		}
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseParamError(fmt.Sprintf("failed to recognize params: %v", keys)),
-		}
-		body, _ := json.Marshal(resp)
-		writeJSON(w, body, http.StatusOK)
+		err = errors.New(fmt.Sprintf("failed to recognize params: %v", keys))
 		return
 	}
+
+	// parse testcase path
 	if req.TestCasePath == "" {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseParamError(fmt.Sprint("missing testcases path")),
-		}
-		body, _ := json.Marshal(resp)
-		writeJSON(w, body, http.StatusOK)
+		err = errors.New("missing testcases path")
 		return
 	}
 	paths := strings.Split(req.TestCasePath, ",")
+
+	// set testcase path
 	api.boomer.SetTestCasesPath(paths)
-	if err == nil {
-		err = api.boomer.Start(&req.Profile)
-	}
+
+	// start boomer with profile
+	err = api.boomer.Start(&req.Profile)
+}
+
+func (api *apiHandler) ReBalance(w http.ResponseWriter, r *http.Request) {
+	var resp *CommonResponseBody
+	var err error
+	defer func() {
+		if err != nil {
+			resp = &CommonResponseBody{
+				ServerStatus: EnumAPIResponseServerError(err.Error()),
+			}
+		} else {
+			resp = &CommonResponseBody{
+				ServerStatus: EnumAPIResponseSuccess,
+			}
+		}
+		body, _ := json.Marshal(resp)
+		writeJSON(w, body, http.StatusOK)
+	}()
+
+	// parse body
+	data, err := parseBody(r)
 	if err != nil {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseServerError(err.Error()),
-		}
-	} else {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseSuccess,
-		}
+		return
 	}
-	body, _ := json.Marshal(resp)
-	writeJSON(w, body, http.StatusOK)
+	req := RebalanceRequestBody{
+		Profile: *api.boomer.GetProfile(),
+	}
+	err = mapstructure.Decode(data, &req)
+	if err != nil {
+		return
+	}
+
+	// recognize invalid parameters
+	if len(req.Other) > 0 {
+		keys := make([]string, 0, len(req.Other))
+		for k := range req.Other {
+			keys = append(keys, k)
+		}
+		err = errors.New(fmt.Sprintf("failed to recognize params: %v", keys))
+		return
+	}
+
+	// rebalance boomer with profile
+	err = api.boomer.ReBalance(&req.Profile)
 }
 
 func (api *apiHandler) Stop(w http.ResponseWriter, r *http.Request) {
@@ -223,18 +272,23 @@ func (api *apiHandler) Stop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var resp *CommonResponseBody
-	err := api.boomer.Stop()
-	if err != nil {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseStopError(err.Error()),
+	var err error
+	defer func() {
+		if err != nil {
+			resp = &CommonResponseBody{
+				ServerStatus: EnumAPIResponseStopError(err.Error()),
+			}
+		} else {
+			resp = &CommonResponseBody{
+				ServerStatus: EnumAPIResponseSuccess,
+			}
 		}
-	} else {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseSuccess,
-		}
-	}
-	body, _ := json.Marshal(resp)
-	writeJSON(w, body, http.StatusOK)
+		body, _ := json.Marshal(resp)
+		writeJSON(w, body, http.StatusOK)
+	}()
+
+	// stop boomer
+	err = api.boomer.Stop()
 }
 
 func (api *apiHandler) Quit(w http.ResponseWriter, r *http.Request) {
@@ -245,49 +299,16 @@ func (api *apiHandler) Quit(w http.ResponseWriter, r *http.Request) {
 			data[k] = v
 		}
 	}
-
-	resp := &CommonResponseBody{
-		ServerStatus: EnumAPIResponseSuccess,
-	}
-	body, _ := json.Marshal(resp)
-	writeJSON(w, body, http.StatusOK)
-	api.boomer.Quit()
-}
-
-func (api *apiHandler) ReBalance(w http.ResponseWriter, r *http.Request) {
-	var resp *CommonResponseBody
-	data, err := parseBody(r)
-
-	req := RebalanceRequestBody{
-		Profile: *api.boomer.GetProfile(),
-	}
-	err = mapstructure.Decode(data, &req)
-	if len(req.Other) > 0 {
-		keys := make([]string, 0, len(req.Other))
-		for k := range req.Other {
-			keys = append(keys, k)
-		}
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseParamError(fmt.Sprintf("failed to recognize params: %v", keys)),
+	defer func() {
+		resp := &CommonResponseBody{
+			ServerStatus: EnumAPIResponseSuccess,
 		}
 		body, _ := json.Marshal(resp)
 		writeJSON(w, body, http.StatusOK)
-		return
-	}
-	if err == nil {
-		err = api.boomer.ReBalance(&req.Profile)
-	}
-	if err != nil {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseParamError(err.Error()),
-		}
-	} else {
-		resp = &CommonResponseBody{
-			ServerStatus: EnumAPIResponseSuccess,
-		}
-	}
-	body, _ := json.Marshal(resp)
-	writeJSON(w, body, http.StatusOK)
+	}()
+
+	// quit boomer
+	api.boomer.Quit()
 }
 
 func (api *apiHandler) GetWorkersInfo(w http.ResponseWriter, r *http.Request) {
@@ -305,9 +326,9 @@ func (api *apiHandler) Handler() http.Handler {
 
 	mux.HandleFunc("/", methods(api.Index, "GET"))
 	mux.HandleFunc("/start", methods(api.Start, "POST"))
+	mux.HandleFunc("/rebalance", methods(api.ReBalance, "POST"))
 	mux.HandleFunc("/stop", methods(api.Stop, "GET"))
 	mux.HandleFunc("/quit", methods(api.Quit, "GET"))
-	mux.HandleFunc("/rebalance", methods(api.ReBalance, "POST"))
 	mux.HandleFunc("/workers", methods(api.GetWorkersInfo, "GET"))
 
 	return mux
