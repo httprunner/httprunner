@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
@@ -23,6 +24,7 @@ import (
 
 type WorkerNode struct {
 	ID                string  `json:"id"`
+	IP                string  `json:"ip"`
 	State             int32   `json:"state"`
 	Heartbeat         int32   `json:"heartbeat"`
 	SpawnCount        int64   `json:"spawn_count"`
@@ -34,9 +36,9 @@ type WorkerNode struct {
 	disconnectedChan  chan bool
 }
 
-func newWorkerNode(id string) *WorkerNode {
+func newWorkerNode(id, ip string) *WorkerNode {
 	stream := make(chan *messager.StreamResponse, 100)
-	return &WorkerNode{State: StateInit, ID: id, Heartbeat: 3, stream: stream, disconnectedChan: make(chan bool)}
+	return &WorkerNode{State: StateInit, ID: id, IP: ip, Heartbeat: 3, stream: stream, disconnectedChan: make(chan bool)}
 }
 
 func (w *WorkerNode) getState() int32 {
@@ -116,6 +118,7 @@ func (w *WorkerNode) getWorkerInfo() WorkerNode {
 	defer w.mutex.RUnlock()
 	return WorkerNode{
 		ID:                w.ID,
+		IP:                w.IP,
 		State:             w.getState(),
 		Heartbeat:         w.getHeartbeat(),
 		SpawnCount:        w.getSpawnCount(),
@@ -257,9 +260,12 @@ func (s *grpcServer) start() (err error) {
 	return nil
 }
 
-func (s *grpcServer) Register(_ context.Context, req *messager.RegisterRequest) (*messager.RegisterResponse, error) {
+func (s *grpcServer) Register(ctx context.Context, req *messager.RegisterRequest) (*messager.RegisterResponse, error) {
+	// get client ip
+	p, _ := peer.FromContext(ctx)
+	clientIp := strings.Split(p.Addr.String(), ":")[0]
 	// store worker information
-	wn := newWorkerNode(req.NodeID)
+	wn := newWorkerNode(req.NodeID, clientIp)
 	s.clients.Store(req.NodeID, wn)
 	log.Warn().Str("worker id", req.NodeID).Msg("worker joined")
 	return &messager.RegisterResponse{Code: "0", Message: "register successfully"}, nil

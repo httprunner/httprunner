@@ -840,7 +840,7 @@ func (r *workerRunner) run() {
 				log.Warn().Msg("Timeout waiting for sending quit message to master, boomer will quit any way.")
 			}
 
-			if r.getState() != StateMissing {
+			if atomic.LoadInt32(&r.client.failCount) < 2 {
 				if err = r.client.signOut(r.client.config.ctx); err != nil {
 					log.Error().Err(err).Msg("failed to sign out")
 				}
@@ -1293,17 +1293,18 @@ func (r *masterRunner) reportStats() {
 	println(fmt.Sprintf("Current time: %s, State: %v, Current Available Workers: %v, Target Users: %v",
 		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getClientsLength(), r.getSpawnCount()))
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Worker ID", "State", "Current Users", "CPU Usage", "CPU Warning Emitted", "Memory Usage", "Heartbeat"})
+	table.SetHeader([]string{"Worker ID", "IP", "State", "Current Users", "CPU Usage", "CPU Warning Emitted", "Memory Usage", "Heartbeat"})
 
 	for _, worker := range r.server.getAllWorkers() {
-		row := make([]string, 7)
+		row := make([]string, 8)
 		row[0] = worker.ID
-		row[1] = fmt.Sprintf("%v", getStateName(worker.getState()))
-		row[2] = fmt.Sprintf("%v", worker.getSpawnCount())
-		row[3] = fmt.Sprintf("%v", worker.getCPUUsage())
-		row[4] = fmt.Sprintf("%v", worker.getCPUWarningEmitted())
-		row[5] = fmt.Sprintf("%v", worker.getMemoryUsage())
-		row[6] = fmt.Sprintf("%v", worker.getHeartbeat())
+		row[1] = worker.IP
+		row[2] = fmt.Sprintf("%v", getStateName(worker.getState()))
+		row[3] = fmt.Sprintf("%v", worker.getSpawnCount())
+		row[4] = fmt.Sprintf("%v", worker.getCPUUsage())
+		row[5] = fmt.Sprintf("%v", worker.getCPUWarningEmitted())
+		row[6] = fmt.Sprintf("%v", worker.getMemoryUsage())
+		row[7] = fmt.Sprintf("%v", worker.getHeartbeat())
 		table.Append(row)
 	}
 	table.Render()
