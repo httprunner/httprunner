@@ -15,30 +15,48 @@
  *
  */
 
-// Package data provides convenience routines to access files in the data
-// directory.
 package data
 
 import (
+	"embed"
+	"os"
 	"path/filepath"
-	"runtime"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
-// basepath is the root directory of this package.
-var basepath string
+// hrpPath is .hrp directory under the user directory.
+var hrpPath string
+
+//go:embed x509/*
+var x509Dir embed.FS
 
 func init() {
-	_, currentFile, _, _ := runtime.Caller(0)
-	basepath = filepath.Dir(currentFile)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	hrpPath = filepath.Join(home, ".hrp")
+	_ = builtin.EnsureFolderExists(filepath.Join(hrpPath, "x509"))
+
 }
 
-// Path returns the absolute path the given relative file or directory path,
-// relative to the google.golang.org/grpc/examples/data directory in the
-// user's GOPATH.  If rel is already absolute, it is returned unmodified.
-func Path(rel string) string {
-	if filepath.IsAbs(rel) {
-		return rel
+// Path returns the absolute path the given relative file or directory path
+func Path(rel string) (destPath string) {
+	destPath = rel
+	if !filepath.IsAbs(rel) {
+		destPath = filepath.Join(hrpPath, rel)
 	}
+	if !builtin.IsFilePathExists(destPath) {
+		content, err := x509Dir.ReadFile(rel)
+		if err != nil {
+			return
+		}
 
-	return filepath.Join(basepath, rel)
+		err = os.WriteFile(destPath, content, 0o644)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
