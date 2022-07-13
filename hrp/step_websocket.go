@@ -323,7 +323,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	}
 	switch step.WebSocket.Type {
 	case wsOpen:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Msg("open websocket connection")
+		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("open websocket connection")
 		// use the current websocket connection if existed
 		if r.wsConnMap[parsedURL] != nil {
 			break
@@ -333,7 +333,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			return stepResult, errors.Wrap(err, "open connection failed")
 		}
 	case wsPing:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Msg("send ping and expect pong")
+		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("send ping and expect pong")
 		err = writeWebSocket(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "send ping message failed")
@@ -351,7 +351,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			}
 		}()
 	case wsWriteAndRead:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Msg("write a message and read response")
+		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("write a message and read response")
 		err = writeWebSocket(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
@@ -361,19 +361,19 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			return stepResult, errors.Wrap(err, "read message failed")
 		}
 	case wsRead:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Msg("read only")
+		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("read only")
 		resp, err = readMessageWithTimeout(parsedURL, r, step)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "read message failed")
 		}
 	case wsWrite:
-		log.Info().Msg("write only")
+		log.Info().Str("url", parsedURL).Msg("write only")
 		err = writeWebSocket(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
 		}
 	case wsClose:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Msg("close webSocket connection")
+		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("close webSocket connection")
 		resp, err = closeWithTimeout(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "close connection failed")
