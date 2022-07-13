@@ -126,7 +126,7 @@ func TestStopNotify(t *testing.T) {
 		close(r.doneChan)
 	}()
 
-	notifier := r.StopNotify()
+	notifier := r.stopNotify()
 	select {
 	case <-notifier:
 		t.Fatalf("received unexpected stop notification")

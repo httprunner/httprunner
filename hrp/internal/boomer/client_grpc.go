@@ -33,8 +33,6 @@ type grpcClient struct {
 	shutdownChan     chan bool
 
 	failCount int32
-
-	wg *sync.WaitGroup
 }
 
 type grpcClientConfig struct {
@@ -152,7 +150,6 @@ func newClient(masterHost string, masterPort int, identity string) (client *grpc
 			ctxCancel: cancel,
 			mutex:     sync.RWMutex{},
 		},
-		wg: &sync.WaitGroup{},
 	}
 	return client
 }
