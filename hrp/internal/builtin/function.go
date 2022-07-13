@@ -110,12 +110,10 @@ func (w *TFormDataWriter) writeCustomFile(formKey, formValue, formType, formFile
 	}
 	fPath, err := filepath.Abs(formValue)
 	if err != nil {
-		log.Error().Err(err).Str("path", fPath).Msg("convert absolute path failed")
 		return err
 	}
 	file, err := os.ReadFile(fPath)
 	if err != nil {
-		log.Error().Err(err).Str("path", fPath).Msg("read file failed")
 		return err
 	}
 
@@ -139,7 +137,7 @@ func (w *TFormDataWriter) writeCustomFile(formKey, formValue, formType, formFile
 	return err
 }
 
-func multipartEncoder(formMap map[string]interface{}) *TFormDataWriter {
+func multipartEncoder(formMap map[string]interface{}) (*TFormDataWriter, error) {
 	payload := &bytes.Buffer{}
 	writer := multipart.NewWriter(payload)
 	tFormWriter := &TFormDataWriter{
@@ -191,18 +189,19 @@ func multipartEncoder(formMap map[string]interface{}) *TFormDataWriter {
 		if isFilePath {
 			if err := tFormWriter.writeCustomFile(formKey, formValue, formType, formFileName); err != nil {
 				log.Error().Err(err).Msgf("failed to write file: %v=@\"%v\", exit", formKey, formValue)
-				os.Exit(1)
+				return nil, err
 			}
 			continue
 		}
 		if err := tFormWriter.writeCustomField(formKey, formValue, formType, formFileName); err != nil {
 			log.Error().Err(err).Msgf("failed to write text: %v=%v, ignore", formKey, formValue)
+			return nil, err
 		}
 	}
 	if err := writer.Close(); err != nil {
 		log.Error().Err(err).Msg("failed to close form-data writer")
 	}
-	return tFormWriter
+	return tFormWriter, nil
 }
 
 func multipartContentType(w *TFormDataWriter) string {
