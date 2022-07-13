@@ -133,13 +133,11 @@ type grpcServer struct {
 	masterHost string
 	masterPort int
 	server     *grpc.Server
-	secure     bool
 	clients    *sync.Map
 
 	fromWorker       chan *genericMessage
 	disconnectedChan chan bool
 	shutdownChan     chan bool
-	wg               *sync.WaitGroup
 }
 
 var (
@@ -148,6 +146,7 @@ var (
 )
 
 func logger(format string, a ...interface{}) {
+	// FIXME: support server-side and client-side logging to files
 	log.Info().Msg(fmt.Sprintf(format, a...))
 }
 
