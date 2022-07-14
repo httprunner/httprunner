@@ -406,6 +406,7 @@ func (s *grpcServer) close() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	s.stopServer(ctx)
 	cancel()
+	close(s.disconnectedChan)
 }
 
 func (s *grpcServer) recvChannel() chan *genericMessage {

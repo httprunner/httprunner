@@ -1158,24 +1158,35 @@ func (r *masterRunner) start() error {
 		log.Error().Err(err).Msg("copy workerProfile failed")
 		return err
 	}
-	cur := 0
-	ints := builtin.SplitInteger(int(r.profile.SpawnCount), numWorkers)
-	log.Info().Msg("send spawn data to worker")
+
+	// spawn count
+	spawnCounts := builtin.SplitInteger(int(r.profile.SpawnCount), numWorkers)
+
+	// spawn rate
+	spawnRate := workerProfile.SpawnRate / float64(numWorkers)
+	if spawnRate < 1 {
+		spawnRate = 1
+	}
+
+	// max RPS
+	maxRPSs := builtin.SplitInteger(int(workerProfile.MaxRPS), numWorkers)
+
 	r.updateState(StateSpawning)
+	log.Info().Msg("send spawn data to worker")
+
+	cur := 0
 	r.server.clients.Range(func(key, value interface{}) bool {
 		if workerInfo, ok := value.(*WorkerNode); ok {
 			if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
 				return true
 			}
+
 			if workerProfile.SpawnCount > 0 {
-				workerProfile.SpawnCount = int64(ints[cur])
+				workerProfile.SpawnCount = int64(spawnCounts[cur])
 			}
-			if workerProfile.SpawnRate > 0 {
-				workerProfile.SpawnRate = workerProfile.SpawnRate / float64(numWorkers)
-			}
-			if workerProfile.MaxRPS > 0 {
-				workerProfile.MaxRPS = workerProfile.MaxRPS / int64(numWorkers)
-			}
+			workerProfile.MaxRPS = int64(maxRPSs[cur])
+			workerProfile.SpawnRate = spawnRate
+
 			workerInfo.getStream() <- &messager.StreamResponse{
 				Type:    "spawn",
 				Profile: ProfileToBytes(workerProfile),
