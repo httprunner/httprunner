@@ -6,7 +6,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"runtime"
 	"runtime/pprof"
 	"strings"
 	"time"
@@ -102,5 +101,37 @@ func GetCurrentCPUUsage() float64 {
 		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
 		return 0.0
 	}
-	return percent / float64(runtime.NumCPU())
+	return percent
+}
+
+// GetCurrentCPUPercent get the percentage of current cpu used
+func GetCurrentCPUPercent() float64 {
+	currentPid := os.Getpid()
+	p, err := process.NewProcess(int32(currentPid))
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	percent, err := p.Percent(time.Second)
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	return percent
+}
+
+// GetCurrentMemoryUsage get current Memory usage
+func GetCurrentMemoryUsage() float64 {
+	currentPid := os.Getpid()
+	p, err := process.NewProcess(int32(currentPid))
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	percent, err := p.MemoryPercent()
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	return float64(percent)
 }
