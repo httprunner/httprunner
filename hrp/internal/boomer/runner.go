@@ -830,10 +830,8 @@ func (r *workerRunner) run() {
 				log.Warn().Msg("Timeout waiting for sending quit message to master, boomer will quit any way.")
 			}
 
-			if atomic.LoadInt32(&r.client.failCount) < 2 {
-				if err = r.client.signOut(r.client.config.ctx); err != nil {
-					log.Error().Err(err).Msg("failed to sign out")
-				}
+			if err = r.client.signOut(r.client.config.ctx); err != nil {
+				log.Info().Err(err).Msg("failed to sign out")
 			}
 
 			r.client.close()
