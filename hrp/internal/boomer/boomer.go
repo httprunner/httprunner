@@ -458,10 +458,10 @@ func (b *Boomer) RecordFailure(requestType, name string, responseTime int64, exc
 
 // Start starts to run
 func (b *Boomer) Start(Args *Profile) error {
-	if b.masterRunner.isStarted() {
+	if b.masterRunner.isStarting() {
 		return errors.New("already started")
 	}
-	if b.masterRunner.getState() == StateStopping {
+	if b.masterRunner.isStopping() {
 		return errors.New("Please wait for all workers to finish")
 	}
 	b.SetSpawnCount(Args.SpawnCount)
@@ -473,7 +473,7 @@ func (b *Boomer) Start(Args *Profile) error {
 
 // ReBalance starts to rebalance load test
 func (b *Boomer) ReBalance(Args *Profile) error {
-	if !b.masterRunner.isStarted() {
+	if !b.masterRunner.isStarting() {
 		return errors.New("no start")
 	}
 	b.SetSpawnCount(Args.SpawnCount)
