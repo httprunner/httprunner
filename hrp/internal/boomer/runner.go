@@ -806,6 +806,7 @@ func (r *workerRunner) run() {
 		log.Error().Err(err).Msg(fmt.Sprintf("failed to connect to master(%s:%d)", r.masterHost, r.masterPort))
 	}
 
+	// register worker information to master
 	if err = r.client.register(r.client.config.ctx); err != nil {
 		log.Error().Err(err).Msg("failed to register")
 	}
@@ -819,6 +820,7 @@ func (r *workerRunner) run() {
 	go r.client.send()
 
 	defer func() {
+		// wait for goroutines before closing
 		r.wg.Wait()
 
 		var ticker = time.NewTicker(1 * time.Second)
@@ -830,10 +832,12 @@ func (r *workerRunner) run() {
 				log.Warn().Msg("Timeout waiting for sending quit message to master, boomer will quit any way.")
 			}
 
+			// sign out from master
 			if err = r.client.signOut(r.client.config.ctx); err != nil {
 				log.Info().Err(err).Msg("failed to sign out")
 			}
 
+			// close grpc client
 			r.client.close()
 		}
 	}()
@@ -864,10 +868,12 @@ func (r *workerRunner) run() {
 				}
 			}
 			CPUUsage := GetCurrentCPUUsage()
+			MemoryUsage := GetCurrentMemoryUsage()
 			data := map[string]int64{
-				"state":             int64(r.getState()),
-				"current_cpu_usage": int64(CPUUsage),
-				"spawn_count":       r.controller.getCurrentClientsNum(),
+				"state":                int64(r.getState()),
+				"current_cpu_usage":    int64(CPUUsage),    // percentage
+				"current_memory_usage": int64(MemoryUsage), // percentage
+				"current_users":        r.controller.getCurrentClientsNum(),
 			}
 			r.client.sendChannel() <- newGenericMessage("heartbeat", data, r.nodeID)
 		case <-r.closeChan:
@@ -1040,8 +1046,11 @@ func (r *masterRunner) clientListener() {
 				if workerInfo.getCPUUsage() != float64(msg.Data["current_cpu_usage"]) {
 					workerInfo.updateCPUUsage(float64(msg.Data["current_cpu_usage"]))
 				}
-				if workerInfo.getSpawnCount() != msg.Data["spawn_count"] {
-					workerInfo.updateSpawnCount(msg.Data["spawn_count"])
+				if workerInfo.getMemoryUsage() != float64(msg.Data["current_memory_usage"]) {
+					workerInfo.updateMemoryUsage(float64(msg.Data["current_memory_usage"]))
+				}
+				if workerInfo.getSpawnCount() != msg.Data["current_users"] {
+					workerInfo.updateSpawnCount(msg.Data["current_users"])
 				}
 			case typeSpawning:
 				workerInfo.setState(StateSpawning)
@@ -1281,18 +1290,18 @@ func (r *masterRunner) reportStats() {
 	println(fmt.Sprintf("Current time: %s, State: %v, Current Available Workers: %v, Target Users: %v",
 		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getClientsLength(), r.getSpawnCount()))
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Worker ID", "IP", "State", "Current Users", "CPU Usage", "CPU Warning Emitted", "Memory Usage", "Heartbeat"})
+	table.SetColMinWidth(0, 20)
+	table.SetColMinWidth(1, 10)
+	table.SetHeader([]string{"Worker ID", "IP", "State", "Current Users", "CPU Usage (%)", "Memory Usage (%)"})
 
 	for _, worker := range r.server.getAllWorkers() {
-		row := make([]string, 8)
+		row := make([]string, 6)
 		row[0] = worker.ID
 		row[1] = worker.IP
 		row[2] = fmt.Sprintf("%v", getStateName(worker.getState()))
 		row[3] = fmt.Sprintf("%v", worker.getSpawnCount())
 		row[4] = fmt.Sprintf("%v", worker.getCPUUsage())
-		row[5] = fmt.Sprintf("%v", worker.getCPUWarningEmitted())
-		row[6] = fmt.Sprintf("%v", worker.getMemoryUsage())
-		row[7] = fmt.Sprintf("%v", worker.getHeartbeat())
+		row[5] = fmt.Sprintf("%v", worker.getMemoryUsage())
 		table.Append(row)
 	}
 	table.Render()
