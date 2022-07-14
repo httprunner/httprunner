@@ -383,7 +383,6 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 				// spawn workers with rate limit
 				sleepTime := time.Duration(1000000/r.controller.getSpawnRate()) * time.Microsecond
 				time.Sleep(sleepTime)
-
 				// loop count per worker
 				var workerLoop *Loop
 				if r.loop != nil {
