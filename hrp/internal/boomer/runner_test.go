@@ -193,7 +193,7 @@ func TestSpawnWorkersWithManyTasks(t *testing.T) {
 	runner.setTasks(tasks)
 	runner.client = newClient("localhost", 5557, runner.nodeID)
 
-	const numToSpawn int64 = 30
+	const numToSpawn int64 = 20
 
 	go runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
 	time.Sleep(3 * time.Second)
