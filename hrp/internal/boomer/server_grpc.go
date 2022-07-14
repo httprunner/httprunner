@@ -138,6 +138,8 @@ type grpcServer struct {
 	fromWorker       chan *genericMessage
 	disconnectedChan chan bool
 	shutdownChan     chan bool
+
+	wg sync.WaitGroup
 }
 
 var (
@@ -221,6 +223,7 @@ func newServer(masterHost string, masterPort int) (server *grpcServer) {
 		fromWorker:       make(chan *genericMessage, 100),
 		disconnectedChan: make(chan bool),
 		shutdownChan:     make(chan bool),
+		wg:               sync.WaitGroup{},
 	}
 	return server
 }
@@ -290,6 +293,8 @@ func (s *grpcServer) valid(token string) (isValid bool) {
 }
 
 func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_BidirectionalStreamingMessageServer) error {
+	s.wg.Add(1)
+	defer s.wg.Done()
 	token, ok := extractToken(srv.Context())
 	if !ok {
 		return status.Error(codes.Unauthenticated, "missing token header")
@@ -303,32 +308,34 @@ func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_Bidirect
 	go s.sendMsg(srv, token)
 FOR:
 	for {
-		msg, err := srv.Recv()
-		if st, ok := status.FromError(err); ok {
-			switch st.Code() {
-			case codes.OK:
-				s.fromWorker <- newGenericMessage(msg.Type, msg.Data, msg.NodeID)
-				log.Info().
-					Str("nodeID", msg.NodeID).
-					Str("type", msg.Type).
-					Interface("data", msg.Data).
-					Msg("receive data from worker")
-			case codes.Unavailable, codes.Canceled, codes.DeadlineExceeded:
-				s.fromWorker <- newQuitMessage(token)
-				break FOR
-			default:
-				log.Error().Err(err).Msg("failed to get stream from client")
-				break FOR
+		select {
+		case <-srv.Context().Done():
+			break FOR
+		case <-s.disconnectedChannel():
+			break FOR
+		default:
+			msg, err := srv.Recv()
+			if st, ok := status.FromError(err); ok {
+				switch st.Code() {
+				case codes.OK:
+					s.fromWorker <- newGenericMessage(msg.Type, msg.Data, msg.NodeID)
+					log.Info().
+						Str("nodeID", msg.NodeID).
+						Str("type", msg.Type).
+						Interface("data", msg.Data).
+						Msg("receive data from worker")
+				case codes.Unavailable, codes.Canceled, codes.DeadlineExceeded:
+					s.fromWorker <- newQuitMessage(token)
+					break FOR
+				default:
+					log.Error().Err(err).Msg("failed to get stream from client")
+					break FOR
+				}
 			}
 		}
 	}
-	// disconnected to worker
-	select {
-	case <-srv.Context().Done():
-		return srv.Context().Err()
-	case <-s.disconnectedChan:
-	}
-	log.Warn().Str("worker id", token).Msg("worker quited")
+
+	log.Info().Str("worker id", token).Msg("bidirectional stream closed")
 	return nil
 }
 
@@ -337,6 +344,8 @@ func (s *grpcServer) sendMsg(srv messager.Message_BidirectionalStreamingMessageS
 	for {
 		select {
 		case <-srv.Context().Done():
+			return
+		case <-s.disconnectedChannel():
 			return
 		case res := <-stream:
 			if s, ok := status.FromError(srv.Send(res)); ok {
@@ -406,7 +415,6 @@ func (s *grpcServer) close() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	s.stopServer(ctx)
 	cancel()
-	close(s.disconnectedChan)
 }
 
 func (s *grpcServer) recvChannel() chan *genericMessage {
