@@ -1064,11 +1064,26 @@ func (r *masterRunner) clientListener() {
 					workerInfo.setState(int32(builtin.BytesToInt64(msg.Data["state"])))
 				}
 				workerInfo.updateHeartbeat(3)
-				workerInfo.updateCPUUsage(builtin.ByteToFloat64(msg.Data["current_cpu_usage"]))
-				workerInfo.updateWorkerCPUUsage(builtin.ByteToFloat64(msg.Data["current_pid_cpu_usage"]))
-				workerInfo.updateMemoryUsage(builtin.ByteToFloat64(msg.Data["current_memory_usage"]))
-				workerInfo.updateWorkerMemoryUsage(builtin.ByteToFloat64(msg.Data["current_pid_memory_usage"]))
-				workerInfo.updateUserCount(builtin.BytesToInt64(msg.Data["current_users"]))
+				currentCPUUsage, ok := msg.Data["current_cpu_usage"]
+				if ok {
+					workerInfo.updateCPUUsage(builtin.ByteToFloat64(currentCPUUsage))
+				}
+				currentPidCpuUsage, ok := msg.Data["current_pid_cpu_usage"]
+				if ok {
+					workerInfo.updateWorkerCPUUsage(builtin.ByteToFloat64(currentPidCpuUsage))
+				}
+				currentMemoryUsage, ok := msg.Data["current_memory_usage"]
+				if ok {
+					workerInfo.updateMemoryUsage(builtin.ByteToFloat64(currentMemoryUsage))
+				}
+				currentPidMemoryUsage, ok := msg.Data["current_pid_memory_usage"]
+				if ok {
+					workerInfo.updateWorkerMemoryUsage(builtin.ByteToFloat64(currentPidMemoryUsage))
+				}
+				currentUsers, ok := msg.Data["current_users"]
+				if ok {
+					workerInfo.updateUserCount(builtin.BytesToInt64(currentUsers))
+				}
 			case typeSpawning:
 				workerInfo.setState(StateSpawning)
 			case typeSpawningComplete:

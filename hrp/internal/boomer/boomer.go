@@ -491,9 +491,18 @@ func (b *Boomer) Stop() error {
 	return b.masterRunner.stop()
 }
 
-// GetWorkersInfo gets workers
+// GetWorkersInfo gets workers information
 func (b *Boomer) GetWorkersInfo() []WorkerNode {
 	return b.masterRunner.server.getAllWorkers()
+}
+
+// GetMasterInfo gets master information
+func (b *Boomer) GetMasterInfo() map[string]interface{} {
+	masterInfo := make(map[string]interface{})
+	masterInfo["state"] = getStateName(b.masterRunner.getState())
+	masterInfo["workers"] = b.masterRunner.server.getClientsLength()
+	masterInfo["target_users"] = b.masterRunner.getSpawnCount()
+	return masterInfo
 }
 
 func (b *Boomer) GetCloseChan() chan bool {
