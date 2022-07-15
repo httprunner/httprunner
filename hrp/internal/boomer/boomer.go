@@ -499,7 +499,7 @@ func (b *Boomer) GetWorkersInfo() []WorkerNode {
 // GetMasterInfo gets master information
 func (b *Boomer) GetMasterInfo() map[string]interface{} {
 	masterInfo := make(map[string]interface{})
-	masterInfo["state"] = getStateName(b.masterRunner.getState())
+	masterInfo["state"] = b.masterRunner.getState()
 	masterInfo["workers"] = b.masterRunner.server.getClientsLength()
 	masterInfo["target_users"] = b.masterRunner.getSpawnCount()
 	return masterInfo
