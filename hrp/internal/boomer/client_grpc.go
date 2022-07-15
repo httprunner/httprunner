@@ -3,6 +3,7 @@ package boomer
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -181,7 +182,7 @@ func (c *grpcClient) start() (err error) {
 func (c *grpcClient) register(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
-	res, err := c.Register(ctx, &messager.RegisterRequest{NodeID: c.identity})
+	res, err := c.Register(ctx, &messager.RegisterRequest{NodeID: c.identity, Os: runtime.GOOS, Arch: runtime.GOARCH})
 	if err != nil {
 		return err
 	}
@@ -212,6 +213,9 @@ func (c *grpcClient) newBiStreamClient() (err error) {
 	if err != nil {
 		return err
 	}
+	// reset failCount
+	atomic.StoreInt32(&c.failCount, 0)
+	// set bidirectional stream client
 	c.config.setBiStreamClient(biStream)
 	println("successful to establish bidirectional stream with master, press Ctrl+c to quit.")
 	return nil

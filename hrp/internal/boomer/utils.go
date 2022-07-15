@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/rs/zerolog/log"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -88,8 +90,8 @@ func getNodeID() (nodeID string) {
 	return
 }
 
-// GetCurrentCPUUsage get current CPU usage
-func GetCurrentCPUUsage() float64 {
+// GetCurrentPidCPUUsage get current pid CPU usage
+func GetCurrentPidCPUUsage() float64 {
 	currentPid := os.Getpid()
 	p, err := process.NewProcess(int32(currentPid))
 	if err != nil {
@@ -104,8 +106,8 @@ func GetCurrentCPUUsage() float64 {
 	return percent
 }
 
-// GetCurrentCPUPercent get the percentage of current cpu used
-func GetCurrentCPUPercent() float64 {
+// GetCurrentPidCPUPercent get the percentage of current pid cpu used
+func GetCurrentPidCPUPercent() float64 {
 	currentPid := os.Getpid()
 	p, err := process.NewProcess(int32(currentPid))
 	if err != nil {
@@ -120,8 +122,20 @@ func GetCurrentCPUPercent() float64 {
 	return percent
 }
 
-// GetCurrentMemoryUsage get current Memory usage
-func GetCurrentMemoryUsage() float64 {
+// GetCurrentCPUPercent get the percentage of current cpu used
+func GetCurrentCPUPercent() float64 {
+	percent, _ := cpu.Percent(time.Second, false)
+	return percent[0]
+}
+
+// GetCurrentMemoryPercent get the percentage of current memory used
+func GetCurrentMemoryPercent() float64 {
+	memInfo, _ := mem.VirtualMemory()
+	return memInfo.UsedPercent
+}
+
+// GetCurrentPidMemoryUsage get current Memory usage
+func GetCurrentPidMemoryUsage() float64 {
 	currentPid := os.Getpid()
 	p, err := process.NewProcess(int32(currentPid))
 	if err != nil {

@@ -3,9 +3,11 @@ package builtin
 import (
 	"bufio"
 	"bytes"
+	"encoding/binary"
 	"encoding/csv"
 	builtinJSON "encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -503,6 +505,42 @@ func Bytes2File(data []byte, filename string) error {
 	}
 	log.Info().Msg(fmt.Sprintf("write file %s len: %d \n", filename, count))
 	return nil
+}
+
+func Float32ToByte(v float32) []byte {
+	bits := math.Float32bits(v)
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, bits)
+	return bytes
+}
+
+func ByteToFloat32(v []byte) float32 {
+	bits := binary.LittleEndian.Uint32(v)
+	return math.Float32frombits(bits)
+}
+
+func Float64ToByte(v float64) []byte {
+	bits := math.Float64bits(v)
+	bts := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bts, bits)
+	return bts
+}
+
+func ByteToFloat64(v []byte) float64 {
+	bits := binary.LittleEndian.Uint64(v)
+	return math.Float64frombits(bits)
+}
+
+func Int64ToBytes(n int64) []byte {
+	bytesBuf := bytes.NewBuffer([]byte{})
+	_ = binary.Write(bytesBuf, binary.BigEndian, n)
+	return bytesBuf.Bytes()
+}
+
+func BytesToInt64(bys []byte) (data int64) {
+	byteBuff := bytes.NewBuffer(bys)
+	_ = binary.Read(byteBuff, binary.BigEndian, &data)
+	return
 }
 
 func SplitInteger(m, n int) (ints []int) {
