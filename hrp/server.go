@@ -135,15 +135,19 @@ type CommonResponseBody struct {
 }
 
 type APIGetWorkersRequestBody struct {
-	ID          string  `json:"id"`
-	State       int32   `json:"state"`
-	CPUUsage    float64 `json:"cpu_usage"`
-	MemoryUsage float64 `json:"memory_usage"`
 }
 
 type APIGetWorkersResponseBody struct {
 	ServerStatus
 	Data []boomer.WorkerNode `json:"data"`
+}
+
+type APIGetMasterRequestBody struct {
+}
+
+type APIGetMasterResponseBody struct {
+	ServerStatus
+	Data map[string]interface{} `json:"data"`
 }
 
 type apiHandler struct {
@@ -321,6 +325,16 @@ func (api *apiHandler) GetWorkersInfo(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, body, http.StatusOK)
 }
 
+func (api *apiHandler) GetMasterInfo(w http.ResponseWriter, r *http.Request) {
+	resp := &APIGetMasterResponseBody{
+		ServerStatus: EnumAPIResponseSuccess,
+		Data:         api.boomer.GetMasterInfo(),
+	}
+
+	body, _ := json.Marshal(resp)
+	writeJSON(w, body, http.StatusOK)
+}
+
 func (api *apiHandler) Handler() http.Handler {
 	mux := http.NewServeMux()
 
@@ -330,6 +344,7 @@ func (api *apiHandler) Handler() http.Handler {
 	mux.HandleFunc("/stop", methods(api.Stop, "GET"))
 	mux.HandleFunc("/quit", methods(api.Quit, "GET"))
 	mux.HandleFunc("/workers", methods(api.GetWorkersInfo, "GET"))
+	mux.HandleFunc("/master", methods(api.GetMasterInfo, "GET"))
 
 	return mux
 }

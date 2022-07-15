@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -529,7 +530,7 @@ func TestHeartbeatWorker(t *testing.T) {
 	runner.server.recvChannel() <- &genericMessage{
 		Type:   typeHeartbeat,
 		NodeID: "testID2",
-		Data:   map[string]int64{"state": 3},
+		Data:   map[string][]byte{"state": builtin.Int64ToBytes(3)},
 	}
 	worker2, ok := runner.server.getClients().Load("testID2")
 	if !ok {
