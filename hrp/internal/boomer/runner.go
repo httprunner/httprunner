@@ -874,8 +874,11 @@ func (r *workerRunner) run() {
 				}
 				r.updateState(StateInit)
 			}
-			if atomic.LoadInt32(&r.client.failCount) > 2 {
-				r.updateState(StateMissing)
+			if atomic.LoadInt32(&r.client.failCount) > 3 {
+				go r.stop()
+				if !r.isStarting() && !r.isStopping() {
+					r.updateState(StateMissing)
+				}
 			}
 			CPUUsage := GetCurrentCPUPercent()
 			MemoryUsage := GetCurrentMemoryPercent()
@@ -1007,12 +1010,15 @@ func (r *masterRunner) heartbeatWorker() {
 				if !ok {
 					log.Error().Msg("failed to get worker information")
 				}
-				if atomic.LoadInt32(&workerInfo.Heartbeat) <= 0 {
+				if atomic.LoadInt32(&workerInfo.Heartbeat) < 0 {
+					if workerInfo.getState() == StateQuitting {
+						return true
+					}
 					if workerInfo.getState() != StateMissing {
 						workerInfo.setState(StateMissing)
 					}
-					if r.getState() == StateRunning {
-						// all running workers missed, stopping runner
+					if r.isStopping() {
+						// all running workers missed, setting state to stopped
 						if r.server.getClientsLength() <= 0 {
 							r.updateState(StateStopped)
 						}
