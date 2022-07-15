@@ -11,11 +11,11 @@ const (
 )
 
 type genericMessage struct {
-	Type    string           `json:"type,omitempty"`
-	Profile []byte           `json:"profile,omitempty"`
-	Data    map[string]int64 `json:"data,omitempty"`
-	NodeID  string           `json:"node_id,omitempty"`
-	Tasks   []byte           `json:"tasks,omitempty"`
+	Type    string            `json:"type,omitempty"`
+	Profile []byte            `json:"profile,omitempty"`
+	Data    map[string][]byte `json:"data,omitempty"`
+	NodeID  string            `json:"node_id,omitempty"`
+	Tasks   []byte            `json:"tasks,omitempty"`
 }
 
 type task struct {
@@ -23,7 +23,7 @@ type task struct {
 	TestCases []byte   `json:"testcases,omitempty"`
 }
 
-func newGenericMessage(t string, data map[string]int64, nodeID string) (msg *genericMessage) {
+func newGenericMessage(t string, data map[string][]byte, nodeID string) (msg *genericMessage) {
 	return &genericMessage{
 		Type:   t,
 		Data:   data,
@@ -38,7 +38,7 @@ func newQuitMessage(nodeID string) (msg *genericMessage) {
 	}
 }
 
-func newMessageToWorker(t string, profile []byte, data map[string]int64, tasks []byte) (msg *genericMessage) {
+func newMessageToWorker(t string, profile []byte, data map[string][]byte, tasks []byte) (msg *genericMessage) {
 	return &genericMessage{
 		Type:    t,
 		Profile: profile,

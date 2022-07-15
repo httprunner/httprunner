@@ -25,20 +25,24 @@ import (
 type WorkerNode struct {
 	ID                string  `json:"id"`
 	IP                string  `json:"ip"`
+	OS                string  `json:"os"`
+	Arch              string  `json:"arch"`
 	State             int32   `json:"state"`
 	Heartbeat         int32   `json:"heartbeat"`
-	SpawnCount        int64   `json:"spawn_count"`
+	UserCount         int64   `json:"user_count"`
+	WorkerCPUUsage    float64 `json:"worker_cpu_usage"`
 	CPUUsage          float64 `json:"cpu_usage"`
 	CPUWarningEmitted bool    `json:"cpu_warning_emitted"`
+	WorkerMemoryUsage float64 `json:"worker_memory_usage"`
 	MemoryUsage       float64 `json:"memory_usage"`
 	stream            chan *messager.StreamResponse
 	mutex             sync.RWMutex
 	disconnectedChan  chan bool
 }
 
-func newWorkerNode(id, ip string) *WorkerNode {
+func newWorkerNode(id, ip, os, arch string) *WorkerNode {
 	stream := make(chan *messager.StreamResponse, 100)
-	return &WorkerNode{State: StateInit, ID: id, IP: ip, Heartbeat: 3, stream: stream, disconnectedChan: make(chan bool)}
+	return &WorkerNode{State: StateInit, ID: id, IP: ip, OS: os, Arch: arch, Heartbeat: 3, stream: stream, disconnectedChan: make(chan bool)}
 }
 
 func (w *WorkerNode) getState() int32 {
@@ -57,12 +61,12 @@ func (w *WorkerNode) getHeartbeat() int32 {
 	return atomic.LoadInt32(&w.Heartbeat)
 }
 
-func (w *WorkerNode) updateSpawnCount(spawnCount int64) {
-	atomic.StoreInt64(&w.SpawnCount, spawnCount)
+func (w *WorkerNode) updateUserCount(spawnCount int64) {
+	atomic.StoreInt64(&w.UserCount, spawnCount)
 }
 
-func (w *WorkerNode) getSpawnCount() int64 {
-	return atomic.LoadInt64(&w.SpawnCount)
+func (w *WorkerNode) getUserCount() int64 {
+	return atomic.LoadInt64(&w.UserCount)
 }
 
 func (w *WorkerNode) updateCPUUsage(cpuUsage float64) {
@@ -77,6 +81,18 @@ func (w *WorkerNode) getCPUUsage() float64 {
 	return w.CPUUsage
 }
 
+func (w *WorkerNode) updateWorkerCPUUsage(workerCPUUsage float64) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	w.WorkerCPUUsage = workerCPUUsage
+}
+
+func (w *WorkerNode) getWorkerCPUUsage() float64 {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	return w.WorkerCPUUsage
+}
+
 func (w *WorkerNode) updateCPUWarningEmitted(cpuWarningEmitted bool) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
@@ -87,6 +103,18 @@ func (w *WorkerNode) getCPUWarningEmitted() bool {
 	w.mutex.RLock()
 	defer w.mutex.RUnlock()
 	return w.CPUWarningEmitted
+}
+
+func (w *WorkerNode) updateWorkerMemoryUsage(workerMemoryUsage float64) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	w.WorkerMemoryUsage = workerMemoryUsage
+}
+
+func (w *WorkerNode) getWorkerMemoryUsage() float64 {
+	w.mutex.RLock()
+	defer w.mutex.RUnlock()
+	return w.WorkerMemoryUsage
 }
 
 func (w *WorkerNode) updateMemoryUsage(memoryUsage float64) {
@@ -119,11 +147,15 @@ func (w *WorkerNode) getWorkerInfo() WorkerNode {
 	return WorkerNode{
 		ID:                w.ID,
 		IP:                w.IP,
+		OS:                w.OS,
+		Arch:              w.Arch,
 		State:             w.getState(),
 		Heartbeat:         w.getHeartbeat(),
-		SpawnCount:        w.getSpawnCount(),
+		UserCount:         w.getUserCount(),
+		WorkerCPUUsage:    w.getWorkerCPUUsage(),
 		CPUUsage:          w.getCPUUsage(),
 		CPUWarningEmitted: w.getCPUWarningEmitted(),
+		WorkerMemoryUsage: w.getWorkerMemoryUsage(),
 		MemoryUsage:       w.getMemoryUsage(),
 	}
 }
@@ -267,7 +299,7 @@ func (s *grpcServer) Register(ctx context.Context, req *messager.RegisterRequest
 	p, _ := peer.FromContext(ctx)
 	clientIp := strings.Split(p.Addr.String(), ":")[0]
 	// store worker information
-	wn := newWorkerNode(req.NodeID, clientIp)
+	wn := newWorkerNode(req.NodeID, clientIp, req.Os, req.Arch)
 	s.clients.Store(req.NodeID, wn)
 	log.Warn().Str("worker id", req.NodeID).Msg("worker joined")
 	return &messager.RegisterResponse{Code: "0", Message: "register successfully"}, nil
@@ -415,6 +447,12 @@ func (s *grpcServer) close() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	s.stopServer(ctx)
 	cancel()
+
+	// disconnecting workers
+	close(s.disconnectedChan)
+
+	// waiting to close bidirectional stream
+	s.wg.Wait()
 }
 
 func (s *grpcServer) recvChannel() chan *genericMessage {
