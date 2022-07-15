@@ -1320,7 +1320,7 @@ func (r *masterRunner) reportStats() {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetColMinWidth(0, 20)
 	table.SetColMinWidth(1, 10)
-	table.SetHeader([]string{"Worker ID", "IP", "State", "Current Users", "CPU (%)", "Memory (%)"})
+	table.SetHeader([]string{"Worker ID", "IP", "State", "Current Users", "CPU Usage (%)", "Memory Usage (%)"})
 
 	for _, worker := range r.server.getAllWorkers() {
 		row := make([]string, 6)

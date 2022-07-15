@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/metadata"
@@ -169,6 +170,14 @@ func (c *grpcClient) start() (err error) {
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(32 * 10e9)),
 		grpc.WithUnaryInterceptor(unaryInterceptor),
 		grpc.WithStreamInterceptor(streamInterceptor),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  1 * time.Second,
+				Multiplier: 1.2,
+				MaxDelay:   3 * time.Second,
+			},
+			MinConnectTimeout: 3 * time.Second,
+		}),
 	}
 	c.config.conn, err = grpc.Dial(addr, opts...)
 	if err != nil {
