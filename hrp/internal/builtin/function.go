@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"mime"
 	"mime/multipart"
 	"net/textproto"
 	"os"
@@ -118,7 +119,7 @@ func (w *TFormDataWriter) writeCustomFile(formKey, formValue, formType, formFile
 	}
 
 	if formType == "" {
-		formType = "application/octet-stream"
+		formType = inferFormType(formValue)
 	}
 	if formFileName == "" {
 		formFileName = filepath.Base(formValue)
@@ -135,6 +136,20 @@ func (w *TFormDataWriter) writeCustomFile(formKey, formValue, formType, formFile
 
 	_, err = part.Write(file)
 	return err
+}
+
+func inferFormType(formValue string) string {
+	extName := filepath.Ext(formValue)
+	formType := mime.TypeByExtension(extName)
+	if formType == "" {
+		// file without extension name
+		return "application/octet-stream"
+	}
+	if strings.HasPrefix(formType, "text") {
+		// text/... types have the charset parameter set to "utf-8" by default.
+		return strings.TrimSuffix(formType, "; charset=utf-8")
+	}
+	return formType
 }
 
 func multipartEncoder(formMap map[string]interface{}) (*TFormDataWriter, error) {
