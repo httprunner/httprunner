@@ -77,16 +77,16 @@ type TFormDataWriter struct {
 	Payload *bytes.Buffer
 }
 
-func (w *TFormDataWriter) writeCustomField(formKey, formValue, formType, formFileName string) error {
+func (w *TFormDataWriter) writeCustomText(formKey, formValue, formType, formFileName string) error {
 	if w.Writer == nil {
 		return errors.New("form-data writer not initialized")
 	}
 	h := make(textproto.MIMEHeader)
-	// field doesn't have Content-Type by default
+	// text doesn't have Content-Type by default
 	if formType != "" {
 		h.Set("Content-Type", formType)
 	}
-	// field doesn't have filename in Content-Disposition by default
+	// text doesn't have filename in Content-Disposition by default
 	if formFileName == "" {
 		h.Set("Content-Disposition",
 			fmt.Sprintf(`form-data; name="%s"`, escapeQuotes(formKey)))
@@ -193,7 +193,7 @@ func multipartEncoder(formMap map[string]interface{}) (*TFormDataWriter, error) 
 			}
 			continue
 		}
-		if err := tFormWriter.writeCustomField(formKey, formValue, formType, formFileName); err != nil {
+		if err := tFormWriter.writeCustomText(formKey, formValue, formType, formFileName); err != nil {
 			log.Error().Err(err).Msgf("failed to write text: %v=%v, ignore", formKey, formValue)
 			return nil, err
 		}
