@@ -247,7 +247,7 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 		dataBytes = vv
 	case bytes.Buffer:
 		dataBytes = vv.Bytes()
-	case *builtin.TFormWriter:
+	case *builtin.TFormDataWriter:
 		dataBytes = vv.Payload.Bytes()
 	default: // unexpected body type
 		return errors.New("unexpected request body type")
@@ -268,7 +268,7 @@ func initUpload(step *TStep) {
 }
 
 func prepareUpload(parser *Parser, step *TStep, stepVariables map[string]interface{}) (err error) {
-	if step.Request.Upload == nil {
+	if len(step.Request.Upload) == 0 {
 		return
 	}
 	uploadMap, err := parser.Parse(step.Request.Upload, stepVariables)

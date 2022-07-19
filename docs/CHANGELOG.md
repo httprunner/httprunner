@@ -1,5 +1,14 @@
 # Release History
 
+## v4.1.7 (2022-07-18)
+
+**go version**
+
+- fix: using '@FILEPATH' to indicate the path of the file 
+- feat: support indicating type and filename when uploading file
+- feat: support to infer MIME type of the file automatically
+
+
 ## v4.1.6 (2022-07-04)
 
 **go version**

@@ -12,10 +12,10 @@ func TestCaseUploadFile(t *testing.T) {
 			SetBaseURL("https://httpbin.org").
 			WithVariables(map[string]interface{}{"upload_file": "test.env"}),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("upload file").
+			hrp.NewStep("upload file explicitly").
 				WithVariables(map[string]interface{}{
 					"m_encoder": "${multipart_encoder($m_upload)}",
-					"m_upload":  map[string]interface{}{"file": "$upload_file"},
+					"m_upload":  map[string]interface{}{"file": "@$upload_file"},
 				}).
 				POST("/post").
 				WithHeaders(map[string]string{"Content-Type": "${multipart_content_type($m_encoder)}"}).
@@ -23,12 +23,35 @@ func TestCaseUploadFile(t *testing.T) {
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertStartsWith("body.files.file", "UserName=test", "check uploaded file"),
-			hrp.NewStep("upload file with keyword").
+			hrp.NewStep("upload both text and file").
 				POST("/post").
-				WithUpload(map[string]interface{}{"file": "$upload_file"}).
+				WithUpload(map[string]interface{}{
+					"foo1":  "\"bar1\"",
+					"foo2":  "\"@$upload_file\"",
+					"foo3":  "\"\"@$upload_file\"\"",
+					"file1": "@\"$upload_file\"",
+					"file2": "@$upload_file",
+				}).
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
-				AssertStartsWith("body.files.file", "UserName=test", "check uploaded file"),
+				AssertEqual("body.form.foo1", "bar1", "check foo1 in form").
+				AssertEqual("body.form.foo2", "@$upload_file", "check foo2 in form").
+				AssertEqual("body.form.foo3", "\"@$upload_file\"", "check foo3 in form").
+				AssertStartsWith("body.files.file1", "UserName=test", "check uploaded file1").
+				AssertStartsWith("body.files.file2", "UserName=test", "check uploaded file2"),
+			hrp.NewStep("upload empty field").
+				POST("/post").
+				WithUpload(map[string]interface{}{
+					"foo1":  "",
+					"foo2":  "\"\"",
+					"foo3":  "\"\";",
+					"dummy": ";filename=empty",
+				}).
+				Validate().
+				AssertEqual("status_code", 200, "check status code").
+				AssertEqual("body.form.foo1", "", "check foo1 in form").
+				AssertEqual("body.form.foo2", "", "check foo2 in form").
+				AssertEqual("body.files.dummy", "", "check dummy file in files"),
 		},
 	}
 
