@@ -927,14 +927,15 @@ func (r *workerRunner) start() {
 
 		close(r.doneChan)
 
-		// notify master that worker is stopped
-		r.onStopped()
 		// wait until all stats are reported successfully
 		<-r.reportedChan
 		// report test result
 		r.reportTestResult()
 		// output teardown
 		r.outputOnStop()
+
+		// notify master that worker is stopped
+		r.onStopped()
 	}()
 
 	// start stats report

@@ -475,7 +475,8 @@ type PrometheusPusherOutput struct {
 
 // OnStart will register all prometheus metric collectors
 func (o *PrometheusPusherOutput) OnStart() {
-	o.reset()
+	// reset all prometheus metrics
+	resetPrometheusMetrics()
 	log.Info().Msg("register prometheus metric collectors")
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
@@ -608,9 +609,9 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 	}
 }
 
-// reset will reset all metrics
-func (o *PrometheusPusherOutput) reset() {
-	log.Info().Msg("reset metrics")
+// resetPrometheusMetrics will reset all metrics
+func resetPrometheusMetrics() {
+	log.Info().Msg("reset all prometheus metrics")
 	gaugeNumRequests.Reset()
 	gaugeNumFailures.Reset()
 	gaugeMedianResponseTime.Reset()
