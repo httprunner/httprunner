@@ -49,6 +49,7 @@ var (
 	logLevel string
 	logJSON  bool
 	venv     string
+	indexUrl string
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -57,6 +58,7 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
 	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
 	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
+	rootCmd.PersistentFlags().StringVarP(&indexUrl, "index-url", "i", "", "specify python package index")
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

@@ -23,7 +23,7 @@ var pytestCmd = &cobra.Command{
 		packages := []string{
 			fmt.Sprintf("httprunner==%s", version.VERSION),
 		}
-		_, err := builtin.EnsurePython3Venv(venv, packages...)
+		_, err := builtin.EnsurePython3Venv(venv, indexUrl, packages...)
 		if err != nil {
 			log.Error().Err(err).Msg("python3 venv is not ready")
 			return err

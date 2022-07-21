@@ -29,7 +29,7 @@ const projectInfoFile = "proj.json" // used for ensuring root project
 
 var pluginMap = map[string]funplugin.IPlugin{} // used for reusing plugin instance
 
-func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
+func initPlugin(path, venv string, urlIndex string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	// plugin file not found
 	if path == "" {
 		return nil, nil
@@ -59,7 +59,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		packages := []string{
 			fmt.Sprintf("funppy==%s", fungo.Version),
 		}
-		python3, err := builtin.EnsurePython3Venv(venv, packages...)
+		python3, err := builtin.EnsurePython3Venv(venv, urlIndex, packages...)
 		if err != nil {
 			log.Error().Err(err).
 				Interface("packages", packages).

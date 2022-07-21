@@ -40,7 +40,7 @@ func getPython3Executable(venvDir string) string {
 	return filepath.Join(venvDir, "Scripts", "python.exe")
 }
 
-func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err error) {
+func ensurePython3Venv(venvDir string, indexUrl string, packages ...string) (python3 string, err error) {
 	python3 = getPython3Executable(venvDir)
 	log.Info().
 		Str("python3", python3).
@@ -92,7 +92,7 @@ func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 
 	// install default python packages
 	for _, pkg := range packages {
-		err := InstallPythonPackage(python3, pkg)
+		err := InstallPythonPackage(python3, pkg, indexUrl)
 		if err != nil {
 			return "", errors.Wrap(err, fmt.Sprintf("pip install %s failed", pkg))
 		}

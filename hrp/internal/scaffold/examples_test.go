@@ -7,26 +7,34 @@ import (
 
 func TestGenDemoExamples(t *testing.T) {
 	dir := "../../../examples/demo-with-go-plugin"
-	err := CreateScaffold(dir, Go, "", true)
+	err := CreateScaffold(dir, Go, "", "", true)
 	if err != nil {
 		t.Fatal()
 	}
 
 	dir = "../../../examples/demo-with-py-plugin"
 	venv := filepath.Join(dir, ".venv")
-	err = CreateScaffold(dir, Py, venv, true)
+	err = CreateScaffold(dir, Py, venv, "", true)
+	if err != nil {
+		t.Fatal()
+	}
+
+	dir = "../../../examples/demo-with-py-plugin-url-index"
+	venv = filepath.Join(dir, ".venv")
+	indexUrl := "https://mirror.sjtu.edu.cn/pypi/web/simple"
+	err = CreateScaffold(dir, Py, venv, indexUrl, true)
 	if err != nil {
 		t.Fatal()
 	}
 
 	dir = "../../../examples/demo-without-plugin"
-	err = CreateScaffold(dir, Ignore, "", true)
+	err = CreateScaffold(dir, Ignore, "", "", true)
 	if err != nil {
 		t.Fatal()
 	}
 
 	dir = "../../../examples/demo-empty-project"
-	err = CreateScaffold(dir, Empty, "", true)
+	err = CreateScaffold(dir, Empty, "", "", true)
 	if err != nil {
 		t.Fatal()
 	}

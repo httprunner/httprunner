@@ -91,7 +91,7 @@ var python3Executable string = "python3" // system default python3
 
 // EnsurePython3Venv ensures python3 venv with specified packages
 // venv should be directory path of target venv
-func EnsurePython3Venv(venv string, packages ...string) (python3 string, err error) {
+func EnsurePython3Venv(venv string, indexUrl string, packages ...string) (python3 string, err error) {
 	// priority: specified > $HOME/.hrp/venv
 	if venv == "" {
 		home, err := os.UserHomeDir()
@@ -100,7 +100,7 @@ func EnsurePython3Venv(venv string, packages ...string) (python3 string, err err
 		}
 		venv = filepath.Join(home, ".hrp", "venv")
 	}
-	python3, err = ensurePython3Venv(venv, packages...)
+	python3, err = ensurePython3Venv(venv, indexUrl, packages...)
 	if err != nil {
 		return "", errors.Wrap(err, "prepare python3 venv failed")
 	}
@@ -139,7 +139,7 @@ func AssertPythonPackage(python3 string, pkgName, pkgVersion string) error {
 	return nil
 }
 
-func InstallPythonPackage(python3 string, pkg string) (err error) {
+func InstallPythonPackage(python3 string, pkg string, indexUrl string) (err error) {
 	var pkgName, pkgVersion string
 	if strings.Contains(pkg, "==") {
 		// funppy==0.5.0
@@ -167,17 +167,17 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 	log.Info().Str("pkgName", pkgName).Str("pkgVersion", pkgVersion).Msg("installing python package")
 
 	// install package
-	pypiIndexURL := os.Getenv("PYPI_INDEX_URL")
-	if pypiIndexURL == "" {
-		pypiIndexURL = "https://pypi.org/simple" // default
+	cmdArgs := []string{"-m", "pip", "install", "--upgrade", pkg,
+		"--quiet", "--disable-pip-version-check"}
+
+	if indexUrl != "" {
+		cmdArgs = append(cmdArgs, "--index-url", indexUrl)
 	}
-	err = ExecCommand(python3, "-m", "pip", "install", "--upgrade", pkg,
-		"--index-url", pypiIndexURL,
-		"--quiet", "--disable-pip-version-check")
+
+	err = ExecCommand(python3, cmdArgs...)
 	if err != nil {
 		return errors.Wrap(err, "pip install package failed")
 	}
-
 	return AssertPythonPackage(python3, pkgName, pkgVersion)
 }
 

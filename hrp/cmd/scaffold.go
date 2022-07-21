@@ -34,7 +34,7 @@ var scaffoldCmd = &cobra.Command{
 			pluginType = scaffold.Py // default
 		}
 
-		err := scaffold.CreateScaffold(args[0], pluginType, venv, force)
+		err := scaffold.CreateScaffold(args[0], pluginType, venv, indexUrl, force)
 		if err != nil {
 			log.Error().Err(err).Msg("create scaffold project failed")
 			os.Exit(1)

@@ -62,6 +62,7 @@ type HRPRunner struct {
 	requestsLogOn bool
 	pluginLogOn   bool
 	venv          string
+	indexUrl      string
 	saveTests     bool
 	genHTMLReport bool
 	httpClient    *http.Client
@@ -253,7 +254,7 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	}
 
 	// init parser plugin
-	plugin, err := initPlugin(testcase.Config.Path, r.venv, r.pluginLogOn)
+	plugin, err := initPlugin(testcase.Config.Path, r.venv, r.indexUrl, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}

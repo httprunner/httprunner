@@ -52,7 +52,7 @@ func CopyFile(templateFile, targetFile string) error {
 	return nil
 }
 
-func CreateScaffold(projectName string, pluginType PluginType, venv string, force bool) error {
+func CreateScaffold(projectName string, pluginType PluginType, venv string, indexUrl string, force bool) error {
 	// report event
 	sdk.SendEvent(sdk.EventTracking{
 		Category: "Scaffold",
@@ -166,7 +166,7 @@ func CreateScaffold(projectName string, pluginType PluginType, venv string, forc
 	// create debugtalk function plugin
 	switch pluginType {
 	case Py:
-		return createPythonPlugin(projectName, venv)
+		return createPythonPlugin(projectName, venv, indexUrl)
 	case Go:
 		return createGoPlugin(projectName)
 	}
@@ -195,7 +195,7 @@ func createGoPlugin(projectName string) error {
 	return nil
 }
 
-func createPythonPlugin(projectName, venv string) error {
+func createPythonPlugin(projectName, venv string, indexUrl string) error {
 	log.Info().Msg("start to create hashicorp python plugin")
 
 	// create debugtalk.py
@@ -209,7 +209,7 @@ func createPythonPlugin(projectName, venv string) error {
 		fmt.Sprintf("funppy==%s", fungo.Version),
 		fmt.Sprintf("httprunner==%s", version.VERSION),
 	}
-	_, err = builtin.EnsurePython3Venv(venv, packages...)
+	_, err = builtin.EnsurePython3Venv(venv, indexUrl, packages...)
 	if err != nil {
 		return err
 	}
