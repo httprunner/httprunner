@@ -475,6 +475,7 @@ type PrometheusPusherOutput struct {
 
 // OnStart will register all prometheus metric collectors
 func (o *PrometheusPusherOutput) OnStart() {
+	o.reset()
 	log.Info().Msg("register prometheus metric collectors")
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
@@ -605,4 +606,36 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 	if err := o.pusher.Push(); err != nil {
 		log.Error().Err(err).Msg("push to Pushgateway failed")
 	}
+}
+
+// reset will reset all metrics
+func (o *PrometheusPusherOutput) reset() {
+	log.Info().Msg("reset metrics")
+	gaugeNumRequests.Reset()
+	gaugeNumFailures.Reset()
+	gaugeMedianResponseTime.Reset()
+	gaugeAverageResponseTime.Reset()
+	gaugeMinResponseTime.Reset()
+	gaugeMaxResponseTime.Reset()
+	gaugeAverageContentLength.Reset()
+	gaugeCurrentRPS.Reset()
+	gaugeCurrentFailPerSec.Reset()
+	// counter for total
+	counterErrors.Reset()
+	counterTotalNumRequests.Reset()
+	counterTotalNumFailures.Reset()
+	// summary for total
+	summaryResponseTime.Reset()
+	// gauges for total
+	gaugeUsers.Set(0)
+	gaugeState.Set(1)
+	gaugeDuration.Set(0)
+	gaugeTotalAverageResponseTime.Set(0)
+	gaugeTotalMinResponseTime.Reset()
+	gaugeTotalMaxResponseTime.Reset()
+	gaugeTotalRPS.Set(0)
+	gaugeTotalFailRatio.Set(0)
+	gaugeTotalFailPerSec.Set(0)
+	gaugeTransactionsPassed.Set(0)
+	gaugeTransactionsFailed.Set(0)
 }
