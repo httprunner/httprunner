@@ -198,9 +198,9 @@ func parseCaseCurl(cmd string) (CaseCurl, error) {
 
 type CaseCurl map[string][]string
 
-// GetByIndex gets the value by index associated with the given key.
-// If there are no value by index associated with the key, GetByIndex returns the empty string.
-func (c CaseCurl) GetByIndex(key string, index int) string {
+// Get gets the first value associated with the given key.
+// If there are no values associated with the key, Get returns the empty string.
+func (c CaseCurl) Get(key string, index int) string {
 	if c == nil {
 		return ""
 	}
@@ -301,7 +301,7 @@ type stepFromCurl struct {
 }
 
 func (s *stepFromCurl) makeRequestName(c CaseCurl) error {
-	s.Name = c.GetByIndex(originCmdKey, 0)
+	s.Name = c.Get(originCmdKey, 0)
 	return nil
 }
 
@@ -315,7 +315,7 @@ func (s *stepFromCurl) makeRequestMethod(c CaseCurl) error {
 		s.Request.Method = http.MethodHead
 	}
 	if c.HaveKey("--request") {
-		s.Request.Method = hrp.HTTPMethod(strings.ToUpper(c.GetByIndex("--request", 0)))
+		s.Request.Method = hrp.HTTPMethod(strings.ToUpper(c.Get("--request", 0)))
 	}
 	return nil
 }
@@ -375,8 +375,6 @@ func (s *stepFromCurl) makeRequestHeader(headerExpr string) error {
 		var headerValue string
 		if i < len(headerExpr)-1 {
 			headerValue = strings.TrimSpace(headerExpr[i+1:])
-		} else {
-			headerValue = ""
 		}
 		if strings.ToLower(headerKey) == "host" {
 			// headerExpr modifying internal header like "Host:"
@@ -433,8 +431,6 @@ func (s *stepFromCurl) makeRequestCookie(cookieExpr string) error {
 		var cookieValue string
 		if i < len(cookie)-1 {
 			cookieValue = strings.TrimSpace(cookie[i+1:])
-		} else {
-			cookieValue = ""
 		}
 		s.Request.Cookies[cookieKey] = cookieValue
 	}
@@ -497,11 +493,8 @@ func (s *stepFromCurl) makeRequestForm(formList []string) error {
 			var formValue string
 			if i < len(formExpr)-1 {
 				formValue = strings.TrimSpace(formExpr[i+1:])
-			} else {
-				formValue = ""
 			}
-			filePath := strings.TrimLeft(formValue, "@")
-			s.Request.Upload[formKey] = strings.Trim(filePath, "\"")
+			s.Request.Upload[formKey] = strings.Trim(formValue, "\"")
 		}
 	}
 	return nil

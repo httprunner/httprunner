@@ -104,22 +104,22 @@ func Run(outputType OutputType, outputDir, profilePath string, args []string) {
 }
 
 // LoadTCase loads source file and convert to TCase type
-func LoadTCase(path string) (*hrp.TCase, error) {
-	if strings.HasPrefix(path, "curl ") {
+func LoadTCase(inputSample string) (*hrp.TCase, error) {
+	if strings.HasPrefix(inputSample, "curl ") {
 		// 'path' contains curl command
-		curlCase, err := LoadSingleCurlCase(path)
+		curlCase, err := LoadSingleCurlCase(inputSample)
 		if err != nil {
 			return nil, err
 		}
 		return curlCase, nil
 	}
-	extName := filepath.Ext(path)
+	extName := filepath.Ext(inputSample)
 	if extName == "" {
 		return nil, errors.New("file extension is not specified")
 	}
 	switch extName {
 	case ".har":
-		tCase, err := LoadHARCase(path)
+		tCase, err := LoadHARCase(inputSample)
 		if err != nil {
 			return nil, err
 		}
@@ -127,19 +127,19 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 	case ".json":
 		// priority: hrp JSON case > postman > swagger
 		// check if hrp JSON case
-		tCase, err := LoadJSONCase(path)
+		tCase, err := LoadJSONCase(inputSample)
 		if err == nil {
 			return tCase, nil
 		}
 
 		// check if postman format
-		casePostman, err := LoadPostmanCase(path)
+		casePostman, err := LoadPostmanCase(inputSample)
 		if err == nil {
 			return casePostman, nil
 		}
 
 		// check if swagger format
-		caseSwagger, err := LoadSwaggerCase(path)
+		caseSwagger, err := LoadSwaggerCase(inputSample)
 		if err == nil {
 			return caseSwagger, nil
 		}
@@ -148,13 +148,13 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 	case ".yaml", ".yml":
 		// priority: hrp YAML case > swagger
 		// check if hrp YAML case
-		tCase, err := NewYAMLCase(path)
+		tCase, err := NewYAMLCase(inputSample)
 		if err == nil {
 			return tCase, nil
 		}
 
 		// check if swagger format
-		caseSwagger, err := LoadSwaggerCase(path)
+		caseSwagger, err := LoadSwaggerCase(inputSample)
 		if err == nil {
 			return caseSwagger, nil
 		}
@@ -167,7 +167,7 @@ func LoadTCase(path string) (*hrp.TCase, error) {
 	case ".jmx": // TODO
 		return nil, errors.New("convert JMeter jmx is not implemented")
 	case ".txt":
-		curlCase, err := LoadCurlCase(path)
+		curlCase, err := LoadCurlCase(inputSample)
 		if err != nil {
 			return nil, err
 		}
@@ -186,16 +186,12 @@ type TCaseConverter struct {
 
 func (c *TCaseConverter) genOutputPath(suffix string) string {
 	var outFileFullName string
-	if curlCmd := strings.TrimSpace(c.InputSample); strings.HasPrefix(curlCmd, "curl") {
+	if curlCmd := strings.TrimSpace(c.InputSample); strings.HasPrefix(curlCmd, "curl ") {
 		outFileFullName = fmt.Sprintf("curl_%v_test%v", time.Now().Format("20060102150405"), suffix)
 		if c.OutputDir != "" {
 			return filepath.Join(c.OutputDir, outFileFullName)
 		} else {
-			curWorkDir, err := os.Getwd()
-			if err != nil {
-				log.Error().Err(err).Msg("get current working direction failed")
-				os.Exit(1)
-			}
+			curWorkDir, _ := os.Getwd()
 			return filepath.Join(curWorkDir, outFileFullName)
 		}
 	}
