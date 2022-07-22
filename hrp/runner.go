@@ -267,6 +267,9 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
 
+	// init websocket params
+	initWebSocket(testcase)
+
 	// set testcase timeout in seconds
 	if runner.testCase.Config.Timeout != 0 {
 		timeout := time.Duration(runner.testCase.Config.Timeout*1000) * time.Millisecond
