@@ -4,10 +4,12 @@
 
 **go version**
 
-- fix: using '@FILEPATH' to indicate the path of the file 
+- fix: using `@FILEPATH` to indicate the path of the file 
 - feat: support indicating type and filename when uploading file
 - feat: support to infer MIME type of the file automatically
-
+- feat: support omitting websocket url if not necessary
+- feat: support multiple websocket connections each session
+- fix: optimize websocket step initialization
 
 ## v4.1.6 (2022-07-04)
 
