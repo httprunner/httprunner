@@ -3,10 +3,8 @@ package hrp
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/fungo"
@@ -78,14 +76,6 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 
 	// add plugin instance to plugin map
 	pluginMap[pluginPath] = plugin
-
-	// catch Interrupt and SIGTERM signals to ensure plugin quitted
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		plugin.Quit()
-	}()
 
 	// report event for initializing plugin
 	event := sdk.EventTracking{

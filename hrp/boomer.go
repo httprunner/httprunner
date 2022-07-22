@@ -61,6 +61,15 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 		os.Exit(1)
 	}
 
+	// quit all plugins
+	defer func() {
+		if len(pluginMap) > 0 {
+			for _, plugin := range pluginMap {
+				plugin.Quit()
+			}
+		}
+	}()
+
 	for _, testcase := range testCases {
 		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
 		task := b.convertBoomerTask(testcase, rendezvousList)
@@ -71,12 +80,6 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 }
 
 func (b *HRPBoomer) Quit() {
-	b.pluginsMutex.Lock()
-	plugins := b.plugins
-	b.pluginsMutex.Unlock()
-	for _, plugin := range plugins {
-		plugin.Quit()
-	}
 	b.Boomer.Quit()
 }
 

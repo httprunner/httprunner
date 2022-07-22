@@ -184,6 +184,15 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		return err
 	}
 
+	// quit all plugins
+	defer func() {
+		if len(pluginMap) > 0 {
+			for _, plugin := range pluginMap {
+				plugin.Quit()
+			}
+		}
+	}()
+
 	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
@@ -192,11 +201,6 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			log.Error().Err(err).Msg("[Run] init session runner failed")
 			return err
 		}
-		defer func() {
-			if sessionRunner.parser.plugin != nil {
-				sessionRunner.parser.plugin.Quit()
-			}
-		}()
 
 		for it := sessionRunner.parametersIterator; it.HasNext(); {
 			err = sessionRunner.Start(it.Next())
