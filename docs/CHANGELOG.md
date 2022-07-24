@@ -10,6 +10,8 @@
 - feat: support omitting websocket url if not necessary
 - feat: support multiple websocket connections each session
 - fix: optimize websocket step initialization
+- feat: support convert curl command(s) to testcase(s)
+- feat: support run curl as subcommand of run/boom/convert
 
 ## v4.1.6 (2022-07-04)
 

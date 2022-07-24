@@ -35,35 +35,7 @@ var boomCmd = &cobra.Command{
 			path := hrp.TestCasePath(arg)
 			paths = append(paths, &path)
 		}
-		// if set profile, the priority is higher than the other commands
-		if boomArgs.profile != "" {
-			err := builtin.LoadFile(boomArgs.profile, &boomArgs)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to load profile")
-				os.Exit(1)
-			}
-		}
-
-		hrpBoomer := hrp.NewBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
-		hrpBoomer.SetRateLimiter(boomArgs.MaxRPS, boomArgs.RequestIncreaseRate)
-		if boomArgs.LoopCount > 0 {
-			hrpBoomer.SetLoopCount(boomArgs.LoopCount)
-		}
-		if !boomArgs.DisableConsoleOutput {
-			hrpBoomer.AddOutput(boomer.NewConsoleOutput())
-		}
-		if boomArgs.PrometheusPushgatewayURL != "" {
-			hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(boomArgs.PrometheusPushgatewayURL, "hrp", hrpBoomer.GetMode()))
-		}
-		hrpBoomer.SetDisableKeepAlive(boomArgs.DisableKeepalive)
-		hrpBoomer.SetDisableCompression(boomArgs.DisableCompression)
-		hrpBoomer.SetClientTransport()
-		if venv != "" {
-			hrpBoomer.SetPython3Venv(venv)
-		}
-		hrpBoomer.EnableCPUProfile(boomArgs.CPUProfile, boomArgs.CPUProfileDuration)
-		hrpBoomer.EnableMemoryProfile(boomArgs.MemoryProfile, boomArgs.MemoryProfileDuration)
-		hrpBoomer.EnableGracefulQuit()
+		hrpBoomer := makeHRPBoomer()
 		hrpBoomer.Run(paths...)
 	},
 }
@@ -104,4 +76,37 @@ func init() {
 	boomCmd.Flags().BoolVar(&boomArgs.DisableCompression, "disable-compression", false, "Disable compression")
 	boomCmd.Flags().BoolVar(&boomArgs.DisableKeepalive, "disable-keepalive", false, "Disable keepalive")
 	boomCmd.Flags().StringVar(&boomArgs.profile, "profile", "", "profile for load testing")
+}
+
+func makeHRPBoomer() *hrp.HRPBoomer {
+	// if set profile, the priority is higher than the other commands
+	if boomArgs.profile != "" {
+		err := builtin.LoadFile(boomArgs.profile, &boomArgs)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to load profile")
+			os.Exit(1)
+		}
+	}
+
+	hrpBoomer := hrp.NewBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
+	hrpBoomer.SetRateLimiter(boomArgs.MaxRPS, boomArgs.RequestIncreaseRate)
+	if boomArgs.LoopCount > 0 {
+		hrpBoomer.SetLoopCount(boomArgs.LoopCount)
+	}
+	if !boomArgs.DisableConsoleOutput {
+		hrpBoomer.AddOutput(boomer.NewConsoleOutput())
+	}
+	if boomArgs.PrometheusPushgatewayURL != "" {
+		hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(boomArgs.PrometheusPushgatewayURL, "hrp", hrpBoomer.GetMode()))
+	}
+	hrpBoomer.SetDisableKeepAlive(boomArgs.DisableKeepalive)
+	hrpBoomer.SetDisableCompression(boomArgs.DisableCompression)
+	hrpBoomer.SetClientTransport()
+	if venv != "" {
+		hrpBoomer.SetPython3Venv(venv)
+	}
+	hrpBoomer.EnableCPUProfile(boomArgs.CPUProfile, boomArgs.CPUProfileDuration)
+	hrpBoomer.EnableMemoryProfile(boomArgs.MemoryProfile, boomArgs.MemoryProfileDuration)
+	hrpBoomer.EnableGracefulQuit()
+	return hrpBoomer
 }

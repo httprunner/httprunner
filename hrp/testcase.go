@@ -60,11 +60,45 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 	if err != nil {
 		return nil, err
 	}
+	return tc.ToTestCase(casePath)
+}
+
+// TCase represents testcase data structure.
+// Each testcase includes one public config and several sequential teststeps.
+type TCase struct {
+	Config    *TConfig `json:"config" yaml:"config"`
+	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
+}
+
+// MakeCompat converts TCase compatible with Golang engine style
+func (tc *TCase) MakeCompat() (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
+		}
+	}()
+	for _, step := range tc.TestSteps {
+		// 1. deal with request body compatibility
+		convertCompatRequestBody(step.Request)
+
+		// 2. deal with validators compatibility
+		err = convertCompatValidator(step.Validators)
+		if err != nil {
+			return err
+		}
+
+		// 3. deal with extract expr including hyphen
+		convertExtract(step.Extract)
+	}
+	return nil
+}
+
+func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 	if tc.TestSteps == nil {
 		return nil, errors.New("invalid testcase format, missing teststeps!")
 	}
 
-	err = tc.MakeCompat()
+	err := tc.MakeCompat()
 	if err != nil {
 		return nil, err
 	}
@@ -171,36 +205,6 @@ func (path *TestCasePath) ToTestCase() (*TestCase, error) {
 		}
 	}
 	return testCase, nil
-}
-
-// TCase represents testcase data structure.
-// Each testcase includes one public config and several sequential teststeps.
-type TCase struct {
-	Config    *TConfig `json:"config" yaml:"config"`
-	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
-}
-
-// MakeCompat converts TCase compatible with Golang engine style
-func (tc *TCase) MakeCompat() (err error) {
-	defer func() {
-		if p := recover(); p != nil {
-			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
-		}
-	}()
-	for _, step := range tc.TestSteps {
-		// 1. deal with request body compatibility
-		convertCompatRequestBody(step.Request)
-
-		// 2. deal with validators compatibility
-		err = convertCompatValidator(step.Validators)
-		if err != nil {
-			return err
-		}
-
-		// 3. deal with extract expr including hyphen
-		convertExtract(step.Extract)
-	}
-	return nil
 }
 
 func convertCompatRequestBody(request *Request) {

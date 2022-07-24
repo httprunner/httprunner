@@ -42,7 +42,8 @@ Copyright 2017 debugtalk`,
 			log.Info().Msg("Set log to color console other than JSON format.")
 		}
 	},
-	Version: version.VERSION,
+	Version:          version.VERSION,
+	TraverseChildren: true,
 }
 
 var (

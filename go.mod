@@ -8,6 +8,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-openapi/spec v0.20.6
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/httprunner/funplugin v0.5.0
