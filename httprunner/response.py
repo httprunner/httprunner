@@ -282,7 +282,10 @@ class ResponseObject(ResponseObjectBase):
             "body": self.body,
         }
         if not expr.startswith(tuple(resp_obj_meta.keys())):
-            return expr
+            if hasattr(self.resp_obj,expr):
+                return getattr(self.resp_obj,expr)
+            else:
+                return expr
 
         try:
             check_value = jmespath.search(expr, resp_obj_meta)
