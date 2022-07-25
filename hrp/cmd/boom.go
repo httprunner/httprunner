@@ -148,26 +148,12 @@ func makeHRPBoomer() *hrp.HRPBoomer {
 			os.Exit(1)
 		}
 	}
-
 	hrpBoomer := hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
-	hrpBoomer.SetRateLimiter(boomArgs.MaxRPS, boomArgs.RequestIncreaseRate)
-	if boomArgs.LoopCount > 0 {
-		hrpBoomer.SetLoopCount(boomArgs.LoopCount)
-	}
-	if !boomArgs.DisableConsoleOutput {
-		hrpBoomer.AddOutput(boomer.NewConsoleOutput())
-	}
-	if boomArgs.PrometheusPushgatewayURL != "" {
-		hrpBoomer.AddOutput(boomer.NewPrometheusPusherOutput(boomArgs.PrometheusPushgatewayURL, "hrp", hrpBoomer.GetMode()))
-	}
-	hrpBoomer.SetDisableKeepAlive(boomArgs.DisableKeepalive)
-	hrpBoomer.SetDisableCompression(boomArgs.DisableCompression)
-	hrpBoomer.SetClientTransport()
 	if venv != "" {
 		hrpBoomer.SetPython3Venv(venv)
 	}
-	hrpBoomer.EnableCPUProfile(boomArgs.CPUProfile, boomArgs.CPUProfileDuration)
-	hrpBoomer.EnableMemoryProfile(boomArgs.MemoryProfile, boomArgs.MemoryProfileDuration)
-	hrpBoomer.EnableGracefulQuit()
+	hrpBoomer.SetProfile(&boomArgs.Profile)
+	hrpBoomer.EnableGracefulQuit(context.Background())
+	hrpBoomer.InitBoomer()
 	return hrpBoomer
 }
