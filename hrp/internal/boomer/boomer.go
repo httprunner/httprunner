@@ -210,6 +210,11 @@ func (b *Boomer) ParseTestCasesChan() chan bool {
 	return b.masterRunner.parseTestCasesChan
 }
 
+// GetMasterHost returns master IP
+func (b *Boomer) GetMasterHost() string {
+	return b.masterHost
+}
+
 // GetState gets worker state
 func (b *Boomer) GetState() int32 {
 	switch b.mode {

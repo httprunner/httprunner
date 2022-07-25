@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -207,6 +208,18 @@ func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
 		}
 
 		testcases = append(testcases, tesecase)
+	}
+
+	if profile.PrometheusPushgatewayURL != "" {
+		urlSlice := strings.Split(profile.PrometheusPushgatewayURL, ":")
+		if len(urlSlice) != 2 {
+			profile.PrometheusPushgatewayURL = ""
+		} else {
+			if urlSlice[0] == "" {
+				urlSlice[0] = b.Boomer.GetMasterHost()
+			}
+		}
+		profile.PrometheusPushgatewayURL = strings.Join(urlSlice, ":")
 	}
 
 	b.SetProfile(profile)
