@@ -1,17 +1,20 @@
 # Release History
 
-## v4.1.7 (2022-07-18)
+## v4.2.0 (2022-07-22)
 
 **go version**
 
-- fix: using `@FILEPATH` to indicate the path of the file 
+- feat: support multi-machine collaborative distributed load testing
 - feat: support indicating type and filename when uploading file
 - feat: support to infer MIME type of the file automatically
 - feat: support omitting websocket url if not necessary
 - feat: support multiple websocket connections each session
-- fix: optimize websocket step initialization
 - feat: support convert curl command(s) to testcase(s)
 - feat: support run curl as subcommand of run/boom/convert
+- fix: optimize websocket step initialization
+- fix: using `@FILEPATH` to indicate the path of the file
+- fix: reuse plugin instance if it already initialized
+- fix: deep copy api step to avoid data racing
 
 ## v4.1.6 (2022-07-04)
 
@@ -462,9 +465,9 @@
 **Changed**
 
 - change: override variables
-    (1) testcase: session variables > step variables > config variables
-    (2) testsuite: testcase variables > config variables
-    (3) testsuite testcase variables > testcase config variables
+  (1) testcase: session variables > step variables > config variables
+  (2) testsuite: testcase variables > config variables
+  (3) testsuite testcase variables > testcase config variables
 
 **Fixed**
 

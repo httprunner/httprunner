@@ -178,6 +178,14 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 	return selectedParameters
 }
 
+func (iter *ParametersIterator) outParameters() map[string]interface{} {
+	res := map[string]interface{}{}
+	for key, params := range iter.data {
+		res[key] = params
+	}
+	return res
+}
+
 func genCartesianProduct(multiParameters []Parameters) Parameters {
 	if len(multiParameters) == 0 {
 		return nil

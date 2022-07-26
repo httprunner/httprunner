@@ -7,6 +7,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -278,6 +280,21 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	if runner.testCase.Config.Timeout != 0 {
 		timeout := time.Duration(runner.testCase.Config.Timeout*1000) * time.Millisecond
 		runner.hrpRunner.SetTimeout(timeout)
+	}
+
+	// load plugin info to testcase config
+	if plugin != nil {
+		pluginPath, _ := locatePlugin(testcase.Config.Path)
+		pluginContent, err := builtin.ReadFile(pluginPath)
+		if err != nil {
+			return nil, err
+		}
+		tp := strings.Split(plugin.Path(), ".")
+		runner.parsedConfig.PluginSetting = &PluginConfig{
+			Path:    pluginPath,
+			Content: pluginContent,
+			Type:    tp[len(tp)-1],
+		}
 	}
 
 	return runner, nil

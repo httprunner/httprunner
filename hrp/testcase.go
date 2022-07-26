@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/mitchellh/mapstructure"
 )
 
 // ITestCase represents interface for testcases,
@@ -40,6 +41,11 @@ func (tc *TestCase) ToTCase() *TCase {
 		Config: tc.Config,
 	}
 	for _, step := range tc.TestSteps {
+		if step.Type() == stepTypeTestCase {
+			if testcase, ok := step.Struct().TestCase.(*TestCase); ok {
+				step.Struct().TestCase = testcase.ToTCase()
+			}
+		}
 		tCase.TestSteps = append(tCase.TestSteps, step.Struct())
 	}
 	return tCase
@@ -106,13 +112,17 @@ func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 		tc.Config = &TConfig{Name: "please input testcase name"}
 	}
 	tc.Config.Path = casePath
+	return tc.toTestCase()
+}
 
+// toTestCase converts *TCase to *TestCase
+func (tc *TCase) toTestCase() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
 	}
 
 	// locate project root dir by plugin path
-	projectRootDir, err := GetProjectRootDirPath(casePath)
+	projectRootDir, err := GetProjectRootDirPath(tc.Config.Path)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get project root dir")
 	}
@@ -139,40 +149,71 @@ func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 	for _, step := range tc.TestSteps {
 		if step.API != nil {
 			apiPath, ok := step.API.(string)
+			if ok {
+				path := filepath.Join(projectRootDir, apiPath)
+				if !builtin.IsFilePathExists(path) {
+					return nil, errors.New("referenced api file not found: " + path)
+				}
+
+				refAPI := APIPath(path)
+				apiContent, err := refAPI.ToAPI()
+				if err != nil {
+					return nil, err
+				}
+				step.API = apiContent
+			} else {
+				apiMap, ok := step.API.(map[string]interface{})
+				if !ok {
+					return nil, fmt.Errorf("referenced api should be map or path(string), got %v", step.API)
+				}
+				api := &API{}
+				err = mapstructure.Decode(apiMap, api)
+				if err != nil {
+					return nil, err
+				}
+				step.API = api
+			}
+			_, ok = step.API.(*API)
 			if !ok {
-				return nil, fmt.Errorf("referenced api path should be string, got %v", step.API)
+				return nil, fmt.Errorf("failed to handle referenced API, got %v", step.TestCase)
 			}
-			path := filepath.Join(projectRootDir, apiPath)
-			if !builtin.IsFilePathExists(path) {
-				return nil, errors.New("referenced api file not found: " + path)
-			}
-
-			refAPI := APIPath(path)
-			apiContent, err := refAPI.ToAPI()
-			if err != nil {
-				return nil, err
-			}
-			step.API = apiContent
-
 			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
 				step: step,
 			})
 		} else if step.TestCase != nil {
 			casePath, ok := step.TestCase.(string)
-			if !ok {
-				return nil, fmt.Errorf("referenced testcase path should be string, got %v", step.TestCase)
-			}
-			path := filepath.Join(projectRootDir, casePath)
-			if !builtin.IsFilePathExists(path) {
-				return nil, errors.New("referenced testcase file not found: " + path)
-			}
+			if ok {
+				path := filepath.Join(projectRootDir, casePath)
+				if !builtin.IsFilePathExists(path) {
+					return nil, errors.New("referenced testcase file not found: " + path)
+				}
 
-			refTestCase := TestCasePath(path)
-			tc, err := refTestCase.ToTestCase()
-			if err != nil {
-				return nil, err
+				refTestCase := TestCasePath(path)
+				tc, err := refTestCase.ToTestCase()
+				if err != nil {
+					return nil, err
+				}
+				step.TestCase = tc
+			} else {
+				testCaseMap, ok := step.TestCase.(map[string]interface{})
+				if !ok {
+					return nil, fmt.Errorf("referenced testcase should be map or path(string), got %v", step.TestCase)
+				}
+				tCase := &TCase{}
+				err = mapstructure.Decode(testCaseMap, tCase)
+				if err != nil {
+					return nil, err
+				}
+				tc, err := tCase.toTestCase()
+				if err != nil {
+					return nil, err
+				}
+				step.TestCase = tc
 			}
-			step.TestCase = tc
+			_, ok = step.TestCase.(*TestCase)
+			if !ok {
+				return nil, fmt.Errorf("failed to handle referenced testcase, got %v", step.TestCase)
+			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
 				step: step,
 			})

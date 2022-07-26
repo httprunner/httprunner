@@ -8,10 +8,9 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/fungo"
-	"github.com/rs/zerolog/log"
-
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/rs/zerolog/log"
 )
 
 const (
