@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"github.com/mitchellh/mapstructure"
 )
 
 const jsonContentType = "application/json; encoding=utf-8"
@@ -134,16 +135,14 @@ type CommonResponseBody struct {
 	ServerStatus
 }
 
-type APIGetWorkersRequestBody struct {
-}
+type APIGetWorkersRequestBody struct{}
 
 type APIGetWorkersResponseBody struct {
 	ServerStatus
 	Data []boomer.WorkerNode `json:"data"`
 }
 
-type APIGetMasterRequestBody struct {
-}
+type APIGetMasterRequestBody struct{}
 
 type APIGetMasterResponseBody struct {
 	ServerStatus
@@ -204,7 +203,7 @@ func (api *apiHandler) Start(w http.ResponseWriter, r *http.Request) {
 		for k := range req.Other {
 			keys = append(keys, k)
 		}
-		err = errors.New(fmt.Sprintf("failed to recognize params: %v", keys))
+		err = fmt.Errorf("failed to recognize params: %v", keys)
 		return
 	}
 
@@ -258,7 +257,7 @@ func (api *apiHandler) ReBalance(w http.ResponseWriter, r *http.Request) {
 		for k := range req.Other {
 			keys = append(keys, k)
 		}
-		err = errors.New(fmt.Sprintf("failed to recognize params: %v", keys))
+		err = fmt.Errorf("failed to recognize params: %v", keys)
 		return
 	}
 
@@ -370,7 +369,7 @@ func (b *HRPBoomer) StartServer(ctx context.Context, addr string) {
 		}
 	}()
 
-	log.Println(fmt.Sprintf("starting HTTP server (%v), please use the API to control master", server.Addr))
+	log.Printf("starting HTTP server (%v), please use the API to control master", server.Addr)
 	err := server.ListenAndServe()
 	if err != nil {
 		if err == http.ErrServerClosed {
