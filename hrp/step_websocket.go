@@ -232,18 +232,17 @@ type WebSocketAction struct {
 }
 
 func initWebSocket(testcase *TestCase) {
-	tCase := testcase.ToTCase()
-	for _, step := range tCase.TestSteps {
-		if step.WebSocket == nil {
+	for _, step := range testcase.TestSteps {
+		if step.Struct().WebSocket == nil {
 			continue
 		}
 		// init websocket action parameters
-		if step.WebSocket.Timeout <= 0 {
-			step.WebSocket.Timeout = defaultTimeout
+		if step.Struct().WebSocket.Timeout <= 0 {
+			step.Struct().WebSocket.Timeout = defaultTimeout
 		}
 		// close status code range: [1000, 4999]. ref: https://datatracker.ietf.org/doc/html/rfc6455#section-11.7
-		if step.WebSocket.CloseStatusCode < 1000 || step.WebSocket.CloseStatusCode > 4999 {
-			step.WebSocket.CloseStatusCode = defaultCloseStatus
+		if step.Struct().WebSocket.CloseStatusCode < 1000 || step.Struct().WebSocket.CloseStatusCode > 4999 {
+			step.Struct().WebSocket.CloseStatusCode = defaultCloseStatus
 		}
 	}
 }
