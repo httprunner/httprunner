@@ -81,17 +81,20 @@ Usage:
 
 Available Commands:
   boom         run load test with boomer
+  build        build plugin for testing
   completion   generate the autocompletion script for the specified shell
-  har2case     convert HAR to json/yaml testcase files
+  convert      convert to JSON/YAML/gotest/pytest testcases
   help         Help about any command
   pytest       run API test with pytest
   run          run API test with go engine
   startproject create a scaffold project
+  wiki         visit https://httprunner.com
 
 Flags:
   -h, --help               help for hrp
       --log-json           set log to json format
   -l, --log-level string   set log level (default "INFO")
+      --venv string        specify python3 venv path
   -v, --version            version for hrp
 
 Use "hrp [command] --help" for more information about a command.
@@ -100,7 +103,6 @@ Use "hrp [command] --help" for more information about a command.
 ## 用户案例
 
 <a href="https://httprunner.com/docs/cases/dji-ibg"><img src="https://httprunner.com/image/logo/dji.jpeg" title="大疆 - 基于 HttpRunner 构建完整的自动化测试体系" width="60"></a>
-<a href="https://httprunner.com/docs/cases/bytedance-feishu"><img src="https://httprunner.com/image/logo/feishu.jpeg" title="飞书 - 使用 HttpRunner 替换已有测试平台的执行引擎" width="60"></a>
 <a href="https://httprunner.com/docs/cases/youmi"><img src="https://httprunner.com/image/logo/youmi.png" title="有米科技 - 基于 HttpRunner 建设自动化测试平台" width="60"></a>
 <a href="https://httprunner.com/docs/cases/umcare"><img src="https://httprunner.com/image/logo/umcare.png" title="通用环球医疗 - 使用 HttpRunner 实践接口自动化测试" width="100"></a>
 <a href="https://httprunner.com/docs/cases/mihoyo"><img src="https://httprunner.com/image/logo/miHoYo.png" title="米哈游 - 基于 HttpRunner 搭建接口自动化测试体系" width="100"></a>

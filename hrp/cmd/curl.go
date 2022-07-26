@@ -15,7 +15,7 @@ import (
 
 var runCurlCmd = &cobra.Command{
 	Use:                "curl URLs",
-	Short:              "run API test with go engine by curl command",
+	Short:              "run API test with curl command",
 	Args:               cobra.MinimumNArgs(1),
 	DisableFlagParsing: true,
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -31,7 +31,7 @@ var runCurlCmd = &cobra.Command{
 
 var boomCurlCmd = &cobra.Command{
 	Use:                "curl URLs",
-	Short:              "run load test with boomer by curl command",
+	Short:              "run load test with curl command",
 	Args:               cobra.MinimumNArgs(1),
 	DisableFlagParsing: true,
 	PreRun: func(cmd *cobra.Command, args []string) {
