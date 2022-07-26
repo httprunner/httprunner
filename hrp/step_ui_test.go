@@ -10,7 +10,10 @@ func TestAndroidAction(t *testing.T) {
 		Config: NewConfig("android ui action"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				Android().Serial("xxx").Click("抖音"),
+				Android().Serial("xxx").Click("抖音").
+				Validate().
+				AssertTextExists("首页", "首页 tab 不存在").
+				AssertTextExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
 				Android().Serial("xxx").SwipeUp().SwipeUp().SwipeDown(),
 		},
@@ -29,7 +32,10 @@ func TestIOSAction(t *testing.T) {
 		Config: NewConfig("ios ui action"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				IOS().UDID("xxx").Click("抖音"),
+				IOS().UDID("xxx").Click("抖音").
+				Validate().
+				AssertTextExists("首页", "首页 tab 不存在").
+				AssertTextExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
 				IOS().UDID("xxx").SwipeUp().SwipeUp().SwipeDown(),
 		},

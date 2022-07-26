@@ -132,6 +132,17 @@ type StepIOSValidation struct {
 	step *TStep
 }
 
+func (s *StepIOSValidation) AssertTextExists(expectedText string, msg string) *StepIOSValidation {
+	v := Validator{
+		Check:   "ios_ui",
+		Assert:  "text_exists",
+		Expect:  expectedText,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepIOSValidation) Name() string {
 	return s.step.Name
 }
