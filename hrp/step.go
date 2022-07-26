@@ -10,7 +10,31 @@ const (
 	stepTypeRendezvous  StepType = "rendezvous"
 	stepTypeThinkTime   StepType = "thinktime"
 	stepTypeWebSocket   StepType = "websocket"
+	stepTypeAndroid     StepType = "android"
+	stepTypeIOS         StepType = "ios"
 )
+
+type MobileMethod string
+
+const (
+	appInstall    MobileMethod = "install"
+	appStart      MobileMethod = "app_start"
+	cameraStart   MobileMethod = "camera_start"
+	cameraStop    MobileMethod = "camera_stop"
+	recordStart   MobileMethod = "record_start"
+	recordStop    MobileMethod = "record_stop"
+	uiClick       MobileMethod = "click"
+	uiDoubleClick MobileMethod = "double_click"
+	uiLongClick   MobileMethod = "long_click"
+	uiSwipe       MobileMethod = "swipe"
+	uiInput       MobileMethod = "input"
+	appClick      MobileMethod = "app_click"
+)
+
+type MobileAction struct {
+	Method MobileMethod `json:"method" yaml:"method"`
+	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
+}
 
 type StepResult struct {
 	Name        string                 `json:"name" yaml:"name"`                                   // step name
@@ -35,6 +59,8 @@ type TStep struct {
 	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
 	ThinkTime     *ThinkTime             `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocket     *WebSocketAction       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
+	Android       *AndroidAction         `json:"android,omitempty" yaml:"android,omitempty"`
+	IOS           *IOSAction             `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
