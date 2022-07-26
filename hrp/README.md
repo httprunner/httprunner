@@ -81,15 +81,15 @@ type SessionRunner struct {
 
 ```go
 func (r *SessionRunner) Start() error {
-    ...
-    // run step in sequential order
+	...
+	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
 		_, err := step.Run(r)
 		if err != nil && r.hrpRunner.failfast {
 			return errors.Wrap(err, "abort running due to failfast setting")
 		}
 	}
-    ...
+	...
 }
 ```
 

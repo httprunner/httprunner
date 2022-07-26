@@ -1,19 +1,18 @@
 # Release History
 
-## v4.2.0 (2022-07-22)
+## v4.2.0 (2022-07-26)
 
 **go version**
 
-- feat: support multi-machine collaborative distributed load testing
-- feat: support indicating type and filename when uploading file
-- feat: support to infer MIME type of the file automatically
-- feat: support omitting websocket url if not necessary
-- feat: support multiple websocket connections each session
-- feat: support convert curl command(s) to testcase(s)
-- feat: support run curl as subcommand of run/boom/convert
+- feat: support distributed load testing on multi-machines
+- feat: support run/boom/convert curl command(s)
+- feat: support uploading file with indicated type and filename
+- feat: support to infer MIME type of the uploaded file automatically
+- feat: using `@FILEPATH` to indicate the path of the file
+- change: support omitting websocket url if not necessary
+- change: support multiple websocket connections for each session
 - fix: optimize websocket step initialization
-- fix: using `@FILEPATH` to indicate the path of the file
-- fix: reuse plugin instance if it already initialized
+- fix: reuse plugin instance if already initialized
 - fix: deep copy api step to avoid data racing
 
 ## v4.1.6 (2022-07-04)
