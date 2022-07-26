@@ -759,6 +759,22 @@ func (s *StepRequest) WebSocket() *StepWebSocket {
 	}
 }
 
+// Android creates a new android action
+func (s *StepRequest) Android() *StepAndroid {
+	s.step.Android = &AndroidAction{}
+	return &StepAndroid{
+		step: s.step,
+	}
+}
+
+// IOS creates a new ios action
+func (s *StepRequest) IOS() *StepIOS {
+	s.step.IOS = &IOSAction{}
+	return &StepIOS{
+		step: s.step,
+	}
+}
+
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
 	step *TStep
