@@ -7,9 +7,15 @@ import (
 	"math"
 	"os"
 	"runtime/pprof"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/rs/zerolog/log"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/process"
 )
 
 func round(val float64, roundOn float64, places int) (newVal float64) {
@@ -74,4 +80,72 @@ func startCPUProfile(file string, duration time.Duration) (err error) {
 		log.Info().Dur("duration", duration).Msg("Stop CPU profiling")
 	})
 	return nil
+}
+
+// generate a random nodeID like locust does, using the same algorithm.
+func getNodeID() (nodeID string) {
+	hostname, _ := os.Hostname()
+	id := strings.Replace(uuid.New().String(), "-", "", -1)
+	nodeID = fmt.Sprintf("%s_%s", hostname, id)
+	return
+}
+
+// GetCurrentPidCPUUsage get current pid CPU usage
+func GetCurrentPidCPUUsage() float64 {
+	currentPid := os.Getpid()
+	p, err := process.NewProcess(int32(currentPid))
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	percent, err := p.CPUPercent()
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	return percent
+}
+
+// GetCurrentPidCPUPercent get the percentage of current pid cpu used
+func GetCurrentPidCPUPercent() float64 {
+	currentPid := os.Getpid()
+	p, err := process.NewProcess(int32(currentPid))
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	percent, err := p.Percent(time.Second)
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	return percent
+}
+
+// GetCurrentCPUPercent get the percentage of current cpu used
+func GetCurrentCPUPercent() float64 {
+	percent, _ := cpu.Percent(time.Second, false)
+	return percent[0]
+}
+
+// GetCurrentMemoryPercent get the percentage of current memory used
+func GetCurrentMemoryPercent() float64 {
+	memInfo, _ := mem.VirtualMemory()
+	return memInfo.UsedPercent
+}
+
+// GetCurrentPidMemoryUsage get current Memory usage
+func GetCurrentPidMemoryUsage() float64 {
+	currentPid := os.Getpid()
+	p, err := process.NewProcess(int32(currentPid))
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	percent, err := p.MemoryPercent()
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to get CPU percent\n"))
+		return 0.0
+	}
+	return float64(percent)
 }

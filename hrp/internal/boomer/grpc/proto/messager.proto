@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "grpc/messager";
+
+service Message {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc SignOut(SignOutRequest) returns (SignOutResponse) {}
+  rpc BidirectionalStreamingMessage(stream StreamRequest) returns (stream StreamResponse){};
+}
+
+message StreamRequest{
+  string type = 1;
+  string nodeID = 2;
+  map<string, bytes> data = 3;
+}
+
+message StreamResponse{
+  string type = 1;
+  string nodeID = 2;
+  bytes profile = 3;
+  bytes tasks = 4;
+  map<string, bytes> data = 5;
+}
+
+message RegisterRequest{
+  string nodeID = 1;
+  string os = 2;
+  string arch = 3;
+}
+
+message RegisterResponse{
+  string code = 1;
+  string message = 2;
+}
+
+message SignOutRequest{
+  string nodeID = 1;
+}
+
+message SignOutResponse{
+  string code = 1;
+  string message = 2;
+}

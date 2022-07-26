@@ -32,7 +32,8 @@ type TConfig struct {
 	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
-	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"` // testcase file path
+	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
+	PluginSetting     *PluginConfig          `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
 }
 
 // WithVariables sets variables for current testcase.
@@ -98,7 +99,7 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) {
 }
 
 type ThinkTimeConfig struct {
-	Strategy thinkTimeStrategy `json:"strategy,omitempty" yaml:"strategy,omitempty"` // default、random、limit、multiply、ignore
+	Strategy thinkTimeStrategy `json:"strategy,omitempty" yaml:"strategy,omitempty"` // default、random、multiply、ignore
 	Setting  interface{}       `json:"setting,omitempty" yaml:"setting,omitempty"`   // random(map): {"min_percentage": 0.5, "max_percentage": 1.5}; 10、multiply(float64): 1.5
 	Limit    float64           `json:"limit,omitempty" yaml:"limit,omitempty"`       // limit think time no more than specific time, ignore if value <= 0
 }
@@ -172,3 +173,9 @@ const (
 )
 
 var thinkTimeDefaultRandom = map[string]float64{"min_percentage": 0.5, "max_percentage": 1.5}
+
+type PluginConfig struct {
+	Path    string
+	Type    string // bin、so、py
+	Content []byte
+}
