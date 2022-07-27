@@ -348,10 +348,20 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	case uiClick:
 		// click on coordinate
 		if location, ok := action.Params.([]int); ok {
+			// absolute x,y
 			if len(location) != 2 {
 				return fmt.Errorf("invalid click location params: %v", location)
 			}
 			return w.Driver.Tap(location[0], location[1])
+		}
+		if location, ok := action.Params.([]float64); ok {
+			// relative x,y of window size
+			if len(location) != 2 {
+				return fmt.Errorf("invalid click location params: %v", location)
+			}
+			x := location[0] * float64(w.WindowSize.Width)
+			y := location[1] * float64(w.WindowSize.Height)
+			return w.Driver.TapFloat(x, y)
 		}
 		// click on name or xpath
 		if param, ok := action.Params.(string); ok {
