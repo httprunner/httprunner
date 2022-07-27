@@ -167,7 +167,23 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
-func (r *HRPRunner) InitWDAClient(udid string) (*wdaClient, error) {
+func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
+	defer func() {
+		if err != nil {
+			return
+		}
+		// check if WDA is healthy
+		ok, e := client.Driver.IsWdaHealthy()
+		if err != nil {
+			err = errors.Wrap(e, "check WDA health failed")
+			return
+		}
+		if !ok {
+			err = errors.New("WDA is not healthy")
+			return
+		}
+	}()
+
 	// avoid duplicate init
 	if udid == "" && len(r.wdaClients) == 1 {
 		for _, v := range r.wdaClients {
@@ -199,7 +215,7 @@ func (r *HRPRunner) InitWDAClient(udid string) (*wdaClient, error) {
 
 	// cache wda client
 	r.wdaClients = make(map[string]*wdaClient)
-	client := &wdaClient{
+	client = &wdaClient{
 		Driver:     driver,
 		WindowSize: windowSize,
 	}
