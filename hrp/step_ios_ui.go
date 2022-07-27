@@ -355,20 +355,7 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		}
 		// click on name or xpath
 		if param, ok := action.Params.(string); ok {
-			var selector gwda.BySelector
-			if strings.HasPrefix(param, "/") {
-				// xpath
-				selector = gwda.BySelector{
-					XPath: param,
-				}
-			} else {
-				// name
-				selector = gwda.BySelector{
-					Name: param,
-				}
-			}
-
-			ele, err := w.Driver.FindElement(selector)
+			ele, err := w.findElement(param)
 			if err != nil {
 				return errors.Wrap(err, "failed to find element")
 			}
@@ -376,11 +363,25 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid click params: %v", action.Params)
 	case uiDoubleClick:
-		// TODO
-		return errActionNotImplemented
+		// double click on name or xpath
+		if param, ok := action.Params.(string); ok {
+			ele, err := w.findElement(param)
+			if err != nil {
+				return errors.Wrap(err, "failed to find element")
+			}
+			return ele.DoubleTap()
+		}
+		return fmt.Errorf("invalid click params: %v", action.Params)
 	case uiLongClick:
-		// TODO
-		return errActionNotImplemented
+		// long click 2s on name or xpath
+		if param, ok := action.Params.(string); ok {
+			ele, err := w.findElement(param)
+			if err != nil {
+				return errors.Wrap(err, "failed to find element")
+			}
+			return ele.TouchAndHold(2)
+		}
+		return fmt.Errorf("invalid click params: %v", action.Params)
 	case uiSwipe:
 		width := w.WindowSize.Width
 		height := w.WindowSize.Height
@@ -470,6 +471,23 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 		}
 	}
 	return
+}
+
+func (w *wdaClient) findElement(param string) (ele gwda.WebElement, err error) {
+	var selector gwda.BySelector
+	if strings.HasPrefix(param, "/") {
+		// xpath
+		selector = gwda.BySelector{
+			XPath: param,
+		}
+	} else {
+		// name
+		selector = gwda.BySelector{
+			Name: param,
+		}
+	}
+
+	return w.Driver.FindElement(selector)
 }
 
 func (w *wdaClient) assertName(name string, exists bool) bool {
