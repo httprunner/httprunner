@@ -47,6 +47,25 @@ func TestIOSSettingsAction(t *testing.T) {
 	}
 }
 
+func TestIOSSearchApp(t *testing.T) {
+	testCase := &TestCase{
+		Config: NewConfig("ios ui action on Search App 资源库"),
+		TestSteps: []IStep{
+			NewStep("进入 App 资源库 搜索框").
+				IOS().Home().SwipeLeft().SwipeLeft().Click("dewey-search-field").
+				Validate().
+				AssertNameExists("取消", "「取消」不存在"),
+			NewStep("搜索抖音").
+				IOS().Input("抖音\n"),
+		},
+	}
+
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestIOSDouyinAction(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on 抖音"),
