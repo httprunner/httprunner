@@ -1,5 +1,13 @@
 package hrp
 
+import (
+	"fmt"
+
+	"github.com/electricbubble/gwda"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+)
+
 type IOSAction struct {
 	MobileAction
 	UDID    string         `json:"udid,omitempty" yaml:"udid,omitempty"`
@@ -159,12 +167,172 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
+func (r *HRPRunner) InitWDAClient(udid string) (*wdaClient, error) {
+	// avoid duplicate init
+	if udid == "" && len(r.wdaClients) == 1 {
+		for _, v := range r.wdaClients {
+			return v, nil
+		}
+	}
+
+	targetDevice, err := getAttachedIOSDevice(udid)
+	if err != nil {
+		return nil, err
+	}
+
+	// avoid duplicate init
+	if client, ok := r.wdaClients[targetDevice.SerialNumber()]; ok {
+		return client, nil
+	}
+
+	// init WDA driver
+	driver, err := gwda.NewUSBDriver(nil, *targetDevice)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to init WDA driver")
+	}
+
+	// get device window size
+	windowSize, err := driver.WindowSize()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get windows size")
+	}
+
+	// cache wda client
+	r.wdaClients = make(map[string]*wdaClient)
+	client := &wdaClient{
+		Driver:     driver,
+		WindowSize: windowSize,
+	}
+	r.wdaClients[targetDevice.SerialNumber()] = client
+
+	return client, nil
+}
+
+func getAttachedIOSDevice(udid string) (*gwda.Device, error) {
+	// get all attached deivces
+	devices, err := gwda.DeviceList()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get attached ios devices list")
+	}
+	if len(devices) == 0 {
+		return nil, errors.New("no ios devices attached")
+	}
+
+	if udid == "" {
+		return &devices[0], nil
+	}
+
+	// find device by udid
+	for _, device := range devices {
+		if device.SerialNumber() == udid {
+			return &device, nil
+		}
+	}
+
+	return nil, fmt.Errorf("device %s is not attached", udid)
+}
+
 func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
 	stepResult = &StepResult{
 		Name:        step.Name,
-		StepType:    stepTypeAndroid,
+		StepType:    stepTypeIOS,
 		Success:     false,
 		ContentSize: 0,
 	}
+
+	// init wdaClient driver
+	wdaClient, err := r.hrpRunner.InitWDAClient(step.IOS.UDID)
+	if err != nil {
+		return
+	}
+
+	// prepare actions
+	var actions []MobileAction
+	if step.IOS.Actions == nil {
+		actions = []MobileAction{
+			{
+				Method: step.IOS.Method,
+				Params: step.IOS.Params,
+			},
+		}
+	} else {
+		actions = step.IOS.Actions
+	}
+
+	// run actions
+	for _, action := range actions {
+		if err := wdaClient.doAction(action); err != nil {
+			return stepResult, err
+		}
+	}
+
+	// do validation
+	// step.Validators
+
+	stepResult.Success = true
 	return stepResult, nil
+}
+
+var errActionNotImplemented = errors.New("UI action not implemented")
+
+type wdaClient struct {
+	Driver     gwda.WebDriver
+	WindowSize gwda.Size
+}
+
+func (w *wdaClient) doAction(action MobileAction) error {
+	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start iOS UI action")
+
+	switch action.Method {
+	case appInstall:
+		// TODO
+		return errActionNotImplemented
+	case appStart:
+		// TODO
+		return errActionNotImplemented
+	case uiClick:
+		// TODO
+		return errActionNotImplemented
+	case uiDoubleClick:
+		// TODO
+		return errActionNotImplemented
+	case uiLongClick:
+		// TODO
+		return errActionNotImplemented
+	case uiSwipe:
+		width := w.WindowSize.Width
+		height := w.WindowSize.Height
+
+		var fromX, fromY, toX, toY int
+		if direction, ok := action.Params.(string); ok {
+			switch direction {
+			case "up":
+				fromX, fromY, toX, toY = width/2, height*1/4, width/2, height*3/4
+			case "down":
+				fromX, fromY, toX, toY = width/2, height*3/4, width/2, height*1/4
+			case "left":
+				fromX, fromY, toX, toY = width*3/4, height/2, width*1/4, height/2
+			case "right":
+				fromX, fromY, toX, toY = width*1/4, height/2, width*3/4, height/2
+			}
+		} else if params, ok := action.Params.([]int); ok {
+			if len(params) != 4 {
+				return fmt.Errorf("invalid swipe params: %v", params)
+			}
+			fromX, fromY, toX, toY = params[0], params[1], params[2], params[3]
+		}
+		return w.Driver.Swipe(fromX, fromY, toX, toY)
+	case uiInput:
+		// TODO
+		return errActionNotImplemented
+	case appClick:
+		// TODO
+		return errActionNotImplemented
+	}
+	return nil
+}
+
+func (w *wdaClient) doValidation() error {
+	// TODO
+	return errActionNotImplemented
 }

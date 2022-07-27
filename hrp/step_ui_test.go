@@ -32,12 +32,12 @@ func TestIOSAction(t *testing.T) {
 		Config: NewConfig("ios ui action"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				IOS().UDID("xxx").Click("抖音").
+				IOS().Click("抖音").
 				Validate().
 				AssertTextExists("首页", "首页 tab 不存在").
 				AssertTextExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
-				IOS().UDID("xxx").SwipeUp().SwipeUp().SwipeDown(),
+				IOS().SwipeUp().SwipeUp().SwipeDown(),
 		},
 	}
 	tCase := testCase.ToTCase()
