@@ -307,8 +307,18 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		// TODO
 		return errActionNotImplemented
 	case uiClick:
-		// TODO
-		return errActionNotImplemented
+		// click on coordinate
+		if location, ok := action.Params.([]int); ok {
+			if len(location) != 2 {
+				return fmt.Errorf("invalid click location params: %v", location)
+			}
+			return w.Driver.Tap(location[0], location[1])
+		}
+		// click on xpath
+		if _, ok := action.Params.(string); ok {
+			return errActionNotImplemented
+		}
+		return fmt.Errorf("invalid click params: %v", action.Params)
 	case uiDoubleClick:
 		// TODO
 		return errActionNotImplemented
