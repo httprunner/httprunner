@@ -33,6 +33,14 @@ func (s *StepIOS) InstallApp(path string) *StepIOS {
 	return s
 }
 
+func (s *StepIOS) Home() *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: uiHome,
+		Params: nil,
+	})
+	return &StepIOS{step: s.step}
+}
+
 func (s *StepIOS) Click(params interface{}) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
 		Method: uiClick,
@@ -345,6 +353,8 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	case appStart:
 		// TODO
 		return errActionNotImplemented
+	case uiHome:
+		return w.Driver.Homescreen()
 	case uiClick:
 		// click on coordinate
 		if location, ok := action.Params.([]int); ok {

@@ -23,6 +23,7 @@ const (
 	cameraStop    MobileMethod = "camera_stop"
 	recordStart   MobileMethod = "record_start"
 	recordStop    MobileMethod = "record_stop"
+	uiHome        MobileMethod = "home"
 	uiClick       MobileMethod = "click"
 	uiDoubleClick MobileMethod = "double_click"
 	uiLongClick   MobileMethod = "long_click"
