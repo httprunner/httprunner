@@ -428,8 +428,11 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		}
 		return w.Driver.Swipe(fromX, fromY, toX, toY)
 	case uiInput:
-		// TODO
-		return errActionNotImplemented
+		// input text on current active element
+		// append \n to send text with enter
+		// send \b\b\b to delete 3 chars
+		param := fmt.Sprintf("%v", action.Params)
+		return w.Driver.SendKeys(param)
 	case appClick:
 		// TODO
 		return errActionNotImplemented
