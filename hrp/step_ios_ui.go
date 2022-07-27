@@ -315,8 +315,15 @@ func (w *wdaClient) doAction(action MobileAction) error {
 			return w.Driver.Tap(location[0], location[1])
 		}
 		// click on xpath
-		if _, ok := action.Params.(string); ok {
-			return errActionNotImplemented
+		if xpath, ok := action.Params.(string); ok {
+			selector := gwda.BySelector{
+				XPath: xpath,
+			}
+			ele, err := w.Driver.FindElement(selector)
+			if err != nil {
+				return errors.Wrap(err, "failed to find element")
+			}
+			return ele.Click()
 		}
 		return fmt.Errorf("invalid click params: %v", action.Params)
 	case uiDoubleClick:
@@ -346,6 +353,8 @@ func (w *wdaClient) doAction(action MobileAction) error {
 				return fmt.Errorf("invalid swipe params: %v", params)
 			}
 			fromX, fromY, toX, toY = params[0], params[1], params[2], params[3]
+		} else {
+			return fmt.Errorf("invalid swipe params: %v", action.Params)
 		}
 		return w.Driver.Swipe(fromX, fromY, toX, toY)
 	case uiInput:

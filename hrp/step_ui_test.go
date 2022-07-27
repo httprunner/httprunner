@@ -32,7 +32,7 @@ func TestIOSAction(t *testing.T) {
 		Config: NewConfig("ios ui action"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				IOS().Click("抖音").
+				IOS().Click("//*[@label='抖音']").
 				Validate().
 				AssertTextExists("首页", "首页 tab 不存在").
 				AssertTextExists("消息", "消息 tab 不存在"),
@@ -40,8 +40,6 @@ func TestIOSAction(t *testing.T) {
 				IOS().SwipeUp().SwipeUp().SwipeDown(),
 		},
 	}
-	tCase := testCase.ToTCase()
-	fmt.Println(tCase)
 
 	err := NewRunner(t).Run(testCase)
 	if err != nil {
