@@ -32,7 +32,7 @@ func TestIOSSettingsAction(t *testing.T) {
 		Config: NewConfig("ios ui action on Settings"),
 		TestSteps: []IStep{
 			NewStep("launch Settings").
-				IOS().Click("//*[@label='设置']").
+				IOS().Home().Click("//*[@label='设置']").
 				Validate().
 				AssertNameExists("飞行模式", "「飞行模式」不存在").
 				AssertNameNotExists("飞行模式2", "「飞行模式2」不存在"),
@@ -52,7 +52,7 @@ func TestIOSDouyinAction(t *testing.T) {
 		Config: NewConfig("ios ui action on 抖音"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				IOS().Click("//*[@label='抖音']").
+				IOS().Home().Click("//*[@label='抖音']").
 				Validate().
 				AssertNameExists("首页", "首页 tab 不存在").
 				AssertNameExists("消息", "消息 tab 不存在"),
