@@ -172,11 +172,11 @@ type StepAndroidValidation struct {
 	step *TStep
 }
 
-func (s *StepAndroidValidation) AssertTextExists(expectedText string, msg string) *StepAndroidValidation {
+func (s *StepAndroidValidation) AssertXpathExists(expectedXpath string, msg string) *StepAndroidValidation {
 	v := Validator{
-		Check:   "android_ui",
-		Assert:  "text_exists",
-		Expect:  expectedText,
+		Check:   "UI",
+		Assert:  "xpath_exists",
+		Expect:  expectedXpath,
 		Message: msg,
 	}
 	s.step.Validators = append(s.step.Validators, v)

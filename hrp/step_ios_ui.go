@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/electricbubble/gwda"
 	"github.com/pkg/errors"
@@ -140,11 +141,44 @@ type StepIOSValidation struct {
 	step *TStep
 }
 
-func (s *StepIOSValidation) AssertTextExists(expectedText string, msg string) *StepIOSValidation {
+func (s *StepIOSValidation) AssertNameExists(expectedName string, msg string) *StepIOSValidation {
 	v := Validator{
-		Check:   "ios_ui",
-		Assert:  "text_exists",
-		Expect:  expectedText,
+		Check:   "UI",
+		Assert:  "name_exists",
+		Expect:  expectedName,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg string) *StepIOSValidation {
+	v := Validator{
+		Check:   "UI",
+		Assert:  "name_not_exists",
+		Expect:  expectedName,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertXpathExists(expectedXpath string, msg string) *StepIOSValidation {
+	v := Validator{
+		Check:   "UI",
+		Assert:  "xpath_exists",
+		Expect:  expectedXpath,
+		Message: msg,
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertXpathNotExists(expectedXpath string, msg string) *StepIOSValidation {
+	v := Validator{
+		Check:   "UI",
+		Assert:  "xpath_not_exists",
+		Expect:  expectedXpath,
 		Message: msg,
 	}
 	s.step.Validators = append(s.step.Validators, v)
@@ -282,9 +316,14 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 		}
 	}
 
-	// do validation
-	// step.Validators
-
+	// validate
+	validateResults, err := wdaClient.doValidation(step.Validators)
+	if err != nil {
+		return
+	}
+	sessionData := newSessionData()
+	sessionData.Validators = validateResults
+	stepResult.Data = sessionData
 	stepResult.Success = true
 	return stepResult, nil
 }
@@ -314,11 +353,21 @@ func (w *wdaClient) doAction(action MobileAction) error {
 			}
 			return w.Driver.Tap(location[0], location[1])
 		}
-		// click on xpath
-		if xpath, ok := action.Params.(string); ok {
-			selector := gwda.BySelector{
-				XPath: xpath,
+		// click on name or xpath
+		if param, ok := action.Params.(string); ok {
+			var selector gwda.BySelector
+			if strings.HasPrefix(param, "/") {
+				// xpath
+				selector = gwda.BySelector{
+					XPath: param,
+				}
+			} else {
+				// name
+				selector = gwda.BySelector{
+					Name: param,
+				}
 			}
+
 			ele, err := w.Driver.FindElement(selector)
 			if err != nil {
 				return errors.Wrap(err, "failed to find element")
@@ -340,9 +389,9 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		if direction, ok := action.Params.(string); ok {
 			switch direction {
 			case "up":
-				fromX, fromY, toX, toY = width/2, height*1/4, width/2, height*3/4
-			case "down":
 				fromX, fromY, toX, toY = width/2, height*3/4, width/2, height*1/4
+			case "down":
+				fromX, fromY, toX, toY = width/2, height*1/4, width/2, height*3/4
 			case "left":
 				fromX, fromY, toX, toY = width*3/4, height/2, width*1/4, height/2
 			case "right":
@@ -367,7 +416,74 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	return nil
 }
 
-func (w *wdaClient) doValidation() error {
-	// TODO
-	return errActionNotImplemented
+func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*ValidationResult, err error) {
+	for _, iValidator := range iValidators {
+		validator, ok := iValidator.(Validator)
+		if !ok {
+			return nil, errors.New("validator type error")
+		}
+
+		validataResult := &ValidationResult{
+			Validator:   validator,
+			CheckResult: "fail",
+		}
+
+		// parse check value
+		if validator.Check != "UI" {
+			validataResult.CheckResult = "skip"
+			log.Warn().Interface("validator", validator).Msg("skip validator")
+			validateResults = append(validateResults, validataResult)
+			continue
+		}
+
+		expected, ok := validator.Expect.(string)
+		if !ok {
+			return nil, errors.New("validator expect should be string")
+		}
+
+		var result bool
+		switch validator.Assert {
+		case "xpath_exists":
+			result = w.assertXpath(expected, true)
+		case "xpath_not_exists":
+			result = w.assertXpath(expected, false)
+		case "name_exists":
+			result = w.assertName(expected, true)
+		case "name_not_exists":
+			result = w.assertName(expected, false)
+		}
+		if result {
+			log.Info().
+				Str("assert", validator.Assert).
+				Str("expect", expected).
+				Msg("validate UI success")
+			validataResult.CheckResult = "pass"
+			validateResults = append(validateResults, validataResult)
+		} else {
+			log.Error().
+				Str("assert", validator.Assert).
+				Str("expect", expected).
+				Str("msg", validator.Message).
+				Msg("validate UI failed")
+			validateResults = append(validateResults, validataResult)
+			err = errors.New("step validation failed")
+		}
+	}
+	return
+}
+
+func (w *wdaClient) assertName(name string, exists bool) bool {
+	selector := gwda.BySelector{
+		Name: name,
+	}
+	_, err := w.Driver.FindElement(selector)
+	return exists == (err == nil)
+}
+
+func (w *wdaClient) assertXpath(xpath string, exists bool) bool {
+	selector := gwda.BySelector{
+		XPath: xpath,
+	}
+	_, err := w.Driver.FindElement(selector)
+	return exists == (err == nil)
 }
