@@ -98,6 +98,7 @@ func DoPing(pingOptions *PingOptions, args []string) (err error) {
 		pingResult.DebugLog = err.Error()
 		return
 	}
+	fmt.Print(pingResult.DebugLog)
 	stats := pinger.Statistics() // get send/receive/rtt stats
 	pingResult.Ip = pinger.IPAddr().String()
 	pingResult.AvgCost = int(stats.AvgRtt / time.Millisecond)
