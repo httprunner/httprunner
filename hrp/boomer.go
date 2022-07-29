@@ -2,8 +2,6 @@ package hrp
 
 import (
 	"fmt"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,9 +11,11 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/net/context"
 )
 
 func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {
@@ -100,6 +100,15 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	// report execution timing event
 	defer sdk.SendEvent(event.StartTiming("execution"))
 
+	// quit all plugins
+	defer func() {
+		if len(pluginMap) > 0 {
+			for _, plugin := range pluginMap {
+				plugin.Quit()
+			}
+		}
+	}()
+
 	taskSlice := b.ConvertTestCasesToBoomerTasks(testcases...)
 
 	b.Boomer.Run(taskSlice...)
@@ -112,15 +121,6 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(1)
 	}
-
-	// quit all plugins
-	defer func() {
-		if len(pluginMap) > 0 {
-			for _, plugin := range pluginMap {
-				plugin.Quit()
-			}
-		}
-	}()
 
 	for _, testcase := range testCases {
 		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
