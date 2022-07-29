@@ -2,11 +2,19 @@ package hrp
 
 import (
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/electricbubble/gwda"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -386,6 +394,13 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 		}
 	}
 
+	// take snapshot
+	log.Info().Str("name", step.Name).Msg("take snapshot")
+	err = wdaClient.screenshot()
+	if err != nil {
+		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
+	}
+
 	// validate
 	validateResults, err := wdaClient.doValidation(step.Validators)
 	if err != nil {
@@ -403,6 +418,47 @@ var errActionNotImplemented = errors.New("UI action not implemented")
 type wdaClient struct {
 	Driver     gwda.WebDriver
 	WindowSize gwda.Size
+}
+
+func (w *wdaClient) screenshot() error {
+	raw, err := w.Driver.Screenshot()
+	if err != nil {
+		return errors.Wrap(err, "screenshot by WDA failed")
+	}
+
+	img, format, err := image.Decode(raw)
+	if err != nil {
+		return errors.Wrap(err, "decode screenshot image failed")
+	}
+
+	dir, _ := os.Getwd()
+	screenshotsDir := filepath.Join(dir, "screenshots")
+	if err := builtin.EnsureFolderExists(screenshotsDir); err != nil {
+		return errors.Wrap(err, "create screenshots failed")
+	}
+	path := filepath.Join(screenshotsDir, fmt.Sprintf("%d", time.Now().UnixMilli())+"."+format)
+	file, err := os.Create(path)
+	if err != nil {
+		return errors.Wrap(err, "create screenshot image file failed")
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	switch format {
+	case "png":
+		err = png.Encode(file, img)
+	case "jpeg":
+		err = jpeg.Encode(file, img, nil)
+	default:
+		return fmt.Errorf("unsupported image format: %s", format)
+	}
+	if err != nil {
+		return errors.Wrap(err, "encode screenshot image failed")
+	}
+
+	log.Info().Str("path", path).Msg("screenshot generated")
+	return nil
 }
 
 func (w *wdaClient) doAction(action MobileAction) error {
