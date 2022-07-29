@@ -66,6 +66,27 @@ func TestIOSSearchApp(t *testing.T) {
 	}
 }
 
+func TestIOSAppLaunch(t *testing.T) {
+	testCase := &TestCase{
+		Config: NewConfig("启动 & 关闭 App"),
+		TestSteps: []IStep{
+			NewStep("终止今日头条").
+				IOS().AppTerminate("com.ss.iphone.article.News"),
+			NewStep("启动今日头条").
+				IOS().AppLaunch("com.ss.iphone.article.News"),
+			NewStep("终止今日头条").
+				IOS().AppTerminate("com.ss.iphone.article.News"),
+			NewStep("启动今日头条").
+				IOS().AppLaunchUnattached("com.ss.iphone.article.News"),
+		},
+	}
+
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestIOSWeixin(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on 微信"),

@@ -136,14 +136,6 @@ func (s *StepAndroid) Input(text string) *StepAndroid {
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) StartAppByClick(name string) *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, MobileAction{
-		Method: appClick,
-		Params: name,
-	})
-	return &StepAndroid{step: s.step}
-}
-
 // Validate switches to step validation.
 func (s *StepAndroid) Validate() *StepAndroidValidation {
 	return &StepAndroidValidation{

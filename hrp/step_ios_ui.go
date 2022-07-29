@@ -33,6 +33,30 @@ func (s *StepIOS) InstallApp(path string) *StepIOS {
 	return s
 }
 
+func (s *StepIOS) AppLaunch(bundleId string) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: appLaunch,
+		Params: bundleId,
+	})
+	return s
+}
+
+func (s *StepIOS) AppLaunchUnattached(bundleId string) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: appLaunchUnattached,
+		Params: bundleId,
+	})
+	return s
+}
+
+func (s *StepIOS) AppTerminate(bundleId string) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: appTerminate,
+		Params: bundleId,
+	})
+	return s
+}
+
 func (s *StepIOS) Home() *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
 		Method: uiHome,
@@ -109,14 +133,6 @@ func (s *StepIOS) Input(text string) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
 		Method: uiInput,
 		Params: text,
-	})
-	return &StepIOS{step: s.step}
-}
-
-func (s *StepIOS) StartAppByClick(name string) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
-		Method: appClick,
-		Params: name,
 	})
 	return &StepIOS{step: s.step}
 }
@@ -377,9 +393,28 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	case appInstall:
 		// TODO
 		return errActionNotImplemented
-	case appStart:
-		// TODO
-		return errActionNotImplemented
+	case appLaunch:
+		if bundleId, ok := action.Params.(string); ok {
+			return w.Driver.AppLaunch(bundleId)
+		}
+		return fmt.Errorf("app_launch params should be bundleId(string), got %v", action.Params)
+	case appLaunchUnattached:
+		if bundleId, ok := action.Params.(string); ok {
+			return w.Driver.AppLaunchUnattached(bundleId)
+		}
+		return fmt.Errorf("app_launch_unattached params should be bundleId(string), got %v", action.Params)
+	case appTerminate:
+		if bundleId, ok := action.Params.(string); ok {
+			success, err := w.Driver.AppTerminate(bundleId)
+			if err != nil {
+				return errors.Wrap(err, "failed to terminate app")
+			}
+			if !success {
+				log.Warn().Str("bundleId", bundleId).Msg("app was not running")
+			}
+			return nil
+		}
+		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case uiHome:
 		return w.Driver.Homescreen()
 	case uiClick:
@@ -460,9 +495,6 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
 		return w.Driver.SendKeys(param)
-	case appClick:
-		// TODO
-		return errActionNotImplemented
 	}
 	return nil
 }
