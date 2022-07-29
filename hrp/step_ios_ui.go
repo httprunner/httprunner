@@ -121,6 +121,27 @@ func (s *StepIOS) StartAppByClick(name string) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
+// run last action with given times
+func (s *StepIOS) Times(n int) *StepIOS {
+	if n <= 0 {
+		log.Warn().Int("n", n).Msg("times should be positive, set to 1")
+		n = 1
+	}
+
+	actionsTotal := len(s.step.IOS.Actions)
+	if actionsTotal == 0 {
+		return s
+	}
+
+	// actionsTotal >=1 && n >= 1
+	lastAction := s.step.IOS.Actions[actionsTotal-1 : actionsTotal][0]
+	for i := 0; i < n-1; i++ {
+		// duplicate last action n-1 times
+		s.step.IOS.Actions = append(s.step.IOS.Actions, lastAction)
+	}
+	return &StepIOS{step: s.step}
+}
+
 // Validate switches to step validation.
 func (s *StepIOS) Validate() *StepIOSValidation {
 	return &StepIOSValidation{

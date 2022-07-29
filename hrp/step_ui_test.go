@@ -52,11 +52,34 @@ func TestIOSSearchApp(t *testing.T) {
 		Config: NewConfig("ios ui action on Search App 资源库"),
 		TestSteps: []IStep{
 			NewStep("进入 App 资源库 搜索框").
-				IOS().Home().SwipeLeft().SwipeLeft().Click("dewey-search-field").
+				IOS().Home().SwipeLeft().Times(2).Click("dewey-search-field").
 				Validate().
 				AssertNameExists("取消", "「取消」不存在"),
 			NewStep("搜索抖音").
 				IOS().Input("抖音\n"),
+		},
+	}
+
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestIOSWeixin(t *testing.T) {
+	testCase := &TestCase{
+		Config: NewConfig("ios ui action on 微信"),
+		TestSteps: []IStep{
+			NewStep("启动微信").
+				IOS().Home().Click("微信").
+				Validate().
+				AssertNameExists("通讯录", "微信启动失败，「通讯录」不存在"),
+			NewStep("进入直播页").
+				IOS().Click("发现").Click([]float64{0.5, 0.3}).
+				Validate().
+				AssertNameExists("直播", "「直播」不存在"),
+			NewStep("向上滑动 5 次").
+				IOS().SwipeUp().Times(5),
 		},
 	}
 
@@ -76,7 +99,7 @@ func TestIOSDouyinAction(t *testing.T) {
 				AssertNameExists("首页", "首页 tab 不存在").
 				AssertNameExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
-				IOS().SwipeUp().SwipeUp().SwipeDown(),
+				IOS().SwipeUp().Times(3).SwipeDown(),
 		},
 	}
 
