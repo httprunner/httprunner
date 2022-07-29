@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	pingOptions dial.PingOptions
-	dnsOptions  dial.DnsOptions
+	pingOptions       dial.PingOptions
+	dnsOptions        dial.DnsOptions
+	traceRouteOptions dial.TraceRouteOptions
 )
 
 var pingCmd = &cobra.Command{
@@ -44,16 +45,31 @@ var dnsCmd = &cobra.Command{
 	},
 }
 
+var traceRouteCmd = &cobra.Command{
+	Use:   "traceroute $url",
+	Short: "run integrated traceroute command",
+	Args:  cobra.ExactArgs(1),
+	PreRun: func(cmd *cobra.Command, args []string) {
+		setLogLevel(logLevel)
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return dial.DoTraceRoute(&traceRouteOptions, args)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(pingCmd)
 	pingCmd.Flags().IntVarP(&pingOptions.Count, "count", "c", 10, "Stop after sending (and receiving) N packets")
 	pingCmd.Flags().DurationVarP(&pingOptions.Timeout, "timeout", "t", 20*time.Second, "Ping exits after N seconds")
 	pingCmd.Flags().DurationVarP(&pingOptions.Interval, "interval", "i", 1*time.Second, "Wait N seconds between sending each packet")
-	pingCmd.Flags().BoolVar(&pingOptions.SaveTests, "save-tests", false, "Save ping results json")
+	pingCmd.Flags().BoolVar(&pingOptions.SaveTests, "save-tests", false, "Save ping result as json")
 
 	rootCmd.AddCommand(dnsCmd)
 	dnsCmd.Flags().IntVar(&dnsOptions.DnsSourceType, "dns-source", 0, "DNS source type\n0: local DNS\n1: http DNS\n2: google DNS")
 	dnsCmd.Flags().IntVar(&dnsOptions.DnsRecordType, "dns-record", 1, "DNS record type\n1: A\n28: AAAA\n5: CNAME")
 	dnsCmd.Flags().StringVar(&dnsOptions.DnsServer, "dns-server", "", "DNS server, only available for local DNS source")
-	dnsCmd.Flags().BoolVar(&dnsOptions.SaveTests, "save-tests", false, "Save DNS resolution results json")
+	dnsCmd.Flags().BoolVar(&dnsOptions.SaveTests, "save-tests", false, "Save DNS resolution result as json")
+
+	rootCmd.AddCommand(traceRouteCmd)
+	traceRouteCmd.Flags().BoolVar(&traceRouteOptions.SaveTests, "save-tests", false, "Save traceroute result as json")
 }
