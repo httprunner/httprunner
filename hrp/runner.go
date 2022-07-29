@@ -285,15 +285,17 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 	// load plugin info to testcase config
 	if plugin != nil {
 		pluginPath, _ := locatePlugin(testcase.Config.Path)
-		pluginContent, err := builtin.ReadFile(pluginPath)
-		if err != nil {
-			return nil, err
-		}
-		tp := strings.Split(plugin.Path(), ".")
-		runner.parsedConfig.PluginSetting = &PluginConfig{
-			Path:    pluginPath,
-			Content: pluginContent,
-			Type:    tp[len(tp)-1],
+		if runner.parsedConfig.PluginSetting == nil {
+			pluginContent, err := builtin.ReadFile(pluginPath)
+			if err != nil {
+				return nil, err
+			}
+			tp := strings.Split(plugin.Path(), ".")
+			runner.parsedConfig.PluginSetting = &PluginConfig{
+				Path:    pluginPath,
+				Content: pluginContent,
+				Type:    tp[len(tp)-1],
+			}
 		}
 	}
 
