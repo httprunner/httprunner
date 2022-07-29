@@ -248,6 +248,12 @@ func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
+	// set snapshotMaxDepth to avoid dump too many levels of hierarchy
+	settings, err := driver.SetAppiumSettings(map[string]interface{}{"snapshotMaxDepth": 10})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to set snapshotMaxDepth in appium WDA settings")
+	}
+	log.Info().Interface("appiumWDASettings", settings).Msg("set snapshotMaxDepth in appium WDA settings")
 
 	// get device window size
 	windowSize, err := driver.WindowSize()
