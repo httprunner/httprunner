@@ -9,6 +9,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	// Changes the value of maximum depth for traversing elements source tree.
+	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
+	// but it might restrict the depth of source tree.
+	// A part of elements source tree might be lost if the value was too small. Defaults to 50
+	snapshotMaxDepth = 10
+	// Allows to customize accept/dismiss alert button selector.
+	// It helps you to handle an arbitrary element as accept button in accept alert command.
+	// The selector should be a valid class chain expression, where the search root is the alert element itself.
+	// The default button location algorithm is used if the provided selector is wrong or does not match any element.
+	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] ‘accept’`]
+	acceptAlertButtonSelector  = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','稍后再说'}`]"
+	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
+)
+
 type IOSAction struct {
 	MobileAction
 	UDID    string         `json:"udid,omitempty" yaml:"udid,omitempty"`
@@ -281,16 +296,20 @@ func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
 	}
 
 	// init WDA driver
-	driver, err := gwda.NewUSBDriver(nil, *targetDevice)
+	capabilities := gwda.NewCapabilities()
+	capabilities.WithDefaultAlertAction(gwda.AlertActionAccept)
+	driver, err := gwda.NewUSBDriver(capabilities, *targetDevice)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	// set snapshotMaxDepth to avoid dump too many levels of hierarchy
-	settings, err := driver.SetAppiumSettings(map[string]interface{}{"snapshotMaxDepth": 10})
+	settings, err := driver.SetAppiumSettings(map[string]interface{}{
+		"snapshotMaxDepth":          snapshotMaxDepth,
+		"acceptAlertButtonSelector": acceptAlertButtonSelector,
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to set snapshotMaxDepth in appium WDA settings")
+		return nil, errors.Wrap(err, "failed to set appium WDA settings")
 	}
-	log.Info().Interface("appiumWDASettings", settings).Msg("set snapshotMaxDepth in appium WDA settings")
+	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
 	// get device window size
 	windowSize, err := driver.WindowSize()
