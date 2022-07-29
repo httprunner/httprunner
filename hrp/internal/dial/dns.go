@@ -214,7 +214,7 @@ func DoDns(dnsOptions *DnsOptions, args []string) (err error) {
 			dnsResultPath := filepath.Join(dir, dnsResultName)
 			err = builtin.Dump2JSON(dnsResult, dnsResultPath)
 			if err != nil {
-				log.Error().Err(err).Msg("save ping result failed")
+				log.Error().Err(err).Msg("save dns resolution result failed")
 			}
 		}
 	}()
