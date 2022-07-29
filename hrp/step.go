@@ -17,19 +17,23 @@ const (
 type MobileMethod string
 
 const (
-	appInstall    MobileMethod = "install"
-	appStart      MobileMethod = "app_start"
-	cameraStart   MobileMethod = "camera_start"
-	cameraStop    MobileMethod = "camera_stop"
-	recordStart   MobileMethod = "record_start"
-	recordStop    MobileMethod = "record_stop"
-	uiHome        MobileMethod = "home"
-	uiClick       MobileMethod = "click"
-	uiDoubleClick MobileMethod = "double_click"
-	uiLongClick   MobileMethod = "long_click"
-	uiSwipe       MobileMethod = "swipe"
-	uiInput       MobileMethod = "input"
-	appClick      MobileMethod = "app_click"
+	appInstall          MobileMethod = "install"
+	appUninstall        MobileMethod = "uninstall"
+	appStart            MobileMethod = "app_start"
+	appLaunch           MobileMethod = "app_launch"            // 等待 app 打开并堵塞到 app 首屏加载完成，可以传入 app 的启动参数、环境变量
+	appLaunchUnattached MobileMethod = "app_launch_unattached" // 只负责通知打开 app，不堵塞等待，不可传入启动参数
+	appTerminate        MobileMethod = "app_terminate"
+	appStop             MobileMethod = "app_stop"
+	cameraStart         MobileMethod = "camera_start"
+	cameraStop          MobileMethod = "camera_stop"
+	recordStart         MobileMethod = "record_start"
+	recordStop          MobileMethod = "record_stop"
+	uiHome              MobileMethod = "home"
+	uiClick             MobileMethod = "click"
+	uiDoubleClick       MobileMethod = "double_click"
+	uiLongClick         MobileMethod = "long_click"
+	uiSwipe             MobileMethod = "swipe"
+	uiInput             MobileMethod = "input"
 )
 
 type MobileAction struct {
