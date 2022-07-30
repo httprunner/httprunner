@@ -57,7 +57,6 @@ type HRPBoomer struct {
 }
 
 func (b *HRPBoomer) InitBoomer() {
-	// init output
 	if !b.GetProfile().DisableConsoleOutput {
 		b.AddOutput(boomer.NewConsoleOutput())
 	}
@@ -164,7 +163,7 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 	return testCasesBytes
 }
 
-func (b *HRPBoomer) BytesToTestCases(testCasesBytes []byte) []*TCase {
+func (b *HRPBoomer) BytesToTCases(testCasesBytes []byte) []*TCase {
 	var testcase []*TCase
 	err := json.Unmarshal(testCasesBytes, &testcase)
 	if err != nil {
@@ -177,8 +176,7 @@ func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
 }
 
-func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
-	var testcases []ITestCase
+func (b *HRPBoomer) parseTCases(testCases []*TCase) (testcases []ITestCase) {
 	for _, tc := range testCases {
 		tesecase, err := tc.toTestCase()
 		if err != nil {
@@ -209,7 +207,11 @@ func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
 
 		testcases = append(testcases, tesecase)
 	}
+	return testcases
+}
 
+func (b *HRPBoomer) initWorker(profile *boomer.Profile) {
+	// if no IP address is specified, the default IP address is that of the master
 	if profile.PrometheusPushgatewayURL != "" {
 		urlSlice := strings.Split(profile.PrometheusPushgatewayURL, ":")
 		if len(urlSlice) != 2 {
@@ -224,16 +226,13 @@ func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
 
 	b.SetProfile(profile)
 	b.InitBoomer()
-	log.Info().Interface("testcases", testcases).Interface("profile", profile).Msg("run tasks successful")
-	b.Run(testcases...)
 }
 
-func (b *HRPBoomer) rebalanceBoomer(profile *boomer.Profile) {
-	b.SetProfile(profile)
-	b.SetSpawnCount(b.GetProfile().SpawnCount)
-	b.SetSpawnRate(b.GetProfile().SpawnRate)
+func (b *HRPBoomer) rebalanceRunner(profile *boomer.Profile) {
+	b.SetSpawnCount(profile.SpawnCount)
+	b.SetSpawnRate(profile.SpawnRate)
 	b.GetRebalanceChan() <- true
-	log.Info().Interface("profile", profile).Msg("rebalance tasks successful")
+	log.Info().Interface("profile", profile).Msg("rebalance tasks successfully")
 }
 
 func (b *HRPBoomer) PollTasks(ctx context.Context) {
@@ -245,11 +244,17 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 				continue
 			}
 			//Todo: 过滤掉已经传输过的task
-			if task.TestCases != nil {
-				testCases := b.BytesToTestCases(task.TestCases)
-				go b.runTestCases(testCases, task.Profile)
+			if task.TestCasesBytes != nil {
+				// init boomer with profile
+				b.initWorker(task.Profile)
+				// get testcases
+				testcases := b.parseTCases(b.BytesToTCases(task.TestCasesBytes))
+				log.Info().Interface("testcases", testcases).Interface("profile", b.GetProfile()).Msg("starting to run tasks")
+				// run testcases
+				go b.Run(testcases...)
 			} else {
-				go b.rebalanceBoomer(task.Profile)
+				// rebalance runner with profile
+				go b.rebalanceRunner(task.Profile)
 			}
 
 		case <-b.Boomer.GetCloseChan():
@@ -261,6 +266,15 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 }
 
 func (b *HRPBoomer) PollTestCases(ctx context.Context) {
+	// quit all plugins
+	defer func() {
+		if len(pluginMap) > 0 {
+			for _, plugin := range pluginMap {
+				plugin.Quit()
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-b.Boomer.ParseTestCasesChan():
@@ -270,7 +284,7 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 				tcs = append(tcs, &tcp)
 			}
 			b.TestCaseBytesChan() <- b.TestCasesToBytes(tcs...)
-			log.Info().Msg("put testcase successful")
+			log.Info().Msg("put testcase successfully")
 		case <-b.Boomer.GetCloseChan():
 			return
 		case <-ctx.Done():
