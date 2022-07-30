@@ -160,7 +160,7 @@ func (s *StepIOS) Input(text string) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
-// run last action with given times
+// Times specify running times for run last action
 func (s *StepIOS) Times(n int) *StepIOS {
 	if n <= 0 {
 		log.Warn().Int("n", n).Msg("times should be positive, set to 1")
@@ -178,6 +178,15 @@ func (s *StepIOS) Times(n int) *StepIOS {
 		// duplicate last action n-1 times
 		s.step.IOS.Actions = append(s.step.IOS.Actions, lastAction)
 	}
+	return &StepIOS{step: s.step}
+}
+
+// Sleep specify sleep seconds after last action
+func (s *StepIOS) Sleep(n int) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: ctlSleep,
+		Params: n,
+	})
 	return &StepIOS{step: s.step}
 }
 
@@ -570,6 +579,12 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
 		return w.Driver.SendKeys(param)
+	case ctlSleep:
+		if param, ok := action.Params.(int); ok {
+			time.Sleep(time.Duration(param) * time.Second)
+			return nil
+		}
+		return fmt.Errorf("invalid sleep params: %v", action.Params)
 	}
 	return nil
 }
