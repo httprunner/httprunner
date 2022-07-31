@@ -34,6 +34,7 @@ const (
 	uiLongClick         MobileMethod = "long_click"
 	uiSwipe             MobileMethod = "swipe"
 	uiInput             MobileMethod = "input"
+	ctlScreenShot       MobileMethod = "screenshot"
 	ctlSleep            MobileMethod = "sleep"
 )
 
