@@ -24,18 +24,20 @@ const (
 	appLaunchUnattached MobileMethod = "app_launch_unattached" // 只负责通知打开 app，不堵塞等待，不可传入启动参数
 	appTerminate        MobileMethod = "app_terminate"
 	appStop             MobileMethod = "app_stop"
-	cameraStart         MobileMethod = "camera_start"
-	cameraStop          MobileMethod = "camera_stop"
-	recordStart         MobileMethod = "record_start"
-	recordStop          MobileMethod = "record_stop"
-	uiHome              MobileMethod = "home"
-	uiClick             MobileMethod = "click"
-	uiDoubleClick       MobileMethod = "double_click"
-	uiLongClick         MobileMethod = "long_click"
-	uiSwipe             MobileMethod = "swipe"
-	uiInput             MobileMethod = "input"
 	ctlScreenShot       MobileMethod = "screenshot"
 	ctlSleep            MobileMethod = "sleep"
+	ctlStartCamera      MobileMethod = "camera_start" // alias for app_launch camera
+	ctlStopCamera       MobileMethod = "camera_stop"  // alias for app_terminate camera
+	recordStart         MobileMethod = "record_start"
+	recordStop          MobileMethod = "record_stop"
+
+	// UI handling
+	uiHome        MobileMethod = "home"
+	uiClick       MobileMethod = "click"
+	uiDoubleClick MobileMethod = "double_click"
+	uiLongClick   MobileMethod = "long_click"
+	uiSwipe       MobileMethod = "swipe"
+	uiInput       MobileMethod = "input"
 )
 
 type MobileAction struct {

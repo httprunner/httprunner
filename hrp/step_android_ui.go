@@ -34,7 +34,7 @@ func (s *StepAndroid) StartAppByIntent(activity string) *StepAndroid {
 
 func (s *StepAndroid) StartCamera() *StepAndroid {
 	s.step.Android.Actions = append(s.step.Android.Actions, MobileAction{
-		Method: cameraStart,
+		Method: ctlStartCamera,
 		Params: nil,
 	})
 	return &StepAndroid{step: s.step}
@@ -42,7 +42,7 @@ func (s *StepAndroid) StartCamera() *StepAndroid {
 
 func (s *StepAndroid) StopCamera() *StepAndroid {
 	s.step.Android.Actions = append(s.step.Android.Actions, MobileAction{
-		Method: cameraStop,
+		Method: ctlStopCamera,
 		Params: nil,
 	})
 	return &StepAndroid{step: s.step}
