@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/electricbubble/gwda v0.3.0
+	github.com/electricbubble/gwda v0.3.1-0.20220731124432-07f451783588
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-errors/errors v1.0.1
