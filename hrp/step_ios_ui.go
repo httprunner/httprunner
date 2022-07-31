@@ -190,6 +190,14 @@ func (s *StepIOS) Sleep(n int) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
+func (s *StepIOS) ScreenShot() *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: ctlScreenShot,
+		Params: nil,
+	})
+	return &StepIOS{step: s.step}
+}
+
 // Validate switches to step validation.
 func (s *StepIOS) Validate() *StepIOSValidation {
 	return &StepIOSValidation{
@@ -404,8 +412,8 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 
 	// take snapshot
-	log.Info().Str("name", step.Name).Msg("take snapshot")
-	err = wdaClient.screenshot()
+	log.Info().Str("name", step.Name).Msg("take snapshot before validation")
+	err = wdaClient.screenShot()
 	if err != nil {
 		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
 	}
@@ -429,7 +437,7 @@ type wdaClient struct {
 	WindowSize gwda.Size
 }
 
-func (w *wdaClient) screenshot() error {
+func (w *wdaClient) screenShot() error {
 	raw, err := w.Driver.Screenshot()
 	if err != nil {
 		return errors.Wrap(err, "screenshot by WDA failed")
@@ -585,6 +593,10 @@ func (w *wdaClient) doAction(action MobileAction) error {
 			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v", action.Params)
+	case ctlScreenShot:
+		// take snapshot
+		log.Info().Msg("take snapshot for current screen")
+		w.screenShot()
 	}
 	return nil
 }

@@ -87,20 +87,27 @@ func TestIOSAppLaunch(t *testing.T) {
 	}
 }
 
-func TestIOSWeixin(t *testing.T) {
+func TestIOSWeixinLive(t *testing.T) {
 	testCase := &TestCase{
-		Config: NewConfig("ios ui action on 微信"),
+		Config: NewConfig("ios ui action on 微信直播"),
 		TestSteps: []IStep{
 			NewStep("启动微信").
-				IOS().Home().Click("微信").
+				IOS().
+				Home().
+				AppTerminate("com.tencent.xin"). // 关闭已运行的微信，确保启动微信后在「微信」首页
+				Click("微信").
 				Validate().
 				AssertNameExists("通讯录", "微信启动失败，「通讯录」不存在"),
 			NewStep("进入直播页").
-				IOS().Click("发现").Click([]float64{0.5, 0.3}).
+				IOS().
+				Click("发现").Sleep(5).       // 进入「发现页」；等待 5 秒确保加载完成
+				Click([]float64{0.5, 0.3}). // 基于坐标位置点击「直播」；TODO：通过 OCR 识别「直播」
 				Validate().
 				AssertNameExists("直播", "「直播」不存在"),
 			NewStep("向上滑动 5 次").
-				IOS().SwipeUp().Times(5),
+				IOS().
+				SwipeUp().Times(3).ScreenShot(). // 上划 3 次，截图保存
+				SwipeUp().Times(2).ScreenShot(), // 再上划 2 次，截图保存
 		},
 	}
 
