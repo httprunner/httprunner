@@ -198,6 +198,22 @@ func (s *StepIOS) ScreenShot() *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
+func (s *StepIOS) StartCamera() *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: ctlStartCamera,
+		Params: nil,
+	})
+	return &StepIOS{step: s.step}
+}
+
+func (s *StepIOS) StopCamera() *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: ctlStopCamera,
+		Params: nil,
+	})
+	return &StepIOS{step: s.step}
+}
+
 // Validate switches to step validation.
 func (s *StepIOS) Validate() *StepIOSValidation {
 	return &StepIOSValidation{
@@ -612,7 +628,20 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	case ctlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
-		w.screenShot()
+		return w.screenShot()
+	case ctlStartCamera:
+		// start camera, alias for app_launch com.apple.camera
+		return w.Driver.AppLaunch("com.apple.camera")
+	case ctlStopCamera:
+		// stop camera, alias for app_terminate com.apple.camera
+		success, err := w.Driver.AppTerminate("com.apple.camera")
+		if err != nil {
+			return errors.Wrap(err, "failed to terminate camera")
+		}
+		if !success {
+			log.Warn().Msg("camera was not running")
+		}
+		return nil
 	}
 	return nil
 }

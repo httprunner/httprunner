@@ -117,6 +117,56 @@ func TestIOSWeixinLive(t *testing.T) {
 	}
 }
 
+func TestIOSCameraPhotoCapture(t *testing.T) {
+	testCase := &TestCase{
+		Config: NewConfig("ios camera photo capture"),
+		TestSteps: []IStep{
+			NewStep("launch camera").
+				IOS().Home().
+				StopCamera().
+				StartCamera().
+				Validate().
+				AssertNameExists("PhotoCapture", "拍照按钮不存在"),
+			NewStep("start recording").
+				IOS().Click("PhotoCapture"),
+		},
+	}
+
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestIOSCameraVideoCapture(t *testing.T) {
+	testCase := &TestCase{
+		Config: NewConfig("ios camera video capture"),
+		TestSteps: []IStep{
+			NewStep("launch camera").
+				IOS().Home().
+				StopCamera().
+				StartCamera().
+				Validate().
+				AssertNameExists("PhotoCapture", "录像按钮不存在"),
+			NewStep("switch to video capture").
+				IOS().
+				SwipeRight().
+				Validate().
+				AssertNameExists("VideoCapture", "拍摄按钮不存在"),
+			NewStep("start recording").
+				IOS().
+				Click("VideoCapture"). // 开始录像
+				Sleep(5).
+				Click("VideoCapture"), // 停止录像
+		},
+	}
+
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestIOSDouyinAction(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on 抖音"),
