@@ -320,6 +320,15 @@ func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
 		return client, nil
 	}
 
+	// switch to iOS springboard before init WDA session
+	// aviod getting stuck when some super app is activate such as douyin or wexin
+	log.Info().Msg("switch to iOS springboard")
+	bundleID := "com.apple.springboard"
+	_, err = targetDevice.GIDevice().AppLaunch(bundleID)
+	if err != nil {
+		return nil, errors.Wrap(err, "launch springboard failed")
+	}
+
 	// init WDA driver
 	capabilities := gwda.NewCapabilities()
 	capabilities.WithDefaultAlertAction(gwda.AlertActionAccept)
@@ -345,6 +354,7 @@ func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
 	// cache wda client
 	r.wdaClients = make(map[string]*wdaClient)
 	client = &wdaClient{
+		Device:     targetDevice,
 		Driver:     driver,
 		WindowSize: windowSize,
 	}
@@ -433,12 +443,18 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 type wdaClient struct {
+	Device     *gwda.Device
 	Driver     gwda.WebDriver
 	WindowSize gwda.Size
 }
 
+// screenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 func (w *wdaClient) screenShot() error {
-	raw, err := w.Driver.Screenshot()
+	// gidevice 和 gwda 均可实现截图功能，但 gidevice 的截图性能更优
+	// gwda 通过 wda 请求获取（分辨率、响应时间均由 wda 决定）
+	// gidevice 直接通过 Apple 允许的底层通信获取
+	// raw, err := w.Driver.Screenshot()
+	raw, err := w.Device.GIDevice().Screenshot()
 	if err != nil {
 		return errors.Wrap(err, "screenshot by WDA failed")
 	}
