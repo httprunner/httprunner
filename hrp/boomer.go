@@ -178,30 +178,45 @@ func (b *HRPBoomer) Quit() {
 
 func (b *HRPBoomer) parseTCases(testCases []*TCase) (testcases []ITestCase) {
 	for _, tc := range testCases {
-		tesecase, err := tc.toTestCase()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to load testcases")
-			return
-		}
 		// create temp dir to save testcase
 		tempDir, err := ioutil.TempDir("", "hrp_testcases")
 		if err != nil {
-			log.Error().Err(err).Msg("failed to save testcases")
+			log.Error().Err(err).Msg("failed to create hrp testcases directory")
 			return
 		}
 
-		tesecase.Config.Path = filepath.Join(tempDir, "test-case.json")
-		if tesecase.Config.PluginSetting != nil {
-			tesecase.Config.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", tesecase.Config.PluginSetting.Type))
-			err = builtin.Bytes2File(tesecase.Config.PluginSetting.Content, tesecase.Config.PluginSetting.Path)
+		if tc.Config.PluginSetting != nil {
+			tc.Config.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", tc.Config.PluginSetting.Type))
+			err = builtin.Bytes2File(tc.Config.PluginSetting.Content, tc.Config.PluginSetting.Path)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to save plugin file")
 				return
 			}
+			tc.Config.PluginSetting.Content = nil // remove the content in testcase
 		}
-		err = builtin.Dump2JSON(tesecase, tesecase.Config.Path)
+
+		if tc.Config.Environs != nil {
+			envContent := ""
+			for k, v := range tc.Config.Environs {
+				envContent += fmt.Sprintf("%s=%s\n", k, v)
+			}
+			err = os.WriteFile(filepath.Join(tempDir, ".env"), []byte(envContent), 0o644)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to dump environs")
+				return
+			}
+		}
+
+		tc.Config.Path = filepath.Join(tempDir, "test-case.json")
+		err = builtin.Dump2JSON(tc, tc.Config.Path)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to dump testcases")
+			return
+		}
+
+		tesecase, err := tc.toTestCase()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to load testcases")
 			return
 		}
 
