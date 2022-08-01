@@ -101,11 +101,12 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 
 	// quit all plugins
 	defer func() {
-		if len(pluginMap) > 0 {
-			for _, plugin := range pluginMap {
+		pluginMap.Range(func(key, value interface{}) bool {
+			if plugin, ok := value.(funplugin.IPlugin); ok {
 				plugin.Quit()
 			}
-		}
+			return true
+		})
 	}()
 
 	taskSlice := b.ConvertTestCasesToBoomerTasks(testcases...)
@@ -283,11 +284,12 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 	// quit all plugins
 	defer func() {
-		if len(pluginMap) > 0 {
-			for _, plugin := range pluginMap {
+		pluginMap.Range(func(key, value interface{}) bool {
+			if plugin, ok := value.(funplugin.IPlugin); ok {
 				plugin.Quit()
 			}
-		}
+			return true
+		})
 	}()
 
 	for {
