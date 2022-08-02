@@ -71,5 +71,7 @@ func init() {
 	dnsCmd.Flags().BoolVar(&dnsOptions.SaveTests, "save-tests", false, "Save DNS resolution result as json")
 
 	rootCmd.AddCommand(traceRouteCmd)
+	traceRouteCmd.Flags().IntVarP(&traceRouteOptions.MaxTTL, "max-hops", "m", 30, "Set the max number of hops (max TTL to be reached)")
+	traceRouteCmd.Flags().IntVarP(&traceRouteOptions.Queries, "queries", "q", 1, "Set the number of probes per each hop")
 	traceRouteCmd.Flags().BoolVar(&traceRouteOptions.SaveTests, "save-tests", false, "Save traceroute result as json")
 }
