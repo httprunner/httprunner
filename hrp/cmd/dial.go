@@ -61,6 +61,19 @@ var traceRouteCmd = &cobra.Command{
 	},
 }
 
+var curlCmd = &cobra.Command{
+	Use:                "curl $url",
+	Short:              "run integrated curl command",
+	Args:               cobra.MinimumNArgs(1),
+	DisableFlagParsing: true,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		setLogLevel(logLevel)
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return dial.DoCurl(args)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(pingCmd)
 	pingCmd.Flags().IntVarP(&pingOptions.Count, "count", "c", 10, "Stop after sending (and receiving) N packets")
@@ -78,4 +91,6 @@ func init() {
 	traceRouteCmd.Flags().IntVarP(&traceRouteOptions.MaxTTL, "max-hops", "m", 30, "Set the max number of hops (max TTL to be reached)")
 	traceRouteCmd.Flags().IntVarP(&traceRouteOptions.Queries, "queries", "q", 1, "Set the number of probes per each hop")
 	traceRouteCmd.Flags().BoolVar(&traceRouteOptions.SaveTests, "save-tests", false, "Save traceroute result as json")
+
+	rootCmd.AddCommand(curlCmd)
 }
