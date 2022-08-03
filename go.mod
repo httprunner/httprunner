@@ -7,7 +7,6 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
-	github.com/gizak/termui v2.3.0+incompatible // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/go-openapi/spec v0.20.6
 	github.com/go-ping/ping v1.1.0
@@ -19,12 +18,8 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/maja42/goval v1.2.1
-	github.com/maruel/panicparse v1.6.2 // indirect
-	github.com/mehrdadrad/mylg v0.2.6
 	github.com/miekg/dns v1.0.14
-	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
@@ -38,7 +33,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
-	gopkg.in/h2non/gock.v0 v0.1.6 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 

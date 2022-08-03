@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"runtime"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -53,6 +54,9 @@ var traceRouteCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if runtime.GOOS == "windows" {
+			log.Info().Msg("using default probe number (3) on Windows")
+		}
 		return dial.DoTraceRoute(&traceRouteOptions, args)
 	},
 }
