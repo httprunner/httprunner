@@ -380,10 +380,15 @@ func (r *runner) reset() {
 }
 
 func (r *runner) runTimeCheck(runTime int64) {
+	if runTime <= 0 {
+		return
+	}
+
 	for range time.Tick(time.Second * 3) {
 		nowTime := time.Now().Unix()
 		if nowTime > runTime {
 			r.stop()
+			return
 		}
 	}
 }
@@ -646,10 +651,7 @@ func (r *localRunner) start() {
 	// output setup
 	r.outputOnStart()
 
-	runTime := r.getRunTime()
-	if runTime != 0 {
-		go r.runTimeCheck(runTime)
-	}
+	go r.runTimeCheck(r.getRunTime())
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, nil)
 
@@ -941,10 +943,7 @@ func (r *workerRunner) start() {
 
 	r.outputOnStart()
 
-	runTime := r.getRunTime()
-	if runTime != 0 {
-		go r.runTimeCheck(runTime)
-	}
+	go r.runTimeCheck(r.getRunTime())
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, r.spawnComplete)
 
