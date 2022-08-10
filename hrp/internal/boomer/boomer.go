@@ -253,14 +253,14 @@ func (b *Boomer) SetSpawnRate(spawnRate float64) {
 }
 
 // SetRunTime sets run time
-func (b *Boomer) SetRunTime(spawnRate int64) {
+func (b *Boomer) SetRunTime(runTime int64) {
 	switch b.mode {
 	case DistributedMasterMode:
-		b.masterRunner.setRunTime(spawnRate)
+		b.masterRunner.setRunTime(runTime)
 	case DistributedWorkerMode:
-		b.workerRunner.setRunTime(spawnRate)
+		b.workerRunner.setRunTime(runTime)
 	default:
-		b.localRunner.setRunTime(spawnRate)
+		b.localRunner.setRunTime(runTime)
 	}
 }
 
