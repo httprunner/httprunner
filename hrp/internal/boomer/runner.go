@@ -195,6 +195,7 @@ type runner struct {
 
 	spawnCount int64 // target clients to spawn
 	spawnRate  float64
+	runTime    int64
 
 	controller *Controller
 	loop       *Loop // specify loop count for testcase, count = loopCount * spawnCount
@@ -236,6 +237,20 @@ func (r *runner) getSpawnRate() float64 {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	return r.spawnRate
+}
+
+func (r *runner) setRunTime(runTime int64) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if runTime > 0 {
+		r.runTime = time.Now().Unix() + runTime
+	}
+}
+
+func (r *runner) getRunTime() int64 {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	return r.runTime
 }
 
 func (r *runner) getSpawnCount() int64 {
@@ -362,6 +377,15 @@ func (r *runner) reset() {
 	r.stoppingChan = make(chan bool)
 	r.doneChan = make(chan bool)
 	r.reportedChan = make(chan bool)
+}
+
+func (r *runner) runTimeCheck(runTime int64) {
+	for range time.Tick(time.Second * 3) {
+		nowTime := time.Now().Unix()
+		if nowTime > runTime {
+			r.stop()
+		}
+	}
 }
 
 func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
@@ -621,6 +645,11 @@ func (r *localRunner) start() {
 	}
 	// output setup
 	r.outputOnStart()
+
+	runTime := r.getRunTime()
+	if runTime != 0 {
+		go r.runTimeCheck(runTime)
+	}
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, nil)
 
@@ -911,6 +940,11 @@ func (r *workerRunner) start() {
 	}
 
 	r.outputOnStart()
+
+	runTime := r.getRunTime()
+	if runTime != 0 {
+		go r.runTimeCheck(runTime)
+	}
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, r.spawnComplete)
 

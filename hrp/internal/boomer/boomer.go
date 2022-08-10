@@ -50,6 +50,7 @@ type Boomer struct {
 type Profile struct {
 	SpawnCount               int64         `json:"spawn-count,omitempty" yaml:"spawn-count,omitempty" mapstructure:"spawn-count,omitempty"`
 	SpawnRate                float64       `json:"spawn-rate,omitempty" yaml:"spawn-rate,omitempty" mapstructure:"spawn-rate,omitempty"`
+	RunTime                  int64         `json:"run-time,omitempty" yaml:"run-time,omitempty" mapstructure:"run-time,omitempty"`
 	MaxRPS                   int64         `json:"max-rps,omitempty" yaml:"max-rps,omitempty" mapstructure:"max-rps,omitempty"`
 	LoopCount                int64         `json:"loop-count,omitempty" yaml:"loop-count,omitempty" mapstructure:"loop-count,omitempty"`
 	RequestIncreaseRate      string        `json:"request-increase-rate,omitempty" yaml:"request-increase-rate,omitempty" mapstructure:"request-increase-rate,omitempty"`
@@ -248,6 +249,18 @@ func (b *Boomer) SetSpawnRate(spawnRate float64) {
 		b.workerRunner.setSpawnRate(spawnRate)
 	default:
 		b.localRunner.setSpawnRate(spawnRate)
+	}
+}
+
+// SetRunTime sets run time
+func (b *Boomer) SetRunTime(spawnRate int64) {
+	switch b.mode {
+	case DistributedMasterMode:
+		b.masterRunner.setRunTime(spawnRate)
+	case DistributedWorkerMode:
+		b.workerRunner.setRunTime(spawnRate)
+	default:
+		b.localRunner.setRunTime(spawnRate)
 	}
 }
 
@@ -471,6 +484,7 @@ func (b *Boomer) Start(Args *Profile) error {
 	}
 	b.SetSpawnCount(Args.SpawnCount)
 	b.SetSpawnRate(Args.SpawnRate)
+	b.SetRunTime(Args.RunTime)
 	b.SetProfile(Args)
 	err := b.masterRunner.start()
 	return err
@@ -483,6 +497,7 @@ func (b *Boomer) ReBalance(Args *Profile) error {
 	}
 	b.SetSpawnCount(Args.SpawnCount)
 	b.SetSpawnRate(Args.SpawnRate)
+	b.SetRunTime(Args.RunTime)
 	b.SetProfile(Args)
 	err := b.masterRunner.rebalance()
 	if err != nil {
