@@ -66,6 +66,7 @@ func (b *HRPBoomer) InitBoomer() {
 	}
 	b.SetSpawnCount(b.GetProfile().SpawnCount)
 	b.SetSpawnRate(b.GetProfile().SpawnRate)
+	b.SetRunTime(b.GetProfile().RunTime)
 	if b.GetProfile().LoopCount > 0 {
 		b.SetLoopCount(b.GetProfile().LoopCount)
 	}
@@ -232,6 +233,7 @@ func (b *HRPBoomer) rebalanceBoomer(profile *boomer.Profile) {
 	b.SetProfile(profile)
 	b.SetSpawnCount(b.GetProfile().SpawnCount)
 	b.SetSpawnRate(b.GetProfile().SpawnRate)
+	b.SetRunTime(b.GetProfile().RunTime)
 	b.GetRebalanceChan() <- true
 	log.Info().Interface("profile", profile).Msg("rebalance tasks successful")
 }

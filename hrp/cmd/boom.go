@@ -67,6 +67,7 @@ var boomCmd = &cobra.Command{
 				hrpBoomer.SetExpectWorkers(boomArgs.expectWorkers, boomArgs.expectWorkersMaxWait)
 				hrpBoomer.SetSpawnCount(boomArgs.SpawnCount)
 				hrpBoomer.SetSpawnRate(boomArgs.SpawnRate)
+				hrpBoomer.SetRunTime(boomArgs.RunTime)
 			}
 			if boomArgs.autoStart {
 				hrpBoomer.InitBoomer()
@@ -116,6 +117,7 @@ func init() {
 	boomCmd.Flags().StringVar(&boomArgs.RequestIncreaseRate, "request-increase-rate", "-1", "Request increase rate, disabled by default.")
 	boomCmd.Flags().Int64Var(&boomArgs.SpawnCount, "spawn-count", 1, "The number of users to spawn for load testing")
 	boomCmd.Flags().Float64Var(&boomArgs.SpawnRate, "spawn-rate", 1, "The rate for spawning users")
+	boomCmd.Flags().Int64Var(&boomArgs.RunTime, "run-time", 0, "Stop after the specified amount of time(s), Only used  --autostart. Defaults to run forever.")
 	boomCmd.Flags().Int64Var(&boomArgs.LoopCount, "loop-count", -1, "The specify running cycles for load testing")
 	boomCmd.Flags().StringVar(&boomArgs.MemoryProfile, "mem-profile", "", "Enable memory profiling.")
 	boomCmd.Flags().DurationVar(&boomArgs.MemoryProfileDuration, "mem-profile-duration", 30*time.Second, "Memory profile duration.")
