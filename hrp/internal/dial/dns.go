@@ -37,6 +37,10 @@ const (
 	DnsRecordTypeCNAME = 5
 )
 
+var dnsHttpClient = &http.Client{
+	Timeout: 5 * time.Minute,
+}
+
 type DnsOptions struct {
 	DnsSourceType int
 	DnsRecordType int
@@ -142,61 +146,58 @@ func httpDns(url string, dnsRecordType int) (dnsResult DnsResult, err error) {
 	if dnsRecordType == DnsRecordTypeAAAA {
 		target += "&aid=13&f=2"
 	}
-	resp, err := http.Get(target)
+	resp, err := dnsHttpClient.Get(target)
 
 	dnsResult.DnsSource = DnsSourceTypeHttp
 	dnsResult.DnsRecordType = dnsRecordType
 
 	if err != nil {
 		return
-	} else {
-		defer resp.Body.Close()
-		var buf []byte
-		buf, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return
-		}
-		var result httpDnsResp
-		err = json.Unmarshal(buf, &result)
-		if err != nil {
-			return
-		}
-		dnsResult.DnsList = result.Ips
-		dnsResult.Ttl = result.Ttl
 	}
+	defer resp.Body.Close()
+	var buf []byte
+	buf, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	var result httpDnsResp
+	err = json.Unmarshal(buf, &result)
+	if err != nil {
+		return
+	}
+	dnsResult.DnsList = result.Ips
+	dnsResult.Ttl = result.Ttl
 	return
 }
 
 func googleDns(url string, dnsRecordType int) (dnsResult DnsResult, err error) {
-	resp, err := http.Get(googleDnsUrl + "?name=" + url + "&type=" + strconv.Itoa(dnsRecordType))
+	resp, err := dnsHttpClient.Get(googleDnsUrl + "?name=" + url + "&type=" + strconv.Itoa(dnsRecordType))
 
 	dnsResult.DnsSource = DnsSourceTypeGoogle
 	dnsResult.DnsRecordType = dnsRecordType
 
 	if err != nil {
 		return
-	} else {
-		defer resp.Body.Close()
-		var buf []byte
-		buf, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return
+	}
+	defer resp.Body.Close()
+	var buf []byte
+	buf, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	var result googleDnsResp
+	err = json.Unmarshal(buf, &result)
+	if err != nil {
+		return
+	}
+	if len(result.Answer) == 0 {
+		return
+	}
+	for _, answer := range result.Answer {
+		if answer.Type == dnsRecordType {
+			dnsResult.Ttl = answer.TTL
+			dnsResult.DnsList = append(dnsResult.DnsList, answer.Data)
 		}
-		var result googleDnsResp
-		err = json.Unmarshal(buf, &result)
-		if err != nil {
-			return
-		}
-		if len(result.Answer) == 0 {
-			return
-		}
-		for _, answer := range result.Answer {
-			if answer.Type == dnsRecordType {
-				dnsResult.Ttl = answer.TTL
-				dnsResult.DnsList = append(dnsResult.DnsList, answer.Data)
-			}
-		}
-
 	}
 	return
 }
@@ -240,7 +241,7 @@ func DoDns(dnsOptions *DnsOptions, args []string) (err error) {
 	if err != nil {
 		dnsResult.Suc = false
 		dnsResult.ErrMsg = err.Error()
-		log.Error().Err(err).Msgf("fail to do DNS for %s", dnsTarget, err)
+		log.Error().Err(err).Msgf("fail to do DNS for %s", dnsTarget)
 	} else {
 		dnsResult.Suc = true
 		dnsResult.ErrMsg = ""
