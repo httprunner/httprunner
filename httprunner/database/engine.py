@@ -37,6 +37,7 @@ class DBEngine(object):
                     pass
 
     def _fetch(self, query, size=-1, commit=True):
+        query = query.strip()
         result = self.session.execute(query)
         if query.upper()[:6] == "SELECT":
             if size < 0:
@@ -80,5 +81,6 @@ class DBEngine(object):
 if __name__ == "__main__":
     # db = DBEngine(f"mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")
     db = DBEngine(f"sqlite:////Users/bytedance/HttpRunner/examples/data/sqlite.db")
-    print(db.fetchmany("select* from student", 5))
+    print(db.fetchmany("""
+    select* from student""", 5))
     print(db.fetchmany("select* from student", 5))
