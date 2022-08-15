@@ -501,7 +501,7 @@ func (w *wdaClient) screenShot() error {
 	if err := builtin.EnsureFolderExists(screenshotsDir); err != nil {
 		return errors.Wrap(err, "create screenshots failed")
 	}
-	path := filepath.Join(screenshotsDir, fmt.Sprintf("%d", time.Now().UnixMilli())+"."+format)
+	path := filepath.Join(screenshotsDir, fmt.Sprintf("%d", time.Now().Unix())+"."+format)
 	file, err := os.Create(path)
 	if err != nil {
 		return errors.Wrap(err, "create screenshot image file failed")
