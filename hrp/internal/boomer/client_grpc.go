@@ -313,11 +313,12 @@ func (c *grpcClient) sendMessage(msg *genericMessage) {
 		return
 	}
 	err := c.config.getBiStreamClient().Send(&messager.StreamRequest{Type: msg.Type, Data: msg.Data, NodeID: msg.NodeID})
-	switch err {
-	case nil:
+	if err == nil {
 		atomic.StoreInt32(&c.failCount, 0)
-	default:
-		//log.Error().Err(err).Interface("genericMessage", *msg).Msg("failed to send message")
+		return
+	}
+	//log.Error().Err(err).Interface("genericMessage", *msg).Msg("failed to send message")
+	if msg.Type == "heartbeat" {
 		atomic.AddInt32(&c.failCount, 1)
 	}
 }

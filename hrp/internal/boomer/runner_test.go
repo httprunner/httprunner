@@ -338,6 +338,7 @@ func TestOnQuitMessage(t *testing.T) {
 	go runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
 	close(runner.doneChan)
 	<-runner.closeChan
+	runner.onQuiting()
 	if runner.getState() != StateQuitting {
 		t.Error("Runner's state should be StateQuitting")
 	}
@@ -348,6 +349,7 @@ func TestOnQuitMessage(t *testing.T) {
 	runner.client.shutdownChan = make(chan bool)
 	runner.onMessage(newGenericMessage("quit", nil, runner.nodeID))
 	<-runner.closeChan
+	runner.onQuiting()
 	if runner.getState() != StateQuitting {
 		t.Error("Runner's state should be StateQuitting")
 	}
@@ -395,7 +397,7 @@ func TestOnMessage(t *testing.T) {
 
 	// increase goroutines while running
 	runner.onMessage(newMessageToWorker("rebalance", ProfileToBytes(&Profile{SpawnCount: 15, SpawnRate: 15}), nil, nil))
-	runner.rebalance <- true
+	runner.controller.rebalance <- true
 
 	time.Sleep(2 * time.Second)
 	if runner.getState() != StateRunning {
@@ -460,6 +462,7 @@ func TestClientListener(t *testing.T) {
 	runner.updateState(StateInit)
 	runner.setSpawnCount(10)
 	runner.setSpawnRate(10)
+	go runner.stateMachine()
 	go runner.clientListener()
 	runner.server.clients.Store("testID1", &WorkerNode{ID: "testID1", Heartbeat: 3, stream: make(chan *messager.StreamResponse, 10)})
 	runner.server.clients.Store("testID2", &WorkerNode{ID: "testID2", Heartbeat: 3, stream: make(chan *messager.StreamResponse, 10)})
@@ -483,6 +486,7 @@ func TestClientListener(t *testing.T) {
 		Type:   typeClientStopped,
 		NodeID: "testID2",
 	}
+	runner.updateState(StateRunning)
 	worker2, ok := runner.server.getClients().Load("testID2")
 	if !ok {
 		t.Fatal("error")
@@ -515,7 +519,7 @@ func TestHeartbeatWorker(t *testing.T) {
 	runner.server.clients.Store("testID2", &WorkerNode{ID: "testID2", Heartbeat: 1, State: StateInit, stream: make(chan *messager.StreamResponse, 10)})
 	go runner.clientListener()
 	go runner.heartbeatWorker()
-	time.Sleep(3 * time.Second)
+	time.Sleep(4 * time.Second)
 	worker1, ok := runner.server.getClients().Load("testID1")
 	if !ok {
 		t.Fatal()
@@ -525,7 +529,7 @@ func TestHeartbeatWorker(t *testing.T) {
 		t.Fatal()
 	}
 	if workerInfo1.getState() != StateMissing {
-		t.Error("expected state of worker runner is missing, but got", workerInfo1.getState())
+		t.Error("expected state of worker runner is missing, but got", getStateName(workerInfo1.getState()))
 	}
 	runner.server.recvChannel() <- &genericMessage{
 		Type:   typeHeartbeat,

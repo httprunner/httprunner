@@ -2,8 +2,6 @@ package hrp
 
 import (
 	"fmt"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,9 +11,11 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/net/context"
 )
 
 func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {
@@ -57,7 +57,6 @@ type HRPBoomer struct {
 }
 
 func (b *HRPBoomer) InitBoomer() {
-	// init output
 	if !b.GetProfile().DisableConsoleOutput {
 		b.AddOutput(boomer.NewConsoleOutput())
 	}
@@ -100,6 +99,16 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	// report execution timing event
 	defer sdk.SendEvent(event.StartTiming("execution"))
 
+	// quit all plugins
+	defer func() {
+		pluginMap.Range(func(key, value interface{}) bool {
+			if plugin, ok := value.(funplugin.IPlugin); ok {
+				plugin.Quit()
+			}
+			return true
+		})
+	}()
+
 	taskSlice := b.ConvertTestCasesToBoomerTasks(testcases...)
 
 	b.Boomer.Run(taskSlice...)
@@ -112,15 +121,6 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(1)
 	}
-
-	// quit all plugins
-	defer func() {
-		if len(pluginMap) > 0 {
-			for _, plugin := range pluginMap {
-				plugin.Quit()
-			}
-		}
-	}()
 
 	for _, testcase := range testCases {
 		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
@@ -164,7 +164,7 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 	return testCasesBytes
 }
 
-func (b *HRPBoomer) BytesToTestCases(testCasesBytes []byte) []*TCase {
+func (b *HRPBoomer) BytesToTCases(testCasesBytes []byte) []*TCase {
 	var testcase []*TCase
 	err := json.Unmarshal(testCasesBytes, &testcase)
 	if err != nil {
@@ -177,39 +177,57 @@ func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
 }
 
-func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
-	var testcases []ITestCase
+func (b *HRPBoomer) parseTCases(testCases []*TCase) (testcases []ITestCase) {
 	for _, tc := range testCases {
-		tesecase, err := tc.toTestCase()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to load testcases")
-			return
-		}
 		// create temp dir to save testcase
 		tempDir, err := ioutil.TempDir("", "hrp_testcases")
 		if err != nil {
-			log.Error().Err(err).Msg("failed to save testcases")
+			log.Error().Err(err).Msg("failed to create hrp testcases directory")
 			return
 		}
 
-		tesecase.Config.Path = filepath.Join(tempDir, "test-case.json")
-		if tesecase.Config.PluginSetting != nil {
-			tesecase.Config.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", tesecase.Config.PluginSetting.Type))
-			err = builtin.Bytes2File(tesecase.Config.PluginSetting.Content, tesecase.Config.PluginSetting.Path)
+		if tc.Config.PluginSetting != nil {
+			tc.Config.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", tc.Config.PluginSetting.Type))
+			err = builtin.Bytes2File(tc.Config.PluginSetting.Content, tc.Config.PluginSetting.Path)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to save plugin file")
 				return
 			}
+			tc.Config.PluginSetting.Content = nil // remove the content in testcase
 		}
-		err = builtin.Dump2JSON(tesecase, tesecase.Config.Path)
+
+		if tc.Config.Environs != nil {
+			envContent := ""
+			for k, v := range tc.Config.Environs {
+				envContent += fmt.Sprintf("%s=%s\n", k, v)
+			}
+			err = os.WriteFile(filepath.Join(tempDir, ".env"), []byte(envContent), 0o644)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to dump environs")
+				return
+			}
+		}
+
+		tc.Config.Path = filepath.Join(tempDir, "test-case.json")
+		err = builtin.Dump2JSON(tc, tc.Config.Path)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to dump testcases")
 			return
 		}
 
+		tesecase, err := tc.toTestCase()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to load testcases")
+			return
+		}
+
 		testcases = append(testcases, tesecase)
 	}
+	return testcases
+}
 
+func (b *HRPBoomer) initWorker(profile *boomer.Profile) {
+	// if no IP address is specified, the default IP address is that of the master
 	if profile.PrometheusPushgatewayURL != "" {
 		urlSlice := strings.Split(profile.PrometheusPushgatewayURL, ":")
 		if len(urlSlice) != 2 {
@@ -224,16 +242,13 @@ func (b *HRPBoomer) runTestCases(testCases []*TCase, profile *boomer.Profile) {
 
 	b.SetProfile(profile)
 	b.InitBoomer()
-	log.Info().Interface("testcases", testcases).Interface("profile", profile).Msg("run tasks successful")
-	b.Run(testcases...)
 }
 
-func (b *HRPBoomer) rebalanceBoomer(profile *boomer.Profile) {
-	b.SetProfile(profile)
-	b.SetSpawnCount(b.GetProfile().SpawnCount)
-	b.SetSpawnRate(b.GetProfile().SpawnRate)
+func (b *HRPBoomer) rebalanceRunner(profile *boomer.Profile) {
+	b.SetSpawnCount(profile.SpawnCount)
+	b.SetSpawnRate(profile.SpawnRate)
 	b.GetRebalanceChan() <- true
-	log.Info().Interface("profile", profile).Msg("rebalance tasks successful")
+	log.Info().Interface("profile", profile).Msg("rebalance tasks successfully")
 }
 
 func (b *HRPBoomer) PollTasks(ctx context.Context) {
@@ -245,11 +260,17 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 				continue
 			}
 			//Todo: 过滤掉已经传输过的task
-			if task.TestCases != nil {
-				testCases := b.BytesToTestCases(task.TestCases)
-				go b.runTestCases(testCases, task.Profile)
+			if task.TestCasesBytes != nil {
+				// init boomer with profile
+				b.initWorker(task.Profile)
+				// get testcases
+				testcases := b.parseTCases(b.BytesToTCases(task.TestCasesBytes))
+				log.Info().Interface("testcases", testcases).Interface("profile", b.GetProfile()).Msg("starting to run tasks")
+				// run testcases
+				go b.Run(testcases...)
 			} else {
-				go b.rebalanceBoomer(task.Profile)
+				// rebalance runner with profile
+				go b.rebalanceRunner(task.Profile)
 			}
 
 		case <-b.Boomer.GetCloseChan():
@@ -261,6 +282,16 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 }
 
 func (b *HRPBoomer) PollTestCases(ctx context.Context) {
+	// quit all plugins
+	defer func() {
+		pluginMap.Range(func(key, value interface{}) bool {
+			if plugin, ok := value.(funplugin.IPlugin); ok {
+				plugin.Quit()
+			}
+			return true
+		})
+	}()
+
 	for {
 		select {
 		case <-b.Boomer.ParseTestCasesChan():
@@ -270,7 +301,7 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 				tcs = append(tcs, &tcp)
 			}
 			b.TestCaseBytesChan() <- b.TestCasesToBytes(tcs...)
-			log.Info().Msg("put testcase successful")
+			log.Info().Msg("put testcase successfully")
 		case <-b.Boomer.GetCloseChan():
 			return
 		case <-ctx.Done():
@@ -379,7 +410,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					// transaction
 					// FIXME: support nested transactions
 					if step.Struct().Transaction.Type == transactionEnd { // only record when transaction ends
-						b.RecordTransaction(stepResult.Name, transactionSuccess, stepResult.Elapsed, 0)
+						b.RecordTransaction(step.Struct().Transaction.Name, transactionSuccess, stepResult.Elapsed, 0)
 						transactionSuccess = true // reset flag for next transaction
 					}
 				} else if stepResult.StepType == stepTypeRendezvous {

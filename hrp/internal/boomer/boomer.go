@@ -63,6 +63,18 @@ type Profile struct {
 	DisableKeepalive         bool          `json:"disable-keepalive,omitempty" yaml:"disable-keepalive,omitempty" mapstructure:"disable-keepalive,omitempty"`
 }
 
+func NewProfile() *Profile {
+	return &Profile{
+		SpawnCount:            1,
+		SpawnRate:             1,
+		MaxRPS:                -1,
+		LoopCount:             -1,
+		RequestIncreaseRate:   "-1",
+		CPUProfileDuration:    30 * time.Second,
+		MemoryProfileDuration: 30 * time.Second,
+	}
+}
+
 func (b *Boomer) GetProfile() *Profile {
 	switch b.mode {
 	case DistributedMasterMode:
@@ -158,7 +170,18 @@ func (b *Boomer) RunWorker() {
 
 // TestCaseBytesChan gets test case bytes chan
 func (b *Boomer) TestCaseBytesChan() chan []byte {
-	return b.masterRunner.testCaseBytes
+	return b.masterRunner.testCaseBytesChan
+}
+
+func (b *Boomer) GetTestCaseBytes() []byte {
+	switch b.mode {
+	case DistributedMasterMode:
+		return b.masterRunner.testCasesBytes
+	case DistributedWorkerMode:
+		return b.workerRunner.testCasesBytes
+	default:
+		return nil
+	}
 }
 
 func ProfileToBytes(profile *Profile) []byte {
@@ -192,7 +215,7 @@ func (b *Boomer) GetTasksChan() chan *task {
 func (b *Boomer) GetRebalanceChan() chan bool {
 	switch b.mode {
 	case DistributedWorkerMode:
-		return b.workerRunner.rebalance
+		return b.workerRunner.controller.getRebalanceChan()
 	default:
 		return nil
 	}
@@ -469,6 +492,9 @@ func (b *Boomer) Start(Args *Profile) error {
 	if b.masterRunner.isStopping() {
 		return errors.New("Please wait for all workers to finish")
 	}
+	if int(Args.SpawnCount) < b.masterRunner.server.getAvailableClientsLength() {
+		return errors.New("spawn count should be greater than available worker count")
+	}
 	b.SetSpawnCount(Args.SpawnCount)
 	b.SetSpawnRate(Args.SpawnRate)
 	b.SetProfile(Args)
@@ -480,6 +506,9 @@ func (b *Boomer) Start(Args *Profile) error {
 func (b *Boomer) ReBalance(Args *Profile) error {
 	if !b.masterRunner.isStarting() {
 		return errors.New("no start")
+	}
+	if int(Args.SpawnCount) < b.masterRunner.server.getAvailableClientsLength() {
+		return errors.New("spawn count should be greater than available worker count")
 	}
 	b.SetSpawnCount(Args.SpawnCount)
 	b.SetSpawnRate(Args.SpawnRate)
@@ -505,8 +534,9 @@ func (b *Boomer) GetWorkersInfo() []WorkerNode {
 func (b *Boomer) GetMasterInfo() map[string]interface{} {
 	masterInfo := make(map[string]interface{})
 	masterInfo["state"] = b.masterRunner.getState()
-	masterInfo["workers"] = b.masterRunner.server.getClientsLength()
+	masterInfo["workers"] = b.masterRunner.server.getAvailableClientsLength()
 	masterInfo["target_users"] = b.masterRunner.getSpawnCount()
+	masterInfo["current_users"] = b.masterRunner.server.getCurrentUsers()
 	return masterInfo
 }
 
