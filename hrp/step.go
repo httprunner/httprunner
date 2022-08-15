@@ -38,6 +38,12 @@ const (
 	uiLongClick   MobileMethod = "long_click"
 	uiSwipe       MobileMethod = "swipe"
 	uiInput       MobileMethod = "input"
+
+	// UI validation
+	assertionNameExists     string = "name_exists"
+	assertionNameNotExists  string = "name_not_exists"
+	assertionXpathExists    string = "xpath_exists"
+	assertionXpathNotExists string = "xpath_not_exists"
 )
 
 type MobileAction struct {

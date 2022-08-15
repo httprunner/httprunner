@@ -242,45 +242,61 @@ type StepIOSValidation struct {
 	step *TStep
 }
 
-func (s *StepIOSValidation) AssertNameExists(expectedName string, msg string) *StepIOSValidation {
+func (s *StepIOSValidation) AssertNameExists(expectedName string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:   "UI",
-		Assert:  "name_exists",
-		Expect:  expectedName,
-		Message: msg,
+		Check:  "UI",
+		Assert: assertionNameExists,
+		Expect: expectedName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("[%s] not found", expectedName)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg string) *StepIOSValidation {
+func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:   "UI",
-		Assert:  "name_not_exists",
-		Expect:  expectedName,
-		Message: msg,
+		Check:  "UI",
+		Assert: assertionNameNotExists,
+		Expect: expectedName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("[%s] should not exist", expectedName)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *StepIOSValidation) AssertXpathExists(expectedXpath string, msg string) *StepIOSValidation {
+func (s *StepIOSValidation) AssertXpathExists(expectedXpath string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:   "UI",
-		Assert:  "xpath_exists",
-		Expect:  expectedXpath,
-		Message: msg,
+		Check:  "UI",
+		Assert: assertionXpathExists,
+		Expect: expectedXpath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("xpath [%s] not found", expectedXpath)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *StepIOSValidation) AssertXpathNotExists(expectedXpath string, msg string) *StepIOSValidation {
+func (s *StepIOSValidation) AssertXpathNotExists(expectedXpath string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:   "UI",
-		Assert:  "xpath_not_exists",
-		Expect:  expectedXpath,
-		Message: msg,
+		Check:  "UI",
+		Assert: assertionXpathNotExists,
+		Expect: expectedXpath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("xpath [%s] should not exist", expectedXpath)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -673,13 +689,13 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 
 		var result bool
 		switch validator.Assert {
-		case "xpath_exists":
+		case assertionXpathExists:
 			result = w.assertXpath(expected, true)
-		case "xpath_not_exists":
+		case assertionXpathNotExists:
 			result = w.assertXpath(expected, false)
-		case "name_exists":
+		case assertionNameExists:
 			result = w.assertName(expected, true)
-		case "name_not_exists":
+		case assertionNameNotExists:
 			result = w.assertName(expected, false)
 		}
 		if result {

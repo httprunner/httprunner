@@ -1,5 +1,7 @@
 package hrp
 
+import "fmt"
+
 type AndroidAction struct {
 	MobileAction
 	Serial  string         `json:"serial,omitempty" yaml:"serial,omitempty"`
@@ -164,12 +166,31 @@ type StepAndroidValidation struct {
 	step *TStep
 }
 
-func (s *StepAndroidValidation) AssertXpathExists(expectedXpath string, msg string) *StepAndroidValidation {
+func (s *StepAndroidValidation) AssertXpathExists(expectedXpath string, msg ...string) *StepAndroidValidation {
 	v := Validator{
-		Check:   "UI",
-		Assert:  "xpath_exists",
-		Expect:  expectedXpath,
-		Message: msg,
+		Check:  "UI",
+		Assert: assertionXpathExists,
+		Expect: expectedXpath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("xpath [%s] not found", expectedXpath)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertXpathNotExists(expectedXpath string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  "UI",
+		Assert: assertionXpathNotExists,
+		Expect: expectedXpath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("xpath [%s] should not exist", expectedXpath)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s

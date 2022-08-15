@@ -5,28 +5,6 @@ import (
 	"testing"
 )
 
-func TestAndroidAction(t *testing.T) {
-	testCase := &TestCase{
-		Config: NewConfig("android ui action"),
-		TestSteps: []IStep{
-			NewStep("launch douyin").
-				Android().Serial("xxx").Click("抖音").
-				Validate().
-				AssertXpathExists("首页", "首页 tab 不存在").
-				AssertXpathExists("消息", "消息 tab 不存在"),
-			NewStep("swipe up and down").
-				Android().Serial("xxx").SwipeUp().SwipeUp().SwipeDown(),
-		},
-	}
-	tCase := testCase.ToTCase()
-	fmt.Println(tCase)
-
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestIOSSettingsAction(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on Settings"),
@@ -34,17 +12,18 @@ func TestIOSSettingsAction(t *testing.T) {
 			NewStep("launch Settings").
 				IOS().Home().Click("//*[@label='设置']").
 				Validate().
-				AssertNameExists("飞行模式", "「飞行模式」不存在").
-				AssertNameNotExists("飞行模式2", "「飞行模式2」不存在"),
+				AssertNameExists("飞行模式").
+				AssertNameNotExists("飞行模式2"),
 			NewStep("swipe up and down").
 				IOS().SwipeUp().SwipeUp().SwipeDown(),
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestIOSSearchApp(t *testing.T) {
@@ -54,16 +33,17 @@ func TestIOSSearchApp(t *testing.T) {
 			NewStep("进入 App 资源库 搜索框").
 				IOS().Home().SwipeLeft().Times(2).Click("dewey-search-field").
 				Validate().
-				AssertNameExists("取消", "「取消」不存在"),
+				AssertNameExists("取消"),
 			NewStep("搜索抖音").
 				IOS().Input("抖音\n"),
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestIOSAppLaunch(t *testing.T) {
@@ -80,11 +60,12 @@ func TestIOSAppLaunch(t *testing.T) {
 				IOS().AppLaunchUnattached("com.ss.iphone.article.News"),
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestIOSWeixinLive(t *testing.T) {
@@ -103,18 +84,19 @@ func TestIOSWeixinLive(t *testing.T) {
 				Click("发现").Sleep(5).       // 进入「发现页」；等待 5 秒确保加载完成
 				Click([]float64{0.5, 0.3}). // 基于坐标位置点击「直播」；TODO：通过 OCR 识别「直播」
 				Validate().
-				AssertNameExists("直播", "「直播」不存在"),
+				AssertNameExists("直播"),
 			NewStep("向上滑动 5 次").
 				IOS().
 				SwipeUp().Times(3).ScreenShot(). // 上划 3 次，截图保存
 				SwipeUp().Times(2).ScreenShot(), // 再上划 2 次，截图保存
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestIOSCameraPhotoCapture(t *testing.T) {
@@ -131,11 +113,12 @@ func TestIOSCameraPhotoCapture(t *testing.T) {
 				IOS().Click("PhotoCapture"),
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestIOSCameraVideoCapture(t *testing.T) {
@@ -160,11 +143,12 @@ func TestIOSCameraVideoCapture(t *testing.T) {
 				Click("VideoCapture"), // 停止录像
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestIOSDouyinAction(t *testing.T) {
@@ -180,9 +164,10 @@ func TestIOSDouyinAction(t *testing.T) {
 				IOS().SwipeUp().Times(3).SwipeDown(),
 		},
 	}
+	fmt.Println(testCase)
 
-	err := NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err := NewRunner(t).Run(testCase)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
