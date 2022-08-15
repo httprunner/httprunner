@@ -40,10 +40,11 @@ const (
 	uiInput       MobileMethod = "input"
 
 	// UI validation
-	assertionNameExists     string = "name_exists"
-	assertionNameNotExists  string = "name_not_exists"
-	assertionXpathExists    string = "xpath_exists"
-	assertionXpathNotExists string = "xpath_not_exists"
+	uiSelectorName     string = "ui_name"
+	uiSelectorXpath    string = "ui_xpath"
+	uiSelectorOCR      string = "ui_ocr"
+	assertionExists    string = "exists"
+	assertionNotExists string = "not_exists"
 )
 
 type MobileAction struct {

@@ -168,8 +168,8 @@ type StepAndroidValidation struct {
 
 func (s *StepAndroidValidation) AssertXpathExists(expectedXpath string, msg ...string) *StepAndroidValidation {
 	v := Validator{
-		Check:  "UI",
-		Assert: assertionXpathExists,
+		Check:  uiSelectorXpath,
+		Assert: assertionExists,
 		Expect: expectedXpath,
 	}
 	if len(msg) > 0 {
@@ -183,8 +183,8 @@ func (s *StepAndroidValidation) AssertXpathExists(expectedXpath string, msg ...s
 
 func (s *StepAndroidValidation) AssertXpathNotExists(expectedXpath string, msg ...string) *StepAndroidValidation {
 	v := Validator{
-		Check:  "UI",
-		Assert: assertionXpathNotExists,
+		Check:  uiSelectorXpath,
+		Assert: assertionNotExists,
 		Expect: expectedXpath,
 	}
 	if len(msg) > 0 {
