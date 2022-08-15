@@ -49,10 +49,10 @@ func getStateName(state int32) (stateName string) {
 }
 
 const (
-	reportStatsInterval = 3 * time.Second
-	heartbeatInterval   = 1 * time.Second
-	heartbeatLiveness   = 3 * time.Second
-	reconnectInterval   = 3 * time.Second
+	reportStatsInterval  = 3 * time.Second
+	heartbeatInterval    = 1 * time.Second
+	heartbeatLiveness    = 3 * time.Second
+	stateMachineInterval = 1 * time.Second
 )
 
 type Loop struct {
@@ -86,6 +86,7 @@ type Controller struct {
 	currentClientsNum int64 // current clients count
 	spawnCount        int64 // target clients to spawn
 	spawnRate         float64
+	rebalance         chan bool // dynamically balance boomer running parameters
 	spawnDone         chan struct{}
 	tasks             []*Task
 }
@@ -143,6 +144,12 @@ func (c *Controller) spawnCompete() {
 	close(c.spawnDone)
 }
 
+func (c *Controller) getRebalanceChan() chan bool {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	return c.rebalance
+}
+
 func (c *Controller) isFinished() bool {
 	// return true when workers acquired
 	return atomic.LoadInt64(&c.currentClientsNum) == atomic.LoadInt64(&c.spawnCount)
@@ -178,6 +185,7 @@ func (c *Controller) reset() {
 	c.spawnRate = 0
 	atomic.StoreInt64(&c.currentClientsNum, 0)
 	c.spawnDone = make(chan struct{})
+	c.rebalance = make(chan bool)
 	c.tasks = []*Task{}
 	c.once = sync.Once{}
 }
@@ -198,9 +206,6 @@ type runner struct {
 
 	controller *Controller
 	loop       *Loop // specify loop count for testcase, count = loopCount * spawnCount
-
-	// dynamically balance boomer running parameters
-	rebalance chan bool
 
 	// stop signals the run goroutine should shutdown.
 	stopChan chan bool
@@ -358,7 +363,6 @@ func (r *runner) reportTestResult() {
 func (r *runner) reset() {
 	r.controller.reset()
 	r.stats.clearAll()
-	r.rebalance = make(chan bool)
 	r.stoppingChan = make(chan bool)
 	r.doneChan = make(chan bool)
 	r.reportedChan = make(chan bool)
@@ -430,16 +434,18 @@ func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan boo
 				continue
 			}
 
-			r.controller.once.Do(func() {
-				// spawning compete
-				r.controller.spawnCompete()
-				if spawnCompleteFunc != nil {
-					spawnCompleteFunc()
-				}
-				r.updateState(StateRunning)
-			})
+			r.controller.once.Do(
+				func() {
+					// spawning compete
+					r.controller.spawnCompete()
+					if spawnCompleteFunc != nil {
+						spawnCompleteFunc()
+					}
+					r.updateState(StateRunning)
+				},
+			)
 
-			<-r.rebalance
+			<-r.controller.getRebalanceChan()
 			if r.isStarting() {
 				// rebalance spawn count
 				r.controller.setSpawn(r.getSpawnCount(), r.getSpawnRate())
@@ -629,7 +635,7 @@ func (r *localRunner) start() {
 		r.wgMu.Lock()
 		r.updateState(StateStopping)
 		close(r.stoppingChan)
-		close(r.rebalance)
+		close(r.controller.rebalance)
 		r.wgMu.Unlock()
 
 		// wait for goroutines before closing
@@ -668,7 +674,8 @@ type workerRunner struct {
 	masterPort int
 	client     *grpcClient
 
-	profile *Profile
+	profile        *Profile
+	testCasesBytes []byte
 
 	tasksChan chan *task
 
@@ -714,10 +721,10 @@ func (r *workerRunner) onSpawnMessage(msg *genericMessage) {
 		log.Error().Msg("miss tasks")
 	}
 	r.tasksChan <- &task{
-		Profile:   profile,
-		TestCases: msg.Tasks,
+		Profile:        profile,
+		TestCasesBytes: msg.Tasks,
 	}
-	log.Info().Msg("on spawn message successful")
+	log.Info().Msg("on spawn message successfully")
 }
 
 func (r *workerRunner) onRebalanceMessage(msg *genericMessage) {
@@ -731,7 +738,7 @@ func (r *workerRunner) onRebalanceMessage(msg *genericMessage) {
 	r.tasksChan <- &task{
 		Profile: profile,
 	}
-	log.Info().Msg("on rebalance message successful")
+	log.Info().Msg("on rebalance message successfully")
 }
 
 // Runner acts as a state machine.
@@ -831,6 +838,9 @@ func (r *workerRunner) run() {
 		// wait for goroutines before closing
 		r.wg.Wait()
 
+		// notify master that worker is quitting
+		r.onQuiting()
+
 		var ticker = time.NewTicker(1 * time.Second)
 		if r.client != nil {
 			// waitting for quit message is sent to master
@@ -879,6 +889,7 @@ func (r *workerRunner) run() {
 				if !r.isStarting() && !r.isStopping() {
 					r.updateState(StateMissing)
 				}
+				continue
 			}
 			CPUUsage := GetCurrentCPUPercent()
 			MemoryUsage := GetCurrentMemoryPercent()
@@ -918,12 +929,17 @@ func (r *workerRunner) start() {
 		// block concurrent waitgroup adds in GoAttach while stopping
 		r.wgMu.Lock()
 		r.updateState(StateStopping)
+		close(r.controller.rebalance)
 		close(r.stoppingChan)
-		close(r.rebalance)
 		r.wgMu.Unlock()
 
 		// wait for goroutines before closing
 		r.wg.Wait()
+
+		// reset loop
+		if r.loop != nil {
+			r.loop = nil
+		}
 
 		close(r.doneChan)
 
@@ -951,7 +967,6 @@ func (r *workerRunner) stop() {
 }
 
 func (r *workerRunner) close() {
-	r.onQuiting()
 	close(r.closeChan)
 }
 
@@ -970,8 +985,8 @@ type masterRunner struct {
 	profile *Profile
 
 	parseTestCasesChan chan bool
-	testCaseBytes      chan []byte
-	tcb                []byte
+	testCaseBytesChan  chan []byte
+	testCasesBytes     []byte
 }
 
 func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
@@ -988,7 +1003,7 @@ func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
 		masterBindPort:     masterBindPort,
 		server:             newServer(masterBindHost, masterBindPort),
 		parseTestCasesChan: make(chan bool),
-		testCaseBytes:      make(chan []byte),
+		testCaseBytesChan:  make(chan []byte),
 	}
 }
 
@@ -1011,23 +1026,15 @@ func (r *masterRunner) heartbeatWorker() {
 				if !ok {
 					log.Error().Msg("failed to get worker information")
 				}
-				if atomic.LoadInt32(&workerInfo.Heartbeat) < 0 {
-					if workerInfo.getState() == StateQuitting {
-						return true
-					}
-					if workerInfo.getState() != StateMissing {
-						workerInfo.setState(StateMissing)
-					}
-					if r.isStopping() {
-						// all running workers missed, setting state to stopped
-						if r.server.getClientsLength() <= 0 {
-							r.updateState(StateStopped)
+				go func() {
+					if atomic.LoadInt32(&workerInfo.Heartbeat) < 0 {
+						if workerInfo.getState() != StateMissing {
+							workerInfo.setState(StateMissing)
 						}
-						return true
+					} else {
+						atomic.AddInt32(&workerInfo.Heartbeat, -1)
 					}
-				} else {
-					atomic.AddInt32(&workerInfo.Heartbeat, -1)
-				}
+				}()
 				return true
 			})
 		case <-reportTicker.C:
@@ -1051,72 +1058,85 @@ func (r *masterRunner) clientListener() {
 			if !ok {
 				continue
 			}
-			switch msg.Type {
-			case typeClientReady:
-				workerInfo.setState(StateInit)
-				if r.getState() == StateRunning {
-					log.Warn().Str("worker id", workerInfo.ID).Msg("worker joined, ready to rebalance the load of each worker")
+			go func() {
+				switch msg.Type {
+				case typeClientReady:
+					workerInfo.setState(StateInit)
+				case typeClientStopped:
+					workerInfo.setState(StateStopped)
+				case typeHeartbeat:
+					if workerInfo.getState() == StateMissing {
+						workerInfo.setState(int32(builtin.BytesToInt64(msg.Data["state"])))
+					}
+					workerInfo.updateHeartbeat(3)
+					currentCPUUsage, ok := msg.Data["current_cpu_usage"]
+					if ok {
+						workerInfo.updateCPUUsage(builtin.ByteToFloat64(currentCPUUsage))
+					}
+					currentPidCpuUsage, ok := msg.Data["current_pid_cpu_usage"]
+					if ok {
+						workerInfo.updateWorkerCPUUsage(builtin.ByteToFloat64(currentPidCpuUsage))
+					}
+					currentMemoryUsage, ok := msg.Data["current_memory_usage"]
+					if ok {
+						workerInfo.updateMemoryUsage(builtin.ByteToFloat64(currentMemoryUsage))
+					}
+					currentPidMemoryUsage, ok := msg.Data["current_pid_memory_usage"]
+					if ok {
+						workerInfo.updateWorkerMemoryUsage(builtin.ByteToFloat64(currentPidMemoryUsage))
+					}
+					currentUsers, ok := msg.Data["current_users"]
+					if ok {
+						workerInfo.updateUserCount(builtin.BytesToInt64(currentUsers))
+					}
+				case typeSpawning:
+					workerInfo.setState(StateSpawning)
+				case typeSpawningComplete:
+					workerInfo.setState(StateRunning)
+				case typeQuit:
+					if workerInfo.getState() == StateQuitting {
+						break
+					}
+					workerInfo.setState(StateQuitting)
+				case typeException:
+					// Todo
+				default:
+				}
+			}()
+		}
+	}
+}
+
+func (r *masterRunner) stateMachine() {
+	ticker := time.NewTicker(stateMachineInterval)
+	for {
+		select {
+		case <-r.closeChan:
+			return
+		case <-ticker.C:
+			switch r.getState() {
+			case StateSpawning:
+				if r.server.getCurrentUsers() == int(r.getSpawnCount()) {
+					log.Warn().Msg("all workers spawn done, setting state as running")
+					r.updateState(StateRunning)
+				}
+			case StateRunning:
+				if r.server.getStartingClientsLength() == 0 {
+					r.updateState(StateStopped)
+					continue
+				}
+				if r.server.getWorkersLengthByState(StateInit) != 0 {
 					err := r.rebalance()
 					if err != nil {
 						log.Error().Err(err).Msg("failed to rebalance")
 					}
 				}
-			case typeClientStopped:
-				workerInfo.setState(StateStopped)
-				if r.server.getWorkersLengthByState(StateStopped)+r.server.getWorkersLengthByState(StateInit) == r.server.getClientsLength() {
+			case StateStopping:
+				if r.server.getReadyClientsLength() == r.server.getAvailableClientsLength() {
 					r.updateState(StateStopped)
 				}
-			case typeHeartbeat:
-				if workerInfo.getState() != int32(builtin.BytesToInt64(msg.Data["state"])) {
-					workerInfo.setState(int32(builtin.BytesToInt64(msg.Data["state"])))
-				}
-				workerInfo.updateHeartbeat(3)
-				currentCPUUsage, ok := msg.Data["current_cpu_usage"]
-				if ok {
-					workerInfo.updateCPUUsage(builtin.ByteToFloat64(currentCPUUsage))
-				}
-				currentPidCpuUsage, ok := msg.Data["current_pid_cpu_usage"]
-				if ok {
-					workerInfo.updateWorkerCPUUsage(builtin.ByteToFloat64(currentPidCpuUsage))
-				}
-				currentMemoryUsage, ok := msg.Data["current_memory_usage"]
-				if ok {
-					workerInfo.updateMemoryUsage(builtin.ByteToFloat64(currentMemoryUsage))
-				}
-				currentPidMemoryUsage, ok := msg.Data["current_pid_memory_usage"]
-				if ok {
-					workerInfo.updateWorkerMemoryUsage(builtin.ByteToFloat64(currentPidMemoryUsage))
-				}
-				currentUsers, ok := msg.Data["current_users"]
-				if ok {
-					workerInfo.updateUserCount(builtin.BytesToInt64(currentUsers))
-				}
-			case typeSpawning:
-				workerInfo.setState(StateSpawning)
-			case typeSpawningComplete:
-				workerInfo.setState(StateRunning)
-				if r.server.getWorkersLengthByState(StateRunning) == r.server.getClientsLength() {
-					log.Warn().Msg("all workers spawn done, setting state as running")
-					r.updateState(StateRunning)
-				}
-			case typeQuit:
-				if workerInfo.getState() == StateQuitting {
-					break
-				}
-				workerInfo.setState(StateQuitting)
-				if r.isStarting() {
-					if r.server.getClientsLength() > 0 {
-						log.Warn().Str("worker id", workerInfo.ID).Msg("worker quited, ready to rebalance the load of each worker")
-						err := r.rebalance()
-						if err != nil {
-							log.Error().Err(err).Msg("failed to rebalance")
-						}
-					}
-				}
-			case typeException:
-				// Todo
-			default:
 			}
+
 		}
 	}
 }
@@ -1146,7 +1166,7 @@ func (r *masterRunner) run() {
 				case <-r.closeChan:
 					return
 				case <-ticker.C:
-					c := r.server.getClientsLength()
+					c := r.server.getAvailableClientsLength()
 					log.Info().Msg(fmt.Sprintf("expected worker number: %v, current worker count: %v", r.expectWorkers, c))
 					if c >= r.expectWorkers {
 						err = r.start()
@@ -1165,6 +1185,9 @@ func (r *masterRunner) run() {
 		}()
 	}
 
+	// master state machine
+	r.goAttach(r.stateMachine)
+
 	// listen and deal message from worker
 	r.goAttach(r.clientListener)
 
@@ -1174,13 +1197,13 @@ func (r *masterRunner) run() {
 }
 
 func (r *masterRunner) start() error {
-	numWorkers := r.server.getClientsLength()
+	numWorkers := r.server.getAvailableClientsLength()
 	if numWorkers == 0 {
 		return errors.New("current available workers: 0")
 	}
 
-	// fetching testcase
-	testcase, err := r.fetchTestCase()
+	// fetching testcases
+	testCasesBytes, err := r.fetchTestCases()
 	if err != nil {
 		return err
 	}
@@ -1223,19 +1246,19 @@ func (r *masterRunner) start() error {
 				Type:    "spawn",
 				Profile: ProfileToBytes(workerProfile),
 				NodeID:  workerInfo.ID,
-				Tasks:   testcase,
+				Tasks:   testCasesBytes,
 			}
 			cur++
 		}
 		return true
 	})
 
-	log.Warn().Interface("profile", r.profile).Msg("send spawn data to worker successful")
+	log.Warn().Interface("profile", r.profile).Msg("send spawn data to worker successfully")
 	return nil
 }
 
 func (r *masterRunner) rebalance() error {
-	numWorkers := r.server.getClientsLength()
+	numWorkers := r.server.getAvailableClientsLength()
 	if numWorkers == 0 {
 		return errors.New("current available workers: 0")
 	}
@@ -1276,7 +1299,7 @@ func (r *masterRunner) rebalance() error {
 					Type:    "spawn",
 					Profile: ProfileToBytes(workerProfile),
 					NodeID:  workerInfo.ID,
-					Tasks:   r.tcb,
+					Tasks:   r.testCasesBytes,
 				}
 			} else {
 				workerInfo.getStream() <- &messager.StreamResponse{
@@ -1290,22 +1313,22 @@ func (r *masterRunner) rebalance() error {
 		return true
 	})
 
-	log.Warn().Msg("send rebalance data to worker successful")
+	log.Warn().Msg("send rebalance data to worker successfully")
 	return nil
 }
 
-func (r *masterRunner) fetchTestCase() ([]byte, error) {
+func (r *masterRunner) fetchTestCases() ([]byte, error) {
 	ticker := time.NewTicker(30 * time.Second)
-	if len(r.testCaseBytes) > 0 {
-		<-r.testCaseBytes
+	if len(r.testCaseBytesChan) > 0 {
+		<-r.testCaseBytesChan
 	}
 	r.parseTestCasesChan <- true
 	select {
 	case <-ticker.C:
 		return nil, errors.New("parse testcases timeout")
-	case tcb := <-r.testCaseBytes:
-		r.tcb = tcb
-		return tcb, nil
+	case testCasesBytes := <-r.testCaseBytesChan:
+		r.testCasesBytes = testCasesBytes
+		return testCasesBytes, nil
 	}
 }
 
@@ -1336,22 +1359,23 @@ func (r *masterRunner) close() {
 func (r *masterRunner) reportStats() {
 	currentTime := time.Now()
 	println()
-	println("========================= HttpRunner Master for Distributed Load Testing ========================= ")
-	println(fmt.Sprintf("Current time: %s, State: %v, Current Available Workers: %v, Target Users: %v",
-		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getClientsLength(), r.getSpawnCount()))
+	println("==================================== HttpRunner Master for Distributed Load Testing ==================================== ")
+	println(fmt.Sprintf("Current time: %s, State: %v, Current Available Workers: %v, Target Users: %v, Current Users: %v",
+		currentTime.Format("2006/01/02 15:04:05"), getStateName(r.getState()), r.server.getAvailableClientsLength(), r.getSpawnCount(), r.server.getCurrentUsers()))
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetColMinWidth(0, 20)
+	table.SetColMinWidth(0, 40)
 	table.SetColMinWidth(1, 10)
+	table.SetColMinWidth(2, 10)
 	table.SetHeader([]string{"Worker ID", "IP", "State", "Current Users", "CPU Usage (%)", "Memory Usage (%)"})
 
 	for _, worker := range r.server.getAllWorkers() {
 		row := make([]string, 6)
 		row[0] = worker.ID
 		row[1] = worker.IP
-		row[2] = fmt.Sprintf("%v", getStateName(worker.getState()))
-		row[3] = fmt.Sprintf("%v", worker.getUserCount())
-		row[4] = fmt.Sprintf("%.2f", worker.getCPUUsage())
-		row[5] = fmt.Sprintf("%.2f", worker.getMemoryUsage())
+		row[2] = fmt.Sprintf("%v", getStateName(worker.State))
+		row[3] = fmt.Sprintf("%v", worker.UserCount)
+		row[4] = fmt.Sprintf("%.2f", worker.CPUUsage)
+		row[5] = fmt.Sprintf("%.2f", worker.MemoryUsage)
 		table.Append(row)
 	}
 	table.Render()

@@ -104,10 +104,6 @@ func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 		return nil, errors.New("invalid testcase format, missing teststeps!")
 	}
 
-	err := tc.MakeCompat()
-	if err != nil {
-		return nil, err
-	}
 	if tc.Config == nil {
 		tc.Config = &TConfig{Name: "please input testcase name"}
 	}
@@ -119,6 +115,11 @@ func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 func (tc *TCase) toTestCase() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
+	}
+
+	err := tc.MakeCompat()
+	if err != nil {
+		return nil, err
 	}
 
 	// locate project root dir by plugin path
