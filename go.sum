@@ -101,8 +101,8 @@ github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25Kn
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385/go.mod h1:0vRUJqYpeSZifjYj7uP3BG/gKcuzL9xWVV/Y+cK33KM=
 github.com/electricbubble/gidevice v0.6.2 h1:eIeCHH7Xn5fTwnUv3qL8c7L4anKIHtjlTBkgr1LDVTc=
 github.com/electricbubble/gidevice v0.6.2/go.mod h1:bRHL2M9qgeEKju8KRvKMZUVEg7t5zMnTiG3SJ3QDH5o=
-github.com/electricbubble/gwda v0.3.1-0.20220731124432-07f451783588 h1:CAq1AvRKkG8/PX6LCLwYpERq/TIXkVNTXq4MJEWGlG0=
-github.com/electricbubble/gwda v0.3.1-0.20220731124432-07f451783588/go.mod h1:kyzKpP1/iKJ2i4AxmT8sEmSvB8Pz5NcDVwc/m/Jsg6k=
+github.com/electricbubble/gwda v0.4.0 h1:+Sbi8WRM8sXh0cXpmY97GiWuR1CNQ/v2tsMUyWxlnV4=
+github.com/electricbubble/gwda v0.4.0/go.mod h1:kyzKpP1/iKJ2i4AxmT8sEmSvB8Pz5NcDVwc/m/Jsg6k=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
