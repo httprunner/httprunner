@@ -24,7 +24,7 @@ func removeHashicorpGoPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp go plugin")
 	os.Remove(tmpl("debugtalk.bin"))
 	pluginPath, _ := filepath.Abs(tmpl("debugtalk.bin"))
-	delete(pluginMap, pluginPath)
+	pluginMap.Delete(pluginPath)
 }
 
 func buildHashicorpPyPlugin() {
