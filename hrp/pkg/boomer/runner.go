@@ -670,8 +670,8 @@ func (r *localRunner) start() {
 		close(r.controller.rebalance)
 		r.wgMu.Unlock()
 
-		// wait for goroutines before closing
-		r.wg.Wait()
+		//// wait for goroutines before closing
+		//r.wg.Wait()
 
 		close(r.doneChan)
 
