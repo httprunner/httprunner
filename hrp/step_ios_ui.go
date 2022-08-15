@@ -244,8 +244,8 @@ type StepIOSValidation struct {
 
 func (s *StepIOSValidation) AssertNameExists(expectedName string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:  "UI",
-		Assert: assertionNameExists,
+		Check:  uiSelectorName,
+		Assert: assertionExists,
 		Expect: expectedName,
 	}
 	if len(msg) > 0 {
@@ -259,8 +259,8 @@ func (s *StepIOSValidation) AssertNameExists(expectedName string, msg ...string)
 
 func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:  "UI",
-		Assert: assertionNameNotExists,
+		Check:  uiSelectorName,
+		Assert: assertionNotExists,
 		Expect: expectedName,
 	}
 	if len(msg) > 0 {
@@ -274,8 +274,8 @@ func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg ...stri
 
 func (s *StepIOSValidation) AssertXpathExists(expectedXpath string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:  "UI",
-		Assert: assertionXpathExists,
+		Check:  uiSelectorXpath,
+		Assert: assertionExists,
 		Expect: expectedXpath,
 	}
 	if len(msg) > 0 {
@@ -289,8 +289,8 @@ func (s *StepIOSValidation) AssertXpathExists(expectedXpath string, msg ...strin
 
 func (s *StepIOSValidation) AssertXpathNotExists(expectedXpath string, msg ...string) *StepIOSValidation {
 	v := Validator{
-		Check:  "UI",
-		Assert: assertionXpathNotExists,
+		Check:  uiSelectorXpath,
+		Assert: assertionNotExists,
 		Expect: expectedXpath,
 	}
 	if len(msg) > 0 {
@@ -675,7 +675,7 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 		}
 
 		// parse check value
-		if validator.Check != "UI" {
+		if !strings.HasPrefix(validator.Check, "ui_") {
 			validataResult.CheckResult = "skip"
 			log.Warn().Interface("validator", validator).Msg("skip validator")
 			validateResults = append(validateResults, validataResult)
@@ -687,17 +687,20 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 			return nil, errors.New("validator expect should be string")
 		}
 
-		var result bool
-		switch validator.Assert {
-		case assertionXpathExists:
-			result = w.assertXpath(expected, true)
-		case assertionXpathNotExists:
-			result = w.assertXpath(expected, false)
-		case assertionNameExists:
-			result = w.assertName(expected, true)
-		case assertionNameNotExists:
-			result = w.assertName(expected, false)
+		var exists bool
+		if validator.Assert == assertionExists {
+			exists = true
+		} else {
+			exists = false
 		}
+		var result bool
+		switch validator.Check {
+		case uiSelectorName:
+			result = w.assertName(expected, exists)
+		case uiSelectorXpath:
+			result = w.assertXpath(expected, exists)
+		}
+
 		if result {
 			log.Info().
 				Str("assert", validator.Assert).

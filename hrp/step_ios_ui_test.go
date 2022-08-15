@@ -20,10 +20,10 @@ func TestIOSSettingsAction(t *testing.T) {
 	}
 	fmt.Println(testCase)
 
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIOSSearchApp(t *testing.T) {
@@ -93,10 +93,10 @@ func TestIOSWeixinLive(t *testing.T) {
 	}
 	fmt.Println(testCase)
 
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIOSCameraPhotoCapture(t *testing.T) {
