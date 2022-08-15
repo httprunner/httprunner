@@ -190,7 +190,7 @@ func (api *apiHandler) Start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req := StartRequestBody{
-		Profile: *api.boomer.GetProfile(),
+		Profile: *boomer.NewProfile(),
 	}
 	err = mapstructure.Decode(data, &req)
 	if err != nil {
