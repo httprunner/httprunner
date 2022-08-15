@@ -387,13 +387,16 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
 	}
-	defer resp.Body.Close()
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 
 	// decode response body in br/gzip/deflate formats
 	err = decodeResponseBody(resp)
 	if err != nil {
 		return stepResult, errors.Wrap(err, "decode response body failed")
 	}
+	defer resp.Body.Close()
 
 	// log & print response
 	if r.LogOn() {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -454,8 +455,8 @@ var (
 )
 
 var (
-	minResponseTimeMap = map[string]float64{}
-	maxResponseTimeMap = map[string]float64{}
+	minResponseTimeMap = sync.Map{}
+	maxResponseTimeMap = sync.Map{}
 )
 
 // NewPrometheusPusherOutput returns a PrometheusPusherOutput.
@@ -577,19 +578,19 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 		}
 		// every stat in total
 		key := fmt.Sprintf("%v_%v", method, name)
-		if _, ok := minResponseTimeMap[key]; !ok {
-			minResponseTimeMap[key] = float64(stat.MinResponseTime)
-		} else {
-			minResponseTimeMap[key] = math.Min(float64(stat.MinResponseTime), minResponseTimeMap[key])
+		minResponseTime, loaded := minResponseTimeMap.LoadOrStore(key, float64(stat.MinResponseTime))
+		if loaded {
+			minResponseTime = math.Min(minResponseTime.(float64), float64(stat.MinResponseTime))
+			minResponseTimeMap.Store(key, minResponseTime)
 		}
-		gaugeTotalMinResponseTime.WithLabelValues(method, name).Set(minResponseTimeMap[key])
+		gaugeTotalMinResponseTime.WithLabelValues(method, name).Set(minResponseTime.(float64))
 
-		if _, ok := maxResponseTimeMap[key]; !ok {
-			maxResponseTimeMap[key] = float64(stat.MaxResponseTime)
-		} else {
-			maxResponseTimeMap[key] = math.Max(float64(stat.MaxResponseTime), maxResponseTimeMap[key])
+		maxResponseTime, loaded := maxResponseTimeMap.LoadOrStore(key, float64(stat.MaxResponseTime))
+		if loaded {
+			maxResponseTime = math.Max(maxResponseTime.(float64), float64(stat.MaxResponseTime))
+			maxResponseTimeMap.Store(key, maxResponseTime)
 		}
-		gaugeTotalMaxResponseTime.WithLabelValues(method, name).Set(maxResponseTimeMap[key])
+		gaugeTotalMaxResponseTime.WithLabelValues(method, name).Set(maxResponseTime.(float64))
 
 		counterTotalNumRequests.WithLabelValues(method, name).Add(float64(stat.NumRequests))
 		counterTotalNumFailures.WithLabelValues(method, name).Add(float64(stat.NumFailures))
@@ -639,4 +640,7 @@ func resetPrometheusMetrics() {
 	gaugeTotalFailPerSec.Set(0)
 	gaugeTransactionsPassed.Set(0)
 	gaugeTransactionsFailed.Set(0)
+
+	minResponseTimeMap = sync.Map{}
+	maxResponseTimeMap = sync.Map{}
 }

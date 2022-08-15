@@ -53,6 +53,24 @@ func (w *WorkerNode) setState(state int32) {
 	atomic.StoreInt32(&w.State, state)
 }
 
+func (w *WorkerNode) isStarting() bool {
+	return w.getState() == StateRunning || w.getState() == StateSpawning
+}
+
+func (w *WorkerNode) isStopping() bool {
+	return w.getState() == StateStopping
+}
+
+func (w *WorkerNode) isAvailable() bool {
+	state := w.getState()
+	return state != StateMissing && state != StateQuitting
+}
+
+func (w *WorkerNode) isReady() bool {
+	state := w.getState()
+	return state == StateInit || state == StateStopped
+}
+
 func (w *WorkerNode) updateHeartbeat(heartbeat int32) {
 	atomic.StoreInt32(&w.Heartbeat, heartbeat)
 }
@@ -130,8 +148,8 @@ func (w *WorkerNode) getMemoryUsage() float64 {
 }
 
 func (w *WorkerNode) setStream(stream chan *messager.StreamResponse) {
-	w.mutex.RLock()
-	defer w.mutex.RUnlock()
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
 	w.stream = stream
 }
 
@@ -302,26 +320,19 @@ func (s *grpcServer) Register(ctx context.Context, req *messager.RegisterRequest
 	wn := newWorkerNode(req.NodeID, clientIp, req.Os, req.Arch)
 	s.clients.Store(req.NodeID, wn)
 	log.Warn().Str("worker id", req.NodeID).Msg("worker joined")
-	return &messager.RegisterResponse{Code: "0", Message: "register successfully"}, nil
+	return &messager.RegisterResponse{Code: "0", Message: "register successful"}, nil
 }
 
 func (s *grpcServer) SignOut(_ context.Context, req *messager.SignOutRequest) (*messager.SignOutResponse, error) {
 	// delete worker information
 	s.clients.Delete(req.NodeID)
 	log.Warn().Str("worker id", req.NodeID).Msg("worker quited")
-	return &messager.SignOutResponse{Code: "0", Message: "sign out successfully"}, nil
+	return &messager.SignOutResponse{Code: "0", Message: "sign out successful"}, nil
 }
 
-func (s *grpcServer) valid(token string) (isValid bool) {
-	s.clients.Range(func(key, value interface{}) bool {
-		if workerInfo, ok := value.(*WorkerNode); ok {
-			if workerInfo.ID == token {
-				isValid = true
-			}
-		}
-		return true
-	})
-	return
+func (s *grpcServer) validClientToken(token string) bool {
+	_, ok := s.clients.Load(token)
+	return ok
 }
 
 func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_BidirectionalStreamingMessageServer) error {
@@ -332,7 +343,7 @@ func (s *grpcServer) BidirectionalStreamingMessage(srv messager.Message_Bidirect
 		return status.Error(codes.Unauthenticated, "missing token header")
 	}
 
-	ok = s.valid(token)
+	ok = s.validClientToken(token)
 	if !ok {
 		return status.Error(codes.Unauthenticated, "invalid token")
 	}
@@ -404,7 +415,7 @@ func (s *grpcServer) sendMsg(srv messager.Message_BidirectionalStreamingMessageS
 func (s *grpcServer) sendBroadcasts(msg *genericMessage) {
 	s.clients.Range(func(key, value interface{}) bool {
 		if workerInfo, ok := value.(*WorkerNode); ok {
-			if workerInfo.getState() == StateQuitting || workerInfo.getState() == StateMissing {
+			if !workerInfo.isAvailable() {
 				return true
 			}
 			workerInfo.getStream() <- &messager.StreamResponse{
@@ -517,11 +528,47 @@ func (s *grpcServer) getClients() *sync.Map {
 	return s.clients
 }
 
-func (s *grpcServer) getClientsLength() (l int) {
+func (s *grpcServer) getAvailableClientsLength() (l int) {
 	s.clients.Range(func(key, value interface{}) bool {
 		if workerInfo, ok := value.(*WorkerNode); ok {
-			if workerInfo.getState() != StateQuitting && workerInfo.getState() != StateMissing {
+			if workerInfo.isAvailable() {
 				l++
+			}
+		}
+		return true
+	})
+	return
+}
+
+func (s *grpcServer) getReadyClientsLength() (l int) {
+	s.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.isReady() {
+				l++
+			}
+		}
+		return true
+	})
+	return
+}
+
+func (s *grpcServer) getStartingClientsLength() (l int) {
+	s.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.isStarting() {
+				l++
+			}
+		}
+		return true
+	})
+	return
+}
+
+func (s *grpcServer) getCurrentUsers() (l int) {
+	s.clients.Range(func(key, value interface{}) bool {
+		if workerInfo, ok := value.(*WorkerNode); ok {
+			if workerInfo.isStarting() {
+				l += int(workerInfo.getUserCount())
 			}
 		}
 		return true
