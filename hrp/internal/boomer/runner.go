@@ -240,17 +240,11 @@ func (r *runner) getSpawnRate() float64 {
 }
 
 func (r *runner) setRunTime(runTime int64) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	if runTime > 0 {
-		r.runTime = time.Now().Unix() + runTime
-	}
+	atomic.StoreInt64(&r.runTime, time.Now().Unix()+runTime)
 }
 
 func (r *runner) getRunTime() int64 {
-	r.mutex.RLock()
-	defer r.mutex.RUnlock()
-	return r.runTime
+	return atomic.LoadInt64(&r.runTime)
 }
 
 func (r *runner) getSpawnCount() int64 {
@@ -384,11 +378,17 @@ func (r *runner) runTimeCheck(runTime int64) {
 		return
 	}
 
-	for range time.Tick(time.Second * 3) {
-		nowTime := time.Now().Unix()
-		if nowTime > runTime {
-			r.stop()
+	var ticker = time.NewTicker(time.Second * 3)
+	for {
+		select {
+		case <-r.stopChan:
 			return
+		case <-ticker.C:
+			nowTime := time.Now().Unix()
+			if nowTime > runTime {
+				r.stop()
+				return
+			}
 		}
 	}
 }
