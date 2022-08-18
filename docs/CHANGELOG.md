@@ -14,6 +14,7 @@
 - fix: optimize websocket step initialization
 - fix: reuse plugin instance if already initialized
 - fix: deep copy api step to avoid data racing
+- feat: support ping/dns/traceroute for dial test
 
 ## v4.1.6 (2022-07-04)
 
