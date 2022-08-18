@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/fungo"
@@ -24,7 +25,7 @@ const (
 
 const projectInfoFile = "proj.json" // used for ensuring root project
 
-var pluginMap = map[string]funplugin.IPlugin{} // used for reusing plugin instance
+var pluginMap = sync.Map{} // used for reusing plugin instance
 
 func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	// plugin file not found
@@ -37,8 +38,8 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	}
 
 	// reuse plugin instance if it already initialized
-	if p, ok := pluginMap[pluginPath]; ok {
-		return p, nil
+	if p, ok := pluginMap.Load(pluginPath); ok {
+		return p.(funplugin.IPlugin), nil
 	}
 
 	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
@@ -74,7 +75,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	}
 
 	// add plugin instance to plugin map
-	pluginMap[pluginPath] = plugin
+	pluginMap.Store(pluginPath, plugin)
 
 	// report event for initializing plugin
 	event := sdk.EventTracking{
