@@ -1,20 +1,18 @@
 # Release History
 
-## v4.2.0 (2022-07-26)
+## v4.2.0 (2022-08-21)
 
 **go version**
 
 - feat: support distributed load testing on multi-machines
 - feat: support run/boom/convert curl command(s)
-- feat: support uploading file with indicated type and filename
-- feat: support to infer MIME type of the uploaded file automatically
-- feat: using `@FILEPATH` to indicate the path of the file
+- feat: add ping/dns/traceroute/curl sub commands
+- feat: improve builtin uploading feature, support `@` indicator and inferring MIME type
 - change: support omitting websocket url if not necessary
 - change: support multiple websocket connections for each session
 - fix: optimize websocket step initialization
 - fix: reuse plugin instance if already initialized
 - fix: deep copy api step to avoid data racing
-- feat: support ping/dns/traceroute for dial test
 
 ## v4.1.6 (2022-07-04)
 

@@ -1,15 +1,15 @@
-## hrp wiki
+## hrp curl
 
-visit https://httprunner.com
+run integrated curl command
 
 ```
-hrp wiki [flags]
+hrp curl $url [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for wiki
+  -h, --help   help for curl
 ```
 
 ### SEE ALSO
