@@ -8,6 +8,7 @@
 - feat: support run/boom/convert curl command(s)
 - feat: add ping/dns/traceroute/curl sub commands
 - feat: improve builtin uploading feature, support `@` indicator and inferring MIME type
+- feat: hrp boom support setting duration of run time
 - change: support omitting websocket url if not necessary
 - change: support multiple websocket connections for each session
 - fix: optimize websocket step initialization
