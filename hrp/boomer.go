@@ -245,14 +245,13 @@ func (b *HRPBoomer) initWorker(profile *boomer.Profile) {
 	b.InitBoomer()
 }
 
-func (b *HRPBoomer) rebalanceBoomer(profile *boomer.Profile) {
-	b.SetProfile(profile)
-	b.SetSpawnCount(b.GetProfile().SpawnCount)
-	b.SetSpawnRate(b.GetProfile().SpawnRate)
-	b.SetRunTime(b.GetProfile().RunTime)
+func (b *HRPBoomer) rebalanceRunner(profile *boomer.Profile) {
+	b.SetSpawnCount(profile.SpawnCount)
+	b.SetSpawnRate(profile.SpawnRate)
 	b.GetRebalanceChan() <- true
 	log.Info().Interface("profile", profile).Msg("rebalance tasks successfully")
 }
+
 
 func (b *HRPBoomer) PollTasks(ctx context.Context) {
 	for {
