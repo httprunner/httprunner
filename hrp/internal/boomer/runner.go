@@ -203,6 +203,7 @@ type runner struct {
 
 	spawnCount int64 // target clients to spawn
 	spawnRate  float64
+	runTime    int64
 
 	controller *Controller
 	loop       *Loop // specify loop count for testcase, count = loopCount * spawnCount
@@ -241,6 +242,14 @@ func (r *runner) getSpawnRate() float64 {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	return r.spawnRate
+}
+
+func (r *runner) setRunTime(runTime int64) {
+	atomic.StoreInt64(&r.runTime, time.Now().Unix()+runTime)
+}
+
+func (r *runner) getRunTime() int64 {
+	return atomic.LoadInt64(&r.runTime)
 }
 
 func (r *runner) getSpawnCount() int64 {
@@ -366,6 +375,26 @@ func (r *runner) reset() {
 	r.stoppingChan = make(chan bool)
 	r.doneChan = make(chan bool)
 	r.reportedChan = make(chan bool)
+}
+
+func (r *runner) runTimeCheck(runTime int64) {
+	if runTime <= 0 {
+		return
+	}
+
+	var ticker = time.NewTicker(time.Second * 3)
+	for {
+		select {
+		case <-r.stopChan:
+			return
+		case <-ticker.C:
+			nowTime := time.Now().Unix()
+			if nowTime > runTime {
+				r.stop()
+				return
+			}
+		}
+	}
 }
 
 func (r *runner) spawnWorkers(spawnCount int64, spawnRate float64, quit chan bool, spawnCompleteFunc func()) {
@@ -627,6 +656,8 @@ func (r *localRunner) start() {
 	}
 	// output setup
 	r.outputOnStart()
+
+	go r.runTimeCheck(r.getRunTime())
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, nil)
 
@@ -922,6 +953,8 @@ func (r *workerRunner) start() {
 	}
 
 	r.outputOnStart()
+
+	go r.runTimeCheck(r.getRunTime())
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, r.spawnComplete)
 
