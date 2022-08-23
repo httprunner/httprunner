@@ -70,7 +70,8 @@ func TestIOSAppLaunch(t *testing.T) {
 
 func TestIOSWeixinLive(t *testing.T) {
 	testCase := &TestCase{
-		Config: NewConfig("ios ui action on 微信直播"),
+		Config: NewConfig("ios ui action on 微信直播").
+			SetIOS(WDADevice{Port: 8700, MjpegPort: 8800}),
 		TestSteps: []IStep{
 			NewStep("启动微信").
 				IOS().

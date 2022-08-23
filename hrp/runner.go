@@ -12,12 +12,12 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/httprunner/funplugin"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
@@ -383,6 +383,14 @@ func (r *testCaseRunner) parseConfig() error {
 		return errors.Wrap(err, "parse testcase config parameters failed")
 	}
 	r.parametersIterator = parametersIterator
+
+	// init iOS WDA clients
+	for _, iosDeviceConfig := range r.parsedConfig.IOS {
+		_, err := r.hrpRunner.InitWDAClient(iosDeviceConfig.WDADevice)
+		if err != nil {
+			return errors.Wrap(err, "init iOS WDA client failed")
+		}
+	}
 
 	return nil
 }
