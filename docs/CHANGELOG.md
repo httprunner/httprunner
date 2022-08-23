@@ -1,5 +1,9 @@
 # Release History
 
+## v4.2.1 (2022-08-23)
+
+- feat: support iOS UI automation with WebDriverAgent
+
 ## v4.2.0 (2022-08-21)
 
 **go version**

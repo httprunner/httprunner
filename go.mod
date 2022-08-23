@@ -38,3 +38,4 @@ require (
 )
 
 // replace github.com/httprunner/funplugin => ../funplugin
+replace github.com/electricbubble/gwda => github.com/debugtalk/gwda v0.0.0-20220823102718-fae698f66992

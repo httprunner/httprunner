@@ -2,7 +2,7 @@ package hrp
 
 import "fmt"
 
-type AndroidAction struct {
+type AndroidStep struct {
 	MobileAction
 	Serial  string         `json:"serial,omitempty" yaml:"serial,omitempty"`
 	Actions []MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`

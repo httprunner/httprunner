@@ -32,9 +32,19 @@ const (
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
-type IOSAction struct {
+type IOSConfig struct {
+	WDADevice
+}
+
+type WDADevice struct {
+	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
+	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
+}
+
+type IOSStep struct {
+	WDADevice
 	MobileAction
-	UDID    string         `json:"udid,omitempty" yaml:"udid,omitempty"`
 	Actions []MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
@@ -318,7 +328,7 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
-func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
+func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err error) {
 	defer func() {
 		if err != nil {
 			return
@@ -336,13 +346,24 @@ func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
 	}()
 
 	// avoid duplicate init
-	if udid == "" && len(r.wdaClients) == 1 {
+	if device.UDID == "" && len(r.wdaClients) == 1 {
 		for _, v := range r.wdaClients {
 			return v, nil
 		}
 	}
 
-	targetDevice, err := getAttachedIOSDevice(udid)
+	// init wda device
+	var options []gwda.DeviceOptions
+	if device.UDID != "" {
+		options = append(options, gwda.WithSerialNumber(device.UDID))
+	}
+	if device.Port != 0 {
+		options = append(options, gwda.WithPort(device.Port))
+	}
+	if device.MjpegPort != 0 {
+		options = append(options, gwda.WithMjpegPort(device.MjpegPort))
+	}
+	targetDevice, err := gwda.NewDevice(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -395,30 +416,6 @@ func (r *HRPRunner) InitWDAClient(udid string) (client *wdaClient, err error) {
 	return client, nil
 }
 
-func getAttachedIOSDevice(udid string) (*gwda.Device, error) {
-	// get all attached deivces
-	devices, err := gwda.DeviceList()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get attached ios devices list")
-	}
-	if len(devices) == 0 {
-		return nil, errors.New("no ios devices attached")
-	}
-
-	if udid == "" {
-		return &devices[0], nil
-	}
-
-	// find device by udid
-	for _, device := range devices {
-		if device.SerialNumber() == udid {
-			return &device, nil
-		}
-	}
-
-	return nil, fmt.Errorf("device %s is not attached", udid)
-}
-
 func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
 	stepResult = &StepResult{
 		Name:        step.Name,
@@ -428,7 +425,7 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 
 	// init wdaClient driver
-	wdaClient, err := r.hrpRunner.InitWDAClient(step.IOS.UDID)
+	wdaClient, err := r.hrpRunner.InitWDAClient(step.IOS.WDADevice)
 	if err != nil {
 		return
 	}
