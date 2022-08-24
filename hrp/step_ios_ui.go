@@ -353,7 +353,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	}
 
 	// init wda device
-	var options []gwda.DeviceOptions
+	var options []gwda.DeviceOption
 	if device.UDID != "" {
 		options = append(options, gwda.WithSerialNumber(device.UDID))
 	}
