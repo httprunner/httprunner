@@ -12,6 +12,7 @@ var (
 	MarshalIndent = json.MarshalIndent
 	Unmarshal     = json.Unmarshal
 	NewDecoder    = json.NewDecoder
+	Valid         = json.Valid
 	NewEncoder    = json.NewEncoder
 	Get           = json.Get
 )
