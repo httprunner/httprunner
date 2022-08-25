@@ -383,6 +383,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	}
 
 	// init WDA driver
+	gwda.SetDebug(true)
 	capabilities := gwda.NewCapabilities()
 	capabilities.WithDefaultAlertAction(gwda.AlertActionAccept)
 	driver, err := gwda.NewUSBDriver(capabilities, *targetDevice)
@@ -728,7 +729,7 @@ func (w *wdaClient) findElement(param string) (ele gwda.WebElement, err error) {
 	} else {
 		// name
 		selector = gwda.BySelector{
-			Name: param,
+			LinkText: gwda.NewElementAttribute().WithName(param),
 		}
 	}
 
@@ -737,7 +738,7 @@ func (w *wdaClient) findElement(param string) (ele gwda.WebElement, err error) {
 
 func (w *wdaClient) assertName(name string, exists bool) bool {
 	selector := gwda.BySelector{
-		Name: name,
+		LinkText: gwda.NewElementAttribute().WithName(name),
 	}
 	_, err := w.Driver.FindElement(selector)
 	return exists == (err == nil)

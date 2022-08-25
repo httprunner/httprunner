@@ -48,7 +48,8 @@ func TestIOSSearchApp(t *testing.T) {
 
 func TestIOSAppLaunch(t *testing.T) {
 	testCase := &TestCase{
-		Config: NewConfig("启动 & 关闭 App"),
+		Config: NewConfig("启动 & 关闭 App").
+			SetIOS(WDADevice{Port: 8100, MjpegPort: 9100}),
 		TestSteps: []IStep{
 			NewStep("终止今日头条").
 				IOS().AppTerminate("com.ss.iphone.article.News"),
@@ -71,7 +72,7 @@ func TestIOSAppLaunch(t *testing.T) {
 func TestIOSWeixinLive(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on 微信直播").
-			SetIOS(WDADevice{Port: 8700, MjpegPort: 8800}),
+			SetIOS(WDADevice{Port: 8100, MjpegPort: 9100}),
 		TestSteps: []IStep{
 			NewStep("启动微信").
 				IOS().
