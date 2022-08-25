@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -408,16 +409,20 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	// cache wda client
 	r.wdaClients = make(map[string]*wdaClient)
 	client = &wdaClient{
+		ID:         time.Now().Unix(),
 		Device:     targetDevice,
 		Driver:     driver,
 		WindowSize: windowSize,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 	r.wdaClients[targetDevice.SerialNumber()] = client
 
 	return client, nil
 }
 
-func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
+func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
 	stepResult = &StepResult{
 		Name:        step.Name,
 		StepType:    stepTypeIOS,
@@ -426,7 +431,7 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 
 	// init wdaClient driver
-	wdaClient, err := r.hrpRunner.InitWDAClient(step.IOS.WDADevice)
+	wdaClient, err := s.hrpRunner.InitWDAClient(step.IOS.WDADevice)
 	if err != nil {
 		return
 	}
@@ -453,7 +458,7 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 
 	// take snapshot
 	log.Info().Str("name", step.Name).Msg("take snapshot before validation")
-	err = wdaClient.screenShot()
+	err = wdaClient.screenShot(fmt.Sprintf("validate_%s", step.Name))
 	if err != nil {
 		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
 	}
@@ -473,13 +478,15 @@ func runStepIOS(r *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 type wdaClient struct {
+	ID         int64
 	Device     *gwda.Device
 	Driver     gwda.WebDriver
 	WindowSize gwda.Size
+	httpClient *http.Client
 }
 
 // screenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (w *wdaClient) screenShot() error {
+func (w *wdaClient) screenShot(path ...string) error {
 	// gidevice 和 gwda 均可实现截图功能，但 gidevice 的截图性能更优
 	// gwda 通过 wda 请求获取（分辨率、响应时间均由 wda 决定）
 	// gidevice 直接通过 Apple 允许的底层通信获取
@@ -497,10 +504,19 @@ func (w *wdaClient) screenShot() error {
 	dir, _ := os.Getwd()
 	screenshotsDir := filepath.Join(dir, "screenshots")
 	if err := builtin.EnsureFolderExists(screenshotsDir); err != nil {
-		return errors.Wrap(err, "create screenshots failed")
+		return errors.Wrap(err, "create screenshots directory failed")
 	}
-	path := filepath.Join(screenshotsDir, fmt.Sprintf("%d", time.Now().Unix())+"."+format)
-	file, err := os.Create(path)
+
+	var filaName string
+	if len(path) > 0 && path[0] != "" {
+		filaName = fmt.Sprintf("%d_%s", time.Now().Unix(), path[0])
+	} else {
+		filaName = fmt.Sprintf("%d", time.Now().Unix())
+	}
+	screenshotPath := filepath.Join(screenshotsDir,
+		fmt.Sprintf("%d_%s.%s", w.ID, filaName, format))
+
+	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return errors.Wrap(err, "create screenshot image file failed")
 	}
@@ -520,7 +536,7 @@ func (w *wdaClient) screenShot() error {
 		return errors.Wrap(err, "encode screenshot image failed")
 	}
 
-	log.Info().Str("path", path).Msg("screenshot generated")
+	log.Info().Str("path", screenshotPath).Msg("screenshot generated")
 	return nil
 }
 
@@ -642,6 +658,9 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	case ctlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
+		if param, ok := action.Params.(string); ok {
+			return w.screenShot(fmt.Sprintf("screenshot_%s", param))
+		}
 		return w.screenShot()
 	case ctlStartCamera:
 		// start camera, alias for app_launch com.apple.camera
@@ -734,6 +753,20 @@ func (w *wdaClient) findElement(param string) (ele gwda.WebElement, err error) {
 	}
 
 	return w.Driver.FindElement(selector)
+}
+
+func (w *wdaClient) locateByOCR(text string) (point gwda.Point, err error) {
+	// raw, err := w.Device.GIDevice().Screenshot()
+	// if err != nil {
+	// 	return errors.Wrap(err, "screenshot by WDA failed")
+	// }
+
+	// url := "https://hubble.bytedance.net/video/api/v1/algorithm/ocr"
+
+	// req, err := http.NewRequest("POST", url, strings.NewReader(form.Encode()))
+
+	// w.httpClient.Do(req)
+	return
 }
 
 func (w *wdaClient) assertName(name string, exists bool) bool {
