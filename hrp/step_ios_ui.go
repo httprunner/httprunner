@@ -2,20 +2,14 @@ package hrp
 
 import (
 	"fmt"
-	"image"
-	"image/jpeg"
-	"image/png"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/electricbubble/gwda"
+	gwdaExt "github.com/electricbubble/gwda-ext-opencv"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -335,7 +329,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 			return
 		}
 		// check if WDA is healthy
-		ok, e := client.Driver.IsWdaHealthy()
+		ok, e := client.DriverExt.IsWdaHealthy()
 		if err != nil {
 			err = errors.Wrap(e, "check WDA health failed")
 			return
@@ -391,7 +385,11 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	settings, err := driver.SetAppiumSettings(map[string]interface{}{
+	driverExt, err := gwdaExt.Extend(driver, 0.95)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to extend gwda.WebDriver")
+	}
+	settings, err := driverExt.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          snapshotMaxDepth,
 		"acceptAlertButtonSelector": acceptAlertButtonSelector,
 	})
@@ -401,7 +399,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
 	// get device window size
-	windowSize, err := driver.WindowSize()
+	windowSize, err := driverExt.WindowSize()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get windows size")
 	}
@@ -411,7 +409,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	client = &wdaClient{
 		ID:         time.Now().Unix(),
 		Device:     targetDevice,
-		Driver:     driver,
+		DriverExt:  driverExt,
 		WindowSize: windowSize,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
@@ -457,11 +455,11 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 
 	// take snapshot
-	log.Info().Str("name", step.Name).Msg("take snapshot before validation")
-	err = wdaClient.screenShot(fmt.Sprintf("validate_%s", step.Name))
+	screenshotPath, err := wdaClient.DriverExt.ScreenShot(fmt.Sprintf("validate_%s", step.Name))
 	if err != nil {
 		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
 	}
+	log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
 
 	// validate
 	validateResults, err := wdaClient.doValidation(step.Validators)
@@ -480,64 +478,9 @@ var errActionNotImplemented = errors.New("UI action not implemented")
 type wdaClient struct {
 	ID         int64
 	Device     *gwda.Device
-	Driver     gwda.WebDriver
+	DriverExt  *gwdaExt.DriverExt
 	WindowSize gwda.Size
 	httpClient *http.Client
-}
-
-// screenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (w *wdaClient) screenShot(path ...string) error {
-	// gidevice 和 gwda 均可实现截图功能，但 gidevice 的截图性能更优
-	// gwda 通过 wda 请求获取（分辨率、响应时间均由 wda 决定）
-	// gidevice 直接通过 Apple 允许的底层通信获取
-	// raw, err := w.Driver.Screenshot()
-	raw, err := w.Device.GIDevice().Screenshot()
-	if err != nil {
-		return errors.Wrap(err, "screenshot by WDA failed")
-	}
-
-	img, format, err := image.Decode(raw)
-	if err != nil {
-		return errors.Wrap(err, "decode screenshot image failed")
-	}
-
-	dir, _ := os.Getwd()
-	screenshotsDir := filepath.Join(dir, "screenshots")
-	if err := builtin.EnsureFolderExists(screenshotsDir); err != nil {
-		return errors.Wrap(err, "create screenshots directory failed")
-	}
-
-	var filaName string
-	if len(path) > 0 && path[0] != "" {
-		filaName = fmt.Sprintf("%d_%s", time.Now().Unix(), path[0])
-	} else {
-		filaName = fmt.Sprintf("%d", time.Now().Unix())
-	}
-	screenshotPath := filepath.Join(screenshotsDir,
-		fmt.Sprintf("%d_%s.%s", w.ID, filaName, format))
-
-	file, err := os.Create(screenshotPath)
-	if err != nil {
-		return errors.Wrap(err, "create screenshot image file failed")
-	}
-	defer func() {
-		_ = file.Close()
-	}()
-
-	switch format {
-	case "png":
-		err = png.Encode(file, img)
-	case "jpeg":
-		err = jpeg.Encode(file, img, nil)
-	default:
-		return fmt.Errorf("unsupported image format: %s", format)
-	}
-	if err != nil {
-		return errors.Wrap(err, "encode screenshot image failed")
-	}
-
-	log.Info().Str("path", screenshotPath).Msg("screenshot generated")
-	return nil
 }
 
 func (w *wdaClient) doAction(action MobileAction) error {
@@ -549,17 +492,17 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		return errActionNotImplemented
 	case appLaunch:
 		if bundleId, ok := action.Params.(string); ok {
-			return w.Driver.AppLaunch(bundleId)
+			return w.DriverExt.AppLaunch(bundleId)
 		}
 		return fmt.Errorf("app_launch params should be bundleId(string), got %v", action.Params)
 	case appLaunchUnattached:
 		if bundleId, ok := action.Params.(string); ok {
-			return w.Driver.AppLaunchUnattached(bundleId)
+			return w.DriverExt.AppLaunchUnattached(bundleId)
 		}
 		return fmt.Errorf("app_launch_unattached params should be bundleId(string), got %v", action.Params)
 	case appTerminate:
 		if bundleId, ok := action.Params.(string); ok {
-			success, err := w.Driver.AppTerminate(bundleId)
+			success, err := w.DriverExt.AppTerminate(bundleId)
 			if err != nil {
 				return errors.Wrap(err, "failed to terminate app")
 			}
@@ -570,7 +513,7 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case uiHome:
-		return w.Driver.Homescreen()
+		return w.DriverExt.Homescreen()
 	case uiClick:
 		// click on coordinate
 		if location, ok := action.Params.([]int); ok {
@@ -578,7 +521,7 @@ func (w *wdaClient) doAction(action MobileAction) error {
 			if len(location) != 2 {
 				return fmt.Errorf("invalid click location params: %v", location)
 			}
-			return w.Driver.Tap(location[0], location[1])
+			return w.DriverExt.WebDriver.Tap(location[0], location[1])
 		}
 		if location, ok := action.Params.([]float64); ok {
 			// relative x,y of window size
@@ -587,7 +530,7 @@ func (w *wdaClient) doAction(action MobileAction) error {
 			}
 			x := location[0] * float64(w.WindowSize.Width)
 			y := location[1] * float64(w.WindowSize.Height)
-			return w.Driver.TapFloat(x, y)
+			return w.DriverExt.TapFloat(x, y)
 		}
 		// click on name or xpath
 		if param, ok := action.Params.(string); ok {
@@ -642,13 +585,13 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		} else {
 			return fmt.Errorf("invalid swipe params: %v", action.Params)
 		}
-		return w.Driver.Swipe(fromX, fromY, toX, toY)
+		return w.DriverExt.WebDriver.Swipe(fromX, fromY, toX, toY)
 	case uiInput:
 		// input text on current active element
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
-		return w.Driver.SendKeys(param)
+		return w.DriverExt.SendKeys(param)
 	case ctlSleep:
 		if param, ok := action.Params.(int); ok {
 			time.Sleep(time.Duration(param) * time.Second)
@@ -658,16 +601,21 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	case ctlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
+		var screenshotPath string
+		var err error
 		if param, ok := action.Params.(string); ok {
-			return w.screenShot(fmt.Sprintf("screenshot_%s", param))
+			screenshotPath, err = w.DriverExt.ScreenShot(fmt.Sprintf("screenshot_%s", param))
+		} else {
+			screenshotPath, err = w.DriverExt.ScreenShot(fmt.Sprintf("screenshot_%d", time.Now().Unix()))
 		}
-		return w.screenShot()
+		log.Info().Str("path", screenshotPath).Msg("take screenshot")
+		return err
 	case ctlStartCamera:
 		// start camera, alias for app_launch com.apple.camera
-		return w.Driver.AppLaunch("com.apple.camera")
+		return w.DriverExt.AppLaunch("com.apple.camera")
 	case ctlStopCamera:
 		// stop camera, alias for app_terminate com.apple.camera
-		success, err := w.Driver.AppTerminate("com.apple.camera")
+		success, err := w.DriverExt.AppTerminate("com.apple.camera")
 		if err != nil {
 			return errors.Wrap(err, "failed to terminate camera")
 		}
@@ -752,28 +700,14 @@ func (w *wdaClient) findElement(param string) (ele gwda.WebElement, err error) {
 		}
 	}
 
-	return w.Driver.FindElement(selector)
-}
-
-func (w *wdaClient) locateByOCR(text string) (point gwda.Point, err error) {
-	// raw, err := w.Device.GIDevice().Screenshot()
-	// if err != nil {
-	// 	return errors.Wrap(err, "screenshot by WDA failed")
-	// }
-
-	// url := "https://hubble.bytedance.net/video/api/v1/algorithm/ocr"
-
-	// req, err := http.NewRequest("POST", url, strings.NewReader(form.Encode()))
-
-	// w.httpClient.Do(req)
-	return
+	return w.DriverExt.FindElement(selector)
 }
 
 func (w *wdaClient) assertName(name string, exists bool) bool {
 	selector := gwda.BySelector{
 		LinkText: gwda.NewElementAttribute().WithName(name),
 	}
-	_, err := w.Driver.FindElement(selector)
+	_, err := w.DriverExt.FindElement(selector)
 	return exists == (err == nil)
 }
 
@@ -781,6 +715,6 @@ func (w *wdaClient) assertXpath(xpath string, exists bool) bool {
 	selector := gwda.BySelector{
 		XPath: xpath,
 	}
-	_, err := w.Driver.FindElement(selector)
+	_, err := w.DriverExt.FindElement(selector)
 	return exists == (err == nil)
 }
