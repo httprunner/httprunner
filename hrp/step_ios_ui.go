@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	gwdaExt "github.com/debugtalk/gwda-ext"
 	"github.com/electricbubble/gwda"
-	gwdaExt "github.com/electricbubble/gwda-ext-opencv"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
