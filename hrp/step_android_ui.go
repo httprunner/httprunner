@@ -66,25 +66,17 @@ func (s *StepAndroid) StopRecording() *StepAndroid {
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) Click(params interface{}) *StepAndroid {
+func (s *StepAndroid) Tap(params interface{}) *StepAndroid {
 	s.step.Android.Actions = append(s.step.Android.Actions, MobileAction{
-		Method: uiClick,
+		Method: uiTap,
 		Params: params,
 	})
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) DoubleClick(params interface{}) *StepAndroid {
+func (s *StepAndroid) DoubleTap(params interface{}) *StepAndroid {
 	s.step.Android.Actions = append(s.step.Android.Actions, MobileAction{
-		Method: uiDoubleClick,
-		Params: params,
-	})
-	return &StepAndroid{step: s.step}
-}
-
-func (s *StepAndroid) LongClick(params interface{}) *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, MobileAction{
-		Method: uiLongClick,
+		Method: uiDoubleTap,
 		Params: params,
 	})
 	return &StepAndroid{step: s.step}

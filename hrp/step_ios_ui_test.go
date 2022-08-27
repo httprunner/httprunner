@@ -10,7 +10,7 @@ func TestIOSSettingsAction(t *testing.T) {
 		Config: NewConfig("ios ui action on Settings"),
 		TestSteps: []IStep{
 			NewStep("launch Settings").
-				IOS().Home().Click("//*[@label='设置']").
+				IOS().Home().Tap("//*[@label='设置']").
 				Validate().
 				AssertNameExists("飞行模式").
 				AssertNameNotExists("飞行模式2"),
@@ -31,7 +31,7 @@ func TestIOSSearchApp(t *testing.T) {
 		Config: NewConfig("ios ui action on Search App 资源库"),
 		TestSteps: []IStep{
 			NewStep("进入 App 资源库 搜索框").
-				IOS().Home().SwipeLeft().Times(2).Click("dewey-search-field").
+				IOS().Home().SwipeLeft().Times(2).Tap("dewey-search-field").
 				Validate().
 				AssertNameExists("取消"),
 			NewStep("搜索抖音").
@@ -78,13 +78,13 @@ func TestIOSWeixinLive(t *testing.T) {
 				IOS().
 				Home().
 				AppTerminate("com.tencent.xin"). // 关闭已运行的微信，确保启动微信后在「微信」首页
-				Click("微信").
+				Tap("微信").
 				Validate().
 				AssertNameExists("通讯录", "微信启动失败，「通讯录」不存在"),
 			NewStep("进入直播页").
 				IOS().
-				Click("发现").Sleep(5).       // 进入「发现页」；等待 5 秒确保加载完成
-				Click([]float64{0.5, 0.3}). // 基于坐标位置点击「直播」；TODO：通过 OCR 识别「直播」
+				Tap("发现").Sleep(5). // 进入「发现页」；等待 5 秒确保加载完成
+				TapXY(0.5, 0.3).    // 基于坐标位置点击「直播」；TODO：通过 OCR 识别「直播」
 				Validate().
 				AssertNameExists("直播"),
 			NewStep("向上滑动 5 次").
@@ -112,7 +112,7 @@ func TestIOSCameraPhotoCapture(t *testing.T) {
 				Validate().
 				AssertNameExists("PhotoCapture", "拍照按钮不存在"),
 			NewStep("start recording").
-				IOS().Click("PhotoCapture"),
+				IOS().Tap("PhotoCapture"),
 		},
 	}
 	fmt.Println(testCase)
@@ -140,9 +140,9 @@ func TestIOSCameraVideoCapture(t *testing.T) {
 				AssertNameExists("VideoCapture", "拍摄按钮不存在"),
 			NewStep("start recording").
 				IOS().
-				Click("VideoCapture"). // 开始录像
+				Tap("VideoCapture"). // 开始录像
 				Sleep(5).
-				Click("VideoCapture"), // 停止录像
+				Tap("VideoCapture"), // 停止录像
 		},
 	}
 	fmt.Println(testCase)
@@ -158,7 +158,7 @@ func TestIOSDouyinAction(t *testing.T) {
 		Config: NewConfig("ios ui action on 抖音"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				IOS().Home().Click("//*[@label='抖音']").
+				IOS().Home().Tap("//*[@label='抖音']").
 				Validate().
 				AssertNameExists("首页", "首页 tab 不存在").
 				AssertNameExists("消息", "消息 tab 不存在"),
