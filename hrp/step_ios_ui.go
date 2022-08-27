@@ -2,12 +2,11 @@ package hrp
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	gwdaExt "github.com/debugtalk/gwda-ext"
 	"github.com/electricbubble/gwda"
+	"github.com/httprunner/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -93,25 +92,36 @@ func (s *StepIOS) Home() *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) Click(params interface{}) *StepIOS {
+// TapXY taps the point {X,Y}, X & Y is percentage of coordinates
+func (s *StepIOS) TapXY(x, y float64) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
-		Method: uiClick,
+		Method: uiTapXY,
+		Params: []float64{x, y},
+	})
+	return &StepIOS{step: s.step}
+}
+
+// Tap taps on the target element
+func (s *StepIOS) Tap(params string) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: uiTap,
 		Params: params,
 	})
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) DoubleClick(params interface{}) *StepIOS {
+// DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
+func (s *StepIOS) DoubleTapXY(x, y float64) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
-		Method: uiDoubleClick,
-		Params: params,
+		Method: uiDoubleTapXY,
+		Params: []float64{x, y},
 	})
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) LongClick(params interface{}) *StepIOS {
+func (s *StepIOS) DoubleTap(params string) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
-		Method: uiLongClick,
+		Method: uiDoubleTap,
 		Params: params,
 	})
 	return &StepIOS{step: s.step}
@@ -385,7 +395,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	driverExt, err := gwdaExt.Extend(driver, 0.95)
+	driverExt, err := uixt.Extend(driver, 0.95)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to extend gwda.WebDriver")
 	}
@@ -407,13 +417,9 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 	// cache wda client
 	r.wdaClients = make(map[string]*wdaClient)
 	client = &wdaClient{
-		ID:         time.Now().Unix(),
 		Device:     targetDevice,
 		DriverExt:  driverExt,
 		WindowSize: windowSize,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
 	}
 	r.wdaClients[targetDevice.SerialNumber()] = client
 
@@ -476,11 +482,9 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 type wdaClient struct {
-	ID         int64
 	Device     *gwda.Device
-	DriverExt  *gwdaExt.DriverExt
+	DriverExt  *uixt.DriverExt
 	WindowSize gwda.Size
-	httpClient *http.Client
 }
 
 func (w *wdaClient) doAction(action MobileAction) error {
@@ -514,78 +518,39 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case uiHome:
 		return w.DriverExt.Homescreen()
-	case uiClick:
-		// click on coordinate
-		if location, ok := action.Params.([]int); ok {
-			// absolute x,y
-			if len(location) != 2 {
-				return fmt.Errorf("invalid click location params: %v", location)
-			}
-			return w.DriverExt.WebDriver.Tap(location[0], location[1])
-		}
+	case uiTapXY:
 		if location, ok := action.Params.([]float64); ok {
-			// relative x,y of window size
+			// relative x,y of window size: [0.5, 0.5]
 			if len(location) != 2 {
-				return fmt.Errorf("invalid click location params: %v", location)
+				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			x := location[0] * float64(w.WindowSize.Width)
-			y := location[1] * float64(w.WindowSize.Height)
-			return w.DriverExt.TapFloat(x, y)
+			return w.DriverExt.TapXY(location[0], location[1])
 		}
-		// click on name or xpath
+		return fmt.Errorf("invalid %s params: %v", uiTapXY, action.Params)
+	case uiTap:
 		if param, ok := action.Params.(string); ok {
-			ele, err := w.findElement(param)
-			if err != nil {
-				return errors.Wrap(err, "failed to find element")
-			}
-			return ele.Click()
+			return w.DriverExt.Tap(param)
 		}
-		return fmt.Errorf("invalid click params: %v", action.Params)
-	case uiDoubleClick:
-		// double click on name or xpath
+		return fmt.Errorf("invalid %s params: %v", uiTap, action.Params)
+	case uiDoubleTapXY:
+		if location, ok := action.Params.([]float64); ok {
+			// relative x,y of window size: [0.5, 0.5]
+			if len(location) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", location)
+			}
+			return w.DriverExt.DoubleTapXY(location[0], location[1])
+		}
+		return fmt.Errorf("invalid %s params: %v", uiDoubleTapXY, action.Params)
+	case uiDoubleTap:
 		if param, ok := action.Params.(string); ok {
-			ele, err := w.findElement(param)
-			if err != nil {
-				return errors.Wrap(err, "failed to find element")
-			}
-			return ele.DoubleTap()
+			return w.DriverExt.DoubleTap(param)
 		}
-		return fmt.Errorf("invalid click params: %v", action.Params)
-	case uiLongClick:
-		// long click 2s on name or xpath
-		if param, ok := action.Params.(string); ok {
-			ele, err := w.findElement(param)
-			if err != nil {
-				return errors.Wrap(err, "failed to find element")
-			}
-			return ele.TouchAndHold(2)
-		}
-		return fmt.Errorf("invalid click params: %v", action.Params)
+		return fmt.Errorf("invalid %s params: %v", uiDoubleTap, action.Params)
 	case uiSwipe:
-		width := w.WindowSize.Width
-		height := w.WindowSize.Height
-
-		var fromX, fromY, toX, toY int
-		if direction, ok := action.Params.(string); ok {
-			switch direction {
-			case "up":
-				fromX, fromY, toX, toY = width/2, height*3/4, width/2, height*1/4
-			case "down":
-				fromX, fromY, toX, toY = width/2, height*1/4, width/2, height*3/4
-			case "left":
-				fromX, fromY, toX, toY = width*3/4, height/2, width*1/4, height/2
-			case "right":
-				fromX, fromY, toX, toY = width*1/4, height/2, width*3/4, height/2
-			}
-		} else if params, ok := action.Params.([]int); ok {
-			if len(params) != 4 {
-				return fmt.Errorf("invalid swipe params: %v", params)
-			}
-			fromX, fromY, toX, toY = params[0], params[1], params[2], params[3]
-		} else {
-			return fmt.Errorf("invalid swipe params: %v", action.Params)
+		if param, ok := action.Params.(string); ok {
+			return w.DriverExt.SwipeTo(param)
 		}
-		return w.DriverExt.WebDriver.Swipe(fromX, fromY, toX, toY)
+		return fmt.Errorf("invalid %s params: %v", uiSwipe, action.Params)
 	case uiInput:
 		// input text on current active element
 		// append \n to send text with enter
