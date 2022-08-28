@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/electricbubble/gwda"
-	"github.com/httprunner/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
 const (
@@ -649,23 +650,6 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 		}
 	}
 	return
-}
-
-func (w *wdaClient) findElement(param string) (ele gwda.WebElement, err error) {
-	var selector gwda.BySelector
-	if strings.HasPrefix(param, "/") {
-		// xpath
-		selector = gwda.BySelector{
-			XPath: param,
-		}
-	} else {
-		// name
-		selector = gwda.BySelector{
-			LinkText: gwda.NewElementAttribute().WithName(param),
-		}
-	}
-
-	return w.DriverExt.FindElement(selector)
 }
 
 func (w *wdaClient) assertName(name string, exists bool) bool {
