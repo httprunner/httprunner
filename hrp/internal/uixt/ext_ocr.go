@@ -118,7 +118,7 @@ type OCRService interface {
 	FindText(text string, imageBuf []byte) (rect image.Rectangle, err error)
 }
 
-func (dExt *DriverExt) FindTextByOCR(search string) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindTextByOCR(ocrText string) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
 		err = fmt.Errorf("screenshot error: %v", err)
@@ -126,7 +126,7 @@ func (dExt *DriverExt) FindTextByOCR(search string) (x, y, width, height float64
 	}
 
 	service := &veDEMOCRService{}
-	rect, err := service.FindText(search, bufSource.Bytes())
+	rect, err := service.FindText(ocrText, bufSource.Bytes())
 	if err != nil {
 		err = fmt.Errorf("find text failed: %v", err)
 		return

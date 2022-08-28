@@ -297,9 +297,9 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string) (x, y, width, height flo
 	return dExt.FindImageRectInUIKit(search)
 }
 
-func (dExt *DriverExt) FindImageRectInUIKit(search string) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindImageRectInUIKit(imagePath string) (x, y, width, height float64, err error) {
 	var bufSource, bufSearch *bytes.Buffer
-	if bufSearch, err = getBufFromDisk(search); err != nil {
+	if bufSearch, err = getBufFromDisk(imagePath); err != nil {
 		return 0, 0, 0, 0, err
 	}
 	if bufSource, err = dExt.takeScreenShot(); err != nil {

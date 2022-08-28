@@ -17,6 +17,24 @@ func (dExt *DriverExt) TapXY(x, y float64) error {
 	return dExt.WebDriver.TapFloat(x, y)
 }
 
+func (dExt *DriverExt) TapByOCR(ocrText string) error {
+	x, y, width, height, err := dExt.FindTextByOCR(ocrText)
+	if err != nil {
+		return err
+	}
+
+	return dExt.WebDriver.TapFloat(x+width*0.5, y+height*0.5)
+}
+
+func (dExt *DriverExt) TapByCV(imagePath string) error {
+	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath)
+	if err != nil {
+		return err
+	}
+
+	return dExt.WebDriver.TapFloat(x+width*0.5, y+height*0.5)
+}
+
 func (dExt *DriverExt) Tap(param string) error {
 	return dExt.TapOffset(param, 0.5, 0.5)
 }
