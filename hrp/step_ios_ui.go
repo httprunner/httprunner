@@ -5,26 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/electricbubble/gwda"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
-)
-
-const (
-	// Changes the value of maximum depth for traversing elements source tree.
-	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
-	// but it might restrict the depth of source tree.
-	// A part of elements source tree might be lost if the value was too small. Defaults to 50
-	snapshotMaxDepth = 10
-	// Allows to customize accept/dismiss alert button selector.
-	// It helps you to handle an arbitrary element as accept button in accept alert command.
-	// The selector should be a valid class chain expression, where the search root is the alert element itself.
-	// The default button location algorithm is used if the provided selector is wrong or does not match any element.
-	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] ‘accept’`]
-	acceptAlertButtonSelector  = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','稍后再说'}`]"
-	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
 type IOSConfig struct {
@@ -364,23 +348,7 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
-func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err error) {
-	defer func() {
-		if err != nil {
-			return
-		}
-		// check if WDA is healthy
-		ok, e := client.DriverExt.IsWdaHealthy()
-		if err != nil {
-			err = errors.Wrap(e, "check WDA health failed")
-			return
-		}
-		if !ok {
-			err = errors.New("WDA is not healthy")
-			return
-		}
-	}()
-
+func (r *HRPRunner) InitWDAClient(device WDADevice) (client *uiDriver, err error) {
 	// avoid duplicate init
 	if device.UDID == "" && len(r.wdaClients) == 1 {
 		for _, v := range r.wdaClients {
@@ -388,71 +356,26 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *wdaClient, err erro
 		}
 	}
 
-	// init wda device
-	var options []gwda.DeviceOption
+	// avoid duplicate init
 	if device.UDID != "" {
-		options = append(options, gwda.WithSerialNumber(device.UDID))
+		if client, ok := r.wdaClients[device.UDID]; ok {
+			return client, nil
+		}
 	}
-	if device.Port != 0 {
-		options = append(options, gwda.WithPort(device.Port))
-	}
-	if device.MjpegPort != 0 {
-		options = append(options, gwda.WithMjpegPort(device.MjpegPort))
-	}
-	targetDevice, err := gwda.NewDevice(options...)
+
+	driverExt, err := uixt.InitWDAClient(device.UDID, device.Port, device.MjpegPort)
 	if err != nil {
 		return nil, err
 	}
-
-	// avoid duplicate init
-	if client, ok := r.wdaClients[targetDevice.SerialNumber()]; ok {
-		return client, nil
-	}
-
-	// switch to iOS springboard before init WDA session
-	// aviod getting stuck when some super app is activate such as douyin or wexin
-	log.Info().Msg("switch to iOS springboard")
-	bundleID := "com.apple.springboard"
-	_, err = targetDevice.GIDevice().AppLaunch(bundleID)
-	if err != nil {
-		return nil, errors.Wrap(err, "launch springboard failed")
-	}
-
-	// init WDA driver
-	gwda.SetDebug(true)
-	capabilities := gwda.NewCapabilities()
-	capabilities.WithDefaultAlertAction(gwda.AlertActionAccept)
-	driver, err := gwda.NewUSBDriver(capabilities, *targetDevice)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to init WDA driver")
-	}
-	driverExt, err := uixt.Extend(driver, 0.95)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to extend gwda.WebDriver")
-	}
-	settings, err := driverExt.SetAppiumSettings(map[string]interface{}{
-		"snapshotMaxDepth":          snapshotMaxDepth,
-		"acceptAlertButtonSelector": acceptAlertButtonSelector,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set appium WDA settings")
-	}
-	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
-
-	// get device window size
-	windowSize, err := driverExt.WindowSize()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get windows size")
+	client = &uiDriver{
+		DriverExt: *driverExt,
 	}
 
 	// cache wda client
-	r.wdaClients = make(map[string]*wdaClient)
-	client = &wdaClient{
-		Device:     targetDevice,
-		DriverExt:  driverExt,
-		WindowSize: windowSize,
+	if r.wdaClients == nil {
+		r.wdaClients = make(map[string]*uiDriver)
 	}
-	r.wdaClients[targetDevice.SerialNumber()] = client
+	r.wdaClients[device.UDID] = client
 
 	return client, nil
 }
@@ -512,13 +435,11 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 
 var errActionNotImplemented = errors.New("UI action not implemented")
 
-type wdaClient struct {
-	Device     *gwda.Device
-	DriverExt  *uixt.DriverExt
-	WindowSize gwda.Size
+type uiDriver struct {
+	uixt.DriverExt
 }
 
-func (w *wdaClient) doAction(action MobileAction) error {
+func (ud *uiDriver) doAction(action MobileAction) error {
 	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start iOS UI action")
 
 	switch action.Method {
@@ -527,17 +448,17 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		return errActionNotImplemented
 	case appLaunch:
 		if bundleId, ok := action.Params.(string); ok {
-			return w.DriverExt.AppLaunch(bundleId)
+			return ud.AppLaunch(bundleId)
 		}
 		return fmt.Errorf("app_launch params should be bundleId(string), got %v", action.Params)
 	case appLaunchUnattached:
 		if bundleId, ok := action.Params.(string); ok {
-			return w.DriverExt.AppLaunchUnattached(bundleId)
+			return ud.AppLaunchUnattached(bundleId)
 		}
 		return fmt.Errorf("app_launch_unattached params should be bundleId(string), got %v", action.Params)
 	case appTerminate:
 		if bundleId, ok := action.Params.(string); ok {
-			success, err := w.DriverExt.AppTerminate(bundleId)
+			success, err := ud.AppTerminate(bundleId)
 			if err != nil {
 				return errors.Wrap(err, "failed to terminate app")
 			}
@@ -548,19 +469,19 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case uiHome:
-		return w.DriverExt.Homescreen()
+		return ud.Homescreen()
 	case uiTapXY:
 		if location, ok := action.Params.([]float64); ok {
 			// relative x,y of window size: [0.5, 0.5]
 			if len(location) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			return w.DriverExt.TapXY(location[0], location[1])
+			return ud.TapXY(location[0], location[1])
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapXY, action.Params)
 	case uiTap:
 		if param, ok := action.Params.(string); ok {
-			return w.DriverExt.Tap(param)
+			return ud.Tap(param)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTap, action.Params)
 	case uiDoubleTapXY:
@@ -569,17 +490,17 @@ func (w *wdaClient) doAction(action MobileAction) error {
 			if len(location) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			return w.DriverExt.DoubleTapXY(location[0], location[1])
+			return ud.DoubleTapXY(location[0], location[1])
 		}
 		return fmt.Errorf("invalid %s params: %v", uiDoubleTapXY, action.Params)
 	case uiDoubleTap:
 		if param, ok := action.Params.(string); ok {
-			return w.DriverExt.DoubleTap(param)
+			return ud.DoubleTap(param)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiDoubleTap, action.Params)
 	case uiSwipe:
 		if param, ok := action.Params.(string); ok {
-			return w.DriverExt.SwipeTo(param)
+			return ud.SwipeTo(param)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiSwipe, action.Params)
 	case uiInput:
@@ -587,7 +508,7 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
-		return w.DriverExt.SendKeys(param)
+		return ud.SendKeys(param)
 	case ctlSleep:
 		if param, ok := action.Params.(int); ok {
 			time.Sleep(time.Duration(param) * time.Second)
@@ -600,18 +521,18 @@ func (w *wdaClient) doAction(action MobileAction) error {
 		var screenshotPath string
 		var err error
 		if param, ok := action.Params.(string); ok {
-			screenshotPath, err = w.DriverExt.ScreenShot(fmt.Sprintf("screenshot_%s", param))
+			screenshotPath, err = ud.ScreenShot(fmt.Sprintf("screenshot_%s", param))
 		} else {
-			screenshotPath, err = w.DriverExt.ScreenShot(fmt.Sprintf("screenshot_%d", time.Now().Unix()))
+			screenshotPath, err = ud.ScreenShot(fmt.Sprintf("screenshot_%d", time.Now().Unix()))
 		}
 		log.Info().Str("path", screenshotPath).Msg("take screenshot")
 		return err
 	case ctlStartCamera:
 		// start camera, alias for app_launch com.apple.camera
-		return w.DriverExt.AppLaunch("com.apple.camera")
+		return ud.AppLaunch("com.apple.camera")
 	case ctlStopCamera:
 		// stop camera, alias for app_terminate com.apple.camera
-		success, err := w.DriverExt.AppTerminate("com.apple.camera")
+		success, err := ud.AppTerminate("com.apple.camera")
 		if err != nil {
 			return errors.Wrap(err, "failed to terminate camera")
 		}
@@ -623,7 +544,7 @@ func (w *wdaClient) doAction(action MobileAction) error {
 	return nil
 }
 
-func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*ValidationResult, err error) {
+func (ud *uiDriver) doValidation(iValidators []interface{}) (validateResults []*ValidationResult, err error) {
 	for _, iValidator := range iValidators {
 		validator, ok := iValidator.(Validator)
 		if !ok {
@@ -657,11 +578,11 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 		var result bool
 		switch validator.Check {
 		case uiSelectorName:
-			result = w.assertName(expected, exists)
+			result = (ud.IsNameExist(expected) == exists)
 		case uiSelectorLabel:
-			result = w.assertLabel(expected, exists)
+			result = (ud.IsLabelExist(expected) == exists)
 		case uiSelectorOCR:
-			result = w.assertOCR(expected, exists)
+			result = (ud.IsOCRExist(expected) == exists)
 		}
 
 		if result {
@@ -678,29 +599,8 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 				Str("msg", validator.Message).
 				Msg("validate UI failed")
 			validateResults = append(validateResults, validataResult)
-			err = errors.New("step validation failed")
+			return validateResults, errors.New("step validation failed")
 		}
 	}
-	return
-}
-
-func (w *wdaClient) assertName(name string, exists bool) bool {
-	selector := gwda.BySelector{
-		LinkText: gwda.NewElementAttribute().WithName(name),
-	}
-	_, err := w.DriverExt.FindElement(selector)
-	return exists == (err == nil)
-}
-
-func (w *wdaClient) assertLabel(label string, exists bool) bool {
-	selector := gwda.BySelector{
-		LinkText: gwda.NewElementAttribute().WithLabel(label),
-	}
-	_, err := w.DriverExt.FindElement(selector)
-	return exists == (err == nil)
-}
-
-func (w *wdaClient) assertOCR(text string, exists bool) bool {
-	_, _, _, _, err := w.DriverExt.FindTextByOCR(text)
-	return exists == (err == nil)
+	return validateResults, nil
 }
