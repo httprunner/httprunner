@@ -352,3 +352,8 @@ func (dExt *DriverExt) IsOCRExist(text string) bool {
 	_, _, _, _, err := dExt.FindTextByOCR(text)
 	return err == nil
 }
+
+func (dExt *DriverExt) IsImageExist(text string) bool {
+	_, _, _, _, err := dExt.FindImageRectInUIKit(text)
+	return err == nil
+}

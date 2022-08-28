@@ -269,7 +269,7 @@ func (s *StepIOSValidation) AssertNameExists(expectedName string, msg ...string)
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("[%s] not found", expectedName)
+		v.Message = fmt.Sprintf("attribute name [%s] not found", expectedName)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -284,7 +284,7 @@ func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg ...stri
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("[%s] should not exist", expectedName)
+		v.Message = fmt.Sprintf("attribute name [%s] should not exist", expectedName)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -299,7 +299,7 @@ func (s *StepIOSValidation) AssertLabelExists(expectedLabel string, msg ...strin
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("[%s] not found", expectedLabel)
+		v.Message = fmt.Sprintf("attribute label [%s] not found", expectedLabel)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -314,7 +314,7 @@ func (s *StepIOSValidation) AssertLabelNotExists(expectedLabel string, msg ...st
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("[%s] should not exist", expectedLabel)
+		v.Message = fmt.Sprintf("attribute label [%s] should not exist", expectedLabel)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -329,7 +329,7 @@ func (s *StepIOSValidation) AssertOCRExists(expectedText string, msg ...string) 
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("[%s] not found", expectedText)
+		v.Message = fmt.Sprintf("ocr text [%s] not found", expectedText)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -344,7 +344,37 @@ func (s *StepIOSValidation) AssertOCRNotExists(expectedText string, msg ...strin
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("[%s] should not exist", expectedText)
+		v.Message = fmt.Sprintf("ocr text [%s] should not exist", expectedText)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertImageExists(expectedImagePath string, msg ...string) *StepIOSValidation {
+	v := Validator{
+		Check:  uiSelectorImage,
+		Assert: assertionExists,
+		Expect: expectedImagePath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("cv image [%s] not found", expectedImagePath)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertImageNotExists(expectedImagePath string, msg ...string) *StepIOSValidation {
+	v := Validator{
+		Check:  uiSelectorImage,
+		Assert: assertionNotExists,
+		Expect: expectedImagePath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("cv image [%s] should not exist", expectedImagePath)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
@@ -611,6 +641,8 @@ func (ud *uiDriver) doValidation(iValidators []interface{}) (validateResults []*
 			result = (ud.IsLabelExist(expected) == exists)
 		case uiSelectorOCR:
 			result = (ud.IsOCRExist(expected) == exists)
+		case uiSelectorImage:
+			result = (ud.IsImageExist(expected) == exists)
 		}
 
 		if result {

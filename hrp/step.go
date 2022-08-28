@@ -46,6 +46,7 @@ const (
 	uiSelectorName     string = "ui_name"
 	uiSelectorLabel    string = "ui_label"
 	uiSelectorOCR      string = "ui_ocr"
+	uiSelectorImage    string = "ui_image"
 	assertionExists    string = "exists"
 	assertionNotExists string = "not_exists"
 )
