@@ -34,6 +34,8 @@ const (
 	// UI handling
 	uiHome        MobileMethod = "home"
 	uiTapXY       MobileMethod = "tap_xy"
+	uiTapByOCR    MobileMethod = "tap_ocr"
+	uiTapByCV     MobileMethod = "tap_cv"
 	uiTap         MobileMethod = "tap"
 	uiDoubleTapXY MobileMethod = "double_tap_xy"
 	uiDoubleTap   MobileMethod = "double_tap"

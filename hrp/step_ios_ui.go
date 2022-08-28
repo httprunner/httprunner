@@ -95,6 +95,24 @@ func (s *StepIOS) Tap(params string) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
+// Tap taps on the target element by OCR recognition
+func (s *StepIOS) TapByOCR(ocrText string) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: uiTapByOCR,
+		Params: ocrText,
+	})
+	return &StepIOS{step: s.step}
+}
+
+// Tap taps on the target element by CV recognition
+func (s *StepIOS) TapByCV(imagePath string) *StepIOS {
+	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+		Method: uiTapByCV,
+		Params: imagePath,
+	})
+	return &StepIOS{step: s.step}
+}
+
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepIOS) DoubleTapXY(x, y float64) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
@@ -484,6 +502,16 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 			return ud.Tap(param)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTap, action.Params)
+	case uiTapByOCR:
+		if ocrText, ok := action.Params.(string); ok {
+			return ud.TapByOCR(ocrText)
+		}
+		return fmt.Errorf("invalid %s params: %v", uiTapByOCR, action.Params)
+	case uiTapByCV:
+		if imagePath, ok := action.Params.(string); ok {
+			return ud.TapByCV(imagePath)
+		}
+		return fmt.Errorf("invalid %s params: %v", uiTapByCV, action.Params)
 	case uiDoubleTapXY:
 		if location, ok := action.Params.([]float64); ok {
 			// relative x,y of window size: [0.5, 0.5]
