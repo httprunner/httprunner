@@ -12,8 +12,8 @@ func TestIOSSettingsAction(t *testing.T) {
 			NewStep("launch Settings").
 				IOS().Home().Tap("//*[@label='设置']").
 				Validate().
-				AssertNameExists("飞行模式").
-				AssertNameNotExists("飞行模式2"),
+				AssertLabelExists("飞行模式").
+				AssertLabelNotExists("飞行模式2"),
 			NewStep("swipe up and down").
 				IOS().SwipeUp().SwipeUp().SwipeDown(),
 		},
@@ -33,7 +33,7 @@ func TestIOSSearchApp(t *testing.T) {
 			NewStep("进入 App 资源库 搜索框").
 				IOS().Home().SwipeLeft().Times(2).Tap("dewey-search-field").
 				Validate().
-				AssertNameExists("取消"),
+				AssertLabelExists("取消"),
 			NewStep("搜索抖音").
 				IOS().Input("抖音\n"),
 		},
@@ -80,13 +80,13 @@ func TestIOSWeixinLive(t *testing.T) {
 				AppTerminate("com.tencent.xin"). // 关闭已运行的微信，确保启动微信后在「微信」首页
 				Tap("微信").
 				Validate().
-				AssertNameExists("通讯录", "微信启动失败，「通讯录」不存在"),
+				AssertLabelExists("通讯录", "微信启动失败，「通讯录」不存在"),
 			NewStep("进入直播页").
 				IOS().
 				Tap("发现").Sleep(5). // 进入「发现页」；等待 5 秒确保加载完成
 				TapXY(0.5, 0.3).    // 基于坐标位置点击「直播」；TODO：通过 OCR 识别「直播」
 				Validate().
-				AssertNameExists("直播"),
+				AssertLabelExists("直播"),
 			NewStep("向上滑动 5 次").
 				IOS().
 				SwipeUp().Times(3).ScreenShot(). // 上划 3 次，截图保存
@@ -110,7 +110,7 @@ func TestIOSCameraPhotoCapture(t *testing.T) {
 				StopCamera().
 				StartCamera().
 				Validate().
-				AssertNameExists("PhotoCapture", "拍照按钮不存在"),
+				AssertLabelExists("PhotoCapture", "拍照按钮不存在"),
 			NewStep("start recording").
 				IOS().Tap("PhotoCapture"),
 		},
@@ -132,12 +132,12 @@ func TestIOSCameraVideoCapture(t *testing.T) {
 				StopCamera().
 				StartCamera().
 				Validate().
-				AssertNameExists("PhotoCapture", "录像按钮不存在"),
+				AssertLabelExists("PhotoCapture", "录像按钮不存在"),
 			NewStep("switch to video capture").
 				IOS().
 				SwipeRight().
 				Validate().
-				AssertNameExists("VideoCapture", "拍摄按钮不存在"),
+				AssertLabelExists("VideoCapture", "拍摄按钮不存在"),
 			NewStep("start recording").
 				IOS().
 				Tap("VideoCapture"). // 开始录像
@@ -160,8 +160,8 @@ func TestIOSDouyinAction(t *testing.T) {
 			NewStep("launch douyin").
 				IOS().Home().Tap("//*[@label='抖音']").
 				Validate().
-				AssertNameExists("首页", "首页 tab 不存在").
-				AssertNameExists("消息", "消息 tab 不存在"),
+				AssertLabelExists("首页", "首页 tab 不存在").
+				AssertLabelExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
 				IOS().SwipeUp().Times(3).SwipeDown(),
 		},

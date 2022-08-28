@@ -288,6 +288,36 @@ func (s *StepIOSValidation) AssertNameNotExists(expectedName string, msg ...stri
 	return s
 }
 
+func (s *StepIOSValidation) AssertLabelExists(expectedLabel string, msg ...string) *StepIOSValidation {
+	v := Validator{
+		Check:  uiSelectorLabel,
+		Assert: assertionExists,
+		Expect: expectedLabel,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("[%s] not found", expectedLabel)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertLabelNotExists(expectedLabel string, msg ...string) *StepIOSValidation {
+	v := Validator{
+		Check:  uiSelectorLabel,
+		Assert: assertionNotExists,
+		Expect: expectedLabel,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("[%s] should not exist", expectedLabel)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepIOSValidation) Name() string {
 	return s.step.Name
 }
@@ -598,6 +628,8 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 		switch validator.Check {
 		case uiSelectorName:
 			result = w.assertName(expected, exists)
+		case uiSelectorLabel:
+			result = w.assertLabel(expected, exists)
 		}
 
 		if result {
@@ -623,6 +655,14 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 func (w *wdaClient) assertName(name string, exists bool) bool {
 	selector := gwda.BySelector{
 		LinkText: gwda.NewElementAttribute().WithName(name),
+	}
+	_, err := w.DriverExt.FindElement(selector)
+	return exists == (err == nil)
+}
+
+func (w *wdaClient) assertLabel(label string, exists bool) bool {
+	selector := gwda.BySelector{
+		LinkText: gwda.NewElementAttribute().WithLabel(label),
 	}
 	_, err := w.DriverExt.FindElement(selector)
 	return exists == (err == nil)
