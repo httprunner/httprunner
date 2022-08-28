@@ -10,9 +10,11 @@ func TestIOSSettingsAction(t *testing.T) {
 		Config: NewConfig("ios ui action on Settings"),
 		TestSteps: []IStep{
 			NewStep("launch Settings").
-				IOS().Home().Tap("//*[@label='设置']").
+				IOS().Home().Tap("设置").
 				Validate().
+				AssertNameExists("飞行模式").
 				AssertLabelExists("飞行模式").
+				AssertOCRExists("飞行模式").
 				AssertLabelNotExists("飞行模式2"),
 			NewStep("swipe up and down").
 				IOS().SwipeUp().SwipeUp().SwipeDown(),

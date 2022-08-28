@@ -318,6 +318,36 @@ func (s *StepIOSValidation) AssertLabelNotExists(expectedLabel string, msg ...st
 	return s
 }
 
+func (s *StepIOSValidation) AssertOCRExists(expectedText string, msg ...string) *StepIOSValidation {
+	v := Validator{
+		Check:  uiSelectorOCR,
+		Assert: assertionExists,
+		Expect: expectedText,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("[%s] not found", expectedText)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepIOSValidation) AssertOCRNotExists(expectedText string, msg ...string) *StepIOSValidation {
+	v := Validator{
+		Check:  uiSelectorOCR,
+		Assert: assertionNotExists,
+		Expect: expectedText,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("[%s] should not exist", expectedText)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepIOSValidation) Name() string {
 	return s.step.Name
 }
@@ -630,6 +660,8 @@ func (w *wdaClient) doValidation(iValidators []interface{}) (validateResults []*
 			result = w.assertName(expected, exists)
 		case uiSelectorLabel:
 			result = w.assertLabel(expected, exists)
+		case uiSelectorOCR:
+			result = w.assertOCR(expected, exists)
 		}
 
 		if result {
@@ -665,5 +697,10 @@ func (w *wdaClient) assertLabel(label string, exists bool) bool {
 		LinkText: gwda.NewElementAttribute().WithLabel(label),
 	}
 	_, err := w.DriverExt.FindElement(selector)
+	return exists == (err == nil)
+}
+
+func (w *wdaClient) assertOCR(text string, exists bool) bool {
+	_, _, _, _, err := w.DriverExt.FindTextByOCR(text)
 	return exists == (err == nil)
 }
