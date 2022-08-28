@@ -158,31 +158,31 @@ type StepAndroidValidation struct {
 	step *TStep
 }
 
-func (s *StepAndroidValidation) AssertXpathExists(expectedXpath string, msg ...string) *StepAndroidValidation {
+func (s *StepAndroidValidation) AssertNameExists(expectedName string, msg ...string) *StepAndroidValidation {
 	v := Validator{
-		Check:  uiSelectorXpath,
+		Check:  uiSelectorName,
 		Assert: assertionExists,
-		Expect: expectedXpath,
+		Expect: expectedName,
 	}
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("xpath [%s] not found", expectedXpath)
+		v.Message = fmt.Sprintf("[%s] not found", expectedName)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s
 }
 
-func (s *StepAndroidValidation) AssertXpathNotExists(expectedXpath string, msg ...string) *StepAndroidValidation {
+func (s *StepAndroidValidation) AssertNameNotExists(expectedName string, msg ...string) *StepAndroidValidation {
 	v := Validator{
-		Check:  uiSelectorXpath,
+		Check:  uiSelectorName,
 		Assert: assertionNotExists,
-		Expect: expectedXpath,
+		Expect: expectedName,
 	}
 	if len(msg) > 0 {
 		v.Message = msg[0]
 	} else {
-		v.Message = fmt.Sprintf("xpath [%s] should not exist", expectedXpath)
+		v.Message = fmt.Sprintf("[%s] should not exist", expectedName)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s

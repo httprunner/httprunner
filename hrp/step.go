@@ -42,7 +42,6 @@ const (
 
 	// UI validation
 	uiSelectorName     string = "ui_name"
-	uiSelectorXpath    string = "ui_xpath"
 	uiSelectorOCR      string = "ui_ocr"
 	assertionExists    string = "exists"
 	assertionNotExists string = "not_exists"
