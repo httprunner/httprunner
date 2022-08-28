@@ -4,9 +4,9 @@ go 1.16
 
 require (
 	github.com/andybalholm/brotli v1.0.4
-	github.com/debugtalk/gwda-ext v0.0.0-20220826161333-0588d8320009
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/electricbubble/gwda v0.4.0
+	github.com/electricbubble/opencv-helper v0.0.3
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-errors/errors v1.0.1
@@ -31,6 +31,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
+	gocv.io/x/gocv v0.31.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	google.golang.org/grpc v1.45.0
