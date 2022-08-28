@@ -10,10 +10,10 @@ func TestAndroidAction(t *testing.T) {
 		Config: NewConfig("android ui action"),
 		TestSteps: []IStep{
 			NewStep("launch douyin").
-				Android().Serial("xxx").Click("抖音").
+				Android().Serial("xxx").Tap("抖音").
 				Validate().
-				AssertXpathExists("首页", "首页 tab 不存在").
-				AssertXpathExists("消息", "消息 tab 不存在"),
+				AssertNameExists("首页", "首页 tab 不存在").
+				AssertNameExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
 				Android().Serial("xxx").SwipeUp().SwipeUp().SwipeDown(),
 		},
