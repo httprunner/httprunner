@@ -71,7 +71,7 @@ type HRPRunner struct {
 	httpClient    *http.Client
 	http2Client   *http.Client
 	wsDialer      *websocket.Dialer
-	wdaClients    map[string]*wdaClient // wda client used for iOS UI automation, key is udid
+	wdaClients    map[string]*uiDriver // wda client used for iOS UI automation, key is udid
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing

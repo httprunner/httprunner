@@ -332,4 +332,23 @@ func (dExt *DriverExt) PerformActions(actions *gwda.W3CActions) error {
 	return dExt.PerformW3CActions(actions)
 }
 
-// IsExist
+func (dExt *DriverExt) IsNameExist(name string) bool {
+	selector := gwda.BySelector{
+		LinkText: gwda.NewElementAttribute().WithName(name),
+	}
+	_, err := dExt.FindElement(selector)
+	return err == nil
+}
+
+func (dExt *DriverExt) IsLabelExist(label string) bool {
+	selector := gwda.BySelector{
+		LinkText: gwda.NewElementAttribute().WithLabel(label),
+	}
+	_, err := dExt.FindElement(selector)
+	return err == nil
+}
+
+func (dExt *DriverExt) IsOCRExist(text string) bool {
+	_, _, _, _, err := dExt.FindTextByOCR(text)
+	return err == nil
+}

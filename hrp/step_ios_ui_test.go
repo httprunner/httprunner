@@ -13,9 +13,8 @@ func TestIOSSettingsAction(t *testing.T) {
 				IOS().Home().Tap("设置").
 				Validate().
 				AssertNameExists("飞行模式").
-				AssertLabelExists("飞行模式").
-				AssertOCRExists("飞行模式").
-				AssertLabelNotExists("飞行模式2"),
+				AssertLabelExists("蓝牙").
+				AssertOCRExists("个人热点"),
 			NewStep("swipe up and down").
 				IOS().SwipeUp().SwipeUp().SwipeDown(),
 		},
