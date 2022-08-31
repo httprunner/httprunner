@@ -49,17 +49,28 @@ const (
 	uiSelectorImage    string = "ui_image"
 	assertionExists    string = "exists"
 	assertionNotExists string = "not_exists"
+
+	// custom actions
+	swipeToTapApp  MobileMethod = "swipe_to_tap_app"  // swipe left & right to find app and tap
+	swipeToTapText MobileMethod = "swipe_to_tap_text" // swipe up & down to find text and tap
 )
 
 type MobileAction struct {
 	Method MobileMethod `json:"method" yaml:"method"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
 
+	maxRetryTimes       int  // max retry times
 	timeout             int  // TODO: wait timeout in seconds for mobile action
 	ignoreNotFoundError bool // ignore error if target element not found
 }
 
 type ActionOption func(o *MobileAction)
+
+func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
+	return func(o *MobileAction) {
+		o.maxRetryTimes = maxRetryTimes
+	}
+}
 
 func WithTimeout(timeout int) ActionOption {
 	return func(o *MobileAction) {

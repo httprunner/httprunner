@@ -187,6 +187,38 @@ func (s *StepIOS) SwipeRight() *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
+func (s *StepIOS) SwipeToTapApp(appName string, options ...ActionOption) *StepIOS {
+	action := MobileAction{
+		Method: swipeToTapApp,
+		Params: appName,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	// default to retry 5 times
+	if action.maxRetryTimes == 0 {
+		action.maxRetryTimes = 5
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
+	return &StepIOS{step: s.step}
+}
+
+func (s *StepIOS) SwipeToTapText(text string, options ...ActionOption) *StepIOS {
+	action := MobileAction{
+		Method: swipeToTapText,
+		Params: text,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	// default to retry 10 times
+	if action.maxRetryTimes == 0 {
+		action.maxRetryTimes = 10
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
+	return &StepIOS{step: s.step}
+}
+
 func (s *StepIOS) Input(text string) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
 		Method: uiInput,
@@ -519,12 +551,60 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 		if bundleId, ok := action.Params.(string); ok {
 			return ud.AppLaunch(bundleId)
 		}
-		return fmt.Errorf("app_launch params should be bundleId(string), got %v", action.Params)
+		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
+			appLaunch, action.Params)
 	case appLaunchUnattached:
 		if bundleId, ok := action.Params.(string); ok {
 			return ud.AppLaunchUnattached(bundleId)
 		}
-		return fmt.Errorf("app_launch_unattached params should be bundleId(string), got %v", action.Params)
+		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
+			appLaunchUnattached, action.Params)
+	case swipeToTapApp:
+		if appName, ok := action.Params.(string); ok {
+			var x, y, width, height float64
+			findApp := func(d *uixt.DriverExt) error {
+				var err error
+				x, y, width, height, err = d.FindTextByOCR(appName)
+				return err
+			}
+			foundAppAction := func(d *uixt.DriverExt) error {
+				// click app to launch
+				return d.TapFloat(x+width*0.5, y+height*0.5-20)
+			}
+
+			// go to home screen
+			if err := ud.WebDriver.Homescreen(); err != nil {
+				return errors.Wrap(err, "go to home screen failed")
+			}
+
+			// swipe to first screen
+			for i := 0; i < 5; i++ {
+				ud.SwipeTo("right")
+			}
+
+			// swipe next screen until app found
+			return ud.SwipeUntil("left", findApp, foundAppAction, action.maxRetryTimes)
+		}
+		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
+			swipeToTapApp, action.Params)
+	case swipeToTapText:
+		if text, ok := action.Params.(string); ok {
+			var x, y, width, height float64
+			findText := func(d *uixt.DriverExt) error {
+				var err error
+				x, y, width, height, err = d.FindTextByOCR(text)
+				return err
+			}
+			foundTextAction := func(d *uixt.DriverExt) error {
+				// tap text
+				return d.TapFloat(x+width*0.5, y+height*0.5)
+			}
+
+			// swipe until live room found
+			return ud.SwipeUntil("up", findText, foundTextAction, 20)
+		}
+		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
+			swipeToTapText, action.Params)
 	case appTerminate:
 		if bundleId, ok := action.Params.(string); ok {
 			success, err := ud.AppTerminate(bundleId)
