@@ -21,18 +21,8 @@ const (
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
-func InitWDAClient(udid string, port, mjpeg_port int) (*DriverExt, error) {
+func InitWDAClient(options ...gwda.DeviceOption) (*DriverExt, error) {
 	// init wda device
-	var options []gwda.DeviceOption
-	if udid != "" {
-		options = append(options, gwda.WithSerialNumber(udid))
-	}
-	if port != 0 {
-		options = append(options, gwda.WithPort(port))
-	}
-	if mjpeg_port != 0 {
-		options = append(options, gwda.WithMjpegPort(mjpeg_port))
-	}
 	targetDevice, err := gwda.NewDevice(options...)
 	if err != nil {
 		return nil, err

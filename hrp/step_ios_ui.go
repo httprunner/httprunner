@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/electricbubble/gwda"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -427,7 +428,11 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *uiDriver, err error
 		}
 	}
 
-	driverExt, err := uixt.InitWDAClient(device.UDID, device.Port, device.MjpegPort)
+	driverExt, err := uixt.InitWDAClient(
+		gwda.WithSerialNumber(device.UDID),
+		gwda.WithPort(device.Port),
+		gwda.WithMjpegPort(device.MjpegPort),
+	)
 	if err != nil {
 		return nil, err
 	}

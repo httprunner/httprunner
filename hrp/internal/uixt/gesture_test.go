@@ -4,8 +4,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-
-	"github.com/electricbubble/gwda"
 )
 
 func TestDriverExt_GesturePassword(t *testing.T) {
@@ -15,10 +13,7 @@ func TestDriverExt_GesturePassword(t *testing.T) {
 		password[i], _ = strconv.Atoi(split[i])
 	}
 
-	driver, err := gwda.NewUSBDriver(nil)
-	checkErr(t, err)
-
-	driverExt, err := Extend(driver, 0.95)
+	driverExt, err := InitWDAClient()
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_5.png"

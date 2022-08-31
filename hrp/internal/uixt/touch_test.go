@@ -2,15 +2,10 @@ package uixt
 
 import (
 	"testing"
-
-	"github.com/electricbubble/gwda"
 )
 
 func TestDriverExt_ForceTouch(t *testing.T) {
-	driver, err := gwda.NewUSBDriver(nil)
-	checkErr(t, err)
-
-	driverExt, err := Extend(driver, 0.95)
+	driverExt, err := InitWDAClient()
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_ft.png"
@@ -26,10 +21,7 @@ func TestDriverExt_ForceTouch(t *testing.T) {
 }
 
 func TestDriverExt_TouchAndHold(t *testing.T) {
-	driver, err := gwda.NewUSBDriver(nil)
-	checkErr(t, err)
-
-	driverExt, err := Extend(driver, 0.95)
+	driverExt, err := InitWDAClient()
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_ft.png"
