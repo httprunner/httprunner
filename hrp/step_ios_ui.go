@@ -87,29 +87,41 @@ func (s *StepIOS) TapXY(x, y float64) *StepIOS {
 }
 
 // Tap taps on the target element
-func (s *StepIOS) Tap(params string) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) Tap(params string, options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiTap,
 		Params: params,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
 // Tap taps on the target element by OCR recognition
-func (s *StepIOS) TapByOCR(ocrText string) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) TapByOCR(ocrText string, options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiTapByOCR,
 		Params: ocrText,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
 // Tap taps on the target element by CV recognition
-func (s *StepIOS) TapByCV(imagePath string) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) TapByCV(imagePath string, options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiTapByCV,
 		Params: imagePath,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
@@ -122,11 +134,15 @@ func (s *StepIOS) DoubleTapXY(x, y float64) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) DoubleTap(params string) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) DoubleTap(params string, options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiDoubleTap,
 		Params: params,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
@@ -529,17 +545,17 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", uiTapXY, action.Params)
 	case uiTap:
 		if param, ok := action.Params.(string); ok {
-			return ud.Tap(param)
+			return ud.Tap(param, action.ignoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTap, action.Params)
 	case uiTapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			return ud.TapByOCR(ocrText)
+			return ud.TapByOCR(ocrText, action.ignoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapByOCR, action.Params)
 	case uiTapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return ud.TapByCV(imagePath)
+			return ud.TapByCV(imagePath, action.ignoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapByCV, action.Params)
 	case uiDoubleTapXY:

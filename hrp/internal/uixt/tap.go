@@ -17,37 +17,46 @@ func (dExt *DriverExt) TapXY(x, y float64) error {
 	return dExt.WebDriver.TapFloat(x, y)
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string) error {
+func (dExt *DriverExt) TapByOCR(ocrText string, ignoreNotFoundError bool) error {
 	x, y, width, height, err := dExt.FindTextByOCR(ocrText)
 	if err != nil {
+		if ignoreNotFoundError {
+			return nil
+		}
 		return err
 	}
 
 	return dExt.WebDriver.TapFloat(x+width*0.5, y+height*0.5)
 }
 
-func (dExt *DriverExt) TapByCV(imagePath string) error {
+func (dExt *DriverExt) TapByCV(imagePath string, ignoreNotFoundError bool) error {
 	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath)
 	if err != nil {
+		if ignoreNotFoundError {
+			return nil
+		}
 		return err
 	}
 
 	return dExt.WebDriver.TapFloat(x+width*0.5, y+height*0.5)
 }
 
-func (dExt *DriverExt) Tap(param string) error {
-	return dExt.TapOffset(param, 0.5, 0.5)
+func (dExt *DriverExt) Tap(param string, ignoreNotFoundError bool) error {
+	return dExt.TapOffset(param, 0.5, 0.5, ignoreNotFoundError)
 }
 
-func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64) (err error) {
+func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, ignoreNotFoundError bool) (err error) {
 	// click on element, find by name attribute
 	ele, err := dExt.FindUIElement(param)
 	if err == nil {
 		return ele.Click()
 	}
 
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(param); err != nil {
+	x, y, width, height, err := dExt.FindUIRectInUIKit(param)
+	if err != nil {
+		if ignoreNotFoundError {
+			return nil
+		}
 		return err
 	}
 

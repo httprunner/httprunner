@@ -54,6 +54,23 @@ const (
 type MobileAction struct {
 	Method MobileMethod `json:"method" yaml:"method"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
+
+	timeout             int  // TODO: wait timeout in seconds for mobile action
+	ignoreNotFoundError bool // ignore error if target element not found
+}
+
+type ActionOption func(o *MobileAction)
+
+func WithTimeout(timeout int) ActionOption {
+	return func(o *MobileAction) {
+		o.timeout = timeout
+	}
+}
+
+func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
+	return func(o *MobileAction) {
+		o.ignoreNotFoundError = ignoreError
+	}
 }
 
 type StepResult struct {
