@@ -54,7 +54,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	defer func() {
 		// update testcase summary
 		if err != nil {
-			stepResult.Attachment = err.Error()
+			stepResult.Attachments = err.Error()
 		}
 	}()
 

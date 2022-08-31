@@ -295,7 +295,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	defer func() {
 		// update testcase summary
 		if err != nil {
-			stepResult.Attachment = err.Error()
+			stepResult.Attachments = err.Error()
 		}
 		// update summary
 		r.summary.Records = append(r.summary.Records, stepResult)
