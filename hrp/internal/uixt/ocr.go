@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -92,10 +93,12 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte) (rect image.Rec
 	}
 
 	for _, ocrResult := range ocrResults {
-		if ocrResult.Text != text {
+		// not contains text
+		if !strings.Contains(ocrResult.Text, text) {
 			continue
 		}
 
+		// contains text
 		// only find the first matched one
 		rect = image.Rectangle{
 			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
