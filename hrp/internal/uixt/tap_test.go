@@ -43,6 +43,6 @@ func TestDriverExt_TapWithOCR(t *testing.T) {
 	checkErr(t, err)
 
 	// 需要点击文字上方的图标
-	err = driverExt.TapOffset("抖音", 0.5, -1)
+	err = driverExt.TapOffset("抖音", 0.5, -1, false)
 	checkErr(t, err)
 }

@@ -85,7 +85,7 @@ func TestIOSWeixinLive(t *testing.T) {
 			NewStep("进入直播页").
 				IOS().
 				Tap("发现").Sleep(5). // 进入「发现页」；等待 5 秒确保加载完成
-				TapXY(0.5, 0.3).    // 基于坐标位置点击「直播」；TODO：通过 OCR 识别「直播」
+				TapByOCR("直播").     // 通过 OCR 识别「直播」
 				Validate().
 				AssertLabelExists("直播"),
 			NewStep("向上滑动 5 次").
