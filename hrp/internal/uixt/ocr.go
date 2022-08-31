@@ -92,14 +92,13 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte) (rect image.Rec
 		return
 	}
 
+	var rects []image.Rectangle
 	for _, ocrResult := range ocrResults {
 		// not contains text
 		if !strings.Contains(ocrResult.Text, text) {
 			continue
 		}
 
-		// contains text
-		// only find the first matched one
 		rect = image.Rectangle{
 			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
 			Min: image.Point{
@@ -111,7 +110,20 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte) (rect image.Rec
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
-		return
+
+		// contains text while not match exactly
+		if ocrResult.Text != text {
+			rects = append(rects, rect)
+			continue
+		}
+
+		// match exactly
+		return rect, nil
+	}
+
+	// only find the first matched one
+	if len(rects) > 0 {
+		return rects[0], nil
 	}
 
 	return image.Rectangle{}, fmt.Errorf("text %s not found", text)

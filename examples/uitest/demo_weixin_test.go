@@ -21,19 +21,17 @@ func TestIOSWeixinLive(t *testing.T) {
 			hrp.NewStep("进入直播页").
 				IOS().
 				Tap("发现").       // 进入「发现页」
-				TapByOCR("视频号"). // 通过 OCR 识别「视频号」
-				Validate().
-				AssertLabelExists("视频号"),
+				TapByOCR("视频号"), // 通过 OCR 识别「视频号」
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
-				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(false)),
+				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("在推荐页上划，直到出现「轻触进入直播间」").
 				IOS().
 				SwipeToTapText("轻触进入直播间", hrp.WithMaxRetryTimes(10)),
-			hrp.NewStep("向上滑动，等待 60s").
+			hrp.NewStep("向上滑动，等待 10s").
 				IOS().
-				SwipeUp().Sleep(60).ScreenShot(). // 上划 1 次，等待 60s，截图保存
-				SwipeUp().Times(60).ScreenShot(), // 再上划 1 次，等待 60s，截图保存
+				SwipeUp().Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
+				SwipeUp().Times(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
 	}
 	fmt.Println(testCase)

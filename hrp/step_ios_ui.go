@@ -460,11 +460,18 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *uiDriver, err error
 		}
 	}
 
-	driverExt, err := uixt.InitWDAClient(
-		gwda.WithSerialNumber(device.UDID),
-		gwda.WithPort(device.Port),
-		gwda.WithMjpegPort(device.MjpegPort),
-	)
+	var deviceOptions []gwda.DeviceOption
+	if device.UDID != "" {
+		deviceOptions = append(deviceOptions, gwda.WithSerialNumber(device.UDID))
+	}
+	if device.Port != 0 {
+		deviceOptions = append(deviceOptions, gwda.WithPort(device.Port))
+	}
+	if device.MjpegPort != 0 {
+		deviceOptions = append(deviceOptions, gwda.WithMjpegPort(device.MjpegPort))
+	}
+
+	driverExt, err := uixt.InitWDAClient(deviceOptions...)
 	if err != nil {
 		return nil, err
 	}
