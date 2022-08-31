@@ -1,5 +1,11 @@
 package uixt
 
+import (
+	"fmt"
+
+	"github.com/rs/zerolog/log"
+)
+
 func (dExt *DriverExt) SwipeTo(direction string) (err error) {
 	width := dExt.windowSize.Width
 	height := dExt.windowSize.Height
@@ -16,6 +22,22 @@ func (dExt *DriverExt) SwipeTo(direction string) (err error) {
 		fromX, fromY, toX, toY = width*1/4, height/2, width*3/4, height/2
 	}
 	return dExt.WebDriver.Swipe(fromX, fromY, toX, toY)
+}
+
+type Condition func(driver *DriverExt) error
+
+func (dExt *DriverExt) SwipeUntil(direction string, condition Condition, maxTimes int) error {
+	for i := 0; i < maxTimes; i++ {
+		err := condition(dExt)
+		if err == nil {
+			return nil
+		}
+		err = dExt.SwipeTo(direction)
+		if err != nil {
+			log.Error().Err(err).Msgf("swipe %s failed", direction)
+		}
+	}
+	return fmt.Errorf("swipe %s %d times, run condition failed", direction, maxTimes)
 }
 
 func (dExt *DriverExt) Swipe(pathname string, toX, toY int) (err error) {
