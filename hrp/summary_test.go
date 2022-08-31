@@ -12,7 +12,7 @@ func TestGenHTMLReport(t *testing.T) {
 		StepType:    stepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
-		Attachment:  "err",
+		Attachments: "err",
 	}
 	caseSummary1.Records = []*StepResult{stepResult1, stepResult2, nil}
 	summary.appendCaseSummary(caseSummary1)

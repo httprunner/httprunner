@@ -31,13 +31,16 @@ func TestIOSWeixinLive(t *testing.T) {
 			hrp.NewStep("向上滑动，等待 10s").
 				IOS().
 				SwipeUp().Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
-				SwipeUp().Times(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
+				SwipeUp().Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
 	}
 	fmt.Println(testCase)
 
-	err := hrp.NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
+	runner := hrp.NewRunner(t)
+	sessionRunner, _ := runner.NewSessionRunner(testCase)
+	if err := sessionRunner.Start(nil); err != nil {
+		t.Fatal()
 	}
+	summary := sessionRunner.GetSummary()
+	fmt.Println(summary)
 }

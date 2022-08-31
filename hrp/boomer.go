@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/httprunner/funplugin"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/net/context"
+
 	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/net/context"
 )
 
 func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {
@@ -252,7 +253,6 @@ func (b *HRPBoomer) rebalanceRunner(profile *boomer.Profile) {
 	log.Info().Interface("profile", profile).Msg("rebalance tasks successfully")
 }
 
-
 func (b *HRPBoomer) PollTasks(ctx context.Context) {
 	for {
 		select {
@@ -261,7 +261,7 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 			if len(b.Boomer.GetTasksChan()) > 0 {
 				continue
 			}
-			//Todo: 过滤掉已经传输过的task
+			// Todo: 过滤掉已经传输过的task
 			if task.TestCasesBytes != nil {
 				// init boomer with profile
 				b.initWorker(task.Profile)
@@ -382,7 +382,8 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 						if result.Success {
 							b.RecordSuccess(string(result.StepType), result.Name, result.Elapsed, result.ContentSize)
 						} else {
-							b.RecordFailure(string(result.StepType), result.Name, result.Elapsed, result.Attachment)
+							exception, _ := result.Attachments.(string)
+							b.RecordFailure(string(result.StepType), result.Name, result.Elapsed, exception)
 						}
 					}
 				}

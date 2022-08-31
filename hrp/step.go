@@ -93,7 +93,7 @@ type StepResult struct {
 	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`               // session data or slice of step data
 	ContentSize int64                  `json:"content_size" yaml:"content_size"`                   // response body length
 	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"` // extract variables
-	Attachment  string                 `json:"attachment,omitempty" yaml:"attachment,omitempty"`   // step error information
+	Attachments interface{}            `json:"attachments,omitempty" yaml:"attachments,omitempty"` // store extra step information, such as error message or screenshots
 }
 
 // TStep represents teststep data structure.

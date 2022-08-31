@@ -495,12 +495,36 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 		Success:     false,
 		ContentSize: 0,
 	}
+	screenshots := make([]string, 0)
 
 	// init wdaClient driver
 	wdaClient, err := s.hrpRunner.InitWDAClient(step.IOS.WDADevice)
 	if err != nil {
 		return
 	}
+
+	defer func() {
+		attachments := make(map[string]interface{})
+		if err != nil {
+			attachments["error"] = err.Error()
+		}
+
+		// save attachments
+		screenshots = append(screenshots, wdaClient.screenShots...)
+		attachments["screenshots"] = screenshots
+		stepResult.Attachments = attachments
+
+		// update summary
+		s.summary.Records = append(s.summary.Records, stepResult)
+		s.summary.Stat.Total += 1
+		if stepResult.Success {
+			s.summary.Stat.Successes += 1
+		} else {
+			s.summary.Stat.Failures += 1
+			// update summary result to failed
+			s.summary.Success = false
+		}
+	}()
 
 	// prepare actions
 	var actions []MobileAction
@@ -523,11 +547,14 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 
 	// take snapshot
-	screenshotPath, err := wdaClient.DriverExt.ScreenShot(fmt.Sprintf("validate_%s", step.Name))
+	screenshotPath, err := wdaClient.DriverExt.ScreenShot(
+		fmt.Sprintf("validate_%d", time.Now().Unix()))
 	if err != nil {
 		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
+	} else {
+		log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
+		screenshots = append(screenshots, screenshotPath)
 	}
-	log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
 
 	// validate
 	validateResults, err := wdaClient.doValidation(step.Validators)
@@ -545,6 +572,8 @@ var errActionNotImplemented = errors.New("UI action not implemented")
 
 type uiDriver struct {
 	uixt.DriverExt
+
+	screenShots []string // save screenshots path
 }
 
 func (ud *uiDriver) doAction(action MobileAction) error {
@@ -684,14 +713,12 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 	case ctlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
-		var screenshotPath string
-		var err error
-		if param, ok := action.Params.(string); ok {
-			screenshotPath, err = ud.ScreenShot(fmt.Sprintf("screenshot_%s", param))
-		} else {
-			screenshotPath, err = ud.ScreenShot(fmt.Sprintf("screenshot_%d", time.Now().Unix()))
+		screenshotPath, err := ud.ScreenShot(fmt.Sprintf("screenshot_%d", time.Now().Unix()))
+		if err != nil {
+			return errors.Wrap(err, "take screenshot failed")
 		}
 		log.Info().Str("path", screenshotPath).Msg("take screenshot")
+		ud.screenShots = append(ud.screenShots, screenshotPath)
 		return err
 	case ctlStartCamera:
 		// start camera, alias for app_launch com.apple.camera
