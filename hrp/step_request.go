@@ -107,6 +107,13 @@ func (r *requestBuilder) prepareHeaders(stepVariables map[string]interface{}) er
 			if strings.HasPrefix(key, ":") {
 				continue
 			}
+
+			// supports the use of incoming Host
+			if key == "useIncomingHost" {
+				r.req.Host = headers[value]
+				continue
+			}
+
 			r.req.Header.Add(key, value)
 
 			// prepare content length
