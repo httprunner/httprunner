@@ -110,7 +110,7 @@ func (r *requestBuilder) prepareHeaders(stepVariables map[string]interface{}) er
 
 			// supports the use of incoming Host
 			if key == "useIncomingHost" {
-				r.req.Host = headers[value]
+				r.req.Host = value
 				continue
 			}
 
