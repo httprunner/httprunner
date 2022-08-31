@@ -37,6 +37,10 @@ func TestSwipeUntil(t *testing.T) {
 		x, y, width, height, err = d.FindTextByOCR("抖音")
 		return err
 	}
+	foundAppAction := func(d *DriverExt) error {
+		// click app, launch douyin
+		return d.TapFloat(x+width*0.5, y+height*0.5-20)
+	}
 
 	driverExt.Homescreen()
 
@@ -46,22 +50,20 @@ func TestSwipeUntil(t *testing.T) {
 	}
 
 	// swipe until app found
-	err = driverExt.SwipeUntil("left", findApp, 10)
+	err = driverExt.SwipeUntil("left", findApp, foundAppAction, 10)
 	checkErr(t, err)
-
-	// click app, launch douyin
-	driverExt.TapFloat(x+width*0.5, y+height*0.5-20)
 
 	findLive := func(d *DriverExt) error {
 		var err error
 		x, y, width, height, err = d.FindTextByOCR("点击进入直播间")
 		return err
 	}
+	foundLiveAction := func(d *DriverExt) error {
+		// enter live room
+		return d.TapFloat(x+width*0.5, y+height*0.5)
+	}
 
 	// swipe until live room found
-	err = driverExt.SwipeUntil("up", findLive, 20)
+	err = driverExt.SwipeUntil("up", findLive, foundLiveAction, 20)
 	checkErr(t, err)
-
-	// enter live room
-	driverExt.TapFloat(x+width*0.5, y+height*0.5)
 }
