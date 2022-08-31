@@ -24,20 +24,23 @@ func (dExt *DriverExt) SwipeTo(direction string) (err error) {
 	return dExt.WebDriver.Swipe(fromX, fromY, toX, toY)
 }
 
-type Condition func(driver *DriverExt) error
+// FindCondition indicates the condition to find a UI element
+type FindCondition func(driver *DriverExt) error
 
-func (dExt *DriverExt) SwipeUntil(direction string, condition Condition, maxTimes int) error {
+// FoundAction indicates the action to do after a UI element is found
+type FoundAction func(driver *DriverExt) error
+
+func (dExt *DriverExt) SwipeUntil(direction string, condition FindCondition, action FoundAction, maxTimes int) error {
 	for i := 0; i < maxTimes; i++ {
-		err := condition(dExt)
-		if err == nil {
-			return nil
+		if err := condition(dExt); err == nil {
+			// do action after found
+			return action(dExt)
 		}
-		err = dExt.SwipeTo(direction)
-		if err != nil {
+		if err := dExt.SwipeTo(direction); err != nil {
 			log.Error().Err(err).Msgf("swipe %s failed", direction)
 		}
 	}
-	return fmt.Errorf("swipe %s %d times, run condition failed", direction, maxTimes)
+	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
 }
 
 func (dExt *DriverExt) Swipe(pathname string, toX, toY int) (err error) {
