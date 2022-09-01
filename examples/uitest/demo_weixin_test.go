@@ -35,11 +35,17 @@ func TestIOSWeixinLive(t *testing.T) {
 		},
 	}
 	fmt.Println(testCase)
+	if err := testCase.Dump2JSON("demo_weixin_live.json"); err != nil {
+		t.Fatal(err)
+	}
+	if err := testCase.Dump2YAML("demo_weixin_live.yaml"); err != nil {
+		t.Fatal(err)
+	}
 
 	runner := hrp.NewRunner(t)
 	sessionRunner, _ := runner.NewSessionRunner(testCase)
 	if err := sessionRunner.Start(nil); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	summary := sessionRunner.GetSummary()
 	fmt.Println(summary)
