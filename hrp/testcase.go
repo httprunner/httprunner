@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/mitchellh/mapstructure"
 )
 
 // ITestCase represents interface for testcases,
@@ -49,6 +49,24 @@ func (tc *TestCase) ToTCase() *TCase {
 		tCase.TestSteps = append(tCase.TestSteps, step.Struct())
 	}
 	return tCase
+}
+
+func (tc *TestCase) Dump2JSON(targetPath string) error {
+	tCase := tc.ToTCase()
+	err := builtin.Dump2JSON(tCase, targetPath)
+	if err != nil {
+		return errors.Wrap(err, "dump testcase to json failed")
+	}
+	return nil
+}
+
+func (tc *TestCase) Dump2YAML(targetPath string) error {
+	tCase := tc.ToTCase()
+	err := builtin.Dump2YAML(tCase, targetPath)
+	if err != nil {
+		return errors.Wrap(err, "dump testcase to yaml failed")
+	}
+	return nil
 }
 
 // TestCasePath implements ITestCase interface.
