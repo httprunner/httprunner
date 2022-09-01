@@ -260,6 +260,14 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			testCase.TestSteps = append(testCase.TestSteps, &StepWebSocket{
 				step: step,
 			})
+		} else if step.IOS != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepIOS{
+				step: step,
+			})
+		} else if step.Android != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepAndroid{
+				step: step,
+			})
 		} else {
 			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
 		}

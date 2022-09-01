@@ -34,7 +34,7 @@ func TestIOSWeixinLive(t *testing.T) {
 				SwipeUp().Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
 	}
-	fmt.Println(testCase)
+
 	if err := testCase.Dump2JSON("demo_weixin_live.json"); err != nil {
 		t.Fatal(err)
 	}

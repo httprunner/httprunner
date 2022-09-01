@@ -195,10 +195,6 @@ func (s *StepIOS) SwipeToTapApp(appName string, options ...ActionOption) *StepIO
 	for _, option := range options {
 		option(&action)
 	}
-	// default to retry 5 times
-	if action.maxRetryTimes == 0 {
-		action.maxRetryTimes = 5
-	}
 	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
@@ -210,10 +206,6 @@ func (s *StepIOS) SwipeToTapText(text string, options ...ActionOption) *StepIOS 
 	}
 	for _, option := range options {
 		option(&action)
-	}
-	// default to retry 10 times
-	if action.maxRetryTimes == 0 {
-		action.maxRetryTimes = 10
 	}
 	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
@@ -620,8 +612,12 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 				ud.SwipeTo("right")
 			}
 
+			// default to retry 5 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 5
+			}
 			// swipe next screen until app found
-			return ud.SwipeUntil("left", findApp, foundAppAction, action.maxRetryTimes)
+			return ud.SwipeUntil("left", findApp, foundAppAction, action.MaxRetryTimes)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			swipeToTapApp, action.Params)
@@ -638,8 +634,12 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 				return d.TapFloat(x+width*0.5, y+height*0.5)
 			}
 
+			// default to retry 10 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 10
+			}
 			// swipe until live room found
-			return ud.SwipeUntil("up", findText, foundTextAction, 20)
+			return ud.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			swipeToTapText, action.Params)
@@ -668,17 +668,17 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", uiTapXY, action.Params)
 	case uiTap:
 		if param, ok := action.Params.(string); ok {
-			return ud.Tap(param, action.ignoreNotFoundError)
+			return ud.Tap(param, action.IgnoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTap, action.Params)
 	case uiTapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			return ud.TapByOCR(ocrText, action.ignoreNotFoundError)
+			return ud.TapByOCR(ocrText, action.IgnoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapByOCR, action.Params)
 	case uiTapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return ud.TapByCV(imagePath, action.ignoreNotFoundError)
+			return ud.TapByCV(imagePath, action.IgnoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapByCV, action.Params)
 	case uiDoubleTapXY:

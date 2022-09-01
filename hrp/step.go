@@ -56,31 +56,31 @@ const (
 )
 
 type MobileAction struct {
-	Method MobileMethod `json:"method" yaml:"method"`
+	Method MobileMethod `json:"method,omitempty" yaml:"method,omitempty"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
 
-	maxRetryTimes       int  // max retry times
-	timeout             int  // TODO: wait timeout in seconds for mobile action
-	ignoreNotFoundError bool // ignore error if target element not found
+	MaxRetryTimes       int  `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	Timeout             int  `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
+	IgnoreNotFoundError bool `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
 }
 
 type ActionOption func(o *MobileAction)
 
 func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
 	return func(o *MobileAction) {
-		o.maxRetryTimes = maxRetryTimes
+		o.MaxRetryTimes = maxRetryTimes
 	}
 }
 
 func WithTimeout(timeout int) ActionOption {
 	return func(o *MobileAction) {
-		o.timeout = timeout
+		o.Timeout = timeout
 	}
 }
 
 func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	return func(o *MobileAction) {
-		o.ignoreNotFoundError = ignoreError
+		o.IgnoreNotFoundError = ignoreError
 	}
 }
 
