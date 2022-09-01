@@ -1,5 +1,11 @@
 # Release History
 
+## v4.2.1 (2022-09-01)
+
+**go version**
+
+- fix: hrp boom duration still limited without specifying `--run-time`
+
 ## v4.2.0 (2022-08-21)
 
 **go version**

@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/go-errors/errors"
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/jinzhu/copier"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -245,7 +246,7 @@ func (r *runner) getSpawnRate() float64 {
 }
 
 func (r *runner) setRunTime(runTime int64) {
-	atomic.StoreInt64(&r.runTime, time.Now().Unix()+runTime)
+	atomic.StoreInt64(&r.runTime, runTime)
 }
 
 func (r *runner) getRunTime() int64 {
@@ -381,15 +382,15 @@ func (r *runner) runTimeCheck(runTime int64) {
 	if runTime <= 0 {
 		return
 	}
+	stopTime := time.Now().Unix() + runTime
 
-	var ticker = time.NewTicker(time.Second * 3)
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-r.stopChan:
 			return
 		case <-ticker.C:
-			nowTime := time.Now().Unix()
-			if nowTime > runTime {
+			if time.Now().Unix() > stopTime {
 				r.stop()
 				return
 			}
@@ -552,7 +553,7 @@ func (r *runner) getTask() *Task {
 }
 
 func (r *runner) statsStart() {
-	var ticker = time.NewTicker(reportStatsInterval)
+	ticker := time.NewTicker(reportStatsInterval)
 	for {
 		select {
 		// record stats
@@ -872,7 +873,7 @@ func (r *workerRunner) run() {
 		// notify master that worker is quitting
 		r.onQuiting()
 
-		var ticker = time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(1 * time.Second)
 		if r.client != nil {
 			// waitting for quit message is sent to master
 			select {
@@ -900,7 +901,7 @@ func (r *workerRunner) run() {
 
 	// heartbeat
 	// See: https://github.com/locustio/locust/commit/a8c0d7d8c588f3980303358298870f2ea394ab93
-	var ticker = time.NewTicker(heartbeatInterval)
+	ticker := time.NewTicker(heartbeatInterval)
 	for {
 		select {
 		case <-ticker.C:
@@ -1047,8 +1048,8 @@ func (r *masterRunner) setExpectWorkers(expectWorkers int, expectWorkersMaxWait 
 
 func (r *masterRunner) heartbeatWorker() {
 	log.Info().Msg("heartbeatWorker, listen and record heartbeat from worker")
-	var heartBeatTicker = time.NewTicker(heartbeatInterval)
-	var reportTicker = time.NewTicker(heartbeatLiveness)
+	heartBeatTicker := time.NewTicker(heartbeatInterval)
+	reportTicker := time.NewTicker(heartbeatLiveness)
 	for {
 		select {
 		case <-r.closeChan:
@@ -1192,8 +1193,8 @@ func (r *masterRunner) run() {
 	if r.autoStart {
 		go func() {
 			log.Info().Msg("auto start, waiting expected workers joined")
-			var ticker = time.NewTicker(1 * time.Second)
-			var tickerMaxWait = time.NewTicker(time.Duration(r.expectWorkersMaxWait) * time.Second)
+			ticker := time.NewTicker(1 * time.Second)
+			tickerMaxWait := time.NewTicker(time.Duration(r.expectWorkersMaxWait) * time.Second)
 			for {
 				select {
 				case <-r.closeChan:
