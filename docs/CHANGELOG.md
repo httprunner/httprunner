@@ -1,8 +1,14 @@
 # Release History
 
-## v4.2.1 (2022-08-23)
+## v4.3.0 (2022-09-01)
 
 - feat: support iOS UI automation with WebDriverAgent
+
+## v4.2.1 (2022-09-01)
+
+**go version**
+
+- fix: hrp boom duration still limited without specifying `--run-time`
 
 ## v4.2.0 (2022-08-21)
 
