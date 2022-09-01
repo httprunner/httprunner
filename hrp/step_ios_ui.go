@@ -502,6 +502,7 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	if err != nil {
 		return
 	}
+	wdaClient.startTime = s.startTime
 
 	defer func() {
 		attachments := make(map[string]interface{})
@@ -548,7 +549,7 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 
 	// take snapshot
 	screenshotPath, err := wdaClient.DriverExt.ScreenShot(
-		fmt.Sprintf("validate_%d", time.Now().Unix()))
+		fmt.Sprintf("%d_validate_%d", wdaClient.startTime.Unix(), time.Now().Unix()))
 	if err != nil {
 		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
 	} else {
@@ -573,7 +574,8 @@ var errActionNotImplemented = errors.New("UI action not implemented")
 type uiDriver struct {
 	uixt.DriverExt
 
-	screenShots []string // save screenshots path
+	startTime   time.Time // used to associate screenshots name
+	screenShots []string  // save screenshots path
 }
 
 func (ud *uiDriver) doAction(action MobileAction) error {
@@ -713,7 +715,8 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 	case ctlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
-		screenshotPath, err := ud.ScreenShot(fmt.Sprintf("screenshot_%d", time.Now().Unix()))
+		screenshotPath, err := ud.ScreenShot(fmt.Sprintf("%d_screenshot_%d",
+			ud.startTime.Unix(), time.Now().Unix()))
 		if err != nil {
 			return errors.Wrap(err, "take screenshot failed")
 		}
