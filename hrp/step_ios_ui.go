@@ -23,9 +23,9 @@ type WDADevice struct {
 }
 
 type IOSStep struct {
-	WDADevice
-	MobileAction
-	Actions []MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
+	WDADevice    `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
+	MobileAction `yaml:",inline"`
+	Actions      []MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
 // StepIOS implements IStep interface.
