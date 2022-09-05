@@ -21,8 +21,9 @@ func NewConfig(name string) *TConfig {
 type TConfig struct {
 	Name              string                 `json:"name" yaml:"name"` // required
 	Verify            bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
-	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`   // deprecated in v4.1, moved to env
-	Headers           map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`     // public request headers
+	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"` // deprecated in v4.1, moved to env
+	Headers           map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`   // public request headers
+	UseHeaderHost     bool                   `json:"use_header_host,omitempty" yaml:"use_header_host,omitempty"`
 	Environs          map[string]string      `json:"environs,omitempty" yaml:"environs,omitempty"`   // environment variables
 	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"` // global variables
 	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`

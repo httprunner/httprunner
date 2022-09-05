@@ -107,6 +107,7 @@ func (r *requestBuilder) prepareHeaders(stepVariables map[string]interface{}) er
 			if strings.HasPrefix(key, ":") {
 				continue
 			}
+
 			r.req.Header.Add(key, value)
 
 			// prepare content length
@@ -115,6 +116,11 @@ func (r *requestBuilder) prepareHeaders(stepVariables map[string]interface{}) er
 					r.req.ContentLength = l
 				}
 			}
+		}
+
+		// set Host of Header Host
+		if r.config.UseHeaderHost && headers["Host"] != "" {
+			r.req.Host = headers["Host"]
 		}
 	}
 
