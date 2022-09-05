@@ -382,6 +382,8 @@ func (r *testCaseRunner) parseConfig() error {
 	}
 	r.parametersIterator = parametersIterator
 
+	r.parsedConfig.UseHeaderHost = cfg.UseHeaderHost
+
 	return nil
 }
 
