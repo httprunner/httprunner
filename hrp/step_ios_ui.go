@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -241,7 +242,7 @@ func (s *StepIOS) Times(n int) *StepIOS {
 }
 
 // Sleep specify sleep seconds after last action
-func (s *StepIOS) Sleep(n int) *StepIOS {
+func (s *StepIOS) Sleep(n float64) *StepIOS {
 	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
 		Method: ctlSleep,
 		Params: n,
@@ -707,11 +708,15 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 		param := fmt.Sprintf("%v", action.Params)
 		return ud.SendKeys(param)
 	case ctlSleep:
-		if param, ok := action.Params.(int); ok {
-			time.Sleep(time.Duration(param) * time.Second)
+		if param, ok := action.Params.(json.Number); ok {
+			seconds, _ := param.Float64()
+			time.Sleep(time.Duration(seconds*1000) * time.Millisecond)
+			return nil
+		} else if param, ok := action.Params.(float64); ok {
+			time.Sleep(time.Duration(param*1000) * time.Millisecond)
 			return nil
 		}
-		return fmt.Errorf("invalid sleep params: %v", action.Params)
+		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case ctlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
