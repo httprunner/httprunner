@@ -17,6 +17,7 @@ import (
 	"github.com/electricbubble/gwda"
 	cvHelper "github.com/electricbubble/opencv-helper"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // TemplateMatchMode is the type of the template matching operation.
@@ -170,6 +171,7 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 		return dExt.frame, nil
 	}
 	if raw, err = dExt.WebDriver.Screenshot(); err != nil {
+		log.Error().Err(err).Msgf("screenshot failed: %v", err)
 		return nil, err
 	}
 	return
