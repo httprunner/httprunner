@@ -23,7 +23,7 @@ func TestDriverExt_TapXY(t *testing.T) {
 	driverExt, err := InitWDAClient()
 	checkErr(t, err)
 
-	err = driverExt.TapXY(0.4, 0.5)
+	err = driverExt.TapXY(0.4, 0.5, "")
 	checkErr(t, err)
 }
 
@@ -32,6 +32,6 @@ func TestDriverExt_TapWithOCR(t *testing.T) {
 	checkErr(t, err)
 
 	// 需要点击文字上方的图标
-	err = driverExt.TapOffset("抖音", 0.5, -1, false)
+	err = driverExt.TapOffset("抖音", 0.5, -1, "", false)
 	checkErr(t, err)
 }

@@ -59,12 +59,19 @@ type MobileAction struct {
 	Method MobileMethod `json:"method,omitempty" yaml:"method,omitempty"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
 
-	MaxRetryTimes       int  `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
-	Timeout             int  `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
-	IgnoreNotFoundError bool `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
+	Identifier          string `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
+	MaxRetryTimes       int    `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	Timeout             int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
+	IgnoreNotFoundError bool   `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
 }
 
 type ActionOption func(o *MobileAction)
+
+func WithIdentifier(identifier string) ActionOption {
+	return func(o *MobileAction) {
+		o.Identifier = identifier
+	}
+}
 
 func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
 	return func(o *MobileAction) {

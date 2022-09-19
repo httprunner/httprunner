@@ -9,7 +9,7 @@ import (
 
 func TestIOSWeixinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
-		Config: hrp.NewConfig("通过 feed 卡片进入微信直播间"),
+		Config: hrp.NewConfig("通过 feed 卡片进入微信直播间"), // .SetIOS(hrp.WDADevice{Port: 8700, MjpegPort: 8800})
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动微信").
 				IOS().
@@ -27,11 +27,11 @@ func TestIOSWeixinLive(t *testing.T) {
 				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("在推荐页上划，直到出现「轻触进入直播间」").
 				IOS().
-				SwipeToTapText("轻触进入直播间", hrp.WithMaxRetryTimes(10)),
+				SwipeToTapText("轻触进入直播间", hrp.WithMaxRetryTimes(10), hrp.WithIdentifier("进入直播间")),
 			hrp.NewStep("向上滑动，等待 10s").
 				IOS().
-				SwipeUp().Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
-				SwipeUp().Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
+				SwipeUp(hrp.WithIdentifier("第一次上划")).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
+				SwipeUp(hrp.WithIdentifier("第二次上划")).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
 	}
 
