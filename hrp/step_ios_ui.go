@@ -80,11 +80,15 @@ func (s *StepIOS) Home() *StepIOS {
 }
 
 // TapXY taps the point {X,Y}, X & Y is percentage of coordinates
-func (s *StepIOS) TapXY(x, y float64) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) TapXY(x, y float64, options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiTapXY,
 		Params: []float64{x, y},
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
@@ -148,43 +152,63 @@ func (s *StepIOS) DoubleTap(params string, options ...ActionOption) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) Swipe(sx, sy, ex, ey int) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) Swipe(sx, sy, ex, ey int, options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiSwipe,
 		Params: []int{sx, sy, ex, ey},
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) SwipeUp() *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) SwipeUp(options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiSwipe,
 		Params: "up",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) SwipeDown() *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) SwipeDown(options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiSwipe,
 		Params: "down",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) SwipeLeft() *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) SwipeLeft(options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiSwipe,
 		Params: "left",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) SwipeRight() *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, MobileAction{
+func (s *StepIOS) SwipeRight(options ...ActionOption) *StepIOS {
+	action := MobileAction{
 		Method: uiSwipe,
 		Params: "right",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 
@@ -664,22 +688,22 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 			if len(location) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			return ud.TapXY(location[0], location[1])
+			return ud.TapXY(location[0], location[1], action.Identifier)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapXY, action.Params)
 	case uiTap:
 		if param, ok := action.Params.(string); ok {
-			return ud.Tap(param, action.IgnoreNotFoundError)
+			return ud.Tap(param, action.Identifier, action.IgnoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTap, action.Params)
 	case uiTapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			return ud.TapByOCR(ocrText, action.IgnoreNotFoundError)
+			return ud.TapByOCR(ocrText, action.Identifier, action.IgnoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapByOCR, action.Params)
 	case uiTapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return ud.TapByCV(imagePath, action.IgnoreNotFoundError)
+			return ud.TapByCV(imagePath, action.Identifier, action.IgnoreNotFoundError)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiTapByCV, action.Params)
 	case uiDoubleTapXY:

@@ -6,7 +6,20 @@ import (
 	"github.com/electricbubble/gwda"
 )
 
-func (dExt *DriverExt) TapXY(x, y float64) error {
+func (dExt *DriverExt) tapFloat(x, y float64, identifier string) error {
+	if len(identifier) > 0 {
+		option := gwda.DataOption{
+			"log": map[string]interface{}{
+				"enable": true,
+				"data":   identifier,
+			},
+		}
+		return dExt.WebDriver.TapFloat(x, y, option)
+	}
+	return dExt.WebDriver.TapFloat(x, y)
+}
+
+func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
 	// tap on coordinate: [x, y] should be relative
 	if x > 1 || y > 1 {
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
@@ -14,10 +27,11 @@ func (dExt *DriverExt) TapXY(x, y float64) error {
 
 	x = x * float64(dExt.windowSize.Width)
 	y = y * float64(dExt.windowSize.Height)
-	return dExt.WebDriver.TapFloat(x, y)
+
+	return dExt.tapFloat(x, y, identifier)
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string, ignoreNotFoundError bool) error {
+func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool) error {
 	x, y, width, height, err := dExt.FindTextByOCR(ocrText)
 	if err != nil {
 		if ignoreNotFoundError {
@@ -26,10 +40,10 @@ func (dExt *DriverExt) TapByOCR(ocrText string, ignoreNotFoundError bool) error 
 		return err
 	}
 
-	return dExt.WebDriver.TapFloat(x+width*0.5, y+height*0.5)
+	return dExt.tapFloat(x+width*0.5, y+height*0.5, identifier)
 }
 
-func (dExt *DriverExt) TapByCV(imagePath string, ignoreNotFoundError bool) error {
+func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFoundError bool) error {
 	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath)
 	if err != nil {
 		if ignoreNotFoundError {
@@ -38,14 +52,14 @@ func (dExt *DriverExt) TapByCV(imagePath string, ignoreNotFoundError bool) error
 		return err
 	}
 
-	return dExt.WebDriver.TapFloat(x+width*0.5, y+height*0.5)
+	return dExt.tapFloat(x+width*0.5, y+height*0.5, identifier)
 }
 
-func (dExt *DriverExt) Tap(param string, ignoreNotFoundError bool) error {
-	return dExt.TapOffset(param, 0.5, 0.5, ignoreNotFoundError)
+func (dExt *DriverExt) Tap(param string, identifier string, ignoreNotFoundError bool) error {
+	return dExt.TapOffset(param, 0.5, 0.5, identifier, ignoreNotFoundError)
 }
 
-func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, ignoreNotFoundError bool) (err error) {
+func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, identifier string, ignoreNotFoundError bool) (err error) {
 	// click on element, find by name attribute
 	ele, err := dExt.FindUIElement(param)
 	if err == nil {
@@ -60,7 +74,7 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, ignoreN
 		return err
 	}
 
-	return dExt.WebDriver.TapFloat(x+width*xOffset, y+height*yOffset)
+	return dExt.tapFloat(x+width*xOffset, y+height*yOffset, identifier)
 }
 
 func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
