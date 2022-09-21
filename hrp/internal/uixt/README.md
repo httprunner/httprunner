@@ -28,6 +28,10 @@ You can get more installation introduction on [hybridgroup/gocv].
 
 OCR API is a paid service, you need to pre-purchase and configure the account key.
 
+```bash
+$ make build tags=ocr
+```
+
 ## Thanks
 
 This uixt module is initially forked from [electricbubble/gwda-ext-opencv] and made a lot of changes.

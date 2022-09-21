@@ -4,6 +4,7 @@ package uixt
 
 import (
 	"image"
+	"sort"
 
 	"github.com/electricbubble/gwda"
 )
