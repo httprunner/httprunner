@@ -22,7 +22,6 @@ import (
 type TemplateMatchMode int
 
 type CVArgs struct {
-	scale     float64
 	matchMode TemplateMatchMode
 	threshold float64
 }
@@ -46,6 +45,7 @@ type DriverExt struct {
 	windowSize      gwda.Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
+	scale           float64
 
 	CVArgs
 }
@@ -58,6 +58,10 @@ func extend(driver gwda.WebDriver) (dExt *DriverExt, err error) {
 	dExt.windowSize, err = dExt.WebDriver.WindowSize()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get windows size")
+	}
+
+	if dExt.scale, err = dExt.Scale(); err != nil {
+		return nil, err
 	}
 
 	return dExt, nil
@@ -211,6 +215,12 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string) (x, y, width, height flo
 	}
 	// click on image, using opencv
 	return dExt.FindImageRectInUIKit(search)
+}
+
+func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
+	x, y = float64(rect.Min.X)/dExt.scale, float64(rect.Min.Y)/dExt.scale
+	width, height = float64(rect.Dx())/dExt.scale, float64(rect.Dy())/dExt.scale
+	return
 }
 
 func (dExt *DriverExt) PerformTouchActions(touchActions *gwda.TouchActions) error {

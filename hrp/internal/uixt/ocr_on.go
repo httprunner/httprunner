@@ -4,11 +4,15 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"image"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"strings"
+	"time"
 )
 
 var client = &http.Client{

@@ -64,6 +64,7 @@
                     {
                         "method": "swipe_to_tap_text",
                         "params": "轻触进入直播间",
+                        "identifier": "进入直播间",
                         "max_retry_times": 10
                     }
                 ]
@@ -75,7 +76,8 @@
                 "actions": [
                     {
                         "method": "swipe",
-                        "params": "up"
+                        "params": "up",
+                        "identifier": "第一次上划"
                     },
                     {
                         "method": "sleep",
@@ -86,7 +88,8 @@
                     },
                     {
                         "method": "swipe",
-                        "params": "up"
+                        "params": "up",
+                        "identifier": "第二次上划"
                     },
                     {
                         "method": "sleep",

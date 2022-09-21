@@ -22,8 +22,3 @@ func (dExt *DriverExt) FindImageRectInUIKit(imagePath string) (x, y, width, heig
 	log.Fatal().Msg("opencv is not supported")
 	return
 }
-
-func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
-	log.Fatal().Msg("opencv is not supported")
-	return
-}

@@ -53,10 +53,6 @@ func Extend(driver gwda.WebDriver, options ...CVOption) (dExt *DriverExt, err er
 		option(&dExt.CVArgs)
 	}
 
-	if dExt.scale, err = dExt.Scale(); err != nil {
-		return nil, err
-	}
-
 	if dExt.threshold == 0 {
 		dExt.threshold = 0.95 // default threshold
 	}
@@ -148,10 +144,4 @@ func getBufFromDisk(name string) (*bytes.Buffer, error) {
 		return nil, err
 	}
 	return bytes.NewBuffer(all), nil
-}
-
-func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
-	x, y = float64(rect.Min.X)/dExt.scale, float64(rect.Min.Y)/dExt.scale
-	width, height = float64(rect.Dx())/dExt.scale, float64(rect.Dy())/dExt.scale
-	return
 }

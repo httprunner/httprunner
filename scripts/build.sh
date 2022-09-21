@@ -4,8 +4,10 @@
 
 # Usage:
 # $ make build
+# $ make build tags=ocr
 # or
-# $ bash cli/scripts/build.sh
+# $ bash scripts/build.sh
+# $ bash scripts/build.sh ocr
 
 set -e
 set -x
@@ -14,9 +16,15 @@ set -x
 mkdir -p "output"
 bin_path="output/hrp"
 
-# build
 # optional build tags: opencv ocr
-go build -ldflags '-s -w' -tags ocr -o "$bin_path" hrp/cmd/cli/main.go
+tags=$1
+
+# build
+if [ -z "$tags" ]; then
+    go build -ldflags '-s -w' -o "$bin_path" hrp/cmd/cli/main.go
+else
+    go build -ldflags '-s -w' -tags "$tags" -o "$bin_path" hrp/cmd/cli/main.go
+fi
 
 # check output and version
 ls -lh "$bin_path"
