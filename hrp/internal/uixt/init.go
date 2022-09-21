@@ -45,7 +45,7 @@ func InitWDAClient(options ...gwda.DeviceOption) (*DriverExt, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	driverExt, err := Extend(driver, 0.95)
+	driverExt, err := Extend(driver)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to extend gwda.WebDriver")
 	}

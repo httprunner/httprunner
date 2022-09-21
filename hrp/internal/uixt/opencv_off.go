@@ -5,12 +5,12 @@ package uixt
 import (
 	"image"
 
+	"github.com/electricbubble/gwda"
 	"github.com/rs/zerolog/log"
 )
 
-func (dExt *DriverExt) extendOpenCV(threshold float64, matchMode ...TemplateMatchMode) (err error) {
-	log.Fatal().Msg("opencv is not supported")
-	return
+func Extend(driver gwda.WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
+	return extend(driver)
 }
 
 func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle, err error) {

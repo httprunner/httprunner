@@ -21,24 +21,36 @@ import (
 // TemplateMatchMode is the type of the template matching operation.
 type TemplateMatchMode int
 
+type CVArgs struct {
+	scale     float64
+	matchMode TemplateMatchMode
+	threshold float64
+}
+
+type CVOption func(*CVArgs)
+
+func WithTemplateMatchMode(mode TemplateMatchMode) CVOption {
+	return func(args *CVArgs) {
+		args.matchMode = mode
+	}
+}
+
+func WithThreshold(threshold float64) CVOption {
+	return func(args *CVArgs) {
+		args.threshold = threshold
+	}
+}
+
 type DriverExt struct {
 	gwda.WebDriver
 	windowSize      gwda.Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 
-	// OpenCV
-	scale     float64
-	matchMode TemplateMatchMode
-	threshold float64
+	CVArgs
 }
 
-// Extend 获得扩展后的 Driver，
-// 并指定匹配阀值，
-// 获取当前设备的 Scale，
-// 默认匹配模式为 TmCcoeffNormed，
-// 默认关闭 OpenCV 匹配值计算后的输出
-func Extend(driver gwda.WebDriver, threshold float64, matchMode ...TemplateMatchMode) (dExt *DriverExt, err error) {
+func extend(driver gwda.WebDriver) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{WebDriver: driver}
 	dExt.doneMjpegStream = make(chan bool, 1)
 
@@ -48,8 +60,7 @@ func Extend(driver gwda.WebDriver, threshold float64, matchMode ...TemplateMatch
 		return nil, errors.Wrap(err, "failed to get windows size")
 	}
 
-	err = dExt.extendOpenCV(threshold, matchMode...)
-	return dExt, err
+	return dExt, nil
 }
 
 func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {

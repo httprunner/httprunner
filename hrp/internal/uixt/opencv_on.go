@@ -8,12 +8,15 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/electricbubble/gwda"
 	cvHelper "github.com/electricbubble/opencv-helper"
 )
 
 const (
+	// TmCcoeffNormed maps to TM_CCOEFF_NORMED
+	TmCcoeffNormed TemplateMatchMode = iota
 	// TmSqdiff maps to TM_SQDIFF
-	TmSqdiff TemplateMatchMode = iota
+	TmSqdiff
 	// TmSqdiffNormed maps to TM_SQDIFF_NORMED
 	TmSqdiffNormed
 	// TmCcorr maps to TM_CCORR
@@ -22,8 +25,6 @@ const (
 	TmCcorrNormed
 	// TmCcoeff maps to TM_CCOEFF
 	TmCcoeff
-	// TmCcoeffNormed maps to TM_CCOEFF_NORMED
-	TmCcoeffNormed
 )
 
 type DebugMode int
@@ -42,18 +43,28 @@ const (
 // 获取当前设备的 Scale，
 // 默认匹配模式为 TmCcoeffNormed，
 // 默认关闭 OpenCV 匹配值计算后的输出
-func (dExt *DriverExt) extendOpenCV(threshold float64, matchMode ...TemplateMatchMode) (err error) {
-	if dExt.scale, err = dExt.Scale(); err != nil {
-		return err
+func Extend(driver gwda.WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
+	dExt, err = extend(driver)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(matchMode) == 0 {
-		matchMode = []TemplateMatchMode{TmCcoeffNormed}
+	for _, option := range options {
+		option(&dExt.CVArgs)
 	}
-	dExt.matchMode = matchMode[0]
+
+	if dExt.scale, err = dExt.Scale(); err != nil {
+		return nil, err
+	}
+
+	if dExt.threshold == 0 {
+		dExt.threshold = 0.95 // default threshold
+	}
+	if dExt.matchMode == 0 {
+		dExt.matchMode = TmCcoeffNormed // default match mode
+	}
 	cvHelper.Debug(cvHelper.DebugMode(DmOff))
-	dExt.threshold = threshold
-	return nil
+	return
 }
 
 func (dExt *DriverExt) Debug(dm DebugMode) {

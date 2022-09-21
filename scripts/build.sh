@@ -15,8 +15,8 @@ mkdir -p "output"
 bin_path="output/hrp"
 
 # build
-# optional build tags: opencv
-go build -ldflags '-s -w' -o "$bin_path" hrp/cmd/cli/main.go
+# optional build tags: opencv ocr
+go build -ldflags '-s -w' -tags ocr -o "$bin_path" hrp/cmd/cli/main.go
 
 # check output and version
 ls -lh "$bin_path"
