@@ -3,25 +3,68 @@ package uixt
 import (
 	"fmt"
 
+	"github.com/electricbubble/gwda"
 	"github.com/rs/zerolog/log"
 )
 
-func (dExt *DriverExt) SwipeTo(direction string) (err error) {
+func assertRelative(p float64) bool {
+	return p >= 0 && p <= 1
+}
+
+// SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
+func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier ...string) error {
 	width := dExt.windowSize.Width
 	height := dExt.windowSize.Height
 
-	var fromX, fromY, toX, toY int
+	if !assertRelative(fromX) || !assertRelative(fromY) ||
+		!assertRelative(toX) || !assertRelative(toY) {
+		return fmt.Errorf("fromX(%f), fromY(%f), toX(%f), toY(%f) must be less than 1",
+			fromX, fromY, toX, toY)
+	}
+
+	fromX = float64(width) * fromX
+	fromY = float64(height) * fromY
+	toX = float64(width) * toX
+	toY = float64(height) * toY
+
+	if len(identifier) > 0 && identifier[0] != "" {
+		option := gwda.WithCustomOption("log", map[string]interface{}{
+			"enable": true,
+			"data":   identifier[0],
+		})
+		dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY, option)
+	}
+	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
+}
+
+func (dExt *DriverExt) SwipeTo(direction string, identifier ...string) (err error) {
 	switch direction {
 	case "up":
-		fromX, fromY, toX, toY = width/2, height*3/4, width/2, height*1/4
+		return dExt.SwipeUp(identifier...)
 	case "down":
-		fromX, fromY, toX, toY = width/2, height*1/4, width/2, height*3/4
+		return dExt.SwipeDown(identifier...)
 	case "left":
-		fromX, fromY, toX, toY = width*3/4, height/2, width*1/4, height/2
+		return dExt.SwipeLeft(identifier...)
 	case "right":
-		fromX, fromY, toX, toY = width*1/4, height/2, width*3/4, height/2
+		return dExt.SwipeRight(identifier...)
 	}
-	return dExt.WebDriver.Swipe(fromX, fromY, toX, toY)
+	return fmt.Errorf("unexpected direction: %s", direction)
+}
+
+func (dExt *DriverExt) SwipeUp(identifier ...string) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, identifier...)
+}
+
+func (dExt *DriverExt) SwipeDown(identifier ...string) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, identifier...)
+}
+
+func (dExt *DriverExt) SwipeLeft(identifier ...string) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, identifier...)
+}
+
+func (dExt *DriverExt) SwipeRight(identifier ...string) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, identifier...)
 }
 
 // FindCondition indicates the condition to find a UI element
@@ -41,120 +84,4 @@ func (dExt *DriverExt) SwipeUntil(direction string, condition FindCondition, act
 		}
 	}
 	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
-}
-
-func (dExt *DriverExt) Swipe(pathname string, toX, toY int) (err error) {
-	return dExt.SwipeFloat(pathname, float64(toX), float64(toY))
-}
-
-func (dExt *DriverExt) SwipeFloat(pathname string, toX, toY float64) (err error) {
-	return dExt.SwipeOffsetFloat(pathname, toX, toY, 0.5, 0.5)
-}
-
-func (dExt *DriverExt) SwipeOffset(pathname string, toX, toY int, xOffset, yOffset float64) (err error) {
-	return dExt.SwipeOffsetFloat(pathname, float64(toX), float64(toY), xOffset, yOffset)
-}
-
-func (dExt *DriverExt) SwipeOffsetFloat(pathname string, toX, toY, xOffset, yOffset float64) (err error) {
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(pathname); err != nil {
-		return err
-	}
-
-	fromX := x + width*xOffset
-	fromY := y + height*yOffset
-
-	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
-}
-
-func (dExt *DriverExt) SwipeUp(pathname string, distance ...float64) (err error) {
-	return dExt.SwipeUpOffset(pathname, 0.5, 0.9, distance...)
-}
-
-func (dExt *DriverExt) SwipeUpOffset(pathname string, xOffset, yOffset float64, distance ...float64) (err error) {
-	if len(distance) == 0 {
-		distance = []float64{1.0}
-	}
-
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(pathname); err != nil {
-		return err
-	}
-
-	fromX := x + width*xOffset
-	fromY := (y + height) - height*(1.0-yOffset)
-
-	toX := fromX
-	toY := fromY - height*distance[0]
-
-	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
-}
-
-func (dExt *DriverExt) SwipeDown(pathname string, distance ...float64) (err error) {
-	return dExt.SwipeDownOffset(pathname, 0.5, 0.1, distance...)
-}
-
-func (dExt *DriverExt) SwipeDownOffset(pathname string, xOffset, yOffset float64, distance ...float64) (err error) {
-	if len(distance) == 0 {
-		distance = []float64{1.0}
-	}
-
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(pathname); err != nil {
-		return err
-	}
-
-	fromX := x + width*xOffset
-	fromY := y + height*yOffset
-
-	toX := fromX
-	toY := fromY + height*distance[0]
-
-	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
-}
-
-func (dExt *DriverExt) SwipeLeft(pathname string, distance ...float64) (err error) {
-	return dExt.SwipeLeftOffset(pathname, 0.9, 0.5, distance...)
-}
-
-func (dExt *DriverExt) SwipeLeftOffset(pathname string, xOffset, yOffset float64, distance ...float64) (err error) {
-	if len(distance) == 0 {
-		distance = []float64{1.0}
-	}
-
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(pathname); err != nil {
-		return err
-	}
-
-	fromX := x + width*xOffset
-	fromY := y + height*yOffset
-
-	toX := fromX - width*distance[0]
-	toY := fromY
-
-	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
-}
-
-func (dExt *DriverExt) SwipeRight(pathname string, distance ...float64) (err error) {
-	return dExt.SwipeRightOffset(pathname, 0.1, 0.5, distance...)
-}
-
-func (dExt *DriverExt) SwipeRightOffset(pathname string, xOffset, yOffset float64, distance ...float64) (err error) {
-	if len(distance) == 0 {
-		distance = []float64{1.0}
-	}
-
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(pathname); err != nil {
-		return err
-	}
-
-	fromX := x + width*xOffset
-	fromY := y + height*yOffset
-
-	toX := fromX + width*distance[0]
-	toY := fromY
-
-	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
 }

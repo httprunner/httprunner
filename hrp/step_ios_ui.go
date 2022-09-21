@@ -634,7 +634,7 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 
 			// swipe to first screen
 			for i := 0; i < 5; i++ {
-				ud.SwipeTo("right")
+				ud.SwipeRight()
 			}
 
 			// default to retry 5 times
@@ -721,8 +721,16 @@ func (ud *uiDriver) doAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", uiDoubleTap, action.Params)
 	case uiSwipe:
-		if param, ok := action.Params.(string); ok {
-			return ud.SwipeTo(param)
+		if positions, ok := action.Params.([]float64); ok {
+			// relative fromX, fromY, toX, toY of window size: [0.5, 0.9, 0.5, 0.1]
+			if len(positions) != 4 {
+				return fmt.Errorf("invalid swipe params [fromX, fromY, toX, toY]: %v", positions)
+			}
+			return ud.SwipeRelative(
+				positions[0], positions[1], positions[2], positions[3], action.Identifier)
+		}
+		if direction, ok := action.Params.(string); ok {
+			return ud.SwipeTo(direction, action.Identifier)
 		}
 		return fmt.Errorf("invalid %s params: %v", uiSwipe, action.Params)
 	case uiInput:

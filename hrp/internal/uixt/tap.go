@@ -8,12 +8,10 @@ import (
 
 func (dExt *DriverExt) tapFloat(x, y float64, identifier string) error {
 	if len(identifier) > 0 {
-		option := gwda.DataOption{
-			"log": map[string]interface{}{
-				"enable": true,
-				"data":   identifier,
-			},
-		}
+		option := gwda.WithCustomOption("log", map[string]interface{}{
+			"enable": true,
+			"data":   identifier,
+		})
 		return dExt.WebDriver.TapFloat(x, y, option)
 	}
 	return dExt.WebDriver.TapFloat(x, y)
