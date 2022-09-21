@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -15,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/electricbubble/gwda"
-	cvHelper "github.com/electricbubble/opencv-helper"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -23,40 +21,16 @@ import (
 // TemplateMatchMode is the type of the template matching operation.
 type TemplateMatchMode int
 
-const (
-	// TmSqdiff maps to TM_SQDIFF
-	TmSqdiff TemplateMatchMode = iota
-	// TmSqdiffNormed maps to TM_SQDIFF_NORMED
-	TmSqdiffNormed
-	// TmCcorr maps to TM_CCORR
-	TmCcorr
-	// TmCcorrNormed maps to TM_CCORR_NORMED
-	TmCcorrNormed
-	// TmCcoeff maps to TM_CCOEFF
-	TmCcoeff
-	// TmCcoeffNormed maps to TM_CCOEFF_NORMED
-	TmCcoeffNormed
-)
-
-type DebugMode int
-
-const (
-	// DmOff no output
-	DmOff DebugMode = iota
-	// DmEachMatch output matched and mismatched values
-	DmEachMatch
-	// DmNotMatch output only values that do not match
-	DmNotMatch
-)
-
 type DriverExt struct {
 	gwda.WebDriver
 	windowSize      gwda.Size
-	scale           float64
-	MatchMode       TemplateMatchMode
-	Threshold       float64
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
+
+	// OpenCV
+	scale     float64
+	matchMode TemplateMatchMode
+	threshold float64
 }
 
 // Extend 获得扩展后的 Driver，
@@ -68,45 +42,14 @@ func Extend(driver gwda.WebDriver, threshold float64, matchMode ...TemplateMatch
 	dExt = &DriverExt{WebDriver: driver}
 	dExt.doneMjpegStream = make(chan bool, 1)
 
-	if dExt.scale, err = dExt.Scale(); err != nil {
-		return &DriverExt{}, err
-	}
-
 	// get device window size
 	dExt.windowSize, err = dExt.WebDriver.WindowSize()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get windows size")
 	}
 
-	if len(matchMode) == 0 {
-		matchMode = []TemplateMatchMode{TmCcoeffNormed}
-	}
-	dExt.MatchMode = matchMode[0]
-	cvHelper.Debug(cvHelper.DebugMode(DmOff))
-	dExt.Threshold = threshold
-	return dExt, nil
-}
-
-func (dExt *DriverExt) OnlyOnceThreshold(threshold float64) (newExt *DriverExt) {
-	newExt = new(DriverExt)
-	newExt.WebDriver = dExt.WebDriver
-	newExt.scale = dExt.scale
-	newExt.MatchMode = dExt.MatchMode
-	newExt.Threshold = threshold
-	return
-}
-
-func (dExt *DriverExt) OnlyOnceMatchMode(matchMode TemplateMatchMode) (newExt *DriverExt) {
-	newExt = new(DriverExt)
-	newExt.WebDriver = dExt.WebDriver
-	newExt.scale = dExt.scale
-	newExt.MatchMode = matchMode
-	newExt.Threshold = dExt.Threshold
-	return
-}
-
-func (dExt *DriverExt) Debug(dm DebugMode) {
-	cvHelper.Debug(cvHelper.DebugMode(dm))
+	err = dExt.extendOpenCV(threshold, matchMode...)
+	return dExt, err
 }
 
 func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {
@@ -225,46 +168,6 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 	return dExt.saveScreenShot(raw, fileName)
 }
 
-// func (sExt *DriverExt) findImgRect(search string) (rect image.Rectangle, err error) {
-// 	pathSource := filepath.Join(sExt.pathname, cvHelper.GenFilename())
-// 	if err = sExt.driver.ScreenshotToDisk(pathSource); err != nil {
-// 		return image.Rectangle{}, err
-// 	}
-//
-// 	if rect, err = cvHelper.FindImageRectFromDisk(pathSource, search, float32(sExt.Threshold), cvHelper.TemplateMatchMode(sExt.MatchMode)); err != nil {
-// 		return image.Rectangle{}, err
-// 	}
-// 	return
-// }
-
-func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle, err error) {
-	var bufSource, bufSearch *bytes.Buffer
-	if bufSearch, err = getBufFromDisk(search); err != nil {
-		return nil, err
-	}
-	if bufSource, err = dExt.takeScreenShot(); err != nil {
-		return nil, err
-	}
-
-	if rects, err = cvHelper.FindAllImageRectsFromRaw(bufSource, bufSearch, float32(dExt.Threshold), cvHelper.TemplateMatchMode(dExt.MatchMode)); err != nil {
-		return nil, err
-	}
-	return
-}
-
-func getBufFromDisk(name string) (*bytes.Buffer, error) {
-	var f *os.File
-	var err error
-	if f, err = os.Open(name); err != nil {
-		return nil, err
-	}
-	var all []byte
-	if all, err = ioutil.ReadAll(f); err != nil {
-		return nil, err
-	}
-	return bytes.NewBuffer(all), nil
-}
-
 // isPathExists returns true if path exists, whether path is file or dir
 func isPathExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -297,33 +200,6 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string) (x, y, width, height flo
 	}
 	// click on image, using opencv
 	return dExt.FindImageRectInUIKit(search)
-}
-
-func (dExt *DriverExt) FindImageRectInUIKit(imagePath string) (x, y, width, height float64, err error) {
-	var bufSource, bufSearch *bytes.Buffer
-	if bufSearch, err = getBufFromDisk(imagePath); err != nil {
-		return 0, 0, 0, 0, err
-	}
-	if bufSource, err = dExt.takeScreenShot(); err != nil {
-		return 0, 0, 0, 0, err
-	}
-
-	var rect image.Rectangle
-	if rect, err = cvHelper.FindImageRectFromRaw(bufSource, bufSearch, float32(dExt.Threshold), cvHelper.TemplateMatchMode(dExt.MatchMode)); err != nil {
-		return 0, 0, 0, 0, err
-	}
-
-	// if rect, err = dExt.findImgRect(search); err != nil {
-	// 	return 0, 0, 0, 0, err
-	// }
-	x, y, width, height = dExt.MappingToRectInUIKit(rect)
-	return
-}
-
-func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
-	x, y = float64(rect.Min.X)/dExt.scale, float64(rect.Min.Y)/dExt.scale
-	width, height = float64(rect.Dx())/dExt.scale, float64(rect.Dy())/dExt.scale
-	return
 }
 
 func (dExt *DriverExt) PerformTouchActions(touchActions *gwda.TouchActions) error {

@@ -1,7 +1,8 @@
+//go:build opencv
+
 package uixt
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 )
