@@ -5,7 +5,7 @@ import (
 )
 
 func TestDriverExt_TapWithNumber(t *testing.T) {
-	driverExt, err := InitWDAClient()
+	driverExt, err := InitWDAClient(nil)
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/flag7.png"
@@ -20,7 +20,7 @@ func TestDriverExt_TapWithNumber(t *testing.T) {
 }
 
 func TestDriverExt_TapXY(t *testing.T) {
-	driverExt, err := InitWDAClient()
+	driverExt, err := InitWDAClient(nil)
 	checkErr(t, err)
 
 	err = driverExt.TapXY(0.4, 0.5, "")
@@ -28,7 +28,7 @@ func TestDriverExt_TapXY(t *testing.T) {
 }
 
 func TestDriverExt_TapWithOCR(t *testing.T) {
-	driverExt, err := InitWDAClient()
+	driverExt, err := InitWDAClient(nil)
 	checkErr(t, err)
 
 	// 需要点击文字上方的图标

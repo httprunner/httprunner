@@ -5,7 +5,6 @@ package uixt
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -13,6 +12,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 var client = &http.Client{

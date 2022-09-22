@@ -5,7 +5,7 @@ import (
 )
 
 func TestSwipeUntil(t *testing.T) {
-	driverExt, err := InitWDAClient()
+	driverExt, err := InitWDAClient(nil)
 	checkErr(t, err)
 
 	var x, y, width, height float64

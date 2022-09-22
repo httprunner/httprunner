@@ -6,25 +6,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/electricbubble/gwda"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
-type IOSConfig struct {
-	WDADevice
-}
+type (
+	WDAOptions = uixt.WDAOptions
+	WDAOption  = uixt.WDAOption
+)
 
-type WDADevice struct {
-	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
-	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
-}
+var (
+	WithUDID      = uixt.WithUDID
+	WithPort      = uixt.WithPort
+	WithMjpegPort = uixt.WithMjpegPort
+	WithLogOn     = uixt.WithLogOn
+)
 
 type IOSStep struct {
-	WDADevice    `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
+	WDAOptions   `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
 	MobileAction `yaml:",inline"`
 	Actions      []MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -462,36 +463,26 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
-func (r *HRPRunner) InitWDAClient(device WDADevice) (client *uiDriver, err error) {
+func (r *HRPRunner) InitWDAClient(options *WDAOptions) (client *uiDriver, err error) {
 	// avoid duplicate init
-	if device.UDID == "" && len(r.wdaClients) == 1 {
+	if options.UDID == "" && len(r.wdaClients) == 1 {
 		for _, v := range r.wdaClients {
 			return v, nil
 		}
 	}
 
 	// avoid duplicate init
-	if device.UDID != "" {
-		if client, ok := r.wdaClients[device.UDID]; ok {
+	if options.UDID != "" {
+		if client, ok := r.wdaClients[options.UDID]; ok {
 			return client, nil
 		}
 	}
 
-	var deviceOptions []gwda.DeviceOption
-	if device.UDID != "" {
-		deviceOptions = append(deviceOptions, gwda.WithSerialNumber(device.UDID))
-	}
-	if device.Port != 0 {
-		deviceOptions = append(deviceOptions, gwda.WithPort(device.Port))
-	}
-	if device.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, gwda.WithMjpegPort(device.MjpegPort))
-	}
-
-	driverExt, err := uixt.InitWDAClient(deviceOptions...)
+	driverExt, err := uixt.InitWDAClient(options)
 	if err != nil {
 		return nil, err
 	}
+
 	client = &uiDriver{
 		DriverExt: *driverExt,
 	}
@@ -500,7 +491,7 @@ func (r *HRPRunner) InitWDAClient(device WDADevice) (client *uiDriver, err error
 	if r.wdaClients == nil {
 		r.wdaClients = make(map[string]*uiDriver)
 	}
-	r.wdaClients[device.UDID] = client
+	r.wdaClients[options.UDID] = client
 
 	return client, nil
 }
@@ -515,7 +506,7 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	screenshots := make([]string, 0)
 
 	// init wdaClient driver
-	wdaClient, err := s.hrpRunner.InitWDAClient(step.IOS.WDADevice)
+	wdaClient, err := s.hrpRunner.InitWDAClient(&step.IOS.WDAOptions)
 	if err != nil {
 		return
 	}

@@ -386,7 +386,7 @@ func (r *testCaseRunner) parseConfig() error {
 
 	// init iOS WDA clients
 	for _, iosDeviceConfig := range r.parsedConfig.IOS {
-		_, err := r.hrpRunner.InitWDAClient(iosDeviceConfig.WDADevice)
+		_, err := r.hrpRunner.InitWDAClient(iosDeviceConfig)
 		if err != nil {
 			return errors.Wrap(err, "init iOS WDA client failed")
 		}
