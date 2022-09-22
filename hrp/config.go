@@ -29,7 +29,7 @@ type TConfig struct {
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
-	IOS               []*IOSConfig           `json:"ios,omitempty" yaml:"ios,omitempty"`
+	IOS               []*WDAOptions          `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
@@ -100,23 +100,23 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetIOS(device WDADevice) *TConfig {
+func (c *TConfig) SetIOS(options ...WDAOption) *TConfig {
+	wdaOptions := &WDAOptions{}
+	for _, option := range options {
+		option(wdaOptions)
+	}
+
 	// each device can have its own settings
-	if device.UDID != "" {
-		c.IOS = append(c.IOS, &IOSConfig{
-			WDADevice: device,
-		})
+	if wdaOptions.UDID != "" {
+		c.IOS = append(c.IOS, wdaOptions)
 		return c
 	}
 
-	// device UDID is not specified ,settings will be shared
-	iosConfig := &IOSConfig{
-		WDADevice: device,
-	}
+	// device UDID is not specified, settings will be shared
 	if len(c.IOS) == 0 {
-		c.IOS = append(c.IOS, iosConfig)
+		c.IOS = append(c.IOS, wdaOptions)
 	} else {
-		c.IOS[0] = iosConfig
+		c.IOS[0] = wdaOptions
 	}
 	return c
 }

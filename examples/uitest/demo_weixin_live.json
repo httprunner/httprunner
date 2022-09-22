@@ -1,6 +1,13 @@
 {
     "config": {
-        "name": "通过 feed 卡片进入微信直播间"
+        "name": "通过 feed 卡片进入微信直播间",
+        "ios": [
+            {
+                "port": 8700,
+                "mjpeg_port": 8800,
+                "log_on": true
+            }
+        ]
     },
     "teststeps": [
         {
@@ -40,7 +47,8 @@
                     },
                     {
                         "method": "tap_ocr",
-                        "params": "视频号"
+                        "params": "视频号",
+                        "identifier": "进入视频号"
                     }
                 ]
             }

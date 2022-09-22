@@ -9,7 +9,8 @@ import (
 
 func TestIOSWeixinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
-		Config: hrp.NewConfig("通过 feed 卡片进入微信直播间"), // .SetIOS(hrp.WDADevice{Port: 8700, MjpegPort: 8800})
+		Config: hrp.NewConfig("通过 feed 卡片进入微信直播间").
+			SetIOS(hrp.WithLogOn(true), hrp.WithPort(8700), hrp.WithMjpegPort(8800)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动微信").
 				IOS().
@@ -20,8 +21,8 @@ func TestIOSWeixinLive(t *testing.T) {
 				AssertLabelExists("通讯录", "微信启动失败，「通讯录」不存在"),
 			hrp.NewStep("进入直播页").
 				IOS().
-				Tap("发现").       // 进入「发现页」
-				TapByOCR("视频号"), // 通过 OCR 识别「视频号」
+				Tap("发现").                                    // 进入「发现页」
+				TapByOCR("视频号", hrp.WithIdentifier("进入视频号")), // 通过 OCR 识别「视频号」
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
 				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),

@@ -46,6 +46,7 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
+	host            string
 
 	CVArgs
 }
