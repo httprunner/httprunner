@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/electricbubble/gwda v0.4.0
+	github.com/electricbubble/gidevice v0.6.2
 	github.com/electricbubble/opencv-helper v0.0.3
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
@@ -42,7 +42,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/electricbubble/gidevice v0.6.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
@@ -88,4 +87,3 @@ require (
 )
 
 // replace github.com/httprunner/funplugin => ../funplugin
-replace github.com/electricbubble/gwda => github.com/debugtalk/gwda v0.0.0-20220920103757-8c05b6218f45

@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/electricbubble/gwda"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -120,8 +119,8 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type DriverExt struct {
-	Driver          gwda.WebDriver
-	windowSize      gwda.Size
+	Driver          WebDriver
+	windowSize      Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
@@ -132,7 +131,7 @@ type DriverExt struct {
 	CVArgs
 }
 
-func extend(driver gwda.WebDriver) (dExt *DriverExt, err error) {
+func extend(driver WebDriver) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{Driver: driver}
 	dExt.doneMjpegStream = make(chan bool, 1)
 
@@ -273,17 +272,17 @@ func isPathExists(path string) bool {
 	return true
 }
 
-func (dExt *DriverExt) FindUIElement(param string) (ele gwda.WebElement, err error) {
-	var selector gwda.BySelector
+func (dExt *DriverExt) FindUIElement(param string) (ele WebElement, err error) {
+	var selector BySelector
 	if strings.HasPrefix(param, "/") {
 		// xpath
-		selector = gwda.BySelector{
+		selector = BySelector{
 			XPath: param,
 		}
 	} else {
 		// name
-		selector = gwda.BySelector{
-			LinkText: gwda.NewElementAttribute().WithName(param),
+		selector = BySelector{
+			LinkText: NewElementAttribute().WithName(param),
 		}
 	}
 
@@ -305,25 +304,25 @@ func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, 
 	return
 }
 
-func (dExt *DriverExt) PerformTouchActions(touchActions *gwda.TouchActions) error {
+func (dExt *DriverExt) PerformTouchActions(touchActions *TouchActions) error {
 	return dExt.Driver.PerformAppiumTouchActions(touchActions)
 }
 
-func (dExt *DriverExt) PerformActions(actions *gwda.W3CActions) error {
+func (dExt *DriverExt) PerformActions(actions *W3CActions) error {
 	return dExt.Driver.PerformW3CActions(actions)
 }
 
 func (dExt *DriverExt) IsNameExist(name string) bool {
-	selector := gwda.BySelector{
-		LinkText: gwda.NewElementAttribute().WithName(name),
+	selector := BySelector{
+		LinkText: NewElementAttribute().WithName(name),
 	}
 	_, err := dExt.Driver.FindElement(selector)
 	return err == nil
 }
 
 func (dExt *DriverExt) IsLabelExist(label string) bool {
-	selector := gwda.BySelector{
-		LinkText: gwda.NewElementAttribute().WithLabel(label),
+	selector := BySelector{
+		LinkText: NewElementAttribute().WithLabel(label),
 	}
 	_, err := dExt.Driver.FindElement(selector)
 	return err == nil

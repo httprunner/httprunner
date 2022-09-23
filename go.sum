@@ -96,8 +96,6 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/debugtalk/gwda v0.0.0-20220920103757-8c05b6218f45 h1:n/O+tMRl7XmuP778Oy2wunq8QpftRS0rlBkKumaJSbc=
-github.com/debugtalk/gwda v0.0.0-20220920103757-8c05b6218f45/go.mod h1:kyzKpP1/iKJ2i4AxmT8sEmSvB8Pz5NcDVwc/m/Jsg6k=
 github.com/denisbrodbeck/machineid v1.0.1 h1:geKr9qtkB876mXguW2X6TU4ZynleN6ezuMSRhl4D7AQ=
 github.com/denisbrodbeck/machineid v1.0.1/go.mod h1:dJUwb7PTidGDeYyUBmXZ2GphQBbjJCrnectwCyxcUSI=
 github.com/electricbubble/gidevice v0.6.2 h1:eIeCHH7Xn5fTwnUv3qL8c7L4anKIHtjlTBkgr1LDVTc=

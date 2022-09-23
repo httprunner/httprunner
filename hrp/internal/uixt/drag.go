@@ -1,7 +1,5 @@
 package uixt
 
-import "github.com/electricbubble/gwda"
-
 func (dExt *DriverExt) Drag(pathname string, toX, toY int, pressForDuration ...float64) (err error) {
 	return dExt.DragFloat(pathname, float64(toX), float64(toY), pressForDuration...)
 }
@@ -28,5 +26,5 @@ func (dExt *DriverExt) DragOffsetFloat(pathname string, toX, toY, xOffset, yOffs
 	fromY := y + height*yOffset
 
 	return dExt.Driver.DragFloat(fromX, fromY, toX, toY,
-		gwda.WithPressDuration(pressForDuration[0]))
+		WithPressDuration(pressForDuration[0]))
 }

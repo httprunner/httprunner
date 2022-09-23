@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/electricbubble/gwda"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,7 +28,7 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier 
 	toY = float64(height) * toY
 
 	if len(identifier) > 0 && identifier[0] != "" {
-		option := gwda.WithCustomOption("log", map[string]interface{}{
+		option := WithCustomOption("log", map[string]interface{}{
 			"enable": true,
 			"data":   identifier[0],
 		})

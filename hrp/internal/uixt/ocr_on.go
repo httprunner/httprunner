@@ -20,11 +20,6 @@ var client = &http.Client{
 	Timeout: time.Second * 10,
 }
 
-type Point struct {
-	X float32 `json:"x"`
-	Y float32 `json:"y"`
-}
-
 type OCRResult struct {
 	Text   string  `json:"text"`
 	Points []Point `json:"points"`

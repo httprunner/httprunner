@@ -17,7 +17,7 @@ var (
 )
 
 type IOSStep struct {
-	uixt.WDAOptions   `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
+	uixt.IOSDevice    `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -455,8 +455,8 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
-func (r *HRPRunner) initUIClient(options uixt.Options) (client *uixt.DriverExt, err error) {
-	uuid := options.UUID()
+func (r *HRPRunner) initUIClient(device uixt.Device) (client *uixt.DriverExt, err error) {
+	uuid := device.UUID()
 
 	// avoid duplicate init
 	if uuid == "" && len(r.uiClients) == 1 {
@@ -472,10 +472,10 @@ func (r *HRPRunner) initUIClient(options uixt.Options) (client *uixt.DriverExt, 
 		}
 	}
 
-	if wdaOptions, ok := options.(*uixt.WDAOptions); ok {
-		client, err = uixt.InitWDAClient(wdaOptions)
-	} else if uiaOptions, ok := options.(*uixt.UIAOptions); ok {
-		client, err = uixt.InitUIAClient(uiaOptions)
+	if iosDevice, ok := device.(*uixt.IOSDevice); ok {
+		client, err = uixt.InitWDAClient(iosDevice)
+	} else if androidDevice, ok := device.(*uixt.AndroidDevice); ok {
+		client, err = uixt.InitUIAClient(androidDevice)
 	}
 	if err != nil {
 		return nil, err
@@ -500,7 +500,7 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	screenshots := make([]string, 0)
 
 	// init wdaClient driver
-	wdaClient, err := s.hrpRunner.initUIClient(&step.IOS.WDAOptions)
+	wdaClient, err := s.hrpRunner.initUIClient(&step.IOS.IOSDevice)
 	if err != nil {
 		return
 	}
