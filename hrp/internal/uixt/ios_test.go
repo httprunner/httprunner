@@ -9,66 +9,53 @@ import (
 )
 
 var (
-	urlPrefix = "http://localhost:8100"
-	bundleId  = "com.apple.Preferences"
-	driver    WebDriver
+	bundleId = "com.apple.Preferences"
+	driver   WebDriver
 )
 
 func setup(t *testing.T) {
-	var err error
-	driver, err = NewUSBDriver(nil)
+	device, err := NewIOSDevice()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err = device.NewUSBDriver(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestViaUSB(t *testing.T) {
-	devices, err := DeviceList()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	drivers := make([]WebDriver, 0, len(devices))
-
-	for _, dev := range devices {
-		d, err := NewUSBDriver(nil, dev)
-		if err != nil {
-			t.Errorf("%s: %s", dev.UUID(), err)
-			continue
-		}
-		drivers = append(drivers, d)
-	}
-
-	for _, d := range drivers {
-		t.Log(d.Status())
-	}
+	setup(t)
+	t.Log(driver.Status())
 }
 
-func TestNewDevice(t *testing.T) {
-	device, _ := NewDevice()
+func TestNewIOSDevice(t *testing.T) {
+	device, _ := NewIOSDevice()
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewDevice(WithUDID("xxxx"))
+	device, _ = NewIOSDevice(WithUDID("xxxx"))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewDevice(WithPort(8700), WithMjpegPort(8800))
+	device, _ = NewIOSDevice(WithPort(8700), WithMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewDevice(WithUDID("xxxx"), WithPort(8700), WithMjpegPort(8800))
+	device, _ = NewIOSDevice(WithUDID("xxxx"), WithPort(8700), WithMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 }
 
-func TestNewDriver(t *testing.T) {
+func TestNewWDAHTTPDriver(t *testing.T) {
+	device, _ := NewIOSDevice()
 	var err error
-	driver, err = NewDriver(nil, urlPrefix)
+	_, err = device.NewHTTPDriver(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
