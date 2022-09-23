@@ -7,10 +7,13 @@ import (
 	builtinJSON "encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mime"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -54,7 +57,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	}
 
 	// init wda device
-	targetDevice, err := NewDevice(deviceOptions...)
+	iosDevice, err := NewIOSDevice(deviceOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +66,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	// aviod getting stuck when some super app is activate such as douyin or wexin
 	log.Info().Msg("switch to iOS springboard")
 	bundleID := "com.apple.springboard"
-	_, err = targetDevice.GIDevice().AppLaunch(bundleID)
+	_, err = iosDevice.AppLaunch(bundleID)
 	if err != nil {
 		return nil, errors.Wrap(err, "launch springboard failed")
 	}
@@ -71,7 +74,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	// init WDA driver
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
-	driver, err := NewUSBDriver(capabilities, *targetDevice)
+	driver, err := iosDevice.NewUSBDriver(capabilities)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
@@ -88,7 +91,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	}
 	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
-	driverExt.host = fmt.Sprintf("http://127.0.0.1:%d", targetDevice.Port)
+	driverExt.host = fmt.Sprintf("http://127.0.0.1:%d", iosDevice.Port)
 	if device.LogOn {
 		err = driverExt.StartLogRecording("hrp_wda_log")
 		if err != nil {
@@ -101,23 +104,6 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 
 type Device interface {
 	UUID() string
-}
-
-type IOSDevice struct {
-	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
-	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
-
-	d giDevice.Device
-}
-
-func (d IOSDevice) UUID() string {
-	return d.UDID
-}
-
-func (d IOSDevice) GIDevice() giDevice.Device {
-	return d.d
 }
 
 type IOSDeviceOption func(*IOSDevice)
@@ -146,7 +132,7 @@ func WithLogOn(logOn bool) IOSDeviceOption {
 	}
 }
 
-func NewDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
+func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	var usbmux giDevice.Usbmux
 	if usbmux, err = giDevice.NewUsbmux(); err != nil {
 		return nil, fmt.Errorf("init usbmux failed: %v", err)
@@ -166,49 +152,37 @@ func NewDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	}
 
 	serialNumber := device.UDID
-	for _, d := range deviceList {
+	for _, dev := range deviceList {
 		// find device by serial number if specified
-		if serialNumber != "" && d.Properties().SerialNumber != serialNumber {
+		if serialNumber != "" && dev.Properties().SerialNumber != serialNumber {
 			continue
 		}
 
-		device.UDID = d.Properties().SerialNumber
-		device.d = d
+		device.UDID = dev.Properties().SerialNumber
+		device.Device = dev
 		return device, nil
 	}
 
 	return nil, fmt.Errorf("device %s not found", device.UDID)
 }
 
-func DeviceList() (devices []IOSDevice, err error) {
-	var usbmux giDevice.Usbmux
-	if usbmux, err = giDevice.NewUsbmux(); err != nil {
-		return nil, fmt.Errorf("usbmuxd: %w", err)
-	}
-
-	var deviceList []giDevice.Device
-	if deviceList, err = usbmux.Devices(); err != nil {
-		return nil, fmt.Errorf("device list: %w", err)
-	}
-
-	devices = make([]IOSDevice, len(deviceList))
-
-	for i := range devices {
-		devices[i].UDID = deviceList[i].Properties().SerialNumber
-		devices[i].Port = defaultPort
-		devices[i].MjpegPort = defaultMjpegPort
-		devices[i].d = deviceList[i]
-	}
-
-	return
+type IOSDevice struct {
+	giDevice.Device
+	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
+	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
+	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
-// NewDriver creates new remote client, this will also start a new session.
-func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (driver WebDriver, err error) {
-	if len(mjpegPort) == 0 {
-		mjpegPort = []int{defaultMjpegPort}
-	}
-	wd := new(remoteWD)
+func (dev *IOSDevice) UUID() string {
+	return dev.UDID
+}
+
+// NewHTTPDriver creates new remote HTTP client, this will also start a new session.
+func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
+	wd := new(wdaDriver)
+
+	urlPrefix := fmt.Sprintf("http://127.0.0.1:%d", dev.Port)
 	if wd.urlPrefix, err = url.Parse(urlPrefix); err != nil {
 		return nil, err
 	}
@@ -218,7 +192,11 @@ func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (d
 	}
 	wd.sessionId = sessionInfo.SessionId
 
-	if wd.mjpegConn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(), mjpegPort[0])); err != nil {
+	if wd.mjpegConn, err = net.Dial(
+		"tcp",
+		fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(),
+			dev.MjpegPort),
+	); err != nil {
 		return nil, err
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegConn)
@@ -227,30 +205,20 @@ func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (d
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
-func NewUSBDriver(capabilities Capabilities, device ...IOSDevice) (driver WebDriver, err error) {
-	if len(device) == 0 {
-		if device, err = DeviceList(); err != nil {
-			return nil, err
-		}
-		if len(device) == 0 {
-			return nil, errors.New("no device")
-		}
-	}
-	dev := device[0]
-
-	wd := &remoteWD{
+func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
+	wd := &wdaDriver{
 		usbCli: &struct {
 			httpCli                *http.Client
 			defaultConn, mjpegConn giDevice.InnerConn
 			sync.Mutex
 		}{},
 	}
-	if wd.usbCli.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
+	if wd.usbCli.defaultConn, err = dev.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
 	wd.usbCli.httpCli = convertToHTTPClient(wd.usbCli.defaultConn.RawConn())
 
-	if wd.usbCli.mjpegConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
+	if wd.usbCli.mjpegConn, err = dev.NewConnect(dev.MjpegPort, 0); err != nil {
 		return nil, fmt.Errorf("create connection MJPEG: %w", err)
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.usbCli.mjpegConn.RawConn())
@@ -275,20 +243,6 @@ func NewUSBDriver(capabilities Capabilities, device ...IOSDevice) (driver WebDri
 	}()
 
 	return wd, err
-}
-
-func newRequest(method string, url string, rawBody []byte) (request *http.Request, err error) {
-	header := map[string]string{
-		"Content-Type": "application/json;charset=UTF-8",
-		"Accept":       "application/json",
-	}
-	if request, err = http.NewRequest(method, url, bytes.NewBuffer(rawBody)); err != nil {
-		return nil, err
-	}
-	for k, v := range header {
-		request.Header.Set(k, v)
-	}
-	return
 }
 
 func convertToHTTPClient(_conn net.Conn) *http.Client {
@@ -358,6 +312,61 @@ func (dExt *DriverExt) triggerWDALog(data map[string]interface{}) (*wdaResponse,
 	}
 
 	return reply, nil
+}
+
+func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {
+	if httpClient == nil {
+		return errors.New(`'httpClient' can't be nil`)
+	}
+
+	var req *http.Request
+	if req, err = http.NewRequest(http.MethodGet, "http://*", nil); err != nil {
+		return err
+	}
+
+	var resp *http.Response
+	if resp, err = httpClient.Do(req); err != nil {
+		return err
+	}
+	// defer func() { _ = resp.Body.Close() }()
+
+	var boundary string
+	if _, param, err := mime.ParseMediaType(resp.Header.Get("Content-Type")); err != nil {
+		return err
+	} else {
+		boundary = strings.Trim(param["boundary"], "-")
+	}
+
+	mjpegReader := multipart.NewReader(resp.Body, boundary)
+
+	go func() {
+		for {
+			select {
+			case <-dExt.doneMjpegStream:
+				_ = resp.Body.Close()
+				return
+			default:
+				var part *multipart.Part
+				if part, err = mjpegReader.NextPart(); err != nil {
+					dExt.frame = nil
+					continue
+				}
+
+				raw := new(bytes.Buffer)
+				if _, err = raw.ReadFrom(part); err != nil {
+					dExt.frame = nil
+					continue
+				}
+				dExt.frame = raw
+			}
+		}
+	}()
+
+	return
+}
+
+func (dExt *DriverExt) CloseMjpegStream() {
+	dExt.doneMjpegStream <- true
 }
 
 type rawResponse []byte
