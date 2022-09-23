@@ -20,6 +20,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
 // Run starts to run API test with default configs.
@@ -71,7 +72,7 @@ type HRPRunner struct {
 	httpClient    *http.Client
 	http2Client   *http.Client
 	wsDialer      *websocket.Dialer
-	wdaClients    map[string]*uiDriver // wda client used for iOS UI automation, key is udid
+	uiClients     map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
@@ -384,11 +385,17 @@ func (r *testCaseRunner) parseConfig() error {
 	}
 	r.parametersIterator = parametersIterator
 
-	// init iOS WDA clients
+	// init iOS/Android clients
 	for _, iosDeviceConfig := range r.parsedConfig.IOS {
-		_, err := r.hrpRunner.InitWDAClient(iosDeviceConfig)
+		_, err := r.hrpRunner.initUIClient(iosDeviceConfig)
 		if err != nil {
 			return errors.Wrap(err, "init iOS WDA client failed")
+		}
+	}
+	for _, androidDeviceConfig := range r.parsedConfig.Android {
+		_, err := r.hrpRunner.initUIClient(androidDeviceConfig)
+		if err != nil {
+			return errors.Wrap(err, "init Android UIAutomator client failed")
 		}
 	}
 

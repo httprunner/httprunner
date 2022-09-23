@@ -1,5 +1,7 @@
 package hrp
 
+import "github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+
 type StepType string
 
 const (
@@ -14,82 +16,12 @@ const (
 	stepTypeIOS         StepType = "ios"
 )
 
-type MobileMethod string
-
-const (
-	appInstall          MobileMethod = "install"
-	appUninstall        MobileMethod = "uninstall"
-	appStart            MobileMethod = "app_start"
-	appLaunch           MobileMethod = "app_launch"            // 等待 app 打开并堵塞到 app 首屏加载完成，可以传入 app 的启动参数、环境变量
-	appLaunchUnattached MobileMethod = "app_launch_unattached" // 只负责通知打开 app，不堵塞等待，不可传入启动参数
-	appTerminate        MobileMethod = "app_terminate"
-	appStop             MobileMethod = "app_stop"
-	ctlScreenShot       MobileMethod = "screenshot"
-	ctlSleep            MobileMethod = "sleep"
-	ctlStartCamera      MobileMethod = "camera_start" // alias for app_launch camera
-	ctlStopCamera       MobileMethod = "camera_stop"  // alias for app_terminate camera
-	recordStart         MobileMethod = "record_start"
-	recordStop          MobileMethod = "record_stop"
-
-	// UI handling
-	uiHome        MobileMethod = "home"
-	uiTapXY       MobileMethod = "tap_xy"
-	uiTapByOCR    MobileMethod = "tap_ocr"
-	uiTapByCV     MobileMethod = "tap_cv"
-	uiTap         MobileMethod = "tap"
-	uiDoubleTapXY MobileMethod = "double_tap_xy"
-	uiDoubleTap   MobileMethod = "double_tap"
-	uiSwipe       MobileMethod = "swipe"
-	uiInput       MobileMethod = "input"
-
-	// UI validation
-	uiSelectorName     string = "ui_name"
-	uiSelectorLabel    string = "ui_label"
-	uiSelectorOCR      string = "ui_ocr"
-	uiSelectorImage    string = "ui_image"
-	assertionExists    string = "exists"
-	assertionNotExists string = "not_exists"
-
-	// custom actions
-	swipeToTapApp  MobileMethod = "swipe_to_tap_app"  // swipe left & right to find app and tap
-	swipeToTapText MobileMethod = "swipe_to_tap_text" // swipe up & down to find text and tap
+var (
+	WithIdentifier          = uixt.WithIdentifier
+	WithMaxRetryTimes       = uixt.WithMaxRetryTimes
+	WithTimeout             = uixt.WithTimeout
+	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
 )
-
-type MobileAction struct {
-	Method MobileMethod `json:"method,omitempty" yaml:"method,omitempty"`
-	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
-
-	Identifier          string `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
-	MaxRetryTimes       int    `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
-	Timeout             int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
-	IgnoreNotFoundError bool   `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
-}
-
-type ActionOption func(o *MobileAction)
-
-func WithIdentifier(identifier string) ActionOption {
-	return func(o *MobileAction) {
-		o.Identifier = identifier
-	}
-}
-
-func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
-	return func(o *MobileAction) {
-		o.MaxRetryTimes = maxRetryTimes
-	}
-}
-
-func WithTimeout(timeout int) ActionOption {
-	return func(o *MobileAction) {
-		o.Timeout = timeout
-	}
-}
-
-func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
-	return func(o *MobileAction) {
-		o.IgnoreNotFoundError = ignoreError
-	}
-}
 
 type StepResult struct {
 	Name        string                 `json:"name" yaml:"name"`                                   // step name

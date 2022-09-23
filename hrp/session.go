@@ -164,8 +164,8 @@ func (r *SessionRunner) GetSummary() *TestCaseSummary {
 	caseSummary.InOut.ConfigVars = r.parsedConfig.Variables
 
 	logs := make(map[string]string)
-	for udid, client := range r.hrpRunner.wdaClients {
-		log, err := client.GetWDALog()
+	for udid, client := range r.hrpRunner.uiClients {
+		log, err := client.GetLogs()
 		if err != nil {
 			logs[udid] = err.Error()
 		} else {
