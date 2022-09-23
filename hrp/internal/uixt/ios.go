@@ -28,11 +28,19 @@ const (
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
+type Options interface {
+	UUID() string
+}
+
 type WDAOptions struct {
 	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
 	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
 	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
 	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+}
+
+func (o WDAOptions) UUID() string {
+	return o.UDID
 }
 
 type WDAOption func(*WDAOptions)
@@ -100,7 +108,7 @@ func InitWDAClient(options *WDAOptions) (*DriverExt, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to extend gwda.WebDriver")
 	}
-	settings, err := driverExt.SetAppiumSettings(map[string]interface{}{
+	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          snapshotMaxDepth,
 		"acceptAlertButtonSelector": acceptAlertButtonSelector,
 	})
@@ -111,7 +119,7 @@ func InitWDAClient(options *WDAOptions) (*DriverExt, error) {
 
 	driverExt.host = fmt.Sprintf("http://127.0.0.1:%d", targetDevice.Port)
 	if options.LogOn {
-		err = driverExt.StartWDALog("hrp_wda_log")
+		err = driverExt.StartLogRecording("hrp_wda_log")
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +133,7 @@ type wdaResponse struct {
 	SessionID string `json:"sessionId"`
 }
 
-func (dExt *DriverExt) StartWDALog(identifier string) error {
+func (dExt *DriverExt) StartLogRecording(identifier string) error {
 	log.Info().Msg("start WDA log recording")
 	data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier}
 	_, err := dExt.triggerWDALog(data)
@@ -136,7 +144,7 @@ func (dExt *DriverExt) StartWDALog(identifier string) error {
 	return nil
 }
 
-func (dExt *DriverExt) GetWDALog() (string, error) {
+func (dExt *DriverExt) GetLogs() (string, error) {
 	log.Info().Msg("stop WDA log recording")
 	data := map[string]interface{}{"action": "stop"}
 	reply, err := dExt.triggerWDALog(data)

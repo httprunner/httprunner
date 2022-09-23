@@ -69,7 +69,7 @@ func (dExt *DriverExt) Debug(dm DebugMode) {
 
 func (dExt *DriverExt) OnlyOnceThreshold(threshold float64) (newExt *DriverExt) {
 	newExt = new(DriverExt)
-	newExt.WebDriver = dExt.WebDriver
+	newExt.Driver = dExt.Driver
 	newExt.scale = dExt.scale
 	newExt.matchMode = dExt.matchMode
 	newExt.threshold = threshold
@@ -78,7 +78,7 @@ func (dExt *DriverExt) OnlyOnceThreshold(threshold float64) (newExt *DriverExt) 
 
 func (dExt *DriverExt) OnlyOnceMatchMode(matchMode TemplateMatchMode) (newExt *DriverExt) {
 	newExt = new(DriverExt)
-	newExt.WebDriver = dExt.WebDriver
+	newExt.Driver = dExt.Driver
 	newExt.scale = dExt.scale
 	newExt.matchMode = matchMode
 	newExt.threshold = dExt.threshold

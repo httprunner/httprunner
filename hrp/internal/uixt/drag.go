@@ -27,6 +27,6 @@ func (dExt *DriverExt) DragOffsetFloat(pathname string, toX, toY, xOffset, yOffs
 	fromX := x + width*xOffset
 	fromY := y + height*yOffset
 
-	return dExt.WebDriver.DragFloat(fromX, fromY, toX, toY,
+	return dExt.Driver.DragFloat(fromX, fromY, toX, toY,
 		gwda.WithPressDuration(pressForDuration[0]))
 }

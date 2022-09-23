@@ -13,7 +13,7 @@ func (dExt *DriverExt) ForceTouchOffset(pathname string, pressure, xOffset, yOff
 		return err
 	}
 
-	return dExt.ForceTouchFloat(x+width*xOffset, y+height*yOffset, pressure, duration[0])
+	return dExt.Driver.ForceTouchFloat(x+width*xOffset, y+height*yOffset, pressure, duration[0])
 }
 
 func (dExt *DriverExt) TouchAndHold(pathname string, duration ...float64) (err error) {
@@ -29,5 +29,5 @@ func (dExt *DriverExt) TouchAndHoldOffset(pathname string, xOffset, yOffset floa
 		return err
 	}
 
-	return dExt.TouchAndHoldFloat(x+width*xOffset, y+height*yOffset, duration[0])
+	return dExt.Driver.TouchAndHoldFloat(x+width*xOffset, y+height*yOffset, duration[0])
 }

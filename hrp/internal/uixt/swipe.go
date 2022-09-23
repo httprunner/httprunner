@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/electricbubble/gwda"
 	"github.com/rs/zerolog/log"
@@ -32,9 +33,9 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier 
 			"enable": true,
 			"data":   identifier[0],
 		})
-		dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY, option)
+		dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, option)
 	}
-	return dExt.WebDriver.SwipeFloat(fromX, fromY, toX, toY)
+	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY)
 }
 
 func (dExt *DriverExt) SwipeTo(direction string, identifier ...string) (err error) {
@@ -82,6 +83,8 @@ func (dExt *DriverExt) SwipeUntil(direction string, condition FindCondition, act
 		if err := dExt.SwipeTo(direction); err != nil {
 			log.Error().Err(err).Msgf("swipe %s failed", direction)
 		}
+		// wait for swipe done
+		time.Sleep(500 * time.Millisecond)
 	}
 	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
 }

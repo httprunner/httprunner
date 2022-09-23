@@ -12,9 +12,9 @@ func (dExt *DriverExt) tapFloat(x, y float64, identifier string) error {
 			"enable": true,
 			"data":   identifier,
 		})
-		return dExt.WebDriver.TapFloat(x, y, option)
+		return dExt.Driver.TapFloat(x, y, option)
 	}
-	return dExt.WebDriver.TapFloat(x, y)
+	return dExt.Driver.TapFloat(x, y)
 }
 
 func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
@@ -83,7 +83,7 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
 
 	x = x * float64(dExt.windowSize.Width)
 	y = y * float64(dExt.windowSize.Height)
-	return dExt.WebDriver.DoubleTapFloat(x, y)
+	return dExt.Driver.DoubleTapFloat(x, y)
 }
 
 func (dExt *DriverExt) DoubleTap(param string) (err error) {
@@ -102,7 +102,7 @@ func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (
 		return err
 	}
 
-	return dExt.WebDriver.DoubleTapFloat(x+width*xOffset, y+height*yOffset)
+	return dExt.Driver.DoubleTapFloat(x+width*xOffset, y+height*yOffset)
 }
 
 // TapWithNumber sends one or more taps

@@ -16,10 +16,10 @@ func TestSwipeUntil(t *testing.T) {
 	}
 	foundAppAction := func(d *DriverExt) error {
 		// click app, launch douyin
-		return d.TapFloat(x+width*0.5, y+height*0.5-20)
+		return d.Driver.TapFloat(x+width*0.5, y+height*0.5-20)
 	}
 
-	driverExt.Homescreen()
+	driverExt.Driver.Homescreen()
 
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
@@ -37,7 +37,7 @@ func TestSwipeUntil(t *testing.T) {
 	}
 	foundLiveAction := func(d *DriverExt) error {
 		// enter live room
-		return d.TapFloat(x+width*0.5, y+height*0.5)
+		return d.Driver.TapFloat(x+width*0.5, y+height*0.5)
 	}
 
 	// swipe until live room found

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
 // NewConfig returns a new constructed testcase config with specified testcase name.
@@ -29,7 +30,8 @@ type TConfig struct {
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
-	IOS               []*WDAOptions          `json:"ios,omitempty" yaml:"ios,omitempty"`
+	IOS               []*uixt.WDAOptions     `json:"ios,omitempty" yaml:"ios,omitempty"`
+	Android           []*uixt.UIAOptions     `json:"android,omitempty" yaml:"android,omitempty"`
 	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
@@ -100,8 +102,8 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetIOS(options ...WDAOption) *TConfig {
-	wdaOptions := &WDAOptions{}
+func (c *TConfig) SetIOS(options ...uixt.WDAOption) *TConfig {
+	wdaOptions := &uixt.WDAOptions{}
 	for _, option := range options {
 		option(wdaOptions)
 	}
