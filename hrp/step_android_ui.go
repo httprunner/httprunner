@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
 type AndroidStep struct {
-	uixt.UIAOptions `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
+	uixt.AndroidDevice `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
 	uixt.MobileAction
 	Actions []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -220,7 +221,7 @@ func runStepAndroid(s *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	screenshots := make([]string, 0)
 
 	// init uiaClient driver
-	uiaClient, err := s.hrpRunner.initUIClient(&step.Android.UIAOptions)
+	uiaClient, err := s.hrpRunner.initUIClient(&step.Android.AndroidDevice)
 	if err != nil {
 		return
 	}

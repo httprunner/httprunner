@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/electricbubble/gwda"
 	cvHelper "github.com/electricbubble/opencv-helper"
 )
 
@@ -43,7 +42,7 @@ const (
 // 获取当前设备的 Scale，
 // 默认匹配模式为 TmCcoeffNormed，
 // 默认关闭 OpenCV 匹配值计算后的输出
-func Extend(driver gwda.WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
+func Extend(driver WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
 	dExt, err = extend(driver)
 	if err != nil {
 		return nil, err

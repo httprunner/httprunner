@@ -4,9 +4,6 @@ package uixt
 
 import (
 	"image"
-	"sort"
-
-	"github.com/electricbubble/gwda"
 )
 
 func (dExt *DriverExt) GesturePassword(pathname string, password ...int) (err error) {
@@ -26,17 +23,17 @@ func (dExt *DriverExt) GesturePassword(pathname string, password ...int) (err er
 		return false
 	})
 
-	touchActions := gwda.NewTouchActions(len(password)*2 + 1)
+	touchActions := NewTouchActions(len(password)*2 + 1)
 	for i := range password {
 		x, y, width, height := dExt.MappingToRectInUIKit(rects[password[i]])
 		x = x + width*0.5
 		y = y + height*0.5
 
 		if i == 0 {
-			touchActions.Press(gwda.NewTouchActionPress().WithXYFloat(x, y)).
+			touchActions.Press(NewTouchActionPress().WithXYFloat(x, y)).
 				Wait(0.2)
 		} else {
-			touchActions.MoveTo(gwda.NewTouchActionMoveTo().WithXYFloat(x, y)).
+			touchActions.MoveTo(NewTouchActionMoveTo().WithXYFloat(x, y)).
 				Wait(0.2)
 		}
 	}

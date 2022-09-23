@@ -5,11 +5,10 @@ package uixt
 import (
 	"image"
 
-	"github.com/electricbubble/gwda"
 	"github.com/rs/zerolog/log"
 )
 
-func Extend(driver gwda.WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
+func Extend(driver WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
 	return extend(driver)
 }
 

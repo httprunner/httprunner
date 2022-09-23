@@ -2,13 +2,11 @@ package uixt
 
 import (
 	"fmt"
-
-	"github.com/electricbubble/gwda"
 )
 
 func (dExt *DriverExt) tapFloat(x, y float64, identifier string) error {
 	if len(identifier) > 0 {
-		option := gwda.WithCustomOption("log", map[string]interface{}{
+		option := WithCustomOption("log", map[string]interface{}{
 			"enable": true,
 			"data":   identifier,
 		})
@@ -122,6 +120,6 @@ func (dExt *DriverExt) TapWithNumberOffset(param string, numberOfTaps int, xOffs
 	x = x + width*xOffset
 	y = y + height*yOffset
 
-	touchActions := gwda.NewTouchActions().Tap(gwda.NewTouchActionTap().WithXYFloat(x, y).WithCount(numberOfTaps))
+	touchActions := NewTouchActions().Tap(NewTouchActionTap().WithXYFloat(x, y).WithCount(numberOfTaps))
 	return dExt.PerformTouchActions(touchActions)
 }
