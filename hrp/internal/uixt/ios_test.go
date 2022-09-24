@@ -351,8 +351,6 @@ func Test_remoteWD_Homescreen(t *testing.T) {
 func Test_remoteWD_AppLaunch(t *testing.T) {
 	setup(t)
 
-	// SetDebug(true)
-
 	// bundleId = "com.hustlzp.xcz"
 	// bundleId = "com.github.stormbreaker.prod"
 	// bundleId = "com.360buy.jdmobile"

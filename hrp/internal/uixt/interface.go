@@ -164,6 +164,8 @@ type BatteryInfo struct {
 
 	// Battery state ( 1: on battery, discharging; 2: plugged in, less than 100%, 3: plugged in, at 100% )
 	State BatteryState `json:"state"`
+
+	Status BatteryStatus `json:"status"`
 }
 
 type BatteryState int
@@ -683,6 +685,11 @@ type Point struct {
 	Y int `json:"y"` // upper left Y coordinate of selected element
 }
 
+type PointF struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
 type Rect struct {
 	Point
 	Size
@@ -706,6 +713,11 @@ func WithFrequency(frequency int) DataOption {
 	return func(data map[string]interface{}) {
 		data["frequency"] = frequency
 	}
+}
+
+// current implemeted device: IOSDevice, AndroidDevice
+type Device interface {
+	UUID() string
 }
 
 // WebDriver defines methods supported by WebDriver drivers.
