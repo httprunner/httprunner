@@ -10,8 +10,6 @@ func TestDriverExt_TapWithNumber(t *testing.T) {
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/flag7.png"
 
-	// SetDebug(true)
-
 	err = driverExt.TapWithNumber(pathSearch, 3)
 	checkErr(t, err)
 

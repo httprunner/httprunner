@@ -4,6 +4,7 @@ package uixt
 
 import (
 	"image"
+	"sort"
 )
 
 func (dExt *DriverExt) GesturePassword(pathname string, password ...int) (err error) {

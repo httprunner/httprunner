@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	giDevice "github.com/electricbubble/gidevice"
@@ -40,7 +38,7 @@ const (
 )
 
 const (
-	defaultPort      = 8100
+	defaultWDAPort   = 8100
 	defaultMjpegPort = 9100
 )
 
@@ -102,10 +100,6 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	return driverExt, nil
 }
 
-type Device interface {
-	UUID() string
-}
-
 type IOSDeviceOption func(*IOSDevice)
 
 func WithUDID(udid string) IOSDeviceOption {
@@ -144,7 +138,7 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	}
 
 	device = &IOSDevice{
-		Port:      defaultPort,
+		Port:      defaultWDAPort,
 		MjpegPort: defaultMjpegPort,
 	}
 	for _, option := range options {
@@ -191,37 +185,33 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 		return nil, err
 	}
 	wd.sessionId = sessionInfo.SessionId
+	wd.client = http.DefaultClient
 
-	if wd.mjpegConn, err = net.Dial(
+	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
 		fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(),
 			dev.MjpegPort),
 	); err != nil {
 		return nil, err
 	}
-	wd.mjpegClient = convertToHTTPClient(wd.mjpegConn)
+	wd.mjpegClient = convertToHTTPClient(wd.mjpegHTTPConn)
 
 	return wd, nil
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
 func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
-	wd := &wdaDriver{
-		usbCli: &struct {
-			httpCli                *http.Client
-			defaultConn, mjpegConn giDevice.InnerConn
-			sync.Mutex
-		}{},
-	}
-	if wd.usbCli.defaultConn, err = dev.NewConnect(dev.Port, 0); err != nil {
+	wd := new(wdaDriver)
+
+	if wd.defaultConn, err = dev.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
-	wd.usbCli.httpCli = convertToHTTPClient(wd.usbCli.defaultConn.RawConn())
+	wd.client = convertToHTTPClient(wd.defaultConn.RawConn())
 
-	if wd.usbCli.mjpegConn, err = dev.NewConnect(dev.MjpegPort, 0); err != nil {
+	if wd.mjpegUSBConn, err = dev.NewConnect(dev.MjpegPort, 0); err != nil {
 		return nil, fmt.Errorf("create connection MJPEG: %w", err)
 	}
-	wd.mjpegClient = convertToHTTPClient(wd.usbCli.mjpegConn.RawConn())
+	wd.mjpegClient = convertToHTTPClient(wd.mjpegUSBConn.RawConn())
 
 	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
 		return nil, err
@@ -243,17 +233,6 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	}()
 
 	return wd, err
-}
-
-func convertToHTTPClient(_conn net.Conn) *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return _conn, nil
-			},
-		},
-		Timeout: 0,
-	}
 }
 
 type wdaResponse struct {
@@ -374,9 +353,10 @@ type rawResponse []byte
 func (r rawResponse) checkErr() (err error) {
 	reply := new(struct {
 		Value struct {
-			Err       string `json:"error"`
-			Message   string `json:"message"`
-			Traceback string `json:"traceback"`
+			Err        string `json:"error"`
+			Message    string `json:"message"`
+			Traceback  string `json:"traceback"`  // wda
+			Stacktrace string `json:"stacktrace"` // uia
 		}
 	})
 	if err = json.Unmarshal(r, reply); err != nil {

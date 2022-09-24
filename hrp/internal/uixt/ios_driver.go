@@ -5,57 +5,46 @@ import (
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
-	"sync"
 	"time"
 
 	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 type wdaDriver struct {
-	urlPrefix *url.URL
-	sessionId string
+	Driver
 
-	usbCli *struct {
-		httpCli                *http.Client
-		defaultConn, mjpegConn giDevice.InnerConn
-		sync.Mutex
-	}
+	// default port
+	defaultConn giDevice.InnerConn
 
-	mjpegClient *http.Client
-	mjpegConn   net.Conn
+	// mjpeg port
+	mjpegUSBConn  giDevice.InnerConn // via USB
+	mjpegHTTPConn net.Conn           // via HTTP
+	mjpegClient   *http.Client
 }
 
-func (wd *wdaDriver) GetMjpegHTTPClient() *http.Client {
+func (wd *wdaDriver) GetMjpegClient() *http.Client {
 	return wd.mjpegClient
 }
 
 func (wd *wdaDriver) Close() error {
-	if wd.usbCli == nil {
+	if wd.defaultConn != nil {
+		wd.defaultConn.Close()
+	}
+	if wd.mjpegUSBConn != nil {
+		wd.mjpegUSBConn.Close()
+	}
+
+	if wd.mjpegClient != nil {
 		wd.mjpegClient.CloseIdleConnections()
-		return wd.mjpegConn.Close()
 	}
-
-	wd.usbCli.Lock()
-	defer wd.usbCli.Unlock()
-
-	if wd.usbCli.defaultConn != nil {
-		wd.usbCli.defaultConn.Close()
-	}
-	if wd.usbCli.mjpegConn != nil {
-		wd.usbCli.mjpegConn.Close()
-	}
-	return nil
+	return wd.mjpegHTTPConn.Close()
 }
 
 func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
@@ -843,84 +832,4 @@ func (wd *wdaDriver) WaitWithTimeout(condition Condition, timeout time.Duration)
 
 func (wd *wdaDriver) Wait(condition Condition) error {
 	return wd.WaitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
-}
-
-func (wd *wdaDriver) concatURL(u *url.URL, elem ...string) string {
-	var tmp *url.URL
-	if u == nil {
-		u = wd.urlPrefix
-	}
-	tmp, _ = url.Parse(u.String())
-	tmp.Path = path.Join(append([]string{u.Path}, elem...)...)
-	return tmp.String()
-}
-
-func (wd *wdaDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.httpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
-}
-
-func (wd *wdaDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	return wd.httpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
-}
-
-func (wd *wdaDriver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.httpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
-}
-
-func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
-	log.Debug().Str("method", method).Str("url", rawURL).Str("body", string(rawBody)).Msg("request WDA")
-
-	var req *http.Request
-	if req, err = http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	req.Header.Set("Accept", "application/json")
-
-	var httpCli *http.Client
-	if wd.usbCli != nil {
-		wd.usbCli.Lock()
-		defer wd.usbCli.Unlock()
-		httpCli = wd.usbCli.httpCli
-	} else {
-		httpCli = http.DefaultClient
-	}
-	httpCli.Timeout = 0
-
-	start := time.Now()
-	var resp *http.Response
-	if resp, err = httpCli.Do(req); err != nil {
-		return nil, err
-	}
-	defer func() {
-		// https://github.com/etcd-io/etcd/blob/v3.3.25/pkg/httputil/httputil.go#L16-L22
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}()
-
-	rawResp, err = ioutil.ReadAll(resp.Body)
-	logger := log.Debug().Int("statusCode", resp.StatusCode).Str("duration", time.Since(start).String())
-	if !strings.HasSuffix(rawURL, "screenshot") {
-		// avoid printing screenshot data
-		logger.Bytes("response", rawResp)
-	}
-	logger.Msg("get WDA response")
-	if err != nil {
-		return nil, err
-	}
-
-	if err = rawResp.checkErr(); err != nil {
-		if resp.StatusCode == http.StatusOK {
-			return rawResp, nil
-		}
-		return nil, err
-	}
-
-	return
 }

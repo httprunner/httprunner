@@ -38,13 +38,13 @@ This uixt module is initially forked from the following repos and made a lot of 
 
 - [electricbubble/gwda-ext-opencv]
 - [electricbubble/gwda]
-- [electricbubble/guia]
+- [electricbubble/guia2]
 
 
 [electricbubble/gwda-ext-opencv]: https://github.com/electricbubble/gwda-ext-opencv
 [appium/WebDriverAgent]: https://github.com/appium/WebDriverAgent
 [electricbubble/gwda]: https://github.com/electricbubble/gwda
-[electricbubble/guia]: https://github.com/electricbubble/guia2
+[electricbubble/guia2]: https://github.com/electricbubble/guia2
 [OpenCV 4]: https://opencv.org/
 [hybridgroup/gocv]: https://github.com/hybridgroup/gocv
 [volcengine]: https://www.volcengine.com/product/text-recognition
