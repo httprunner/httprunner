@@ -152,10 +152,10 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 		return dExt.frame, nil
 	}
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
-		log.Error().Err(err).Msgf("screenshot failed: %v", err)
+		log.Error().Err(err).Msg("takeScreenShot failed")
 		return nil, err
 	}
-	return
+	return raw, nil
 }
 
 // saveScreenShot saves image file to $CWD/screenshots/ folder
@@ -203,7 +203,11 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 		return "", errors.Wrap(err, "screenshot by WDA failed")
 	}
 
-	return dExt.saveScreenShot(raw, fileName)
+	path, err := dExt.saveScreenShot(raw, fileName)
+	if err != nil {
+		return "", errors.Wrap(err, "save screenshot failed")
+	}
+	return path, nil
 }
 
 // isPathExists returns true if path exists, whether path is file or dir

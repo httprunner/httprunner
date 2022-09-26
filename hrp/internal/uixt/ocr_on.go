@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -21,8 +23,8 @@ var client = &http.Client{
 }
 
 type OCRResult struct {
-	Text   string  `json:"text"`
-	Points []Point `json:"points"`
+	Text   string   `json:"text"`
+	Points []PointF `json:"points"`
 }
 
 type ResponseOCR struct {
@@ -134,14 +136,15 @@ type OCRService interface {
 func (dExt *DriverExt) FindTextByOCR(ocrText string) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
-		err = fmt.Errorf("screenshot error: %v", err)
+		err = fmt.Errorf("takeScreenShot error: %v", err)
 		return
 	}
 
 	service := &veDEMOCRService{}
 	rect, err := service.FindText(ocrText, bufSource.Bytes())
 	if err != nil {
-		err = fmt.Errorf("find text failed: %v", err)
+		log.Warn().Err(err).Msg("FindText failed")
+		err = fmt.Errorf("FindText failed: %v", err)
 		return
 	}
 
