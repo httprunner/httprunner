@@ -68,13 +68,13 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected response status code: %d", resp.StatusCode)
-	}
-
 	results, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response body error: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected response status code: %d, results: %v", resp.StatusCode, string(results))
 	}
 
 	var ocrResult ResponseOCR
@@ -148,6 +148,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string) (x, y, width, height float6
 		return
 	}
 
+	log.Info().Str("ocrText", ocrText).Msgf("FindText success")
 	x, y, width, height = dExt.MappingToRectInUIKit(rect)
 	return
 }
