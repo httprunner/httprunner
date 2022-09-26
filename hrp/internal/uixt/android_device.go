@@ -101,7 +101,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 		}
 
 		device.SerialNumber = dev.Serial()
-		device.Device = dev
+		device.d = dev
 		return device, nil
 	}
 
@@ -109,7 +109,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 }
 
 type AndroidDevice struct {
-	gadb.Device
+	d            gadb.Device
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	IP           string `json:"ip,omitempty" yaml:"ip,omitempty"`
 	Port         int    `json:"port,omitempty" yaml:"port,omitempty"`
@@ -136,17 +136,17 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver *uiaDr
 	if localPort, err = getFreePort(); err != nil {
 		return nil, err
 	}
-	if err = dev.Forward(localPort, UIA2ServerPort); err != nil {
+	if err = dev.d.Forward(localPort, UIA2ServerPort); err != nil {
 		return nil, err
 	}
 
 	rawURL := fmt.Sprintf("http://%s%d:6790/wd/hub", forwardToPrefix, localPort)
 	driver, err = NewUIADriver(capabilities, rawURL)
 	if err != nil {
-		_ = dev.ForwardKill(localPort)
+		_ = dev.d.ForwardKill(localPort)
 		return nil, err
 	}
-	driver.adbDevice = dev.Device
+	driver.adbDevice = dev.d
 	driver.localPort = localPort
 
 	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
@@ -165,7 +165,7 @@ func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver *uiaD
 	if driver, err = NewUIADriver(capabilities, rawURL); err != nil {
 		return nil, err
 	}
-	driver.adbDevice = dev.Device
+	driver.adbDevice = dev.d
 	return driver, nil
 }
 

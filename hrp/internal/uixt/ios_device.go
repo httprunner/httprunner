@@ -64,7 +64,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	// aviod getting stuck when some super app is activate such as douyin or wexin
 	log.Info().Msg("switch to iOS springboard")
 	bundleID := "com.apple.springboard"
-	_, err = iosDevice.AppLaunch(bundleID)
+	_, err = iosDevice.d.AppLaunch(bundleID)
 	if err != nil {
 		return nil, errors.Wrap(err, "launch springboard failed")
 	}
@@ -153,7 +153,7 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		}
 
 		device.UDID = dev.Properties().SerialNumber
-		device.Device = dev
+		device.d = dev
 		return device, nil
 	}
 
@@ -161,7 +161,7 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
-	giDevice.Device
+	d         giDevice.Device
 	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
 	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
 	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
@@ -203,12 +203,12 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
 	wd := new(wdaDriver)
 
-	if wd.defaultConn, err = dev.NewConnect(dev.Port, 0); err != nil {
+	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
 	wd.client = convertToHTTPClient(wd.defaultConn.RawConn())
 
-	if wd.mjpegUSBConn, err = dev.NewConnect(dev.MjpegPort, 0); err != nil {
+	if wd.mjpegUSBConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
 		return nil, fmt.Errorf("create connection MJPEG: %w", err)
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegUSBConn.RawConn())
@@ -377,7 +377,7 @@ func (r rawResponse) checkErr() (err error) {
 func (r rawResponse) valueConvertToString() (s string, err error) {
 	reply := new(struct{ Value string })
 	if err = json.Unmarshal(r, reply); err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "json.Unmarshal failed, rawResponse: %s", string(r))
 	}
 	s = reply.Value
 	return
@@ -411,13 +411,13 @@ func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage,
 }
 
 func (r rawResponse) valueDecodeAsBase64() (raw *bytes.Buffer, err error) {
-	var str string
-	if str, err = r.valueConvertToString(); err != nil {
-		return nil, err
+	str, err := r.valueConvertToString()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert value to string")
 	}
-	var decodeString []byte
-	if decodeString, err = base64.StdEncoding.DecodeString(str); err != nil {
-		return nil, err
+	decodeString, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode base64 string")
 	}
 	raw = bytes.NewBuffer(decodeString)
 	return

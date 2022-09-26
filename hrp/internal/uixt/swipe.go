@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -82,8 +81,6 @@ func (dExt *DriverExt) SwipeUntil(direction string, condition FindCondition, act
 		if err := dExt.SwipeTo(direction); err != nil {
 			log.Error().Err(err).Msgf("swipe %s failed", direction)
 		}
-		// wait for swipe done
-		time.Sleep(500 * time.Millisecond)
 	}
 	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
 }

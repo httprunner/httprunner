@@ -699,11 +699,11 @@ func (wd *wdaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	var rawResp rawResponse
 	if rawResp, err = wd.httpGET("/session", wd.sessionId, "/screenshot"); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get WDA screenshot data failed")
 	}
 
 	if raw, err = rawResp.valueDecodeAsBase64(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "decode WDA screenshot data failed")
 	}
 	return
 }
