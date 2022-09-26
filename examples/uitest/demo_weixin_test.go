@@ -21,8 +21,8 @@ func TestIOSWeixinLive(t *testing.T) {
 				AssertLabelExists("通讯录", "微信启动失败，「通讯录」不存在"),
 			hrp.NewStep("进入直播页").
 				IOS().
-				Tap("发现").                                    // 进入「发现页」
-				TapByOCR("视频号", hrp.WithIdentifier("进入视频号")), // 通过 OCR 识别「视频号」
+				Tap("发现").                                                       // 进入「发现页」
+				TapByOCR("视频号", hrp.WithIdentifier("进入视频号"), hrp.WithIndex(-1)), // 通过 OCR 识别「视频号」
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
 				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),

@@ -19,6 +19,7 @@ const (
 var (
 	WithIdentifier          = uixt.WithIdentifier
 	WithMaxRetryTimes       = uixt.WithMaxRetryTimes
+	WithIndex               = uixt.WithIndex
 	WithTimeout             = uixt.WithTimeout
 	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
 )
