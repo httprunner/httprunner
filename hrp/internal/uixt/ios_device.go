@@ -204,12 +204,14 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	wd := new(wdaDriver)
 
 	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
-		return nil, fmt.Errorf("create connection: %w", err)
+		return nil, fmt.Errorf("connect port %d failed: %w",
+			dev.Port, err)
 	}
 	wd.client = convertToHTTPClient(wd.defaultConn.RawConn())
 
 	if wd.mjpegUSBConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
-		return nil, fmt.Errorf("create connection MJPEG: %w", err)
+		return nil, fmt.Errorf("connect MJPEG port %d failed: %w",
+			dev.MjpegPort, err)
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegUSBConn.RawConn())
 
