@@ -86,7 +86,11 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 	return ocrResult.OCRResult, nil
 }
 
-func (s *veDEMOCRService) FindText(text string, imageBuf []byte) (rect image.Rectangle, err error) {
+func (s *veDEMOCRService) FindText(text string, imageBuf []byte, index ...int) (rect image.Rectangle, err error) {
+	if len(index) == 0 {
+		index = []int{0} // index not specified
+	}
+
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
 		return
@@ -110,30 +114,46 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte) (rect image.Rec
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
+		rects = append(rects, rect)
 
 		// contains text while not match exactly
 		if ocrResult.Text != text {
-			rects = append(rects, rect)
 			continue
 		}
 
-		// match exactly
-		return rect, nil
+		// match exactly, and not specify index, return the first one
+		if index[0] == 0 {
+			return rect, nil
+		}
 	}
 
-	// only find the first matched one
-	if len(rects) > 0 {
-		return rects[0], nil
+	if len(rects) == 0 {
+		return image.Rectangle{}, fmt.Errorf("text %s not found", text)
 	}
 
-	return image.Rectangle{}, fmt.Errorf("text %s not found", text)
+	// get index
+	idx := index[0]
+	if idx > 0 {
+		// NOTICE: index start from 1
+		idx = idx - 1
+	} else if idx < 0 {
+		idx = len(rects) + idx
+	}
+
+	// index out of range
+	if idx >= len(rects) {
+		return image.Rectangle{}, fmt.Errorf("text %s found %d, index %d out of range",
+			text, len(rects), idx)
+	}
+
+	return rects[idx], nil
 }
 
 type OCRService interface {
-	FindText(text string, imageBuf []byte) (rect image.Rectangle, err error)
+	FindText(text string, imageBuf []byte, index ...int) (rect image.Rectangle, err error)
 }
 
-func (dExt *DriverExt) FindTextByOCR(ocrText string) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindTextByOCR(ocrText string, index ...int) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
 		err = fmt.Errorf("takeScreenShot error: %v", err)
@@ -141,7 +161,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string) (x, y, width, height float6
 	}
 
 	service := &veDEMOCRService{}
-	rect, err := service.FindText(ocrText, bufSource.Bytes())
+	rect, err := service.FindText(ocrText, bufSource.Bytes(), index...)
 	if err != nil {
 		log.Warn().Err(err).Msg("FindText failed")
 		err = fmt.Errorf("FindText failed: %v", err)

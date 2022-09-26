@@ -27,8 +27,8 @@ func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
 	return dExt.tapFloat(x, y, identifier)
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool) error {
-	x, y, width, height, err := dExt.FindTextByOCR(ocrText)
+func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool, index ...int) error {
+	x, y, width, height, err := dExt.FindTextByOCR(ocrText, index...)
 	if err != nil {
 		if ignoreNotFoundError {
 			return nil
@@ -39,7 +39,7 @@ func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoun
 	return dExt.tapFloat(x+width*0.5, y+height*0.5, identifier)
 }
 
-func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFoundError bool) error {
+func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFoundError bool, index ...int) error {
 	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath)
 	if err != nil {
 		if ignoreNotFoundError {
@@ -51,18 +51,18 @@ func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFou
 	return dExt.tapFloat(x+width*0.5, y+height*0.5, identifier)
 }
 
-func (dExt *DriverExt) Tap(param string, identifier string, ignoreNotFoundError bool) error {
-	return dExt.TapOffset(param, 0.5, 0.5, identifier, ignoreNotFoundError)
+func (dExt *DriverExt) Tap(param string, identifier string, ignoreNotFoundError bool, index ...int) error {
+	return dExt.TapOffset(param, 0.5, 0.5, identifier, ignoreNotFoundError, index...)
 }
 
-func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, identifier string, ignoreNotFoundError bool) (err error) {
+func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, identifier string, ignoreNotFoundError bool, index ...int) (err error) {
 	// click on element, find by name attribute
 	ele, err := dExt.FindUIElement(param)
 	if err == nil {
 		return ele.Click()
 	}
 
-	x, y, width, height, err := dExt.FindUIRectInUIKit(param)
+	x, y, width, height, err := dExt.FindUIRectInUIKit(param, index...)
 	if err != nil {
 		if ignoreNotFoundError {
 			return nil

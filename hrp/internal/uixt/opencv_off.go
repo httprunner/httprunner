@@ -17,7 +17,7 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	return
 }
 
-func (dExt *DriverExt) FindImageRectInUIKit(imagePath string) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, index ...int) (x, y, width, height float64, err error) {
 	log.Fatal().Msg("opencv is not supported")
 	return
 }

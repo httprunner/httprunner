@@ -11,7 +11,7 @@
     },
     "teststeps": [
         {
-            "name": "启动微信",
+            "name": "启动抖音",
             "ios": {
                 "actions": [
                     {
@@ -19,62 +19,37 @@
                     },
                     {
                         "method": "app_terminate",
-                        "params": "com.tencent.xin"
+                        "params": "com.ss.iphone.ugc.Aweme"
                     },
                     {
                         "method": "swipe_to_tap_app",
-                        "params": "微信",
+                        "params": "抖音",
                         "max_retry_times": 5
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
                     }
                 ]
             },
             "validate": [
                 {
-                    "check": "ui_label",
+                    "check": "ui_ocr",
                     "assert": "exists",
-                    "expect": "通讯录",
-                    "msg": "微信启动失败，「通讯录」不存在"
+                    "expect": "推荐",
+                    "msg": "抖音启动失败，「推荐」不存在"
                 }
             ]
         },
         {
-            "name": "进入直播页",
-            "ios": {
-                "actions": [
-                    {
-                        "method": "tap",
-                        "params": "发现"
-                    },
-                    {
-                        "method": "tap_ocr",
-                        "params": "视频号",
-                        "identifier": "进入视频号",
-                        "index": -1
-                    }
-                ]
-            }
-        },
-        {
-            "name": "处理青少年弹窗",
-            "ios": {
-                "actions": [
-                    {
-                        "method": "tap_ocr",
-                        "params": "我知道了",
-                        "ignore_NotFoundError": true
-                    }
-                ]
-            }
-        },
-        {
-            "name": "在推荐页上划，直到出现「轻触进入直播间」",
+            "name": "在推荐页上划，直到出现「点击进入直播间」",
             "ios": {
                 "actions": [
                     {
                         "method": "swipe_to_tap_text",
-                        "params": "轻触进入直播间",
+                        "params": "点击进入直播间",
                         "identifier": "进入直播间",
-                        "max_retry_times": 10
+                        "max_retry_times": 100
                     }
                 ]
             }
@@ -90,7 +65,7 @@
                     },
                     {
                         "method": "sleep",
-                        "params": 10
+                        "params": 2
                     },
                     {
                         "method": "screenshot"
@@ -102,7 +77,7 @@
                     },
                     {
                         "method": "sleep",
-                        "params": 10
+                        "params": 2
                     },
                     {
                         "method": "screenshot"

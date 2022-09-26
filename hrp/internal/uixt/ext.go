@@ -63,6 +63,7 @@ type MobileAction struct {
 
 	Identifier          string `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
 	MaxRetryTimes       int    `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	Index               int    `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
 	Timeout             int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
 	IgnoreNotFoundError bool   `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
 }
@@ -72,6 +73,12 @@ type ActionOption func(o *MobileAction)
 func WithIdentifier(identifier string) ActionOption {
 	return func(o *MobileAction) {
 		o.Identifier = identifier
+	}
+}
+
+func WithIndex(index int) ActionOption {
+	return func(o *MobileAction) {
+		o.Index = index
 	}
 }
 
@@ -235,13 +242,13 @@ func (dExt *DriverExt) FindUIElement(param string) (ele WebElement, err error) {
 	return dExt.Driver.FindElement(selector)
 }
 
-func (dExt *DriverExt) FindUIRectInUIKit(search string) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindUIRectInUIKit(search string, index ...int) (x, y, width, height float64, err error) {
 	// click on text, using OCR
 	if !isPathExists(search) {
-		return dExt.FindTextByOCR(search)
+		return dExt.FindTextByOCR(search, index...)
 	}
 	// click on image, using opencv
-	return dExt.FindImageRectInUIKit(search)
+	return dExt.FindImageRectInUIKit(search, index...)
 }
 
 func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
@@ -310,7 +317,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			var x, y, width, height float64
 			findApp := func(d *DriverExt) error {
 				var err error
-				x, y, width, height, err = d.FindTextByOCR(appName)
+				x, y, width, height, err = d.FindTextByOCR(appName, action.Index)
 				return err
 			}
 			foundAppAction := func(d *DriverExt) error {
@@ -384,17 +391,17 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, action.Identifier, action.IgnoreNotFoundError)
+			return dExt.Tap(param, action.Identifier, action.IgnoreNotFoundError, action.Index)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			return dExt.TapByOCR(ocrText, action.Identifier, action.IgnoreNotFoundError)
+			return dExt.TapByOCR(ocrText, action.Identifier, action.IgnoreNotFoundError, action.Index)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, action.Identifier, action.IgnoreNotFoundError)
+			return dExt.TapByCV(imagePath, action.Identifier, action.IgnoreNotFoundError, action.Index)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
