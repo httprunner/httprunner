@@ -1,7 +1,6 @@
 package uitest
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/httprunner/httprunner/v4/hrp"
@@ -43,14 +42,9 @@ func TestIOSWeixinLive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	runner := hrp.NewRunner(t)
-	sessionRunner, err := runner.NewSessionRunner(testCase)
+	runner := hrp.NewRunner(t).SetSaveTests(true)
+	err := runner.Run(testCase)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := sessionRunner.Start(nil); err != nil {
-		t.Fatal(err)
-	}
-	summary := sessionRunner.GetSummary()
-	fmt.Println(summary)
 }

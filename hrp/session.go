@@ -7,8 +7,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 // SessionRunner is used to run testcase and its steps.
@@ -151,7 +149,7 @@ func (r *SessionRunner) updateSessionVariables(parameters map[string]interface{}
 	}
 }
 
-func (r *SessionRunner) GetSummary() *TestCaseSummary {
+func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	caseSummary := r.summary
 	caseSummary.Name = r.parsedConfig.Name
 	caseSummary.Time.StartAt = r.startTime
@@ -163,19 +161,16 @@ func (r *SessionRunner) GetSummary() *TestCaseSummary {
 	caseSummary.InOut.ExportVars = exportVars
 	caseSummary.InOut.ConfigVars = r.parsedConfig.Variables
 
+	// add WDA/UIA logs to summary
 	logs := make(map[string]string)
 	for udid, client := range r.hrpRunner.uiClients {
 		log, err := client.GetLogs()
 		if err != nil {
-			logs[udid] = err.Error()
-		} else {
-			logs[udid] = log
+			return nil, err
 		}
-
+		logs[udid] = log
 	}
-	logsStr, _ := json.Marshal(logs)
-	caseSummary.Logs = string(logsStr)
+	caseSummary.Logs = logs
 
-	// caseSummary.Log
-	return caseSummary
+	return caseSummary, nil
 }

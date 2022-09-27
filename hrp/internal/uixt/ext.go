@@ -124,6 +124,7 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type DriverExt struct {
+	Device          Device
 	Driver          WebDriver
 	windowSize      Size
 	frame           *bytes.Buffer

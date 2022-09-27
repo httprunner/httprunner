@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -89,11 +90,17 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	start := time.Now()
 	// run referenced testcase with step variables
 	err = sessionRunner.Start(stepVariables)
-	if err == nil {
-		stepResult.Success = true
-	}
 	stepResult.Elapsed = time.Since(start).Milliseconds()
-	summary := sessionRunner.GetSummary()
+
+	summary, err2 := sessionRunner.GetSummary()
+	if err2 != nil {
+		log.Error().Err(err).Msg("get summary failed")
+		if err != nil {
+			err = errors.Wrap(err, err2.Error())
+		} else {
+			err = err2
+		}
+	}
 	// update step names
 	for _, record := range summary.Records {
 		record.Name = fmt.Sprintf("%s - %s", stepResult.Name, record.Name)
@@ -108,5 +115,8 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	r.summary.Stat.Successes += summary.Stat.Successes
 	r.summary.Stat.Failures += summary.Stat.Failures
 
+	if err == nil {
+		stepResult.Success = true
+	}
 	return stepResult, err
 }

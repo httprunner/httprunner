@@ -27,6 +27,7 @@
                     {
                         "method": "swipe_to_tap_app",
                         "params": "$app_name",
+                        "identifier": "启动抖音",
                         "max_retry_times": 5
                     },
                     {
@@ -45,20 +46,7 @@
             ]
         },
         {
-            "name": "在推荐页上划，直到出现「点击进入直播间」",
-            "ios": {
-                "actions": [
-                    {
-                        "method": "swipe_to_tap_text",
-                        "params": "点击进入直播间",
-                        "identifier": "进入直播间",
-                        "max_retry_times": 100
-                    }
-                ]
-            }
-        },
-        {
-            "name": "向上滑动，等待 10s",
+            "name": "向上滑动 2 次",
             "ios": {
                 "actions": [
                     {
@@ -84,6 +72,19 @@
                     },
                     {
                         "method": "screenshot"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "在推荐页上划，直到出现「点击进入直播间」",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "swipe_to_tap_text",
+                        "params": "点击进入直播间",
+                        "identifier": "进入直播间",
+                        "max_retry_times": 10
                     }
                 ]
             }

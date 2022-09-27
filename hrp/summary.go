@@ -151,7 +151,7 @@ type TestCaseSummary struct {
 	Stat    *TestStepStat  `json:"stat" yaml:"stat"`
 	Time    *TestCaseTime  `json:"time" yaml:"time"`
 	InOut   *TestCaseInOut `json:"in_out" yaml:"in_out"`
-	Logs    string         `json:"logs,omitempty" yaml:"logs,omitempty"` // TODO
+	Logs    interface{}    `json:"logs,omitempty" yaml:"logs,omitempty"`
 	Records []*StepResult  `json:"records" yaml:"records"`
 	RootDir string         `json:"root_dir" yaml:"root_dir"`
 }

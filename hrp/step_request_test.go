@@ -103,7 +103,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if err := sessionRunner.Start(nil); err != nil {
 		t.Fatal()
 	}
-	summary := sessionRunner.GetSummary()
+	summary, _ := sessionRunner.GetSummary()
 
 	stat := summary.Records[0].HttpStat
 	if !assert.GreaterOrEqual(t, stat["DNSLookup"], int64(0)) {
