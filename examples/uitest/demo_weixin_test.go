@@ -44,7 +44,10 @@ func TestIOSWeixinLive(t *testing.T) {
 	}
 
 	runner := hrp.NewRunner(t)
-	sessionRunner, _ := runner.NewSessionRunner(testCase)
+	sessionRunner, err := runner.NewSessionRunner(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := sessionRunner.Start(nil); err != nil {
 		t.Fatal(err)
 	}

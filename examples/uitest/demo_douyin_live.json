@@ -1,6 +1,6 @@
 {
     "config": {
-        "name": "通过 feed 卡片进入微信直播间",
+        "name": "通过 feed 卡片进入抖音直播间",
         "ios": [
             {
                 "port": 8700,

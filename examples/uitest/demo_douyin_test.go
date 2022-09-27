@@ -9,7 +9,7 @@ import (
 
 func TestIOSDouyinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
-		Config: hrp.NewConfig("通过 feed 卡片进入微信直播间").
+		Config: hrp.NewConfig("通过 feed 卡片进入抖音直播间").
 			SetIOS(hrp.WithLogOn(true), hrp.WithPort(8700), hrp.WithMjpegPort(8800)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
