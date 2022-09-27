@@ -96,6 +96,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 		}
 	}
 
+	driverExt.Device = iosDevice
 	return driverExt, nil
 }
 

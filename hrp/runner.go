@@ -210,10 +210,10 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		}
 
 		for it := sessionRunner.parametersIterator; it.HasNext(); {
-			err = sessionRunner.Start(it.Next())
-			caseSummary := sessionRunner.GetSummary()
+			err1 := sessionRunner.Start(it.Next())
+			caseSummary, err2 := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
-			if err != nil {
+			if err1 != nil || err2 != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				runErr = err
 				break
