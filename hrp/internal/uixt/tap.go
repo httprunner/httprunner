@@ -27,8 +27,21 @@ func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
 	return dExt.tapFloat(x, y, identifier)
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool, index ...int) error {
+func (dExt *DriverExt) GetTextCoordinate(ocrText string, index ...int) (point PointF, err error) {
 	x, y, width, height, err := dExt.FindTextByOCR(ocrText, index...)
+	if err != nil {
+		return PointF{}, err
+	}
+
+	point = PointF{
+		X: x + width*0.5,
+		Y: y + height*0.5,
+	}
+	return point, nil
+}
+
+func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool, index ...int) error {
+	point, err := dExt.GetTextCoordinate(ocrText, index...)
 	if err != nil {
 		if ignoreNotFoundError {
 			return nil
@@ -36,7 +49,7 @@ func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoun
 		return err
 	}
 
-	return dExt.tapFloat(x+width*0.5, y+height*0.5, identifier)
+	return dExt.tapFloat(point.X, point.Y, identifier)
 }
 
 func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFoundError bool, index ...int) error {
