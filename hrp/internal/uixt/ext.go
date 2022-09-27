@@ -314,15 +314,15 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			AppLaunchUnattached, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
-			var x, y, width, height float64
+			var point PointF
 			findApp := func(d *DriverExt) error {
 				var err error
-				x, y, width, height, err = d.FindTextByOCR(appName, action.Index)
+				point, err = d.GetTextCoordinate(appName, action.Index)
 				return err
 			}
 			foundAppAction := func(d *DriverExt) error {
 				// click app to launch
-				return d.Driver.TapFloat(x+width*0.5, y+height*0.5-20)
+				return d.tapFloat(point.X, point.Y-20, action.Identifier)
 			}
 
 			// go to home screen
@@ -346,15 +346,15 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
 		if text, ok := action.Params.(string); ok {
-			var x, y, width, height float64
+			var point PointF
 			findText := func(d *DriverExt) error {
 				var err error
-				x, y, width, height, err = d.FindTextByOCR(text)
+				point, err = d.GetTextCoordinate(text, action.Index)
 				return err
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.Driver.TapFloat(x+width*0.5, y+height*0.5)
+				return d.tapFloat(point.X, point.Y, action.Identifier)
 			}
 
 			// default to retry 10 times
