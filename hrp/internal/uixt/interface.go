@@ -10,9 +10,8 @@ import (
 )
 
 var (
-	DefaultWaitTimeout       = 60 * time.Second
-	DefaultWaitInterval      = 400 * time.Millisecond
-	DefaultKeepAliveInterval = 30 * time.Second
+	DefaultWaitTimeout  = 60 * time.Second
+	DefaultWaitInterval = 400 * time.Millisecond
 )
 
 type AlertAction string

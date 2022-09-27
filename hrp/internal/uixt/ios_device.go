@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 
 	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
@@ -219,20 +218,6 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 		return nil, err
 	}
 	_, err = wd.NewSession(capabilities)
-
-	go func() {
-		if DefaultKeepAliveInterval <= 0 {
-			return
-		}
-		ticker := time.NewTicker(DefaultKeepAliveInterval)
-		for {
-			<-ticker.C
-			if healthy, err := wd.IsHealthy(); err != nil || !healthy {
-				ticker.Stop()
-				return
-			}
-		}
-	}()
 
 	return wd, err
 }
