@@ -10,7 +10,6 @@ require (
 	github.com/electricbubble/opencv-helper v0.0.3
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.13.0
-	github.com/go-errors/errors v1.4.2
 	github.com/go-openapi/spec v0.20.7
 	github.com/go-ping/ping v1.1.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
@@ -43,6 +42,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
