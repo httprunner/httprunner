@@ -316,7 +316,7 @@ func (s *StepIOS) Name() string {
 }
 
 func (s *StepIOS) Type() StepType {
-	return stepTypeAndroid
+	return stepTypeIOS
 }
 
 func (s *StepIOS) Struct() *TStep {
@@ -457,7 +457,7 @@ func (s *StepIOSValidation) Name() string {
 }
 
 func (s *StepIOSValidation) Type() StepType {
-	return stepTypeAndroid
+	return stepTypeIOS
 }
 
 func (s *StepIOSValidation) Struct() *TStep {
