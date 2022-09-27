@@ -4,7 +4,8 @@ import (
 	"fmt"
 )
 
-func (dExt *DriverExt) tapFloat(x, y float64, identifier string) error {
+func (dExt *DriverExt) TapAbsXY(x, y float64, identifier string) error {
+	// tap on absolute coordinate [x, y]
 	if len(identifier) > 0 {
 		option := WithCustomOption("log", map[string]interface{}{
 			"enable": true,
@@ -16,7 +17,7 @@ func (dExt *DriverExt) tapFloat(x, y float64, identifier string) error {
 }
 
 func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
-	// tap on coordinate: [x, y] should be relative
+	// tap on [x, y] percent of window size
 	if x > 1 || y > 1 {
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
 	}
@@ -24,10 +25,10 @@ func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
 	x = x * float64(dExt.windowSize.Width)
 	y = y * float64(dExt.windowSize.Height)
 
-	return dExt.tapFloat(x, y, identifier)
+	return dExt.TapAbsXY(x, y, identifier)
 }
 
-func (dExt *DriverExt) GetTextCoordinate(ocrText string, index ...int) (point PointF, err error) {
+func (dExt *DriverExt) GetTextXY(ocrText string, index ...int) (point PointF, err error) {
 	x, y, width, height, err := dExt.FindTextByOCR(ocrText, index...)
 	if err != nil {
 		return PointF{}, err
@@ -40,8 +41,21 @@ func (dExt *DriverExt) GetTextCoordinate(ocrText string, index ...int) (point Po
 	return point, nil
 }
 
+func (dExt *DriverExt) GetImageXY(imagePath string, index ...int) (point PointF, err error) {
+	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath, index...)
+	if err != nil {
+		return PointF{}, err
+	}
+
+	point = PointF{
+		X: x + width*0.5,
+		Y: y + height*0.5,
+	}
+	return point, nil
+}
+
 func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool, index ...int) error {
-	point, err := dExt.GetTextCoordinate(ocrText, index...)
+	point, err := dExt.GetTextXY(ocrText, index...)
 	if err != nil {
 		if ignoreNotFoundError {
 			return nil
@@ -49,11 +63,11 @@ func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoun
 		return err
 	}
 
-	return dExt.tapFloat(point.X, point.Y, identifier)
+	return dExt.TapAbsXY(point.X, point.Y, identifier)
 }
 
 func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFoundError bool, index ...int) error {
-	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath)
+	point, err := dExt.GetImageXY(imagePath, index...)
 	if err != nil {
 		if ignoreNotFoundError {
 			return nil
@@ -61,7 +75,7 @@ func (dExt *DriverExt) TapByCV(imagePath string, identifier string, ignoreNotFou
 		return err
 	}
 
-	return dExt.tapFloat(x+width*0.5, y+height*0.5, identifier)
+	return dExt.TapAbsXY(point.X, point.Y, identifier)
 }
 
 func (dExt *DriverExt) Tap(param string, identifier string, ignoreNotFoundError bool, index ...int) error {
@@ -83,7 +97,7 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, identif
 		return err
 	}
 
-	return dExt.tapFloat(x+width*xOffset, y+height*yOffset, identifier)
+	return dExt.TapAbsXY(x+width*xOffset, y+height*yOffset, identifier)
 }
 
 func (dExt *DriverExt) DoubleTapXY(x, y float64) error {

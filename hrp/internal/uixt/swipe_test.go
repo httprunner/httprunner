@@ -11,12 +11,12 @@ func TestSwipeUntil(t *testing.T) {
 	var point PointF
 	findApp := func(d *DriverExt) error {
 		var err error
-		point, err = d.GetTextCoordinate("抖音")
+		point, err = d.GetTextXY("抖音")
 		return err
 	}
 	foundAppAction := func(d *DriverExt) error {
 		// click app, launch douyin
-		return d.tapFloat(point.X, point.Y, "")
+		return d.TapAbsXY(point.X, point.Y, "")
 	}
 
 	driverExt.Driver.Homescreen()
@@ -32,12 +32,12 @@ func TestSwipeUntil(t *testing.T) {
 
 	findLive := func(d *DriverExt) error {
 		var err error
-		point, err = d.GetTextCoordinate("点击进入直播间")
+		point, err = d.GetTextXY("点击进入直播间")
 		return err
 	}
 	foundLiveAction := func(d *DriverExt) error {
 		// enter live room
-		return d.tapFloat(point.X, point.Y, "")
+		return d.TapAbsXY(point.X, point.Y, "")
 	}
 
 	// swipe until live room found

@@ -25,6 +25,14 @@ func TestDriverExt_TapXY(t *testing.T) {
 	checkErr(t, err)
 }
 
+func TestDriverExt_TapAbsXY(t *testing.T) {
+	driverExt, err := InitWDAClient(nil)
+	checkErr(t, err)
+
+	err = driverExt.TapAbsXY(100, 300, "")
+	checkErr(t, err)
+}
+
 func TestDriverExt_TapWithOCR(t *testing.T) {
 	driverExt, err := InitWDAClient(nil)
 	checkErr(t, err)
