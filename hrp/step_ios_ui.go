@@ -85,6 +85,19 @@ func (s *StepIOS) TapXY(x, y float64, options ...uixt.ActionOption) *StepIOS {
 	return &StepIOS{step: s.step}
 }
 
+// TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
+func (s *StepIOS) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepIOS {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapAbsXY,
+		Params: []float64{x, y},
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
+	return &StepIOS{step: s.step}
+}
+
 // Tap taps on the target element
 func (s *StepIOS) Tap(params string, options ...uixt.ActionOption) *StepIOS {
 	action := uixt.MobileAction{

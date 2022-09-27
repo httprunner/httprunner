@@ -44,6 +44,7 @@ const (
 	// UI handling
 	ACTION_Home        MobileMethod = "home"
 	ACTION_TapXY       MobileMethod = "tap_xy"
+	ACTION_TapAbsXY    MobileMethod = "tap_abs_xy"
 	ACTION_TapByOCR    MobileMethod = "tap_ocr"
 	ACTION_TapByCV     MobileMethod = "tap_cv"
 	ACTION_Tap         MobileMethod = "tap"
@@ -317,12 +318,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			var point PointF
 			findApp := func(d *DriverExt) error {
 				var err error
-				point, err = d.GetTextCoordinate(appName, action.Index)
+				point, err = d.GetTextXY(appName, action.Index)
 				return err
 			}
 			foundAppAction := func(d *DriverExt) error {
 				// click app to launch
-				return d.tapFloat(point.X, point.Y-20, action.Identifier)
+				return d.TapAbsXY(point.X, point.Y-20, action.Identifier)
 			}
 
 			// go to home screen
@@ -349,12 +350,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			var point PointF
 			findText := func(d *DriverExt) error {
 				var err error
-				point, err = d.GetTextCoordinate(text, action.Index)
+				point, err = d.GetTextXY(text, action.Index)
 				return err
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.tapFloat(point.X, point.Y, action.Identifier)
+				return d.TapAbsXY(point.X, point.Y, action.Identifier)
 			}
 
 			// default to retry 10 times
@@ -389,6 +390,15 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			return dExt.TapXY(location[0], location[1], action.Identifier)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
+	case ACTION_TapAbsXY:
+		if location, ok := action.Params.([]float64); ok {
+			// absolute coordinates x,y of window size: [100, 300]
+			if len(location) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", location)
+			}
+			return dExt.TapAbsXY(location[0], location[1], action.Identifier)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
 			return dExt.Tap(param, action.Identifier, action.IgnoreNotFoundError, action.Index)
