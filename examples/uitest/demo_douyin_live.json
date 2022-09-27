@@ -1,6 +1,9 @@
 {
     "config": {
         "name": "通过 feed 卡片进入抖音直播间",
+        "variables": {
+            "app_name": "抖音"
+        },
         "ios": [
             {
                 "port": 8700,
@@ -23,7 +26,7 @@
                     },
                     {
                         "method": "swipe_to_tap_app",
-                        "params": "抖音",
+                        "params": "$app_name",
                         "max_retry_times": 5
                     },
                     {

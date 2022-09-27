@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
@@ -512,6 +513,13 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 	screenshots := make([]string, 0)
 
+	// override step variables
+	stepVariables, err := s.MergeStepVariables(step.Variables)
+	if err != nil {
+		return
+	}
+	parser := s.GetParser()
+
 	// init wdaClient driver
 	wdaClient, err := s.hrpRunner.initUIClient(&step.IOS.IOSDevice)
 	if err != nil {
@@ -557,6 +565,9 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 
 	// run actions
 	for _, action := range actions {
+		if action.Params, err = parser.Parse(action.Params, stepVariables); err != nil {
+			return stepResult, errors.Wrap(err, "parse action params failed")
+		}
 		if err := wdaClient.DoAction(action); err != nil {
 			return stepResult, err
 		}

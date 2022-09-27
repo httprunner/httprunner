@@ -10,13 +10,16 @@ import (
 func TestIOSDouyinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("通过 feed 卡片进入抖音直播间").
+			WithVariables(map[string]interface{}{
+				"app_name": "抖音",
+			}).
 			SetIOS(hrp.WithLogOn(true), hrp.WithPort(8700), hrp.WithMjpegPort(8800)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				IOS().
 				Home().
 				AppTerminate("com.ss.iphone.ugc.Aweme"). // 关闭已运行的抖音
-				SwipeToTapApp("抖音", hrp.WithMaxRetryTimes(5)).Sleep(5).
+				SwipeToTapApp("$app_name", hrp.WithMaxRetryTimes(5)).Sleep(5).
 				Validate().
 				AssertOCRExists("推荐", "抖音启动失败，「推荐」不存在"),
 			// hrp.NewStep("处理青少年弹窗").

@@ -1,5 +1,7 @@
 config:
     name: 通过 feed 卡片进入抖音直播间
+    variables:
+        app_name: 抖音
     ios:
         - port: 8700
           mjpeg_port: 8800
@@ -12,7 +14,7 @@ teststeps:
             - method: app_terminate
               params: com.ss.iphone.ugc.Aweme
             - method: swipe_to_tap_app
-              params: 抖音
+              params: $app_name
               max_retry_times: 5
             - method: sleep
               params: 5
