@@ -245,6 +245,7 @@ func (dExt *DriverExt) GetLogs() (interface{}, error) {
 		data := map[string]interface{}{"action": "stop"}
 		reply, err := dExt.triggerWDALog(data)
 		if err != nil {
+			log.Error().Err(err).Interface("reply", reply).Msg("failed to get WDA logs")
 			return "", errors.Wrap(err, "failed to get WDA logs")
 		}
 		return reply.Value, nil
@@ -279,8 +280,7 @@ func (dExt *DriverExt) triggerWDALog(data map[string]interface{}) (*wdaResponse,
 
 	reply := new(wdaResponse)
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		log.Info().Bytes("rawResp", rawResp).Msg("get unexpected WDA log response")
-		return nil, err
+		return reply, err
 	}
 	log.Info().Interface("value", reply.Value).Msg("get WDA log response")
 
