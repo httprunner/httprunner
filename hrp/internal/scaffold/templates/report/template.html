@@ -338,14 +338,14 @@
                     </div>
                 </div>
             </div>
-            {{ if .Attachment }}
+            {{ if .Attachments }}
             <a class="button" href="#popup_attachment_{{$suite_index}}_{{$loop_index}}">traceback</a>
             <div id="popup_attachment_{{$suite_index}}_{{$loop_index}}" class="overlay">
                 <div class="popup">
                     <h2>Traceback Message</h2>
                     <a class="close" href="#record_{{$suite_index}}_{{$loop_index}}">&times;</a>
                     <div class="content">
-                        <pre>{{ .Attachment }}</pre>
+                        <pre>{{ .Attachments }}</pre>
                     </div>
                 </div>
             </div>
