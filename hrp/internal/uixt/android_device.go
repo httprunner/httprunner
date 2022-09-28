@@ -65,12 +65,6 @@ func WithSerialNumber(serial string) AndroidDeviceOption {
 	}
 }
 
-func WithMjpegPortA(port int) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.MjpegPort = port
-	}
-}
-
 func WithAdbIP(ip string) AndroidDeviceOption {
 	return func(device *AndroidDevice) {
 		device.IP = ip

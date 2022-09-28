@@ -14,7 +14,6 @@ var (
 	WithAdbIP        = uixt.WithAdbIP
 	WithAdbPort      = uixt.WithAdbPort
 	WithAdbLogOn     = uixt.WithAdbLogOn
-	WithMjpegPortA   = uixt.WithMjpegPortA
 )
 
 type AndroidStep struct {

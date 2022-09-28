@@ -6,16 +6,16 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 )
 
-func TestIOSDouYinLive(t *testing.T) {
+func TestAndroidDouYinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("通过 feed 头像进入抖音直播间").
-			SetAndroid(hrp.WithAdbLogOn(true), hrp.WithMjpegPortA(9100)),
+			SetAndroid(hrp.WithAdbLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("打开网页").
 				Android().
 				Home().
 				AppTerminate("com.google.android.apps.chrome.Main").Sleep(1). // 关闭已运行的抖音，确保启动抖音后在「抖音」首页
-				SwipeToTapApp("Chrome", hrp.WithMaxRetryTimes(5)).TapByOCR("Search").Input("https://gtftask.bytedance.com/local-time").TapByOCR("前往").Sleep(5).
+				SwipeToTapApp("Chrome", hrp.WithMaxRetryTimes(5)).TapByOCR("搜索").Input("https://gtftask.bytedance.com/local-time").TapByOCR("前往").Sleep(5).
 				Validate().
 				AssertOCRExists("1664", "网页打开失败"),
 			hrp.NewStep("启动抖音").
