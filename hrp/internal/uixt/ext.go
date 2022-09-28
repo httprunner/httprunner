@@ -464,6 +464,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		} else if param, ok := action.Params.(float64); ok {
 			time.Sleep(time.Duration(param*1000) * time.Millisecond)
 			return nil
+		} else if param, ok := action.Params.(int64); ok {
+			time.Sleep(time.Duration(param) * time.Second)
+			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case CtlScreenShot:
