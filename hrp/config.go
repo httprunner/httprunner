@@ -123,6 +123,27 @@ func (c *TConfig) SetIOS(options ...uixt.IOSDeviceOption) *TConfig {
 	return c
 }
 
+func (c *TConfig) SetAndroid(options ...uixt.AndroidDeviceOption) *TConfig {
+	uiaOptions := &uixt.AndroidDevice{}
+	for _, option := range options {
+		option(uiaOptions)
+	}
+
+	// each device can have its own settings
+	if uiaOptions.SerialNumber != "" {
+		c.Android = append(c.Android, uiaOptions)
+		return c
+	}
+
+	// device UDID is not specified, settings will be shared
+	if len(c.Android) == 0 {
+		c.Android = append(c.Android, uiaOptions)
+	} else {
+		c.Android[0] = uiaOptions
+	}
+	return c
+}
+
 type ThinkTimeConfig struct {
 	Strategy thinkTimeStrategy `json:"strategy,omitempty" yaml:"strategy,omitempty"` // default、random、multiply、ignore
 	Setting  interface{}       `json:"setting,omitempty" yaml:"setting,omitempty"`   // random(map): {"min_percentage": 0.5, "max_percentage": 1.5}; 10、multiply(float64): 1.5

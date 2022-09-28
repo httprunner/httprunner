@@ -148,6 +148,55 @@ type DeviceInfo struct {
 	Name               string `json:"name"`
 	IsSimulator        bool   `json:"isSimulator"`
 	ThermalState       int    `json:"thermalState"`
+	// ANDROID_ID A 64-bit number (as a hex string) that is uniquely generated when the user
+	// first sets up the device and should remain constant for the lifetime of the user's device. The value
+	// may change if a factory reset is performed on the device.
+	AndroidID string `json:"androidId"`
+	// Build.MANUFACTURER value
+	Manufacturer string `json:"manufacturer"`
+	// Build.BRAND value
+	Brand string `json:"brand"`
+	// Current running OS's API VERSION
+	APIVersion string `json:"apiVersion"`
+	// The current version string, for example "1.0" or "3.4b5"
+	PlatformVersion string `json:"platformVersion"`
+	// the name of the current celluar network carrier
+	CarrierName string `json:"carrierName"`
+	// the real size of the default display
+	RealDisplaySize string `json:"realDisplaySize"`
+	// The logical density of the display in Density Independent Pixel units.
+	DisplayDensity int `json:"displayDensity"`
+	// available networks
+	Networks []networkInfo `json:"networks"`
+	// current system locale
+	Locale    string `json:"locale"`
+	Bluetooth struct {
+		State string `json:"state"`
+	} `json:"bluetooth"`
+}
+
+type networkCapabilities struct {
+	TransportTypes            string `json:"transportTypes"`
+	NetworkCapabilities       string `json:"networkCapabilities"`
+	LinkUpstreamBandwidthKbps int    `json:"linkUpstreamBandwidthKbps"`
+	LinkDownBandwidthKbps     int    `json:"linkDownBandwidthKbps"`
+	SignalStrength            int    `json:"signalStrength"`
+	SSID                      string `json:"SSID"`
+}
+
+type networkInfo struct {
+	Type          int                 `json:"type"`
+	TypeName      string              `json:"typeName"`
+	Subtype       int                 `json:"subtype"`
+	SubtypeName   string              `json:"subtypeName"`
+	IsConnected   bool                `json:"isConnected"`
+	DetailedState string              `json:"detailedState"`
+	State         string              `json:"state"`
+	ExtraInfo     string              `json:"extraInfo"`
+	IsAvailable   bool                `json:"isAvailable"`
+	IsRoaming     bool                `json:"isRoaming"`
+	IsFailover    bool                `json:"isFailover"`
+	Capabilities  networkCapabilities `json:"capabilities"`
 }
 
 type Location struct {
@@ -264,6 +313,11 @@ func (opt AppLaunchOption) WithArguments(args []string) AppLaunchOption {
 // The environment variables are going to be applied if the application was not running before.
 func (opt AppLaunchOption) WithEnvironment(env map[string]string) AppLaunchOption {
 	opt["environment"] = env
+	return opt
+}
+
+func (opt AppLaunchOption) WithAndroidBySelector(waitForComplete ...AndroidBySelector) AppLaunchOption {
+	opt["androidBySelector"] = waitForComplete
 	return opt
 }
 
@@ -426,6 +480,13 @@ type BySelector struct {
 	ClassChain string `json:"class chain"`
 
 	XPath string `json:"xpath"` // not recommended, it's slow because it is not supported by XCTest natively
+
+	// Set the search criteria to match the given resource ResourceIdID.
+	ResourceIdID string `json:"id"`
+	// Set the search criteria to match the content-description property for a widget.
+	ContentDescription string `json:"accessibility id"`
+
+	UiAutomator string `json:"-android uiautomator"`
 }
 
 func (wl BySelector) getUsingAndValue() (using, value string) {
@@ -443,6 +504,24 @@ func (wl BySelector) getUsingAndValue() (using, value string) {
 		}
 		if value != "" && value != "UNKNOWN" {
 			using = tBy.Field(i).Tag.Get("json")
+			return
+		}
+	}
+	return
+}
+
+func (by BySelector) getMethodAndSelector() (method, selector string) {
+	vBy := reflect.ValueOf(by)
+	tBy := reflect.TypeOf(by)
+	for i := 0; i < vBy.NumField(); i++ {
+		vi := vBy.Field(i).Interface()
+		// switch vi := vi.(type) {
+		// case string:
+		// 	selector = vi
+		// }
+		selector = vi.(string)
+		if selector != "" && selector != "UNKNOWN" {
+			method = tBy.Field(i).Tag.Get("json")
 			return
 		}
 	}
@@ -799,6 +878,14 @@ type WebDriver interface {
 
 	// AppAuthReset Resets the authorization status for a protected resource. Available since Xcode 11.4
 	AppAuthReset(ProtectedResource) error
+
+	// StartCamera Starts a new camera for recording
+	StartCamera() error
+	// StopCamera Stops the camera for recording
+	StopCamera() error
+
+	StartRecording() error
+	StopRecording() error
 
 	// Tap Sends a tap event at the coordinate.
 	Tap(x, y int, options ...DataOption) error

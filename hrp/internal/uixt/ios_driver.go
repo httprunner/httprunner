@@ -13,6 +13,7 @@ import (
 
 	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
@@ -555,6 +556,33 @@ func (wd *wdaDriver) IOHIDEvent(pageID EventPageID, usageID EventUsageID, durati
 	}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/performIoHidEvent")
 	return
+}
+
+func (wd *wdaDriver) StartCamera() (err error) {
+	// start camera, alias for app_launch com.apple.camera
+	return wd.AppLaunch("com.apple.camera")
+}
+
+func (wd *wdaDriver) StopCamera() (err error) {
+	// stop camera, alias for app_terminate com.apple.camera
+	success, err := wd.AppTerminate("com.apple.camera")
+	if err != nil {
+		return errors.Wrap(err, "failed to terminate camera")
+	}
+	if !success {
+		log.Warn().Msg("camera was not running")
+	}
+	return nil
+}
+
+func (wd *wdaDriver) StartRecording() (err error) {
+	// TODO
+	return errDriverNotImplemented
+}
+
+func (wd *wdaDriver) StopRecording() (err error) {
+	// TODO
+	return errDriverNotImplemented
 }
 
 func (wd *wdaDriver) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {

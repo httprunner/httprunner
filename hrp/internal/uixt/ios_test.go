@@ -1,3 +1,4 @@
+//go:build localtest
 package uixt
 
 import (
