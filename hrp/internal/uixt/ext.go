@@ -304,7 +304,7 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 func (dExt *DriverExt) DoAction(action MobileAction) error {
-	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start iOS UI action")
+	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start UI action")
 
 	switch action.Method {
 	case AppInstall:

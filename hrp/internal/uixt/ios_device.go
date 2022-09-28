@@ -240,7 +240,7 @@ func (dExt *DriverExt) StartLogRecording(identifier string) error {
 }
 
 func (dExt *DriverExt) GetLogs() (interface{}, error) {
-	log.Info().Msg("stop WDA log recording")
+	log.Info().Msg("stop log recording")
 	if _, ok := dExt.Driver.(*wdaDriver); ok {
 		data := map[string]interface{}{"action": "stop"}
 		reply, err := dExt.triggerWDALog(data)
