@@ -24,6 +24,12 @@ teststeps:
           assert: exists
           expect: 推荐
           msg: 抖音启动失败，「推荐」不存在
+    - name: 处理青少年弹窗
+      ios:
+        actions:
+            - method: tap_ocr
+              params: 我知道了
+              ignore_NotFoundError: true
     - name: 向上滑动 2 次
       ios:
         actions:

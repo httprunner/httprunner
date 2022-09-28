@@ -499,7 +499,7 @@ func (r *HRPRunner) initUIClient(device uixt.Device) (client *uixt.DriverExt, er
 	if r.uiClients == nil {
 		r.uiClients = make(map[string]*uixt.DriverExt)
 	}
-	r.uiClients[client.Device.UUID()] = client
+	r.uiClients[client.UUID] = client
 
 	return client, nil
 }

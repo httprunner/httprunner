@@ -96,7 +96,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 		}
 	}
 
-	driverExt.Device = iosDevice
+	driverExt.UUID = iosDevice.UUID()
 	return driverExt, nil
 }
 
@@ -224,8 +224,8 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 }
 
 type wdaResponse struct {
-	Value     string `json:"value"`
-	SessionID string `json:"sessionId"`
+	Value     interface{} `json:"value"`
+	SessionID string      `json:"sessionId"`
 }
 
 func (dExt *DriverExt) StartLogRecording(identifier string) error {
@@ -239,11 +239,12 @@ func (dExt *DriverExt) StartLogRecording(identifier string) error {
 	return nil
 }
 
-func (dExt *DriverExt) GetLogs() (string, error) {
+func (dExt *DriverExt) GetLogs() (interface{}, error) {
 	log.Info().Msg("stop WDA log recording")
 	data := map[string]interface{}{"action": "stop"}
 	reply, err := dExt.triggerWDALog(data)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get WDA logs")
 		return "", errors.Wrap(err, "failed to get WDA logs")
 	}
 
@@ -275,8 +276,10 @@ func (dExt *DriverExt) triggerWDALog(data map[string]interface{}) (*wdaResponse,
 
 	reply := new(wdaResponse)
 	if err = json.Unmarshal(rawResp, reply); err != nil {
+		log.Info().Bytes("rawResp", rawResp).Msg("get unexpected WDA log response")
 		return nil, err
 	}
+	log.Info().Interface("value", reply.Value).Msg("get WDA log response")
 
 	return reply, nil
 }

@@ -21,9 +21,9 @@ func TestIOSDouyinLive(t *testing.T) {
 				SwipeToTapApp("$app_name", hrp.WithMaxRetryTimes(5), hrp.WithIdentifier("启动抖音")).Sleep(5).
 				Validate().
 				AssertOCRExists("推荐", "抖音启动失败，「推荐」不存在"),
-			// hrp.NewStep("处理青少年弹窗").
-			// 	IOS().
-			// 	TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),
+			hrp.NewStep("处理青少年弹窗").
+				IOS().
+				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("向上滑动 2 次").
 				IOS().
 				SwipeUp(hrp.WithIdentifier("第一次上划")).Sleep(2).ScreenShot(). // 上划 1 次，等待 2s，截图保存

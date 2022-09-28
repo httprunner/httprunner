@@ -163,7 +163,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, index ...int) (x, y, width,
 	service := &veDEMOCRService{}
 	rect, err := service.FindText(ocrText, bufSource.Bytes(), index...)
 	if err != nil {
-		log.Warn().Err(err).Msg("FindText failed")
+		log.Warn().Msgf("FindText failed: %s", err.Error())
 		err = fmt.Errorf("FindText failed: %v", err)
 		return
 	}
