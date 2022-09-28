@@ -93,11 +93,15 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, index ...int) (
 
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
+		log.Error().Err(err).Msg("getOCRResult failed")
 		return
 	}
 
 	var rects []image.Rectangle
+	var ocrTexts []string
 	for _, ocrResult := range ocrResults {
+		ocrTexts = append(ocrTexts, ocrResult.Text)
+
 		// not contains text
 		if !strings.Contains(ocrResult.Text, text) {
 			continue
@@ -128,7 +132,8 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, index ...int) (
 	}
 
 	if len(rects) == 0 {
-		return image.Rectangle{}, fmt.Errorf("text %s not found", text)
+		return image.Rectangle{},
+			fmt.Errorf("text %s not found in %v", text, ocrTexts)
 	}
 
 	// get index

@@ -155,6 +155,9 @@ func extend(driver WebDriver) (dExt *DriverExt, err error) {
 }
 
 func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
+	// wait for action done
+	time.Sleep(500 * time.Millisecond)
+
 	// 优先使用 MJPEG 流进行截图，性能最优
 	// 如果 MJPEG 流未开启，则使用 WebDriver 的截图接口
 	if dExt.frame != nil {
