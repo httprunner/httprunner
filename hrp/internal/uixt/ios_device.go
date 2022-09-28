@@ -241,14 +241,17 @@ func (dExt *DriverExt) StartLogRecording(identifier string) error {
 
 func (dExt *DriverExt) GetLogs() (interface{}, error) {
 	log.Info().Msg("stop WDA log recording")
-	data := map[string]interface{}{"action": "stop"}
-	reply, err := dExt.triggerWDALog(data)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get WDA logs")
-		return "", errors.Wrap(err, "failed to get WDA logs")
+	if _, ok := dExt.Driver.(*wdaDriver); ok {
+		data := map[string]interface{}{"action": "stop"}
+		reply, err := dExt.triggerWDALog(data)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get WDA logs")
+		}
+		return reply.Value, nil
+	} else {
+		// TODO: Android log recording
 	}
-
-	return reply.Value, nil
+	return "", nil
 }
 
 func (dExt *DriverExt) triggerWDALog(data map[string]interface{}) (*wdaResponse, error) {

@@ -9,6 +9,14 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
+var (
+	WithSerialNumber = uixt.WithSerialNumber
+	WithAdbIP        = uixt.WithAdbIP
+	WithAdbPort      = uixt.WithAdbPort
+	WithAdbLogOn     = uixt.WithAdbLogOn
+	WithMjpegPortA   = uixt.WithMjpegPortA
+)
+
 type AndroidStep struct {
 	uixt.AndroidDevice `yaml:",inline"` // inline refers to https://pkg.go.dev/gopkg.in/yaml.v3#Marshal
 	uixt.MobileAction
@@ -29,6 +37,38 @@ func (s *StepAndroid) InstallApp(path string) *StepAndroid {
 	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
 		Method: uixt.AppInstall,
 		Params: path,
+	})
+	return &StepAndroid{step: s.step}
+}
+
+func (s *StepAndroid) AppLaunch(bundleId string) *StepAndroid {
+	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+		Method: uixt.AppLaunch,
+		Params: bundleId,
+	})
+	return s
+}
+
+func (s *StepAndroid) AppLaunchUnattached(bundleId string) *StepAndroid {
+	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+		Method: uixt.AppLaunchUnattached,
+		Params: bundleId,
+	})
+	return s
+}
+
+func (s *StepAndroid) AppTerminate(bundleId string) *StepAndroid {
+	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+		Method: uixt.AppTerminate,
+		Params: bundleId,
+	})
+	return s
+}
+
+func (s *StepAndroid) Home() *StepAndroid {
+	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+		Method: uixt.ACTION_Home,
+		Params: nil,
 	})
 	return &StepAndroid{step: s.step}
 }
@@ -81,51 +121,101 @@ func (s *StepAndroid) Tap(params interface{}) *StepAndroid {
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) DoubleTap(params interface{}) *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+// Tap taps on the target element by OCR recognition
+func (s *StepAndroid) TapByOCR(ocrText string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapByOCR,
+		Params: ocrText,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
+// Tap taps on the target element by CV recognition
+func (s *StepAndroid) TapByCV(imagePath string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapByCV,
+		Params: imagePath,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
+func (s *StepAndroid) DoubleTap(params string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_DoubleTap,
 		Params: params,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) Swipe(sx, sy, ex, ey int) *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+func (s *StepAndroid) Swipe(sx, sy, ex, ey int, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
 		Params: []int{sx, sy, ex, ey},
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) SwipeUp() *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+func (s *StepAndroid) SwipeUp(options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
 		Params: "up",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) SwipeDown() *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+func (s *StepAndroid) SwipeDown(options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
 		Params: "down",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) SwipeLeft() *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+func (s *StepAndroid) SwipeLeft(options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
 		Params: "left",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) SwipeRight() *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+func (s *StepAndroid) SwipeRight(options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
 		Params: "right",
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
@@ -134,6 +224,47 @@ func (s *StepAndroid) Input(text string) *StepAndroid {
 		Method: uixt.ACTION_Input,
 		Params: text,
 	})
+	return &StepAndroid{step: s.step}
+}
+
+// Sleep specify sleep seconds after last action
+func (s *StepAndroid) Sleep(n float64) *StepAndroid {
+	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+		Method: uixt.CtlSleep,
+		Params: n,
+	})
+	return &StepAndroid{step: s.step}
+}
+
+func (s *StepAndroid) ScreenShot() *StepAndroid {
+	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+		Method: uixt.CtlScreenShot,
+		Params: nil,
+	})
+	return &StepAndroid{step: s.step}
+}
+
+func (s *StepAndroid) SwipeToTapApp(appName string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_SwipeToTapApp,
+		Params: appName,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
+func (s *StepAndroid) SwipeToTapText(text string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_SwipeToTapText,
+		Params: text,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
@@ -190,6 +321,96 @@ func (s *StepAndroidValidation) AssertNameNotExists(expectedName string, msg ...
 		v.Message = msg[0]
 	} else {
 		v.Message = fmt.Sprintf("[%s] should not exist", expectedName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertLabelExists(expectedLabel string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  uixt.SelectorLabel,
+		Assert: uixt.AssertionExists,
+		Expect: expectedLabel,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("attribute label [%s] not found", expectedLabel)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertLabelNotExists(expectedLabel string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  uixt.SelectorLabel,
+		Assert: uixt.AssertionNotExists,
+		Expect: expectedLabel,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("attribute label [%s] should not exist", expectedLabel)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertOCRExists(expectedText string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  uixt.SelectorOCR,
+		Assert: uixt.AssertionExists,
+		Expect: expectedText,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("ocr text [%s] not found", expectedText)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertOCRNotExists(expectedText string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  uixt.SelectorOCR,
+		Assert: uixt.AssertionNotExists,
+		Expect: expectedText,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("ocr text [%s] should not exist", expectedText)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertImageExists(expectedImagePath string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  uixt.SelectorImage,
+		Assert: uixt.AssertionExists,
+		Expect: expectedImagePath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("cv image [%s] not found", expectedImagePath)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepAndroidValidation) AssertImageNotExists(expectedImagePath string, msg ...string) *StepAndroidValidation {
+	v := Validator{
+		Check:  uixt.SelectorImage,
+		Assert: uixt.AssertionNotExists,
+		Expect: expectedImagePath,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("cv image [%s] should not exist", expectedImagePath)
 	}
 	s.step.Validators = append(s.step.Validators, v)
 	return s

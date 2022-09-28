@@ -42,7 +42,7 @@ func (ta *TouchAction) AddPointF(point PointF, startTime ...float64) *TouchActio
 	return ta.AddFloat(point.X, point.Y, startTime...)
 }
 
-func (d *uiaDriver) MultiPointerGesture(gesture1 *TouchAction, gesture2 *TouchAction, tas ...*TouchAction) (err error) {
+func (ud *uiaDriver) MultiPointerGesture(gesture1 *TouchAction, gesture2 *TouchAction, tas ...*TouchAction) (err error) {
 	// Must provide coordinates for at least 2 pointers
 	actions := make([]*TouchAction, 0)
 	actions = append(actions, gesture1, gesture2)
@@ -53,7 +53,7 @@ func (d *uiaDriver) MultiPointerGesture(gesture1 *TouchAction, gesture2 *TouchAc
 		"actions": actions,
 	}
 	// register(postHandler, new MultiPointerGesture("/wd/hub/session/:sessionId/touch/multi/perform"))
-	_, err = d.httpPOST(data, "/session", d.sessionId, "/touch/multi/perform")
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "/touch/multi/perform")
 	return
 }
 
