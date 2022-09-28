@@ -1,3 +1,5 @@
+//go:build localtest
+
 package uixt
 
 import (
@@ -21,11 +23,11 @@ func TestDriver_NewSession(t *testing.T) {
 		"firstMatch":  []interface{}{firstMatchEntry},
 		"alwaysMatch": struct{}{},
 	}
-	sessionID, err := driver.NewSession(caps)
+	session, err := driver.NewSession(caps)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(sessionID) == 0 {
+	if len(session.SessionId) == 0 {
 		t.Fatal("should not be empty")
 	}
 }
@@ -45,7 +47,7 @@ func TestDriver_Quit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = driver.Quit(); err != nil {
+	if err = driver.Close(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -147,7 +149,7 @@ func TestDriver_DeviceSize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deviceSize, err := driver.DeviceSize()
+	deviceSize, err := driver.WindowSize()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,20 +169,6 @@ func TestDriver_Source(t *testing.T) {
 	}
 
 	t.Log(source)
-}
-
-func TestDriver_StatusBarHeight(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	statusBarHeight, err := driver.StatusBarHeight()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(statusBarHeight)
 }
 
 func TestDriver_BatteryInfo(t *testing.T) {
@@ -220,7 +208,7 @@ func TestDriver_DeviceScaleRatio(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	scaleRatio, err := driver.DeviceScaleRatio()
+	scaleRatio, err := driver.Scale()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,17 +263,6 @@ func TestDriver_Tap(t *testing.T) {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second)
-
-	err = driver.TapPoint(Point{X: 150, Y: 340})
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second)
-
-	err = driver.TapPointF(PointF{X: 60.5, Y: 125.5})
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestDriver_Swipe(t *testing.T) {
@@ -294,26 +271,12 @@ func TestDriver_Swipe(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.Swipe(400, 1000, 400, 500, 10)
+	err = driver.Swipe(400, 1000, 400, 500)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	err = driver.SwipeFloat(400, 555.5, 400, 1255.5)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	startPoint := Point{400, 1000}
-	endPoint := Point{400, 500}
-	err = driver.SwipePoint(startPoint, endPoint)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	startPointF := PointF{400, 555.5}
-	endPointF := PointF{400, 1255.5}
-	err = driver.SwipePointF(startPointF, endPointF)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -325,50 +288,17 @@ func TestDriver_Drag(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.Drag(400, 260, 400, 500, 10)
+	err = driver.Drag(400, 260, 400, 500)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Millisecond * 200)
 
-	err = driver.DragFloat(400, 501.5, 400, 261.5, 10)
+	err = driver.DragFloat(400, 501.5, 400, 261.5)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Millisecond * 200)
-
-	startPoint := Point{400, 260}
-	endPoint := Point{400, 500}
-	err = driver.DragPoint(startPoint, endPoint)
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Millisecond * 200)
-
-	startPointF := PointF{400.5, 501.5}
-	endPointF := PointF{400.5, 261.5}
-	err = driver.DragPointF(startPointF, endPointF)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_TouchLongClick(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.TouchLongClick(400, 260, 1.2222)
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Millisecond * 200)
-
-	err = driver.TouchLongClickPoint(Point{X: 400, Y: 260})
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestDriver_SendKeys(t *testing.T) {
@@ -383,7 +313,7 @@ func TestDriver_SendKeys(t *testing.T) {
 	}
 	time.Sleep(time.Second * 2)
 
-	err = driver.SendKeys("def", false)
+	err = driver.SendKeys("def")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -396,270 +326,270 @@ func TestDriver_SendKeys(t *testing.T) {
 	}
 }
 
-func TestDriver_PressBack(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
+//func TestDriver_PressBack(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.PressBack()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-	err = driver.PressBack()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func TestDriver_PressKeyCode(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.PressKeyCodeAsync(KCx)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	err = driver.PressKeyCodeAsync(KCx, KMCapLocked)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	// err = driver.PressKeyCodeAsync(KCExplorer)
+//	// if err != nil {
+//	// 	t.Fatal(err)
+//	// }
+//
+//	err = driver.PressKeyCode(KCExplorer, KMEmpty)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-func TestDriver_PressKeyCode(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
+//func TestDriver_LongPressKeyCode(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.LongPressKeyCode(KCAt, KMEmpty)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func TestDriver_TouchDown(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	doTouchUp := func() {
+//		err = driver.TouchUp(400, 260)
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//	}
+//
+//	err = driver.TouchDown(400, 260)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// _ = driver.TapPoint(Point{400, 500})
+//	doTouchUp()
+//
+//	err = driver.TouchDownPoint(Point{400, 260})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	doTouchUp()
+//}
+//
+//func TestDriver_TouchUp(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.TouchDown(400, 260)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// err = driver.TouchUp(400, 260)
+//	err = driver.TouchUpPoint(Point{400, 260})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func TestDriver_TouchMove(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	doTouchDown := func(x, y int) {
+//		err = driver.TouchDown(x, y)
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//	}
+//
+//	doTouchUp := func(x, y int) {
+//		err = driver.TouchUp(x, y)
+//		if err != nil {
+//			t.Fatal(err)
+//		}
+//	}
+//
+//	doTouchDown(400, 260)
+//
+//	err = driver.TouchMove(400, 500)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	doTouchUp(400, 500)
+//
+//	doTouchDown(400, 500)
+//
+//	err = driver.TouchMove(400, 260)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	doTouchUp(400, 260)
+//}
+//
+//func TestDriver_OpenNotification(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.OpenNotification()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func TestDriver_Flick(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.Flick(50, -100)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func TestDriver_ScrollTo(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.ScrollTo(BySelector{ClassName: "android.widget.SeekBar"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-	err = driver.PressKeyCodeAsync(KCx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = driver.PressKeyCodeAsync(KCx, KMCapLocked)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// err = driver.PressKeyCodeAsync(KCExplorer)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	err = driver.PressKeyCode(KCExplorer, KMEmpty)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_LongPressKeyCode(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.LongPressKeyCode(KCAt, KMEmpty)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_TouchDown(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	doTouchUp := func() {
-		err = driver.TouchUp(400, 260)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	err = driver.TouchDown(400, 260)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// _ = driver.TapPoint(Point{400, 500})
-	doTouchUp()
-
-	err = driver.TouchDownPoint(Point{400, 260})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	doTouchUp()
-}
-
-func TestDriver_TouchUp(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.TouchDown(400, 260)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// err = driver.TouchUp(400, 260)
-	err = driver.TouchUpPoint(Point{400, 260})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_TouchMove(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	doTouchDown := func(x, y int) {
-		err = driver.TouchDown(x, y)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	doTouchUp := func(x, y int) {
-		err = driver.TouchUp(x, y)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	doTouchDown(400, 260)
-
-	err = driver.TouchMove(400, 500)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	doTouchUp(400, 500)
-
-	doTouchDown(400, 500)
-
-	err = driver.TouchMove(400, 260)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	doTouchUp(400, 260)
-}
-
-func TestDriver_OpenNotification(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.OpenNotification()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_Flick(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Flick(50, -100)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_ScrollTo(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.ScrollTo(AndroidBySelector{ClassName: "android.widget.SeekBar"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_MultiPointerGesture(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	gesture1 := NewTouchAction().Add(150, 340, 0.35).AddFloat(50, 300)
-	gesture2 := NewTouchAction().Add(200, 340).AddFloat(300, 300)
-	gesture3 := NewTouchAction().Add(300, 500).AddFloat(350, 500).AddPoint(Point{300, 550}).AddPointF(PointF{350, 550})
-	_ = gesture3
-
-	// err = driver.MultiPointerGesture(gesture1, gesture2)
-	err = driver.MultiPointerGesture(gesture1, gesture2, gesture3)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_PerformW3CActions(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// actionKey := NewW3CAction(ATKey, NewW3CGestures().KeyDown("g").KeyUp("g").Pause().KeyDown("o").KeyUp("o"))
-	// actionKey := NewW3CAction(ATKey, NewW3CGestures().SendKeys("golang"))
-	// err = driver.PerformW3CActions(actionKey)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	// var queryField map[string]string
-	// queryField = make(map[string]string)
-	// {
-	// 	queryField = map[string]string{
-	// 		"a": "",
-	// 	}
-	// }
-
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/search"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	// actionPointer := NewW3CAction(ATPointer, NewW3CGestures().PointerMove(0, 0, elem.id).PointerDown().Pause(3).PointerUp())
-	// actionPointer := NewW3CAction(ATPointer,
-	// 	NewW3CGestures().PointerMove(400, 500, "viewport").PointerDown().Pause(2).
-	// 		PointerMove(0, 0, elem.id).Pause(2).
-	// 		PointerMove(20, 0, "pointer").Pause(2).
-	// 		PointerUp(),
-	// )
-	actionPointer := NewW3CAction(ATPointer,
-		NewW3CGestures().PointerMoveTo(400, 500).PointerDown().
-			PointerMouseOver(0, 0, elem).
-			PointerMoveRelative(20, 0).PointerUp())
-	err = driver.PerformW3CActions(actionPointer)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_GetClipboard(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	text, err := driver.GetClipboard()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(text)
-}
-
-func TestDriver_SetClipboard(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	content := "test123"
-	err = driver.SetClipboard(ClipDataTypePlaintext, content)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	text, err := driver.GetClipboard()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if text != content {
-		t.Fatal("should be the same")
-	}
-}
+//func TestDriver_MultiPointerGesture(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	gesture1 := NewTouchAction().Add(150, 340, 0.35).AddFloat(50, 300)
+//	gesture2 := NewTouchAction().Add(200, 340).AddFloat(300, 300)
+//	gesture3 := NewTouchAction().Add(300, 500).AddFloat(350, 500).AddPoint(Point{300, 550}).AddPointF(PointF{350, 550})
+//	_ = gesture3
+//
+//	// err = driver.MultiPointerGesture(gesture1, gesture2)
+//	err = driver.MultiPointerGesture(gesture1, gesture2, gesture3)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func TestDriver_PerformW3CActions(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// actionKey := NewW3CAction(ATKey, NewW3CGestures().KeyDown("g").KeyUp("g").Pause().KeyDown("o").KeyUp("o"))
+//	// actionKey := NewW3CAction(ATKey, NewW3CGestures().SendKeys("golang"))
+//	// err = driver.PerformW3CActions(actionKey)
+//	// if err != nil {
+//	// 	t.Fatal(err)
+//	// }
+//
+//	// var queryField map[string]string
+//	// queryField = make(map[string]string)
+//	// {
+//	// 	queryField = map[string]string{
+//	// 		"a": "",
+//	// 	}
+//	// }
+//
+//	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/search"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	// actionPointer := NewW3CAction(ATPointer, NewW3CGestures().PointerMove(0, 0, elem.id).PointerDown().Pause(3).PointerUp())
+//	// actionPointer := NewW3CAction(ATPointer,
+//	// 	NewW3CGestures().PointerMove(400, 500, "viewport").PointerDown().Pause(2).
+//	// 		PointerMove(0, 0, elem.id).Pause(2).
+//	// 		PointerMove(20, 0, "pointer").Pause(2).
+//	// 		PointerUp(),
+//	// )
+//	actionPointer := NewW3CAction(ATPointer,
+//		NewW3CGestures().PointerMoveTo(400, 500).PointerDown().
+//			PointerMouseOver(0, 0, elem).
+//			PointerMoveRelative(20, 0).PointerUp())
+//	err = driver.PerformW3CActions(actionPointer)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
+//
+//func TestDriver_GetClipboard(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	text, err := driver.GetClipboard()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	t.Log(text)
+//}
+//
+//func TestDriver_SetClipboard(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	content := "test123"
+//	err = driver.SetClipboard(ClipDataTypePlaintext, content)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	text, err := driver.GetClipboard()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	if text != content {
+//		t.Fatal("should be the same")
+//	}
+//}
 
 func TestDriver_AlertAccept(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
@@ -687,33 +617,33 @@ func TestDriver_AlertDismiss(t *testing.T) {
 	}
 }
 
-func TestDriver_SetAppiumSettings(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	appiumSettings, err := driver.GetAppiumSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	sdopd := appiumSettings["shutdownOnPowerDisconnect"]
-	t.Log("shutdownOnPowerDisconnect:", sdopd)
-
-	err = driver.SetAppiumSettings(map[string]interface{}{"shutdownOnPowerDisconnect": !sdopd.(bool)})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	appiumSettings, err = driver.GetAppiumSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if appiumSettings["shutdownOnPowerDisconnect"] == sdopd.(bool) {
-		t.Fatal("should not be equal")
-	}
-	t.Log("shutdownOnPowerDisconnect:", appiumSettings["shutdownOnPowerDisconnect"])
-}
+//func TestDriver_SetAppiumSettings(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	appiumSettings, err := driver.GetAppiumSettings()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	sdopd := appiumSettings["shutdownOnPowerDisconnect"]
+//	t.Log("shutdownOnPowerDisconnect:", sdopd)
+//
+//	err = driver.SetAppiumSettings(map[string]interface{}{"shutdownOnPowerDisconnect": !sdopd.(bool)})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	appiumSettings, err = driver.GetAppiumSettings()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	if appiumSettings["shutdownOnPowerDisconnect"] == sdopd.(bool) {
+//		t.Fatal("should not be equal")
+//	}
+//	t.Log("shutdownOnPowerDisconnect:", appiumSettings["shutdownOnPowerDisconnect"])
+//}
 
 func TestDriver_SetOrientation(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
@@ -741,17 +671,17 @@ func TestDriver_SetRotation(t *testing.T) {
 	}
 }
 
-func TestDriver_NetworkConnection(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.NetworkConnection(NetworkTypeWifi)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func TestDriver_NetworkConnection(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = driver.NetworkConnection(NetworkTypeWifi)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
 func TestDriver_FindElement(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
@@ -759,12 +689,12 @@ func TestDriver_FindElement(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "android:id/content"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "android:id/content"})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	t.Log(elem.GetAttribute("class"))
+	e := ElementAttribute{}.WithLabel("class")
+	t.Log(elem.GetAttribute(e))
 }
 
 func TestDriver_FindElements(t *testing.T) {
@@ -773,8 +703,8 @@ func TestDriver_FindElements(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// elements, err := driver.FindElements(AndroidBySelector{ResourceIdID: "com.android.settings:id/title"})
-	elements, err := driver.FindElements(AndroidBySelector{UiAutomator: "new UiSelector().textStartsWith(\"应\");"})
+	// elements, err := driver.FindElements(BySelector{ResourceIdID: "com.android.settings:id/title"})
+	elements, err := driver.FindElements(BySelector{UiAutomator: "new UiSelector().textStartsWith(\"应\");"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -786,12 +716,12 @@ func TestDriver_WaitWithTimeoutAndInterval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	element, err := driver.FindElement(AndroidBySelector{UiAutomator: "new UiSelector().className(\"android.view.ViewGroup\");"})
+	element, err := driver.FindElement(BySelector{UiAutomator: "new UiSelector().className(\"android.view.ViewGroup\");"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	elem, err := element.FindElement(AndroidBySelector{UiAutomator: "new UiSelector().className(\"android.widget.LinearLayout\").index(6);"})
+	elem, err := element.FindElement(BySelector{UiAutomator: "new UiSelector().className(\"android.widget.LinearLayout\").index(6);"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -808,8 +738,8 @@ func TestDriver_WaitWithTimeoutAndInterval(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	by := AndroidBySelector{UiAutomator: "new UiSelector().text(\"科技\");"}
-	exists := func(d *uiaDriver) (bool, error) {
+	by := BySelector{UiAutomator: "new UiSelector().text(\"科技\");"}
+	exists := func(d WebDriver) (bool, error) {
 		element, err = d.FindElement(by)
 		if err == nil {
 			return true, nil
@@ -817,7 +747,7 @@ func TestDriver_WaitWithTimeoutAndInterval(t *testing.T) {
 		return false, nil
 	}
 
-	err = driver.WaitWithTimeoutAndInterval(exists, 1, 0.1)
+	err = driver.WaitWithTimeoutAndInterval(exists, 1, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -833,25 +763,25 @@ func TestDriver_WaitWithTimeoutAndInterval(t *testing.T) {
 	}
 }
 
-func TestDriver_ActiveElement(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		_ = driver.Dispose()
-	}()
-
-	element, err := driver.ActiveElement()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err = element.SendKeys("test"); err != nil {
-		t.Fatal(err)
-	}
-}
+//func TestDriver_ActiveElement(t *testing.T) {
+//	device, _ := NewAndroidDevice()
+//	driver, err := device.NewUSBDriver(nil)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	defer func() {
+//		_ = driver.Dispose()
+//	}()
+//
+//	element, err := driver.ActiveElement()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	if err = element.SendKeys("test"); err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
 func TestUiSelectorHelper_NewUiSelectorHelper(t *testing.T) {
 	uiSelector := NewUiSelectorHelper().Text("a").String()
@@ -898,38 +828,38 @@ func TestDeviceList(t *testing.T) {
 	}
 }
 
-func TestAndroidNewUSBDriver(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer driver.Dispose()
+//func TestAndroidNewUSBDriver(t *testing.T) {
+//	device, _ := NewAndroidDevice()
+//	driver, err := device.NewUSBDriver(nil)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	defer driver.Dispose()
+//
+//	ready, err := driver.Status()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	if !ready {
+//		t.Fatal("should be 'true'")
+//	}
+//}
 
-	ready, err := driver.Status()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !ready {
-		t.Fatal("should be 'true'")
-	}
-}
-
-func TestDriver_ActiveAppPackageName(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer driver.Dispose()
-
-	appPackageName, err := driver.ActiveAppPackageName()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(appPackageName)
-}
+//func TestDriver_ActiveAppPackageName(t *testing.T) {
+//	device, _ := NewAndroidDevice()
+//	driver, err := device.NewUSBDriver(nil)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	defer driver.Dispose()
+//
+//	appPackageName, err := driver.ActiveAppPackageName()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	t.Log(appPackageName)
+//}
 
 func TestDriver_AppLaunch(t *testing.T) {
 	device, _ := NewAndroidDevice()
@@ -937,10 +867,9 @@ func TestDriver_AppLaunch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer driver.Dispose()
 
-	// err = driver.AppLaunch("tv.danmaku.bili", AndroidBySelector{ResourceIdID: "tv.danmaku.bili:id/action_bar_root"})
-	err = driver.AppLaunch("com.android.settings", AndroidBySelector{ResourceIdID: "android:id/list"})
+	// err = driver.AppLaunch("tv.danmaku.bili", BySelector{ResourceIdID: "tv.danmaku.bili:id/action_bar_root"})
+	err = driver.AppLaunch("com.android.settings", AppLaunchOption{}.WithAndroidBySelector(AndroidBySelector{ResourceIdID: "android:id/list"}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -960,63 +889,63 @@ func TestDriver_AppTerminate(t *testing.T) {
 	}
 	defer driver.Dispose()
 
-	err = driver.AppTerminate("tv.danmaku.bili")
+	_, err = driver.AppTerminate("tv.danmaku.bili")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestNewWiFiDriver(t *testing.T) {
-	device, _ := NewAndroidDevice(WithAdbIP("192.168.1.28"))
-	driver, err := device.NewHTTPDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+//func TestNewWiFiDriver(t *testing.T) {
+//	device, _ := NewAndroidDevice(WithAdbIP("192.168.1.28"))
+//	driver, err := device.NewHTTPDriver(nil)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// SetDebug(false, true)
+//	_, err = driver.ActiveAppActivity()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-	// SetDebug(false, true)
-	_, err = driver.ActiveAppActivity()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func TestDriver_AppInstall(t *testing.T) {
+//	device, _ := NewAndroidDevice()
+//	driver, err := device.NewUSBDriver(nil)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	defer driver.Dispose()
+//
+//	err = driver.AppInstall("/Users/hero/Desktop/xuexi_android_10002068.apk")
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-func TestDriver_AppInstall(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer driver.Dispose()
-
-	err = driver.AppInstall("/Users/hero/Desktop/xuexi_android_10002068.apk")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_AppUninstall(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer driver.Dispose()
-
-	err = driver.AppUninstall("cn.xuexi.android")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func TestDriver_AppUninstall(t *testing.T) {
+//	device, _ := NewAndroidDevice()
+//	driver, err := device.NewUSBDriver(nil)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	defer driver.Dispose()
+//
+//	err = driver.AppUninstall("cn.xuexi.android")
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
 func TestBySelector_getMethodAndSelector(t *testing.T) {
 	testVal := "test id"
-	bySelector := AndroidBySelector{ResourceIdID: testVal}
+	bySelector := BySelector{ResourceIdID: testVal}
 	method, selector := bySelector.getMethodAndSelector()
 	if method != "id" || selector != testVal {
 		t.Fatal(method, "=", selector)
 	}
 
-	bySelector = AndroidBySelector{ContentDescription: testVal}
+	bySelector = BySelector{ContentDescription: testVal}
 	method, selector = bySelector.getMethodAndSelector()
 	if method != "accessibility id" || selector != testVal {
 		t.Fatal(method, "=", selector)
@@ -1029,7 +958,7 @@ func TestElement_Text(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1048,12 +977,13 @@ func TestElement_GetAttribute(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	attribute, err := elem.GetAttribute("class")
+	e := ElementAttribute{}.WithName("class")
+	attribute, err := elem.GetAttribute(e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1061,24 +991,24 @@ func TestElement_GetAttribute(t *testing.T) {
 	t.Log(attribute)
 }
 
-func TestElement_ContentDescription(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/search"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	name, err := elem.ContentDescription()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(name)
-}
+//func TestElement_ContentDescription(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/search"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	name, err := elem.ContentDescription()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	t.Log(name)
+//}
 
 func TestElement_Size(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
@@ -1086,7 +1016,7 @@ func TestElement_Size(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/search"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/search"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1105,7 +1035,7 @@ func TestElement_Rect(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1124,7 +1054,7 @@ func TestElement_Screenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1143,7 +1073,7 @@ func TestElement_Location(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1162,7 +1092,7 @@ func TestElement_Click(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1179,7 +1109,7 @@ func TestElement_Clear(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "android:id/search_src_text"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "android:id/search_src_text"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1196,7 +1126,7 @@ func TestElement_SendKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "android:id/search_src_text"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "android:id/search_src_text"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1204,7 +1134,7 @@ func TestElement_SendKeys(t *testing.T) {
 	// return
 
 	// err = elem.SendKeys("abc")
-	err = elem.SendKeys("456", false)
+	err = elem.SendKeys("456", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1216,12 +1146,12 @@ func TestElement_FindElements(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	parentElem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/main_content"})
+	parentElem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/main_content"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	elements, err := parentElem.FindElements(AndroidBySelector{ResourceIdID: "com.android.settings:id/category"})
+	elements, err := parentElem.FindElements(BySelector{ResourceIdID: "com.android.settings:id/category"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1234,12 +1164,12 @@ func TestElement_FindElement(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	parentElem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/main_content"})
+	parentElem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/main_content"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	elem, err := parentElem.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := parentElem.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1253,7 +1183,7 @@ func TestElement_Swipe(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	elem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/category_title"})
+	elem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/category_title"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1274,111 +1204,104 @@ func TestElement_Swipe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	startPoint := PointF{X: float64(rect.X + rect.Width/20 + 30), Y: float64(startY / 2)}
-	endPoint := PointF{X: startPoint.X, Y: startPoint.Y + startPoint.Y}
-	err = elem.SwipePointF(startPoint, endPoint)
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
-func TestElement_Drag(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
+//func TestElement_Drag(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	elements, err := driver.FindElements(BySelector{ClassName: "android.widget.TextView"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	for i, elem := range elements {
+//		text, _ := elem.Text()
+//		t.Log(i, text)
+//	}
+//
+//	rect, err := elements[0].Rect()
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// err = elements[0].Drag(300, 450, 256)
+//	err = elements[0].Drag(300, 450, 256)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = elements[0].DragTo(elements[1], 256)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	endPoint := PointF{X: float64(rect.X + rect.Width/3*2), Y: float64(rect.Y + rect.Height/2)}
+//	err = elements[0].DragPointF(endPoint, 256)
+//	if err != nil {
+//		t.Fatal()
+//	}
+//}
 
-	elements, err := driver.FindElements(AndroidBySelector{ClassName: "android.widget.TextView"})
-	if err != nil {
-		t.Fatal(err)
-	}
+//func TestElement_Flick(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	elem, err := driver.FindElement(BySelector{UiAutomator: "new UiSelector().text(\"提示音和通知\");"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = elem.Flick(36, 20, 100)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-	for i, elem := range elements {
-		text, _ := elem.Text()
-		t.Log(i, text)
-	}
+//func TestElement_ScrollTo(t *testing.T) {
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// how to make it work?
+//	// parentElem, err := driver.FindElement(BySelector{ClassName: "android.widget.ScrollView"})
+//	// parentElem, err := driver.FindElement(BySelector{ResourceIdID: "com.cyanogenmod.filemanager:id/navigation_view_layout"})
+//	parentElem, err := driver.FindElement(BySelector{ResourceIdID: "com.android.settings:id/dashboard"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = parentElem.ScrollTo(BySelector{ContentDescription: "电池"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}
 
-	rect, err := elements[0].Rect()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// err = elements[0].Drag(300, 450, 256)
-	err = elements[0].Drag(300, 450, 256)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = elements[0].DragTo(elements[1], 256)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	endPoint := PointF{X: float64(rect.X + rect.Width/3*2), Y: float64(rect.Y + rect.Height/2)}
-	err = elements[0].DragPointF(endPoint, 256)
-	if err != nil {
-		t.Fatal()
-	}
-}
-
-func TestElement_Flick(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	elem, err := driver.FindElement(AndroidBySelector{UiAutomator: "new UiSelector().text(\"提示音和通知\");"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = elem.Flick(36, 20, 100)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestElement_ScrollTo(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// how to make it work?
-	// parentElem, err := driver.FindElement(AndroidBySelector{ClassName: "android.widget.ScrollView"})
-	// parentElem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.cyanogenmod.filemanager:id/navigation_view_layout"})
-	parentElem, err := driver.FindElement(AndroidBySelector{ResourceIdID: "com.android.settings:id/dashboard"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = parentElem.ScrollTo(AndroidBySelector{ContentDescription: "电池"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestElement_ScrollToElement(t *testing.T) {
-	// android.widget.HorizontalScrollView
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// how to make it work?
-	parentElem, err := driver.FindElement(AndroidBySelector{UiAutomator: "new UiSelector().resourceId(\"com.android.settings:id/dashboard\");"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	element, err := driver.FindElement(AndroidBySelector{UiAutomator: "new UiSelector().text(\"电池\");"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = parentElem.ScrollToElement(element)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
+//func TestElement_ScrollToElement(t *testing.T) {
+//	// android.widget.HorizontalScrollView
+//	driver, err := NewUIADriver(nil, uiaServerURL)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	// how to make it work?
+//	parentElem, err := driver.FindElement(BySelector{UiAutomator: "new UiSelector().resourceId(\"com.android.settings:id/dashboard\");"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	element, err := driver.FindElement(BySelector{UiAutomator: "new UiSelector().text(\"电池\");"})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	err = parentElem.ScrollToElement(element)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//}

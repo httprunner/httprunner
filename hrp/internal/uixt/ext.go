@@ -237,6 +237,11 @@ func (dExt *DriverExt) FindUIElement(param string) (ele WebElement, err error) {
 		selector = BySelector{
 			XPath: param,
 		}
+	} else if strings.HasPrefix(param, "com.") {
+		// name
+		selector = BySelector{
+			ResourceIdID: param,
+		}
 	} else {
 		// name
 		selector = BySelector{
@@ -299,7 +304,7 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 func (dExt *DriverExt) DoAction(action MobileAction) error {
-	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start iOS UI action")
+	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start UI action")
 
 	switch action.Method {
 	case AppInstall:
@@ -473,18 +478,13 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		dExt.ScreenShots = append(dExt.ScreenShots, screenshotPath)
 		return err
 	case CtlStartCamera:
-		// start camera, alias for app_launch com.apple.camera
-		return dExt.Driver.AppLaunch("com.apple.camera")
+		return dExt.Driver.StartCamera()
 	case CtlStopCamera:
-		// stop camera, alias for app_terminate com.apple.camera
-		success, err := dExt.Driver.AppTerminate("com.apple.camera")
-		if err != nil {
-			return errors.Wrap(err, "failed to terminate camera")
-		}
-		if !success {
-			log.Warn().Msg("camera was not running")
-		}
-		return nil
+		return dExt.Driver.StopCamera()
+	case RecordStart:
+		return dExt.Driver.StartRecording()
+	case RecordStop:
+		return dExt.Driver.StopRecording()
 	}
 	return nil
 }

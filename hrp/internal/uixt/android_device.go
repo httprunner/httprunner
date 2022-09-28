@@ -44,11 +44,15 @@ func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
 	fmt.Println(driver)
 
 	var driverExt *DriverExt
-	// TODO
-	// driverExt, err = Extend(driver)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "failed to extend UIA Driver")
-	// }
+
+	driverExt, err = Extend(driver)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to extend UIA Driver")
+	}
+
+	if device.LogOn {
+		// TODO
+	}
 
 	return driverExt, nil
 }
@@ -113,6 +117,7 @@ type AndroidDevice struct {
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	IP           string `json:"ip,omitempty" yaml:"ip,omitempty"`
 	Port         int    `json:"port,omitempty" yaml:"port,omitempty"`
+	MjpegPort    int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
@@ -148,12 +153,6 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver *uiaDr
 	}
 	driver.adbDevice = dev.d
 	driver.localPort = localPort
-
-	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
-	if err != nil {
-		return nil, fmt.Errorf("adb forward: %w", err)
-	}
-	driver.client = convertToHTTPClient(conn)
 
 	return driver, nil
 }

@@ -215,7 +215,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			s.appendCaseSummary(caseSummary)
 			if err1 != nil || err2 != nil {
 				log.Error().Err(err1).Msg("[Run] run testcase failed")
-				runErr = err
+				runErr = err1
 				break
 			}
 		}

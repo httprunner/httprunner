@@ -51,7 +51,7 @@ func (wd *Driver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error
 }
 
 func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
-	log.Debug().Str("method", method).Str("url", rawURL).Str("body", string(rawBody)).Msg("request WDA")
+	log.Debug().Str("method", method).Str("url", rawURL).Str("body", string(rawBody)).Msg("request driver agent")
 
 	var req *http.Request
 	if req, err = http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
@@ -77,7 +77,7 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 		// avoid printing screenshot data
 		logger.Str("response", string(rawResp))
 	}
-	logger.Msg("get WDA response")
+	logger.Msg("get driver agent response")
 	if err != nil {
 		return nil, err
 	}
