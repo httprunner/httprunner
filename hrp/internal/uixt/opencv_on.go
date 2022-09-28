@@ -5,6 +5,7 @@ package uixt
 import (
 	"bytes"
 	"image"
+	"io/ioutil"
 	"os"
 
 	cvHelper "github.com/electricbubble/opencv-helper"
