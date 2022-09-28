@@ -46,6 +46,18 @@
             ]
         },
         {
+            "name": "处理青少年弹窗",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "我知道了",
+                        "ignore_NotFoundError": true
+                    }
+                ]
+            }
+        },
+        {
             "name": "向上滑动 2 次",
             "ios": {
                 "actions": [

@@ -124,7 +124,7 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type DriverExt struct {
-	Device          Device
+	UUID            string // ios udid or android serial
 	Driver          WebDriver
 	windowSize      Size
 	frame           *bytes.Buffer
