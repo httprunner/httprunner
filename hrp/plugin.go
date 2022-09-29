@@ -9,9 +9,10 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/fungo"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -34,6 +35,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	}
 	pluginPath, err := locatePlugin(path)
 	if err != nil {
+		log.Warn().Err(err).Str("path", path).Msg("locate plugin failed")
 		return nil, nil
 	}
 
@@ -109,7 +111,6 @@ func locatePlugin(path string) (pluginPath string, err error) {
 		return
 	}
 
-	log.Warn().Err(err).Str("path", path).Msg("plugin file not found")
 	return "", fmt.Errorf("plugin file not found")
 }
 

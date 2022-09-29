@@ -21,6 +21,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 // Run starts to run API test with default configs.
@@ -172,6 +173,8 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) error {
+	log.Info().Str("hrp_version", version.VERSION).
+		Interface("testcases", testcases).Msg("start running")
 	event := sdk.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
