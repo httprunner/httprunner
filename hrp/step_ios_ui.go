@@ -477,7 +477,7 @@ func (r *HRPRunner) initUIClient(device uixt.Device) (client *uixt.DriverExt, er
 	uuid := device.UUID()
 
 	// avoid duplicate init
-	if uuid == "" && len(r.uiClients) == 1 {
+	if uuid == "" && len(r.uiClients) > 0 {
 		for _, v := range r.uiClients {
 			return v, nil
 		}
