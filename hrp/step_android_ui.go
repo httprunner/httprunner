@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -109,6 +109,32 @@ func (s *StepAndroid) StopRecording() *StepAndroid {
 		Method: uixt.RecordStop,
 		Params: nil,
 	})
+	return &StepAndroid{step: s.step}
+}
+
+// TapXY taps the point {X,Y}, X & Y is percentage of coordinates
+func (s *StepAndroid) TapXY(x, y float64, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapXY,
+		Params: []float64{x, y},
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
+// TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
+func (s *StepAndroid) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapAbsXY,
+		Params: []float64{x, y},
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
@@ -440,6 +466,13 @@ func runStepAndroid(s *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 	screenshots := make([]string, 0)
 
+	// override step variables
+	stepVariables, err := s.MergeStepVariables(step.Variables)
+	if err != nil {
+		return
+	}
+	parser := s.GetParser()
+
 	// init uiaClient driver
 	uiaClient, err := s.hrpRunner.initUIClient(&step.Android.AndroidDevice)
 	if err != nil {
@@ -485,6 +518,9 @@ func runStepAndroid(s *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// run actions
 	for _, action := range actions {
+		if action.Params, err = parser.Parse(action.Params, stepVariables); err != nil {
+			return stepResult, errors.Wrap(err, "parse action params failed")
+		}
 		if err := uiaClient.DoAction(action); err != nil {
 			return stepResult, err
 		}
