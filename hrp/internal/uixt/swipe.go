@@ -31,7 +31,7 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier 
 			"enable": true,
 			"data":   identifier[0],
 		})
-		dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, option)
+		return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, option)
 	}
 	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY)
 }
