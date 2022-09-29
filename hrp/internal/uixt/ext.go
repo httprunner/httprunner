@@ -301,6 +301,45 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 	return err == nil
 }
 
+func (dExt *DriverExt) StartLogRecording(identifier string) error {
+	if _, ok := dExt.Driver.(*wdaDriver); ok {
+		log.Info().Msg("start WDA log recording")
+		data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier}
+		_, err := dExt.triggerWDALog(data)
+		if err != nil {
+			return errors.Wrap(err, "failed to start WDA log recording")
+		}
+	} else {
+		log.Info().Msg("start adb log recording")
+		err := dExt.Driver.(*uiaDriver).logcat.CatchLogcat()
+		if err != nil {
+			return errors.Wrap(err, "failed to start adb log recording")
+		}
+	}
+	return nil
+}
+
+func (dExt *DriverExt) GetLogs() (interface{}, error) {
+	if _, ok := dExt.Driver.(*wdaDriver); ok {
+		log.Info().Msg("stop WDA log recording")
+		data := map[string]interface{}{"action": "stop"}
+		reply, err := dExt.triggerWDALog(data)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get WDA logs")
+		}
+		return reply.Value, nil
+	} else {
+		log.Info().Msg("stop adb log recording")
+		err := dExt.Driver.(*uiaDriver).logcat.Stop()
+		if err != nil {
+			println("failed to get adb log recording")
+			//return "", errors.Wrap(err, "failed to get adb log recording")
+		}
+		content := dExt.Driver.(*uiaDriver).logcat.logBuffer.String()
+		return ConvertPoints(content), err
+	}
+}
+
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 func (dExt *DriverExt) DoAction(action MobileAction) error {
