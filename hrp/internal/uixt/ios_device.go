@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net"
@@ -111,9 +110,8 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	}
 	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
-	driverExt.host = fmt.Sprintf("http://127.0.0.1:%d", iosDevice.Port)
 	if device.LogOn {
-		err = driverExt.StartLogRecording("hrp_wda_log")
+		err = driverExt.Driver.StartCaptureLog("hrp_wda_log")
 		if err != nil {
 			return nil, err
 		}
@@ -198,6 +196,7 @@ func (dev *IOSDevice) UUID() string {
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
 	wd := new(wdaDriver)
+	wd.client = http.DefaultClient
 
 	urlPrefix := fmt.Sprintf("http://127.0.0.1:%d", dev.Port)
 	if wd.urlPrefix, err = url.Parse(urlPrefix); err != nil {
@@ -208,7 +207,6 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 		return nil, err
 	}
 	wd.sessionId = sessionInfo.SessionId
-	wd.client = http.DefaultClient
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
@@ -244,70 +242,6 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	_, err = wd.NewSession(capabilities)
 
 	return wd, err
-}
-
-type wdaResponse struct {
-	Value     interface{} `json:"value"`
-	SessionID string      `json:"sessionId"`
-}
-
-func (dExt *DriverExt) StartLogRecording(identifier string) error {
-	log.Info().Msg("start WDA log recording")
-	data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier}
-	_, err := dExt.triggerWDALog(data)
-	if err != nil {
-		return errors.Wrap(err, "failed to start WDA log recording")
-	}
-
-	return nil
-}
-
-func (dExt *DriverExt) GetLogs() (interface{}, error) {
-	log.Info().Msg("stop log recording")
-	if _, ok := dExt.Driver.(*wdaDriver); ok {
-		data := map[string]interface{}{"action": "stop"}
-		reply, err := dExt.triggerWDALog(data)
-		if err != nil {
-			log.Error().Err(err).Interface("reply", reply).Msg("failed to get WDA logs")
-			return "", errors.Wrap(err, "failed to get WDA logs")
-		}
-		return reply.Value, nil
-	} else {
-		// TODO: Android log recording
-	}
-	return "", nil
-}
-
-func (dExt *DriverExt) triggerWDALog(data map[string]interface{}) (*wdaResponse, error) {
-	// [[FBRoute POST:@"/gtf/automation/log"].withoutSession respondWithTarget:self action:@selector(handleAutomationLog:)]
-	postJSON, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-
-	url := fmt.Sprintf("%s/gtf/automation/log", dExt.host)
-	log.Info().Str("url", url).Interface("data", data).Msg("trigger WDA log")
-	resp, err := http.DefaultClient.Post(url, "application/json", bytes.NewBuffer(postJSON))
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("failed to trigger wda log, response status code: %d", resp.StatusCode)
-	}
-
-	rawResp, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	reply := new(wdaResponse)
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return reply, err
-	}
-	log.Info().Interface("value", reply.Value).Msg("get WDA log response")
-
-	return reply, nil
 }
 
 func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {

@@ -138,7 +138,7 @@ func (ud *uiaDriver) SessionDetails() (scrollData map[string]interface{}, err er
 	if rawResp, err = ud.httpGET("/session", ud.sessionId); err != nil {
 		return nil, err
 	}
-	var reply = new(struct{ Value map[string]interface{} })
+	reply := new(struct{ Value map[string]interface{} })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return nil, err
 	}
@@ -943,4 +943,14 @@ func (ud *uiaDriver) WaitWithTimeout(condition Condition, timeout time.Duration)
 
 func (ud *uiaDriver) Wait(condition Condition) error {
 	return ud.WaitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
+}
+
+func (ud *uiaDriver) StartCaptureLog(identifier ...string) (err error) {
+	// TODO
+	return
+}
+
+func (ud *uiaDriver) StopCaptureLog() (result interface{}, err error) {
+	// TODO
+	return
 }
