@@ -228,33 +228,6 @@ type wdaResponse struct {
 	SessionID string      `json:"sessionId"`
 }
 
-func (dExt *DriverExt) StartLogRecording(identifier string) error {
-	log.Info().Msg("start WDA log recording")
-	data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier}
-	_, err := dExt.triggerWDALog(data)
-	if err != nil {
-		return errors.Wrap(err, "failed to start WDA log recording")
-	}
-
-	return nil
-}
-
-func (dExt *DriverExt) GetLogs() (interface{}, error) {
-	log.Info().Msg("stop log recording")
-	if _, ok := dExt.Driver.(*wdaDriver); ok {
-		data := map[string]interface{}{"action": "stop"}
-		reply, err := dExt.triggerWDALog(data)
-		if err != nil {
-			log.Error().Err(err).Interface("reply", reply).Msg("failed to get WDA logs")
-			return "", errors.Wrap(err, "failed to get WDA logs")
-		}
-		return reply.Value, nil
-	} else {
-		// TODO: Android log recording
-	}
-	return "", nil
-}
-
 func (dExt *DriverExt) triggerWDALog(data map[string]interface{}) (*wdaResponse, error) {
 	// [[FBRoute POST:@"/gtf/automation/log"].withoutSession respondWithTarget:self action:@selector(handleAutomationLog:)]
 	postJSON, err := json.Marshal(data)
