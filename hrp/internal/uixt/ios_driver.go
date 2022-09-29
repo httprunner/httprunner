@@ -861,3 +861,44 @@ func (wd *wdaDriver) WaitWithTimeout(condition Condition, timeout time.Duration)
 func (wd *wdaDriver) Wait(condition Condition) error {
 	return wd.WaitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
 }
+
+func (wd *wdaDriver) triggerWDALog(data map[string]interface{}) (rawResp []byte, err error) {
+	// [[FBRoute POST:@"/gtf/automation/log"].withoutSession respondWithTarget:self action:@selector(handleAutomationLog:)]
+	return wd.httpPOST(data, "/gtf/automation/log")
+}
+
+func (wd *wdaDriver) StartCaptureLog(identifier ...string) error {
+	log.Info().Msg("start WDA log recording")
+	if identifier == nil {
+		identifier = []string{""}
+	}
+	data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier[0]}
+	_, err := wd.triggerWDALog(data)
+	if err != nil {
+		return errors.Wrap(err, "failed to start WDA log recording")
+	}
+
+	return nil
+}
+
+type wdaResponse struct {
+	Value     interface{} `json:"value"`
+	SessionID string      `json:"sessionId"`
+}
+
+func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
+	log.Info().Msg("stop log recording")
+	data := map[string]interface{}{"action": "stop"}
+	rawResp, err := wd.triggerWDALog(data)
+	if err != nil {
+		log.Error().Err(err).Bytes("rawResp", rawResp).Msg("failed to get WDA logs")
+		return "", errors.Wrap(err, "failed to get WDA logs")
+	}
+	reply := new(wdaResponse)
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		log.Error().Err(err).Bytes("rawResp", rawResp).Msg("failed to json.Unmarshal WDA logs")
+		return reply, err
+	}
+	log.Info().Interface("value", reply.Value).Msg("get WDA log response")
+	return reply.Value, nil
+}

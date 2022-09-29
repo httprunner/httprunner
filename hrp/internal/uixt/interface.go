@@ -989,6 +989,10 @@ type WebDriver interface {
 
 	// Close inner connections properly
 	Close() error
+
+	// triggers the log capture and returns the log entries
+	StartCaptureLog(identifier ...string) (err error)
+	StopCaptureLog() (result interface{}, err error)
 }
 
 // WebElement defines method supported by web elements.

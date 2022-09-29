@@ -8,8 +8,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 // SessionRunner is used to run testcase and its steps.
@@ -165,17 +163,17 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	caseSummary.InOut.ConfigVars = r.parsedConfig.Variables
 
 	// add WDA/UIA logs to summary
-	logs := make(map[string]interface{})
-	for udid, client := range r.hrpRunner.uiClients {
-		log, err := client.GetLogs()
+	for uuid, client := range r.hrpRunner.uiClients {
+		log, err := client.Driver.StopCaptureLog()
 		if err != nil {
 			return caseSummary, err
 		}
-		logs[udid] = log
+		logs := map[string]interface{}{
+			"uuid":    uuid,
+			"content": log,
+		}
+		caseSummary.Logs = append(caseSummary.Logs, logs)
 	}
-
-	logsBytes, _ := json.Marshal(logs)
-	caseSummary.Logs = string(logsBytes)
 
 	return caseSummary, nil
 }
