@@ -11,7 +11,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	giDevice "github.com/electricbubble/gidevice"
@@ -45,6 +47,27 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	var deviceOptions []IOSDeviceOption
 	if device.UDID != "" {
 		deviceOptions = append(deviceOptions, WithUDID(device.UDID))
+	}
+
+	wda_port := os.Getenv("WDA_PORT")
+	if wda_port != "" {
+		if port, err := strconv.Atoi(wda_port); err == nil {
+			log.Info().Str("WDA_PORT", wda_port).
+				Msg("override with environment variable")
+			device.Port = port
+		} else {
+			log.Error().Err(err).Msg("invalid WDA_PORT, ignored")
+		}
+	}
+	wda_mjpeg_port := os.Getenv("WDA_MJPEG_PORT")
+	if wda_mjpeg_port != "" {
+		if mjpeg_port, err := strconv.Atoi(wda_mjpeg_port); err == nil {
+			log.Info().Str("WDA_MJPEG_PORT", wda_mjpeg_port).
+				Msg("override with environment variable")
+			device.MjpegPort = mjpeg_port
+		} else {
+			log.Error().Err(err).Msg("invalid WDA_MJPEG_PORT, ignored")
+		}
 	}
 	if device.Port != 0 {
 		deviceOptions = append(deviceOptions, WithPort(device.Port))
