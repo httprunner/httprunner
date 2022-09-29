@@ -37,13 +37,3 @@ func TestDriverExt_TouchAndHold(t *testing.T) {
 	err = driverExt.TouchAndHoldOffset(pathSearch, 0.8, 0.1)
 	checkErr(t, err)
 }
-
-func checkErr(t *testing.T, err error, msg ...string) {
-	if err != nil {
-		if len(msg) == 0 {
-			t.Fatal(err)
-		} else {
-			t.Fatal(msg, err)
-		}
-	}
-}
