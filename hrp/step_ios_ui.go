@@ -243,11 +243,15 @@ func (s *StepIOS) SwipeToTapText(text string, options ...uixt.ActionOption) *Ste
 	return &StepIOS{step: s.step}
 }
 
-func (s *StepIOS) Input(text string) *StepIOS {
-	s.step.IOS.Actions = append(s.step.IOS.Actions, uixt.MobileAction{
+func (s *StepIOS) Input(text string, options ...uixt.ActionOption) *StepIOS {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Input,
 		Params: text,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.IOS.Actions = append(s.step.IOS.Actions, action)
 	return &StepIOS{step: s.step}
 }
 

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/pkg/errors"
@@ -391,21 +392,25 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	case ACTION_Home:
 		return dExt.Driver.Homescreen()
 	case ACTION_TapXY:
-		if location, ok := action.Params.([]float64); ok {
+		if location, ok := action.Params.([]interface{}); ok {
 			// relative x,y of window size: [0.5, 0.5]
 			if len(location) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			return dExt.TapXY(location[0], location[1], action.Identifier)
+			x, _ := location[0].(float64)
+			y, _ := location[1].(float64)
+			return dExt.TapXY(x, y, action.Identifier)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_TapAbsXY:
-		if location, ok := action.Params.([]float64); ok {
+		if location, ok := action.Params.([]interface{}); ok {
 			// absolute coordinates x,y of window size: [100, 300]
 			if len(location) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			return dExt.TapAbsXY(location[0], location[1], action.Identifier)
+			x, _ := location[0].(float64)
+			y, _ := location[1].(float64)
+			return dExt.TapAbsXY(x, y, action.Identifier)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
@@ -424,12 +429,14 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
-		if location, ok := action.Params.([]float64); ok {
+		if location, ok := action.Params.([]interface{}); ok {
 			// relative x,y of window size: [0.5, 0.5]
 			if len(location) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", location)
 			}
-			return dExt.DoubleTapXY(location[0], location[1])
+			x, _ := location[0].(float64)
+			y, _ := location[1].(float64)
+			return dExt.DoubleTapXY(x, y)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTapXY, action.Params)
 	case ACTION_DoubleTap:
@@ -438,13 +445,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
-		if positions, ok := action.Params.([]float64); ok {
+		if positions, ok := action.Params.([]interface{}); ok {
 			// relative fromX, fromY, toX, toY of window size: [0.5, 0.9, 0.5, 0.1]
 			if len(positions) != 4 {
 				return fmt.Errorf("invalid swipe params [fromX, fromY, toX, toY]: %v", positions)
 			}
-			return dExt.SwipeRelative(
-				positions[0], positions[1], positions[2], positions[3], action.Identifier)
+			fromX, _ := positions[0].(float64)
+			fromY, _ := positions[1].(float64)
+			toX, _ := positions[2].(float64)
+			toY, _ := positions[3].(float64)
+			return dExt.SwipeRelative(fromX, fromY, toX, toY, action.Identifier)
 		}
 		if direction, ok := action.Params.(string); ok {
 			return dExt.SwipeTo(direction, action.Identifier)
@@ -455,6 +465,13 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
+		if action.Identifier != "" {
+			option := WithCustomOption("log", map[string]interface{}{
+				"enable": true,
+				"data":   action.Identifier,
+			})
+			return dExt.Driver.SendKeys(param, option)
+		}
 		return dExt.Driver.SendKeys(param)
 	case CtlSleep:
 		if param, ok := action.Params.(json.Number); ok {
@@ -528,4 +545,14 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 		Str("expect", expected).
 		Msg("validate UI success")
 	return true
+}
+
+func checkErr(t *testing.T, err error, msg ...string) {
+	if err != nil {
+		if len(msg) == 0 {
+			t.Fatal(err)
+		} else {
+			t.Fatal(msg, err)
+		}
+	}
 }
