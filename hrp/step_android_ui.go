@@ -112,6 +112,32 @@ func (s *StepAndroid) StopRecording() *StepAndroid {
 	return &StepAndroid{step: s.step}
 }
 
+// TapXY taps the point {X,Y}, X & Y is percentage of coordinates
+func (s *StepAndroid) TapXY(x, y float64, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapXY,
+		Params: []float64{x, y},
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
+// TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
+func (s *StepAndroid) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapAbsXY,
+		Params: []float64{x, y},
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
 func (s *StepAndroid) Tap(params interface{}) *StepAndroid {
 	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
 		Method: uixt.ACTION_Tap,
