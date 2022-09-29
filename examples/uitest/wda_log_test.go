@@ -1,4 +1,4 @@
-//go:build localtest
+//go:build !localtest
 
 package uitest
 
@@ -16,6 +16,11 @@ func TestWDALog(t *testing.T) {
 			}).
 			SetIOS(hrp.WithLogOn(true), hrp.WithPort(8700), hrp.WithMjpegPort(8800)),
 		TestSteps: []hrp.IStep{
+			hrp.NewStep("查看时间戳").
+				IOS().
+				Home().
+				AppTerminate("com.apple.mobilesafari").
+				SwipeToTapApp("timestamp", hrp.WithMaxRetryTimes(5)).Sleep(3),
 			hrp.NewStep("启动抖音").
 				IOS().
 				Home().
