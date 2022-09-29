@@ -22,6 +22,7 @@ type uiaDriver struct {
 	Driver
 
 	adbDevice gadb.Device
+	logcat    *DeviceLogcat
 	localPort int
 }
 
