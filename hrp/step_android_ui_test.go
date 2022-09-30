@@ -3,7 +3,6 @@
 package hrp
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -20,11 +19,8 @@ func TestAndroidAction(t *testing.T) {
 				Android().Serial("xxx").SwipeUp().SwipeUp().SwipeDown(),
 		},
 	}
-	tCase := testCase.ToTCase()
-	fmt.Println(tCase)
-
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
