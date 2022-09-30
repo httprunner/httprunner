@@ -527,6 +527,10 @@ func (wd *wdaDriver) SendKeys(text string, options ...DataOption) (err error) {
 	return
 }
 
+func (wd *wdaDriver) Input(text string, options ...DataOption) (err error) {
+	return wd.SendKeys(text, options...)
+}
+
 func (wd *wdaDriver) KeyboardDismiss(keyNames ...string) (err error) {
 	// [[FBRoute POST:@"/wda/keyboard/dismiss"] respondWithTarget:self action:@selector(handleDismissKeyboardCommand:)]
 	if len(keyNames) == 0 {
@@ -573,16 +577,6 @@ func (wd *wdaDriver) StopCamera() (err error) {
 		log.Warn().Msg("camera was not running")
 	}
 	return nil
-}
-
-func (wd *wdaDriver) StartRecording() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (wd *wdaDriver) StopRecording() (err error) {
-	// TODO
-	return errDriverNotImplemented
 }
 
 func (wd *wdaDriver) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {

@@ -69,6 +69,11 @@ func ensurePython3Venv(venv string, packages ...string) (python3 string, err err
 	return python3, nil
 }
 
+func Command(name string, arg ...string) *exec.Cmd {
+	args := strings.Join(arg, " ")
+	return exec.Command("bash", "-c", name, args)
+}
+
 func ExecCommand(cmdName string, args ...string) error {
 	cmd := exec.Command(cmdName, args...)
 	log.Info().Str("cmd", cmd.String()).Msg("exec command")
