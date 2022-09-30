@@ -225,11 +225,12 @@ func (dev *IOSDevice) opitons() (deviceOptions []IOSDeviceOption) {
 // iproxy -u UDID WDA_LOCAL_PORT WDA_PORT
 // iproxy -u UDID WDA_LOCAL_MJPEG_PORT WDA_MJPEG_PORT
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
-	log.Info().Interface("capabilities", capabilities).Msg("init WDA HTTP driver")
+	host := "127.0.0.1"
+	log.Info().Interface("capabilities", capabilities).
+		Str("host", host).Msg("init WDA HTTP driver")
 	wd := new(wdaDriver)
 	wd.client = http.DefaultClient
 
-	host := "127.0.0.1"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, dev.LocalPort)); err != nil {
 		return nil, err
 	}
@@ -252,9 +253,10 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
 func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
-	log.Info().Interface("capabilities", capabilities).Msg("init WDA USB driver")
-	wd := new(wdaDriver)
+	log.Info().Interface("capabilities", capabilities).
+		Str("udid", dev.UDID).Msg("init WDA USB driver")
 
+	wd := new(wdaDriver)
 	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("connect port %d failed: %w",
 			dev.Port, err)
