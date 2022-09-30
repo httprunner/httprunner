@@ -100,6 +100,11 @@ func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 	return python3, nil
 }
 
+func Command(name string, arg ...string) *exec.Cmd {
+	args := strings.Join(arg, " ")
+	return exec.Command("cmd", "/c", name, args)
+}
+
 func ExecCommand(cmdName string, args ...string) error {
 	// "cmd /c" carries out the command specified by string and then stops
 	// refer: https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cmd
