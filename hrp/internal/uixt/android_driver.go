@@ -676,6 +676,14 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 	return
 }
 
+func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
+	element, err := ud.FindElement(BySelector{ClassName: ElementType{EditText: true}})
+	if err != nil {
+		return err
+	}
+	return element.SendKeys(text)
+}
+
 func (ud *uiaDriver) KeyboardDismiss(keyNames ...string) (err error) {
 	// TODO
 	return errDriverNotImplemented
