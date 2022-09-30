@@ -579,16 +579,6 @@ func (wd *wdaDriver) StopCamera() (err error) {
 	return nil
 }
 
-func (wd *wdaDriver) StartRecording() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (wd *wdaDriver) StopRecording() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (wd *wdaDriver) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {
 	// [[FBRoute POST:@"/wda/expectNotification"] respondWithTarget:self action:@selector(handleExpectNotification:)]
 	if len(second) == 0 {
