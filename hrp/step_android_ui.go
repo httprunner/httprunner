@@ -138,11 +138,16 @@ func (s *StepAndroid) TapAbsXY(x, y float64, options ...uixt.ActionOption) *Step
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) Tap(params interface{}) *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+// Tap taps on the target element
+func (s *StepAndroid) Tap(params string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Tap,
 		Params: params,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
 	return &StepAndroid{step: s.step}
 }
 
@@ -244,11 +249,36 @@ func (s *StepAndroid) SwipeRight(options ...uixt.ActionOption) *StepAndroid {
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) Input(text string) *StepAndroid {
-	s.step.Android.Actions = append(s.step.Android.Actions, uixt.MobileAction{
+func (s *StepAndroid) Input(text string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
 		Method: uixt.ACTION_Input,
 		Params: text,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
+// Times specify running times for run last action
+func (s *StepAndroid) Times(n int) *StepAndroid {
+	if n <= 0 {
+		log.Warn().Int("n", n).Msg("times should be positive, set to 1")
+		n = 1
+	}
+
+	actionsTotal := len(s.step.Android.Actions)
+	if actionsTotal == 0 {
+		return s
+	}
+
+	// actionsTotal >=1 && n >= 1
+	lastAction := s.step.Android.Actions[actionsTotal-1 : actionsTotal][0]
+	for i := 0; i < n-1; i++ {
+		// duplicate last action n-1 times
+		s.step.Android.Actions = append(s.step.Android.Actions, lastAction)
+	}
 	return &StepAndroid{step: s.step}
 }
 
