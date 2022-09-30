@@ -238,10 +238,37 @@ func (ud *uiaDriver) PressBack() (err error) {
 }
 
 func (ud *uiaDriver) StartCamera() (err error) {
-	if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
+	if _, err = ud.adbDevice.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
 		return err
 	}
-	return
+	time.Sleep(5 * time.Second)
+	var version string
+	if version, err = ud.adbDevice.RunShellCommand("getprop", "ro.build.version.release"); err != nil {
+		return err
+	}
+	if version == "11" || version == "12" {
+		if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
+			return err
+		}
+		time.Sleep(5 * time.Second)
+		if _, err = ud.adbDevice.RunShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
+			return err
+		}
+		time.Sleep(5 * time.Second)
+		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
+			return err
+		}
+		return
+	} else {
+		if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
+			return err
+		}
+		time.Sleep(5 * time.Second)
+		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
+			return err
+		}
+		return
+	}
 }
 
 func (ud *uiaDriver) StopCamera() (err error) {
@@ -263,24 +290,6 @@ func (ud *uiaDriver) StopCamera() (err error) {
 	if _, err = ud.adbDevice.RunShellCommand("am", "force-stop", "com.android.camera2"); err != nil {
 		return err
 	}
-	return
-}
-
-func (ud *uiaDriver) StartRecording() (err error) {
-	var res string
-	if res, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
-		return err
-	}
-	log.Info().Str("shell", res)
-	return
-}
-
-func (ud *uiaDriver) StopRecording() (err error) {
-	var res string
-	if res, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
-		return err
-	}
-	log.Info().Str("shell", res)
 	return
 }
 

@@ -500,10 +500,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return dExt.Driver.StartCamera()
 	case CtlStopCamera:
 		return dExt.Driver.StopCamera()
-	case RecordStart:
-		return dExt.Driver.StartRecording()
-	case RecordStop:
-		return dExt.Driver.StopRecording()
 	}
 	return nil
 }
