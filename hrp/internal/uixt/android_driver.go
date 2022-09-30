@@ -947,11 +947,18 @@ func (ud *uiaDriver) Wait(condition Condition) error {
 }
 
 func (ud *uiaDriver) StartCaptureLog(identifier ...string) (err error) {
-	// TODO
+	log.Info().Msg("start adb log recording")
+	err = ud.logcat.CatchLogcat()
 	return
 }
 
 func (ud *uiaDriver) StopCaptureLog() (result interface{}, err error) {
-	// TODO
-	return
+	log.Info().Msg("stop adb log recording")
+	err = ud.logcat.Stop()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get adb log recording")
+		return "", err
+	}
+	content := ud.logcat.logBuffer.String()
+	return ConvertPoints(content), nil
 }
