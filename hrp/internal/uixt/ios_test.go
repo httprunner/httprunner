@@ -1,4 +1,5 @@
 //go:build localtest
+
 package uixt
 
 import (
@@ -42,12 +43,12 @@ func TestNewIOSDevice(t *testing.T) {
 		t.Log(device)
 	}
 
-	device, _ = NewIOSDevice(WithPort(8700), WithMjpegPort(8800))
+	device, _ = NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewIOSDevice(WithUDID("xxxx"), WithPort(8700), WithMjpegPort(8800))
+	device, _ = NewIOSDevice(WithUDID("xxxx"), WithWDAPort(8700), WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}

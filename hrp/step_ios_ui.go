@@ -11,10 +11,12 @@ import (
 )
 
 var (
-	WithUDID      = uixt.WithUDID
-	WithPort      = uixt.WithPort
-	WithMjpegPort = uixt.WithMjpegPort
-	WithLogOn     = uixt.WithLogOn
+	WithUDID              = uixt.WithUDID
+	WithWDAPort           = uixt.WithWDAPort
+	WithWDAMjpegPort      = uixt.WithWDAMjpegPort
+	WithWDALocalPort      = uixt.WithWDALocalPort
+	WithWDALocalMjpegPort = uixt.WithWDALocalMjpegPort
+	WithLogOn             = uixt.WithLogOn
 )
 
 type IOSStep struct {

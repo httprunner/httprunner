@@ -43,39 +43,32 @@ const (
 )
 
 func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
-	var deviceOptions []IOSDeviceOption
-	if device.UDID != "" {
-		deviceOptions = append(deviceOptions, WithUDID(device.UDID))
-	}
-	if device.Port != 0 {
-		deviceOptions = append(deviceOptions, WithPort(device.Port))
-	}
-	if device.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithMjpegPort(device.MjpegPort))
-	}
-
 	// init wda device
-	iosDevice, err := NewIOSDevice(deviceOptions...)
+	iosDevice, err := NewIOSDevice(device.opitons()...)
 	if err != nil {
 		return nil, err
-	}
-
-	// switch to iOS springboard before init WDA session
-	// aviod getting stuck when some super app is activate such as douyin or wexin
-	log.Info().Msg("switch to iOS springboard")
-	bundleID := "com.apple.springboard"
-	_, err = iosDevice.d.AppLaunch(bundleID)
-	if err != nil {
-		return nil, errors.Wrap(err, "launch springboard failed")
 	}
 
 	// init WDA driver
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
-	driver, err := iosDevice.NewUSBDriver(capabilities)
+	var driver WebDriver
+	if iosDevice.LocalPort != 0 && iosDevice.LocalMjpegPort != 0 {
+		driver, err = iosDevice.NewHTTPDriver(capabilities)
+	} else {
+		driver, err = iosDevice.NewUSBDriver(capabilities)
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
+
+	// switch to iOS springboard before init WDA session
+	// aviod getting stuck when some super app is activate such as douyin or wexin
+	log.Info().Msg("go back to home screen")
+	if err = driver.Homescreen(); err != nil {
+		return nil, errors.Wrap(err, "failed to go back to home screen")
+	}
+
 	driverExt, err := Extend(driver)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to extend WebDriver")
@@ -108,15 +101,27 @@ func WithUDID(udid string) IOSDeviceOption {
 	}
 }
 
-func WithPort(port int) IOSDeviceOption {
+func WithWDAPort(port int) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.Port = port
 	}
 }
 
-func WithMjpegPort(port int) IOSDeviceOption {
+func WithWDAMjpegPort(port int) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.MjpegPort = port
+	}
+}
+
+func WithWDALocalPort(port int) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.LocalPort = port
+	}
+}
+
+func WithWDALocalMjpegPort(port int) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.LocalMjpegPort = port
 	}
 }
 
@@ -161,43 +166,71 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
-	d         giDevice.Device
-	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`
-	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	d              giDevice.Device
+	UDID           string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port           int    `json:"port,omitempty" yaml:"port,omitempty"`                         // WDA remote port
+	MjpegPort      int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`             // WDA remote MJPEG port
+	LocalPort      int    `json:"local_port,omitempty" yaml:"local_port,omitempty"`             // WDA local port
+	LocalMjpegPort int    `json:"local_mjpeg_port,omitempty" yaml:"local_mjpeg_port,omitempty"` // WDA local MJPEG port
+	LogOn          bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
 func (dev *IOSDevice) UUID() string {
 	return dev.UDID
 }
 
+func (dev *IOSDevice) opitons() (deviceOptions []IOSDeviceOption) {
+	if dev.UDID != "" {
+		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
+	}
+	if dev.MjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+
+	if wda_port := os.Getenv("WDA_LOCAL_PORT"); wda_port != "" {
+		if port, err := strconv.Atoi(wda_port); err == nil {
+			log.Info().Int("WDA_LOCAL_PORT", port).
+				Msg("override with environment variable")
+			dev.LocalPort = port
+		} else {
+			log.Error().Err(err).Str("WDA_LOCAL_PORT", wda_port).
+				Msg("invalid WDA_LOCAL_PORT, ignored")
+		}
+	}
+	if wda_mjpeg_port := os.Getenv("WDA_LOCAL_MJPEG_PORT"); wda_mjpeg_port != "" {
+		if mjpeg_port, err := strconv.Atoi(wda_mjpeg_port); err == nil {
+			log.Info().Int("WDA_LOCAL_MJPEG_PORT", mjpeg_port).
+				Msg("override with environment variable")
+			dev.LocalMjpegPort = mjpeg_port
+		} else {
+			log.Error().Err(err).Str("WDA_LOCAL_MJPEG_PORT", wda_mjpeg_port).
+				Msg("invalid WDA_LOCAL_MJPEG_PORT, ignored")
+		}
+	}
+	if dev.LocalPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDALocalPort(dev.LocalPort))
+	}
+	if dev.LocalMjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDALocalMjpegPort(dev.LocalMjpegPort))
+	}
+
+	return
+}
+
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
+// WDA port and mjpeg port must be proxied to local ports:
+// iproxy -u UDID WDA_LOCAL_PORT WDA_PORT
+// iproxy -u UDID WDA_LOCAL_MJPEG_PORT WDA_MJPEG_PORT
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
+	log.Info().Interface("capabilities", capabilities).Msg("init WDA HTTP driver")
 	wd := new(wdaDriver)
 	wd.client = http.DefaultClient
 
-	port := dev.Port
-	mjpeg_port := dev.MjpegPort
-	if wda_port := os.Getenv("WDA_PROXY_PORT"); wda_port != "" {
-		if port, err = strconv.Atoi(wda_port); err == nil {
-			log.Info().Str("WDA_PROXY_PORT", wda_port).
-				Msg("override with environment variable")
-		} else {
-			log.Error().Err(err).Msg("invalid WDA_PROXY_PORT, ignored")
-		}
-	}
-	if wda_mjpeg_port := os.Getenv("WDA_PROXY_MJPEG_PORT"); wda_mjpeg_port != "" {
-		if mjpeg_port, err = strconv.Atoi(wda_mjpeg_port); err == nil {
-			log.Info().Str("WDA_PROXY_MJPEG_PORT", wda_mjpeg_port).
-				Msg("override with environment variable")
-		} else {
-			log.Error().Err(err).Msg("invalid WDA_PROXY_MJPEG_PORT, ignored")
-		}
-	}
-
 	host := "127.0.0.1"
-	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, port)); err != nil {
+	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, dev.LocalPort)); err != nil {
 		return nil, err
 	}
 	var sessionInfo SessionInfo
@@ -208,7 +241,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
-		fmt.Sprintf("%s:%d", host, mjpeg_port),
+		fmt.Sprintf("%s:%d", host, dev.LocalMjpegPort),
 	); err != nil {
 		return nil, err
 	}
@@ -219,6 +252,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
 func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
+	log.Info().Interface("capabilities", capabilities).Msg("init WDA USB driver")
 	wd := new(wdaDriver)
 
 	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
