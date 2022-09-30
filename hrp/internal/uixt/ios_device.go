@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
+	"io"
 	"mime"
 	"mime/multipart"
 	"net"
@@ -12,8 +13,8 @@ import (
 	"net/url"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
+	"time"
 
 	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
@@ -53,7 +54,9 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
 	var driver WebDriver
-	if iosDevice.LocalPort != 0 && iosDevice.LocalMjpegPort != 0 {
+
+	if os.Getenv("WDA_USB_DRIVER") == "" {
+		// default use http driver
 		driver, err = iosDevice.NewHTTPDriver(capabilities)
 	} else {
 		driver, err = iosDevice.NewUSBDriver(capabilities)
@@ -113,18 +116,6 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 	}
 }
 
-func WithWDALocalPort(port int) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.LocalPort = port
-	}
-}
-
-func WithWDALocalMjpegPort(port int) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.LocalMjpegPort = port
-	}
-}
-
 func WithLogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.LogOn = logOn
@@ -166,17 +157,60 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
-	d              giDevice.Device
-	UDID           string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port           int    `json:"port,omitempty" yaml:"port,omitempty"`                         // WDA remote port
-	MjpegPort      int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`             // WDA remote MJPEG port
-	LocalPort      int    `json:"local_port,omitempty" yaml:"local_port,omitempty"`             // WDA local port
-	LocalMjpegPort int    `json:"local_mjpeg_port,omitempty" yaml:"local_mjpeg_port,omitempty"` // WDA local MJPEG port
-	LogOn          bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	d         giDevice.Device
+	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
+	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
+	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
 func (dev *IOSDevice) UUID() string {
 	return dev.UDID
+}
+
+func (dev *IOSDevice) forward(localPort, remotePort int) error {
+	log.Info().Int("localPort", localPort).Int("remotePort", remotePort).
+		Str("udid", dev.UDID).Msg("forward tcp port")
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", localPort))
+	if err != nil {
+		log.Error().Err(err).Msg("listen tcp error")
+		return err
+	}
+
+	go func(listener net.Listener, device giDevice.Device) {
+		for {
+			accept, err := listener.Accept()
+			if err != nil {
+				log.Error().Err(err).Msg("accept error")
+				continue
+			}
+
+			rInnerConn, err := device.NewConnect(remotePort)
+			if err != nil {
+				log.Error().Err(err).Msg("connect to device failed")
+				os.Exit(1)
+			}
+
+			rConn := rInnerConn.RawConn()
+			_ = rConn.SetDeadline(time.Time{})
+
+			go func(lConn net.Conn) {
+				go func(lConn, rConn net.Conn) {
+					if _, err := io.Copy(lConn, rConn); err != nil {
+						log.Error().Err(err).Msg("copy local -> remote")
+					}
+				}(lConn, rConn)
+				go func(lConn, rConn net.Conn) {
+					if _, err := io.Copy(rConn, lConn); err != nil {
+						log.Error().Err(err).Msg("copy local <- remote")
+					}
+				}(lConn, rConn)
+			}(accept)
+		}
+	}(listener, dev.d)
+
+	return nil
 }
 
 func (dev *IOSDevice) opitons() (deviceOptions []IOSDeviceOption) {
@@ -189,49 +223,35 @@ func (dev *IOSDevice) opitons() (deviceOptions []IOSDeviceOption) {
 	if dev.MjpegPort != 0 {
 		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
 	}
-
-	if wda_port := os.Getenv("WDA_LOCAL_PORT"); wda_port != "" {
-		if port, err := strconv.Atoi(wda_port); err == nil {
-			log.Info().Int("WDA_LOCAL_PORT", port).
-				Msg("override with environment variable")
-			dev.LocalPort = port
-		} else {
-			log.Error().Err(err).Str("WDA_LOCAL_PORT", wda_port).
-				Msg("invalid WDA_LOCAL_PORT, ignored")
-		}
-	}
-	if wda_mjpeg_port := os.Getenv("WDA_LOCAL_MJPEG_PORT"); wda_mjpeg_port != "" {
-		if mjpeg_port, err := strconv.Atoi(wda_mjpeg_port); err == nil {
-			log.Info().Int("WDA_LOCAL_MJPEG_PORT", mjpeg_port).
-				Msg("override with environment variable")
-			dev.LocalMjpegPort = mjpeg_port
-		} else {
-			log.Error().Err(err).Str("WDA_LOCAL_MJPEG_PORT", wda_mjpeg_port).
-				Msg("invalid WDA_LOCAL_MJPEG_PORT, ignored")
-		}
-	}
-	if dev.LocalPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDALocalPort(dev.LocalPort))
-	}
-	if dev.LocalMjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDALocalMjpegPort(dev.LocalMjpegPort))
-	}
-
 	return
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-// WDA port and mjpeg port must be proxied to local ports:
-// iproxy -u UDID WDA_LOCAL_PORT WDA_PORT
-// iproxy -u UDID WDA_LOCAL_MJPEG_PORT WDA_MJPEG_PORT
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
-	host := "127.0.0.1"
+	localPort, err := getFreePort()
+	if err != nil {
+		return nil, errors.Wrap(err, "get free port failed")
+	}
+	if err = dev.forward(localPort, dev.Port); err != nil {
+		return nil, errors.Wrap(err, "forward tcp port failed")
+	}
+	localMjpegPort, err := getFreePort()
+	if err != nil {
+		return nil, errors.Wrap(err, "get free port failed")
+	}
+	if err = dev.forward(localMjpegPort, dev.MjpegPort); err != nil {
+		return nil, errors.Wrap(err, "forward tcp port failed")
+	}
+
 	log.Info().Interface("capabilities", capabilities).
-		Str("host", host).Msg("init WDA HTTP driver")
+		Int("localPort", localPort).Int("localMjpegPort", localMjpegPort).
+		Msg("init WDA HTTP driver")
+
 	wd := new(wdaDriver)
 	wd.client = http.DefaultClient
 
-	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, dev.LocalPort)); err != nil {
+	host := "127.0.0.1"
+	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, err
 	}
 	var sessionInfo SessionInfo
@@ -242,7 +262,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
-		fmt.Sprintf("%s:%d", host, dev.LocalMjpegPort),
+		fmt.Sprintf("%s:%d", host, localMjpegPort),
 	); err != nil {
 		return nil, err
 	}

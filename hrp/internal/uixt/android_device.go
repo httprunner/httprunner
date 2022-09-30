@@ -13,9 +13,10 @@ import (
 	"syscall"
 
 	"github.com/electricbubble/gadb"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -194,12 +195,12 @@ func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver *uiaD
 func getFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {
-		return 0, fmt.Errorf("free port: %w", err)
+		return 0, errors.Wrap(err, "resolve tcp addr failed")
 	}
 
 	l, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		return 0, fmt.Errorf("free port: %w", err)
+		return 0, errors.Wrap(err, "listen tcp addr failed")
 	}
 	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port, nil
