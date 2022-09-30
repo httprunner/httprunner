@@ -68,7 +68,10 @@ func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
 	}
 
 	if device.LogOn {
-		err = driverExt.StartLogRecording("hrp_adb_log")
+		err = driverExt.Driver.StartCaptureLog("hrp_adb_log")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return driverExt, err
