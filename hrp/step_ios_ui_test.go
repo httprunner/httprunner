@@ -1,8 +1,8 @@
 //go:build localtest
+
 package hrp
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -20,8 +20,6 @@ func TestIOSSettingsAction(t *testing.T) {
 				IOS().SwipeUp().SwipeUp().SwipeDown(),
 		},
 	}
-	fmt.Println(testCase)
-
 	err := NewRunner(t).Run(testCase)
 	if err != nil {
 		t.Fatal(err)
@@ -40,18 +38,16 @@ func TestIOSSearchApp(t *testing.T) {
 				IOS().Input("抖音\n"),
 		},
 	}
-	fmt.Println(testCase)
-
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIOSAppLaunch(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("启动 & 关闭 App").
-			SetIOS(WithPort(8100), WithMjpegPort(9100)),
+			SetIOS(WithWDAPort(8100), WithWDAMjpegPort(9100)),
 		TestSteps: []IStep{
 			NewStep("终止今日头条").
 				IOS().AppTerminate("com.ss.iphone.article.News"),
@@ -63,18 +59,16 @@ func TestIOSAppLaunch(t *testing.T) {
 				IOS().AppLaunchUnattached("com.ss.iphone.article.News"),
 		},
 	}
-	fmt.Println(testCase)
-
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIOSWeixinLive(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on 微信直播").
-			SetIOS(WithLogOn(true), WithPort(8100), WithMjpegPort(9100)),
+			SetIOS(WithLogOn(true), WithWDAPort(8100), WithWDAMjpegPort(9100)),
 		TestSteps: []IStep{
 			NewStep("启动微信").
 				IOS().
@@ -86,7 +80,7 @@ func TestIOSWeixinLive(t *testing.T) {
 			NewStep("进入直播页").
 				IOS().
 				Tap("发现").Sleep(5). // 进入「发现页」；等待 5 秒确保加载完成
-				TapByOCR("直播"). // 通过 OCR 识别「直播」
+				TapByOCR("直播").     // 通过 OCR 识别「直播」
 				Validate().
 				AssertLabelExists("直播"),
 			NewStep("向上滑动 5 次").
@@ -95,8 +89,6 @@ func TestIOSWeixinLive(t *testing.T) {
 				SwipeUp().Times(2).ScreenShot(), // 再上划 2 次，截图保存
 		},
 	}
-	fmt.Println(testCase)
-
 	err := NewRunner(t).Run(testCase)
 	if err != nil {
 		t.Fatal(err)
@@ -117,12 +109,10 @@ func TestIOSCameraPhotoCapture(t *testing.T) {
 				IOS().Tap("PhotoCapture"),
 		},
 	}
-	fmt.Println(testCase)
-
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIOSCameraVideoCapture(t *testing.T) {
@@ -147,12 +137,10 @@ func TestIOSCameraVideoCapture(t *testing.T) {
 				Tap("VideoCapture"), // 停止录像
 		},
 	}
-	fmt.Println(testCase)
-
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIOSDouyinAction(t *testing.T) {
@@ -168,10 +156,8 @@ func TestIOSDouyinAction(t *testing.T) {
 				IOS().SwipeUp().Times(3).SwipeDown(),
 		},
 	}
-	fmt.Println(testCase)
-
-	// err := NewRunner(t).Run(testCase)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
