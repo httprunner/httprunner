@@ -14,7 +14,7 @@ func TestIOSDouyinLive(t *testing.T) {
 			WithVariables(map[string]interface{}{
 				"app_name": "抖音",
 			}).
-			SetIOS(hrp.WithLogOn(true), hrp.WithPort(8700), hrp.WithMjpegPort(8800)),
+			SetIOS(hrp.WithLogOn(true), hrp.WithWDAPort(8700), hrp.WithWDAMjpegPort(8800)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				IOS().
