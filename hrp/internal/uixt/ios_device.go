@@ -47,27 +47,6 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	if device.UDID != "" {
 		deviceOptions = append(deviceOptions, WithUDID(device.UDID))
 	}
-
-	wda_port := os.Getenv("WDA_PORT")
-	if wda_port != "" {
-		if port, err := strconv.Atoi(wda_port); err == nil {
-			log.Info().Str("WDA_PORT", wda_port).
-				Msg("override with environment variable")
-			device.Port = port
-		} else {
-			log.Error().Err(err).Msg("invalid WDA_PORT, ignored")
-		}
-	}
-	wda_mjpeg_port := os.Getenv("WDA_MJPEG_PORT")
-	if wda_mjpeg_port != "" {
-		if mjpeg_port, err := strconv.Atoi(wda_mjpeg_port); err == nil {
-			log.Info().Str("WDA_MJPEG_PORT", wda_mjpeg_port).
-				Msg("override with environment variable")
-			device.MjpegPort = mjpeg_port
-		} else {
-			log.Error().Err(err).Msg("invalid WDA_MJPEG_PORT, ignored")
-		}
-	}
 	if device.Port != 0 {
 		deviceOptions = append(deviceOptions, WithPort(device.Port))
 	}
@@ -198,8 +177,27 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	wd := new(wdaDriver)
 	wd.client = http.DefaultClient
 
-	urlPrefix := fmt.Sprintf("http://127.0.0.1:%d", dev.Port)
-	if wd.urlPrefix, err = url.Parse(urlPrefix); err != nil {
+	port := dev.Port
+	mjpeg_port := dev.MjpegPort
+	if wda_port := os.Getenv("WDA_PROXY_PORT"); wda_port != "" {
+		if port, err = strconv.Atoi(wda_port); err == nil {
+			log.Info().Str("WDA_PROXY_PORT", wda_port).
+				Msg("override with environment variable")
+		} else {
+			log.Error().Err(err).Msg("invalid WDA_PROXY_PORT, ignored")
+		}
+	}
+	if wda_mjpeg_port := os.Getenv("WDA_PROXY_MJPEG_PORT"); wda_mjpeg_port != "" {
+		if mjpeg_port, err = strconv.Atoi(wda_mjpeg_port); err == nil {
+			log.Info().Str("WDA_PROXY_MJPEG_PORT", wda_mjpeg_port).
+				Msg("override with environment variable")
+		} else {
+			log.Error().Err(err).Msg("invalid WDA_PROXY_MJPEG_PORT, ignored")
+		}
+	}
+
+	host := "127.0.0.1"
+	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, port)); err != nil {
 		return nil, err
 	}
 	var sessionInfo SessionInfo
@@ -210,8 +208,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
-		fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(),
-			dev.MjpegPort),
+		fmt.Sprintf("%s:%d", host, mjpeg_port),
 	); err != nil {
 		return nil, err
 	}
