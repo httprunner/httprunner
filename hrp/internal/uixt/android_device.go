@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/electricbubble/gadb"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -260,8 +261,8 @@ func (l *DeviceLogcat) CatchLogcat() (err error) {
 	if l.cmd != nil {
 		err = fmt.Errorf("logcat already start")
 	}
-	command := fmt.Sprintf("adb -s %s logcat -c && adb -s %s logcat -v time -s iesqaMonitor:V", l.serial, l.serial)
-	l.cmd = exec.Command("bash", "-c", command)
+	cmdLine := fmt.Sprintf("adb -s %s logcat -c && adb -s %s logcat -v time -s iesqaMonitor:V", l.serial, l.serial)
+	l.cmd = builtin.Command(cmdLine)
 	l.cmd.Stderr = l.logBuffer
 	l.cmd.Stdout = l.logBuffer
 	l.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -280,8 +281,8 @@ func (l *DeviceLogcat) CatchLogcat() (err error) {
 
 func (l *DeviceLogcat) BufferedLogcat() (err error) {
 	// -d: dump the current buffered logcat result and exits
-	command := fmt.Sprintf("adb -s %s logcat -d", l.serial)
-	cmd := exec.Command("bash", "-c", command)
+	cmdLine := fmt.Sprintf("adb -s %s logcat -d", l.serial)
+	cmd := builtin.Command(cmdLine)
 	cmd.Stdout = l.logBuffer
 	cmd.Stderr = l.logBuffer
 	if err = cmd.Run(); err != nil {
