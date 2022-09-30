@@ -469,9 +469,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				"enable": true,
 				"data":   action.Identifier,
 			})
-			return dExt.Driver.SendKeys(param, option)
+			return dExt.Driver.Input(param, option)
 		}
-		return dExt.Driver.SendKeys(param)
+		return dExt.Driver.Input(param)
 	case CtlSleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()
@@ -500,10 +500,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return dExt.Driver.StartCamera()
 	case CtlStopCamera:
 		return dExt.Driver.StopCamera()
-	case RecordStart:
-		return dExt.Driver.StartRecording()
-	case RecordStop:
-		return dExt.Driver.StopRecording()
 	}
 	return nil
 }

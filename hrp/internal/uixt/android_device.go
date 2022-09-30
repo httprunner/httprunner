@@ -2,12 +2,20 @@ package uixt
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
+	"os/exec"
 	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
+	"syscall"
 
 	"github.com/electricbubble/gadb"
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -18,6 +26,15 @@ var (
 )
 
 const forwardToPrefix = "forward-to-"
+
+const (
+	regexFloat = `[0-9\.]*`
+)
+
+var (
+	regexCompileSwipe = regexp.MustCompile(fmt.Sprintf(`timesec=(%s)\s*startX=(%s)\s*startY=(%s)\s*endX=(%s)\s*endY=(%s)`, regexFloat, regexFloat, regexFloat, regexFloat, regexFloat)) // parse ${var} or $var
+	regexCompileTap   = regexp.MustCompile(fmt.Sprintf(`timesec=(%s)\s*x=(%s)\s*y=(%s)`, regexFloat, regexFloat, regexFloat))                                                           // parse ${func1($a, $b)} 	// parse number
+)
 
 func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
 	var deviceOptions []AndroidDeviceOption
@@ -51,10 +68,13 @@ func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
 	}
 
 	if device.LogOn {
-		// TODO
+		err = driverExt.Driver.StartCaptureLog("hrp_adb_log")
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return driverExt, nil
+	return driverExt, err
 }
 
 type AndroidDeviceOption func(*AndroidDevice)
@@ -106,6 +126,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 
 		device.SerialNumber = dev.Serial()
 		device.d = dev
+		device.logcat = NewAdbLogcat(serialNumber)
 		return device, nil
 	}
 
@@ -114,6 +135,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 
 type AndroidDevice struct {
 	d            gadb.Device
+	logcat       *DeviceLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	IP           string `json:"ip,omitempty" yaml:"ip,omitempty"`
 	Port         int    `json:"port,omitempty" yaml:"port,omitempty"`
@@ -152,6 +174,7 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver *uiaDr
 		return nil, err
 	}
 	driver.adbDevice = dev.d
+	driver.logcat = dev.logcat
 	driver.localPort = localPort
 
 	return driver, nil
@@ -180,6 +203,151 @@ func getFreePort() (int, error) {
 	}
 	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+type DeviceLogcat struct {
+	serial    string
+	logBuffer *bytes.Buffer
+	errs      []error
+	stopping  chan struct{}
+	done      chan struct{}
+	cmd       *exec.Cmd
+}
+
+func NewAdbLogcat(serial string) *DeviceLogcat {
+	return &DeviceLogcat{
+		serial:    serial,
+		logBuffer: new(bytes.Buffer),
+		stopping:  make(chan struct{}),
+		done:      make(chan struct{}),
+	}
+}
+
+// CatchLogcatContext starts logcat with timeout context
+func (l *DeviceLogcat) CatchLogcatContext(timeoutCtx context.Context) (err error) {
+	if err = l.CatchLogcat(); err != nil {
+		return
+	}
+	go func() {
+		select {
+		case <-timeoutCtx.Done():
+			_ = l.Stop()
+		case <-l.stopping:
+		}
+	}()
+	return
+}
+
+func (l *DeviceLogcat) Stop() error {
+	select {
+	case <-l.stopping:
+	default:
+		close(l.stopping)
+		<-l.done
+		close(l.done)
+	}
+	return l.Errors()
+}
+
+func (l *DeviceLogcat) Errors() (err error) {
+	for _, e := range l.errs {
+		if err != nil {
+			err = fmt.Errorf("%v |[DeviceLogcatErr] %v", err, e)
+		} else {
+			err = fmt.Errorf("[DeviceLogcatErr] %v", e)
+		}
+	}
+	return
+}
+
+func (l *DeviceLogcat) CatchLogcat() (err error) {
+	if l.cmd != nil {
+		err = fmt.Errorf("logcat already start")
+	}
+	cmdLine := fmt.Sprintf("adb -s %s logcat -c && adb -s %s logcat -v time -s iesqaMonitor:V", l.serial, l.serial)
+	l.cmd = builtin.Command(cmdLine)
+	l.cmd.Stderr = l.logBuffer
+	l.cmd.Stdout = l.logBuffer
+	l.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err = l.cmd.Start(); err != nil {
+		return
+	}
+	go func() {
+		<-l.stopping
+		if e := syscall.Kill(-l.cmd.Process.Pid, syscall.SIGKILL); e != nil {
+			l.errs = append(l.errs, fmt.Errorf("kill logcat process err:%v", e))
+		}
+		l.done <- struct{}{}
+	}()
+	return
+}
+
+func (l *DeviceLogcat) BufferedLogcat() (err error) {
+	// -d: dump the current buffered logcat result and exits
+	cmdLine := fmt.Sprintf("adb -s %s logcat -d", l.serial)
+	cmd := builtin.Command(cmdLine)
+	cmd.Stdout = l.logBuffer
+	cmd.Stderr = l.logBuffer
+	if err = cmd.Run(); err != nil {
+		return
+	}
+	return
+}
+
+type ExportPoint struct {
+	Start     int         `json:"start" yaml:"start"`
+	End       int         `json:"end" yaml:"end"`
+	From      interface{} `json:"from" yaml:"from"`
+	To        interface{} `json:"to" yaml:"to"`
+	Operation string      `json:"operation" yaml:"operation"`
+	Ext       string      `json:"ext" yaml:"ext"`
+	RunTime   int         `json:"run_time,omitempty" yaml:"run_time,omitempty"`
+}
+
+func ConvertPoints(data string) (eps []ExportPoint) {
+	lines := strings.Split(data, "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "startX") {
+			matched := regexCompileSwipe.FindStringSubmatch(line)
+			if len(matched) != 6 {
+				log.Error().Msg("failed to parse point data")
+				continue
+			}
+			start, _ := strconv.Atoi(matched[1])
+			fromX, _ := strconv.ParseFloat(matched[2], 64)
+			fromY, _ := strconv.ParseFloat(matched[3], 64)
+			toX, _ := strconv.ParseFloat(matched[4], 64)
+			toY, _ := strconv.ParseFloat(matched[5], 64)
+			p := ExportPoint{
+				Start:     start,
+				End:       start,
+				From:      []float64{fromX, fromY},
+				To:        []float64{toX, toY},
+				Operation: "Gtf-Drag",
+				Ext:       "",
+			}
+			eps = append(eps, p)
+		} else if strings.Contains(line, "x=") {
+			matched := regexCompileTap.FindStringSubmatch(line)
+			if len(matched) != 4 {
+				log.Error().Msg("failed to parse point data")
+				continue
+			}
+			start, _ := strconv.Atoi(matched[1])
+			x, _ := strconv.ParseFloat(matched[2], 64)
+			y, _ := strconv.ParseFloat(matched[3], 64)
+			p := ExportPoint{
+				Start:     start,
+				End:       start,
+				From:      []float64{x, y},
+				To:        []float64{x, y},
+				Operation: "Gtf-Tap",
+				Ext:       "",
+			}
+			eps = append(eps, p)
+		}
+	}
+	return
 }
 
 type UiSelectorHelper struct {

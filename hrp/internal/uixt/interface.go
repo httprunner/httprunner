@@ -715,6 +715,7 @@ type ElementType struct {
 	Tab                bool `json:"XCUIElementTypeTab"`
 	TouchBar           bool `json:"XCUIElementTypeTouchBar"`
 	StatusItem         bool `json:"XCUIElementTypeStatusItem"`
+	EditText           bool `json:"android.widget.EditText"`
 }
 
 // ProtectedResource A system resource that requires user authorization to access.
@@ -884,9 +885,6 @@ type WebDriver interface {
 	// StopCamera Stops the camera for recording
 	StopCamera() error
 
-	StartRecording() error
-	StopRecording() error
-
 	// Tap Sends a tap event at the coordinate.
 	Tap(x, y int, options ...DataOption) error
 	TapFloat(x, y float64, options ...DataOption) error
@@ -926,6 +924,9 @@ type WebDriver interface {
 	// otherwise an error is raised.
 	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
 	SendKeys(text string, options ...DataOption) error
+
+	// Input works like SendKeys
+	Input(text string, options ...DataOption) error
 
 	// KeyboardDismiss Tries to dismiss the on-screen keyboard
 	KeyboardDismiss(keyNames ...string) error
