@@ -9,8 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
 var xctestCmd = &cobra.Command{
@@ -20,19 +18,10 @@ var xctestCmd = &cobra.Command{
 		if bundleID == "" {
 			return fmt.Errorf("bundleID is required")
 		}
-
-		devices, err := uixt.IOSDevices(udid)
+		device, err := getDevice(udid)
 		if err != nil {
 			return err
 		}
-		if len(devices) == 0 {
-			fmt.Println("no ios device found")
-			os.Exit(1)
-		}
-		if len(devices) > 1 {
-			return fmt.Errorf("multiple devices found, please specify udid")
-		}
-		device := devices[0]
 
 		log.Info().Str("bundleID", bundleID).Msg("run xctest")
 		out, cancel, err := device.XCTest(bundleID)
