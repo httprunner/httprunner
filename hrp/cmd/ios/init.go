@@ -11,8 +11,9 @@ import (
 )
 
 var iosRootCmd = &cobra.Command{
-	Use:   "ios",
-	Short: "simple utils for ios device management",
+	Use:              "ios",
+	Short:            "simple utils for ios device management",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 }
 
 func getDevice(udid string) (giDevice.Device, error) {
