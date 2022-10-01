@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
 	"github.com/httprunner/httprunner/v4/hrp/cmd/ios"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
@@ -61,6 +62,8 @@ func Execute() {
 	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
 
 	ios.Init(rootCmd)
+	adb.Init(rootCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}

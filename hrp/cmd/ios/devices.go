@@ -96,7 +96,7 @@ var listIOSDevicesCmd = &cobra.Command{
 			deviceList = append(deviceList, d)
 		}
 		if udid != "" && len(deviceList) == 0 {
-			fmt.Printf("no device found for udid: %s\n", udid)
+			fmt.Printf("no ios device found for udid: %s\n", udid)
 			os.Exit(1)
 		}
 
