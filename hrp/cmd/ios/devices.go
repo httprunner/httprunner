@@ -4,21 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
-
-func wrapError(err error, msg string) error {
-	if strings.HasSuffix(err.Error(), "InvalidService") {
-		msg += ", check if Developer Disk Image mounted"
-	}
-	return errors.Wrap(err, msg)
-}
-
-type DeviceList []Device
 
 type Device struct {
 	d               giDevice.Device
@@ -77,30 +69,21 @@ var listIOSDevicesCmd = &cobra.Command{
 	Use:   "devices",
 	Short: "List all iOS devices",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		usbmux, err := giDevice.NewUsbmux()
+		devices, err := uixt.IOSDevices(udid)
 		if err != nil {
-			return wrapError(err, "create usbmux failed")
+			return err
 		}
-
-		devices, err := usbmux.Devices()
-		if err != nil {
-			return wrapError(err, "list ios devices failed")
-		}
-
-		var deviceList []giDevice.Device
-		// filter by udid
-		for _, d := range devices {
-			if udid != "" && udid != d.Properties().SerialNumber {
-				continue
+		if len(devices) == 0 {
+			if udid != "" {
+				fmt.Printf("no ios device found for udid: %s\n", udid)
+				os.Exit(1)
+			} else {
+				fmt.Println("no ios device found")
+				os.Exit(0)
 			}
-			deviceList = append(deviceList, d)
-		}
-		if udid != "" && len(deviceList) == 0 {
-			fmt.Printf("no ios device found for udid: %s\n", udid)
-			os.Exit(1)
 		}
 
-		for _, d := range deviceList {
+		for _, d := range devices {
 			deviceByte, _ := json.Marshal(d.Properties())
 			device := &Device{
 				d: d,

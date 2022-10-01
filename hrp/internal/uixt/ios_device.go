@@ -122,17 +122,31 @@ func WithLogOn(logOn bool) IOSDeviceOption {
 	}
 }
 
-func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
+func IOSDevices(udid ...string) (devices []giDevice.Device, err error) {
 	var usbmux giDevice.Usbmux
 	if usbmux, err = giDevice.NewUsbmux(); err != nil {
 		return nil, fmt.Errorf("init usbmux failed: %v", err)
 	}
 
-	var deviceList []giDevice.Device
-	if deviceList, err = usbmux.Devices(); err != nil {
-		return nil, fmt.Errorf("get attached devices failed: %v", err)
+	if devices, err = usbmux.Devices(); err != nil {
+		return nil, fmt.Errorf("list ios devices failed: %v", err)
 	}
 
+	// filter by udid
+	var deviceList []giDevice.Device
+	for _, d := range devices {
+		for _, u := range udid {
+			if u != "" && u != d.Properties().SerialNumber {
+				continue
+			}
+			deviceList = append(deviceList, d)
+		}
+	}
+
+	return deviceList, nil
+}
+
+func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	device = &IOSDevice{
 		Port:      defaultWDAPort,
 		MjpegPort: defaultMjpegPort,
@@ -141,15 +155,15 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		option(device)
 	}
 
-	serialNumber := device.UDID
-	for _, dev := range deviceList {
-		// find device by serial number if specified
-		if serialNumber != "" && dev.Properties().SerialNumber != serialNumber {
-			continue
-		}
+	deviceList, err := IOSDevices(device.UDID)
+	if err != nil {
+		return nil, err
+	}
 
-		device.UDID = dev.Properties().SerialNumber
-		device.d = dev
+	if len(deviceList) > 0 {
+		device.UDID = deviceList[0].Properties().SerialNumber
+		log.Info().Str("udid", device.UDID).Msg("select device")
+		device.d = deviceList[0]
 		return device, nil
 	}
 
