@@ -2,31 +2,20 @@ package ios
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 )
 
-var listIOSAppsCmd = &cobra.Command{
+var listAppsCmd = &cobra.Command{
 	Use:   "apps",
 	Short: "List all iOS installed apps",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		devices, err := uixt.IOSDevices(udid)
+		device, err := getDevice(udid)
 		if err != nil {
 			return err
 		}
-		if len(devices) == 0 {
-			fmt.Println("no ios device found")
-			os.Exit(1)
-		}
-		if len(devices) > 1 {
-			return fmt.Errorf("multiple devices found, please specify udid")
-		}
-		device := devices[0]
 
 		apps, err := device.AppList()
 		if err != nil {
@@ -47,7 +36,7 @@ var listIOSAppsCmd = &cobra.Command{
 var appType string
 
 func init() {
-	listIOSAppsCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
-	listIOSAppsCmd.Flags().StringVarP(&appType, "type", "t", "user", "filter application type [user|system|pluginkit|all]")
-	iosRootCmd.AddCommand(listIOSAppsCmd)
+	listAppsCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
+	listAppsCmd.Flags().StringVarP(&appType, "type", "t", "user", "filter application type [user|system|pluginkit|all]")
+	iosRootCmd.AddCommand(listAppsCmd)
 }

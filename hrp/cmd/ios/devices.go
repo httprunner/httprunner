@@ -65,7 +65,7 @@ func (device *Device) ToFormat() string {
 	return string(result)
 }
 
-var listIOSDevicesCmd = &cobra.Command{
+var listDevicesCmd = &cobra.Command{
 	Use:   "devices",
 	Short: "List all iOS devices",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -111,7 +111,7 @@ var (
 )
 
 func init() {
-	listIOSDevicesCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
-	listIOSDevicesCmd.Flags().BoolVarP(&isDetail, "detail", "d", false, "print device's detail")
-	iosRootCmd.AddCommand(listIOSDevicesCmd)
+	listDevicesCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
+	listDevicesCmd.Flags().BoolVarP(&isDetail, "detail", "d", false, "print device's detail")
+	iosRootCmd.AddCommand(listDevicesCmd)
 }
