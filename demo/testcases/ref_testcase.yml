@@ -1,0 +1,33 @@
+config:
+    name: "request methods testcase: reference testcase"
+    variables:
+        foo1: testsuite_config_bar1
+        expect_foo1: testsuite_config_bar1
+        expect_foo2: config_bar2
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: request with functions
+    variables:
+        foo1: testcase_ref_bar1
+        expect_foo1: testcase_ref_bar1
+    testcase: testcases/requests.yml
+    export:
+        - foo3
+-
+    name: post form data
+    variables:
+        foo1: bar1
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: ${get_user_agent()}
+            Content-Type: "application/x-www-form-urlencoded"
+        body: "foo1=$foo1&foo2=$foo3"
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.form.foo1", "bar1"]
+        - eq: ["body.form.foo2", "bar21"]

@@ -1,0 +1,136 @@
+{
+    "config": {
+        "name": "request methods testcase with functions",
+        "variables": {
+            "foo1": "config_bar1",
+            "foo2": "config_bar2",
+            "expect_foo1": "config_bar1",
+            "expect_foo2": "config_bar2"
+        },
+        "headers": {
+            "User-Agent": "${get_user_agent()}"
+        },
+        "base_url": "https://postman-echo.com",
+        "verify": false,
+        "export": [
+            "foo3"
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "get with params",
+            "variables": {
+                "foo1": "${ENV(USERNAME)}",
+                "foo2": "bar21",
+                "sum_v": "${sum_two_int(10000000, 20000000)}"
+            },
+            "request": {
+                "method": "GET",
+                "url": "/get",
+                "params": {
+                    "foo1": "$foo1",
+                    "foo2": "$foo2",
+                    "sum_v": "$sum_v"
+                }
+            },
+            "extract": {
+                "foo3": "body.args.foo2"
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equal",
+                    "expect": 200,
+                    "msg": "check status_code"
+                },
+                {
+                    "check": "body.args.foo1",
+                    "assert": "equal",
+                    "expect": "debugtalk",
+                    "msg": "check body.args.foo1"
+                },
+                {
+                    "check": "body.args.sum_v",
+                    "assert": "equal",
+                    "expect": "30000000",
+                    "msg": "check body.args.sum_v"
+                },
+                {
+                    "check": "body.args.foo2",
+                    "assert": "equal",
+                    "expect": "bar21",
+                    "msg": "check body.args.foo2"
+                }
+            ]
+        },
+        {
+            "name": "post raw text",
+            "variables": {
+                "foo1": "bar12",
+                "foo3": "bar32"
+            },
+            "request": {
+                "method": "POST",
+                "url": "/post",
+                "headers": {
+                    "Content-Type": "text/plain"
+                },
+                "body": "This is expected to be sent back as part of response body: $foo1-$foo2-$foo3."
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equal",
+                    "expect": 200,
+                    "msg": "check status_code"
+                },
+                {
+                    "check": "body.data",
+                    "assert": "equal",
+                    "expect": "This is expected to be sent back as part of response body: bar12-$expect_foo2-bar32.",
+                    "msg": "check body.data"
+                }
+            ]
+        },
+        {
+            "name": "post form data",
+            "variables": {
+                "foo2": "bar23"
+            },
+            "request": {
+                "method": "POST",
+                "url": "/post",
+                "headers": {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "foo1=$foo1&foo2=$foo2&foo3=$foo3"
+            },
+            "validate": [
+                {
+                    "check": "status_code",
+                    "assert": "equal",
+                    "expect": 200,
+                    "msg": "check status_code"
+                },
+                {
+                    "check": "body.form.foo1",
+                    "assert": "equal",
+                    "expect": "$expect_foo1",
+                    "msg": "check body.form.foo1"
+                },
+                {
+                    "check": "body.form.foo2",
+                    "assert": "equal",
+                    "expect": "bar23",
+                    "msg": "check body.form.foo2"
+                },
+                {
+                    "check": "body.form.foo3",
+                    "assert": "equal",
+                    "expect": "bar21",
+                    "msg": "check body.form.foo3"
+                }
+            ]
+        }
+    ]
+}
