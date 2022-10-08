@@ -96,12 +96,12 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/debugtalk/gidevice v0.6.3-0.20221008035433-d79086a752a7 h1:rxaa937c9aj3Yu4M2UZb5CLAgmPu5XXpXQEfKKSWkEw=
+github.com/debugtalk/gidevice v0.6.3-0.20221008035433-d79086a752a7/go.mod h1:bRHL2M9qgeEKju8KRvKMZUVEg7t5zMnTiG3SJ3QDH5o=
 github.com/denisbrodbeck/machineid v1.0.1 h1:geKr9qtkB876mXguW2X6TU4ZynleN6ezuMSRhl4D7AQ=
 github.com/denisbrodbeck/machineid v1.0.1/go.mod h1:dJUwb7PTidGDeYyUBmXZ2GphQBbjJCrnectwCyxcUSI=
 github.com/electricbubble/gadb v0.0.7 h1:fxvVLVNs3IFKuYAEXDF2tDZUjT9jNCltoTSirjM5dgo=
 github.com/electricbubble/gadb v0.0.7/go.mod h1:3293YJ6OWHv/Q6NA5dwSbK43MbmYm8+Vz2d7h5J3IA8=
-github.com/electricbubble/gidevice v0.6.2 h1:eIeCHH7Xn5fTwnUv3qL8c7L4anKIHtjlTBkgr1LDVTc=
-github.com/electricbubble/gidevice v0.6.2/go.mod h1:bRHL2M9qgeEKju8KRvKMZUVEg7t5zMnTiG3SJ3QDH5o=
 github.com/electricbubble/opencv-helper v0.0.3 h1:p0sHTUPPPm8GqzVUtYH+wQbJoguzotUXVRAS7Ibk7nI=
 github.com/electricbubble/opencv-helper v0.0.3/go.mod h1:VHB21p5xsIjXUsUleWSaKGJosRsRAO7cuJoZKf7uCcc=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=

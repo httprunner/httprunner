@@ -1,0 +1,81 @@
+{
+    "config": {
+        "name": "postman collection demo"
+    },
+    "teststeps": [
+        {
+            "name": "folder1 - folder2 - Get with params",
+            "request": {
+                "method": "GET",
+                "url": "https://postman-echo.com/get",
+                "params": {
+                    "k1": "v1",
+                    "k2": "v2"
+                }
+            }
+        },
+        {
+            "name": "folder3 - Post form-data",
+            "request": {
+                "method": "POST",
+                "url": "https://postman-echo.com/post",
+                "upload": {
+                    "intro_key": "intro.txt",
+                    "k1": "v1",
+                    "k2": "v2",
+                    "logo_key": "logo.jpeg"
+                }
+            }
+        },
+        {
+            "name": "folder3 - Post x-www-form-urlencoded",
+            "request": {
+                "method": "POST",
+                "url": "https://postman-echo.com/post",
+                "headers": {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": {
+                    "k1": "v1",
+                    "k2": "v2"
+                }
+            }
+        },
+        {
+            "name": "folder3 - Post raw json",
+            "request": {
+                "method": "POST",
+                "url": "https://postman-echo.com/post",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body": {
+                    "k1": "v1",
+                    "k2": "v2"
+                }
+            }
+        },
+        {
+            "name": "folder3 - Post raw text",
+            "request": {
+                "method": "POST",
+                "url": "https://postman-echo.com/post",
+                "headers": {
+                    "Content-Type": "text/plain"
+                },
+                "body": "have a nice day"
+            }
+        },
+        {
+            "name": "Get request headers",
+            "request": {
+                "method": "GET",
+                "url": "https://postman-echo.com/headers",
+                "headers": {
+                    "Connection": "close",
+                    "User-Agent": "HttpRunner"
+                }
+            }
+        }
+    ]
+}

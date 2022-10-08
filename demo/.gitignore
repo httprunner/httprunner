@@ -1,0 +1,14 @@
+reports/
+*.so
+.vscode/
+.idea/
+.DS_Store
+output/
+__pycache__/
+*.pyc
+.python-version
+logs/
+
+# plugin
+debugtalk.bin
+debugtalk.so
