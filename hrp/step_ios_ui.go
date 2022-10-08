@@ -524,6 +524,15 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	}
 	parser := s.GetParser()
 
+	// parse device udid
+	if step.IOS.IOSDevice.UDID != "" {
+		udid, err := parser.ParseString(step.IOS.IOSDevice.UDID, stepVariables)
+		if err != nil {
+			return
+		}
+		step.IOS.IOSDevice.UDID = udid.(string)
+	}
+
 	// init wdaClient driver
 	wdaClient, err := s.hrpRunner.initUIClient(&step.IOS.IOSDevice)
 	if err != nil {

@@ -503,6 +503,15 @@ func runStepAndroid(s *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 	parser := s.GetParser()
 
+	// parse device serial
+	if step.Android.AndroidDevice.SerialNumber != "" {
+		sn, err := parser.ParseString(step.Android.AndroidDevice.SerialNumber, stepVariables)
+		if err != nil {
+			return
+		}
+		step.Android.AndroidDevice.SerialNumber = sn.(string)
+	}
+
 	// init uiaClient driver
 	uiaClient, err := s.hrpRunner.initUIClient(&step.Android.AndroidDevice)
 	if err != nil {
