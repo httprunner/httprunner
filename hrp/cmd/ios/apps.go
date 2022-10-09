@@ -2,11 +2,17 @@ package ios
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/pkg/errors"
+	giDevice "github.com/electricbubble/gidevice"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 )
+
+type Application struct {
+	CFBundleVersion     string `json:"version"`
+	CFBundleDisplayName string `json:"name"`
+	CFBundleIdentifier  string `json:"bundleId"`
+}
 
 var listAppsCmd = &cobra.Command{
 	Use:   "apps",
@@ -17,17 +23,31 @@ var listAppsCmd = &cobra.Command{
 			return err
 		}
 
-		apps, err := device.AppList()
-		if err != nil {
-			return errors.Wrap(err, "get ios apps failed")
+		var applicationType giDevice.ApplicationType
+		switch appType {
+		case "user":
+			applicationType = giDevice.ApplicationTypeUser
+		case "system":
+			applicationType = giDevice.ApplicationTypeSystem
+		case "internal":
+			applicationType = giDevice.ApplicationTypeInternal
+		case "all":
+			applicationType = giDevice.ApplicationTypeAny
 		}
-		for _, app := range apps {
-			if appType != "all" && strings.ToLower(app.Type) != appType {
-				continue
-			}
 
-			fmt.Printf("%-10.10s %-30.30s %-50.50s %-s\n",
-				app.Type, app.DisplayName, app.CFBundleIdentifier, app.Version)
+		result, errList := device.InstallationProxyBrowse(
+			giDevice.WithApplicationType(applicationType),
+			giDevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
+		if errList != nil {
+			return fmt.Errorf("get app list failed")
+		}
+
+		for _, app := range result {
+			a := Application{}
+			mapstructure.Decode(app, &a)
+
+			fmt.Printf("%-30.30s %-50.50s %-s\n",
+				a.CFBundleDisplayName, a.CFBundleIdentifier, a.CFBundleVersion)
 		}
 		return nil
 	},
@@ -37,6 +57,6 @@ var appType string
 
 func init() {
 	listAppsCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
-	listAppsCmd.Flags().StringVarP(&appType, "type", "t", "user", "filter application type [user|system|pluginkit|all]")
+	listAppsCmd.Flags().StringVarP(&appType, "type", "t", "user", "filter application type [user|system|internal|all]")
 	iosRootCmd.AddCommand(listAppsCmd)
 }
