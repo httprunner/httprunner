@@ -41,7 +41,7 @@ Copyright 2017 debugtalk`,
 		}
 		if !logJSON {
 			log.Logger = zerolog.New(zerolog.ConsoleWriter{NoColor: noColor, Out: os.Stderr}).With().Timestamp().Logger()
-			log.Info().Msg("Set log to color console other than JSON format.")
+			log.Info().Msg("Set log to color console")
 		}
 	},
 	Version:          version.VERSION,
