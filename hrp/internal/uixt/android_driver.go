@@ -482,7 +482,7 @@ func (ud *uiaDriver) AppAuthReset(resource ProtectedResource) (err error) {
 }
 
 func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
-	return ud.TapFloat(float64(x), float64(y))
+	return ud.TapFloat(float64(x), float64(y), options...)
 }
 
 func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
@@ -491,6 +491,11 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 		"x": x,
 		"y": y,
 	}
+	// append options in post data for extra uiautomator configurations
+	for _, option := range options {
+		option(data)
+	}
+
 	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/tap")
 	return
 }
@@ -546,8 +551,7 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 		"endY":   toY,
 	}
 
-	// append options in post data for extra WDA configurations
-	// e.g. use WithPressDuration to set pressForDuration
+	// append options in post data for extra uiautomator configurations
 	for _, option := range options {
 		option(data)
 	}
@@ -559,17 +563,23 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	return ud._drag(data)
 }
 
-func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, steps int, elementID ...string) (err error) {
+func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...DataOption) (err error) {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	data := map[string]interface{}{
 		"startX": startX,
 		"startY": startY,
 		"endX":   endX,
 		"endY":   endY,
-		"steps":  steps,
 	}
-	if len(elementID) != 0 {
-		data["elementId"] = elementID[0]
+
+	// append options in post data for extra uiautomator configurations
+	// e.g. use WithPressDuration to set pressForDuration
+	for _, option := range options {
+		option(data)
+	}
+
+	if _, ok := data["steps"]; !ok {
+		data["steps"] = 12 // default steps
 	}
 	_, err = ud.httpPOST(data, "/session", ud.sessionId, "touch/perform")
 	return
@@ -580,23 +590,12 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, steps int, e
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //  `steps` is the number of move steps sent to the system
 func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
-	options = append(options, WithPressDuration(0))
+	options = append(options, WithSteps(12))
 	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
-	data := map[string]interface{}{}
-	// append options in post data for extra WDA configurations
-	// e.g. use WithPressDuration to set pressForDuration
-	for _, option := range options {
-		option(data)
-	}
-
-	if _, ok := data["steps"]; !ok {
-		data["steps"] = 12 // default steps
-	}
-
-	return ud._swipe(fromX, fromY, toX, toY, data["steps"].(int))
+	return ud._swipe(fromX, fromY, toX, toY, options...)
 }
 
 func (ud *uiaDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
@@ -671,8 +670,7 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 	data := map[string]interface{}{
 		"text": text,
 	}
-	// append options in post data for extra WDA configurations
-	// e.g. use WithPressDuration to set pressForDuration
+	// append options in post data for extra uiautomator configurations
 	for _, option := range options {
 		option(data)
 	}
@@ -690,7 +688,7 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 	if err != nil {
 		return err
 	}
-	return element.SendKeys(text)
+	return element.SendKeys(text, options...)
 }
 
 func (ud *uiaDriver) KeyboardDismiss(keyNames ...string) (err error) {
