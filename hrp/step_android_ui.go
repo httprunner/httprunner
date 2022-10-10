@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 var (
@@ -189,10 +190,10 @@ func (s *StepAndroid) DoubleTap(params string, options ...uixt.ActionOption) *St
 	return &StepAndroid{step: s.step}
 }
 
-func (s *StepAndroid) Swipe(sx, sy, ex, ey int, options ...uixt.ActionOption) *StepAndroid {
+func (s *StepAndroid) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepAndroid {
 	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
-		Params: []int{sx, sy, ex, ey},
+		Params: []float64{sx, sy, ex, ey},
 	}
 	for _, option := range options {
 		option(&action)

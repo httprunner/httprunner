@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // NewConfig returns a new constructed testcase config with specified testcase name.

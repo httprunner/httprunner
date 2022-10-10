@@ -16,7 +16,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 var fieldTags = []string{"proto", "status_code", "headers", "cookies", "body", textExtractorSubRegexp}

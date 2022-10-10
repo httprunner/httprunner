@@ -708,7 +708,6 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 	return element.SendKeys(text, options...)
 }
 
-
 func (ud *uiaDriver) KeyboardDismiss(keyNames ...string) (err error) {
 	// TODO
 	return errDriverNotImplemented
