@@ -7,8 +7,6 @@ import (
 	"net"
 	"os/exec"
 	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -17,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 var (
@@ -27,15 +26,6 @@ var (
 )
 
 const forwardToPrefix = "forward-to-"
-
-const (
-	regexFloat = `[0-9\.]*`
-)
-
-var (
-	regexCompileSwipe = regexp.MustCompile(fmt.Sprintf(`timesec=(%s)\s*startX=(%s)\s*startY=(%s)\s*endX=(%s)\s*endY=(%s)`, regexFloat, regexFloat, regexFloat, regexFloat, regexFloat)) // parse ${var} or $var
-	regexCompileTap   = regexp.MustCompile(fmt.Sprintf(`timesec=(%s)\s*x=(%s)\s*y=(%s)`, regexFloat, regexFloat, regexFloat))                                                           // parse ${func1($a, $b)} 	// parse number
-)
 
 func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
 	var deviceOptions []AndroidDeviceOption
@@ -75,6 +65,7 @@ func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
 		}
 	}
 
+	driverExt.UUID = androidDevice.UUID()
 	return driverExt, err
 }
 
@@ -308,42 +299,14 @@ type ExportPoint struct {
 func ConvertPoints(data string) (eps []ExportPoint) {
 	lines := strings.Split(data, "\n")
 	for _, line := range lines {
-		if strings.Contains(line, "startX") {
-			matched := regexCompileSwipe.FindStringSubmatch(line)
-			if len(matched) != 6 {
+		if strings.Contains(line, "ext") {
+			idx := strings.Index(line, "{")
+			line = line[idx:]
+			p := ExportPoint{}
+			err := json.Unmarshal([]byte(line), &p)
+			if err != nil {
 				log.Error().Msg("failed to parse point data")
 				continue
-			}
-			start, _ := strconv.Atoi(matched[1])
-			fromX, _ := strconv.ParseFloat(matched[2], 64)
-			fromY, _ := strconv.ParseFloat(matched[3], 64)
-			toX, _ := strconv.ParseFloat(matched[4], 64)
-			toY, _ := strconv.ParseFloat(matched[5], 64)
-			p := ExportPoint{
-				Start:     start,
-				End:       start,
-				From:      []float64{fromX, fromY},
-				To:        []float64{toX, toY},
-				Operation: "Gtf-Drag",
-				Ext:       "",
-			}
-			eps = append(eps, p)
-		} else if strings.Contains(line, "x=") {
-			matched := regexCompileTap.FindStringSubmatch(line)
-			if len(matched) != 4 {
-				log.Error().Msg("failed to parse point data")
-				continue
-			}
-			start, _ := strconv.Atoi(matched[1])
-			x, _ := strconv.ParseFloat(matched[2], 64)
-			y, _ := strconv.ParseFloat(matched[3], 64)
-			p := ExportPoint{
-				Start:     start,
-				End:       start,
-				From:      []float64{x, y},
-				To:        []float64{x, y},
-				Operation: "Gtf-Tap",
-				Ext:       "",
 			}
 			eps = append(eps, p)
 		}
