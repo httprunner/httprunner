@@ -105,8 +105,6 @@ func WithDescription(description string) ActionOption {
 	}
 }
 
-
-
 func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
 	return func(o *MobileAction) {
 		o.MaxRetryTimes = maxRetryTimes
@@ -508,7 +506,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			options = append(options, WithCustomOption("description", action.Description))
 		}
 		if action.Identifier != "" {
-			options = append(options,WithCustomOption("log", map[string]interface{}{
+			options = append(options, WithCustomOption("log", map[string]interface{}{
 				"enable": true,
 				"data":   action.Identifier,
 			}))

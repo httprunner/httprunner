@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -72,7 +73,7 @@ func (ue uiaElement) TwoFingerTap() (err error) {
 }
 
 func (ue uiaElement) TapWithNumberOfTaps(numberOfTaps, numberOfTouches int) (err error) {
-	//Todo: implement
+	// Todo: implement
 	log.Fatal().Msg("not support")
 	return
 }

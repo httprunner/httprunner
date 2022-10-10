@@ -3,7 +3,7 @@ package hrp
 import (
 	giDevice "github.com/electricbubble/gidevice"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 type StepType string

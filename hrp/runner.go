@@ -20,8 +20,8 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
-	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // Run starts to run API test with default configs.
