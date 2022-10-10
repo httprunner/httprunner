@@ -22,6 +22,9 @@ var (
 	WithIndex               = uixt.WithIndex
 	WithTimeout             = uixt.WithTimeout
 	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
+	WithText                = uixt.WithText
+	WithID                  = uixt.WithID
+	WithDescription         = uixt.WithDescription
 )
 
 type StepResult struct {
