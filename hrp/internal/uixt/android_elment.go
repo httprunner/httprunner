@@ -21,16 +21,22 @@ func (ue uiaElement) Click() (err error) {
 	return
 }
 
-func (ue uiaElement) SendKeys(text string, isReplace ...int) (err error) {
-	if len(isReplace) == 0 {
-		isReplace = []int{1}
-	}
+func (ue uiaElement) SendKeys(text string, options ...DataOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/element/:id/value"))
 	// https://github.com/appium/appium-uiutomator2-server/blob/master/app/src/main/java/io/appium/uiutomator2/handler/SendKeysToElement.java#L76-L85
 	data := map[string]interface{}{
-		"text":    text,
-		"replace": isReplace[0] == 1,
+		"text": text,
 	}
+
+	// append options in post data for extra uiautomator configurations
+	for _, option := range options {
+		option(data)
+	}
+
+	if _, ok := data["isReplace"]; !ok {
+		data["isReplace"] = true // default true
+	}
+
 	_, err = ue.parent.httpPOST(data, "/session", ue.parent.sessionId, "/element", ue.id, "/value")
 	return
 }
@@ -105,7 +111,11 @@ func (ue uiaElement) Swipe(fromX, fromY, toX, toY int) error {
 }
 
 func (ue uiaElement) SwipeFloat(fromX, fromY, toX, toY float64) error {
-	return ue.parent._swipe(fromX, fromY, toX, toY, 12, ue.id)
+	options := []DataOption{
+		WithSteps(12),
+		WithCustomOption("elementId", ue.id),
+	}
+	return ue.parent._swipe(fromX, fromY, toX, toY, options...)
 }
 
 func (ue uiaElement) SwipeDirection(direction Direction, velocity ...float64) (err error) {
