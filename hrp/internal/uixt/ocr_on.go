@@ -55,7 +55,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 		return nil, fmt.Errorf("close body writer error: %v", err)
 	}
 
-	url, _ := base64.StdEncoding.DecodeString("aHR0cHM6Ly9odWJibGUuYnl0ZWRhbmNlLm5ldC92aWRlby9hcGkvdjEvYWxnb3JpdGhtL29jcg==")
+	url, _ := base64.StdEncoding.DecodeString("aHR0cHM6Ly9ndGZ0YXNrLmJ5dGVkYW5jZS5jb20vYXBpL3YxL2FsZ29yaXRobS9vY3I=")
 	req, err := http.NewRequest("POST", string(url), bodyBuf)
 	if err != nil {
 		return nil, fmt.Errorf("construct request error: %v", err)

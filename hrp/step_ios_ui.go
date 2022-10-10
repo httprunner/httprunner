@@ -15,6 +15,7 @@ var (
 	WithWDAPort      = uixt.WithWDAPort
 	WithWDAMjpegPort = uixt.WithWDAMjpegPort
 	WithLogOn        = uixt.WithLogOn
+	WithPerfOptions  = uixt.WithPerfOptions
 )
 
 type IOSStep struct {

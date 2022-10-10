@@ -92,6 +92,28 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 		}
 	}
 
+	if device.PerfOptions != nil {
+		data, err := iosDevice.d.PerfStart(device.perfOpitons()...)
+		if err != nil {
+			return nil, err
+		}
+
+		driverExt.perfStop = make(chan struct{})
+		// start performance monitor
+		go func() {
+			for {
+				select {
+				case <-driverExt.perfStop:
+					iosDevice.d.PerfStop()
+					return
+				case d := <-data:
+					fmt.Println(string(d))
+					driverExt.perfData = append(driverExt.perfData, string(d))
+				}
+			}
+		}()
+	}
+
 	driverExt.UUID = iosDevice.UUID()
 	return driverExt, nil
 }
@@ -119,6 +141,15 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 func WithLogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.LogOn = logOn
+	}
+}
+
+func WithPerfOptions(options ...giDevice.PerfOption) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.PerfOptions = &giDevice.PerfOptions{}
+		for _, option := range options {
+			option(device.PerfOptions)
+		}
 	}
 }
 
@@ -171,11 +202,12 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
-	d         giDevice.Device
-	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
-	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	d           giDevice.Device
+	PerfOptions *giDevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
+	UDID        string                `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port        int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
+	MjpegPort   int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
+	LogOn       bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
 func (dev *IOSDevice) UUID() string {
@@ -236,6 +268,57 @@ func (dev *IOSDevice) opitons() (deviceOptions []IOSDeviceOption) {
 	}
 	if dev.MjpegPort != 0 {
 		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+	return
+}
+
+func (dev *IOSDevice) perfOpitons() (perfOptions []giDevice.PerfOption) {
+	if dev.PerfOptions == nil {
+		return
+	}
+
+	// system
+	if dev.PerfOptions.SysCPU {
+		perfOptions = append(perfOptions, giDevice.WithPerfSystemCPU(true))
+	}
+	if dev.PerfOptions.SysMem {
+		perfOptions = append(perfOptions, giDevice.WithPerfSystemMem(true))
+	}
+	if dev.PerfOptions.SysDisk {
+		perfOptions = append(perfOptions, giDevice.WithPerfSystemDisk(true))
+	}
+	if dev.PerfOptions.SysNetwork {
+		perfOptions = append(perfOptions, giDevice.WithPerfSystemNetwork(true))
+	}
+	if dev.PerfOptions.FPS {
+		perfOptions = append(perfOptions, giDevice.WithPerfFPS(true))
+	}
+	if dev.PerfOptions.Network {
+		perfOptions = append(perfOptions, giDevice.WithPerfNetwork(true))
+	}
+
+	// process
+	if dev.PerfOptions.BundleID != "" {
+		perfOptions = append(perfOptions,
+			giDevice.WithPerfBundleID(dev.PerfOptions.BundleID))
+	}
+	if dev.PerfOptions.Pid != 0 {
+		perfOptions = append(perfOptions,
+			giDevice.WithPerfPID(dev.PerfOptions.Pid))
+	}
+
+	// config
+	if dev.PerfOptions.OutputInterval != 0 {
+		perfOptions = append(perfOptions,
+			giDevice.WithPerfOutputInterval(dev.PerfOptions.OutputInterval))
+	}
+	if dev.PerfOptions.SystemAttributes != nil {
+		perfOptions = append(perfOptions,
+			giDevice.WithPerfSystemAttributes(dev.PerfOptions.SystemAttributes...))
+	}
+	if dev.PerfOptions.ProcessAttributes != nil {
+		perfOptions = append(perfOptions,
+			giDevice.WithPerfProcessAttributes(dev.PerfOptions.ProcessAttributes...))
 	}
 	return
 }

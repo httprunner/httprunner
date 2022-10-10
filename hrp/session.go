@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -162,8 +161,8 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	caseSummary.InOut.ExportVars = exportVars
 	caseSummary.InOut.ConfigVars = r.parsedConfig.Variables
 
-	// add WDA/UIA logs to summary
 	for uuid, client := range r.hrpRunner.uiClients {
+		// add WDA/UIA logs to summary
 		log, err := client.Driver.StopCaptureLog()
 		if err != nil {
 			return caseSummary, err
@@ -172,6 +171,10 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 			"uuid":    uuid,
 			"content": log,
 		}
+
+		// stop performance monitor
+		logs["performance"] = client.GetPerfData()
+
 		caseSummary.Logs = append(caseSummary.Logs, logs)
 	}
 
