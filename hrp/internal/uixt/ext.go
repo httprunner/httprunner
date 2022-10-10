@@ -131,8 +131,10 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
-	StartTime       time.Time // used to associate screenshots name
-	ScreenShots     []string  // save screenshots path
+	StartTime       time.Time     // used to associate screenshots name
+	ScreenShots     []string      // save screenshots path
+	perfStop        chan struct{} // stop performance monitor
+	perfData        []string      // save perf data
 
 	CVArgs
 }
@@ -152,6 +154,14 @@ func extend(driver WebDriver) (dExt *DriverExt, err error) {
 	}
 
 	return dExt, nil
+}
+
+func (dExt *DriverExt) GetPerfData() []string {
+	if dExt.perfStop == nil {
+		return nil
+	}
+	close(dExt.perfStop)
+	return dExt.perfData
 }
 
 func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {

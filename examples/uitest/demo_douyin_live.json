@@ -6,6 +6,10 @@
         },
         "ios": [
             {
+                "perf_options": {
+                    "sys_cpu": true,
+                    "sys_mem": true
+                },
                 "port": 8700,
                 "mjpeg_port": 8800,
                 "log_on": true

@@ -3,7 +3,10 @@ config:
     variables:
         app_name: 抖音
     ios:
-        - port: 8700
+        - perf_options:
+            sys_cpu: true
+            sys_mem: true
+          port: 8700
           mjpeg_port: 8800
           log_on: true
 teststeps:

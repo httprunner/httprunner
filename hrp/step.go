@@ -1,6 +1,10 @@
 package hrp
 
-import "github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+import (
+	giDevice "github.com/electricbubble/gidevice"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/uixt"
+)
 
 type StepType string
 
@@ -22,6 +26,21 @@ var (
 	WithIndex               = uixt.WithIndex
 	WithTimeout             = uixt.WithTimeout
 	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
+)
+
+var (
+	WithPerfSystemCPU         = giDevice.WithPerfSystemCPU
+	WithPerfSystemMem         = giDevice.WithPerfSystemMem
+	WithPerfSystemDisk        = giDevice.WithPerfSystemDisk
+	WithPerfSystemNetwork     = giDevice.WithPerfSystemNetwork
+	WithPerfGPU               = giDevice.WithPerfGPU
+	WithPerfFPS               = giDevice.WithPerfFPS
+	WithPerfNetwork           = giDevice.WithPerfNetwork
+	WithPerfBundleID          = giDevice.WithPerfBundleID
+	WithPerfPID               = giDevice.WithPerfPID
+	WithPerfOutputInterval    = giDevice.WithPerfOutputInterval
+	WithPerfProcessAttributes = giDevice.WithPerfProcessAttributes
+	WithPerfSystemAttributes  = giDevice.WithPerfSystemAttributes
 )
 
 type StepResult struct {
