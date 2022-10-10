@@ -68,6 +68,9 @@ type MobileAction struct {
 	Index               int    `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
 	Timeout             int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
 	IgnoreNotFoundError bool   `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
+	Text                string `json:"text,omitempty" yaml:"text,omitempty"`
+	ID                  string `json:"id,omitempty" yaml:"id,omitempty"`
+	Description         string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type ActionOption func(o *MobileAction)
@@ -83,6 +86,26 @@ func WithIndex(index int) ActionOption {
 		o.Index = index
 	}
 }
+
+func WithText(text string) ActionOption {
+	return func(o *MobileAction) {
+		o.Text = text
+	}
+}
+
+func WithID(id string) ActionOption {
+	return func(o *MobileAction) {
+		o.ID = id
+	}
+}
+
+func WithDescription(description string) ActionOption {
+	return func(o *MobileAction) {
+		o.Description = description
+	}
+}
+
+
 
 func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
 	return func(o *MobileAction) {
@@ -474,14 +497,23 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
+		options := []DataOption{}
+		if action.Text != "" {
+			options = append(options, WithCustomOption("text", action.Text))
+		}
+		if action.ID != "" {
+			options = append(options, WithCustomOption("id", action.ID))
+		}
+		if action.Description != "" {
+			options = append(options, WithCustomOption("description", action.Description))
+		}
 		if action.Identifier != "" {
-			option := WithCustomOption("log", map[string]interface{}{
+			options = append(options,WithCustomOption("log", map[string]interface{}{
 				"enable": true,
 				"data":   action.Identifier,
-			})
-			return dExt.Driver.Input(param, option)
+			}))
 		}
-		return dExt.Driver.Input(param)
+		return dExt.Driver.Input(param, options...)
 	case CtlSleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()
