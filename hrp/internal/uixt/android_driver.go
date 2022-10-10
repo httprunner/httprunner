@@ -684,12 +684,30 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 }
 
 func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
-	element, err := ud.FindElement(BySelector{ClassName: ElementType{EditText: true}})
+	data := map[string]interface{}{
+		"view": text,
+	}
+	// append options in post data for extra uiautomator configurations
+	for _, option := range options {
+		option(data)
+	}
+
+	var element WebElement
+	if valuetext, ok := data["text"]; ok {
+		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().TextContains(fmt.Sprintf("%v", valuetext)).String()})
+	} else if valueid, ok := data["id"]; ok {
+		element, err = ud.FindElement(BySelector{ResourceIdID: fmt.Sprintf("%v", valueid)})
+	} else if valuedesc, ok := data["description"]; ok {
+		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().Description(fmt.Sprintf("%v", valuedesc)).String()})
+	} else {
+		element, err = ud.FindElement(BySelector{ClassName: ElementType{EditText: true}})
+	}
 	if err != nil {
 		return err
 	}
 	return element.SendKeys(text, options...)
 }
+
 
 func (ud *uiaDriver) KeyboardDismiss(keyNames ...string) (err error) {
 	// TODO
