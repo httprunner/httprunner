@@ -66,8 +66,9 @@ func (device *Device) ToFormat() string {
 }
 
 var listDevicesCmd = &cobra.Command{
-	Use:   "devices",
-	Short: "List all iOS devices",
+	Use:              "devices",
+	Short:            "List all iOS devices",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		devices, err := uixt.IOSDevices(udid)
 		if err != nil {

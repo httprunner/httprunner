@@ -1134,7 +1134,7 @@ func TestElement_SendKeys(t *testing.T) {
 	// return
 
 	// err = elem.SendKeys("abc")
-	err = elem.SendKeys("456", 0)
+	err = elem.SendKeys("456")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,8 +7,9 @@ import (
 )
 
 var rebootCmd = &cobra.Command{
-	Use:   "reboot",
-	Short: "reboot or shutdown ios device",
+	Use:              "reboot",
+	Short:            "reboot or shutdown ios device",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		device, err := getDevice(udid)
 		if err != nil {
@@ -31,7 +32,7 @@ var rebootCmd = &cobra.Command{
 var isShutdown bool
 
 func init() {
-	rebootCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
+	rebootCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
 	rebootCmd.Flags().BoolVarP(&isShutdown, "shutdown", "s", false, "shutdown ios device")
 	iosRootCmd.AddCommand(rebootCmd)
 }

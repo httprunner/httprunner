@@ -15,8 +15,9 @@ type Application struct {
 }
 
 var listAppsCmd = &cobra.Command{
-	Use:   "apps",
-	Short: "List all iOS installed apps",
+	Use:              "apps",
+	Short:            "List all iOS installed apps",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		device, err := getDevice(udid)
 		if err != nil {
@@ -56,7 +57,7 @@ var listAppsCmd = &cobra.Command{
 var appType string
 
 func init() {
-	listAppsCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
+	listAppsCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
 	listAppsCmd.Flags().StringVarP(&appType, "type", "t", "user", "filter application type [user|system|internal|all]")
 	iosRootCmd.AddCommand(listAppsCmd)
 }
