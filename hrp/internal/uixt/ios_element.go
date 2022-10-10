@@ -25,13 +25,20 @@ func (we wdaElement) Click() (err error) {
 	return
 }
 
-func (we wdaElement) SendKeys(text string, frequency ...int) (err error) {
+func (we wdaElement) SendKeys(text string, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/element/:uuid/value"] respondWithTarget:self action:@selector(handleSetValue:)]
-	data := map[string]interface{}{"value": strings.Split(text, "")}
-	if len(frequency) == 0 || frequency[0] <= 0 {
-		frequency = []int{60}
+	data := map[string]interface{}{
+		"value": strings.Split(text, ""),
 	}
-	data["frequency"] = frequency[0]
+	// append options in post data for extra uiautomator configurations
+	for _, option := range options {
+		option(data)
+	}
+
+	if _, ok := data["frequency"]; !ok {
+		data["frequency"] = 60
+	}
+
 	_, err = we.parent.httpPOST(data, "/session", we.parent.sessionId, "/element", we.id, "/value")
 	return
 }

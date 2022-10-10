@@ -788,6 +788,12 @@ func WithPressDuration(duraion float64) DataOption {
 	}
 }
 
+func WithSteps(steps int) DataOption {
+	return func(data map[string]interface{}) {
+		data["steps"] = steps
+	}
+}
+
 func WithFrequency(frequency int) DataOption {
 	return func(data map[string]interface{}) {
 		data["frequency"] = frequency
@@ -1003,7 +1009,7 @@ type WebElement interface {
 	// SendKeys Types a text into element. It will try to activate keyboard on element,
 	// if element has no keyboard focus.
 	//  frequency: Frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, frequency ...int) error
+	SendKeys(text string, options ...DataOption) error
 	// Clear Clears text on element. It will try to activate keyboard on element,
 	// if element has no keyboard focus.
 	Clear() error
