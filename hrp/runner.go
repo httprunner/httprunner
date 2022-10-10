@@ -390,12 +390,26 @@ func (r *testCaseRunner) parseConfig() error {
 
 	// init iOS/Android clients
 	for _, iosDeviceConfig := range r.parsedConfig.IOS {
+		if iosDeviceConfig.UDID != "" {
+			udid, err := r.parser.ParseString(iosDeviceConfig.UDID, parsedVariables)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse ios device udid")
+			}
+			iosDeviceConfig.UDID = udid.(string)
+		}
 		_, err := r.hrpRunner.initUIClient(iosDeviceConfig)
 		if err != nil {
 			return errors.Wrap(err, "init iOS WDA client failed")
 		}
 	}
 	for _, androidDeviceConfig := range r.parsedConfig.Android {
+		if androidDeviceConfig.SerialNumber != "" {
+			sn, err := r.parser.ParseString(androidDeviceConfig.SerialNumber, parsedVariables)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse android device serial")
+			}
+			androidDeviceConfig.SerialNumber = sn.(string)
+		}
 		_, err := r.hrpRunner.initUIClient(androidDeviceConfig)
 		if err != nil {
 			return errors.Wrap(err, "init Android UIAutomator client failed")
