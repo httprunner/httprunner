@@ -10,8 +10,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
 
 // boomCmd represents the boom command

@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/internal/convert"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
 
 var runCurlCmd = &cobra.Command{

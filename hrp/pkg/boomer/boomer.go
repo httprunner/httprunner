@@ -1,8 +1,6 @@
 package boomer
 
 import (
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"golang.org/x/net/context"
 	"math"
 	"os"
 	"os/signal"
@@ -11,6 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/net/context"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 // Mode is the running mode of boomer, both standalone and distributed are supported.
@@ -156,7 +157,6 @@ func NewWorkerBoomer(masterHost string, masterPort int) *Boomer {
 // SetAutoStart auto start to load testing
 func (b *Boomer) SetAutoStart() {
 	b.masterRunner.autoStart = true
-
 }
 
 // RunMaster start to run master runner

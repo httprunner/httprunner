@@ -7,10 +7,11 @@
 package messager
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -458,17 +459,20 @@ func file_grpc_proto_messager_proto_rawDescGZIP() []byte {
 	return file_grpc_proto_messager_proto_rawDescData
 }
 
-var file_grpc_proto_messager_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
-var file_grpc_proto_messager_proto_goTypes = []interface{}{
-	(*StreamRequest)(nil),    // 0: message.StreamRequest
-	(*StreamResponse)(nil),   // 1: message.StreamResponse
-	(*RegisterRequest)(nil),  // 2: message.RegisterRequest
-	(*RegisterResponse)(nil), // 3: message.RegisterResponse
-	(*SignOutRequest)(nil),   // 4: message.SignOutRequest
-	(*SignOutResponse)(nil),  // 5: message.SignOutResponse
-	nil,                      // 6: message.StreamRequest.DataEntry
-	nil,                      // 7: message.StreamResponse.DataEntry
-}
+var (
+	file_grpc_proto_messager_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+	file_grpc_proto_messager_proto_goTypes  = []interface{}{
+		(*StreamRequest)(nil),    // 0: message.StreamRequest
+		(*StreamResponse)(nil),   // 1: message.StreamResponse
+		(*RegisterRequest)(nil),  // 2: message.RegisterRequest
+		(*RegisterResponse)(nil), // 3: message.RegisterResponse
+		(*SignOutRequest)(nil),   // 4: message.SignOutRequest
+		(*SignOutResponse)(nil),  // 5: message.SignOutResponse
+		nil,                      // 6: message.StreamRequest.DataEntry
+		nil,                      // 7: message.StreamResponse.DataEntry
+	}
+)
+
 var file_grpc_proto_messager_proto_depIdxs = []int32{
 	6, // 0: message.StreamRequest.data:type_name -> message.StreamRequest.DataEntry
 	7, // 1: message.StreamResponse.data:type_name -> message.StreamResponse.DataEntry
