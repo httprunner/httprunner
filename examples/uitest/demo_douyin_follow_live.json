@@ -94,7 +94,7 @@
             "ios": {
                 "actions": [
                     {
-                        "method": "swipe_to_tap_text",
+                        "method": "swipe_to_tap_texts",
                         "params": [
                             "理肤泉",
                             "婉宝"
