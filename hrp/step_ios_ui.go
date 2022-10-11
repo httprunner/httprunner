@@ -11,11 +11,15 @@ import (
 )
 
 var (
-	WithUDID         = uixt.WithUDID
-	WithWDAPort      = uixt.WithWDAPort
-	WithWDAMjpegPort = uixt.WithWDAMjpegPort
-	WithLogOn        = uixt.WithLogOn
-	WithPerfOptions  = uixt.WithPerfOptions
+	WithUDID                       = uixt.WithUDID
+	WithWDAPort                    = uixt.WithWDAPort
+	WithWDAMjpegPort               = uixt.WithWDAMjpegPort
+	WithLogOn                      = uixt.WithLogOn
+	WithResetHomeOnStartup         = uixt.WithResetHomeOnStartup
+	WithSnapshotMaxDepth           = uixt.WithSnapshotMaxDepth
+	WithAcceptAlertButtonSelector  = uixt.WithAcceptAlertButtonSelector
+	WithDismissAlertButtonSelector = uixt.WithDismissAlertButtonSelector
+	WithPerfOptions                = uixt.WithPerfOptions
 )
 
 type IOSStep struct {

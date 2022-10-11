@@ -25,6 +25,12 @@ import (
 )
 
 const (
+	defaultWDAPort            = 8100
+	defaultMjpegPort          = 9100
+	defaultResetHomeOnStartup = true
+)
+
+const (
 	// Changes the value of maximum depth for traversing elements source tree.
 	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
 	// but it might restrict the depth of source tree.
@@ -37,11 +43,6 @@ const (
 	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] ‘accept’`]
 	acceptAlertButtonSelector  = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','稍后再说'}`]"
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
-)
-
-const (
-	defaultWDAPort   = 8100
-	defaultMjpegPort = 9100
 )
 
 type IOSDeviceOption func(*IOSDevice)
@@ -67,6 +68,30 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 func WithLogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.LogOn = logOn
+	}
+}
+
+func WithResetHomeOnStartup(reset bool) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.ResetHomeOnStartup = reset
+	}
+}
+
+func WithSnapshotMaxDepth(depth int) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.SnapshotMaxDepth = depth
+	}
+}
+
+func WithAcceptAlertButtonSelector(selector string) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.AcceptAlertButtonSelector = selector
+	}
+}
+
+func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.DismissAlertButtonSelector = selector
 	}
 }
 
@@ -105,8 +130,12 @@ func IOSDevices(udid ...string) (devices []giDevice.Device, err error) {
 
 func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	device = &IOSDevice{
-		Port:      defaultWDAPort,
-		MjpegPort: defaultMjpegPort,
+		Port:                       defaultWDAPort,
+		MjpegPort:                  defaultMjpegPort,
+		ResetHomeOnStartup:         defaultResetHomeOnStartup,
+		SnapshotMaxDepth:           snapshotMaxDepth,
+		AcceptAlertButtonSelector:  acceptAlertButtonSelector,
+		DismissAlertButtonSelector: dismissAlertButtonSelector,
 	}
 	for _, option := range options {
 		option(device)
@@ -134,6 +163,12 @@ type IOSDevice struct {
 	Port        int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	MjpegPort   int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn       bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	// switch to iOS springboard before init WDA session
+	// avoid getting stuck when some super app is activate such as douyin or wexin
+	ResetHomeOnStartup         bool   `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
+	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
+	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
+	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
 }
 
 func (dev *IOSDevice) UUID() string {
@@ -150,6 +185,21 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 	}
 	if dev.MjpegPort != 0 {
 		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithLogOn(true))
+	}
+	if dev.ResetHomeOnStartup {
+		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
+	}
+	if dev.SnapshotMaxDepth != 0 {
+		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
+	}
+	if dev.AcceptAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
+	}
+	if dev.DismissAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.DismissAlertButtonSelector))
 	}
 
 	iosDevice, err := NewIOSDevice(deviceOptions...)
@@ -177,11 +227,11 @@ func (dev *IOSDevice) initWDAClient(capabilities Capabilities) (driverExt *Drive
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
 
-	// switch to iOS springboard before init WDA session
-	// avoid getting stuck when some super app is activate such as douyin or wexin
-	log.Info().Msg("go back to home screen")
-	if err = driver.Homescreen(); err != nil {
-		return nil, errors.Wrap(err, "failed to go back to home screen")
+	if dev.ResetHomeOnStartup {
+		log.Info().Msg("go back to home screen")
+		if err = driver.Homescreen(); err != nil {
+			return nil, errors.Wrap(err, "failed to go back to home screen")
+		}
 	}
 
 	driverExt, err = Extend(driver)
@@ -189,8 +239,8 @@ func (dev *IOSDevice) initWDAClient(capabilities Capabilities) (driverExt *Drive
 		return nil, errors.Wrap(err, "failed to extend WebDriver")
 	}
 	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
-		"snapshotMaxDepth":          snapshotMaxDepth,
-		"acceptAlertButtonSelector": acceptAlertButtonSelector,
+		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
+		"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to set appium WDA settings")
