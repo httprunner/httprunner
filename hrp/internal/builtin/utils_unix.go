@@ -11,6 +11,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
 func isPython3(python string) bool {
@@ -80,7 +82,7 @@ func ExecCommand(cmdName string, args ...string) error {
 
 	// add cmd dir path to $PATH
 	if cmdDir := filepath.Dir(cmdName); cmdDir != "" {
-		PATH := fmt.Sprintf("%s:%s", cmdDir, os.Getenv("PATH"))
+		PATH := fmt.Sprintf("%s:%s", cmdDir, env.PATH)
 		if err := os.Setenv("PATH", PATH); err != nil {
 			log.Error().Err(err).Msg("set env $PATH failed")
 			return err

@@ -20,6 +20,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -170,7 +171,7 @@ func InstallPythonPackage(python3 string, pkg string) (err error) {
 	log.Info().Str("pkgName", pkgName).Str("pkgVersion", pkgVersion).Msg("installing python package")
 
 	// install package
-	pypiIndexURL := os.Getenv("PYPI_INDEX_URL")
+	pypiIndexURL := env.PYPI_INDEX_URL
 	if pypiIndexURL == "" {
 		pypiIndexURL = "https://pypi.org/simple" // default
 	}
@@ -494,7 +495,7 @@ func GetFileNameWithoutExtension(path string) string {
 }
 
 func Bytes2File(data []byte, filename string) error {
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0o755)
 	defer file.Close()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate file")

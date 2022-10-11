@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -55,7 +56,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
 	var driver WebDriver
 
-	if os.Getenv("WDA_USB_DRIVER") == "" {
+	if env.WDA_USB_DRIVER == "" {
 		// default use http driver
 		driver, err = iosDevice.NewHTTPDriver(capabilities)
 	} else {
