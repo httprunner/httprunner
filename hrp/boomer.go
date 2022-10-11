@@ -13,10 +13,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
 
 func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {

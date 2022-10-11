@@ -8,6 +8,7 @@ package messager
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -95,15 +96,16 @@ type MessageServer interface {
 }
 
 // UnimplementedMessageServer must be embedded to have forward compatible implementations.
-type UnimplementedMessageServer struct {
-}
+type UnimplementedMessageServer struct{}
 
 func (UnimplementedMessageServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
+
 func (UnimplementedMessageServer) SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignOut not implemented")
 }
+
 func (UnimplementedMessageServer) BidirectionalStreamingMessage(Message_BidirectionalStreamingMessageServer) error {
 	return status.Errorf(codes.Unimplemented, "method BidirectionalStreamingMessage not implemented")
 }

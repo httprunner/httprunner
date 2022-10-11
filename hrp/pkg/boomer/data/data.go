@@ -38,7 +38,6 @@ func init() {
 	}
 	hrpPath = filepath.Join(home, ".hrp")
 	_ = builtin.EnsureFolderExists(filepath.Join(hrpPath, "x509"))
-
 }
 
 // Path returns the absolute path the given relative file or directory path

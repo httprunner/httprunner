@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -15,10 +17,8 @@ import (
 	"google.golang.org/grpc/credentials/oauth"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/data"
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer/data"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer/grpc/messager"
 )
 
 type grpcClient struct {
@@ -247,7 +247,7 @@ func (c *grpcClient) recv() {
 			msg, err := c.config.getBiStreamClient().Recv()
 			if err != nil {
 				time.Sleep(1 * time.Second)
-				//log.Error().Err(err).Msg("failed to get message")
+				// log.Error().Err(err).Msg("failed to get message")
 				continue
 			}
 			if msg == nil {
@@ -317,7 +317,7 @@ func (c *grpcClient) sendMessage(msg *genericMessage) {
 		atomic.StoreInt32(&c.failCount, 0)
 		return
 	}
-	//log.Error().Err(err).Interface("genericMessage", *msg).Msg("failed to send message")
+	// log.Error().Err(err).Interface("genericMessage", *msg).Msg("failed to send message")
 	if msg.Type == "heartbeat" {
 		atomic.AddInt32(&c.failCount, 1)
 	}

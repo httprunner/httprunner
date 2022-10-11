@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -17,9 +18,8 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/data"
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer/data"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer/grpc/messager"
 )
 
 type WorkerNode struct {

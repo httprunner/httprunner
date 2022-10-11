@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer/grpc/messager"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer/grpc/messager"
 )
 
 type HitOutput struct {

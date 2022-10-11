@@ -110,7 +110,6 @@ func TestLogError(t *testing.T) {
 	if err400.occurrences != 2 {
 		t.Error("Error occurrences is wrong, expected: 2, got:", err400.occurrences)
 	}
-
 }
 
 func BenchmarkLogError(b *testing.B) {

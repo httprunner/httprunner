@@ -32,7 +32,6 @@ func TestRound(t *testing.T) {
 	if roundOne != roundTwo {
 		t.Error("round(58360) should be equal to round(58460)")
 	}
-
 }
 
 func TestGenMD5(t *testing.T) {
