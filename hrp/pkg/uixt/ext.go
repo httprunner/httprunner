@@ -55,8 +55,9 @@ const (
 	ACTION_Input       MobileMethod = "input"
 
 	// custom actions
-	ACTION_SwipeToTapApp  MobileMethod = "swipe_to_tap_app"  // swipe left & right to find app and tap
-	ACTION_SwipeToTapText MobileMethod = "swipe_to_tap_text" // swipe up & down to find text and tap
+	ACTION_SwipeToTapApp   MobileMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
+	ACTION_SwipeToTapText  MobileMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
+	ACTION_SwipeToTapTexts MobileMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 )
 
 type MobileAction struct {
@@ -401,17 +402,35 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
-		var point PointF
-		var findText func(d *DriverExt) error
-
 		if text, ok := action.Params.(string); ok {
-			findText = func(d *DriverExt) error {
+			var point PointF
+			findText := func(d *DriverExt) error {
 				var err error
 				point, err = d.GetTextXY(text, action.Index)
 				return err
 			}
-		} else if texts, ok := action.Params.([]interface{}); ok {
-			findText = func(d *DriverExt) error {
+			foundTextAction := func(d *DriverExt) error {
+				// tap text
+				return d.TapAbsXY(point.X, point.Y, action.Identifier)
+			}
+
+			// default to retry 10 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 10
+			}
+
+			if action.Direction != nil {
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+			}
+			// swipe until found
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+		}
+		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
+			ACTION_SwipeToTapText, action.Params)
+	case ACTION_SwipeToTapTexts:
+		if texts, ok := action.Params.([]interface{}); ok {
+			var point PointF
+			findText := func(d *DriverExt) error {
 				var err error
 				var ts []string
 				for _, t := range texts {
@@ -428,25 +447,24 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				}
 				return errors.New("failed to find text position")
 			}
-		} else {
-			return fmt.Errorf("invalid %s params, should be app text(string or []string), got %v",
-				ACTION_SwipeToTapText, action.Params)
-		}
+			foundTextAction := func(d *DriverExt) error {
+				// tap text
+				return d.TapAbsXY(point.X, point.Y, action.Identifier)
+			}
 
-		foundTextAction := func(d *DriverExt) error {
-			// tap text
-			return d.TapAbsXY(point.X, point.Y, action.Identifier)
-		}
+			// default to retry 10 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 10
+			}
 
-		// default to retry 10 times
-		if action.MaxRetryTimes == 0 {
-			action.MaxRetryTimes = 10
+			if action.Direction != nil {
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+			}
+			// swipe until found
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
 		}
-		if action.Direction != nil {
-			return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
-		}
-		// swipe until found
-		return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
+			ACTION_SwipeToTapText, action.Params)
 	case AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
 			success, err := dExt.Driver.AppTerminate(bundleId)
