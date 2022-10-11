@@ -468,7 +468,6 @@ type BySelector struct {
 	Name            string `json:"name"`
 	Id              string `json:"id"`
 	AccessibilityId string `json:"accessibility id"`
-	// isSearchByIdentifier
 
 	// partialSearch
 	LinkText        ElementAttribute `json:"link text"`
