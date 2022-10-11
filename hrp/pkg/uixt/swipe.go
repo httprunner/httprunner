@@ -72,14 +72,20 @@ type FindCondition func(driver *DriverExt) error
 // FoundAction indicates the action to do after a UI element is found
 type FoundAction func(driver *DriverExt) error
 
-func (dExt *DriverExt) SwipeUntil(direction string, condition FindCondition, action FoundAction, maxTimes int) error {
+func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition, action FoundAction, maxTimes int) error {
 	for i := 0; i < maxTimes; i++ {
 		if err := condition(dExt); err == nil {
 			// do action after found
 			return action(dExt)
 		}
-		if err := dExt.SwipeTo(direction); err != nil {
-			log.Error().Err(err).Msgf("swipe %s failed", direction)
+		if d, ok := direction.(string); ok {
+			if err := dExt.SwipeTo(d); err != nil {
+				log.Error().Err(err).Msgf("swipe %s failed", d)
+			}
+		} else if d, ok := direction.([]float64); ok {
+			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3]); err != nil {
+				log.Error().Err(err).Msgf("swipe %s failed", d)
+			}
 		}
 	}
 	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)

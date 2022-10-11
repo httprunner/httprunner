@@ -29,6 +29,7 @@ var (
 	WithText                = uixt.WithText
 	WithID                  = uixt.WithID
 	WithDescription         = uixt.WithDescription
+	WithDirection           = uixt.WithDirection
 )
 
 var (

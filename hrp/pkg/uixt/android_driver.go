@@ -693,7 +693,7 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 	}
 
 	var element WebElement
-	if valuetext, ok := data["text"]; ok {
+	if valuetext, ok := data["textview"]; ok {
 		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().TextContains(fmt.Sprintf("%v", valuetext)).String()})
 	} else if valueid, ok := data["id"]; ok {
 		element, err = ud.FindElement(BySelector{ResourceIdID: fmt.Sprintf("%v", valueid)})

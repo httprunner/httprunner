@@ -159,6 +159,48 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, index ...int) (
 	return rects[idx], nil
 }
 
+func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte) (rects map[string]image.Rectangle, err error) {
+	ocrResults, err := s.getOCRResult(imageBuf)
+	if err != nil {
+		log.Error().Err(err).Msg("getOCRResult failed")
+		return
+	}
+
+	var ocrTexts []string
+	rects = map[string]image.Rectangle{}
+
+	for _, text := range texts {
+		for _, ocrResult := range ocrResults {
+			ocrTexts = append(ocrTexts, ocrResult.Text)
+
+			// not contains text
+			if !strings.Contains(ocrResult.Text, text) {
+				continue
+			}
+
+			rect := image.Rectangle{
+				// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
+				Min: image.Point{
+					X: int(ocrResult.Points[0].X),
+					Y: int(ocrResult.Points[0].Y),
+				},
+				Max: image.Point{
+					X: int(ocrResult.Points[2].X),
+					Y: int(ocrResult.Points[2].Y),
+				},
+			}
+			rects[text] = rect
+			break
+		}
+
+		if _, ok := rects[text]; !ok {
+			rects[text] = image.Rectangle{}
+		}
+	}
+
+	return rects, nil
+}
+
 type OCRService interface {
 	FindText(text string, imageBuf []byte, index ...int) (rect image.Rectangle, err error)
 }
@@ -180,5 +222,34 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, index ...int) (x, y, width,
 
 	log.Info().Str("ocrText", ocrText).Msgf("FindText success")
 	x, y, width, height = dExt.MappingToRectInUIKit(rect)
+	return
+}
+
+func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string) (ps map[string][]float64, err error) {
+	var bufSource *bytes.Buffer
+	if bufSource, err = dExt.takeScreenShot(); err != nil {
+		err = fmt.Errorf("takeScreenShot error: %v", err)
+		return
+	}
+
+	service := &veDEMOCRService{}
+	rects, err := service.FindTexts(ocrTexts, bufSource.Bytes())
+	if err != nil {
+		log.Warn().Msgf("FindTexts failed: %s", err.Error())
+		err = fmt.Errorf("FindTexts failed: %v", err)
+		return
+	}
+
+	ps = map[string][]float64{}
+	log.Info().Interface("ocrTexts", ocrTexts).Msgf("FindTexts success")
+	for text, rect := range rects {
+		if rect == (image.Rectangle{}) {
+			ps[text] = []float64{}
+			continue
+		}
+		x, y, width, height := dExt.MappingToRectInUIKit(rect)
+		ps[text] = []float64{x, y, width, height}
+	}
+
 	return
 }
