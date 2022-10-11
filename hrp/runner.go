@@ -404,7 +404,7 @@ func (r *testCaseRunner) parseConfig() error {
 			iosDeviceConfig.UDID = udid.(string)
 		}
 		// switch to iOS springboard before init WDA session
-		// avoid getting stuck when some super app is activate such as douyin or wexin
+		// avoid getting stuck when some super app is active such as douyin or wexin
 		iosDeviceConfig.ResetHomeOnStartup = true
 		_, err := r.hrpRunner.initUIClient(iosDeviceConfig)
 		if err != nil {
