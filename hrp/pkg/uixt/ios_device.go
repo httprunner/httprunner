@@ -67,7 +67,7 @@ func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
 	}
 
 	// switch to iOS springboard before init WDA session
-	// aviod getting stuck when some super app is activate such as douyin or wexin
+	// avoid getting stuck when some super app is activate such as douyin or wexin
 	log.Info().Msg("go back to home screen")
 	if err = driver.Homescreen(); err != nil {
 		return nil, errors.Wrap(err, "failed to go back to home screen")
