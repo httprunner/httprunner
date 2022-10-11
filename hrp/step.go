@@ -30,6 +30,7 @@ var (
 	WithID                  = uixt.WithID
 	WithDescription         = uixt.WithDescription
 	WithDirection           = uixt.WithDirection
+	WithCustomDirection     = uixt.WithCustomDirection
 )
 
 var (
