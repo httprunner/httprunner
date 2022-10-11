@@ -7,7 +7,9 @@ import (
 )
 
 func TestSwipeUntil(t *testing.T) {
-	driverExt, err := InitWDAClient(nil)
+	device, err := NewIOSDevice()
+	checkErr(t, err)
+	driverExt, err := device.InitWDAClient()
 	checkErr(t, err)
 
 	var point PointF

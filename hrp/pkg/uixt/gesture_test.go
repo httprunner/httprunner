@@ -15,7 +15,9 @@ func TestDriverExt_GesturePassword(t *testing.T) {
 		password[i], _ = strconv.Atoi(split[i])
 	}
 
-	driverExt, err := InitWDAClient(nil)
+	device, err := NewIOSDevice()
+	checkErr(t, err)
+	driverExt, err := device.InitWDAClient()
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_5.png"

@@ -205,7 +205,7 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 	// wait for action done
 	time.Sleep(500 * time.Millisecond)
 
-	// 优先使用 MJPEG 流进行截图，性能最优
+	// iOS 优先使用 MJPEG 流进行截图，性能最优
 	// 如果 MJPEG 流未开启，则使用 WebDriver 的截图接口
 	if dExt.frame != nil {
 		return dExt.frame, nil
@@ -259,7 +259,7 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 	raw, err := dExt.takeScreenShot()
 	if err != nil {
-		return "", errors.Wrap(err, "screenshot by WDA failed")
+		return "", errors.Wrap(err, "screenshot failed")
 	}
 
 	path, err := dExt.saveScreenShot(raw, fileName)
