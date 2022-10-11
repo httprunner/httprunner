@@ -88,10 +88,17 @@ func WithIndex(index int) ActionOption {
 	}
 }
 
-// WithDirection inputs direction (up, down, left, right, []float64{sx, sy, ex, ey})
-func WithDirection(direction interface{}) ActionOption {
+// WithDirection inputs direction (up, down, left, right)
+func WithDirection(direction string) ActionOption {
 	return func(o *MobileAction) {
 		o.Direction = direction
+	}
+}
+
+// WithCustomDirection inputs sx, sy, ex, ey
+func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
+	return func(o *MobileAction) {
+		o.Direction = []float64{sx, sy, ex, ey}
 	}
 }
 
@@ -438,7 +445,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if action.Direction != nil {
 			return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
 		}
-		// swipe until live room found
+		// swipe until found
 		return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
 	case AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
