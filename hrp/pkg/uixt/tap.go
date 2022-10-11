@@ -41,6 +41,27 @@ func (dExt *DriverExt) GetTextXY(ocrText string, index ...int) (point PointF, er
 	return point, nil
 }
 
+func (dExt *DriverExt) GetTextXYs(ocrText []string) (points map[string]PointF, err error) {
+	ps, err := dExt.FindTextsByOCR(ocrText)
+	if err != nil {
+		return map[string]PointF{}, err
+	}
+
+	points = map[string]PointF{}
+	for text, point := range ps {
+		if len(point) == 0 {
+			points[text] = PointF{}
+			continue
+		}
+		points[text] = PointF{
+			X: point[0] + point[2]*0.5,
+			Y: point[1] + point[3]*0.5,
+		}
+	}
+
+	return points, nil
+}
+
 func (dExt *DriverExt) GetImageXY(imagePath string, index ...int) (point PointF, err error) {
 	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath, index...)
 	if err != nil {
