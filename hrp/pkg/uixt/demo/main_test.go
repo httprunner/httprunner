@@ -8,7 +8,10 @@ import (
 )
 
 func TestIOSDemo(t *testing.T) {
-	device, err := uixt.NewIOSDevice(uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800))
+	device, err := uixt.NewIOSDevice(
+		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
+		uixt.WithResetHomeOnStartup(false), // not reset home on startup
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
