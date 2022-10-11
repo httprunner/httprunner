@@ -211,6 +211,12 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			log.Error().Err(err).Msg("[Run] init session runner failed")
 			return err
 		}
+		// release UI driver session
+		defer func() {
+			for _, client := range sessionRunner.hrpRunner.uiClients {
+				client.Driver.DeleteSession()
+			}
+		}()
 
 		for it := sessionRunner.parametersIterator; it.HasNext(); {
 			err1 := sessionRunner.Start(it.Next())
