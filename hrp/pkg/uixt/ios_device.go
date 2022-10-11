@@ -25,9 +25,8 @@ import (
 )
 
 const (
-	defaultWDAPort            = 8100
-	defaultMjpegPort          = 9100
-	defaultResetHomeOnStartup = true
+	defaultWDAPort   = 8100
+	defaultMjpegPort = 9100
 )
 
 const (
@@ -132,7 +131,6 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	device = &IOSDevice{
 		Port:                       defaultWDAPort,
 		MjpegPort:                  defaultMjpegPort,
-		ResetHomeOnStartup:         defaultResetHomeOnStartup,
 		SnapshotMaxDepth:           snapshotMaxDepth,
 		AcceptAlertButtonSelector:  acceptAlertButtonSelector,
 		DismissAlertButtonSelector: dismissAlertButtonSelector,
@@ -163,9 +161,11 @@ type IOSDevice struct {
 	Port        int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	MjpegPort   int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn       bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+
 	// switch to iOS springboard before init WDA session
-	// avoid getting stuck when some super app is activate such as douyin or wexin
-	ResetHomeOnStartup         bool   `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
+	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
+
+	// config appium settings
 	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
 	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
 	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
