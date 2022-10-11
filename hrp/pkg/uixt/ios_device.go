@@ -29,7 +29,7 @@ const (
 	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
 	// but it might restrict the depth of source tree.
 	// A part of elements source tree might be lost if the value was too small. Defaults to 50
-	snapshotMaxDepth = 10
+	snapshotMaxDepth = 16
 	// Allows to customize accept/dismiss alert button selector.
 	// It helps you to handle an arbitrary element as accept button in accept alert command.
 	// The selector should be a valid class chain expression, where the search root is the alert element itself.
@@ -43,81 +43,6 @@ const (
 	defaultWDAPort   = 8100
 	defaultMjpegPort = 9100
 )
-
-func InitWDAClient(device *IOSDevice) (*DriverExt, error) {
-	// init wda device
-	iosDevice, err := NewIOSDevice(device.opitons()...)
-	if err != nil {
-		return nil, err
-	}
-
-	// init WDA driver
-	capabilities := NewCapabilities()
-	capabilities.WithDefaultAlertAction(AlertActionAccept)
-	var driver WebDriver
-
-	if env.WDA_USB_DRIVER == "" {
-		// default use http driver
-		driver, err = iosDevice.NewHTTPDriver(capabilities)
-	} else {
-		driver, err = iosDevice.NewUSBDriver(capabilities)
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to init WDA driver")
-	}
-
-	// switch to iOS springboard before init WDA session
-	// avoid getting stuck when some super app is activate such as douyin or wexin
-	log.Info().Msg("go back to home screen")
-	if err = driver.Homescreen(); err != nil {
-		return nil, errors.Wrap(err, "failed to go back to home screen")
-	}
-
-	driverExt, err := Extend(driver)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to extend WebDriver")
-	}
-	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
-		"snapshotMaxDepth":          snapshotMaxDepth,
-		"acceptAlertButtonSelector": acceptAlertButtonSelector,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set appium WDA settings")
-	}
-	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
-
-	if device.LogOn {
-		err = driverExt.Driver.StartCaptureLog("hrp_wda_log")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if device.PerfOptions != nil {
-		data, err := iosDevice.d.PerfStart(device.perfOpitons()...)
-		if err != nil {
-			return nil, err
-		}
-
-		driverExt.perfStop = make(chan struct{})
-		// start performance monitor
-		go func() {
-			for {
-				select {
-				case <-driverExt.perfStop:
-					iosDevice.d.PerfStop()
-					return
-				case d := <-data:
-					fmt.Println(string(d))
-					driverExt.perfData = append(driverExt.perfData, string(d))
-				}
-			}
-		}()
-	}
-
-	driverExt.UUID = iosDevice.UUID()
-	return driverExt, nil
-}
 
 type IOSDeviceOption func(*IOSDevice)
 
@@ -215,6 +140,94 @@ func (dev *IOSDevice) UUID() string {
 	return dev.UDID
 }
 
+func (dev *IOSDevice) NewDriver() (driverExt *DriverExt, err error) {
+	var deviceOptions []IOSDeviceOption
+	if dev.UDID != "" {
+		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
+	}
+	if dev.MjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+
+	iosDevice, err := NewIOSDevice(deviceOptions...)
+	if err != nil {
+		return nil, err
+	}
+	return iosDevice.InitWDAClient()
+}
+
+func (dev *IOSDevice) InitWDAClient() (driverExt *DriverExt, err error) {
+	// init WDA driver
+	capabilities := NewCapabilities()
+	capabilities.WithDefaultAlertAction(AlertActionAccept)
+	var driver WebDriver
+
+	if env.WDA_USB_DRIVER == "" {
+		// default use http driver
+		driver, err = dev.NewHTTPDriver(capabilities)
+	} else {
+		driver, err = dev.NewUSBDriver(capabilities)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to init WDA driver")
+	}
+
+	// switch to iOS springboard before init WDA session
+	// avoid getting stuck when some super app is activate such as douyin or wexin
+	log.Info().Msg("go back to home screen")
+	if err = driver.Homescreen(); err != nil {
+		return nil, errors.Wrap(err, "failed to go back to home screen")
+	}
+
+	driverExt, err = Extend(driver)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to extend WebDriver")
+	}
+	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
+		"snapshotMaxDepth":          snapshotMaxDepth,
+		"acceptAlertButtonSelector": acceptAlertButtonSelector,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to set appium WDA settings")
+	}
+	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
+
+	if dev.LogOn {
+		err = driverExt.Driver.StartCaptureLog("hrp_wda_log")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if dev.PerfOptions != nil {
+		data, err := dev.d.PerfStart(dev.perfOpitons()...)
+		if err != nil {
+			return nil, err
+		}
+
+		driverExt.perfStop = make(chan struct{})
+		// start performance monitor
+		go func() {
+			for {
+				select {
+				case <-driverExt.perfStop:
+					dev.d.PerfStop()
+					return
+				case d := <-data:
+					fmt.Println(string(d))
+					driverExt.perfData = append(driverExt.perfData, string(d))
+				}
+			}
+		}()
+	}
+
+	driverExt.UUID = dev.UUID()
+	return driverExt, nil
+}
+
 func (dev *IOSDevice) forward(localPort, remotePort int) error {
 	log.Info().Int("localPort", localPort).Int("remotePort", remotePort).
 		Str("udid", dev.UDID).Msg("forward tcp port")
@@ -258,19 +271,6 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 	}(listener, dev.d)
 
 	return nil
-}
-
-func (dev *IOSDevice) opitons() (deviceOptions []IOSDeviceOption) {
-	if dev.UDID != "" {
-		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
-	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
-	}
-	if dev.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
-	}
-	return
 }
 
 func (dev *IOSDevice) perfOpitons() (perfOptions []giDevice.PerfOption) {

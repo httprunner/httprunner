@@ -1,4 +1,4 @@
-package uixt
+package demo
 
 import (
 	"testing"
@@ -7,12 +7,12 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-func TestDemo(t *testing.T) {
+func TestIOSDemo(t *testing.T) {
 	device, err := uixt.NewIOSDevice(uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800))
 	if err != nil {
 		t.Fatal(err)
 	}
-	driverExt, err := uixt.InitWDAClient(device)
+	driverExt, err := device.InitWDAClient()
 	if err != nil {
 		t.Fatal(err)
 	}

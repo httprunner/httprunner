@@ -27,48 +27,6 @@ var (
 
 const forwardToPrefix = "forward-to-"
 
-func InitUIAClient(device *AndroidDevice) (*DriverExt, error) {
-	var deviceOptions []AndroidDeviceOption
-	if device.SerialNumber != "" {
-		deviceOptions = append(deviceOptions, WithSerialNumber(device.SerialNumber))
-	}
-	if device.IP != "" {
-		deviceOptions = append(deviceOptions, WithAdbIP(device.IP))
-	}
-	if device.Port != 0 {
-		deviceOptions = append(deviceOptions, WithAdbPort(device.Port))
-	}
-
-	// init uia device
-	androidDevice, err := NewAndroidDevice(deviceOptions...)
-	if err != nil {
-		return nil, err
-	}
-
-	driver, err := androidDevice.NewUSBDriver(nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to init UIA driver")
-	}
-	fmt.Println(driver)
-
-	var driverExt *DriverExt
-
-	driverExt, err = Extend(driver)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to extend UIA Driver")
-	}
-
-	if device.LogOn {
-		err = driverExt.Driver.StartCaptureLog("hrp_adb_log")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	driverExt.UUID = androidDevice.UUID()
-	return driverExt, err
-}
-
 type AndroidDeviceOption func(*AndroidDevice)
 
 func WithSerialNumber(serial string) AndroidDeviceOption {
@@ -125,6 +83,15 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	return nil, fmt.Errorf("device %s not found", device.SerialNumber)
 }
 
+func DeviceList() (devices []gadb.Device, err error) {
+	var adbClient gadb.Client
+	if adbClient, err = gadb.NewClientWith(AdbServerHost, AdbServerPort); err != nil {
+		return nil, err
+	}
+
+	return adbClient.DeviceList()
+}
+
 type AndroidDevice struct {
 	d            gadb.Device
 	logcat       *DeviceLogcat
@@ -135,17 +102,52 @@ type AndroidDevice struct {
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
-func (o AndroidDevice) UUID() string {
-	return o.SerialNumber
+func (dev *AndroidDevice) UUID() string {
+	return dev.SerialNumber
 }
 
-func DeviceList() (devices []gadb.Device, err error) {
-	var adbClient gadb.Client
-	if adbClient, err = gadb.NewClientWith(AdbServerHost, AdbServerPort); err != nil {
-		return nil, err
+func (dev *AndroidDevice) NewDriver() (driverExt *DriverExt, err error) {
+	var deviceOptions []AndroidDeviceOption
+	if dev.SerialNumber != "" {
+		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
+	}
+	if dev.IP != "" {
+		deviceOptions = append(deviceOptions, WithAdbIP(dev.IP))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithAdbPort(dev.Port))
 	}
 
-	return adbClient.DeviceList()
+	androidDevice, err := NewAndroidDevice(deviceOptions...)
+	if err != nil {
+		return nil, err
+	}
+	return androidDevice.InitUIAClient()
+}
+
+func (dev *AndroidDevice) InitUIAClient() (*DriverExt, error) {
+	driver, err := dev.NewUSBDriver(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to init UIA driver")
+	}
+	fmt.Println(driver)
+
+	var driverExt *DriverExt
+
+	driverExt, err = Extend(driver)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to extend UIA Driver")
+	}
+
+	if dev.LogOn {
+		err = driverExt.Driver.StartCaptureLog("hrp_adb_log")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	driverExt.UUID = dev.UUID()
+	return driverExt, err
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
@@ -255,6 +257,7 @@ func (l *DeviceLogcat) Errors() (err error) {
 func (l *DeviceLogcat) CatchLogcat() (err error) {
 	if l.cmd != nil {
 		err = fmt.Errorf("logcat already start")
+		return
 	}
 	cmdLine := fmt.Sprintf("adb -s %s logcat -c && adb -s %s logcat -v time -s iesqaMonitor:V", l.serial, l.serial)
 	l.cmd = builtin.Command(cmdLine)

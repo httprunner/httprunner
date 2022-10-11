@@ -503,11 +503,7 @@ func (r *HRPRunner) initUIClient(device uixt.Device) (client *uixt.DriverExt, er
 		}
 	}
 
-	if iosDevice, ok := device.(*uixt.IOSDevice); ok {
-		client, err = uixt.InitWDAClient(iosDevice)
-	} else if androidDevice, ok := device.(*uixt.AndroidDevice); ok {
-		client, err = uixt.InitUIAClient(androidDevice)
-	}
+	client, err = device.NewDriver()
 	if err != nil {
 		return nil, err
 	}

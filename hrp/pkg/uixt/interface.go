@@ -802,6 +802,7 @@ func WithFrequency(frequency int) DataOption {
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
 	UUID() string
+	NewDriver() (driverExt *DriverExt, err error)
 }
 
 // WebDriver defines methods supported by WebDriver drivers.

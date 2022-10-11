@@ -7,7 +7,9 @@ import (
 )
 
 func TestDriverExt_Drag(t *testing.T) {
-	driverExt, err := InitWDAClient(nil)
+	device, err := NewIOSDevice()
+	checkErr(t, err)
+	driverExt, err := device.InitWDAClient()
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_map.png"
