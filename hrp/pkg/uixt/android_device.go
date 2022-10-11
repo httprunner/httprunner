@@ -106,7 +106,7 @@ func (dev *AndroidDevice) UUID() string {
 	return dev.SerialNumber
 }
 
-func (dev *AndroidDevice) NewDriver() (driverExt *DriverExt, err error) {
+func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	var deviceOptions []AndroidDeviceOption
 	if dev.SerialNumber != "" {
 		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
@@ -122,11 +122,11 @@ func (dev *AndroidDevice) NewDriver() (driverExt *DriverExt, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return androidDevice.InitUIAClient()
+	return androidDevice.initUIAClient(capabilities)
 }
 
-func (dev *AndroidDevice) InitUIAClient() (*DriverExt, error) {
-	driver, err := dev.NewUSBDriver(nil)
+func (dev *AndroidDevice) initUIAClient(capabilities Capabilities) (*DriverExt, error) {
+	driver, err := dev.NewUSBDriver(capabilities)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}

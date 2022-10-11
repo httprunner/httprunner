@@ -7,9 +7,7 @@ import (
 )
 
 func TestDriverExt_ForceTouch(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_ft.png"
@@ -25,9 +23,7 @@ func TestDriverExt_ForceTouch(t *testing.T) {
 }
 
 func TestDriverExt_TouchAndHold(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_ft.png"

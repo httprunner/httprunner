@@ -7,9 +7,7 @@ import (
 )
 
 func TestDriverExtOCR(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	x, y, width, height, err := driverExt.FindTextByOCR("抖音")

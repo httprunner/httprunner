@@ -140,7 +140,7 @@ func (dev *IOSDevice) UUID() string {
 	return dev.UDID
 }
 
-func (dev *IOSDevice) NewDriver() (driverExt *DriverExt, err error) {
+func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	var deviceOptions []IOSDeviceOption
 	if dev.UDID != "" {
 		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
@@ -156,15 +156,17 @@ func (dev *IOSDevice) NewDriver() (driverExt *DriverExt, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return iosDevice.InitWDAClient()
+	return iosDevice.initWDAClient(capabilities)
 }
 
-func (dev *IOSDevice) InitWDAClient() (driverExt *DriverExt, err error) {
+func (dev *IOSDevice) initWDAClient(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	// init WDA driver
-	capabilities := NewCapabilities()
-	capabilities.WithDefaultAlertAction(AlertActionAccept)
-	var driver WebDriver
+	if capabilities == nil {
+		capabilities = NewCapabilities()
+		capabilities.WithDefaultAlertAction(AlertActionAccept)
+	}
 
+	var driver WebDriver
 	if env.WDA_USB_DRIVER == "" {
 		// default use http driver
 		driver, err = dev.NewHTTPDriver(capabilities)

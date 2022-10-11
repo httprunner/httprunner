@@ -6,10 +6,14 @@ import (
 	"testing"
 )
 
+var iosDevice *IOSDevice
+
+func init() {
+	iosDevice, _ = NewIOSDevice()
+}
+
 func TestDriverExt_TapWithNumber(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/flag7.png"
@@ -22,9 +26,7 @@ func TestDriverExt_TapWithNumber(t *testing.T) {
 }
 
 func TestDriverExt_TapXY(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	err = driverExt.TapXY(0.4, 0.5, "")
@@ -32,9 +34,7 @@ func TestDriverExt_TapXY(t *testing.T) {
 }
 
 func TestDriverExt_TapAbsXY(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	err = driverExt.TapAbsXY(100, 300, "")
@@ -42,9 +42,7 @@ func TestDriverExt_TapAbsXY(t *testing.T) {
 }
 
 func TestDriverExt_TapWithOCR(t *testing.T) {
-	device, err := NewIOSDevice()
-	checkErr(t, err)
-	driverExt, err := device.InitWDAClient()
+	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
 	// 需要点击文字上方的图标
