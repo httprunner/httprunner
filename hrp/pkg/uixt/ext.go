@@ -55,22 +55,24 @@ const (
 	ACTION_Input       MobileMethod = "input"
 
 	// custom actions
-	ACTION_SwipeToTapApp  MobileMethod = "swipe_to_tap_app"  // swipe left & right to find app and tap
-	ACTION_SwipeToTapText MobileMethod = "swipe_to_tap_text" // swipe up & down to find text and tap
+	ACTION_SwipeToTapApp   MobileMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
+	ACTION_SwipeToTapText  MobileMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
+	ACTION_SwipeToTapTexts MobileMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 )
 
 type MobileAction struct {
 	Method MobileMethod `json:"method,omitempty" yaml:"method,omitempty"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
 
-	Identifier          string `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
-	MaxRetryTimes       int    `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
-	Index               int    `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
-	Timeout             int    `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
-	IgnoreNotFoundError bool   `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
-	Text                string `json:"text,omitempty" yaml:"text,omitempty"`
-	ID                  string `json:"id,omitempty" yaml:"id,omitempty"`
-	Description         string `json:"description,omitempty" yaml:"description,omitempty"`
+	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
+	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
+	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
+	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
+	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
+	Text                string      `json:"text,omitempty" yaml:"text,omitempty"`
+	ID                  string      `json:"id,omitempty" yaml:"id,omitempty"`
+	Description         string      `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type ActionOption func(o *MobileAction)
@@ -84,6 +86,20 @@ func WithIdentifier(identifier string) ActionOption {
 func WithIndex(index int) ActionOption {
 	return func(o *MobileAction) {
 		o.Index = index
+	}
+}
+
+// WithDirection inputs direction (up, down, left, right)
+func WithDirection(direction string) ActionOption {
+	return func(o *MobileAction) {
+		o.Direction = direction
+	}
+}
+
+// WithCustomDirection inputs sx, sy, ex, ey
+func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
+	return func(o *MobileAction) {
+		o.Direction = []float64{sx, sy, ex, ey}
 	}
 }
 
@@ -363,7 +379,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundAppAction := func(d *DriverExt) error {
 				// click app to launch
-				return d.TapAbsXY(point.X, point.Y-20, action.Identifier)
+				return d.TapAbsXY(point.X, point.Y-25, action.Identifier)
 			}
 
 			// go to home screen
@@ -402,10 +418,52 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			if action.MaxRetryTimes == 0 {
 				action.MaxRetryTimes = 10
 			}
-			// swipe until live room found
+
+			if action.Direction != nil {
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+			}
+			// swipe until found
 			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
+			ACTION_SwipeToTapText, action.Params)
+	case ACTION_SwipeToTapTexts:
+		if texts, ok := action.Params.([]interface{}); ok {
+			var point PointF
+			findText := func(d *DriverExt) error {
+				var err error
+				var ts []string
+				for _, t := range texts {
+					ts = append(ts, t.(string))
+				}
+				points, err := d.GetTextXYs(ts)
+				if err != nil {
+					return err
+				}
+				for _, point = range points {
+					if point != (PointF{}) {
+						return nil
+					}
+				}
+				return errors.New("failed to find text position")
+			}
+			foundTextAction := func(d *DriverExt) error {
+				// tap text
+				return d.TapAbsXY(point.X, point.Y, action.Identifier)
+			}
+
+			// default to retry 10 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 10
+			}
+
+			if action.Direction != nil {
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+			}
+			// swipe until found
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+		}
+		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
 	case AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
@@ -497,7 +555,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		param := fmt.Sprintf("%v", action.Params)
 		options := []DataOption{}
 		if action.Text != "" {
-			options = append(options, WithCustomOption("text", action.Text))
+			options = append(options, WithCustomOption("textview", action.Text))
 		}
 		if action.ID != "" {
 			options = append(options, WithCustomOption("id", action.ID))
