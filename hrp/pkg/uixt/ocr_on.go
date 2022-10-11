@@ -4,17 +4,18 @@ package uixt
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"image"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -55,8 +56,12 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 		return nil, fmt.Errorf("close body writer error: %v", err)
 	}
 
-	url, _ := base64.StdEncoding.DecodeString("aHR0cHM6Ly9ndGZ0YXNrLmJ5dGVkYW5jZS5jb20vYXBpL3YxL2FsZ29yaXRobS9vY3I=")
-	req, err := http.NewRequest("POST", string(url), bodyBuf)
+	if env.VEDEM_OCR_URL == "" {
+		log.Error().Msg("VEDEM_OCR_URL env missed for OCR service")
+		os.Exit(1)
+	}
+
+	req, err := http.NewRequest("POST", env.VEDEM_OCR_URL, bodyBuf)
 	if err != nil {
 		return nil, fmt.Errorf("construct request error: %v", err)
 	}
