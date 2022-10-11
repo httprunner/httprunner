@@ -324,6 +324,18 @@ func (s *StepAndroid) SwipeToTapText(text string, options ...uixt.ActionOption) 
 	return &StepAndroid{step: s.step}
 }
 
+func (s *StepAndroid) SwipeToTapFromTexts(texts []string, options ...uixt.ActionOption) *StepAndroid {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_SwipeToTapText,
+		Params: texts,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.step.Android.Actions = append(s.step.Android.Actions, action)
+	return &StepAndroid{step: s.step}
+}
+
 // Validate switches to step validation.
 func (s *StepAndroid) Validate() *StepAndroidValidation {
 	return &StepAndroidValidation{
