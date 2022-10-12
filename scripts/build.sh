@@ -4,10 +4,10 @@
 
 # Usage:
 # $ make build
-# $ make build tags=ocr
+# $ make build tags=opencv
 # or
 # $ bash scripts/build.sh
-# $ bash scripts/build.sh ocr
+# $ bash scripts/build.sh opencv
 
 set -e
 set -x
@@ -16,7 +16,7 @@ set -x
 mkdir -p "output"
 bin_path="output/hrp"
 
-# optional build tags: opencv ocr
+# optional build tags: opencv
 tags=$1
 
 # build

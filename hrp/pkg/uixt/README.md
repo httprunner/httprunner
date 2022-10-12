@@ -26,11 +26,11 @@ You can get more installation introduction on [hybridgroup/gocv].
 
 ### OCR
 
-OCR API is a paid service, you need to pre-purchase and configure the account key.
+OCR API is a paid service, you need to pre-purchase and configure the environment variables.
 
-```bash
-$ make build tags=ocr
-```
+- VEDEM_OCR_URL
+- VEDEM_OCR_AK
+- VEDEM_OCR_SK
 
 ## Thanks
 
