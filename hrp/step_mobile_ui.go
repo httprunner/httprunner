@@ -575,6 +575,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// init wda/uia driver
 	uiDriver, err := s.hrpRunner.initUIClient(mobileStep.Serial, osType)
+
 	if err != nil {
 		return
 	}
