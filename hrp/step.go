@@ -71,8 +71,8 @@ type TStep struct {
 	Rendezvous    *Rendezvous            `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
 	ThinkTime     *ThinkTime             `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocket     *WebSocketAction       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
-	Android       *AndroidStep           `json:"android,omitempty" yaml:"android,omitempty"`
-	IOS           *IOSStep               `json:"ios,omitempty" yaml:"ios,omitempty"`
+	Android       *MobileStep            `json:"android,omitempty" yaml:"android,omitempty"`
+	IOS           *MobileStep            `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`

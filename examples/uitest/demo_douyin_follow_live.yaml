@@ -3,8 +3,8 @@ config:
     variables:
         app_name: 抖音
     ios:
-        - port: 8100
-          mjpeg_port: 9100
+        - port: 8700
+          mjpeg_port: 8800
           log_on: true
 teststeps:
     - name: 启动抖音

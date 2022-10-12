@@ -261,11 +261,11 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 				step: step,
 			})
 		} else if step.IOS != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepIOS{
+			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
 				step: step,
 			})
 		} else if step.Android != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepAndroid{
+			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
 				step: step,
 			})
 		} else {
