@@ -53,6 +53,19 @@ func WithAdbLogOn(logOn bool) AndroidDeviceOption {
 	}
 }
 
+func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceOption) {
+	if dev.SerialNumber != "" {
+		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
+	}
+	if dev.IP != "" {
+		deviceOptions = append(deviceOptions, WithAdbIP(dev.IP))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithAdbPort(dev.Port))
+	}
+	return
+}
+
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
 	deviceList, err := DeviceList()
 	if err != nil {
@@ -107,32 +120,10 @@ func (dev *AndroidDevice) UUID() string {
 }
 
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
-	var deviceOptions []AndroidDeviceOption
-	if dev.SerialNumber != "" {
-		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
-	}
-	if dev.IP != "" {
-		deviceOptions = append(deviceOptions, WithAdbIP(dev.IP))
-	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithAdbPort(dev.Port))
-	}
-
-	androidDevice, err := NewAndroidDevice(deviceOptions...)
-	if err != nil {
-		return nil, err
-	}
-	return androidDevice.initUIAClient(capabilities)
-}
-
-func (dev *AndroidDevice) initUIAClient(capabilities Capabilities) (*DriverExt, error) {
 	driver, err := dev.NewUSBDriver(capabilities)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
-	fmt.Println(driver)
-
-	var driverExt *DriverExt
 
 	driverExt, err = Extend(driver)
 	if err != nil {

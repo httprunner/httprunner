@@ -395,6 +395,9 @@ func (r *testCaseRunner) parseConfig() error {
 	r.parametersIterator = parametersIterator
 
 	// init iOS/Android clients
+	if r.hrpRunner.uiClients == nil {
+		r.hrpRunner.uiClients = make(map[string]*uixt.DriverExt)
+	}
 	for _, iosDeviceConfig := range r.parsedConfig.IOS {
 		if iosDeviceConfig.UDID != "" {
 			udid, err := r.parser.ParseString(iosDeviceConfig.UDID, parsedVariables)
@@ -403,13 +406,16 @@ func (r *testCaseRunner) parseConfig() error {
 			}
 			iosDeviceConfig.UDID = udid.(string)
 		}
-		// switch to iOS springboard before init WDA session
-		// avoid getting stuck when some super app is active such as douyin or wexin
-		iosDeviceConfig.ResetHomeOnStartup = true
-		_, err := r.hrpRunner.initUIClient(iosDeviceConfig)
+
+		device, err := uixt.NewIOSDevice(uixt.GetIOSDeviceOptions(iosDeviceConfig)...)
+		if err != nil {
+			return errors.Wrap(err, "init iOS device failed")
+		}
+		client, err := device.NewDriver(nil)
 		if err != nil {
 			return errors.Wrap(err, "init iOS WDA client failed")
 		}
+		r.hrpRunner.uiClients[device.UDID] = client
 	}
 	for _, androidDeviceConfig := range r.parsedConfig.Android {
 		if androidDeviceConfig.SerialNumber != "" {
@@ -419,10 +425,15 @@ func (r *testCaseRunner) parseConfig() error {
 			}
 			androidDeviceConfig.SerialNumber = sn.(string)
 		}
-		_, err := r.hrpRunner.initUIClient(androidDeviceConfig)
+		device, err := uixt.NewAndroidDevice(uixt.GetAndroidDeviceOptions(androidDeviceConfig)...)
+		if err != nil {
+			return errors.Wrap(err, "init iOS device failed")
+		}
+		client, err := device.NewDriver(nil)
 		if err != nil {
 			return errors.Wrap(err, "init Android UIAutomator client failed")
 		}
+		r.hrpRunner.uiClients[device.SerialNumber] = client
 	}
 
 	return nil
