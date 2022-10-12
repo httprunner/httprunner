@@ -3,6 +3,8 @@ package builtin
 import (
 	"bufio"
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/csv"
 	builtinJSON "encoding/json"
@@ -15,6 +17,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -564,4 +567,19 @@ func SplitInteger(m, n int) (ints []int) {
 		}
 	}
 	return
+}
+
+func sha256HMAC(key []byte, data []byte) []byte {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	return []byte(fmt.Sprintf("%x", mac.Sum(nil)))
+}
+
+// ver: auth-v1or auth-v2
+func Sign(ver string, ak string, sk string, body []byte) string {
+	expiration := 1800
+	signKeyInfo := fmt.Sprintf("%s/%s/%d/%d", ver, ak, time.Now().Unix(), expiration)
+	signKey := sha256HMAC([]byte(sk), []byte(signKeyInfo))
+	signResult := sha256HMAC(signKey, body)
+	return fmt.Sprintf("%v/%v", signKeyInfo, string(signResult))
 }
