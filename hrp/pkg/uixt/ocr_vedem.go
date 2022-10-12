@@ -1,5 +1,3 @@
-//go:build ocr
-
 package uixt
 
 import (
@@ -159,25 +157,22 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, index ...int) (
 	return rects[idx], nil
 }
 
-func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte) (rects map[string]image.Rectangle, err error) {
+func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte) (rects []image.Rectangle, err error) {
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
 		log.Error().Err(err).Msg("getOCRResult failed")
 		return
 	}
 
-	var ocrTexts []string
-	rects = map[string]image.Rectangle{}
-
 	for _, text := range texts {
+		var found bool
 		for _, ocrResult := range ocrResults {
-			ocrTexts = append(ocrTexts, ocrResult.Text)
-
 			// not contains text
 			if !strings.Contains(ocrResult.Text, text) {
 				continue
 			}
 
+			found = true
 			rect := image.Rectangle{
 				// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
 				Min: image.Point{
@@ -189,12 +184,11 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte) (rects map[
 					Y: int(ocrResult.Points[2].Y),
 				},
 			}
-			rects[text] = rect
+			rects = append(rects, rect)
 			break
 		}
-
-		if _, ok := rects[text]; !ok {
-			rects[text] = image.Rectangle{}
+		if !found {
+			rects = append(rects, image.Rectangle{})
 		}
 	}
 
@@ -220,12 +214,13 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, index ...int) (x, y, width,
 		return
 	}
 
-	log.Info().Str("ocrText", ocrText).Msgf("FindText success")
+	log.Info().Str("ocrText", ocrText).
+		Interface("rect", rect).Msgf("FindTextByOCR success")
 	x, y, width, height = dExt.MappingToRectInUIKit(rect)
 	return
 }
 
-func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string) (ps map[string][]float64, err error) {
+func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string) (points [][]float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
 		err = fmt.Errorf("takeScreenShot error: %v", err)
@@ -240,15 +235,11 @@ func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string) (ps map[string][]float6
 		return
 	}
 
-	ps = map[string][]float64{}
-	log.Info().Interface("ocrTexts", ocrTexts).Msgf("FindTexts success")
-	for text, rect := range rects {
-		if rect == (image.Rectangle{}) {
-			ps[text] = []float64{}
-			continue
-		}
+	log.Info().Interface("ocrTexts", ocrTexts).
+		Interface("rects", rects).Msgf("FindTextsByOCR success")
+	for _, rect := range rects {
 		x, y, width, height := dExt.MappingToRectInUIKit(rect)
-		ps[text] = []float64{x, y, width, height}
+		points = append(points, []float64{x, y, width, height})
 	}
 
 	return

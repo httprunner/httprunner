@@ -41,22 +41,18 @@ func (dExt *DriverExt) GetTextXY(ocrText string, index ...int) (point PointF, er
 	return point, nil
 }
 
-func (dExt *DriverExt) GetTextXYs(ocrText []string) (points map[string]PointF, err error) {
+func (dExt *DriverExt) GetTextXYs(ocrText []string) (points []PointF, err error) {
 	ps, err := dExt.FindTextsByOCR(ocrText)
 	if err != nil {
-		return map[string]PointF{}, err
+		return nil, err
 	}
 
-	points = map[string]PointF{}
-	for text, point := range ps {
-		if len(point) == 0 {
-			points[text] = PointF{}
-			continue
-		}
-		points[text] = PointF{
+	for _, point := range ps {
+		pointF := PointF{
 			X: point[0] + point[2]*0.5,
 			Y: point[1] + point[3]*0.5,
 		}
+		points = append(points, pointF)
 	}
 
 	return points, nil
