@@ -16,8 +16,8 @@ func TestIOSDouyinFollowLive(t *testing.T) {
 			}).
 			SetIOS(
 				hrp.WithLogOn(true),
-				hrp.WithWDAPort(8100),
-				hrp.WithWDAMjpegPort(9100),
+				hrp.WithWDAPort(8700),
+				hrp.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").

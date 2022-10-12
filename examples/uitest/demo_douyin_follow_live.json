@@ -6,8 +6,8 @@
         },
         "ios": [
             {
-                "port": 8100,
-                "mjpeg_port": 9100,
+                "port": 8700,
+                "mjpeg_port": 8800,
                 "log_on": true
             }
         ]

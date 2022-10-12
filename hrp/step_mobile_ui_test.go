@@ -8,7 +8,8 @@ import (
 
 func TestIOSSettingsAction(t *testing.T) {
 	testCase := &TestCase{
-		Config: NewConfig("ios ui action on Settings"),
+		Config: NewConfig("ios ui action on Settings").
+			SetIOS(WithWDAPort(8700), WithWDAMjpegPort(8800)),
 		TestSteps: []IStep{
 			NewStep("launch Settings").
 				IOS().Home().Tap("设置").
@@ -47,7 +48,7 @@ func TestIOSSearchApp(t *testing.T) {
 func TestIOSAppLaunch(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("启动 & 关闭 App").
-			SetIOS(WithWDAPort(8100), WithWDAMjpegPort(9100)),
+			SetIOS(WithWDAPort(8700), WithWDAMjpegPort(8800)),
 		TestSteps: []IStep{
 			NewStep("终止今日头条").
 				IOS().AppTerminate("com.ss.iphone.article.News"),
@@ -154,6 +155,25 @@ func TestIOSDouyinAction(t *testing.T) {
 				AssertLabelExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
 				IOS().SwipeUp().Times(3).SwipeDown(),
+		},
+	}
+	err := NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAndroidAction(t *testing.T) {
+	testCase := &TestCase{
+		Config: NewConfig("android ui action"),
+		TestSteps: []IStep{
+			NewStep("launch douyin").
+				Android().Serial("xxx").Tap("抖音").
+				Validate().
+				AssertNameExists("首页", "首页 tab 不存在").
+				AssertNameExists("消息", "消息 tab 不存在"),
+			NewStep("swipe up and down").
+				Android().Serial("xxx").SwipeUp().SwipeUp().SwipeDown(),
 		},
 	}
 	err := NewRunner(t).Run(testCase)

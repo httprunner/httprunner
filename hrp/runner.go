@@ -406,7 +406,6 @@ func (r *testCaseRunner) parseConfig() error {
 			}
 			iosDeviceConfig.UDID = udid.(string)
 		}
-
 		device, err := uixt.NewIOSDevice(uixt.GetIOSDeviceOptions(iosDeviceConfig)...)
 		if err != nil {
 			return errors.Wrap(err, "init iOS device failed")
