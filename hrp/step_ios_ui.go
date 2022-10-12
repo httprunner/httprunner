@@ -490,33 +490,18 @@ func (s *StepIOSValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepIOS(r, s.step)
 }
 
-func (r *HRPRunner) initUIClient(device uixt.Device) (client *uixt.DriverExt, err error) {
-	uuid := device.UUID()
-
-	// avoid duplicate init
+func (r *HRPRunner) getUIDriver(uuid string) (client *uixt.DriverExt, err error) {
 	if uuid == "" && len(r.uiClients) > 0 {
 		for _, v := range r.uiClients {
 			return v, nil
 		}
 	}
 
-	// avoid duplicate init
-	if uuid != "" {
-		if client, ok := r.uiClients[uuid]; ok {
-			return client, nil
-		}
+	client, ok := r.uiClients[uuid]
+	if !ok {
+		err = fmt.Errorf("driver not found for device %s", uuid)
+		return
 	}
-
-	client, err = device.NewDriver(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// cache wda client
-	if r.uiClients == nil {
-		r.uiClients = make(map[string]*uixt.DriverExt)
-	}
-	r.uiClients[client.UUID] = client
 
 	return client, nil
 }
@@ -538,16 +523,17 @@ func runStepIOS(s *SessionRunner, step *TStep) (stepResult *StepResult, err erro
 	parser := s.GetParser()
 
 	// parse device udid
-	if step.IOS.IOSDevice.UDID != "" {
-		udid, err := parser.ParseString(step.IOS.IOSDevice.UDID, stepVariables)
+	udid := step.IOS.IOSDevice.UDID
+	if udid != "" {
+		sn, err := parser.ParseString(udid, stepVariables)
 		if err != nil {
 			return stepResult, err
 		}
-		step.IOS.IOSDevice.UDID = udid.(string)
+		udid = sn.(string)
 	}
 
 	// init wdaClient driver
-	wdaClient, err := s.hrpRunner.initUIClient(&step.IOS.IOSDevice)
+	wdaClient, err := s.hrpRunner.getUIDriver(udid)
 	if err != nil {
 		return
 	}

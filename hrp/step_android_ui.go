@@ -517,17 +517,19 @@ func runStepAndroid(s *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	parser := s.GetParser()
 
 	// parse device serial
-	if step.Android.AndroidDevice.SerialNumber != "" {
-		sn, err := parser.ParseString(step.Android.AndroidDevice.SerialNumber, stepVariables)
+	serial := step.Android.AndroidDevice.SerialNumber
+	if serial != "" {
+		sn, err := parser.ParseString(serial, stepVariables)
 		if err != nil {
 			return stepResult, err
 		}
-		step.Android.AndroidDevice.SerialNumber = sn.(string)
+		serial = sn.(string)
 	}
 
-	// init uiaClient driver
-	uiaClient, err := s.hrpRunner.initUIClient(&step.Android.AndroidDevice)
-	if err != nil {
+	// get uiaClient driver
+	uiaClient, ok := s.hrpRunner.uiClients[serial]
+	if !ok {
+		err = fmt.Errorf("uia client not found for device %s", serial)
 		return
 	}
 	uiaClient.StartTime = s.startTime

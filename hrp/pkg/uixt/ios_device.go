@@ -127,6 +127,37 @@ func IOSDevices(udid ...string) (devices []giDevice.Device, err error) {
 	return deviceList, nil
 }
 
+func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
+	if dev.UDID != "" {
+		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
+	}
+	if dev.MjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithLogOn(true))
+	}
+	if dev.PerfOptions != nil {
+		deviceOptions = append(deviceOptions, WithPerfOptions(dev.perfOpitons()...))
+	}
+	if dev.ResetHomeOnStartup {
+		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
+	}
+	if dev.SnapshotMaxDepth != 0 {
+		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
+	}
+	if dev.AcceptAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
+	}
+	if dev.DismissAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.DismissAlertButtonSelector))
+	}
+	return
+}
+
 func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	device = &IOSDevice{
 		Port:                       defaultWDAPort,
@@ -134,6 +165,9 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		SnapshotMaxDepth:           snapshotMaxDepth,
 		AcceptAlertButtonSelector:  acceptAlertButtonSelector,
 		DismissAlertButtonSelector: dismissAlertButtonSelector,
+		// switch to iOS springboard before init WDA session
+		// avoid getting stuck when some super app is active such as douyin or wexin
+		ResetHomeOnStartup: true,
 	}
 	for _, option := range options {
 		option(device)
@@ -176,40 +210,6 @@ func (dev *IOSDevice) UUID() string {
 }
 
 func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
-	var deviceOptions []IOSDeviceOption
-	if dev.UDID != "" {
-		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
-	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
-	}
-	if dev.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithLogOn(true))
-	}
-	if dev.ResetHomeOnStartup {
-		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
-	}
-	if dev.SnapshotMaxDepth != 0 {
-		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
-	}
-	if dev.AcceptAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
-	}
-	if dev.DismissAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.DismissAlertButtonSelector))
-	}
-
-	iosDevice, err := NewIOSDevice(deviceOptions...)
-	if err != nil {
-		return nil, err
-	}
-	return iosDevice.initWDAClient(capabilities)
-}
-
-func (dev *IOSDevice) initWDAClient(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	// init WDA driver
 	if capabilities == nil {
 		capabilities = NewCapabilities()

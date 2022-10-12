@@ -88,4 +88,4 @@ require (
 )
 
 // replace github.com/httprunner/funplugin => ../funplugin
-replace github.com/electricbubble/gidevice => github.com/debugtalk/gidevice v0.6.3-0.20221011141335-8a73d55ade10
+replace github.com/electricbubble/gidevice => github.com/debugtalk/gidevice v0.6.3-0.20221012071407-9b59e12ecc77
