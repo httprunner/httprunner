@@ -13,6 +13,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
@@ -64,6 +65,9 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 		return nil, fmt.Errorf("construct request error: %v", err)
 	}
 
+	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, bodyBuf.Bytes())
+
+	req.Header.Add("Agw-Auth", token)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
 	resp, err := client.Do(req)
 	if err != nil {
