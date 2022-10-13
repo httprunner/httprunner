@@ -618,6 +618,13 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// run actions
 	for _, action := range actions {
+		if action.Function != "" {
+			parsedParams, err := parser.ParseString(action.Function, stepVariables)
+			if err != nil {
+				return stepResult, err
+			}
+			action.Params = parsedParams
+		}
 		if action.Params, err = parser.Parse(action.Params, stepVariables); err != nil {
 			return stepResult, errors.Wrap(err, "parse action params failed")
 		}
