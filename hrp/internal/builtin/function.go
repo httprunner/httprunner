@@ -28,6 +28,7 @@ var Functions = map[string]interface{}{
 	"md5":                    MD5,             // call with one argument
 	"parameterize":           loadFromCSV,
 	"P":                      loadFromCSV,
+	"split_by_comma":         splitByComma, // call with one argument
 	"environ":                os.Getenv,
 	"ENV":                    os.Getenv,
 	"load_ws_message":        loadMessage,
@@ -224,4 +225,8 @@ func multipartContentType(w *TFormDataWriter) string {
 		return ""
 	}
 	return w.Writer.FormDataContentType()
+}
+
+func splitByComma(s string) []string {
+	return strings.Split(s, ",")
 }

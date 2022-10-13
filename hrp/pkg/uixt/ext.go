@@ -429,14 +429,17 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			ACTION_SwipeToTapText, action.Params)
 	case ACTION_SwipeToTapTexts:
 		if texts, ok := action.Params.([]interface{}); ok {
+			var textList []string
+			for _, t := range texts {
+				textList = append(textList, t.(string))
+			}
+			action.Params = textList
+		}
+		if texts, ok := action.Params.([]string); ok {
 			var point PointF
 			findText := func(d *DriverExt) error {
 				var err error
-				var ts []string
-				for _, t := range texts {
-					ts = append(ts, t.(string))
-				}
-				points, err := d.GetTextXYs(ts)
+				points, err := d.GetTextXYs(texts)
 				if err != nil {
 					return err
 				}
