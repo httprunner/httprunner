@@ -263,7 +263,7 @@ func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) SwipeToTapTexts(texts []string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method: uixt.ACTION_SwipeToTapTexts,
 		Params: texts,
@@ -618,13 +618,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// run actions
 	for _, action := range actions {
-		if action.Function != "" {
-			parsedParams, err := parser.ParseString(action.Function, stepVariables)
-			if err != nil {
-				return stepResult, err
-			}
-			action.Params = parsedParams
-		}
 		if action.Params, err = parser.Parse(action.Params, stepVariables); err != nil {
 			return stepResult, errors.Wrap(err, "parse action params failed")
 		}

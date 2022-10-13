@@ -13,7 +13,7 @@ func TestIOSKuaiShouLive(t *testing.T) {
 		Config: hrp.NewConfig("直播_快手_关注天窗_ios").
 			WithVariables(map[string]interface{}{
 				"device": "${ENV(UDID)}",
-				"ups":    "大哥,王者",
+				"ups":    "${ENV(LIVEUPLIST)}",
 			}).
 			SetIOS(hrp.WithUDID("$device"), hrp.WithLogOn(true), hrp.WithWDAPort(8100), hrp.WithWDAMjpegPort(9100)),
 		TestSteps: []hrp.IStep{
@@ -36,7 +36,7 @@ func TestIOSKuaiShouLive(t *testing.T) {
 				TapByOCR("关注", hrp.WithIndex(1)).Sleep(10),
 			hrp.NewStep("点击直播标签,进入直播间").
 				IOS().
-				SwipeToTapTexts([]string{}, hrp.WithFunction("${split_by_comma($ups)}"), hrp.WithCustomDirection(0.6, 0.2, 0.2, 0.2), hrp.WithIdentifier("click_live")).Sleep(60).
+				SwipeToTapTexts("${split_by_comma($ups)}", hrp.WithCustomDirection(0.6, 0.2, 0.2, 0.2), hrp.WithIdentifier("click_live")).Sleep(60).
 				Validate().
 				AssertOCRExists("说点什么", "进入直播间失败"),
 			hrp.NewStep("下滑进入下一个直播间").
