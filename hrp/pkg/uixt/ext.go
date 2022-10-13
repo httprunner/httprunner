@@ -67,6 +67,7 @@ type MobileAction struct {
 	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
 	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
 	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
+	Function            string      `json:"function,omitempty" yaml:"function,omitempty"`                         // used to replace params
 	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
 	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
 	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
@@ -86,6 +87,13 @@ func WithIdentifier(identifier string) ActionOption {
 func WithIndex(index int) ActionOption {
 	return func(o *MobileAction) {
 		o.Index = index
+	}
+}
+
+// WithFunction replaces params
+func WithFunction(function string) ActionOption {
+	return func(o *MobileAction) {
+		o.Function = function
 	}
 }
 
