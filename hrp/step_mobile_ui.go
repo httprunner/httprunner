@@ -263,7 +263,7 @@ func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) SwipeToTapTexts(texts []string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method: uixt.ACTION_SwipeToTapTexts,
 		Params: texts,
