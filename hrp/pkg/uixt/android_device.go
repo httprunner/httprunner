@@ -63,6 +63,9 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 	if dev.Port != 0 {
 		deviceOptions = append(deviceOptions, WithAdbPort(dev.Port))
 	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
+	}
 	return
 }
 
