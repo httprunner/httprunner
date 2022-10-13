@@ -153,7 +153,7 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
 	}
 	if dev.DismissAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.DismissAlertButtonSelector))
+		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
 	}
 	return
 }
