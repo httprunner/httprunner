@@ -3,7 +3,7 @@
         "name": "直播_快手_关注天窗_ios",
         "variables": {
             "device": "${ENV(UDID)}",
-            "ups": "大哥,王者"
+            "ups": "${ENV(LIVEUPLIST)}"
         },
         "ios": [
             {
@@ -104,15 +104,14 @@
                 "actions": [
                     {
                         "method": "swipe_to_tap_texts",
-                        "params": [],
+                        "params": "${split_by_comma($ups)}",
                         "identifier": "click_live",
                         "direction": [
                             0.6,
                             0.2,
                             0.2,
                             0.2
-                        ],
-                        "function": "${split_by_comma($ups)}"
+                        ]
                     },
                     {
                         "method": "sleep",
