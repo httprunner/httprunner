@@ -444,7 +444,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 					return err
 				}
 				for _, point = range points {
-					if point != (PointF{}) {
+					if point != (PointF{X: 0, Y: 0}) {
 						return nil
 					}
 				}

@@ -3,6 +3,7 @@ package uixt
 import (
 	"fmt"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/rs/zerolog/log"
 )
 
@@ -85,6 +86,14 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition
 		} else if d, ok := direction.([]float64); ok {
 			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3]); err != nil {
 				log.Error().Err(err).Msgf("swipe %s failed", d)
+			}
+		} else if d, ok := direction.([]interface{}); ok {
+			sx, _ := builtin.Interface2Float64(d[0])
+			sy, _ := builtin.Interface2Float64(d[1])
+			ex, _ := builtin.Interface2Float64(d[2])
+			ey, _ := builtin.Interface2Float64(d[3])
+			if err := dExt.SwipeRelative(sx, sy, ex, ey); err != nil {
+				log.Error().Err(err).Msgf("swipe (%v, %v) to (%v, %v) failed", sx, sy, ex, ey)
 			}
 		}
 	}
