@@ -32,7 +32,7 @@ func TestIOSDemo(t *testing.T) {
 
 	// 持续监测手机屏幕，直到出现青少年模式弹窗后，点击「我知道了」
 	for {
-		points, err := driverExt.GetTextXYs([]string{"青少年模式", "我知道了"})
+		points, err := driverExt.GetTextXYs([]string{"青少年模式", "我知道了"}, nil)
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
