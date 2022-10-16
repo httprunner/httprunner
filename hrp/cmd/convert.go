@@ -61,7 +61,7 @@ func convertRun(cmd *cobra.Command, args []string) error {
 		outputType = convert.OutputTypePyTest
 
 		packages := []string{
-			fmt.Sprintf("httprunner==%s", version.VERSION),
+			fmt.Sprintf("httprunner==%s", version.HttpRunnerMinimumVersion),
 		}
 		_, err := myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {

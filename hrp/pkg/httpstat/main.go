@@ -11,6 +11,7 @@ import (
 	"net/http/httptrace"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fatih/color"
@@ -100,6 +101,8 @@ type Stat struct {
 
 	// connected network info
 	network, addr string
+
+	mux *sync.RWMutex // avoid data race
 }
 
 // Finish sets the time when reading response is done.
@@ -176,6 +179,7 @@ func (s *Stat) Print() {
 // WithHTTPStat is a wrapper of httptrace.WithClientTrace.
 // It records the time of each httptrace hooks.
 func WithHTTPStat(req *http.Request, s *Stat) context.Context {
+	s.mux = new(sync.RWMutex)
 	s.schema = req.URL.Scheme
 	return httptrace.WithClientTrace(req.Context(), &httptrace.ClientTrace{
 		DNSStart: func(i httptrace.DNSStartInfo) {
@@ -228,6 +232,8 @@ func WithHTTPStat(req *http.Request, s *Stat) context.Context {
 		},
 
 		WroteRequest: func(info httptrace.WroteRequestInfo) {
+			s.mux.Lock()
+			defer s.mux.Unlock()
 			now := time.Now()
 			s.serverStart = now
 
@@ -259,6 +265,8 @@ func WithHTTPStat(req *http.Request, s *Stat) context.Context {
 		},
 
 		GotFirstResponseByte: func() {
+			s.mux.Lock()
+			defer s.mux.Unlock()
 			s.serverDone = time.Now()
 			s.ServerProcessing = s.serverDone.Sub(s.serverStart)
 			s.StartTransfer = s.serverDone.Sub(s.dnsStart)
