@@ -71,7 +71,11 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http reqeust OCR server error: %v", err)
+		var logID string
+		if resp != nil {
+			logID = getLogID(resp.Header)
+		}
+		return nil, fmt.Errorf("http reqeust veDEM OCR server error: %v, logID: %s", err, logID)
 	}
 	defer resp.Body.Close()
 
@@ -91,6 +95,18 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 	}
 
 	return ocrResult.OCRResult, nil
+}
+
+func getLogID(header http.Header) string {
+	if len(header) == 0 {
+		return ""
+	}
+
+	logID, ok := header["X-Tt-Logid"]
+	if !ok || len(logID) == 0 {
+		return ""
+	}
+	return logID[0]
 }
 
 func (s *veDEMOCRService) FindText(text string, imageBuf []byte, index ...int) (rect image.Rectangle, err error) {
