@@ -117,23 +117,14 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 	}
 
 	if _, ok := data["index"]; !ok {
-		data["index"] = []int{0} // index not specified
+		data["index"] = 0 // index not specified
 	}
+	index, _ := data["index"].(int)
 
-	index, ok := data["index"].([]int)
-	if !ok || len(index) == 0 {
-		index = []int{0}
-	}
-
-	_, ok = data["scope"]
-	if !ok {
+	if _, ok := data["scope"]; !ok {
 		data["scope"] = []int{0, 0, math.MaxInt64, math.MaxInt64} // scope not specified
 	}
-
-	scope, ok := data["scope"].([]int)
-	if !ok || len(scope) != 4 {
-		scope = []int{0, 0, math.MaxInt64, math.MaxInt64}
-	}
+	scope, _ := data["scope"].([]int)
 
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
@@ -172,7 +163,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 		}
 
 		// match exactly, and not specify index, return the first one
-		if index[0] == 0 {
+		if index == 0 {
 			return rect, nil
 		}
 	}
@@ -183,7 +174,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 	}
 
 	// get index
-	idx := index[0]
+	idx := index
 	if idx > 0 {
 		// NOTICE: index start from 1
 		idx = idx - 1
@@ -212,19 +203,15 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 		option(data)
 	}
 
-	_, ok := data["scope"]
-	if !ok {
+	if _, ok := data["scope"]; !ok {
 		data["scope"] = []int{0, 0, math.MaxInt64, math.MaxInt64} // scope not specified
 	}
-
-	scope, ok := data["scope"].([]int)
-	if !ok || len(scope) != 4 {
-		scope = []int{0, 0, math.MaxInt64, math.MaxInt64}
-	}
+	scope, _ := data["scope"].([]int)
 
 	var success bool
 	var rect image.Rectangle
-	var ocrTexts []string
+	ocrTexts := map[string]bool{}
+
 	for _, text := range texts {
 		var found bool
 		for _, ocrResult := range ocrResults {
@@ -240,8 +227,8 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 				},
 			}
 
-			if rect.Min.X > scope[0] && rect.Max.X < scope[2] && rect.Min.Y > scope[1] && rect.Max.Y < scope[3] {
-				ocrTexts = append(ocrTexts, ocrResult.Text)
+			if rect.Min.X >= scope[0] && rect.Max.X <= scope[2] && rect.Min.Y >= scope[1] && rect.Max.Y <= scope[3] {
+				ocrTexts[ocrResult.Text] = true
 
 				// not contains text
 				if !strings.Contains(ocrResult.Text, text) {

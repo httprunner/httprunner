@@ -781,21 +781,51 @@ func WithCustomOption(key string, value interface{}) DataOption {
 	}
 }
 
-func WithPressDuration(duraion float64) DataOption {
+func WithPressDurationOption(duraion float64) DataOption {
 	return func(data map[string]interface{}) {
 		data["duration"] = duraion
 	}
 }
 
-func WithSteps(steps int) DataOption {
+func WithStepsOption(steps int) DataOption {
 	return func(data map[string]interface{}) {
 		data["steps"] = steps
 	}
 }
 
-func WithFrequency(frequency int) DataOption {
+func WithFrequencyOption(frequency int) DataOption {
 	return func(data map[string]interface{}) {
 		data["frequency"] = frequency
+	}
+}
+
+func WithIndexOption(index int) DataOption {
+	return func(data map[string]interface{}) {
+		data["index"] = index
+	}
+}
+
+func WithScopeOption(x1, x2, y1, y2 int) DataOption {
+	return func(data map[string]interface{}) {
+		data["scope"] = []int{x1, x2, y1, y2}
+	}
+}
+
+func WithIdentifierOption(identifier string) DataOption {
+	if identifier == "" {
+		return func(data map[string]interface{}) {}
+	}
+	return func(data map[string]interface{}) {
+		data["log"] = map[string]interface{}{
+			"enable": true,
+			"data":   identifier,
+		}
+	}
+}
+
+func WithIgnoreNotFoundErrorOption(ignoreError bool) DataOption {
+	return func(data map[string]interface{}) {
+		data["ignoreNotFoundError"] = ignoreError
 	}
 }
 
@@ -905,7 +935,7 @@ type WebDriver interface {
 	TouchAndHoldFloat(x, y float64, second ...float64) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
-	// WithPressDuration option can be used to set pressForDuration (default to 1 second).
+	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
 	Drag(fromX, fromY, toX, toY int, options ...DataOption) error
 	DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
 

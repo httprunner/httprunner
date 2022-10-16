@@ -12,7 +12,7 @@ func assertRelative(p float64) bool {
 }
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
-func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier ...string) error {
+func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...DataOption) error {
 	width := dExt.windowSize.Width
 	height := dExt.windowSize.Height
 
@@ -27,44 +27,37 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier 
 	toX = float64(width) * toX
 	toY = float64(height) * toY
 
-	if len(identifier) > 0 && identifier[0] != "" {
-		option := WithCustomOption("log", map[string]interface{}{
-			"enable": true,
-			"data":   identifier[0],
-		})
-		return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, option)
-	}
-	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY)
+	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
 }
 
-func (dExt *DriverExt) SwipeTo(direction string, identifier ...string) (err error) {
+func (dExt *DriverExt) SwipeTo(direction string, options ...DataOption) (err error) {
 	switch direction {
 	case "up":
-		return dExt.SwipeUp(identifier...)
+		return dExt.SwipeUp(options...)
 	case "down":
-		return dExt.SwipeDown(identifier...)
+		return dExt.SwipeDown(options...)
 	case "left":
-		return dExt.SwipeLeft(identifier...)
+		return dExt.SwipeLeft(options...)
 	case "right":
-		return dExt.SwipeRight(identifier...)
+		return dExt.SwipeRight(options...)
 	}
 	return fmt.Errorf("unexpected direction: %s", direction)
 }
 
-func (dExt *DriverExt) SwipeUp(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, identifier...)
+func (dExt *DriverExt) SwipeUp(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, options...)
 }
 
-func (dExt *DriverExt) SwipeDown(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, identifier...)
+func (dExt *DriverExt) SwipeDown(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, options...)
 }
 
-func (dExt *DriverExt) SwipeLeft(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, identifier...)
+func (dExt *DriverExt) SwipeLeft(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, options...)
 }
 
-func (dExt *DriverExt) SwipeRight(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, identifier...)
+func (dExt *DriverExt) SwipeRight(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, options...)
 }
 
 // FindCondition indicates the condition to find a UI element

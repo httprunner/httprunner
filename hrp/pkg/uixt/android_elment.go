@@ -113,7 +113,7 @@ func (ue uiaElement) Swipe(fromX, fromY, toX, toY int) error {
 
 func (ue uiaElement) SwipeFloat(fromX, fromY, toX, toY float64) error {
 	options := []DataOption{
-		WithSteps(12),
+		WithStepsOption(12),
 		WithCustomOption("elementId", ue.id),
 	}
 	return ue.parent._swipe(fromX, fromY, toX, toY, options...)
