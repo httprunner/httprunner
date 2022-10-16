@@ -21,7 +21,7 @@ var pytestCmd = &cobra.Command{
 	DisableFlagParsing: true, // allow to pass any args to pytest
 	RunE: func(cmd *cobra.Command, args []string) error {
 		packages := []string{
-			fmt.Sprintf("httprunner==%s", version.VERSION),
+			fmt.Sprintf("httprunner==%s", version.HttpRunnerMinimumVersion),
 		}
 		_, err := myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {

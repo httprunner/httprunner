@@ -207,7 +207,7 @@ func createPythonPlugin(projectName, venv string) error {
 
 	packages := []string{
 		fmt.Sprintf("funppy==%s", fungo.Version),
-		fmt.Sprintf("httprunner==%s", version.VERSION),
+		fmt.Sprintf("httprunner==%s", version.HttpRunnerMinimumVersion),
 	}
 	_, err = myexec.EnsurePython3Venv(venv, packages...)
 	if err != nil {
