@@ -13,6 +13,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -212,7 +213,7 @@ func (c *TCaseConverter) ToPyTest() (string, error) {
 	}
 
 	args := append([]string{"make"}, jsonPath)
-	err = builtin.ExecPython3Command("httprunner", args...)
+	err = myexec.ExecPython3Command("httprunner", args...)
 	if err != nil {
 		return "", err
 	}

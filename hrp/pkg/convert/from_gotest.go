@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 func convert2GoTestScripts(paths ...string) error {
@@ -48,7 +48,7 @@ func convert2GoTestScripts(paths ...string) error {
 	}
 
 	// format pytest scripts with black
-	return builtin.ExecPython3Command("black", pytestPaths...)
+	return myexec.ExecPython3Command("black", pytestPaths...)
 }
 
 //go:embed testcase.tmpl

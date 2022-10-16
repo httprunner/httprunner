@@ -8,14 +8,13 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
-	"syscall"
 
 	"github.com/electricbubble/gadb"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 var (
@@ -250,20 +249,25 @@ func (l *DeviceLogcat) Errors() (err error) {
 
 func (l *DeviceLogcat) CatchLogcat() (err error) {
 	if l.cmd != nil {
-		err = fmt.Errorf("logcat already start")
+		log.Warn().Msg("logcat already start")
+		return nil
+	}
+
+	// clear logcat
+	if err = myexec.RunCommand("adb", "-s", l.serial, "logcat", "-c"); err != nil {
 		return
 	}
-	cmdLine := fmt.Sprintf("adb -s %s logcat -c && adb -s %s logcat -v time -s iesqaMonitor:V", l.serial, l.serial)
-	l.cmd = builtin.Command(cmdLine)
+
+	// start logcat
+	l.cmd = myexec.Command("adb", "-s", l.serial, "logcat", "-v", "time", "-s", "iesqaMonitor:V")
 	l.cmd.Stderr = l.logBuffer
 	l.cmd.Stdout = l.logBuffer
-	l.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err = l.cmd.Start(); err != nil {
 		return
 	}
 	go func() {
 		<-l.stopping
-		if e := syscall.Kill(-l.cmd.Process.Pid, syscall.SIGKILL); e != nil {
+		if e := myexec.KillProcessesByGpid(l.cmd); e != nil {
 			l.errs = append(l.errs, fmt.Errorf("kill logcat process err:%v", e))
 		}
 		l.done <- struct{}{}
@@ -273,8 +277,7 @@ func (l *DeviceLogcat) CatchLogcat() (err error) {
 
 func (l *DeviceLogcat) BufferedLogcat() (err error) {
 	// -d: dump the current buffered logcat result and exits
-	cmdLine := fmt.Sprintf("adb -s %s logcat -d", l.serial)
-	cmd := builtin.Command(cmdLine)
+	cmd := myexec.Command("adb", "-s", l.serial, "logcat", "-d")
 	cmd.Stdout = l.logBuffer
 	cmd.Stderr = l.logBuffer
 	if err = cmd.Run(); err != nil {

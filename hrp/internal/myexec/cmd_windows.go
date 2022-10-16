@@ -1,15 +1,11 @@
 //go:build windows
 
-package builtin
+package myexec
 
 import (
-	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
-	"strings"
+	"syscall"
 
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,17 +14,6 @@ func init() {
 	if !isPython3(python3Executable) {
 		python3Executable = "python"
 	}
-}
-
-func isPython3(python string) bool {
-	out, err := exec.Command("cmd", "/c", python, "--version").Output()
-	if err != nil {
-		return false
-	}
-	if strings.HasPrefix(string(out), "Python 3") {
-		return true
-	}
-	return false
 }
 
 func getPython3Executable(venvDir string) string {
@@ -101,26 +86,17 @@ func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 }
 
 func Command(name string, arg ...string) *exec.Cmd {
-	args := strings.Join(arg, " ")
-	return exec.Command("cmd", "/c", name, args)
-}
-
-func ExecCommand(cmdName string, args ...string) error {
 	// "cmd /c" carries out the command specified by string and then stops
 	// refer: https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/cmd
-	cmdStr := fmt.Sprintf("%s %s", cmdName, strings.Join(args, " "))
-	cmd := exec.Command("cmd", "/c", cmdStr)
-	log.Info().Str("cmd", cmd.String()).Msg("exec command")
-
-	// print output with colors
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
-	if err != nil {
-		log.Error().Err(err).Msg("exec command failed")
-		return err
+	cmd := exec.Command("cmd.exe")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CmdLine:    strings.Join(append([]string{"/c", name}, arg...), " "),
+		HideWindow: true,
 	}
+	return cmd
+}
 
-	return nil
+func KillProcessesByGpid(cmd *exec.Cmd) error {
+	killCmd := Command("taskkill", "/T", "/F", "/PID ", strconv.Itoa(cmd.Process.Pid))
+	return killCmd.Run()
 }

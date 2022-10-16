@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -49,7 +48,7 @@ func DoTraceRoute(traceRouteOptions *TraceRouteOptions, args []string) (err erro
 		traceRouteTarget = strings.Split(parsedURL.Host, ":")[0]
 	}
 
-	cmd := exec.Command("tracert", "-h", strconv.Itoa(traceRouteOptions.MaxTTL), traceRouteTarget)
+	cmd := myexec.Command("tracert", "-h", strconv.Itoa(traceRouteOptions.MaxTTL), traceRouteTarget)
 	stdout, _ := cmd.StdoutPipe()
 
 	startT := time.Now()

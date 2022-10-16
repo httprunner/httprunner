@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -128,26 +128,26 @@ func (pt *pluginTemplate) generateGo(output string) error {
 	}
 
 	// check go sdk in tempDir
-	if err := builtin.ExecCommandInDir(exec.Command("go", "version"), pluginDir); err != nil {
+	if err := myexec.RunCommand("go", "version"); err != nil {
 		return errors.Wrap(err, "go sdk not installed")
 	}
 
 	if !builtin.IsFilePathExists(filepath.Join(pluginDir, "go.mod")) {
 		// create go mod
-		if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "init", "main"), pluginDir); err != nil {
+		if err := myexec.ExecCommandInDir(myexec.Command("go", "mod", "init", "main"), pluginDir); err != nil {
 			return err
 		}
 
 		// download plugin dependency
 		// funplugin version should be locked
 		funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
-		if err := builtin.ExecCommandInDir(exec.Command("go", "get", funplugin), pluginDir); err != nil {
+		if err := myexec.ExecCommandInDir(myexec.Command("go", "get", funplugin), pluginDir); err != nil {
 			return errors.Wrap(err, "go get funplugin failed")
 		}
 	}
 
 	// add missing and remove unused modules
-	if err := builtin.ExecCommandInDir(exec.Command("go", "mod", "tidy"), pluginDir); err != nil {
+	if err := myexec.ExecCommandInDir(myexec.Command("go", "mod", "tidy"), pluginDir); err != nil {
 		return errors.Wrap(err, "go mod tidy failed")
 	}
 
@@ -161,8 +161,8 @@ func (pt *pluginTemplate) generateGo(output string) error {
 	outputPath, _ := filepath.Abs(output)
 
 	// build go plugin to debugtalk.bin
-	cmd := exec.Command("go", "build", "-o", outputPath, PluginGoSourceGenFile, filepath.Base(pt.path))
-	if err := builtin.ExecCommandInDir(cmd, pluginDir); err != nil {
+	cmd := myexec.Command("go", "build", "-o", outputPath, PluginGoSourceGenFile, filepath.Base(pt.path))
+	if err := myexec.ExecCommandInDir(cmd, pluginDir); err != nil {
 		return errors.Wrap(err, "go build plugin failed")
 	}
 	log.Info().Str("output", outputPath).Str("plugin", pt.path).Msg("build go plugin successfully")
@@ -194,7 +194,7 @@ func buildGo(path string, output string) error {
 func buildPy(path string, output string) error {
 	log.Info().Str("path", path).Str("output", output).Msg("start to prepare python plugin")
 	// check the syntax of debugtalk.py
-	err := builtin.ExecPython3Command("py_compile", path)
+	err := myexec.ExecPython3Command("py_compile", path)
 	if err != nil {
 		return errors.Wrap(err, "python plugin syntax invalid")
 	}

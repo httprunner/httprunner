@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -18,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 var (
@@ -51,7 +51,7 @@ func DoTraceRoute(traceRouteOptions *TraceRouteOptions, args []string) (err erro
 		traceRouteTarget = strings.Split(parsedURL.Host, ":")[0]
 	}
 
-	cmd := exec.Command("traceroute", "-m", strconv.Itoa(traceRouteOptions.MaxTTL),
+	cmd := myexec.Command("traceroute", "-m", strconv.Itoa(traceRouteOptions.MaxTTL),
 		"-q", strconv.Itoa(traceRouteOptions.Queries), traceRouteTarget)
 	stdout, _ := cmd.StdoutPipe()
 
