@@ -1,30 +1,17 @@
 //go:build darwin || linux
 
-package builtin
+package myexec
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
-
-func isPython3(python string) bool {
-	out, err := exec.Command(python, "--version").Output()
-	if err != nil {
-		return false
-	}
-	if strings.HasPrefix(string(out), "Python 3") {
-		return true
-	}
-	return false
-}
 
 func getPython3Executable(venvDir string) string {
 	return filepath.Join(venvDir, "bin", "python3")
@@ -42,20 +29,20 @@ func ensurePython3Venv(venv string, packages ...string) (python3 string, err err
 	if !isPython3(python3) {
 		// python3 venv not available, create one
 		// check if system python3 is available
-		if err := ExecCommand("python3", "--version"); err != nil {
+		if err := RunCommand("python3", "--version"); err != nil {
 			return "", errors.Wrap(err, "python3 not found")
 		}
 
 		// check if .venv exists
 		if _, err := os.Stat(venv); err == nil {
 			// .venv exists, remove first
-			if err := ExecCommand("rm", "-rf", venv); err != nil {
+			if err := RunCommand("rm", "-rf", venv); err != nil {
 				return "", errors.Wrap(err, "remove existed venv failed")
 			}
 		}
 
 		// create python3 .venv
-		if err := ExecCommand("python3", "-m", "venv", venv); err != nil {
+		if err := RunCommand("python3", "-m", "venv", venv); err != nil {
 			return "", errors.Wrap(err, "create python3 venv failed")
 		}
 	}
@@ -72,32 +59,13 @@ func ensurePython3Venv(venv string, packages ...string) (python3 string, err err
 }
 
 func Command(name string, arg ...string) *exec.Cmd {
-	args := strings.Join(arg, " ")
-	return exec.Command("bash", "-c", name, args)
+	cmd := exec.Command(name, arg...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid: true,
+	}
+	return cmd
 }
 
-func ExecCommand(cmdName string, args ...string) error {
-	cmd := exec.Command(cmdName, args...)
-	log.Info().Str("cmd", cmd.String()).Msg("exec command")
-
-	// add cmd dir path to $PATH
-	if cmdDir := filepath.Dir(cmdName); cmdDir != "" {
-		PATH := fmt.Sprintf("%s:%s", cmdDir, env.PATH)
-		if err := os.Setenv("PATH", PATH); err != nil {
-			log.Error().Err(err).Msg("set env $PATH failed")
-			return err
-		}
-	}
-
-	// print output with colors
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
-	if err != nil {
-		log.Error().Err(err).Msg("exec command failed")
-		return err
-	}
-
-	return nil
+func KillProcessesByGpid(cmd *exec.Cmd) error {
+	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 }

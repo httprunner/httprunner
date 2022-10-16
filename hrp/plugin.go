@@ -11,7 +11,7 @@ import (
 	"github.com/httprunner/funplugin/fungo"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -59,7 +59,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		packages := []string{
 			fmt.Sprintf("funppy==%s", fungo.Version),
 		}
-		python3, err := builtin.EnsurePython3Venv(venv, packages...)
+		python3, err := myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {
 			log.Error().Err(err).
 				Interface("packages", packages).
