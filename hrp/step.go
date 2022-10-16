@@ -31,7 +31,7 @@ var (
 	WithDescription         = uixt.WithDescription
 	WithDirection           = uixt.WithDirection
 	WithCustomDirection     = uixt.WithCustomDirection
-	WithRecognitionArea     = uixt.WithRecognitionArea
+	WithScope               = uixt.WithScope
 )
 
 var (

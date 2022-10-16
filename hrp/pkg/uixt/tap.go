@@ -28,8 +28,8 @@ func (dExt *DriverExt) TapXY(x, y float64, identifier string) error {
 	return dExt.TapAbsXY(x, y, identifier)
 }
 
-func (dExt *DriverExt) GetTextXY(ocrText string, recognitionArea []float64, index ...int) (point PointF, err error) {
-	x, y, width, height, err := dExt.FindTextByOCR(ocrText, recognitionArea, index...)
+func (dExt *DriverExt) GetTextXY(ocrText string, options ...DataOption) (point PointF, err error) {
+	x, y, width, height, err := dExt.FindTextByOCR(ocrText, options...)
 	if err != nil {
 		return PointF{}, err
 	}
@@ -41,8 +41,8 @@ func (dExt *DriverExt) GetTextXY(ocrText string, recognitionArea []float64, inde
 	return point, nil
 }
 
-func (dExt *DriverExt) GetTextXYs(ocrText []string, recognitionArea []float64) (points []PointF, err error) {
-	ps, err := dExt.FindTextsByOCR(ocrText, recognitionArea)
+func (dExt *DriverExt) GetTextXYs(ocrText []string, options ...DataOption) (points []PointF, err error) {
+	ps, err := dExt.FindTextsByOCR(ocrText, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +71,8 @@ func (dExt *DriverExt) GetImageXY(imagePath string, index ...int) (point PointF,
 	return point, nil
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool, recognitionArea []float64, index ...int) error {
-	point, err := dExt.GetTextXY(ocrText, recognitionArea, index...)
+func (dExt *DriverExt) TapByOCR(ocrText string, identifier string, ignoreNotFoundError bool, options ...DataOption) error {
+	point, err := dExt.GetTextXY(ocrText, options...)
 	if err != nil {
 		if ignoreNotFoundError {
 			return nil
