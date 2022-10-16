@@ -3,9 +3,12 @@
 package myexec
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -48,7 +51,7 @@ func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 		// check if .venv exists
 		if _, err := os.Stat(venvDir); err == nil {
 			// .venv exists, remove first
-			if err := ExecCommand("del", "/q", venvDir); err != nil {
+			if err := RunCommand("del", "/q", venvDir); err != nil {
 				return "", errors.Wrap(err, "remove existed venv failed")
 			}
 		}
@@ -56,10 +59,10 @@ func ensurePython3Venv(venvDir string, packages ...string) (python3 string, err 
 		// create python3 .venv
 		// notice: --symlinks should be specified for windows
 		// https://github.com/actions/virtual-environments/issues/2690
-		if err := ExecCommand(systemPython, "-m", "venv", "--symlinks", venvDir); err != nil {
+		if err := RunCommand(systemPython, "-m", "venv", "--symlinks", venvDir); err != nil {
 			// fix: failed to symlink on Windows
 			log.Warn().Msg("failed to create python3 .venv by using --symlinks, try to use --copies")
-			if err := ExecCommand(systemPython, "-m", "venv", "--copies", venvDir); err != nil {
+			if err := RunCommand(systemPython, "-m", "venv", "--copies", venvDir); err != nil {
 				return "", errors.Wrap(err, "create python3 venv failed")
 			}
 		}
