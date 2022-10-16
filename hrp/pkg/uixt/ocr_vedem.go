@@ -110,31 +110,35 @@ func getLogID(header http.Header) string {
 	return logID[0]
 }
 
-func (s *veDEMOCRService) FindText(text string, imageBuf []byte, recAbsArea []int, index ...int) (rect image.Rectangle, err error) {
-	if len(index) == 0 {
-		index = []int{0} // index not specified
+func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (rect image.Rectangle, err error) {
+	data := map[string]interface{}{}
+	for _, option := range options {
+		option(data)
+	}
+
+	if _, ok := data["index"]; !ok {
+		data["index"] = []int{0} // index not specified
+	}
+
+	index, ok := data["index"].([]int)
+	if !ok || len(index) == 0 {
+		index = []int{0}
+	}
+
+	_, ok = data["scope"]
+	if !ok {
+		data["scope"] = []int{0, 0, math.MaxInt64, math.MaxInt64} // scope not specified
+	}
+
+	scope, ok := data["scope"].([]int)
+	if !ok || len(scope) != 4 {
+		scope = []int{0, 0, math.MaxInt64, math.MaxInt64}
 	}
 
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
 		log.Error().Err(err).Msg("getOCRResult failed")
 		return
-	}
-
-	if len(recAbsArea) != 4 {
-		recAbsArea = []int{0, 0, math.MaxInt64, math.MaxInt64}
-	}
-
-	var minX, minY, maxX, maxY int
-	if recAbsArea[0] < recAbsArea[2] {
-		minX, maxX = recAbsArea[0], recAbsArea[2]
-	} else {
-		minX, maxX = recAbsArea[2], recAbsArea[0]
-	}
-	if recAbsArea[1] < recAbsArea[3] {
-		minY, maxY = recAbsArea[1], recAbsArea[3]
-	} else {
-		minY, maxY = recAbsArea[3], recAbsArea[1]
 	}
 
 	var rects []image.Rectangle
@@ -151,7 +155,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, recAbsArea []in
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
-		if rect.Min.X > minX && rect.Max.X < maxX && rect.Min.Y < maxY && rect.Max.Y > minY {
+		if rect.Min.X > scope[0] && rect.Max.X < scope[2] && rect.Min.Y > scope[1] && rect.Max.Y < scope[3] {
 			ocrTexts = append(ocrTexts, ocrResult.Text)
 
 			// not contains text
@@ -196,27 +200,26 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, recAbsArea []in
 	return rects[idx], nil
 }
 
-func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, recAbsArea []int) (rects []image.Rectangle, err error) {
+func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...DataOption) (rects []image.Rectangle, err error) {
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
 		log.Error().Err(err).Msg("getOCRResult failed")
 		return
 	}
 
-	if len(recAbsArea) != 4 {
-		recAbsArea = []int{0, 0, math.MaxInt64, math.MaxInt64}
+	data := map[string]interface{}{}
+	for _, option := range options {
+		option(data)
 	}
 
-	var minX, minY, maxX, maxY int
-	if recAbsArea[0] < recAbsArea[2] {
-		minX, maxX = recAbsArea[0], recAbsArea[2]
-	} else {
-		minX, maxX = recAbsArea[2], recAbsArea[0]
+	_, ok := data["scope"]
+	if !ok {
+		data["scope"] = []int{0, 0, math.MaxInt64, math.MaxInt64} // scope not specified
 	}
-	if recAbsArea[1] < recAbsArea[3] {
-		minY, maxY = recAbsArea[1], recAbsArea[3]
-	} else {
-		minY, maxY = recAbsArea[3], recAbsArea[1]
+
+	scope, ok := data["scope"].([]int)
+	if !ok || len(scope) != 4 {
+		scope = []int{0, 0, math.MaxInt64, math.MaxInt64}
 	}
 
 	var success bool
@@ -237,7 +240,7 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, recAbsArea 
 				},
 			}
 
-			if rect.Min.X > minX && rect.Max.X < maxX && rect.Min.Y < maxY && rect.Max.Y > minY {
+			if rect.Min.X > scope[0] && rect.Max.X < scope[2] && rect.Min.Y > scope[1] && rect.Max.Y < scope[3] {
 				ocrTexts = append(ocrTexts, ocrResult.Text)
 
 				// not contains text
@@ -268,26 +271,15 @@ type OCRService interface {
 	FindText(text string, imageBuf []byte, index ...int) (rect image.Rectangle, err error)
 }
 
-func (dExt *DriverExt) FindTextByOCR(ocrText string, recognitionArea []float64, index ...int) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
 		err = fmt.Errorf("takeScreenShot error: %v", err)
 		return
 	}
 
-	if len(recognitionArea) != 4 {
-		recognitionArea = []float64{0, 0, 1, 1}
-	}
-
-	absArea := []int{
-		int(recognitionArea[0] * float64(dExt.windowSize.Width) * dExt.scale),
-		int(recognitionArea[1] * float64(dExt.windowSize.Height) * dExt.scale),
-		int(recognitionArea[2] * float64(dExt.windowSize.Width) * dExt.scale),
-		int(recognitionArea[3] * float64(dExt.windowSize.Height) * dExt.scale),
-	}
-
 	service := &veDEMOCRService{}
-	rect, err := service.FindText(ocrText, bufSource.Bytes(), absArea, index...)
+	rect, err := service.FindText(ocrText, bufSource.Bytes(), options...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		err = fmt.Errorf("FindText failed: %v", err)
@@ -300,26 +292,15 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, recognitionArea []float64, 
 	return
 }
 
-func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, recognitionArea []float64) (points [][]float64, err error) {
+func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) (points [][]float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
 		err = fmt.Errorf("takeScreenShot error: %v", err)
 		return
 	}
 
-	if len(recognitionArea) != 4 {
-		recognitionArea = []float64{0, 0, 1, 1}
-	}
-
-	absArea := []int{
-		int(recognitionArea[0] * float64(dExt.windowSize.Width) * dExt.scale),
-		int(recognitionArea[1] * float64(dExt.windowSize.Height) * dExt.scale),
-		int(recognitionArea[2] * float64(dExt.windowSize.Width) * dExt.scale),
-		int(recognitionArea[3] * float64(dExt.windowSize.Height) * dExt.scale),
-	}
-
 	service := &veDEMOCRService{}
-	rects, err := service.FindTexts(ocrTexts, bufSource.Bytes(), absArea)
+	rects, err := service.FindTexts(ocrTexts, bufSource.Bytes(), options...)
 	if err != nil {
 		log.Warn().Msgf("FindTexts failed: %s", err.Error())
 		err = fmt.Errorf("FindTexts failed: %v", err)
