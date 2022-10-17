@@ -379,12 +379,10 @@ func (wd *wdaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 		"x": x,
 		"y": y,
 	}
-	// append options in post data for extra WDA configurations
-	// e.g. add identifier in tap event logs
-	for _, option := range options {
-		option(data)
-	}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/tap/0")
+	// new data options in post data for extra WDA configurations
+	d := NewData(data, options...)
+
+	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/tap/0")
 	return
 }
 
@@ -433,26 +431,20 @@ func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 		"toY":   toY,
 	}
 
-	// append options in post data for extra WDA configurations
-	// e.g. use WithPressDuration to set pressForDuration
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra WDA configurations
+	d := NewData(data, options...)
 
-	if _, ok := data["duration"]; !ok {
-		data["duration"] = 1.0 // default duration
-	}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
+	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return
 }
 
 func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
-	options = append(options, WithPressDuration(0))
+	options = append(options, WithDataPressDuration(0))
 	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
 func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
-	options = append(options, WithPressDuration(0))
+	options = append(options, WithDataPressDuration(0))
 	return wd.DragFloat(fromX, fromY, toX, toY, options...)
 }
 
@@ -514,16 +506,10 @@ func (wd *wdaDriver) SendKeys(text string, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 
-	// append options in post data for extra WDA configurations
-	// e.g. use WithFrequency to set frequency of typing
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra WDA configurations
+	d := NewData(data, options...)
 
-	if _, ok := data["frequency"]; !ok {
-		data["frequency"] = 60 // default frequency
-	}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/keys")
+	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/keys")
 	return
 }
 

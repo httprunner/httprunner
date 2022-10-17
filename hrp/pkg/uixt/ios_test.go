@@ -443,7 +443,7 @@ func Test_remoteWD_TouchAndHold(t *testing.T) {
 func Test_remoteWD_Drag(t *testing.T) {
 	setup(t)
 
-	// err := driver.Drag(200, 300, 200, 500, WithPressDuration(0.5))
+	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
 	err := driver.Swipe(200, 300, 200, 500)
 	if err != nil {
 		t.Fatal(err)

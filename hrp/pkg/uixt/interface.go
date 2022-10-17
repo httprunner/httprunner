@@ -3,6 +3,7 @@ package uixt
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -773,30 +774,98 @@ type Rect struct {
 	Size
 }
 
-type DataOption func(data map[string]interface{})
+type DataOption func(data *DataOptions)
 
 func WithCustomOption(key string, value interface{}) DataOption {
-	return func(data map[string]interface{}) {
-		data[key] = value
+	return func(data *DataOptions) {
+		data.Data[key] = value
 	}
 }
 
-func WithPressDuration(duraion float64) DataOption {
-	return func(data map[string]interface{}) {
-		data["duration"] = duraion
+func WithDataPressDuration(duration float64) DataOption {
+	return func(data *DataOptions) {
+		data.Data["duration"] = duration
 	}
 }
 
-func WithSteps(steps int) DataOption {
-	return func(data map[string]interface{}) {
-		data["steps"] = steps
+func WithDataSteps(steps int) DataOption {
+	return func(data *DataOptions) {
+		data.Data["steps"] = steps
 	}
 }
 
-func WithFrequency(frequency int) DataOption {
-	return func(data map[string]interface{}) {
-		data["frequency"] = frequency
+func WithDataFrequency(frequency int) DataOption {
+	return func(data *DataOptions) {
+		data.Data["frequency"] = frequency
 	}
+}
+
+func WithDataIndex(index int) DataOption {
+	return func(data *DataOptions) {
+		data.Index = index
+	}
+}
+
+func WithDataScope(x1, x2, y1, y2 int) DataOption {
+	return func(data *DataOptions) {
+		data.Scope = []int{x1, x2, y1, y2}
+	}
+}
+
+func WithDataIdentifier(identifier string) DataOption {
+	if identifier == "" {
+		return func(data *DataOptions) {}
+	}
+	return func(data *DataOptions) {
+		data.Data["log"] = map[string]interface{}{
+			"enable": true,
+			"data":   identifier,
+		}
+	}
+}
+
+func WithDataIgnoreNotFoundError(ignoreError bool) DataOption {
+	return func(data *DataOptions) {
+		data.IgnoreNotFoundError = ignoreError
+	}
+}
+
+type DataOptions struct {
+	Data                map[string]interface{} // configurations used by ios/android driver
+	Scope               []int                  // used by ocr to get text position in the scope
+	Index               int                    // index of the target element, should start from 1
+	IgnoreNotFoundError bool                   // ignore error if target element not found
+}
+
+func NewData(d map[string]interface{}, options ...DataOption) *DataOptions {
+	data := &DataOptions{
+		Data: d,
+	}
+	for _, option := range options {
+		option(data)
+	}
+
+	if len(data.Scope) == 0 {
+		data.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
+	}
+
+	if _, ok := data.Data["steps"]; !ok {
+		data.Data["steps"] = 12 // default steps
+	}
+
+	if _, ok := data.Data["duration"]; !ok {
+		data.Data["duration"] = 1.0 // default duration
+	}
+
+	if _, ok := data.Data["frequency"]; !ok {
+		data.Data["frequency"] = 60 // default frequency
+	}
+
+	if _, ok := data.Data["isReplace"]; !ok {
+		data.Data["isReplace"] = true // default true
+	}
+
+	return data
 }
 
 // current implemeted device: IOSDevice, AndroidDevice
@@ -905,7 +974,7 @@ type WebDriver interface {
 	TouchAndHoldFloat(x, y float64, second ...float64) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
-	// WithPressDuration option can be used to set pressForDuration (default to 1 second).
+	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
 	Drag(fromX, fromY, toX, toY int, options ...DataOption) error
 	DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
 

@@ -66,7 +66,9 @@ type MobileAction struct {
 
 	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
 	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	WaitTime            float64     `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
 	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
+	Scope               []float64   `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
 	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
 	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
 	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
@@ -89,6 +91,12 @@ func WithIndex(index int) ActionOption {
 	}
 }
 
+func WithWaitTime(sec float64) ActionOption {
+	return func(o *MobileAction) {
+		o.WaitTime = sec
+	}
+}
+
 // WithDirection inputs direction (up, down, left, right)
 func WithDirection(direction string) ActionOption {
 	return func(o *MobileAction) {
@@ -100,6 +108,13 @@ func WithDirection(direction string) ActionOption {
 func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 	return func(o *MobileAction) {
 		o.Direction = []float64{sx, sy, ex, ey}
+	}
+}
+
+// WithScope inputs area of [(x1,y1), (x2,y2)]
+func WithScope(x1, y1, x2, y2 float64) ActionOption {
+	return func(o *MobileAction) {
+		o.Scope = []float64{x1, y1, x2, y2}
 	}
 }
 
@@ -299,13 +314,13 @@ func (dExt *DriverExt) FindUIElement(param string) (ele WebElement, err error) {
 	return dExt.Driver.FindElement(selector)
 }
 
-func (dExt *DriverExt) FindUIRectInUIKit(search string, index ...int) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (x, y, width, height float64, err error) {
 	// click on text, using OCR
 	if !isPathExists(search) {
-		return dExt.FindTextByOCR(search, index...)
+		return dExt.FindTextByOCR(search, options...)
 	}
 	// click on image, using opencv
-	return dExt.FindImageRectInUIKit(search, index...)
+	return dExt.FindImageRectInUIKit(search, options...)
 }
 
 func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
@@ -371,15 +386,23 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			AppLaunchUnattached, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
+			if len(action.Scope) != 4 {
+				action.Scope = []float64{0, 0, 1, 1}
+			}
+
+			identifierOption := WithDataIdentifier(action.Identifier)
+			indexOption := WithDataIndex(action.Index)
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+
 			var point PointF
 			findApp := func(d *DriverExt) error {
 				var err error
-				point, err = d.GetTextXY(appName, action.Index)
+				point, err = d.GetTextXY(appName, scopeOption, indexOption)
 				return err
 			}
 			foundAppAction := func(d *DriverExt) error {
 				// click app to launch
-				return d.TapAbsXY(point.X, point.Y-25, action.Identifier)
+				return d.TapAbsXY(point.X, point.Y-25, identifierOption)
 			}
 
 			// go to home screen
@@ -397,21 +420,29 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.MaxRetryTimes = 5
 			}
 			// swipe next screen until app found
-			return dExt.SwipeUntil("left", findApp, foundAppAction, action.MaxRetryTimes)
+			return dExt.SwipeUntil("left", findApp, foundAppAction, action.MaxRetryTimes, action.WaitTime)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
 		if text, ok := action.Params.(string); ok {
+			if len(action.Scope) != 4 {
+				action.Scope = []float64{0, 0, 1, 1}
+			}
+
+			identifierOption := WithDataIdentifier(action.Identifier)
+			indexOption := WithDataIndex(action.Index)
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+
 			var point PointF
 			findText := func(d *DriverExt) error {
 				var err error
-				point, err = d.GetTextXY(text, action.Index)
+				point, err = d.GetTextXY(text, indexOption, scopeOption)
 				return err
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, action.Identifier)
+				return d.TapAbsXY(point.X, point.Y, identifierOption)
 			}
 
 			// default to retry 10 times
@@ -420,10 +451,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			if action.Direction != nil {
-				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 			}
 			// swipe until found
-			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -436,10 +467,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			action.Params = textList
 		}
 		if texts, ok := action.Params.([]string); ok {
+			if len(action.Scope) != 4 {
+				action.Scope = []float64{0, 0, 1, 1}
+			}
+
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+
 			var point PointF
 			findText := func(d *DriverExt) error {
 				var err error
-				points, err := d.GetTextXYs(texts)
+				points, err := d.GetTextXYs(texts, scopeOption)
 				if err != nil {
 					return err
 				}
@@ -452,7 +489,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, action.Identifier)
+				return d.TapAbsXY(point.X, point.Y, WithDataIdentifier(action.Identifier))
 			}
 
 			// default to retry 10 times
@@ -461,10 +498,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			if action.Direction != nil {
-				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 			}
 			// swipe until found
-			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 		}
 		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -490,7 +527,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapXY(x, y, action.Identifier)
+			return dExt.TapXY(x, y, WithDataIdentifier(action.Identifier))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_TapAbsXY:
@@ -501,22 +538,30 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapAbsXY(x, y, action.Identifier)
+			return dExt.TapAbsXY(x, y, WithDataIdentifier(action.Identifier))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, action.Identifier, action.IgnoreNotFoundError, action.Index)
+			return dExt.Tap(param, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			return dExt.TapByOCR(ocrText, action.Identifier, action.IgnoreNotFoundError, action.Index)
+			if len(action.Scope) != 4 {
+				action.Scope = []float64{0, 0, 1, 1}
+			}
+
+			indexOption := WithDataIndex(action.Index)
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			identifierOption := WithDataIdentifier(action.Identifier)
+			IgnoreNotFoundErrorOption := WithDataIgnoreNotFoundError(action.IgnoreNotFoundError)
+			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, action.Identifier, action.IgnoreNotFoundError, action.Index)
+			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -536,6 +581,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
+		identifierOption := WithDataIdentifier(action.Identifier)
 		if positions, ok := action.Params.([]interface{}); ok {
 			// relative fromX, fromY, toX, toY of window size: [0.5, 0.9, 0.5, 0.1]
 			if len(positions) != 4 {
@@ -545,10 +591,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			fromY, _ := positions[1].(float64)
 			toX, _ := positions[2].(float64)
 			toY, _ := positions[3].(float64)
-			return dExt.SwipeRelative(fromX, fromY, toX, toY, action.Identifier)
+			return dExt.SwipeRelative(fromX, fromY, toX, toY, identifierOption)
 		}
 		if direction, ok := action.Params.(string); ok {
-			return dExt.SwipeTo(direction, action.Identifier)
+			return dExt.SwipeTo(direction, identifierOption)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Swipe, action.Params)
 	case ACTION_Input:
@@ -567,10 +613,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			options = append(options, WithCustomOption("description", action.Description))
 		}
 		if action.Identifier != "" {
-			options = append(options, WithCustomOption("log", map[string]interface{}{
-				"enable": true,
-				"data":   action.Identifier,
-			}))
+			options = append(options, WithDataIdentifier(action.Identifier))
 		}
 		return dExt.Driver.Input(param, options...)
 	case CtlSleep:
@@ -603,6 +646,13 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return dExt.Driver.StopCamera()
 	}
 	return nil
+}
+
+func (dExt *DriverExt) GetAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
+	return int(x1 * float64(dExt.windowSize.Width) * dExt.scale),
+		int(y1 * float64(dExt.windowSize.Height) * dExt.scale),
+		int(x2 * float64(dExt.windowSize.Width) * dExt.scale),
+		int(y2 * float64(dExt.windowSize.Height) * dExt.scale)
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
