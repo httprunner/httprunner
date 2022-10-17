@@ -243,7 +243,8 @@ def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):
 
 
 class ExtendJSONEncoder(json.JSONEncoder):
-    """especially used to safely dump json data with python object, such as MultipartEncoder"""
+    """especially used to safely dump json data with python object,
+    such as MultipartEncoder"""
 
     def default(self, obj):
         try:
@@ -275,7 +276,8 @@ def is_support_multiprocessing() -> bool:
         Queue()
         return True
     except (ImportError, OSError):
-        # system that does not support semaphores(dependency of multiprocessing), like Android termux
+        # system that does not support semaphores
+        # (dependency of multiprocessing), like Android termux
         return False
 
 
@@ -320,7 +322,10 @@ def gen_cartesian_product(*args: List[Dict]) -> List[Dict]:
     return product_list
 
 
-LOGGER_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level}</level> | <level>{message}</level>"
+LOGGER_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green>"
+    + " | <level>{level}</level> | <level>{message}</level>"
+)
 
 
 def init_logger(level: str):
