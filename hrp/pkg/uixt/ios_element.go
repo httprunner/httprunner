@@ -31,8 +31,7 @@ func (we wdaElement) SendKeys(text string, options ...DataOption) (err error) {
 		"value": strings.Split(text, ""),
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	_, err = we.parent.httpPOST(d.Data, "/session", we.parent.sessionId, "/element", we.id, "/value")
 	return

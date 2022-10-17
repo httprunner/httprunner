@@ -65,7 +65,7 @@ func (dExt *DriverExt) GetImageXY(imagePath string, options ...DataOption) (poin
 }
 
 func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
-	data := NewData(options...)
+	data := NewData(map[string]interface{}{}, options...)
 
 	point, err := dExt.GetTextXY(ocrText, options...)
 	if err != nil {
@@ -79,7 +79,7 @@ func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
 }
 
 func (dExt *DriverExt) TapByCV(imagePath string, options ...DataOption) error {
-	data := NewData(options...)
+	data := NewData(map[string]interface{}{}, options...)
 
 	point, err := dExt.GetImageXY(imagePath, options...)
 	if err != nil {
@@ -103,7 +103,7 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options
 		return ele.Click()
 	}
 
-	data := NewData(options...)
+	data := NewData(map[string]interface{}{}, options...)
 
 	x, y, width, height, err := dExt.FindUIRectInUIKit(param, options...)
 	if err != nil {

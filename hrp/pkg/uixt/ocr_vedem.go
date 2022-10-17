@@ -110,7 +110,7 @@ func getLogID(header http.Header) string {
 }
 
 func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (rect image.Rectangle, err error) {
-	data := NewData(options...)
+	data := NewData(map[string]interface{}{}, options...)
 
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
@@ -184,7 +184,7 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 		return
 	}
 
-	data := NewData(options...)
+	data := NewData(map[string]interface{}{}, options...)
 	ocrTexts := map[string]bool{}
 
 	var success bool

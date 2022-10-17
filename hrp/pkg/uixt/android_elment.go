@@ -30,8 +30,7 @@ func (ue uiaElement) SendKeys(text string, options ...DataOption) (err error) {
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	_, err = ue.parent.httpPOST(d.Data, "/session", ue.parent.sessionId, "/element", ue.id, "/value")
 	return
