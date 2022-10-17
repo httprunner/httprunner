@@ -29,16 +29,11 @@ func (ue uiaElement) SendKeys(text string, options ...DataOption) (err error) {
 		"text": text,
 	}
 
-	// append options in post data for extra uiautomator configurations
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(options...)
+	d.MergeData(data)
 
-	if _, ok := data["isReplace"]; !ok {
-		data["isReplace"] = true // default true
-	}
-
-	_, err = ue.parent.httpPOST(data, "/session", ue.parent.sessionId, "/element", ue.id, "/value")
+	_, err = ue.parent.httpPOST(d.Data, "/session", ue.parent.sessionId, "/element", ue.id, "/value")
 	return
 }
 
@@ -113,7 +108,7 @@ func (ue uiaElement) Swipe(fromX, fromY, toX, toY int) error {
 
 func (ue uiaElement) SwipeFloat(fromX, fromY, toX, toY float64) error {
 	options := []DataOption{
-		WithStepsOption(12),
+		WithDataSteps(12),
 		WithCustomOption("elementId", ue.id),
 	}
 	return ue.parent._swipe(fromX, fromY, toX, toY, options...)

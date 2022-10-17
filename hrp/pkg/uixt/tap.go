@@ -65,16 +65,12 @@ func (dExt *DriverExt) GetImageXY(imagePath string, options ...DataOption) (poin
 }
 
 func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
-	data := map[string]interface{}{}
-	for _, option := range options {
-		option(data)
-	}
+	data := NewData(options...)
+
 	point, err := dExt.GetTextXY(ocrText, options...)
 	if err != nil {
-		if d, ok := data["ignoreNotFoundError"]; ok {
-			if b, ok := d.(bool); b && ok {
-				return nil
-			}
+		if data.IgnoreNotFoundError {
+			return nil
 		}
 		return err
 	}
@@ -83,16 +79,12 @@ func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
 }
 
 func (dExt *DriverExt) TapByCV(imagePath string, options ...DataOption) error {
-	data := map[string]interface{}{}
-	for _, option := range options {
-		option(data)
-	}
+	data := NewData(options...)
+
 	point, err := dExt.GetImageXY(imagePath, options...)
 	if err != nil {
-		if d, ok := data["ignoreNotFoundError"]; ok {
-			if b, ok := d.(bool); b && ok {
-				return nil
-			}
+		if data.IgnoreNotFoundError {
+			return nil
 		}
 		return err
 	}
@@ -111,17 +103,12 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options
 		return ele.Click()
 	}
 
-	data := map[string]interface{}{}
-	for _, option := range options {
-		option(data)
-	}
+	data := NewData(options...)
 
 	x, y, width, height, err := dExt.FindUIRectInUIKit(param, options...)
 	if err != nil {
-		if d, ok := data["ignoreNotFoundError"]; ok {
-			if b, ok := d.(bool); b && ok {
-				return nil
-			}
+		if data.IgnoreNotFoundError {
+			return nil
 		}
 		return err
 	}
