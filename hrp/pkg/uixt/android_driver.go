@@ -492,8 +492,7 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 		"y": y,
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "appium/tap")
 	return
@@ -551,8 +550,7 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	return ud._drag(d.Data)
 }
@@ -567,8 +565,7 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...D
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "touch/perform")
 	return
@@ -660,8 +657,7 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 		"text": text,
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "keys")
 	return
@@ -672,8 +668,7 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 		"view": text,
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(options...)
-	d.MergeData(data)
+	d := NewData(data, options...)
 
 	var element WebElement
 	if valuetext, ok := d.Data["textview"]; ok {

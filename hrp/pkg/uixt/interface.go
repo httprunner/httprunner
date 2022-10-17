@@ -837,9 +837,9 @@ type DataOptions struct {
 	IgnoreNotFoundError bool                   // ignore error if target element not found
 }
 
-func NewData(options ...DataOption) *DataOptions {
+func NewData(d map[string]interface{}, options ...DataOption) *DataOptions {
 	data := &DataOptions{
-		Data: map[string]interface{}{},
+		Data: d,
 	}
 	for _, option := range options {
 		option(data)
@@ -866,16 +866,6 @@ func NewData(options ...DataOption) *DataOptions {
 	}
 
 	return data
-}
-
-func (d *DataOptions) MergeData(data map[string]interface{}) {
-	for key, value := range data {
-		d.Data[key] = value
-	}
-}
-
-func (d *DataOptions) AddData(key string, value interface{}) {
-	d.Data[key] = value
 }
 
 // current implemeted device: IOSDevice, AndroidDevice
