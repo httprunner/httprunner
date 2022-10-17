@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func assertRelative(p float64) bool {
@@ -61,17 +63,19 @@ func (dExt *DriverExt) SwipeRight(options ...DataOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, options...)
 }
 
-// FindCondition indicates the condition to find a UI element
-type FindCondition func(driver *DriverExt) error
+type Action func(driver *DriverExt) error
 
-// FoundAction indicates the action to do after a UI element is found
-type FoundAction func(driver *DriverExt) error
+// findCondition indicates the condition to find a UI element
+// foundAction indicates the action to do after a UI element is found
+func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, foundAction Action, options ...DataOption) error {
+	d := NewData(nil, options...)
+	maxRetryTimes := d.MaxRetryTimes
+	interval := d.Interval
 
-func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition, action FoundAction, maxTimes int, waitTime float64) error {
-	for i := 0; i < maxTimes; i++ {
-		if err := condition(dExt); err == nil {
+	for i := 0; i < maxRetryTimes; i++ {
+		if err := findCondition(dExt); err == nil {
 			// do action after found
-			return action(dExt)
+			return foundAction(dExt)
 		}
 		if d, ok := direction.(string); ok {
 			if err := dExt.SwipeTo(d); err != nil {
@@ -91,7 +95,72 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition
 			}
 		}
 		// wait for swipe action to completed and content to load completely
-		time.Sleep(time.Duration(1000*waitTime) * time.Millisecond)
+		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
-	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
+	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxRetryTimes)
+}
+
+func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, options ...DataOption) error {
+	d := NewData(nil, options...)
+	maxRetryTimes := d.MaxRetryTimes
+	interval := d.Interval
+
+	for i := 0; i < maxRetryTimes; i++ {
+		if err := findCondition(dExt); err == nil {
+			// do action after found
+			return foundAction(dExt)
+		}
+
+		if err := findAction(dExt); err != nil {
+			log.Error().Err(err).Msgf("find action failed")
+		}
+
+		// wait interval between each findAction
+		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
+	}
+	return fmt.Errorf("loop %d times, match find condition failed", maxRetryTimes)
+}
+
+func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error {
+	if len(action.Scope) != 4 {
+		action.Scope = []float64{0, 0, 1, 1}
+	}
+
+	identifierOption := WithDataIdentifier(action.Identifier)
+	indexOption := WithDataIndex(action.Index)
+	scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+
+	// default to retry 5 times
+	if action.MaxRetryTimes == 0 {
+		action.MaxRetryTimes = 5
+	}
+	maxRetryOption := WithDataMaxRetryTimes(action.MaxRetryTimes)
+	waitTimeOption := WithDataWaitTime(action.WaitTime)
+
+	var point PointF
+	findAppAction := func(d *DriverExt) error {
+		return dExt.SwipeLeft()
+	}
+	findAppCondition := func(d *DriverExt) error {
+		var err error
+		point, err = d.GetTextXY(appName, scopeOption, indexOption)
+		return err
+	}
+	foundAppAction := func(d *DriverExt) error {
+		// click app to launch
+		return d.TapAbsXY(point.X, point.Y-25, identifierOption)
+	}
+
+	// go to home screen
+	if err := dExt.Driver.Homescreen(); err != nil {
+		return errors.Wrap(err, "go to home screen failed")
+	}
+
+	// swipe to first screen
+	for i := 0; i < 5; i++ {
+		dExt.SwipeRight()
+	}
+
+	// swipe next screen until app found
+	return dExt.LoopUntil(findAppAction, findAppCondition, foundAppAction, maxRetryOption, waitTimeOption)
 }

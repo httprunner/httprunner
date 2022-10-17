@@ -386,45 +386,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			AppLaunchUnattached, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
-			if len(action.Scope) != 4 {
-				action.Scope = []float64{0, 0, 1, 1}
-			}
-
-			identifierOption := WithDataIdentifier(action.Identifier)
-			indexOption := WithDataIndex(action.Index)
-			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
-
-			var point PointF
-			findApp := func(d *DriverExt) error {
-				var err error
-				point, err = d.GetTextXY(appName, scopeOption, indexOption)
-				return err
-			}
-			foundAppAction := func(d *DriverExt) error {
-				// click app to launch
-				return d.TapAbsXY(point.X, point.Y-25, identifierOption)
-			}
-
-			// go to home screen
-			if err := dExt.Driver.Homescreen(); err != nil {
-				return errors.Wrap(err, "go to home screen failed")
-			}
-
-			// swipe to first screen
-			for i := 0; i < 5; i++ {
-				dExt.SwipeRight()
-			}
-
-			// default to retry 5 times
-			if action.MaxRetryTimes == 0 {
-				action.MaxRetryTimes = 5
-			}
-			// swipe next screen until app found
-			return dExt.SwipeUntil("left", findApp, foundAppAction, action.MaxRetryTimes, action.WaitTime)
+			return dExt.swipeToTapApp(appName, action)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
+		// TODO: merge to LoopUntil
 		if text, ok := action.Params.(string); ok {
 			if len(action.Scope) != 4 {
 				action.Scope = []float64{0, 0, 1, 1}
@@ -432,10 +399,20 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 
 			identifierOption := WithDataIdentifier(action.Identifier)
 			indexOption := WithDataIndex(action.Index)
-			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+
+			// default to retry 10 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 10
+			}
+			maxRetryOption := WithDataMaxRetryTimes(action.MaxRetryTimes)
+			waitTimeOption := WithDataWaitTime(action.WaitTime)
 
 			var point PointF
-			findText := func(d *DriverExt) error {
+			// findTextAction := func(d *DriverExt) error {
+			// 	return nil
+			// }
+			findTextCondition := func(d *DriverExt) error {
 				var err error
 				point, err = d.GetTextXY(text, indexOption, scopeOption)
 				return err
@@ -445,20 +422,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				return d.TapAbsXY(point.X, point.Y, identifierOption)
 			}
 
-			// default to retry 10 times
-			if action.MaxRetryTimes == 0 {
-				action.MaxRetryTimes = 10
-			}
-
 			if action.Direction != nil {
-				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
+				return dExt.SwipeUntil(action.Direction, findTextCondition, foundTextAction, maxRetryOption, waitTimeOption)
 			}
 			// swipe until found
-			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
+			return dExt.SwipeUntil("up", findTextCondition, foundTextAction, maxRetryOption, waitTimeOption)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
 	case ACTION_SwipeToTapTexts:
+		// TODO: merge to LoopUntil
 		if texts, ok := action.Params.([]interface{}); ok {
 			var textList []string
 			for _, t := range texts {
@@ -471,10 +444,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
 
-			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			// default to retry 10 times
+			if action.MaxRetryTimes == 0 {
+				action.MaxRetryTimes = 10
+			}
+			maxRetryOption := WithDataMaxRetryTimes(action.MaxRetryTimes)
+			waitTimeOption := WithDataWaitTime(action.WaitTime)
 
 			var point PointF
-			findText := func(d *DriverExt) error {
+			findTexts := func(d *DriverExt) error {
 				var err error
 				points, err := d.GetTextXYs(texts, scopeOption)
 				if err != nil {
@@ -498,10 +477,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			if action.Direction != nil {
-				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
+				return dExt.SwipeUntil(action.Direction, findTexts, foundTextAction, maxRetryOption, waitTimeOption)
 			}
 			// swipe until found
-			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
+			return dExt.SwipeUntil("up", findTexts, foundTextAction, maxRetryOption, waitTimeOption)
 		}
 		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -553,7 +532,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			indexOption := WithDataIndex(action.Index)
-			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 			identifierOption := WithDataIdentifier(action.Identifier)
 			IgnoreNotFoundErrorOption := WithDataIgnoreNotFoundError(action.IgnoreNotFoundError)
 			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption)
@@ -648,7 +627,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	return nil
 }
 
-func (dExt *DriverExt) GetAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
+func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
 	return int(x1 * float64(dExt.windowSize.Width) * dExt.scale),
 		int(y1 * float64(dExt.windowSize.Height) * dExt.scale),
 		int(x2 * float64(dExt.windowSize.Width) * dExt.scale),
