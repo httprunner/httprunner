@@ -18,7 +18,7 @@ func TestSwipeUntil(t *testing.T) {
 	}
 	foundAppAction := func(d *DriverExt) error {
 		// click app, launch douyin
-		return d.TapAbsXY(point.X, point.Y, "")
+		return d.TapAbsXY(point.X, point.Y)
 	}
 
 	driverExt.Driver.Homescreen()
@@ -29,7 +29,7 @@ func TestSwipeUntil(t *testing.T) {
 	}
 
 	// swipe until app found
-	err = driverExt.SwipeUntil("left", findApp, foundAppAction, 10)
+	err = driverExt.SwipeUntil("left", findApp, foundAppAction, WithDataMaxRetryTimes(10))
 	checkErr(t, err)
 
 	findLive := func(d *DriverExt) error {
@@ -39,10 +39,10 @@ func TestSwipeUntil(t *testing.T) {
 	}
 	foundLiveAction := func(d *DriverExt) error {
 		// enter live room
-		return d.TapAbsXY(point.X, point.Y, "")
+		return d.TapAbsXY(point.X, point.Y)
 	}
 
 	// swipe until live room found
-	err = driverExt.SwipeUntil("up", findLive, foundLiveAction, 20)
+	err = driverExt.SwipeUntil("up", findLive, foundLiveAction, WithDataMaxRetryTimes(20))
 	checkErr(t, err)
 }

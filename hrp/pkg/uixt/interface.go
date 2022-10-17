@@ -774,6 +774,15 @@ type Rect struct {
 	Size
 }
 
+type DataOptions struct {
+	Data                map[string]interface{} // configurations used by ios/android driver
+	Scope               []int                  // used by ocr to get text position in the scope
+	Index               int                    // index of the target element, should start from 1
+	IgnoreNotFoundError bool                   // ignore error if target element not found
+	MaxRetryTimes       int                    // max retry times if target element not found
+	Interval            float64                // interval between retries in seconds
+}
+
 type DataOption func(data *DataOptions)
 
 func WithCustomOption(key string, value interface{}) DataOption {
@@ -830,42 +839,50 @@ func WithDataIgnoreNotFoundError(ignoreError bool) DataOption {
 	}
 }
 
-type DataOptions struct {
-	Data                map[string]interface{} // configurations used by ios/android driver
-	Scope               []int                  // used by ocr to get text position in the scope
-	Index               int                    // index of the target element, should start from 1
-	IgnoreNotFoundError bool                   // ignore error if target element not found
+func WithDataMaxRetryTimes(maxRetryTimes int) DataOption {
+	return func(data *DataOptions) {
+		data.MaxRetryTimes = maxRetryTimes
+	}
 }
 
-func NewData(d map[string]interface{}, options ...DataOption) *DataOptions {
-	data := &DataOptions{
-		Data: d,
+func WithDataWaitTime(sec float64) DataOption {
+	return func(data *DataOptions) {
+		data.Interval = sec
+	}
+}
+
+func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	dataOptions := &DataOptions{
+		Data: data,
 	}
 	for _, option := range options {
-		option(data)
+		option(dataOptions)
 	}
 
-	if len(data.Scope) == 0 {
-		data.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
+	if len(dataOptions.Scope) == 0 {
+		dataOptions.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
 	}
 
-	if _, ok := data.Data["steps"]; !ok {
-		data.Data["steps"] = 12 // default steps
+	if _, ok := dataOptions.Data["steps"]; !ok {
+		dataOptions.Data["steps"] = 12 // default steps
 	}
 
-	if _, ok := data.Data["duration"]; !ok {
-		data.Data["duration"] = 1.0 // default duration
+	if _, ok := dataOptions.Data["duration"]; !ok {
+		dataOptions.Data["duration"] = 1.0 // default duration
 	}
 
-	if _, ok := data.Data["frequency"]; !ok {
-		data.Data["frequency"] = 60 // default frequency
+	if _, ok := dataOptions.Data["frequency"]; !ok {
+		dataOptions.Data["frequency"] = 60 // default frequency
 	}
 
-	if _, ok := data.Data["isReplace"]; !ok {
-		data.Data["isReplace"] = true // default true
+	if _, ok := dataOptions.Data["isReplace"]; !ok {
+		dataOptions.Data["isReplace"] = true // default true
 	}
 
-	return data
+	return dataOptions
 }
 
 // current implemeted device: IOSDevice, AndroidDevice
