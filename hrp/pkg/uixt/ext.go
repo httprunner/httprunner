@@ -66,6 +66,7 @@ type MobileAction struct {
 
 	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
 	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	WaitTime            float64     `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
 	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
 	Scope               []float64   `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
 	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
@@ -87,6 +88,12 @@ func WithIdentifier(identifier string) ActionOption {
 func WithIndex(index int) ActionOption {
 	return func(o *MobileAction) {
 		o.Index = index
+	}
+}
+
+func WithWaitTime(sec float64) ActionOption {
+	return func(o *MobileAction) {
+		o.WaitTime = sec
 	}
 }
 
@@ -413,7 +420,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.MaxRetryTimes = 5
 			}
 			// swipe next screen until app found
-			return dExt.SwipeUntil("left", findApp, foundAppAction, action.MaxRetryTimes)
+			return dExt.SwipeUntil("left", findApp, foundAppAction, action.MaxRetryTimes, action.WaitTime)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
@@ -444,10 +451,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			if action.Direction != nil {
-				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 			}
 			// swipe until found
-			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -491,10 +498,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			if action.Direction != nil {
-				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes)
+				return dExt.SwipeUntil(action.Direction, findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 			}
 			// swipe until found
-			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes)
+			return dExt.SwipeUntil("up", findText, foundTextAction, action.MaxRetryTimes, action.WaitTime)
 		}
 		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
