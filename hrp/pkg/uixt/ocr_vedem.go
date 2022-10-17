@@ -45,7 +45,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create form file error: %v", err)
 	}
-	_, err = formWriter.Write(imageBuf)
+	size, err := formWriter.Write(imageBuf)
 	if err != nil {
 		return nil, fmt.Errorf("write form error: %v", err)
 	}
@@ -55,8 +55,9 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 		return nil, fmt.Errorf("close body writer error: %v", err)
 	}
 
-	if env.VEDEM_OCR_URL == "" {
-		log.Error().Msg("VEDEM_OCR_URL env missed for OCR service")
+	if env.VEDEM_OCR_URL == "" || env.VEDEM_OCR_AK == "" || env.VEDEM_OCR_SK == "" {
+		log.Error().Msg(
+			"missed env missed for veDEM OCR service: VEDEM_OCR_URL/VEDEM_OCR_AK/VEDEM_OCR_SK")
 		os.Exit(1)
 	}
 
@@ -69,14 +70,25 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 
 	req.Header.Add("Agw-Auth", token)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
-	resp, err := client.Do(req)
-	if err != nil {
-		var logID string
-		if resp != nil {
-			logID = getLogID(resp.Header)
+
+	var resp *http.Response
+	// retry 3 times
+	for i := 1; i <= 3; i++ {
+		resp, err = client.Do(req)
+		if err == nil {
+			break
 		}
-		return nil, fmt.Errorf("http reqeust veDEM OCR server error: %v, logID: %s", err, logID)
+		logID := getLogID(resp.Header)
+		log.Error().Err(err).
+			Str("logID", logID).
+			Int("imageBufSize", size).
+			Msgf("request OCR service failed, retry %d", i)
+		time.Sleep(1 * time.Second)
 	}
+	if resp == nil {
+		return nil, fmt.Errorf("veDEM OCR service is not available")
+	}
+
 	defer resp.Body.Close()
 
 	results, err := ioutil.ReadAll(resp.Body)
