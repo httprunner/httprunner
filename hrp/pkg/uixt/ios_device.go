@@ -34,7 +34,7 @@ const (
 	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
 	// but it might restrict the depth of source tree.
 	// A part of elements source tree might be lost if the value was too small. Defaults to 50
-	snapshotMaxDepth = 16
+	snapshotMaxDepth = 10
 	// Allows to customize accept/dismiss alert button selector.
 	// It helps you to handle an arbitrary element as accept button in accept alert command.
 	// The selector should be a valid class chain expression, where the search root is the alert element itself.

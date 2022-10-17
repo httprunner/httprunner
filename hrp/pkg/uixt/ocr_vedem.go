@@ -96,7 +96,11 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 		if err == nil {
 			break
 		}
-		logID := getLogID(resp.Header)
+
+		var logID string
+		if resp != nil {
+			logID = getLogID(resp.Header)
+		}
 		log.Error().Err(err).
 			Str("logID", logID).
 			Int("imageBufSize", size).
@@ -116,7 +120,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrap(code.OCRResponseStatusCodeNot200,
+		return nil, errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("unexpected response status code: %d, results: %v",
 				resp.StatusCode, string(results)))
 	}
@@ -258,8 +262,8 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 	}
 
 	if !success {
-		return rects,
-			fmt.Errorf("texts %s not found in %v", texts, ocrTexts)
+		return rects, errors.Wrap(code.OCRTextNotFoundError,
+			fmt.Sprintf("texts %s not found in %v", texts, ocrTexts))
 	}
 
 	return rects, nil

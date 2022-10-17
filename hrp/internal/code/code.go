@@ -21,30 +21,45 @@ var (
 
 // runner: [60, 100)
 
-// ios related: [100, 120)
+// ios related: [100, 130)
 var (
-	IOSScreenShotError = errors.New("ios screenshot error") // 100
+	IOSScreenShotError = errors.New("ios screenshot error") // 110
 )
 
-// android related: [120, 140)
-
-// OCR related: [140, 160)
+// android related: [130, 160)
 var (
-	OCREnvMissedError           = errors.New("veDEM OCR env missed error")                // 140
-	OCRRequestError             = errors.New("vedem ocr prepare request error")           // 141
-	OCRServiceConnectionError   = errors.New("vedem ocr service connect error")           // 142
-	OCRResponseStatusCodeNot200 = errors.New("vedem ocr response status code is not 200") // 143
-	OCRResponseError            = errors.New("vedem ocr parse response error")            // 143
-	OCRTextNotFoundError        = errors.New("vedem ocr text not found")                  // 144
+	AndroidScreenShotError = errors.New("android screenshot error") // 150
 )
 
-// CV related: [160, 180)
+// OCR related: [160, 180)
+var (
+	OCREnvMissedError         = errors.New("veDEM OCR env missed error")      // 160
+	OCRRequestError           = errors.New("vedem ocr prepare request error") // 161
+	OCRServiceConnectionError = errors.New("vedem ocr service connect error") // 162
+	OCRResponseError          = errors.New("vedem ocr parse response error")  // 163
+	OCRTextNotFoundError      = errors.New("vedem ocr text not found")        // 164
+)
+
+// CV related: [180, 200)
 
 // report related: [200, 220)
 
 var errorsMap = map[error]int{
 	LoadJSONError: 10,
 	LoadYAMLError: 11,
+
+	// ios related
+	IOSScreenShotError: 110,
+
+	// android related
+	AndroidScreenShotError: 130,
+
+	// OCR related
+	OCREnvMissedError:         160,
+	OCRRequestError:           161,
+	OCRServiceConnectionError: 162,
+	OCRResponseError:          163,
+	OCRTextNotFoundError:      164,
 }
 
 func GetErrorCode(err error) int {
