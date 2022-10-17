@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"io/ioutil"
-	"math"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -111,20 +110,7 @@ func getLogID(header http.Header) string {
 }
 
 func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (rect image.Rectangle, err error) {
-	data := map[string]interface{}{}
-	for _, option := range options {
-		option(data)
-	}
-
-	if _, ok := data["index"]; !ok {
-		data["index"] = 0 // index not specified
-	}
-	index, _ := data["index"].(int)
-
-	if _, ok := data["scope"]; !ok {
-		data["scope"] = []int{0, 0, math.MaxInt64, math.MaxInt64} // scope not specified
-	}
-	scope, _ := data["scope"].([]int)
+	data := NewData(options...)
 
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
@@ -146,7 +132,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
-		if rect.Min.X > scope[0] && rect.Max.X < scope[2] && rect.Min.Y > scope[1] && rect.Max.Y < scope[3] {
+		if rect.Min.X > data.Scope[0] && rect.Max.X < data.Scope[2] && rect.Min.Y > data.Scope[1] && rect.Max.Y < data.Scope[3] {
 			ocrTexts = append(ocrTexts, ocrResult.Text)
 
 			// not contains text
@@ -163,7 +149,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 		}
 
 		// match exactly, and not specify index, return the first one
-		if index == 0 {
+		if data.Index == 0 {
 			return rect, nil
 		}
 	}
@@ -174,7 +160,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 	}
 
 	// get index
-	idx := index
+	idx := data.Index
 	if idx > 0 {
 		// NOTICE: index start from 1
 		idx = idx - 1
@@ -198,20 +184,11 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 		return
 	}
 
-	data := map[string]interface{}{}
-	for _, option := range options {
-		option(data)
-	}
-
-	if _, ok := data["scope"]; !ok {
-		data["scope"] = []int{0, 0, math.MaxInt64, math.MaxInt64} // scope not specified
-	}
-	scope, _ := data["scope"].([]int)
+	data := NewData(options...)
+	ocrTexts := map[string]bool{}
 
 	var success bool
 	var rect image.Rectangle
-	ocrTexts := map[string]bool{}
-
 	for _, text := range texts {
 		var found bool
 		for _, ocrResult := range ocrResults {
@@ -227,7 +204,7 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 				},
 			}
 
-			if rect.Min.X >= scope[0] && rect.Max.X <= scope[2] && rect.Min.Y >= scope[1] && rect.Max.Y <= scope[3] {
+			if rect.Min.X >= data.Scope[0] && rect.Max.X <= data.Scope[2] && rect.Min.Y >= data.Scope[1] && rect.Max.Y <= data.Scope[3] {
 				ocrTexts[ocrResult.Text] = true
 
 				// not contains text

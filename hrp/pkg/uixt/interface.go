@@ -3,6 +3,7 @@ package uixt
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -773,60 +774,108 @@ type Rect struct {
 	Size
 }
 
-type DataOption func(data map[string]interface{})
+type DataOption func(data *DataOptions)
 
 func WithCustomOption(key string, value interface{}) DataOption {
-	return func(data map[string]interface{}) {
-		data[key] = value
+	return func(data *DataOptions) {
+		data.Data[key] = value
 	}
 }
 
-func WithPressDurationOption(duraion float64) DataOption {
-	return func(data map[string]interface{}) {
-		data["duration"] = duraion
+func WithDataPressDuration(duration float64) DataOption {
+	return func(data *DataOptions) {
+		data.Data["duration"] = duration
 	}
 }
 
-func WithStepsOption(steps int) DataOption {
-	return func(data map[string]interface{}) {
-		data["steps"] = steps
+func WithDataSteps(steps int) DataOption {
+	return func(data *DataOptions) {
+		data.Data["steps"] = steps
 	}
 }
 
-func WithFrequencyOption(frequency int) DataOption {
-	return func(data map[string]interface{}) {
-		data["frequency"] = frequency
+func WithDataFrequency(frequency int) DataOption {
+	return func(data *DataOptions) {
+		data.Data["frequency"] = frequency
 	}
 }
 
-func WithIndexOption(index int) DataOption {
-	return func(data map[string]interface{}) {
-		data["index"] = index
+func WithDataIndex(index int) DataOption {
+	return func(data *DataOptions) {
+		data.Index = index
 	}
 }
 
-func WithScopeOption(x1, x2, y1, y2 int) DataOption {
-	return func(data map[string]interface{}) {
-		data["scope"] = []int{x1, x2, y1, y2}
+func WithDataScope(x1, x2, y1, y2 int) DataOption {
+	return func(data *DataOptions) {
+		data.Scope = []int{x1, x2, y1, y2}
 	}
 }
 
-func WithIdentifierOption(identifier string) DataOption {
+func WithDataIdentifier(identifier string) DataOption {
 	if identifier == "" {
-		return func(data map[string]interface{}) {}
+		return func(data *DataOptions) {}
 	}
-	return func(data map[string]interface{}) {
-		data["log"] = map[string]interface{}{
+	return func(data *DataOptions) {
+		data.Data["log"] = map[string]interface{}{
 			"enable": true,
 			"data":   identifier,
 		}
 	}
 }
 
-func WithIgnoreNotFoundErrorOption(ignoreError bool) DataOption {
-	return func(data map[string]interface{}) {
-		data["ignoreNotFoundError"] = ignoreError
+func WithDataIgnoreNotFoundError(ignoreError bool) DataOption {
+	return func(data *DataOptions) {
+		data.IgnoreNotFoundError = ignoreError
 	}
+}
+
+type DataOptions struct {
+	Data                map[string]interface{} // configurations used by ios/android driver
+	Scope               []int                  // used by ocr to get text position in the scope
+	Index               int                    // index of the target element, should start from 1
+	IgnoreNotFoundError bool                   // ignore error if target element not found
+}
+
+func NewData(options ...DataOption) *DataOptions {
+	data := &DataOptions{
+		Data: map[string]interface{}{},
+	}
+	for _, option := range options {
+		option(data)
+	}
+
+	if len(data.Scope) == 0 {
+		data.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
+	}
+
+	if _, ok := data.Data["steps"]; !ok {
+		data.Data["steps"] = 12 // default steps
+	}
+
+	if _, ok := data.Data["duration"]; !ok {
+		data.Data["duration"] = 1.0 // default duration
+	}
+
+	if _, ok := data.Data["frequency"]; !ok {
+		data.Data["frequency"] = 60 // default frequency
+	}
+
+	if _, ok := data.Data["isReplace"]; !ok {
+		data.Data["isReplace"] = true // default true
+	}
+
+	return data
+}
+
+func (d *DataOptions) MergeData(data map[string]interface{}) {
+	for key, value := range data {
+		d.Data[key] = value
+	}
+}
+
+func (d *DataOptions) AddData(key string, value interface{}) {
+	d.Data[key] = value
 }
 
 // current implemeted device: IOSDevice, AndroidDevice

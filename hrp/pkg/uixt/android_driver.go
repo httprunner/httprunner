@@ -491,12 +491,11 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 		"x": x,
 		"y": y,
 	}
-	// append options in post data for extra uiautomator configurations
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(options...)
+	d.MergeData(data)
 
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/tap")
+	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "appium/tap")
 	return
 }
 
@@ -551,16 +550,11 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 		"endY":   toY,
 	}
 
-	// append options in post data for extra uiautomator configurations
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(options...)
+	d.MergeData(data)
 
-	if _, ok := data["steps"]; !ok {
-		data["steps"] = 12 // default steps
-	}
-
-	return ud._drag(data)
+	return ud._drag(d.Data)
 }
 
 func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...DataOption) (err error) {
@@ -572,16 +566,11 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...D
 		"endY":   endY,
 	}
 
-	// append options in post data for extra uiautomator configurations
-	// e.g. use WithPressDurationOption to set pressForDuration
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(options...)
+	d.MergeData(data)
 
-	if _, ok := data["steps"]; !ok {
-		data["steps"] = 12 // default steps
-	}
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "touch/perform")
+	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "touch/perform")
 	return
 }
 
@@ -590,7 +579,7 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...D
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //  `steps` is the number of move steps sent to the system
 func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
-	options = append(options, WithStepsOption(12))
+	options = append(options, WithDataSteps(12))
 	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
@@ -670,16 +659,11 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 	data := map[string]interface{}{
 		"text": text,
 	}
-	// append options in post data for extra uiautomator configurations
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(options...)
+	d.MergeData(data)
 
-	if _, ok := data["isReplace"]; !ok {
-		data["isReplace"] = true // default true
-	}
-
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "keys")
+	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "keys")
 	return
 }
 
@@ -687,17 +671,16 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 	data := map[string]interface{}{
 		"view": text,
 	}
-	// append options in post data for extra uiautomator configurations
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(options...)
+	d.MergeData(data)
 
 	var element WebElement
-	if valuetext, ok := data["textview"]; ok {
+	if valuetext, ok := d.Data["textview"]; ok {
 		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().TextContains(fmt.Sprintf("%v", valuetext)).String()})
-	} else if valueid, ok := data["id"]; ok {
+	} else if valueid, ok := d.Data["id"]; ok {
 		element, err = ud.FindElement(BySelector{ResourceIdID: fmt.Sprintf("%v", valueid)})
-	} else if valuedesc, ok := data["description"]; ok {
+	} else if valuedesc, ok := d.Data["description"]; ok {
 		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().Description(fmt.Sprintf("%v", valuedesc)).String()})
 	} else {
 		element, err = ud.FindElement(BySelector{ClassName: ElementType{EditText: true}})

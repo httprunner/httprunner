@@ -383,9 +383,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
 
-			identifierOption := WithIdentifierOption(action.Identifier)
-			indexOption := WithIndexOption(action.Index)
-			scopeOption := WithScopeOption(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			identifierOption := WithDataIdentifier(action.Identifier)
+			indexOption := WithDataIndex(action.Index)
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 
 			var point PointF
 			findApp := func(d *DriverExt) error {
@@ -423,9 +423,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
 
-			identifierOption := WithIdentifierOption(action.Identifier)
-			indexOption := WithIndexOption(action.Index)
-			scopeOption := WithScopeOption(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			identifierOption := WithDataIdentifier(action.Identifier)
+			indexOption := WithDataIndex(action.Index)
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 
 			var point PointF
 			findText := func(d *DriverExt) error {
@@ -464,7 +464,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
 
-			scopeOption := WithScopeOption(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 
 			var point PointF
 			findText := func(d *DriverExt) error {
@@ -482,7 +482,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, WithIdentifierOption(action.Identifier))
+				return d.TapAbsXY(point.X, point.Y, WithDataIdentifier(action.Identifier))
 			}
 
 			// default to retry 10 times
@@ -520,7 +520,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapXY(x, y, WithIdentifierOption(action.Identifier))
+			return dExt.TapXY(x, y, WithDataIdentifier(action.Identifier))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_TapAbsXY:
@@ -531,12 +531,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapAbsXY(x, y, WithIdentifierOption(action.Identifier))
+			return dExt.TapAbsXY(x, y, WithDataIdentifier(action.Identifier))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, WithIdentifierOption(action.Identifier), WithIgnoreNotFoundErrorOption(true), WithIndexOption(action.Index))
+			return dExt.Tap(param, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
@@ -545,16 +545,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
 
-			indexOption := WithIndexOption(action.Index)
-			scopeOption := WithScopeOption(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
-			identifierOption := WithIdentifierOption(action.Identifier)
-			IgnoreNotFoundErrorOption := WithIgnoreNotFoundErrorOption(action.IgnoreNotFoundError)
+			indexOption := WithDataIndex(action.Index)
+			scopeOption := WithDataScope(dExt.GetAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
+			identifierOption := WithDataIdentifier(action.Identifier)
+			IgnoreNotFoundErrorOption := WithDataIgnoreNotFoundError(action.IgnoreNotFoundError)
 			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, WithIdentifierOption(action.Identifier), WithIgnoreNotFoundErrorOption(true), WithIndexOption(action.Index))
+			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -574,7 +574,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
-		identifierOption := WithIdentifierOption(action.Identifier)
+		identifierOption := WithDataIdentifier(action.Identifier)
 		if positions, ok := action.Params.([]interface{}); ok {
 			// relative fromX, fromY, toX, toY of window size: [0.5, 0.9, 0.5, 0.1]
 			if len(positions) != 4 {
@@ -606,7 +606,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			options = append(options, WithCustomOption("description", action.Description))
 		}
 		if action.Identifier != "" {
-			options = append(options, WithIdentifierOption(action.Identifier))
+			options = append(options, WithDataIdentifier(action.Identifier))
 		}
 		return dExt.Driver.Input(param, options...)
 	case CtlSleep:
