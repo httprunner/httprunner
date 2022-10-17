@@ -23,6 +23,7 @@ const (
 var (
 	WithIdentifier          = uixt.WithIdentifier
 	WithMaxRetryTimes       = uixt.WithMaxRetryTimes
+	WithWaitTime            = uixt.WithWaitTime
 	WithIndex               = uixt.WithIndex
 	WithTimeout             = uixt.WithTimeout
 	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
@@ -31,6 +32,7 @@ var (
 	WithDescription         = uixt.WithDescription
 	WithDirection           = uixt.WithDirection
 	WithCustomDirection     = uixt.WithCustomDirection
+	WithScope               = uixt.WithScope
 )
 
 var (
