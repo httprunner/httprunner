@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/rs/zerolog/log"
@@ -66,7 +67,7 @@ type FindCondition func(driver *DriverExt) error
 // FoundAction indicates the action to do after a UI element is found
 type FoundAction func(driver *DriverExt) error
 
-func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition, action FoundAction, maxTimes int) error {
+func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition, action FoundAction, maxTimes int, waitTime float64) error {
 	for i := 0; i < maxTimes; i++ {
 		if err := condition(dExt); err == nil {
 			// do action after found
@@ -89,6 +90,8 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition
 				log.Error().Err(err).Msgf("swipe (%v, %v) to (%v, %v) failed", sx, sy, ex, ey)
 			}
 		}
+		// wait for swipe action to completed and content to load completely
+		time.Sleep(time.Duration(1000*waitTime) * time.Millisecond)
 	}
 	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
 }
