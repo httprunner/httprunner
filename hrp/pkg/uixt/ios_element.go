@@ -30,16 +30,10 @@ func (we wdaElement) SendKeys(text string, options ...DataOption) (err error) {
 	data := map[string]interface{}{
 		"value": strings.Split(text, ""),
 	}
-	// append options in post data for extra uiautomator configurations
-	for _, option := range options {
-		option(data)
-	}
+	// new data options in post data for extra uiautomator configurations
+	d := NewData(data, options...)
 
-	if _, ok := data["frequency"]; !ok {
-		data["frequency"] = 60
-	}
-
-	_, err = we.parent.httpPOST(data, "/session", we.parent.sessionId, "/element", we.id, "/value")
+	_, err = we.parent.httpPOST(d.Data, "/session", we.parent.sessionId, "/element", we.id, "/value")
 	return
 }
 

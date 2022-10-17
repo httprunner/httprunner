@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/rs/zerolog/log"
@@ -12,7 +13,7 @@ func assertRelative(p float64) bool {
 }
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
-func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier ...string) error {
+func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...DataOption) error {
 	width := dExt.windowSize.Width
 	height := dExt.windowSize.Height
 
@@ -27,44 +28,37 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, identifier 
 	toX = float64(width) * toX
 	toY = float64(height) * toY
 
-	if len(identifier) > 0 && identifier[0] != "" {
-		option := WithCustomOption("log", map[string]interface{}{
-			"enable": true,
-			"data":   identifier[0],
-		})
-		return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, option)
-	}
-	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY)
+	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
 }
 
-func (dExt *DriverExt) SwipeTo(direction string, identifier ...string) (err error) {
+func (dExt *DriverExt) SwipeTo(direction string, options ...DataOption) (err error) {
 	switch direction {
 	case "up":
-		return dExt.SwipeUp(identifier...)
+		return dExt.SwipeUp(options...)
 	case "down":
-		return dExt.SwipeDown(identifier...)
+		return dExt.SwipeDown(options...)
 	case "left":
-		return dExt.SwipeLeft(identifier...)
+		return dExt.SwipeLeft(options...)
 	case "right":
-		return dExt.SwipeRight(identifier...)
+		return dExt.SwipeRight(options...)
 	}
 	return fmt.Errorf("unexpected direction: %s", direction)
 }
 
-func (dExt *DriverExt) SwipeUp(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, identifier...)
+func (dExt *DriverExt) SwipeUp(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, options...)
 }
 
-func (dExt *DriverExt) SwipeDown(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, identifier...)
+func (dExt *DriverExt) SwipeDown(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, options...)
 }
 
-func (dExt *DriverExt) SwipeLeft(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, identifier...)
+func (dExt *DriverExt) SwipeLeft(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, options...)
 }
 
-func (dExt *DriverExt) SwipeRight(identifier ...string) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, identifier...)
+func (dExt *DriverExt) SwipeRight(options ...DataOption) (err error) {
+	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, options...)
 }
 
 // FindCondition indicates the condition to find a UI element
@@ -73,7 +67,7 @@ type FindCondition func(driver *DriverExt) error
 // FoundAction indicates the action to do after a UI element is found
 type FoundAction func(driver *DriverExt) error
 
-func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition, action FoundAction, maxTimes int) error {
+func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition, action FoundAction, maxTimes int, waitTime float64) error {
 	for i := 0; i < maxTimes; i++ {
 		if err := condition(dExt); err == nil {
 			// do action after found
@@ -96,6 +90,8 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, condition FindCondition
 				log.Error().Err(err).Msgf("swipe (%v, %v) to (%v, %v) failed", sx, sy, ex, ey)
 			}
 		}
+		// wait for swipe action to completed and content to load completely
+		time.Sleep(time.Duration(1000*waitTime) * time.Millisecond)
 	}
 	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxTimes)
 }

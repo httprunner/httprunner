@@ -38,7 +38,7 @@ func TestIOSDemo(t *testing.T) {
 			continue
 		}
 
-		err = driverExt.TapAbsXY(points[1].X, points[1].Y, "")
+		err = driverExt.TapAbsXY(points[1].X, points[1].Y)
 		if err != nil {
 			t.Fatal(err)
 		}
