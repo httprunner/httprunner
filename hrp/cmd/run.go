@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp"
@@ -20,17 +18,14 @@ var runCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		setLogLevel(logLevel)
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			path := hrp.TestCasePath(arg)
 			paths = append(paths, &path)
 		}
 		runner := makeHRPRunner()
-		err := runner.Run(paths...)
-		if err != nil {
-			os.Exit(1)
-		}
+		return runner.Run(paths...)
 	},
 }
 

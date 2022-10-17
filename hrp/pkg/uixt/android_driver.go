@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -13,7 +12,10 @@ import (
 	"time"
 
 	"github.com/electricbubble/gadb"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
@@ -860,7 +862,8 @@ func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "screenshot"); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.AndroidScreenShotError,
+			fmt.Sprintf("get UIA screenshot data failed: %v", err))
 	}
 	reply := new(struct{ Value string })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
@@ -869,7 +872,8 @@ func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 
 	var decodeStr []byte
 	if decodeStr, err = base64.StdEncoding.DecodeString(reply.Value); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.AndroidScreenShotError,
+			fmt.Sprintf("decode UIA screenshot data failed: %v", err))
 	}
 
 	raw = bytes.NewBuffer(decodeStr)

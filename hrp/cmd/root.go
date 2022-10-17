@@ -11,6 +11,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
 	"github.com/httprunner/httprunner/v4/hrp/cmd/ios"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -45,7 +46,8 @@ Copyright 2017 debugtalk`,
 		}
 	},
 	Version:          version.VERSION,
-	TraverseChildren: true,
+	TraverseChildren: true, // parses flags on all parents before executing child command
+	SilenceUsage:     true, // silence usage when an error occurs
 }
 
 var (
@@ -56,7 +58,7 @@ var (
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute() int {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
 	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
 	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
@@ -64,9 +66,8 @@ func Execute() {
 	ios.Init(rootCmd)
 	adb.Init(rootCmd)
 
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+	err := rootCmd.Execute()
+	return code.GetErrorCode(err)
 }
 
 func setLogLevel(level string) {

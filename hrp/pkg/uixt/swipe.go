@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 func assertRelative(p float64) bool {
@@ -97,7 +98,8 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, f
 		// wait for swipe action to completed and content to load completely
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
-	return fmt.Errorf("swipe %s %d times, match condition failed", direction, maxRetryTimes)
+	return errors.Wrap(code.OCRTextNotFoundError,
+		fmt.Sprintf("swipe %s %d times, match condition failed", direction, maxRetryTimes))
 }
 
 func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, options ...DataOption) error {
@@ -118,7 +120,9 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		// wait interval between each findAction
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
-	return fmt.Errorf("loop %d times, match find condition failed", maxRetryTimes)
+
+	return errors.Wrap(code.OCRTextNotFoundError,
+		fmt.Sprintf("loop %d times, match find condition failed", maxRetryTimes))
 }
 
 func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error {
