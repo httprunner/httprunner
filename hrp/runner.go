@@ -317,9 +317,10 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 }
 
 type testCaseRunner struct {
-	testCase           *TestCase
-	hrpRunner          *HRPRunner
-	parser             *Parser
+	testCase  *TestCase
+	hrpRunner *HRPRunner
+	parser    *Parser
+
 	parsedConfig       *TConfig
 	parametersIterator *ParametersIterator
 	rootDir            string // project root dir

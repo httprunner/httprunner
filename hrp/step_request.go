@@ -297,16 +297,6 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		if err != nil {
 			stepResult.Attachments = err.Error()
 		}
-		// update summary
-		r.summary.Records = append(r.summary.Records, stepResult)
-		r.summary.Stat.Total += 1
-		if stepResult.Success {
-			r.summary.Stat.Successes += 1
-		} else {
-			r.summary.Stat.Failures += 1
-			// update summary result to failed
-			r.summary.Success = false
-		}
 	}()
 
 	// override step variables
@@ -321,8 +311,8 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 
 	sessionData := newSessionData()
-	parser := r.GetParser()
-	config := r.GetConfig()
+	parser := r.parser
+	config := r.parsedConfig
 
 	rb := newRequestBuilder(parser, config, step.Request)
 	rb.req.Method = string(step.Request.Method)

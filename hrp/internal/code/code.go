@@ -6,8 +6,8 @@ import (
 
 // general: [0, 20)
 const (
-	SUCCESS = 0
-	FAIL    = 1
+	Success     = 0
+	GeneralFail = 1
 )
 
 // loader: [20, 40)
@@ -64,7 +64,7 @@ var errorsMap = map[error]int{
 
 func GetErrorCode(err error) int {
 	if err == nil {
-		return SUCCESS
+		return Success
 	}
 
 	e := errors.Cause(err)
@@ -72,5 +72,5 @@ func GetErrorCode(err error) int {
 		return code
 	}
 
-	return FAIL
+	return GeneralFail
 }

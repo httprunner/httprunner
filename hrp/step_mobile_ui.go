@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // ios setting options
@@ -559,7 +560,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	if err != nil {
 		return
 	}
-	parser := s.GetParser()
 
 	var osType string
 	var mobileStep *MobileStep
@@ -590,17 +590,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		screenshots = append(screenshots, uiDriver.ScreenShots...)
 		attachments["screenshots"] = screenshots
 		stepResult.Attachments = attachments
-
-		// update summary
-		s.summary.Records = append(s.summary.Records, stepResult)
-		s.summary.Stat.Total += 1
-		if stepResult.Success {
-			s.summary.Stat.Successes += 1
-		} else {
-			s.summary.Stat.Failures += 1
-			// update summary result to failed
-			s.summary.Success = false
-		}
 	}()
 
 	// prepare actions
@@ -618,7 +607,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// run actions
 	for _, action := range actions {
-		if action.Params, err = parser.Parse(action.Params, stepVariables); err != nil {
+		if action.Params, err = s.parser.Parse(action.Params, stepVariables); err != nil {
 			return stepResult, errors.Wrap(err, "parse action params failed")
 		}
 		if err := uiDriver.DoAction(action); err != nil {
