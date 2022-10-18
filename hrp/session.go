@@ -35,14 +35,6 @@ func (r *SessionRunner) resetSession() {
 	r.closeResponseChan = make(chan *wsCloseRespObject, 1)
 }
 
-func (r *SessionRunner) GetParser() *Parser {
-	return r.parser
-}
-
-func (r *SessionRunner) GetConfig() *TConfig {
-	return r.parsedConfig
-}
-
 func (r *SessionRunner) HTTPStatOn() bool {
 	return r.hrpRunner.httpStatOn
 }
@@ -74,31 +66,41 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 		log.Info().Str("step", stepName).
 			Str("type", string(step.Type())).Msg("run step start")
 
+		// run step
 		stepResult, err := step.Run(r)
 		stepResult.Name = stepName
-		if err != nil {
+
+		// update summary
+		r.summary.Records = append(r.summary.Records, stepResult)
+		r.summary.Stat.Total += 1
+		if stepResult.Success {
+			r.summary.Stat.Successes += 1
+			log.Info().
+				Str("step", stepResult.Name).
+				Str("type", string(stepResult.StepType)).
+				Bool("success", true).
+				Interface("exportVars", stepResult.ExportVars).
+				Msg("run step end")
+		} else {
+			r.summary.Stat.Failures += 1
+			// update summary result to failed
+			r.summary.Success = false
 			log.Error().
 				Str("step", stepResult.Name).
 				Str("type", string(stepResult.StepType)).
 				Bool("success", false).
 				Msg("run step end")
+		}
 
-			if r.hrpRunner.failfast {
-				return errors.Wrap(err, "abort running due to failfast setting")
-			}
+		// check if failfast
+		if err != nil && r.hrpRunner.failfast {
+			return errors.Wrap(err, "abort running due to failfast setting")
 		}
 
 		// update extracted variables
 		for k, v := range stepResult.ExportVars {
 			r.sessionVariables[k] = v
 		}
-
-		log.Info().
-			Str("step", stepResult.Name).
-			Str("type", string(stepResult.StepType)).
-			Bool("success", stepResult.Success).
-			Interface("exportVars", stepResult.ExportVars).
-			Msg("run step end")
 	}
 
 	// close websocket connection after all steps done

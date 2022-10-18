@@ -109,12 +109,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	// export testcase export variables
 	stepResult.ExportVars = summary.InOut.ExportVars
 
-	// merge testcase summary
-	r.summary.Records = append(r.summary.Records, summary.Records...)
-	r.summary.Stat.Total += summary.Stat.Total
-	r.summary.Stat.Successes += summary.Stat.Successes
-	r.summary.Stat.Failures += summary.Stat.Failures
-
 	if err == nil {
 		stepResult.Success = true
 	}

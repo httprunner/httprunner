@@ -190,7 +190,7 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 				return raw, err
 			}
 
-			result, err := p.CallFunc(funcName, parsedArgs.([]interface{})...)
+			result, err := p.callFunc(funcName, parsedArgs.([]interface{})...)
 			if err != nil {
 				log.Error().Str("funcName", funcName).Interface("arguments", arguments).
 					Err(err).Msg("call function failed")
@@ -251,9 +251,9 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 	return parsedString, nil
 }
 
-// CallFunc calls function with arguments
+// callFunc calls function with arguments
 // only support return at most one result value
-func (p *Parser) CallFunc(funcName string, arguments ...interface{}) (interface{}, error) {
+func (p *Parser) callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// call with plugin function
 	if p.plugin != nil {
 		if p.plugin.Has(funcName) {

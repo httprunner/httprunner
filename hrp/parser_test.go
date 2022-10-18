@@ -478,14 +478,14 @@ func TestCallBuiltinFunction(t *testing.T) {
 	parser := newParser()
 
 	// call function without arguments
-	_, err := parser.CallFunc("get_timestamp")
+	_, err := parser.callFunc("get_timestamp")
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 
 	// call function with one argument
 	timeStart := time.Now()
-	_, err = parser.CallFunc("sleep", 1)
+	_, err = parser.callFunc("sleep", 1)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -494,7 +494,7 @@ func TestCallBuiltinFunction(t *testing.T) {
 	}
 
 	// call function with one argument
-	result, err := parser.CallFunc("gen_random_string", 10)
+	result, err := parser.callFunc("gen_random_string", 10)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -503,7 +503,7 @@ func TestCallBuiltinFunction(t *testing.T) {
 	}
 
 	// call function with two argument
-	result, err = parser.CallFunc("max", float64(10), 9.99)
+	result, err = parser.callFunc("max", float64(10), 9.99)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
