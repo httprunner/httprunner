@@ -291,6 +291,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		Success:     false,
 		ContentSize: 0,
 	}
+	stepVariables := step.Variables
 
 	defer func() {
 		// update testcase summary
@@ -298,12 +299,6 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 			stepResult.Attachments = err.Error()
 		}
 	}()
-
-	// override step variables
-	stepVariables, err := r.MergeStepVariables(step.Variables)
-	if err != nil {
-		return
-	}
 
 	err = prepareUpload(r.parser, step, stepVariables)
 	if err != nil {

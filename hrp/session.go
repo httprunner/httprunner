@@ -57,6 +57,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
+		// TODO: parse step
 		// parse step name
 		parsedName, err := r.parser.ParseString(step.Name(), r.sessionVariables)
 		if err != nil {
@@ -65,6 +66,12 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 		stepName := convertString(parsedName)
 		log.Info().Str("step", stepName).
 			Str("type", string(step.Type())).Msg("run step start")
+
+		// merge step variables with session variables
+		step.Struct().Variables, err = r.mergeStepVariables(step.Struct().Variables)
+		if err != nil {
+			return errors.Wrap(err, "merge step variables with session variables failed")
+		}
 
 		// run step
 		stepResult, err := step.Run(r)
@@ -120,8 +127,8 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	return nil
 }
 
-// MergeStepVariables merges step variables with config variables and session variables
-func (r *SessionRunner) MergeStepVariables(vars map[string]interface{}) (map[string]interface{}, error) {
+// mergeStepVariables merges step variables with config variables and session variables
+func (r *SessionRunner) mergeStepVariables(vars map[string]interface{}) (map[string]interface{}, error) {
 	// override variables
 	// step variables > session variables (extracted variables from previous steps)
 	overrideVars := mergeVariables(vars, r.sessionVariables)

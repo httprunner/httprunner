@@ -254,6 +254,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		Success:     false,
 		ContentSize: 0,
 	}
+	stepVariables := step.Variables
 
 	defer func() {
 		// update testcase summary
@@ -261,12 +262,6 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			stepResult.Attachments = err.Error()
 		}
 	}()
-
-	// override step variables
-	stepVariables, err := r.MergeStepVariables(step.Variables)
-	if err != nil {
-		return
-	}
 
 	sessionData := newSessionData()
 	parser := r.parser
