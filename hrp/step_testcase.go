@@ -51,6 +51,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
+	stepVariables := s.step.Variables
 
 	defer func() {
 		// update testcase summary
@@ -58,11 +59,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 			stepResult.Attachments = err.Error()
 		}
 	}()
-
-	stepVariables, err := r.MergeStepVariables(s.step.Variables)
-	if err != nil {
-		return stepResult, err
-	}
 
 	stepTestCase := s.step.TestCase.(*TestCase)
 

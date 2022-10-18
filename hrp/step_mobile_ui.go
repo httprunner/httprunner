@@ -554,12 +554,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		ContentSize: 0,
 	}
 	screenshots := make([]string, 0)
-
-	// override step variables
-	stepVariables, err := s.MergeStepVariables(step.Variables)
-	if err != nil {
-		return
-	}
+	stepVariables := step.Variables
 
 	var osType string
 	var mobileStep *MobileStep
