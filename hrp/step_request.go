@@ -291,7 +291,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		Success:     false,
 		ContentSize: 0,
 	}
-	stepVariables := step.Variables
+
+	// merge step variables with session variables
+	stepVariables, err := r.ParseStepVariables(step.Variables)
+	if err != nil {
+		err = errors.Wrap(err, "parse step variables failed")
+		return
+	}
 
 	defer func() {
 		// update testcase summary
@@ -300,14 +306,14 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}()
 
-	err = prepareUpload(r.parser, step, stepVariables)
+	err = prepareUpload(r.caseRunner.parser, step, stepVariables)
 	if err != nil {
 		return
 	}
 
 	sessionData := newSessionData()
-	parser := r.parser
-	config := r.parsedConfig
+	parser := r.caseRunner.parser
+	config := r.caseRunner.parsedConfig
 
 	rb := newRequestBuilder(parser, config, step.Request)
 	rb.req.Method = string(step.Request.Method)
@@ -340,7 +346,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 
 	// log & print request
-	if r.LogOn() {
+	if r.caseRunner.hrpRunner.requestsLogOn {
 		if err := printRequest(rb.req); err != nil {
 			return stepResult, err
 		}
@@ -348,7 +354,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// stat HTTP request
 	var httpStat httpstat.Stat
-	if r.HTTPStatOn() {
+	if r.caseRunner.hrpRunner.httpStatOn {
 		ctx := httpstat.WithHTTPStat(rb.req, &httpStat)
 		rb.req = rb.req.WithContext(ctx)
 	}
@@ -356,9 +362,9 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	// select HTTP client
 	var client *http.Client
 	if step.Request.HTTP2 {
-		client = r.hrpRunner.http2Client
+		client = r.caseRunner.hrpRunner.http2Client
 	} else {
-		client = r.hrpRunner.httpClient
+		client = r.caseRunner.hrpRunner.httpClient
 	}
 
 	// set step timeout
@@ -384,21 +390,21 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	defer resp.Body.Close()
 
 	// log & print response
-	if r.LogOn() {
+	if r.caseRunner.hrpRunner.requestsLogOn {
 		if err := printResponse(resp); err != nil {
 			return stepResult, err
 		}
 	}
 
 	// new response object
-	respObj, err := newHttpResponseObject(r.hrpRunner.t, parser, resp)
+	respObj, err := newHttpResponseObject(r.caseRunner.hrpRunner.t, parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "init ResponseObject error")
 		return
 	}
 
 	stepResult.Elapsed = time.Since(start).Milliseconds()
-	if r.HTTPStatOn() {
+	if r.caseRunner.hrpRunner.httpStatOn {
 		// resp.Body has been ReadAll
 		httpStat.Finish()
 		stepResult.HttpStat = httpStat.Durations()

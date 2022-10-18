@@ -554,7 +554,13 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		ContentSize: 0,
 	}
 	screenshots := make([]string, 0)
-	stepVariables := step.Variables
+
+	// merge step variables with session variables
+	stepVariables, err := s.ParseStepVariables(step.Variables)
+	if err != nil {
+		err = errors.Wrap(err, "parse step variables failed")
+		return
+	}
 
 	var osType string
 	var mobileStep *MobileStep
@@ -569,7 +575,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// init wda/uia driver
-	uiDriver, err := s.hrpRunner.initUIClient(mobileStep.Serial, osType)
+	uiDriver, err := s.caseRunner.hrpRunner.initUIClient(mobileStep.Serial, osType)
 	if err != nil {
 		return
 	}
@@ -602,7 +608,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// run actions
 	for _, action := range actions {
-		if action.Params, err = s.parser.Parse(action.Params, stepVariables); err != nil {
+		if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
 			return stepResult, errors.Wrap(err, "parse action params failed")
 		}
 		if err := uiDriver.DoAction(action); err != nil {

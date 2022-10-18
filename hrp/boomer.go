@@ -136,7 +136,7 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TCase {
 	var parsedTestCases []*TCase
 	for _, tc := range testCases {
-		caseRunner, err := b.hrpRunner.newCaseRunner(tc)
+		caseRunner, err := b.hrpRunner.NewCaseRunner(tc)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create runner")
 			os.Exit(1)
@@ -313,9 +313,9 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	// init runner for testcase
+	// init case runner for testcase
 	// this runner is shared by multiple session runners
-	caseRunner, err := b.hrpRunner.newCaseRunner(testcase)
+	caseRunner, err := b.hrpRunner.NewCaseRunner(testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create runner")
 		os.Exit(1)
@@ -352,18 +352,19 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			transactionSuccess := true // flag current transaction result
 
 			// init session runner
-			sessionRunner := caseRunner.newSession()
+			sessionRunner := caseRunner.NewSession()
 
 			mutex.Lock()
 			if parametersIterator.HasNext() {
-				sessionRunner.updateSessionVariables(parametersIterator.Next())
+				sessionRunner.InitWithParameters(parametersIterator.Next())
 			}
 			mutex.Unlock()
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
+				// TODO: parse step struct
 				// parse step name
-				parsedName, err := sessionRunner.parser.ParseString(step.Name(), sessionRunner.sessionVariables)
+				parsedName, err := caseRunner.parser.ParseString(step.Name(), sessionRunner.sessionVariables)
 				if err != nil {
 					parsedName = step.Name()
 				}

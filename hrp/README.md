@@ -51,28 +51,50 @@ type HRPRunner struct {
 }
 
 func (r *HRPRunner) Run(testcases ...ITestCase) error
-func (r *HRPRunner) NewSessionRunner(testcase *TestCase) *SessionRunner
+func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error)
 ```
 
 重点关注两个方法：
 
 - Run：测试执行的主入口，支持运行一个或多个测试用例
-- NewSessionRunner：针对给定的测试用例初始化一个 SessionRunner
+- NewCaseRunner：针对给定的测试用例初始化一个 CaseRunner
 
-### 用例执行器 SessionRunner
+### 用例执行器 CaseRunner
 
-测试用例的具体执行都由 `SessionRunner` 完成，每个 TestCase 对应一个实例，在该实例中除了包含测试用例自身内容外，还会包含测试过程的 session 数据和最终测试结果 summary。
+针对每个测试用例，采用 CaseRunner 存储其公共信息，包括 plugin/parser
+
+```go
+type CaseRunner struct {
+	testCase  *TestCase
+	hrpRunner *HRPRunner
+	parser    *Parser
+
+	parsedConfig       *TConfig
+	parametersIterator *ParametersIterator
+	rootDir            string // project root dir
+}
+
+func (r *CaseRunner) NewSession() *SessionRunner {
+```
+
+重点关注一个方法：
+
+- NewSession：测试用例的每一次执行对应一个 SessionRunner
+
+### SessionRunner
+
+测试用例的具体执行都由 `SessionRunner` 完成，每个 session 实例中除了包含测试用例自身内容外，还会包含测试过程的 session 数据和最终测试结果 summary。
 
 ```go
 type SessionRunner struct {
-	testCase         *TestCase
-	hrpRunner        *HRPRunner
-	parser           *Parser
+	caseRunner       *CaseRunner
 	sessionVariables map[string]interface{}
-	transactions map[string]map[transactionType]time.Time
-	startTime    time.Time        // record start time of the testcase
-	summary      *TestCaseSummary // record test case summary
+	transactions      map[string]map[transactionType]time.Time
+	startTime         time.Time                  // record start time of the testcase
+	summary           *TestCaseSummary           // record test case summary
 }
+
+func (r *SessionRunner) Start(givenVars map[string]interface{}) error
 ```
 
 重点关注一个方法：
@@ -80,12 +102,29 @@ type SessionRunner struct {
 - Start：启动执行用例，依次执行所有测试步骤
 
 ```go
-func (r *SessionRunner) Start() error {
+func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	...
+	r.resetSession()
+
+	r.InitWithParameters(givenVars)
+
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
-		_, err := step.Run(r)
-		if err != nil && r.hrpRunner.failfast {
+		// parse step
+
+		// run step
+		stepResult, err := step.Run(r)
+
+		// update summary
+		r.summary.Records = append(r.summary.Records, stepResult)
+
+		// update extracted variables
+		for k, v := range stepResult.ExportVars {
+			r.sessionVariables[k] = v
+		}
+
+		// check if failfast
+		if err != nil && r.caseRunner.hrpRunner.failfast {
 			return errors.Wrap(err, "abort running due to failfast setting")
 		}
 	}
