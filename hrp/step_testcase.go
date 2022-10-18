@@ -51,7 +51,13 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
-	stepVariables := s.step.Variables
+
+	// merge step variables with session variables
+	stepVariables, err := r.ParseStepVariables(s.step.Variables)
+	if err != nil {
+		err = errors.Wrap(err, "parse step variables failed")
+		return
+	}
 
 	defer func() {
 		// update testcase summary
@@ -77,11 +83,12 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	// merge & override extractors
 	copiedTestCase.Config.Export = mergeSlices(s.step.Export, copiedTestCase.Config.Export)
 
-	sessionRunner, err := r.hrpRunner.NewSessionRunner(copiedTestCase)
+	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(copiedTestCase)
 	if err != nil {
-		log.Error().Err(err).Msg("create session runner failed")
+		log.Error().Err(err).Msg("create case runner failed")
 		return stepResult, err
 	}
+	sessionRunner := caseRunner.NewSession()
 
 	start := time.Now()
 	// run referenced testcase with step variables

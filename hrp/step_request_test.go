@@ -77,29 +77,13 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 	}
 }
 
-func TestRunRequestRun(t *testing.T) {
-	testcase := &TestCase{
-		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{stepGET, stepPOSTData},
-	}
-	runner := NewRunner(t).SetRequestsLogOn()
-	sessionRunner, _ := runner.NewSessionRunner(testcase)
-
-	if _, err := stepGET.Run(sessionRunner); err != nil {
-		t.Fatalf("stepGET.Run() error: %v", err)
-	}
-	if _, err := stepPOSTData.Run(sessionRunner); err != nil {
-		t.Fatalf("stepPOSTData.Run() error: %v", err)
-	}
-}
-
 func TestRunRequestStatOn(t *testing.T) {
 	testcase := &TestCase{
 		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{stepGET, stepPOSTData},
 	}
-	runner := NewRunner(t).SetHTTPStatOn()
-	sessionRunner, _ := runner.NewSessionRunner(testcase)
+	caseRunner, _ := NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
+	sessionRunner := caseRunner.NewSession()
 	if err := sessionRunner.Start(nil); err != nil {
 		t.Fatal()
 	}
