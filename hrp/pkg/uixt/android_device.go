@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
@@ -71,7 +72,8 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
 	deviceList, err := DeviceList()
 	if err != nil {
-		return nil, fmt.Errorf("get attached devices failed: %v", err)
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+			fmt.Sprintf("get attached devices failed: %v", err))
 	}
 
 	device = &AndroidDevice{
@@ -95,13 +97,14 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 		return device, nil
 	}
 
-	return nil, fmt.Errorf("device %s not found", device.SerialNumber)
+	return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+		fmt.Sprintf("device %s not found", device.SerialNumber))
 }
 
 func DeviceList() (devices []gadb.Device, err error) {
 	var adbClient gadb.Client
 	if adbClient, err = gadb.NewClientWith(AdbServerHost, AdbServerPort); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
 	}
 
 	return adbClient.DeviceList()

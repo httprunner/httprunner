@@ -858,7 +858,8 @@ func (wd *wdaDriver) StartCaptureLog(identifier ...string) error {
 	data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier[0]}
 	_, err := wd.triggerWDALog(data)
 	if err != nil {
-		return errors.Wrap(err, "failed to start WDA log recording")
+		return errors.Wrap(code.IOSCaptureLogError,
+			fmt.Sprintf("start WDA log recording failed: %v", err))
 	}
 
 	return nil
@@ -875,12 +876,14 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 	rawResp, err := wd.triggerWDALog(data)
 	if err != nil {
 		log.Error().Err(err).Bytes("rawResp", rawResp).Msg("failed to get WDA logs")
-		return "", errors.Wrap(err, "failed to get WDA logs")
+		return "", errors.Wrap(code.IOSCaptureLogError,
+			fmt.Sprintf("get WDA logs failed: %v", err))
 	}
 	reply := new(wdaResponse)
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		log.Error().Err(err).Bytes("rawResp", rawResp).Msg("failed to json.Unmarshal WDA logs")
-		return reply, err
+		return reply, errors.Wrap(code.IOSCaptureLogError,
+			fmt.Sprintf("json.Unmarshal WDA logs failed: %v", err))
 	}
 	log.Info().Interface("value", reply.Value).Msg("get WDA log response")
 	return reply.Value, nil

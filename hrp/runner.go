@@ -560,7 +560,7 @@ func (r *SessionRunner) ParseStepVariables(stepVariables map[string]interface{})
 	if err != nil {
 		log.Error().Interface("variables", r.caseRunner.parsedConfig.Variables).
 			Err(err).Msg("parse step variables failed")
-		return nil, err
+		return nil, errors.Wrap(err, "parse step variables failed")
 	}
 	return parsedVariables, nil
 }
