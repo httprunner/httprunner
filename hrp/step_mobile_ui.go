@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -609,10 +610,11 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	// run actions
 	for _, action := range actions {
 		if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
-			return stepResult, errors.Wrap(err, "parse action params failed")
+			return stepResult, errors.Wrap(code.ParseError,
+				fmt.Sprintf("parse action params failed: %v", err))
 		}
 		if err := uiDriver.DoAction(action); err != nil {
-			return stepResult, err
+			return stepResult, errors.Wrap(code.MobileUIDriverError, err.Error())
 		}
 	}
 
@@ -629,6 +631,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	// validate
 	validateResults, err := validateUI(uiDriver, step.Validators)
 	if err != nil {
+		err = errors.Wrap(code.MobileUIValidationError, err.Error())
 		return
 	}
 	sessionData := newSessionData()

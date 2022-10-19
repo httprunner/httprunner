@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
@@ -106,11 +107,13 @@ func WithPerfOptions(options ...giDevice.PerfOption) IOSDeviceOption {
 func IOSDevices(udid ...string) (devices []giDevice.Device, err error) {
 	var usbmux giDevice.Usbmux
 	if usbmux, err = giDevice.NewUsbmux(); err != nil {
-		return nil, fmt.Errorf("init usbmux failed: %v", err)
+		return nil, errors.Wrap(code.IOSDeviceConnectionError,
+			fmt.Sprintf("init usbmux failed: %v", err))
 	}
 
 	if devices, err = usbmux.Devices(); err != nil {
-		return nil, fmt.Errorf("list ios devices failed: %v", err)
+		return nil, errors.Wrap(code.IOSDeviceConnectionError,
+			fmt.Sprintf("list ios devices failed: %v", err))
 	}
 
 	// filter by udid
@@ -185,7 +188,8 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		return device, nil
 	}
 
-	return nil, fmt.Errorf("device %s not found", device.UDID)
+	return nil, errors.Wrap(code.IOSDeviceConnectionError,
+		fmt.Sprintf("device %s not found", device.UDID))
 }
 
 type IOSDevice struct {
@@ -230,13 +234,15 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 	if dev.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
 		if err = driver.Homescreen(); err != nil {
-			return nil, errors.Wrap(err, "failed to go back to home screen")
+			return nil, errors.Wrap(code.MobileUIDriverError,
+				fmt.Sprintf("go back to home screen failed: %v", err))
 		}
 	}
 
 	driverExt, err = Extend(driver)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to extend WebDriver")
+		return nil, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("extend WebDriver failed: %v", err))
 	}
 	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
@@ -380,17 +386,21 @@ func (dev *IOSDevice) perfOpitons() (perfOptions []giDevice.PerfOption) {
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
 	localPort, err := getFreePort()
 	if err != nil {
-		return nil, errors.Wrap(err, "get free port failed")
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			fmt.Sprintf("get free port failed: %v", err))
 	}
 	if err = dev.forward(localPort, dev.Port); err != nil {
-		return nil, errors.Wrap(err, "forward tcp port failed")
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
 	localMjpegPort, err := getFreePort()
 	if err != nil {
-		return nil, errors.Wrap(err, "get free port failed")
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			fmt.Sprintf("get free port failed: %v", err))
 	}
 	if err = dev.forward(localMjpegPort, dev.MjpegPort); err != nil {
-		return nil, errors.Wrap(err, "forward tcp port failed")
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
 
 	log.Info().Interface("capabilities", capabilities).
@@ -402,11 +412,11 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 
 	host := "127.0.0.1"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}
 	var sessionInfo SessionInfo
 	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}
 	wd.sessionId = sessionInfo.SessionId
 
@@ -414,7 +424,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 		"tcp",
 		fmt.Sprintf("%s:%d", host, localMjpegPort),
 	); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegHTTPConn)
 
@@ -428,23 +438,25 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 
 	wd := new(wdaDriver)
 	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
-		return nil, fmt.Errorf("connect port %d failed: %w",
-			dev.Port, err)
+		return nil, errors.Wrap(code.IOSDeviceUSBDriverError,
+			fmt.Sprintf("connect port %d failed: %v", dev.Port, err))
 	}
 	wd.client = convertToHTTPClient(wd.defaultConn.RawConn())
 
 	if wd.mjpegUSBConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
-		return nil, fmt.Errorf("connect MJPEG port %d failed: %w",
-			dev.MjpegPort, err)
+		return nil, errors.Wrap(code.IOSDeviceUSBDriverError,
+			fmt.Sprintf("connect MJPEG port %d failed: %v", dev.MjpegPort, err))
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegUSBConn.RawConn())
 
 	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
-	_, err = wd.NewSession(capabilities)
+	if _, err = wd.NewSession(capabilities); err != nil {
+		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
+	}
 
-	return wd, err
+	return wd, nil
 }
 
 func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {
