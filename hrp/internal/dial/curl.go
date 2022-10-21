@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 const (
@@ -46,7 +46,7 @@ func DoCurl(args []string) (err error) {
 		}
 	}()
 
-	cmd := exec.Command("curl", args...)
+	cmd := myexec.Command("curl", args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -60,11 +60,11 @@ func DoCurl(args []string) (err error) {
 		return
 	}
 	if stdout.String() != "" {
-		fmt.Printf(stdout.String())
+		fmt.Println(stdout.String())
 		curlResult.Result = stdout.String()
 		curlResult.ResultType = normalResult
 	} else if stderr.String() != "" {
-		fmt.Printf(stderr.String())
+		fmt.Println(stderr.String())
 		curlResult.ErrorMsg = stderr.String()
 		curlResult.ResultType = errorResult
 	}

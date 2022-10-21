@@ -27,6 +27,7 @@ logs
 reports
 *.xml
 htmlcov/
+screenshots/
 
 # built plugins
 debugtalk.bin

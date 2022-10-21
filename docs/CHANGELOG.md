@@ -1,5 +1,13 @@
 # Release History
 
+## v4.3.0 (2022-10-21)
+
+- feat: support iOS UI automation with [WebDriverAgent]
+- feat support Android UI automation with [uiautomator2]
+- feat: integrage ios device management with [gidevice]
+- feat: add specified exit code for different exceptions
+- refactor: make boomer/uixt/httpstat as sub package
+
 ## v4.2.1 (2022-09-01)
 
 **go version**
@@ -670,3 +678,6 @@ reference: [v2-changelog]
 [black]: https://github.com/psf/black
 [loguru]: https://github.com/Delgan/loguru
 [v2-changelog]: https://github.com/httprunner/httprunner/blob/v2/docs/CHANGELOG.md
+[WebDriverAgent]: https://github.com/appium/WebDriverAgent
+[uiautomator2]: https://github.com/appium/appium-uiautomator2-server
+[gidevice]: https://github.com/electricbubble/gidevice

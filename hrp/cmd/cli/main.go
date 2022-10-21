@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -20,5 +21,5 @@ func main() {
 		}
 	}()
 
-	cmd.Execute()
+	os.Exit(cmd.Execute())
 }

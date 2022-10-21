@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -51,17 +52,19 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		Success:  false,
 	}
 
+	// merge step variables with session variables
+	stepVariables, err := r.ParseStepVariables(s.step.Variables)
+	if err != nil {
+		err = errors.Wrap(err, "parse step variables failed")
+		return
+	}
+
 	defer func() {
 		// update testcase summary
 		if err != nil {
-			stepResult.Attachment = err.Error()
+			stepResult.Attachments = err.Error()
 		}
 	}()
-
-	stepVariables, err := r.MergeStepVariables(s.step.Variables)
-	if err != nil {
-		return stepResult, err
-	}
 
 	stepTestCase := s.step.TestCase.(*TestCase)
 
@@ -80,20 +83,27 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	// merge & override extractors
 	copiedTestCase.Config.Export = mergeSlices(s.step.Export, copiedTestCase.Config.Export)
 
-	sessionRunner, err := r.hrpRunner.NewSessionRunner(copiedTestCase)
+	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(copiedTestCase)
 	if err != nil {
-		log.Error().Err(err).Msg("create session runner failed")
+		log.Error().Err(err).Msg("create case runner failed")
 		return stepResult, err
 	}
+	sessionRunner := caseRunner.NewSession()
 
 	start := time.Now()
 	// run referenced testcase with step variables
 	err = sessionRunner.Start(stepVariables)
-	if err == nil {
-		stepResult.Success = true
-	}
 	stepResult.Elapsed = time.Since(start).Milliseconds()
-	summary := sessionRunner.GetSummary()
+
+	summary, err2 := sessionRunner.GetSummary()
+	if err2 != nil {
+		log.Error().Err(err).Msg("get summary failed")
+		if err != nil {
+			err = errors.Wrap(err, err2.Error())
+		} else {
+			err = err2
+		}
+	}
 	// update step names
 	for _, record := range summary.Records {
 		record.Name = fmt.Sprintf("%s - %s", stepResult.Name, record.Name)
@@ -102,11 +112,8 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	// export testcase export variables
 	stepResult.ExportVars = summary.InOut.ExportVars
 
-	// merge testcase summary
-	r.summary.Records = append(r.summary.Records, summary.Records...)
-	r.summary.Stat.Total += summary.Stat.Total
-	r.summary.Stat.Successes += summary.Stat.Successes
-	r.summary.Stat.Failures += summary.Stat.Failures
-
+	if err == nil {
+		stepResult.Success = true
+	}
 	return stepResult, err
 }

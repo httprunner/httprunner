@@ -6,3 +6,6 @@ import (
 
 //go:embed VERSION
 var VERSION string
+
+// httprunner python version
+const HttpRunnerMinimumVersion = "v4.2.0"

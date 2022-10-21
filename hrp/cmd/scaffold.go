@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"os"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -37,7 +36,7 @@ var scaffoldCmd = &cobra.Command{
 		err := scaffold.CreateScaffold(args[0], pluginType, venv, force)
 		if err != nil {
 			log.Error().Err(err).Msg("create scaffold project failed")
-			os.Exit(1)
+			return err
 		}
 		log.Info().Str("projectName", args[0]).Msg("create scaffold success")
 		return nil

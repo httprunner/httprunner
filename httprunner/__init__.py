@@ -1,4 +1,4 @@
-__version__ = "v4.2.0"
+__version__ = "v4.3.0"
 __description__ = "One-stop solution for HTTP(S) testing."
 
 
@@ -18,6 +18,7 @@ from httprunner.step_thrift_request import (
     StepThriftRequestExtraction,
     StepThriftRequestValidation,
 )
+
 
 __all__ = [
     "__version__",

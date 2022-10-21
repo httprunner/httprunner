@@ -3,6 +3,8 @@ package builtin
 import (
 	"bufio"
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/csv"
 	builtinJSON "encoding/json"
@@ -10,16 +12,17 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -88,117 +91,6 @@ func FormatResponse(raw interface{}) interface{} {
 		formattedResponse[key] = value
 	}
 	return formattedResponse
-}
-
-var python3Executable string = "python3" // system default python3
-
-// EnsurePython3Venv ensures python3 venv with specified packages
-// venv should be directory path of target venv
-func EnsurePython3Venv(venv string, packages ...string) (python3 string, err error) {
-	// priority: specified > $HOME/.hrp/venv
-	if venv == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", errors.Wrap(err, "get user home dir failed")
-		}
-		venv = filepath.Join(home, ".hrp", "venv")
-	}
-	python3, err = ensurePython3Venv(venv, packages...)
-	if err != nil {
-		return "", errors.Wrap(err, "prepare python3 venv failed")
-	}
-	python3Executable = python3
-	log.Info().Str("Python3Executable", python3Executable).Msg("set python3 executable path")
-	return python3, nil
-}
-
-func ExecPython3Command(cmdName string, args ...string) error {
-	args = append([]string{"-m", cmdName}, args...)
-	return ExecCommand(python3Executable, args...)
-}
-
-func AssertPythonPackage(python3 string, pkgName, pkgVersion string) error {
-	out, err := exec.Command(
-		python3, "-c", fmt.Sprintf("import %s; print(%s.__version__)", pkgName, pkgName),
-	).Output()
-	if err != nil {
-		return fmt.Errorf("python package %s not found", pkgName)
-	}
-
-	// do not check version if pkgVersion is empty
-	if pkgVersion == "" {
-		log.Info().Str("name", pkgName).Msg("python package is ready")
-		return nil
-	}
-
-	// check package version equality
-	version := strings.TrimSpace(string(out))
-	if strings.TrimLeft(version, "v") != strings.TrimLeft(pkgVersion, "v") {
-		return fmt.Errorf("python package %s version %s not matched, please upgrade to %s",
-			pkgName, version, pkgVersion)
-	}
-
-	log.Info().Str("name", pkgName).Str("version", pkgVersion).Msg("python package is ready")
-	return nil
-}
-
-func InstallPythonPackage(python3 string, pkg string) (err error) {
-	var pkgName, pkgVersion string
-	if strings.Contains(pkg, "==") {
-		// funppy==0.5.0
-		pkgInfo := strings.Split(pkg, "==")
-		pkgName = pkgInfo[0]
-		pkgVersion = pkgInfo[1]
-	} else {
-		// funppy
-		pkgName = pkg
-	}
-
-	// check if package installed and version matched
-	err = AssertPythonPackage(python3, pkgName, pkgVersion)
-	if err == nil {
-		return nil
-	}
-
-	// check if pip available
-	err = ExecCommand(python3, "-m", "pip", "--version")
-	if err != nil {
-		log.Warn().Msg("pip is not available")
-		return errors.Wrap(err, "pip is not available")
-	}
-
-	log.Info().Str("pkgName", pkgName).Str("pkgVersion", pkgVersion).Msg("installing python package")
-
-	// install package
-	pypiIndexURL := os.Getenv("PYPI_INDEX_URL")
-	if pypiIndexURL == "" {
-		pypiIndexURL = "https://pypi.org/simple" // default
-	}
-	err = ExecCommand(python3, "-m", "pip", "install", "--upgrade", pkg,
-		"--index-url", pypiIndexURL,
-		"--quiet", "--disable-pip-version-check")
-	if err != nil {
-		return errors.Wrap(err, "pip install package failed")
-	}
-
-	return AssertPythonPackage(python3, pkgName, pkgVersion)
-}
-
-func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
-	log.Info().Str("cmd", cmd.String()).Str("dir", dir).Msg("exec command")
-	cmd.Dir = dir
-
-	// print output with colors
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
-	if err != nil {
-		log.Error().Err(err).Msg("exec command failed")
-		return err
-	}
-
-	return nil
 }
 
 func CreateFolder(folderPath string) error {
@@ -285,19 +177,19 @@ func GetRandomNumber(min, max int) int {
 }
 
 func Interface2Float64(i interface{}) (float64, error) {
-	switch i.(type) {
+	switch v := i.(type) {
 	case int:
-		return float64(i.(int)), nil
+		return float64(v), nil
 	case int32:
-		return float64(i.(int32)), nil
+		return float64(v), nil
 	case int64:
-		return float64(i.(int64)), nil
+		return float64(v), nil
 	case float32:
-		return float64(i.(float32)), nil
+		return float64(v), nil
 	case float64:
-		return i.(float64), nil
+		return v, nil
 	case string:
-		intVar, err := strconv.Atoi(i.(string))
+		intVar, err := strconv.Atoi(v)
 		if err != nil {
 			return 0, err
 		}
@@ -344,8 +236,6 @@ func InterfaceType(raw interface{}) string {
 	return reflect.TypeOf(raw).String()
 }
 
-var ErrUnsupportedFileExt = fmt.Errorf("unsupported file extension")
-
 // LoadFile loads file content with file extension and assigns to structObj
 func LoadFile(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
@@ -361,12 +251,21 @@ func LoadFile(path string, structObj interface{}) (err error) {
 		decoder := json.NewDecoder(bytes.NewReader(file))
 		decoder.UseNumber()
 		err = decoder.Decode(structObj)
+		if err != nil {
+			err = errors.Wrap(code.LoadJSONError, err.Error())
+		}
 	case ".yaml", ".yml":
 		err = yaml.Unmarshal(file, structObj)
+		if err != nil {
+			err = errors.Wrap(code.LoadYAMLError, err.Error())
+		}
 	case ".env":
 		err = parseEnvContent(file, structObj)
+		if err != nil {
+			err = errors.Wrap(code.LoadEnvError, err.Error())
+		}
 	default:
-		err = ErrUnsupportedFileExt
+		err = code.UnsupportedFileExtension
 	}
 	return err
 }
@@ -406,14 +305,14 @@ func loadFromCSV(path string) []map[string]interface{} {
 	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read csv file failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 
 	r := csv.NewReader(strings.NewReader(string(file)))
 	content, err := r.ReadAll()
 	if err != nil {
 		log.Error().Err(err).Msg("parse csv file failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	firstLine := content[0] // parameter names
 	var result []map[string]interface{}
@@ -432,7 +331,7 @@ func loadMessage(path string) []byte {
 	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read message file failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	return file
 }
@@ -442,13 +341,13 @@ func ReadFile(path string) ([]byte, error) {
 	path, err = filepath.Abs(path)
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
-		return nil, err
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
 	}
 
 	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read file failed")
-		return nil, err
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
 	}
 	return file, nil
 }
@@ -494,7 +393,7 @@ func GetFileNameWithoutExtension(path string) string {
 }
 
 func Bytes2File(data []byte, filename string) error {
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0o755)
 	defer file.Close()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate file")
@@ -563,4 +462,19 @@ func SplitInteger(m, n int) (ints []int) {
 		}
 	}
 	return
+}
+
+func sha256HMAC(key []byte, data []byte) []byte {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	return []byte(fmt.Sprintf("%x", mac.Sum(nil)))
+}
+
+// ver: auth-v1or auth-v2
+func Sign(ver string, ak string, sk string, body []byte) string {
+	expiration := 1800
+	signKeyInfo := fmt.Sprintf("%s/%s/%d/%d", ver, ak, time.Now().Unix(), expiration)
+	signKey := sha256HMAC([]byte(sk), []byte(signKeyInfo))
+	signResult := sha256HMAC(signKey, body)
+	return fmt.Sprintf("%v/%v", signKeyInfo, string(signResult))
 }

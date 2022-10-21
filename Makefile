@@ -16,7 +16,7 @@ bump: ## bump hrp version, e.g. make bump version=4.0.0
 .PHONY: build
 build: ## build hrp cli tool
 	@echo "[info] build hrp cli tool"
-	@. scripts/build.sh
+	@. scripts/build.sh $(tags)
 
 .PHONY: install-hooks
 install-hooks: ## install git hooks

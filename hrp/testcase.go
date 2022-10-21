@@ -2,16 +2,15 @@ package hrp
 
 import (
 	"fmt"
-	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/mitchellh/mapstructure"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 // ITestCase represents interface for testcases,
@@ -49,6 +48,24 @@ func (tc *TestCase) ToTCase() *TCase {
 		tCase.TestSteps = append(tCase.TestSteps, step.Struct())
 	}
 	return tCase
+}
+
+func (tc *TestCase) Dump2JSON(targetPath string) error {
+	tCase := tc.ToTCase()
+	err := builtin.Dump2JSON(tCase, targetPath)
+	if err != nil {
+		return errors.Wrap(err, "dump testcase to json failed")
+	}
+	return nil
+}
+
+func (tc *TestCase) Dump2YAML(targetPath string) error {
+	tCase := tc.ToTCase()
+	err := builtin.Dump2YAML(tCase, targetPath)
+	if err != nil {
+		return errors.Wrap(err, "dump testcase to yaml failed")
+	}
+	return nil
 }
 
 // TestCasePath implements ITestCase interface.
@@ -101,7 +118,8 @@ func (tc *TCase) MakeCompat() (err error) {
 
 func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 	if tc.TestSteps == nil {
-		return nil, errors.New("invalid testcase format, missing teststeps!")
+		return nil, errors.Wrap(code.InvalidCaseFormat,
+			"invalid testcase format, missing teststeps!")
 	}
 
 	if tc.Config == nil {
@@ -153,7 +171,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			if ok {
 				path := filepath.Join(projectRootDir, apiPath)
 				if !builtin.IsFilePathExists(path) {
-					return nil, errors.New("referenced api file not found: " + path)
+					return nil, errors.Wrap(code.ReferencedFileNotFound,
+						fmt.Sprintf("referenced api file not found: %s", path))
 				}
 
 				refAPI := APIPath(path)
@@ -165,7 +184,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			} else {
 				apiMap, ok := step.API.(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("referenced api should be map or path(string), got %v", step.API)
+					return nil, errors.Wrap(code.InvalidCaseFormat,
+						fmt.Sprintf("referenced api should be map or path(string), got %v", step.API))
 				}
 				api := &API{}
 				err = mapstructure.Decode(apiMap, api)
@@ -176,7 +196,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			}
 			_, ok = step.API.(*API)
 			if !ok {
-				return nil, fmt.Errorf("failed to handle referenced API, got %v", step.TestCase)
+				return nil, errors.Wrap(code.InvalidCaseFormat,
+					fmt.Sprintf("failed to handle referenced API, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
 				step: step,
@@ -186,7 +207,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			if ok {
 				path := filepath.Join(projectRootDir, casePath)
 				if !builtin.IsFilePathExists(path) {
-					return nil, errors.New("referenced testcase file not found: " + path)
+					return nil, errors.Wrap(code.ReferencedFileNotFound,
+						fmt.Sprintf("referenced testcase file not found: %s", path))
 				}
 
 				refTestCase := TestCasePath(path)
@@ -198,7 +220,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			} else {
 				testCaseMap, ok := step.TestCase.(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("referenced testcase should be map or path(string), got %v", step.TestCase)
+					return nil, errors.Wrap(code.InvalidCaseFormat,
+						fmt.Sprintf("referenced testcase should be map or path(string), got %v", step.TestCase))
 				}
 				tCase := &TCase{}
 				err = mapstructure.Decode(testCaseMap, tCase)
@@ -213,7 +236,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			}
 			_, ok = step.TestCase.(*TestCase)
 			if !ok {
-				return nil, fmt.Errorf("failed to handle referenced testcase, got %v", step.TestCase)
+				return nil, errors.Wrap(code.InvalidCaseFormat,
+					fmt.Sprintf("failed to handle referenced testcase, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
 				step: step,
@@ -240,6 +264,14 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			})
 		} else if step.WebSocket != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepWebSocket{
+				step: step,
+			})
+		} else if step.IOS != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+				step: step,
+			})
+		} else if step.Android != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
 				step: step,
 			})
 		} else {
@@ -293,7 +325,8 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			for assertMethod, iValidatorContent := range validatorMap {
 				validatorContent := iValidatorContent.([]interface{})
 				if len(validatorContent) > 3 {
-					return fmt.Errorf("unexpected validator format: %v", validatorMap)
+					return errors.Wrap(code.InvalidCaseFormat,
+						fmt.Sprintf("unexpected validator format: %v", validatorMap))
 				}
 				validator.Check = validatorContent[0].(string)
 				validator.Assert = assertMethod
@@ -306,7 +339,8 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			Validators[i] = validator
 			continue
 		}
-		return fmt.Errorf("unexpected validator format: %v", validatorMap)
+		return errors.Wrap(code.InvalidCaseFormat,
+			fmt.Sprintf("unexpected validator format: %v", validatorMap))
 	}
 	return nil
 }
@@ -332,62 +366,4 @@ func convertJmespathExpr(checkExpr string) string {
 		}
 	}
 	return strings.Join(checkItems, ".")
-}
-
-func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
-	testCases := make([]*TestCase, 0)
-
-	for _, iTestCase := range iTestCases {
-		if _, ok := iTestCase.(*TestCase); ok {
-			testcase, err := iTestCase.ToTestCase()
-			if err != nil {
-				log.Error().Err(err).Msg("failed to convert ITestCase interface to TestCase struct")
-				return nil, err
-			}
-			testCases = append(testCases, testcase)
-			continue
-		}
-
-		// iTestCase should be a TestCasePath, file path or folder path
-		tcPath, ok := iTestCase.(*TestCasePath)
-		if !ok {
-			return nil, errors.New("invalid iTestCase type")
-		}
-
-		casePath := tcPath.GetPath()
-		err := fs.WalkDir(os.DirFS(casePath), ".", func(path string, dir fs.DirEntry, e error) error {
-			if dir == nil {
-				// casePath is a file other than a dir
-				path = casePath
-			} else if dir.IsDir() && path != "." && strings.HasPrefix(path, ".") {
-				// skip hidden folders
-				return fs.SkipDir
-			} else {
-				// casePath is a dir
-				path = filepath.Join(casePath, path)
-			}
-
-			// ignore non-testcase files
-			ext := filepath.Ext(path)
-			if ext != ".yml" && ext != ".yaml" && ext != ".json" {
-				return nil
-			}
-
-			// filtered testcases
-			testCasePath := TestCasePath(path)
-			tc, err := testCasePath.ToTestCase()
-			if err != nil {
-				log.Warn().Err(err).Str("path", path).Msg("load testcase failed")
-				return nil
-			}
-			testCases = append(testCases, tc)
-			return nil
-		})
-		if err != nil {
-			return nil, errors.Wrap(err, "read dir failed")
-		}
-	}
-
-	log.Info().Int("count", len(testCases)).Msg("load testcases successfully")
-	return testCases, nil
 }

@@ -79,8 +79,8 @@ class DBEngine(object):
 
 
 if __name__ == "__main__":
-    # db = DBEngine(f"mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")
-    db = DBEngine(f"sqlite:////Users/bytedance/HttpRunner/examples/data/sqlite.db")
+    # db = DBEngine("mysql+pymysql://xxxxx:xxxxx@10.0.0.1:3306/dbname?charset=utf8mb4")
+    db = DBEngine("sqlite:////Users/xxx/HttpRunner/examples/data/sqlite.db")
     print(db.fetchmany("""
     select* from student""", 5))
     print(db.fetchmany("select* from student", 5))

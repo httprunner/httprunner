@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // NewConfig returns a new constructed testcase config with specified testcase name.
@@ -29,6 +30,8 @@ type TConfig struct {
 	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
+	IOS               []*uixt.IOSDevice      `json:"ios,omitempty" yaml:"ios,omitempty"`
+	Android           []*uixt.AndroidDevice  `json:"android,omitempty" yaml:"android,omitempty"`
 	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
@@ -90,12 +93,55 @@ func (c *TConfig) SetWeight(weight int) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) {
+func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 	c.WebSocketSetting = &WebSocketConfig{
 		ReconnectionTimes:    times,
 		ReconnectionInterval: interval,
 		MaxMessageSize:       size,
 	}
+	return c
+}
+
+func (c *TConfig) SetIOS(options ...uixt.IOSDeviceOption) *TConfig {
+	wdaOptions := &uixt.IOSDevice{}
+	for _, option := range options {
+		option(wdaOptions)
+	}
+
+	// each device can have its own settings
+	if wdaOptions.UDID != "" {
+		c.IOS = append(c.IOS, wdaOptions)
+		return c
+	}
+
+	// device UDID is not specified, settings will be shared
+	if len(c.IOS) == 0 {
+		c.IOS = append(c.IOS, wdaOptions)
+	} else {
+		c.IOS[0] = wdaOptions
+	}
+	return c
+}
+
+func (c *TConfig) SetAndroid(options ...uixt.AndroidDeviceOption) *TConfig {
+	uiaOptions := &uixt.AndroidDevice{}
+	for _, option := range options {
+		option(uiaOptions)
+	}
+
+	// each device can have its own settings
+	if uiaOptions.SerialNumber != "" {
+		c.Android = append(c.Android, uiaOptions)
+		return c
+	}
+
+	// device UDID is not specified, settings will be shared
+	if len(c.Android) == 0 {
+		c.Android = append(c.Android, uiaOptions)
+	} else {
+		c.Android[0] = uiaOptions
+	}
+	return c
 }
 
 type ThinkTimeConfig struct {

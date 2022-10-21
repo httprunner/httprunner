@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -12,14 +13,16 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/httprunner/funplugin"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // Run starts to run API test with default configs.
@@ -49,6 +52,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 			Transport: &http2.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
+			Jar:     jar, // insert response cookies into request
 			Timeout: 120 * time.Second,
 		},
 		// use default handshake timeout (no timeout limit) here, enable timeout at step level
@@ -70,6 +74,7 @@ type HRPRunner struct {
 	httpClient    *http.Client
 	http2Client   *http.Client
 	wsDialer      *websocket.Dialer
+	uiClients     map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
@@ -169,6 +174,8 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) error {
+	log.Info().Str("hrp_version", version.VERSION).
+		Interface("testcases", testcases).Msg("start running")
 	event := sdk.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",
@@ -200,19 +207,30 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
-		sessionRunner, err := r.NewSessionRunner(testcase)
+		// each testcase has its own case runner
+		caseRunner, err := r.NewCaseRunner(testcase)
 		if err != nil {
-			log.Error().Err(err).Msg("[Run] init session runner failed")
+			log.Error().Err(err).Msg("[Run] init case runner failed")
 			return err
 		}
 
-		for it := sessionRunner.parametersIterator; it.HasNext(); {
-			err = sessionRunner.Start(it.Next())
-			caseSummary := sessionRunner.GetSummary()
+		// release UI driver session
+		defer func() {
+			for _, client := range r.uiClients {
+				client.Driver.DeleteSession()
+			}
+		}()
+
+		for it := caseRunner.parametersIterator; it.HasNext(); {
+			// case runner can run multiple times with different parameters
+			// each run has its own session runner
+			sessionRunner := caseRunner.NewSession()
+			err1 := sessionRunner.Start(it.Next())
+			caseSummary, err2 := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
-			if err != nil {
-				log.Error().Err(err).Msg("[Run] run testcase failed")
-				runErr = err
+			if err1 != nil || err2 != nil {
+				log.Error().Err(err1).Msg("[Run] run testcase failed")
+				runErr = err1
 				break
 			}
 		}
@@ -238,23 +256,10 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	return runErr
 }
 
-// NewSessionRunner creates a new session runner for testcase.
-// each testcase has its own session runner
-func (r *HRPRunner) NewSessionRunner(testcase *TestCase) (*SessionRunner, error) {
-	runner, err := r.newCaseRunner(testcase)
-	if err != nil {
-		return nil, err
-	}
-
-	sessionRunner := &SessionRunner{
-		testCaseRunner: runner,
-	}
-	sessionRunner.resetSession()
-	return sessionRunner, nil
-}
-
-func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
-	runner := &testCaseRunner{
+// NewCaseRunner creates a new case runner for testcase.
+// each testcase has its own case runner
+func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
+	caseRunner := &CaseRunner{
 		testCase:  testcase,
 		hrpRunner: r,
 		parser:    newParser(),
@@ -266,34 +271,31 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
 	if plugin != nil {
-		runner.parser.plugin = plugin
-		runner.rootDir = filepath.Dir(plugin.Path())
+		caseRunner.parser.plugin = plugin
+		caseRunner.rootDir = filepath.Dir(plugin.Path())
 	}
 
 	// parse testcase config
-	if err := runner.parseConfig(); err != nil {
+	if err := caseRunner.parseConfig(); err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
 
-	// init websocket params
-	initWebSocket(testcase)
-
 	// set testcase timeout in seconds
-	if runner.testCase.Config.Timeout != 0 {
-		timeout := time.Duration(runner.testCase.Config.Timeout*1000) * time.Millisecond
-		runner.hrpRunner.SetTimeout(timeout)
+	if testcase.Config.Timeout != 0 {
+		timeout := time.Duration(testcase.Config.Timeout*1000) * time.Millisecond
+		r.SetTimeout(timeout)
 	}
 
 	// load plugin info to testcase config
 	if plugin != nil {
 		pluginPath, _ := locatePlugin(testcase.Config.Path)
-		if runner.parsedConfig.PluginSetting == nil {
+		if caseRunner.parsedConfig.PluginSetting == nil {
 			pluginContent, err := builtin.ReadFile(pluginPath)
 			if err != nil {
 				return nil, err
 			}
 			tp := strings.Split(plugin.Path(), ".")
-			runner.parsedConfig.PluginSetting = &PluginConfig{
+			caseRunner.parsedConfig.PluginSetting = &PluginConfig{
 				Path:    pluginPath,
 				Content: pluginContent,
 				Type:    tp[len(tp)-1],
@@ -301,20 +303,21 @@ func (r *HRPRunner) newCaseRunner(testcase *TestCase) (*testCaseRunner, error) {
 		}
 	}
 
-	return runner, nil
+	return caseRunner, nil
 }
 
-type testCaseRunner struct {
-	testCase           *TestCase
-	hrpRunner          *HRPRunner
-	parser             *Parser
+type CaseRunner struct {
+	testCase  *TestCase
+	hrpRunner *HRPRunner
+	parser    *Parser
+
 	parsedConfig       *TConfig
 	parametersIterator *ParametersIterator
 	rootDir            string // project root dir
 }
 
 // parseConfig parses testcase config, stores to parsedConfig.
-func (r *testCaseRunner) parseConfig() error {
+func (r *CaseRunner) parseConfig() error {
 	cfg := r.testCase.Config
 
 	r.parsedConfig = &TConfig{}
@@ -382,15 +385,227 @@ func (r *testCaseRunner) parseConfig() error {
 	}
 	r.parametersIterator = parametersIterator
 
+	// init iOS/Android clients
+	if r.hrpRunner.uiClients == nil {
+		r.hrpRunner.uiClients = make(map[string]*uixt.DriverExt)
+	}
+	for _, iosDeviceConfig := range r.parsedConfig.IOS {
+		if iosDeviceConfig.UDID != "" {
+			udid, err := r.parser.ParseString(iosDeviceConfig.UDID, parsedVariables)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse ios device udid")
+			}
+			iosDeviceConfig.UDID = udid.(string)
+		}
+		device, err := uixt.NewIOSDevice(uixt.GetIOSDeviceOptions(iosDeviceConfig)...)
+		if err != nil {
+			return errors.Wrap(err, "init iOS device failed")
+		}
+		client, err := device.NewDriver(nil)
+		if err != nil {
+			return errors.Wrap(err, "init iOS WDA client failed")
+		}
+		r.hrpRunner.uiClients[device.UDID] = client
+	}
+	for _, androidDeviceConfig := range r.parsedConfig.Android {
+		if androidDeviceConfig.SerialNumber != "" {
+			sn, err := r.parser.ParseString(androidDeviceConfig.SerialNumber, parsedVariables)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse android device serial")
+			}
+			androidDeviceConfig.SerialNumber = sn.(string)
+		}
+		device, err := uixt.NewAndroidDevice(uixt.GetAndroidDeviceOptions(androidDeviceConfig)...)
+		if err != nil {
+			return errors.Wrap(err, "init iOS device failed")
+		}
+		client, err := device.NewDriver(nil)
+		if err != nil {
+			return errors.Wrap(err, "init Android UIAutomator client failed")
+		}
+		r.hrpRunner.uiClients[device.SerialNumber] = client
+	}
+
 	return nil
 }
 
 // each boomer task initiates a new session
 // in order to avoid data racing
-func (r *testCaseRunner) newSession() *SessionRunner {
+func (r *CaseRunner) NewSession() *SessionRunner {
 	sessionRunner := &SessionRunner{
-		testCaseRunner: r,
+		caseRunner: r,
 	}
 	sessionRunner.resetSession()
 	return sessionRunner
+}
+
+// SessionRunner is used to run testcase and its steps.
+// each testcase has its own SessionRunner instance and share session variables.
+type SessionRunner struct {
+	caseRunner       *CaseRunner
+	sessionVariables map[string]interface{}
+	// transactions stores transaction timing info.
+	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
+	transactions      map[string]map[transactionType]time.Time
+	startTime         time.Time                  // record start time of the testcase
+	summary           *TestCaseSummary           // record test case summary
+	wsConnMap         map[string]*websocket.Conn // save all websocket connections
+	pongResponseChan  chan string                // channel used to receive pong response message
+	closeResponseChan chan *wsCloseRespObject    // channel used to receive close response message
+}
+
+func (r *SessionRunner) resetSession() {
+	log.Info().Msg("reset session runner")
+	r.sessionVariables = make(map[string]interface{})
+	r.transactions = make(map[string]map[transactionType]time.Time)
+	r.startTime = time.Now()
+	r.summary = newSummary()
+	r.wsConnMap = make(map[string]*websocket.Conn)
+	r.pongResponseChan = make(chan string, 1)
+	r.closeResponseChan = make(chan *wsCloseRespObject, 1)
+}
+
+// Start runs the test steps in sequential order.
+// givenVars is used for data driven
+func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
+	config := r.caseRunner.testCase.Config
+	log.Info().Str("testcase", config.Name).Msg("run testcase start")
+
+	// reset session runner
+	r.resetSession()
+
+	// update config variables with given variables
+	r.InitWithParameters(givenVars)
+
+	// run step in sequential order
+	for _, step := range r.caseRunner.testCase.TestSteps {
+		// TODO: parse step struct
+		// parse step name
+		parsedName, err := r.caseRunner.parser.ParseString(step.Name(), r.sessionVariables)
+		if err != nil {
+			parsedName = step.Name()
+		}
+		stepName := convertString(parsedName)
+		log.Info().Str("step", stepName).
+			Str("type", string(step.Type())).Msg("run step start")
+
+		// run step
+		stepResult, err := step.Run(r)
+		stepResult.Name = stepName
+
+		// update summary
+		r.summary.Records = append(r.summary.Records, stepResult)
+		r.summary.Stat.Total += 1
+		if stepResult.Success {
+			r.summary.Stat.Successes += 1
+		} else {
+			r.summary.Stat.Failures += 1
+			// update summary result to failed
+			r.summary.Success = false
+		}
+
+		// update extracted variables
+		for k, v := range stepResult.ExportVars {
+			r.sessionVariables[k] = v
+		}
+
+		if err == nil {
+			log.Info().Str("step", stepResult.Name).
+				Str("type", string(stepResult.StepType)).
+				Bool("success", true).
+				Interface("exportVars", stepResult.ExportVars).
+				Msg("run step end")
+			continue
+		}
+
+		// failed
+		log.Error().Err(err).Str("step", stepResult.Name).
+			Str("type", string(stepResult.StepType)).
+			Bool("success", false).
+			Msg("run step end")
+
+		// check if failfast
+		if r.caseRunner.hrpRunner.failfast {
+			return errors.Wrap(err, "abort running due to failfast setting")
+		}
+	}
+
+	// close websocket connection after all steps done
+	defer func() {
+		for _, wsConn := range r.wsConnMap {
+			if wsConn != nil {
+				log.Info().Str("testcase", config.Name).Msg("websocket disconnected")
+				err := wsConn.Close()
+				if err != nil {
+					log.Error().Err(err).Msg("websocket disconnection failed")
+				}
+			}
+		}
+	}()
+
+	log.Info().Str("testcase", config.Name).Msg("run testcase end")
+	return nil
+}
+
+// ParseStepVariables merges step variables with config variables and session variables
+func (r *SessionRunner) ParseStepVariables(stepVariables map[string]interface{}) (map[string]interface{}, error) {
+	// override variables
+	// step variables > session variables (extracted variables from previous steps)
+	overrideVars := mergeVariables(stepVariables, r.sessionVariables)
+	// step variables > testcase config variables
+	overrideVars = mergeVariables(overrideVars, r.caseRunner.parsedConfig.Variables)
+
+	// parse step variables
+	parsedVariables, err := r.caseRunner.parser.ParseVariables(overrideVars)
+	if err != nil {
+		log.Error().Interface("variables", r.caseRunner.parsedConfig.Variables).
+			Err(err).Msg("parse step variables failed")
+		return nil, errors.Wrap(err, "parse step variables failed")
+	}
+	return parsedVariables, nil
+}
+
+// InitWithParameters updates session variables with given parameters.
+// this is used for data driven
+func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
+	if len(parameters) == 0 {
+		return
+	}
+
+	log.Info().Interface("parameters", parameters).Msg("update session variables")
+	for k, v := range parameters {
+		r.sessionVariables[k] = v
+	}
+}
+
+func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
+	caseSummary := r.summary
+	caseSummary.Name = r.caseRunner.parsedConfig.Name
+	caseSummary.Time.StartAt = r.startTime
+	caseSummary.Time.Duration = time.Since(r.startTime).Seconds()
+	exportVars := make(map[string]interface{})
+	for _, value := range r.caseRunner.parsedConfig.Export {
+		exportVars[value] = r.sessionVariables[value]
+	}
+	caseSummary.InOut.ExportVars = exportVars
+	caseSummary.InOut.ConfigVars = r.caseRunner.parsedConfig.Variables
+
+	for uuid, client := range r.caseRunner.hrpRunner.uiClients {
+		// add WDA/UIA logs to summary
+		log, err := client.Driver.StopCaptureLog()
+		if err != nil {
+			return caseSummary, err
+		}
+		logs := map[string]interface{}{
+			"uuid":    uuid,
+			"content": log,
+		}
+
+		// stop performance monitor
+		logs["performance"] = client.GetPerfData()
+
+		caseSummary.Logs = append(caseSummary.Logs, logs)
+	}
+
+	return caseSummary, nil
 }
