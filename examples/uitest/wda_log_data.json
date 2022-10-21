@@ -14,29 +14,6 @@
     },
     "teststeps": [
         {
-            "name": "查看时间戳",
-            "ios": {
-                "actions": [
-                    {
-                        "method": "home"
-                    },
-                    {
-                        "method": "app_terminate",
-                        "params": "com.apple.mobilesafari"
-                    },
-                    {
-                        "method": "swipe_to_tap_app",
-                        "params": "timestamp",
-                        "max_retry_times": 5
-                    },
-                    {
-                        "method": "sleep",
-                        "params": 3
-                    }
-                ]
-            }
-        },
-        {
             "name": "启动抖音",
             "ios": {
                 "actions": [
@@ -76,6 +53,38 @@
                         "method": "tap_ocr",
                         "params": "我知道了",
                         "ignore_NotFoundError": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "进入购物页",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "购物",
+                        "identifier": "点击购物"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "进入推荐页",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "推荐",
+                        "identifier": "点击推荐"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
                     }
                 ]
             }

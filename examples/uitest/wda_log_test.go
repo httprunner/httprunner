@@ -16,11 +16,6 @@ func TestWDALog(t *testing.T) {
 			}).
 			SetIOS(hrp.WithLogOn(true), hrp.WithWDAPort(8700), hrp.WithWDAMjpegPort(8800)),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("查看时间戳").
-				IOS().
-				Home().
-				AppTerminate("com.apple.mobilesafari").
-				SwipeToTapApp("timestamp", hrp.WithMaxRetryTimes(5)).Sleep(3),
 			hrp.NewStep("启动抖音").
 				IOS().
 				Home().
@@ -31,6 +26,10 @@ func TestWDALog(t *testing.T) {
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
 				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),
+			hrp.NewStep("进入购物页").
+				IOS().TapByOCR("购物", hrp.WithIdentifier("点击购物")).Sleep(5),
+			hrp.NewStep("进入推荐页").
+				IOS().TapByOCR("推荐", hrp.WithIdentifier("点击推荐")).Sleep(5),
 			hrp.NewStep("向上滑动 2 次").
 				IOS().
 				SwipeUp(hrp.WithIdentifier("第 1 次上划")).Sleep(2).
