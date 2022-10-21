@@ -306,8 +306,8 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 
 			rInnerConn, err := device.NewConnect(remotePort)
 			if err != nil {
-				log.Error().Err(err).Msg("connect to device failed")
-				os.Exit(1)
+				log.Error().Err(err).Msg("connect to ios device failed")
+				os.Exit(code.GetErrorCode(code.IOSDeviceConnectionError))
 			}
 
 			rConn := rInnerConn.RawConn()

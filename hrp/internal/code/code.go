@@ -2,6 +2,7 @@ package code
 
 import (
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // general: [0, 2)
@@ -102,15 +103,19 @@ var errorsMap = map[error]int{
 	OCRTextNotFoundError:      84,
 }
 
-func GetErrorCode(err error) int {
+func GetErrorCode(err error) (exitCode int) {
 	if err == nil {
+		log.Info().Int("code", Success).Msg("hrp exit")
 		return Success
 	}
 
 	e := errors.Cause(err)
 	if code, ok := errorsMap[e]; ok {
-		return code
+		exitCode = code
+	} else {
+		exitCode = GeneralFail
 	}
 
-	return GeneralFail
+	log.Warn().Int("code", exitCode).Msg("hrp exit")
+	return
 }
