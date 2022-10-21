@@ -9,8 +9,10 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/fungo"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
@@ -52,7 +54,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		err = BuildPlugin(pluginPath, genPyPluginPath)
 		if err != nil {
 			log.Error().Err(err).Str("path", pluginPath).Msg("build plugin failed")
-			return nil, nil
+			return nil, err
 		}
 		pluginPath = genPyPluginPath
 
@@ -73,6 +75,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	plugin, err = funplugin.Init(pluginPath, pluginOptions...)
 	if err != nil {
 		log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
+		err = errors.Wrap(code.InitPluginFailed, err.Error())
 		return
 	}
 

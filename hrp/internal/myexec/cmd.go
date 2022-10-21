@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
@@ -39,7 +40,7 @@ func EnsurePython3Venv(venv string, packages ...string) (python3 string, err err
 	}
 	python3, err = ensurePython3Venv(venv, packages...)
 	if err != nil {
-		return "", errors.Wrap(err, "prepare python3 venv failed")
+		return "", errors.Wrap(code.InvalidPython3Venv, err.Error())
 	}
 	python3Executable = python3
 	log.Info().Str("Python3Executable", python3Executable).Msg("set python3 executable path")

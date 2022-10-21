@@ -22,6 +22,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -235,8 +236,6 @@ func InterfaceType(raw interface{}) string {
 	return reflect.TypeOf(raw).String()
 }
 
-var ErrUnsupportedFileExt = fmt.Errorf("unsupported file extension")
-
 // LoadFile loads file content with file extension and assigns to structObj
 func LoadFile(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
@@ -252,12 +251,15 @@ func LoadFile(path string, structObj interface{}) (err error) {
 		decoder := json.NewDecoder(bytes.NewReader(file))
 		decoder.UseNumber()
 		err = decoder.Decode(structObj)
+		err = errors.Wrap(code.LoadJSONError, err.Error())
 	case ".yaml", ".yml":
 		err = yaml.Unmarshal(file, structObj)
+		err = errors.Wrap(code.LoadYAMLError, err.Error())
 	case ".env":
 		err = parseEnvContent(file, structObj)
+		err = errors.Wrap(code.LoadEnvError, err.Error())
 	default:
-		err = ErrUnsupportedFileExt
+		err = code.UnsupportedFileExtension
 	}
 	return err
 }
@@ -297,14 +299,14 @@ func loadFromCSV(path string) []map[string]interface{} {
 	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read csv file failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 
 	r := csv.NewReader(strings.NewReader(string(file)))
 	content, err := r.ReadAll()
 	if err != nil {
 		log.Error().Err(err).Msg("parse csv file failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	firstLine := content[0] // parameter names
 	var result []map[string]interface{}
@@ -323,7 +325,7 @@ func loadMessage(path string) []byte {
 	file, err := ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read message file failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	return file
 }
@@ -333,13 +335,13 @@ func ReadFile(path string) ([]byte, error) {
 	path, err = filepath.Abs(path)
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
-		return nil, err
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
 	}
 
 	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read file failed")
-		return nil, err
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
 	}
 	return file, nil
 }

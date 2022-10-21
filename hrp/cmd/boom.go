@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"strings"
 	"time"
 
@@ -30,7 +29,7 @@ var boomCmd = &cobra.Command{
 		}
 		setLogLevel(logLevel)
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			path := hrp.TestCasePath(arg)
@@ -42,7 +41,7 @@ var boomCmd = &cobra.Command{
 			err := builtin.LoadFile(boomArgs.profile, &boomArgs.Profile)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load profile")
-				os.Exit(1)
+				return err
 			}
 		}
 
@@ -89,6 +88,7 @@ var boomCmd = &cobra.Command{
 			hrpBoomer.InitBoomer()
 			hrpBoomer.Run(paths...)
 		}
+		return nil
 	},
 }
 
@@ -141,13 +141,13 @@ func init() {
 	boomCmd.Flags().IntVar(&boomArgs.expectWorkersMaxWait, "expect-workers-max-wait", 120, "How many workers master should expect to connect before starting the test (only when --autostart is used")
 }
 
-func makeHRPBoomer() *hrp.HRPBoomer {
+func makeHRPBoomer() (*hrp.HRPBoomer, error) {
 	// if set profile, the priority is higher than the other commands
 	if boomArgs.profile != "" {
 		err := builtin.LoadFile(boomArgs.profile, &boomArgs)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to load profile")
-			os.Exit(1)
+			return nil, err
 		}
 	}
 	hrpBoomer := hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
@@ -157,5 +157,5 @@ func makeHRPBoomer() *hrp.HRPBoomer {
 	hrpBoomer.SetProfile(&boomArgs.Profile)
 	hrpBoomer.EnableGracefulQuit(context.Background())
 	hrpBoomer.InitBoomer()
-	return hrpBoomer
+	return hrpBoomer, nil
 }
