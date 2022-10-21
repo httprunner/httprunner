@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 // ITestCase represents interface for testcases,
@@ -117,7 +118,8 @@ func (tc *TCase) MakeCompat() (err error) {
 
 func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
 	if tc.TestSteps == nil {
-		return nil, errors.New("invalid testcase format, missing teststeps!")
+		return nil, errors.Wrap(code.InvalidCaseFormat,
+			"invalid testcase format, missing teststeps!")
 	}
 
 	if tc.Config == nil {
@@ -169,7 +171,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			if ok {
 				path := filepath.Join(projectRootDir, apiPath)
 				if !builtin.IsFilePathExists(path) {
-					return nil, errors.New("referenced api file not found: " + path)
+					return nil, errors.Wrap(code.ReferencedFileNotFound,
+						fmt.Sprintf("referenced api file not found: %s", path))
 				}
 
 				refAPI := APIPath(path)
@@ -181,7 +184,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			} else {
 				apiMap, ok := step.API.(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("referenced api should be map or path(string), got %v", step.API)
+					return nil, errors.Wrap(code.InvalidCaseFormat,
+						fmt.Sprintf("referenced api should be map or path(string), got %v", step.API))
 				}
 				api := &API{}
 				err = mapstructure.Decode(apiMap, api)
@@ -192,7 +196,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			}
 			_, ok = step.API.(*API)
 			if !ok {
-				return nil, fmt.Errorf("failed to handle referenced API, got %v", step.TestCase)
+				return nil, errors.Wrap(code.InvalidCaseFormat,
+					fmt.Sprintf("failed to handle referenced API, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
 				step: step,
@@ -202,7 +207,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			if ok {
 				path := filepath.Join(projectRootDir, casePath)
 				if !builtin.IsFilePathExists(path) {
-					return nil, errors.New("referenced testcase file not found: " + path)
+					return nil, errors.Wrap(code.ReferencedFileNotFound,
+						fmt.Sprintf("referenced testcase file not found: %s", path))
 				}
 
 				refTestCase := TestCasePath(path)
@@ -214,7 +220,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			} else {
 				testCaseMap, ok := step.TestCase.(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("referenced testcase should be map or path(string), got %v", step.TestCase)
+					return nil, errors.Wrap(code.InvalidCaseFormat,
+						fmt.Sprintf("referenced testcase should be map or path(string), got %v", step.TestCase))
 				}
 				tCase := &TCase{}
 				err = mapstructure.Decode(testCaseMap, tCase)
@@ -229,7 +236,8 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			}
 			_, ok = step.TestCase.(*TestCase)
 			if !ok {
-				return nil, fmt.Errorf("failed to handle referenced testcase, got %v", step.TestCase)
+				return nil, errors.Wrap(code.InvalidCaseFormat,
+					fmt.Sprintf("failed to handle referenced testcase, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
 				step: step,
@@ -317,7 +325,8 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			for assertMethod, iValidatorContent := range validatorMap {
 				validatorContent := iValidatorContent.([]interface{})
 				if len(validatorContent) > 3 {
-					return fmt.Errorf("unexpected validator format: %v", validatorMap)
+					return errors.Wrap(code.InvalidCaseFormat,
+						fmt.Sprintf("unexpected validator format: %v", validatorMap))
 				}
 				validator.Check = validatorContent[0].(string)
 				validator.Assert = assertMethod
@@ -330,7 +339,8 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			Validators[i] = validator
 			continue
 		}
-		return fmt.Errorf("unexpected validator format: %v", validatorMap)
+		return errors.Wrap(code.InvalidCaseFormat,
+			fmt.Sprintf("unexpected validator format: %v", validatorMap))
 	}
 	return nil
 }

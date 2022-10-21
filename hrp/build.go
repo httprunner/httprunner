@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
@@ -175,11 +176,11 @@ func buildGo(path string, output string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read file")
-		return errors.Wrap(err, "read file failed")
+		return errors.Wrap(code.LoadFileError, err.Error())
 	}
 	functionNames, err := regexGoFunctionName.findAllFunctionNames(string(content))
 	if err != nil {
-		return err
+		return errors.Wrap(code.InvalidPluginFile, err.Error())
 	}
 
 	templateContent := &pluginTemplate{
@@ -187,7 +188,11 @@ func buildGo(path string, output string) error {
 		Version:       version.VERSION,
 		FunctionNames: functionNames,
 	}
-	return templateContent.generateGo(output)
+	err = templateContent.generateGo(output)
+	if err != nil {
+		return errors.Wrap(code.BuildGoPluginFailed, err.Error())
+	}
+	return nil
 }
 
 // buildPy completes funppy information in debugtalk.py
@@ -196,17 +201,18 @@ func buildPy(path string, output string) error {
 	// check the syntax of debugtalk.py
 	err := myexec.ExecPython3Command("py_compile", path)
 	if err != nil {
-		return errors.Wrap(err, "python plugin syntax invalid")
+		return errors.Wrap(code.InvalidPluginFile,
+			fmt.Sprintf("python plugin syntax invalid: %s", err.Error()))
 	}
 
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read file")
-		return errors.Wrap(err, "read file failed")
+		return errors.Wrap(code.LoadFileError, err.Error())
 	}
 	functionNames, err := regexPyFunctionName.findAllFunctionNames(string(content))
 	if err != nil {
-		return err
+		return errors.Wrap(code.InvalidPluginFile, err.Error())
 	}
 
 	templateContent := &pluginTemplate{
@@ -214,7 +220,11 @@ func buildPy(path string, output string) error {
 		Version:       version.VERSION,
 		FunctionNames: functionNames,
 	}
-	return templateContent.generatePy(output)
+	err = templateContent.generatePy(output)
+	if err != nil {
+		return errors.Wrap(code.BuildPyPluginFailed, err.Error())
+	}
+	return nil
 }
 
 func BuildPlugin(path string, output string) (err error) {
@@ -225,11 +235,12 @@ func BuildPlugin(path string, output string) (err error) {
 	case ".go":
 		err = buildGo(path, output)
 	default:
-		return errors.New("type error, expected .py or .go")
+		return errors.Wrap(code.UnsupportedFileExtension,
+			"type error, expected .py or .go")
 	}
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("build plugin failed")
-		os.Exit(1)
+		return err
 	}
 	return nil
 }

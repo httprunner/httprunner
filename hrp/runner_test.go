@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +17,7 @@ func buildHashicorpGoPlugin() {
 	err := BuildPlugin(tmpl("plugin/debugtalk.go"), tmpl("debugtalk.bin"))
 	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 }
 
@@ -33,7 +34,7 @@ func buildHashicorpPyPlugin() {
 	err := ioutil.WriteFile(tmpl("debugtalk.py"), src, 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("copy hashicorp python plugin failed")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 }
 

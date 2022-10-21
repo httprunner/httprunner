@@ -14,6 +14,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
@@ -121,7 +122,7 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 
 	for _, testcase := range testCases {
@@ -139,7 +140,7 @@ func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TCase {
 		caseRunner, err := b.hrpRunner.NewCaseRunner(tc)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create runner")
-			os.Exit(1)
+			os.Exit(code.GetErrorCode(err))
 		}
 		caseRunner.parsedConfig.Parameters = caseRunner.parametersIterator.outParameters()
 		parsedTestCases = append(parsedTestCases, &TCase{
@@ -155,7 +156,7 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	tcs := b.ParseTestCases(testCases)
 	testCasesBytes, err := json.Marshal(tcs)
@@ -318,7 +319,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	caseRunner, err := b.hrpRunner.NewCaseRunner(testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create runner")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	if caseRunner.parser.plugin != nil {
 		b.pluginsMutex.Lock()

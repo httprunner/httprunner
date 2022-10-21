@@ -125,14 +125,19 @@ func (p *Parser) Parse(raw interface{}, variablesMapping map[string]interface{})
 	}
 }
 
-func parseJSONNumber(raw builtinJSON.Number) (interface{}, error) {
+func parseJSONNumber(raw builtinJSON.Number) (value interface{}, err error) {
 	if strings.Contains(raw.String(), ".") {
 		// float64
-		return raw.Float64()
+		value, err = raw.Float64()
 	} else {
 		// int64
-		return raw.Int64()
+		value, err = raw.Int64()
 	}
+	if err != nil {
+		return nil, errors.Wrap(code.ParseError,
+			fmt.Sprintf("parse json number failed: %v", err))
+	}
+	return value, nil
 }
 
 const (
@@ -185,18 +190,18 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			argsStr := funcMatched[2]
 			arguments, err := parseFunctionArguments(argsStr)
 			if err != nil {
-				return raw, errors.Wrap(code.ParseStringError, err.Error())
+				return raw, errors.Wrap(code.ParseFunctionError, err.Error())
 			}
 			parsedArgs, err := p.Parse(arguments, variablesMapping)
 			if err != nil {
-				return raw, errors.Wrap(code.ParseStringError, err.Error())
+				return raw, err
 			}
 
 			result, err := p.callFunc(funcName, parsedArgs.([]interface{})...)
 			if err != nil {
 				log.Error().Str("funcName", funcName).Interface("arguments", arguments).
 					Err(err).Msg("call function failed")
-				return raw, errors.Wrap(code.ParseStringError, err.Error())
+				return raw, errors.Wrap(code.CallFunctionError, err.Error())
 			}
 			log.Info().Str("funcName", funcName).Interface("arguments", arguments).
 				Interface("output", result).Msg("call function success")
@@ -228,7 +233,7 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			}
 			varValue, ok := variablesMapping[varName]
 			if !ok {
-				return raw, errors.Wrap(code.ParseStringError,
+				return raw, errors.Wrap(code.VariableNotFound,
 					fmt.Sprintf("variable %s not found", varName))
 			}
 

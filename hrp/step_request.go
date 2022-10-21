@@ -21,6 +21,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/httpstat"
 )
@@ -683,7 +684,7 @@ func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
 	s.step.TestCase, err = tc.ToTestCase()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcase")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	return &StepTestCaseWithOptionalArgs{
 		step: s.step,
@@ -696,7 +697,7 @@ func (s *StepRequest) CallRefAPI(api IAPI) *StepAPIWithOptionalArgs {
 	s.step.API, err = api.ToAPI()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load api")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	return &StepAPIWithOptionalArgs{
 		step: s.step,

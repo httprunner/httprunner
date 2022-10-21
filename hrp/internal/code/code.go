@@ -12,23 +12,39 @@ const (
 )
 
 // environment: [2, 10)
+var (
+	InvalidPython3Venv = errors.New("prepare python3 venv failed") // 9
+)
 
 // loader: [10, 20)
 var (
-	LoadError     = errors.New("load error")      // 10
-	LoadJSONError = errors.New("load json error") // 11
-	LoadYAMLError = errors.New("load yaml error") // 12
+	LoadFileError            = errors.New("load file error")            // 10
+	LoadJSONError            = errors.New("load json error")            // 11
+	LoadYAMLError            = errors.New("load yaml error")            // 12
+	LoadEnvError             = errors.New("load .env error")            // 13
+	LoadCSVError             = errors.New("load csv error")             // 14
+	InvalidCaseFormat        = errors.New("invalid case format")        // 15
+	UnsupportedFileExtension = errors.New("unsupported file extension") // 16
+	ReferencedFileNotFound   = errors.New("referenced file not found")  // 17
+	InvalidPluginFile        = errors.New("invalid plugin file")        // 18
 )
 
 // parser: [20, 30)
 var (
 	ParseError          = errors.New("parse error")            // 20
-	ParseStringError    = errors.New("parse string failed")    // 21
-	ParseVariablesError = errors.New("parse variables failed") // 22
-	ParseConfigError    = errors.New("parse config error")     // 25
+	VariableNotFound    = errors.New("variable not found")     // 21
+	ParseFunctionError  = errors.New("parse function failed")  // 22
+	CallFunctionError   = errors.New("call function failed")   // 23
+	ParseVariablesError = errors.New("parse variables failed") // 24
 )
 
 // runner: [30, 40)
+
+var (
+	InitPluginFailed    = errors.New("init plugin failed")     // 31
+	BuildGoPluginFailed = errors.New("build go plugin failed") // 32
+	BuildPyPluginFailed = errors.New("build py plugin failed") // 33
+)
 
 // summary: [40, 50)
 
@@ -67,16 +83,31 @@ var (
 // CV related: [90, 100)
 
 var errorsMap = map[error]int{
+	// environment
+	InvalidPython3Venv: 9,
+
 	// loader
-	LoadError:     10,
-	LoadJSONError: 11,
-	LoadYAMLError: 12,
+	LoadFileError:            10,
+	LoadJSONError:            11,
+	LoadYAMLError:            12,
+	LoadEnvError:             13,
+	LoadCSVError:             14,
+	InvalidCaseFormat:        15,
+	UnsupportedFileExtension: 16,
+	ReferencedFileNotFound:   17,
+	InvalidPluginFile:        18,
 
 	// parser
 	ParseError:          20,
-	ParseStringError:    21,
-	ParseVariablesError: 22,
-	ParseConfigError:    25,
+	VariableNotFound:    21,
+	ParseFunctionError:  22,
+	CallFunctionError:   23,
+	ParseVariablesError: 24,
+
+	// runner
+	InitPluginFailed:    31,
+	BuildGoPluginFailed: 32,
+	BuildPyPluginFailed: 33,
 
 	// ios related
 	IOSDeviceConnectionError: 50,
@@ -105,7 +136,6 @@ var errorsMap = map[error]int{
 
 func GetErrorCode(err error) (exitCode int) {
 	if err == nil {
-		log.Info().Int("code", Success).Msg("hrp exit")
 		return Success
 	}
 
