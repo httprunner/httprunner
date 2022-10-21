@@ -53,8 +53,7 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 			testCasePath := TestCasePath(path)
 			tc, err := testCasePath.ToTestCase()
 			if err != nil {
-				log.Warn().Err(err).Str("path", path).Msg("load testcase failed")
-				return err
+				return nil
 			}
 			testCases = append(testCases, tc)
 			return nil

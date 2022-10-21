@@ -614,7 +614,10 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 				fmt.Sprintf("parse action params failed: %v", err))
 		}
 		if err := uiDriver.DoAction(action); err != nil {
-			return stepResult, errors.Wrap(code.MobileUIDriverError, err.Error())
+			if !code.IsErrorPredefined(err) {
+				err = errors.Wrap(code.MobileUIDriverError, err.Error())
+			}
+			return stepResult, err
 		}
 	}
 
@@ -631,7 +634,9 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	// validate
 	validateResults, err := validateUI(uiDriver, step.Validators)
 	if err != nil {
-		err = errors.Wrap(code.MobileUIValidationError, err.Error())
+		if !code.IsErrorPredefined(err) {
+			err = errors.Wrap(code.MobileUIValidationError, err.Error())
+		}
 		return
 	}
 	sessionData := newSessionData()

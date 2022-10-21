@@ -251,13 +251,19 @@ func LoadFile(path string, structObj interface{}) (err error) {
 		decoder := json.NewDecoder(bytes.NewReader(file))
 		decoder.UseNumber()
 		err = decoder.Decode(structObj)
-		err = errors.Wrap(code.LoadJSONError, err.Error())
+		if err != nil {
+			err = errors.Wrap(code.LoadJSONError, err.Error())
+		}
 	case ".yaml", ".yml":
 		err = yaml.Unmarshal(file, structObj)
-		err = errors.Wrap(code.LoadYAMLError, err.Error())
+		if err != nil {
+			err = errors.Wrap(code.LoadYAMLError, err.Error())
+		}
 	case ".env":
 		err = parseEnvContent(file, structObj)
-		err = errors.Wrap(code.LoadEnvError, err.Error())
+		if err != nil {
+			err = errors.Wrap(code.LoadEnvError, err.Error())
+		}
 	default:
 		err = code.UnsupportedFileExtension
 	}
