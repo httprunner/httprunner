@@ -84,7 +84,7 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, f
 			}
 		} else if d, ok := direction.([]float64); ok {
 			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3]); err != nil {
-				log.Error().Err(err).Msgf("swipe %s failed", d)
+				log.Error().Err(err).Msgf("swipe %v failed", d)
 			}
 		} else if d, ok := direction.([]interface{}); ok {
 			sx, _ := builtin.Interface2Float64(d[0])

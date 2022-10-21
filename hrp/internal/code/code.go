@@ -134,6 +134,11 @@ var errorsMap = map[error]int{
 	OCRTextNotFoundError:      84,
 }
 
+func IsErrorPredefined(err error) bool {
+	_, ok := errorsMap[err]
+	return ok
+}
+
 func GetErrorCode(err error) (exitCode int) {
 	if err == nil {
 		return Success
