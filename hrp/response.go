@@ -16,6 +16,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 var fieldTags = []string{"proto", "status_code", "headers", "cookies", "body", textExtractorSubRegexp}
@@ -271,4 +272,39 @@ func (v *responseObject) searchRegexp(expr string) interface{} {
 	}
 	log.Error().Str("expr", expr).Msg("search regexp failed")
 	return expr
+}
+
+func validateUI(ud *uixt.DriverExt, iValidators []interface{}) (validateResults []*ValidationResult, err error) {
+	for _, iValidator := range iValidators {
+		validator, ok := iValidator.(Validator)
+		if !ok {
+			return nil, errors.New("validator type error")
+		}
+
+		validataResult := &ValidationResult{
+			Validator:   validator,
+			CheckResult: "fail",
+		}
+
+		// parse check value
+		if !strings.HasPrefix(validator.Check, "ui_") {
+			validataResult.CheckResult = "skip"
+			log.Warn().Interface("validator", validator).Msg("skip validator")
+			validateResults = append(validateResults, validataResult)
+			continue
+		}
+
+		expected, ok := validator.Expect.(string)
+		if !ok {
+			return nil, errors.New("validator expect should be string")
+		}
+
+		if !ud.DoValidation(validator.Check, validator.Assert, expected, validator.Message) {
+			return validateResults, errors.New("step validation failed")
+		}
+
+		validataResult.CheckResult = "pass"
+		validateResults = append(validateResults, validataResult)
+	}
+	return validateResults, nil
 }

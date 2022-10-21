@@ -10,12 +10,14 @@ import (
 	"time"
 
 	"github.com/httprunner/funplugin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/boomer"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
 
 func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {
@@ -120,7 +122,7 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 
 	for _, testcase := range testCases {
@@ -135,10 +137,10 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TCase {
 	var parsedTestCases []*TCase
 	for _, tc := range testCases {
-		caseRunner, err := b.hrpRunner.newCaseRunner(tc)
+		caseRunner, err := b.hrpRunner.NewCaseRunner(tc)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create runner")
-			os.Exit(1)
+			os.Exit(code.GetErrorCode(err))
 		}
 		caseRunner.parsedConfig.Parameters = caseRunner.parametersIterator.outParameters()
 		parsedTestCases = append(parsedTestCases, &TCase{
@@ -154,7 +156,7 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	tcs := b.ParseTestCases(testCases)
 	testCasesBytes, err := json.Marshal(tcs)
@@ -252,7 +254,6 @@ func (b *HRPBoomer) rebalanceRunner(profile *boomer.Profile) {
 	log.Info().Interface("profile", profile).Msg("rebalance tasks successfully")
 }
 
-
 func (b *HRPBoomer) PollTasks(ctx context.Context) {
 	for {
 		select {
@@ -261,7 +262,7 @@ func (b *HRPBoomer) PollTasks(ctx context.Context) {
 			if len(b.Boomer.GetTasksChan()) > 0 {
 				continue
 			}
-			//Todo: 过滤掉已经传输过的task
+			// Todo: 过滤掉已经传输过的task
 			if task.TestCasesBytes != nil {
 				// init boomer with profile
 				b.initWorker(task.Profile)
@@ -313,12 +314,12 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 }
 
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
-	// init runner for testcase
+	// init case runner for testcase
 	// this runner is shared by multiple session runners
-	caseRunner, err := b.hrpRunner.newCaseRunner(testcase)
+	caseRunner, err := b.hrpRunner.NewCaseRunner(testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create runner")
-		os.Exit(1)
+		os.Exit(code.GetErrorCode(err))
 	}
 	if caseRunner.parser.plugin != nil {
 		b.pluginsMutex.Lock()
@@ -352,18 +353,19 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			transactionSuccess := true // flag current transaction result
 
 			// init session runner
-			sessionRunner := caseRunner.newSession()
+			sessionRunner := caseRunner.NewSession()
 
 			mutex.Lock()
 			if parametersIterator.HasNext() {
-				sessionRunner.updateSessionVariables(parametersIterator.Next())
+				sessionRunner.InitWithParameters(parametersIterator.Next())
 			}
 			mutex.Unlock()
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
+				// TODO: parse step struct
 				// parse step name
-				parsedName, err := sessionRunner.parser.ParseString(step.Name(), sessionRunner.sessionVariables)
+				parsedName, err := caseRunner.parser.ParseString(step.Name(), sessionRunner.sessionVariables)
 				if err != nil {
 					parsedName = step.Name()
 				}
@@ -382,7 +384,8 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 						if result.Success {
 							b.RecordSuccess(string(result.StepType), result.Name, result.Elapsed, result.ContentSize)
 						} else {
-							b.RecordFailure(string(result.StepType), result.Name, result.Elapsed, result.Attachment)
+							exception, _ := result.Attachments.(string)
+							b.RecordFailure(string(result.StepType), result.Name, result.Elapsed, exception)
 						}
 					}
 				}

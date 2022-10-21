@@ -1,7 +1,7 @@
 package pytest
 
 import (
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -12,5 +12,5 @@ func RunPytest(args []string) error {
 	})
 
 	args = append([]string{"run"}, args...)
-	return builtin.ExecPython3Command("httprunner", args...)
+	return myexec.ExecPython3Command("httprunner", args...)
 }

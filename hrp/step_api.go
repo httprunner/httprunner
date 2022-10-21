@@ -100,9 +100,6 @@ func (s *StepAPIWithOptionalArgs) Struct() *TStep {
 
 func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
 	defer func() {
-		if err != nil {
-			r.summary.Success = false
-		}
 		stepResult.StepType = stepTypeAPI
 	}()
 	// extend request with referenced API

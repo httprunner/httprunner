@@ -13,9 +13,11 @@ import (
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/shared"
 	"github.com/maja42/goval"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 func newParser() *Parser {
@@ -123,14 +125,19 @@ func (p *Parser) Parse(raw interface{}, variablesMapping map[string]interface{})
 	}
 }
 
-func parseJSONNumber(raw builtinJSON.Number) (interface{}, error) {
+func parseJSONNumber(raw builtinJSON.Number) (value interface{}, err error) {
 	if strings.Contains(raw.String(), ".") {
 		// float64
-		return raw.Float64()
+		value, err = raw.Float64()
 	} else {
 		// int64
-		return raw.Int64()
+		value, err = raw.Int64()
 	}
+	if err != nil {
+		return nil, errors.Wrap(code.ParseError,
+			fmt.Sprintf("parse json number failed: %v", err))
+	}
+	return value, nil
 }
 
 const (
@@ -183,18 +190,18 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			argsStr := funcMatched[2]
 			arguments, err := parseFunctionArguments(argsStr)
 			if err != nil {
-				return raw, err
+				return raw, errors.Wrap(code.ParseFunctionError, err.Error())
 			}
 			parsedArgs, err := p.Parse(arguments, variablesMapping)
 			if err != nil {
 				return raw, err
 			}
 
-			result, err := p.CallFunc(funcName, parsedArgs.([]interface{})...)
+			result, err := p.callFunc(funcName, parsedArgs.([]interface{})...)
 			if err != nil {
 				log.Error().Str("funcName", funcName).Interface("arguments", arguments).
 					Err(err).Msg("call function failed")
-				return raw, err
+				return raw, errors.Wrap(code.CallFunctionError, err.Error())
 			}
 			log.Info().Str("funcName", funcName).Interface("arguments", arguments).
 				Interface("output", result).Msg("call function success")
@@ -226,7 +233,8 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			}
 			varValue, ok := variablesMapping[varName]
 			if !ok {
-				return raw, fmt.Errorf("variable %s not found", varName)
+				return raw, errors.Wrap(code.VariableNotFound,
+					fmt.Sprintf("variable %s not found", varName))
 			}
 
 			if fmt.Sprintf("${%s}", varName) == raw || fmt.Sprintf("$%s", varName) == raw {
@@ -251,9 +259,9 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 	return parsedString, nil
 }
 
-// CallFunc calls function with arguments
+// callFunc calls function with arguments
 // only support return at most one result value
-func (p *Parser) CallFunc(funcName string, arguments ...interface{}) (interface{}, error) {
+func (p *Parser) callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// call with plugin function
 	if p.plugin != nil {
 		if p.plugin.Has(funcName) {
@@ -428,7 +436,8 @@ func (p *Parser) ParseVariables(variables map[string]interface{}) (map[string]in
 			// variables = {"key": ["$key", 2]}
 			if _, ok := extractVarsSet[varName]; ok {
 				log.Error().Interface("variables", variables).Msg("[parseVariables] variable self reference error")
-				return variables, fmt.Errorf("variable self reference: %v", varName)
+				return variables, errors.Wrap(code.ParseVariablesError,
+					fmt.Sprintf("variable self reference: %v", varName))
 			}
 
 			// check if reference variable not in variables mapping
@@ -443,7 +452,8 @@ func (p *Parser) ParseVariables(variables map[string]interface{}) (map[string]in
 			}
 			if len(undefinedVars) > 0 {
 				log.Error().Interface("undefinedVars", undefinedVars).Msg("[parseVariables] variable not defined error")
-				return variables, fmt.Errorf("variable not defined: %v", undefinedVars)
+				return variables, errors.Wrap(code.ParseVariablesError,
+					fmt.Sprintf("variable not defined: %v", undefinedVars))
 			}
 
 			parsedValue, err := p.Parse(varValue, parsedVariables)
@@ -456,7 +466,7 @@ func (p *Parser) ParseVariables(variables map[string]interface{}) (map[string]in
 		// check if circular reference exists
 		if traverseRounds > len(variables) {
 			log.Error().Msg("[parseVariables] circular reference error, break infinite loop!")
-			return variables, fmt.Errorf("circular reference")
+			return variables, errors.Wrap(code.ParseVariablesError, "circular reference")
 		}
 	}
 

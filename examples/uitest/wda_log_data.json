@@ -1,0 +1,144 @@
+{
+    "config": {
+        "name": "验证 WDA 打点数据准确性",
+        "variables": {
+            "app_name": "抖音"
+        },
+        "ios": [
+            {
+                "port": 8700,
+                "mjpeg_port": 8800,
+                "log_on": true
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "启动抖音",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "home"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.iphone.ugc.Aweme"
+                    },
+                    {
+                        "method": "swipe_to_tap_app",
+                        "params": "$app_name",
+                        "identifier": "启动抖音",
+                        "max_retry_times": 5
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_ocr",
+                    "assert": "exists",
+                    "expect": "推荐",
+                    "msg": "抖音启动失败，「推荐」不存在"
+                }
+            ]
+        },
+        {
+            "name": "处理青少年弹窗",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "我知道了",
+                        "ignore_NotFoundError": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "进入购物页",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "购物",
+                        "identifier": "点击购物"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "进入推荐页",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "推荐",
+                        "identifier": "点击推荐"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "向上滑动 2 次",
+            "ios": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": "up",
+                        "identifier": "第 1 次上划"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "swipe",
+                        "params": "up",
+                        "identifier": "第 2 次上划"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "swipe",
+                        "params": "up",
+                        "identifier": "第 3 次上划"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "tap_xy",
+                        "params": [
+                            0.9,
+                            0.1
+                        ],
+                        "identifier": "点击进入搜索框"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "input",
+                        "params": "httprunner",
+                        "identifier": "输入搜索关键词"
+                    }
+                ]
+            }
+        }
+    ]
+}

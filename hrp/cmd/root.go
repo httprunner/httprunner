@@ -9,6 +9,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
+	"github.com/httprunner/httprunner/v4/hrp/cmd/ios"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -39,11 +42,12 @@ Copyright 2017 debugtalk`,
 		}
 		if !logJSON {
 			log.Logger = zerolog.New(zerolog.ConsoleWriter{NoColor: noColor, Out: os.Stderr}).With().Timestamp().Logger()
-			log.Info().Msg("Set log to color console other than JSON format.")
+			log.Info().Msg("Set log to color console")
 		}
 	},
 	Version:          version.VERSION,
-	TraverseChildren: true,
+	TraverseChildren: true, // parses flags on all parents before executing child command
+	SilenceUsage:     true, // silence usage when an error occurs
 }
 
 var (
@@ -54,14 +58,16 @@ var (
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute() int {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
 	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
 	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
 
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+	ios.Init(rootCmd)
+	adb.Init(rootCmd)
+
+	err := rootCmd.Execute()
+	return code.GetErrorCode(err)
 }
 
 func setLogLevel(level string) {

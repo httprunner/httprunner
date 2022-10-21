@@ -231,20 +231,19 @@ type WebSocketAction struct {
 	Timeout         int64                  `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 }
 
-func initWebSocket(testcase *TestCase) {
-	for _, step := range testcase.TestSteps {
-		if step.Struct().WebSocket == nil {
-			continue
-		}
-		// init websocket action parameters
-		if step.Struct().WebSocket.Timeout <= 0 {
-			step.Struct().WebSocket.Timeout = defaultTimeout
-		}
-		// close status code range: [1000, 4999]. ref: https://datatracker.ietf.org/doc/html/rfc6455#section-11.7
-		if step.Struct().WebSocket.CloseStatusCode < 1000 || step.Struct().WebSocket.CloseStatusCode > 4999 {
-			step.Struct().WebSocket.CloseStatusCode = defaultCloseStatus
-		}
+func (w *WebSocketAction) GetTimeout() int64 {
+	if w.Timeout <= 0 {
+		return defaultTimeout
 	}
+	return w.Timeout
+}
+
+func (w *WebSocketAction) GetCloseStatusCode() int64 {
+	// close status code range: [1000, 4999]. ref: https://datatracker.ietf.org/doc/html/rfc6455#section-11.7
+	if w.CloseStatusCode < 1000 || w.CloseStatusCode > 4999 {
+		return defaultCloseStatus
+	}
+	return w.CloseStatusCode
 }
 
 func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
@@ -255,32 +254,23 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		ContentSize: 0,
 	}
 
-	defer func() {
-		// update testcase summary
-		if err != nil {
-			stepResult.Attachment = err.Error()
-		}
-		// update summary
-		r.summary.Records = append(r.summary.Records, stepResult)
-		r.summary.Stat.Total += 1
-		if stepResult.Success {
-			r.summary.Stat.Successes += 1
-		} else {
-			r.summary.Stat.Failures += 1
-			// update summary result to failed
-			r.summary.Success = false
-		}
-	}()
-
-	// override step variables
-	stepVariables, err := r.MergeStepVariables(step.Variables)
+	// merge step variables with session variables
+	stepVariables, err := r.ParseStepVariables(step.Variables)
 	if err != nil {
+		err = errors.Wrap(err, "parse step variables failed")
 		return
 	}
 
+	defer func() {
+		// update testcase summary
+		if err != nil {
+			stepResult.Attachments = err.Error()
+		}
+	}()
+
 	sessionData := newSessionData()
-	parser := r.GetParser()
-	config := r.GetConfig()
+	parser := r.caseRunner.parser
+	config := r.caseRunner.parsedConfig
 
 	dummyReq := &Request{
 		URL:     step.WebSocket.URL,
@@ -317,12 +307,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	start := time.Now()
 
 	// do websocket action
-	if r.LogOn() {
+	if r.caseRunner.hrpRunner.requestsLogOn {
 		fmt.Printf("-------------------- websocket action: %v --------------------\n", step.WebSocket.Type.toString())
 	}
 	switch step.WebSocket.Type {
 	case wsOpen:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("open websocket connection")
+		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("open websocket connection")
 		// use the current websocket connection if existed
 		if r.wsConnMap[parsedURL] != nil {
 			break
@@ -332,12 +322,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			return stepResult, errors.Wrap(err, "open connection failed")
 		}
 	case wsPing:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("send ping and expect pong")
+		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("send ping and expect pong")
 		err = writeWebSocket(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "send ping message failed")
 		}
-		timer := time.NewTimer(time.Duration(step.WebSocket.Timeout) * time.Millisecond)
+		timer := time.NewTimer(time.Duration(step.WebSocket.GetTimeout()) * time.Millisecond)
 		// asynchronous receiving pong message with timeout
 		go func() {
 			select {
@@ -350,7 +340,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			}
 		}()
 	case wsWriteAndRead:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("write a message and read response")
+		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("write a message and read response")
 		err = writeWebSocket(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
@@ -360,7 +350,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			return stepResult, errors.Wrap(err, "read message failed")
 		}
 	case wsRead:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("read only")
+		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("read only")
 		resp, err = readMessageWithTimeout(parsedURL, r, step)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "read message failed")
@@ -372,7 +362,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			return stepResult, errors.Wrap(err, "write message failed")
 		}
 	case wsClose:
-		log.Info().Int64("timeout(ms)", step.WebSocket.Timeout).Str("url", parsedURL).Msg("close webSocket connection")
+		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("close webSocket connection")
 		resp, err = closeWithTimeout(parsedURL, r, step, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "close connection failed")
@@ -380,7 +370,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	default:
 		return stepResult, errors.Errorf("unexpected websocket frame type: %v", step.WebSocket.Type)
 	}
-	if r.LogOn() {
+	if r.caseRunner.hrpRunner.requestsLogOn {
 		err = printWebSocketResponse(resp)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "print response failed")
@@ -388,7 +378,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	}
 
 	stepResult.Elapsed = time.Since(start).Milliseconds()
-	respObj, err := getResponseObject(r.hrpRunner.t, r.parser, resp)
+	respObj, err := getResponseObject(r.caseRunner.hrpRunner.t, r.caseRunner.parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "get response object error")
 		return
@@ -470,7 +460,7 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 	openResponseChan := make(chan *http.Response)
 	errorChan := make(chan error)
 	go func() {
-		conn, resp, err := r.hrpRunner.wsDialer.Dial(urlStr, requestHeader)
+		conn, resp, err := r.caseRunner.hrpRunner.wsDialer.Dial(urlStr, requestHeader)
 		if err != nil {
 			errorChan <- errors.Wrap(err, "dial tcp failed")
 			return
@@ -496,7 +486,7 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 		openResponseChan <- resp
 	}()
 
-	timer := time.NewTimer(time.Duration(step.WebSocket.Timeout) * time.Millisecond)
+	timer := time.NewTimer(time.Duration(step.WebSocket.GetTimeout()) * time.Millisecond)
 	select {
 	case <-timer.C:
 		timer.Stop()
@@ -526,7 +516,7 @@ func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*w
 			}
 		}
 	}()
-	timer := time.NewTimer(time.Duration(step.WebSocket.Timeout) * time.Millisecond)
+	timer := time.NewTimer(time.Duration(step.WebSocket.GetTimeout()) * time.Millisecond)
 	select {
 	case <-timer.C:
 		timer.Stop()
@@ -545,7 +535,7 @@ func writeWebSocket(urlString string, r *SessionRunner, step *TStep, stepVariabl
 	}
 	// check priority: text message > binary message
 	if step.WebSocket.TextMessage != nil {
-		parsedMessage, parseErr := r.parser.Parse(step.WebSocket.TextMessage, stepVariables)
+		parsedMessage, parseErr := r.caseRunner.parser.Parse(step.WebSocket.TextMessage, stepVariables)
 		if parseErr != nil {
 			return parseErr
 		}
@@ -554,7 +544,7 @@ func writeWebSocket(urlString string, r *SessionRunner, step *TStep, stepVariabl
 			return writeErr
 		}
 	} else if step.WebSocket.BinaryMessage != nil {
-		parsedMessage, parseErr := r.parser.Parse(step.WebSocket.BinaryMessage, stepVariables)
+		parsedMessage, parseErr := r.caseRunner.parser.Parse(step.WebSocket.BinaryMessage, stepVariables)
 		if parseErr != nil {
 			return parseErr
 		}
@@ -597,7 +587,7 @@ func writeWithAction(c *websocket.Conn, step *TStep, messageType int, message []
 	case wsPing:
 		return c.WriteControl(websocket.PingMessage, message, time.Now().Add(defaultWriteWait))
 	case wsClose:
-		closeMessage := websocket.FormatCloseMessage(int(step.WebSocket.CloseStatusCode), string(message))
+		closeMessage := websocket.FormatCloseMessage(int(step.WebSocket.GetCloseStatusCode()), string(message))
 		return c.WriteControl(websocket.CloseMessage, closeMessage, time.Now().Add(defaultWriteWait))
 	default:
 		return c.WriteMessage(messageType, message)
@@ -637,7 +627,7 @@ func closeWithTimeout(urlString string, r *SessionRunner, step *TStep, stepVaria
 		// r.wsConn.Close() will be called at the end of current session, so no need to Close here
 		log.Info().Str("msg", readErr.Error()).Msg("connection closed")
 	}()
-	timer := time.NewTimer(time.Duration(step.WebSocket.Timeout) * time.Millisecond)
+	timer := time.NewTimer(time.Duration(step.WebSocket.GetTimeout()) * time.Millisecond)
 	select {
 	case <-timer.C:
 		timer.Stop()

@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package dial
 
@@ -8,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -19,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 var (
@@ -50,7 +49,7 @@ func DoTraceRoute(traceRouteOptions *TraceRouteOptions, args []string) (err erro
 		traceRouteTarget = strings.Split(parsedURL.Host, ":")[0]
 	}
 
-	cmd := exec.Command("tracert", "-h", strconv.Itoa(traceRouteOptions.MaxTTL), traceRouteTarget)
+	cmd := myexec.Command("tracert", "-h", strconv.Itoa(traceRouteOptions.MaxTTL), traceRouteTarget)
 	stdout, _ := cmd.StdoutPipe()
 
 	startT := time.Now()

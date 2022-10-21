@@ -3,9 +3,9 @@
 # release will be triggered on github actions, see .github/workflows/release.yml
 
 # Usage:
-# $ make bump version=v0.5.2
+# $ make bump version=v4.3.0
 # or
-# $ bash cli/scripts/bump_version.sh v0.5.2
+# $ bash scripts/bump_version.sh v4.3.0
 
 set -e
 
