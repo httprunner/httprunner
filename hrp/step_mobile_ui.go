@@ -356,6 +356,9 @@ func (s *StepMobile) Name() string {
 }
 
 func (s *StepMobile) Type() StepType {
+	if s.step.Android != nil {
+		return stepTypeAndroid
+	}
 	return stepTypeIOS
 }
 
@@ -548,21 +551,6 @@ func (r *HRPRunner) initUIClient(uuid string, osType string) (client *uixt.Drive
 }
 
 func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
-	stepResult = &StepResult{
-		Name:        step.Name,
-		StepType:    stepTypeIOS,
-		Success:     false,
-		ContentSize: 0,
-	}
-	screenshots := make([]string, 0)
-
-	// merge step variables with session variables
-	stepVariables, err := s.ParseStepVariables(step.Variables)
-	if err != nil {
-		err = errors.Wrap(err, "parse step variables failed")
-		return
-	}
-
 	var osType string
 	var mobileStep *MobileStep
 	if step.IOS != nil {
@@ -573,6 +561,21 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		// android step
 		osType = "android"
 		mobileStep = step.Android
+	}
+
+	stepResult = &StepResult{
+		Name:        step.Name,
+		StepType:    StepType(osType),
+		Success:     false,
+		ContentSize: 0,
+	}
+	screenshots := make([]string, 0)
+
+	// merge step variables with session variables
+	stepVariables, err := s.ParseStepVariables(step.Variables)
+	if err != nil {
+		err = errors.Wrap(err, "parse step variables failed")
+		return
 	}
 
 	// init wda/uia driver
