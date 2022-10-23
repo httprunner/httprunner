@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -384,23 +385,33 @@ func (dev *IOSDevice) perfOpitons() (perfOptions []giDevice.PerfOption) {
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
-	localPort, err := getFreePort()
+	var localPort int
+	localPort, err = strconv.Atoi(env.WDA_LOCAL_PORT)
 	if err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
-			fmt.Sprintf("get free port failed: %v", err))
+		localPort, err = getFreePort()
+		if err != nil {
+			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+				fmt.Sprintf("get free port failed: %v", err))
+		}
+
+		if err = dev.forward(localPort, dev.Port); err != nil {
+			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+				fmt.Sprintf("forward tcp port failed: %v", err))
+		}
 	}
-	if err = dev.forward(localPort, dev.Port); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
-			fmt.Sprintf("forward tcp port failed: %v", err))
-	}
-	localMjpegPort, err := getFreePort()
+
+	var localMjpegPort int
+	localMjpegPort, err = strconv.Atoi(env.WDA_LOCAL_MJPEG_PORT)
 	if err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
-			fmt.Sprintf("get free port failed: %v", err))
-	}
-	if err = dev.forward(localMjpegPort, dev.MjpegPort); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
-			fmt.Sprintf("forward tcp port failed: %v", err))
+		localMjpegPort, err = getFreePort()
+		if err != nil {
+			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+				fmt.Sprintf("get free port failed: %v", err))
+		}
+		if err = dev.forward(localMjpegPort, dev.MjpegPort); err != nil {
+			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+				fmt.Sprintf("forward tcp port failed: %v", err))
+		}
 	}
 
 	log.Info().Interface("capabilities", capabilities).
