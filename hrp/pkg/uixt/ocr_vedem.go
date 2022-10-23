@@ -170,7 +170,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
-		if rect.Min.X > data.Scope[0] && rect.Max.X < data.Scope[2] && rect.Min.Y > data.Scope[1] && rect.Max.Y < data.Scope[3] {
+		if rect.Min.X >= data.Scope[0] && rect.Max.X <= data.Scope[2] && rect.Min.Y >= data.Scope[1] && rect.Max.Y <= data.Scope[3] {
 			ocrTexts = append(ocrTexts, ocrResult.Text)
 
 			// not contains text
