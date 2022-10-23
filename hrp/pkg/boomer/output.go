@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/rs/zerolog/log"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
@@ -461,10 +461,9 @@ var (
 
 // NewPrometheusPusherOutput returns a PrometheusPusherOutput.
 func NewPrometheusPusherOutput(gatewayURL, jobName string, mode string) *PrometheusPusherOutput {
-	nodeUUID, _ := uuid.NewUUID()
 	return &PrometheusPusherOutput{
 		pusher: push.New(gatewayURL, jobName).
-			Grouping("instance", nodeUUID.String()).
+			Grouping("instance", uuid.NewV1().String()).
 			Grouping("mode", mode),
 	}
 }
