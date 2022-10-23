@@ -97,7 +97,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 
 	summary, err2 := sessionRunner.GetSummary()
 	if err2 != nil {
-		log.Error().Err(err).Msg("get summary failed")
+		log.Error().Err(err2).Msg("get summary failed")
 		if err != nil {
 			err = errors.Wrap(err, err2.Error())
 		} else {

@@ -60,7 +60,7 @@ var (
 // android device related: [60, 70)
 var (
 	AndroidDeviceConnectionError = errors.New("android device connection error") // 60
-	AndroidDeviceDriverError     = errors.New("android device driver error")     // 61
+	AndroidDeviceUSBDriverError  = errors.New("android device USB driver error") // 61
 	AndroidScreenShotError       = errors.New("android screenshot error")        // 65
 	AndroidCaptureLogError       = errors.New("android capture log error")       // 66
 )
@@ -118,7 +118,7 @@ var errorsMap = map[error]int{
 
 	// android related
 	AndroidDeviceConnectionError: 60,
-	AndroidDeviceDriverError:     61,
+	AndroidDeviceUSBDriverError:  61,
 	AndroidScreenShotError:       65,
 	AndroidCaptureLogError:       66,
 

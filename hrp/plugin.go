@@ -37,7 +37,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	}
 	pluginPath, err := locatePlugin(path)
 	if err != nil {
-		log.Warn().Err(err).Str("path", path).Msg("locate plugin failed")
+		log.Warn().Str("path", path).Msg("locate plugin failed")
 		return nil, nil
 	}
 
