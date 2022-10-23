@@ -5,7 +5,6 @@ go 1.18
 require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/electricbubble/gadb v0.0.7
 	github.com/electricbubble/gidevice v0.6.2
 	github.com/electricbubble/opencv-helper v0.0.3
 	github.com/fatih/color v1.13.0
