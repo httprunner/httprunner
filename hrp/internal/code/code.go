@@ -135,7 +135,7 @@ var errorsMap = map[error]int{
 }
 
 func IsErrorPredefined(err error) bool {
-	_, ok := errorsMap[err]
+	_, ok := errorsMap[errors.Cause(err)]
 	return ok
 }
 
