@@ -1,12 +1,23 @@
 # Release History
 
-## v4.3.0 (2022-10-21)
+## v4.3.0 (2022-10-23)
 
-- feat: support iOS UI automation with [WebDriverAgent]
-- feat support Android UI automation with [uiautomator2]
-- feat: integrage ios device management with [gidevice]
-- feat: add specified exit code for different exceptions
-- refactor: make boomer/uixt/httpstat as sub package
+Release hrp sub package `uixt` to support iOS/Android UI automation 🎉
+
+- feat: support iOS UI automation with [WebDriverAgent] and [gwda]
+- feat: support Android UI automation with [uiautomator2] and [guia2]
+- feat: support UI recognition with [OCR service] and [gwda-ext-opencv]
+
+For iOS/Android device management:
+
+- feat: integrage ios device management with [gidevice],
+- feat: integrage android device management with [gadb]
+- feat: add simple commands to interact with iOS/Android devices, try `hrp ios` and `hrp adb`
+
+Other improvements:
+
+- feat: exit with specified code for different exceptions
+- refactor: make uixt/gadb/gidevice/boomer/httpstat as hrp sub package
 
 ## v4.2.1 (2022-09-01)
 
@@ -681,3 +692,8 @@ reference: [v2-changelog]
 [WebDriverAgent]: https://github.com/appium/WebDriverAgent
 [uiautomator2]: https://github.com/appium/appium-uiautomator2-server
 [gidevice]: https://github.com/electricbubble/gidevice
+[gwda]: https://github.com/electricbubble/gwda
+[guia2]: https://github.com/electricbubble/guia2
+[gadb]: https://github.com/electricbubble/gadb
+[OCR service]: https://www.volcengine.com/product/text-recognition
+[gwda-ext-opencv]: https://github.com/electricbubble/gwda-ext-opencv

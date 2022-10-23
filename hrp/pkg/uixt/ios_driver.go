@@ -11,22 +11,22 @@ import (
 	"strings"
 	"time"
 
-	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
 type wdaDriver struct {
 	Driver
 
 	// default port
-	defaultConn giDevice.InnerConn
+	defaultConn gidevice.InnerConn
 
 	// mjpeg port
-	mjpegUSBConn  giDevice.InnerConn // via USB
+	mjpegUSBConn  gidevice.InnerConn // via USB
 	mjpegHTTPConn net.Conn           // via HTTP
 	mjpegClient   *http.Client
 }

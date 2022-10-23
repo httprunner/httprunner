@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"os"
 
-	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 type Device struct {
-	d               giDevice.Device
+	d               gidevice.Device
 	UDID            string        `json:"UDID"`
 	Status          string        `json:"status"`
 	ConnectionType  string        `json:"connectionType"`
