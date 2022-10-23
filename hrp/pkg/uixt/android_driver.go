@@ -964,7 +964,7 @@ func (ud *uiaDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
 	err = ud.logcat.CatchLogcat()
 	if err != nil {
-		err = errors.Wrap(code.IOSCaptureLogError,
+		err = errors.Wrap(code.AndroidCaptureLogError,
 			fmt.Sprintf("start adb log recording failed: %v", err))
 		return err
 	}
@@ -976,7 +976,7 @@ func (ud *uiaDriver) StopCaptureLog() (result interface{}, err error) {
 	err = ud.logcat.Stop()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get adb log recording")
-		err = errors.Wrap(code.IOSCaptureLogError,
+		err = errors.Wrap(code.AndroidCaptureLogError,
 			fmt.Sprintf("get adb log recording failed: %v", err))
 		return "", err
 	}

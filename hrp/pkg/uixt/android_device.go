@@ -132,7 +132,8 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 
 	driverExt, err = Extend(driver)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to extend UIA Driver")
+		return nil, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("init UIA driver failed: %v", err))
 	}
 
 	if dev.LogOn {
@@ -143,7 +144,7 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 	}
 
 	driverExt.UUID = dev.UUID()
-	return driverExt, err
+	return driverExt, nil
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
@@ -151,17 +152,20 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver *uiaDriver, err error) {
 	var localPort int
 	if localPort, err = getFreePort(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError,
+			fmt.Sprintf("get free port failed: %v", err))
 	}
 	if err = dev.d.Forward(localPort, UIA2ServerPort); err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError,
+			fmt.Sprintf("forward port %d->%d failed: %v",
+				localPort, UIA2ServerPort, err))
 	}
 
 	rawURL := fmt.Sprintf("http://%s%d:6790/wd/hub", forwardToPrefix, localPort)
 	driver, err = NewUIADriver(capabilities, rawURL)
 	if err != nil {
 		_ = dev.d.ForwardKill(localPort)
-		return nil, err
+		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError, err.Error())
 	}
 	driver.adbDevice = dev.d
 	driver.logcat = dev.logcat

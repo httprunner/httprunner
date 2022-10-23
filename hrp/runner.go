@@ -226,11 +226,22 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			// each run has its own session runner
 			sessionRunner := caseRunner.NewSession()
 			err1 := sessionRunner.Start(it.Next())
-			caseSummary, err2 := sessionRunner.GetSummary()
-			s.appendCaseSummary(caseSummary)
-			if err1 != nil || err2 != nil {
+			if err1 != nil {
 				log.Error().Err(err1).Msg("[Run] run testcase failed")
 				runErr = err1
+			}
+			caseSummary, err2 := sessionRunner.GetSummary()
+			s.appendCaseSummary(caseSummary)
+			if err2 != nil {
+				log.Error().Err(err2).Msg("[Run] get summary failed")
+				if err1 != nil {
+					runErr = errors.Wrap(err1, err2.Error())
+				} else {
+					runErr = err2
+				}
+			}
+
+			if runErr != nil && r.failfast {
 				break
 			}
 		}
