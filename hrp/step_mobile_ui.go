@@ -613,8 +613,11 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	// run actions
 	for _, action := range actions {
 		if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
-			return stepResult, errors.Wrap(code.ParseError,
-				fmt.Sprintf("parse action params failed: %v", err))
+			if !code.IsErrorPredefined(err) {
+				err = errors.Wrap(code.ParseError,
+					fmt.Sprintf("parse action params failed: %v", err))
+			}
+			return stepResult, err
 		}
 		if err := uiDriver.DoAction(action); err != nil {
 			if !code.IsErrorPredefined(err) {
