@@ -1,3 +1,5 @@
+//go:build localtest
+
 package gidevice
 
 import "testing"

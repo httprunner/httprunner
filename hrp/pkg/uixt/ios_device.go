@@ -398,6 +398,8 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
+	} else {
+		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
 	}
 
 	var localMjpegPort int
@@ -412,6 +414,9 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
+	} else {
+		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
+			Msg("reuse WDA local mjpeg port")
 	}
 
 	log.Info().Interface("capabilities", capabilities).

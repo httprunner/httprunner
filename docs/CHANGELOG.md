@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.0 (2022-10-23)
+## v4.3.0 (2022-10-24)
 
 Release hrp sub package `uixt` to support iOS/Android UI automation 🎉
 
@@ -10,7 +10,7 @@ Release hrp sub package `uixt` to support iOS/Android UI automation 🎉
 
 For iOS/Android device management:
 
-- feat: integrage ios device management with [gidevice],
+- feat: integrage ios device management with [gidevice]
 - feat: integrage android device management with [gadb]
 - feat: add simple commands to interact with iOS/Android devices, try `hrp ios` and `hrp adb`
 
