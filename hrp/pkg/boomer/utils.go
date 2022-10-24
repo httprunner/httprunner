@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	uuid "github.com/satori/go.uuid"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/process"
@@ -84,7 +84,7 @@ func startCPUProfile(file string, duration time.Duration) (err error) {
 // generate a random nodeID like locust does, using the same algorithm.
 func getNodeID() (nodeID string) {
 	hostname, _ := os.Hostname()
-	id := strings.Replace(uuid.New().String(), "-", "", -1)
+	id := strings.Replace(uuid.NewV4().String(), "-", "", -1)
 	nodeID = fmt.Sprintf("%s_%s", hostname, id)
 	return
 }

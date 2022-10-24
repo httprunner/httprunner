@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	giDevice "github.com/electricbubble/gidevice"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -15,7 +15,7 @@ var iosRootCmd = &cobra.Command{
 	Short: "simple utils for ios device management",
 }
 
-func getDevice(udid string) (giDevice.Device, error) {
+func getDevice(udid string) (gidevice.Device, error) {
 	devices, err := uixt.IOSDevices(udid)
 	if err != nil {
 		return nil, err

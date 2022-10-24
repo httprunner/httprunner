@@ -3,9 +3,10 @@ package ios
 import (
 	"fmt"
 
-	giDevice "github.com/electricbubble/gidevice"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
+
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
 type Application struct {
@@ -24,21 +25,21 @@ var listAppsCmd = &cobra.Command{
 			return err
 		}
 
-		var applicationType giDevice.ApplicationType
+		var applicationType gidevice.ApplicationType
 		switch appType {
 		case "user":
-			applicationType = giDevice.ApplicationTypeUser
+			applicationType = gidevice.ApplicationTypeUser
 		case "system":
-			applicationType = giDevice.ApplicationTypeSystem
+			applicationType = gidevice.ApplicationTypeSystem
 		case "internal":
-			applicationType = giDevice.ApplicationTypeInternal
+			applicationType = gidevice.ApplicationTypeInternal
 		case "all":
-			applicationType = giDevice.ApplicationTypeAny
+			applicationType = gidevice.ApplicationTypeAny
 		}
 
 		result, errList := device.InstallationProxyBrowse(
-			giDevice.WithApplicationType(applicationType),
-			giDevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
+			gidevice.WithApplicationType(applicationType),
+			gidevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
 		if errList != nil {
 			return fmt.Errorf("get app list failed")
 		}
