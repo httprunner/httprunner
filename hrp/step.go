@@ -1,8 +1,7 @@
 package hrp
 
 import (
-	giDevice "github.com/electricbubble/gidevice"
-
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -36,18 +35,18 @@ var (
 )
 
 var (
-	WithPerfSystemCPU         = giDevice.WithPerfSystemCPU
-	WithPerfSystemMem         = giDevice.WithPerfSystemMem
-	WithPerfSystemDisk        = giDevice.WithPerfSystemDisk
-	WithPerfSystemNetwork     = giDevice.WithPerfSystemNetwork
-	WithPerfGPU               = giDevice.WithPerfGPU
-	WithPerfFPS               = giDevice.WithPerfFPS
-	WithPerfNetwork           = giDevice.WithPerfNetwork
-	WithPerfBundleID          = giDevice.WithPerfBundleID
-	WithPerfPID               = giDevice.WithPerfPID
-	WithPerfOutputInterval    = giDevice.WithPerfOutputInterval
-	WithPerfProcessAttributes = giDevice.WithPerfProcessAttributes
-	WithPerfSystemAttributes  = giDevice.WithPerfSystemAttributes
+	WithPerfSystemCPU         = gidevice.WithPerfSystemCPU
+	WithPerfSystemMem         = gidevice.WithPerfSystemMem
+	WithPerfSystemDisk        = gidevice.WithPerfSystemDisk
+	WithPerfSystemNetwork     = gidevice.WithPerfSystemNetwork
+	WithPerfGPU               = gidevice.WithPerfGPU
+	WithPerfFPS               = gidevice.WithPerfFPS
+	WithPerfNetwork           = gidevice.WithPerfNetwork
+	WithPerfBundleID          = gidevice.WithPerfBundleID
+	WithPerfPID               = gidevice.WithPerfPID
+	WithPerfOutputInterval    = gidevice.WithPerfOutputInterval
+	WithPerfProcessAttributes = gidevice.WithPerfProcessAttributes
+	WithPerfSystemAttributes  = gidevice.WithPerfSystemAttributes
 )
 
 type StepResult struct {

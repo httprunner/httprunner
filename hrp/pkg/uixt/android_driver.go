@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/electricbubble/gadb"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")

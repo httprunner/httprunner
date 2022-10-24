@@ -5,8 +5,8 @@ import (
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/getsentry/sentry-go"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
@@ -23,8 +23,7 @@ func init() {
 	// init GA client
 	clientID, err := machineid.ProtectedID("hrp")
 	if err != nil {
-		nodeUUID, _ := uuid.NewUUID()
-		clientID = nodeUUID.String()
+		clientID = uuid.NewV1().String()
 	}
 	gaClient = NewGAClient(trackingID, clientID)
 

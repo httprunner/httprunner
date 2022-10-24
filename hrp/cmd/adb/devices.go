@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/electricbubble/gadb"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 

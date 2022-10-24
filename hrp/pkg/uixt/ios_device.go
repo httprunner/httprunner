@@ -17,13 +17,13 @@ import (
 	"strings"
 	"time"
 
-	giDevice "github.com/electricbubble/gidevice"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
 const (
@@ -96,18 +96,18 @@ func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
 	}
 }
 
-func WithPerfOptions(options ...giDevice.PerfOption) IOSDeviceOption {
+func WithPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	return func(device *IOSDevice) {
-		device.PerfOptions = &giDevice.PerfOptions{}
+		device.PerfOptions = &gidevice.PerfOptions{}
 		for _, option := range options {
 			option(device.PerfOptions)
 		}
 	}
 }
 
-func IOSDevices(udid ...string) (devices []giDevice.Device, err error) {
-	var usbmux giDevice.Usbmux
-	if usbmux, err = giDevice.NewUsbmux(); err != nil {
+func IOSDevices(udid ...string) (devices []gidevice.Device, err error) {
+	var usbmux gidevice.Usbmux
+	if usbmux, err = gidevice.NewUsbmux(); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceConnectionError,
 			fmt.Sprintf("init usbmux failed: %v", err))
 	}
@@ -118,7 +118,7 @@ func IOSDevices(udid ...string) (devices []giDevice.Device, err error) {
 	}
 
 	// filter by udid
-	var deviceList []giDevice.Device
+	var deviceList []gidevice.Device
 	for _, d := range devices {
 		for _, u := range udid {
 			if u != "" && u != d.Properties().SerialNumber {
@@ -194,8 +194,8 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
-	d           giDevice.Device
-	PerfOptions *giDevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
+	d           gidevice.Device
+	PerfOptions *gidevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
 	UDID        string                `json:"udid,omitempty" yaml:"udid,omitempty"`
 	Port        int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	MjpegPort   int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
@@ -297,7 +297,7 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 		return err
 	}
 
-	go func(listener net.Listener, device giDevice.Device) {
+	go func(listener net.Listener, device gidevice.Device) {
 		for {
 			accept, err := listener.Accept()
 			if err != nil {
@@ -332,53 +332,53 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 	return nil
 }
 
-func (dev *IOSDevice) perfOpitons() (perfOptions []giDevice.PerfOption) {
+func (dev *IOSDevice) perfOpitons() (perfOptions []gidevice.PerfOption) {
 	if dev.PerfOptions == nil {
 		return
 	}
 
 	// system
 	if dev.PerfOptions.SysCPU {
-		perfOptions = append(perfOptions, giDevice.WithPerfSystemCPU(true))
+		perfOptions = append(perfOptions, gidevice.WithPerfSystemCPU(true))
 	}
 	if dev.PerfOptions.SysMem {
-		perfOptions = append(perfOptions, giDevice.WithPerfSystemMem(true))
+		perfOptions = append(perfOptions, gidevice.WithPerfSystemMem(true))
 	}
 	if dev.PerfOptions.SysDisk {
-		perfOptions = append(perfOptions, giDevice.WithPerfSystemDisk(true))
+		perfOptions = append(perfOptions, gidevice.WithPerfSystemDisk(true))
 	}
 	if dev.PerfOptions.SysNetwork {
-		perfOptions = append(perfOptions, giDevice.WithPerfSystemNetwork(true))
+		perfOptions = append(perfOptions, gidevice.WithPerfSystemNetwork(true))
 	}
 	if dev.PerfOptions.FPS {
-		perfOptions = append(perfOptions, giDevice.WithPerfFPS(true))
+		perfOptions = append(perfOptions, gidevice.WithPerfFPS(true))
 	}
 	if dev.PerfOptions.Network {
-		perfOptions = append(perfOptions, giDevice.WithPerfNetwork(true))
+		perfOptions = append(perfOptions, gidevice.WithPerfNetwork(true))
 	}
 
 	// process
 	if dev.PerfOptions.BundleID != "" {
 		perfOptions = append(perfOptions,
-			giDevice.WithPerfBundleID(dev.PerfOptions.BundleID))
+			gidevice.WithPerfBundleID(dev.PerfOptions.BundleID))
 	}
 	if dev.PerfOptions.Pid != 0 {
 		perfOptions = append(perfOptions,
-			giDevice.WithPerfPID(dev.PerfOptions.Pid))
+			gidevice.WithPerfPID(dev.PerfOptions.Pid))
 	}
 
 	// config
 	if dev.PerfOptions.OutputInterval != 0 {
 		perfOptions = append(perfOptions,
-			giDevice.WithPerfOutputInterval(dev.PerfOptions.OutputInterval))
+			gidevice.WithPerfOutputInterval(dev.PerfOptions.OutputInterval))
 	}
 	if dev.PerfOptions.SystemAttributes != nil {
 		perfOptions = append(perfOptions,
-			giDevice.WithPerfSystemAttributes(dev.PerfOptions.SystemAttributes...))
+			gidevice.WithPerfSystemAttributes(dev.PerfOptions.SystemAttributes...))
 	}
 	if dev.PerfOptions.ProcessAttributes != nil {
 		perfOptions = append(perfOptions,
-			giDevice.WithPerfProcessAttributes(dev.PerfOptions.ProcessAttributes...))
+			gidevice.WithPerfProcessAttributes(dev.PerfOptions.ProcessAttributes...))
 	}
 	return
 }
@@ -398,6 +398,8 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
+	} else {
+		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
 	}
 
 	var localMjpegPort int
@@ -412,6 +414,9 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
+	} else {
+		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
+			Msg("reuse WDA local mjpeg port")
 	}
 
 	log.Info().Interface("capabilities", capabilities).
