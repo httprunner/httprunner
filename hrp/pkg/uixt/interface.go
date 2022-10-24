@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -777,6 +779,7 @@ type Rect struct {
 type DataOptions struct {
 	Data                map[string]interface{} // configurations used by ios/android driver
 	Scope               []int                  // used by ocr to get text position in the scope
+	Offset              []int                  // used to tap offset of point
 	Index               int                    // index of the target element, should start from 1
 	IgnoreNotFoundError bool                   // ignore error if target element not found
 	MaxRetryTimes       int                    // max retry times if target element not found
@@ -818,6 +821,12 @@ func WithDataIndex(index int) DataOption {
 func WithDataScope(x1, x2, y1, y2 int) DataOption {
 	return func(data *DataOptions) {
 		data.Scope = []int{x1, x2, y1, y2}
+	}
+}
+
+func WithDataOffset(offsetX, offsetY int) DataOption {
+	return func(data *DataOptions) {
+		data.Offset = []int{offsetX, offsetY}
 	}
 }
 
@@ -864,6 +873,17 @@ func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
 
 	if len(dataOptions.Scope) == 0 {
 		dataOptions.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
+	}
+
+	if len(dataOptions.Offset) == 2 {
+		if x, ok := data["x"]; ok {
+			xf, _ := builtin.Interface2Float64(x)
+			data["x"] = xf + float64(dataOptions.Offset[0])
+		}
+		if y, ok := data["y"]; ok {
+			yf, _ := builtin.Interface2Float64(y)
+			data["y"] = yf + float64(dataOptions.Offset[1])
+		}
 	}
 
 	if _, ok := dataOptions.Data["steps"]; !ok {
