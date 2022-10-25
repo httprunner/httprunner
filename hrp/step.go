@@ -32,6 +32,7 @@ var (
 	WithDirection           = uixt.WithDirection
 	WithCustomDirection     = uixt.WithCustomDirection
 	WithScope               = uixt.WithScope
+	WithOffset              = uixt.WithOffset
 )
 
 var (
