@@ -424,8 +424,8 @@ func (ud *uiaDriver) AppLaunch(bundleId string, launchOpt ...AppLaunchOption) (e
 		var ce error
 		exists := func(ud WebDriver) (bool, error) {
 			for _, opt := range launchOpt {
-				if waitForComplete, ok := opt["androidBySelector"]; ok {
-					for _, e := range waitForComplete.([]BySelector) {
+				if bySelector, ok := opt["bySelector"]; ok {
+					for _, e := range bySelector.([]BySelector) {
 						_, ce = ud.FindElement(e)
 						if ce == nil {
 							return true, nil
@@ -436,7 +436,7 @@ func (ud *uiaDriver) AppLaunch(bundleId string, launchOpt ...AppLaunchOption) (e
 			return false, nil
 		}
 		if err = ud.WaitWithTimeoutAndInterval(exists, 45, 1); err != nil {
-			return fmt.Errorf("app launch (waitForComplete): %s: %w", err.Error(), ce)
+			return fmt.Errorf("app launch: %s: %w", err.Error(), ce)
 		}
 	}
 	return

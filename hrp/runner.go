@@ -174,8 +174,7 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) error {
-	log.Info().Str("hrp_version", version.VERSION).
-		Interface("testcases", testcases).Msg("start running")
+	log.Info().Str("hrp_version", version.VERSION).Msg("start running")
 	event := sdk.EventTracking{
 		Category: "RunAPITests",
 		Action:   "hrp run",

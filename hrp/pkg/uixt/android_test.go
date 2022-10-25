@@ -868,8 +868,7 @@ func TestDriver_AppLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// err = driver.AppLaunch("tv.danmaku.bili", BySelector{ResourceIdID: "tv.danmaku.bili:id/action_bar_root"})
-	err = driver.AppLaunch("com.android.settings", AppLaunchOption{}.WithAndroidBySelector(AndroidBySelector{ResourceIdID: "android:id/list"}))
+	err = driver.AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}

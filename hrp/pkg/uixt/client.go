@@ -98,7 +98,7 @@ func convertToHTTPClient(conn net.Conn) *http.Client {
 	if err := tcpConn.SetKeepAlive(true); err != nil {
 		log.Error().Err(err).Msg("set tcp keep alive failed")
 	}
-	if err := tcpConn.SetKeepAlivePeriod(5 * time.Second); err != nil {
+	if err := tcpConn.SetKeepAlivePeriod(30 * time.Second); err != nil {
 		log.Error().Err(err).Msg("set tcp keep alive period failed")
 	}
 	return &http.Client{

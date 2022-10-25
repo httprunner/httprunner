@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"os/exec"
-	"reflect"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -74,6 +73,9 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	if err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
 			fmt.Sprintf("get attached devices failed: %v", err))
+	} else if len(deviceList) == 0 {
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+			"not attached device found")
 	}
 
 	device = &AndroidDevice{
@@ -93,7 +95,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 
 		device.SerialNumber = dev.Serial()
 		device.d = dev
-		device.logcat = NewAdbLogcat(serialNumber)
+		device.logcat = NewAdbLogcat(device.SerialNumber)
 		return device, nil
 	}
 
@@ -661,33 +663,4 @@ func (s UiSelectorHelper) ContainerSelector(selector UiSelectorHelper) UiSelecto
 func (s UiSelectorHelper) FromParent(selector UiSelectorHelper) UiSelectorHelper {
 	s.value.WriteString(fmt.Sprintf(`.fromParent(%s)`, selector.value.String()))
 	return s
-}
-
-type AndroidBySelector struct {
-	// Set the search criteria to match the given resource ResourceIdID.
-	ResourceIdID string `json:"id"`
-	// Set the search criteria to match the content-description property for a widget.
-	ContentDescription string `json:"accessibility id"`
-	XPath              string `json:"xpath"`
-	// Set the search criteria to match the class property for a widget (for example, "android.widget.Button").
-	ClassName   string `json:"class name"`
-	UiAutomator string `json:"-android uiautomator"`
-}
-
-func (by AndroidBySelector) getMethodAndSelector() (method, selector string) {
-	vBy := reflect.ValueOf(by)
-	tBy := reflect.TypeOf(by)
-	for i := 0; i < vBy.NumField(); i++ {
-		vi := vBy.Field(i).Interface()
-		// switch vi := vi.(type) {
-		// case string:
-		// 	selector = vi
-		// }
-		selector = vi.(string)
-		if selector != "" && selector != "UNKNOWN" {
-			method = tBy.Field(i).Tag.Get("json")
-			return
-		}
-	}
-	return
 }
