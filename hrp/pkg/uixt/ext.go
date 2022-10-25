@@ -408,7 +408,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			identifierOption := WithDataIdentifier(action.Identifier)
-			OffsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
+			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 			indexOption := WithDataIndex(action.Index)
 			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 
@@ -430,7 +430,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, identifierOption, OffsetOption)
+				return d.TapAbsXY(point.X, point.Y, identifierOption, offsetOption)
 			}
 
 			if action.Direction != nil {
@@ -459,7 +459,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			identifierOption := WithDataIdentifier(action.Identifier)
-			OffsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
+			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 			// default to retry 10 times
 			if action.MaxRetryTimes == 0 {
@@ -484,7 +484,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, identifierOption, OffsetOption)
+				return d.TapAbsXY(point.X, point.Y, identifierOption, offsetOption)
 			}
 
 			// default to retry 10 times
@@ -554,11 +554,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 
 			indexOption := WithDataIndex(action.Index)
-			OffsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
+			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 			identifierOption := WithDataIdentifier(action.Identifier)
 			IgnoreNotFoundErrorOption := WithDataIgnoreNotFoundError(action.IgnoreNotFoundError)
-			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption, OffsetOption)
+			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption, offsetOption)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:

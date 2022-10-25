@@ -135,7 +135,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error 
 
 	identifierOption := WithDataIdentifier(action.Identifier)
 	indexOption := WithDataIndex(action.Index)
-	OffsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
+	offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 	scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 
 	// default to retry 5 times
@@ -156,7 +156,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error 
 	}
 	foundAppAction := func(d *DriverExt) error {
 		// click app to launch
-		return d.TapAbsXY(point.X, point.Y, identifierOption, OffsetOption)
+		return d.TapAbsXY(point.X, point.Y, identifierOption, offsetOption)
 	}
 
 	// go to home screen
