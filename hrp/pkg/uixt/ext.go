@@ -69,6 +69,7 @@ type MobileAction struct {
 	WaitTime            float64     `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
 	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
 	Scope               []float64   `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
+	Offset              []int       `json:"offset,omitempty" yaml:"offset,omitempty"`                             // used to tap offset of point
 	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
 	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
 	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
@@ -115,6 +116,12 @@ func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 func WithScope(x1, y1, x2, y2 float64) ActionOption {
 	return func(o *MobileAction) {
 		o.Scope = []float64{x1, y1, x2, y2}
+	}
+}
+
+func WithOffset(offsetX, offsetY int) ActionOption {
+	return func(o *MobileAction) {
+		o.Offset = []int{offsetX, offsetY}
 	}
 }
 
@@ -396,8 +403,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			if len(action.Scope) != 4 {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
+			if len(action.Offset) != 2 {
+				action.Offset = []int{0, 0}
+			}
 
 			identifierOption := WithDataIdentifier(action.Identifier)
+			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 			indexOption := WithDataIndex(action.Index)
 			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 
@@ -419,7 +430,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, identifierOption)
+				return d.TapAbsXY(point.X, point.Y, identifierOption, offsetOption)
 			}
 
 			if action.Direction != nil {
@@ -443,7 +454,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			if len(action.Scope) != 4 {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
+			if len(action.Offset) != 2 {
+				action.Offset = []int{0, 0}
+			}
 
+			identifierOption := WithDataIdentifier(action.Identifier)
+			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 			// default to retry 10 times
 			if action.MaxRetryTimes == 0 {
@@ -468,7 +484,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			foundTextAction := func(d *DriverExt) error {
 				// tap text
-				return d.TapAbsXY(point.X, point.Y, WithDataIdentifier(action.Identifier))
+				return d.TapAbsXY(point.X, point.Y, identifierOption, offsetOption)
 			}
 
 			// default to retry 10 times
@@ -517,7 +533,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapAbsXY(x, y, WithDataIdentifier(action.Identifier))
+			if len(action.Offset) != 2 {
+				action.Offset = []int{0, 0}
+			}
+			return dExt.TapAbsXY(x, y, WithDataIdentifier(action.Identifier), WithDataOffset(action.Offset[0], action.Offset[1]))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
@@ -530,12 +549,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			if len(action.Scope) != 4 {
 				action.Scope = []float64{0, 0, 1, 1}
 			}
+			if len(action.Offset) != 2 {
+				action.Offset = []int{0, 0}
+			}
 
 			indexOption := WithDataIndex(action.Index)
+			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
 			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
 			identifierOption := WithDataIdentifier(action.Identifier)
 			IgnoreNotFoundErrorOption := WithDataIgnoreNotFoundError(action.IgnoreNotFoundError)
-			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption)
+			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption, offsetOption)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
