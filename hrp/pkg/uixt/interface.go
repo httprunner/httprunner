@@ -319,8 +319,8 @@ func (opt AppLaunchOption) WithEnvironment(env map[string]string) AppLaunchOptio
 	return opt
 }
 
-func (opt AppLaunchOption) WithAndroidBySelector(waitForComplete ...AndroidBySelector) AppLaunchOption {
-	opt["androidBySelector"] = waitForComplete
+func (opt AppLaunchOption) WithBySelector(bySelector ...BySelector) AppLaunchOption {
+	opt["bySelector"] = bySelector
 	return opt
 }
 
