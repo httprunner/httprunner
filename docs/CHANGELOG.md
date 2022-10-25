@@ -2,7 +2,7 @@
 
 ## v4.3.0 (2022-10-24)
 
-Release hrp sub package `uixt` to support iOS/Android UI automation 🎉
+Release hrp sub package `uixt` to support iOS/Android UI automation testing 🎉
 
 - feat: support iOS UI automation with [WebDriverAgent] and [gwda]
 - feat: support Android UI automation with [uiautomator2] and [guia2]

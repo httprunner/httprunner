@@ -93,10 +93,18 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 }
 
 func convertToHTTPClient(conn net.Conn) *http.Client {
+	// set tcp keep alive
+	tcpConn := conn.(*net.TCPConn)
+	if err := tcpConn.SetKeepAlive(true); err != nil {
+		log.Error().Err(err).Msg("set tcp keep alive failed")
+	}
+	if err := tcpConn.SetKeepAlivePeriod(5 * time.Second); err != nil {
+		log.Error().Err(err).Msg("set tcp keep alive period failed")
+	}
 	return &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return conn, nil
+				return tcpConn, nil
 			},
 		},
 		Timeout: 0,
