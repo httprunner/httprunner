@@ -58,7 +58,7 @@ var mountCmd = &cobra.Command{
 		if builtin.IsFilePathExists(filepath.Join(developerDiskImageDir, "DeveloperDiskImage.dmg")) {
 			dmgPath = filepath.Join(developerDiskImageDir, "DeveloperDiskImage.dmg")
 			signaturePath = filepath.Join(developerDiskImageDir, "DeveloperDiskImage.dmg.signature")
-		} else if builtin.IsFilePathExists(filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg.")) {
+		} else if builtin.IsFilePathExists(filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg")) {
 			dmgPath = filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg")
 			signaturePath = filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg.signature")
 		} else {
