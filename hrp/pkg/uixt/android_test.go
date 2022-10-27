@@ -873,11 +873,37 @@ func TestDriver_AppLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// screenshot, err := driver.Screenshot()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Log(ioutil.WriteFile("/Users/hero/Desktop/s1.png", screenshot.Bytes(), 0600))
+	raw, err := driver.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(ioutil.WriteFile("s1.png", raw.Bytes(), 0o600))
+}
+
+func TestDriver_KeepAlive(t *testing.T) {
+	device, _ := NewAndroidDevice()
+	driver, err := device.NewUSBDriver(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.AppLaunch("com.android.settings")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = driver.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(60 * time.Second)
+
+	_, err = driver.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestDriver_AppTerminate(t *testing.T) {
