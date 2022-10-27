@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.0 (2022-10-24)
+## v4.3.0 (2022-10-27)
 
 Release hrp sub package `uixt` to support iOS/Android UI automation testing 🎉
 
