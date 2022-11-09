@@ -526,6 +526,27 @@ func (wd *wdaDriver) KeyboardDismiss(keyNames ...string) (err error) {
 	return
 }
 
+// PressBack simulates a short press on the BACK button.
+func (wd *wdaDriver) PressBack(options ...DataOption) (err error) {
+	windowSize, err := wd.WindowSize()
+	if err != nil {
+		return
+	}
+
+	data := map[string]interface{}{
+		"fromX": float64(windowSize.Width) * 0,
+		"fromY": float64(windowSize.Height) * 0.5,
+		"toX":   float64(windowSize.Width) * 0.6,
+		"toY":   float64(windowSize.Height) * 0.5,
+	}
+
+	// new data options in post data for extra WDA configurations
+	d := NewData(data, options...)
+
+	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
+	return
+}
+
 func (wd *wdaDriver) PressButton(devBtn DeviceButton) (err error) {
 	// [[FBRoute POST:@"/wda/pressButton"] respondWithTarget:self action:@selector(handlePressButtonCommand:)]
 	data := map[string]interface{}{"name": devBtn}

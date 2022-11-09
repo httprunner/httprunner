@@ -181,6 +181,18 @@ func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *Ste
 	return &StepMobile{step: s.step}
 }
 
+func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_Back,
+		Params: nil,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	return &StepMobile{step: s.step}
+}
+
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method: uixt.ACTION_Swipe,
