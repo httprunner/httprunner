@@ -891,7 +891,7 @@ func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
 	}
 
 	if _, ok := dataOptions.Data["duration"]; !ok {
-		dataOptions.Data["duration"] = 1.0 // default duration
+		dataOptions.Data["duration"] = 0 // default duration
 	}
 
 	if _, ok := dataOptions.Data["frequency"]; !ok {
