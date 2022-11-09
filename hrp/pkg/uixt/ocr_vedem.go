@@ -179,16 +179,16 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 			}
 
 			rects = append(rects, rect)
-		}
 
-		// contains text while not match exactly
-		if ocrResult.Text != text {
-			continue
-		}
+			// contains text while not match exactly
+			if ocrResult.Text != text {
+				continue
+			}
 
-		// match exactly, and not specify index, return the first one
-		if data.Index == 0 {
-			return rect, nil
+			// match exactly, and not specify index, return the first one
+			if data.Index == 0 {
+				return rect, nil
+			}
 		}
 	}
 
