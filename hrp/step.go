@@ -29,6 +29,8 @@ var (
 	WithText                = uixt.WithText
 	WithID                  = uixt.WithID
 	WithDescription         = uixt.WithDescription
+	WithDuration            = uixt.WithDuration
+	WIthSteps               = uixt.WithSteps
 	WithDirection           = uixt.WithDirection
 	WithCustomDirection     = uixt.WithCustomDirection
 	WithScope               = uixt.WithScope

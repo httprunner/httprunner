@@ -581,7 +581,6 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...D
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //  `steps` is the number of move steps sent to the system
 func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
-	options = append(options, WithDataSteps(12))
 	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
