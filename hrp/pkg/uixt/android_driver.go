@@ -233,9 +233,12 @@ func (ud *uiaDriver) Scale() (scale float64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ud *uiaDriver) PressBack() (err error) {
+func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
+	if err != nil {
+		_, err = ud.adbDevice.RunShellCommand("input", "keyevent", "4")
+	}
 	return
 }
 

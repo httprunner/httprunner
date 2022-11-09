@@ -53,6 +53,7 @@ const (
 	ACTION_DoubleTap   MobileMethod = "double_tap"
 	ACTION_Swipe       MobileMethod = "swipe"
 	ACTION_Input       MobileMethod = "input"
+	ACTION_Back        MobileMethod = "back"
 
 	// custom actions
 	ACTION_SwipeToTapApp   MobileMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
@@ -618,6 +619,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			options = append(options, WithDataIdentifier(action.Identifier))
 		}
 		return dExt.Driver.Input(param, options...)
+	case ACTION_Back:
+		return dExt.Driver.PressBack()
 	case CtlSleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()
@@ -651,10 +654,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 }
 
 func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
-	return int(x1 * float64(dExt.windowSize.Width) * dExt.scale),
-		int(y1 * float64(dExt.windowSize.Height) * dExt.scale),
-		int(x2 * float64(dExt.windowSize.Width) * dExt.scale),
-		int(y2 * float64(dExt.windowSize.Height) * dExt.scale)
+	return int(x1 * float64(dExt.windowSize.Width)),
+		int(y1 * float64(dExt.windowSize.Height)),
+		int(x2 * float64(dExt.windowSize.Width)),
+		int(y2 * float64(dExt.windowSize.Height))
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {

@@ -1046,6 +1046,9 @@ type WebDriver interface {
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error
 
+	// PressBack Presses the back button
+	PressBack(options ...DataOption) error
+
 	// IOHIDEvent Emulated triggering of the given low-level IOHID device event.
 	//  duration: The event duration in float seconds (XCTest uses 0.005 for a single press event)
 	IOHIDEvent(pageID EventPageID, usageID EventUsageID, duration ...float64) error
