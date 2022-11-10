@@ -18,6 +18,17 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
+// See https://developer.android.com/reference/android/view/KeyEvent
+const (
+	KEYCODE_BACK      string = "4"
+	KEYCODE_CAMERA    string = "27"
+	KEYCODE_ALT_LEFT  string = "57"
+	KEYCODE_ALT_RIGHT string = "58"
+	KEYCODE_MENU      string = "82"
+	KEYCODE_BREAK     string = "121"
+	KEYCODE_ALL_APPS  string = "284"
+)
+
 var errDriverNotImplemented = errors.New("driver method not implemented")
 
 type uiaDriver struct {
@@ -233,9 +244,12 @@ func (ud *uiaDriver) Scale() (scale float64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ud *uiaDriver) PressBack() (err error) {
+func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
+	if err != nil {
+		_, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_BACK)
+	}
 	return
 }
 
@@ -257,7 +271,7 @@ func (ud *uiaDriver) StartCamera() (err error) {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
+		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
 			return err
 		}
 		return
@@ -266,7 +280,7 @@ func (ud *uiaDriver) StartCamera() (err error) {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
+		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
 			return err
 		}
 		return
@@ -578,7 +592,6 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...D
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //  `steps` is the number of move steps sent to the system
 func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
-	options = append(options, WithDataSteps(12))
 	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 

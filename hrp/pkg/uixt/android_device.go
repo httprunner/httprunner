@@ -310,6 +310,9 @@ func ConvertPoints(data string) (eps []ExportPoint) {
 	for _, line := range lines {
 		if strings.Contains(line, "ext") {
 			idx := strings.Index(line, "{")
+			if idx == -1 {
+				continue
+			}
 			line = line[idx:]
 			p := ExportPoint{}
 			err := json.Unmarshal([]byte(line), &p)

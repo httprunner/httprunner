@@ -53,6 +53,7 @@ const (
 	ACTION_DoubleTap   MobileMethod = "double_tap"
 	ACTION_Swipe       MobileMethod = "swipe"
 	ACTION_Input       MobileMethod = "input"
+	ACTION_Back        MobileMethod = "back"
 
 	// custom actions
 	ACTION_SwipeToTapApp   MobileMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
@@ -67,6 +68,8 @@ type MobileAction struct {
 	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
 	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
 	WaitTime            float64     `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
+	Duration            float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
+	Steps               int         `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
 	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
 	Scope               []float64   `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
 	Offset              []int       `json:"offset,omitempty" yaml:"offset,omitempty"`                             // used to tap offset of point
@@ -95,6 +98,18 @@ func WithIndex(index int) ActionOption {
 func WithWaitTime(sec float64) ActionOption {
 	return func(o *MobileAction) {
 		o.WaitTime = sec
+	}
+}
+
+func WithDuration(duration float64) ActionOption {
+	return func(o *MobileAction) {
+		o.Duration = duration
+	}
+}
+
+func WithSteps(steps int) ActionOption {
+	return func(o *MobileAction) {
+		o.Steps = steps
 	}
 }
 
@@ -584,6 +599,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
 		identifierOption := WithDataIdentifier(action.Identifier)
+		durationOption := WithDataPressDuration(action.Duration)
+		if action.Steps == 0 {
+			action.Steps = 10
+		}
+		stepsOption := WithDataSteps(action.Steps)
 		if positions, ok := action.Params.([]interface{}); ok {
 			// relative fromX, fromY, toX, toY of window size: [0.5, 0.9, 0.5, 0.1]
 			if len(positions) != 4 {
@@ -593,10 +613,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			fromY, _ := positions[1].(float64)
 			toX, _ := positions[2].(float64)
 			toY, _ := positions[3].(float64)
-			return dExt.SwipeRelative(fromX, fromY, toX, toY, identifierOption)
+			return dExt.SwipeRelative(fromX, fromY, toX, toY, identifierOption, durationOption, stepsOption)
 		}
 		if direction, ok := action.Params.(string); ok {
-			return dExt.SwipeTo(direction, identifierOption)
+			return dExt.SwipeTo(direction, identifierOption, durationOption, stepsOption)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Swipe, action.Params)
 	case ACTION_Input:
@@ -618,6 +638,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			options = append(options, WithDataIdentifier(action.Identifier))
 		}
 		return dExt.Driver.Input(param, options...)
+	case ACTION_Back:
+		return dExt.Driver.PressBack()
 	case CtlSleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()
