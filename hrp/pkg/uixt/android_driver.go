@@ -18,6 +18,17 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
+// See https://developer.android.com/reference/android/view/KeyEvent
+const (
+	KEYCODE_BACK      string = "4"
+	KEYCODE_CAMERA    string = "27"
+	KEYCODE_ALT_LEFT  string = "57"
+	KEYCODE_ALT_RIGHT string = "58"
+	KEYCODE_MENU      string = "82"
+	KEYCODE_BREAK     string = "121"
+	KEYCODE_ALL_APPS  string = "284"
+)
+
 var errDriverNotImplemented = errors.New("driver method not implemented")
 
 type uiaDriver struct {
@@ -237,7 +248,7 @@ func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
 	if err != nil {
-		_, err = ud.adbDevice.RunShellCommand("input", "keyevent", "4")
+		_, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_BACK)
 	}
 	return
 }
@@ -260,7 +271,7 @@ func (ud *uiaDriver) StartCamera() (err error) {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
+		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
 			return err
 		}
 		return
@@ -269,7 +280,7 @@ func (ud *uiaDriver) StartCamera() (err error) {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", "27"); err != nil {
+		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
 			return err
 		}
 		return
