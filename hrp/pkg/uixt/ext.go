@@ -673,10 +673,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 }
 
 func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
-	return int(x1 * float64(dExt.windowSize.Width)),
-		int(y1 * float64(dExt.windowSize.Height)),
-		int(x2 * float64(dExt.windowSize.Width)),
-		int(y2 * float64(dExt.windowSize.Height))
+	return int(x1 * float64(dExt.windowSize.Width) * dExt.scale),
+		int(y1 * float64(dExt.windowSize.Height) * dExt.scale),
+		int(x2 * float64(dExt.windowSize.Width) * dExt.scale),
+		int(y2 * float64(dExt.windowSize.Height) * dExt.scale)
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
