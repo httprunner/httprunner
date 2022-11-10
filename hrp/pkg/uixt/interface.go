@@ -891,7 +891,7 @@ func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
 	}
 
 	if _, ok := dataOptions.Data["duration"]; !ok {
-		dataOptions.Data["duration"] = 1.0 // default duration
+		dataOptions.Data["duration"] = 0 // default duration
 	}
 
 	if _, ok := dataOptions.Data["frequency"]; !ok {
@@ -1045,6 +1045,9 @@ type WebDriver interface {
 
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error
+
+	// PressBack Presses the back button
+	PressBack(options ...DataOption) error
 
 	// IOHIDEvent Emulated triggering of the given low-level IOHID device event.
 	//  duration: The event duration in float seconds (XCTest uses 0.005 for a single press event)

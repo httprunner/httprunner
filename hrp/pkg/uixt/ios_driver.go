@@ -440,12 +440,10 @@ func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 }
 
 func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
-	options = append(options, WithDataPressDuration(0))
 	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
 func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
-	options = append(options, WithDataPressDuration(0))
 	return wd.DragFloat(fromX, fromY, toX, toY, options...)
 }
 
@@ -525,6 +523,27 @@ func (wd *wdaDriver) KeyboardDismiss(keyNames ...string) (err error) {
 	}
 	data := map[string]interface{}{"keyNames": keyNames}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/keyboard/dismiss")
+	return
+}
+
+// PressBack simulates a short press on the BACK button.
+func (wd *wdaDriver) PressBack(options ...DataOption) (err error) {
+	windowSize, err := wd.WindowSize()
+	if err != nil {
+		return
+	}
+
+	data := map[string]interface{}{
+		"fromX": float64(windowSize.Width) * 0,
+		"fromY": float64(windowSize.Height) * 0.5,
+		"toX":   float64(windowSize.Width) * 0.6,
+		"toY":   float64(windowSize.Height) * 0.5,
+	}
+
+	// new data options in post data for extra WDA configurations
+	d := NewData(data, options...)
+
+	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return
 }
 

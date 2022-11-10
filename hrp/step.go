@@ -22,16 +22,18 @@ const (
 var (
 	WithIdentifier          = uixt.WithIdentifier
 	WithMaxRetryTimes       = uixt.WithMaxRetryTimes
-	WithWaitTime            = uixt.WithWaitTime
-	WithIndex               = uixt.WithIndex
+	WithWaitTime            = uixt.WithWaitTime // only applicable to SwipeToTap* action
+	WithIndex               = uixt.WithIndex    // index of the target element, should start from 1, only applicable to ocr actions
 	WithTimeout             = uixt.WithTimeout
 	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
 	WithText                = uixt.WithText
 	WithID                  = uixt.WithID
 	WithDescription         = uixt.WithDescription
+	WithDuration            = uixt.WithDuration // only applicable to ios swipe action
+	WithSteps               = uixt.WithSteps    // only applicable to android swipe action
 	WithDirection           = uixt.WithDirection
 	WithCustomDirection     = uixt.WithCustomDirection
-	WithScope               = uixt.WithScope
+	WithScope               = uixt.WithScope // only applicable to ocr actions
 	WithOffset              = uixt.WithOffset
 )
 
