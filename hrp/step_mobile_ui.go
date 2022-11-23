@@ -21,15 +21,17 @@ var (
 	WithSnapshotMaxDepth           = uixt.WithSnapshotMaxDepth
 	WithAcceptAlertButtonSelector  = uixt.WithAcceptAlertButtonSelector
 	WithDismissAlertButtonSelector = uixt.WithDismissAlertButtonSelector
+	WithClosePopup                 = uixt.WithClosePopup
 	WithPerfOptions                = uixt.WithPerfOptions
 )
 
 // android setting options
 var (
-	WithSerialNumber = uixt.WithSerialNumber
-	WithAdbIP        = uixt.WithAdbIP
-	WithAdbPort      = uixt.WithAdbPort
-	WithAdbLogOn     = uixt.WithAdbLogOn
+	WithSerialNumber  = uixt.WithSerialNumber
+	WithAdbIP         = uixt.WithAdbIP
+	WithAdbPort       = uixt.WithAdbPort
+	WithAdbLogOn      = uixt.WithAdbLogOn
+	WithAdbClosePopup = uixt.WithAdbClosePopup
 )
 
 type MobileStep struct {

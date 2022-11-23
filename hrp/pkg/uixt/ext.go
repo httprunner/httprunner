@@ -176,17 +176,26 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	}
 }
 
-// TemplateMatchMode is the type of the template matching operation.
-type TemplateMatchMode int
+type MatchMethod int
+
+// MatchMode is the type of the matching operation.
+type MatchMode int
 
 type CVArgs struct {
-	matchMode TemplateMatchMode
-	threshold float64
+	matchMethod MatchMethod
+	matchMode   MatchMode
+	threshold   float64
 }
 
 type CVOption func(*CVArgs)
 
-func WithTemplateMatchMode(mode TemplateMatchMode) CVOption {
+func WithCVMatchMethod(method MatchMethod) CVOption {
+	return func(args *CVArgs) {
+		args.matchMethod = method
+	}
+}
+
+func WithCVMatchMode(mode MatchMode) CVOption {
 	return func(args *CVArgs) {
 		args.matchMode = mode
 	}
@@ -209,6 +218,7 @@ type DriverExt struct {
 	ScreenShots     []string      // save screenshots path
 	perfStop        chan struct{} // stop performance monitor
 	perfData        []string      // save perf data
+	ClosePopup      bool
 
 	CVArgs
 }

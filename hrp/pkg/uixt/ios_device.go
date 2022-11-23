@@ -5,6 +5,9 @@ import (
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -17,11 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
-
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
@@ -96,6 +95,12 @@ func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
 	}
 }
 
+func WithClosePopup(isTrue bool) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.ClosePopup = isTrue
+	}
+}
+
 func WithPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.PerfOptions = &gidevice.PerfOptions{}
@@ -159,6 +164,9 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 	if dev.DismissAlertButtonSelector != "" {
 		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
 	}
+	if dev.ClosePopup {
+		deviceOptions = append(deviceOptions, WithClosePopup(true))
+	}
 	return
 }
 
@@ -208,6 +216,8 @@ type IOSDevice struct {
 	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
 	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
 	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
+
+	ClosePopup bool `json:"close_popup,omitempty" yaml:"close_popup,omitempty"`
 }
 
 func (dev *IOSDevice) UUID() string {
@@ -283,6 +293,7 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		}()
 	}
 
+	driverExt.ClosePopup = dev.ClosePopup
 	driverExt.UUID = dev.UUID()
 	return driverExt, nil
 }

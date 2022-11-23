@@ -52,6 +52,12 @@ func WithAdbLogOn(logOn bool) AndroidDeviceOption {
 	}
 }
 
+func WithAdbClosePopup(isTrue bool) AndroidDeviceOption {
+	return func(device *AndroidDevice) {
+		device.ClosePopup = isTrue
+	}
+}
+
 func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceOption) {
 	if dev.SerialNumber != "" {
 		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
@@ -64,6 +70,9 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
+	}
+	if dev.ClosePopup {
+		deviceOptions = append(deviceOptions, WithAdbClosePopup(true))
 	}
 	return
 }
@@ -120,6 +129,7 @@ type AndroidDevice struct {
 	Port         int    `json:"port,omitempty" yaml:"port,omitempty"`
 	MjpegPort    int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	ClosePopup   bool   `json:"close_popup,omitempty" yaml:"close_popup,omitempty"`
 }
 
 func (dev *AndroidDevice) UUID() string {
@@ -145,6 +155,7 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 		}
 	}
 
+	driverExt.ClosePopup = dev.ClosePopup
 	driverExt.UUID = dev.UUID()
 	return driverExt, nil
 }
