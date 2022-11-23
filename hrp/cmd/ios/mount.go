@@ -62,12 +62,13 @@ var mountCmd = &cobra.Command{
 			dmgPath = filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg")
 			signaturePath = filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg.signature")
 		} else {
-			log.Error().Str("dir", developerDiskImageDir).Msg("developer disk image not found in directory")
-			return fmt.Errorf("developer disk image not found")
+			log.Error().Str("dir", developerDiskImageDir).Msgf(
+				"developer disk image %s not found in directory", version)
+			return fmt.Errorf("developer disk image %s not found", version)
 		}
 
 		if err = device.MountDeveloperDiskImage(dmgPath, signaturePath); err != nil {
-			return fmt.Errorf("mount developer disk image failed: %s", err)
+			return fmt.Errorf("mount developer disk image %s failed: %s", version, err)
 		}
 
 		log.Info().Msg("mount developer disk image successfully")
