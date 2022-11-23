@@ -3,6 +3,7 @@
 package demo
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -42,5 +43,32 @@ func TestIOSDemo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestIOSGetOCRTexts(t *testing.T) {
+	device, err := uixt.NewIOSDevice(
+		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
+		uixt.WithResetHomeOnStartup(false), // not reset home on startup
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	capabilities := uixt.NewCapabilities()
+	capabilities.WithDefaultAlertAction(uixt.AlertActionAccept) // or uixt.AlertActionDismiss
+	driverExt, err := device.NewDriver(capabilities)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for {
+		texts, err := driverExt.GetTextsByOCR()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Println(texts)
+		time.Sleep(3 * time.Second)
 	}
 }

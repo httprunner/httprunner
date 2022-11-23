@@ -205,6 +205,7 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
+	ocrService      OCRService    // used to get text from image
 	StartTime       time.Time     // used to associate screenshots name
 	ScreenShots     []string      // save screenshots path
 	perfStop        chan struct{} // stop performance monitor
@@ -224,6 +225,10 @@ func extend(driver WebDriver) (dExt *DriverExt, err error) {
 	}
 
 	if dExt.scale, err = dExt.Driver.Scale(); err != nil {
+		return nil, err
+	}
+
+	if dExt.ocrService, err = newVEDEMOCRService(); err != nil {
 		return nil, err
 	}
 
