@@ -170,6 +170,8 @@ func (s *veDEMOCRService) GetTexts(imageBuf []byte, options ...DataOption) (
 		return
 	}
 
+	dataOptions := NewDataOptions(options...)
+
 	for _, ocrResult := range ocrResults {
 		rect := image.Rectangle{
 			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
@@ -182,6 +184,14 @@ func (s *veDEMOCRService) GetTexts(imageBuf []byte, options ...DataOption) (
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
+
+		// check if text in scope
+		if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
+			rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
+			// not in scope
+			continue
+		}
+
 		ocrTexts = append(ocrTexts, OCRText{
 			Text: ocrResult.Text,
 			Rect: rect,
@@ -193,7 +203,7 @@ func (s *veDEMOCRService) GetTexts(imageBuf []byte, options ...DataOption) (
 func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (
 	rect image.Rectangle, err error) {
 
-	ocrTexts, err := s.GetTexts(imageBuf)
+	ocrTexts, err := s.GetTexts(imageBuf, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetTexts failed")
 		return
@@ -204,13 +214,6 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 	var rects []image.Rectangle
 	for _, ocrText := range ocrTexts {
 		rect = ocrText.Rect
-
-		// check if text in scope
-		if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
-			rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
-			// not in scope
-			continue
-		}
 
 		// not contains text
 		if !strings.Contains(ocrText.Text, text) {
@@ -256,26 +259,17 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...DataOption) (
 	rects []image.Rectangle, err error) {
 
-	ocrTexts, err := s.GetTexts(imageBuf)
+	ocrTexts, err := s.GetTexts(imageBuf, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetTexts failed")
 		return
 	}
-
-	dataOptions := NewDataOptions(options...)
 
 	var success bool
 	for _, text := range texts {
 		var found bool
 		for _, ocrText := range ocrTexts {
 			rect := ocrText.Rect
-
-			// check if text in scope
-			if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
-				rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
-				// not in scope
-				continue
-			}
 
 			// not contains text
 			if !strings.Contains(ocrText.Text, text) {
@@ -306,14 +300,14 @@ type OCRService interface {
 	FindTexts(texts []string, imageBuf []byte, options ...DataOption) (rects []image.Rectangle, err error)
 }
 
-func (dExt *DriverExt) GetTextsByOCR() (texts OCRTexts, err error) {
+func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.takeScreenShot(); err != nil {
 		err = fmt.Errorf("takeScreenShot error: %v", err)
 		return
 	}
 
-	ocrTexts, err := dExt.ocrService.GetTexts(bufSource.Bytes())
+	ocrTexts, err := dExt.ocrService.GetTexts(bufSource.Bytes(), options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetTexts failed")
 		return
