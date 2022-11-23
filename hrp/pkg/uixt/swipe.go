@@ -69,9 +69,9 @@ type Action func(driver *DriverExt) error
 // findCondition indicates the condition to find a UI element
 // foundAction indicates the action to do after a UI element is found
 func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, foundAction Action, options ...DataOption) error {
-	d := NewData(nil, options...)
-	maxRetryTimes := d.MaxRetryTimes
-	interval := d.Interval
+	dataOptions := NewDataOptions(options...)
+	maxRetryTimes := dataOptions.MaxRetryTimes
+	interval := dataOptions.Interval
 
 	for i := 0; i < maxRetryTimes; i++ {
 		if err := findCondition(dExt); err == nil {
@@ -103,9 +103,9 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, f
 }
 
 func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, options ...DataOption) error {
-	d := NewData(nil, options...)
-	maxRetryTimes := d.MaxRetryTimes
-	interval := d.Interval
+	dataOptions := NewDataOptions(options...)
+	maxRetryTimes := dataOptions.MaxRetryTimes
+	interval := dataOptions.Interval
 
 	for i := 0; i < maxRetryTimes; i++ {
 		if err := findCondition(dExt); err == nil {
