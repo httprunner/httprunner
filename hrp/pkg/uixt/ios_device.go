@@ -124,6 +124,10 @@ func IOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 			if u != "" && u != d.Properties().SerialNumber {
 				continue
 			}
+			// filter non-usb ios devices
+			if d.Properties().ConnectionType != "USB" {
+				continue
+			}
 			deviceList = append(deviceList, d)
 		}
 	}
