@@ -147,8 +147,23 @@ func getLogID(header http.Header) string {
 	return logID[0]
 }
 
-func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (rect image.Rectangle, err error) {
-	data := NewData(map[string]interface{}{}, options...)
+type OCRText struct {
+	Text string
+	Rect image.Rectangle
+}
+
+type OCRTexts []OCRText
+
+func (t OCRTexts) Texts() []string {
+	var texts []string
+	for _, text := range t {
+		texts = append(texts, text.Text)
+	}
+	return texts
+}
+
+func (s *veDEMOCRService) GetAllTexts(imageBuf []byte) (
+	ocrTexts OCRTexts, err error) {
 
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
@@ -156,10 +171,8 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 		return
 	}
 
-	var rects []image.Rectangle
-	var ocrTexts []string
 	for _, ocrResult := range ocrResults {
-		rect = image.Rectangle{
+		rect := image.Rectangle{
 			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
 			Min: image.Point{
 				X: int(ocrResult.Points[0].X),
@@ -170,31 +183,57 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
-		if rect.Min.X >= data.Scope[0] && rect.Max.X <= data.Scope[2] && rect.Min.Y >= data.Scope[1] && rect.Max.Y <= data.Scope[3] {
-			ocrTexts = append(ocrTexts, ocrResult.Text)
+		ocrTexts = append(ocrTexts, OCRText{
+			Text: ocrResult.Text,
+			Rect: rect,
+		})
+	}
+	return
+}
 
-			// not contains text
-			if !strings.Contains(ocrResult.Text, text) {
-				continue
-			}
+func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (
+	rect image.Rectangle, err error) {
 
-			rects = append(rects, rect)
+	ocrTexts, err := s.GetAllTexts(imageBuf)
+	if err != nil {
+		log.Error().Err(err).Msg("GetAllTexts failed")
+		return
+	}
 
-			// contains text while not match exactly
-			if ocrResult.Text != text {
-				continue
-			}
+	data := NewData(map[string]interface{}{}, options...)
 
-			// match exactly, and not specify index, return the first one
-			if data.Index == 0 {
-				return rect, nil
-			}
+	var rects []image.Rectangle
+	for _, ocrText := range ocrTexts {
+		rect = ocrText.Rect
+
+		// check if text in scope
+		if rect.Min.X < data.Scope[0] || rect.Max.X > data.Scope[2] ||
+			rect.Min.Y < data.Scope[1] || rect.Max.Y > data.Scope[3] {
+			// not in scope
+			continue
+		}
+
+		// not contains text
+		if !strings.Contains(ocrText.Text, text) {
+			continue
+		}
+
+		rects = append(rects, rect)
+
+		// contains text while not match exactly
+		if ocrText.Text != text {
+			continue
+		}
+
+		// match exactly, and not specify index, return the first one
+		if data.Index == 0 {
+			return rect, nil
 		}
 	}
 
 	if len(rects) == 0 {
 		return image.Rectangle{}, errors.Wrap(code.OCRTextNotFoundError,
-			fmt.Sprintf("text %s not found in %v", text, ocrTexts))
+			fmt.Sprintf("text %s not found in %v", text, ocrTexts.Texts()))
 	}
 
 	// get index
@@ -215,45 +254,38 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 	return rects[idx], nil
 }
 
-func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...DataOption) (rects []image.Rectangle, err error) {
-	ocrResults, err := s.getOCRResult(imageBuf)
+func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...DataOption) (
+	rects []image.Rectangle, err error) {
+
+	ocrTexts, err := s.GetAllTexts(imageBuf)
 	if err != nil {
-		log.Error().Err(err).Msg("getOCRResult failed")
+		log.Error().Err(err).Msg("GetAllTexts failed")
 		return
 	}
 
 	data := NewData(map[string]interface{}{}, options...)
-	ocrTexts := map[string]bool{}
 
 	var success bool
-	var rect image.Rectangle
 	for _, text := range texts {
 		var found bool
-		for _, ocrResult := range ocrResults {
-			rect = image.Rectangle{
-				// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
-				Min: image.Point{
-					X: int(ocrResult.Points[0].X),
-					Y: int(ocrResult.Points[0].Y),
-				},
-				Max: image.Point{
-					X: int(ocrResult.Points[2].X),
-					Y: int(ocrResult.Points[2].Y),
-				},
+		for _, ocrText := range ocrTexts {
+			rect := ocrText.Rect
+
+			// check if text in scope
+			if rect.Min.X < data.Scope[0] || rect.Max.X > data.Scope[2] ||
+				rect.Min.Y < data.Scope[1] || rect.Max.Y > data.Scope[3] {
+				// not in scope
+				continue
 			}
 
-			if rect.Min.X >= data.Scope[0] && rect.Max.X <= data.Scope[2] && rect.Min.Y >= data.Scope[1] && rect.Max.Y <= data.Scope[3] {
-				ocrTexts[ocrResult.Text] = true
-
-				// not contains text
-				if !strings.Contains(ocrResult.Text, text) {
-					continue
-				}
-
-				found = true
-				rects = append(rects, rect)
-				break
+			// not contains text
+			if !strings.Contains(ocrText.Text, text) {
+				continue
 			}
+
+			found = true
+			rects = append(rects, rect)
+			break
 		}
 		if !found {
 			rects = append(rects, image.Rectangle{})
@@ -263,7 +295,7 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 
 	if !success {
 		return rects, errors.Wrap(code.OCRTextNotFoundError,
-			fmt.Sprintf("texts %s not found in %v", texts, ocrTexts))
+			fmt.Sprintf("texts %s not found in %v", texts, ocrTexts.Texts()))
 	}
 
 	return rects, nil
