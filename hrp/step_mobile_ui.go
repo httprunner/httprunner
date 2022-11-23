@@ -11,6 +11,29 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
+// ios setting options
+var (
+	WithUDID                       = uixt.WithUDID
+	WithWDAPort                    = uixt.WithWDAPort
+	WithWDAMjpegPort               = uixt.WithWDAMjpegPort
+	WithLogOn                      = uixt.WithLogOn
+	WithResetHomeOnStartup         = uixt.WithResetHomeOnStartup
+	WithSnapshotMaxDepth           = uixt.WithSnapshotMaxDepth
+	WithAcceptAlertButtonSelector  = uixt.WithAcceptAlertButtonSelector
+	WithDismissAlertButtonSelector = uixt.WithDismissAlertButtonSelector
+	WithClosePopup                 = uixt.WithClosePopup
+	WithPerfOptions                = uixt.WithPerfOptions
+)
+
+// android setting options
+var (
+	WithSerialNumber  = uixt.WithSerialNumber
+	WithAdbIP         = uixt.WithAdbIP
+	WithAdbPort       = uixt.WithAdbPort
+	WithAdbLogOn      = uixt.WithAdbLogOn
+	WithAdbClosePopup = uixt.WithAdbClosePopup
+)
+
 type MobileStep struct {
 	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	uixt.MobileAction `yaml:",inline"`
