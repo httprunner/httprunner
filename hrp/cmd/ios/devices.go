@@ -85,11 +85,13 @@ var listDevicesCmd = &cobra.Command{
 		}
 
 		for _, d := range devices {
-			deviceByte, _ := json.Marshal(d.Properties())
+			deviceProperties := d.Properties()
 			device := &Device{
-				d: d,
+				d:               d,
+				UDID:            deviceProperties.SerialNumber,
+				ConnectionType:  deviceProperties.ConnectionType,
+				ConnectionSpeed: deviceProperties.ConnectionSpeed,
 			}
-			json.Unmarshal(deviceByte, device)
 			device.Status = device.GetStatus()
 
 			if isDetail {
