@@ -260,7 +260,7 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 }
 
 // saveScreenShot saves image file to $CWD/screenshots/ folder
-func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
@@ -304,7 +304,7 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 		return "", errors.Wrap(err, "screenshot failed")
 	}
 
-	path, err := dExt.saveScreenShot(raw, fileName)
+	path, err := saveScreenShot(raw, fileName)
 	if err != nil {
 		return "", errors.Wrap(err, "save screenshot failed")
 	}

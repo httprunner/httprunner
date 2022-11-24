@@ -56,7 +56,7 @@ func checkEnv() error {
 	return nil
 }
 
-func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
+func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("withDet", "true")
@@ -67,7 +67,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf []byte) ([]OCRResult, error) {
 		return nil, errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("create form file error: %v", err))
 	}
-	size, err := formWriter.Write(imageBuf)
+	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
 		return nil, errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("write form error: %v", err))
@@ -161,7 +161,7 @@ func (t OCRTexts) Texts() (texts []string) {
 	return texts
 }
 
-func (s *veDEMOCRService) GetTexts(imageBuf []byte, options ...DataOption) (
+func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (
 	ocrTexts OCRTexts, err error) {
 
 	ocrResults, err := s.getOCRResult(imageBuf)
@@ -171,6 +171,14 @@ func (s *veDEMOCRService) GetTexts(imageBuf []byte, options ...DataOption) (
 	}
 
 	dataOptions := NewDataOptions(options...)
+
+	if dataOptions.ScreenShotFilename != "" {
+		path, err := saveScreenShot(imageBuf, dataOptions.ScreenShotFilename)
+		if err != nil {
+			return nil, errors.Wrap(err, "save screenshot failed")
+		}
+		log.Info().Str("path", path).Msg("save screenshot")
+	}
 
 	for _, ocrResult := range ocrResults {
 		rect := image.Rectangle{
@@ -200,7 +208,7 @@ func (s *veDEMOCRService) GetTexts(imageBuf []byte, options ...DataOption) (
 	return
 }
 
-func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...DataOption) (
+func (s *veDEMOCRService) FindText(text string, imageBuf *bytes.Buffer, options ...DataOption) (
 	rect image.Rectangle, err error) {
 
 	ocrTexts, err := s.GetTexts(imageBuf, options...)
@@ -256,7 +264,7 @@ func (s *veDEMOCRService) FindText(text string, imageBuf []byte, options ...Data
 	return rects[idx], nil
 }
 
-func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...DataOption) (
+func (s *veDEMOCRService) FindTexts(texts []string, imageBuf *bytes.Buffer, options ...DataOption) (
 	rects []image.Rectangle, err error) {
 
 	ocrTexts, err := s.GetTexts(imageBuf, options...)
@@ -295,9 +303,9 @@ func (s *veDEMOCRService) FindTexts(texts []string, imageBuf []byte, options ...
 }
 
 type OCRService interface {
-	GetTexts(imageBuf []byte, options ...DataOption) (ocrTexts OCRTexts, err error)
-	FindText(text string, imageBuf []byte, options ...DataOption) (rect image.Rectangle, err error)
-	FindTexts(texts []string, imageBuf []byte, options ...DataOption) (rects []image.Rectangle, err error)
+	GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (ocrTexts OCRTexts, err error)
+	FindText(text string, imageBuf *bytes.Buffer, options ...DataOption) (rect image.Rectangle, err error)
+	FindTexts(texts []string, imageBuf *bytes.Buffer, options ...DataOption) (rects []image.Rectangle, err error)
 }
 
 func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
@@ -307,7 +315,7 @@ func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err
 		return
 	}
 
-	ocrTexts, err := dExt.ocrService.GetTexts(bufSource.Bytes(), options...)
+	ocrTexts, err := dExt.ocrService.GetTexts(bufSource, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetTexts failed")
 		return
@@ -323,7 +331,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, 
 		return
 	}
 
-	rect, err := dExt.ocrService.FindText(ocrText, bufSource.Bytes(), options...)
+	rect, err := dExt.ocrService.FindText(ocrText, bufSource, options...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
@@ -342,7 +350,7 @@ func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) 
 		return
 	}
 
-	rects, err := dExt.ocrService.FindTexts(ocrTexts, bufSource.Bytes(), options...)
+	rects, err := dExt.ocrService.FindTexts(ocrTexts, bufSource, options...)
 	if err != nil {
 		log.Warn().Msgf("FindTexts failed: %s", err.Error())
 		return
