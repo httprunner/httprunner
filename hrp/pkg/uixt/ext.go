@@ -259,21 +259,14 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 	return raw, nil
 }
 
-// saveScreenShot saves image file to $CWD/screenshots/ folder
+// saveScreenShot saves image file with file name
 func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	dir, _ := os.Getwd()
-	screenshotsDir := filepath.Join(dir, "screenshots")
-	if err = os.MkdirAll(screenshotsDir, os.ModePerm); err != nil {
-		return "", errors.Wrap(err, "create screenshots directory failed")
-	}
-	screenshotPath := filepath.Join(screenshotsDir,
-		fmt.Sprintf("%s.%s", fileName, format))
-
+	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, format))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")
@@ -304,6 +297,12 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 		return "", errors.Wrap(err, "screenshot failed")
 	}
 
+	dir, _ := os.Getwd()
+	screenshotsDir := filepath.Join(dir, "screenshots")
+	if err = os.MkdirAll(screenshotsDir, os.ModePerm); err != nil {
+		return "", errors.Wrap(err, "create screenshots directory failed")
+	}
+	fileName = filepath.Join(screenshotsDir, fileName)
 	path, err := saveScreenShot(raw, fileName)
 	if err != nil {
 		return "", errors.Wrap(err, "save screenshot failed")

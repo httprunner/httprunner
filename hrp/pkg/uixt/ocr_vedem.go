@@ -177,7 +177,7 @@ func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption
 		if err != nil {
 			return nil, errors.Wrap(err, "save screenshot failed")
 		}
-		log.Info().Str("path", path).Msg("save screenshot")
+		log.Debug().Str("path", path).Msg("save screenshot")
 	}
 
 	for _, ocrResult := range ocrResults {
