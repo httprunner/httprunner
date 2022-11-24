@@ -784,6 +784,7 @@ type DataOptions struct {
 	IgnoreNotFoundError bool                   // ignore error if target element not found
 	MaxRetryTimes       int                    // max retry times if target element not found
 	Interval            float64                // interval between retries in seconds
+	ScreenShotFilename  string                 // turn on screenshot and specify file name
 }
 
 type DataOption func(data *DataOptions)
@@ -857,6 +858,16 @@ func WithDataMaxRetryTimes(maxRetryTimes int) DataOption {
 func WithDataWaitTime(sec float64) DataOption {
 	return func(data *DataOptions) {
 		data.Interval = sec
+	}
+}
+
+func WithScreenShot(fileName ...string) DataOption {
+	return func(data *DataOptions) {
+		if len(fileName) > 0 {
+			data.ScreenShotFilename = fileName[0]
+		} else {
+			data.ScreenShotFilename = fmt.Sprintf("screenshot_%d", time.Now().Unix())
+		}
 	}
 }
 
