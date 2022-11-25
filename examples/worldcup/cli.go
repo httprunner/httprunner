@@ -35,6 +35,7 @@ var (
 	interval  int
 	logLevel  string
 	matchName string
+	perf      []string
 )
 
 func main() {
@@ -44,6 +45,8 @@ func main() {
 	rootCmd.PersistentFlags().IntVarP(&duration, "duration", "d", 30, "set duration in seconds")
 	rootCmd.PersistentFlags().IntVarP(&interval, "interval", "i", 15, "set interval in seconds")
 	rootCmd.PersistentFlags().StringVarP(&matchName, "match-name", "n", "", "specify match name")
+	rootCmd.PersistentFlags().StringSliceVarP(&perf, "perf", "p", nil,
+		"specify performance monitor, e.g. sys_cpu,sys_mem,sys_net,sys_disk,fps,network,gpu")
 
 	err := rootCmd.Execute()
 	if err != nil {
