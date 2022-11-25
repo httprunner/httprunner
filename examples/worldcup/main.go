@@ -13,6 +13,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -35,11 +37,31 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 }
 
 func initIOSDevice() uixt.Device {
+	perfOptions := []gidevice.PerfOption{}
+	for _, p := range perf {
+		switch p {
+		case "sys_cpu":
+			perfOptions = append(perfOptions, hrp.WithPerfSystemCPU(true))
+		case "sys_mem":
+			perfOptions = append(perfOptions, hrp.WithPerfSystemMem(true))
+		case "sys_net":
+			perfOptions = append(perfOptions, hrp.WithPerfSystemNetwork(true))
+		case "sys_disk":
+			perfOptions = append(perfOptions, hrp.WithPerfSystemDisk(true))
+		case "network":
+			perfOptions = append(perfOptions, hrp.WithPerfNetwork(true))
+		case "fps":
+			perfOptions = append(perfOptions, hrp.WithPerfFPS(true))
+		case "gpu":
+			perfOptions = append(perfOptions, hrp.WithPerfGPU(true))
+		}
+	}
+
 	device, err := uixt.NewIOSDevice(
 		uixt.WithUDID(uuid),
 		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
 		uixt.WithResetHomeOnStartup(false), // not reset home on startup
-		// uixt.WithPerfOptions(),
+		uixt.WithPerfOptions(perfOptions...),
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init ios device")
@@ -73,6 +95,7 @@ type WorldCupLive struct {
 	Interval  int       `json:"interval"` // seconds
 	Duration  int       `json:"duration"` // seconds
 	Summary   []timeLog `json:"summary"`
+	PerfData  []string  `json:"perfData"`
 }
 
 func NewWorldCupLive(matchName, osType string, duration, interval int) *WorldCupLive {
@@ -145,7 +168,7 @@ func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 			liveTimeSeconds = seconds
 			line := fmt.Sprintf("%s\t%d\t%s\t%d\n",
 				utcTimeStr, utcTime.Unix(), ocrText.Text, liveTimeSeconds)
-			fmt.Print(line)
+			log.Info().Str("utcTime", utcTimeStr).Str("liveTime", ocrText.Text).Msg("log live time")
 			if _, err := wc.file.WriteString(line); err != nil {
 				log.Error().Err(err).Str("line", line).Msg("write timeseries failed")
 			}
@@ -193,6 +216,7 @@ func (wc *WorldCupLive) DumpResult() error {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "    ")
 
+	wc.PerfData = wc.driver.GetPerfData()
 	err := encoder.Encode(wc)
 	if err != nil {
 		return err
