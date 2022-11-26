@@ -35,7 +35,7 @@ type uiaDriver struct {
 	Driver
 
 	adbDevice gadb.Device
-	logcat    *DeviceLogcat
+	logcat    *AdbLogcat
 	localPort int
 }
 
@@ -478,7 +478,7 @@ func (ud *uiaDriver) AppTerminate(bundleId string) (successful bool, err error) 
 		return false, err
 	}
 
-	_, err = ud.adbDevice.RunShellCommand("am force-stop", bundleId)
+	_, err = ud.adbDevice.RunShellCommand("am", "force-stop", bundleId)
 	return err == nil, err
 }
 
