@@ -90,6 +90,7 @@ type WorldCupLive struct {
 	resultDir string
 	UUID      string    `json:"uuid"`
 	MatchName string    `json:"matchName"`
+	BundleID  string    `json:"bundleID"`
 	StartTime string    `json:"startTime"`
 	EndTime   string    `json:"endTime"`
 	Interval  int       `json:"interval"` // seconds
@@ -98,15 +99,7 @@ type WorldCupLive struct {
 	PerfData  []string  `json:"perfData"`
 }
 
-func NewWorldCupLive(matchName, osType string, duration, interval int) *WorldCupLive {
-	var device uixt.Device
-	log.Info().Str("osType", osType).Msg("init device")
-	if osType == "ios" {
-		device = initIOSDevice()
-	} else {
-		device = initAndroidDevice()
-	}
-
+func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, interval int) *WorldCupLive {
 	driverExt, err := device.NewDriver(nil)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init driver")
@@ -130,6 +123,7 @@ func NewWorldCupLive(matchName, osType string, duration, interval int) *WorldCup
 		log.Fatal().Err(err).Msg("failed to open file")
 	}
 	// write title
+	f.WriteString(fmt.Sprintf("%s\t%s\t%s\n", matchName, device.UUID(), bundleID))
 	f.WriteString("utc_time\tutc_timestamp\tlive_time\tlive_seconds\n")
 
 	if interval == 0 {
@@ -139,16 +133,22 @@ func NewWorldCupLive(matchName, osType string, duration, interval int) *WorldCup
 		duration = 30
 	}
 
-	return &WorldCupLive{
+	wc := &WorldCupLive{
 		driver:    driverExt,
 		file:      f,
 		resultDir: resultDir,
 		UUID:      device.UUID(),
+		BundleID:  bundleID,
 		Duration:  duration,
 		Interval:  interval,
 		StartTime: startTime.Format("2006-01-02 15:04:05"),
 		MatchName: matchName,
 	}
+
+	if bundleID != "" {
+		wc.EnterLive(bundleID)
+	}
+	return wc
 }
 
 func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
@@ -180,6 +180,52 @@ func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 			break
 		}
 	}
+	return nil
+}
+
+func (wc *WorldCupLive) EnterLive(bundleID string) error {
+	log.Info().Msg("enter world cup live")
+
+	// kill app
+	_, err := wc.driver.Driver.AppTerminate(bundleID)
+	if err != nil {
+		log.Error().Err(err).Msg("terminate app failed")
+	}
+
+	// launch app
+	err = wc.driver.Driver.AppLaunch(bundleID)
+	if err != nil {
+		log.Error().Err(err).Msg("launch app failed")
+		return err
+	}
+
+	// 青少年弹窗处理
+	if points, err := wc.driver.GetTextXYs([]string{"青少年模式", "我知道了"}); err == nil {
+		_ = wc.driver.TapAbsXY(points[1].X, points[1].Y)
+	}
+
+	// 点击进入搜索
+	err = wc.driver.TapXY(0.9, 0.07)
+	if err != nil {
+		log.Error().Err(err).Msg("enter search failed")
+		return err
+	}
+
+	// 搜索世界杯
+	_ = wc.driver.Input("世界杯")
+	err = wc.driver.TapByOCR("搜索")
+	if err != nil {
+		log.Error().Err(err).Msg("search 世界杯 failed")
+		return err
+	}
+	time.Sleep(2 * time.Second)
+
+	// 进入世界杯直播
+	if err = wc.driver.TapByOCR("直播中"); err != nil {
+		log.Error().Err(err).Msg("enter 直播中 failed")
+		return err
+	}
+
 	return nil
 }
 

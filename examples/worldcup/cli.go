@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 var rootCmd = &cobra.Command{
@@ -21,7 +24,21 @@ var rootCmd = &cobra.Command{
 		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		wc := NewWorldCupLive(matchName, osType, duration, interval)
+		var device uixt.Device
+		var bundleID string
+		if iosApp != "" {
+			log.Info().Str("bundleID", iosApp).Msg("init ios device")
+			device = initIOSDevice()
+			bundleID = iosApp
+		} else if androidApp != "" {
+			log.Info().Str("bundleID", androidApp).Msg("init android device")
+			device = initAndroidDevice()
+			bundleID = androidApp
+		} else {
+			return errors.New("android or ios app bundldID is required")
+		}
+
+		wc := NewWorldCupLive(device, matchName, bundleID, duration, interval)
 		wc.Start()
 		wc.DumpResult()
 		return nil
@@ -29,19 +46,21 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	uuid      string
-	osType    string
-	duration  int
-	interval  int
-	logLevel  string
-	matchName string
-	perf      []string
+	uuid       string
+	iosApp     string
+	androidApp string
+	duration   int
+	interval   int
+	logLevel   string
+	matchName  string
+	perf       []string
 )
 
 func main() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
 	rootCmd.PersistentFlags().StringVarP(&uuid, "uuid", "u", "", "specify device serial or udid")
-	rootCmd.PersistentFlags().StringVarP(&osType, "os-type", "t", "ios", "specify mobile os type")
+	rootCmd.PersistentFlags().StringVar(&iosApp, "ios", "", "run ios app")
+	rootCmd.PersistentFlags().StringVar(&androidApp, "android", "", "run android app")
 	rootCmd.PersistentFlags().IntVarP(&duration, "duration", "d", 30, "set duration in seconds")
 	rootCmd.PersistentFlags().IntVarP(&interval, "interval", "i", 15, "set interval in seconds")
 	rootCmd.PersistentFlags().StringVarP(&matchName, "match-name", "n", "", "specify match name")
