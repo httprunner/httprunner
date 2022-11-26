@@ -1,10 +1,6 @@
+//go:build localtest
+
 package main
-
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
 
 func TestConvertTimeToSeconds(t *testing.T) {
 	testData := []struct {
@@ -26,6 +22,16 @@ func TestConvertTimeToSeconds(t *testing.T) {
 	}
 }
 
-func TestMain(t *testing.T) {
-	main()
+func TestMainIOS(t *testing.T) {
+	device := initIOSDevice()
+	wc := NewWorldCupLive(device, "", "com.ss.iphone.ugc.Aweme", 30, 10)
+	wc.Start()
+	wc.DumpResult()
+}
+
+func TestMainAndroid(t *testing.T) {
+	device := initAndroidDevice()
+	wc := NewWorldCupLive(device, "", "com.ss.android.ugc.aweme", 30, 10)
+	wc.Start()
+	wc.DumpResult()
 }
