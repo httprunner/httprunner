@@ -36,7 +36,7 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 	return seconds, nil
 }
 
-func initIOSDevice() uixt.Device {
+func initIOSDevice(uuid string) uixt.Device {
 	perfOptions := []gidevice.PerfOption{}
 	for _, p := range perf {
 		switch p {
@@ -69,7 +69,7 @@ func initIOSDevice() uixt.Device {
 	return device
 }
 
-func initAndroidDevice() uixt.Device {
+func initAndroidDevice(uuid string) uixt.Device {
 	device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(uuid))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init android device")
@@ -204,21 +204,12 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 		_ = wc.driver.TapAbsXY(points[1].X, points[1].Y)
 	}
 
-	// 点击进入搜索
-	err = wc.driver.TapXY(0.9, 0.07)
-	if err != nil {
-		log.Error().Err(err).Msg("enter search failed")
+	// 进入世界杯 tab
+	if err = wc.driver.TapByOCR("世界杯"); err != nil {
+		log.Error().Err(err).Msg("enter 直播中 failed")
 		return err
 	}
-
-	// 搜索世界杯
-	_ = wc.driver.Input("世界杯")
-	err = wc.driver.TapByOCR("搜索")
-	if err != nil {
-		log.Error().Err(err).Msg("search 世界杯 failed")
-		return err
-	}
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// 进入世界杯直播
 	if err = wc.driver.TapByOCR("直播中"); err != nil {
