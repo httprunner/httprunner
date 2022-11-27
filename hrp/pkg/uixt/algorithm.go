@@ -325,3 +325,21 @@ func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) 
 
 	return
 }
+
+type SDService interface {
+	SceneDetection(detectImage []byte, detectType string) (bool, error)
+}
+
+func (dExt *DriverExt) ScenarioDetect(scenarioType string, options ...DataOption) (res bool, err error) {
+	var bufSource *bytes.Buffer
+	if bufSource, err = dExt.takeScreenShot(); err != nil {
+		err = fmt.Errorf("takeScreenShot error: %v", err)
+		return
+	}
+
+	service, err := newVEDEMSDService()
+	if err != nil {
+		return
+	}
+	return service.SceneDetection(bufSource.Bytes(), scenarioType)
+}

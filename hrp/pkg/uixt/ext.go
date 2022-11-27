@@ -47,6 +47,8 @@ const (
 	SelectorOCR           string = "ui_ocr"
 	SelectorImage         string = "ui_image"
 	SelectorForegroundApp string = "ui_foreground_app"
+	ScenarioType          string = "scenario_type"
+
 	// assertions
 	AssertionEqual     string = "equal"
 	AssertionNotEqual  string = "not_equal"
@@ -388,6 +390,11 @@ func (dExt *DriverExt) IsAppInForeground(packageName string) bool {
 		return false
 	}
 	return true
+}
+
+func (dExt *DriverExt) IsScenarioType(scenarioType string) bool {
+	_, _, _, _, err := dExt.FindImageRectInUIKit(scenarioType)
+	return err == nil
 }
 
 var errActionNotImplemented = errors.New("UI action not implemented")
@@ -749,6 +756,8 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 		result = (dExt.IsImageExist(expected) == exp)
 	case SelectorForegroundApp:
 		result = (dExt.IsAppInForeground(expected) == exp)
+	case ScenarioType:
+		result, _ = dExt.ScenarioDetect(expected)
 	}
 
 	if !result {
