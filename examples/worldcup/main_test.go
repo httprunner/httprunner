@@ -23,14 +23,14 @@ func TestConvertTimeToSeconds(t *testing.T) {
 }
 
 func TestMainIOS(t *testing.T) {
-	device := initIOSDevice()
+	device := initIOSDevice(uuid)
 	wc := NewWorldCupLive(device, "", "com.ss.iphone.ugc.Aweme", 30, 10)
 	wc.Start()
 	wc.DumpResult()
 }
 
 func TestMainAndroid(t *testing.T) {
-	device := initAndroidDevice()
+	device := initAndroidDevice(uuid)
 	wc := NewWorldCupLive(device, "", "com.ss.android.ugc.aweme", 30, 10)
 	wc.Start()
 	wc.DumpResult()

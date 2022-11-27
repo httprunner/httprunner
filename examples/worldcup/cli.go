@@ -15,7 +15,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "wcl",
 	Short:   "Monitor FIFA World Cup Live",
-	Version: "0.1",
+	Version: "2022.11.27.2240",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		log.Logger = zerolog.New(
 			zerolog.ConsoleWriter{NoColor: false, Out: os.Stderr},
@@ -28,11 +28,11 @@ var rootCmd = &cobra.Command{
 		var bundleID string
 		if iosApp != "" {
 			log.Info().Str("bundleID", iosApp).Msg("init ios device")
-			device = initIOSDevice()
+			device = initIOSDevice(uuid)
 			bundleID = iosApp
 		} else if androidApp != "" {
 			log.Info().Str("bundleID", androidApp).Msg("init android device")
-			device = initAndroidDevice()
+			device = initAndroidDevice(uuid)
 			bundleID = androidApp
 		} else {
 			return errors.New("android or ios app bundldID is required")
