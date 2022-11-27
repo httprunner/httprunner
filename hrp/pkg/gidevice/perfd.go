@@ -32,8 +32,8 @@ type PerfOptions struct {
 
 func defaulPerfOption() *PerfOptions {
 	return &PerfOptions{
-		SysCPU:         true, // default on
-		SysMem:         true, // default on
+		SysCPU:         false,
+		SysMem:         false,
 		SysDisk:        false,
 		SysNetwork:     false,
 		gpu:            false,
