@@ -133,7 +133,7 @@ func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, i
 		duration = 30
 	}
 
-	wc := &WorldCupLive{
+	return &WorldCupLive{
 		driver:    driverExt,
 		file:      f,
 		resultDir: resultDir,
@@ -144,11 +144,6 @@ func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, i
 		StartTime: startTime.Format("2006-01-02 15:04:05"),
 		MatchName: matchName,
 	}
-
-	if bundleID != "" {
-		wc.EnterLive(bundleID)
-	}
-	return wc
 }
 
 func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
@@ -198,10 +193,15 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 		log.Error().Err(err).Msg("launch app failed")
 		return err
 	}
+	time.Sleep(5 * time.Second)
 
 	// 青少年弹窗处理
 	if points, err := wc.driver.GetTextXYs([]string{"青少年模式", "我知道了"}); err == nil {
 		_ = wc.driver.TapAbsXY(points[1].X, points[1].Y)
+	}
+
+	if err = wc.driver.SwipeRelative(0.5, 0.1, 0.8, 0.1); err != nil {
+		log.Error().Err(err).Msg("swipe failed")
 	}
 
 	// 进入世界杯 tab

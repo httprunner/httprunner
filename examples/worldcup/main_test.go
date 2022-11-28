@@ -2,6 +2,12 @@
 
 package main
 
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
 func TestConvertTimeToSeconds(t *testing.T) {
 	testData := []struct {
 		timeStr string
@@ -24,14 +30,18 @@ func TestConvertTimeToSeconds(t *testing.T) {
 
 func TestMainIOS(t *testing.T) {
 	device := initIOSDevice(uuid)
-	wc := NewWorldCupLive(device, "", "com.ss.iphone.ugc.Aweme", 30, 10)
+	bundleID := "com.ss.iphone.ugc.Aweme"
+	wc := NewWorldCupLive(device, "", bundleID, 30, 10)
+	wc.EnterLive(bundleID)
 	wc.Start()
 	wc.DumpResult()
 }
 
 func TestMainAndroid(t *testing.T) {
 	device := initAndroidDevice(uuid)
-	wc := NewWorldCupLive(device, "", "com.ss.android.ugc.aweme", 30, 10)
+	bundleID := "com.ss.android.ugc.aweme"
+	wc := NewWorldCupLive(device, "", bundleID, 30, 10)
+	wc.EnterLive(bundleID)
 	wc.Start()
 	wc.DumpResult()
 }

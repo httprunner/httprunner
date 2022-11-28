@@ -2,6 +2,8 @@
 
 package ios
 
+import "testing"
+
 func TestGetDevice(t *testing.T) {
 	device, err := getDevice(udid)
 	if err != nil {
