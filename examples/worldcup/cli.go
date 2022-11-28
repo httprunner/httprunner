@@ -39,6 +39,11 @@ var rootCmd = &cobra.Command{
 		}
 
 		wc := NewWorldCupLive(device, matchName, bundleID, duration, interval)
+
+		if auto {
+			wc.EnterLive(bundleID)
+		}
+
 		wc.Start()
 		wc.DumpResult()
 		return nil
@@ -49,6 +54,7 @@ var (
 	uuid       string
 	iosApp     string
 	androidApp string
+	auto       bool
 	duration   int
 	interval   int
 	logLevel   string
@@ -61,6 +67,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&uuid, "uuid", "u", "", "specify device serial or udid")
 	rootCmd.PersistentFlags().StringVar(&iosApp, "ios", "", "run ios app")
 	rootCmd.PersistentFlags().StringVar(&androidApp, "android", "", "run android app")
+	rootCmd.PersistentFlags().BoolVar(&auto, "auto", false, "auto enter live")
 	rootCmd.PersistentFlags().IntVarP(&duration, "duration", "d", 30, "set duration in seconds")
 	rootCmd.PersistentFlags().IntVarP(&interval, "interval", "i", 15, "set interval in seconds")
 	rootCmd.PersistentFlags().StringVarP(&matchName, "match-name", "n", "", "specify match name")
