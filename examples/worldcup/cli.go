@@ -45,7 +45,6 @@ var rootCmd = &cobra.Command{
 		}
 
 		wc.Start()
-		wc.DumpResult()
 		return nil
 	},
 }

@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -87,7 +89,6 @@ type timeLog struct {
 
 type WorldCupLive struct {
 	driver    *uixt.DriverExt
-	done      chan bool
 	file      *os.File
 	resultDir string
 	UUID      string    `json:"uuid"`
@@ -224,32 +225,31 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 }
 
 func (wc *WorldCupLive) Start() {
-	wc.done = make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-wc.done:
-				return
-			default:
-				utcTime := time.Now()
-				if utcTime.Unix()%int64(wc.Interval) == 0 {
-					wc.getCurrentLiveTime(utcTime)
-				} else {
-					time.Sleep(500 * time.Millisecond)
-				}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+	timer := time.NewTimer(time.Duration(wc.Duration) * time.Second)
+	for {
+		select {
+		case <-timer.C:
+			wc.dumpResult()
+			return
+		case <-c:
+			wc.dumpResult()
+			return
+		default:
+			utcTime := time.Now()
+			if utcTime.Unix()%int64(wc.Interval) == 0 {
+				wc.getCurrentLiveTime(utcTime)
+			} else {
+				time.Sleep(500 * time.Millisecond)
 			}
 		}
-	}()
-	time.Sleep(time.Duration(wc.Duration) * time.Second)
-	wc.Stop()
+	}
 }
 
-func (wc *WorldCupLive) Stop() {
+func (wc *WorldCupLive) dumpResult() error {
 	wc.EndTime = time.Now().Format("2006-01-02 15:04:05")
-	wc.done <- true
-}
 
-func (wc *WorldCupLive) DumpResult() error {
 	// init json encoder
 	buffer := new(bytes.Buffer)
 	encoder := json.NewEncoder(buffer)
@@ -263,11 +263,12 @@ func (wc *WorldCupLive) DumpResult() error {
 		return err
 	}
 
-	filename := filepath.Join(wc.resultDir, "summary.json")
-	err = os.WriteFile(filename, buffer.Bytes(), 0o755)
+	path := filepath.Join(wc.resultDir, "summary.json")
+	err = os.WriteFile(path, buffer.Bytes(), 0o755)
 	if err != nil {
 		log.Error().Err(err).Msg("dump json path failed")
 		return err
 	}
+	log.Info().Str("path", path).Msg("dump summary success")
 	return nil
 }
