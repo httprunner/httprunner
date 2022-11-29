@@ -34,7 +34,6 @@ func TestMainIOS(t *testing.T) {
 	wc := NewWorldCupLive(device, "", bundleID, 30, 10)
 	wc.EnterLive(bundleID)
 	wc.Start()
-	wc.DumpResult()
 }
 
 func TestMainAndroid(t *testing.T) {
@@ -43,5 +42,4 @@ func TestMainAndroid(t *testing.T) {
 	wc := NewWorldCupLive(device, "", bundleID, 30, 10)
 	wc.EnterLive(bundleID)
 	wc.Start()
-	wc.DumpResult()
 }
