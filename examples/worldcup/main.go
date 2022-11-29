@@ -56,6 +56,7 @@ func initIOSDevice(uuid string) uixt.Device {
 			perfOptions = append(perfOptions, hrp.WithPerfGPU(true))
 		}
 	}
+	perfOptions = append(perfOptions, hrp.WithPerfOutputInterval(interval*1000))
 
 	device, err := uixt.NewIOSDevice(
 		uixt.WithUDID(uuid),
@@ -78,6 +79,7 @@ func initAndroidDevice(uuid string) uixt.Device {
 }
 
 type timeLog struct {
+	UTCTimeStr      string `json:"utc_time_str"`
 	UTCTime         int64  `json:"utc_time"`
 	LiveTime        string `json:"live_time"`
 	LiveTimeSeconds int    `json:"live_time_seconds"`
@@ -111,7 +113,7 @@ func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, i
 
 	startTime := time.Now()
 	matchName = fmt.Sprintf("%s-%s", startTime.Format("2006-01-02"), matchName)
-	resultDir := filepath.Join("worldcup-archives", matchName, startTime.Format("15:04:05"))
+	resultDir := filepath.Join("worldcuplive", matchName, startTime.Format("15:04:05"))
 
 	if err = os.MkdirAll(filepath.Join(resultDir, "screenshot"), 0o755); err != nil {
 		log.Fatal().Err(err).Msg("failed to create result dir")
@@ -168,6 +170,7 @@ func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 				log.Error().Err(err).Str("line", line).Msg("write timeseries failed")
 			}
 			wc.Summary = append(wc.Summary, timeLog{
+				UTCTimeStr:      utcTimeStr,
 				UTCTime:         utcTime.Unix(),
 				LiveTime:        ocrText.Text,
 				LiveTimeSeconds: liveTimeSeconds,
@@ -256,6 +259,7 @@ func (wc *WorldCupLive) DumpResult() error {
 	wc.PerfData = wc.driver.GetPerfData()
 	err := encoder.Encode(wc)
 	if err != nil {
+		log.Error().Err(err).Msg("encode json failed")
 		return err
 	}
 
