@@ -15,7 +15,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "wcl",
 	Short:   "Monitor FIFA World Cup Live",
-	Version: "2022.11.27.2240",
+	Version: "2022.11.30.2341",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		log.Logger = zerolog.New(
 			zerolog.ConsoleWriter{NoColor: false, Out: os.Stderr},

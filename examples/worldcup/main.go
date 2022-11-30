@@ -98,7 +98,7 @@ type WorldCupLive struct {
 	EndTime   string    `json:"endTime"`
 	Interval  int       `json:"interval"` // seconds
 	Duration  int       `json:"duration"` // seconds
-	Summary   []timeLog `json:"summary"`
+	Timelines []timeLog `json:"timelines"`
 	PerfData  []string  `json:"perfData"`
 }
 
@@ -170,7 +170,7 @@ func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 			if _, err := wc.file.WriteString(line); err != nil {
 				log.Error().Err(err).Str("line", line).Msg("write timeseries failed")
 			}
-			wc.Summary = append(wc.Summary, timeLog{
+			wc.Timelines = append(wc.Timelines, timeLog{
 				UTCTimeStr:      utcTimeStr,
 				UTCTime:         utcTime.Unix(),
 				LiveTime:        ocrText.Text,
