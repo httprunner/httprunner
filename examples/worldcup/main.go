@@ -65,6 +65,7 @@ func initIOSDevice(uuid string) uixt.Device {
 		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
 		uixt.WithResetHomeOnStartup(false), // not reset home on startup
 		uixt.WithPerfOptions(perfOptions...),
+		uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init ios device")
