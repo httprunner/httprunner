@@ -154,32 +154,49 @@ func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 	utcTimeStr := utcTime.Format("15:04:05")
 	fileName := filepath.Join(
 		wc.resultDir, "screenshot", utcTimeStr)
-	ocrTexts, err := wc.driver.GetTextsByOCR(uixt.WithScreenShot(fileName))
+	ocrTexts, err := wc.driver.GetTextsByOCR(
+		uixt.WithScreenShot(fileName),
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("get ocr texts failed")
 		return err
 	}
 
-	var liveTimeSeconds int
+	// filter ocr texts with time format
+	secondsMap := map[string]int{}
+	var secondsTexts []string
 	for _, ocrText := range ocrTexts {
 		seconds, err := convertTimeToSeconds(ocrText.Text)
 		if err == nil {
-			liveTimeSeconds = seconds
-			line := fmt.Sprintf("%s\t%d\t%s\t%d\n",
-				utcTimeStr, utcTime.Unix(), ocrText.Text, liveTimeSeconds)
-			log.Info().Str("utcTime", utcTimeStr).Str("liveTime", ocrText.Text).Msg("log live time")
-			if _, err := wc.file.WriteString(line); err != nil {
-				log.Error().Err(err).Str("line", line).Msg("write timeseries failed")
-			}
-			wc.Timelines = append(wc.Timelines, timeLog{
-				UTCTimeStr:      utcTimeStr,
-				UTCTime:         utcTime.Unix(),
-				LiveTime:        ocrText.Text,
-				LiveTimeSeconds: liveTimeSeconds,
-			})
-			break
+			secondsTexts = append(secondsTexts, ocrText.Text)
+			secondsMap[ocrText.Text] = seconds
 		}
 	}
+
+	var secondsText string
+	if len(secondsTexts) == 1 {
+		secondsText = secondsTexts[0]
+	} else if len(secondsTexts) >= 2 {
+		// select the second, the first maybe mobile system time
+		secondsText = secondsTexts[1]
+	} else {
+		log.Warn().Msg("no time text found")
+		return nil
+	}
+
+	liveTimeSeconds := secondsMap[secondsText]
+	line := fmt.Sprintf("%s\t%d\t%s\t%d\n",
+		utcTimeStr, utcTime.Unix(), secondsText, liveTimeSeconds)
+	log.Info().Str("utcTime", utcTimeStr).Str("liveTime", secondsText).Msg("log live time")
+	if _, err := wc.file.WriteString(line); err != nil {
+		log.Error().Err(err).Str("line", line).Msg("write timeseries failed")
+	}
+	wc.Timelines = append(wc.Timelines, timeLog{
+		UTCTimeStr:      utcTimeStr,
+		UTCTime:         utcTime.Unix(),
+		LiveTime:        secondsText,
+		LiveTimeSeconds: liveTimeSeconds,
+	})
 	return nil
 }
 
@@ -203,10 +220,6 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 	// 青少年弹窗处理
 	if points, err := wc.driver.GetTextXYs([]string{"青少年模式", "我知道了"}); err == nil {
 		_ = wc.driver.TapAbsXY(points[1].X, points[1].Y)
-	}
-
-	if err = wc.driver.SwipeRelative(0.5, 0.1, 0.8, 0.1); err != nil {
-		log.Error().Err(err).Msg("swipe failed")
 	}
 
 	// 进入世界杯 tab
