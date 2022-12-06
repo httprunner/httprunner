@@ -2,10 +2,11 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
+	"io"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -17,9 +18,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type Box struct {
+	Point  PointF  `json:"point"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+}
+
 type IMResult struct {
-	Image  string   `json:"image"`
-	Points []PointF `json:"points"`
+	Box      Box     `json:"box"`
+	Distance float64 `json:"distance"`
 }
 
 type IMResponse struct {
@@ -50,49 +57,32 @@ func checkIMEnv() error {
 	return nil
 }
 
+func convertBase64(imgByte []byte) (baseImg string) {
+	return base64.StdEncoding.EncodeToString(imgByte)
+}
+
 func (s *veDEMIMService) getIMResult(searchImage []byte, sourceImage []byte) ([]IMResult, error) {
-	bodyBuf := &bytes.Buffer{}
-	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("withDet", "true")
-	// bodyWriter.WriteField("timestampOnly", "true")
-
-	formWriter, err := bodyWriter.CreateFormFile("searchImage", "searchImage.png")
-	if err != nil {
-		return nil, errors.Wrap(code.CVRequestError,
-			fmt.Sprintf("create form file error: %v", err))
-	}
-	size, err := formWriter.Write(searchImage)
-	if err != nil {
-		return nil, errors.Wrap(code.CVRequestError,
-			fmt.Sprintf("write form error: %v", err))
+	data := map[string]interface{}{
+		"sourceImage":  convertBase64(sourceImage),
+		"targetImages": []string{convertBase64(searchImage)},
 	}
 
-	formWriter, err = bodyWriter.CreateFormFile("sourceImage", "sourceImage.png")
+	// post json
+	dataBytes, err := json.Marshal(data)
 	if err != nil {
 		return nil, errors.Wrap(code.CVRequestError,
-			fmt.Sprintf("create form file error: %v", err))
-	}
-	_, err = formWriter.Write(sourceImage)
-	if err != nil {
-		return nil, errors.Wrap(code.CVRequestError,
-			fmt.Sprintf("write form error: %v", err))
+			fmt.Sprintf("json marshal error: %v", err))
 	}
 
-	err = bodyWriter.Close()
-	if err != nil {
-		return nil, errors.Wrap(code.CVRequestError,
-			fmt.Sprintf("close body writer error: %v", err))
-	}
-
-	req, err := http.NewRequest("POST", env.VEDEM_IM_URL, bodyBuf)
+	req, err := http.NewRequest("POST", env.VEDEM_IM_URL, io.NopCloser(bytes.NewReader(dataBytes)))
 	if err != nil {
 		return nil, errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("construct request error: %v", err))
 	}
 
-	token := builtin.Sign("auth-v2", env.VEDEM_IM_AK, env.VEDEM_IM_SK, bodyBuf.Bytes())
+	token := builtin.Sign("auth-v2", env.VEDEM_IM_AK, env.VEDEM_IM_SK, dataBytes)
 	req.Header.Add("Agw-Auth", token)
-	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
+	req.Header.Add("Content-Type", "application/json; charset=utf-8")
 
 	var resp *http.Response
 	// retry 3 times
@@ -108,7 +98,6 @@ func (s *veDEMIMService) getIMResult(searchImage []byte, sourceImage []byte) ([]
 		}
 		log.Error().Err(err).
 			Str("logID", logID).
-			Int("imageBufSize", size).
 			Msgf("request CV service failed, retry %d", i)
 		time.Sleep(1 * time.Second)
 	}
@@ -150,22 +139,19 @@ func (s *veDEMIMService) FindImage(byteSearch []byte, byteSource []byte, options
 	}
 
 	var rects []image.Rectangle
-	var cvImages []string
 	for _, cvResult := range cvResults {
 		rect = image.Rectangle{
 			// cvResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
 			Min: image.Point{
-				X: int(cvResult.Points[0].X),
-				Y: int(cvResult.Points[0].Y),
+				X: int(cvResult.Box.Point.X),
+				Y: int(cvResult.Box.Point.Y),
 			},
 			Max: image.Point{
-				X: int(cvResult.Points[2].X),
-				Y: int(cvResult.Points[2].Y),
+				X: int(cvResult.Box.Point.X + cvResult.Box.Width),
+				Y: int(cvResult.Box.Point.Y + cvResult.Box.Height),
 			},
 		}
 		if rect.Min.X >= data.Scope[0] && rect.Max.X <= data.Scope[2] && rect.Min.Y >= data.Scope[1] && rect.Max.Y <= data.Scope[3] {
-			cvImages = append(cvImages, cvResult.Image)
-
 			rects = append(rects, rect)
 
 			// match exactly, and not specify index, return the first one
