@@ -4,12 +4,14 @@ package hrp
 
 import (
 	"testing"
+
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 func TestIOSSettingsAction(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on Settings").
-			SetIOS(WithWDAPort(8700), WithWDAMjpegPort(8800)),
+			SetIOS(uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800)),
 		TestSteps: []IStep{
 			NewStep("launch Settings").
 				IOS().Home().Tap("设置").
@@ -48,7 +50,7 @@ func TestIOSSearchApp(t *testing.T) {
 func TestIOSAppLaunch(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("启动 & 关闭 App").
-			SetIOS(WithWDAPort(8700), WithWDAMjpegPort(8800)),
+			SetIOS(uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800)),
 		TestSteps: []IStep{
 			NewStep("终止今日头条").
 				IOS().AppTerminate("com.ss.iphone.article.News"),
@@ -69,7 +71,7 @@ func TestIOSAppLaunch(t *testing.T) {
 func TestIOSWeixinLive(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on 微信直播").
-			SetIOS(WithLogOn(true), WithWDAPort(8100), WithWDAMjpegPort(9100)),
+			SetIOS(uixt.WithWDALogOn(true), uixt.WithWDAPort(8100), uixt.WithWDAMjpegPort(9100)),
 		TestSteps: []IStep{
 			NewStep("启动微信").
 				IOS().

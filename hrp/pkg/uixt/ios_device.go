@@ -48,6 +48,23 @@ const (
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
+type IOSPerfOption = gidevice.PerfOption
+
+var (
+	WithIOSPerfSystemCPU         = gidevice.WithPerfSystemCPU
+	WithIOSPerfSystemMem         = gidevice.WithPerfSystemMem
+	WithIOSPerfSystemDisk        = gidevice.WithPerfSystemDisk
+	WithIOSPerfSystemNetwork     = gidevice.WithPerfSystemNetwork
+	WithIOSPerfGPU               = gidevice.WithPerfGPU
+	WithIOSPerfFPS               = gidevice.WithPerfFPS
+	WithIOSPerfNetwork           = gidevice.WithPerfNetwork
+	WithIOSPerfBundleID          = gidevice.WithPerfBundleID
+	WithIOSPerfPID               = gidevice.WithPerfPID
+	WithIOSPerfOutputInterval    = gidevice.WithPerfOutputInterval
+	WithIOSPerfProcessAttributes = gidevice.WithPerfProcessAttributes
+	WithIOSPerfSystemAttributes  = gidevice.WithPerfSystemAttributes
+)
+
 type IOSDeviceOption func(*IOSDevice)
 
 func WithUDID(udid string) IOSDeviceOption {
@@ -68,7 +85,7 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 	}
 }
 
-func WithLogOn(logOn bool) IOSDeviceOption {
+func WithWDALogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.LogOn = logOn
 	}
@@ -104,7 +121,7 @@ func WithXCTest(bundleID string) IOSDeviceOption {
 	}
 }
 
-func WithPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
+func WithIOSPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.PerfOptions = &gidevice.PerfOptions{}
 		for _, option := range options {
@@ -154,10 +171,10 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
 	}
 	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithLogOn(true))
+		deviceOptions = append(deviceOptions, WithWDALogOn(true))
 	}
 	if dev.PerfOptions != nil {
-		deviceOptions = append(deviceOptions, WithPerfOptions(dev.perfOpitons()...))
+		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
 	}
 	if dev.XCTestBundleID != "" {
 		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
