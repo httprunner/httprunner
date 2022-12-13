@@ -15,8 +15,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -39,32 +37,32 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 }
 
 func initIOSDevice(uuid string) uixt.Device {
-	perfOptions := []gidevice.PerfOption{}
+	perfOptions := []uixt.IOSPerfOption{}
 	for _, p := range perf {
 		switch p {
 		case "sys_cpu":
-			perfOptions = append(perfOptions, hrp.WithPerfSystemCPU(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemCPU(true))
 		case "sys_mem":
-			perfOptions = append(perfOptions, hrp.WithPerfSystemMem(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemMem(true))
 		case "sys_net":
-			perfOptions = append(perfOptions, hrp.WithPerfSystemNetwork(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemNetwork(true))
 		case "sys_disk":
-			perfOptions = append(perfOptions, hrp.WithPerfSystemDisk(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemDisk(true))
 		case "network":
-			perfOptions = append(perfOptions, hrp.WithPerfNetwork(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfNetwork(true))
 		case "fps":
-			perfOptions = append(perfOptions, hrp.WithPerfFPS(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfFPS(true))
 		case "gpu":
-			perfOptions = append(perfOptions, hrp.WithPerfGPU(true))
+			perfOptions = append(perfOptions, uixt.WithIOSPerfGPU(true))
 		}
 	}
-	perfOptions = append(perfOptions, hrp.WithPerfOutputInterval(interval*1000))
+	perfOptions = append(perfOptions, uixt.WithIOSPerfOutputInterval(interval*1000))
 
 	device, err := uixt.NewIOSDevice(
 		uixt.WithUDID(uuid),
 		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
 		uixt.WithResetHomeOnStartup(false), // not reset home on startup
-		uixt.WithPerfOptions(perfOptions...),
+		uixt.WithIOSPerfOptions(perfOptions...),
 		uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
 	)
 	if err != nil {

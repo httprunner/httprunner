@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 func TestConvertTimeToSeconds(t *testing.T) {
@@ -54,11 +55,11 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 				"appBundleID": "com.ss.iphone.ugc.Aweme",
 			}).
 			SetIOS(
-				hrp.WithUDID(uuid),
-				hrp.WithLogOn(true),
-				hrp.WithWDAPort(8700),
-				hrp.WithWDAMjpegPort(8800),
-				hrp.WithXCTest("com.gtf.wda.runner.xctrunner"),
+				uixt.WithUDID(uuid),
+				uixt.WithWDALogOn(true),
+				uixt.WithWDAPort(8700),
+				uixt.WithWDAMjpegPort(8800),
+				uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
@@ -70,22 +71,22 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 				AssertOCRExists("首页", "抖音启动失败，「首页」不存在"),
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
-				TapByOCR("我知道了", hrp.WithIgnoreNotFoundError(true)),
+				TapByOCR("我知道了", uixt.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("点击首页").
 				IOS().
-				TapByOCR("首页", hrp.WithIndex(-1)).Sleep(5),
+				TapByOCR("首页", uixt.WithIndex(-1)).Sleep(5),
 			hrp.NewStep("点击世界杯页").
 				IOS().
 				SwipeToTapText("世界杯",
-					hrp.WithMaxRetryTimes(5),
-					hrp.WithCustomDirection(0.4, 0.07, 0.6, 0.07), // 滑动 tab，从左到右，解决「世界杯」被遮挡的问题
-					hrp.WithScope(0, 0, 1, 0.15),                  // 限定 tab 区域
-					hrp.WithWaitTime(1),
+					uixt.WithMaxRetryTimes(5),
+					uixt.WithCustomDirection(0.4, 0.07, 0.6, 0.07), // 滑动 tab，从左到右，解决「世界杯」被遮挡的问题
+					uixt.WithScope(0, 0, 1, 0.15),                  // 限定 tab 区域
+					uixt.WithWaitTime(1),
 				),
 			hrp.NewStep("点击进入直播间").
 				IOS().
 				Loop(5). // 重复执行 5 次
-				TapByOCR("直播中", hrp.WithIdentifier("click_live"), hrp.WithIndex(-1)).
+				TapByOCR("直播中", uixt.WithIdentifier("click_live"), uixt.WithIndex(-1)).
 				Sleep(3).Back().Sleep(3),
 			hrp.NewStep("关闭抖音").
 				IOS().
