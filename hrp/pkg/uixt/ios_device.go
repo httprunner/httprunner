@@ -2,10 +2,12 @@ package uixt
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
 	"io"
+	builtinLog "log"
 	"mime"
 	"mime/multipart"
 	"net"
@@ -46,6 +48,23 @@ const (
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
+type IOSPerfOption = gidevice.PerfOption
+
+var (
+	WithIOSPerfSystemCPU         = gidevice.WithPerfSystemCPU
+	WithIOSPerfSystemMem         = gidevice.WithPerfSystemMem
+	WithIOSPerfSystemDisk        = gidevice.WithPerfSystemDisk
+	WithIOSPerfSystemNetwork     = gidevice.WithPerfSystemNetwork
+	WithIOSPerfGPU               = gidevice.WithPerfGPU
+	WithIOSPerfFPS               = gidevice.WithPerfFPS
+	WithIOSPerfNetwork           = gidevice.WithPerfNetwork
+	WithIOSPerfBundleID          = gidevice.WithPerfBundleID
+	WithIOSPerfPID               = gidevice.WithPerfPID
+	WithIOSPerfOutputInterval    = gidevice.WithPerfOutputInterval
+	WithIOSPerfProcessAttributes = gidevice.WithPerfProcessAttributes
+	WithIOSPerfSystemAttributes  = gidevice.WithPerfSystemAttributes
+)
+
 type IOSDeviceOption func(*IOSDevice)
 
 func WithUDID(udid string) IOSDeviceOption {
@@ -66,7 +85,7 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 	}
 }
 
-func WithLogOn(logOn bool) IOSDeviceOption {
+func WithWDALogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.LogOn = logOn
 	}
@@ -96,7 +115,13 @@ func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
 	}
 }
 
-func WithPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
+func WithXCTest(bundleID string) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.XCTestBundleID = bundleID
+	}
+}
+
+func WithIOSPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.PerfOptions = &gidevice.PerfOptions{}
 		for _, option := range options {
@@ -124,6 +149,10 @@ func IOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 			if u != "" && u != d.Properties().SerialNumber {
 				continue
 			}
+			// filter non-usb ios devices
+			if d.Properties().ConnectionType != "USB" {
+				continue
+			}
 			deviceList = append(deviceList, d)
 		}
 	}
@@ -142,10 +171,13 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
 	}
 	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithLogOn(true))
+		deviceOptions = append(deviceOptions, WithWDALogOn(true))
 	}
 	if dev.PerfOptions != nil {
-		deviceOptions = append(deviceOptions, WithPerfOptions(dev.perfOpitons()...))
+		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
+	}
+	if dev.XCTestBundleID != "" {
+		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
 	}
 	if dev.ResetHomeOnStartup {
 		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
@@ -182,10 +214,21 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		return nil, err
 	}
 
-	if len(deviceList) > 0 {
-		device.UDID = deviceList[0].Properties().SerialNumber
+	for _, dev := range deviceList {
+		udid := dev.Properties().SerialNumber
+		device.UDID = udid
+		device.d = dev
+
+		// run xctest if XCTestBundleID is set
+		if device.XCTestBundleID != "" {
+			_, err = device.RunXCTest(device.XCTestBundleID)
+			if err != nil {
+				log.Error().Err(err).Str("udid", udid).Msg("failed to init XCTest")
+				continue
+			}
+		}
+
 		log.Info().Str("udid", device.UDID).Msg("select device")
-		device.d = deviceList[0]
 		return device, nil
 	}
 
@@ -194,12 +237,13 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
-	d           gidevice.Device
-	PerfOptions *gidevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
-	UDID        string                `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port        int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
-	MjpegPort   int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
-	LogOn       bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	d              gidevice.Device
+	PerfOptions    *gidevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
+	UDID           string                `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port           int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
+	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
+	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
@@ -473,6 +517,33 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	}
 
 	return wd, nil
+}
+
+func (dev *IOSDevice) RunXCTest(bundleID string) (cancel context.CancelFunc, err error) {
+	log.Info().Str("bundleID", bundleID).Msg("run xctest")
+	out, cancel, err := dev.d.XCTest(bundleID)
+	if err != nil {
+		return nil, errors.Wrap(err, "run xctest failed")
+	}
+	// wait for xctest to start
+	time.Sleep(5 * time.Second)
+
+	f, err := os.OpenFile(fmt.Sprintf("xctest_%s.log", dev.UDID),
+		os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
+	if err != nil {
+		return nil, err
+	}
+	defer builtinLog.SetOutput(f)
+
+	// print xctest running logs
+	go func() {
+		for s := range out {
+			builtinLog.Print(s)
+		}
+		f.Close()
+	}()
+
+	return cancel, nil
 }
 
 func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {

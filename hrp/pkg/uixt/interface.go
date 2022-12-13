@@ -784,6 +784,7 @@ type DataOptions struct {
 	IgnoreNotFoundError bool                   // ignore error if target element not found
 	MaxRetryTimes       int                    // max retry times if target element not found
 	Interval            float64                // interval between retries in seconds
+	ScreenShotFilename  string                 // turn on screenshot and specify file name
 }
 
 type DataOption func(data *DataOptions)
@@ -860,12 +861,19 @@ func WithDataWaitTime(sec float64) DataOption {
 	}
 }
 
-func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
-	if data == nil {
-		data = make(map[string]interface{})
+func WithScreenShot(fileName ...string) DataOption {
+	return func(data *DataOptions) {
+		if len(fileName) > 0 {
+			data.ScreenShotFilename = fileName[0]
+		} else {
+			data.ScreenShotFilename = fmt.Sprintf("screenshot_%d", time.Now().Unix())
+		}
 	}
+}
+
+func NewDataOptions(options ...DataOption) *DataOptions {
 	dataOptions := &DataOptions{
-		Data: data,
+		Data: make(map[string]interface{}),
 	}
 	for _, option := range options {
 		option(dataOptions)
@@ -874,7 +882,18 @@ func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
 	if len(dataOptions.Scope) == 0 {
 		dataOptions.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
 	}
+	return dataOptions
+}
 
+func NewData(data map[string]interface{}, options ...DataOption) map[string]interface{} {
+	dataOptions := NewDataOptions(options...)
+
+	// merge with data options
+	for k, v := range dataOptions.Data {
+		data[k] = v
+	}
+
+	// handle point offset
 	if len(dataOptions.Offset) == 2 {
 		if x, ok := data["x"]; ok {
 			xf, _ := builtin.Interface2Float64(x)
@@ -886,23 +905,24 @@ func NewData(data map[string]interface{}, options ...DataOption) *DataOptions {
 		}
 	}
 
-	if _, ok := dataOptions.Data["steps"]; !ok {
-		dataOptions.Data["steps"] = 12 // default steps
+	// add default options
+	if _, ok := data["steps"]; !ok {
+		data["steps"] = 12 // default steps
 	}
 
-	if _, ok := dataOptions.Data["duration"]; !ok {
-		dataOptions.Data["duration"] = 0 // default duration
+	if _, ok := data["duration"]; !ok {
+		data["duration"] = 0 // default duration
 	}
 
-	if _, ok := dataOptions.Data["frequency"]; !ok {
-		dataOptions.Data["frequency"] = 60 // default frequency
+	if _, ok := data["frequency"]; !ok {
+		data["frequency"] = 60 // default frequency
 	}
 
-	if _, ok := dataOptions.Data["isReplace"]; !ok {
-		dataOptions.Data["isReplace"] = true // default true
+	if _, ok := data["isReplace"]; !ok {
+		data["isReplace"] = true // default true
 	}
 
-	return dataOptions
+	return data
 }
 
 // current implemeted device: IOSDevice, AndroidDevice
