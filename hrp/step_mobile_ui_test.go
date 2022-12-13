@@ -86,7 +86,7 @@ func TestIOSWeixinLive(t *testing.T) {
 				AssertLabelExists("直播"),
 			NewStep("向上滑动 3 次，截图保存").
 				IOS().
-				LoopTimes(3).                     // 整体循环 3 次
+				Loop(3).                          // 整体循环 3 次
 				SwipeUp().SwipeUp().ScreenShot(), // 上划 2 次，截图保存
 		},
 	}
@@ -155,7 +155,7 @@ func TestIOSDouyinAction(t *testing.T) {
 				AssertLabelExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
 				IOS().
-				LoopTimes(3).
+				Loop(3).
 				SwipeUp().SwipeDown(),
 		},
 	}

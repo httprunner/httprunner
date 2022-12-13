@@ -3,7 +3,6 @@
 package main
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,18 +47,14 @@ func TestMainAndroid(t *testing.T) {
 	wc.Start()
 }
 
-func init() {
-	os.Setenv("UDID", "00008030-00194DA421C1802E")
-}
-
 func TestIOSDouyinWorldCupLive(t *testing.T) {
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("直播_抖音_世界杯_ios").
 			WithVariables(map[string]interface{}{
-				"device": "${ENV(UDID)}",
+				"appBundleID": "com.ss.iphone.ugc.Aweme",
 			}).
 			SetIOS(
-				hrp.WithUDID("$device"),
+				hrp.WithUDID(uuid),
 				hrp.WithLogOn(true),
 				hrp.WithWDAPort(8700),
 				hrp.WithWDAMjpegPort(8800),
@@ -69,8 +64,8 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 			hrp.NewStep("启动抖音").
 				IOS().
 				Home().
-				AppTerminate("com.ss.iphone.ugc.Aweme"). // 关闭已运行的抖音
-				AppLaunch("com.ss.iphone.ugc.Aweme").
+				AppTerminate("$appBundleID"). // 关闭已运行的抖音
+				AppLaunch("$appBundleID").
 				Validate().
 				AssertOCRExists("首页", "抖音启动失败，「首页」不存在"),
 			hrp.NewStep("处理青少年弹窗").
@@ -86,26 +81,16 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 					hrp.WithCustomDirection(0.4, 0.07, 0.6, 0.07), // 滑动 tab，从左到右，解决「世界杯」被遮挡的问题
 					hrp.WithScope(0, 0, 1, 0.15),                  // 限定 tab 区域
 					hrp.WithWaitTime(1),
-				).
-				Swipe(0.5, 0.3, 0.5, 0.2), // 少量上划，解决「直播中」未展示的问题
+				),
 			hrp.NewStep("点击进入直播间").
 				IOS().
-				LoopTimes(30). // 重复执行 30 次
+				Loop(5). // 重复执行 5 次
 				TapByOCR("直播中", hrp.WithIdentifier("click_live"), hrp.WithIndex(-1)).
-				Sleep(30).Back().Sleep(30),
+				Sleep(3).Back().Sleep(3),
 			hrp.NewStep("关闭抖音").
 				IOS().
-				AppTerminate("com.ss.iphone.ugc.Aweme"),
-			hrp.NewStep("返回主界面，并打开本地时间戳").
-				IOS().
-				Home().SwipeToTapApp("local", hrp.WithMaxRetryTimes(5)).Sleep(10).
-				Validate().
-				AssertOCRExists("16", "打开本地时间戳失败"),
+				AppTerminate("$appBundleID"),
 		},
-	}
-
-	if err := testCase.Dump2JSON("ios_worldcup_live_douyin_test.json"); err != nil {
-		t.Fatal(err)
 	}
 
 	runner := hrp.NewRunner(t).SetSaveTests(true)
