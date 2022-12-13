@@ -3,12 +3,13 @@
 package uixt
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"testing"
 )
 
-func checkOCR(buff []byte) error {
+func checkOCR(buff *bytes.Buffer) error {
 	service, err := newVEDEMOCRService()
 	if err != nil {
 		return err
@@ -33,19 +34,23 @@ func TestOCRWithScreenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := checkOCR(raw.Bytes()); err != nil {
+	if err := checkOCR(raw); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestOCRWithLocalFile(t *testing.T) {
 	imagePath := "/Users/debugtalk/Downloads/s1.png"
+
 	file, err := os.ReadFile(imagePath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := checkOCR(file); err != nil {
+	buf := new(bytes.Buffer)
+	buf.Read(file)
+
+	if err := checkOCR(buf); err != nil {
 		t.Fatal(err)
 	}
 }

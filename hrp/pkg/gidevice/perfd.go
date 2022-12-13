@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 	"time"
@@ -32,8 +33,8 @@ type PerfOptions struct {
 
 func defaulPerfOption() *PerfOptions {
 	return &PerfOptions{
-		SysCPU:         true, // default on
-		SysMem:         true, // default on
+		SysCPU:         false,
+		SysMem:         false,
 		SysDisk:        false,
 		SysNetwork:     false,
 		gpu:            false,
@@ -179,10 +180,13 @@ type perfdSysmontap struct {
 
 func (c *perfdSysmontap) Start() (data <-chan []byte, err error) {
 	// set config
+	interval := time.Millisecond * time.Duration(c.options.OutputInterval)
+	log.Printf("set sysmontap sample interval: %dms\n", c.options.OutputInterval)
+
 	config := map[string]interface{}{
 		"bm":             0,
 		"cpuUsage":       true,
-		"sampleInterval": time.Second * 1,             // 1s
+		"sampleInterval": interval,                    // time.Duration
 		"ur":             c.options.OutputInterval,    // 输出频率
 		"procAttrs":      c.options.ProcessAttributes, // process performance
 		"sysAttrs":       c.options.SystemAttributes,  // system performance
@@ -740,7 +744,7 @@ func (c *perfdGraphicsOpengl) Start() (data <-chan []byte, err error) {
 	if _, err = c.i.call(
 		instrumentsServiceGraphicsOpengl,
 		"setSamplingRate:",
-		float64(c.options.OutputInterval)/100,
+		float64(c.options.OutputInterval)/100, // FIXME: unable to set sampling rate, always 1.0
 	); err != nil {
 		return nil, err
 	}

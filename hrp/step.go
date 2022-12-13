@@ -1,10 +1,5 @@
 package hrp
 
-import (
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
-)
-
 type StepType string
 
 const (
@@ -17,39 +12,6 @@ const (
 	stepTypeWebSocket   StepType = "websocket"
 	stepTypeAndroid     StepType = "android"
 	stepTypeIOS         StepType = "ios"
-)
-
-var (
-	WithIdentifier          = uixt.WithIdentifier
-	WithMaxRetryTimes       = uixt.WithMaxRetryTimes
-	WithWaitTime            = uixt.WithWaitTime // only applicable to SwipeToTap* action
-	WithIndex               = uixt.WithIndex    // index of the target element, should start from 1, only applicable to ocr actions
-	WithTimeout             = uixt.WithTimeout
-	WithIgnoreNotFoundError = uixt.WithIgnoreNotFoundError
-	WithText                = uixt.WithText
-	WithID                  = uixt.WithID
-	WithDescription         = uixt.WithDescription
-	WithDuration            = uixt.WithDuration // only applicable to ios swipe action
-	WithSteps               = uixt.WithSteps    // only applicable to android swipe action
-	WithDirection           = uixt.WithDirection
-	WithCustomDirection     = uixt.WithCustomDirection
-	WithScope               = uixt.WithScope // only applicable to ocr actions
-	WithOffset              = uixt.WithOffset
-)
-
-var (
-	WithPerfSystemCPU         = gidevice.WithPerfSystemCPU
-	WithPerfSystemMem         = gidevice.WithPerfSystemMem
-	WithPerfSystemDisk        = gidevice.WithPerfSystemDisk
-	WithPerfSystemNetwork     = gidevice.WithPerfSystemNetwork
-	WithPerfGPU               = gidevice.WithPerfGPU
-	WithPerfFPS               = gidevice.WithPerfFPS
-	WithPerfNetwork           = gidevice.WithPerfNetwork
-	WithPerfBundleID          = gidevice.WithPerfBundleID
-	WithPerfPID               = gidevice.WithPerfPID
-	WithPerfOutputInterval    = gidevice.WithPerfOutputInterval
-	WithPerfProcessAttributes = gidevice.WithPerfProcessAttributes
-	WithPerfSystemAttributes  = gidevice.WithPerfSystemAttributes
 )
 
 type StepResult struct {
@@ -83,6 +45,7 @@ type TStep struct {
 	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
 	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Loops         int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
 }
 
 // IStep represents interface for all types for teststeps, includes:

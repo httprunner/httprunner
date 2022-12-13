@@ -45,7 +45,7 @@ type Summary struct {
 func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
 	s.Success = s.Success && caseSummary.Success
 	s.Stat.TestCases.Total += 1
-	s.Stat.TestSteps.Total += len(caseSummary.Records)
+	s.Stat.TestSteps.Total += caseSummary.Stat.Total
 	if caseSummary.Success {
 		s.Stat.TestCases.Success += 1
 	} else {

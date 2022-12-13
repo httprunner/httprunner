@@ -68,6 +68,8 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 	return
 }
 
+// uiautomator2 server must be started before
+// adb shell am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
 	deviceList, err := DeviceList()
 	if err != nil {
@@ -114,7 +116,7 @@ func DeviceList() (devices []gadb.Device, err error) {
 
 type AndroidDevice struct {
 	d            gadb.Device
-	logcat       *DeviceLogcat
+	logcat       *AdbLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	IP           string `json:"ip,omitempty" yaml:"ip,omitempty"`
 	Port         int    `json:"port,omitempty" yaml:"port,omitempty"`
@@ -201,7 +203,7 @@ func getFreePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
-type DeviceLogcat struct {
+type AdbLogcat struct {
 	serial    string
 	logBuffer *bytes.Buffer
 	errs      []error
@@ -210,8 +212,8 @@ type DeviceLogcat struct {
 	cmd       *exec.Cmd
 }
 
-func NewAdbLogcat(serial string) *DeviceLogcat {
-	return &DeviceLogcat{
+func NewAdbLogcat(serial string) *AdbLogcat {
+	return &AdbLogcat{
 		serial:    serial,
 		logBuffer: new(bytes.Buffer),
 		stopping:  make(chan struct{}),
@@ -220,7 +222,7 @@ func NewAdbLogcat(serial string) *DeviceLogcat {
 }
 
 // CatchLogcatContext starts logcat with timeout context
-func (l *DeviceLogcat) CatchLogcatContext(timeoutCtx context.Context) (err error) {
+func (l *AdbLogcat) CatchLogcatContext(timeoutCtx context.Context) (err error) {
 	if err = l.CatchLogcat(); err != nil {
 		return
 	}
@@ -234,7 +236,7 @@ func (l *DeviceLogcat) CatchLogcatContext(timeoutCtx context.Context) (err error
 	return
 }
 
-func (l *DeviceLogcat) Stop() error {
+func (l *AdbLogcat) Stop() error {
 	select {
 	case <-l.stopping:
 	default:
@@ -245,7 +247,7 @@ func (l *DeviceLogcat) Stop() error {
 	return l.Errors()
 }
 
-func (l *DeviceLogcat) Errors() (err error) {
+func (l *AdbLogcat) Errors() (err error) {
 	for _, e := range l.errs {
 		if err != nil {
 			err = fmt.Errorf("%v |[DeviceLogcatErr] %v", err, e)
@@ -256,7 +258,7 @@ func (l *DeviceLogcat) Errors() (err error) {
 	return
 }
 
-func (l *DeviceLogcat) CatchLogcat() (err error) {
+func (l *AdbLogcat) CatchLogcat() (err error) {
 	if l.cmd != nil {
 		log.Warn().Msg("logcat already start")
 		return nil
@@ -284,7 +286,7 @@ func (l *DeviceLogcat) CatchLogcat() (err error) {
 	return
 }
 
-func (l *DeviceLogcat) BufferedLogcat() (err error) {
+func (l *AdbLogcat) BufferedLogcat() (err error) {
 	// -d: dump the current buffered logcat result and exits
 	cmd := myexec.Command("adb", "-s", l.serial, "logcat", "-d")
 	cmd.Stdout = l.logBuffer

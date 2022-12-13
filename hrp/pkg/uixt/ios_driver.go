@@ -381,9 +381,9 @@ func (wd *wdaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 		"y": y,
 	}
 	// new data options in post data for extra WDA configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/tap/0")
+	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/tap/0")
 	return
 }
 
@@ -433,9 +433,9 @@ func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	}
 
 	// new data options in post data for extra WDA configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
+	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return
 }
 
@@ -506,9 +506,9 @@ func (wd *wdaDriver) SendKeys(text string, options ...DataOption) (err error) {
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 
 	// new data options in post data for extra WDA configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/keys")
+	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/keys")
 	return
 }
 
@@ -541,9 +541,9 @@ func (wd *wdaDriver) PressBack(options ...DataOption) (err error) {
 	}
 
 	// new data options in post data for extra WDA configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = wd.httpPOST(d.Data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
+	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return
 }
 

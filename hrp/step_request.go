@@ -566,6 +566,12 @@ func (s *StepRequest) HTTP2() *StepRequest {
 	return s
 }
 
+// Loop specify running times for the current step
+func (s *StepRequest) Loop(times int) *StepRequest {
+	s.step.Loops = times
+	return s
+}
+
 // GET makes a HTTP GET request.
 func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
 	if s.step.Request != nil {

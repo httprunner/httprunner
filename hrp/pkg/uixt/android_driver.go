@@ -35,7 +35,7 @@ type uiaDriver struct {
 	Driver
 
 	adbDevice gadb.Device
-	logcat    *DeviceLogcat
+	logcat    *AdbLogcat
 	localPort int
 }
 
@@ -478,7 +478,7 @@ func (ud *uiaDriver) AppTerminate(bundleId string) (successful bool, err error) 
 		return false, err
 	}
 
-	_, err = ud.adbDevice.RunShellCommand("am force-stop", bundleId)
+	_, err = ud.adbDevice.RunShellCommand("am", "force-stop", bundleId)
 	return err == nil, err
 }
 
@@ -508,9 +508,9 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 		"y": y,
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "appium/tap")
+	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "appium/tap")
 	return
 }
 
@@ -566,9 +566,9 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	return ud._drag(d.Data)
+	return ud._drag(newData)
 }
 
 func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...DataOption) (err error) {
@@ -581,9 +581,9 @@ func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...D
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "touch/perform")
+	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
 	return
 }
 
@@ -672,9 +672,9 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 		"text": text,
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
-	_, err = ud.httpPOST(d.Data, "/session", ud.sessionId, "keys")
+	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "keys")
 	return
 }
 
@@ -683,14 +683,14 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 		"view": text,
 	}
 	// new data options in post data for extra uiautomator configurations
-	d := NewData(data, options...)
+	newData := NewData(data, options...)
 
 	var element WebElement
-	if valuetext, ok := d.Data["textview"]; ok {
+	if valuetext, ok := newData["textview"]; ok {
 		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().TextContains(fmt.Sprintf("%v", valuetext)).String()})
-	} else if valueid, ok := d.Data["id"]; ok {
+	} else if valueid, ok := newData["id"]; ok {
 		element, err = ud.FindElement(BySelector{ResourceIdID: fmt.Sprintf("%v", valueid)})
-	} else if valuedesc, ok := d.Data["description"]; ok {
+	} else if valuedesc, ok := newData["description"]; ok {
 		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().Description(fmt.Sprintf("%v", valuedesc)).String()})
 	} else {
 		element, err = ud.FindElement(BySelector{ClassName: ElementType{EditText: true}})

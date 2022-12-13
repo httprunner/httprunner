@@ -205,6 +205,7 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
+	ocrService      OCRService    // used to get text from image
 	StartTime       time.Time     // used to associate screenshots name
 	ScreenShots     []string      // save screenshots path
 	perfStop        chan struct{} // stop performance monitor
@@ -224,6 +225,10 @@ func extend(driver WebDriver) (dExt *DriverExt, err error) {
 	}
 
 	if dExt.scale, err = dExt.Driver.Scale(); err != nil {
+		return nil, err
+	}
+
+	if dExt.ocrService, err = newVEDEMOCRService(); err != nil {
 		return nil, err
 	}
 
@@ -254,21 +259,14 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 	return raw, nil
 }
 
-// saveScreenShot saves image file to $CWD/screenshots/ folder
-func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+// saveScreenShot saves image file with file name
+func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	dir, _ := os.Getwd()
-	screenshotsDir := filepath.Join(dir, "screenshots")
-	if err = os.MkdirAll(screenshotsDir, os.ModePerm); err != nil {
-		return "", errors.Wrap(err, "create screenshots directory failed")
-	}
-	screenshotPath := filepath.Join(screenshotsDir,
-		fmt.Sprintf("%s.%s", fileName, format))
-
+	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, format))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")
@@ -299,7 +297,13 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 		return "", errors.Wrap(err, "screenshot failed")
 	}
 
-	path, err := dExt.saveScreenShot(raw, fileName)
+	dir, _ := os.Getwd()
+	screenshotsDir := filepath.Join(dir, "screenshots")
+	if err = os.MkdirAll(screenshotsDir, os.ModePerm); err != nil {
+		return "", errors.Wrap(err, "create screenshots directory failed")
+	}
+	fileName = filepath.Join(screenshotsDir, fileName)
+	path, err := saveScreenShot(raw, fileName)
 	if err != nil {
 		return "", errors.Wrap(err, "save screenshot failed")
 	}

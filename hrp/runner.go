@@ -3,6 +3,7 @@ package hrp
 import (
 	"crypto/tls"
 	_ "embed"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -499,12 +500,34 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 		log.Info().Str("step", stepName).
 			Str("type", string(step.Type())).Msg("run step start")
 
-		// run step
-		stepResult, err := step.Run(r)
-		stepResult.Name = stepName
+		// run times of step
+		loopTimes := step.Struct().Loops
+		if loopTimes < 0 {
+			log.Warn().Int("loops", loopTimes).Msg("loop times should be positive, set to 1")
+			loopTimes = 1
+		} else if loopTimes == 0 {
+			loopTimes = 1
+		} else if loopTimes > 1 {
+			log.Info().Int("loops", loopTimes).Msg("run step with specified loop times")
+		}
 
-		// update summary
-		r.summary.Records = append(r.summary.Records, stepResult)
+		// run step with specified loop times
+		var stepResult *StepResult
+		for i := 1; i <= loopTimes; i++ {
+			var loopIndex string
+			if loopTimes > 1 {
+				log.Info().Int("index", i).Msg("start running step in loop")
+				loopIndex = fmt.Sprintf("_loop_%d", i)
+			}
+
+			// run step
+			stepResult, err = step.Run(r)
+			stepResult.Name = stepName + loopIndex
+
+			// update summary
+			r.summary.Records = append(r.summary.Records, stepResult)
+		}
+
 		r.summary.Stat.Total += 1
 		if stepResult.Success {
 			r.summary.Stat.Successes += 1

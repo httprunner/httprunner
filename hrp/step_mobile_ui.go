@@ -11,27 +11,6 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-// ios setting options
-var (
-	WithUDID                       = uixt.WithUDID
-	WithWDAPort                    = uixt.WithWDAPort
-	WithWDAMjpegPort               = uixt.WithWDAMjpegPort
-	WithLogOn                      = uixt.WithLogOn
-	WithResetHomeOnStartup         = uixt.WithResetHomeOnStartup
-	WithSnapshotMaxDepth           = uixt.WithSnapshotMaxDepth
-	WithAcceptAlertButtonSelector  = uixt.WithAcceptAlertButtonSelector
-	WithDismissAlertButtonSelector = uixt.WithDismissAlertButtonSelector
-	WithPerfOptions                = uixt.WithPerfOptions
-)
-
-// android setting options
-var (
-	WithSerialNumber = uixt.WithSerialNumber
-	WithAdbIP        = uixt.WithAdbIP
-	WithAdbPort      = uixt.WithAdbPort
-	WithAdbLogOn     = uixt.WithAdbLogOn
-)
-
 type MobileStep struct {
 	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	uixt.MobileAction `yaml:",inline"`
@@ -298,28 +277,6 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 		option(&action)
 	}
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
-	return &StepMobile{step: s.step}
-}
-
-// Times specify running times for run last action
-func (s *StepMobile) Times(n int) *StepMobile {
-	if n <= 0 {
-		log.Warn().Int("n", n).Msg("times should be positive, set to 1")
-		n = 1
-	}
-
-	mobileStep := s.mobileStep()
-	actionsTotal := len(mobileStep.Actions)
-	if actionsTotal == 0 {
-		return s
-	}
-
-	// actionsTotal >=1 && n >= 1
-	lastAction := mobileStep.Actions[actionsTotal-1 : actionsTotal][0]
-	for i := 0; i < n-1; i++ {
-		// duplicate last action n-1 times
-		mobileStep.Actions = append(mobileStep.Actions, lastAction)
-	}
 	return &StepMobile{step: s.step}
 }
 
