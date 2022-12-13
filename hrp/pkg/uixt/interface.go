@@ -872,7 +872,9 @@ func WithScreenShot(fileName ...string) DataOption {
 }
 
 func NewDataOptions(options ...DataOption) *DataOptions {
-	dataOptions := &DataOptions{}
+	dataOptions := &DataOptions{
+		Data: make(map[string]interface{}),
+	}
 	for _, option := range options {
 		option(dataOptions)
 	}

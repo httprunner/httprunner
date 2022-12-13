@@ -22,6 +22,7 @@ var (
 	WithAcceptAlertButtonSelector  = uixt.WithAcceptAlertButtonSelector
 	WithDismissAlertButtonSelector = uixt.WithDismissAlertButtonSelector
 	WithPerfOptions                = uixt.WithPerfOptions
+	WithXCTest                     = uixt.WithXCTest
 )
 
 // android setting options
@@ -34,6 +35,7 @@ var (
 
 type MobileStep struct {
 	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`
+	Times             int    `json:"times,omitempty" yaml:"times,omitempty"`
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -301,25 +303,9 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 	return &StepMobile{step: s.step}
 }
 
-// Times specify running times for run last action
-func (s *StepMobile) Times(n int) *StepMobile {
-	if n <= 0 {
-		log.Warn().Int("n", n).Msg("times should be positive, set to 1")
-		n = 1
-	}
-
-	mobileStep := s.mobileStep()
-	actionsTotal := len(mobileStep.Actions)
-	if actionsTotal == 0 {
-		return s
-	}
-
-	// actionsTotal >=1 && n >= 1
-	lastAction := mobileStep.Actions[actionsTotal-1 : actionsTotal][0]
-	for i := 0; i < n-1; i++ {
-		// duplicate last action n-1 times
-		mobileStep.Actions = append(mobileStep.Actions, lastAction)
-	}
+// LoopTimes specify running times for the current step
+func (s *StepMobile) LoopTimes(n int) *StepMobile {
+	s.mobileStep().Times = n
 	return &StepMobile{step: s.step}
 }
 
@@ -622,20 +608,33 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		actions = mobileStep.Actions
 	}
 
-	// run actions
-	for _, action := range actions {
-		if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
-			if !code.IsErrorPredefined(err) {
-				err = errors.Wrap(code.ParseError,
-					fmt.Sprintf("parse action params failed: %v", err))
+	// run times
+	times := mobileStep.Times
+	if times < 0 {
+		log.Warn().Int("times", times).Msg("times should be positive, set to 1")
+		times = 1
+	} else if times == 0 {
+		times = 1
+	} else if times > 1 {
+		log.Info().Int("times", times).Msg("run actions with specified times")
+	}
+
+	// run actions with specified times
+	for i := 0; i < times; i++ {
+		for _, action := range actions {
+			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
+				if !code.IsErrorPredefined(err) {
+					err = errors.Wrap(code.ParseError,
+						fmt.Sprintf("parse action params failed: %v", err))
+				}
+				return stepResult, err
 			}
-			return stepResult, err
-		}
-		if err := uiDriver.DoAction(action); err != nil {
-			if !code.IsErrorPredefined(err) {
-				err = errors.Wrap(code.MobileUIDriverError, err.Error())
+			if err := uiDriver.DoAction(action); err != nil {
+				if !code.IsErrorPredefined(err) {
+					err = errors.Wrap(code.MobileUIDriverError, err.Error())
+				}
+				return stepResult, err
 			}
-			return stepResult, err
 		}
 	}
 

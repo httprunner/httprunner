@@ -32,7 +32,7 @@ func TestIOSSearchApp(t *testing.T) {
 		Config: NewConfig("ios ui action on Search App 资源库"),
 		TestSteps: []IStep{
 			NewStep("进入 App 资源库 搜索框").
-				IOS().Home().SwipeLeft().Times(2).Tap("dewey-search-field").
+				IOS().Home().SwipeLeft().SwipeLeft().Tap("dewey-search-field").
 				Validate().
 				AssertLabelExists("取消"),
 			NewStep("搜索抖音").
@@ -84,10 +84,10 @@ func TestIOSWeixinLive(t *testing.T) {
 				TapByOCR("直播").     // 通过 OCR 识别「直播」
 				Validate().
 				AssertLabelExists("直播"),
-			NewStep("向上滑动 5 次").
+			NewStep("向上滑动 3 次，截图保存").
 				IOS().
-				SwipeUp().Times(3).ScreenShot(). // 上划 3 次，截图保存
-				SwipeUp().Times(2).ScreenShot(), // 再上划 2 次，截图保存
+				LoopTimes(3).                     // 整体循环 3 次
+				SwipeUp().SwipeUp().ScreenShot(), // 上划 2 次，截图保存
 		},
 	}
 	err := NewRunner(t).Run(testCase)
@@ -154,7 +154,9 @@ func TestIOSDouyinAction(t *testing.T) {
 				AssertLabelExists("首页", "首页 tab 不存在").
 				AssertLabelExists("消息", "消息 tab 不存在"),
 			NewStep("swipe up and down").
-				IOS().SwipeUp().Times(3).SwipeDown(),
+				IOS().
+				LoopTimes(3).
+				SwipeUp().SwipeDown(),
 		},
 	}
 	err := NewRunner(t).Run(testCase)
