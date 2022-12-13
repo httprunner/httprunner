@@ -159,6 +159,9 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 	if dev.PerfOptions != nil {
 		deviceOptions = append(deviceOptions, WithPerfOptions(dev.perfOpitons()...))
 	}
+	if dev.XCTestBundleID != "" {
+		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
+	}
 	if dev.ResetHomeOnStartup {
 		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
 	}
