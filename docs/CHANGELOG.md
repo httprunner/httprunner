@@ -1,5 +1,16 @@
 # Release History
 
+## v4.3.1 (2022-12-14)
+
+**go version**
+
+- feat: add option WithScreenShot
+- feat: run xctest before start ios automation
+- feat: run step with specified loop times
+- feat: add options for FindTexts
+- refactor: move all UI APIs to uixt pkg
+- docs: add examples for UI APIs
+
 ## v4.3.0 (2022-10-27)
 
 Release hrp sub package `uixt` to support iOS/Android UI automation testing 🎉
