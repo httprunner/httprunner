@@ -552,7 +552,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	if err != nil {
 		return
 	}
-	uiDriver.StartTime = s.startTime
 
 	defer func() {
 		attachments := make(map[string]interface{})
@@ -598,7 +597,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// take snapshot
 	screenshotPath, err := uiDriver.ScreenShot(
-		fmt.Sprintf("%d_validate_%d", uiDriver.StartTime.Unix(), time.Now().Unix()))
+		fmt.Sprintf("validate_%d", time.Now().Unix()))
 	if err != nil {
 		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
 	} else {

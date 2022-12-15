@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -188,7 +187,7 @@ type TCaseConverter struct {
 func (c *TCaseConverter) genOutputPath(suffix string) string {
 	var outFileFullName string
 	if curlCmd := strings.TrimSpace(c.InputSample); strings.HasPrefix(curlCmd, "curl ") {
-		outFileFullName = fmt.Sprintf("curl_%v_test%v", time.Now().Format("20060102150405"), suffix)
+		outFileFullName = fmt.Sprintf("curl_%v_test%v", env.StartTimeStr, suffix)
 		if c.OutputDir != "" {
 			return filepath.Join(c.OutputDir, outFileFullName)
 		} else {

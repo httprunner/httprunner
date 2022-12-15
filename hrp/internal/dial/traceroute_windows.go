@@ -32,7 +32,7 @@ func DoTraceRoute(traceRouteOptions *TraceRouteOptions, args []string) (err erro
 	var traceRouteResult TraceRouteResult
 	defer func() {
 		if traceRouteOptions.SaveTests {
-			traceRouteResultName := fmt.Sprintf("traceroute_result_%v.json", time.Now().Format("20060102150405"))
+			traceRouteResultName := fmt.Sprintf("traceroute_result_%v.json", env.StartTimeStr)
 			traceRouteResultPath := filepath.Join(env.RootDir, traceRouteResultName)
 			err = builtin.Dump2JSON(traceRouteResult, traceRouteResultPath)
 			if err != nil {

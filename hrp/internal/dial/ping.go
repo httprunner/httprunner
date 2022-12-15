@@ -46,7 +46,7 @@ func DoPing(pingOptions *PingOptions, args []string) (err error) {
 	var pingResult PingResult
 	defer func() {
 		if pingOptions.SaveTests {
-			pingResultName := fmt.Sprintf("ping_result_%v.json", time.Now().Format("20060102150405"))
+			pingResultName := fmt.Sprintf("ping_result_%v.json", env.StartTimeStr)
 			pingResultPath := filepath.Join(env.RootDir, pingResultName)
 			err = builtin.Dump2JSON(pingResult, pingResultPath)
 			if err != nil {

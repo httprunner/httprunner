@@ -210,7 +210,7 @@ func DoDns(dnsOptions *DnsOptions, args []string) (err error) {
 	var dnsResult DnsResult
 	defer func() {
 		if dnsOptions.SaveTests {
-			dnsResultName := fmt.Sprintf("dns_result_%v.json", time.Now().Format("20060102150405"))
+			dnsResultName := fmt.Sprintf("dns_result_%v.json", env.StartTimeStr)
 			dnsResultPath := filepath.Join(env.RootDir, dnsResultName)
 			err = builtin.Dump2JSON(dnsResult, dnsResultPath)
 			if err != nil {

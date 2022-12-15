@@ -27,7 +27,7 @@ func newOutSummary() *Summary {
 		Success: true,
 		Stat:    &Stat{},
 		Time: &TestCaseTime{
-			StartAt: time.Now(),
+			StartAt: env.StartTime,
 		},
 		Platform: platForm,
 	}
@@ -73,7 +73,7 @@ func (s *Summary) genHTMLReport() error {
 		return err
 	}
 
-	reportPath := filepath.Join(reportsDir, fmt.Sprintf("report-%v.html", s.Time.StartAt.Unix()))
+	reportPath := filepath.Join(reportsDir, "report.html")
 	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
@@ -103,7 +103,7 @@ func (s *Summary) genSummary() error {
 		return err
 	}
 
-	summaryPath := filepath.Join(reportsDir, fmt.Sprintf("summary-%v.json", s.Time.StartAt.Unix()))
+	summaryPath := filepath.Join(reportsDir, "summary.json")
 	err = builtin.Dump2JSON(s, summaryPath)
 	if err != nil {
 		return err
