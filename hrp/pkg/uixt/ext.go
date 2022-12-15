@@ -208,7 +208,6 @@ type DriverExt struct {
 	doneMjpegStream chan bool
 	scale           float64
 	ocrService      OCRService // used to get text from image
-	StartTime       time.Time  // used to associate screenshots name
 	ScreenShots     []string   // save screenshots path
 
 	CVArgs
@@ -657,8 +656,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	case CtlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
-		screenshotPath, err := dExt.ScreenShot(fmt.Sprintf("%d_screenshot_%d",
-			dExt.StartTime.Unix(), time.Now().Unix()))
+		screenshotPath, err := dExt.ScreenShot(fmt.Sprintf("screenshot_%d",
+			time.Now().Unix()))
 		if err != nil {
 			return errors.Wrap(err, "take screenshot failed")
 		}

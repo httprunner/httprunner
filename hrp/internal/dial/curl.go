@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -36,7 +35,7 @@ func DoCurl(args []string) (err error) {
 	var curlResult CurlResult
 	defer func() {
 		if saveTests {
-			curlResultName := fmt.Sprintf("curl_result_%v.json", time.Now().Format("20060102150405"))
+			curlResultName := fmt.Sprintf("curl_result_%v.json", env.StartTimeStr)
 			curlResultPath := filepath.Join(env.RootDir, curlResultName)
 			err = builtin.Dump2JSON(curlResult, curlResultPath)
 			if err != nil {

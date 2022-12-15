@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"path/filepath"
+	"time"
 )
 
 var (
@@ -19,13 +20,17 @@ var (
 )
 
 const (
-	ResultsDir = "results"
+	ResultsDirName     = "results"
+	ScreenshotsDirName = "screenshots"
 )
 
 var (
 	RootDir         string
+	ResultsDir      string
 	ResultsPath     string
 	ScreenShotsPath string
+	StartTime       = time.Now()
+	StartTimeStr    = StartTime.Format("20060102150405")
 )
 
 func init() {
@@ -35,6 +40,7 @@ func init() {
 		panic(err)
 	}
 
+	ResultsDir = filepath.Join(ResultsDirName, StartTimeStr)
 	ResultsPath = filepath.Join(RootDir, ResultsDir)
-	ScreenShotsPath = filepath.Join(ResultsPath, "screenshots")
+	ScreenShotsPath = filepath.Join(ResultsPath, ScreenshotsDirName)
 }

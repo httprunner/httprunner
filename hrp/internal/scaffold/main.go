@@ -92,10 +92,10 @@ func CreateScaffold(projectName string, pluginType PluginType, venv string, forc
 	if err := builtin.CreateFolder(filepath.Join(projectName, "testcases")); err != nil {
 		return err
 	}
-	if err := builtin.CreateFolder(filepath.Join(projectName, env.ResultsDir)); err != nil {
+	if err := builtin.CreateFolder(filepath.Join(projectName, env.ResultsDirName)); err != nil {
 		return err
 	}
-	if err := builtin.CreateFile(filepath.Join(projectName, env.ResultsDir, ".keep"), ""); err != nil {
+	if err := builtin.CreateFile(filepath.Join(projectName, env.ResultsDirName, ".keep"), ""); err != nil {
 		return err
 	}
 

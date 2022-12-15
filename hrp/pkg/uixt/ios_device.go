@@ -349,9 +349,7 @@ func (dev *IOSDevice) StartPerf() error {
 		return err
 	}
 
-	dev.perfFile = filepath.Join(env.ResultsPath,
-		fmt.Sprintf("perf_%s.log", time.Now().Format("20060102150405")))
-
+	dev.perfFile = filepath.Join(env.ResultsPath, "perf.data")
 	log.Info().Str("perfFile", dev.perfFile).Msg("create perf file")
 	file, err := os.OpenFile(dev.perfFile,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
@@ -395,9 +393,7 @@ func (dev *IOSDevice) StartPcap() error {
 		return err
 	}
 
-	dev.pcapFile = filepath.Join(env.ResultsPath,
-		fmt.Sprintf("dump_%s.pcap", time.Now().Format("20060102150405")))
-
+	dev.pcapFile = filepath.Join(env.ResultsPath, "dump.pcap")
 	log.Info().Str("pcapFile", dev.pcapFile).Msg("create pcap file")
 	file, err := os.OpenFile(dev.pcapFile,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
