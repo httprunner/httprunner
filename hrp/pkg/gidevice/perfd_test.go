@@ -163,7 +163,7 @@ func TestPerfAll(t *testing.T) {
 func TestPcap(t *testing.T) {
 	setupLockdownSrv(t)
 
-	data, err := dev.Pcap()
+	data, err := dev.PcapStart()
 	if err != nil {
 		t.Fatal(err)
 	}

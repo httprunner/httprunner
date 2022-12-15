@@ -199,7 +199,7 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type DriverExt struct {
-	UUID            string // ios udid or android serial
+	Device          Device
 	Driver          WebDriver
 	windowSize      Size
 	frame           *bytes.Buffer
@@ -214,8 +214,11 @@ type DriverExt struct {
 	CVArgs
 }
 
-func extend(driver WebDriver) (dExt *DriverExt, err error) {
-	dExt = &DriverExt{Driver: driver}
+func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
+	dExt = &DriverExt{
+		Device: device,
+		Driver: driver,
+	}
 	dExt.doneMjpegStream = make(chan bool, 1)
 
 	// get device window size

@@ -134,10 +134,14 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
 
-	driverExt, err = Extend(driver)
+	driverExt, err = NewDriverExt(dev, driver)
+	if err != nil {
+		return nil, err
+	}
+	err = driverExt.extendCV()
 	if err != nil {
 		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("init UIA driver failed: %v", err))
+			fmt.Sprintf("extend OpenCV failed: %v", err))
 	}
 
 	if dev.LogOn {
@@ -147,7 +151,6 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 		}
 	}
 
-	driverExt.UUID = dev.UUID()
 	return driverExt, nil
 }
 
@@ -187,6 +190,17 @@ func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver *uiaD
 	}
 	driver.adbDevice = dev.d
 	return driver, nil
+}
+
+func (dev *AndroidDevice) StartPcap() error {
+	// TODO
+	return nil
+}
+
+// StopPcap stops pcap monitor and returns the saved pcap file path
+func (dev *AndroidDevice) StopPcap() string {
+	// TODO
+	return ""
 }
 
 func getFreePort() (int, error) {
