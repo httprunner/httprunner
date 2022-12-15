@@ -3,7 +3,6 @@ package convert
 import (
 	_ "embed"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
@@ -192,8 +192,7 @@ func (c *TCaseConverter) genOutputPath(suffix string) string {
 		if c.OutputDir != "" {
 			return filepath.Join(c.OutputDir, outFileFullName)
 		} else {
-			curWorkDir, _ := os.Getwd()
-			return filepath.Join(curWorkDir, outFileFullName)
+			return filepath.Join(env.RootDir, outFileFullName)
 		}
 	}
 	outFileFullName = builtin.GetFileNameWithoutExtension(c.InputSample) + "_test" + suffix

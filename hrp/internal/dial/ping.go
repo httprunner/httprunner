@@ -3,7 +3,6 @@ package dial
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
 type PingOptions struct {
@@ -46,9 +46,8 @@ func DoPing(pingOptions *PingOptions, args []string) (err error) {
 	var pingResult PingResult
 	defer func() {
 		if pingOptions.SaveTests {
-			dir, _ := os.Getwd()
 			pingResultName := fmt.Sprintf("ping_result_%v.json", time.Now().Format("20060102150405"))
-			pingResultPath := filepath.Join(dir, pingResultName)
+			pingResultPath := filepath.Join(env.RootDir, pingResultName)
 			err = builtin.Dump2JSON(pingResult, pingResultPath)
 			if err != nil {
 				log.Error().Err(err).Msg("save ping result failed")

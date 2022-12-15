@@ -3,13 +3,13 @@ package dial
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
@@ -36,9 +36,8 @@ func DoCurl(args []string) (err error) {
 	var curlResult CurlResult
 	defer func() {
 		if saveTests {
-			dir, _ := os.Getwd()
 			curlResultName := fmt.Sprintf("curl_result_%v.json", time.Now().Format("20060102150405"))
-			curlResultPath := filepath.Join(dir, curlResultName)
+			curlResultPath := filepath.Join(env.RootDir, curlResultName)
 			err = builtin.Dump2JSON(curlResult, curlResultPath)
 			if err != nil {
 				log.Error().Err(err).Msg("save dns resolution result failed")

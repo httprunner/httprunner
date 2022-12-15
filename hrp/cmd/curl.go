@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/convert"
 )
@@ -76,8 +77,7 @@ func makeCurlTestCase(args []string) *hrp.TestCase {
 		log.Error().Err(err).Msg("convert curl command failed")
 		os.Exit(1)
 	}
-	casePath, _ := os.Getwd()
-	testCase, err := tCase.ToTestCase(casePath)
+	testCase, err := tCase.ToTestCase(env.RootDir)
 	if err != nil {
 		log.Error().Err(err).Msg("convert testcase to failed")
 		os.Exit(1)

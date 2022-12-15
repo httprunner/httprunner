@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -234,6 +235,13 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		return nil, err
 	}
 
+	// create results directory
+	if err = builtin.EnsureFolderExists(env.ResultsPath); err != nil {
+		return nil, errors.Wrap(err, "create results directory failed")
+	}
+	if err = builtin.EnsureFolderExists(env.ScreenShotsPath); err != nil {
+		return nil, errors.Wrap(err, "create screenshots directory failed")
+	}
 	return dExt, nil
 }
 
@@ -291,11 +299,7 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 		return "", errors.Wrap(err, "screenshot failed")
 	}
 
-	screenshotsDir := env.ScreenShotsPath
-	if err = os.MkdirAll(screenshotsDir, os.ModePerm); err != nil {
-		return "", errors.Wrap(err, "create screenshots directory failed")
-	}
-	fileName = filepath.Join(screenshotsDir, fileName)
+	fileName = filepath.Join(env.ScreenShotsPath, fileName)
 	path, err := saveScreenShot(raw, fileName)
 	if err != nil {
 		return "", errors.Wrap(err, "save screenshot failed")
