@@ -192,12 +192,21 @@ func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver *uiaD
 	return driver, nil
 }
 
+func (dev *AndroidDevice) StartPerf() error {
+	// TODO
+	return nil
+}
+
+func (dev *AndroidDevice) StopPerf() string {
+	// TODO
+	return ""
+}
+
 func (dev *AndroidDevice) StartPcap() error {
 	// TODO
 	return nil
 }
 
-// StopPcap stops pcap monitor and returns the saved pcap file path
 func (dev *AndroidDevice) StopPcap() string {
 	// TODO
 	return ""

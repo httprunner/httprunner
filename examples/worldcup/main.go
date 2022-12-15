@@ -98,7 +98,7 @@ type WorldCupLive struct {
 	Interval  int       `json:"interval"` // seconds
 	Duration  int       `json:"duration"` // seconds
 	Timelines []timeLog `json:"timelines"`
-	PerfData  []string  `json:"perfData"`
+	PerfFile  string    `json:"perf"`
 }
 
 func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, interval int) *WorldCupLive {
@@ -268,7 +268,7 @@ func (wc *WorldCupLive) dumpResult() error {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "    ")
 
-	wc.PerfData = wc.driver.GetPerfData()
+	wc.PerfFile = wc.driver.Device.StopPerf()
 	err := encoder.Encode(wc)
 	if err != nil {
 		log.Error().Err(err).Msg("encode json failed")

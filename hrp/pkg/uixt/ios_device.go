@@ -264,6 +264,10 @@ type IOSDevice struct {
 	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
 	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
 
+	// performance monitor
+	perfStop chan struct{} // stop performance monitor
+	perfFile string        // saved perf file path
+
 	// pcap monitor
 	pcapStop chan struct{} // stop pcap monitor
 	pcapFile string        // saved pcap file path
@@ -325,25 +329,9 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 	}
 
 	if dev.PerfOptions != nil {
-		data, err := dev.d.PerfStart(dev.perfOpitons()...)
-		if err != nil {
+		if err := dev.StartPerf(); err != nil {
 			return nil, err
 		}
-
-		driverExt.perfStop = make(chan struct{})
-		// start performance monitor
-		go func() {
-			for {
-				select {
-				case <-driverExt.perfStop:
-					dev.d.PerfStop()
-					return
-				case d := <-data:
-					fmt.Println(string(d))
-					driverExt.perfData = append(driverExt.perfData, string(d))
-				}
-			}
-		}()
 	}
 
 	if dev.PcapOn {
@@ -355,14 +343,59 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 	return driverExt, nil
 }
 
+func (dev *IOSDevice) StartPerf() error {
+	data, err := dev.d.PerfStart(dev.perfOpitons()...)
+	if err != nil {
+		return err
+	}
+
+	dev.perfFile = filepath.Join(env.ResultsPath,
+		fmt.Sprintf("perf_%s.log", time.Now().Format("20060102150405")))
+
+	log.Info().Str("perfFile", dev.perfFile).Msg("create perf file")
+	file, err := os.OpenFile(dev.perfFile,
+		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
+	if err != nil {
+		return err
+	}
+
+	dev.perfStop = make(chan struct{})
+	// start performance monitor
+	go func() {
+		for {
+			select {
+			case <-dev.perfStop:
+				file.Close()
+				dev.d.PerfStop()
+				return
+			case d := <-data:
+				_, err = file.WriteString(string(d) + "\n")
+				if err != nil {
+					log.Error().Err(err).
+						Str("line", string(d)).
+						Msg("write perf data failed")
+				}
+			}
+		}
+	}()
+	return nil
+}
+
+func (dev *IOSDevice) StopPerf() string {
+	if dev.perfStop == nil {
+		return ""
+	}
+	close(dev.perfStop)
+	return dev.perfFile
+}
+
 func (dev *IOSDevice) StartPcap() error {
 	packets, err := dev.d.PcapStart()
 	if err != nil {
 		return err
 	}
 
-	rootDir, _ := os.Getwd()
-	dev.pcapFile = filepath.Join(rootDir,
+	dev.pcapFile = filepath.Join(env.ResultsPath,
 		fmt.Sprintf("dump_%s.pcap", time.Now().Format("20060102150405")))
 
 	log.Info().Str("pcapFile", dev.pcapFile).Msg("create pcap file")
