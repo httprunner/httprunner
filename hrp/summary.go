@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -61,12 +62,12 @@ func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
 		s.rootDir = caseSummary.RootDir
 	} else if s.rootDir != caseSummary.RootDir {
 		// if multiple testcases have different root path, use current working dir
-		s.rootDir, _ = os.Getwd()
+		s.rootDir = env.RootDir
 	}
 }
 
 func (s *Summary) genHTMLReport() error {
-	reportsDir := filepath.Join(s.rootDir, resultsDir)
+	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
 	err := builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
 		return err
@@ -96,7 +97,7 @@ func (s *Summary) genHTMLReport() error {
 }
 
 func (s *Summary) genSummary() error {
-	reportsDir := filepath.Join(s.rootDir, resultsDir)
+	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
 	err := builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
 		return err
@@ -113,11 +114,9 @@ func (s *Summary) genSummary() error {
 //go:embed internal/scaffold/templates/report/template.html
 var reportTemplate string
 
-const resultsDir = "reports"
-
 type Stat struct {
-	TestCases TestCaseStat `json:"testcases" yaml:"test_cases"`
-	TestSteps TestStepStat `json:"teststeps" yaml:"test_steps"`
+	TestCases TestCaseStat `json:"testcases" yaml:"testcases"`
+	TestSteps TestStepStat `json:"teststeps" yaml:"teststeps"`
 }
 
 type TestCaseStat struct {

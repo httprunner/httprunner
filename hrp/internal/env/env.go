@@ -1,6 +1,9 @@
 package env
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 var (
 	WDA_USB_DRIVER       = os.Getenv("WDA_USB_DRIVER")
@@ -14,3 +17,24 @@ var (
 	PYPI_INDEX_URL       = os.Getenv("PYPI_INDEX_URL")
 	PATH                 = os.Getenv("PATH")
 )
+
+const (
+	ResultsDir = "results"
+)
+
+var (
+	RootDir         string
+	ResultsPath     string
+	ScreenShotsPath string
+)
+
+func init() {
+	var err error
+	RootDir, err = os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	ResultsPath = filepath.Join(RootDir, ResultsDir)
+	ScreenShotsPath = filepath.Join(ResultsPath, "screenshots")
+}

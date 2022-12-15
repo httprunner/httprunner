@@ -13,6 +13,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
@@ -91,10 +92,10 @@ func CreateScaffold(projectName string, pluginType PluginType, venv string, forc
 	if err := builtin.CreateFolder(filepath.Join(projectName, "testcases")); err != nil {
 		return err
 	}
-	if err := builtin.CreateFolder(filepath.Join(projectName, "reports")); err != nil {
+	if err := builtin.CreateFolder(filepath.Join(projectName, env.ResultsDir)); err != nil {
 		return err
 	}
-	if err := builtin.CreateFile(filepath.Join(projectName, "reports", ".keep"), ""); err != nil {
+	if err := builtin.CreateFile(filepath.Join(projectName, env.ResultsDir, ".keep"), ""); err != nil {
 		return err
 	}
 

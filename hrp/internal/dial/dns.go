@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -210,9 +210,8 @@ func DoDns(dnsOptions *DnsOptions, args []string) (err error) {
 	var dnsResult DnsResult
 	defer func() {
 		if dnsOptions.SaveTests {
-			dir, _ := os.Getwd()
 			dnsResultName := fmt.Sprintf("dns_result_%v.json", time.Now().Format("20060102150405"))
-			dnsResultPath := filepath.Join(dir, dnsResultName)
+			dnsResultPath := filepath.Join(env.RootDir, dnsResultName)
 			err = builtin.Dump2JSON(dnsResult, dnsResultPath)
 			if err != nil {
 				log.Error().Err(err).Msg("save dns resolution result failed")

@@ -23,8 +23,11 @@ __debug_bin
 site/
 output/
 logs
+*.log
+*.pcap
 .coverage
 reports
+results
 *.xml
 htmlcov/
 screenshots/

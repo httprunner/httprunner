@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -17,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
@@ -34,9 +34,8 @@ func DoTraceRoute(traceRouteOptions *TraceRouteOptions, args []string) (err erro
 	var traceRouteResult TraceRouteResult
 	defer func() {
 		if traceRouteOptions.SaveTests {
-			dir, _ := os.Getwd()
 			traceRouteResultName := fmt.Sprintf("traceroute_result_%v.json", time.Now().Format("20060102150405"))
-			traceRouteResultPath := filepath.Join(dir, traceRouteResultName)
+			traceRouteResultPath := filepath.Join(env.RootDir, traceRouteResultName)
 			err = builtin.Dump2JSON(traceRouteResult, traceRouteResultPath)
 			if err != nil {
 				log.Error().Err(err).Msg("save traceroute result failed")
