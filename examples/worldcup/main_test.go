@@ -60,6 +60,11 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 				uixt.WithWDAPort(8700),
 				uixt.WithWDAMjpegPort(8800),
 				uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
+				// uixt.WithIOSPerfOptions(
+				// 	uixt.WithIOSPerfNetwork(true),
+				// 	uixt.WithIOSPerfBundleID("com.ss.iphone.ugc.Aweme"),
+				// ),
+				uixt.WithIOSPcapOn(true),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").

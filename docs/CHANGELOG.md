@@ -8,6 +8,7 @@
 - feat: run xctest before start ios automation
 - feat: run step with specified loop times
 - feat: add options for FindTexts
+- feat: capture pcap file for iOS
 - refactor: move all UI APIs to uixt pkg
 - docs: add examples for UI APIs
 

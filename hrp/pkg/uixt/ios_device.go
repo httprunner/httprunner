@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -130,6 +131,12 @@ func WithIOSPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	}
 }
 
+func WithIOSPcapOn(pcapOn bool) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.PcapOn = pcapOn
+	}
+}
+
 func IOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 	var usbmux gidevice.Usbmux
 	if usbmux, err = gidevice.NewUsbmux(); err != nil {
@@ -175,6 +182,9 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 	}
 	if dev.PerfOptions != nil {
 		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
+	}
+	if dev.PcapOn {
+		deviceOptions = append(deviceOptions, WithIOSPcapOn(true))
 	}
 	if dev.XCTestBundleID != "" {
 		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
@@ -243,6 +253,7 @@ type IOSDevice struct {
 	Port           int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	PcapOn         bool                  `json:"pcap_on,omitempty" yaml:"pcap_on,omitempty"`
 	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
 
 	// switch to iOS springboard before init WDA session
@@ -252,6 +263,10 @@ type IOSDevice struct {
 	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
 	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
 	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
+
+	// pcap monitor
+	pcapStop chan struct{} // stop pcap monitor
+	pcapFile string        // saved pcap file path
 }
 
 func (dev *IOSDevice) UUID() string {
@@ -284,10 +299,14 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		}
 	}
 
-	driverExt, err = Extend(driver)
+	driverExt, err = NewDriverExt(dev, driver)
+	if err != nil {
+		return nil, err
+	}
+	err = driverExt.extendCV()
 	if err != nil {
 		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("extend WebDriver failed: %v", err))
+			fmt.Sprintf("extend OpenCV failed: %v", err))
 	}
 	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
@@ -327,8 +346,67 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		}()
 	}
 
-	driverExt.UUID = dev.UUID()
+	if dev.PcapOn {
+		if err := dev.StartPcap(); err != nil {
+			return nil, err
+		}
+	}
+
 	return driverExt, nil
+}
+
+func (dev *IOSDevice) StartPcap() error {
+	packets, err := dev.d.PcapStart()
+	if err != nil {
+		return err
+	}
+
+	rootDir, _ := os.Getwd()
+	dev.pcapFile = filepath.Join(rootDir,
+		fmt.Sprintf("dump_%s.pcap", time.Now().Format("20060102150405")))
+
+	log.Info().Str("pcapFile", dev.pcapFile).Msg("create pcap file")
+	file, err := os.OpenFile(dev.pcapFile,
+		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
+	if err != nil {
+		return err
+	}
+
+	// pcap magic number
+	// https://www.ietf.org/archive/id/draft-gharris-opsawg-pcap-01.html
+	_, _ = file.Write([]byte{
+		0xd4, 0xc3, 0xb2, 0xa1, 0x02, 0x00, 0x04, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0xff, 0xff, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+	})
+
+	dev.pcapStop = make(chan struct{})
+	// start pcap monitor
+	go func() {
+		for {
+			select {
+			case <-dev.pcapStop:
+				file.Close()
+				dev.d.PcapStop()
+				return
+			case d := <-packets:
+				_, err = file.Write(d)
+				if err != nil {
+					log.Error().Err(err).Msg("write pcap data failed")
+				}
+			}
+		}
+	}()
+	return nil
+}
+
+// StopPcap stops pcap monitor and returns the saved pcap file path
+func (dev *IOSDevice) StopPcap() string {
+	if dev.pcapStop == nil {
+		return ""
+	}
+	close(dev.pcapStop)
+	return dev.pcapFile
 }
 
 func (dev *IOSDevice) forward(localPort, remotePort int) error {

@@ -636,6 +636,7 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 
 		// stop performance monitor
 		logs["performance"] = client.GetPerfData()
+		logs["pcap"] = client.Device.StopPcap()
 
 		caseSummary.Logs = append(caseSummary.Logs, logs)
 	}

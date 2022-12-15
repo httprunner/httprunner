@@ -927,8 +927,11 @@ func NewData(data map[string]interface{}, options ...DataOption) map[string]inte
 
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
-	UUID() string
+	UUID() string // ios udid or android serial
 	NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error)
+
+	StartPcap() error
+	StopPcap() string
 }
 
 // WebDriver defines methods supported by WebDriver drivers.

@@ -8,8 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Extend(driver WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
-	return extend(driver)
+func (dExt *DriverExt) extendCV(options ...CVOption) (err error) {
+	return nil
 }
 
 func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle, err error) {

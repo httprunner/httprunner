@@ -42,17 +42,12 @@ const (
 	DmNotMatch
 )
 
-// Extend 获得扩展后的 Driver，
+// extendCV 获得扩展后的 Driver，
 // 并指定匹配阀值，
 // 获取当前设备的 Scale，
 // 默认匹配模式为 TmCcoeffNormed，
 // 默认关闭 OpenCV 匹配值计算后的输出
-func Extend(driver WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
-	dExt, err = extend(driver)
-	if err != nil {
-		return nil, err
-	}
-
+func (dExt *DriverExt) extendCV(options ...CVOption) (err error) {
 	for _, option := range options {
 		option(&dExt.CVArgs)
 	}

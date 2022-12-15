@@ -549,24 +549,16 @@ func (d *device) GetInterfaceOrientation() (orientation libimobiledevice.Orienta
 	return
 }
 
-func (d *device) PcapdService() (pcapd Pcapd, err error) {
-	// if d.pcapd != nil {
-	// 	return d.pcapd, nil
-	// }
-	if _, err = d.lockdownService(); err != nil {
-		return nil, err
+func (d *device) PcapStart() (lines <-chan []byte, err error) {
+	if d.pcapd == nil {
+		if _, err = d.lockdownService(); err != nil {
+			return nil, err
+		}
+		if d.pcapd, err = d.lockdown.PcapdService(); err != nil {
+			return nil, err
+		}
 	}
-	if d.pcapd, err = d.lockdown.PcapdService(); err != nil {
-		return nil, err
-	}
-	pcapd = d.pcapd
-	return
-}
 
-func (d *device) Pcap() (lines <-chan []byte, err error) {
-	if _, err = d.PcapdService(); err != nil {
-		return nil, err
-	}
 	return d.pcapd.Packet(), nil
 }
 
