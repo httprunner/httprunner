@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -205,11 +206,9 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
-	ocrService      OCRService    // used to get text from image
-	StartTime       time.Time     // used to associate screenshots name
-	ScreenShots     []string      // save screenshots path
-	perfStop        chan struct{} // stop performance monitor
-	perfData        []string      // save perf data
+	ocrService      OCRService // used to get text from image
+	StartTime       time.Time  // used to associate screenshots name
+	ScreenShots     []string   // save screenshots path
 
 	CVArgs
 }
@@ -236,14 +235,6 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	}
 
 	return dExt, nil
-}
-
-func (dExt *DriverExt) GetPerfData() []string {
-	if dExt.perfStop == nil {
-		return nil
-	}
-	close(dExt.perfStop)
-	return dExt.perfData
 }
 
 func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
@@ -300,8 +291,7 @@ func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
 		return "", errors.Wrap(err, "screenshot failed")
 	}
 
-	dir, _ := os.Getwd()
-	screenshotsDir := filepath.Join(dir, "screenshots")
+	screenshotsDir := env.ScreenShotsPath
 	if err = os.MkdirAll(screenshotsDir, os.ModePerm); err != nil {
 		return "", errors.Wrap(err, "create screenshots directory failed")
 	}

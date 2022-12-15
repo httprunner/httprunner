@@ -930,6 +930,9 @@ type Device interface {
 	UUID() string // ios udid or android serial
 	NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error)
 
+	StartPerf() error
+	StopPerf() string
+
 	StartPcap() error
 	StopPcap() string
 }
