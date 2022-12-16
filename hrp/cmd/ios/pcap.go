@@ -6,11 +6,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
+
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
 )
 
 var pcapCmd = &cobra.Command{

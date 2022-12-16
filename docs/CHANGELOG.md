@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.1 (2022-12-15)
+## v4.3.1 (2022-12-16)
 
 **go version**
 
@@ -9,6 +9,7 @@
 - feat: run step with specified loop times
 - feat: add options for FindTexts
 - feat: capture pcap file for iOS, including CLI `hrp ios pcap` and option `uixt.WithIOSPcapOn(true)`
+- feat: add performance monitor for iOS, including CLI `hrp ios perf` and options `uixt.WithIOSPerfOptions(...)`
 - refactor: move all UI APIs to uixt pkg
 - docs: add examples for UI APIs
 
