@@ -344,13 +344,13 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 }
 
 func (dev *IOSDevice) StartPerf() error {
+	log.Info().Msg("start performance monitor")
 	data, err := dev.d.PerfStart(dev.perfOpitons()...)
 	if err != nil {
 		return err
 	}
 
 	dev.perfFile = filepath.Join(env.ResultsPath, "perf.data")
-	log.Info().Str("perfFile", dev.perfFile).Msg("create perf file")
 	file, err := os.OpenFile(dev.perfFile,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
 	if err != nil {
@@ -384,6 +384,7 @@ func (dev *IOSDevice) StopPerf() string {
 		return ""
 	}
 	close(dev.perfStop)
+	log.Info().Str("perfFile", dev.perfFile).Msg("stop performance monitor")
 	return dev.perfFile
 }
 
