@@ -8,7 +8,7 @@
 - feat: run xctest before start ios automation
 - feat: run step with specified loop times
 - feat: add options for FindTexts
-- feat: capture pcap file for iOS
+- feat: capture pcap file for iOS, including CLI `hrp ios pcap` and option `uixt.WithIOSPcapOn(true)`
 - refactor: move all UI APIs to uixt pkg
 - docs: add examples for UI APIs
 

@@ -388,13 +388,13 @@ func (dev *IOSDevice) StopPerf() string {
 }
 
 func (dev *IOSDevice) StartPcap() error {
+	log.Info().Msg("start packet capture")
 	packets, err := dev.d.PcapStart()
 	if err != nil {
 		return err
 	}
 
 	dev.pcapFile = filepath.Join(env.ResultsPath, "dump.pcap")
-	log.Info().Str("pcapFile", dev.pcapFile).Msg("create pcap file")
 	file, err := os.OpenFile(dev.pcapFile,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
 	if err != nil {
@@ -435,6 +435,7 @@ func (dev *IOSDevice) StopPcap() string {
 		return ""
 	}
 	close(dev.pcapStop)
+	log.Info().Str("pcapFile", dev.pcapFile).Msg("stop packet capture")
 	return dev.pcapFile
 }
 
