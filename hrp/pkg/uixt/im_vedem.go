@@ -130,7 +130,7 @@ func (s *veDEMIMService) getIMResult(searchImage []byte, sourceImage []byte) ([]
 }
 
 func (s *veDEMIMService) FindImage(byteSearch []byte, byteSource []byte, options ...DataOption) (rect image.Rectangle, err error) {
-	data := NewData(map[string]interface{}{}, options...)
+	data := NewDataOptions(options...)
 
 	cvResults, err := s.getIMResult(byteSearch, byteSource)
 	if err != nil {

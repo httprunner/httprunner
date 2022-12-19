@@ -92,7 +92,7 @@ func (i *ImageTemplate) read() (imageBuffer *bytes.Buffer, err error) {
 // extendCV 获得扩展后的 Driver，
 // 并指定匹配阀值，
 // 获取当前设备的 Scale，
-func extendCV(driver WebDriver, options ...CVOption) (dExt *DriverExt, err error) {
+func (dExt *DriverExt) extendCV(options ...CVOption) (err error) {
 	for _, option := range options {
 		option(&dExt.CVArgs)
 	}

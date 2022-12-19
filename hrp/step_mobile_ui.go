@@ -16,13 +16,11 @@ var (
 	WithUDID                       = uixt.WithUDID
 	WithWDAPort                    = uixt.WithWDAPort
 	WithWDAMjpegPort               = uixt.WithWDAMjpegPort
-	WithLogOn                      = uixt.WithLogOn
 	WithResetHomeOnStartup         = uixt.WithResetHomeOnStartup
 	WithSnapshotMaxDepth           = uixt.WithSnapshotMaxDepth
 	WithAcceptAlertButtonSelector  = uixt.WithAcceptAlertButtonSelector
 	WithDismissAlertButtonSelector = uixt.WithDismissAlertButtonSelector
 	WithClosePopup                 = uixt.WithClosePopup
-	WithPerfOptions                = uixt.WithPerfOptions
 )
 
 // android setting options

@@ -131,7 +131,7 @@ func (s *veDEMCPService) getCPResult(sourceImage []byte) ([]CPResult, error) {
 }
 
 func (s *veDEMCPService) FindPopupCloseButton(byteSource []byte, options ...DataOption) (rect image.Rectangle, err error) {
-	data := NewData(map[string]interface{}{}, options...)
+	data := NewDataOptions(options...)
 
 	cpResults, err := s.getCPResult(byteSource)
 	if err != nil {
