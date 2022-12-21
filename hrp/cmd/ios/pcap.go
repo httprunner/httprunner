@@ -18,8 +18,23 @@ var pcapCmd = &cobra.Command{
 	Use:   "pcap",
 	Short: "capture ios network packets",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		pcapOptions := []uixt.IOSPcapOption{}
+		if pid > 0 {
+			pcapOptions = append(pcapOptions, uixt.WithIOSPcapPID(pid))
+		}
+		if procName != "" {
+			pcapOptions = append(pcapOptions, uixt.WithIOSPcapProcName(procName))
+		}
+		if bundleID != "" {
+			pcapOptions = append(pcapOptions, uixt.WithIOSPcapBundleID(bundleID))
+		}
+		if len(pcapOptions) == 0 {
+			pcapOptions = append(pcapOptions, uixt.WithIOSPcapAll(true))
+		}
+
 		device, err := uixt.NewIOSDevice(
 			uixt.WithUDID(udid),
+			uixt.WithIOSPcapOptions(pcapOptions...),
 		)
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to init ios device")
@@ -50,10 +65,17 @@ var pcapCmd = &cobra.Command{
 	},
 }
 
-var timeDuration int
+var (
+	timeDuration int
+	pid          int
+	procName     string
+)
 
 func init() {
 	pcapCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
+	pcapCmd.Flags().IntVarP(&pid, "pid", "p", 0, "specify process ID")
+	pcapCmd.Flags().StringVarP(&procName, "procName", "n", "", "specify process name")
+	pcapCmd.Flags().StringVarP(&bundleID, "bundleID", "b", "", "specify bundle ID")
 	pcapCmd.Flags().IntVarP(&timeDuration, "duration", "t", 10, "specify time duraion in seconds")
 	iosRootCmd.AddCommand(pcapCmd)
 }

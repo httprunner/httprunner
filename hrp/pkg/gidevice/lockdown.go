@@ -449,12 +449,12 @@ func (c *lockdown) SyslogRelayService() (syslogRelay SyslogRelay, err error) {
 	return
 }
 
-func (c *lockdown) PcapdService() (pcapd Pcapd, err error) {
+func (c *lockdown) PcapdService(targetPID int, targetProcName string) (pcapd Pcapd, err error) {
 	var innerConn InnerConn
 	if innerConn, err = c._startService(libimobiledevice.PcapdServiceName, nil); err != nil {
 		return nil, err
 	}
-	pcapdClient := libimobiledevice.NewPcapdClient(innerConn)
+	pcapdClient := libimobiledevice.NewPcapdClient(innerConn, targetPID, targetProcName)
 	return newPcapdClient(pcapdClient), nil
 }
 

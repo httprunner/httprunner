@@ -66,6 +66,15 @@ var (
 	WithIOSPerfSystemAttributes  = gidevice.WithPerfSystemAttributes
 )
 
+type IOSPcapOption = gidevice.PcapOption
+
+var (
+	WithIOSPcapAll      = gidevice.WithPcapAll
+	WithIOSPcapPID      = gidevice.WithPcapPID
+	WithIOSPcapProcName = gidevice.WithPcapProcName
+	WithIOSPcapBundleID = gidevice.WithPcapBundleID
+)
+
 type IOSDeviceOption func(*IOSDevice)
 
 func WithUDID(udid string) IOSDeviceOption {
@@ -131,9 +140,12 @@ func WithIOSPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	}
 }
 
-func WithIOSPcapOn(pcapOn bool) IOSDeviceOption {
+func WithIOSPcapOptions(options ...gidevice.PcapOption) IOSDeviceOption {
 	return func(device *IOSDevice) {
-		device.PcapOn = pcapOn
+		device.PcapOptions = &gidevice.PcapOptions{}
+		for _, option := range options {
+			option(device.PcapOptions)
+		}
 	}
 }
 
@@ -183,8 +195,8 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 	if dev.PerfOptions != nil {
 		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
 	}
-	if dev.PcapOn {
-		deviceOptions = append(deviceOptions, WithIOSPcapOn(true))
+	if dev.PcapOptions != nil {
+		deviceOptions = append(deviceOptions, WithIOSPcapOptions(dev.pcapOpitons()...))
 	}
 	if dev.XCTestBundleID != "" {
 		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
@@ -249,11 +261,11 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 type IOSDevice struct {
 	d              gidevice.Device
 	PerfOptions    *gidevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
+	PcapOptions    *gidevice.PcapOptions `json:"pcap_options,omitempty" yaml:"pcap_options,omitempty"`
 	UDID           string                `json:"udid,omitempty" yaml:"udid,omitempty"`
 	Port           int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
-	PcapOn         bool                  `json:"pcap_on,omitempty" yaml:"pcap_on,omitempty"`
 	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
 
 	// switch to iOS springboard before init WDA session
@@ -334,7 +346,7 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		}
 	}
 
-	if dev.PcapOn {
+	if dev.PcapOptions != nil {
 		if err := dev.StartPcap(); err != nil {
 			return nil, err
 		}
@@ -390,7 +402,7 @@ func (dev *IOSDevice) StopPerf() string {
 
 func (dev *IOSDevice) StartPcap() error {
 	log.Info().Msg("start packet capture")
-	packets, err := dev.d.PcapStart()
+	packets, err := dev.d.PcapStart(dev.pcapOpitons()...)
 	if err != nil {
 		return err
 	}
@@ -533,6 +545,27 @@ func (dev *IOSDevice) perfOpitons() (perfOptions []gidevice.PerfOption) {
 		perfOptions = append(perfOptions,
 			gidevice.WithPerfProcessAttributes(dev.PerfOptions.ProcessAttributes...))
 	}
+	return
+}
+
+func (dev *IOSDevice) pcapOpitons() (pcapOptions []gidevice.PcapOption) {
+	if dev.PcapOptions == nil {
+		return
+	}
+
+	if dev.PcapOptions.All {
+		pcapOptions = append(pcapOptions, gidevice.WithPcapAll(true))
+	}
+	if dev.PcapOptions.Pid > 0 {
+		pcapOptions = append(pcapOptions, gidevice.WithPcapPID(dev.PcapOptions.Pid))
+	}
+	if dev.PcapOptions.ProcName != "" {
+		pcapOptions = append(pcapOptions, gidevice.WithPcapProcName(dev.PcapOptions.ProcName))
+	}
+	if dev.PcapOptions.BundleID != "" {
+		pcapOptions = append(pcapOptions, gidevice.WithPcapBundleID(dev.PcapOptions.BundleID))
+	}
+
 	return
 }
 
