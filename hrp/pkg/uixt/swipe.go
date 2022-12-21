@@ -99,7 +99,7 @@ func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, f
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
 	return errors.Wrap(code.OCRTextNotFoundError,
-		fmt.Sprintf("swipe %s %d times, match condition failed", direction, maxRetryTimes))
+		fmt.Sprintf("swipe %v %d times, match condition failed", direction, maxRetryTimes))
 }
 
 func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, options ...DataOption) error {

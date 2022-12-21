@@ -61,7 +61,7 @@ type Device interface {
 	Syslog() (lines <-chan string, err error)
 	SyslogStop()
 
-	PcapStart() (packet <-chan []byte, err error)
+	PcapStart(opts ...PcapOption) (packet <-chan []byte, err error)
 	PcapStop()
 
 	Reboot() error

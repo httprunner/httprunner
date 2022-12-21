@@ -6,6 +6,39 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice/pkg/libimobiledevice"
 )
 
+type PcapOptions struct {
+	All      bool   // capture all packets
+	Pid      int    // capture packets from specific PID
+	ProcName string // capture packets from specific process name
+	BundleID string // convert to PID first, then capture packets from the PID
+}
+
+type PcapOption func(*PcapOptions)
+
+func WithPcapAll(all bool) PcapOption {
+	return func(opt *PcapOptions) {
+		opt.All = all
+	}
+}
+
+func WithPcapProcName(procName string) PcapOption {
+	return func(opt *PcapOptions) {
+		opt.ProcName = procName
+	}
+}
+
+func WithPcapPID(pid int) PcapOption {
+	return func(opt *PcapOptions) {
+		opt.Pid = pid
+	}
+}
+
+func WithPcapBundleID(bundleID string) PcapOption {
+	return func(opt *PcapOptions) {
+		opt.BundleID = bundleID
+	}
+}
+
 type pcapdClient struct {
 	stop chan struct{}
 	c    *libimobiledevice.PcapdClient
@@ -37,6 +70,10 @@ func (c *pcapdClient) Packet() <-chan []byte {
 				if err != nil {
 					close(packetCh)
 					return
+				}
+				if raw == nil {
+					// filtered packet
+					continue
 				}
 				res, err := c.c.CreatePacket(raw)
 				if err != nil {

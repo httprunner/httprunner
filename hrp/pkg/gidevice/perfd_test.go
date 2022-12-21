@@ -159,22 +159,3 @@ func TestPerfAll(t *testing.T) {
 		}
 	}
 }
-
-func TestPcap(t *testing.T) {
-	setupLockdownSrv(t)
-
-	data, err := dev.PcapStart()
-	if err != nil {
-		t.Fatal(err)
-	}
-	timer := time.NewTimer(time.Duration(time.Second * 10))
-	for {
-		select {
-		case <-timer.C:
-			dev.PcapStop()
-			return
-		case d := <-data:
-			fmt.Println(string(d))
-		}
-	}
-}

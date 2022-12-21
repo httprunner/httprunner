@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
 	"howett.net/plist"
 
@@ -549,12 +550,38 @@ func (d *device) GetInterfaceOrientation() (orientation libimobiledevice.Orienta
 	return
 }
 
-func (d *device) PcapStart() (lines <-chan []byte, err error) {
+func (d *device) PcapStart(opts ...PcapOption) (lines <-chan []byte, err error) {
+	pcapOptions := &PcapOptions{}
+	for _, fn := range opts {
+		fn(pcapOptions)
+	}
+	log.Info().Interface("options", pcapOptions).Msg("pcap start")
+
+	// wait until get pid for bundle id
+	if pcapOptions.BundleID != "" {
+		instruments, err := d.newInstrumentsService()
+		if err != nil {
+			fmt.Printf("get pid by bundle id failed: %v\n", err)
+			os.Exit(1)
+		}
+
+		for {
+			pid, err := instruments.getPidByBundleID(pcapOptions.BundleID)
+			if err != nil {
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			pcapOptions.Pid = pid
+			break
+		}
+	}
+
 	if d.pcapd == nil {
 		if _, err = d.lockdownService(); err != nil {
 			return nil, err
 		}
-		if d.pcapd, err = d.lockdown.PcapdService(); err != nil {
+		if d.pcapd, err = d.lockdown.PcapdService(
+			pcapOptions.Pid, pcapOptions.ProcName); err != nil {
 			return nil, err
 		}
 	}

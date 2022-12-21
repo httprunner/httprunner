@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/lunixbochs/struc"
@@ -12,8 +14,23 @@ import (
 
 const PcapdServiceName = "com.apple.pcapd"
 
-func NewPcapdClient(innerConn InnerConn) *PcapdClient {
+func filterPacket(pid int, procName string) func(*IOSPacketHeader) bool {
+	return func(iph *IOSPacketHeader) bool {
+		if pid > 0 {
+			return iph.Pid == int32(pid) ||
+				iph.Pid2 == int32(pid)
+		}
+		if procName != "" {
+			return strings.HasPrefix(iph.ProcName, procName) ||
+				strings.HasPrefix(iph.ProcName2, procName)
+		}
+		return true
+	}
+}
+
+func NewPcapdClient(innerConn InnerConn, targetPID int, targetProcName string) *PcapdClient {
 	return &PcapdClient{
+		filter: filterPacket(targetPID, targetProcName),
 		client: newServicePacketClient(innerConn),
 	}
 }
@@ -48,6 +65,11 @@ func (c *PcapdClient) ReceivePacket() (respPkt Packet, err error) {
 	return
 }
 
+const (
+	PacketHeaderSize = uint32(95)
+)
+
+// ref: https://github.com/danielpaulus/go-ios/blob/fc943b9d236571f9775f5c593e3d49bb5bd67afd/ios/pcap/pcap.go#L27
 type IOSPacketHeader struct {
 	HdrSize        uint32  `struc:"uint32,big"`
 	Version        uint8   `struc:"uint8,big"`
@@ -78,12 +100,24 @@ func (c *PcapdClient) GetPacket(buf []byte) ([]byte, error) {
 		}
 	}
 
+	// support ios 15 beta4
+	if iph.HdrSize > PacketHeaderSize {
+		buf := make([]byte, iph.HdrSize-PacketHeaderSize)
+		_, err := io.ReadFull(preader, buf)
+		if err != nil {
+			return []byte{}, err
+		}
+	}
+
 	packet, err := ioutil.ReadAll(preader)
 	if err != nil {
 		return packet, err
 	}
 	if iph.FramePreLength == 0 {
-		ext := []byte{0xbe, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe, 0x08, 0x00}
+		ext := []byte{
+			0xbe, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe, 0xbe, 0xfe,
+			0xbe, 0xfe, 0xbe, 0xfe, 0x08, 0x00,
+		}
 		return append(ext, packet...), nil
 	}
 	return packet, nil

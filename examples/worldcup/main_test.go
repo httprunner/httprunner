@@ -64,7 +64,12 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 					uixt.WithIOSPerfNetwork(true),
 					// uixt.WithIOSPerfBundleID("com.ss.iphone.ugc.Aweme"),
 				),
-				uixt.WithIOSPcapOn(true),
+				uixt.WithIOSPcapOptions(
+					// uixt.WithIOSPcapAll(true),
+					// uixt.WithIOSPcapPID(1234),
+					// uixt.WithIOSPcapProcName("Awe"),
+					uixt.WithIOSPcapBundleID("com.ss.iphone.ugc.Aweme"),
+				),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
