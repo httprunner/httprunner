@@ -80,14 +80,20 @@ Usage:
   hrp [command]
 
 Available Commands:
+  adb          simple utils for android device management
   boom         run load test with boomer
   build        build plugin for testing
-  completion   generate the autocompletion script for the specified shell
-  convert      convert to JSON/YAML/gotest/pytest testcases
+  completion   Generate the autocompletion script for the specified shell
+  convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
+  curl         run integrated curl command
+  dns          DNS resolution for different source and record types
   help         Help about any command
+  ios          simple utils for ios device management
+  ping         run integrated ping command
   pytest       run API test with pytest
   run          run API test with go engine
   startproject create a scaffold project
+  traceroute   run integrated traceroute command
   wiki         visit https://httprunner.com
 
 Flags:
@@ -107,29 +113,12 @@ Use "hrp [command] --help" for more information about a command.
 <a href="https://httprunner.com/docs/cases/umcare"><img src="https://httprunner.com/image/logo/umcare.png" title="通用环球医疗 - 使用 HttpRunner 实践接口自动化测试" width="100"></a>
 <a href="https://httprunner.com/docs/cases/mihoyo"><img src="https://httprunner.com/image/logo/miHoYo.png" title="米哈游 - 基于 HttpRunner 搭建接口自动化测试体系" width="100"></a>
 
-## 赞助商
-
-### 金牌赞助商
-
-[<img src="https://httprunner.com/image/hogwarts.jpeg" alt="霍格沃兹测试开发学社" width="400">](https://ceshiren.com/)
-
-> [霍格沃兹测试开发学社](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=httprunner&url=https://www.testing-studio.com) 。学院课程由一线大厂测试经理与资深测试开发专家参与研发，实战驱动。课程涵盖 web/app 自动化测试、接口测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移&右移、精准测试、测试平台开发、测试管理等内容，帮助测试工程师实现测试开发技术转型。通过优秀的学社制度（奖学金、内推返学费、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。
-
-> [进入测试开发技术能力测评!](http://qrcode.testing-studio.com/f?from=httprunner&url=https://ceshiren.com/t/topic/14940)
-
-### 开源服务赞助商
-
-[<img src="https://httprunner.com/image/sentry-logo-black.svg" alt="Sentry" width="150">](https://sentry.io/_/open-source/)
-
-HttpRunner is in Sentry Sponsored plan.
 
 ## Subscribe
 
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
 <img src="https://httprunner.com/image/qrcode.png" alt="HttpRunner" width="400">
-
-如果你期望加入 HttpRunner 用户群，请看这里：[HttpRunner v4 用户交流群，它来啦！](https://httprunner.com/blog/join-chat-group)
 
 [HttpRunner]: https://github.com/httprunner/httprunner
 [boomer]: https://github.com/myzhan/boomer
