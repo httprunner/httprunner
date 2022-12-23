@@ -559,7 +559,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 		// check if failfast
 		if r.caseRunner.hrpRunner.failfast {
-			return errors.Wrap(err, "abort running due to failfast setting")
+			return errors.New("abort running due to failfast setting")
 		}
 	}
 

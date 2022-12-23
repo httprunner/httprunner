@@ -317,7 +317,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	config := r.caseRunner.parsedConfig
 
 	rb := newRequestBuilder(parser, config, step.Request)
-	rb.req.Method = string(step.Request.Method)
+	rb.req.Method = strings.ToUpper(string(step.Request.Method))
 
 	err = rb.prepareUrlParams(stepVariables)
 	if err != nil {
