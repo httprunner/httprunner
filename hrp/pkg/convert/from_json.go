@@ -2,13 +2,14 @@ package convert
 
 import (
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func LoadJSONCase(path string) (*hrp.TCase, error) {
-	// load json case file
+	log.Info().Str("path", path).Msg("load json case file")
 	caseJSON := new(hrp.TCase)
 	err := builtin.LoadFile(path, caseJSON)
 	if err != nil {
