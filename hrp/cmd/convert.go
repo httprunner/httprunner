@@ -29,6 +29,8 @@ var convertCmd = &cobra.Command{
 			fromType = convert.FromTypePostman
 		} else if fromHARFlag {
 			fromType = convert.FromTypeHAR
+		} else if fromCurlFlag {
+			fromType = convert.FromTypeCurl
 		} else {
 			fromType = convert.FromTypeJSON
 			log.Info().Str("fromType", fromType.String()).Msg("set default")
@@ -74,6 +76,7 @@ var (
 	fromYAMLFlag    bool
 	fromPostmanFlag bool
 	fromHARFlag     bool
+	fromCurlFlag    bool
 
 	toJSONFlag   bool
 	toYAMLFlag   bool
@@ -87,6 +90,7 @@ func init() {
 	convertCmd.Flags().BoolVar(&fromYAMLFlag, "from-yaml", false, "load from yaml case format")
 	convertCmd.Flags().BoolVar(&fromHARFlag, "from-har", false, "load from HAR format")
 	convertCmd.Flags().BoolVar(&fromPostmanFlag, "from-postman", false, "load from postman format")
+	convertCmd.Flags().BoolVar(&fromCurlFlag, "from-curl", false, "load from curl format")
 
 	convertCmd.Flags().BoolVar(&toJSONFlag, "to-json", true, "convert to JSON case scripts")
 	convertCmd.Flags().BoolVar(&toYAMLFlag, "to-yaml", false, "convert to YAML case scripts")
