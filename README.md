@@ -85,7 +85,6 @@ Available Commands:
   build        build plugin for testing
   completion   Generate the autocompletion script for the specified shell
   convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
-  curl         run integrated curl command
   dns          DNS resolution for different source and record types
   help         Help about any command
   ios          simple utils for ios device management
