@@ -9,7 +9,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
-func NewYAMLCase(path string) (*hrp.TCase, error) {
+func LoadYAMLCase(path string) (*hrp.TCase, error) {
 	// load yaml case file
 	caseJSON := new(hrp.TCase)
 	err := builtin.LoadFile(path, caseJSON)

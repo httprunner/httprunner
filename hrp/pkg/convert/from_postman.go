@@ -113,7 +113,7 @@ var contentTypeMap = map[string]string{
 }
 
 func LoadPostmanCase(path string) (*hrp.TCase, error) {
-	// load postman file
+	log.Info().Str("path", path).Msg("load postman case file")
 	casePostman, err := loadCasePostman(path)
 	if err != nil {
 		return nil, err
