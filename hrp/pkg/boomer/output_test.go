@@ -81,7 +81,7 @@ func TestConsoleOutput(t *testing.T) {
 	data["stats"] = []interface{}{stat}
 
 	stat["name"] = "http"
-	stat["method"] = "post"
+	stat["method"] = "POST"
 	stat["num_requests"] = int64(100)
 	stat["num_failures"] = int64(10)
 	stat["response_times"] = map[int64]int64{
