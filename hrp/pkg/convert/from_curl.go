@@ -1,9 +1,11 @@
 package convert
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/google/shlex"
@@ -11,7 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -94,12 +95,14 @@ func init() {
 
 // LoadCurlCase loads testcase from one or more curl commands in .txt file
 func LoadCurlCase(path string) (*hrp.TCase, error) {
-	cmds, err := builtin.ReadCmdLines(path)
+	cmds, err := readFileLines(path)
 	if err != nil {
 		return nil, err
 	}
 	tCase := &hrp.TCase{
-		Config: &hrp.TConfig{Name: "testcase converted from curl command"},
+		Config: &hrp.TConfig{
+			Name: "testcase converted from curl command",
+		},
 	}
 	for _, cmd := range cmds {
 		tSteps, err := LoadCurlSteps(cmd)
@@ -115,21 +118,24 @@ func LoadCurlCase(path string) (*hrp.TCase, error) {
 	return tCase, nil
 }
 
-// LoadSingleCurlCase one testcase from one curl command
-func LoadSingleCurlCase(cmd string) (*hrp.TCase, error) {
-	tSteps, err := LoadCurlSteps(cmd)
+func readFileLines(path string) ([]string, error) {
+	file, err := os.Open(path)
 	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("open file failed")
 		return nil, err
 	}
-	tCase := &hrp.TCase{
-		Config:    &hrp.TConfig{Name: "testcase converted from curl command"},
-		TestSteps: tSteps,
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || line == "\n" {
+			continue
+		}
+		lines = append(lines, line)
 	}
-	err = tCase.MakeCompat()
-	if err != nil {
-		return nil, err
-	}
-	return tCase, nil
+	return lines, scanner.Err()
 }
 
 // LoadCurlSteps loads one teststep from one curl command

@@ -1,7 +1,6 @@
 package builtin
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -350,40 +349,6 @@ func ReadFile(path string) ([]byte, error) {
 		return nil, errors.Wrap(code.LoadFileError, err.Error())
 	}
 	return file, nil
-}
-
-func ReadCmdLines(path string) ([]string, error) {
-	var err error
-	path, err = filepath.Abs(path)
-	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
-		return nil, err
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("open file failed")
-		return nil, err
-	}
-	defer file.Close()
-
-	var line string
-	var lines []string
-	scanner := bufio.NewScanner(file)
-	// FIXME: resize scanner's capacity for lines over 64K
-	for scanner.Scan() {
-		text := strings.TrimSpace(scanner.Text())
-		if text == "" || text == "\n" {
-			continue
-		}
-		if strings.HasSuffix(text, "\\") {
-			line = line + strings.Trim(text, "\\")
-			continue
-		}
-		line = line + text
-		lines = append(lines, line)
-		line = ""
-	}
-	return lines, scanner.Err()
 }
 
 func GetFileNameWithoutExtension(path string) string {
