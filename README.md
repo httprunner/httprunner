@@ -92,7 +92,6 @@ Available Commands:
   pytest       run API test with pytest
   run          run API test with go engine
   startproject create a scaffold project
-  traceroute   run integrated traceroute command
   wiki         visit https://httprunner.com
 
 Flags:
