@@ -2,20 +2,10 @@ curl httpbin.org
 
 curl https://httpbin.org/get?key1=value1&key2=value2
 
-curl -H "Content-Type: application/json" \
-    -H "Authorization: Bearer b7d03a6947b217efb6f3ec3bd3504582" \
-    -d '{"type":"A","name":"www","data":"162.10.66.0","priority":null,"port":null,"weight":null}' \
-    "https://httpbin.org/post"
+curl -H "Content-Type: application/json" -H "Authorization: Bearer b7d03a6947b217efb6f3ec3bd3504582" -d '{"type":"A","name":"www","data":"162.10.66.0","priority":null,"port":null,"weight":null}' "https://httpbin.org/post"
 
 curl -F "dummyName=dummyFile" -F file1=@file1.txt -F file2=@file2.txt https://httpbin.org/post
 
-curl https://httpbin.org/post \
-     -d 'shipment[to_address][id]=adr_HrBKVA85' \
-     -d 'shipment[from_address][id]=adr_VtuTOj7o' \
-     -d 'shipment[parcel][id]=prcl_WDv2VzHp' \
-     -d 'shipment[is_return]=true' \
-     -d 'shipment[customs_info][id]=cstinfo_bl5sE20Y'
+curl https://httpbin.org/post -d 'shipment[to_address][id]=adr_HrBKVA85' -d 'shipment[from_address][id]=adr_VtuTOj7o' -d 'shipment[parcel][id]=prcl_WDv2VzHp' -d 'shipment[is_return]=true' -d 'shipment[customs_info][id]=cstinfo_bl5sE20Y'
 
-curl https://httpbing.org/post -H "Content-Type: application/x-www-form-urlencoded" \
-     --data "key1=value+1&key2=value%3A2"
-
+curl https://httpbing.org/post -H "Content-Type: application/x-www-form-urlencoded" --data "key1=value+1&key2=value%3A2"

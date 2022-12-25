@@ -18,6 +18,7 @@ const (
 	suffixYAML   = ".yaml"
 	suffixGoTest = ".go"
 	suffixPyTest = ".py"
+	suffixHAR    = ".har"
 )
 
 type FromType int
@@ -51,6 +52,25 @@ func (fromType FromType) String() string {
 		return "pytest"
 	default:
 		return "json"
+	}
+}
+
+func (fromType FromType) Extensions() []string {
+	switch fromType {
+	case FromTypeYAML:
+		return []string{suffixYAML, ".yml"}
+	case FromTypeHAR:
+		return []string{suffixHAR}
+	case FromTypePostman, FromTypeSwagger:
+		return []string{suffixJSON}
+	case FromTypeCurl:
+		return []string{".txt", ".curl"}
+	case FromTypeGotest:
+		return []string{suffixGoTest}
+	case FromTypePyest:
+		return []string{suffixPyTest}
+	default:
+		return []string{suffixJSON}
 	}
 }
 

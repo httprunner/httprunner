@@ -330,16 +330,28 @@ func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 		}
 	}()
 
+	languageType := "text"
+	iOptions := item.Request.Body.Options
+	if iOptions != nil {
+		iLanguage := iOptions.(map[string]interface{})["raw"]
+		if iLanguage != nil {
+			languageType = iLanguage.(map[string]interface{})["language"].(string)
+		}
+	}
+
 	s.Request.Body = item.Request.Body.Raw
 	contentType := s.Request.Headers["Content-Type"]
-	if strings.Contains(contentType, "application/json") {
+	if strings.Contains(contentType, "application/json") || languageType == "json" {
 		var iBody interface{}
 		err = json.Unmarshal([]byte(item.Request.Body.Raw), &iBody)
 		if err != nil {
-			log.Warn().Err(err).Msg("33333")
 			return errors.Wrap(err, "make request body (raw -> json) failed")
 		}
 		s.Request.Body = iBody
+	}
+
+	if contentType == "" {
+		s.Request.Headers["Content-Type"] = contentTypeMap[languageType]
 	}
 	return
 }
