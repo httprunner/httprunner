@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/convert"
@@ -55,12 +58,35 @@ var convertCmd = &cobra.Command{
 			log.Info().Str("outputType", outputType.String()).Msg("set default")
 		}
 
+		var files []string
 		for _, arg := range args {
-			if err := caseConverter.Convert(arg, fromType, outputType); err != nil {
-				log.Error().Err(err).Str("path", arg).
+			if builtin.IsFolderPathExists(arg) {
+				fs, err := ioutil.ReadDir(arg)
+				if err != nil {
+					log.Error().Err(err).Str("path", arg).Msg("read dir failed")
+					continue
+				}
+				for _, f := range fs {
+					files = append(files, filepath.Join(arg, f.Name()))
+				}
+			} else {
+				files = append(files, arg)
+			}
+		}
+
+		for _, file := range files {
+			extName := filepath.Ext(file)
+			if !builtin.Contains(fromType.Extensions(), extName) {
+				log.Warn().Str("path", file).
+					Strs("expectExtensions", fromType.Extensions()).
+					Msg("skip file")
+				continue
+			}
+
+			if err := caseConverter.Convert(file, fromType, outputType); err != nil {
+				log.Error().Err(err).Str("path", file).
 					Str("outputType", outputType.String()).
 					Msg("convert case failed")
-				return err
 			}
 		}
 
