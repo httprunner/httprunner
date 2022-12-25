@@ -1,23 +1,16 @@
 package uixt
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	builtinJSON "encoding/json"
 	"fmt"
 	"io"
 	builtinLog "log"
-	"mime"
-	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -25,7 +18,6 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
@@ -686,169 +678,4 @@ func (dev *IOSDevice) RunXCTest(bundleID string) (cancel context.CancelFunc, err
 	}()
 
 	return cancel, nil
-}
-
-func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {
-	if httpClient == nil {
-		return errors.New(`'httpClient' can't be nil`)
-	}
-
-	var req *http.Request
-	if req, err = http.NewRequest(http.MethodGet, "http://*", nil); err != nil {
-		return err
-	}
-
-	var resp *http.Response
-	if resp, err = httpClient.Do(req); err != nil {
-		return err
-	}
-	// defer func() { _ = resp.Body.Close() }()
-
-	var boundary string
-	if _, param, err := mime.ParseMediaType(resp.Header.Get("Content-Type")); err != nil {
-		return err
-	} else {
-		boundary = strings.Trim(param["boundary"], "-")
-	}
-
-	mjpegReader := multipart.NewReader(resp.Body, boundary)
-
-	go func() {
-		for {
-			select {
-			case <-dExt.doneMjpegStream:
-				_ = resp.Body.Close()
-				return
-			default:
-				var part *multipart.Part
-				if part, err = mjpegReader.NextPart(); err != nil {
-					dExt.frame = nil
-					continue
-				}
-
-				raw := new(bytes.Buffer)
-				if _, err = raw.ReadFrom(part); err != nil {
-					dExt.frame = nil
-					continue
-				}
-				dExt.frame = raw
-			}
-		}
-	}()
-
-	return
-}
-
-func (dExt *DriverExt) CloseMjpegStream() {
-	dExt.doneMjpegStream <- true
-}
-
-type rawResponse []byte
-
-func (r rawResponse) checkErr() (err error) {
-	reply := new(struct {
-		Value struct {
-			Err        string `json:"error"`
-			Message    string `json:"message"`
-			Traceback  string `json:"traceback"`  // wda
-			Stacktrace string `json:"stacktrace"` // uia
-		}
-	})
-	if err = json.Unmarshal(r, reply); err != nil {
-		return err
-	}
-	if reply.Value.Err != "" {
-		errText := reply.Value.Message
-		re := regexp.MustCompile(`{.+?=(.+?)}`)
-		if re.MatchString(reply.Value.Message) {
-			subMatch := re.FindStringSubmatch(reply.Value.Message)
-			errText = subMatch[len(subMatch)-1]
-		}
-		return fmt.Errorf("%s: %s", reply.Value.Err, errText)
-	}
-	return
-}
-
-func (r rawResponse) valueConvertToString() (s string, err error) {
-	reply := new(struct{ Value string })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return "", errors.Wrapf(err, "json.Unmarshal failed, rawResponse: %s", string(r))
-	}
-	s = reply.Value
-	return
-}
-
-func (r rawResponse) valueConvertToBool() (b bool, err error) {
-	reply := new(struct{ Value bool })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return false, err
-	}
-	b = reply.Value
-	return
-}
-
-func (r rawResponse) valueConvertToSessionInfo() (sessionInfo SessionInfo, err error) {
-	reply := new(struct{ Value struct{ SessionInfo } })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return SessionInfo{}, err
-	}
-	sessionInfo = reply.Value.SessionInfo
-	return
-}
-
-func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
-	reply := new(struct{ Value builtinJSON.RawMessage })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return nil, err
-	}
-	raw = reply.Value
-	return
-}
-
-func (r rawResponse) valueDecodeAsBase64() (raw *bytes.Buffer, err error) {
-	str, err := r.valueConvertToString()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to convert value to string")
-	}
-	decodeString, err := base64.StdEncoding.DecodeString(str)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode base64 string")
-	}
-	raw = bytes.NewBuffer(decodeString)
-	return
-}
-
-var errNoSuchElement = errors.New("no such element")
-
-func (r rawResponse) valueConvertToElementID() (id string, err error) {
-	reply := new(struct{ Value map[string]string })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return "", err
-	}
-	if len(reply.Value) == 0 {
-		return "", errNoSuchElement
-	}
-	if id = elementIDFromValue(reply.Value); id == "" {
-		return "", fmt.Errorf("invalid element returned: %+v", reply)
-	}
-	return
-}
-
-func (r rawResponse) valueConvertToElementIDs() (IDs []string, err error) {
-	reply := new(struct{ Value []map[string]string })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return nil, err
-	}
-	if len(reply.Value) == 0 {
-		return nil, errNoSuchElement
-	}
-	IDs = make([]string, len(reply.Value))
-	for i, elem := range reply.Value {
-		var id string
-		if id = elementIDFromValue(elem); id == "" {
-			return nil, fmt.Errorf("invalid element returned: %+v", reply)
-		}
-		IDs[i] = id
-	}
-	return
 }

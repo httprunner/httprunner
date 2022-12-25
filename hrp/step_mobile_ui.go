@@ -50,14 +50,6 @@ func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) AppLaunchUnattached(bundleId string) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppLaunchUnattached,
-		Params: bundleId,
-	})
-	return s
-}
-
 func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method: uixt.AppTerminate,

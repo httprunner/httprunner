@@ -7,10 +7,12 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"mime"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
@@ -22,19 +24,18 @@ import (
 type MobileMethod string
 
 const (
-	AppInstall          MobileMethod = "install"
-	AppUninstall        MobileMethod = "uninstall"
-	AppStart            MobileMethod = "app_start"
-	AppLaunch           MobileMethod = "app_launch"            // 等待 app 打开并堵塞到 app 首屏加载完成，可以传入 app 的启动参数、环境变量
-	AppLaunchUnattached MobileMethod = "app_launch_unattached" // 只负责通知打开 app，不堵塞等待，不可传入启动参数
-	AppTerminate        MobileMethod = "app_terminate"
-	AppStop             MobileMethod = "app_stop"
-	CtlScreenShot       MobileMethod = "screenshot"
-	CtlSleep            MobileMethod = "sleep"
-	CtlStartCamera      MobileMethod = "camera_start" // alias for app_launch camera
-	CtlStopCamera       MobileMethod = "camera_stop"  // alias for app_terminate camera
-	RecordStart         MobileMethod = "record_start"
-	RecordStop          MobileMethod = "record_stop"
+	AppInstall     MobileMethod = "install"
+	AppUninstall   MobileMethod = "uninstall"
+	AppStart       MobileMethod = "app_start"
+	AppLaunch      MobileMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
+	AppTerminate   MobileMethod = "app_terminate"
+	AppStop        MobileMethod = "app_stop"
+	CtlScreenShot  MobileMethod = "screenshot"
+	CtlSleep       MobileMethod = "sleep"
+	CtlStartCamera MobileMethod = "camera_start" // alias for app_launch camera
+	CtlStopCamera  MobileMethod = "camera_stop"  // alias for app_terminate camera
+	RecordStart    MobileMethod = "record_start"
+	RecordStop     MobileMethod = "record_stop"
 
 	// UI validation
 	SelectorName       string = "ui_name"
@@ -314,28 +315,6 @@ func isPathExists(path string) bool {
 	return true
 }
 
-func (dExt *DriverExt) FindUIElement(param string) (ele WebElement, err error) {
-	var selector BySelector
-	if strings.HasPrefix(param, "/") {
-		// xpath
-		selector = BySelector{
-			XPath: param,
-		}
-	} else if strings.HasPrefix(param, "com.") {
-		// name
-		selector = BySelector{
-			ResourceIdID: param,
-		}
-	} else {
-		// name
-		selector = BySelector{
-			LinkText: NewElementAttribute().WithName(param),
-		}
-	}
-
-	return dExt.Driver.FindElement(selector)
-}
-
 func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (x, y, width, height float64, err error) {
 	// click on text, using OCR
 	if !isPathExists(search) {
@@ -349,30 +328,6 @@ func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, 
 	x, y = float64(rect.Min.X)/dExt.scale, float64(rect.Min.Y)/dExt.scale
 	width, height = float64(rect.Dx())/dExt.scale, float64(rect.Dy())/dExt.scale
 	return
-}
-
-func (dExt *DriverExt) PerformTouchActions(touchActions *TouchActions) error {
-	return dExt.Driver.PerformAppiumTouchActions(touchActions)
-}
-
-func (dExt *DriverExt) PerformActions(actions *W3CActions) error {
-	return dExt.Driver.PerformW3CActions(actions)
-}
-
-func (dExt *DriverExt) IsNameExist(name string) bool {
-	selector := BySelector{
-		LinkText: NewElementAttribute().WithName(name),
-	}
-	_, err := dExt.Driver.FindElement(selector)
-	return err == nil
-}
-
-func (dExt *DriverExt) IsLabelExist(label string) bool {
-	selector := BySelector{
-		LinkText: NewElementAttribute().WithLabel(label),
-	}
-	_, err := dExt.Driver.FindElement(selector)
-	return err == nil
 }
 
 func (dExt *DriverExt) IsOCRExist(text string) bool {
@@ -400,12 +355,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
 			AppLaunch, action.Params)
-	case AppLaunchUnattached:
-		if bundleId, ok := action.Params.(string); ok {
-			return dExt.Driver.AppLaunchUnattached(bundleId)
-		}
-		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
-			AppLaunchUnattached, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
 			return dExt.swipeToTapApp(appName, action)
@@ -688,10 +637,6 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 	}
 	var result bool
 	switch check {
-	case SelectorName:
-		result = (dExt.IsNameExist(expected) == exists)
-	case SelectorLabel:
-		result = (dExt.IsLabelExist(expected) == exists)
 	case SelectorOCR:
 		result = (dExt.IsOCRExist(expected) == exists)
 	case SelectorImage:
@@ -717,12 +662,57 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 	return true
 }
 
-func checkErr(t *testing.T, err error, msg ...string) {
-	if err != nil {
-		if len(msg) == 0 {
-			t.Fatal(err)
-		} else {
-			t.Fatal(msg, err)
-		}
+func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {
+	if httpClient == nil {
+		return errors.New(`'httpClient' can't be nil`)
 	}
+
+	var req *http.Request
+	if req, err = http.NewRequest(http.MethodGet, "http://*", nil); err != nil {
+		return err
+	}
+
+	var resp *http.Response
+	if resp, err = httpClient.Do(req); err != nil {
+		return err
+	}
+	// defer func() { _ = resp.Body.Close() }()
+
+	var boundary string
+	if _, param, err := mime.ParseMediaType(resp.Header.Get("Content-Type")); err != nil {
+		return err
+	} else {
+		boundary = strings.Trim(param["boundary"], "-")
+	}
+
+	mjpegReader := multipart.NewReader(resp.Body, boundary)
+
+	go func() {
+		for {
+			select {
+			case <-dExt.doneMjpegStream:
+				_ = resp.Body.Close()
+				return
+			default:
+				var part *multipart.Part
+				if part, err = mjpegReader.NextPart(); err != nil {
+					dExt.frame = nil
+					continue
+				}
+
+				raw := new(bytes.Buffer)
+				if _, err = raw.ReadFrom(part); err != nil {
+					dExt.frame = nil
+					continue
+				}
+				dExt.frame = raw
+			}
+		}
+	}()
+
+	return
+}
+
+func (dExt *DriverExt) CloseMjpegStream() {
+	dExt.doneMjpegStream <- true
 }

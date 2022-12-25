@@ -6,9 +6,16 @@
         },
         "ios": [
             {
+                "perf_options": {
+                    "sys_cpu": true,
+                    "sys_mem": true,
+                    "fps": true,
+                    "network": true
+                },
                 "port": 8700,
                 "mjpeg_port": 8800,
-                "log_on": true
+                "log_on": true,
+                "xctest_bundle_id": "com.gtf.wda.runner.xctrunner"
             }
         ]
     },
@@ -63,8 +70,8 @@
                 "actions": [
                     {
                         "method": "tap_ocr",
-                        "params": "购物",
-                        "identifier": "点击购物"
+                        "params": "商城",
+                        "identifier": "点击商城"
                     },
                     {
                         "method": "sleep",

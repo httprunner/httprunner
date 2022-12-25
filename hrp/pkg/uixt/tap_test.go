@@ -12,17 +12,14 @@ func init() {
 	iosDevice, _ = NewIOSDevice()
 }
 
-func TestDriverExt_TapWithNumber(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
-	checkErr(t, err)
-
-	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/flag7.png"
-
-	err = driverExt.TapWithNumber(pathSearch, 3)
-	checkErr(t, err)
-
-	err = driverExt.TapWithNumberOffset(pathSearch, 3, 0.5, 0.75)
-	checkErr(t, err)
+func checkErr(t *testing.T, err error, msg ...string) {
+	if err != nil {
+		if len(msg) == 0 {
+			t.Fatal(err)
+		} else {
+			t.Fatal(msg, err)
+		}
+	}
 }
 
 func TestDriverExt_TapXY(t *testing.T) {
