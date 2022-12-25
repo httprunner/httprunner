@@ -12,7 +12,7 @@ import (
 func TestAndroidDouYinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("通过 feed 头像进入抖音直播间").
-			SetAndroid(uixt.WithAdbLogOn(true), uixt.WithSerialNumber("2d06bf70")),
+			SetAndroid(uixt.WithAdbLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().
@@ -34,13 +34,6 @@ func TestAndroidDouYinLive(t *testing.T) {
 				SwipeUp(uixt.WithIdentifier("第一次上划")).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
 				SwipeUp(uixt.WithIdentifier("第二次上划")).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
-	}
-
-	if err := testCase.Dump2JSON("demo_android_douyin_live.json"); err != nil {
-		t.Fatal(err)
-	}
-	if err := testCase.Dump2YAML("demo_android_douyin_live.yaml"); err != nil {
-		t.Fatal(err)
 	}
 
 	runner := hrp.NewRunner(t).SetSaveTests(true)
