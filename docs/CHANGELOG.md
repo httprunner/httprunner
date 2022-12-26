@@ -1,5 +1,14 @@
 # Release History
 
+## v4.3.2 (2022-12-26)
+
+**go version**
+
+- feat: run Android UI automation with adb by default, add `uixt.WithUIA2(true)` option to use uiautomator2
+- refactor: remove unused APIs in UI automation
+- refactor: convert cases by specifying from/to format
+- change: remove traceroute/curl sub commands
+
 ## v4.3.1 (2022-12-22)
 
 **go version**

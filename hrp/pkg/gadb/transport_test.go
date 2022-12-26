@@ -7,8 +7,6 @@ import (
 )
 
 func Test_transport_VerifyResponse(t *testing.T) {
-	SetDebug(true)
-
 	transport, err := newTransport("localhost:5037")
 	if err != nil {
 		t.Fatal(err)

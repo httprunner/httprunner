@@ -8,6 +8,8 @@ import (
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 var ErrConnBroken = errors.New("socket connection broken")
@@ -32,7 +34,6 @@ func newTransport(address string, readTimeout ...time.Duration) (tp transport, e
 
 func (t transport) Send(command string) (err error) {
 	msg := fmt.Sprintf("%04x%s", len(command), command)
-	debugLog(fmt.Sprintf("--> %s", command))
 	return _send(t.sock, []byte(msg))
 }
 
@@ -42,7 +43,6 @@ func (t transport) VerifyResponse() (err error) {
 		return err
 	}
 	if status == "OKAY" {
-		debugLog(fmt.Sprintf("<-- %s", status))
 		return nil
 	}
 
@@ -51,7 +51,7 @@ func (t transport) VerifyResponse() (err error) {
 		return err
 	}
 	err = fmt.Errorf("command failed: %s", sError)
-	debugLog(fmt.Sprintf("<-- %s %s", status, sError))
+	log.Error().Str("status", status).Str("err", sError).Msg("verify adb response failed")
 	return
 }
 
@@ -63,7 +63,6 @@ func (t transport) ReadStringAll() (s string, err error) {
 
 func (t transport) ReadBytesAll() (raw []byte, err error) {
 	raw, err = ioutil.ReadAll(t.sock)
-	debugLog(fmt.Sprintf("\r%s", raw))
 	return
 }
 
@@ -84,7 +83,6 @@ func (t transport) UnpackBytes() (raw []byte, err error) {
 	}
 
 	raw, err = t.ReadBytesN(int(size))
-	debugLog(fmt.Sprintf("\r%s", raw))
 	return
 }
 

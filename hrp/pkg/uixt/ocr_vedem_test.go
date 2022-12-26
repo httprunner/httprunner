@@ -24,12 +24,12 @@ func checkOCR(buff *bytes.Buffer) error {
 
 func TestOCRWithScreenshot(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
+	driver, err := device.NewDriver(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	raw, err := driver.Screenshot()
+	raw, err := driver.Driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}

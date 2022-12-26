@@ -20,6 +20,7 @@ import (
 var (
 	AdbServerHost  = "localhost"
 	AdbServerPort  = gadb.AdbServerPort // 5037
+	UIA2ServerHost = "localhost"
 	UIA2ServerPort = 6790
 	DeviceTempPath = "/data/local/tmp"
 )
@@ -34,15 +35,21 @@ func WithSerialNumber(serial string) AndroidDeviceOption {
 	}
 }
 
-func WithAdbIP(ip string) AndroidDeviceOption {
+func WithUIA2(uia2On bool) AndroidDeviceOption {
 	return func(device *AndroidDevice) {
-		device.IP = ip
+		device.UIA2 = uia2On
 	}
 }
 
-func WithAdbPort(port int) AndroidDeviceOption {
+func WithUIA2IP(ip string) AndroidDeviceOption {
 	return func(device *AndroidDevice) {
-		device.Port = port
+		device.UIA2IP = ip
+	}
+}
+
+func WithUIA2Port(port int) AndroidDeviceOption {
+	return func(device *AndroidDevice) {
+		device.UIA2Port = port
 	}
 }
 
@@ -56,11 +63,14 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 	if dev.SerialNumber != "" {
 		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
 	}
-	if dev.IP != "" {
-		deviceOptions = append(deviceOptions, WithAdbIP(dev.IP))
+	if dev.UIA2 {
+		deviceOptions = append(deviceOptions, WithUIA2(true))
 	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithAdbPort(dev.Port))
+	if dev.UIA2IP != "" {
+		deviceOptions = append(deviceOptions, WithUIA2IP(dev.UIA2IP))
+	}
+	if dev.UIA2Port != 0 {
+		deviceOptions = append(deviceOptions, WithUIA2Port(dev.UIA2Port))
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
@@ -81,8 +91,8 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	}
 
 	device = &AndroidDevice{
-		Port: UIA2ServerPort,
-		IP:   AdbServerHost,
+		UIA2IP:   UIA2ServerHost,
+		UIA2Port: UIA2ServerPort,
 	}
 	for _, option := range options {
 		option(device)
@@ -118,9 +128,9 @@ type AndroidDevice struct {
 	d            gadb.Device
 	logcat       *AdbLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
-	IP           string `json:"ip,omitempty" yaml:"ip,omitempty"`
-	Port         int    `json:"port,omitempty" yaml:"port,omitempty"`
-	MjpegPort    int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"`
+	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
+	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
+	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
@@ -129,7 +139,12 @@ func (dev *AndroidDevice) UUID() string {
 }
 
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
-	driver, err := dev.NewUSBDriver(capabilities)
+	var driver WebDriver
+	if dev.UIA2 {
+		driver, err = dev.NewUSBDriver(capabilities)
+	} else {
+		driver, err = dev.NewAdbDriver()
+	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
@@ -155,8 +170,7 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
-// TODO: replace uiaDriver with WebDriver
-func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver *uiaDriver, err error) {
+func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
 	var localPort int
 	if localPort, err = getFreePort(); err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError,
@@ -168,28 +182,37 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver *uiaDr
 				localPort, UIA2ServerPort, err))
 	}
 
-	rawURL := fmt.Sprintf("http://%s%d:6790/wd/hub", forwardToPrefix, localPort)
-	driver, err = NewUIADriver(capabilities, rawURL)
+	rawURL := fmt.Sprintf("http://%s%d:%d/wd/hub",
+		forwardToPrefix, localPort, UIA2ServerPort)
+	uiaDriver, err := NewUIADriver(capabilities, rawURL)
 	if err != nil {
 		_ = dev.d.ForwardKill(localPort)
 		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError, err.Error())
 	}
-	driver.adbDevice = dev.d
-	driver.logcat = dev.logcat
-	driver.localPort = localPort
+	uiaDriver.adbClient = dev.d
+	uiaDriver.logcat = dev.logcat
 
-	return driver, nil
+	return uiaDriver, nil
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-// TODO: replace uiaDriver with WebDriver
-func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver *uiaDriver, err error) {
-	rawURL := fmt.Sprintf("http://%s:%d/wd/hub", dev.IP, dev.Port)
-	if driver, err = NewUIADriver(capabilities, rawURL); err != nil {
+func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
+	rawURL := fmt.Sprintf("http://%s:%d/wd/hub", dev.UIA2IP, dev.UIA2Port)
+	uiaDriver, err := NewUIADriver(capabilities, rawURL)
+	if err != nil {
 		return nil, err
 	}
-	driver.adbDevice = dev.d
-	return driver, nil
+
+	uiaDriver.adbClient = dev.d
+	uiaDriver.logcat = dev.logcat
+	return uiaDriver, nil
+}
+
+func (dev *AndroidDevice) NewAdbDriver() (driver WebDriver, err error) {
+	adbDriver := NewAdbDriver()
+	adbDriver.adbClient = dev.d
+	adbDriver.logcat = dev.logcat
+	return adbDriver, nil
 }
 
 func (dev *AndroidDevice) StartPerf() error {

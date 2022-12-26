@@ -35,20 +35,6 @@ func (wd *wdaDriver) GetMjpegClient() *http.Client {
 	return wd.mjpegClient
 }
 
-func (wd *wdaDriver) Close() error {
-	if wd.defaultConn != nil {
-		wd.defaultConn.Close()
-	}
-	if wd.mjpegUSBConn != nil {
-		wd.mjpegUSBConn.Close()
-	}
-
-	if wd.mjpegClient != nil {
-		wd.mjpegClient.CloseIdleConnections()
-	}
-	return wd.mjpegHTTPConn.Close()
-}
-
 func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	// [[FBRoute POST:@"/session"].withoutSession respondWithTarget:self action:@selector(handleCreateSession:)]
 	data := make(map[string]interface{})
@@ -69,19 +55,21 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	return
 }
 
-func (wd *wdaDriver) ActiveSession() (sessionInfo SessionInfo, err error) {
-	// [[FBRoute GET:@""] respondWithTarget:self action:@selector(handleGetActiveSession:)]
-	var rawResp rawResponse
-	if rawResp, err = wd.httpGET("/session", wd.sessionId); err != nil {
-		return SessionInfo{}, err
-	}
-	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {
-		return SessionInfo{}, err
-	}
-	return
-}
-
 func (wd *wdaDriver) DeleteSession() (err error) {
+	if wd.defaultConn != nil {
+		wd.defaultConn.Close()
+	}
+	if wd.mjpegUSBConn != nil {
+		wd.mjpegUSBConn.Close()
+	}
+
+	if wd.mjpegClient != nil {
+		wd.mjpegClient.CloseIdleConnections()
+	}
+	if wd.mjpegHTTPConn != nil {
+		wd.mjpegHTTPConn.Close()
+	}
+
 	// [[FBRoute DELETE:@""] respondWithTarget:self action:@selector(handleDeleteSession:)]
 	_, err = wd.httpDELETE("/session", wd.sessionId)
 	return
