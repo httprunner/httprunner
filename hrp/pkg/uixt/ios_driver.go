@@ -69,18 +69,6 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	return
 }
 
-func (wd *wdaDriver) ActiveSession() (sessionInfo SessionInfo, err error) {
-	// [[FBRoute GET:@""] respondWithTarget:self action:@selector(handleGetActiveSession:)]
-	var rawResp rawResponse
-	if rawResp, err = wd.httpGET("/session", wd.sessionId); err != nil {
-		return SessionInfo{}, err
-	}
-	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {
-		return SessionInfo{}, err
-	}
-	return
-}
-
 func (wd *wdaDriver) DeleteSession() (err error) {
 	// [[FBRoute DELETE:@""] respondWithTarget:self action:@selector(handleDeleteSession:)]
 	_, err = wd.httpDELETE("/session", wd.sessionId)

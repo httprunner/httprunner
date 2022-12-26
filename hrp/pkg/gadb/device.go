@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type DeviceFileInfo struct {
@@ -20,7 +22,7 @@ func (info DeviceFileInfo) IsDir() bool {
 	return (info.Mode & (1 << 14)) == (1 << 14)
 }
 
-const DefaultFileMode = os.FileMode(0664)
+const DefaultFileMode = os.FileMode(0o664)
 
 type DeviceState string
 
@@ -147,6 +149,9 @@ func (d Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, er
 	if strings.TrimSpace(cmd) == "" {
 		return nil, errors.New("adb shell: command cannot be empty")
 	}
+	log.Debug().Str("cmd",
+		fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
+		Msg("run adb command")
 	raw, err := d.executeCommand(fmt.Sprintf("shell:%s", cmd))
 	return raw, err
 }
@@ -156,6 +161,9 @@ func (d Device) EnableAdbOverTCP(port ...int) (err error) {
 		port = []int{AdbDaemonPort}
 	}
 
+	log.Info().Str("cmd",
+		fmt.Sprintf("adb -s %s tcpip %d", d.serial, port[0])).
+		Msg("enable adb over tcp")
 	_, err = d.executeCommand(fmt.Sprintf("tcpip:%d", port[0]), true)
 	return
 }

@@ -34,9 +34,8 @@ var errDriverNotImplemented = errors.New("driver method not implemented")
 type uiaDriver struct {
 	Driver
 
-	adbDevice gadb.Device
+	adbClient gadb.Device
 	logcat    *AdbLogcat
-	localPort int
 }
 
 func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDriver, err error) {
@@ -126,44 +125,6 @@ func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	return SessionInfo{SessionId: sessionID}, nil
 }
 
-func (ud *uiaDriver) ActiveSession() (sessionInfo SessionInfo, err error) {
-	// [[FBRoute GET:@""] respondWithTarget:self action:@selector(handleGetActiveSession:)]
-	return SessionInfo{SessionId: ud.sessionId}, nil
-}
-
-func (ud *uiaDriver) SessionIDs() (sessionIDs []string, err error) {
-	// register(getHandler, new GetSessions("/wd/hub/sessions"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/sessions"); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value []struct{ SessionId string } })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	sessionIDs = make([]string, len(reply.Value))
-	for i := range reply.Value {
-		sessionIDs[i] = reply.Value[i].SessionId
-	}
-	return
-}
-
-func (ud *uiaDriver) SessionDetails() (scrollData map[string]interface{}, err error) {
-	// register(getHandler, new GetSessionDetails("/wd/hub/session/:sessionId"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value map[string]interface{} })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	scrollData = reply.Value
-	return
-}
-
 func (ud *uiaDriver) DeleteSession() (err error) {
 	// TODO
 	return errDriverNotImplemented
@@ -225,7 +186,7 @@ func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 
 func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	// adb shell wm size
-	resp, err := ud.adbDevice.RunShellCommand("wm", "size")
+	resp, err := ud.adbClient.RunShellCommand("wm", "size")
 	if err == nil {
 		// Physical size: 1080x2340
 		s := strings.Trim(strings.Split(resp, ": ")[1], "\n")
@@ -261,7 +222,7 @@ func (ud *uiaDriver) Scale() (scale float64, err error) {
 // PressBack simulates a short press on the BACK button.
 func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
 	// adb shell input keyevent 4
-	_, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_BACK)
+	_, err = ud.adbClient.RunShellCommand("input", "keyevent", KEYCODE_BACK)
 	if err == nil {
 		return nil
 	}
@@ -271,33 +232,33 @@ func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
 }
 
 func (ud *uiaDriver) StartCamera() (err error) {
-	if _, err = ud.adbDevice.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
+	if _, err = ud.adbClient.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
 		return err
 	}
 	time.Sleep(5 * time.Second)
 	var version string
-	if version, err = ud.adbDevice.RunShellCommand("getprop", "ro.build.version.release"); err != nil {
+	if version, err = ud.adbClient.RunShellCommand("getprop", "ro.build.version.release"); err != nil {
 		return err
 	}
 	if version == "11" || version == "12" {
-		if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
+		if _, err = ud.adbClient.RunShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
+		if _, err = ud.adbClient.RunShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
+		if _, err = ud.adbClient.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
 			return err
 		}
 		return
 	} else {
-		if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
+		if _, err = ud.adbClient.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
+		if _, err = ud.adbClient.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
 			return err
 		}
 		return
@@ -315,12 +276,12 @@ func (ud *uiaDriver) StopCamera() (err error) {
 	}
 
 	// kill samsung shell command
-	if _, err = ud.adbDevice.RunShellCommand("am", "force-stop", "com.sec.android.app.camera"); err != nil {
+	if _, err = ud.adbClient.RunShellCommand("am", "force-stop", "com.sec.android.app.camera"); err != nil {
 		return err
 	}
 
 	// kill other camera (huawei mi)
-	if _, err = ud.adbDevice.RunShellCommand("am", "force-stop", "com.android.camera2"); err != nil {
+	if _, err = ud.adbClient.RunShellCommand("am", "force-stop", "com.android.camera2"); err != nil {
 		return err
 	}
 	return
@@ -332,7 +293,7 @@ func (ud *uiaDriver) Homescreen() (err error) {
 
 func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
 	// adb shell input keyevent <keyCode>
-	_, err = ud.adbDevice.RunShellCommand(
+	_, err = ud.adbClient.RunShellCommand(
 		"input", "keyevent", fmt.Sprintf("%d", keyCode))
 	if err == nil {
 		return nil
@@ -355,7 +316,7 @@ func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...K
 func (ud *uiaDriver) AppLaunch(bundleId string) (err error) {
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
-	sOutput, err := ud.adbDevice.RunShellCommand(
+	sOutput, err := ud.adbClient.RunShellCommand(
 		"monkey", "-p", bundleId, "-c", "android.intent.category.LAUNCHER", "1",
 	)
 	if err != nil {
@@ -370,7 +331,7 @@ func (ud *uiaDriver) AppLaunch(bundleId string) (err error) {
 func (ud *uiaDriver) AppTerminate(bundleId string) (successful bool, err error) {
 	// 强制停止应用，停止 <packagename> 相关的进程
 	// adb shell am force-stop <packagename>
-	_, err = ud.adbDevice.RunShellCommand("am", "force-stop", bundleId)
+	_, err = ud.adbClient.RunShellCommand("am", "force-stop", bundleId)
 	return err == nil, err
 }
 
@@ -380,7 +341,7 @@ func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
 
 func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 	// adb shell input tap x y
-	_, err = ud.adbDevice.RunShellCommand(
+	_, err = ud.adbClient.RunShellCommand(
 		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
 	if err == nil {
 		return nil
@@ -461,7 +422,7 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) er
 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
 	// adb shell input swipe fromX fromY toX toY
-	_, err := ud.adbDevice.RunShellCommand(
+	_, err := ud.adbClient.RunShellCommand(
 		"input", "swipe",
 		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
@@ -581,7 +542,7 @@ func (ud *uiaDriver) SetRotation(rotation Rotation) (err error) {
 
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// adb shell screencap -p
-	resp, err := ud.adbDevice.RunShellCommandWithBytes(
+	resp, err := ud.adbClient.RunShellCommandWithBytes(
 		"screencap", "-p",
 	)
 	if err == nil {
