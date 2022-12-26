@@ -9,37 +9,21 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
-)
-
-// See https://developer.android.com/reference/android/view/KeyEvent
-const (
-	KEYCODE_BACK      string = "4"
-	KEYCODE_CAMERA    string = "27"
-	KEYCODE_ALT_LEFT  string = "57"
-	KEYCODE_ALT_RIGHT string = "58"
-	KEYCODE_MENU      string = "82"
-	KEYCODE_BREAK     string = "121"
-	KEYCODE_ALL_APPS  string = "284"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
 
 type uiaDriver struct {
-	Driver
-
-	adbDevice gadb.Device
-	logcat    *AdbLogcat
-	localPort int
+	adbDriver
 }
 
 func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDriver, err error) {
+	log.Info().Msg("init uiautomator2 driver")
 	if capabilities == nil {
 		capabilities = NewCapabilities()
 	}
@@ -60,12 +44,15 @@ func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDrive
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
 	driver.client = convertToHTTPClient(conn)
-	if session, err := driver.NewSession(capabilities); err != nil {
-		return nil, err
-	} else {
+
+	session, err := driver.NewSession(capabilities)
+	if err == nil {
 		driver.sessionId = session.SessionId
+	} else {
+		log.Warn().Msg(
+			"create UIAutomator session failed, use adb driver instead")
 	}
-	return
+	return driver, nil
 }
 
 type BatteryStatus int
@@ -96,17 +83,6 @@ func (bs BatteryStatus) String() string {
 	}
 }
 
-func (ud *uiaDriver) Close() (err error) {
-	if ud.sessionId == "" {
-		return nil
-	}
-	if _, err = ud.httpDELETE("/session", ud.sessionId); err == nil {
-		ud.sessionId = ""
-	}
-
-	return err
-}
-
 func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp rawResponse
@@ -123,47 +99,15 @@ func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	return SessionInfo{SessionId: sessionID}, nil
 }
 
-func (ud *uiaDriver) ActiveSession() (sessionInfo SessionInfo, err error) {
-	// [[FBRoute GET:@""] respondWithTarget:self action:@selector(handleGetActiveSession:)]
-	return SessionInfo{SessionId: ud.sessionId}, nil
-}
-
-func (ud *uiaDriver) SessionIDs() (sessionIDs []string, err error) {
-	// register(getHandler, new GetSessions("/wd/hub/sessions"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/sessions"); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value []struct{ SessionId string } })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	sessionIDs = make([]string, len(reply.Value))
-	for i := range reply.Value {
-		sessionIDs[i] = reply.Value[i].SessionId
-	}
-	return
-}
-
-func (ud *uiaDriver) SessionDetails() (scrollData map[string]interface{}, err error) {
-	// register(getHandler, new GetSessionDetails("/wd/hub/session/:sessionId"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value map[string]interface{} })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	scrollData = reply.Value
-	return
-}
-
 func (ud *uiaDriver) DeleteSession() (err error) {
-	// TODO
-	return errDriverNotImplemented
+	if ud.sessionId == "" {
+		return nil
+	}
+	if _, err = ud.httpDELETE("/session", ud.sessionId); err == nil {
+		ud.sessionId = ""
+	}
+
+	return err
 }
 
 func (ud *uiaDriver) Status() (deviceStatus DeviceStatus, err error) {
@@ -198,11 +142,6 @@ func (ud *uiaDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	return
 }
 
-func (ud *uiaDriver) Location() (location Location, err error) {
-	// TODO
-	return location, errDriverNotImplemented
-}
-
 func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	// register(getHandler, new GetBatteryInfo("/wd/hub/session/:sessionId/appium/device/battery_info"))
 	var rawResp rawResponse
@@ -234,78 +173,10 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	return
 }
 
-func (ud *uiaDriver) Screen() (screen Screen, err error) {
-	// TODO
-	return screen, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) Scale() (scale float64, err error) {
-	return 1, nil
-}
-
 // PressBack simulates a short press on the BACK button.
 func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
-	if err != nil {
-		_, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_BACK)
-	}
-	return
-}
-
-func (ud *uiaDriver) StartCamera() (err error) {
-	if _, err = ud.adbDevice.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
-		return err
-	}
-	time.Sleep(5 * time.Second)
-	var version string
-	if version, err = ud.adbDevice.RunShellCommand("getprop", "ro.build.version.release"); err != nil {
-		return err
-	}
-	if version == "11" || version == "12" {
-		if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
-			return err
-		}
-		return
-	} else {
-		if _, err = ud.adbDevice.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
-			return err
-		}
-		return
-	}
-}
-
-func (ud *uiaDriver) StopCamera() (err error) {
-	err = ud.PressBack()
-	if err != nil {
-		return err
-	}
-	err = ud.Homescreen()
-	if err != nil {
-		return err
-	}
-
-	// kill samsung shell command
-	if _, err = ud.adbDevice.RunShellCommand("am", "force-stop", "com.sec.android.app.camera"); err != nil {
-		return err
-	}
-
-	// kill other camera (huawei mi)
-	if _, err = ud.adbDevice.RunShellCommand("am", "force-stop", "com.android.camera2"); err != nil {
-		return err
-	}
 	return
 }
 
@@ -314,10 +185,6 @@ func (ud *uiaDriver) Homescreen() (err error) {
 }
 
 func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
-	return ud._pressKeyCode(keyCode, metaState, flags...)
-}
-
-func (ud *uiaDriver) _pressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
 	// register(postHandler, new PressKeyCodeAsync("/wd/hub/session/:sessionId/appium/device/press_keycode"))
 	data := map[string]interface{}{
 		"keycode": keyCode,
@@ -330,28 +197,6 @@ func (ud *uiaDriver) _pressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...
 	}
 	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/device/press_keycode")
 	return
-}
-
-func (ud *uiaDriver) AppLaunch(bundleId string) (err error) {
-	// 不指定 Activity 名称启动（启动主 Activity）
-	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
-	sOutput, err := ud.adbDevice.RunShellCommand(
-		"monkey", "-p", bundleId, "-c", "android.intent.category.LAUNCHER", "1",
-	)
-	if err != nil {
-		return err
-	}
-	if strings.Contains(sOutput, "monkey aborted") {
-		return fmt.Errorf("app launch: %s", strings.TrimSpace(sOutput))
-	}
-	return nil
-}
-
-func (ud *uiaDriver) AppTerminate(bundleId string) (successful bool, err error) {
-	// 强制停止应用，停止 <packagename> 相关的进程
-	// adb shell am force-stop <packagename>
-	_, err = ud.adbDevice.RunShellCommand("am", "force-stop", bundleId)
-	return err == nil, err
 }
 
 func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
@@ -369,15 +214,6 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 
 	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "appium/tap")
 	return
-}
-
-func (ud *uiaDriver) DoubleTap(x, y int) error {
-	return ud.DoubleTapFloat(float64(x), float64(y))
-}
-
-func (ud *uiaDriver) DoubleTapFloat(x, y float64) (err error) {
-	// TODO
-	return errDriverNotImplemented
 }
 
 func (ud *uiaDriver) TouchAndHold(x, y int, second ...float64) (err error) {
@@ -400,12 +236,6 @@ func (ud *uiaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 	return
 }
 
-func (ud *uiaDriver) _drag(data map[string]interface{}) (err error) {
-	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "touch/drag")
-	return
-}
-
 // Drag performs a swipe from one coordinate to another coordinate. You can control
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
@@ -425,22 +255,8 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	// new data options in post data for extra uiautomator configurations
 	newData := NewData(data, options...)
 
-	return ud._drag(newData)
-}
-
-func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...DataOption) (err error) {
-	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
-	data := map[string]interface{}{
-		"startX": startX,
-		"startY": startY,
-		"endX":   endX,
-		"endY":   endY,
-	}
-
-	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
-
-	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
+	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
+	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/drag")
 	return
 }
 
@@ -453,16 +269,19 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) er
 }
 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
-	return ud._swipe(fromX, fromY, toX, toY, options...)
-}
+	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
+	data := map[string]interface{}{
+		"startX": fromX,
+		"startY": fromY,
+		"endX":   toX,
+		"endY":   toY,
+	}
 
-func (ud *uiaDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
-	return ud.ForceTouchFloat(float64(x), float64(y), pressure, second...)
-}
+	// new data options in post data for extra uiautomator configurations
+	newData := NewData(data, options...)
 
-func (ud *uiaDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) (err error) {
-	// TODO
-	return errDriverNotImplemented
+	_, err := ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
+	return err
 }
 
 func (ud *uiaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
@@ -525,11 +344,6 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 	return ud.SendKeys(text, options...)
 }
 
-func (ud *uiaDriver) PressButton(devBtn DeviceButton) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 	// register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"))
 	var rawResp rawResponse
@@ -543,11 +357,6 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 
 	rotation = reply.Value
 	return
-}
-
-func (ud *uiaDriver) SetRotation(rotation Rotation) (err error) {
-	// TODO
-	return errDriverNotImplemented
 }
 
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
@@ -585,93 +394,4 @@ func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 
 	source = reply.Value
 	return
-}
-
-func (ud *uiaDriver) AccessibleSource() (source string, err error) {
-	// TODO
-	return source, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) HealthCheck() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
-	// register(getHandler, new GetSettings("/wd/hub/session/:sessionId/appium/settings"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId, "appium/settings"); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value map[string]interface{} })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	settings = reply.Value
-	return
-}
-
-func (ud *uiaDriver) SetAppiumSettings(settings map[string]interface{}) (ret map[string]interface{}, err error) {
-	data := map[string]interface{}{
-		"settings": settings,
-	}
-	// register(postHandler, new UpdateSettings("/wd/hub/session/:sessionId/appium/settings"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/settings")
-	return
-}
-
-func (ud *uiaDriver) IsHealthy() (healthy bool, err error) {
-	// TODO
-	return healthy, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) WaitWithTimeoutAndInterval(condition Condition, timeout, interval time.Duration) error {
-	startTime := time.Now()
-	for {
-		done, err := condition(ud)
-		if err != nil {
-			return err
-		}
-		if done {
-			return nil
-		}
-
-		if elapsed := time.Since(startTime); elapsed > timeout {
-			return fmt.Errorf("timeout after %v", elapsed)
-		}
-		time.Sleep(interval)
-	}
-}
-
-func (ud *uiaDriver) WaitWithTimeout(condition Condition, timeout time.Duration) error {
-	return ud.WaitWithTimeoutAndInterval(condition, timeout, DefaultWaitInterval)
-}
-
-func (ud *uiaDriver) Wait(condition Condition) error {
-	return ud.WaitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
-}
-
-func (ud *uiaDriver) StartCaptureLog(identifier ...string) (err error) {
-	log.Info().Msg("start adb log recording")
-	err = ud.logcat.CatchLogcat()
-	if err != nil {
-		err = errors.Wrap(code.AndroidCaptureLogError,
-			fmt.Sprintf("start adb log recording failed: %v", err))
-		return err
-	}
-	return nil
-}
-
-func (ud *uiaDriver) StopCaptureLog() (result interface{}, err error) {
-	log.Info().Msg("stop adb log recording")
-	err = ud.logcat.Stop()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get adb log recording")
-		err = errors.Wrap(code.AndroidCaptureLogError,
-			fmt.Sprintf("get adb log recording failed: %v", err))
-		return "", err
-	}
-	content := ud.logcat.logBuffer.String()
-	return ConvertPoints(content), nil
 }

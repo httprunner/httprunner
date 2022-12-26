@@ -1,5 +1,7 @@
 package uixt
 
+// See https://developer.android.com/reference/android/view/KeyEvent
+
 type KeyMeta int
 
 const (
