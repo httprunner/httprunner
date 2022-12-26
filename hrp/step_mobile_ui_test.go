@@ -59,7 +59,7 @@ func TestIOSAppLaunch(t *testing.T) {
 			NewStep("终止今日头条").
 				IOS().AppTerminate("com.ss.iphone.article.News"),
 			NewStep("启动今日头条").
-				IOS().AppLaunchUnattached("com.ss.iphone.article.News"),
+				IOS().AppLaunch("com.ss.iphone.article.News"),
 		},
 	}
 	err := NewRunner(t).Run(testCase)

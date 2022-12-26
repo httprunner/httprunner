@@ -13,31 +13,33 @@ const (
 	profileOverridePath = "../../../examples/data/profile_override.yml"
 )
 
+var converter *TCaseConverter
+
+func init() {
+	converter = NewConverter("", "")
+}
+
 func TestLoadTCase(t *testing.T) {
-	tCase, err := LoadTCase(harPath)
+	err := converter.loadCase(harPath, FromTypeHAR)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
-	if !assert.NotEmpty(t, tCase) {
+	if !assert.NotEmpty(t, converter.tCase) {
 		t.Fatal()
 	}
 }
 
 func TestLoadHARWithProfileOverride(t *testing.T) {
-	tCase, err := LoadTCase(harPath)
+	err := converter.loadCase(harPath, FromTypeHAR)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
-	if !assert.NotEmpty(t, tCase) {
+	if !assert.NotEmpty(t, converter.tCase) {
 		t.Fatal()
 	}
 
-	caseConverter := &TCaseConverter{
-		TCase: tCase,
-	}
-
 	// override TCase with profile
-	err = caseConverter.overrideWithProfile(profileOverridePath)
+	err = converter.overrideWithProfile(profileOverridePath)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
@@ -45,12 +47,12 @@ func TestLoadHARWithProfileOverride(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		if !assert.Equal(t,
 			map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-			caseConverter.TCase.TestSteps[i].Request.Headers) {
+			converter.tCase.TestSteps[i].Request.Headers) {
 			t.FailNow()
 		}
 		if !assert.Equal(t,
 			map[string]string{"UserName": "debugtalk"},
-			caseConverter.TCase.TestSteps[i].Request.Cookies) {
+			converter.tCase.TestSteps[i].Request.Cookies) {
 			t.FailNow()
 		}
 	}
@@ -58,7 +60,7 @@ func TestLoadHARWithProfileOverride(t *testing.T) {
 
 func TestMakeRequestWithProfile(t *testing.T) {
 	caseConverter := &TCaseConverter{
-		TCase: &hrp.TCase{
+		tCase: &hrp.TCase{
 			TestSteps: []*hrp.TStep{
 				{
 					Request: &hrp.Request{
@@ -87,19 +89,19 @@ func TestMakeRequestWithProfile(t *testing.T) {
 
 	if !assert.Equal(t, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "hrp",
-	}, caseConverter.TCase.TestSteps[0].Request.Headers) {
+	}, caseConverter.tCase.TestSteps[0].Request.Headers) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, map[string]string{
 		"UserName": "debugtalk", "abc": "123",
-	}, caseConverter.TCase.TestSteps[0].Request.Cookies) {
+	}, caseConverter.tCase.TestSteps[0].Request.Cookies) {
 		t.Fatal()
 	}
 }
 
 func TestMakeRequestWithProfileOverride(t *testing.T) {
 	caseConverter := &TCaseConverter{
-		TCase: &hrp.TCase{
+		tCase: &hrp.TCase{
 			TestSteps: []*hrp.TStep{
 				{
 					Request: &hrp.Request{
@@ -129,12 +131,12 @@ func TestMakeRequestWithProfileOverride(t *testing.T) {
 
 	if !assert.Equal(t, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
-	}, caseConverter.TCase.TestSteps[0].Request.Headers) {
+	}, caseConverter.tCase.TestSteps[0].Request.Headers) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, map[string]string{
 		"UserName": "debugtalk",
-	}, caseConverter.TCase.TestSteps[0].Request.Cookies) {
+	}, caseConverter.tCase.TestSteps[0].Request.Cookies) {
 		t.Fatal()
 	}
 }

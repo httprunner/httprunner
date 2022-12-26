@@ -97,12 +97,6 @@ func (dExt *DriverExt) Tap(param string, options ...DataOption) error {
 }
 
 func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options ...DataOption) (err error) {
-	// click on element, find by name attribute
-	ele, err := dExt.FindUIElement(param)
-	if err == nil {
-		return ele.Click()
-	}
-
 	dataOptions := NewDataOptions(options...)
 
 	x, y, width, height, err := dExt.FindUIRectInUIKit(param, options...)
@@ -132,37 +126,10 @@ func (dExt *DriverExt) DoubleTap(param string) (err error) {
 }
 
 func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (err error) {
-	// click on element, find by name attribute
-	ele, err := dExt.FindUIElement(param)
-	if err == nil {
-		return ele.DoubleTap()
-	}
-
 	var x, y, width, height float64
 	if x, y, width, height, err = dExt.FindUIRectInUIKit(param); err != nil {
 		return err
 	}
 
 	return dExt.Driver.DoubleTapFloat(x+width*xOffset, y+height*yOffset)
-}
-
-// TapWithNumber sends one or more taps
-func (dExt *DriverExt) TapWithNumber(param string, numberOfTaps int) (err error) {
-	return dExt.TapWithNumberOffset(param, numberOfTaps, 0.5, 0.5)
-}
-
-func (dExt *DriverExt) TapWithNumberOffset(param string, numberOfTaps int, xOffset, yOffset float64) (err error) {
-	if numberOfTaps <= 0 {
-		numberOfTaps = 1
-	}
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(param); err != nil {
-		return err
-	}
-
-	x = x + width*xOffset
-	y = y + height*yOffset
-
-	touchActions := NewTouchActions().Tap(NewTouchActionTap().WithXYFloat(x, y).WithCount(numberOfTaps))
-	return dExt.PerformTouchActions(touchActions)
 }

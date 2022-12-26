@@ -8,8 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -315,12 +315,9 @@ func (wd *wdaDriver) AlertSendKeys(text string) (err error) {
 	return
 }
 
-func (wd *wdaDriver) AppLaunch(bundleId string, launchOpt ...AppLaunchOption) (err error) {
+func (wd *wdaDriver) AppLaunch(bundleId string) (err error) {
 	// [[FBRoute POST:@"/wda/apps/launch"] respondWithTarget:self action:@selector(handleSessionAppLaunch:)]
 	data := make(map[string]interface{})
-	if len(launchOpt) != 0 {
-		data = launchOpt[0]
-	}
 	data["bundleId"] = bundleId
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/apps/launch")
 	return
@@ -360,13 +357,6 @@ func (wd *wdaDriver) AppDeactivate(second float64) (err error) {
 	}
 	data := map[string]interface{}{"duration": second}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/deactivateApp")
-	return
-}
-
-func (wd *wdaDriver) AppAuthReset(resource ProtectedResource) (err error) {
-	// [[FBRoute POST:@"/wda/resetAppAuth"] respondWithTarget:self action:@selector(handleResetAppAuth:)]
-	data := map[string]interface{}{"resource": resource}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/resetAppAuth")
 	return
 }
 
@@ -447,37 +437,6 @@ func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataO
 	return wd.DragFloat(fromX, fromY, toX, toY, options...)
 }
 
-func (wd *wdaDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
-	return wd.ForceTouchFloat(float64(x), float64(y), pressure, second...)
-}
-
-func (wd *wdaDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) error {
-	if len(second) == 0 || second[0] <= 0 {
-		second = []float64{1.0}
-	}
-	actions := NewTouchActions().
-		Press(
-			NewTouchActionPress().WithXYFloat(x, y).WithPressure(pressure)).
-		Wait(second[0]).
-		Release()
-	return wd.PerformAppiumTouchActions(actions)
-}
-
-func (wd *wdaDriver) PerformW3CActions(actions *W3CActions) (err error) {
-	// [[FBRoute POST:@"/actions"] respondWithTarget:self action:@selector(handlePerformW3CTouchActions:)]
-	data := map[string]interface{}{"actions": actions}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/actions")
-	return
-}
-
-func (wd *wdaDriver) PerformAppiumTouchActions(touchActs *TouchActions) (err error) {
-	// [[FBRoute POST:@"/wda/touch/perform"] respondWithTarget:self action:@selector(handlePerformAppiumTouchActions:)]
-	// [[FBRoute POST:@"/wda/touch/multi/perform"]
-	data := map[string]interface{}{"actions": touchActs}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/touch/multi/perform")
-	return
-}
-
 func (wd *wdaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
 	// [[FBRoute POST:@"/wda/setPasteboard"] respondWithTarget:self action:@selector(handleSetPasteboard:)]
 	data := map[string]interface{}{
@@ -516,16 +475,6 @@ func (wd *wdaDriver) Input(text string, options ...DataOption) (err error) {
 	return wd.SendKeys(text, options...)
 }
 
-func (wd *wdaDriver) KeyboardDismiss(keyNames ...string) (err error) {
-	// [[FBRoute POST:@"/wda/keyboard/dismiss"] respondWithTarget:self action:@selector(handleDismissKeyboardCommand:)]
-	if len(keyNames) == 0 {
-		keyNames = []string{"return"}
-	}
-	data := map[string]interface{}{"keyNames": keyNames}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/keyboard/dismiss")
-	return
-}
-
 // PressBack simulates a short press on the BACK button.
 func (wd *wdaDriver) PressBack(options ...DataOption) (err error) {
 	windowSize, err := wd.WindowSize()
@@ -554,20 +503,6 @@ func (wd *wdaDriver) PressButton(devBtn DeviceButton) (err error) {
 	return
 }
 
-func (wd *wdaDriver) IOHIDEvent(pageID EventPageID, usageID EventUsageID, duration ...float64) (err error) {
-	// [[FBRoute POST:@"/wda/performIoHidEvent"] respondWithTarget:self action:@selector(handlePeformIOHIDEvent:)]
-	if len(duration) == 0 || duration[0] <= 0 {
-		duration = []float64{0.005}
-	}
-	data := map[string]interface{}{
-		"page":     pageID,
-		"usage":    usageID,
-		"duration": duration[0],
-	}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/performIoHidEvent")
-	return
-}
-
 func (wd *wdaDriver) StartCamera() (err error) {
 	// start camera, alias for app_launch com.apple.camera
 	return wd.AppLaunch("com.apple.camera")
@@ -583,34 +518,6 @@ func (wd *wdaDriver) StopCamera() (err error) {
 		log.Warn().Msg("camera was not running")
 	}
 	return nil
-}
-
-func (wd *wdaDriver) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {
-	// [[FBRoute POST:@"/wda/expectNotification"] respondWithTarget:self action:@selector(handleExpectNotification:)]
-	if len(second) == 0 {
-		second = []int{60}
-	}
-	data := map[string]interface{}{
-		"name":    notifyName,
-		"type":    notifyType,
-		"timeout": second[0],
-	}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/expectNotification")
-	return
-}
-
-func (wd *wdaDriver) SiriActivate(text string) (err error) {
-	// [[FBRoute POST:@"/wda/siri/activate"] respondWithTarget:self action:@selector(handleActivateSiri:)]
-	data := map[string]interface{}{"text": text}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/siri/activate")
-	return
-}
-
-func (wd *wdaDriver) SiriOpenUrl(url string) (err error) {
-	// [[FBRoute POST:@"/url"] respondWithTarget:self action:@selector(handleOpenURL:)]
-	data := map[string]interface{}{"url": url}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/url")
-	return
 }
 
 func (wd *wdaDriver) Orientation() (orientation Orientation, err error) {
@@ -651,74 +558,6 @@ func (wd *wdaDriver) Rotation() (rotation Rotation, err error) {
 func (wd *wdaDriver) SetRotation(rotation Rotation) (err error) {
 	// [[FBRoute POST:@"/rotation"] respondWithTarget:self action:@selector(handleSetRotation:)]
 	_, err = wd.httpPOST(rotation, "/session", wd.sessionId, "/rotation")
-	return
-}
-
-func (wd *wdaDriver) MatchTouchID(isMatch bool) (err error) {
-	// [FBRoute POST:@"/wda/touch_id"]
-	data := map[string]interface{}{"match": isMatch}
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/touch_id")
-	return
-}
-
-func (wd *wdaDriver) ActiveElement() (element WebElement, err error) {
-	// [[FBRoute GET:@"/element/active"] respondWithTarget:self action:@selector(handleGetActiveElement:)]
-	var rawResp rawResponse
-	if rawResp, err = wd.httpGET("/session", wd.sessionId, "/element/active"); err != nil {
-		return nil, err
-	}
-	var elementID string
-	if elementID, err = rawResp.valueConvertToElementID(); err != nil {
-		return nil, err
-	}
-	element = &wdaElement{parent: wd, id: elementID}
-	return
-}
-
-func (wd *wdaDriver) FindElement(by BySelector) (element WebElement, err error) {
-	// [[FBRoute POST:@"/element"] respondWithTarget:self action:@selector(handleFindElement:)]
-	using, value := by.getUsingAndValue()
-	data := map[string]interface{}{
-		"using": using,
-		"value": value,
-	}
-	var rawResp rawResponse
-	if rawResp, err = wd.httpPOST(data, "/session", wd.sessionId, "/element"); err != nil {
-		return nil, err
-	}
-	var elementID string
-	if elementID, err = rawResp.valueConvertToElementID(); err != nil {
-		if errors.Is(err, errNoSuchElement) {
-			return nil, fmt.Errorf("%w: unable to find an element using '%s', value '%s'", err, using, value)
-		}
-		return nil, err
-	}
-	element = &wdaElement{parent: wd, id: elementID}
-	return
-}
-
-func (wd *wdaDriver) FindElements(by BySelector) (elements []WebElement, err error) {
-	// [[FBRoute POST:@"/elements"] respondWithTarget:self action:@selector(handleFindElements:)]
-	using, value := by.getUsingAndValue()
-	data := map[string]interface{}{
-		"using": using,
-		"value": value,
-	}
-	var rawResp rawResponse
-	if rawResp, err = wd.httpPOST(data, "/session", wd.sessionId, "/elements"); err != nil {
-		return nil, err
-	}
-	var elementIDs []string
-	if elementIDs, err = rawResp.valueConvertToElementIDs(); err != nil {
-		if errors.Is(err, errNoSuchElement) {
-			return nil, fmt.Errorf("%w: unable to find an element using '%s', value '%s'", err, using, value)
-		}
-		return nil, err
-	}
-	elements = make([]WebElement, len(elementIDs))
-	for i := range elementIDs {
-		elements[i] = &wdaElement{parent: wd, id: elementIDs[i]}
-	}
 	return
 }
 
@@ -838,32 +677,6 @@ func (wd *wdaDriver) WdaShutdown() (err error) {
 	return
 }
 
-func (wd *wdaDriver) WaitWithTimeoutAndInterval(condition Condition, timeout, interval time.Duration) error {
-	startTime := time.Now()
-	for {
-		done, err := condition(wd)
-		if err != nil {
-			return err
-		}
-		if done {
-			return nil
-		}
-
-		if elapsed := time.Since(startTime); elapsed > timeout {
-			return fmt.Errorf("timeout after %v", elapsed)
-		}
-		time.Sleep(interval)
-	}
-}
-
-func (wd *wdaDriver) WaitWithTimeout(condition Condition, timeout time.Duration) error {
-	return wd.WaitWithTimeoutAndInterval(condition, timeout, DefaultWaitInterval)
-}
-
-func (wd *wdaDriver) Wait(condition Condition) error {
-	return wd.WaitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
-}
-
 func (wd *wdaDriver) triggerWDALog(data map[string]interface{}) (rawResp []byte, err error) {
 	// [[FBRoute POST:@"/gtf/automation/log"].withoutSession respondWithTarget:self action:@selector(handleAutomationLog:)]
 	return wd.httpPOST(data, "/gtf/automation/log")
@@ -906,4 +719,79 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 	}
 	log.Info().Interface("value", reply.Value).Msg("get WDA log response")
 	return reply.Value, nil
+}
+
+type rawResponse []byte
+
+func (r rawResponse) checkErr() (err error) {
+	reply := new(struct {
+		Value struct {
+			Err        string `json:"error"`
+			Message    string `json:"message"`
+			Traceback  string `json:"traceback"`  // wda
+			Stacktrace string `json:"stacktrace"` // uia
+		}
+	})
+	if err = json.Unmarshal(r, reply); err != nil {
+		return err
+	}
+	if reply.Value.Err != "" {
+		errText := reply.Value.Message
+		re := regexp.MustCompile(`{.+?=(.+?)}`)
+		if re.MatchString(reply.Value.Message) {
+			subMatch := re.FindStringSubmatch(reply.Value.Message)
+			errText = subMatch[len(subMatch)-1]
+		}
+		return fmt.Errorf("%s: %s", reply.Value.Err, errText)
+	}
+	return
+}
+
+func (r rawResponse) valueConvertToString() (s string, err error) {
+	reply := new(struct{ Value string })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return "", errors.Wrapf(err, "json.Unmarshal failed, rawResponse: %s", string(r))
+	}
+	s = reply.Value
+	return
+}
+
+func (r rawResponse) valueConvertToBool() (b bool, err error) {
+	reply := new(struct{ Value bool })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return false, err
+	}
+	b = reply.Value
+	return
+}
+
+func (r rawResponse) valueConvertToSessionInfo() (sessionInfo SessionInfo, err error) {
+	reply := new(struct{ Value struct{ SessionInfo } })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return SessionInfo{}, err
+	}
+	sessionInfo = reply.Value.SessionInfo
+	return
+}
+
+func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
+	reply := new(struct{ Value builtinJSON.RawMessage })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return nil, err
+	}
+	raw = reply.Value
+	return
+}
+
+func (r rawResponse) valueDecodeAsBase64() (raw *bytes.Buffer, err error) {
+	str, err := r.valueConvertToString()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert value to string")
+	}
+	decodeString, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode base64 string")
+	}
+	raw = bytes.NewBuffer(decodeString)
+	return
 }

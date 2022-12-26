@@ -24,6 +24,7 @@ func TestWDALog(t *testing.T) {
 					uixt.WithIOSPerfNetwork(true),
 					uixt.WithIOSPerfFPS(true),
 				),
+				uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").

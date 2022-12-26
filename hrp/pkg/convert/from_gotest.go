@@ -31,9 +31,9 @@ func convert2GoTestScripts(paths ...string) error {
 	for _, testCase := range testCases {
 		tc := testCase.ToTCase()
 		converter := TCaseConverter{
-			TCase: tc,
+			tCase: tc,
 		}
-		pytestPath, err := converter.ToPyTest()
+		pytestPath, err := converter.toPyTest()
 		if err != nil {
 			log.Error().Err(err).
 				Str("originPath", tc.Config.Path).
