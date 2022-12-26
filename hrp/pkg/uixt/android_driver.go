@@ -245,11 +245,13 @@ func (ud *uiaDriver) Scale() (scale float64, err error) {
 
 // PressBack simulates a short press on the BACK button.
 func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
+	// adb shell input keyevent 4
+	_, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_BACK)
+	if err == nil {
+		return nil
+	}
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
-	if err != nil {
-		_, err = ud.adbDevice.RunShellCommand("input", "keyevent", KEYCODE_BACK)
-	}
 	return
 }
 
@@ -314,10 +316,13 @@ func (ud *uiaDriver) Homescreen() (err error) {
 }
 
 func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
-	return ud._pressKeyCode(keyCode, metaState, flags...)
-}
+	// adb shell input keyevent <keyCode>
+	_, err = ud.adbDevice.RunShellCommand(
+		"input", "keyevent", fmt.Sprintf("%d", keyCode))
+	if err == nil {
+		return nil
+	}
 
-func (ud *uiaDriver) _pressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
 	// register(postHandler, new PressKeyCodeAsync("/wd/hub/session/:sessionId/appium/device/press_keycode"))
 	data := map[string]interface{}{
 		"keycode": keyCode,
@@ -359,6 +364,13 @@ func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
 }
 
 func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
+	// adb shell input tap x y
+	_, err = ud.adbDevice.RunShellCommand(
+		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
+	if err == nil {
+		return nil
+	}
+
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	data := map[string]interface{}{
 		"x": x,
@@ -400,12 +412,6 @@ func (ud *uiaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 	return
 }
 
-func (ud *uiaDriver) _drag(data map[string]interface{}) (err error) {
-	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "touch/drag")
-	return
-}
-
 // Drag performs a swipe from one coordinate to another coordinate. You can control
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
@@ -425,22 +431,8 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	// new data options in post data for extra uiautomator configurations
 	newData := NewData(data, options...)
 
-	return ud._drag(newData)
-}
-
-func (ud *uiaDriver) _swipe(startX, startY, endX, endY interface{}, options ...DataOption) (err error) {
-	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
-	data := map[string]interface{}{
-		"startX": startX,
-		"startY": startY,
-		"endX":   endX,
-		"endY":   endY,
-	}
-
-	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
-
-	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
+	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
+	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/drag")
 	return
 }
 
@@ -453,7 +445,29 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) er
 }
 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
-	return ud._swipe(fromX, fromY, toX, toY, options...)
+	// adb shell input swipe fromX fromY toX toY
+	_, err := ud.adbDevice.RunShellCommand(
+		"input", "swipe",
+		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
+		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
+	)
+	if err == nil {
+		return nil
+	}
+
+	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
+	data := map[string]interface{}{
+		"startX": fromX,
+		"startY": fromY,
+		"endX":   toX,
+		"endY":   toY,
+	}
+
+	// new data options in post data for extra uiautomator configurations
+	newData := NewData(data, options...)
+
+	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
+	return err
 }
 
 func (ud *uiaDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
@@ -551,6 +565,14 @@ func (ud *uiaDriver) SetRotation(rotation Rotation) (err error) {
 }
 
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
+	// adb shell screencap -p
+	resp, err := ud.adbDevice.RunShellCommandWithBytes(
+		"screencap", "-p",
+	)
+	if err == nil {
+		return bytes.NewBuffer(resp), nil
+	}
+
 	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "screenshot"); err != nil {
