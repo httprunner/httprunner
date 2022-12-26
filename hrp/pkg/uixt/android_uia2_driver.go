@@ -142,11 +142,6 @@ func (ud *uiaDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	return
 }
 
-func (ud *uiaDriver) Location() (location Location, err error) {
-	// TODO
-	return location, errDriverNotImplemented
-}
-
 func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	// register(getHandler, new GetBatteryInfo("/wd/hub/session/:sessionId/appium/device/battery_info"))
 	var rawResp rawResponse
@@ -176,15 +171,6 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	}
 	size = reply.Value.Size
 	return
-}
-
-func (ud *uiaDriver) Screen() (screen Screen, err error) {
-	// TODO
-	return screen, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) Scale() (scale float64, err error) {
-	return 1, nil
 }
 
 // PressBack simulates a short press on the BACK button.
@@ -228,15 +214,6 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 
 	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "appium/tap")
 	return
-}
-
-func (ud *uiaDriver) DoubleTap(x, y int) error {
-	return ud.DoubleTapFloat(float64(x), float64(y))
-}
-
-func (ud *uiaDriver) DoubleTapFloat(x, y float64) (err error) {
-	// TODO
-	return errDriverNotImplemented
 }
 
 func (ud *uiaDriver) TouchAndHold(x, y int, second ...float64) (err error) {
@@ -307,15 +284,6 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataO
 	return err
 }
 
-func (ud *uiaDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
-	return ud.ForceTouchFloat(float64(x), float64(y), pressure, second...)
-}
-
-func (ud *uiaDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (ud *uiaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
 	lbl := content
 
@@ -376,11 +344,6 @@ func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
 	return ud.SendKeys(text, options...)
 }
 
-func (ud *uiaDriver) PressButton(devBtn DeviceButton) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 	// register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"))
 	var rawResp rawResponse
@@ -396,20 +359,7 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 	return
 }
 
-func (ud *uiaDriver) SetRotation(rotation Rotation) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
-	// adb shell screencap -p
-	resp, err := ud.adbClient.RunShellCommandWithBytes(
-		"screencap", "-p",
-	)
-	if err == nil {
-		return bytes.NewBuffer(resp), nil
-	}
-
 	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "screenshot"); err != nil {
@@ -444,43 +394,4 @@ func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 
 	source = reply.Value
 	return
-}
-
-func (ud *uiaDriver) AccessibleSource() (source string, err error) {
-	// TODO
-	return source, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) HealthCheck() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
-	// register(getHandler, new GetSettings("/wd/hub/session/:sessionId/appium/settings"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId, "appium/settings"); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value map[string]interface{} })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	settings = reply.Value
-	return
-}
-
-func (ud *uiaDriver) SetAppiumSettings(settings map[string]interface{}) (ret map[string]interface{}, err error) {
-	data := map[string]interface{}{
-		"settings": settings,
-	}
-	// register(postHandler, new UpdateSettings("/wd/hub/session/:sessionId/appium/settings"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/settings")
-	return
-}
-
-func (ud *uiaDriver) IsHealthy() (healthy bool, err error) {
-	// TODO
-	return healthy, errDriverNotImplemented
 }

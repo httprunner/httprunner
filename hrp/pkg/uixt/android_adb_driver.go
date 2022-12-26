@@ -132,12 +132,11 @@ func (ad *adbDriver) StopCamera() (err error) {
 	}
 
 	// kill samsung shell command
-	if _, err = ad.adbClient.RunShellCommand("am", "force-stop", "com.sec.android.app.camera"); err != nil {
+	if _, err = ad.AppTerminate("com.sec.android.app.camera"); err != nil {
 		return err
 	}
-
 	// kill other camera (huawei mi)
-	if _, err = ad.adbClient.RunShellCommand("am", "force-stop", "com.android.camera2"); err != nil {
+	if _, err = ad.AppTerminate("com.android.camera2"); err != nil {
 		return err
 	}
 	return
@@ -248,7 +247,8 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 }
 
 func (ad *adbDriver) SendKeys(text string, options ...DataOption) (err error) {
-	err = errDriverNotImplemented
+	// adb shell input text <text>
+	_, err = ad.adbClient.RunShellCommand("input", "text", text)
 	return
 }
 
