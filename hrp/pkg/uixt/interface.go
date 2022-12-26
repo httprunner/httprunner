@@ -595,7 +595,6 @@ type WebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
 	NewSession(capabilities Capabilities) (SessionInfo, error)
 
-	ActiveSession() (SessionInfo, error)
 	// DeleteSession Kills application associated with that session and removes session
 	//  1) alertsMonitor disable
 	//  2) testedApplicationBundleId terminate

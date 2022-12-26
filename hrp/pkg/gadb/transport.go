@@ -34,7 +34,6 @@ func newTransport(address string, readTimeout ...time.Duration) (tp transport, e
 
 func (t transport) Send(command string) (err error) {
 	msg := fmt.Sprintf("%04x%s", len(command), command)
-	log.Debug().Str("cmd", command).Msg("run adb command")
 	return _send(t.sock, []byte(msg))
 }
 

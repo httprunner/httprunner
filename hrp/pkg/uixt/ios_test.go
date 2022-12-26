@@ -68,18 +68,6 @@ func TestNewUSBDriver(t *testing.T) {
 	// t.Log(driver.IsWdaHealthy())
 }
 
-func Test_remoteWD_ActiveSession(t *testing.T) {
-	setup(t)
-
-	sessionInfo, err := driver.ActiveSession()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(sessionInfo.SessionId) == 0 {
-		t.Fatal(sessionInfo)
-	}
-}
-
 func Test_remoteWD_DeleteSession(t *testing.T) {
 	setup(t)
 

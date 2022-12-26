@@ -66,43 +66,6 @@ func TestDriver_Status(t *testing.T) {
 	}
 }
 
-func TestDriver_SessionIDs(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	sessions, err := driver.SessionIDs()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(sessions) == 0 {
-		t.Fatal("should have at least one")
-	}
-	t.Log(len(sessions), sessions)
-}
-
-func TestDriver_SessionDetails(t *testing.T) {
-	// firstMatchEntry := make(map[string]interface{})
-	// firstMatchEntry["package"] = "com.android.settings"
-	// firstMatchEntry["activity"] = "com.android.settings/.Settings"
-	// caps = Capabilities{
-	// 	"firstMatch":  []interface{}{firstMatchEntry},
-	// 	"alwaysMatch": struct{}{},
-	// }
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	scrollData, err := driver.SessionDetails()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(scrollData)
-}
-
 func TestDriver_Screenshot(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {
