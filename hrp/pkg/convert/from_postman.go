@@ -113,7 +113,7 @@ var contentTypeMap = map[string]string{
 }
 
 func LoadPostmanCase(path string) (*hrp.TCase, error) {
-	// load postman file
+	log.Info().Str("path", path).Msg("load postman case file")
 	casePostman, err := loadCasePostman(path)
 	if err != nil {
 		return nil, err
@@ -330,7 +330,6 @@ func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 		}
 	}()
 
-	// extract language type, default languageType: text
 	languageType := "text"
 	iOptions := item.Request.Body.Options
 	if iOptions != nil {
@@ -340,19 +339,20 @@ func (s *stepFromPostman) makeRequestBodyRaw(item *TItem) (err error) {
 		}
 	}
 
-	// make request body and indicate Content-Type
-	rawBody := item.Request.Body.Raw
-	if languageType == "json" {
+	s.Request.Body = item.Request.Body.Raw
+	contentType := s.Request.Headers["Content-Type"]
+	if strings.Contains(contentType, "application/json") || languageType == "json" {
 		var iBody interface{}
-		err = json.Unmarshal([]byte(rawBody), &iBody)
+		err = json.Unmarshal([]byte(item.Request.Body.Raw), &iBody)
 		if err != nil {
 			return errors.Wrap(err, "make request body (raw -> json) failed")
 		}
 		s.Request.Body = iBody
-	} else {
-		s.Request.Body = rawBody
 	}
-	s.Request.Headers["Content-Type"] = contentTypeMap[languageType]
+
+	if contentType == "" {
+		s.Request.Headers["Content-Type"] = contentTypeMap[languageType]
+	}
 	return
 }
 

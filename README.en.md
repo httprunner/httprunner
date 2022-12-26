@@ -87,11 +87,15 @@ Usage:
   hrp [command]
 
 Available Commands:
+  adb          simple utils for android device management
   boom         run load test with boomer
   build        build plugin for testing
-  completion   generate the autocompletion script for the specified shell
-  convert      convert to JSON/YAML/gotest/pytest testcases
+  completion   Generate the autocompletion script for the specified shell
+  convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
+  dns          DNS resolution for different source and record types
   help         Help about any command
+  ios          simple utils for ios device management
+  ping         run integrated ping command
   pytest       run API test with pytest
   run          run API test with go engine
   startproject create a scaffold project
@@ -119,8 +123,6 @@ Use "hrp [command] --help" for more information about a command.
 关注 HttpRunner 的微信公众号，第一时间获得最新资讯。
 
 <img src="https://httprunner.com/image/qrcode.png" alt="HttpRunner" width="400">
-
-如果你期望加入 HttpRunner 用户群，请看这里：[HttpRunner v4 用户交流群，它来啦！](https://httprunner.com/blog/join-chat-group)
 
 [HttpRunner]: https://github.com/httprunner/httprunner
 [boomer]: https://github.com/myzhan/boomer

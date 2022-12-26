@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"runtime"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -11,9 +10,8 @@ import (
 )
 
 var (
-	pingOptions       dial.PingOptions
-	dnsOptions        dial.DnsOptions
-	traceRouteOptions dial.TraceRouteOptions
+	pingOptions dial.PingOptions
+	dnsOptions  dial.DnsOptions
 )
 
 var pingCmd = &cobra.Command{
@@ -46,34 +44,6 @@ var dnsCmd = &cobra.Command{
 	},
 }
 
-var traceRouteCmd = &cobra.Command{
-	Use:   "traceroute $url",
-	Short: "run integrated traceroute command",
-	Args:  cobra.ExactArgs(1),
-	PreRun: func(cmd *cobra.Command, args []string) {
-		setLogLevel(logLevel)
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if runtime.GOOS == "windows" {
-			log.Info().Msg("using default probe number (3) on Windows")
-		}
-		return dial.DoTraceRoute(&traceRouteOptions, args)
-	},
-}
-
-var curlCmd = &cobra.Command{
-	Use:                "curl $url",
-	Short:              "run integrated curl command",
-	Args:               cobra.MinimumNArgs(1),
-	DisableFlagParsing: true,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		setLogLevel(logLevel)
-	},
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return dial.DoCurl(args)
-	},
-}
-
 func init() {
 	rootCmd.AddCommand(pingCmd)
 	pingCmd.Flags().IntVarP(&pingOptions.Count, "count", "c", 10, "Stop after sending (and receiving) N packets")
@@ -86,11 +56,4 @@ func init() {
 	dnsCmd.Flags().IntVar(&dnsOptions.DnsRecordType, "dns-record", 1, "DNS record type\n1: A\n28: AAAA\n5: CNAME")
 	dnsCmd.Flags().StringVar(&dnsOptions.DnsServer, "dns-server", "", "DNS server, only available for local DNS source")
 	dnsCmd.Flags().BoolVar(&dnsOptions.SaveTests, "save-tests", false, "Save DNS resolution result as json")
-
-	rootCmd.AddCommand(traceRouteCmd)
-	traceRouteCmd.Flags().IntVarP(&traceRouteOptions.MaxTTL, "max-hops", "m", 30, "Set the max number of hops (max TTL to be reached)")
-	traceRouteCmd.Flags().IntVarP(&traceRouteOptions.Queries, "queries", "q", 1, "Set the number of probes per each hop")
-	traceRouteCmd.Flags().BoolVar(&traceRouteOptions.SaveTests, "save-tests", false, "Save traceroute result as json")
-
-	rootCmd.AddCommand(curlCmd)
 }

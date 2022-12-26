@@ -309,45 +309,12 @@ func (ud *uiaDriver) StopCamera() (err error) {
 	return
 }
 
-func (ud *uiaDriver) ActiveAppInfo() (info AppInfo, err error) {
-	// TODO
-	return info, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) ActiveAppsList() (appsList []AppBaseInfo, err error) {
-	// TODO
-	return appsList, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) AppState(bundleId string) (runState AppState, err error) {
-	// TODO
-	return runState, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) IsLocked() (locked bool, err error) {
-	// TODO
-	return locked, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) Unlock() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) Lock() (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (ud *uiaDriver) Homescreen() (err error) {
 	return ud.PressKeyCode(KCHome, KMEmpty)
 }
 
 func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
-	if len(flags) == 0 {
-		flags = []KeyFlag{KFFromSystem}
-	}
-	return ud._pressKeyCode(keyCode, metaState, KFFromSystem)
+	return ud._pressKeyCode(keyCode, metaState, flags...)
 }
 
 func (ud *uiaDriver) _pressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
@@ -365,136 +332,26 @@ func (ud *uiaDriver) _pressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...
 	return
 }
 
-func (ud *uiaDriver) AlertText() (text string, err error) {
-	// register(getHandler, new GetAlertText("/wd/hub/session/:sessionId/alert/text"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId, "alert/text"); err != nil {
-		return "", err
-	}
-	reply := new(struct{ Value string })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return "", err
-	}
-
-	text = reply.Value
-	return
-}
-
-func (ud *uiaDriver) AlertButtons() (btnLabels []string, err error) {
-	// TODO
-	return btnLabels, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) AlertAccept(label ...string) (err error) {
-	data := map[string]interface{}{
-		"buttonLabel": nil,
-	}
-	if len(label) != 0 {
-		data["buttonLabel"] = label[0]
-	}
-	// register(postHandler, new AcceptAlert("/wd/hub/session/:sessionId/alert/accept"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "alert/accept")
-	return
-}
-
-func (ud *uiaDriver) AlertDismiss(label ...string) (err error) {
-	data := map[string]interface{}{
-		"buttonLabel": nil,
-	}
-	if len(label) != 0 {
-		data["buttonLabel"] = label[0]
-	}
-	// register(postHandler, new DismissAlert("/wd/hub/session/:sessionId/alert/dismiss"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "alert/dismiss")
-	return
-}
-
-func (ud *uiaDriver) AlertSendKeys(text string) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) check() error {
-	if ud.adbDevice.Serial() == "" {
-		return errors.New("adb daemon: the device is not ready")
-	}
-	return nil
-}
-
-func (ud *uiaDriver) AppLaunch(bundleId string, launchOpt ...AppLaunchOption) (err error) {
-	if err = ud.check(); err != nil {
-		return err
-	}
-
-	var sOutput string
-	if sOutput, err = ud.adbDevice.RunShellCommand("monkey -p", bundleId, "-c android.intent.category.LAUNCHER 1"); err != nil {
+func (ud *uiaDriver) AppLaunch(bundleId string) (err error) {
+	// 不指定 Activity 名称启动（启动主 Activity）
+	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
+	sOutput, err := ud.adbDevice.RunShellCommand(
+		"monkey", "-p", bundleId, "-c", "android.intent.category.LAUNCHER", "1",
+	)
+	if err != nil {
 		return err
 	}
 	if strings.Contains(sOutput, "monkey aborted") {
 		return fmt.Errorf("app launch: %s", strings.TrimSpace(sOutput))
 	}
-
-	if len(launchOpt) != 0 {
-		var ce error
-		exists := func(ud WebDriver) (bool, error) {
-			for _, opt := range launchOpt {
-				if bySelector, ok := opt["bySelector"]; ok {
-					for _, e := range bySelector.([]BySelector) {
-						_, ce = ud.FindElement(e)
-						if ce == nil {
-							return true, nil
-						}
-					}
-				}
-			}
-			return false, nil
-		}
-		if err = ud.WaitWithTimeoutAndInterval(exists, 45, 1); err != nil {
-			return fmt.Errorf("app launch: %s: %w", err.Error(), ce)
-		}
-	}
-	return
-}
-
-func (ud *uiaDriver) AppLaunchUnattached(bundleId string) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-// Dispose corresponds to the command:
-//  adb -s $serial forward --remove $localPort
-func (ud *uiaDriver) Dispose() (err error) {
-	if err = ud.check(); err != nil {
-		return err
-	}
-	if ud.localPort == 0 {
-		return nil
-	}
-	return ud.adbDevice.ForwardKill(ud.localPort)
+	return nil
 }
 
 func (ud *uiaDriver) AppTerminate(bundleId string) (successful bool, err error) {
-	if err = ud.check(); err != nil {
-		return false, err
-	}
-
+	// 强制停止应用，停止 <packagename> 相关的进程
+	// adb shell am force-stop <packagename>
 	_, err = ud.adbDevice.RunShellCommand("am", "force-stop", bundleId)
 	return err == nil, err
-}
-
-func (ud *uiaDriver) AppActivate(bundleId string) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) AppDeactivate(second float64) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) AppAuthReset(resource ProtectedResource) (err error) {
-	// TODO
-	return errDriverNotImplemented
 }
 
 func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
@@ -608,20 +465,6 @@ func (ud *uiaDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) 
 	return errDriverNotImplemented
 }
 
-func (ud *uiaDriver) PerformW3CActions(actions *W3CActions) (err error) {
-	data := map[string]interface{}{
-		"actions": actions,
-	}
-	// register(postHandler, new W3CActions("/wd/hub/session/:sessionId/actions"))
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "/actions")
-	return
-}
-
-func (ud *uiaDriver) PerformAppiumTouchActions(touchActs *TouchActions) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
 func (ud *uiaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
 	lbl := content
 
@@ -679,75 +522,10 @@ func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
 }
 
 func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
-	data := map[string]interface{}{
-		"view": text,
-	}
-	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
-
-	var element WebElement
-	if valuetext, ok := newData["textview"]; ok {
-		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().TextContains(fmt.Sprintf("%v", valuetext)).String()})
-	} else if valueid, ok := newData["id"]; ok {
-		element, err = ud.FindElement(BySelector{ResourceIdID: fmt.Sprintf("%v", valueid)})
-	} else if valuedesc, ok := newData["description"]; ok {
-		element, err = ud.FindElement(BySelector{UiAutomator: NewUiSelectorHelper().Description(fmt.Sprintf("%v", valuedesc)).String()})
-	} else {
-		element, err = ud.FindElement(BySelector{ClassName: ElementType{EditText: true}})
-	}
-	if err != nil {
-		return err
-	}
-	return element.SendKeys(text, options...)
-}
-
-func (ud *uiaDriver) KeyboardDismiss(keyNames ...string) (err error) {
-	// TODO
-	return errDriverNotImplemented
+	return ud.SendKeys(text, options...)
 }
 
 func (ud *uiaDriver) PressButton(devBtn DeviceButton) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) IOHIDEvent(pageID EventPageID, usageID EventUsageID, duration ...float64) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {
-	// register(postHandler, new OpenNotification("/wd/hub/session/:sessionId/appium/device/open_notifications"))
-	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "appium/device/open_notifications")
-	return
-}
-
-func (ud *uiaDriver) SiriActivate(text string) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) SiriOpenUrl(url string) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
-	// register(getHandler, new GetOrientation("/wd/hub/session/:sessionId/orientation"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId, "orientation"); err != nil {
-		return "", err
-	}
-	reply := new(struct{ Value Orientation })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return "", err
-	}
-
-	orientation = reply.Value
-	return
-}
-
-func (ud *uiaDriver) SetOrientation(orientation Orientation) (err error) {
 	// TODO
 	return errDriverNotImplemented
 }
@@ -770,105 +548,6 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 func (ud *uiaDriver) SetRotation(rotation Rotation) (err error) {
 	// TODO
 	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) MatchTouchID(isMatch bool) (err error) {
-	// TODO
-	return errDriverNotImplemented
-}
-
-func (ud *uiaDriver) _findElements(method, selector string, elementID ...string) (elements []WebElement, err error) {
-	// register(postHandler, new FindElements("/wd/hub/session/:sessionId/elements"))
-	data := map[string]interface{}{
-		"strategy": method,
-		"selector": selector,
-	}
-	if len(elementID) != 0 {
-		data["context"] = elementID[0]
-	}
-	var rawResp rawResponse
-	if rawResp, err = ud.httpPOST(data, "/session", ud.sessionId, "/elements"); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value []map[string]string })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-	if len(reply.Value) == 0 {
-		return nil, fmt.Errorf("no such element: unable to find an element using '%s', value '%s'", method, selector)
-	}
-	elements = make([]WebElement, len(reply.Value))
-	for i, elem := range reply.Value {
-		var id string
-		if id = elementIDFromValue(elem); id == "" {
-			return nil, fmt.Errorf("invalid element returned: %+v", reply)
-		}
-		uie := WebElement(uiaElement{parent: ud, id: id})
-		elements[i] = uie
-	}
-	return
-}
-
-func (ud *uiaDriver) _findElement(method, selector string, elementID ...string) (elem *uiaElement, err error) {
-	// register(postHandler, new FindElement("/wd/hub/session/:sessionId/element"))
-	data := map[string]interface{}{
-		"strategy": method,
-		"selector": selector,
-	}
-	if len(elementID) != 0 {
-		data["context"] = elementID[0]
-	}
-	var rawResp rawResponse
-	if rawResp, err = ud.httpPOST(data, "/session", ud.sessionId, "/element"); err != nil {
-		return nil, err
-	}
-	reply := new(struct{ Value map[string]string })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-	if len(reply.Value) == 0 {
-		return nil, fmt.Errorf("no such element: unable to find an element using '%s', value '%s'", method, selector)
-	}
-	var id string
-	if id = elementIDFromValue(reply.Value); id == "" {
-		return nil, fmt.Errorf("invalid element returned: %+v", reply)
-	}
-	elem = &uiaElement{parent: ud, id: id}
-	return
-}
-
-func (ud *uiaDriver) ActiveElement() (element WebElement, err error) {
-	// TODO
-	return element, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) FindElement(by BySelector) (element WebElement, err error) {
-	return ud._findElement(by.getUsingAndValue())
-}
-
-func (ud *uiaDriver) FindElements(by BySelector) (elements []WebElement, err error) {
-	// [[FBRoute POST:@"/elements"] respondWithTarget:self action:@selector(handleFindElements:)]
-	using, value := by.getUsingAndValue()
-	data := map[string]interface{}{
-		"using": using,
-		"value": value,
-	}
-	var rawResp rawResponse
-	if rawResp, err = ud.httpPOST(data, "/session", ud.sessionId, "/elements"); err != nil {
-		return nil, err
-	}
-	var elementIDs []string
-	if elementIDs, err = rawResp.valueConvertToElementIDs(); err != nil {
-		if errors.Is(err, errNoSuchElement) {
-			return nil, fmt.Errorf("%w: unable to find an element using '%s', value '%s'", err, using, value)
-		}
-		return nil, err
-	}
-	elements = make([]WebElement, len(elementIDs))
-	for i := range elementIDs {
-		elements[i] = WebElement(uiaElement{parent: ud, id: elementIDs[i]})
-	}
-	return
 }
 
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {

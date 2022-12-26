@@ -428,7 +428,7 @@ func (r *CaseRunner) parseConfig() error {
 		}
 		device, err := uixt.NewAndroidDevice(uixt.GetAndroidDeviceOptions(androidDeviceConfig)...)
 		if err != nil {
-			return errors.Wrap(err, "init iOS device failed")
+			return errors.Wrap(err, "init Android device failed")
 		}
 		client, err := device.NewDriver(nil)
 		if err != nil {
@@ -559,7 +559,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 		// check if failfast
 		if r.caseRunner.hrpRunner.failfast {
-			return errors.Wrap(err, "abort running due to failfast setting")
+			return errors.New("abort running due to failfast setting")
 		}
 	}
 
