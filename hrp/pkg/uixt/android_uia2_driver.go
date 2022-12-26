@@ -9,36 +9,21 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
-)
-
-// See https://developer.android.com/reference/android/view/KeyEvent
-const (
-	KEYCODE_BACK      string = "4"
-	KEYCODE_CAMERA    string = "27"
-	KEYCODE_ALT_LEFT  string = "57"
-	KEYCODE_ALT_RIGHT string = "58"
-	KEYCODE_MENU      string = "82"
-	KEYCODE_BREAK     string = "121"
-	KEYCODE_ALL_APPS  string = "284"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
 
 type uiaDriver struct {
-	Driver
-
-	adbClient gadb.Device
-	logcat    *AdbLogcat
+	adbDriver
 }
 
 func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDriver, err error) {
+	log.Info().Msg("init uiautomator2 driver")
 	if capabilities == nil {
 		capabilities = NewCapabilities()
 	}
@@ -98,17 +83,6 @@ func (bs BatteryStatus) String() string {
 	}
 }
 
-func (ud *uiaDriver) Close() (err error) {
-	if ud.sessionId == "" {
-		return nil
-	}
-	if _, err = ud.httpDELETE("/session", ud.sessionId); err == nil {
-		ud.sessionId = ""
-	}
-
-	return err
-}
-
 func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp rawResponse
@@ -126,8 +100,14 @@ func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 }
 
 func (ud *uiaDriver) DeleteSession() (err error) {
-	// TODO
-	return errDriverNotImplemented
+	if ud.sessionId == "" {
+		return nil
+	}
+	if _, err = ud.httpDELETE("/session", ud.sessionId); err == nil {
+		ud.sessionId = ""
+	}
+
+	return err
 }
 
 func (ud *uiaDriver) Status() (deviceStatus DeviceStatus, err error) {
@@ -185,18 +165,6 @@ func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 }
 
 func (ud *uiaDriver) WindowSize() (size Size, err error) {
-	// adb shell wm size
-	resp, err := ud.adbClient.RunShellCommand("wm", "size")
-	if err == nil {
-		// Physical size: 1080x2340
-		s := strings.Trim(strings.Split(resp, ": ")[1], "\n")
-		ss := strings.Split(s, "x")
-		width, _ := strconv.Atoi(ss[0])
-		height, _ := strconv.Atoi(ss[1])
-		size = Size{Width: width, Height: height}
-		return
-	}
-
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "window/:windowHandle/size"); err != nil {
@@ -221,69 +189,8 @@ func (ud *uiaDriver) Scale() (scale float64, err error) {
 
 // PressBack simulates a short press on the BACK button.
 func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
-	// adb shell input keyevent 4
-	_, err = ud.adbClient.RunShellCommand("input", "keyevent", KEYCODE_BACK)
-	if err == nil {
-		return nil
-	}
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
-	return
-}
-
-func (ud *uiaDriver) StartCamera() (err error) {
-	if _, err = ud.adbClient.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
-		return err
-	}
-	time.Sleep(5 * time.Second)
-	var version string
-	if version, err = ud.adbClient.RunShellCommand("getprop", "ro.build.version.release"); err != nil {
-		return err
-	}
-	if version == "11" || version == "12" {
-		if _, err = ud.adbClient.RunShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ud.adbClient.RunShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ud.adbClient.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
-			return err
-		}
-		return
-	} else {
-		if _, err = ud.adbClient.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ud.adbClient.RunShellCommand("input", "keyevent", KEYCODE_CAMERA); err != nil {
-			return err
-		}
-		return
-	}
-}
-
-func (ud *uiaDriver) StopCamera() (err error) {
-	err = ud.PressBack()
-	if err != nil {
-		return err
-	}
-	err = ud.Homescreen()
-	if err != nil {
-		return err
-	}
-
-	// kill samsung shell command
-	if _, err = ud.adbClient.RunShellCommand("am", "force-stop", "com.sec.android.app.camera"); err != nil {
-		return err
-	}
-
-	// kill other camera (huawei mi)
-	if _, err = ud.adbClient.RunShellCommand("am", "force-stop", "com.android.camera2"); err != nil {
-		return err
-	}
 	return
 }
 
@@ -292,13 +199,6 @@ func (ud *uiaDriver) Homescreen() (err error) {
 }
 
 func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
-	// adb shell input keyevent <keyCode>
-	_, err = ud.adbClient.RunShellCommand(
-		"input", "keyevent", fmt.Sprintf("%d", keyCode))
-	if err == nil {
-		return nil
-	}
-
 	// register(postHandler, new PressKeyCodeAsync("/wd/hub/session/:sessionId/appium/device/press_keycode"))
 	data := map[string]interface{}{
 		"keycode": keyCode,
@@ -313,40 +213,11 @@ func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...K
 	return
 }
 
-func (ud *uiaDriver) AppLaunch(bundleId string) (err error) {
-	// 不指定 Activity 名称启动（启动主 Activity）
-	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
-	sOutput, err := ud.adbClient.RunShellCommand(
-		"monkey", "-p", bundleId, "-c", "android.intent.category.LAUNCHER", "1",
-	)
-	if err != nil {
-		return err
-	}
-	if strings.Contains(sOutput, "monkey aborted") {
-		return fmt.Errorf("app launch: %s", strings.TrimSpace(sOutput))
-	}
-	return nil
-}
-
-func (ud *uiaDriver) AppTerminate(bundleId string) (successful bool, err error) {
-	// 强制停止应用，停止 <packagename> 相关的进程
-	// adb shell am force-stop <packagename>
-	_, err = ud.adbClient.RunShellCommand("am", "force-stop", bundleId)
-	return err == nil, err
-}
-
 func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
 	return ud.TapFloat(float64(x), float64(y), options...)
 }
 
 func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
-	// adb shell input tap x y
-	_, err = ud.adbClient.RunShellCommand(
-		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
-	if err == nil {
-		return nil
-	}
-
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	data := map[string]interface{}{
 		"x": x,
@@ -421,16 +292,6 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) er
 }
 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
-	// adb shell input swipe fromX fromY toX toY
-	_, err := ud.adbClient.RunShellCommand(
-		"input", "swipe",
-		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
-		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
-	)
-	if err == nil {
-		return nil
-	}
-
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	data := map[string]interface{}{
 		"startX": fromX,
@@ -442,7 +303,7 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataO
 	// new data options in post data for extra uiautomator configurations
 	newData := NewData(data, options...)
 
-	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
+	_, err := ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
 	return err
 }
 
@@ -622,54 +483,4 @@ func (ud *uiaDriver) SetAppiumSettings(settings map[string]interface{}) (ret map
 func (ud *uiaDriver) IsHealthy() (healthy bool, err error) {
 	// TODO
 	return healthy, errDriverNotImplemented
-}
-
-func (ud *uiaDriver) WaitWithTimeoutAndInterval(condition Condition, timeout, interval time.Duration) error {
-	startTime := time.Now()
-	for {
-		done, err := condition(ud)
-		if err != nil {
-			return err
-		}
-		if done {
-			return nil
-		}
-
-		if elapsed := time.Since(startTime); elapsed > timeout {
-			return fmt.Errorf("timeout after %v", elapsed)
-		}
-		time.Sleep(interval)
-	}
-}
-
-func (ud *uiaDriver) WaitWithTimeout(condition Condition, timeout time.Duration) error {
-	return ud.WaitWithTimeoutAndInterval(condition, timeout, DefaultWaitInterval)
-}
-
-func (ud *uiaDriver) Wait(condition Condition) error {
-	return ud.WaitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
-}
-
-func (ud *uiaDriver) StartCaptureLog(identifier ...string) (err error) {
-	log.Info().Msg("start adb log recording")
-	err = ud.logcat.CatchLogcat()
-	if err != nil {
-		err = errors.Wrap(code.AndroidCaptureLogError,
-			fmt.Sprintf("start adb log recording failed: %v", err))
-		return err
-	}
-	return nil
-}
-
-func (ud *uiaDriver) StopCaptureLog() (result interface{}, err error) {
-	log.Info().Msg("stop adb log recording")
-	err = ud.logcat.Stop()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get adb log recording")
-		err = errors.Wrap(code.AndroidCaptureLogError,
-			fmt.Sprintf("get adb log recording failed: %v", err))
-		return "", err
-	}
-	content := ud.logcat.logBuffer.String()
-	return ConvertPoints(content), nil
 }

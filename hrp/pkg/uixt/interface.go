@@ -695,9 +695,6 @@ type WebDriver interface {
 
 	IsHealthy() (bool, error)
 
-	// Close inner connections properly
-	Close() error
-
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) (err error)
 	StopCaptureLog() (result interface{}, err error)

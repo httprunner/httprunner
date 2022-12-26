@@ -12,7 +12,7 @@ import (
 func TestAndroidDouYinLive(t *testing.T) {
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("通过 feed 头像进入抖音直播间").
-			SetAndroid(uixt.WithAdbLogOn(true)),
+			SetAndroid(uixt.WithUIA2(false), uixt.WithAdbLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().
