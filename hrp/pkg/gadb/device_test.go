@@ -103,7 +103,6 @@ func TestDevice_Usb(t *testing.T) {
 		dev := devices[i]
 		t.Log(dev.Serial(), dev.Usb(), dev.IsUsb())
 	}
-
 }
 
 func TestDevice_DeviceInfo(t *testing.T) {
@@ -134,8 +133,6 @@ func TestDevice_Forward(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	SetDebug(true)
-
 	localPort := 61000
 	err = devices[0].Forward(localPort, 6790)
 	if err != nil {
@@ -159,8 +156,6 @@ func TestDevice_ForwardList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	SetDebug(true)
-
 	for i := range devices {
 		dev := devices[i]
 		forwardList, err := dev.ForwardList()
@@ -181,8 +176,6 @@ func TestDevice_ForwardKill(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	SetDebug(true)
 
 	err = devices[0].ForwardKill(6790)
 	if err != nil {
@@ -213,8 +206,6 @@ func TestDevice_RunShellCommand(t *testing.T) {
 	// 	t.Log("\n"+dev.serial, cmdOutput)
 	// }
 
-	// SetDebug(true)
-
 	dev := devices[len(devices)-1]
 	dev = devices[0]
 
@@ -225,7 +216,6 @@ func TestDevice_RunShellCommand(t *testing.T) {
 		t.Fatal(dev.serial, err)
 	}
 	t.Log("\n⬇️"+dev.serial+"⬇️\n", cmdOutput)
-
 }
 
 func TestDevice_EnableAdbOverTCP(t *testing.T) {
@@ -241,8 +231,6 @@ func TestDevice_EnableAdbOverTCP(t *testing.T) {
 
 	dev := devices[len(devices)-1]
 	dev = devices[0]
-
-	SetDebug(true)
 
 	err = dev.EnableAdbOverTCP()
 	if err != nil {
@@ -263,8 +251,6 @@ func TestDevice_List(t *testing.T) {
 
 	dev := devices[len(devices)-1]
 	dev = devices[0]
-
-	SetDebug(true)
 
 	// fileEntries, err := dev.List("/sdcard")
 	fileEntries, err := dev.List("/sdcard/Download")
@@ -291,8 +277,6 @@ func TestDevice_Push(t *testing.T) {
 	dev := devices[len(devices)-1]
 	dev = devices[0]
 
-	SetDebug(true)
-
 	file, _ := os.Open("/Users/hero/Documents/temp/MuMu共享文件夹/test.txt")
 	err = dev.PushFile(file, "/sdcard/Download/push.txt", time.Now())
 	if err != nil {
@@ -318,8 +302,6 @@ func TestDevice_Pull(t *testing.T) {
 
 	dev := devices[len(devices)-1]
 	dev = devices[0]
-
-	SetDebug(true)
 
 	buffer := bytes.NewBufferString("")
 	err = dev.Pull("/sdcard/Download/hello.txt", buffer)

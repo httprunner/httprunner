@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type syncTransport struct {
@@ -29,7 +31,7 @@ func (sync syncTransport) Send(command, data string) (err error) {
 	}
 	msg.WriteString(data)
 
-	debugLog(fmt.Sprintf("--> %s", msg.String()))
+	log.Debug().Str("msg", msg.String()).Msg("sync run adb command")
 	return _send(sync.sock, msg.Bytes())
 }
 
@@ -56,7 +58,7 @@ func (sync syncTransport) SendStatus(statusCode string, n uint32) (err error) {
 	if err = binary.Write(msg, binary.LittleEndian, n); err != nil {
 		return fmt.Errorf("sync transport write: %w", err)
 	}
-	debugLog(fmt.Sprintf("--> %s", msg.String()))
+	log.Debug().Str("msg", msg.String()).Msg("sync send adb status")
 	return _send(sync.sock, msg.Bytes())
 }
 
@@ -65,7 +67,6 @@ func (sync syncTransport) sendChunk(buffer []byte) (err error) {
 	if err = binary.Write(msg, binary.LittleEndian, int32(len(buffer))); err != nil {
 		return fmt.Errorf("sync transport write: %w", err)
 	}
-	debugLog(fmt.Sprintf("--> %s ......", msg.String()))
 	msg.Write(buffer)
 	return _send(sync.sock, msg.Bytes())
 }
@@ -76,22 +77,22 @@ func (sync syncTransport) VerifyStatus() (err error) {
 		return err
 	}
 
-	log := bytes.NewBufferString(fmt.Sprintf("<-- %s", status))
+	logs := bytes.NewBufferString(fmt.Sprintf("<-- %s", status))
 	defer func() {
-		debugLog(log.String())
+		fmt.Println(logs.String())
 	}()
 
 	var tmpUint32 uint32
 	if tmpUint32, err = sync.ReadUint32(); err != nil {
 		return fmt.Errorf("sync transport read (status): %w", err)
 	}
-	log.WriteString(fmt.Sprintf(" %d\t", tmpUint32))
+	logs.WriteString(fmt.Sprintf(" %d\t", tmpUint32))
 
 	var msg string
 	if msg, err = sync.ReadStringN(int(tmpUint32)); err != nil {
 		return err
 	}
-	log.WriteString(msg)
+	logs.WriteString(msg)
 
 	if status == "FAIL" {
 		err = fmt.Errorf("sync verify status (fail): %s", msg)
@@ -139,8 +140,10 @@ func (sync syncTransport) readChunk() (chunk []byte, err error) {
 		return nil, err
 	}
 
-	log := bytes.NewBufferString("")
-	defer func() { debugLog(log.String()) }()
+	logs := bytes.NewBufferString("")
+	defer func() {
+		fmt.Println(logs.String())
+	}()
 
 	var tmpUint32 uint32
 	if tmpUint32, err = sync.ReadUint32(); err != nil {
@@ -148,35 +151,34 @@ func (sync syncTransport) readChunk() (chunk []byte, err error) {
 	}
 
 	if status == "FAIL" {
-		log.WriteString(fmt.Sprintf("<-- %s\t%d\t", status, tmpUint32))
+		logs.WriteString(fmt.Sprintf("<-- %s\t%d\t", status, tmpUint32))
 		var sError string
 		if sError, err = sync.ReadStringN(int(tmpUint32)); err != nil {
 			return nil, fmt.Errorf("read chunk (error message): %w", err)
 		}
 		err = fmt.Errorf("status (fail): %s", sError)
-		log.WriteString(sError)
+		logs.WriteString(sError)
 		return
 	}
 
 	switch status {
 	case "DONE":
-		log.WriteString(fmt.Sprintf("<-- %s", status))
+		logs.WriteString(fmt.Sprintf("<-- %s", status))
 		err = syncReadChunkDone
 		return
 	case "DATA":
-		log.WriteString(fmt.Sprintf("<-- %s\t%d\t", status, tmpUint32))
+		logs.WriteString(fmt.Sprintf("<-- %s\t%d\t", status, tmpUint32))
 		if chunk, err = sync.ReadBytesN(int(tmpUint32)); err != nil {
 			return nil, err
 		}
 	default:
-		log.WriteString(fmt.Sprintf("<-- %s\t%d\t", status, tmpUint32))
+		logs.WriteString(fmt.Sprintf("<-- %s\t%d\t", status, tmpUint32))
 		err = errors.New("unknown error")
 	}
 
-	log.WriteString("......")
+	logs.WriteString("......")
 
 	return
-
 }
 
 func (sync syncTransport) ReadDirectoryEntry() (entry DeviceFileInfo, err error) {
@@ -185,43 +187,43 @@ func (sync syncTransport) ReadDirectoryEntry() (entry DeviceFileInfo, err error)
 		return DeviceFileInfo{}, err
 	}
 
-	log := bytes.NewBufferString(fmt.Sprintf("<-- %s", status))
+	logs := bytes.NewBufferString(fmt.Sprintf("<-- %s", status))
 	defer func() {
-		debugLog(log.String())
+		fmt.Println(logs.String())
 	}()
 
 	if status == "DONE" {
 		return
 	}
 
-	log = bytes.NewBufferString(fmt.Sprintf("<-- %s\t", status))
+	logs = bytes.NewBufferString(fmt.Sprintf("<-- %s\t", status))
 
 	if err = binary.Read(sync.sock, binary.LittleEndian, &entry.Mode); err != nil {
 		return DeviceFileInfo{}, fmt.Errorf("sync transport read (mode): %w", err)
 	}
-	log.WriteString(entry.Mode.String() + "\t")
+	logs.WriteString(entry.Mode.String() + "\t")
 
 	if entry.Size, err = sync.ReadUint32(); err != nil {
 		return DeviceFileInfo{}, fmt.Errorf("sync transport read (size): %w", err)
 	}
-	log.WriteString(fmt.Sprintf("%10d", entry.Size) + "\t")
+	logs.WriteString(fmt.Sprintf("%10d", entry.Size) + "\t")
 
 	var tmpUint32 uint32
 	if tmpUint32, err = sync.ReadUint32(); err != nil {
 		return DeviceFileInfo{}, fmt.Errorf("sync transport read (time): %w", err)
 	}
 	entry.LastModified = time.Unix(int64(tmpUint32), 0)
-	log.WriteString(entry.LastModified.String() + "\t")
+	logs.WriteString(entry.LastModified.String() + "\t")
 
 	if tmpUint32, err = sync.ReadUint32(); err != nil {
 		return DeviceFileInfo{}, fmt.Errorf("sync transport read (file name length): %w", err)
 	}
-	log.WriteString(fmt.Sprintf("%d\t", tmpUint32))
+	logs.WriteString(fmt.Sprintf("%d\t", tmpUint32))
 
 	if entry.Name, err = sync.ReadStringN(int(tmpUint32)); err != nil {
 		return DeviceFileInfo{}, fmt.Errorf("sync transport read (file name): %w", err)
 	}
-	log.WriteString(entry.Name + "\t")
+	logs.WriteString(entry.Name + "\t")
 
 	return
 }

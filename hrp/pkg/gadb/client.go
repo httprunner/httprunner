@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
-const AdbServerPort = 5037
-const AdbDaemonPort = 5555
+const (
+	AdbServerPort = 5037
+	AdbDaemonPort = 5555
+)
 
 type Client struct {
 	host string
@@ -86,7 +90,7 @@ func (c Client) DeviceList() (devices []Device, err error) {
 
 		fields := strings.Fields(line)
 		if len(fields) < 5 || len(fields[0]) == 0 {
-			debugLog(fmt.Sprintf("can't parse: %s", line))
+			log.Error().Str("line", line).Msg("get unexpected line")
 			continue
 		}
 
