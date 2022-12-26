@@ -49,7 +49,7 @@ func TestDriver_Quit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = driver.Close(); err != nil {
+	if err = driver.DeleteSession(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -335,17 +335,17 @@ func TestDeviceList(t *testing.T) {
 
 func TestDriver_AppLaunch(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
+	driver, err := device.NewDriver(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driver.AppLaunch("com.android.settings")
+	err = driver.Driver.AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	raw, err := driver.Screenshot()
+	raw, err := driver.Driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -355,24 +355,24 @@ func TestDriver_AppLaunch(t *testing.T) {
 
 func TestDriver_KeepAlive(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
+	driver, err := device.NewDriver(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driver.AppLaunch("com.android.settings")
+	err = driver.Driver.AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = driver.Screenshot()
+	_, err = driver.Driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(60 * time.Second)
 
-	_, err = driver.Screenshot()
+	_, err = driver.Driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -380,12 +380,12 @@ func TestDriver_KeepAlive(t *testing.T) {
 
 func TestDriver_AppTerminate(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewUSBDriver(nil)
+	driver, err := device.NewDriver(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = driver.AppTerminate("tv.danmaku.bili")
+	_, err = driver.Driver.AppTerminate("tv.danmaku.bili")
 	if err != nil {
 		t.Fatal(err)
 	}
