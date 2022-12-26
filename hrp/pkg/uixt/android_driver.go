@@ -60,12 +60,15 @@ func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDrive
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
 	driver.client = convertToHTTPClient(conn)
-	if session, err := driver.NewSession(capabilities); err != nil {
-		return nil, err
-	} else {
+
+	session, err := driver.NewSession(capabilities)
+	if err == nil {
 		driver.sessionId = session.SessionId
+	} else {
+		log.Warn().Msg(
+			"create UIAutomator session failed, use adb driver instead")
 	}
-	return
+	return driver, nil
 }
 
 type BatteryStatus int
@@ -221,6 +224,18 @@ func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 }
 
 func (ud *uiaDriver) WindowSize() (size Size, err error) {
+	// adb shell wm size
+	resp, err := ud.adbDevice.RunShellCommand("wm", "size")
+	if err == nil {
+		// Physical size: 1080x2340
+		s := strings.Trim(strings.Split(resp, ": ")[1], "\n")
+		ss := strings.Split(s, "x")
+		width, _ := strconv.Atoi(ss[0])
+		height, _ := strconv.Atoi(ss[1])
+		size = Size{Width: width, Height: height}
+		return
+	}
+
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "window/:windowHandle/size"); err != nil {
