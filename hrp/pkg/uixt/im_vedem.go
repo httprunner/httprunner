@@ -58,7 +58,7 @@ func checkIMEnv() error {
 }
 
 func convertBase64(imgByte []byte) (baseImg string) {
-	return base64.StdEncoding.EncodeToString(imgByte)
+	return base64.RawStdEncoding.EncodeToString(imgByte)
 }
 
 func (s *veDEMIMService) getIMResult(searchImage []byte, sourceImage []byte) ([]IMResult, error) {

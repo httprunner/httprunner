@@ -64,7 +64,10 @@ type ImageTemplate struct {
 }
 
 func NewImageTemplate(filepath string) ImageTemplate {
-	return ImageTemplate{FilePath: filepath}
+	return ImageTemplate{
+		FilePath:  filepath,
+		rawBuffer: bytes.NewBuffer([]byte{}),
+	}
 }
 
 func (i *ImageTemplate) read() (imageBuffer *bytes.Buffer, err error) {
