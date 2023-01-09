@@ -30,71 +30,90 @@ const (
 const projectInfoFile = "proj.json" // used for ensuring root project
 
 var pluginMap = sync.Map{} // used for reusing plugin instance
+var pluginRW = make(map[string]*funplugin.IPlugin)
+var pluginMutex sync.RWMutex
 
 func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
-	// plugin file not found
-	if path == "" {
-		return nil, nil
-	}
-	pluginPath, err := locatePlugin(path)
-	if err != nil {
-		log.Warn().Str("path", path).Msg("locate plugin failed")
-		return nil, nil
-	}
+	pluginMutex.RLock()
+	plugins := pluginRW[path]
+	pluginMutex.RUnlock()
+	if plugins == nil {
+		pluginMutex.Lock()
+		defer pluginMutex.Unlock()
+		if plugins == nil {
+			plugin, err = func(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
+				// plugin file not found
+				if path == "" {
+					return nil, nil
+				}
+				pluginPath, err := locatePlugin(path)
+				if err != nil {
+					log.Warn().Str("path", path).Msg("locate plugin failed")
+					return nil, nil
+				}
 
-	// reuse plugin instance if it already initialized
-	if p, ok := pluginMap.Load(pluginPath); ok {
-		return p.(funplugin.IPlugin), nil
-	}
+				// reuse plugin instance if it already initialized
+				if p, ok := pluginMap.Load(pluginPath); ok {
+					return p.(funplugin.IPlugin), nil
+				}
 
-	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
+				pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
 
-	if strings.HasSuffix(pluginPath, ".py") {
-		// register funppy plugin
-		genPyPluginPath := filepath.Join(filepath.Dir(pluginPath), PluginPySourceGenFile)
-		err = BuildPlugin(pluginPath, genPyPluginPath)
-		if err != nil {
-			log.Error().Err(err).Str("path", pluginPath).Msg("build plugin failed")
-			return nil, err
+				if strings.HasSuffix(pluginPath, ".py") {
+					// register funppy plugin
+					genPyPluginPath := filepath.Join(filepath.Dir(pluginPath), PluginPySourceGenFile)
+					err = BuildPlugin(pluginPath, genPyPluginPath)
+					if err != nil {
+						log.Error().Err(err).Str("path", pluginPath).Msg("build plugin failed")
+						return nil, err
+					}
+					pluginPath = genPyPluginPath
+
+					packages := []string{
+						fmt.Sprintf("funppy==%s", fungo.Version),
+					}
+					python3, err := myexec.EnsurePython3Venv(venv, packages...)
+					if err != nil {
+						log.Error().Err(err).
+							Interface("packages", packages).
+							Msg("python3 venv is not ready")
+						return nil, err
+					}
+					pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
+				}
+
+				// found plugin file
+				plugin, err = funplugin.Init(pluginPath, pluginOptions...)
+				if err != nil {
+					log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
+					err = errors.Wrap(code.InitPluginFailed, err.Error())
+					return
+				}
+
+				// add plugin instance to plugin map
+				pluginMap.Store(pluginPath, plugin)
+
+				// report event for initializing plugin
+				event := sdk.EventTracking{
+					Category: "InitPlugin",
+					Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
+					Value:    0, // success
+				}
+				if err != nil {
+					event.Value = 1 // failed
+				}
+				go sdk.SendEvent(event)
+
+				return
+			}(path, venv, logOn)
+			if err != nil {
+				return nil, errors.Wrap(err, "init plugin failed")
+			}
+			pluginRW[path] = &plugin
+			plugins = &plugin
 		}
-		pluginPath = genPyPluginPath
-
-		packages := []string{
-			fmt.Sprintf("funppy==%s", fungo.Version),
-		}
-		python3, err := myexec.EnsurePython3Venv(venv, packages...)
-		if err != nil {
-			log.Error().Err(err).
-				Interface("packages", packages).
-				Msg("python3 venv is not ready")
-			return nil, err
-		}
-		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
 	}
-
-	// found plugin file
-	plugin, err = funplugin.Init(pluginPath, pluginOptions...)
-	if err != nil {
-		log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
-		err = errors.Wrap(code.InitPluginFailed, err.Error())
-		return
-	}
-
-	// add plugin instance to plugin map
-	pluginMap.Store(pluginPath, plugin)
-
-	// report event for initializing plugin
-	event := sdk.EventTracking{
-		Category: "InitPlugin",
-		Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
-		Value:    0, // success
-	}
-	if err != nil {
-		event.Value = 1 // failed
-	}
-	go sdk.SendEvent(event)
-
-	return
+	return *plugins, nil
 }
 
 func locatePlugin(path string) (pluginPath string, err error) {
