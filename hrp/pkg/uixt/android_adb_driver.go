@@ -180,6 +180,13 @@ func (ad *adbDriver) Tap(x, y int, options ...DataOption) error {
 }
 
 func (ad *adbDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
+	dataOptions := NewDataOptions(options...)
+
+	if len(dataOptions.Offset) == 2 {
+		x += float64(dataOptions.Offset[0])
+		y += float64(dataOptions.Offset[1])
+	}
+
 	// adb shell input tap x y
 	_, err = ad.adbClient.RunShellCommand(
 		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
