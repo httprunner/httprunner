@@ -20,7 +20,7 @@
         "ID": 15,
         "url": "127.0.0.1:40061/user.User.RegisterUser",
         "body": {
-          "Password": "1112",
+          "P": "1112",
           "UserName": "${UserName}"
         },
         "type": "Simple",
@@ -46,7 +46,7 @@
       "gRPC": {
         "ID": 15,
         "url": "127.0.0.1:40061/user.User.Login",
-        "body": {"Password":"1112", "UserName":"${UserName}"},
+        "body": {"P":"1112", "UserName":"${UserName}"},
         "type": "Simple",
         "headers": {
           "User-Func": "user.User.Login",
