@@ -7,6 +7,7 @@ import (
 	"github.com/fullstorydev/grpcurl"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/pkg/errors"
+
 	"github.com/test-instructor/grpc-plugin/plugin"
 	"io"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"time"
 )
 
+// GrpcType Request type
 type GrpcType string
 
 var (
@@ -23,6 +25,7 @@ var (
 	GrpcTypeBidirectionalStream GrpcType = "BidirectionalStream"
 )
 
+// StepGrpc implements IStep interface.
 type StepGrpc struct {
 	step *TStep
 }
@@ -89,7 +92,7 @@ func runStepGRPC(g *SessionRunner, step *TStep) (stepResult *StepResult, err err
 		return
 	}
 	rb.prepareHost(rb.config.BaseURL)
-	rb.prepareUrl()
+	rb.prepareURL()
 	err = rb.prepareBody(stepVariables)
 	if err != nil {
 		return
@@ -153,15 +156,16 @@ func runStepGRPC(g *SessionRunner, step *TStep) (stepResult *StepResult, err err
 			results: res,
 		}
 	case step.GRPC.Type == GrpcTypeServerSideStream:
-		err = errors.New(fmt.Sprintf("没有实现服务端流模式"))
+		err = errors.New("没有实现服务端流模式")
 		return setGrpcErr(g, err, start, rb, parser, step.Name)
 	case step.GRPC.Type == GrpcTypeClientSideStream:
-		err = errors.New(fmt.Sprintf("没有实现客户端流模式"))
+		err = errors.New("没有实现客户端流模式")
 		return setGrpcErr(g, err, start, rb, parser, step.Name)
 	case step.GRPC.Type == GrpcTypeBidirectionalStream:
-		err = errors.New(fmt.Sprintf("没有实现双向流模式"))
+		err = errors.New("没有实现双向流模式")
 		return setGrpcErr(g, err, start, rb, parser, step.Name)
 	default:
+		err = errors.New("没有传如请求模式")
 		return setGrpcErr(g, err, start, rb, parser, step.Name)
 	}
 	//new response object
@@ -223,6 +227,7 @@ type status int
 var statusConnectionFailed status = 1
 var statusTypeFailed status = 2
 
+//response data format
 type grpcResponse struct {
 	body    string
 	timer   time.Duration
@@ -232,6 +237,8 @@ type grpcResponse struct {
 	results *plugin.RpcResult
 }
 
+// Grpc represents HTTP request data structure.
+// This is used for teststep.
 type Grpc struct {
 	Host          string `json:"host" yaml:"host"`
 	URL           string `json:"url" yaml:"url"`
@@ -306,7 +313,7 @@ func (r *grpcBuilder) prepareHost(h string) {
 	r.Host = h
 }
 
-func (r *grpcBuilder) prepareUrl() {
+func (r *grpcBuilder) prepareURL() {
 	url := r.stepGrpc.URL
 	urlList := strings.Split(url, "/")
 	if len(urlList) == 1 {
@@ -359,7 +366,7 @@ type grpcRespObjMeta struct {
 }
 
 func newGrpcResponseObject(t *testing.T, parser *Parser, resp *grpcResponse) (*responseObject, error) {
-	var statusCode string = "OK"
+	var statusCode = "OK"
 	var errStr string
 	var body interface{}
 	var headers = make(map[string]string)
