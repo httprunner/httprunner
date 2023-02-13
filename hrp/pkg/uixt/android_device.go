@@ -330,7 +330,7 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	go func() {
 		<-l.stopping
 		if e := myexec.KillProcessesByGpid(l.cmd); e != nil {
-			l.errs = append(l.errs, fmt.Errorf("kill logcat process err:%v", e))
+			log.Error().Err(e).Msg("kill logcat process failed")
 		}
 		l.done <- struct{}{}
 	}()
