@@ -281,6 +281,14 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
+func (s *StepMobile) SleepRandom(a, b float64) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method: uixt.CtlSleepRandom,
+		Params: []float64{a, b},
+	})
+	return &StepMobile{step: s.step}
+}
+
 func (s *StepMobile) ScreenShot() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method: uixt.CtlScreenShot,

@@ -321,6 +321,13 @@ func (ad *adbDriver) IsHealthy() (healthy bool, err error) {
 
 func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
+
+	// clear logcat
+	if _, err = ad.adbClient.RunShellCommand("logcat", "--clear"); err != nil {
+		return err
+	}
+
+	// start logcat
 	err = ad.logcat.CatchLogcat()
 	if err != nil {
 		err = errors.Wrap(code.AndroidCaptureLogError,

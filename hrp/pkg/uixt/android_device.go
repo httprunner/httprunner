@@ -311,12 +311,13 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	}
 
 	// clear logcat
-	if err = myexec.RunCommand("adb", "-s", l.serial, "logcat", "-c"); err != nil {
+	if err = myexec.RunCommand("adb", "-s", l.serial, "logcat", "--clear"); err != nil {
 		return
 	}
 
 	// start logcat
-	l.cmd = myexec.Command("adb", "-s", l.serial, "logcat", "-v", "time", "-s", "iesqaMonitor:V")
+	l.cmd = myexec.Command("adb", "-s", l.serial,
+		"logcat", "--format", "time", "-s", "iesqaMonitor:V")
 	l.cmd.Stderr = l.logBuffer
 	l.cmd.Stdout = l.logBuffer
 	if err = l.cmd.Start(); err != nil {
