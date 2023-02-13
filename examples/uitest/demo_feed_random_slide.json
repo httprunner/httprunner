@@ -1,0 +1,84 @@
+{
+    "config": {
+        "name": "点播_抖音_滑动场景_随机间隔_android",
+        "variables": {
+            "device": "${ENV(SerialNumber)}"
+        },
+        "android": [
+            {
+                "serial": "$device"
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "启动抖音",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme"
+                    },
+                    {
+                        "method": "app_launch",
+                        "params": "com.ss.android.ugc.aweme"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 10
+                    }
+                ]
+            }
+        },
+        {
+            "name": "处理青少年弹窗",
+            "android": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "我知道了",
+                        "ignore_NotFoundError": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "滑动 Feed 35 次，随机间隔 0-20s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": "up"
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            0,
+                            20
+                        ]
+                    }
+                ]
+            },
+            "loops": 35
+        },
+        {
+            "name": "滑动 Feed 15 次，随机间隔 15-50s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": "up"
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            15,
+                            50
+                        ]
+                    }
+                ]
+            },
+            "loops": 15
+        }
+    ]
+}
