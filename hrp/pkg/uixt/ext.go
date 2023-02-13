@@ -610,8 +610,17 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case CtlSleepRandom:
 		if params, ok := action.Params.([]interface{}); ok && len(params) == 2 {
-			a := params[0].(float64)
-			b := params[1].(float64)
+			var a, b float64
+			if v, ok := params[0].(float64); ok {
+				a = v
+			} else if v, ok := params[0].(int64); ok {
+				a = float64(v)
+			}
+			if v, ok := params[1].(float64); ok {
+				b = v
+			} else if v, ok := params[1].(int64); ok {
+				b = float64(v)
+			}
 			n := a + rand.Float64()*(b-a)
 			log.Info().Float64("duration", n).Msg("sleep random seconds")
 			time.Sleep(time.Duration(n*1000) * time.Millisecond)
