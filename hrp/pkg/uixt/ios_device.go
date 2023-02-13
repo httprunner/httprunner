@@ -281,6 +281,10 @@ func (dev *IOSDevice) UUID() string {
 	return dev.UDID
 }
 
+func (dev *IOSDevice) LogEnabled() bool {
+	return dev.LogOn
+}
+
 func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	// init WDA driver
 	if capabilities == nil {

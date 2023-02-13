@@ -581,6 +581,7 @@ func NewData(data map[string]interface{}, options ...DataOption) map[string]inte
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
 	UUID() string // ios udid or android serial
+	LogEnabled() bool
 	NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error)
 
 	StartPerf() error

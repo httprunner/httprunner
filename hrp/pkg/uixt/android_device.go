@@ -138,6 +138,10 @@ func (dev *AndroidDevice) UUID() string {
 	return dev.SerialNumber
 }
 
+func (dev *AndroidDevice) LogEnabled() bool {
+	return dev.LogOn
+}
+
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	var driver WebDriver
 	if dev.UIA2 {
