@@ -625,13 +625,16 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 
 	for uuid, client := range r.caseRunner.hrpRunner.uiClients {
 		// add WDA/UIA logs to summary
-		log, err := client.Driver.StopCaptureLog()
-		if err != nil {
-			return caseSummary, err
-		}
 		logs := map[string]interface{}{
-			"uuid":    uuid,
-			"content": log,
+			"uuid": uuid,
+		}
+
+		if client.Device.LogEnabled() {
+			log, err := client.Driver.StopCaptureLog()
+			if err != nil {
+				return caseSummary, err
+			}
+			logs["content"] = log
 		}
 
 		// stop performance monitor
