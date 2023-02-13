@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -32,6 +33,7 @@ const (
 	AppStop        MobileMethod = "app_stop"
 	CtlScreenShot  MobileMethod = "screenshot"
 	CtlSleep       MobileMethod = "sleep"
+	CtlSleepRandom MobileMethod = "sleep_random"
 	CtlStartCamera MobileMethod = "camera_start" // alias for app_launch camera
 	CtlStopCamera  MobileMethod = "camera_stop"  // alias for app_terminate camera
 	RecordStart    MobileMethod = "record_start"
@@ -313,6 +315,10 @@ func isPathExists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
 
 func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (x, y, width, height float64, err error) {
@@ -602,6 +608,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
+	case CtlSleepRandom:
+		if params, ok := action.Params.([]interface{}); ok && len(params) == 2 {
+			a := params[0].(float64)
+			b := params[1].(float64)
+			n := a + rand.Float64()*(b-a)
+			log.Info().Float64("duration", n).Msg("sleep random seconds")
+			time.Sleep(time.Duration(n*1000) * time.Millisecond)
+			return nil
+		}
+		return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 	case CtlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")
