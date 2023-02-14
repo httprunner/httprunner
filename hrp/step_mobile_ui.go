@@ -26,8 +26,6 @@ var (
 // android setting options
 var (
 	WithSerialNumber  = uixt.WithSerialNumber
-	WithAdbIP         = uixt.WithAdbIP
-	WithAdbPort       = uixt.WithAdbPort
 	WithAdbLogOn      = uixt.WithAdbLogOn
 	WithAdbClosePopup = uixt.WithAdbClosePopup
 )
