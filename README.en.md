@@ -120,9 +120,9 @@ Use "hrp [command] --help" for more information about a command.
 
 ## Sponsor
 
-[<img src="https://httprunner.com/image/hogwarts.png" alt="霍格沃兹测试开发学社" width="500">](http://qrcode.testing-studio.com/f?from=HttpRunner&url=https://ceshiren.com/)
+[<img src="https://testing-studio.com/img/icon.png" alt="霍格沃兹测试开发学社" width="500">](https://qrcode.testing-studio.com/f?from=HttpRunner&url=https://testing-studio.com/)
 
-> 霍格沃兹测试开发学社是中国软件测试开发高端教育品牌，产品由国内顶尖软件测试开发技术专家携手打造，为企业与个人提供专业的技能培训与咨询、测试工具与测试平台、测试外包与测试众包服务。领域涵盖 App/Web 自动化测试、接口自动化测试、性能测试、安全测试、持续交付/DevOps、测试左移、测试右移、精准测试、测试平台开发、测试管理等方向。-> [联系我们](http://qrcode.testing-studio.com/f?from=HttpRunner&url=https://ceshiren.com/t/topic/23745)
+> 霍格沃兹测试开发学社是中国软件测试开发高端教育品牌，产品由国内顶尖软件测试开发技术专家携手打造，为企业与个人提供专业的技能培训与咨询、测试工具与测试平台、测试外包与测试众包服务。领域涵盖 App/Web 自动化测试、接口自动化测试、性能测试、安全测试、持续交付/DevOps、测试左移、测试右移、精准测试、测试平台开发、测试管理等方向。-> [**联系我们**](http://qrcode.testing-studio.com/f?from=HttpRunner&url=https://ceshiren.com/t/topic/23745)
 
 ## Subscribe
 
