@@ -234,7 +234,7 @@ func (dExt *DriverExt) ClosePopupHandler() {
 		x, y, width, height := dExt.MappingToRectInUIKit(rect)
 		pointX := x + width*0.5
 		pointY := y + height*0.5
-		err = dExt.TapAbsXY(pointX, pointY)
+		err = dExt.Driver.TapFloat(pointX, pointY)
 		if err != nil {
 			break
 		}

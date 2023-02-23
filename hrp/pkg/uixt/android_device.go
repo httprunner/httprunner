@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"net"
 	"os/exec"
 	"strings"
@@ -167,10 +168,11 @@ func (dev *AndroidDevice) LogEnabled() bool {
 
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	var driver WebDriver
-	if dev.UIA2 {
-		driver, err = dev.NewUSBDriver(capabilities)
-	} else {
+	disableUIA2 := env.DISABLE_UIAUTOMATOR_SERVER == "true"
+	if disableUIA2 {
 		driver, err = dev.NewAdbDriver()
+	} else {
+		driver, err = dev.NewUSBDriver(capabilities)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")

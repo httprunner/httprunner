@@ -65,24 +65,6 @@ func (wd *Driver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error
 	return wd.httpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) tempHttpGET(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.tempHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
-}
-
-func (wd *Driver) tempHttpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	return wd.tempHttpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
-}
-
-func (wd *Driver) tempHttpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.tempHttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
-}
-
 func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	log.Debug().Str("method", method).Str("url", rawURL).Str("body", string(rawBody)).Msg("request driver agent")
 
@@ -125,6 +107,24 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	return
 }
 
+func (wd *Driver) tempHttpGET(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.tempHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+}
+
+func (wd *Driver) tempHttpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	return wd.tempHttpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+}
+
+func (wd *Driver) tempHttpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.tempHttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+}
+
 func (wd *Driver) tempHttpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	var localPort int
 	{
@@ -141,7 +141,7 @@ func (wd *Driver) tempHttpRequest(method string, rawURL string, rawBody []byte) 
 	tmpHTTPClient := HTTPClient
 
 	var resp *http.Response
-	retryCount := 3
+	retryCount := 5
 	for retryCount > 0 {
 		log.Info().Str("url", rawURL).Msg("request url")
 		if req, err = http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
