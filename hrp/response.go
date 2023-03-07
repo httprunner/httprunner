@@ -195,7 +195,11 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		}
 
 		// do assertion
-		result := assertFunc(v.t, checkValue, expectValue)
+		result := false
+		// avoid assertFunc crash
+		if checkValue != nil {
+			result = assertFunc(v.t, checkValue, expectValue)
+		}
 		if result {
 			validResult.CheckResult = "pass"
 		}
