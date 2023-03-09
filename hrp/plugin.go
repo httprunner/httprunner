@@ -42,11 +42,6 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		return nil, nil
 	}
 
-	// reuse plugin instance if it already initialized
-	if p, ok := pluginMap.Load(pluginPath); ok {
-		return p.(funplugin.IPlugin), nil
-	}
-
 	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
 
 	if strings.HasSuffix(pluginPath, ".py") {
@@ -70,6 +65,11 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 			return nil, err
 		}
 		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
+	}
+
+	// reuse plugin instance if it already initialized
+	if p, ok := pluginMap.Load(pluginPath); ok {
+		return p.(funplugin.IPlugin), nil
 	}
 
 	// found plugin file
