@@ -47,6 +47,12 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	if strings.HasSuffix(pluginPath, ".py") {
 		// register funppy plugin
 		genPyPluginPath := filepath.Join(filepath.Dir(pluginPath), PluginPySourceGenFile)
+
+		// reuse plugin instance if it already initialized
+		if p, ok := pluginMap.Load(genPyPluginPath); ok {
+			return p.(funplugin.IPlugin), nil
+		}
+
 		err = BuildPlugin(pluginPath, genPyPluginPath)
 		if err != nil {
 			log.Error().Err(err).Str("path", pluginPath).Msg("build plugin failed")
@@ -65,11 +71,11 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 			return nil, err
 		}
 		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
-	}
-
-	// reuse plugin instance if it already initialized
-	if p, ok := pluginMap.Load(pluginPath); ok {
-		return p.(funplugin.IPlugin), nil
+	} else {
+		// reuse plugin instance if it already initialized
+		if p, ok := pluginMap.Load(pluginPath); ok {
+			return p.(funplugin.IPlugin), nil
+		}
 	}
 
 	// found plugin file
