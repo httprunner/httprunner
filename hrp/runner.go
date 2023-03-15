@@ -522,19 +522,9 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 			// run step
 			stepResult, err = step.Run(r)
-			stepResult.Name = stepName + loopIndex
 
 			// update summary
-			r.summary.Records = append(r.summary.Records, stepResult)
-		}
-
-		r.summary.Stat.Total += 1
-		if stepResult.Success {
-			r.summary.Stat.Successes += 1
-		} else {
-			r.summary.Stat.Failures += 1
-			// update summary result to failed
-			r.summary.Success = false
+			r.summaryIntoSubStep(stepResult, loopIndex)
 		}
 
 		// update extracted variables
@@ -645,4 +635,25 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	}
 
 	return caseSummary, nil
+}
+
+// do summary loop
+func (r *SessionRunner) summaryIntoSubStep(stepResult *StepResult, loopIndex string) {
+	if records, ok := stepResult.Data.([]*StepResult); ok {
+		for _, eachStepResult := range records {
+			r.summaryIntoSubStep(eachStepResult, loopIndex)
+		}
+	} else {
+		// make each step summary
+		stepResult.Name += loopIndex
+		r.summary.Stat.Total += 1
+		if stepResult.Success {
+			r.summary.Stat.Successes += 1
+		} else {
+			r.summary.Stat.Failures += 1
+			// update summary result to failed
+			r.summary.Success = false
+		}
+		r.summary.Records = append(r.summary.Records, stepResult)
+	}
 }
