@@ -1,5 +1,15 @@
 # Release History
 
+## v4.3.3 (2023-04-11)
+
+**go version**
+
+- feat: add `sleep_random` to sleep random seconds, with weight for multiple time ranges
+- feat: input text with adb
+- fix: adb driver for TapFloat
+- fix: stop logcat only when enabled
+- fix: do not fail case when kill logcat error
+
 ## v4.3.2 (2022-12-26)
 
 **go version**
