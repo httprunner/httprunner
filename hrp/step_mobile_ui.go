@@ -281,10 +281,14 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) SleepRandom(a, b float64) *StepMobile {
+// SleepRandom specify random sleeping seconds after last action
+// params have two different kinds:
+// 1. [min, max] : min and max are float64 time range boudaries
+// 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
+func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method: uixt.CtlSleepRandom,
-		Params: []float64{a, b},
+		Params: params,
 	})
 	return &StepMobile{step: s.step}
 }
