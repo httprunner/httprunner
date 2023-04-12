@@ -43,7 +43,7 @@
             }
         },
         {
-            "name": "滑动 Feed 35 次，随机间隔 0-20s",
+            "name": "滑动 Feed 3 次，随机间隔 0-5s",
             "android": {
                 "actions": [
                     {
@@ -54,15 +54,15 @@
                         "method": "sleep_random",
                         "params": [
                             0,
-                            20
+                            5
                         ]
                     }
                 ]
             },
-            "loops": 35
+            "loops": 3
         },
         {
-            "name": "滑动 Feed 15 次，随机间隔 15-50s",
+            "name": "滑动 Feed 1 次，随机间隔 5-10s",
             "android": {
                 "actions": [
                     {
@@ -72,13 +72,36 @@
                     {
                         "method": "sleep_random",
                         "params": [
-                            15,
-                            50
+                            5,
+                            10
                         ]
                     }
                 ]
             },
-            "loops": 15
+            "loops": 1
+        },
+        {
+            "name": "滑动 Feed 10 次，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": "up"
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            0,
+                            5,
+                            0.7,
+                            5,
+                            10,
+                            0.3
+                        ]
+                    }
+                ]
+            },
+            "loops": 10
         }
     ]
 }
