@@ -348,6 +348,19 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 
 var errActionNotImplemented = errors.New("UI action not implemented")
 
+func convertToFloat64(val interface{}) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	default:
+		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
+	}
+}
+
 func (dExt *DriverExt) DoAction(action MobileAction) error {
 	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start UI action")
 
@@ -609,24 +622,54 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case CtlSleepRandom:
-		if params, ok := action.Params.([]interface{}); ok && len(params) == 2 {
-			var a, b float64
-			if v, ok := params[0].(float64); ok {
-				a = v
-			} else if v, ok := params[0].(int64); ok {
-				a = float64(v)
+		params, ok := action.Params.([]interface{})
+		if !ok {
+			return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
+		}
+		// append default weight 1
+		if len(params) == 2 {
+			params = append(params, 1.0)
+		}
+
+		var sections []struct {
+			min, max, weight float64
+		}
+		totalProb := 0.0
+		for i := 0; i+3 <= len(params); i += 3 {
+			min, err := convertToFloat64(params[i])
+			if err != nil {
+				return errors.Wrapf(err, "invalid minimum time: %v", params[i])
 			}
-			if v, ok := params[1].(float64); ok {
-				b = v
-			} else if v, ok := params[1].(int64); ok {
-				b = float64(v)
+			max, err := convertToFloat64(params[i+1])
+			if err != nil {
+				return errors.Wrapf(err, "invalid maximum time: %v", params[i+1])
 			}
-			n := a + rand.Float64()*(b-a)
-			log.Info().Float64("duration", n).Msg("sleep random seconds")
-			time.Sleep(time.Duration(n*1000) * time.Millisecond)
+			weight, err := convertToFloat64(params[i+2])
+			if err != nil {
+				return errors.Wrapf(err, "invalid weight value: %v", params[i+2])
+			}
+			totalProb += weight
+			sections = append(sections,
+				struct{ min, max, weight float64 }{min, max, weight},
+			)
+		}
+
+		if totalProb == 0 {
+			log.Warn().Msg("total weight is 0, skip sleep")
 			return nil
 		}
-		return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
+
+		r := rand.Float64()
+		accProb := 0.0
+		for _, s := range sections {
+			accProb += s.weight / totalProb
+			if r < accProb {
+				n := s.min + rand.Float64()*(s.max-s.min)
+				log.Info().Float64("duration", n).Msg("sleep random seconds")
+				time.Sleep(time.Duration(n*1000) * time.Millisecond)
+				return nil
+			}
+		}
 	case CtlScreenShot:
 		// take snapshot
 		log.Info().Msg("take snapshot for current screen")

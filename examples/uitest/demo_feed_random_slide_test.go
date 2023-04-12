@@ -25,16 +25,21 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 			hrp.NewStep("处理青少年弹窗").
 				Android().
 				TapByOCR("我知道了", uixt.WithIgnoreNotFoundError(true)),
-			hrp.NewStep("滑动 Feed 35 次，随机间隔 0-20s").
-				Loop(35).
+			hrp.NewStep("滑动 Feed 3 次，随机间隔 0-5s").
+				Loop(3).
 				Android().
 				SwipeUp().
-				SleepRandom(0, 20),
-			hrp.NewStep("滑动 Feed 15 次，随机间隔 15-50s").
-				Loop(15).
+				SleepRandom(0, 5),
+			hrp.NewStep("滑动 Feed 1 次，随机间隔 5-10s").
+				Loop(1).
 				Android().
 				SwipeUp().
-				SleepRandom(15, 50),
+				SleepRandom(5, 10),
+			hrp.NewStep("滑动 Feed 10 次，70% 随机间隔 0-5s，30% 随机间隔 5-10s").
+				Loop(10).
+				Android().
+				SwipeUp().
+				SleepRandom(0, 5, 0.7, 5, 10, 0.3),
 		},
 	}
 
