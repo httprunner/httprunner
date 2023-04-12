@@ -75,7 +75,7 @@ func TestLoadParameters(t *testing.T) {
 		"file": "account.csv",
 	}
 	for _, data := range testData {
-		value, err := loadParameters(data.configParameters, variablesMapping)
+		value, err := loadParameters(data.configParameters, variablesMapping, nil)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -106,7 +106,7 @@ func TestLoadParametersError(t *testing.T) {
 		},
 	}
 	for _, data := range testData {
-		_, err := loadParameters(data.configParameters, map[string]interface{}{})
+		_, err := loadParameters(data.configParameters, map[string]interface{}{}, nil)
 		if !assert.Error(t, err) {
 			t.Fatal()
 		}
@@ -241,7 +241,7 @@ func TestInitParametersIteratorCount(t *testing.T) {
 		},
 	}
 	for _, data := range testData {
-		iterator, err := initParametersIterator(data.cfg)
+		iterator, err := initParametersIterator(data.cfg, nil)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -289,7 +289,7 @@ func TestInitParametersIteratorUnlimitedCount(t *testing.T) {
 		},
 	}
 	for _, data := range testData {
-		iterator, err := initParametersIterator(data.cfg)
+		iterator, err := initParametersIterator(data.cfg, nil)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -371,7 +371,7 @@ func TestInitParametersIteratorContent(t *testing.T) {
 		},
 	}
 	for _, data := range testData {
-		iterator, err := initParametersIterator(data.cfg)
+		iterator, err := initParametersIterator(data.cfg, nil)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}

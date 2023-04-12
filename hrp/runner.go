@@ -386,7 +386,7 @@ func (r *CaseRunner) parseConfig() error {
 	r.parsedConfig.WebSocketSetting.checkWebSocket()
 
 	// parse testcase config parameters
-	parametersIterator, err := initParametersIterator(r.parsedConfig)
+	parametersIterator, err := initParametersIterator(r.parsedConfig, r.parser)
 	if err != nil {
 		log.Error().Err(err).
 			Interface("parameters", r.parsedConfig.Parameters).
