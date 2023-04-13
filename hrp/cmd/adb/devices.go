@@ -26,7 +26,7 @@ var listAndroidDevicesCmd = &cobra.Command{
 			return errors.Wrap(err, "list android devices failed")
 		}
 
-		var deviceList []gadb.Device
+		var deviceList []*gadb.Device
 		// filter by serial
 		for _, d := range devices {
 			if serial != "" && serial != d.Serial() {
