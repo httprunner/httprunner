@@ -3,6 +3,7 @@
 package gadb
 
 import (
+	"io/ioutil"
 	"testing"
 )
 
@@ -126,4 +127,23 @@ func TestClient_KillServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestScreenCap(t *testing.T) {
+	adbClient, err := NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dl, err := adbClient.DeviceList()
+	if err != nil {
+		t.Error(err)
+	}
+	d := dl[0]
+	res, err := d.RunShellCommandV2WithBytes("screencap", "-p")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(len(res))
+	ioutil.WriteFile("/tmp/1.png", res, 0o644)
 }

@@ -17,7 +17,7 @@ import (
 type adbDriver struct {
 	Driver
 
-	adbClient gadb.Device
+	adbClient *gadb.Device
 	logcat    *AdbLogcat
 }
 

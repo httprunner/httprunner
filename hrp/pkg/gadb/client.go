@@ -38,6 +38,16 @@ func NewClientWith(host string, port ...int) (adbClient Client, err error) {
 	return
 }
 
+func NewClientWithoutTransport(host string, port ...int) (adbClient Client, err error) {
+	if len(port) == 0 {
+		port = []int{AdbServerPort}
+	}
+	adbClient.host = host
+	adbClient.port = port[0]
+
+	return
+}
+
 func (c Client) ServerVersion() (version int, err error) {
 	var resp string
 	if resp, err = c.executeCommand("host:version"); err != nil {
@@ -73,14 +83,14 @@ func (c Client) DeviceSerialList() (serials []string, err error) {
 	return
 }
 
-func (c Client) DeviceList() (devices []Device, err error) {
+func (c Client) DeviceList() (devices []*Device, err error) {
 	var resp string
 	if resp, err = c.executeCommand("host:devices-l"); err != nil {
 		return
 	}
 
 	lines := strings.Split(resp, "\n")
-	devices = make([]Device, 0, len(lines))
+	devices = make([]*Device, 0, len(lines))
 
 	for i := range lines {
 		line := strings.TrimSpace(lines[i])
@@ -101,7 +111,7 @@ func (c Client) DeviceList() (devices []Device, err error) {
 			key, val := split[0], split[1]
 			mapAttrs[key] = val
 		}
-		devices = append(devices, Device{adbClient: c, serial: fields[0], attrs: mapAttrs})
+		devices = append(devices, &Device{adbClient: c, serial: fields[0], attrs: mapAttrs})
 	}
 
 	return
