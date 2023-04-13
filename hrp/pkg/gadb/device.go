@@ -247,8 +247,7 @@ func (d *Device) RunShellCommand(cmd string, args ...string) (string, error) {
 
 func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, error) {
 	if d.HasFeature(FeatShellV2) {
-		raw, err := d.RunShellCommandV2WithBytes(cmd, args...)
-		return raw, err
+		return d.RunShellCommandV2WithBytes(cmd, args...)
 	}
 	if len(args) > 0 {
 		cmd = fmt.Sprintf("%s %s", cmd, strings.Join(args, " "))
@@ -278,7 +277,7 @@ func (d *Device) RunShellCommandV2WithBytes(cmd string, args ...string) ([]byte,
 	}
 	log.Debug().Str("cmd",
 		fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-		Msg("run adb command")
+		Msg("run adb command in v2")
 	raw, err := d.executeCommand(fmt.Sprintf("shell,v2,raw:%s", cmd))
 	if err != nil {
 		return raw, err
