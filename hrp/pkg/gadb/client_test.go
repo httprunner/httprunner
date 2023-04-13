@@ -140,7 +140,7 @@ func TestScreenCap(t *testing.T) {
 		t.Error(err)
 	}
 	d := dl[0]
-	res, err := d.RunShellCommandV2WithBytes("screencap", "-p")
+	res, err := d.ScreenCap()
 	if err != nil {
 		t.Error(err)
 	}
