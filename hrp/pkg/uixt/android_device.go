@@ -328,7 +328,7 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	}
 
 	// clear logcat
-	if err = myexec.RunCommand("adb", "-s", l.serial, "logcat", "--clear"); err != nil {
+	if err = myexec.RunCommand("adb", "-s", l.serial, "shell", "logcat", "-c"); err != nil {
 		return
 	}
 

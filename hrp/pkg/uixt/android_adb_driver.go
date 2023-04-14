@@ -329,7 +329,7 @@ func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
 
 	// clear logcat
-	if _, err = ad.adbClient.RunShellCommand("logcat", "--clear"); err != nil {
+	if _, err = ad.adbClient.RunShellCommand("logcat", "-c"); err != nil {
 		return err
 	}
 
