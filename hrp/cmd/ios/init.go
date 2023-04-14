@@ -20,7 +20,7 @@ func getDevice(udid string) (gidevice.Device, error) {
 		return nil, err
 	}
 	if len(devices) > 1 {
-		return nil, fmt.Errorf("multiple devices found, please specify ios udid")
+		return nil, fmt.Errorf("found multiple attached devices, please specify ios udid")
 	}
 	return devices[0], nil
 }
