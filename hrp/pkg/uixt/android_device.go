@@ -115,7 +115,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 		fmt.Sprintf("device %s not found", device.SerialNumber))
 }
 
-func DeviceList() (devices []gadb.Device, err error) {
+func DeviceList() (devices []*gadb.Device, err error) {
 	var adbClient gadb.Client
 	if adbClient, err = gadb.NewClientWith(AdbServerHost, AdbServerPort); err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
@@ -125,7 +125,7 @@ func DeviceList() (devices []gadb.Device, err error) {
 }
 
 type AndroidDevice struct {
-	d            gadb.Device
+	d            *gadb.Device
 	logcat       *AdbLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
