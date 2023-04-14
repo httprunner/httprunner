@@ -324,7 +324,7 @@ func Test_getFreePort(t *testing.T) {
 }
 
 func TestDeviceList(t *testing.T) {
-	devices, err := DeviceList()
+	devices, err := GetAndroidDevices()
 	if err != nil {
 		t.Fatal(err)
 	}
