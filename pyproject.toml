@@ -38,7 +38,7 @@ jmespath = "^0.9.5"
 black = "^22.3.0"
 pytest = "^7.1.1"
 pytest-html = "^3.1.1"
-sentry-sdk = "^0.14.4"
+sentry-sdk = ">=0.14.4,<1.15.0"
 allure-pytest = {version = "^2.8.16", optional = true}
 requests-toolbelt = {version = "^0.9.1", optional = true}
 filetype = {version = "^1.0.7", optional = true}
