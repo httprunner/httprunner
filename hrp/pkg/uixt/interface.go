@@ -627,10 +627,14 @@ type WebDriver interface {
 
 	// AppLaunch Launch an application with given bundle identifier in scope of current session.
 	// !This method is only available since Xcode9 SDK
-	AppLaunch(bundleId string) error
-	// AppTerminate Terminate an application with the given bundle id.
+	AppLaunch(packageName string) error
+	// AppTerminate Terminate an application with the given pacakge name.
 	// Either `true` if the app has been successfully terminated or `false` if it was not running
-	AppTerminate(bundleId string) (bool, error)
+	AppTerminate(packageName string) (bool, error)
+	// GetLastLaunchedApp returns the package name of the last launched app
+	GetLastLaunchedApp() string
+	// IsAppInForeground returns true if the given package is in foreground
+	IsAppInForeground(packageName string) (bool, error)
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error

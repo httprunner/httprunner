@@ -572,5 +572,20 @@ func (d *Device) Uninstall(packageName string, keepData ...bool) (string, error)
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {
-	return d.RunShellCommandV2WithBytes("screencap", "-p")
+	if d.HasFeature(FeatShellV2) {
+		return d.RunShellCommandV2WithBytes("screencap", "-p")
+	}
+
+	// for shell v1, screenshot buffer maybe truncated
+	// thus we firstly save it to local file and then pull it
+	tempPath := fmt.Sprintf("/data/local/tmp/screenshot_%d.png",
+		time.Now().Unix())
+	_, err := d.RunShellCommandWithBytes("screencap", "-p", tempPath)
+	if err != nil {
+		return nil, err
+	}
+
+	buffer := bytes.NewBuffer(nil)
+	err = d.Pull(tempPath, buffer)
+	return buffer.Bytes(), err
 }
