@@ -93,13 +93,16 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 	// retry 3 times
 	for i := 1; i <= 3; i++ {
 		resp, err = client.Do(req)
-		if err == nil {
-			break
-		}
-
 		var logID string
 		if resp != nil {
 			logID = getLogID(resp.Header)
+		}
+		if err == nil {
+			log.Debug().
+				Str("X-TT-LOGID", logID).
+				Int("imageBufSize", size).
+				Msg("request OCR service success")
+			break
 		}
 		log.Error().Err(err).
 			Str("X-TT-LOGID", logID).
