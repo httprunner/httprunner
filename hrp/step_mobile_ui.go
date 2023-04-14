@@ -561,6 +561,14 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments := make(map[string]interface{})
 		if err != nil {
 			attachments["error"] = err.Error()
+
+			// check if app is in foreground
+			packageName := uiDriver.Driver.GetLastLaunchedApp()
+			yes, err2 := uiDriver.Driver.IsAppInForeground(packageName)
+			if packageName != "" && (!yes || err2 != nil) {
+				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
+				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
+			}
 		}
 
 		// take screenshot after each step
