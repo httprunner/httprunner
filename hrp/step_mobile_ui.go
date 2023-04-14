@@ -561,6 +561,24 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments := make(map[string]interface{})
 		if err != nil {
 			attachments["error"] = err.Error()
+
+			// check if app is in foreground
+			packageName := uiDriver.Driver.GetLastLaunchedApp()
+			yes, err2 := uiDriver.Driver.IsAppInForeground(packageName)
+			if packageName != "" && (!yes || err2 != nil) {
+				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
+				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
+			}
+		}
+
+		// take screenshot after each step
+		screenshotPath, err := uiDriver.ScreenShot(
+			fmt.Sprintf("step_%d", time.Now().Unix()))
+		if err != nil {
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed")
+		} else {
+			log.Info().Str("path", screenshotPath).Msg("take screenshot on step finished")
+			screenshots = append(screenshots, screenshotPath)
 		}
 
 		// save attachments
@@ -597,16 +615,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 			return stepResult, err
 		}
-	}
-
-	// take snapshot
-	screenshotPath, err := uiDriver.ScreenShot(
-		fmt.Sprintf("validate_%d", time.Now().Unix()))
-	if err != nil {
-		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
-	} else {
-		log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
-		screenshots = append(screenshots, screenshotPath)
 	}
 
 	// validate

@@ -67,8 +67,9 @@ var (
 
 // UI automation related: [70, 80)
 var (
-	MobileUIDriverError     = errors.New("mobile UI driver error")     // 70
-	MobileUIValidationError = errors.New("mobile UI validation error") // 75
+	MobileUIDriverError             = errors.New("mobile UI driver error")                // 70
+	MobileUIValidationError         = errors.New("mobile UI validation error")            // 75
+	MobileUIAppNotInForegroundError = errors.New("mobile UI app not in foreground error") // 76
 )
 
 // OCR related: [80, 90)

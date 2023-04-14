@@ -70,18 +70,10 @@ var listDevicesCmd = &cobra.Command{
 	Short:            "List all iOS devices",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		devices, err := uixt.IOSDevices(udid)
+		devices, err := uixt.GetIOSDevices(udid)
 		if err != nil {
-			return err
-		}
-		if len(devices) == 0 {
-			if udid != "" {
-				fmt.Printf("no ios device found for udid: %s\n", udid)
-				os.Exit(1)
-			} else {
-				fmt.Println("no ios device found")
-				os.Exit(0)
-			}
+			fmt.Println(err)
+			os.Exit(0)
 		}
 
 		for _, d := range devices {
