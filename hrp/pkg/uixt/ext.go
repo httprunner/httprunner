@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"math/rand"
@@ -284,6 +285,8 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 		err = png.Encode(file, img)
 	case "jpeg":
 		err = jpeg.Encode(file, img, nil)
+	case "gif":
+		err = gif.Encode(file, img, nil)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
 	}
