@@ -13,6 +13,7 @@
 - fix: stop logcat only when enabled
 - fix: do not fail case when kill logcat error
 - fix: take screenshot after each step
+- fix: screencap compatibility for shell v1 and v2
 
 ## v4.3.2 (2022-12-26)
 
