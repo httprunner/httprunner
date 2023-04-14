@@ -102,7 +102,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 			logID = getLogID(resp.Header)
 		}
 		log.Error().Err(err).
-			Str("logID", logID).
+			Str("X-TT-LOGID", logID).
 			Int("imageBufSize", size).
 			Msgf("request OCR service failed, retry %d", i)
 		time.Sleep(1 * time.Second)
