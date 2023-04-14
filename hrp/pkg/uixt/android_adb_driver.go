@@ -17,7 +17,7 @@ import (
 type adbDriver struct {
 	Driver
 
-	adbClient gadb.Device
+	adbClient *gadb.Device
 	logcat    *AdbLogcat
 }
 
@@ -280,9 +280,7 @@ func (ad *adbDriver) SetRotation(rotation Rotation) (err error) {
 
 func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// adb shell screencap -p
-	resp, err := ad.adbClient.RunShellCommandWithBytes(
-		"screencap", "-p",
-	)
+	resp, err := ad.adbClient.ScreenCap()
 	if err == nil {
 		return bytes.NewBuffer(resp), nil
 	}
