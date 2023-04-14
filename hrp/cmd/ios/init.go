@@ -2,7 +2,6 @@ package ios
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
@@ -16,16 +15,12 @@ var iosRootCmd = &cobra.Command{
 }
 
 func getDevice(udid string) (gidevice.Device, error) {
-	devices, err := uixt.IOSDevices(udid)
+	devices, err := uixt.GetIOSDevices(udid)
 	if err != nil {
 		return nil, err
 	}
-	if len(devices) == 0 {
-		fmt.Println("no ios device found")
-		os.Exit(1)
-	}
 	if len(devices) > 1 {
-		return nil, fmt.Errorf("multiple devices found, please specify udid")
+		return nil, fmt.Errorf("found multiple attached devices, please specify ios udid")
 	}
 	return devices[0], nil
 }

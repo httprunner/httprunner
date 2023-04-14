@@ -281,10 +281,14 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) SleepRandom(a, b float64) *StepMobile {
+// SleepRandom specify random sleeping seconds after last action
+// params have two different kinds:
+// 1. [min, max] : min and max are float64 time range boudaries
+// 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
+func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method: uixt.CtlSleepRandom,
-		Params: []float64{a, b},
+		Params: params,
 	})
 	return &StepMobile{step: s.step}
 }
@@ -557,6 +561,24 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments := make(map[string]interface{})
 		if err != nil {
 			attachments["error"] = err.Error()
+
+			// check if app is in foreground
+			packageName := uiDriver.Driver.GetLastLaunchedApp()
+			yes, err2 := uiDriver.Driver.IsAppInForeground(packageName)
+			if packageName != "" && (!yes || err2 != nil) {
+				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
+				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
+			}
+		}
+
+		// take screenshot after each step
+		screenshotPath, err := uiDriver.ScreenShot(
+			fmt.Sprintf("step_%d", time.Now().Unix()))
+		if err != nil {
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed")
+		} else {
+			log.Info().Str("path", screenshotPath).Msg("take screenshot on step finished")
+			screenshots = append(screenshots, screenshotPath)
 		}
 
 		// save attachments
@@ -593,16 +615,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 			return stepResult, err
 		}
-	}
-
-	// take snapshot
-	screenshotPath, err := uiDriver.ScreenShot(
-		fmt.Sprintf("validate_%d", time.Now().Unix()))
-	if err != nil {
-		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
-	} else {
-		log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
-		screenshots = append(screenshots, screenshotPath)
 	}
 
 	// validate

@@ -20,6 +20,8 @@ type Driver struct {
 	urlPrefix *url.URL
 	sessionId string
 	client    *http.Client
+	// cache the last launched package name
+	lastLaunchedPackageName string
 }
 
 func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
