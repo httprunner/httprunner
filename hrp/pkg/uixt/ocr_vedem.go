@@ -97,7 +97,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 		if resp != nil {
 			logID = getLogID(resp.Header)
 		}
-		if err == nil {
+		if err == nil && resp.StatusCode == http.StatusOK {
 			log.Debug().
 				Str("X-TT-LOGID", logID).
 				Int("imageBufSize", size).
