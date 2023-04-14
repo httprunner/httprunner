@@ -572,5 +572,5 @@ func (d *Device) Uninstall(packageName string, keepData ...bool) (string, error)
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {
-	return d.RunShellCommandV2WithBytes("screencap", "-p")
+	return d.RunShellCommandWithBytes("screencap", "-p")
 }
