@@ -563,6 +563,16 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			attachments["error"] = err.Error()
 		}
 
+		// take screenshot after each step
+		screenshotPath, err := uiDriver.ScreenShot(
+			fmt.Sprintf("step_%d", time.Now().Unix()))
+		if err != nil {
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed")
+		} else {
+			log.Info().Str("path", screenshotPath).Msg("take screenshot on step finished")
+			screenshots = append(screenshots, screenshotPath)
+		}
+
 		// save attachments
 		screenshots = append(screenshots, uiDriver.ScreenShots...)
 		attachments["screenshots"] = screenshots
@@ -597,16 +607,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 			return stepResult, err
 		}
-	}
-
-	// take snapshot
-	screenshotPath, err := uiDriver.ScreenShot(
-		fmt.Sprintf("validate_%d", time.Now().Unix()))
-	if err != nil {
-		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
-	} else {
-		log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
-		screenshots = append(screenshots, screenshotPath)
 	}
 
 	// validate
