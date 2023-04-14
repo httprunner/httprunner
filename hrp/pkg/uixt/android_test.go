@@ -353,6 +353,34 @@ func TestDriver_AppLaunch(t *testing.T) {
 	t.Log(ioutil.WriteFile("s1.png", raw.Bytes(), 0o600))
 }
 
+func TestDriver_IsAppInForeground(t *testing.T) {
+	device, _ := NewAndroidDevice()
+	driver, err := device.NewDriver(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.Driver.AppLaunch("com.android.settings")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	yes, err := driver.Driver.IsAppInForeground(driver.Driver.GetLastLaunchedApp())
+	if err != nil || !yes {
+		t.Fatal(err)
+	}
+
+	_, err = driver.Driver.AppTerminate("com.android.settings")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	yes, err = driver.Driver.IsAppInForeground("com.android.settings")
+	if err != nil || yes {
+		t.Fatal(err)
+	}
+}
+
 func TestDriver_KeepAlive(t *testing.T) {
 	device, _ := NewAndroidDevice()
 	driver, err := device.NewDriver(nil)
