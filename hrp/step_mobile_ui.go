@@ -2,11 +2,11 @@ package hrp
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -572,7 +572,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		Success:     false,
 		ContentSize: 0,
 	}
-	screenshots := make([]string, 0)
 
 	// merge step variables with session variables
 	stepVariables, err := s.ParseStepVariables(step.Variables)
@@ -602,18 +601,14 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// take screenshot after each step
-		screenshotPath, err := uiDriver.ScreenShot(
-			fmt.Sprintf("step_%d", time.Now().Unix()))
+		_, err := uiDriver.TakeScreenShot(
+			builtin.GenNameWithTimestamp("step_") + "_" + step.Name)
 		if err != nil {
-			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed")
-		} else {
-			log.Info().Str("path", screenshotPath).Msg("take screenshot on step finished")
-			screenshots = append(screenshots, screenshotPath)
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
 
 		// save attachments
-		screenshots = append(screenshots, uiDriver.ScreenShots...)
-		attachments["screenshots"] = screenshots
+		attachments["screenshots"] = uiDriver.GetScreenShots()
 		stepResult.Attachments = attachments
 	}()
 

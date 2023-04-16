@@ -217,7 +217,7 @@ type DriverExt struct {
 	doneMjpegStream chan bool
 	scale           float64
 	ocrService      OCRService // used to get text from image
-	ScreenShots     []string   // save screenshots path
+	screenShots     []string   // cache screenshot paths
 
 	CVArgs
 }
@@ -253,7 +253,9 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	return dExt, nil
 }
 
-func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
+// TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
+// if fileName is empty, it will not save image file and only return raw image data
+func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, err error) {
 	// wait for action done
 	time.Sleep(500 * time.Millisecond)
 
@@ -263,14 +265,27 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 		return dExt.frame, nil
 	}
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
-		log.Error().Err(err).Msg("takeScreenShot failed")
+		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, err
 	}
+
+	// save screenshot to file
+	if len(fileName) > 0 && fileName[0] != "" {
+		path := filepath.Join(env.ScreenShotsPath, fileName[0])
+		path, err := dExt.saveScreenShot(raw, path)
+		if err != nil {
+			log.Error().Err(err).Msg("save screenshot file failed")
+			return nil, err
+		}
+		dExt.screenShots = append(dExt.screenShots, path)
+		log.Info().Str("path", path).Msg("save screenshot file success")
+	}
+
 	return raw, nil
 }
 
 // saveScreenShot saves image file with file name
-func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
@@ -302,19 +317,11 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	return screenshotPath, nil
 }
 
-// ScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
-	raw, err := dExt.takeScreenShot()
-	if err != nil {
-		return "", errors.Wrap(err, "screenshot failed")
-	}
-
-	fileName = filepath.Join(env.ScreenShotsPath, fileName)
-	path, err := saveScreenShot(raw, fileName)
-	if err != nil {
-		return "", errors.Wrap(err, "save screenshot failed")
-	}
-	return path, nil
+func (dExt *DriverExt) GetScreenShots() []string {
+	defer func() {
+		dExt.screenShots = nil
+	}()
+	return dExt.screenShots
 }
 
 // isPathExists returns true if path exists, whether path is file or dir
@@ -689,15 +696,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 		}
 	case CtlScreenShot:
-		// take snapshot
-		log.Info().Msg("take snapshot for current screen")
-		screenshotPath, err := dExt.ScreenShot(fmt.Sprintf("screenshot_%d",
-			time.Now().Unix()))
-		if err != nil {
-			return errors.Wrap(err, "take screenshot failed")
-		}
-		log.Info().Str("path", screenshotPath).Msg("take screenshot")
-		dExt.ScreenShots = append(dExt.ScreenShots, screenshotPath)
+		// take screenshot
+		log.Info().Msg("take screenshot for current screen")
+		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("screenshot_"))
 		return err
 	case CtlStartCamera:
 		return dExt.Driver.StartCamera()
