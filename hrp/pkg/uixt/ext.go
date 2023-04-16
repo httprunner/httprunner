@@ -41,10 +41,15 @@ const (
 	RecordStop     MobileMethod = "record_stop"
 
 	// UI validation
-	SelectorName       string = "ui_name"
-	SelectorLabel      string = "ui_label"
-	SelectorOCR        string = "ui_ocr"
-	SelectorImage      string = "ui_image"
+	// selectors
+	SelectorName          string = "ui_name"
+	SelectorLabel         string = "ui_label"
+	SelectorOCR           string = "ui_ocr"
+	SelectorImage         string = "ui_image"
+	SelectorForegroundApp string = "ui_foreground_app"
+	// assertions
+	AssertionEqual     string = "equal"
+	AssertionNotEqual  string = "not_equal"
 	AssertionExists    string = "exists"
 	AssertionNotExists string = "not_exists"
 
@@ -347,6 +352,16 @@ func (dExt *DriverExt) IsOCRExist(text string) bool {
 func (dExt *DriverExt) IsImageExist(text string) bool {
 	_, _, _, _, err := dExt.FindImageRectInUIKit(text)
 	return err == nil
+}
+
+func (dExt *DriverExt) IsAppInForeground(packageName string) bool {
+	// check if app is in foreground
+	yes, err := dExt.Driver.IsAppInForeground(packageName)
+	if !yes || err != nil {
+		log.Info().Str("packageName", packageName).Msg("app is not in foreground")
+		return false
+	}
+	return true
 }
 
 var errActionNotImplemented = errors.New("UI action not implemented")
@@ -700,18 +715,20 @@ func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) 
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
-	var exists bool
-	if assert == AssertionExists {
-		exists = true
+	var exp bool
+	if assert == AssertionExists || assert == AssertionEqual {
+		exp = true
 	} else {
-		exists = false
+		exp = false
 	}
 	var result bool
 	switch check {
 	case SelectorOCR:
-		result = (dExt.IsOCRExist(expected) == exists)
+		result = (dExt.IsOCRExist(expected) == exp)
 	case SelectorImage:
-		result = (dExt.IsImageExist(expected) == exists)
+		result = (dExt.IsImageExist(expected) == exp)
+	case SelectorForegroundApp:
+		result = (dExt.IsAppInForeground(expected) == exp)
 	}
 
 	if !result {

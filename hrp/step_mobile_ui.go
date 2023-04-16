@@ -468,6 +468,36 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 	return s
 }
 
+func (s *StepMobileUIValidation) AssertAppInForeground(packageName string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorForegroundApp,
+		Assert: uixt.AssertionEqual,
+		Expect: packageName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("app [%s] should be in foreground", packageName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepMobileUIValidation) AssertAppNotInForeground(packageName string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorForegroundApp,
+		Assert: uixt.AssertionNotEqual,
+		Expect: packageName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("app [%s] should not be in foreground", packageName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepMobileUIValidation) Name() string {
 	return s.step.Name
 }

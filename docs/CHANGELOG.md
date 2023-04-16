@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.3 (2023-04-14)
+## v4.3.3 (2023-04-16)
 
 **go version**
 
@@ -9,6 +9,7 @@
 - feat: add adb `screencap` sub command
 - feat: add `IsAppInForeground` to check if the given package is in foreground
 - feat: check if app is in foreground when step failed
+- feat: add validator AssertAppInForeground and AssertAppNotInForeground
 - fix: adb driver for TapFloat
 - fix: stop logcat only when enabled
 - fix: do not fail case when kill logcat error
