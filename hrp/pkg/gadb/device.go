@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 type DeviceFileInfo struct {
@@ -538,7 +540,7 @@ func (d *Device) InstallAPK(apk io.ReadSeeker) (string, error) {
 		return string(raw), err
 	}
 
-	remote := fmt.Sprintf("/data/local/tmp/gadb_remote_%d.apk", time.Now().Unix())
+	remote := fmt.Sprintf("/data/local/tmp/%s.apk", builtin.GenNameWithTimestamp("gadb_remote_"))
 	err := d.Push(apk, remote, time.Now())
 	if err != nil {
 		return "", fmt.Errorf("error pushing: %v", err)

@@ -175,14 +175,6 @@ func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption
 
 	dataOptions := NewDataOptions(options...)
 
-	if dataOptions.ScreenShotFilename != "" {
-		path, err := saveScreenShot(imageBuf, dataOptions.ScreenShotFilename)
-		if err != nil {
-			return nil, errors.Wrap(err, "save screenshot failed")
-		}
-		log.Debug().Str("path", path).Msg("save screenshot")
-	}
-
 	for _, ocrResult := range ocrResults {
 		rect := image.Rectangle{
 			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
@@ -313,8 +305,7 @@ type OCRService interface {
 
 func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.takeScreenShot(); err != nil {
-		err = fmt.Errorf("takeScreenShot error: %v", err)
+	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("ocr_")); err != nil {
 		return
 	}
 
@@ -329,8 +320,7 @@ func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err
 
 func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.takeScreenShot(); err != nil {
-		err = fmt.Errorf("takeScreenShot error: %v", err)
+	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("ocr_")); err != nil {
 		return
 	}
 
@@ -348,8 +338,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, 
 
 func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) (points [][]float64, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.takeScreenShot(); err != nil {
-		err = fmt.Errorf("takeScreenShot error: %v", err)
+	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("ocr_")); err != nil {
 		return
 	}
 
