@@ -21,7 +21,9 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 				Android().
 				AppTerminate("com.ss.android.ugc.aweme").
 				AppLaunch("com.ss.android.ugc.aweme").
-				Sleep(10),
+				Sleep(10).
+				Validate().
+				AssertAppInForeground("com.ss.android.ugc.aweme"),
 			hrp.NewStep("处理青少年弹窗").
 				Android().
 				TapByOCR("我知道了", uixt.WithIgnoreNotFoundError(true)),
@@ -40,6 +42,11 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 				Android().
 				SwipeUp().
 				SleepRandom(0, 5, 0.7, 5, 10, 0.3),
+			hrp.NewStep("exit").
+				Android().
+				AppTerminate("com.ss.android.ugc.aweme").
+				Validate().
+				AssertAppNotInForeground("com.ss.android.ugc.aweme"),
 		},
 	}
 

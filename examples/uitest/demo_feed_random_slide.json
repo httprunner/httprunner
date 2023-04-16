@@ -28,7 +28,15 @@
                         "params": 10
                     }
                 ]
-            }
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "equal",
+                    "expect": "com.ss.android.ugc.aweme",
+                    "msg": "app [com.ss.android.ugc.aweme] should be in foreground"
+                }
+            ]
         },
         {
             "name": "处理青少年弹窗",
@@ -102,6 +110,25 @@
                 ]
             },
             "loops": 10
+        },
+        {
+            "name": "exit",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme"
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "not_equal",
+                    "expect": "com.ss.android.ugc.aweme",
+                    "msg": "app [com.ss.android.ugc.aweme] should not be in foreground"
+                }
+            ]
         }
     ]
 }
