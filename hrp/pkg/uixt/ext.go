@@ -698,7 +698,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	case CtlScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
-		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("screenshot_"))
+		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("screenshot_%d"))
 		return err
 	case CtlStartCamera:
 		return dExt.Driver.StartCamera()

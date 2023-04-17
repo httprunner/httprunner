@@ -45,10 +45,7 @@ func TestIOSDouyinLive(t *testing.T) {
 		},
 	}
 
-	if err := testCase.Dump2JSON("demo_douyin_live.json"); err != nil {
-		t.Fatal(err)
-	}
-	if err := testCase.Dump2YAML("demo_douyin_live.yaml"); err != nil {
+	if err := testCase.Dump2JSON("demo_ios_live_swipe.json"); err != nil {
 		t.Fatal(err)
 	}
 

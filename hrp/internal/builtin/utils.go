@@ -444,6 +444,9 @@ func Sign(ver string, ak string, sk string, body []byte) string {
 	return fmt.Sprintf("%v/%v", signKeyInfo, string(signResult))
 }
 
-func GenNameWithTimestamp(prefix string) string {
-	return fmt.Sprintf("%s%d", prefix, time.Now().Unix())
+func GenNameWithTimestamp(tmpl string) string {
+	if !strings.Contains(tmpl, "%d") {
+		tmpl = tmpl + "_%d"
+	}
+	return fmt.Sprintf(tmpl, time.Now().Unix())
 }

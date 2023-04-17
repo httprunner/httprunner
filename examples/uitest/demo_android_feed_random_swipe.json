@@ -109,7 +109,7 @@
                     }
                 ]
             },
-            "loops": 2
+            "loops": 10
         },
         {
             "name": "exit",

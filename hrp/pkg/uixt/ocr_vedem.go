@@ -305,7 +305,7 @@ type OCRService interface {
 
 func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("ocr_")); err != nil {
+	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_ocr")); err != nil {
 		return
 	}
 
@@ -320,7 +320,7 @@ func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err
 
 func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("ocr_")); err != nil {
+	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_ocr")); err != nil {
 		return
 	}
 
@@ -338,7 +338,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, 
 
 func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) (points [][]float64, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("ocr_")); err != nil {
+	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_ocr")); err != nil {
 		return
 	}
 

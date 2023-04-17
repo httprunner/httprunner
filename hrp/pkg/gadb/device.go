@@ -540,7 +540,7 @@ func (d *Device) InstallAPK(apk io.ReadSeeker) (string, error) {
 		return string(raw), err
 	}
 
-	remote := fmt.Sprintf("/data/local/tmp/%s.apk", builtin.GenNameWithTimestamp("gadb_remote_"))
+	remote := fmt.Sprintf("/data/local/tmp/%s.apk", builtin.GenNameWithTimestamp("gadb_remote_%d"))
 	err := d.Push(apk, remote, time.Now())
 	if err != nil {
 		return "", fmt.Errorf("error pushing: %v", err)
