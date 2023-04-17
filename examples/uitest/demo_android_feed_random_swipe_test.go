@@ -50,7 +50,7 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 		},
 	}
 
-	if err := testCase.Dump2JSON("demo_feed_random_slide.json"); err != nil {
+	if err := testCase.Dump2JSON("demo_android_feed_random_swipe.json"); err != nil {
 		t.Fatal(err)
 	}
 

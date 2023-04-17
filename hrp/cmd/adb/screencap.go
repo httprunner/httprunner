@@ -23,7 +23,7 @@ var screencapAndroidDevicesCmd = &cobra.Command{
 			return err
 		}
 
-		filepath := fmt.Sprintf("%s.png", builtin.GenNameWithTimestamp("screencap_"))
+		filepath := fmt.Sprintf("%s.png", builtin.GenNameWithTimestamp("screencap_%d"))
 		if err = ioutil.WriteFile(filepath, res, 0o644); err != nil {
 			return err
 		}
