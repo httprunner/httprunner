@@ -63,7 +63,7 @@ func assertRunTestCases(t *testing.T) {
 	refCase := TestCasePath(demoTestCaseWithPluginJSONPath)
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
-			SetBaseURL("http://httpbin.org"),
+			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("testcase1-step1").
 				GET("/headers").
@@ -77,7 +77,7 @@ func assertRunTestCases(t *testing.T) {
 				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
 			NewStep("testcase1-step3").CallRefCase(
 				&TestCase{
-					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL("http://httpbin.org"),
+					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL("https://httpbin.org"),
 					TestSteps: []IStep{
 						NewStep("ip").
 							GET("/ip").
