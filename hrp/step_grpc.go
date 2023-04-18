@@ -165,8 +165,15 @@ func runStepGRPC(g *SessionRunner, step *TStep) (stepResult *StepResult, err err
 		err = errors.New("没有实现双向流模式")
 		return setGrpcErr(g, err, start, rb, parser, step.Name)
 	default:
-		err = errors.New("没有传如请求模式")
-		return setGrpcErr(g, err, start, rb, parser, step.Name)
+		res, err := ig.InvokeFunction()
+		//result, timer, gErr := h.InvokeFunction(rb.URL, rb.body, rb.Headers)
+		if err != nil {
+			return setGrpcErr(g, err, start, rb, parser, step.Name)
+		}
+		gResp = &grpcResponse{
+			err:     err,
+			results: res,
+		}
 	}
 	//new response object
 	respObj, err := newGrpcResponseObject(g.caseRunner.hrpRunner.t, parser, gResp)
