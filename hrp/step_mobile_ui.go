@@ -2,11 +2,11 @@ package hrp
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -468,6 +468,36 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 	return s
 }
 
+func (s *StepMobileUIValidation) AssertAppInForeground(packageName string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorForegroundApp,
+		Assert: uixt.AssertionEqual,
+		Expect: packageName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("app [%s] should be in foreground", packageName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepMobileUIValidation) AssertAppNotInForeground(packageName string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorForegroundApp,
+		Assert: uixt.AssertionNotEqual,
+		Expect: packageName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("app [%s] should not be in foreground", packageName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepMobileUIValidation) Name() string {
 	return s.step.Name
 }
@@ -542,7 +572,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		Success:     false,
 		ContentSize: 0,
 	}
-	screenshots := make([]string, 0)
 
 	// merge step variables with session variables
 	stepVariables, err := s.ParseStepVariables(step.Variables)
@@ -572,18 +601,14 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// take screenshot after each step
-		screenshotPath, err := uiDriver.ScreenShot(
-			fmt.Sprintf("step_%d", time.Now().Unix()))
+		_, err := uiDriver.TakeScreenShot(
+			builtin.GenNameWithTimestamp("step_%d_") + step.Name)
 		if err != nil {
-			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed")
-		} else {
-			log.Info().Str("path", screenshotPath).Msg("take screenshot on step finished")
-			screenshots = append(screenshots, screenshotPath)
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
 
 		// save attachments
-		screenshots = append(screenshots, uiDriver.ScreenShots...)
-		attachments["screenshots"] = screenshots
+		attachments["screenshots"] = uiDriver.GetScreenShots()
 		stepResult.Attachments = attachments
 	}()
 

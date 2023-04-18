@@ -368,6 +368,7 @@ func (ad *adbDriver) IsAppInForeground(packageName string) (bool, error) {
 	// adb shell dumpsys activity activities | grep mResumedActivity
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
 	if err != nil {
+		log.Error().Err(err).Msg("failed to dumpsys activities")
 		return false, err
 	}
 

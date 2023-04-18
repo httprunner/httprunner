@@ -443,3 +443,10 @@ func Sign(ver string, ak string, sk string, body []byte) string {
 	signResult := sha256HMAC(signKey, body)
 	return fmt.Sprintf("%v/%v", signKeyInfo, string(signResult))
 }
+
+func GenNameWithTimestamp(tmpl string) string {
+	if !strings.Contains(tmpl, "%d") {
+		tmpl = tmpl + "_%d"
+	}
+	return fmt.Sprintf(tmpl, time.Now().Unix())
+}

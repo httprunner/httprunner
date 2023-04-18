@@ -3,9 +3,10 @@ package adb
 import (
 	"fmt"
 	"io/ioutil"
-	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var screencapAndroidDevicesCmd = &cobra.Command{
@@ -22,7 +23,7 @@ var screencapAndroidDevicesCmd = &cobra.Command{
 			return err
 		}
 
-		filepath := fmt.Sprintf("screencap_%d.png", time.Now().Unix())
+		filepath := fmt.Sprintf("%s.png", builtin.GenNameWithTimestamp("screencap_%d"))
 		if err = ioutil.WriteFile(filepath, res, 0o644); err != nil {
 			return err
 		}
