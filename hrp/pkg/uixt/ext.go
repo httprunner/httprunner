@@ -286,7 +286,13 @@ func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, er
 
 // saveScreenShot saves image file with file name
 func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
-	img, format, err := image.Decode(raw)
+	// notice: screenshot data is a stream, so we need to copy it to a new buffer
+	copiedBuffer := &bytes.Buffer{}
+	if _, err := copiedBuffer.Write(raw.Bytes()); err != nil {
+		log.Error().Err(err).Msg("copy screenshot buffer failed")
+	}
+
+	img, format, err := image.Decode(copiedBuffer)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
