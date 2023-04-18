@@ -25,7 +25,7 @@
                     },
                     {
                         "method": "sleep",
-                        "params": 10
+                        "params": 5
                     }
                 ]
             },
@@ -51,45 +51,20 @@
             }
         },
         {
-            "name": "滑动 Feed 3 次，随机间隔 0-5s",
+            "name": "在推荐页上划，直到出现「点击进入直播间」",
             "android": {
                 "actions": [
                     {
-                        "method": "swipe",
-                        "params": "up"
-                    },
-                    {
-                        "method": "sleep_random",
-                        "params": [
-                            0,
-                            5
-                        ]
+                        "method": "swipe_to_tap_text",
+                        "params": "点击进入直播间",
+                        "identifier": "进入直播间",
+                        "max_retry_times": 10
                     }
                 ]
-            },
-            "loops": 3
+            }
         },
         {
-            "name": "滑动 Feed 1 次，随机间隔 5-10s",
-            "android": {
-                "actions": [
-                    {
-                        "method": "swipe",
-                        "params": "up"
-                    },
-                    {
-                        "method": "sleep_random",
-                        "params": [
-                            5,
-                            10
-                        ]
-                    }
-                ]
-            },
-            "loops": 1
-        },
-        {
-            "name": "滑动 Feed 10 次，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
+            "name": "滑动 Feed 5 次，60% 随机间隔 0-5s，40% 随机间隔 5-10s",
             "android": {
                 "actions": [
                     {
@@ -101,15 +76,46 @@
                         "params": [
                             0,
                             5,
-                            0.7,
+                            0.6,
                             5,
                             10,
-                            0.3
+                            0.4
                         ]
                     }
                 ]
             },
-            "loops": 2
+            "loops": 5
+        },
+        {
+            "name": "向上滑动，等待 10s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": "up",
+                        "identifier": "第一次上划"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 10
+                    },
+                    {
+                        "method": "screenshot"
+                    },
+                    {
+                        "method": "swipe",
+                        "params": "up",
+                        "identifier": "第二次上划"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 10
+                    },
+                    {
+                        "method": "screenshot"
+                    }
+                ]
+            }
         },
         {
             "name": "exit",

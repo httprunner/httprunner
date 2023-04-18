@@ -9,7 +9,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-func TestAndroidDouyinFeedTest(t *testing.T) {
+func TestAndroidLiveSwipeTest(t *testing.T) {
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("点播_抖音_滑动场景_随机间隔_android").
 			WithVariables(map[string]interface{}{
@@ -21,27 +21,24 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 				Android().
 				AppTerminate("com.ss.android.ugc.aweme").
 				AppLaunch("com.ss.android.ugc.aweme").
-				Sleep(10).
+				Sleep(5).
 				Validate().
 				AssertAppInForeground("com.ss.android.ugc.aweme"),
 			hrp.NewStep("处理青少年弹窗").
 				Android().
 				TapByOCR("我知道了", uixt.WithIgnoreNotFoundError(true)),
-			hrp.NewStep("滑动 Feed 3 次，随机间隔 0-5s").
-				Loop(3).
+			hrp.NewStep("在推荐页上划，直到出现「点击进入直播间」").
+				Android().
+				SwipeToTapText("点击进入直播间", uixt.WithMaxRetryTimes(10), uixt.WithIdentifier("进入直播间")),
+			hrp.NewStep("滑动 Feed 5 次，60% 随机间隔 0-5s，40% 随机间隔 5-10s").
+				Loop(5).
 				Android().
 				SwipeUp().
-				SleepRandom(0, 5),
-			hrp.NewStep("滑动 Feed 1 次，随机间隔 5-10s").
-				Loop(1).
+				SleepRandom(0, 5, 0.6, 5, 10, 0.4),
+			hrp.NewStep("向上滑动，等待 10s").
 				Android().
-				SwipeUp().
-				SleepRandom(5, 10),
-			hrp.NewStep("滑动 Feed 10 次，70% 随机间隔 0-5s，30% 随机间隔 5-10s").
-				Loop(10).
-				Android().
-				SwipeUp().
-				SleepRandom(0, 5, 0.7, 5, 10, 0.3),
+				SwipeUp(uixt.WithIdentifier("第一次上划")).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
+				SwipeUp(uixt.WithIdentifier("第二次上划")).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 			hrp.NewStep("exit").
 				Android().
 				AppTerminate("com.ss.android.ugc.aweme").
@@ -50,7 +47,7 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 		},
 	}
 
-	if err := testCase.Dump2JSON("demo_android_feed_random_swipe.json"); err != nil {
+	if err := testCase.Dump2JSON("demo_android_live_swipe.json"); err != nil {
 		t.Fatal(err)
 	}
 
