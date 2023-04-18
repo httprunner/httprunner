@@ -16,6 +16,9 @@
 - fix: do not fail case when kill logcat error
 - fix: take screenshot after each step
 - fix: screencap compatibility for shell v1 and v2 protocol
+- fix: display parsed url in html report
+- fix: fast fail not closing the websocket connection
+- fix #1549: avoid duplicate creating plugins
 
 ## v4.3.2 (2022-12-26)
 
