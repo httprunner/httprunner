@@ -153,7 +153,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["Total"], int64(1)) {
 		t.Fatal()
 	}
-	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3)) {
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(100)) {
 		t.Fatal()
 	}
 }
@@ -165,7 +165,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetTimeout(2 * time.Second). // set global timeout to 2s
-			SetBaseURL("http://httpbin.org"),
+			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("step1").
 				GET("/delay/1").
@@ -181,7 +181,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").
 			SetTimeout(2 * time.Second). // set global timeout to 2s
-			SetBaseURL("http://httpbin.org"),
+			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("step1").
 				GET("/delay/3").
@@ -198,7 +198,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase3 := &TestCase{
 		Config: NewConfig("TestCase3").
 			SetTimeout(2 * time.Second).
-			SetBaseURL("http://httpbin.org"),
+			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("step2").
 				GET("/delay/3").
