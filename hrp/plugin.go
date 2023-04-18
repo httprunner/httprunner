@@ -31,31 +31,10 @@ const projectInfoFile = "proj.json" // used for ensuring root project
 
 var (
 	pluginMap   sync.Map // used for reusing plugin instance
-	pluginMutex sync.Mutex
+	pluginMutex sync.RWMutex
 )
 
-func initPlugin(path, venv string, logOn bool) (funplugin.IPlugin, error) {
-	if plugin, ok := pluginMap.Load(path); ok {
-		return plugin.(funplugin.IPlugin), nil
-	}
-
-	pluginMutex.Lock()
-	defer pluginMutex.Unlock()
-
-	if plugin, ok := pluginMap.Load(path); ok {
-		return plugin.(funplugin.IPlugin), nil
-	}
-
-	p, err := initplugin(path, venv, logOn)
-	if err != nil {
-		return nil, errors.Wrap(err, "init plugin failed")
-	}
-
-	pluginMap.Store(path, p)
-	return p, nil
-}
-
-func initplugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
+func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
 	// plugin file not found
 	if path == "" {
 		return nil, nil
@@ -65,6 +44,9 @@ func initplugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		log.Warn().Str("path", path).Msg("locate plugin failed")
 		return nil, nil
 	}
+
+	pluginMutex.Lock()
+	defer pluginMutex.Unlock()
 
 	// reuse plugin instance if it already initialized
 	if p, ok := pluginMap.Load(pluginPath); ok {
