@@ -188,7 +188,7 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 	r.req.Host = u.Host
 
 	// update url
-	r.requestMap["url"] = u
+	r.requestMap["url"] = u.String()
 
 	return nil
 }
