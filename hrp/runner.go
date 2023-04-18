@@ -488,6 +488,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	// update config variables with given variables
 	r.InitWithParameters(givenVars)
 
+	defer func() {
+		// close session resource after all steps done or fast fail
+		r.releaseResources()
+	}()
+
 	// run step in sequential order
 	for _, step := range r.caseRunner.testCase.TestSteps {
 		// TODO: parse step struct
@@ -563,19 +568,6 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 		}
 	}
 
-	// close websocket connection after all steps done
-	defer func() {
-		for _, wsConn := range r.wsConnMap {
-			if wsConn != nil {
-				log.Info().Str("testcase", config.Name).Msg("websocket disconnected")
-				err := wsConn.Close()
-				if err != nil {
-					log.Error().Err(err).Msg("websocket disconnection failed")
-				}
-			}
-		}
-	}()
-
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return nil
 }
@@ -645,4 +637,18 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	}
 
 	return caseSummary, nil
+}
+
+// releaseResources releases resources used by session runner
+func (r *SessionRunner) releaseResources() {
+	// close websocket connections
+	for _, wsConn := range r.wsConnMap {
+		if wsConn != nil {
+			log.Info().Str("testcase", r.caseRunner.testCase.Config.Name).Msg("websocket disconnected")
+			err := wsConn.Close()
+			if err != nil {
+				log.Error().Err(err).Msg("websocket disconnection failed")
+			}
+		}
+	}
 }
