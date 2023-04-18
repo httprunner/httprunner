@@ -361,6 +361,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			}
 			mutex.Unlock()
 
+			defer func() {
+				sessionRunner.releaseResources()
+			}()
+
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				// TODO: parse step struct
